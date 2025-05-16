@@ -1,5 +1,6 @@
 import timeago
 from flask_socketio import SocketIO
+from flask import has_app_context, current_app
 
 import time
 import os
@@ -26,19 +27,28 @@ class SignalHandler:
         logger.info("SignalHandler: Connected to queue_length signal")
 
     def handle_signal(self, *args, **kwargs):
-        logger.info(f"SignalHandler: Signal received with {len(args)} args and {len(kwargs)} kwargs")
+        logger.trace(f"SignalHandler: Signal received with {len(args)} args and {len(kwargs)} kwargs")
         # Safely extract the watch UUID from kwargs
         watch_uuid = kwargs.get('watch_uuid')
+        app_context = kwargs.get('app_context')
+
         if watch_uuid:
             # Get the watch object from the datastore
             watch = self.datastore.data['watching'].get(watch_uuid)
             if watch:
-                # Forward to handle_watch_update with the watch parameter
-                handle_watch_update(self.socketio_instance, watch=watch, datastore=self.datastore)
+                if app_context:
+                    #note
+                    with app_context.app_context():
+                        with app_context.test_request_context():
+                            # Forward to handle_watch_update with the watch parameter
+                            handle_watch_update(self.socketio_instance, watch=watch, datastore=self.datastore)
+                else:
+                    handle_watch_update(self.socketio_instance, watch=watch, datastore=self.datastore)
+
                 logger.info(f"Signal handler processed watch UUID {watch_uuid}")
             else:
                 logger.warning(f"Watch UUID {watch_uuid} not found in datastore")
-                
+
     def handle_queue_length(self, *args, **kwargs):
         """Handle queue_length signal and emit to all clients"""
         try:
@@ -77,14 +87,22 @@ def handle_watch_update(socketio, **kwargs):
             if hasattr(q_item, 'item') and 'uuid' in q_item.item:
                 queue_list.append(q_item.item['uuid'])
 
+        error_texts = ""
+        if has_app_context():
+            # So anything with 'url_for' etc needs to be triggered with app_context of the current app when sending the signal
+#            with app.app_context():
+#                watch_check_update.send(app_context=app, watch_uuid=uuid)
+
+            error_texts = watch.compile_error_texts()
+
         # Create a simplified watch data object to send to clients
         watch_data = {
             'checking_now': True if watch.get('uuid') in running_uuids else False,
             'fetch_time': watch.get('fetch_time'),
-            'has_error': True if watch.compile_error_texts() else False,
+            'has_error': True if error_texts else False,
             'last_changed': watch.get('last_changed'),
             'last_checked': watch.get('last_checked'),
-            'error_text': watch.compile_error_texts(),
+            'error_text': error_texts,
             'last_checked_text': _jinja2_filter_datetime(watch),
             'last_changed_text': timeago.format(int(watch['last_changed']), time.time()) if watch.history_n >= 2 and int(watch.get('last_changed', 0)) > 0 else 'Not yet',
             'queued': True if watch.get('uuid') in queue_list else False,
@@ -94,6 +112,7 @@ def handle_watch_update(socketio, **kwargs):
             'uuid': watch.get('uuid'),
             'event_timestamp': time.time()
         }
+
         socketio.emit("watch_update", watch_data)
         logger.debug(f"Socket.IO: Emitted update for watch {watch.get('uuid')}, Checking now: {watch_data['checking_now']}")
 

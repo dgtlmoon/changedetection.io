@@ -575,7 +575,8 @@ def notification_runner():
                     log_lines = str(e).splitlines()
                     notification_debug_log += log_lines
 
-                app.config['watch_check_update_SIGNAL'].send(watch_uuid=n_object.get('uuid'))
+                    with app.app_context():
+                        app.config['watch_check_update_SIGNAL'].send(app_context=app, watch_uuid=n_object.get('uuid'))
 
                 # Process notifications
                 notification_debug_log+= ["{} - SENDING - {}".format(now.strftime("%Y/%m/%d %H:%M:%S,000"), json.dumps(sent_obj))]
