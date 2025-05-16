@@ -43,6 +43,7 @@ class model(watch_base):
         self.__datastore_path = kw.get('datastore_path')
         if kw.get('datastore_path'):
             del kw['datastore_path']
+            
         super(model, self).__init__(*arg, **kw)
         if kw.get('default'):
             self.update(kw['default'])
@@ -659,16 +660,15 @@ class model(watch_base):
                 available.append(step_n.group(1))
         return available
 
-    @property
-    def compile_error_texts(self):
-
+    def compile_error_texts(self, has_proxies=None):
+        """Compile error texts for this watch.
+        Accepts has_proxies parameter to ensure it works even outside app context"""
         from flask import (
             Markup, url_for
         )
 
-        output = ""
+        output = []  # Initialize as list since we're using append
         last_error = self.get('last_error','')
-        has_proxies = datastore.proxy_list
 
         if last_error and '403' in last_error:
             if has_proxies:
@@ -679,8 +679,6 @@ class model(watch_base):
         if self.get('last_notification_error'):
             output.append(str(Markup(f"<div class=\"notification-error\"><a href=\"{url_for('settings.notification_logs')}\">{ self.get('last_notification_error') }</a></div>")))
 
-
         res = "\n".join(output)
-
         return res
 
