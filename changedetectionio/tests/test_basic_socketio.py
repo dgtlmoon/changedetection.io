@@ -10,12 +10,11 @@ from .util import (
 )
 
 
-def test_socketio_watch_update(client, live_server):
+def run_socketio_watch_update_test(client, live_server, password_mode=""):
     """Test that the socketio emits a watch update event when content changes"""
 
     # Set up the test server
     set_original_response()
-    live_server_setup(live_server)
 
     # Get the SocketIO instance from the app
     from changedetectionio.flask_app import app
@@ -23,6 +22,10 @@ def test_socketio_watch_update(client, live_server):
 
     # Create a test client for SocketIO
     socketio_test_client = socketio.test_client(app, flask_test_client=client)
+    if password_mode == "not logged in, should exit on connect":
+        assert not socketio_test_client.is_connected(), "Failed to connect to Socket.IO server because it should bounce this connect"
+        return
+
     assert socketio_test_client.is_connected(), "Failed to connect to Socket.IO server"
     print("Successfully connected to Socket.IO server")
 
@@ -53,12 +56,10 @@ def test_socketio_watch_update(client, live_server):
     # Wait for the watch to be checked
     wait_for_all_checks(client)
 
-    # Wait for events to be emitted and received (up to 20 seconds)
-    max_wait = 20
     has_watch_update = False
     has_unviewed_update = False
 
-    for i in range(max_wait):
+    for i in range(10):
         # Get received events
         received = socketio_test_client.get_received()
 
@@ -78,13 +79,13 @@ def test_socketio_watch_update(client, live_server):
             break
 
         # Force a recheck every 5 seconds to ensure events are emitted
-        if i > 0 and i % 5 == 0:
-            print(f"Still waiting for events, forcing another recheck...")
-            res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
-            assert b'Queued 1 watch for rechecking.' in res.data
-            wait_for_all_checks(client)
+#        if i > 0 and i % 5 == 0:
+#            print(f"Still waiting for events, forcing another recheck...")
+#            res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+#            assert b'Queued 1 watch for rechecking.' in res.data
+#            wait_for_all_checks(client)
 
-        print(f"Waiting for unviewed update event... {i+1}/{max_wait}")
+#        print(f"Waiting for unviewed update event... {i+1}/{max_wait}")
         time.sleep(1)
 
     # Verify we received watch_update events
@@ -97,12 +98,7 @@ def test_socketio_watch_update(client, live_server):
     from changedetectionio.flask_app import app
     datastore = app.config.get('DATASTORE')
 
-    # Extract the watch UUID from the watchlist page
-    res = client.get(url_for("watchlist.index"))
-    import re
-    m = re.search('edit/(.+?)[#"]', str(res.data))
-    assert m, "Could not find watch UUID in page"
-    watch_uuid = m.group(1).strip()
+    watch_uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
 
     # Get the watch from the datastore
     watch = datastore.data['watching'].get(watch_uuid)
@@ -111,4 +107,33 @@ def test_socketio_watch_update(client, live_server):
 
     # Clean up
     client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    
+
+def test_everything(live_server, client):
+
+    live_server_setup(live_server)
+
+    run_socketio_watch_update_test(password_mode="", live_server=live_server, client=client)
+
+    ############################ Password required auth check ##############################
+
+    # Enable password check and diff page access bypass
+    res = client.post(
+        url_for("settings.settings_page"),
+        data={"application-password": "foobar",
+              "requests-time_between_check-minutes": 180,
+              'application-fetch_backend': "html_requests"},
+        follow_redirects=True
+    )
+
+    assert b"Password protection enabled." in res.data
+
+    run_socketio_watch_update_test(password_mode="not logged in, should exit on connect", live_server=live_server, client=client)
+    res = client.post(
+        url_for("login"),
+        data={"password": "foobar"},
+        follow_redirects=True
+    )
+
+    # Yes we are correctly logged in
+    assert b"LOG OUT" in res.data
+    run_socketio_watch_update_test(password_mode="should be like normal", live_server=live_server, client=client)
