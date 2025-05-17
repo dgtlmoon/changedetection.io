@@ -164,13 +164,13 @@ def handle_watch_update(socketio, **kwargs):
         }
 
         # Debug what's being emitted
-        logger.debug(f"Emitting 'watch_update' event for {watch.get('uuid')}, data: {watch_data}")
+        #logger.debug(f"Emitting 'watch_update' event for {watch.get('uuid')}, data: {watch_data}")
         
         # Emit to all clients (no 'broadcast' parameter needed - it's the default behavior)
         socketio.emit("watch_update", watch_data)
         
         # Log after successful emit
-        logger.info(f"Socket.IO: Emitted update for watch {watch.get('uuid')}, Checking now: {watch_data['checking_now']}")
+        #logger.info(f"Socket.IO: Emitted update for watch {watch.get('uuid')}, Checking now: {watch_data['checking_now']}")
 
     except Exception as e:
         logger.error(f"Socket.IO error in handle_watch_update: {str(e)}")
