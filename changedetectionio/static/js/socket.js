@@ -37,12 +37,25 @@ $(document).ready(function () {
 
             // Connection status logging
             socket.on('connect', function () {
-                console.log('Socket.IO connected');
+                console.log('Socket.IO connected with path:', socketio_url);
+                console.log('Socket transport:', socket.io.engine.transport.name);
                 bindAjaxHandlerButtonsEvents();
             });
 
-            socket.on('disconnect', function () {
-                console.log('Socket.IO disconnected');
+            socket.on('connect_error', function(error) {
+                console.error('Socket.IO connection error:', error);
+            });
+
+            socket.on('connect_timeout', function() {
+                console.error('Socket.IO connection timeout');
+            });
+
+            socket.on('error', function(error) {
+                console.error('Socket.IO error:', error);
+            });
+
+            socket.on('disconnect', function (reason) {
+                console.log('Socket.IO disconnected, reason:', reason);
                 $('.ajax-op').off('.ajaxHandlerNamespace')
             });
 
@@ -52,11 +65,18 @@ $(document).ready(function () {
             })
 
             // Listen for periodically emitted watch data
+            // Add an explicit watch_update listener
+            console.log('Adding watch_update event listener');
             socket.on('watch_update', function (watch) {
+                // Log the entire watch object for debugging
+                console.log('!!! WATCH UPDATE EVENT RECEIVED !!!');
                 console.log(`${watch.event_timestamp} - Watch update ${watch.uuid} - Checking now - ${watch.checking_now} - UUID in URL ${window.location.href.includes(watch.uuid)}`);
-
+                console.log('Watch data:', watch);
+                
                 // Updating watch table rows
                 const $watchRow = $('tr[data-watch-uuid="' + watch.uuid + '"]');
+                console.log('Found watch row elements:', $watchRow.length);
+                
                 if ($watchRow.length) {
                     $($watchRow).toggleClass('checking-now', watch.checking_now);
                     $($watchRow).toggleClass('queued', watch.queued);
@@ -72,6 +92,8 @@ $(document).ready(function () {
                     $('td.last-checked .innertext', $watchRow).text(watch.last_checked_text)
                     $('td.last-checked', $watchRow).data('timestamp', watch.last_checked).data('fetchduration', watch.fetch_time);
                     $('td.last-checked', $watchRow).data('eta_complete', watch.last_checked + watch.fetch_time);
+                    
+                    console.log('Updated UI for watch:', watch.uuid);
                 }
                 $('body').toggleClass('checking-now', watch.checking_now && window.location.href.includes(watch.uuid));
             });
