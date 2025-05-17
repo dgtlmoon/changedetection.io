@@ -186,7 +186,7 @@ class fetcher(Fetcher):
             self.page = context.new_page()
 
             # Listen for all console events and handle errors
-            self.page.on("console", lambda msg: print(f"Playwright console: Watch URL: {url} {msg.type}: {msg.text} {msg.args}"))
+            self.page.on("console", lambda msg: logger.debug(f"Playwright console: Watch URL: {url} {msg.type}: {msg.text} {msg.args}"))
 
             # Re-use as much code from browser steps as possible so its the same
             from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
