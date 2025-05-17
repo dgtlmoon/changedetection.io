@@ -100,7 +100,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     # A totally zero byte (#2528) response should also not trigger an error
     set_zero_byte_response()
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
-
+    wait_for_all_checks(client)
     # 2877
     assert watch.last_changed == watch['last_checked']
 

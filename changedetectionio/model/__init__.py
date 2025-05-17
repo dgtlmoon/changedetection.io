@@ -36,6 +36,7 @@ class watch_base(dict):
             'include_filters': [],
             'last_checked': 0,
             'last_error': False,
+            'last_notification_error': None,
             'last_viewed': 0,  # history key value of the last viewed via the [diff] link
             'method': 'GET',
             'notification_alert_count': 0,
