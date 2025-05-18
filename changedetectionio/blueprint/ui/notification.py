@@ -20,8 +20,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         from changedetectionio.notification.handler import process_notification
         from changedetectionio.notification.apprise_plugin.assets import apprise_asset
 
-        from changedetectionio.notification.apprise_plugin.custom_handlers import apprise_http_custom_handler
-
         apobj = apprise.Apprise(asset=apprise_asset)
 
         is_global_settings_form = request.args.get('mode', '') == 'global-settings'

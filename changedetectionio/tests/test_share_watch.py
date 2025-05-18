@@ -2,8 +2,7 @@
 
 import time
 from flask import url_for
-from urllib.request import urlopen
-from .util import set_original_response, set_modified_response, live_server_setup
+from .util import set_original_response, live_server_setup
 import re
 
 sleep_time_for_fetch_thread = 3

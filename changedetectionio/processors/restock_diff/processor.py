@@ -110,7 +110,7 @@ def get_itemprop_availability(html_content) -> Restock:
 
         # Second, go dig OpenGraph which is something that jsonpath_ng cant do because of the tuples and double-dots (:)
         if not value.get('price') or value.get('availability'):
-            logger.debug(f"Alternatively digging through OpenGraph properties for restock/price info..")
+            logger.debug("Alternatively digging through OpenGraph properties for restock/price info..")
             jsonpath_expr = parse('$..properties')
 
             for match in jsonpath_expr.find(data):
@@ -189,7 +189,7 @@ class perform_site_check(difference_detection_processor):
         itemprop_availability = {}
         try:
             itemprop_availability = get_itemprop_availability(self.fetcher.content)
-        except MoreThanOnePriceFound as e:
+        except MoreThanOnePriceFound:
             # Add the real data
             raise ProcessorException(message="Cannot run, more than one price detected, this plugin is only for product pages with ONE product, try the content-change detection mode.",
                                      url=watch.get('url'),

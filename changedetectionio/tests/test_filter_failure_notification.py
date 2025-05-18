@@ -1,10 +1,8 @@
 import os
 import time
-from loguru import logger
 from flask import url_for
-from .util import set_original_response, live_server_setup, extract_UUID_from_client, wait_for_all_checks, \
+from .util import set_original_response, live_server_setup, wait_for_all_checks, \
     wait_for_notification_endpoint_output
-from changedetectionio.model import App
 
 
 def set_response_with_filter():
@@ -117,7 +115,7 @@ def run_filter_test(client, live_server, content_filter):
         assert b'Warning, no filters were found' in res.data
         assert not os.path.isfile("test-datastore/notification.txt")
         time.sleep(1)
-        
+
     assert live_server.app.config['DATASTORE'].data['watching'][uuid]['consecutive_filter_failures'] == 5
 
     time.sleep(2)

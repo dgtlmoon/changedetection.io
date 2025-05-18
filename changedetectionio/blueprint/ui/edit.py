@@ -1,8 +1,6 @@
-import time
 from copy import deepcopy
 import os
-import importlib.resources
-from flask import Blueprint, request, redirect, url_for, flash, render_template, make_response, send_from_directory, abort
+from flask import Blueprint, request, redirect, url_for, flash, render_template, abort
 from loguru import logger
 from jinja2 import Environment, FileSystemLoader
 
@@ -12,7 +10,7 @@ from changedetectionio.time_handler import is_within_schedule
 
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData):
     edit_blueprint = Blueprint('ui_edit', __name__, template_folder="../ui/templates")
-    
+
     def _watch_has_tag_options_set(watch):
         """This should be fixed better so that Tag is some proper Model, a tag is just a Watch also"""
         for tag_uuid, tag in datastore.data['settings']['application'].get('tags', {}).items():
@@ -75,10 +73,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             forms_module = importlib.import_module(f"{parent_module.__name__}.forms")
             # Access the 'processor_settings_form' class from the 'forms' module
             form_class = getattr(forms_module, 'processor_settings_form')
-        except ModuleNotFoundError as e:
+        except ModuleNotFoundError:
             # .forms didnt exist
             form_class = forms.processor_text_json_diff_form
-        except AttributeError as e:
+        except AttributeError:
             # .forms exists but no useful form
             form_class = forms.processor_text_json_diff_form
 
@@ -235,7 +233,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
             # Import the global plugin system
             from changedetectionio.pluggy_interface import collect_ui_edit_stats_extras
-            
+
             template_args = {
                 'available_processors': processors.available_processors(),
                 'available_timezones': sorted(available_timezones()),
@@ -334,5 +332,5 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                     datastore.data["watching"][uuid]['ignore_text'].append('/' + s + '/')
 
         return f"<a href={url_for('ui.ui_views.preview_page', uuid=uuid)}>Click to preview</a>"
-    
+
     return edit_blueprint

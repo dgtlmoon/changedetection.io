@@ -44,17 +44,17 @@ def add_data(current_watch_uuid, application_datastruct, ephemeral_data):
     """Add word count data for conditions"""
     result = {}
     watch = application_datastruct['watching'].get(current_watch_uuid)
-    
+
     if watch and 'text' in ephemeral_data:
         word_count = count_words_in_history(watch, ephemeral_data['text'])
         result['word_count'] = word_count
-    
+
     return result
 
 def _generate_stats_html(watch):
     """Generate the HTML content for the stats tab"""
     word_count = count_words_in_history(watch)
-    
+
     html = f"""
     <div class="word-count-stats">
         <h4>Content Analysis</h4>

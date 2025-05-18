@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-import json
 import os
 from flask import url_for
-from changedetectionio.tests.util import live_server_setup, wait_for_all_checks, extract_UUID_from_client
+from changedetectionio.tests.util import live_server_setup, wait_for_all_checks
 
 
 def set_response():
     import time
-    data = f"""<html>
+    data = """<html>
        <body>
      <h1>Awesome, you made it</h1>
      yeah the socks request worked
@@ -89,7 +88,7 @@ def test_socks5(client, live_server, measure_memory_usage):
     )
     # It's probably already finished super fast :(
     #assert b"RUNNING" in res.data
-    
+
     wait_for_all_checks(client)
     res = client.get(
         url_for("check_proxies.get_recheck_status", uuid=uuid),

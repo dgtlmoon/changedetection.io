@@ -1,8 +1,6 @@
-from flask import Blueprint, request, redirect, url_for, flash, render_template, make_response, send_from_directory, abort
-from flask_login import current_user
+from flask import Blueprint, request, redirect, url_for, flash, render_template, make_response, send_from_directory
 import os
 import time
-from copy import deepcopy
 
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
@@ -10,7 +8,7 @@ from changedetectionio import html_tools
 
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData):
     views_blueprint = Blueprint('ui_views', __name__, template_folder="../ui/templates")
-    
+
     @views_blueprint.route("/preview/<string:uuid>", methods=['GET'])
     @login_optionally_required
     def preview_page(uuid):
@@ -54,7 +52,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                                                       mode='line numbers'
                                                                       )
 
-            except Exception as e:
+            except Exception:
                 content.append({'line': f"File doesnt exist or unable to read timestamp {timestamp}", 'classes': ''})
 
         output = render_template("preview.html",
@@ -135,7 +133,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         try:
             from_version_file_contents = watch.get_history_snapshot(dates[from_version_index])
-        except Exception as e:
+        except Exception:
             from_version_file_contents = f"Unable to read to-version at index {dates[from_version_index]}.\n"
 
         to_version = request.args.get('to_version')
@@ -147,7 +145,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         try:
             to_version_file_contents = watch.get_history_snapshot(dates[to_version_index])
-        except Exception as e:
+        except Exception:
             to_version_file_contents = "Unable to read to-version at index{}.\n".format(dates[to_version_index])
 
         screenshot_url = watch.get_screenshot()

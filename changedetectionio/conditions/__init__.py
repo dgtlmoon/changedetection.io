@@ -1,10 +1,7 @@
-from flask import Blueprint
-
 from json_logic.builtins import BUILTINS
 
 from .exceptions import EmptyConditionRuleRowNotUsable
 from .pluggy_interface import plugin_manager  # Import the pluggy plugin manager
-from . import default_plugin
 from loguru import logger
 # List of all supported JSON Logic operators
 operator_choices = [
@@ -93,7 +90,7 @@ def execute_ruleset_against_all_plugins(current_watch_uuid: str, application_dat
 
     EXECUTE_DATA = {}
     result = True
-    
+
     watch = application_datastruct['watching'].get(current_watch_uuid)
 
     if watch and watch.get("conditions"):
@@ -104,8 +101,7 @@ def execute_ruleset_against_all_plugins(current_watch_uuid: str, application_dat
             for plugin in plugin_manager.get_plugins():
                 try:
                     import concurrent.futures
-                    import time
-                    
+
                     with concurrent.futures.ThreadPoolExecutor() as executor:
                         future = executor.submit(
                             plugin.add_data,
@@ -132,7 +128,7 @@ def execute_ruleset_against_all_plugins(current_watch_uuid: str, application_dat
 
             # Create the ruleset
             ruleset = convert_to_jsonlogic(logic_operator=logic_operator, rule_dict=complete_rules)
-            
+
             # Pass the custom operations dictionary to jsonLogic
             if not jsonLogic(logic=ruleset, data=EXECUTE_DATA, operations=CUSTOM_OPERATIONS):
                 result = False
@@ -156,15 +152,15 @@ for plugin in plugin_manager.get_plugins():
 def collect_ui_edit_stats_extras(watch):
     """Collect and combine HTML content from all plugins that implement ui_edit_stats_extras"""
     extras_content = []
-    
+
     for plugin in plugin_manager.get_plugins():
         try:
             content = plugin.ui_edit_stats_extras(watch=watch)
             if content:
                 extras_content.append(content)
-        except Exception as e:
+        except Exception:
             # Skip plugins that don't implement the hook or have errors
             pass
-            
+
     return "\n".join(extras_content) if extras_content else ""
 

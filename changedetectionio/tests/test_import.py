@@ -76,7 +76,7 @@ def test_import_distillio(client, live_server, measure_memory_usage):
             "ts": "2022-03-27T15:51:15.667Z"
         }
     ]
-}		   
+}
 
 '''
 

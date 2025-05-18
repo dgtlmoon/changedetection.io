@@ -2,7 +2,6 @@
 
 import time
 from flask import url_for
-from urllib.request import urlopen
 from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
 
 sleep_time_for_fetch_thread = 3
@@ -26,7 +25,7 @@ def test_check_basic_change_detection_functionality_source(client, live_server, 
 
     #####################
 
-    # Check HTML conversion detected and workd
+    # Check HTML conversion detected and works
     res = client.get(
         url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True

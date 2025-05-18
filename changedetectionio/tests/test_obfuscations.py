@@ -34,7 +34,7 @@ def test_obfuscations(client, live_server, measure_memory_usage):
     # Give the thread time to pick it up
     time.sleep(3)
 
-    # Check HTML conversion detected and workd
+    # Check HTML conversion detected and works
     res = client.get(
         url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True

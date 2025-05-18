@@ -242,7 +242,7 @@ class update_worker(threading.Thread):
                 os.unlink(full_path)
 
     def run(self):
-        
+
         while not self.app.config.exit.is_set():
             update_handler = None
 
@@ -333,7 +333,7 @@ class update_worker(threading.Thread):
 
                         if e.xpath_data:
                             watch.save_xpath_data(data=e.xpath_data)
-                            
+
                         process_changedetection_results = False
 
                     except content_fetchers_exceptions.Non200ErrorCodeReceived as e:
@@ -385,7 +385,7 @@ class update_worker(threading.Thread):
                                     logger.debug(f"Sending filter failed notification for {uuid}")
                                     self.send_filter_failure_notification(uuid)
                                 c = 0
-                                logger.debug(f"Reset filter failure count back to zero")
+                                logger.debug("Reset filter failure count back to zero")
 
                             self.datastore.update_watch(uuid=uuid, update_obj={'consecutive_filter_failures': c})
                         else:
@@ -394,7 +394,7 @@ class update_worker(threading.Thread):
 
                         process_changedetection_results = False
 
-                    except content_fetchers_exceptions.checksumFromPreviousCheckWasTheSame as e:
+                    except content_fetchers_exceptions.checksumFromPreviousCheckWasTheSame:
                         # Yes fine, so nothing todo, don't continue to process.
                         process_changedetection_results = False
                         changed_detected = False
@@ -482,7 +482,7 @@ class update_worker(threading.Thread):
                                                                            'last_check_status': e.status_code,
                                                                            'has_ldjson_price_data': None})
                         process_changedetection_results = False
-                    except content_fetchers_exceptions.BrowserStepsInUnsupportedFetcher as e:
+                    except content_fetchers_exceptions.BrowserStepsInUnsupportedFetcher:
                         err_text = "This watch has Browser Steps configured and so it cannot run with the 'Basic fast Plaintext/HTTP Client', either remove the Browser Steps or select a Chrome fetcher."
                         self.datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text})
                         process_changedetection_results = False
@@ -523,7 +523,7 @@ class update_worker(threading.Thread):
                                 try:
                                     update_obj['title'] = html_tools.extract_element(find='title', html_content=update_handler.fetcher.content)
                                     logger.info(f"UUID: {uuid} Extract <title> updated title to '{update_obj['title']}")
-                                except Exception as e:
+                                except Exception:
                                     logger.warning(f"UUID: {uuid} Extract <title> as watch title was enabled, but couldn't find a <title>.")
 
                         try:
@@ -581,7 +581,7 @@ class update_worker(threading.Thread):
                         self.datastore.update_watch(uuid=uuid,
                                                     update_obj={'remote_server_reply': server_header}
                                                     )
-                    except Exception as e:
+                    except Exception:
                         pass
 
                     self.datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - fetch_start_time, 3),

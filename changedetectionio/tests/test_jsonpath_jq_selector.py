@@ -19,12 +19,12 @@ def test_unittest_inline_html_extract():
     # So lets pretend that the JSON we want is inside some HTML
     content="""
     <html>
-    
+
     food and stuff and more
     <script>
     alert('nothing really good here');
     </script>
-    
+
     <script type="application/ld+json">
   xx {"@context":"http://schema.org","@type":"Product","name":"Nan Optipro Stage 1 Baby Formula  800g","description":"During the first year of life, nutrition is critical for your baby. NAN OPTIPRO 1 is tailored to ensure your formula fed infant receives balanced, high quality nutrition.<br />Starter infant formula. The age optimised protein source (whey dominant) is from cow’s milk.<br />Backed by more than 150 years of Nestlé expertise.<br />For hygiene and convenience, it is available in an innovative packaging format with a separate storage area for the scoop, and a semi-transparent window which allows you to see how much powder is left in the can without having to open it.","image":"https://cdn0.woolworths.media/content/wowproductimages/large/155536.jpg","brand":{"@context":"http://schema.org","@type":"Organization","name":"Nan"},"gtin13":"7613287517388","offers":{"@context":"http://schema.org","@type":"Offer","potentialAction":{"@context":"http://schema.org","@type":"BuyAction"},"availability":"http://schema.org/InStock","itemCondition":"http://schema.org/NewCondition","price":23.5,"priceCurrency":"AUD"},"review":[],"sku":"155536"}
 </script>
@@ -64,14 +64,14 @@ and it can also be repeated
 
     # When nothing at all is found, it should throw JSONNOTFound
     # Which is caught and shown to the user in the watch-overview table
-    with pytest.raises(html_tools.JSONNotFound) as e_info:
+    with pytest.raises(html_tools.JSONNotFound):
         html_tools.extract_json_as_string('COMPLETE GIBBERISH, NO JSON!', "json:$.id")
 
     if jq_support:
-        with pytest.raises(html_tools.JSONNotFound) as e_info:
+        with pytest.raises(html_tools.JSONNotFound):
             html_tools.extract_json_as_string('COMPLETE GIBBERISH, NO JSON!', "jq:.id")
 
-        with pytest.raises(html_tools.JSONNotFound) as e_info:
+        with pytest.raises(html_tools.JSONNotFound):
             html_tools.extract_json_as_string('COMPLETE GIBBERISH, NO JSON!', "jqraw:.id")
 
 
@@ -525,4 +525,3 @@ def test_jsonpath_BOM_utf8(client, live_server, measure_memory_usage):
     text = html_tools.extract_json_as_string(json_str, "json:$.name")
     assert text == '"José"'
 
-    

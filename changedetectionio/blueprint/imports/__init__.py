@@ -10,7 +10,7 @@ from changedetectionio.blueprint.imports.importer import (
 
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData):
     import_blueprint = Blueprint('imports', __name__, template_folder="templates")
-    
+
     @import_blueprint.route("/import", methods=['GET', 'POST'])
     @login_optionally_required
     def import_page():

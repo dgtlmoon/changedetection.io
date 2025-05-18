@@ -328,7 +328,7 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
 
         if not bs_jsons:
             raise JSONNotFound("No parsable JSON found in this document")
-        
+
         for json_data in bs_jsons:
             stripped_text_from_html = _parse_json(json_data, json_filter)
 
@@ -473,7 +473,7 @@ def has_ldjson_product_info(content):
 #            pricing_data += extract_json_as_string(content=content,
 #                                                  json_filter=filter,
 #                                                  ensure_is_ldjson_info_type="product")
-    except Exception as e:
+    except Exception:
         # OK too
         return False
 

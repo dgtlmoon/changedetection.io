@@ -3,7 +3,6 @@
 import time
 import os
 import json
-import logging
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
 from urllib.parse import urlparse, parse_qs

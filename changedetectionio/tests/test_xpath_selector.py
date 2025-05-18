@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
 
@@ -129,7 +128,7 @@ def test_check_xpath_text_function_utf8(client, live_server, measure_memory_usag
 		<item>
 			<title>Stock Alert (UK): Big monitor</title>
 			<foo>something else unrelated</foo>
-		</item>		
+		</item>
 	</channel>
 </rss>'''
 
@@ -279,7 +278,7 @@ def test_xpath1_lxml(client, live_server, measure_memory_usage):
     		<item>
     			<title>Stock Alert (UK): Big monitorěěěě</title>
     			<foo>something else unrelated</foo>
-    		</item>		
+    		</item>
     	</channel>
     </rss>'''.encode('utf-8')
 
@@ -393,7 +392,7 @@ def test_various_rules(client, live_server, measure_memory_usage):
      <a href=''>some linky </a>
      <a href=''>another some linky </a>
      <!-- related to https://github.com/dgtlmoon/changedetection.io/pull/1774 -->
-     <input   type="email"   id="email" />     
+     <input   type="email"   id="email" />
      </body>
      </html>
     """)

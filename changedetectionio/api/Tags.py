@@ -4,7 +4,7 @@ from flask import request
 from . import auth
 
 # Import schemas from __init__.py
-from . import schema_tag, schema_create_tag, schema_update_tag
+from . import schema_update_tag
 
 
 class Tag(Resource):

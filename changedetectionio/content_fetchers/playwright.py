@@ -281,7 +281,7 @@ class fetcher(Fetcher):
                 # The actual screenshot - this always base64 and needs decoding! horrible! huge CPU usage
                 self.screenshot = capture_full_page(page=self.page)
 
-            except Exception as e:
+            except Exception:
                 # It's likely the screenshot was too long/big and something crashed
                 raise ScreenshotUnavailable(url=url, status_code=self.status_code)
             finally:
@@ -290,7 +290,7 @@ class fetcher(Fetcher):
                     self.page.request_gc()
                 except:
                     pass
-                
+
                 # Clean up resources properly
                 try:
                     self.page.request_gc()

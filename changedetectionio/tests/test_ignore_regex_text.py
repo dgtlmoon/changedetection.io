@@ -11,14 +11,14 @@ def test_setup(live_server):
 def test_strip_regex_text_func():
     test_content = """
     but sometimes we want to remove the lines.
-    
+
     but 1 lines
     skip 5 lines
     really? yes man
 #/not this tries weirdly formed regex or just strings starting with /
 /not this
     but including 1234 lines
-    igNORe-cAse text we dont want to keep    
+    igNORe-cAse text we dont want to keep
     but not always."""
 
 
@@ -41,17 +41,17 @@ def test_strip_regex_text_func():
     # Check line number reporting
     stripped_content = html_tools.strip_ignore_text(test_content, ignore_lines, mode="line numbers")
     assert stripped_content == [2, 5, 6, 7, 8, 10]
-    
+
     stripped_content = html_tools.strip_ignore_text(test_content, ['/but 1.+5 lines/s'])
     assert "but 1 lines" not in stripped_content
     assert "skip 5 lines" not in stripped_content
-    
+
     stripped_content = html_tools.strip_ignore_text(test_content, ['/but 1.+5 lines/s'], mode="line numbers")
     assert stripped_content == [4, 5]
-    
+
     stripped_content = html_tools.strip_ignore_text(test_content, ['/.+/s'])
     assert stripped_content == ""
-    
+
     stripped_content = html_tools.strip_ignore_text(test_content, ['/.+/s'], mode="line numbers")
     assert stripped_content == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 

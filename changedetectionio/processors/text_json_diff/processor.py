@@ -10,7 +10,7 @@ from changedetectionio.conditions import execute_ruleset_against_all_plugins
 from changedetectionio.processors import difference_detection_processor
 from changedetectionio.html_tools import PERL_STYLE_REGEX, cdata_in_document_to_text, TRANSLATE_WHITESPACE_TABLE
 from changedetectionio import html_tools, content_fetchers
-from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT, PRICE_DATA_TRACK_REJECT
+from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT
 from loguru import logger
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -138,7 +138,7 @@ class perform_site_check(difference_detection_processor):
             # Sort the JSON so we dont get false alerts when the content is just re-ordered
             try:
                 self.fetcher.content = json.dumps(json.loads(self.fetcher.content), sort_keys=True)
-            except Exception as e:
+            except Exception:
                 # Might have just been a snippet, or otherwise bad JSON, continue
                 pass
 

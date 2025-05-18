@@ -209,7 +209,7 @@ class ChangeDetectionStore:
 
     @property
     def data(self):
-        # Re #152, Return env base_url if not overriden
+        # Re #152, Return env base_url if not overridden
         # Re #148 - Some people have just {{ base_url }} in the body or title, but this may break some notification services
         #           like 'Join', so it's always best to atleast set something obvious so that they are not broken.
 
@@ -636,10 +636,10 @@ class ChangeDetectionStore:
             if watch.get('processor') == processor_name:
                 return True
         return False
-        
+
     def search_watches_for_url(self, query, tag_limit=None, partial=False):
         """Search watches by URL, title, or error messages
-        
+
         Args:
             query (str): Search term to match against watch URLs, titles, and error messages
             tag_limit (str, optional): Optional tag name to limit search results
@@ -804,7 +804,7 @@ class ChangeDetectionStore:
                 if watch_title and watch_title.translate(TRANSLATE_WHITESPACE_TABLE) == current_system_title:
                     # Looks the same as the default one, so unset it
                     watch['notification_title'] = None
-            except Exception as e:
+            except Exception:
                 continue
         return
 
@@ -965,7 +965,7 @@ class ChangeDetectionStore:
                         os.unlink(json_path)
 
     def add_notification_url(self, notification_url):
-        
+
         logger.debug(f">>> Adding new notification_url - '{notification_url}'")
 
         notification_urls = self.data['settings']['application'].get('notification_urls', [])

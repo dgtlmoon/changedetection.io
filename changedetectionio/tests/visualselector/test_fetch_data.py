@@ -70,7 +70,7 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
     res = client.get(url_for('static_content', group='visual_selector_data', filename=uuid))
     decompressed_data = zlib.decompress(res.data)
     json_data = json.loads(decompressed_data.decode('utf-8'))
-    
+
     assert res.mimetype == 'application/json'
     assert res.status_code == 200
 
@@ -132,7 +132,7 @@ def test_basic_browserstep(client, live_server, measure_memory_usage):
 
     assert b"This text should be removed" not in res.data
 
-    # Check HTML conversion detected and workd
+    # Check HTML conversion detected and works
     res = client.get(
         url_for("ui.ui_views.preview_page", uuid=uuid),
         follow_redirects=True

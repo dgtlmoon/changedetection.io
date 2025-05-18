@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
 
@@ -15,7 +14,7 @@ def set_original_response():
      <br>
      So let's see what happens.  <br>
      <div id="sametext">Some text thats the same</div>
-     <div class="changetext">Some text that will change</div>     
+     <div class="changetext">Some text that will change</div>
      </body>
      </html>
     """
@@ -48,12 +47,12 @@ def set_modified_response():
 def set_multiline_response():
     test_return_data = """<html>
        <body>
-     
+
      <p>Something <br>
         across 6 billion multiple<br>
         lines
      </p>
-     
+
      <div>aaand something lines</div>
      <br>
      <div>and this should be</div>
@@ -123,7 +122,7 @@ def test_check_filter_multiline(client, live_server, measure_memory_usage):
     assert b'aaand something lines' not in res.data
 
 def test_check_filter_and_regex_extract(client, live_server, measure_memory_usage):
-    
+
     include_filters = ".changetext"
 
     set_original_response()
@@ -177,7 +176,7 @@ def test_check_filter_and_regex_extract(client, live_server, measure_memory_usag
     res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
 
-    # Check HTML conversion detected and workd
+    # Check HTML conversion detected and works
     res = client.get(
         url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True

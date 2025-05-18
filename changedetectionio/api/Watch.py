@@ -10,7 +10,7 @@ from . import auth
 import copy
 
 # Import schemas from __init__.py
-from . import schema, schema_create_watch, schema_update_watch
+from . import schema_create_watch, schema_update_watch
 
 
 class Watch(Resource):

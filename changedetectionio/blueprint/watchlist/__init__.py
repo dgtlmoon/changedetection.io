@@ -1,8 +1,7 @@
 import os
 import time
 
-from flask import Blueprint, request, make_response, render_template, redirect, url_for, flash, session
-from flask_login import current_user
+from flask import Blueprint, request, make_response, render_template, redirect, url_for, session
 from flask_paginate import Pagination, get_page_parameter
 
 from changedetectionio import forms
@@ -11,7 +10,7 @@ from changedetectionio.auth_decorator import login_optionally_required
 
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData):
     watchlist_blueprint = Blueprint('watchlist', __name__, template_folder="templates")
-    
+
     @watchlist_blueprint.route("/", methods=['GET'])
     @login_optionally_required
     def index():
@@ -107,5 +106,5 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             resp.set_cookie('order', request.args.get('order'))
 
         return resp
-        
+
     return watchlist_blueprint

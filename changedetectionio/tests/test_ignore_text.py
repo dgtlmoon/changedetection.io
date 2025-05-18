@@ -27,7 +27,7 @@ def test_strip_text_func():
 
     # Check that line feeds dont get chewed up when something is found
     test_content = "Some initial text\n\nWhich is across multiple lines\n\nZZZZz\n\n\nSo let's see what happens."
-    ignore = ['something irrelevent but just to check', 'XXXXX', 'YYYYY', 'ZZZZZ']
+    ignore = ['something irrelevant but just to check', 'XXXXX', 'YYYYY', 'ZZZZZ']
 
     stripped_content = html_tools.strip_ignore_text(test_content, ignore)
     assert stripped_content == "Some initial text\n\nWhich is across multiple lines\n\n\n\nSo let's see what happens."
@@ -206,7 +206,7 @@ def _run_test_global_ignore(client, as_source=False, extra_ignore=""):
     #Adding some ignore text should not trigger a change
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
-        data={"ignore_text": "something irrelevent but just to check", "url": test_url, 'fetch_backend': "html_requests"},
+        data={"ignore_text": "something irrelevant but just to check", "url": test_url, 'fetch_backend': "html_requests"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data

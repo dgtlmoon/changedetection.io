@@ -2,15 +2,13 @@
 
 import time
 from flask import url_for
-from urllib.request import urlopen
-from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
+from .util import live_server_setup, wait_for_all_checks
 
 sleep_time_for_fetch_thread = 3
 
 
 
 def test_check_extract_text_from_diff(client, live_server, measure_memory_usage):
-    import time
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write("Now it's {} seconds since epoch, time flies!".format(str(time.time())))
 

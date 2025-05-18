@@ -20,12 +20,9 @@ from flask import (
     render_template,
     request,
     send_from_directory,
-    session,
     url_for,
 )
 from flask_compress import Compress as FlaskCompress
-from flask_login import current_user
-from flask_paginate import Pagination, get_page_parameter
 from flask_restful import abort, Api
 from flask_cors import CORS
 from flask_wtf import CSRFProtect
@@ -225,7 +222,7 @@ def changedetection_app(config=None, datastore_o=None):
     login_manager = flask_login.LoginManager(app)
     login_manager.login_view = 'login'
     app.secret_key = init_app_secret(config['datastore_path'])
-    
+
     # Set up a request hook to check authentication for all routes
     @app.before_request
     def check_authentication():
@@ -281,7 +278,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     watch_api.add_resource(Tag, '/api/v1/tag', '/api/v1/tag/<string:uuid>',
                            resource_class_kwargs={'datastore': datastore})
-                           
+
     watch_api.add_resource(Search, '/api/v1/search',
                            resource_class_kwargs={'datastore': datastore})
 
@@ -448,7 +445,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     import changedetectionio.blueprint.watchlist as watchlist
     app.register_blueprint(watchlist.construct_blueprint(datastore=datastore, update_q=update_q, queuedWatchMetaData=queuedWatchMetaData), url_prefix='')
-    
+
     # Memory cleanup endpoint
     @app.route('/gc-cleanup', methods=['GET'])
     @login_optionally_required
@@ -555,7 +552,7 @@ def ticker_thread_check_time_launch_checks():
     logger.debug(f"System env MINIMUM_SECONDS_RECHECK_TIME {recheck_time_minimum_seconds}")
 
     # Spin up Workers that do the fetching
-    # Can be overriden by ENV or use the default settings
+    # Can be overridden by ENV or use the default settings
     n_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
     for _ in range(n_workers):
         new_worker = update_worker.update_worker(update_q, notification_q, app, datastore)
@@ -579,7 +576,7 @@ def ticker_thread_check_time_launch_checks():
                 for k in sorted(datastore.data['watching'].items(), key=lambda item: item[1].get('last_checked',0)):
                     watch_uuid_list.append(k[0])
 
-            except RuntimeError as e:
+            except RuntimeError:
                 # RuntimeError: dictionary changed size during iteration
                 time.sleep(0.1)
                 watch_uuid_list = []

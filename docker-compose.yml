@@ -50,7 +50,7 @@ services:
   #
   #        Hides the `Referer` header so that monitored websites can't see the changedetection.io hostname.
   #      - HIDE_REFERER=true
-  #        
+  #
   #        Default number of parallel/concurrent fetchers
   #      - FETCH_WORKERS=10
   #
@@ -69,7 +69,7 @@ services:
   #        Maximum height of screenshots, default is 16000 px, screenshots will be clipped to this if exceeded.
   #        RAM usage will be higher if you increase this.
   #      - SCREENSHOT_MAX_HEIGHT=16000
-  
+
       # Comment out ports: when using behind a reverse proxy , enable networks: etc.
       ports:
         - 127.0.0.1:5000:5000
@@ -78,7 +78,7 @@ services:
      # Used for fetching pages via WebDriver+Chrome where you need Javascript support.
      # Now working on arm64 (needs testing on rPi - tested on Oracle ARM instance)
      # replace image with seleniarm/standalone-chromium:4.0.0-20211213
-     
+
      # If WEBDRIVER or PLAYWRIGHT are enabled, changedetection container depends on that
      # and must wait before starting (substitute "browser-chrome" with "playwright-chrome" if last one is used)
 #      depends_on:

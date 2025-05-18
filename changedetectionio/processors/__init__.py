@@ -89,7 +89,7 @@ class difference_detection_processor():
                 proxy_url = self.datastore.proxy_list.get(preferred_proxy_id).get('url')
                 logger.debug(f"Selected proxy key '{preferred_proxy_id}' as proxy URL '{proxy_url}' for {url}")
             else:
-                logger.debug(f"Skipping adding proxy data when custom Browser endpoint is specified. ")
+                logger.debug("Skipping adding proxy data when custom Browser endpoint is specified. ")
 
         # Now call the fetcher (playwright/requests/etc) with arguments that only a fetcher would need.
         # When browser_connection_url is None, it method should default to working out whats the best defaults (os env vars etc)
@@ -127,7 +127,7 @@ class difference_detection_processor():
         request_body = self.watch.get('body')
         if request_body:
             request_body = jinja_render(template_str=self.watch.get('body'))
-        
+
         request_method = self.watch.get('method')
         ignore_status_codes = self.watch.get('ignore_status_codes', False)
 
@@ -217,7 +217,7 @@ def get_parent_module(module):
     parent_module_name = module_name.rsplit('.', 1)[0]
     try:
         return importlib.import_module(parent_module_name)
-    except Exception as e:
+    except Exception:
         pass
 
     return False

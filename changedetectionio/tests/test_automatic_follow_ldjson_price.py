@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup, extract_UUID_from_client, wait_for_all_checks
+from .util import live_server_setup, wait_for_all_checks
 
 
 def set_response_with_ldjson():
@@ -67,7 +67,7 @@ def set_response_without_ldjson():
      <br>
      So let's see what happens.  <br>
      <div class="sametext">Some text thats the same</div>
-     <div class="changetext">Some text that will change</div>     
+     <div class="changetext">Some text that will change</div>
      </body>
      </html>
 """
@@ -138,7 +138,7 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'ldjson-price-track-offer' not in res.data
-    
+
     ##########################################################################################
     client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 

@@ -110,6 +110,6 @@ def app(request):
         app.config.exit.set()
         cleanup(app_config['datastore_path'])
 
-       
+
     request.addfinalizer(teardown)
     yield app

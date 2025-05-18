@@ -1,6 +1,6 @@
 import os
 from changedetectionio.strtobool import strtobool
-from flask_restful import abort, Resource
+from flask_restful import Resource
 from flask import request
 import validators
 from . import auth

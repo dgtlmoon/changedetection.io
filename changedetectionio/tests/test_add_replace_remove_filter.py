@@ -14,7 +14,7 @@ def set_original(excluding=None, add_line=None):
      <p>and a new line!</p>
      <p>The golden line</p>
      <p>A BREAK TO MAKE THE TOP LINE STAY AS "REMOVED" OR IT WILL GET COUNTED AS "CHANGED INTO"</p>
-     <p>Something irrelevant</p>          
+     <p>Something irrelevant</p>
      </body>
      </html>
     """

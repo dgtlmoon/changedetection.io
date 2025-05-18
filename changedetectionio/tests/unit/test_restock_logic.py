@@ -4,7 +4,6 @@
 # python3 -m unittest changedetectionio.tests.unit.test_restock_logic
 
 import unittest
-import os
 
 from changedetectionio.processors import restock_diff
 
