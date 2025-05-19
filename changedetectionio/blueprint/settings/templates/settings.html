@@ -16,7 +16,7 @@
 <script src="{{url_for('static_content', group='js', filename='global-settings.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='scheduler.js')}}" defer></script>
 <div class="edit-form">
-    <div class="tabs collapsable">
+    <div class="tabs collapsible">
         <ul>
             <li class="tab" id=""><a href="#general">General</a></li>
             <li class="tab"><a href="#notifications">Notifications</a></li>
@@ -291,7 +291,7 @@ nav
                     </div>
                 </div>
 
-               <p><strong>Tip</strong>: "Residential" and "Mobile" proxy type can be more successfull than "Data Center" for blocked websites.
+               <p><strong>Tip</strong>: "Residential" and "Mobile" proxy type can be more successful than "Data Center" for blocked websites.
 
                 <div class="pure-control-group" id="extra-proxies-setting">
                 {{ render_field(form.requests.form.extra_proxies) }}

@@ -239,7 +239,7 @@ class import_xlsx_custom(Importer):
             flash("Unable to read export XLSX file, something wrong with the file?", 'error')
             return
 
-        # @todo cehck atleast 2 rows, same in other method
+        # @todo check atleast 2 rows, same in other method
         from changedetectionio.forms import validate_url
         row_i = 1
 

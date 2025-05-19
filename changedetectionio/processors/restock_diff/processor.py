@@ -86,7 +86,7 @@ def get_itemprop_availability(html_content) -> Restock:
 
         price_result = _deduplicate_prices(price_parse.find(data))
         if price_result:
-            # Right now, we just support single product items, maybe we will store the whole actual metadata seperately in teh future and
+            # Right now, we just support single product items, maybe we will store the whole actual metadata separately in the future and
             # parse that for the UI?
             if len(price_result) > 1 and len(price_result) > 1:
                 # See of all prices are different, in the case that one product has many embedded data types with the same price

@@ -84,7 +84,7 @@ def test_normal_page_check_works_with_ignore_status_code(client, live_server, me
     assert b'/test-endpoint' in res.data
 
 
-# Tests the whole stack works with staus codes ignored
+# Tests the whole stack works with status codes ignored
 def test_403_page_check_works_with_ignore_status_code(client, live_server, measure_memory_usage):
     sleep_time_for_fetch_thread = 3
 

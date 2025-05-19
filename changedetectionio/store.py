@@ -209,7 +209,7 @@ class ChangeDetectionStore:
 
     @property
     def data(self):
-        # Re #152, Return env base_url if not overriden
+        # Re #152, Return env base_url if not overridden
         # Re #148 - Some people have just {{ base_url }} in the body or title, but this may break some notification services
         #           like 'Join', so it's always best to atleast set something obvious so that they are not broken.
 

@@ -99,7 +99,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
                 # Include a link to the diff page, they will have to login here to see if password protection is enabled.
                 # Description is the page you watch, link takes you to the diff JS UI page
-                # Dict val base_url will get overriden with the env var if it is set.
+                # Dict val base_url will get overridden with the env var if it is set.
                 ext_base_url = datastore.data['settings']['application'].get('active_base_url')
                 # @todo fix
 

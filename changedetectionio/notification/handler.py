@@ -120,7 +120,7 @@ def process_notification(n_object, datastore):
                               'url': url,
                               'body_format': n_format})
 
-        # Blast off the notifications tht are set in .add()
+        # Blast off the notifications that are set in .add()
         apobj.notify(
             title=n_title,
             body=n_body,
