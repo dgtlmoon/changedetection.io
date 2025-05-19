@@ -10,7 +10,7 @@ from changedetectionio import html_tools
 
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData):
     views_blueprint = Blueprint('ui_views', __name__, template_folder="../ui/templates")
-    
+
     @views_blueprint.route("/preview/<string:uuid>", methods=['GET'])
     @login_optionally_required
     def preview_page(uuid):

@@ -26,12 +26,12 @@ class Notifications(Resource):
         @apiGroup Notifications
         """
 
-        notification_urls = self.datastore.data.get('settings', {}).get('application', {}).get('notification_urls', [])        
+        notification_urls = self.datastore.data.get('settings', {}).get('application', {}).get('notification_urls', [])
 
         return {
                 'notification_urls': notification_urls,
                }, 200
-    
+
     @auth.check_token
     @expects_json(schema_create_notification_urls)
     def post(self):
@@ -67,7 +67,7 @@ class Notifications(Resource):
             return "No valid notification URLs were added", 400
 
         return {'notification_urls': added_urls}, 201
-    
+
     @auth.check_token
     @expects_json(schema_create_notification_urls)
     def put(self):
@@ -89,7 +89,7 @@ class Notifications(Resource):
             validate_notification_urls(notification_urls)
         except ValidationError as e:
             return str(e), 400
-        
+
         if not isinstance(notification_urls, list):
             return "Invalid input format", 400
 
@@ -98,7 +98,7 @@ class Notifications(Resource):
         self.datastore.needs_write = True
 
         return {'notification_urls': clean_urls}, 200
-        
+
     @auth.check_token
     @expects_json(schema_delete_notification_urls)
     def delete(self):
@@ -135,7 +135,7 @@ class Notifications(Resource):
         self.datastore.needs_write = True
 
         return 'OK', 204
-    
+
 def validate_notification_urls(notification_urls):
     from changedetectionio.forms import ValidateAppRiseServers
     validator = ValidateAppRiseServers()

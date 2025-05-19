@@ -59,7 +59,7 @@ class Tag(Resource):
 
         # Delete the tag, and any tag reference
         del self.datastore.data['settings']['application']['tags'][uuid]
-        
+
         # Remove tag from all watches
         for watch_uuid, watch in self.datastore.data['watching'].items():
             if watch.get('tags') and uuid in watch['tags']:

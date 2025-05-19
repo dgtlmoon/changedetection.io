@@ -117,7 +117,7 @@ def run_filter_test(client, live_server, content_filter):
         assert b'Warning, no filters were found' in res.data
         assert not os.path.isfile("test-datastore/notification.txt")
         time.sleep(1)
-        
+
     assert live_server.app.config['DATASTORE'].data['watching'][uuid]['consecutive_filter_failures'] == 5
 
     time.sleep(2)

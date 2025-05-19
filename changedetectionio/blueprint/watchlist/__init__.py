@@ -11,7 +11,7 @@ from changedetectionio.auth_decorator import login_optionally_required
 
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData):
     watchlist_blueprint = Blueprint('watchlist', __name__, template_folder="templates")
-    
+
     @watchlist_blueprint.route("/", methods=['GET'])
     @login_optionally_required
     def index():
@@ -107,5 +107,5 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             resp.set_cookie('order', request.args.get('order'))
 
         return resp
-        
+
     return watchlist_blueprint

@@ -131,11 +131,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             templates_dir = str(importlib.resources.files("changedetectionio").joinpath('templates'))
             env = Environment(loader=FileSystemLoader(templates_dir))
             template_str = """{% from '_helpers.html' import render_field, render_checkbox_field, render_button %}
-        <script>        
+        <script>
             $(document).ready(function () {
                 toggleOpacity('#overrides_watch', '#restock-fieldset-price-group', true);
             });
-        </script>            
+        </script>
                 <fieldset>
                     <div class="pure-control-group">
                         <fieldset class="pure-group">

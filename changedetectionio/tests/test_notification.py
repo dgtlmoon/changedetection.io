@@ -520,4 +520,4 @@ def test_html_color_notifications(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
     _test_color_notifications(client, '{{diff}}')
     _test_color_notifications(client, '{{diff_full}}')
-    
+

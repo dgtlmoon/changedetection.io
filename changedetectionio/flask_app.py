@@ -225,7 +225,7 @@ def changedetection_app(config=None, datastore_o=None):
     login_manager = flask_login.LoginManager(app)
     login_manager.login_view = 'login'
     app.secret_key = init_app_secret(config['datastore_path'])
-    
+
     # Set up a request hook to check authentication for all routes
     @app.before_request
     def check_authentication():
@@ -281,7 +281,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     watch_api.add_resource(Tag, '/api/v1/tag', '/api/v1/tag/<string:uuid>',
                            resource_class_kwargs={'datastore': datastore})
-                           
+
     watch_api.add_resource(Search, '/api/v1/search',
                            resource_class_kwargs={'datastore': datastore})
 
@@ -448,7 +448,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     import changedetectionio.blueprint.watchlist as watchlist
     app.register_blueprint(watchlist.construct_blueprint(datastore=datastore, update_q=update_q, queuedWatchMetaData=queuedWatchMetaData), url_prefix='')
-    
+
     # Memory cleanup endpoint
     @app.route('/gc-cleanup', methods=['GET'])
     @login_optionally_required

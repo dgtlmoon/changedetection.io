@@ -70,7 +70,7 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
     res = client.get(url_for('static_content', group='visual_selector_data', filename=uuid))
     decompressed_data = zlib.decompress(res.data)
     json_data = json.loads(decompressed_data.decode('utf-8'))
-    
+
     assert res.mimetype == 'application/json'
     assert res.status_code == 200
 

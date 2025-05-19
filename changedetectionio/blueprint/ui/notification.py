@@ -7,7 +7,7 @@ from changedetectionio.auth_decorator import login_optionally_required
 
 def construct_blueprint(datastore: ChangeDetectionStore):
     notification_blueprint = Blueprint('ui_notification', __name__, template_folder="../ui/templates")
-    
+
     # AJAX endpoint for sending a test
     @notification_blueprint.route("/notification/send-test/<string:watch_uuid>", methods=['POST'])
     @notification_blueprint.route("/notification/send-test", methods=['POST'])

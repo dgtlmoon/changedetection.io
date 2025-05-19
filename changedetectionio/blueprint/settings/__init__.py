@@ -108,7 +108,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         datastore.needs_write_urgent = True
         flash("API Key was regenerated.")
         return redirect(url_for('settings.settings_page')+'#api')
-        
+
     @settings_blueprint.route("/notification-logs", methods=['GET'])
     @login_optionally_required
     def notification_logs():

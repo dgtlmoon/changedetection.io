@@ -12,7 +12,7 @@ from changedetectionio.time_handler import is_within_schedule
 
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData):
     edit_blueprint = Blueprint('ui_edit', __name__, template_folder="../ui/templates")
-    
+
     def _watch_has_tag_options_set(watch):
         """This should be fixed better so that Tag is some proper Model, a tag is just a Watch also"""
         for tag_uuid, tag in datastore.data['settings']['application'].get('tags', {}).items():
@@ -235,7 +235,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
             # Import the global plugin system
             from changedetectionio.pluggy_interface import collect_ui_edit_stats_extras
-            
+
             template_args = {
                 'available_processors': processors.available_processors(),
                 'available_timezones': sorted(available_timezones()),
@@ -334,5 +334,5 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                     datastore.data["watching"][uuid]['ignore_text'].append('/' + s + '/')
 
         return f"<a href={url_for('ui.ui_views.preview_page', uuid=uuid)}>Click to preview</a>"
-    
+
     return edit_blueprint

@@ -525,4 +525,3 @@ def test_jsonpath_BOM_utf8(client, live_server, measure_memory_usage):
     text = html_tools.extract_json_as_string(json_str, "json:$.name")
     assert text == '"José"'
 
-    

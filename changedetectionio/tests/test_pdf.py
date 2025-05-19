@@ -73,4 +73,4 @@ def test_fetch_pdf(client, live_server, measure_memory_usage):
     assert changed_md5.encode('utf-8') in res.data
 
     assert b'here is a change' in res.data
-    
+

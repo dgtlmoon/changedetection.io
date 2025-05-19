@@ -138,7 +138,7 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'ldjson-price-track-offer' not in res.data
-    
+
     ##########################################################################################
     client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 

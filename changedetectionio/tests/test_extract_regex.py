@@ -123,7 +123,7 @@ def test_check_filter_multiline(client, live_server, measure_memory_usage):
     assert b'aaand something lines' not in res.data
 
 def test_check_filter_and_regex_extract(client, live_server, measure_memory_usage):
-    
+
     include_filters = ".changetext"
 
     set_original_response()

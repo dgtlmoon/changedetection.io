@@ -24,7 +24,7 @@ class TestDiffBuilder(unittest.TestCase):
         watch.save_history_text(contents="hello world", timestamp=112, snapshot_id=str(uuid_builder.uuid4()))
         watch.save_history_text(contents="hello world", timestamp=115, snapshot_id=str(uuid_builder.uuid4()))
         watch.save_history_text(contents="hello world", timestamp=117, snapshot_id=str(uuid_builder.uuid4()))
-    
+
         p = watch.get_from_version_based_on_last_viewed
         assert p == "100", "Correct 'last viewed' timestamp was detected"
 

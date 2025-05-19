@@ -290,7 +290,7 @@ class fetcher(Fetcher):
                     self.page.request_gc()
                 except:
                     pass
-                
+
                 # Clean up resources properly
                 try:
                     self.page.request_gc()

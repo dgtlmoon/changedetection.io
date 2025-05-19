@@ -105,4 +105,3 @@ def test_api_notifications_crud(client, live_server):
     assert res.status_code == 400
     assert "is not a valid AppRise URL." in res.data.decode()
 
-    

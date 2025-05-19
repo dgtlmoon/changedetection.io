@@ -67,7 +67,7 @@ class steppable_browser_interface():
         if self.page is None:
             logger.warning("Cannot call action on None page object")
             return
-            
+
         now = time.time()
         call_action_name = re.sub('[^0-9a-zA-Z]+', '_', action_name.lower())
         if call_action_name == 'choose_one':
@@ -82,7 +82,7 @@ class steppable_browser_interface():
         if not hasattr(self, "action_" + call_action_name):
             logger.warning(f"Action handler for '{call_action_name}' not found")
             return
-            
+
         action_handler = getattr(self, "action_" + call_action_name)
 
         # Support for Jinja2 variables in the value and selector
@@ -102,7 +102,7 @@ class steppable_browser_interface():
         if not value:
             logger.warning("No URL provided for goto_url action")
             return None
-            
+
         now = time.time()
         response = self.page.goto(value, timeout=0, wait_until='load')
         logger.debug(f"Time to goto URL {time.time()-now:.2f}s")
@@ -116,7 +116,7 @@ class steppable_browser_interface():
         logger.debug("Clicking element containing text")
         if not value or not len(value.strip()):
             return
-            
+
         elem = self.page.get_by_text(value)
         if elem.count():
             elem.first.click(delay=randint(200, 500), timeout=self.action_timeout)
@@ -126,12 +126,12 @@ class steppable_browser_interface():
         logger.debug("Clicking element containing text if exists")
         if not value or not len(value.strip()):
             return
-            
+
         elem = self.page.get_by_text(value)
         logger.debug(f"Clicking element containing text - {elem.count()} elements found")
         if elem.count():
             elem.first.click(delay=randint(200, 500), timeout=self.action_timeout)
-                
+
 
     def action_enter_text_in_field(self, selector, value):
         if not selector or not len(selector.strip()):
@@ -142,7 +142,7 @@ class steppable_browser_interface():
     def action_execute_js(self, selector, value):
         if not value:
             return None
-            
+
         return self.page.evaluate(value)
 
     def action_click_element(self, selector, value):
@@ -157,7 +157,7 @@ class steppable_browser_interface():
         logger.debug("Clicking element if exists")
         if not selector or not len(selector.strip()):
             return
-            
+
         try:
             self.page.click(selector, timeout=self.action_timeout, delay=randint(200, 500))
         except _api_types.TimeoutError:
@@ -165,7 +165,7 @@ class steppable_browser_interface():
         except _api_types.Error:
             # Element was there, but page redrew and now its long long gone
             return
-                
+
 
     def action_click_x_y(self, selector, value):
         if not value or not re.match(r'^\s?\d+\s?,\s?\d+\s?$', value):
@@ -176,9 +176,9 @@ class steppable_browser_interface():
             x, y = value.strip().split(',')
             x = int(float(x.strip()))
             y = int(float(y.strip()))
-            
+
             self.page.mouse.click(x=x, y=y, delay=randint(200, 500))
-                
+
         except Exception as e:
             logger.error(f"Error parsing x,y coordinates: {str(e)}")
 
@@ -203,23 +203,23 @@ class steppable_browser_interface():
     def action_wait_for_text(self, selector, value):
         if not value:
             return
-            
+
         import json
         v = json.dumps(value)
         self.page.wait_for_function(
             f'document.querySelector("body").innerText.includes({v});',
             timeout=30000
         )
-            
+
 
     def action_wait_for_text_in_element(self, selector, value):
         if not selector or not value:
             return
-            
+
         import json
         s = json.dumps(selector)
         v = json.dumps(value)
-        
+
         self.page.wait_for_function(
             f'document.querySelector({s}).innerText.includes({v});',
             timeout=30000
@@ -229,7 +229,7 @@ class steppable_browser_interface():
     # https://playwright.dev/python/docs/api/class-keyboard
     def action_press_enter(self, selector, value):
         self.page.keyboard.press("Enter", delay=randint(200, 500))
-            
+
 
     def action_press_page_up(self, selector, value):
         self.page.keyboard.press("PageUp", delay=randint(200, 500))
@@ -246,22 +246,22 @@ class steppable_browser_interface():
     def action_uncheck_checkbox(self, selector, value):
         if not selector:
             return
-            
+
         self.page.locator(selector).uncheck(timeout=self.action_timeout)
-            
+
 
     def action_remove_elements(self, selector, value):
         """Removes all elements matching the given selector from the DOM."""
         if not selector:
             return
-            
+
         self.page.locator(selector).evaluate_all("els => els.forEach(el => el.remove())")
 
     def action_make_all_child_elements_visible(self, selector, value):
         """Recursively makes all child elements inside the given selector fully visible."""
         if not selector:
             return
-            
+
         self.page.locator(selector).locator("*").evaluate_all("""
             els => els.forEach(el => {
                 el.style.display = 'block';   // Forces it to be displayed
@@ -287,7 +287,7 @@ class browsersteps_live_ui(steppable_browser_interface):
     headers = {}
     # Track if resources are properly cleaned up
     _is_cleaned_up = False
-    
+
     # use a special driver, maybe locally etc
     command_executor = os.getenv(
         "PLAYWRIGHT_BROWSERSTEPS_DRIVER_URL"
@@ -352,9 +352,9 @@ class browsersteps_live_ui(steppable_browser_interface):
         """Properly clean up all resources to prevent memory leaks"""
         if self._is_cleaned_up:
             return
-            
+
         logger.debug("Cleaning up browser steps resources")
-        
+
         # Clean up page
         if hasattr(self, 'page') and self.page is not None:
             try:
@@ -362,18 +362,18 @@ class browsersteps_live_ui(steppable_browser_interface):
                 self.page.request_gc()
             except Exception as e:
                 logger.debug(f"Error during page garbage collection: {str(e)}")
-                
+
             try:
                 # Remove event listeners before closing
                 self.page.remove_listener("close", self.mark_as_closed)
             except Exception as e:
                 logger.debug(f"Error removing event listeners: {str(e)}")
-                
+
             try:
                 self.page.close()
             except Exception as e:
                 logger.debug(f"Error closing page: {str(e)}")
-            
+
             self.page = None
 
         # Clean up context
@@ -382,9 +382,9 @@ class browsersteps_live_ui(steppable_browser_interface):
                 self.context.close()
             except Exception as e:
                 logger.debug(f"Error closing context: {str(e)}")
-            
+
             self.context = None
-            
+
         self._is_cleaned_up = True
         logger.debug("Browser steps resources cleanup complete")
 
@@ -392,13 +392,13 @@ class browsersteps_live_ui(steppable_browser_interface):
     def has_expired(self):
         if not self.page or self._is_cleaned_up:
             return True
-        
+
         # Check if session has expired based on age
         max_age_seconds = int(os.getenv("BROWSER_STEPS_MAX_AGE_SECONDS", 60 * 10))  # Default 10 minutes
         if (time.time() - self.age_start) > max_age_seconds:
             logger.debug(f"Browser steps session expired after {max_age_seconds} seconds")
             return True
-            
+
         return False
 
     def get_current_state(self):
@@ -420,7 +420,7 @@ class browsersteps_live_ui(steppable_browser_interface):
 
         screenshot = None
         xpath_data = None
-        
+
         try:
             # Get screenshot first
             screenshot = capture_full_page(page=self.page)
@@ -443,7 +443,7 @@ class browsersteps_live_ui(steppable_browser_interface):
             # Sort elements by size
             xpath_data['size_pos'] = sorted(xpath_data['size_pos'], key=lambda k: k['width'] * k['height'], reverse=True)
             logger.debug(f"Time to scrape xPath element data in browser {time.time()-now:.2f}s")
-            
+
         except Exception as e:
             logger.error(f"Error getting current state: {str(e)}")
             # Attempt recovery - force garbage collection
@@ -451,12 +451,12 @@ class browsersteps_live_ui(steppable_browser_interface):
                 self.page.request_gc()
             except:
                 pass
-        
+
         # Request garbage collection one final time
         try:
             self.page.request_gc()
         except:
             pass
-            
+
         return (screenshot, xpath_data)
 

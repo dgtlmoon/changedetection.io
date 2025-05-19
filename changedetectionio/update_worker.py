@@ -242,7 +242,7 @@ class update_worker(threading.Thread):
                 os.unlink(full_path)
 
     def run(self):
-        
+
         while not self.app.config.exit.is_set():
             update_handler = None
 
@@ -333,7 +333,7 @@ class update_worker(threading.Thread):
 
                         if e.xpath_data:
                             watch.save_xpath_data(data=e.xpath_data)
-                            
+
                         process_changedetection_results = False
 
                     except content_fetchers_exceptions.Non200ErrorCodeReceived as e:

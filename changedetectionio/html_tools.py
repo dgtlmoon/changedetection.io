@@ -328,7 +328,7 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
 
         if not bs_jsons:
             raise JSONNotFound("No parsable JSON found in this document")
-        
+
         for json_data in bs_jsons:
             stripped_text_from_html = _parse_json(json_data, json_filter)
 

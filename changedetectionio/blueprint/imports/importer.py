@@ -90,7 +90,7 @@ class import_distill_io_json(Importer):
         self.new_uuids=[]
 
         # @todo Use JSONSchema like in the API to validate here.
-        
+
         try:
             data = json.loads(data.strip())
         except json.decoder.JSONDecodeError:

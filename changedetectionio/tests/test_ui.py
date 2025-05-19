@@ -4,7 +4,7 @@ from flask import url_for
 from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
 
 def test_checkbox_open_diff_in_new_tab(client, live_server):
-    
+
     set_original_response()
     live_server_setup(live_server)
 
@@ -34,7 +34,7 @@ def test_checkbox_open_diff_in_new_tab(client, live_server):
     assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)
-    
+
     res = client.get(url_for("watchlist.index"))
     lines = res.data.decode().split("\n")
 
@@ -61,7 +61,7 @@ def test_checkbox_open_diff_in_new_tab(client, live_server):
     assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)
-    
+
     res = client.get(url_for("watchlist.index"))
     lines = res.data.decode().split("\n")
 

@@ -94,7 +94,7 @@ def test_trigger_functionality(client, live_server, measure_memory_usage):
     assert bytes(trigger_text.encode('utf-8')) in res.data
 
 
-    
+
     # so that we set the state to 'unviewed' after all the edits
     client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
 
@@ -126,7 +126,7 @@ def test_trigger_functionality(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
-    
+
     # https://github.com/dgtlmoon/changedetection.io/issues/616
     # Apparently the actual snapshot that contains the trigger never shows
     res = client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))

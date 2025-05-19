@@ -72,12 +72,12 @@ def ui_edit_stats_extras(watch):
     """Generate the HTML for Levenshtein stats - shared by both plugin systems"""
     if len(watch.history.keys()) < 2:
         return "<p>Not enough history to calculate Levenshtein metrics</p>"
-    
+
     try:
         lev_data = levenshtein_ratio_recent_history(watch)
         if not lev_data or not isinstance(lev_data, dict):
             return "<p>Unable to calculate Levenshtein metrics</p>"
-            
+
         html = f"""
         <div class="levenshtein-stats">
             <h4>Levenshtein Text Similarity Details</h4>
@@ -104,4 +104,4 @@ def ui_edit_stats_extras(watch):
     except Exception as e:
         logger.error(f"Error generating Levenshtein UI extras: {str(e)}")
         return "<p>Error calculating Levenshtein metrics</p>"
-        
+

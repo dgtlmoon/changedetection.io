@@ -145,7 +145,7 @@ def main():
 
     signal.signal(signal.SIGTERM, sigshutdown_handler)
     signal.signal(signal.SIGINT, sigshutdown_handler)
-    
+
     # Custom signal handler for memory cleanup
     def sigusr_clean_handler(_signo, _stack_frame):
         from changedetectionio.gc_cleanup import memory_cleanup

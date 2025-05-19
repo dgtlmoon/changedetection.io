@@ -636,10 +636,10 @@ class ChangeDetectionStore:
             if watch.get('processor') == processor_name:
                 return True
         return False
-        
+
     def search_watches_for_url(self, query, tag_limit=None, partial=False):
         """Search watches by URL, title, or error messages
-        
+
         Args:
             query (str): Search term to match against watch URLs, titles, and error messages
             tag_limit (str, optional): Optional tag name to limit search results
@@ -965,7 +965,7 @@ class ChangeDetectionStore:
                         os.unlink(json_path)
 
     def add_notification_url(self, notification_url):
-        
+
         logger.debug(f">>> Adding new notification_url - '{notification_url}'")
 
         notification_urls = self.data['settings']['application'].get('notification_urls', [])

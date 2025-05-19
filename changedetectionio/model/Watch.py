@@ -265,7 +265,7 @@ class model(watch_base):
         # When the 'last viewed' timestamp is greater than or equal the newest snapshot, return second newest
         if last_viewed >= int(sorted_keys[0]):
             return sorted_keys[1]
-        
+
         # When the 'last viewed' timestamp is between snapshots, return the older snapshot
         for newer, older in list(zip(sorted_keys[0:], sorted_keys[1:])):
             if last_viewed < int(newer) and last_viewed >= int(older):
