@@ -1,7 +1,6 @@
 import time
 from flask import Blueprint, request, redirect, url_for, flash, render_template, session
 from loguru import logger
-from functools import wraps
 
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.blueprint.ui.edit import construct_blueprint as construct_edit_blueprint

@@ -4,8 +4,7 @@
 import os
 import time
 from flask import url_for
-from .util import set_original_response, live_server_setup, wait_for_notification_endpoint_output
-from changedetectionio.model import App
+from .util import live_server_setup, wait_for_notification_endpoint_output
 
 
 def set_response_without_filter():

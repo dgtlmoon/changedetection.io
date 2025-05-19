@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks
+from .util import live_server_setup
 import json
 
 def test_api_tags_listing(client, live_server, measure_memory_usage):

@@ -3,11 +3,9 @@ import os
 import time
 import re
 from flask import url_for
-from loguru import logger
 
 from .util import set_original_response, set_modified_response, set_more_modified_response, live_server_setup, wait_for_all_checks, \
-    set_longer_modified_response, get_index
-from . util import  extract_UUID_from_client
+    get_index
 import logging
 import base64
 
@@ -15,7 +13,6 @@ from changedetectionio.notification import (
     default_notification_body,
     default_notification_format,
     default_notification_title,
-    valid_notification_formats,
 )
 
 def test_setup(live_server):
@@ -459,7 +456,7 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
 
 def _test_color_notifications(client, notification_body_token):
 
-    from changedetectionio.diff import ADDED_STYLE, REMOVED_STYLE
+    from changedetectionio.diff import REMOVED_STYLE
 
     set_original_response()
 

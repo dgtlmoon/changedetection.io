@@ -1,8 +1,6 @@
 import os
 import time
 import re
-import sys
-import traceback
 from random import randint
 from loguru import logger
 

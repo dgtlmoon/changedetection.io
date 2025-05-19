@@ -1,8 +1,6 @@
-from flask import Blueprint, request, redirect, url_for, flash, render_template, make_response, send_from_directory, abort
-from flask_login import current_user
+from flask import Blueprint, request, redirect, url_for, flash, render_template, make_response, send_from_directory
 import os
 import time
-from copy import deepcopy
 
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required

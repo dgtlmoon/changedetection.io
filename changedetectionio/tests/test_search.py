@@ -1,6 +1,5 @@
 from flask import url_for
-from .util import set_original_response, set_modified_response, live_server_setup
-import time
+from .util import live_server_setup
 
 def test_setup(live_server):
     live_server_setup(live_server)

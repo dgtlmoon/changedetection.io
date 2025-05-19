@@ -1,7 +1,6 @@
 import pluggy
 import os
 import importlib
-import sys
 
 # Global plugin namespace for changedetection.io
 PLUGIN_NAMESPACE = "changedetectionio"

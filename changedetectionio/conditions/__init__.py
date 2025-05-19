@@ -1,10 +1,7 @@
-from flask import Blueprint
-
 from json_logic.builtins import BUILTINS
 
 from .exceptions import EmptyConditionRuleRowNotUsable
 from .pluggy_interface import plugin_manager  # Import the pluggy plugin manager
-from . import default_plugin
 from loguru import logger
 # List of all supported JSON Logic operators
 operator_choices = [
@@ -104,7 +101,6 @@ def execute_ruleset_against_all_plugins(current_watch_uuid: str, application_dat
             for plugin in plugin_manager.get_plugins():
                 try:
                     import concurrent.futures
-                    import time
                     
                     with concurrent.futures.ThreadPoolExecutor() as executor:
                         future = executor.submit(

@@ -20,12 +20,9 @@ from flask import (
     render_template,
     request,
     send_from_directory,
-    session,
     url_for,
 )
 from flask_compress import Compress as FlaskCompress
-from flask_login import current_user
-from flask_paginate import Pagination, get_page_parameter
 from flask_restful import abort, Api
 from flask_cors import CORS
 from flask_wtf import CSRFProtect

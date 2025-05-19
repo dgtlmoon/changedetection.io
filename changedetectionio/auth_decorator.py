@@ -1,7 +1,6 @@
 import os
 from functools import wraps
-from flask import current_app, redirect, request
-from loguru import logger
+from flask import current_app, request
 
 def login_optionally_required(func):
     """

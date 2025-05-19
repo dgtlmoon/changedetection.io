@@ -6,7 +6,6 @@ import re
 import psutil
 import sys
 import threading
-import importlib
 from loguru import logger
 
 def memory_cleanup(app=None):

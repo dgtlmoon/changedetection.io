@@ -1,7 +1,6 @@
 import pluggy
 import os
 import importlib
-import sys
 from . import default_plugin
 
 # ✅ Ensure that the namespace in HookspecMarker matches PluginManager

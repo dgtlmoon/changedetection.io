@@ -4,8 +4,7 @@ import time
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 from flask import url_for
-from .util import  live_server_setup, wait_for_all_checks, extract_UUID_from_client
-
+from .util import  live_server_setup, wait_for_all_checks
 def test_setup(client, live_server):
     live_server_setup(live_server)
 

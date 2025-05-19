@@ -4,7 +4,6 @@
 # python3 -m unittest changedetectionio.tests.unit.test_notification_diff
 
 import unittest
-import os
 
 from changedetectionio.model import Watch
 

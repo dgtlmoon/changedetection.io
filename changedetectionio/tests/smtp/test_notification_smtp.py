@@ -1,23 +1,16 @@
-import json
-import os
 import time
-import re
 from flask import url_for
-from changedetectionio.tests.util import set_original_response, set_modified_response, set_more_modified_response, live_server_setup, \
+from changedetectionio.tests.util import set_original_response, live_server_setup, \
     wait_for_all_checks, \
     set_longer_modified_response
-from changedetectionio.tests.util import extract_UUID_from_client
 import logging
-import base64
 
 # NOTE - RELIES ON mailserver as hostname running, see github build recipes
 smtp_test_server = 'mailserver'
 
 from changedetectionio.notification import (
     default_notification_body,
-    default_notification_format,
     default_notification_title,
-    valid_notification_formats,
 )
 
 def test_setup(live_server):

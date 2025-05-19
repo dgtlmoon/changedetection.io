@@ -4,9 +4,7 @@
 # - If a page is taller than ~8000–10000px, it risks exceeding GPU memory limits.
 # - This is especially important on headless Chromium, where Playwright may fail to allocate a massive full-page buffer.
 
-from loguru import logger
-
-from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, SCREENSHOT_DEFAULT_QUALITY
+from changedetectionio.content_fetchers import SCREENSHOT_DEFAULT_QUALITY
 
 
 def stitch_images_worker(pipe_conn, chunks_bytes, original_page_height, capture_height):
