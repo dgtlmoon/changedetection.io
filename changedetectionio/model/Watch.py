@@ -50,7 +50,7 @@ class model(watch_base):
             del self['default']
 
         # Be sure the cached timestamp is ready
-        bump = self.history
+        _ = self.history
 
     @property
     def viewed(self):
@@ -103,7 +103,7 @@ class model(watch_base):
             os.unlink(item)
 
         # Force the attr to recalculate
-        bump = self.history
+        _ = self.history
 
         # Do this last because it will trigger a recheck due to last_checked being zero
         self.update({
@@ -244,7 +244,7 @@ class model(watch_base):
             return 0
 
 
-        bump = self.history
+        _ = self.history
         return self.__newest_history_key
 
     # Given an arbitrary timestamp, find the best history key for the [diff] button so it can preset a smarter from_version

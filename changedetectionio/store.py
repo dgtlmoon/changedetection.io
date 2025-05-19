@@ -804,7 +804,7 @@ class ChangeDetectionStore:
                 if watch_title and watch_title.translate(TRANSLATE_WHITESPACE_TABLE) == current_system_title:
                     # Looks the same as the default one, so unset it
                     watch['notification_title'] = None
-            except Exception as e:
+            except Exception:
                 continue
         return
 

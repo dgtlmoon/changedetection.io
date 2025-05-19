@@ -54,7 +54,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                                                       mode='line numbers'
                                                                       )
 
-            except Exception as e:
+            except Exception:
                 content.append({'line': f"File doesnt exist or unable to read timestamp {timestamp}", 'classes': ''})
 
         output = render_template("preview.html",
@@ -135,7 +135,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         try:
             from_version_file_contents = watch.get_history_snapshot(dates[from_version_index])
-        except Exception as e:
+        except Exception:
             from_version_file_contents = f"Unable to read to-version at index {dates[from_version_index]}.\n"
 
         to_version = request.args.get('to_version')
@@ -147,7 +147,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         try:
             to_version_file_contents = watch.get_history_snapshot(dates[to_version_index])
-        except Exception as e:
+        except Exception:
             to_version_file_contents = "Unable to read to-version at index{}.\n".format(dates[to_version_index])
 
         screenshot_url = watch.get_screenshot()

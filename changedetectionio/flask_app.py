@@ -579,7 +579,7 @@ def ticker_thread_check_time_launch_checks():
                 for k in sorted(datastore.data['watching'].items(), key=lambda item: item[1].get('last_checked',0)):
                     watch_uuid_list.append(k[0])
 
-            except RuntimeError as e:
+            except RuntimeError:
                 # RuntimeError: dictionary changed size during iteration
                 time.sleep(0.1)
                 watch_uuid_list = []

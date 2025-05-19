@@ -14,7 +14,7 @@ def _task(watch, update_handler):
         changed_detected, update_obj, text_after_filter = update_handler.run_changedetection(watch=watch)
     except FilterNotFoundInResponse as e:
         text_after_filter = f"Filter not found in HTML: {str(e)}"
-    except ReplyWithContentButNoText as e:
+    except ReplyWithContentButNoText:
         text_after_filter = f"Filter found but no text (empty result)"
     except Exception as e:
         text_after_filter = f"Error: {str(e)}"

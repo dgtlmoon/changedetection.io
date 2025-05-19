@@ -217,7 +217,7 @@ def get_parent_module(module):
     parent_module_name = module_name.rsplit('.', 1)[0]
     try:
         return importlib.import_module(parent_module_name)
-    except Exception as e:
+    except Exception:
         pass
 
     return False

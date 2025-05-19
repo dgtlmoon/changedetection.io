@@ -75,10 +75,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             forms_module = importlib.import_module(f"{parent_module.__name__}.forms")
             # Access the 'processor_settings_form' class from the 'forms' module
             form_class = getattr(forms_module, 'processor_settings_form')
-        except ModuleNotFoundError as e:
+        except ModuleNotFoundError:
             # .forms didnt exist
             form_class = forms.processor_text_json_diff_form
-        except AttributeError as e:
+        except AttributeError:
             # .forms exists but no useful form
             form_class = forms.processor_text_json_diff_form
 

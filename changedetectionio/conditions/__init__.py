@@ -162,7 +162,7 @@ def collect_ui_edit_stats_extras(watch):
             content = plugin.ui_edit_stats_extras(watch=watch)
             if content:
                 extras_content.append(content)
-        except Exception as e:
+        except Exception:
             # Skip plugins that don't implement the hook or have errors
             pass
             

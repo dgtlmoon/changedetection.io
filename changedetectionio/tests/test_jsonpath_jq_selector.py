@@ -64,14 +64,14 @@ and it can also be repeated
 
     # When nothing at all is found, it should throw JSONNOTFound
     # Which is caught and shown to the user in the watch-overview table
-    with pytest.raises(html_tools.JSONNotFound) as e_info:
+    with pytest.raises(html_tools.JSONNotFound):
         html_tools.extract_json_as_string('COMPLETE GIBBERISH, NO JSON!', "json:$.id")
 
     if jq_support:
-        with pytest.raises(html_tools.JSONNotFound) as e_info:
+        with pytest.raises(html_tools.JSONNotFound):
             html_tools.extract_json_as_string('COMPLETE GIBBERISH, NO JSON!', "jq:.id")
 
-        with pytest.raises(html_tools.JSONNotFound) as e_info:
+        with pytest.raises(html_tools.JSONNotFound):
             html_tools.extract_json_as_string('COMPLETE GIBBERISH, NO JSON!', "jqraw:.id")
 
 

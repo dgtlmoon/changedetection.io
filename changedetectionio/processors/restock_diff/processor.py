@@ -189,7 +189,7 @@ class perform_site_check(difference_detection_processor):
         itemprop_availability = {}
         try:
             itemprop_availability = get_itemprop_availability(self.fetcher.content)
-        except MoreThanOnePriceFound as e:
+        except MoreThanOnePriceFound:
             # Add the real data
             raise ProcessorException(message="Cannot run, more than one price detected, this plugin is only for product pages with ONE product, try the content-change detection mode.",
                                      url=watch.get('url'),

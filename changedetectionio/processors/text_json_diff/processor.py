@@ -138,7 +138,7 @@ class perform_site_check(difference_detection_processor):
             # Sort the JSON so we dont get false alerts when the content is just re-ordered
             try:
                 self.fetcher.content = json.dumps(json.loads(self.fetcher.content), sort_keys=True)
-            except Exception as e:
+            except Exception:
                 # Might have just been a snippet, or otherwise bad JSON, continue
                 pass
 

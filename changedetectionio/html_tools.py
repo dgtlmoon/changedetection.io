@@ -473,7 +473,7 @@ def has_ldjson_product_info(content):
 #            pricing_data += extract_json_as_string(content=content,
 #                                                  json_filter=filter,
 #                                                  ensure_is_ldjson_info_type="product")
-    except Exception as e:
+    except Exception:
         # OK too
         return False
 

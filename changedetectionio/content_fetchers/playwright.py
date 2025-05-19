@@ -206,7 +206,7 @@ class fetcher(Fetcher):
             try:
                 if self.webdriver_js_execute_code is not None and len(self.webdriver_js_execute_code):
                     browsersteps_interface.action_execute_js(value=self.webdriver_js_execute_code, selector=None)
-            except playwright._impl._errors.TimeoutError as e:
+            except playwright._impl._errors.TimeoutError:
                 context.close()
                 browser.close()
                 # This can be ok, we will try to grab what we could retrieve
