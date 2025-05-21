@@ -156,7 +156,7 @@ class Fetcher():
                 except (Error, TimeoutError) as e:
                     # If the page has navigated (common with logins) then the context is destroyed
                     if "Execution context was destroyed" in str(e):
-                        logger.debug("Execution context was destroyed, most likely because of navigation")
+                        logger.debug("Execution context was destroyed, most likely because of navigation, continuing...")
                         continue
                     logger.debug(str(e))
                     # Stop processing here
