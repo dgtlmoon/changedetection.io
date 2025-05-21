@@ -115,3 +115,6 @@ psutil==7.0.0
 
 ruff >= 0.11.2
 pre_commit >= 4.2.0
+
+# QR-code generator for app onboarding
+qrcode >= 8.1
