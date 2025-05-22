@@ -623,6 +623,31 @@ ul#conditions_match_logic {
   .fieldlist_formfields .addRuleRow:hover, .fieldlist_formfields .removeRuleRow:hover, .fieldlist_formfields .verifyRuleRow:hover {
     background-color: #999; }
 
+.watch-table td,
+.watch-table th {
+  vertical-align: middle; }
+
+.watch-table td.inline.title-col {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  flex-wrap: wrap; }
+  .watch-table td.inline.title-col * {
+    display: inline-block; }
+  .watch-table td.inline.title-col img.thumbnail {
+    width: 32px;
+    object-fit: cover;
+    /* crop/fill if needed */
+    border-radius: 8px;
+    /* subtle rounded corners */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    /* soft shadow */
+    border: 1px solid #ddd;
+    /* light border for contrast */
+    filter: contrast(1.05) saturate(1.1) drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.2));
+    background-color: #fff;
+    /* fallback bg for SVGs without bg */ }
+
 body {
   color: var(--color-text);
   background: var(--color-background-page);
