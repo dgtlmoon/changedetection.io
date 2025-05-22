@@ -206,7 +206,7 @@ def main():
     # Get socketio_server from flask_app
     from changedetectionio.flask_app import socketio_server
 
-    if socketio_server:
+    if socketio_server and datastore.data['settings']['application']['ui'].get('open_diff_in_new_tab'):
         logger.info("Starting server with Socket.IO support (using threading)...")
 
         # Use Flask-SocketIO's run method with error handling for Werkzeug warning

@@ -733,6 +733,7 @@ class globalSettingsRequestForm(Form):
 
 class globalSettingsApplicationUIForm(Form):
     open_diff_in_new_tab = BooleanField('Open diff page in a new tab', default=True, validators=[validators.Optional()])
+    realtime_ui_enabled = BooleanField('Realtime UI updates enabled', default=True, validators=[validators.Optional()])
 
 # datastore.data['settings']['application']..
 class globalSettingsApplicationForm(commonSettingsForm):
