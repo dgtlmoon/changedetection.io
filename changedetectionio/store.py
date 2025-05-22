@@ -17,6 +17,7 @@ import threading
 import time
 import uuid as uuid_builder
 from loguru import logger
+from blinker import signal
 
 from .processors import get_custom_watch_obj_for_processor
 from .processors.restock_diff import Restock
@@ -165,6 +166,10 @@ class ChangeDetectionStore:
         logger.debug(f"Setting watch UUID: {uuid} last viewed to {int(timestamp)}")
         self.data['watching'][uuid].update({'last_viewed': int(timestamp)})
         self.needs_write = True
+
+        watch_check_update = signal('watch_check_update')
+        if watch_check_update:
+            watch_check_update.send(watch_uuid=uuid)
 
     def remove_password(self):
         self.__data['settings']['application']['password'] = False
