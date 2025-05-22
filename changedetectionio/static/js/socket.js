@@ -1,5 +1,4 @@
 // Socket.IO client-side integration for changedetection.io
-// @todo only bind ajax if the socket server attached success.
 
 $(document).ready(function () {
 
@@ -32,7 +31,7 @@ $(document).ready(function () {
                 path: socketio_url,  // This will be the path prefix like "/app/socket.io" from the template
                 transports: ['polling', 'websocket'],  // Try WebSocket but fall back to polling
                 reconnectionDelay: 1000,
-                reconnectionAttempts: 5
+                reconnectionAttempts: 15
             });
 
             // Connection status logging
