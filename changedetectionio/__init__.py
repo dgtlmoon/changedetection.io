@@ -196,13 +196,19 @@ def main():
 
     s_type = socket.AF_INET6 if ipv6_enabled else socket.AF_INET
 
+    wsgi_enable_access_log = not strtobool(os.getenv('SILENT_WSGI', 'false'))
+
     if ssl_mode:
         # @todo finalise SSL config, but this should get you in the right direction if you need it.
         eventlet.wsgi.server(eventlet.wrap_ssl(eventlet.listen((host, port), s_type),
+                                               log=logger,
+                                               log_output=wsgi_enable_access_log,
                                                certfile='cert.pem',
                                                keyfile='privkey.pem',
                                                server_side=True), app)
 
     else:
-        eventlet.wsgi.server(eventlet.listen((host, int(port)), s_type), app)
+        eventlet.wsgi.server(eventlet.listen((host, int(port)), s_type), app,
+                             log=logger,
+                             log_output=wsgi_enable_access_log)
 
