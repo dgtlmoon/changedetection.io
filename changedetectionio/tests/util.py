@@ -139,7 +139,7 @@ def wait_for_all_checks(client=None):
     attempt = 0
     i=0
     max_attempts = 60
-    required_empty_duration = 0.8
+    required_empty_duration = 0.2
 
     logger = logging.getLogger()
     time.sleep(1.2)
