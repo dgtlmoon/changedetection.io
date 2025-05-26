@@ -62,7 +62,6 @@ class model(dict):
                     'timezone': None, # Default IANA timezone name
                     'ui': {
                         'open_diff_in_new_tab': True,
-                        'realtime_ui_enabled': True, # Realtime UI enabled via websocket updates
                     },
                 }
             }
