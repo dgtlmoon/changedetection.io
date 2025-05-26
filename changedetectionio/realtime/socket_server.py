@@ -3,7 +3,6 @@ from flask_socketio import SocketIO
 
 import time
 import os
-import threading
 from loguru import logger
 from blinker import signal
 
@@ -94,7 +93,7 @@ class SignalHandler:
         # Run until explicitly stopped
         while stop_event is None or not stop_event.is_set():
             try:
-                # For each item in the queue, send a signal
+                # For each item in the queue, send a signal, so we update the UI
                 for t in running_update_threads:
                     if hasattr(t, 'current_uuid') and t.current_uuid:
                         logger.debug(f"Sending update for {t.current_uuid}")
@@ -163,11 +162,21 @@ def handle_watch_update(socketio, **kwargs):
             'event_timestamp': time.time()
         }
 
+        errored_count =0
+        for uuid, watch in datastore.data['watching'].items():
+            if watch.get('last_error'):
+                errored_count += 1
+
+        general_stats = {
+            'count_errors': errored_count,
+            'has_unviewed': datastore.has_unviewed
+        }
+
         # Debug what's being emitted
         #logger.debug(f"Emitting 'watch_update' event for {watch.get('uuid')}, data: {watch_data}")
         
         # Emit to all clients (no 'broadcast' parameter needed - it's the default behavior)
-        socketio.emit("watch_update", watch_data)
+        socketio.emit("watch_update", {'watch': watch_data, 'general_stats': general_stats})
         
         # Log after successful emit
         #logger.info(f"Socket.IO: Emitted update for watch {watch.get('uuid')}, Checking now: {watch_data['checking_now']}")

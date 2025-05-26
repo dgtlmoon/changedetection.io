@@ -64,13 +64,17 @@ $(document).ready(function () {
             })
 
             // Listen for periodically emitted watch data
-            // Add an explicit watch_update listener
             console.log('Adding watch_update event listener');
-            socket.on('watch_update', function (watch) {
+
+            socket.on('watch_update', function (data) {
+                const watch = data.watch;
+                const general_stats = data.general_stats;
+
                 // Log the entire watch object for debugging
                 console.log('!!! WATCH UPDATE EVENT RECEIVED !!!');
                 console.log(`${watch.event_timestamp} - Watch update ${watch.uuid} - Checking now - ${watch.checking_now} - UUID in URL ${window.location.href.includes(watch.uuid)}`);
                 console.log('Watch data:', watch);
+                console.log('General stats:', general_stats);
                 
                 // Updating watch table rows
                 const $watchRow = $('tr[data-watch-uuid="' + watch.uuid + '"]');
@@ -94,6 +98,11 @@ $(document).ready(function () {
                     
                     console.log('Updated UI for watch:', watch.uuid);
                 }
+
+                // Tabs at bottom of list
+                $('#post-list-mark-views').toggleClass("has-unviewed", general_stats.has_unviewed);
+                $('#post-list-with-errors').toggleClass("has-errors", general_stats.has_unviewed);
+
                 $('body').toggleClass('checking-now', watch.checking_now && window.location.href.includes(watch.uuid));
             });
 

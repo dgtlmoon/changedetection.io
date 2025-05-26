@@ -694,6 +694,12 @@ body.checking-now #checking-now-fixed-tab {
   padding: 5px;
   position: fixed; }
 
+#post-list-buttons #post-list-with-errors.has-error {
+  display: inline-block !important; }
+
+#post-list-buttons #post-list-mark-views.has-unviewed {
+  display: inline-block !important; }
+
 body {
   color: var(--color-text);
   background: var(--color-background-page);

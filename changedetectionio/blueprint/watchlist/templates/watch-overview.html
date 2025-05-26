@@ -104,7 +104,7 @@
                 {% set checking_now = is_checking_now(watch) %}
             <tr id="{{ watch.uuid }}" data-watch-uuid="{{ watch.uuid }}"
                 class="{{ loop.cycle('pure-table-odd', 'pure-table-even') }} processor-{{ watch['processor'] }}
-                {# socket.js also sets these vars on the row for update #}
+                {# realtime.js also sets these vars on the row for update #}
                 {% if watch.compile_error_texts()|length >2 %}has-error{% endif %}
                 {% if watch.paused is defined and watch.paused != False %}paused{% endif %}
                 {% if watch.has_unviewed %}unviewed{% endif %}
@@ -215,18 +215,14 @@
             </tbody>
         </table>
         <ul id="post-list-buttons">
-            {% if errored_count %}
-            <li>
-                <a href="{{url_for('watchlist.index', with_errors=1, tag=request.args.get('tag')) }}" class="pure-button button-tag button-error ">With errors ({{ errored_count }})</a>
+            <li id="post-list-with-errors" class="{% if errored_count %}has-error{% endif %}" style="display: none;" >
+                <a href="{{url_for('watchlist.index', with_errors=1, tag=request.args.get('tag')) }}" class="pure-button button-tag button-error">With errors ({{ errored_count }})</a>
             </li>
-            {% endif %}
-            {% if has_unviewed %}
-            <li>
-                <a href="{{url_for('ui.mark_all_viewed',with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag ">Mark all viewed</a>
+            <li id="post-list-mark-views" class="{% if has_unviewed %}has-unviewed{% endif %}" style="display: none;" >
+                <a href="{{url_for('ui.mark_all_viewed',with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag " id="mark-all-viewed">Mark all viewed</a>
             </li>
-            {% endif %}
             <li>
-               <a href="{{ url_for('ui.form_watch_checknow', tag=active_tag_uuid, with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag ">Recheck
+               <a href="{{ url_for('ui.form_watch_checknow', tag=active_tag_uuid, with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag" id="recheck-all">Recheck
                 all {% if active_tag_uuid %} in "{{active_tag.title}}"{%endif%}</a>
             </li>
             <li>

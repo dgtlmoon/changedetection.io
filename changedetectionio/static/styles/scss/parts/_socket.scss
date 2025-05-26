@@ -17,3 +17,15 @@ body.checking-now {
   position: fixed;
 }
 
+#post-list-buttons {
+  #post-list-with-errors.has-error {
+    display: inline-block !important;
+  }
+  #post-list-mark-views.has-unviewed {
+    display: inline-block !important;
+  }
+}
+
+
+
+
