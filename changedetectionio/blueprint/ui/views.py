@@ -8,7 +8,7 @@ from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
 from changedetectionio import html_tools
 
-def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData):
+def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData, watch_check_update):
     views_blueprint = Blueprint('ui_views', __name__, template_folder="../ui/templates")
     
     @views_blueprint.route("/preview/<string:uuid>", methods=['GET'])

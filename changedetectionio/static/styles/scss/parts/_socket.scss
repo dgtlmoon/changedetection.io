@@ -1,0 +1,31 @@
+// Styles for Socket.IO real-time updates
+body.checking-now {
+  #checking-now-fixed-tab {
+    display: block !important;
+  }
+}
+
+#checking-now-fixed-tab {
+  background: #ccc;
+  border-radius: 5px;
+  bottom: 0;
+  color: var(--color-text);
+  display: none;
+  font-size: 0.8rem;
+  left: 0;
+  padding: 5px;
+  position: fixed;
+}
+
+#post-list-buttons {
+  #post-list-with-errors.has-error {
+    display: inline-block !important;
+  }
+  #post-list-mark-views.has-unviewed {
+    display: inline-block !important;
+  }
+}
+
+
+
+

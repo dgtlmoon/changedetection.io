@@ -1,3 +1,5 @@
+from blinker import signal
+
 from changedetectionio.strtobool import strtobool
 from changedetectionio.safe_jinja import render as jinja_render
 from . import watch_base
@@ -41,6 +43,7 @@ class model(watch_base):
         self.__datastore_path = kw.get('datastore_path')
         if kw.get('datastore_path'):
             del kw['datastore_path']
+            
         super(model, self).__init__(*arg, **kw)
         if kw.get('default'):
             self.update(kw['default'])
@@ -59,6 +62,10 @@ class model(watch_base):
             return True
 
         return False
+
+    @property
+    def has_unviewed(self):
+        return int(self.newest_history_key) > int(self['last_viewed']) and self.__history_n >= 2
 
     def ensure_data_dir_exists(self):
         if not os.path.isdir(self.watch_data_dir):
@@ -120,6 +127,10 @@ class model(watch_base):
             'remote_server_reply': None,
             'track_ldjson_price_data': None
         })
+        watch_check_update = signal('watch_check_update')
+        if watch_check_update:
+            watch_check_update.send(watch_uuid=self.get('uuid'))
+
         return
 
     @property
@@ -648,3 +659,45 @@ class model(watch_base):
             if step_n:
                 available.append(step_n.group(1))
         return available
+
+    def compile_error_texts(self, has_proxies=None):
+        """Compile error texts for this watch.
+        Accepts has_proxies parameter to ensure it works even outside app context"""
+        from flask import (
+            Markup, url_for
+        )
+
+        output = []  # Initialize as list since we're using append
+        last_error = self.get('last_error','')
+
+        try:
+            url_for('settings.settings_page')
+        except Exception as e:
+            has_app_context = False
+        else:
+            has_app_context = True
+
+        # has app+request context, we can use url_for()
+        if has_app_context:
+            if last_error:
+                if '403' in last_error:
+                    if has_proxies:
+                        output.append(str(Markup(f"{last_error} - <a href=\"{url_for('settings.settings_page', uuid=self.get('uuid'))}\">Try other proxies/location</a>&nbsp;'")))
+                    else:
+                        output.append(str(Markup(f"{last_error} - <a href=\"{url_for('settings.settings_page', uuid=self.get('uuid'))}\">Try adding external proxies/locations</a>&nbsp;'")))
+                else:
+                    output.append(str(Markup(last_error)))
+
+            if self.get('last_notification_error'):
+                output.append(str(Markup(f"<div class=\"notification-error\"><a href=\"{url_for('settings.notification_logs')}\">{ self.get('last_notification_error') }</a></div>")))
+
+        else:
+            # Lo_Fi version
+            if last_error:
+                output.append(str(Markup(last_error)))
+            if self.get('last_notification_error'):
+                output.append(str(Markup(self.get('last_notification_error'))))
+
+        res = "\n".join(output)
+        return res
+

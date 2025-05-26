@@ -219,6 +219,15 @@ def test_rss_bad_chars_breaking(client, live_server):
     rss_token = extract_rss_token_from_UI(client)
 
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
+    i=0
+    from loguru import logger
+    # Because chardet could take a long time
+    while i<=10:
+        logger.debug(f"History was {live_server.app.config['DATASTORE'].data['watching'][uuid].history_n}..")
+        if live_server.app.config['DATASTORE'].data['watching'][uuid].history_n ==2:
+            break
+            i+=1
+        time.sleep(2)
     assert live_server.app.config['DATASTORE'].data['watching'][uuid].history_n == 2
 
     # Check RSS feed is still working

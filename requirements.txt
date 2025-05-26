@@ -9,6 +9,9 @@ flask_restful
 flask_cors # For the Chrome extension to operate
 flask_wtf~=1.2
 flask~=2.3
+flask-socketio>=5.5.1
+python-socketio>=5.13.0
+python-engineio>=4.12.0
 inscriptis~=2.2
 pytz
 timeago~=1.0
@@ -95,6 +98,9 @@ levenshtein
 # Needed for > 3.10, https://github.com/microsoft/playwright-python/issues/2096
 greenlet >= 3.0.3
 
+# Used for realtime socketio mode (so its a different driver to eventlet/threading not to interfere with playwright)
+gevent
+
 # Pinned or it causes problems with flask_expects_json which seems unmaintained
 referencing==0.35.1
 
@@ -102,6 +108,8 @@ referencing==0.35.1
 panzi-json-logic
 # For conditions - extracted number from a body of text
 price-parser
+
+# flask_socket_io - incorrect package name, already have flask-socketio above
 
 # Scheduler - Windows seemed to miss a lot of default timezone info (even "UTC" !)
 tzdata
@@ -115,3 +123,6 @@ psutil==7.0.0
 
 ruff >= 0.11.2
 pre_commit >= 4.2.0
+
+# For events between checking and socketio updates
+blinker
