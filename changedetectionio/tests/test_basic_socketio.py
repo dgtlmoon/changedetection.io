@@ -8,7 +8,7 @@ from .util import (
     live_server_setup,
     wait_for_all_checks
 )
-
+from loguru import logger
 
 def run_socketio_watch_update_test(client, live_server, password_mode=""):
     """Test that the socketio emits a watch update event when content changes"""
@@ -64,15 +64,15 @@ def run_socketio_watch_update_test(client, live_server, password_mode=""):
         received = socketio_test_client.get_received()
 
         if received:
-            print(f"Received {len(received)} events after {i+1} seconds")
+            logger.info(f"Received {len(received)} events after {i+1} seconds")
 
             # Check for watch_update events with unviewed=True
             for event in received:
                 if event['name'] == 'watch_update':
                     has_watch_update = True
-                    if event['args'][0].get('unviewed', False):
+                    if event['args'][0]['watch'].get('unviewed', False):
                         has_unviewed_update = True
-                        print("Found unviewed update event!")
+                        logger.info("Found unviewed update event!")
                         break
 
         if has_unviewed_update:

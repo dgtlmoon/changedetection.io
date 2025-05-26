@@ -7,8 +7,6 @@ from loguru import logger
 from blinker import signal
 
 from changedetectionio import strtobool
-from changedetectionio.flask_app import running_update_threads
-
 
 class SignalHandler:
     """A standalone class to receive signals"""
