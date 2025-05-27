@@ -139,8 +139,7 @@ def wait_for_all_checks(client=None):
     attempt = 0
     i=0
     max_attempts = 60
-    wait_between_attempts = 2
-    required_empty_duration = 2
+    required_empty_duration = 0.2
 
     logger = logging.getLogger()
     time.sleep(1.2)
@@ -328,6 +327,8 @@ def live_server_setup(live_server):
         return resp
 
     live_server.start()
+
+
 
 def get_index(client):
     import inspect

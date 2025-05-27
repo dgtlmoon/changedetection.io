@@ -114,7 +114,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
         # It should report nothing found (no new 'unviewed' class)
         res = client.get(url_for("watchlist.index"))
         assert b'unviewed' not in res.data
-        assert b'Mark all viewed' not in res.data
+        assert b'class="has-unviewed' not in res.data
         assert b'head title' not in res.data  # Should not be present because this is off by default
         assert b'test-endpoint' in res.data
 
@@ -133,7 +133,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
     res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
-    assert b'Mark all viewed' in res.data
+    assert b'class="has-unviewed' in res.data
 
     # It should have picked up the <title>
     assert b'head title' in res.data
@@ -144,7 +144,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     # hit the mark all viewed link
     res = client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
 
-    assert b'Mark all viewed' not in res.data
+    assert b'class="has-unviewed' not in res.data
     assert b'unviewed' not in res.data
 
     # #2458 "clear history" should make the Watch object update its status correctly when the first snapshot lands again

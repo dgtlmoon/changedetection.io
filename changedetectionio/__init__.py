@@ -2,19 +2,17 @@
 
 # Read more https://github.com/dgtlmoon/changedetection.io/wiki
 
-__version__ = '0.49.17'
+__version__ = '0.49.18'
 
 from changedetectionio.strtobool import strtobool
 from json.decoder import JSONDecodeError
 import os
-os.environ['EVENTLET_NO_GREENDNS'] = 'yes'
-import eventlet
-import eventlet.wsgi
 import getopt
 import platform
 import signal
 import socket
 import sys
+from werkzeug.serving import run_simple
 
 from changedetectionio import store
 from changedetectionio.flask_app import changedetection_app
@@ -33,8 +31,17 @@ def sigshutdown_handler(_signo, _stack_frame):
     logger.critical(f'Shutdown: Got Signal - {name} ({_signo}), Saving DB to disk and calling shutdown')
     datastore.sync_to_json()
     logger.success('Sync JSON to disk complete.')
-    # This will throw a SystemExit exception, because eventlet.wsgi.server doesn't know how to deal with it.
-    # Solution: move to gevent or other server in the future (#2014)
+    
+    # Shutdown socketio server if available
+    from changedetectionio.flask_app import socketio_server
+    if socketio_server and hasattr(socketio_server, 'shutdown'):
+        try:
+            logger.info("Shutting down Socket.IO server...")
+            socketio_server.shutdown()
+        except Exception as e:
+            logger.error(f"Error shutting down Socket.IO server: {str(e)}")
+    
+    # Set flags for clean shutdown
     datastore.stop_thread = True
     app.config.exit.set()
     sys.exit()
@@ -196,13 +203,85 @@ def main():
 
     s_type = socket.AF_INET6 if ipv6_enabled else socket.AF_INET
 
-    if ssl_mode:
-        # @todo finalise SSL config, but this should get you in the right direction if you need it.
-        eventlet.wsgi.server(eventlet.wrap_ssl(eventlet.listen((host, port), s_type),
-                                               certfile='cert.pem',
-                                               keyfile='privkey.pem',
-                                               server_side=True), app)
+    # Get socketio_server from flask_app
+    from changedetectionio.flask_app import socketio_server
 
+    if socketio_server and datastore.data['settings']['application']['ui'].get('open_diff_in_new_tab'):
+        logger.info("Starting server with Socket.IO support (using threading)...")
+
+        # Use Flask-SocketIO's run method with error handling for Werkzeug warning
+        # This is the cleanest approach that works with all Flask-SocketIO versions
+        # Use '0.0.0.0' as the default host if none is specified
+        # This will listen on all available interfaces
+        listen_host = '0.0.0.0' if host == '' else host
+        logger.info(f"Using host: {listen_host} and port: {port}")
+
+        try:
+            # First try with the allow_unsafe_werkzeug parameter (newer versions)
+            if ssl_mode:
+                socketio_server.run(
+                    app,
+                    host=listen_host,
+                    port=int(port),
+                    certfile='cert.pem',
+                    keyfile='privkey.pem',
+                    debug=False,
+                    use_reloader=False,
+                    allow_unsafe_werkzeug=True  # Only in newer versions
+                )
+            else:
+                socketio_server.run(
+                    app,
+                    host=listen_host,
+                    port=int(port),
+                    debug=False,
+                    use_reloader=False,
+                    allow_unsafe_werkzeug=True  # Only in newer versions
+                )
+        except TypeError:
+            # If allow_unsafe_werkzeug is not a valid parameter, try without it
+            logger.info("Falling back to basic run method without allow_unsafe_werkzeug")
+            # Override the werkzeug safety check by setting an environment variable
+            os.environ['WERKZEUG_RUN_MAIN'] = 'true'
+            if ssl_mode:
+                socketio_server.run(
+                    app,
+                    host=listen_host,
+                    port=int(port),
+                    certfile='cert.pem',
+                    keyfile='privkey.pem',
+                    debug=False,
+                    use_reloader=False
+                )
+            else:
+                socketio_server.run(
+                    app,
+                    host=listen_host,
+                    port=int(port),
+                    debug=False,
+                    use_reloader=False
+                )
     else:
-        eventlet.wsgi.server(eventlet.listen((host, int(port)), s_type), app)
+        logger.warning("Socket.IO server not initialized, falling back to standard WSGI server")
+        # Fallback to standard WSGI server if socketio_server is not available
+        listen_host = '0.0.0.0' if host == '' else host
+        if ssl_mode:
+            # Use Werkzeug's run_simple with SSL support
+            run_simple(
+                hostname=listen_host,
+                port=int(port),
+                application=app,
+                use_reloader=False,
+                use_debugger=False,
+                ssl_context=('cert.pem', 'privkey.pem')
+            )
+        else:
+            # Use Werkzeug's run_simple for standard HTTP
+            run_simple(
+                hostname=listen_host,
+                port=int(port),
+                application=app,
+                use_reloader=False,
+                use_debugger=False
+            )
 

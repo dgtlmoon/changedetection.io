@@ -7,9 +7,11 @@ import queue
 import threading
 import time
 import timeago
+from blinker import signal
 
 from changedetectionio.strtobool import strtobool
 from threading import Event
+from changedetectionio.custom_queue import SignalPriorityQueue
 
 from flask import (
     Flask,
@@ -25,9 +27,12 @@ from flask import (
 )
 from flask_compress import Compress as FlaskCompress
 from flask_login import current_user
-from flask_paginate import Pagination, get_page_parameter
 from flask_restful import abort, Api
 from flask_cors import CORS
+
+# Create specific signals for application events
+# Make this a global singleton to avoid multiple signal objects
+watch_check_update = signal('watch_check_update', doc='Signal sent when a watch check is completed')
 from flask_wtf import CSRFProtect
 from loguru import logger
 
@@ -45,7 +50,7 @@ ticker_thread = None
 
 extra_stylesheets = []
 
-update_q = queue.PriorityQueue()
+update_q = SignalPriorityQueue()
 notification_q = queue.Queue()
 MAX_QUEUE_SIZE = 2000
 
@@ -53,6 +58,9 @@ app = Flask(__name__,
             static_url_path="",
             static_folder="static",
             template_folder="templates")
+
+# Will be initialized in changedetection_app
+socketio_server = None
 
 # Enable CORS, especially useful for the Chrome extension to operate from anywhere
 CORS(app)
@@ -114,6 +122,18 @@ def get_darkmode_state():
 @app.template_global()
 def get_css_version():
     return __version__
+
+@app.template_global()
+def get_socketio_path():
+    """Generate the correct Socket.IO path prefix for the client"""
+    # If behind a proxy with a sub-path, we need to respect that path
+    prefix = ""
+    if os.getenv('USE_X_SETTINGS') and 'X-Forwarded-Prefix' in request.headers:
+        prefix = request.headers['X-Forwarded-Prefix']
+
+    # Socket.IO will be available at {prefix}/socket.io/
+    return prefix
+
 
 @app.template_filter('format_number_locale')
 def _jinja2_filter_format_number_locale(value: float) -> str:
@@ -215,12 +235,15 @@ class User(flask_login.UserMixin):
 def changedetection_app(config=None, datastore_o=None):
     logger.trace("TRACE log is enabled")
 
-    global datastore
+    global datastore, socketio_server
     datastore = datastore_o
 
     # so far just for read-only via tests, but this will be moved eventually to be the main source
     # (instead of the global var)
     app.config['DATASTORE'] = datastore_o
+    
+    # Store the signal in the app config to ensure it's accessible everywhere
+    app.config['watch_check_update_SIGNAL'] = watch_check_update
 
     login_manager = flask_login.LoginManager(app)
     login_manager.login_view = 'login'
@@ -247,6 +270,9 @@ def changedetection_app(config=None, datastore_o=None):
                 return None
             # RSS access with token is allowed
             elif request.endpoint and 'rss.feed' in request.endpoint:
+                return None
+            # Socket.IO routes - need separate handling
+            elif request.path.startswith('/socket.io/'):
                 return None
             # API routes - use their own auth mechanism (@auth.check_token)
             elif request.path.startswith('/api/'):
@@ -480,11 +506,17 @@ def changedetection_app(config=None, datastore_o=None):
 
     # watchlist UI buttons etc
     import changedetectionio.blueprint.ui as ui
-    app.register_blueprint(ui.construct_blueprint(datastore, update_q, running_update_threads, queuedWatchMetaData))
+    app.register_blueprint(ui.construct_blueprint(datastore, update_q, running_update_threads, queuedWatchMetaData, watch_check_update))
 
     import changedetectionio.blueprint.watchlist as watchlist
     app.register_blueprint(watchlist.construct_blueprint(datastore=datastore, update_q=update_q, queuedWatchMetaData=queuedWatchMetaData), url_prefix='')
-    
+
+    # Initialize Socket.IO server
+    from changedetectionio.realtime.socket_server import init_socketio
+    global socketio_server
+    socketio_server = init_socketio(app, datastore)
+    logger.info("Socket.IO server initialized")
+
     # Memory cleanup endpoint
     @app.route('/gc-cleanup', methods=['GET'])
     @login_optionally_required
@@ -503,6 +535,8 @@ def changedetection_app(config=None, datastore_o=None):
     if not os.getenv("GITHUB_REF", False) and not strtobool(os.getenv('DISABLE_VERSION_CHECK', 'no')):
         threading.Thread(target=check_for_new_version).start()
 
+    # Return the Flask app - the Socket.IO will be attached to it but initialized separately
+    # This avoids circular dependencies
     return app
 
 
@@ -538,48 +572,54 @@ def notification_runner():
     global notification_debug_log
     from datetime import datetime
     import json
-    while not app.config.exit.is_set():
-        try:
-            # At the moment only one thread runs (single runner)
-            n_object = notification_q.get(block=False)
-        except queue.Empty:
-            time.sleep(1)
-
-        else:
-
-            now = datetime.now()
-            sent_obj = None
-
+    with app.app_context():
+        while not app.config.exit.is_set():
             try:
-                from changedetectionio.notification.handler import process_notification
+                # At the moment only one thread runs (single runner)
+                n_object = notification_q.get(block=False)
+            except queue.Empty:
+                time.sleep(1)
 
-                # Fallback to system config if not set
-                if not n_object.get('notification_body') and datastore.data['settings']['application'].get('notification_body'):
-                    n_object['notification_body'] = datastore.data['settings']['application'].get('notification_body')
+            else:
 
-                if not n_object.get('notification_title') and datastore.data['settings']['application'].get('notification_title'):
-                    n_object['notification_title'] = datastore.data['settings']['application'].get('notification_title')
+                now = datetime.now()
+                sent_obj = None
 
-                if not n_object.get('notification_format') and datastore.data['settings']['application'].get('notification_format'):
-                    n_object['notification_format'] = datastore.data['settings']['application'].get('notification_format')
-                if n_object.get('notification_urls', {}):
-                    sent_obj = process_notification(n_object, datastore)
+                try:
+                    from changedetectionio.notification.handler import process_notification
 
-            except Exception as e:
-                logger.error(f"Watch URL: {n_object['watch_url']}  Error {str(e)}")
+                    # Fallback to system config if not set
+                    if not n_object.get('notification_body') and datastore.data['settings']['application'].get('notification_body'):
+                        n_object['notification_body'] = datastore.data['settings']['application'].get('notification_body')
 
-                # UUID wont be present when we submit a 'test' from the global settings
-                if 'uuid' in n_object:
-                    datastore.update_watch(uuid=n_object['uuid'],
-                                           update_obj={'last_notification_error': "Notification error detected, goto notification log."})
+                    if not n_object.get('notification_title') and datastore.data['settings']['application'].get('notification_title'):
+                        n_object['notification_title'] = datastore.data['settings']['application'].get('notification_title')
 
-                log_lines = str(e).splitlines()
-                notification_debug_log += log_lines
+                    if not n_object.get('notification_format') and datastore.data['settings']['application'].get('notification_format'):
+                        n_object['notification_format'] = datastore.data['settings']['application'].get('notification_format')
+                    if n_object.get('notification_urls', {}):
+                        sent_obj = process_notification(n_object, datastore)
 
-            # Process notifications
-            notification_debug_log+= ["{} - SENDING - {}".format(now.strftime("%Y/%m/%d %H:%M:%S,000"), json.dumps(sent_obj))]
-            # Trim the log length
-            notification_debug_log = notification_debug_log[-100:]
+                except Exception as e:
+                    logger.error(f"Watch URL: {n_object['watch_url']}  Error {str(e)}")
+
+                    # UUID wont be present when we submit a 'test' from the global settings
+                    if 'uuid' in n_object:
+                        datastore.update_watch(uuid=n_object['uuid'],
+                                               update_obj={'last_notification_error': "Notification error detected, goto notification log."})
+
+                    log_lines = str(e).splitlines()
+                    notification_debug_log += log_lines
+
+                    with app.app_context():
+                        app.config['watch_check_update_SIGNAL'].send(app_context=app, watch_uuid=n_object.get('uuid'))
+
+                # Process notifications
+                notification_debug_log+= ["{} - SENDING - {}".format(now.strftime("%Y/%m/%d %H:%M:%S,000"), json.dumps(sent_obj))]
+                # Trim the log length
+                notification_debug_log = notification_debug_log[-100:]
+
+
 
 # Threaded runner, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():

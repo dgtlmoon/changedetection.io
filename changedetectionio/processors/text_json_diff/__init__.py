@@ -15,7 +15,7 @@ def _task(watch, update_handler):
     except FilterNotFoundInResponse as e:
         text_after_filter = f"Filter not found in HTML: {str(e)}"
     except ReplyWithContentButNoText as e:
-        text_after_filter = f"Filter found but no text (empty result)"
+        text_after_filter = "Filter found but no text (empty result)"
     except Exception as e:
         text_after_filter = f"Error: {str(e)}"
 

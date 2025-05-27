@@ -7,7 +7,7 @@ from changedetectionio.tests.util import live_server_setup, wait_for_all_checks,
 
 def set_response():
     import time
-    data = f"""<html>
+    data = """<html>
        <body>
      <h1>Awesome, you made it</h1>
      yeah the socks request worked
