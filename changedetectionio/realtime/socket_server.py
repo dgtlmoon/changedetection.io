@@ -157,7 +157,7 @@ def handle_watch_update(socketio, **kwargs):
             'paused': True if watch.get('paused') else False,
             'queued': True if watch.get('uuid') in queue_list else False,
             'unviewed': watch.has_unviewed,
-            'thumbnail': watch.get_screenshot_as_thumbnail,
+            'thumbnail': watch.get_screenshot_as_thumbnail(),
             'uuid': watch.get('uuid'),
         }
 
