@@ -145,19 +145,20 @@ def handle_watch_update(socketio, **kwargs):
         # Create a simplified watch data object to send to clients
         watch_data = {
             'checking_now': True if watch.get('uuid') in running_uuids else False,
+            'error_text': error_texts,
+            'event_timestamp': time.time(),
             'fetch_time': watch.get('fetch_time'),
             'has_error': True if error_texts else False,
             'last_changed': watch.get('last_changed'),
-            'last_checked': watch.get('last_checked'),
-            'error_text': error_texts,
-            'last_checked_text': _jinja2_filter_datetime(watch),
             'last_changed_text': timeago.format(int(watch['last_changed']), time.time()) if watch.history_n >= 2 and int(watch.get('last_changed', 0)) > 0 else 'Not yet',
-            'queued': True if watch.get('uuid') in queue_list else False,
-            'paused': True if watch.get('paused') else False,
+            'last_checked': watch.get('last_checked'),
+            'last_checked_text': _jinja2_filter_datetime(watch),
             'notification_muted': True if watch.get('notification_muted') else False,
+            'paused': True if watch.get('paused') else False,
+            'queued': True if watch.get('uuid') in queue_list else False,
             'unviewed': watch.has_unviewed,
+            'thumbnail': watch.get_screenshot_as_thumbnail,
             'uuid': watch.get('uuid'),
-            'event_timestamp': time.time()
         }
 
         errored_count =0

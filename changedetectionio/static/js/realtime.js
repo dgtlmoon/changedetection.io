@@ -87,8 +87,10 @@ $(document).ready(function () {
                     $($watchRow).toggleClass('has-error', watch.has_error);
                     $($watchRow).toggleClass('notification_muted', watch.notification_muted);
                     $($watchRow).toggleClass('paused', watch.paused);
+                    $($watchRow).toggleClass('has-thumbnail', watch.thumbnail !== undefined);
 
                     $('td.title-col .error-text', $watchRow).html(watch.error_text)
+                    $('img.thumbnail', $watchRow).attr('src', watch.thumbnail);
 
                     $('td.last-changed', $watchRow).text(watch.last_checked_text)
 
