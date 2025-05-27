@@ -9,22 +9,31 @@
     img.thumbnail {
       display: inline-block !important;
     }
+    &.unviewed {
+      img.thumbnail {
+        opacity: 1.0 !important;
+      }
+    }
   }
   td.title-col {
-    .title-col-inner >*{
+    .title-col-inner {
+      display: inline-block;
+      * {
         vertical-align: middle;
+      }
     }
   }
   td.inline.title-col {
     img.thumbnail {
-      width: 50px;
-      object-fit: cover; /* crop/fill if needed */
-      border-radius: 4px; /* subtle rounded corners */
-      padding: 4px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); /* soft shadow */
-      border: 1px solid #ddd; /* light border for contrast */
-      filter: contrast(1.05) saturate(1.1) drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.2));
       background-color: #fff; /* fallback bg for SVGs without bg */
+      border-radius: 4px; /* subtle rounded corners */
+      border: 1px solid #ddd; /* light border for contrast */
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); /* soft shadow */
+      filter: contrast(1.05) saturate(1.1) drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.2));
+      margin-right: 1rem;
+      object-fit: cover; /* crop/fill if needed */
+      opacity: 0.5;
+      width: 50px;
     }
   }
 }

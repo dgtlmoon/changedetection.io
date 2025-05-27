@@ -687,23 +687,29 @@ ul#conditions_match_logic {
 .watch-table tr.has-thumbnail img.thumbnail {
   display: inline-block !important; }
 
-.watch-table td.title-col .title-col-inner > * {
-  vertical-align: middle; }
+.watch-table tr.has-thumbnail.unviewed img.thumbnail {
+  opacity: 1.0 !important; }
+
+.watch-table td.title-col .title-col-inner {
+  display: inline-block; }
+  .watch-table td.title-col .title-col-inner * {
+    vertical-align: middle; }
 
 .watch-table td.inline.title-col img.thumbnail {
-  width: 50px;
-  object-fit: cover;
-  /* crop/fill if needed */
+  background-color: #fff;
+  /* fallback bg for SVGs without bg */
   border-radius: 4px;
   /* subtle rounded corners */
-  padding: 4px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  /* soft shadow */
   border: 1px solid #ddd;
   /* light border for contrast */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  /* soft shadow */
   filter: contrast(1.05) saturate(1.1) drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.2));
-  background-color: #fff;
-  /* fallback bg for SVGs without bg */ }
+  margin-right: 1rem;
+  object-fit: cover;
+  /* crop/fill if needed */
+  opacity: 0.5;
+  width: 50px; }
 
 body.checking-now #checking-now-fixed-tab {
   display: block !important; }

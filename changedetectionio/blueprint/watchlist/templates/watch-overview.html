@@ -5,7 +5,7 @@
 <script src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
 <script>let nowtimeserver={{ now_time_server }};</script>
 <script>let ajax_toggle_url="{{ ajax_toggle_url }}";</script>
-
+<script>let thumbnail_baseURL="{{ url_for('static_content', group='thumbnail', filename="PLACEHOLDER", _external=True) }}"</script>
 <style>
 .checking-now .last-checked {
     background-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.1) 100%);
@@ -123,9 +123,8 @@
                     <a class="ajax-op state-on mute-toggle" data-op="mute"  style="display: none" href="{{url_for('watchlist.index', op='mute', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="UnMute notification" title="UnMute notification" class="icon icon-mute" ></a>
                 </td>
                 <td class="title-col inline">
-
+                    <img style="display: none" class="thumbnail" {% if watch.get_screenshot() %} src="{{url_for('static_content', group='thumbnail', filename=watch.uuid)}}"{% endif %} alt="thumbnail screenshot" title="thumbnail screenshot" >
                     <div class="title-col-inner">
-                        <img style="display: none" class="thumbnail" {% if watch.get_screenshot() %} src="{{url_for('static_content', group='thumbnail', filename=watch.uuid)}}"{% endif %} alt="thumbnail screenshot" title="thumbnail screenshot" >
                         {{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
                         <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}"></a>
                         <a class="link-spread" href="{{url_for('ui.form_share_put_watch', uuid=watch.uuid)}}"><img src="{{url_for('static_content', group='images', filename='spread.svg')}}" class="status-icon icon icon-spread" title="Create a link to share watch config with others" ></a>
