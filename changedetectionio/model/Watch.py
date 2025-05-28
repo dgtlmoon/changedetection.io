@@ -663,9 +663,8 @@ class model(watch_base):
     def compile_error_texts(self, has_proxies=None):
         """Compile error texts for this watch.
         Accepts has_proxies parameter to ensure it works even outside app context"""
-        from flask import (
-            Markup, url_for
-        )
+        from flask import url_for
+        from markupsafe import Markup
 
         output = []  # Initialize as list since we're using append
         last_error = self.get('last_error','')
