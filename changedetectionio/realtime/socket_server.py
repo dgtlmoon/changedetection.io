@@ -52,7 +52,7 @@ class SignalHandler:
                 else:
                     handle_watch_update(self.socketio_instance, watch=watch, datastore=self.datastore)
 
-                logger.info(f"Signal handler processed watch UUID {watch_uuid}")
+                logger.trace(f"Signal handler processed watch UUID {watch_uuid}")
             else:
                 logger.warning(f"Watch UUID {watch_uuid} not found in datastore")
 
@@ -94,7 +94,7 @@ class SignalHandler:
                 # For each item in the queue, send a signal, so we update the UI
                 for t in running_update_threads:
                     if hasattr(t, 'current_uuid') and t.current_uuid:
-                        logger.debug(f"Sending update for {t.current_uuid}")
+                        logger.trace(f"Sending update for {t.current_uuid}")
                         # Send with app_context to ensure proper URL generation
                         with app.app_context():
                             watch_check_update.send(app_context=app, watch_uuid=t.current_uuid)
