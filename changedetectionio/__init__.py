@@ -181,10 +181,11 @@ def main():
 
 
     @app.context_processor
-    def inject_version():
+    def inject_template_globals():
         return dict(right_sticky="v{}".format(datastore.data['version_tag']),
                     new_version_available=app.config['NEW_VERSION_AVAILABLE'],
-                    has_password=datastore.data['settings']['application']['password'] != False
+                    has_password=datastore.data['settings']['application']['password'] != False,
+                    socket_io_enabled=datastore.data['settings']['application']['ui'].get('socket_io_enabled', True)
                     )
 
     # Monitored websites will not receive a Referer header when a user clicks on an outgoing link.
@@ -211,9 +212,18 @@ def main():
 
     # SocketIO instance is already initialized in flask_app.py
 
-    # Launch using eventlet SocketIO run method for proper integration
-    if ssl_mode:
-        socketio.run(app, host=host, port=int(port), debug=False, 
-                    certfile='cert.pem', keyfile='privkey.pem')
+    # Launch using eventlet SocketIO run method for proper integration (if enabled)
+    if socketio_server:
+        if ssl_mode:
+            socketio.run(app, host=host, port=int(port), debug=False, 
+                        certfile='cert.pem', keyfile='privkey.pem')
+        else:
+            socketio.run(app, host=host, port=int(port), debug=False)
     else:
-        socketio.run(app, host=host, port=int(port), debug=False)
+        # Run Flask app without Socket.IO if disabled
+        logger.info("Starting Flask app without Socket.IO server")
+        if ssl_mode:
+            app.run(host=host, port=int(port), debug=False, 
+                   ssl_context=('cert.pem', 'privkey.pem'))
+        else:
+            app.run(host=host, port=int(port), debug=False)

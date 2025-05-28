@@ -475,11 +475,16 @@ def changedetection_app(config=None, datastore_o=None):
     import changedetectionio.blueprint.watchlist as watchlist
     app.register_blueprint(watchlist.construct_blueprint(datastore=datastore, update_q=update_q, queuedWatchMetaData=queuedWatchMetaData), url_prefix='')
 
-    # Initialize Socket.IO server
-    from changedetectionio.realtime.socket_server import init_socketio
-    global socketio_server
-    socketio_server = init_socketio(app, datastore)
-    logger.info("Socket.IO server initialized")
+    # Initialize Socket.IO server conditionally based on settings
+    socket_io_enabled = datastore.data['settings']['application']['ui'].get('socket_io_enabled', True)
+    if socket_io_enabled:
+        from changedetectionio.realtime.socket_server import init_socketio
+        global socketio_server
+        socketio_server = init_socketio(app, datastore)
+        logger.info("Socket.IO server initialized")
+    else:
+        logger.info("Socket.IO server disabled via settings")
+        socketio_server = None
 
     # Memory cleanup endpoint
     @app.route('/gc-cleanup', methods=['GET'])
