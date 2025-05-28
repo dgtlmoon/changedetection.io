@@ -17,17 +17,17 @@ class SignalHandler:
         # Connect to the watch_check_update signal
         from changedetectionio.flask_app import watch_check_update as wcc
         wcc.connect(self.handle_signal, weak=False)
-        logger.info("SignalHandler: Connected to signal from direct import")
+#        logger.info("SignalHandler: Connected to signal from direct import")
         
         # Connect to the queue_length signal
         queue_length_signal = signal('queue_length')
         queue_length_signal.connect(self.handle_queue_length, weak=False)
-        logger.info("SignalHandler: Connected to queue_length signal")
+ #       logger.info("SignalHandler: Connected to queue_length signal")
 
 
         # Create and start the queue update thread using eventlet
         import eventlet
-        logger.info("Using eventlet for polling thread")
+ #       logger.info("Using eventlet for polling thread")
         self.polling_emitter_thread = eventlet.spawn(self.polling_emit_running_or_queued_watches)
         
         # Store the thread reference in socketio for clean shutdown
@@ -204,18 +204,18 @@ def init_socketio(app, datastore):
     @socketio.on('connect')
     def handle_connect():
         """Handle client connection"""
-        logger.info("Socket.IO: CONNECT HANDLER CALLED - Starting connection process")
+#        logger.info("Socket.IO: CONNECT HANDLER CALLED - Starting connection process")
         from flask import request
         from flask_login import current_user
         from changedetectionio.flask_app import update_q
 
         # Access datastore from socketio
         datastore = socketio.datastore
-        logger.info(f"Socket.IO: Current user authenticated: {current_user.is_authenticated if hasattr(current_user, 'is_authenticated') else 'No current_user'}")
+#        logger.info(f"Socket.IO: Current user authenticated: {current_user.is_authenticated if hasattr(current_user, 'is_authenticated') else 'No current_user'}")
 
         # Check if authentication is required and user is not authenticated
         has_password_enabled = datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False)
-        logger.info(f"Socket.IO: Password enabled: {has_password_enabled}")
+#        logger.info(f"Socket.IO: Password enabled: {has_password_enabled}")
         if has_password_enabled and not current_user.is_authenticated:
             logger.warning("Socket.IO: Rejecting unauthenticated connection")
             return False  # Reject the connection
@@ -233,7 +233,7 @@ def init_socketio(app, datastore):
 
         logger.info("Socket.IO: Client connected")
 
-    logger.info("Socket.IO: Registering disconnect event handler")
+#    logger.info("Socket.IO: Registering disconnect event handler")
     @socketio.on('disconnect')
     def handle_disconnect():
         """Handle client disconnection"""
@@ -265,14 +265,14 @@ def init_socketio(app, datastore):
             # Wait for the greenlet to exit (with timeout)
             if hasattr(socketio, 'polling_emitter_thread'):
                 try:
-                    # For eventlet greenlets
-                    eventlet.with_timeout(5, socketio.polling_emitter_thread.wait)
-                    logger.info("Socket.IO: Queue update eventlet greenlet joined successfully")
-                except eventlet.Timeout:
-                    logger.info("Socket.IO: Queue update eventlet greenlet did not exit in time")
-                    socketio.polling_emitter_thread.kill()
+                    # For eventlet greenlets - just kill it directly to avoid MAINLOOP issues
+                    if not socketio.polling_emitter_thread.dead:
+                        socketio.polling_emitter_thread.kill()
+                        logger.info("Socket.IO: Queue update eventlet greenlet killed")
+                    else:
+                        logger.info("Socket.IO: Queue update eventlet greenlet already dead")
                 except Exception as e:
-                    logger.error(f"Error joining eventlet greenlet: {str(e)}")
+                    logger.error(f"Error killing eventlet greenlet: {str(e)}")
             
             # Close any remaining client connections
             #if hasattr(socketio, 'server'):
