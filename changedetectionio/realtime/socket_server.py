@@ -25,10 +25,10 @@ class SignalHandler:
         logger.info("SignalHandler: Connected to queue_length signal")
 
 
-        # Create and start the queue update thread using gevent
-        import gevent
-        logger.info("Using gevent for polling thread")
-        self.polling_emitter_thread = gevent.spawn(self.polling_emit_running_or_queued_watches)
+        # Create and start the queue update thread using eventlet
+        import eventlet
+        logger.info("Using eventlet for polling thread")
+        self.polling_emitter_thread = eventlet.spawn(self.polling_emit_running_or_queued_watches)
         
         # Store the thread reference in socketio for clean shutdown
         self.socketio_instance.polling_emitter_thread = self.polling_emitter_thread
@@ -76,20 +76,20 @@ class SignalHandler:
         """Greenlet that periodically updates the browser/frontend with current state of who is being checked or queued
         This is because sometimes the browser page could reload (like on clicking on a link) but the data is old
         """
-        logger.info("Queue update greenlet started")
+        logger.info("Queue update eventlet greenlet started")
 
         # Import the watch_check_update signal, update_q, and running_update_threads here to avoid circular imports
         from changedetectionio.flask_app import app, running_update_threads
         watch_check_update = signal('watch_check_update')
         
-        # Use gevent sleep for non-blocking operation
-        from gevent import sleep as gevent_sleep
+        # Use eventlet sleep for non-blocking operation
+        from eventlet import sleep as eventlet_sleep
 
         # Get the stop event from the socketio instance
         stop_event = self.socketio_instance.stop_event if hasattr(self.socketio_instance, 'stop_event') else None
 
         # Run until explicitly stopped
-        while stop_event is None or not stop_event.is_set():
+        while stop_event is None or not stop_event.ready():
             try:
                 # For each item in the queue, send a signal, so we update the UI
                 for t in running_update_threads:
@@ -98,22 +98,22 @@ class SignalHandler:
                         # Send with app_context to ensure proper URL generation
                         with app.app_context():
                             watch_check_update.send(app_context=app, watch_uuid=t.current_uuid)
-                        # Yield control back to gevent after each send to prevent blocking
-                        gevent_sleep(0.1)  # Small sleep to yield control
+                        # Yield control back to eventlet after each send to prevent blocking
+                        eventlet_sleep(0.1)  # Small sleep to yield control
                     
                     # Check if we need to stop in the middle of processing
-                    if stop_event is not None and stop_event.is_set():
+                    if stop_event is not None and stop_event.ready():
                         break
 
                 # Sleep between polling/update cycles
-                gevent_sleep(2)
+                eventlet_sleep(2)
 
             except Exception as e:
                 logger.error(f"Error in queue update greenlet: {str(e)}")
                 # Sleep a bit to avoid flooding logs in case of persistent error
-                gevent_sleep(0.5)
+                eventlet_sleep(0.5)
 
-        logger.info("Queue update greenlet stopped")
+        logger.info("Queue update eventlet greenlet stopped")
 
 
 def handle_watch_update(socketio, **kwargs):
@@ -185,10 +185,9 @@ def handle_watch_update(socketio, **kwargs):
 
 def init_socketio(app, datastore):
     """Initialize SocketIO with the main Flask app"""
-    # Use the threading async_mode instead of eventlet
-    # This avoids the need for monkey patching eventlet,
-    # Which leads to problems with async playwright etc
-    async_mode = 'gevent'
+    # Use eventlet async_mode to match the eventlet server
+    # This is required since the main app uses eventlet.wsgi.server
+    async_mode = 'eventlet'
     logger.info(f"Using {async_mode} mode for Socket.IO")
 
     # Restrict SocketIO CORS to same origin by default, can be overridden with env var
@@ -201,19 +200,22 @@ def init_socketio(app, datastore):
                       engineio_logger=strtobool(os.getenv('SOCKETIO_LOGGING', 'False')))
 
     # Set up event handlers
+    logger.info("Socket.IO: Registering connect event handler")
     @socketio.on('connect')
     def handle_connect():
         """Handle client connection"""
-        from changedetectionio.auth_decorator import login_optionally_required
+        logger.info("Socket.IO: CONNECT HANDLER CALLED - Starting connection process")
         from flask import request
         from flask_login import current_user
         from changedetectionio.flask_app import update_q
 
         # Access datastore from socketio
         datastore = socketio.datastore
+        logger.info(f"Socket.IO: Current user authenticated: {current_user.is_authenticated if hasattr(current_user, 'is_authenticated') else 'No current_user'}")
 
         # Check if authentication is required and user is not authenticated
         has_password_enabled = datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False)
+        logger.info(f"Socket.IO: Password enabled: {has_password_enabled}")
         if has_password_enabled and not current_user.is_authenticated:
             logger.warning("Socket.IO: Rejecting unauthenticated connection")
             return False  # Reject the connection
@@ -231,6 +233,7 @@ def init_socketio(app, datastore):
 
         logger.info("Socket.IO: Client connected")
 
+    logger.info("Socket.IO: Registering disconnect event handler")
     @socketio.on('disconnect')
     def handle_disconnect():
         """Handle client disconnection"""
@@ -242,9 +245,9 @@ def init_socketio(app, datastore):
     # Store the datastore reference on the socketio object for later use
     socketio.datastore = datastore
     
-    # Create a stop event for our queue update thread using gevent Event
-    import gevent.event
-    stop_event = gevent.event.Event()
+    # Create a stop event for our queue update thread using eventlet Event
+    import eventlet.event
+    stop_event = eventlet.event.Event()
     socketio.stop_event = stop_event
 
     
@@ -256,18 +259,20 @@ def init_socketio(app, datastore):
             
             # Signal the queue update thread to stop
             if hasattr(socketio, 'stop_event'):
-                socketio.stop_event.set()
+                socketio.stop_event.send()
                 logger.info("Socket.IO: Signaled queue update thread to stop")
             
             # Wait for the greenlet to exit (with timeout)
             if hasattr(socketio, 'polling_emitter_thread'):
                 try:
-                    # For gevent greenlets
-                    socketio.polling_emitter_thread.join(timeout=5)
-                    logger.info("Socket.IO: Queue update greenlet joined successfully")
+                    # For eventlet greenlets
+                    eventlet.with_timeout(5, socketio.polling_emitter_thread.wait)
+                    logger.info("Socket.IO: Queue update eventlet greenlet joined successfully")
+                except eventlet.Timeout:
+                    logger.info("Socket.IO: Queue update eventlet greenlet did not exit in time")
+                    socketio.polling_emitter_thread.kill()
                 except Exception as e:
-                    logger.error(f"Error joining greenlet: {str(e)}")
-                    logger.info("Socket.IO: Queue update greenlet did not exit in time")
+                    logger.error(f"Error joining eventlet greenlet: {str(e)}")
             
             # Close any remaining client connections
             #if hasattr(socketio, 'server'):
@@ -280,4 +285,5 @@ def init_socketio(app, datastore):
     socketio.shutdown = shutdown
 
     logger.info("Socket.IO initialized and attached to main Flask app")
+    logger.info(f"Socket.IO: Registered event handlers: {socketio.handlers if hasattr(socketio, 'handlers') else 'No handlers found'}")
     return socketio
