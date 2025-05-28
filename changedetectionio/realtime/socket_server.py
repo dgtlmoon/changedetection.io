@@ -242,6 +242,10 @@ def init_socketio(app, datastore):
     # Create a dedicated signal handler that will receive signals and emit them to clients
     signal_handler = SignalHandler(socketio, datastore)
 
+    # Register watch operation event handlers
+    from .events import register_watch_operation_handlers
+    register_watch_operation_handlers(socketio, datastore)
+
     # Store the datastore reference on the socketio object for later use
     socketio.datastore = datastore
     

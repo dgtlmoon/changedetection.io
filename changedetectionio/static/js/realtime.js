@@ -2,20 +2,20 @@
 
 $(document).ready(function () {
 
-    function bindAjaxHandlerButtonsEvents() {
-        $('.ajax-op').on('click.ajaxHandlerNamespace', function (e) {
+    function bindSocketHandlerButtonsEvents(socket) {
+        $('.ajax-op').on('click.socketHandlerNamespace', function (e) {
             e.preventDefault();
-            $.ajax({
-                type: "POST",
-                url: ajax_toggle_url,
-                data: {'op': $(this).data('op'), 'uuid': $(this).closest('tr').data('watch-uuid')},
-                statusCode: {
-                    400: function () {
-                        // More than likely the CSRF token was lost when the server restarted
-                        alert("There was a problem processing the request, please reload the page.");
-                    }
-                }
+            const op = $(this).data('op');
+            const uuid = $(this).closest('tr').data('watch-uuid');
+            
+            console.log(`Socket.IO: Sending watch operation '${op}' for UUID ${uuid}`);
+            
+            // Emit the operation via Socket.IO
+            socket.emit('watch_operation', {
+                'op': op,
+                'uuid': uuid
             });
+            
             return false;
         });
     }
@@ -38,7 +38,7 @@ $(document).ready(function () {
             socket.on('connect', function () {
                 console.log('Socket.IO connected with path:', socketio_url);
                 console.log('Socket transport:', socket.io.engine.transport.name);
-                bindAjaxHandlerButtonsEvents();
+                bindSocketHandlerButtonsEvents(socket);
             });
 
             socket.on('connect_error', function(error) {
@@ -55,13 +55,23 @@ $(document).ready(function () {
 
             socket.on('disconnect', function (reason) {
                 console.log('Socket.IO disconnected, reason:', reason);
-                $('.ajax-op').off('.ajaxHandlerNamespace')
+                $('.ajax-op').off('.socketHandlerNamespace')
             });
 
             socket.on('queue_size', function (data) {
                 console.log(`${data.event_timestamp} - Queue size update: ${data.q_length}`);
                 // Update queue size display if implemented in the UI
             })
+
+            // Listen for operation results
+            socket.on('operation_result', function (data) {
+                if (data.success) {
+                    console.log(`Socket.IO: Operation '${data.operation}' completed successfully for UUID ${data.uuid}`);
+                } else {
+                    console.error(`Socket.IO: Operation failed: ${data.error}`);
+                    alert("There was a problem processing the request: " + data.error);
+                }
+            });
 
             // Listen for periodically emitted watch data
             console.log('Adding watch_update event listener');

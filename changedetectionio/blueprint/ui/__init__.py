@@ -1,9 +1,7 @@
 import time
 from flask import Blueprint, request, redirect, url_for, flash, render_template, session
 from loguru import logger
-from functools import wraps
 
-from changedetectionio.blueprint.ui.ajax import constuct_ui_ajax_blueprint
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.blueprint.ui.edit import construct_blueprint as construct_edit_blueprint
 from changedetectionio.blueprint.ui.notification import construct_blueprint as construct_notification_blueprint
@@ -23,9 +21,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
     # Register the views blueprint
     views_blueprint = construct_views_blueprint(datastore, update_q, queuedWatchMetaData, watch_check_update)
     ui_blueprint.register_blueprint(views_blueprint)
-
-    ui_ajax_blueprint = constuct_ui_ajax_blueprint(datastore, update_q, running_update_threads, queuedWatchMetaData, watch_check_update)
-    ui_blueprint.register_blueprint(ui_ajax_blueprint)
 
     # Import the login decorator
     from changedetectionio.auth_decorator import login_optionally_required
