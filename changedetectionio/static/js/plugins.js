@@ -159,6 +159,7 @@
         // Return the current request in case it's needed
         return requests[namespace];
     };
+
 })(jQuery);
 
 
