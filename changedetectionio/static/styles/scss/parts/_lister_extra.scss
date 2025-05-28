@@ -15,14 +15,7 @@
       }
     }
   }
-  td.title-col {
-    .title-col-inner {
-      display: inline-block;
-      * {
-        vertical-align: middle;
-      }
-    }
-  }
+
   td.inline.title-col {
     img.thumbnail {
       background-color: #fff; /* fallback bg for SVGs without bg */
@@ -30,10 +23,28 @@
       border: 1px solid #ddd; /* light border for contrast */
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); /* soft shadow */
       filter: contrast(1.05) saturate(1.1) drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.2));
-      margin-right: 1rem;
       object-fit: cover; /* crop/fill if needed */
       opacity: 0.5;
-      width: 50px;
+      height: 100%;
+      max-height: 100%;
     }
   }
+}
+
+
+.title-col {
+    /* Optional, for spacing */
+    padding: 10px;
+}
+
+.title-wrapper {
+    display: flex;
+    align-items: center; /* Vertical centering */
+    gap: 10px; /* Space between image and text */
+}
+
+/* Make sure .title-col-inner doesn't collapse or misalign */
+.title-col-inner {
+    display: inline-block;
+    vertical-align: middle;
 }

@@ -465,7 +465,7 @@ class model(watch_base):
                 img = img.crop((left, 0, left + square_size, square_size))
 
                 # Final resize to exact thumbnail size with better filter
-                img = img.resize((150, 150), Image.BILINEAR)
+                img = img.resize((350, 350), Image.BILINEAR)
 
                 # Save with optimized settings
                 img.save(thumbnail_path, "JPEG", quality=75, optimize=True)
