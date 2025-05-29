@@ -147,16 +147,42 @@ class difference_detection_processor():
         # And here we go! call the right browser with browser-specific settings
         empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
 
-        self.fetcher.run(url=url,
-                         timeout=timeout,
-                         request_headers=request_headers,
-                         request_body=request_body,
-                         request_method=request_method,
-                         ignore_status_codes=ignore_status_codes,
-                         current_include_filters=self.watch.get('include_filters'),
-                         is_binary=is_binary,
-                         empty_pages_are_a_change=empty_pages_are_a_change
-                         )
+        # Check if the fetcher run method is async (for playwright)
+        import asyncio
+        import inspect
+        
+        run_method = getattr(self.fetcher, 'run')
+        if inspect.iscoroutinefunction(run_method):
+            # Use asyncio to run the async method
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                loop.run_until_complete(
+                    self.fetcher.run(url=url,
+                                   timeout=timeout,
+                                   request_headers=request_headers,
+                                   request_body=request_body,
+                                   request_method=request_method,
+                                   ignore_status_codes=ignore_status_codes,
+                                   current_include_filters=self.watch.get('include_filters'),
+                                   is_binary=is_binary,
+                                   empty_pages_are_a_change=empty_pages_are_a_change
+                                   )
+                )
+            finally:
+                loop.close()
+        else:
+            # Synchronous fetcher (requests, etc.)
+            self.fetcher.run(url=url,
+                           timeout=timeout,
+                           request_headers=request_headers,
+                           request_body=request_body,
+                           request_method=request_method,
+                           ignore_status_codes=ignore_status_codes,
+                           current_include_filters=self.watch.get('include_filters'),
+                           is_binary=is_binary,
+                           empty_pages_are_a_change=empty_pages_are_a_change
+                           )
 
         #@todo .quit here could go on close object, so we can run JS if change-detected
         self.fetcher.quit(watch=self.watch)

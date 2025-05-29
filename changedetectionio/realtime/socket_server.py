@@ -27,7 +27,6 @@ class SignalHandler:
 
         # Create and start the queue update thread using eventlet
         import eventlet
- #       logger.info("Using eventlet for polling thread")
         self.polling_emitter_thread = eventlet.spawn(self.polling_emit_running_or_queued_watches)
         
         # Store the thread reference in socketio for clean shutdown
@@ -177,7 +176,7 @@ def handle_watch_update(socketio, **kwargs):
         socketio.emit("watch_update", {'watch': watch_data, 'general_stats': general_stats})
         
         # Log after successful emit
-        #logger.info(f"Socket.IO: Emitted update for watch {watch.get('uuid')}, Checking now: {watch_data['checking_now']}")
+        logger.info(f"Socket.IO: Emitted update for watch {watch.get('uuid')}, Checking now: {watch_data['checking_now']}")
 
     except Exception as e:
         logger.error(f"Socket.IO error in handle_watch_update: {str(e)}")
@@ -185,8 +184,8 @@ def handle_watch_update(socketio, **kwargs):
 
 def init_socketio(app, datastore):
     """Initialize SocketIO with the main Flask app"""
-    # Use eventlet async_mode to match the eventlet server
-    # This is required since the main app uses eventlet.wsgi.server
+    # Use eventlet async_mode now that Playwright is async and compatible
+    # Eventlet mode works well with async_playwright
     async_mode = 'eventlet'
     logger.info(f"Using {async_mode} mode for Socket.IO")
 

@@ -122,7 +122,7 @@ class Fetcher():
 
         return None
 
-    def iterate_browser_steps(self, start_url=None):
+    async def iterate_browser_steps(self, start_url=None):
         from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
         from playwright._impl._errors import TimeoutError, Error
         from changedetectionio.safe_jinja import render as jinja_render
@@ -136,8 +136,8 @@ class Fetcher():
             for step in valid_steps:
                 step_n += 1
                 logger.debug(f">> Iterating check - browser Step n {step_n} - {step['operation']}...")
-                self.screenshot_step("before-" + str(step_n))
-                self.save_step_html("before-" + str(step_n))
+                await self.screenshot_step("before-" + str(step_n))
+                await self.save_step_html("before-" + str(step_n))
 
                 try:
                     optional_value = step['optional_value']
@@ -148,11 +148,11 @@ class Fetcher():
                     if '{%' in step['selector'] or '{{' in step['selector']:
                         selector = jinja_render(template_str=step['selector'])
 
-                    getattr(interface, "call_action")(action_name=step['operation'],
+                    await getattr(interface, "call_action")(action_name=step['operation'],
                                                       selector=selector,
                                                       optional_value=optional_value)
-                    self.screenshot_step(step_n)
-                    self.save_step_html(step_n)
+                    await self.screenshot_step(step_n)
+                    await self.save_step_html(step_n)
                 except (Error, TimeoutError) as e:
                     logger.debug(str(e))
                     # Stop processing here

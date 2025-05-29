@@ -11,6 +11,10 @@ import getopt
 import platform
 import signal
 
+import eventlet
+# Re-enable eventlet monkey patching now that Playwright is async
+eventlet.monkey_patch()
+
 import sys
 from changedetectionio import store
 from changedetectionio.flask_app import changedetection_app
