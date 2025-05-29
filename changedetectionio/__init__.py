@@ -7,10 +7,6 @@ __version__ = '0.49.18'
 from changedetectionio.strtobool import strtobool
 from json.decoder import JSONDecodeError
 import os
-os.environ['EVENTLET_NO_GREENDNS'] = 'yes'
-import eventlet
-eventlet.monkey_patch()
-
 import getopt
 import platform
 import signal
