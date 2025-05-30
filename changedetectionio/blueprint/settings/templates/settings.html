@@ -48,6 +48,10 @@
                         <span class="pure-form-message-inline">Example - 3 seconds random jitter could trigger up to 3 seconds earlier or up to 3 seconds later</span>
                     </div>
                     <div class="pure-control-group">
+                        {{ render_field(form.requests.form.workers) }}
+                        <span class="pure-form-message-inline">Number of concurrent workers to process watches. More workers = faster processing but higher memory usage.</span>
+                    </div>
+                    <div class="pure-control-group">
                         {{ render_field(form.application.form.filter_failure_notification_threshold_attempts, class="filter_failure_notification_threshold_attempts") }}
                         <span class="pure-form-message-inline">After this many consecutive times that the CSS/xPath filter is missing, send a notification
                             <br>

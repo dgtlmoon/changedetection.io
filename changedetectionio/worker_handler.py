@@ -222,6 +222,88 @@ def shutdown_workers():
     logger.info("Workers shutdown complete")
 
 
+def adjust_async_worker_count(new_count, update_q=None, notification_q=None, app=None, datastore=None):
+    """
+    Dynamically adjust the number of async workers.
+    
+    Args:
+        new_count: Target number of workers
+        update_q, notification_q, app, datastore: Required for adding new workers
+    
+    Returns:
+        dict: Status of the adjustment operation
+    """
+    global running_async_tasks, running_update_threads
+    
+    current_count = get_worker_count()
+    
+    if new_count == current_count:
+        return {
+            'status': 'no_change',
+            'message': f'Worker count already at {current_count}',
+            'current_count': current_count
+        }
+    
+    if USE_ASYNC_WORKERS:
+        if new_count > current_count:
+            # Add workers
+            workers_to_add = new_count - current_count
+            logger.info(f"Adding {workers_to_add} async workers (from {current_count} to {new_count})")
+            
+            if not all([update_q, notification_q, app, datastore]):
+                return {
+                    'status': 'error',
+                    'message': 'Missing required parameters to add workers',
+                    'current_count': current_count
+                }
+            
+            for i in range(workers_to_add):
+                worker_id = len(running_async_tasks)
+                task_future = asyncio.run_coroutine_threadsafe(
+                    start_single_async_worker(worker_id, update_q, notification_q, app, datastore), 
+                    async_loop
+                )
+                running_async_tasks.append(task_future)
+            
+            return {
+                'status': 'success',
+                'message': f'Added {workers_to_add} workers',
+                'previous_count': current_count,
+                'current_count': new_count
+            }
+            
+        else:
+            # Remove workers
+            workers_to_remove = current_count - new_count
+            logger.info(f"Removing {workers_to_remove} async workers (from {current_count} to {new_count})")
+            
+            removed_count = 0
+            for _ in range(workers_to_remove):
+                if running_async_tasks:
+                    task_future = running_async_tasks.pop()
+                    task_future.cancel()
+                    # Wait for the task to actually stop
+                    try:
+                        task_future.result(timeout=5)  # 5 second timeout
+                    except Exception:
+                        pass  # Task was cancelled, which is expected
+                    removed_count += 1
+            
+            return {
+                'status': 'success',
+                'message': f'Removed {removed_count} workers',
+                'previous_count': current_count,
+                'current_count': current_count - removed_count
+            }
+    else:
+        # Sync workers - more complex to adjust dynamically
+        return {
+            'status': 'not_supported',
+            'message': 'Dynamic worker adjustment not supported for sync workers',
+            'current_count': current_count
+        }
+
+
 def get_worker_status():
     """Get status information about workers"""
     return {

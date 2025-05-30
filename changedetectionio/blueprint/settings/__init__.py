@@ -67,7 +67,32 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     del (app_update['password'])
 
                 datastore.data['settings']['application'].update(app_update)
+                
+                # Handle dynamic worker count adjustment
+                old_worker_count = datastore.data['settings']['requests'].get('workers', 1)
+                new_worker_count = form.data['requests'].get('workers', 1)
+                
                 datastore.data['settings']['requests'].update(form.data['requests'])
+                
+                # Adjust worker count if it changed
+                if new_worker_count != old_worker_count:
+                    from changedetectionio import worker_handler
+                    from changedetectionio.flask_app import update_q, notification_q, app, datastore as ds
+                    
+                    result = worker_handler.adjust_async_worker_count(
+                        new_count=new_worker_count,
+                        update_q=update_q,
+                        notification_q=notification_q,
+                        app=app,
+                        datastore=ds
+                    )
+                    
+                    if result['status'] == 'success':
+                        flash(f"Worker count adjusted: {result['message']}", 'notice')
+                    elif result['status'] == 'not_supported':
+                        flash("Dynamic worker adjustment not supported for sync workers", 'warning')
+                    elif result['status'] == 'error':
+                        flash(f"Error adjusting workers: {result['message']}", 'error')
 
                 if not os.getenv("SALTED_PASS", False) and len(form.application.form.password.encrypted_password):
                     datastore.data['settings']['application']['password'] = form.application.form.password.encrypted_password

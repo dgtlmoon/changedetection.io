@@ -719,6 +719,12 @@ class globalSettingsRequestForm(Form):
     jitter_seconds = IntegerField('Random jitter seconds ± check',
                                   render_kw={"style": "width: 5em;"},
                                   validators=[validators.NumberRange(min=0, message="Should contain zero or more seconds")])
+    
+    workers = IntegerField('Number of fetch workers',
+                          render_kw={"style": "width: 5em;"},
+                          validators=[validators.NumberRange(min=1, max=50,
+                                                             message="Should be between 1 and 50")])
+    
     extra_proxies = FieldList(FormField(SingleExtraProxy), min_entries=5)
     extra_browsers = FieldList(FormField(SingleExtraBrowser), min_entries=5)
 

@@ -494,6 +494,12 @@ def changedetection_app(config=None, datastore_o=None):
         result = memory_cleanup(app)
         return jsonify({"status": "success", "message": "Memory cleanup completed", "result": result})
 
+    # Start the async workers during app initialization
+    # Can be overridden by ENV or use the default settings
+    n_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
+    logger.info(f"Starting {n_workers} workers during app initialization")
+    worker_handler.start_workers(n_workers, update_q, notification_q, app, datastore)
+
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
     threading.Thread(target=notification_runner).start()
@@ -597,10 +603,7 @@ def ticker_thread_check_time_launch_checks():
     recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
     logger.debug(f"System env MINIMUM_SECONDS_RECHECK_TIME {recheck_time_minimum_seconds}")
 
-    # Spin up Workers that do the fetching
-    # Can be overriden by ENV or use the default settings
-    n_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
-    worker_handler.start_workers(n_workers, update_q, notification_q, app, datastore)
+    # Workers are now started during app initialization, not here
 
     while not app.config.exit.is_set():
 
