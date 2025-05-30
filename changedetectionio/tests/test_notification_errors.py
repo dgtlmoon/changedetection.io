@@ -60,7 +60,7 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
     # The error should show in the notification logs
     res = client.get(
         url_for("settings.notification_logs"))
-    found_name_resolution_error = b"Temporary failure in name resolution" in res.data or b"Name or service not known" in res.data
+    found_name_resolution_error = b"No address found" in res.data or b"Name or service not known" in res.data
     assert found_name_resolution_error
 
     # And the working one, which is after the 'broken' one should still have fired

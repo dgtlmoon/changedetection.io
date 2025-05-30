@@ -31,11 +31,13 @@
         const socketio_url="{{ get_socketio_path() }}/socket.io";
         const is_authenticated = {% if current_user.is_authenticated or not has_password %}true{% else %}false{% endif %};
     </script>
+    <script src="https://unpkg.com/feather-icons"></script>
     <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
     <script src="{{url_for('static_content', group='js', filename='csrf.js')}}" defer></script>
-    <script src="{{url_for('static_content', group='js', filename='socket.io.min.js')}}" integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+" crossorigin="anonymous"></script>
+    {% if socket_io_enabled %}
+    <script src="{{url_for('static_content', group='js', filename='socket.io.min.js')}}"></script>
     <script src="{{url_for('static_content', group='js', filename='realtime.js')}}" defer></script>
-    <script src="{{url_for('static_content', group='js', filename='timeago-init.js')}}" defer></script>
+    {% endif %}
   </head>
 
   <body class="">

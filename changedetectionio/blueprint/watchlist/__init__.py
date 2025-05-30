@@ -78,7 +78,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             active_tag=active_tag,
             active_tag_uuid=active_tag_uuid,
             app_rss_token=datastore.data['settings']['application'].get('rss_access_token'),
-            ajax_toggle_url=url_for('ui.ajax.ajax_toggler'),
             datastore=datastore,
             errored_count=errored_count,
             form=form,

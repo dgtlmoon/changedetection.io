@@ -135,6 +135,12 @@
                         {{ render_field(form.application.form.webdriver_delay) }}
                     </div>
                 </fieldset>
+                <div class="pure-control-group">
+                    {{ render_field(form.requests.form.workers) }}
+                    {% set worker_info = get_worker_status_info() %}
+                    <span class="pure-form-message-inline">Number of concurrent workers to process watches. More workers = faster processing but higher memory usage.<br>
+                    Currently running: <strong>{{ worker_info.count }}</strong> operational {{ worker_info.type }} workers{% if worker_info.active_workers > 0 %} ({{ worker_info.active_workers }} actively processing){% endif %}.</span>
+                </div>
                 <div class="pure-control-group inline-radio">
                     {{ render_field(form.requests.form.default_ua) }}
                     <span class="pure-form-message-inline">
@@ -247,9 +253,9 @@ nav
                     <span class="pure-form-message-inline">Enable this setting to open the diff page in a new tab. If disabled, the diff page will open in the current tab.</span>
                 </div>
                 <div class="pure-control-group">
-                    <span class="pure-form-message-inline">Enable realtime updates in the UI</span>
+                    {{ render_checkbox_field(form.application.form.ui.form.socket_io_enabled, class="socket_io_enabled") }}
+                    <span class="pure-form-message-inline">Realtime UI Updates Enabled - (Restart required if this is changed)</span>
                 </div>
-
             </div>
             <div class="tab-pane-inner" id="proxies">
                 <div id="recommended-proxy">
