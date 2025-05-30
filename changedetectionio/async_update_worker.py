@@ -247,12 +247,22 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
             await asyncio.sleep(0.01)
 
         except Exception as e:
-            logger.error(f"Worker {worker_id} unexpected error: {e}")
+            logger.error(f"Worker {worker_id} unexpected error processing {uuid}: {e}")
+            logger.error(f"Worker {worker_id} traceback:", exc_info=True)
+            
             # Make sure to mark UUID as completed even on error
             if uuid:
-                worker_handler.set_uuid_processing(uuid, processing=False)
+                try:
+                    worker_handler.set_uuid_processing(uuid, processing=False)
+                    # Also update the watch with error information
+                    if datastore and uuid in datastore.data['watching']:
+                        datastore.update_watch(uuid=uuid, update_obj={'last_error': f"Worker error: {str(e)}"})
+                except Exception as cleanup_error:
+                    logger.error(f"Worker {worker_id} error during cleanup: {cleanup_error}")
+                    
             current_uuid = None
-            await asyncio.sleep(0.1)
+            # Brief pause before continuing to avoid tight error loops
+            await asyncio.sleep(1.0)
 
         # Check if we should exit
         if app.config.exit.is_set():

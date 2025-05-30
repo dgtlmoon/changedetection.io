@@ -494,6 +494,33 @@ def changedetection_app(config=None, datastore_o=None):
         result = memory_cleanup(app)
         return jsonify({"status": "success", "message": "Memory cleanup completed", "result": result})
 
+    # Worker health check endpoint
+    @app.route('/worker-health', methods=['GET'])
+    @login_optionally_required
+    def worker_health():
+        from flask import jsonify
+        
+        expected_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
+        
+        # Get basic status
+        status = worker_handler.get_worker_status()
+        
+        # Perform health check
+        health_result = worker_handler.check_worker_health(
+            expected_count=expected_workers,
+            update_q=update_q,
+            notification_q=notification_q,
+            app=app,
+            datastore=datastore
+        )
+        
+        return jsonify({
+            "status": "success",
+            "worker_status": status,
+            "health_check": health_result,
+            "expected_workers": expected_workers
+        })
+
     # Start the async workers during app initialization
     # Can be overridden by ENV or use the default settings
     n_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
@@ -599,6 +626,7 @@ def ticker_thread_check_time_launch_checks():
     import random
     from changedetectionio import update_worker
     proxy_last_called_time = {}
+    last_health_check = 0
 
     recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
     logger.debug(f"System env MINIMUM_SECONDS_RECHECK_TIME {recheck_time_minimum_seconds}")
@@ -606,6 +634,23 @@ def ticker_thread_check_time_launch_checks():
     # Workers are now started during app initialization, not here
 
     while not app.config.exit.is_set():
+
+        # Periodic worker health check (every 60 seconds)
+        now = time.time()
+        if now - last_health_check > 60:
+            expected_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
+            health_result = worker_handler.check_worker_health(
+                expected_count=expected_workers,
+                update_q=update_q,
+                notification_q=notification_q,
+                app=app,
+                datastore=datastore
+            )
+            
+            if health_result['status'] != 'healthy':
+                logger.warning(f"Worker health check: {health_result['message']}")
+                
+            last_health_check = now
 
         # Get a list of watches by UUID that are currently fetching data
         running_uuids = worker_handler.get_running_uuids()

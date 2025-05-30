@@ -64,13 +64,26 @@ def start_async_workers(n_workers, update_q, notification_q, app, datastore):
 
 
 async def start_single_async_worker(worker_id, update_q, notification_q, app, datastore):
-    """Start a single async worker"""
+    """Start a single async worker with auto-restart capability"""
     from changedetectionio.async_update_worker import async_update_worker
     
-    try:
-        await async_update_worker(worker_id, update_q, notification_q, app, datastore)
-    except Exception as e:
-        logger.error(f"Async worker {worker_id} crashed: {e}")
+    while not app.config.exit.is_set():
+        try:
+            logger.info(f"Starting async worker {worker_id}")
+            await async_update_worker(worker_id, update_q, notification_q, app, datastore)
+            # If we reach here, worker exited cleanly
+            logger.info(f"Async worker {worker_id} exited cleanly")
+            break
+        except asyncio.CancelledError:
+            # Task was cancelled (normal shutdown)
+            logger.info(f"Async worker {worker_id} cancelled")
+            break
+        except Exception as e:
+            logger.error(f"Async worker {worker_id} crashed: {e}")
+            logger.info(f"Restarting async worker {worker_id} in 5 seconds...")
+            await asyncio.sleep(5)
+    
+    logger.info(f"Async worker {worker_id} shutdown complete")
 
 
 def start_sync_workers(n_workers, update_q, notification_q, app, datastore):
@@ -312,3 +325,84 @@ def get_worker_status():
         'running_uuids': get_running_uuids(),
         'async_loop_running': async_loop is not None if USE_ASYNC_WORKERS else None,
     }
+
+
+def check_worker_health(expected_count, update_q=None, notification_q=None, app=None, datastore=None):
+    """
+    Check if the expected number of workers are running and restart any missing ones.
+    
+    Args:
+        expected_count: Expected number of workers
+        update_q, notification_q, app, datastore: Required for restarting workers
+    
+    Returns:
+        dict: Health check results
+    """
+    global running_async_tasks, running_update_threads
+    
+    current_count = get_worker_count()
+    
+    if current_count == expected_count:
+        return {
+            'status': 'healthy',
+            'expected_count': expected_count,
+            'actual_count': current_count,
+            'message': f'All {expected_count} workers running'
+        }
+    
+    if USE_ASYNC_WORKERS:
+        # Check for crashed async workers
+        dead_workers = []
+        alive_count = 0
+        
+        for i, task_future in enumerate(running_async_tasks[:]):
+            if task_future.done():
+                try:
+                    result = task_future.result()
+                    dead_workers.append(i)
+                    logger.warning(f"Async worker {i} completed unexpectedly")
+                except Exception as e:
+                    dead_workers.append(i)
+                    logger.error(f"Async worker {i} crashed: {e}")
+            else:
+                alive_count += 1
+        
+        # Remove dead workers from tracking
+        for i in reversed(dead_workers):
+            if i < len(running_async_tasks):
+                running_async_tasks.pop(i)
+        
+        missing_workers = expected_count - alive_count
+        restarted_count = 0
+        
+        if missing_workers > 0 and all([update_q, notification_q, app, datastore]):
+            logger.info(f"Restarting {missing_workers} crashed async workers")
+            
+            for i in range(missing_workers):
+                worker_id = alive_count + i
+                try:
+                    task_future = asyncio.run_coroutine_threadsafe(
+                        start_single_async_worker(worker_id, update_q, notification_q, app, datastore), 
+                        async_loop
+                    )
+                    running_async_tasks.append(task_future)
+                    restarted_count += 1
+                except Exception as e:
+                    logger.error(f"Failed to restart worker {worker_id}: {e}")
+        
+        return {
+            'status': 'repaired' if restarted_count > 0 else 'degraded',
+            'expected_count': expected_count,
+            'actual_count': alive_count,
+            'dead_workers': len(dead_workers),
+            'restarted_workers': restarted_count,
+            'message': f'Found {len(dead_workers)} dead workers, restarted {restarted_count}'
+        }
+    else:
+        # For sync workers, just report the issue (harder to auto-restart)
+        return {
+            'status': 'degraded',
+            'expected_count': expected_count,
+            'actual_count': current_count,
+            'message': f'Worker count mismatch: expected {expected_count}, got {current_count}'
+        }
