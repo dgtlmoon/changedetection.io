@@ -504,19 +504,6 @@ def changedetection_app(config=None, datastore_o=None):
     if not os.getenv("GITHUB_REF", False) and not strtobool(os.getenv('DISABLE_VERSION_CHECK', 'no')):
         threading.Thread(target=check_for_new_version).start()
 
-    # Setup cleanup handler for PlaywrightManager on app shutdown
-    import atexit
-    def cleanup_playwright():
-        try:
-            from changedetectionio.content_fetchers.playwright_manager import shutdown_playwright_manager
-            shutdown_playwright_manager()
-        except ImportError:
-            pass  # playwright_manager not imported yet
-        except Exception as e:
-            logger.error(f"Error during Playwright cleanup: {e}")
-    
-    atexit.register(cleanup_playwright)
-
     # Return the Flask app - the Socket.IO will be attached to it but initialized separately
     # This avoids circular dependencies
     return app
