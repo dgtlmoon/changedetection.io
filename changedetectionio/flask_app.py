@@ -694,7 +694,6 @@ def notification_runner():
 # Threaded runner, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():
     import random
-    from changedetectionio import update_worker
     proxy_last_called_time = {}
     last_health_check = 0
 

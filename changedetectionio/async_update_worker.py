@@ -406,50 +406,39 @@ def cleanup_error_artifacts(uuid, datastore):
 
 
 async def send_content_changed_notification(watch_uuid, notification_q, datastore):
-    """Helper function to queue notifications (kept sync for now)"""
-    # Note: This uses the original sync notification logic since notifications 
-    # are handled by a separate thread. Could be made async later if needed.
+    """Helper function to queue notifications using the new notification service"""
     try:
-        # Import here to avoid circular imports
-        from changedetectionio.update_worker import update_worker
+        from changedetectionio.notification_service import create_notification_service
         
-        # Create temporary worker instance just for notification methods
-        temp_worker = update_worker(None, notification_q, None, datastore)
-        temp_worker.datastore = datastore
-        temp_worker.notification_q = notification_q
+        # Create notification service instance
+        notification_service = create_notification_service(datastore, notification_q)
         
-        temp_worker.send_content_changed_notification(watch_uuid)
+        notification_service.send_content_changed_notification(watch_uuid)
     except Exception as e:
         logger.error(f"Error sending notification for {watch_uuid}: {e}")
 
 
 async def send_filter_failure_notification(watch_uuid, notification_q, datastore):
-    """Helper function to send filter failure notifications"""
+    """Helper function to send filter failure notifications using the new notification service"""
     try:
-        # Import here to avoid circular imports
-        from changedetectionio.update_worker import update_worker
+        from changedetectionio.notification_service import create_notification_service
         
-        # Create temporary worker instance just for notification methods
-        temp_worker = update_worker(None, notification_q, None, datastore)
-        temp_worker.datastore = datastore
-        temp_worker.notification_q = notification_q
+        # Create notification service instance
+        notification_service = create_notification_service(datastore, notification_q)
         
-        temp_worker.send_filter_failure_notification(watch_uuid)
+        notification_service.send_filter_failure_notification(watch_uuid)
     except Exception as e:
         logger.error(f"Error sending filter failure notification for {watch_uuid}: {e}")
 
 
 async def send_step_failure_notification(watch_uuid, step_n, notification_q, datastore):
-    """Helper function to send step failure notifications"""
+    """Helper function to send step failure notifications using the new notification service"""
     try:
-        # Import here to avoid circular imports
-        from changedetectionio.update_worker import update_worker
+        from changedetectionio.notification_service import create_notification_service
         
-        # Create temporary worker instance just for notification methods
-        temp_worker = update_worker(None, notification_q, None, datastore)
-        temp_worker.datastore = datastore
-        temp_worker.notification_q = notification_q
+        # Create notification service instance
+        notification_service = create_notification_service(datastore, notification_q)
         
-        temp_worker.send_step_failure_notification(watch_uuid, step_n)
+        notification_service.send_step_failure_notification(watch_uuid, step_n)
     except Exception as e:
         logger.error(f"Error sending step failure notification for {watch_uuid}: {e}")
