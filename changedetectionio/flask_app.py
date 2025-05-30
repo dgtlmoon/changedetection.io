@@ -7,11 +7,13 @@ import queue
 import threading
 import time
 import timeago
+import asyncio
 from blinker import signal
 
 from changedetectionio.strtobool import strtobool
 from threading import Event
-from changedetectionio.custom_queue import SignalPriorityQueue
+from changedetectionio.custom_queue import SignalPriorityQueue, AsyncSignalPriorityQueue
+from changedetectionio import worker_handler
 
 from flask import (
     Flask,
@@ -45,12 +47,11 @@ from .time_handler import is_within_schedule
 datastore = None
 
 # Local
-running_update_threads = []
 ticker_thread = None
-
 extra_stylesheets = []
 
-update_q = SignalPriorityQueue()
+# Use async queue by default, keep sync for backward compatibility  
+update_q = AsyncSignalPriorityQueue() if worker_handler.USE_ASYNC_WORKERS else SignalPriorityQueue()
 notification_q = queue.Queue()
 MAX_QUEUE_SIZE = 2000
 
@@ -145,10 +146,7 @@ def _jinja2_filter_format_number_locale(value: float) -> str:
 
 @app.template_global('is_checking_now')
 def _watch_is_checking_now(watch_obj, format="%Y-%m-%d %H:%M:%S"):
-    # Worker thread tells us which UUID it is currently processing.
-    for t in running_update_threads:
-        if t.current_uuid == watch_obj['uuid']:
-            return True
+    return worker_handler.is_watch_running(watch_obj['uuid'])
 
 
 # We use the whole watch object from the store/JSON so we can see if there's some related status in terms of a thread
@@ -470,7 +468,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     # watchlist UI buttons etc
     import changedetectionio.blueprint.ui as ui
-    app.register_blueprint(ui.construct_blueprint(datastore, update_q, running_update_threads, queuedWatchMetaData, watch_check_update))
+    app.register_blueprint(ui.construct_blueprint(datastore, update_q, worker_handler, queuedWatchMetaData, watch_check_update))
 
     import changedetectionio.blueprint.watchlist as watchlist
     app.register_blueprint(watchlist.construct_blueprint(datastore=datastore, update_q=update_q, queuedWatchMetaData=queuedWatchMetaData), url_prefix='')
@@ -602,18 +600,12 @@ def ticker_thread_check_time_launch_checks():
     # Spin up Workers that do the fetching
     # Can be overriden by ENV or use the default settings
     n_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
-    for _ in range(n_workers):
-        new_worker = update_worker.update_worker(update_q, notification_q, app, datastore)
-        running_update_threads.append(new_worker)
-        new_worker.start()
+    worker_handler.start_workers(n_workers, update_q, notification_q, app, datastore)
 
     while not app.config.exit.is_set():
 
         # Get a list of watches by UUID that are currently fetching data
-        running_uuids = []
-        for t in running_update_threads:
-            if t.current_uuid:
-                running_uuids.append(t.current_uuid)
+        running_uuids = worker_handler.get_running_uuids()
 
         # Re #232 - Deepcopy the data incase it changes while we're iterating through it all
         watch_uuid_list = []
@@ -716,7 +708,7 @@ def ticker_thread_check_time_launch_checks():
                         f"{now - watch['last_checked']:0.2f}s since last checked")
 
                     # Into the queue with you
-                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=priority, item={'uuid': uuid}))
+                    worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=priority, item={'uuid': uuid}))
 
                     # Reset for next time
                     watch.jitter_seconds = 0

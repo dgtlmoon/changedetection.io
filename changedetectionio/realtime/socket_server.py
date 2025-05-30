@@ -77,8 +77,9 @@ class SignalHandler:
         """
         logger.info("Queue update eventlet greenlet started")
 
-        # Import the watch_check_update signal, update_q, and running_update_threads here to avoid circular imports
-        from changedetectionio.flask_app import app, running_update_threads
+        # Import the watch_check_update signal, update_q, and worker_handler here to avoid circular imports
+        from changedetectionio.flask_app import app
+        from changedetectionio import worker_handler
         watch_check_update = signal('watch_check_update')
         
         # Use eventlet sleep for non-blocking operation
@@ -90,15 +91,15 @@ class SignalHandler:
         # Run until explicitly stopped
         while stop_event is None or not stop_event.ready():
             try:
-                # For each item in the queue, send a signal, so we update the UI
-                for t in running_update_threads:
-                    if hasattr(t, 'current_uuid') and t.current_uuid:
-                        logger.trace(f"Sending update for {t.current_uuid}")
-                        # Send with app_context to ensure proper URL generation
-                        with app.app_context():
-                            watch_check_update.send(app_context=app, watch_uuid=t.current_uuid)
-                        # Yield control back to eventlet after each send to prevent blocking
-                        eventlet_sleep(0.1)  # Small sleep to yield control
+                # For each running UUID, send a signal, so we update the UI
+                running_uuids = worker_handler.get_running_uuids()
+                for uuid in running_uuids:
+                    logger.trace(f"Sending update for {uuid}")
+                    # Send with app_context to ensure proper URL generation
+                    with app.app_context():
+                        watch_check_update.send(app_context=app, watch_uuid=uuid)
+                    # Yield control back to eventlet after each send to prevent blocking
+                    eventlet_sleep(0.1)  # Small sleep to yield control
                     
                     # Check if we need to stop in the middle of processing
                     if stop_event is not None and stop_event.ready():
@@ -122,14 +123,12 @@ def handle_watch_update(socketio, **kwargs):
         datastore = kwargs.get('datastore')
 
         # Emit the watch update to all connected clients
-        from changedetectionio.flask_app import running_update_threads, update_q
+        from changedetectionio.flask_app import update_q
         from changedetectionio.flask_app import _jinja2_filter_datetime
+        from changedetectionio import worker_handler
 
         # Get list of watches that are currently running
-        running_uuids = []
-        for t in running_update_threads:
-            if hasattr(t, 'current_uuid') and t.current_uuid:
-                running_uuids.append(t.current_uuid)
+        running_uuids = worker_handler.get_running_uuids()
 
         # Get list of watches in the queue
         queue_list = []

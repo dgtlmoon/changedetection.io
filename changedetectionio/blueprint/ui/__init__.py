@@ -7,7 +7,7 @@ from changedetectionio.blueprint.ui.edit import construct_blueprint as construct
 from changedetectionio.blueprint.ui.notification import construct_blueprint as construct_notification_blueprint
 from changedetectionio.blueprint.ui.views import construct_blueprint as construct_views_blueprint
 
-def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_update_threads, queuedWatchMetaData, watch_check_update):
+def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handler, queuedWatchMetaData, watch_check_update):
     ui_blueprint = Blueprint('ui', __name__, template_folder="templates")
     
     # Register the edit blueprint
@@ -95,7 +95,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
         new_uuid = datastore.clone(uuid)
 
         if not datastore.data['watching'].get(uuid).get('paused'):
-            update_q.put(queuedWatchMetaData.PrioritizedItem(priority=5, item={'uuid': new_uuid}))
+            worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=5, item={'uuid': new_uuid}))
 
         flash('Cloned, you are editing the new watch.')
 
@@ -111,13 +111,11 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
 
         i = 0
 
-        running_uuids = []
-        for t in running_update_threads:
-            running_uuids.append(t.current_uuid)
+        running_uuids = worker_handler.get_running_uuids()
 
         if uuid:
             if uuid not in running_uuids:
-                update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+                worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
                 i += 1
 
         else:
@@ -134,7 +132,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
                         if tag != None and tag not in watch['tags']:
                             continue
 
-                        update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
+                        worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
                         i += 1
 
         if i == 1:
@@ -192,7 +190,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, running_updat
             for uuid in uuids:
                 if datastore.data['watching'].get(uuid):
                     # Recheck and require a full reprocessing
-                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+                    worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
             flash("{} watches queued for rechecking".format(len(uuids)))
 
         elif (op == 'clear-errors'):

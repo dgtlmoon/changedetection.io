@@ -37,8 +37,9 @@ def register_watch_operation_handlers(socketio, datastore):
                 # Import here to avoid circular imports
                 from changedetectionio.flask_app import update_q
                 from changedetectionio import queuedWatchMetaData
+                from changedetectionio import worker_handler
                 
-                update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+                worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
                 logger.info(f"Socket.IO: Queued recheck for watch {uuid}")
             else:
                 emit('operation_result', {'success': False, 'error': f'Unknown operation: {op}'})
