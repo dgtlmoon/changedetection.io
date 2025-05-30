@@ -8,72 +8,12 @@ from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, vi
     SCREENSHOT_SIZE_STITCH_THRESHOLD, SCREENSHOT_MAX_TOTAL_HEIGHT, XPATH_ELEMENT_JS, INSTOCK_DATA_JS
 from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable
+from changedetectionio.content_fetchers.playwright_manager import get_playwright_manager
 
-async def capture_full_page_async(page):
-    import os
-    import time
-    from multiprocessing import Process, Pipe
 
-    start = time.time()
-
-    page_height = await page.evaluate("document.documentElement.scrollHeight")
-    page_width = await page.evaluate("document.documentElement.scrollWidth")
-    original_viewport = page.viewport_size
-
-    logger.debug(f"Playwright viewport size {page.viewport_size} page height {page_height} page width {page_width}")
-
-    # Use an approach similar to puppeteer: set a larger viewport and take screenshots in chunks
-    step_size = SCREENSHOT_SIZE_STITCH_THRESHOLD # Size that won't cause GPU to overflow
-    screenshot_chunks = []
-    y = 0
-
-    if page_height > page.viewport_size['height']:
-        if page_height < step_size:
-            step_size = page_height # Incase page is bigger than default viewport but smaller than proposed step size
-        logger.debug(f"Setting bigger viewport to step through large page width W{page.viewport_size['width']}xH{step_size} because page_height > viewport_size")
-        # Set viewport to a larger size to capture more content at once
-        await page.set_viewport_size({'width': page.viewport_size['width'], 'height': step_size})
-
-    # Capture screenshots in chunks up to the max total height
-    while y < min(page_height, SCREENSHOT_MAX_TOTAL_HEIGHT):
-        await page.request_gc()
-        await page.evaluate(f"window.scrollTo(0, {y})")
-        await page.request_gc()
-        screenshot_chunks.append(await page.screenshot(
-            type="jpeg",
-            full_page=False,
-            quality=int(os.getenv("SCREENSHOT_QUALITY", 72))
-        ))
-        y += step_size
-        await page.request_gc()
-
-    # Restore original viewport size
-    await page.set_viewport_size({'width': original_viewport['width'], 'height': original_viewport['height']})
-
-    # If we have multiple chunks, stitch them together
-    if len(screenshot_chunks) > 1:
-        from changedetectionio.content_fetchers.screenshot_handler import stitch_images_worker
-        logger.debug(f"Screenshot stitching {len(screenshot_chunks)} chunks together")
-        parent_conn, child_conn = Pipe()
-        p = Process(target=stitch_images_worker, args=(child_conn, screenshot_chunks, page_height, SCREENSHOT_MAX_TOTAL_HEIGHT))
-        p.start()
-        screenshot = parent_conn.recv_bytes()
-        p.join()
-        logger.debug(
-            f"Screenshot (chunked/stitched) - Page height: {page_height} Capture height: {SCREENSHOT_MAX_TOTAL_HEIGHT} - Stitched together in {time.time() - start:.2f}s")
-        # Explicit cleanup
-        del screenshot_chunks
-        del p
-        del parent_conn, child_conn
-        screenshot_chunks = None
-        return screenshot
-
-    logger.debug(
-        f"Screenshot Page height: {page_height} Capture height: {SCREENSHOT_MAX_TOTAL_HEIGHT} - Stitched together in {time.time() - start:.2f}s")
-
-    return screenshot_chunks[0]
-
+# Legacy sync function - kept for compatibility but not used
 def capture_full_page(page):
+    """Legacy sync capture function - kept for compatibility"""
     import os
     import time
     from multiprocessing import Process, Pipe
@@ -133,7 +73,7 @@ def capture_full_page(page):
         return screenshot
 
     logger.debug(
-        f"Screenshot Page height: {page_height} Capture height: {SCREENSHOT_MAX_TOTAL_HEIGHT} - Stitched together in {time.time() - start:.2f}s")
+        f"Screenshot Page height: {page_height} Capture height: {SCREENSHOT_MAX_TOTAL_HEIGHT} - Single screenshot captured in {time.time() - start:.2f}s")
 
     return screenshot_chunks[0]
 
@@ -188,26 +128,19 @@ class fetcher(Fetcher):
                 self.proxy['username'] = parsed.username
                 self.proxy['password'] = parsed.password
 
-    async def screenshot_step(self, step_n=''):
+    def screenshot_step(self, step_n=''):
+        """Legacy screenshot step method - not used with new manager"""
         super().screenshot_step(step_n=step_n)
-        screenshot = await capture_full_page_async(page=self.page)
+        # This would need to be reimplemented with the manager if browser steps are used
+        logger.warning("screenshot_step called - browser steps may need updating for new manager")
 
-
-        if self.browser_steps_screenshot_path is not None:
-            destination = os.path.join(self.browser_steps_screenshot_path, 'step_{}.jpeg'.format(step_n))
-            logger.debug(f"Saving step screenshot to {destination}")
-            with open(destination, 'wb') as f:
-                f.write(screenshot)
-
-    async def save_step_html(self, step_n):
+    def save_step_html(self, step_n):
+        """Legacy save step HTML method - not used with new manager"""
         super().save_step_html(step_n=step_n)
-        content = await self.page.content()
-        destination = os.path.join(self.browser_steps_screenshot_path, 'step_{}.html'.format(step_n))
-        logger.debug(f"Saving step HTML to {destination}")
-        with open(destination, 'w') as f:
-            f.write(content)
+        # This would need to be reimplemented with the manager if browser steps are used
+        logger.warning("save_step_html called - browser steps may need updating for new manager")
 
-    async def run(self,
+    def run(self,
             url,
             timeout,
             request_headers,
@@ -217,172 +150,49 @@ class fetcher(Fetcher):
             current_include_filters=None,
             is_binary=False,
             empty_pages_are_a_change=False):
-
-        from playwright.async_api import async_playwright
-        import playwright._impl._errors
-        import time
+        """
+        Main run method - now uses PlaywrightManager instead of creating its own async context.
+        This method is synchronous and thread-safe.
+        """
+        
         self.delete_browser_steps_screenshots()
-        response = None
-
-        async with async_playwright() as p:
-            browser_type = getattr(p, self.browser_type)
-
-            # Seemed to cause a connection Exception even tho I can see it connect
-            # self.browser = browser_type.connect(self.command_executor, timeout=timeout*1000)
-            # 60,000 connection timeout only
-            browser = await browser_type.connect_over_cdp(self.browser_connection_url, timeout=60000)
-
-            # SOCKS5 with authentication is not supported (yet)
-            # https://github.com/microsoft/playwright/issues/10567
-
-            # Set user agent to prevent Cloudflare from blocking the browser
-            # Use the default one configured in the App.py model that's passed from fetch_site_status.py
-            context = await browser.new_context(
-                accept_downloads=False,  # Should never be needed
-                bypass_csp=True,  # This is needed to enable JavaScript execution on GitHub and others
-                extra_http_headers=request_headers,
-                ignore_https_errors=True,
-                proxy=self.proxy,
-                service_workers=os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow'), # Should be `allow` or `block` - sites like YouTube can transmit large amounts of data via Service Workers
-                user_agent=manage_user_agent(headers=request_headers),
-            )
-
-            self.page = await context.new_page()
-
-            # Listen for all console events and handle errors
-            self.page.on("console", lambda msg: logger.debug(f"Playwright console: Watch URL: {url} {msg.type}: {msg.text} {msg.args}"))
-
-            # Re-use as much code from browser steps as possible so its the same
-            from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
-            browsersteps_interface = steppable_browser_interface(start_url=url)
-            browsersteps_interface.page = self.page
-
-            response = await browsersteps_interface.action_goto_url(value=url)
-
-            if response is None:
-                await context.close()
-                await browser.close()
-                logger.debug("Content Fetcher > Response object from the browser communication was none")
-                raise EmptyReply(url=url, status_code=None)
-
-            # In async_playwright, all_headers() returns a coroutine
-            try:
-                self.headers = await response.all_headers()
-            except TypeError:
-                # Fallback for sync version
-                self.headers = response.all_headers()
-
-            try:
-                if self.webdriver_js_execute_code is not None and len(self.webdriver_js_execute_code):
-                    await browsersteps_interface.action_execute_js(value=self.webdriver_js_execute_code, selector=None)
-            except playwright._impl._errors.TimeoutError as e:
-                await context.close()
-                await browser.close()
-                # This can be ok, we will try to grab what we could retrieve
-                pass
-            except Exception as e:
-                logger.debug(f"Content Fetcher > Other exception when executing custom JS code {str(e)}")
-                await context.close()
-                await browser.close()
-                raise PageUnloadable(url=url, status_code=None, message=str(e))
-
-            extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
-            await self.page.wait_for_timeout(extra_wait * 1000)
-
-            try:
-                self.status_code = response.status
-            except Exception as e:
-                # https://github.com/dgtlmoon/changedetection.io/discussions/2122#discussioncomment-8241962
-                logger.critical(f"Response from the browser/Playwright did not have a status_code! Response follows.")
-                logger.critical(response)
-                await context.close()
-                await browser.close()
-                raise PageUnloadable(url=url, status_code=None, message=str(e))
-
-            if self.status_code != 200 and not ignore_status_codes:
-                screenshot = await capture_full_page_async(self.page)
-                raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=screenshot)
-
-            if not empty_pages_are_a_change and len((await self.page.content()).strip()) == 0:
-                logger.debug("Content Fetcher > Content was empty, empty_pages_are_a_change = False")
-                await context.close()
-                await browser.close()
-                raise EmptyReply(url=url, status_code=response.status)
-
-            # Run Browser Steps here
-            if self.browser_steps_get_valid_steps():
-                await self.iterate_browser_steps(start_url=url)
-
-            await self.page.wait_for_timeout(extra_wait * 1000)
-
-            now = time.time()
-            # So we can find an element on the page where its selector was entered manually (maybe not xPath etc)
-            if current_include_filters is not None:
-                await self.page.evaluate("var include_filters={}".format(json.dumps(current_include_filters)))
-            else:
-                await self.page.evaluate("var include_filters=''")
-            await self.page.request_gc()
-
-            # request_gc before and after evaluate to free up memory
-            # @todo browsersteps etc
-            MAX_TOTAL_HEIGHT = int(os.getenv("SCREENSHOT_MAX_HEIGHT", SCREENSHOT_MAX_HEIGHT_DEFAULT))
-            self.xpath_data = await self.page.evaluate(XPATH_ELEMENT_JS, {
-                "visualselector_xpath_selectors": visualselector_xpath_selectors,
-                "max_height": MAX_TOTAL_HEIGHT
-            })
-            await self.page.request_gc()
-
-            self.instock_data = await self.page.evaluate(INSTOCK_DATA_JS)
-            await self.page.request_gc()
-
-            self.content = await self.page.content()
-            await self.page.request_gc()
-            logger.debug(f"Scrape xPath element data in browser done in {time.time() - now:.2f}s")
-
-            # Bug 3 in Playwright screenshot handling
-            # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
-            # JPEG is better here because the screenshots can be very very large
-
-            # Screenshots also travel via the ws:// (websocket) meaning that the binary data is base64 encoded
-            # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
-            # acceptable screenshot quality here
-            try:
-                # The actual screenshot - this always base64 and needs decoding! horrible! huge CPU usage
-                self.screenshot = await capture_full_page_async(page=self.page)
-
-            except Exception as e:
-                # It's likely the screenshot was too long/big and something crashed
-                raise ScreenshotUnavailable(url=url, status_code=self.status_code)
-            finally:
-                # Request garbage collection one more time before closing
-                try:
-                    await self.page.request_gc()
-                except:
-                    pass
-                
-                # Clean up resources properly
-                try:
-                    await self.page.request_gc()
-                except:
-                    pass
-
-                try:
-                    await self.page.close()
-                except:
-                    pass
-                self.page = None
-
-                try:
-                    await context.close()
-                except:
-                    pass
-                context = None
-
-                try:
-                    await browser.close()
-                except:
-                    pass
-                browser = None
-
-
-
+        
+        try:
+            # Get the singleton manager
+            playwright_manager = get_playwright_manager()
+            
+            # Prepare all the parameters for the manager
+            fetch_params = {
+                'timeout': timeout,
+                'request_headers': request_headers,
+                'request_body': request_body,
+                'request_method': request_method,
+                'ignore_status_codes': ignore_status_codes,
+                'current_include_filters': current_include_filters,
+                'is_binary': is_binary,
+                'empty_pages_are_a_change': empty_pages_are_a_change,
+                'proxy_override': self.proxy,
+                'webdriver_js_execute_code': self.webdriver_js_execute_code,
+                'browser_steps': None,  # TODO: Implement browser steps integration
+                'render_extract_delay': self.render_extract_delay
+            }
+            
+            # Use the manager to fetch the page
+            result = playwright_manager.fetch_page(url, **fetch_params)
+            
+            # Extract results into instance variables (maintaining compatibility)
+            self.content = result['content']
+            self.status_code = result['status_code']
+            self.screenshot = result['screenshot']
+            self.headers = result['headers']
+            self.xpath_data = result['xpath_data']
+            self.instock_data = result['instock_data']
+            
+            logger.debug(f"Playwright fetch completed successfully for {url}")
+            
+            return self.content
+            
+        except Exception as e:
+            logger.error(f"Playwright fetch failed for {url}: {e}")
+            self.error = str(e)
+            raise
