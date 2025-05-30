@@ -26,9 +26,42 @@ class SignalHandler:
         queue_length_signal.connect(self.handle_queue_length, weak=False)
         #       logger.info("SignalHandler: Connected to queue_length signal")
 
-        # Create and start the queue update thread using eventlet
-        import eventlet
-        self.polling_emitter_thread = eventlet.spawn(self.polling_emit_running_or_queued_watches)
+        # Create and start the queue update thread - platform specific with manual override
+        import platform
+        system = platform.system().lower()
+        
+        # Check for manual override via environment variable
+        force_threading = strtobool(os.getenv('SOCKETIO_FORCE_THREADING', 'False'))
+        force_eventlet = strtobool(os.getenv('SOCKETIO_FORCE_EVENTLET', 'False'))
+        
+        use_threading = force_threading or (system == 'windows' and not force_eventlet)
+        
+        if use_threading:
+            # Use threading mode (Windows default or manual override)
+            import threading
+            self.polling_emitter_thread = threading.Thread(
+                target=self.polling_emit_running_or_queued_watches_threaded, 
+                daemon=True
+            )
+            self.polling_emitter_thread.start()
+            reason = "manual override" if force_threading else f"{system} default"
+            logger.info(f"Started polling thread using threading ({reason})")
+        else:
+            # Use eventlet on macOS/Linux (or manual override)
+            try:
+                import eventlet
+                self.polling_emitter_thread = eventlet.spawn(self.polling_emit_running_or_queued_watches)
+                reason = "manual override" if force_eventlet else f"{system} default"
+                logger.info(f"Started polling thread using eventlet ({reason})")
+            except ImportError:
+                # Fallback to threading
+                import threading
+                self.polling_emitter_thread = threading.Thread(
+                    target=self.polling_emit_running_or_queued_watches_threaded, 
+                    daemon=True
+                )
+                self.polling_emitter_thread.start()
+                logger.info("Eventlet not available: Started polling thread using threading")
 
         # Store the thread reference in socketio for clean shutdown
         self.socketio_instance.polling_emitter_thread = self.polling_emitter_thread
@@ -109,6 +142,56 @@ class SignalHandler:
 
         logger.info("Queue update eventlet greenlet stopped")
 
+    def polling_emit_running_or_queued_watches_threaded(self):
+        """Threading version of polling for Windows compatibility"""
+        import time
+        import threading
+        logger.info("Queue update thread started (threading mode)")
+        
+        # Import here to avoid circular imports
+        from changedetectionio.flask_app import app
+        from changedetectionio import worker_handler
+        watch_check_update = signal('watch_check_update')
+        
+        # Track previous state to avoid unnecessary emissions
+        previous_running_uuids = set()
+        
+        # Run until app shutdown
+        while not getattr(app.config, 'exit', threading.Event()).is_set():
+            try:
+                # Get current running UUIDs from async workers
+                running_uuids = set(worker_handler.get_running_uuids())
+                
+                # Only send updates for UUIDs that changed state
+                newly_running = running_uuids - previous_running_uuids
+                no_longer_running = previous_running_uuids - running_uuids
+                
+                # Send updates for newly running UUIDs
+                for uuid in newly_running:
+                    logger.trace(f"Threading polling: UUID {uuid} started processing")
+                    with app.app_context():
+                        watch_check_update.send(app_context=app, watch_uuid=uuid)
+                    time.sleep(0.01)  # Small yield
+                
+                # Send updates for UUIDs that finished processing  
+                for uuid in no_longer_running:
+                    logger.trace(f"Threading polling: UUID {uuid} finished processing")
+                    with app.app_context():
+                        watch_check_update.send(app_context=app, watch_uuid=uuid)
+                    time.sleep(0.01)  # Small yield
+                
+                # Update tracking for next iteration
+                previous_running_uuids = running_uuids
+                
+                # Sleep between polling cycles
+                time.sleep(10)  # Check every 10 seconds for state changes
+                
+            except Exception as e:
+                logger.error(f"Error in threading polling: {str(e)}")
+                time.sleep(0.5)
+        
+        logger.info("Queue update thread stopped (threading mode)")
+
 
 def handle_watch_update(socketio, **kwargs):
     """Handle watch update signal from blinker"""
@@ -180,10 +263,51 @@ def handle_watch_update(socketio, **kwargs):
 
 def init_socketio(app, datastore):
     """Initialize SocketIO with the main Flask app"""
-    # Use eventlet async_mode now that Playwright is async and compatible
-    # Eventlet mode works well with async_playwright
-    async_mode = 'eventlet'
-    logger.info(f"Using {async_mode} mode for Socket.IO")
+    import platform
+    import sys
+    
+    # Platform-specific async_mode selection for better stability
+    system = platform.system().lower()
+    python_version = sys.version_info
+    
+    # Check for manual override via environment variable
+    force_threading = strtobool(os.getenv('SOCKETIO_FORCE_THREADING', 'False'))
+    force_eventlet = strtobool(os.getenv('SOCKETIO_FORCE_EVENTLET', 'False'))
+    
+    if force_threading:
+        # Manual override to threading mode for testing
+        async_mode = 'threading'
+        logger.info(f"SOCKETIO_FORCE_THREADING=True: Using {async_mode} mode for Socket.IO (manual override)")
+    elif force_eventlet:
+        # Manual override to eventlet mode for testing
+        try:
+            import eventlet
+            async_mode = 'eventlet'
+            logger.info(f"SOCKETIO_FORCE_EVENTLET=True: Using {async_mode} mode for Socket.IO (manual override)")
+        except ImportError:
+            async_mode = 'threading'
+            logger.warning(f"SOCKETIO_FORCE_EVENTLET=True but eventlet not available, falling back to {async_mode} mode")
+    elif system == 'windows':
+        # Windows: Use threading mode for better stability
+        # Eventlet can be problematic on Windows, especially with newer Python versions
+        async_mode = 'threading'
+        logger.info(f"Windows detected: Using {async_mode} mode for Socket.IO (more stable on Windows)")
+    elif system == 'darwin':  # macOS
+        # macOS: Use eventlet but with fallback to threading
+        try:
+            import eventlet
+            async_mode = 'eventlet'
+            logger.info(f"macOS detected: Using {async_mode} mode for Socket.IO")
+        except ImportError:
+            async_mode = 'threading'
+            logger.warning(f"macOS: eventlet not available, falling back to {async_mode} mode")
+    else:
+        # Linux and others: Use eventlet (most stable)
+        async_mode = 'eventlet'
+        logger.info(f"Linux/Unix detected: Using {async_mode} mode for Socket.IO")
+    
+    # Log platform info for debugging
+    logger.info(f"Platform: {system}, Python: {python_version.major}.{python_version.minor}, Socket.IO mode: {async_mode}")
 
     # Restrict SocketIO CORS to same origin by default, can be overridden with env var
     cors_origins = os.environ.get('SOCKETIO_CORS_ORIGINS', None)
