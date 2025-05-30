@@ -1,10 +1,5 @@
 name: ChangeDetection.io Container Build Test
 
-# Triggers the workflow on push or pull request events
-
-# This line doesnt work, even tho it is the documented one
-#on: [push, pull_request]
-
 on:
   push:
     paths:
@@ -20,51 +15,53 @@ on:
       - .github/workflows/*
       - .github/test/Dockerfile*
 
-  # Changes to requirements.txt packages and Dockerfile may or may not always be compatible with arm etc, so worth testing
-  # @todo: some kind of path filter for requirements.txt and Dockerfile
 jobs:
   test-container-build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python_version: [3.11, 3.12, 3.13]
     steps:
-        - uses: actions/checkout@v4
-        - name: Set up Python 3.11
-          uses: actions/setup-python@v5
-          with:
-            python-version: 3.11
+      - uses: actions/checkout@v4
 
-        # Just test that the build works, some libraries won't compile on ARM/rPi etc
-        - name: Set up QEMU
-          uses: docker/setup-qemu-action@v3
-          with:
-            image: tonistiigi/binfmt:latest
-            platforms: all
+      - name: Set up Python ${{ matrix.python_version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python_version }}
 
-        - name: Set up Docker Buildx
-          id: buildx
-          uses: docker/setup-buildx-action@v3
-          with:
-            install: true
-            version: latest
-            driver-opts: image=moby/buildkit:master
+      # Set up QEMU
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          image: tonistiigi/binfmt:latest
+          platforms: all
 
-        # https://github.com/dgtlmoon/changedetection.io/pull/1067
-        # Check we can still build under alpine/musl
-        - name: Test that the docker containers can build (musl via alpine check)
-          id: docker_build_musl
-          uses: docker/build-push-action@v6
-          with:
-            context: ./
-            file: ./.github/test/Dockerfile-alpine
-            platforms: linux/amd64,linux/arm64
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+          version: latest
+          driver-opts: image=moby/buildkit:master
 
-        - name: Test that the docker containers can build
-          id: docker_build
-          uses: docker/build-push-action@v6
-          # https://github.com/docker/build-push-action#customizing
-          with:
-            context: ./
-            file: ./Dockerfile
-            platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v8,linux/arm64/v8
-            cache-from: type=local,src=/tmp/.buildx-cache
-            cache-to: type=local,dest=/tmp/.buildx-cache
+      # Musl (alpine) build test (runs once per matrix job, or can skip with conditional if needed)
+      - name: Test that the docker containers can build (musl via alpine check)
+        id: docker_build_musl
+        uses: docker/build-push-action@v6
+        with:
+          context: ./
+          file: ./.github/test/Dockerfile-alpine
+          platforms: linux/amd64,linux/arm64
 
+      # Main build with matrix Python version
+      - name: Test that the docker containers can build (Python ${{ matrix.python_version }})
+        id: docker_build
+        uses: docker/build-push-action@v6
+        with:
+          context: ./
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v8,linux/arm64/v8,linux/aarch64
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+        build: |
+          args=PYTHON_VERSION=${{ matrix.python_version }}
