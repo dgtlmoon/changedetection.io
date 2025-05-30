@@ -47,7 +47,7 @@ class fetcher(Fetcher):
             self.proxy_url = k.strip()
 
 
-    def run(self,
+    async def run(self,
             url,
             timeout,
             request_headers,
@@ -58,77 +58,86 @@ class fetcher(Fetcher):
             is_binary=False,
             empty_pages_are_a_change=False):
 
-        from selenium.webdriver.chrome.options import Options as ChromeOptions
-        # request_body, request_method unused for now, until some magic in the future happens.
+        import asyncio
+        
+        # Wrap the entire selenium operation in a thread executor
+        def _run_sync():
+            from selenium.webdriver.chrome.options import Options as ChromeOptions
+            # request_body, request_method unused for now, until some magic in the future happens.
 
-        options = ChromeOptions()
+            options = ChromeOptions()
 
-        # Load Chrome options from env
-        CHROME_OPTIONS = [
-            line.strip()
-            for line in os.getenv("CHROME_OPTIONS", "").strip().splitlines()
-            if line.strip()
-        ]
+            # Load Chrome options from env
+            CHROME_OPTIONS = [
+                line.strip()
+                for line in os.getenv("CHROME_OPTIONS", "").strip().splitlines()
+                if line.strip()
+            ]
 
-        for opt in CHROME_OPTIONS:
-            options.add_argument(opt)
+            for opt in CHROME_OPTIONS:
+                options.add_argument(opt)
 
-        # 1. proxy_config /Proxy(proxy_config) selenium object is REALLY unreliable
-        # 2. selenium-wire cant be used because the websocket version conflicts with pypeteer-ng
-        # 3. selenium only allows ONE runner at a time by default!
-        # 4. driver must use quit() or it will continue to block/hold the selenium process!!
+            # 1. proxy_config /Proxy(proxy_config) selenium object is REALLY unreliable
+            # 2. selenium-wire cant be used because the websocket version conflicts with pypeteer-ng
+            # 3. selenium only allows ONE runner at a time by default!
+            # 4. driver must use quit() or it will continue to block/hold the selenium process!!
 
-        if self.proxy_url:
-            options.add_argument(f'--proxy-server={self.proxy_url}')
+            if self.proxy_url:
+                options.add_argument(f'--proxy-server={self.proxy_url}')
 
-        from selenium.webdriver.remote.remote_connection import RemoteConnection
-        from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
-        driver = None
-        try:
-            # Create the RemoteConnection and set timeout (e.g., 30 seconds)
-            remote_connection = RemoteConnection(
-                self.browser_connection_url,
-            )
-            remote_connection.set_timeout(30)  # seconds
+            from selenium.webdriver.remote.remote_connection import RemoteConnection
+            from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
+            driver = None
+            try:
+                # Create the RemoteConnection and set timeout (e.g., 30 seconds)
+                remote_connection = RemoteConnection(
+                    self.browser_connection_url,
+                )
+                remote_connection.set_timeout(30)  # seconds
 
-            # Now create the driver with the RemoteConnection
-            driver = RemoteWebDriver(
-                command_executor=remote_connection,
-                options=options
-            )
+                # Now create the driver with the RemoteConnection
+                driver = RemoteWebDriver(
+                    command_executor=remote_connection,
+                    options=options
+                )
 
-            driver.set_page_load_timeout(int(os.getenv("WEBDRIVER_PAGELOAD_TIMEOUT", 45)))
-        except Exception as e:
-            if driver:
-                driver.quit()
-            raise e
+                driver.set_page_load_timeout(int(os.getenv("WEBDRIVER_PAGELOAD_TIMEOUT", 45)))
+            except Exception as e:
+                if driver:
+                    driver.quit()
+                raise e
 
-        try:
-            driver.get(url)
+            try:
+                driver.get(url)
 
-            if not "--window-size" in os.getenv("CHROME_OPTIONS", ""):
-                driver.set_window_size(1280, 1024)
+                if not "--window-size" in os.getenv("CHROME_OPTIONS", ""):
+                    driver.set_window_size(1280, 1024)
 
-            driver.implicitly_wait(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
-
-            if self.webdriver_js_execute_code is not None:
-                driver.execute_script(self.webdriver_js_execute_code)
-                # Selenium doesn't automatically wait for actions as good as Playwright, so wait again
                 driver.implicitly_wait(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
 
-            # @todo - how to check this? is it possible?
-            self.status_code = 200
-            # @todo somehow we should try to get this working for WebDriver
-            # raise EmptyReply(url=url, status_code=r.status_code)
+                if self.webdriver_js_execute_code is not None:
+                    driver.execute_script(self.webdriver_js_execute_code)
+                    # Selenium doesn't automatically wait for actions as good as Playwright, so wait again
+                    driver.implicitly_wait(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
 
-            # @todo - dom wait loaded?
-            time.sleep(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay)
-            self.content = driver.page_source
-            self.headers = {}
-            self.screenshot = driver.get_screenshot_as_png()
-        except Exception as e:
+                # @todo - how to check this? is it possible?
+                self.status_code = 200
+                # @todo somehow we should try to get this working for WebDriver
+                # raise EmptyReply(url=url, status_code=r.status_code)
+
+                # @todo - dom wait loaded?
+                import time
+                time.sleep(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay)
+                self.content = driver.page_source
+                self.headers = {}
+                self.screenshot = driver.get_screenshot_as_png()
+            except Exception as e:
+                driver.quit()
+                raise e
+
             driver.quit()
-            raise e
 
-        driver.quit()
+        # Run the selenium operations in a thread pool to avoid blocking the event loop
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, _run_sync)
 

@@ -68,7 +68,7 @@ class Fetcher():
         return self.error
 
     @abstractmethod
-    def run(self,
+    async def run(self,
             url,
             timeout,
             request_headers,
