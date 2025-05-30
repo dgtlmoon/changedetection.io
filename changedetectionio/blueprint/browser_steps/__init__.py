@@ -28,36 +28,24 @@ from flask import Response
 import asyncio
 import threading
 
-# Global event loop for browser steps
-_browser_steps_loop = None
-_loop_thread = None
-
-def get_browser_steps_loop():
-    """Get or create a dedicated event loop for browser steps operations"""
-    global _browser_steps_loop, _loop_thread
-    
-    if _browser_steps_loop is None or _browser_steps_loop.is_closed():
-        def run_loop():
-            global _browser_steps_loop
-            _browser_steps_loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(_browser_steps_loop)
-            _browser_steps_loop.run_forever()
-        
-        _loop_thread = threading.Thread(target=run_loop, daemon=True)
-        _loop_thread.start()
-        
-        # Wait for loop to be ready
-        import time
-        while _browser_steps_loop is None:
-            time.sleep(0.01)
-    
-    return _browser_steps_loop
-
 def run_async_in_browser_loop(coro):
-    """Run async coroutine in the dedicated browser steps event loop"""
-    loop = get_browser_steps_loop()
-    future = asyncio.run_coroutine_threadsafe(coro, loop)
-    return future.result()
+    """Run async coroutine using the existing async worker event loop"""
+    from changedetectionio import worker_handler
+    
+    # Use the existing async worker event loop instead of creating a new one
+    if worker_handler.USE_ASYNC_WORKERS and worker_handler.async_loop and not worker_handler.async_loop.is_closed():
+        logger.debug("Browser steps using existing async worker event loop")
+        future = asyncio.run_coroutine_threadsafe(coro, worker_handler.async_loop)
+        return future.result()
+    else:
+        # Fallback: create a new event loop (for sync workers or if async loop not available)
+        logger.debug("Browser steps creating temporary event loop")
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            return loop.run_until_complete(coro)
+        finally:
+            loop.close()
 
 def construct_blueprint(datastore: ChangeDetectionStore):
     browser_steps_blueprint = Blueprint('browser_steps', __name__, template_folder="templates")
