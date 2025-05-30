@@ -30,7 +30,6 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
     while not app.config.exit.is_set():
         update_handler = None
         watch = None
-        current_uuid = None
 
         try:
             # Use asyncio wait_for to make queue.get() cancellable
@@ -43,16 +42,14 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
             await asyncio.sleep(0.1)
             continue
         
-        uuid = None
+        uuid = queued_item_data.item.get('uuid')
+        fetch_start_time = round(time.time())
+        
+        # Mark this UUID as being processed
+        from changedetectionio import worker_handler
+        worker_handler.set_uuid_processing(uuid, processing=True)
+        
         try:
-            uuid = queued_item_data.item.get('uuid')
-            fetch_start_time = round(time.time())
-            current_uuid = uuid
-            
-            # Mark this UUID as being processed
-            from changedetectionio import worker_handler
-            worker_handler.set_uuid_processing(uuid, processing=True)
-            
             if uuid in list(datastore.data['watching'].keys()) and datastore.data['watching'][uuid].get('url'):
                 changed_detected = False
                 contents = b''
@@ -354,39 +351,37 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                 datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - fetch_start_time, 3),
                                                                'check_count': count})
 
-            current_uuid = None
-            
-            # Mark UUID as no longer being processed
-            worker_handler.set_uuid_processing(uuid, processing=False)
-            
-            # Send completion signal
-            if watch:
-                logger.info(f"Worker {worker_id} sending completion signal for UUID {watch['uuid']}")
-                watch_check_update.send(watch_uuid=watch['uuid'])
-
-            update_handler = None
-            logger.debug(f"Worker {worker_id} completed watch {uuid} in {time.time()-fetch_start_time:.2f}s")
-
-            # Yield control to other coroutines
-            await asyncio.sleep(0.01)
-
         except Exception as e:
             logger.error(f"Worker {worker_id} unexpected error processing {uuid}: {e}")
             logger.error(f"Worker {worker_id} traceback:", exc_info=True)
             
-            # Make sure to mark UUID as completed even on error
+            # Also update the watch with error information
+            if datastore and uuid in datastore.data['watching']:
+                datastore.update_watch(uuid=uuid, update_obj={'last_error': f"Worker error: {str(e)}"})
+        
+        finally:
+            # Always cleanup - this runs whether there was an exception or not
             if uuid:
                 try:
+                    # Mark UUID as no longer being processed
                     worker_handler.set_uuid_processing(uuid, processing=False)
-                    # Also update the watch with error information
-                    if datastore and uuid in datastore.data['watching']:
-                        datastore.update_watch(uuid=uuid, update_obj={'last_error': f"Worker error: {str(e)}"})
+                    
+                    # Send completion signal
+                    if watch:
+                        #logger.info(f"Worker {worker_id} sending completion signal for UUID {watch['uuid']}")
+                        watch_check_update.send(watch_uuid=watch['uuid'])
+
+                    update_handler = None
+                    logger.debug(f"Worker {worker_id} completed watch {uuid} in {time.time()-fetch_start_time:.2f}s")
                 except Exception as cleanup_error:
                     logger.error(f"Worker {worker_id} error during cleanup: {cleanup_error}")
-                    
-            current_uuid = None
-            # Brief pause before continuing to avoid tight error loops
-            await asyncio.sleep(1.0)
+            
+            # Brief pause before continuing to avoid tight error loops (only on error)
+            if 'e' in locals():
+                await asyncio.sleep(1.0)
+            else:
+                # Small yield for normal completion
+                await asyncio.sleep(0.01)
 
         # Check if we should exit
         if app.config.exit.is_set():
