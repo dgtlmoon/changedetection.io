@@ -234,7 +234,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             return make_response("Error fetching screenshot and element data - " + str(e), 401)
 
         # SEND THIS BACK TO THE BROWSER
-
         output = {
             "screenshot": f"data:image/jpeg;base64,{base64.b64encode(screenshot).decode('ascii')}",
             "xpath_data": xpath_data,

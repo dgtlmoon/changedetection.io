@@ -143,15 +143,12 @@ def wait_for_all_checks(client=None):
     required_empty_duration = 0.2
 
     logger = logging.getLogger()
-    time.sleep(1.2)
 
     empty_since = None
 
     while attempt < max_attempts:
-        q_length = global_update_q.qsize()
-
-        # Check if any workers are still processing
         time.sleep(1.2)
+        q_length = global_update_q.qsize()
         running_uuids = worker_handler.get_running_uuids()
         any_workers_busy = len(running_uuids) > 0
 

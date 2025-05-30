@@ -148,6 +148,31 @@ def _jinja2_filter_format_number_locale(value: float) -> str:
 def _watch_is_checking_now(watch_obj, format="%Y-%m-%d %H:%M:%S"):
     return worker_handler.is_watch_running(watch_obj['uuid'])
 
+@app.template_global('get_watch_queue_position')
+def _get_watch_queue_position(watch_obj):
+    """Get the position of a watch in the queue"""
+    uuid = watch_obj['uuid']
+    return update_q.get_uuid_position(uuid)
+
+@app.template_global('get_current_worker_count')
+def _get_current_worker_count():
+    """Get the current number of operational workers"""
+    return worker_handler.get_worker_count()
+
+@app.template_global('get_worker_status_info')
+def _get_worker_status_info():
+    """Get detailed worker status information for display"""
+    status = worker_handler.get_worker_status()
+    running_uuids = worker_handler.get_running_uuids()
+    
+    return {
+        'count': status['worker_count'],
+        'type': status['worker_type'],
+        'active_workers': len(running_uuids),
+        'processing_watches': running_uuids,
+        'loop_running': status.get('async_loop_running', None)
+    }
+
 
 # We use the whole watch object from the store/JSON so we can see if there's some related status in terms of a thread
 # running or something similar.
@@ -520,6 +545,51 @@ def changedetection_app(config=None, datastore_o=None):
             "health_check": health_result,
             "expected_workers": expected_workers
         })
+
+    # Queue status endpoint
+    @app.route('/queue-status', methods=['GET'])
+    @login_optionally_required
+    def queue_status():
+        from flask import jsonify, request
+        
+        # Get specific UUID position if requested
+        target_uuid = request.args.get('uuid')
+        
+        if target_uuid:
+            position_info = update_q.get_uuid_position(target_uuid)
+            return jsonify({
+                "status": "success",
+                "uuid": target_uuid,
+                "queue_position": position_info
+            })
+        else:
+            # Get pagination parameters
+            limit = request.args.get('limit', type=int)
+            offset = request.args.get('offset', type=int, default=0)
+            summary_only = request.args.get('summary', type=bool, default=False)
+            
+            if summary_only:
+                # Fast summary for large queues
+                summary = update_q.get_queue_summary()
+                return jsonify({
+                    "status": "success",
+                    "queue_summary": summary
+                })
+            else:
+                # Get queued items with pagination support
+                if limit is None:
+                    # Default limit for large queues to prevent performance issues
+                    queue_size = update_q.qsize()
+                    if queue_size > 100:
+                        limit = 50
+                        logger.warning(f"Large queue ({queue_size} items) detected, limiting to {limit} items. Use ?limit=N for more.")
+                
+                all_queued = update_q.get_all_queued_uuids(limit=limit, offset=offset)
+                return jsonify({
+                    "status": "success",
+                    "queue_size": update_q.qsize(),
+                    "queued_data": all_queued
+                })
 
     # Start the async workers during app initialization
     # Can be overridden by ENV or use the default settings
