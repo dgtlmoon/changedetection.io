@@ -4,6 +4,12 @@
 <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
 <script>let nowtimeserver={{ now_time_server }};</script>
+<script>
+// Initialize Feather icons after the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    feather.replace();
+});
+</script>
 <style>
 .checking-now .last-checked {
     background-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.1) 100%);
@@ -37,17 +43,17 @@
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
     <input type="hidden" id="op_extradata" name="op_extradata" value="" >
     <div id="checkbox-operations">
-        <button class="pure-button button-secondary button-xsmall"  name="op" value="pause">Pause</button>
-        <button class="pure-button button-secondary button-xsmall"  name="op" value="unpause">UnPause</button>
-        <button class="pure-button button-secondary button-xsmall"  name="op" value="mute">Mute</button>
-        <button class="pure-button button-secondary button-xsmall"  name="op" value="unmute">UnMute</button>
-        <button class="pure-button button-secondary button-xsmall" name="op" value="recheck">Recheck</button>
-        <button class="pure-button button-secondary button-xsmall" name="op" value="assign-tag" id="checkbox-assign-tag">Tag</button>
-        <button class="pure-button button-secondary button-xsmall" name="op" value="mark-viewed">Mark viewed</button>
-        <button class="pure-button button-secondary button-xsmall" name="op" value="notification-default">Use default notification</button>
-        <button class="pure-button button-secondary button-xsmall" name="op" value="clear-errors">Clear errors</button>
-        <button class="pure-button button-secondary button-xsmall" style="background: #dd4242;" name="op" value="clear-history">Clear/reset history</button>
-        <button class="pure-button button-secondary button-xsmall" style="background: #dd4242;" name="op" value="delete">Delete</button>
+        <button class="pure-button button-secondary button-xsmall"  name="op" value="pause"><i data-feather="pause" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>Pause</button>
+        <button class="pure-button button-secondary button-xsmall"  name="op" value="unpause"><i data-feather="play" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>UnPause</button>
+        <button class="pure-button button-secondary button-xsmall"  name="op" value="mute"><i data-feather="volume-x" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>Mute</button>
+        <button class="pure-button button-secondary button-xsmall"  name="op" value="unmute"><i data-feather="volume-2" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>UnMute</button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="recheck"><i data-feather="refresh-cw" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>Recheck</button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="assign-tag" id="checkbox-assign-tag"><i data-feather="tag" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>Tag</button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="mark-viewed"><i data-feather="eye" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>Mark viewed</button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="notification-default"><i data-feather="bell" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>Use default notification</button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="clear-errors"><i data-feather="x-circle" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>Clear errors</button>
+        <button class="pure-button button-secondary button-xsmall" style="background: #dd4242;" name="op" value="clear-history"><i data-feather="trash-2" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>Clear/reset history</button>
+        <button class="pure-button button-secondary button-xsmall" style="background: #dd4242;" name="op" value="delete"><i data-feather="trash" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>Delete</button>
     </div>
     {% if watches|length >= pagination.per_page %}
         {{ pagination.info }}
@@ -120,7 +126,7 @@
                     <a class="ajax-op state-on mute-toggle" data-op="mute"  style="display: none" href="{{url_for('watchlist.index', op='mute', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="UnMute notification" title="UnMute notification" class="icon icon-mute" ></a>
                 </td>
                 <td class="title-col inline">{{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
-                    <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}"></a>
+                    <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}"><i data-feather="external-link"></i></a>
                     <a class="link-spread" href="{{url_for('ui.form_share_put_watch', uuid=watch.uuid)}}"><img src="{{url_for('static_content', group='images', filename='spread.svg')}}" class="status-icon icon icon-spread" title="Create a link to share watch config with others" ></a>
 
                     {% if watch.get_fetch_backend == "html_webdriver"
