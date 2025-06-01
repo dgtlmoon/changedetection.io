@@ -51,7 +51,6 @@ def main():
     global app
 
     datastore_path = None
-    do_cleanup = False
     host = ''
     ipv6_enabled = False
     port = os.environ.get('PORT') or 5000
@@ -98,10 +97,6 @@ def main():
         if opt == '-6':
             logger.success("Enabling IPv6 listen support")
             ipv6_enabled = True
-
-        # Cleanup (remove text files that arent in the index)
-        if opt == '-c':
-            do_cleanup = True
 
         # Create the datadir if it doesnt exist
         if opt == '-C':
@@ -165,10 +160,6 @@ def main():
         signal.signal(signal.SIGUSR1, sigusr_clean_handler)
     else:
         logger.info("SIGUSR1 handler only registered on Linux, skipped.")
-
-    # Go into cleanup mode
-    if do_cleanup:
-        datastore.remove_unused_snapshots()
 
     app.config['datastore_path'] = datastore_path
 
