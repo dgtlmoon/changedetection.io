@@ -17,9 +17,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         # Watch_uuid could be unset in the case it`s used in tag editor, global settings
         import apprise
-        from changedetectionio.notification.handler import process_notification
+        import queue
+        from changedetectionio.update_worker import update_worker
         from changedetectionio.notification.apprise_plugin.assets import apprise_asset
-
         from changedetectionio.notification.apprise_plugin.custom_handlers import apprise_http_custom_handler
 
         apobj = apprise.Apprise(asset=apprise_asset)
@@ -92,7 +92,19 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
             n_object['as_async'] = False
             n_object.update(watch.extra_notification_token_values())
-            sent_obj = process_notification(n_object, datastore)
+
+            # Create a temporary notification queue for this test
+            notification_q = queue.Queue()
+            
+            # Create a temporary update_worker instance just for using queue_notification_for_watch
+            worker = update_worker(queue.Queue(), notification_q, None, datastore)
+            
+            # Use queue_notification_for_watch to process the notification with all tokens
+            worker.queue_notification_for_watch(notification_q, n_object, watch)
+            
+            # Get the notification from the queue and process it
+            from changedetectionio.notification.handler import process_notification
+            sent_obj = process_notification(notification_q.get(), datastore)
 
         except Exception as e:
             e_str = str(e)
