@@ -108,7 +108,7 @@ def test_api_simple(client, live_server, measure_memory_usage):
         headers={'x-api-key': api_key}
     )
     assert len(res.json) == 0
-
+    time.sleep(1)
     wait_for_all_checks(client)
 
     set_modified_response()
@@ -119,6 +119,7 @@ def test_api_simple(client, live_server, measure_memory_usage):
     )
     wait_for_all_checks(client)
 
+    time.sleep(1)
     # Did the recheck fire?
     res = client.get(
         url_for("createwatch"),

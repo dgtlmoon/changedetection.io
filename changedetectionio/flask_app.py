@@ -4,10 +4,10 @@ import flask_login
 import locale
 import os
 import queue
+import sys
 import threading
 import time
 import timeago
-import asyncio
 from blinker import signal
 
 from changedetectionio.strtobool import strtobool
@@ -601,8 +601,9 @@ def changedetection_app(config=None, datastore_o=None):
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
     threading.Thread(target=notification_runner).start()
 
+    in_pytest = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
     # Check for new release version, but not when running in test/build or pytest
-    if not os.getenv("GITHUB_REF", False) and not strtobool(os.getenv('DISABLE_VERSION_CHECK', 'no')):
+    if not os.getenv("GITHUB_REF", False) and not strtobool(os.getenv('DISABLE_VERSION_CHECK', 'no')) and not in_pytest:
         threading.Thread(target=check_for_new_version).start()
 
     # Return the Flask app - the Socket.IO will be attached to it but initialized separately
