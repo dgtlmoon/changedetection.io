@@ -29,3 +29,4 @@ venv/
 
 # Visual Studio
 .vscode/
+test-datastore/
