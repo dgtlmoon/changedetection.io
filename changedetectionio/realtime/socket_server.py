@@ -139,7 +139,12 @@ class SignalHandler:
                         break
                     time.sleep(0.5)
         
-        logger.info("Queue update thread stopped (threading mode)")
+        # Check if we're in pytest environment - if so, be more gentle with logging
+        import sys
+        in_pytest = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
+        
+        if not in_pytest:
+            logger.info("Queue update thread stopped (threading mode)")
 
 
 def handle_watch_update(socketio, **kwargs):

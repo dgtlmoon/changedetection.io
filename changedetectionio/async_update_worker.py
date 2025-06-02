@@ -25,6 +25,11 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
         app: Flask application instance
         datastore: Application datastore
     """
+    # Set a descriptive name for this task
+    task = asyncio.current_task()
+    if task:
+        task.set_name(f"async-worker-{worker_id}")
+    
     logger.info(f"Starting async worker {worker_id}")
     
     while not app.config.exit.is_set():
@@ -387,7 +392,12 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
         if app.config.exit.is_set():
             break
 
-    logger.info(f"Worker {worker_id} shutting down")
+    # Check if we're in pytest environment - if so, be more gentle with logging
+    import sys
+    in_pytest = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
+    
+    if not in_pytest:
+        logger.info(f"Worker {worker_id} shutting down")
 
 
 def cleanup_error_artifacts(uuid, datastore):

@@ -407,7 +407,12 @@ class ChangeDetectionStore:
                 # This is a fairly basic strategy to deal with the case that the file is corrupted,
                 # system was out of memory, out of RAM etc
                 with open(self.json_store_path+".tmp", 'w') as json_file:
-                    json.dump(data, json_file, indent=4)
+                    # Use compact JSON in production for better performance
+                    debug_mode = os.environ.get('CHANGEDETECTION_DEBUG', 'false').lower() == 'true'
+                    if debug_mode:
+                        json.dump(data, json_file, indent=4)
+                    else:
+                        json.dump(data, json_file, separators=(',', ':'))
                 os.replace(self.json_store_path+".tmp", self.json_store_path)
             except Exception as e:
                 logger.error(f"Error writing JSON!! (Main JSON file save was skipped) : {str(e)}")

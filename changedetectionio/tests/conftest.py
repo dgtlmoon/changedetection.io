@@ -106,8 +106,33 @@ def app(request):
     app.config['STOP_THREADS'] = True
 
     def teardown():
+        # Stop all threads and services
         datastore.stop_thread = True
         app.config.exit.set()
+        
+        # Shutdown workers gracefully before loguru cleanup
+        try:
+            from changedetectionio import worker_handler
+            worker_handler.shutdown_workers()
+        except Exception:
+            pass
+            
+        # Stop socket server threads
+        try:
+            from changedetectionio.flask_app import socketio_server
+            if socketio_server and hasattr(socketio_server, 'shutdown'):
+                socketio_server.shutdown()
+        except Exception:
+            pass
+        
+        # Give threads a moment to finish their shutdown
+        import time
+        time.sleep(0.1)
+        
+        # Remove all loguru handlers to prevent "closed file" errors
+        logger.remove()
+        
+        # Cleanup files
         cleanup(app_config['datastore_path'])
 
        
