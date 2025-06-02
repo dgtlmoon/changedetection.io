@@ -28,14 +28,23 @@ def start_async_event_loop():
     global async_loop
     logger.info("Starting async event loop for workers")
     
-    async_loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(async_loop)
-    
     try:
+        # Create a new event loop for this thread
+        async_loop = asyncio.new_event_loop()
+        # Set it as the event loop for this thread
+        asyncio.set_event_loop(async_loop)
+        
+        logger.debug(f"Event loop created and set: {async_loop}")
+        
+        # Run the event loop forever
         async_loop.run_forever()
     except Exception as e:
         logger.error(f"Async event loop error: {e}")
     finally:
+        # Clean up
+        if async_loop and not async_loop.is_closed():
+            async_loop.close()
+        async_loop = None
         logger.info("Async event loop stopped")
 
 
@@ -50,16 +59,30 @@ def start_async_workers(n_workers, update_q, notification_q, app, datastore):
     async_loop_thread = threading.Thread(target=start_async_event_loop, daemon=True)
     async_loop_thread.start()
     
-    # Wait a moment for the loop to start
-    time.sleep(0.1)
+    # Wait for the loop to be available (with timeout for safety)
+    max_wait_time = 5.0
+    wait_start = time.time()
+    while async_loop is None and (time.time() - wait_start) < max_wait_time:
+        time.sleep(0.1)
+    
+    if async_loop is None:
+        logger.error("Failed to start async event loop within timeout")
+        return
+    
+    # Additional brief wait to ensure loop is running
+    time.sleep(0.2)
     
     # Start async workers
     logger.info(f"Starting {n_workers} async workers")
     for i in range(n_workers):
-        task_future = asyncio.run_coroutine_threadsafe(
-            start_single_async_worker(i, update_q, notification_q, app, datastore), async_loop
-        )
-        running_async_tasks.append(task_future)
+        try:
+            task_future = asyncio.run_coroutine_threadsafe(
+                start_single_async_worker(i, update_q, notification_q, app, datastore), async_loop
+            )
+            running_async_tasks.append(task_future)
+        except RuntimeError as e:
+            logger.error(f"Failed to start async worker {i}: {e}")
+            continue
 
 
 async def start_single_async_worker(worker_id, update_q, notification_q, app, datastore):
@@ -150,35 +173,44 @@ def is_watch_running(watch_uuid):
 
 def queue_item_async_safe(update_q, item):
     """Queue an item for async queue processing"""
-    if async_loop:
-        # For async queue, schedule the put operation
-        asyncio.run_coroutine_threadsafe(update_q.put(item), async_loop)
+    if async_loop and not async_loop.is_closed():
+        try:
+            # For async queue, schedule the put operation
+            asyncio.run_coroutine_threadsafe(update_q.put(item), async_loop)
+        except RuntimeError as e:
+            logger.error(f"Failed to queue item: {e}")
     else:
-        logger.error("Async loop not available for queueing item")
+        logger.error("Async loop not available or closed for queueing item")
 
 
 def shutdown_workers():
-    """Shutdown all async workers gracefully"""
+    """Shutdown all async workers fast and aggressively"""
     global async_loop, async_loop_thread, running_async_tasks
     
-    logger.info("Shutting down async workers...")
+    logger.info("Fast shutdown of async workers initiated...")
     
-    # Cancel all async tasks
+    # Cancel all async tasks immediately
     for task_future in running_async_tasks:
         task_future.cancel()
     running_async_tasks.clear()
     
-    # Stop the async event loop
-    if async_loop:
-        async_loop.call_soon_threadsafe(async_loop.stop)
+    # Stop the async event loop immediately
+    if async_loop and not async_loop.is_closed():
+        try:
+            async_loop.call_soon_threadsafe(async_loop.stop)
+        except RuntimeError:
+            # Loop might already be stopped
+            pass
         async_loop = None
         
-    # Wait for the async thread to finish
+    # Give async thread minimal time to finish, then continue
     if async_loop_thread and async_loop_thread.is_alive():
-        async_loop_thread.join(timeout=5)
+        async_loop_thread.join(timeout=1.0)  # Only 1 second timeout
+        if async_loop_thread.is_alive():
+            logger.info("Async thread still running after timeout - continuing with shutdown")
         async_loop_thread = None
     
-    logger.info("Async workers shutdown complete")
+    logger.info("Async workers fast shutdown complete")
 
 
 def adjust_async_worker_count(new_count, update_q=None, notification_q=None, app=None, datastore=None):

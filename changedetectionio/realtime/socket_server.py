@@ -26,42 +26,14 @@ class SignalHandler:
         queue_length_signal.connect(self.handle_queue_length, weak=False)
         #       logger.info("SignalHandler: Connected to queue_length signal")
 
-        # Create and start the queue update thread - platform specific with manual override
-        import platform
-        system = platform.system().lower()
-        
-        # Check for manual override via environment variable
-        force_threading = strtobool(os.getenv('SOCKETIO_FORCE_THREADING', 'False'))
-        force_eventlet = strtobool(os.getenv('SOCKETIO_FORCE_EVENTLET', 'False'))
-        
-        use_threading = force_threading or (system == 'windows' and not force_eventlet)
-        
-        if use_threading:
-            # Use threading mode (Windows default or manual override)
-            import threading
-            self.polling_emitter_thread = threading.Thread(
-                target=self.polling_emit_running_or_queued_watches_threaded, 
-                daemon=True
-            )
-            self.polling_emitter_thread.start()
-            reason = "manual override" if force_threading else f"{system} default"
-            logger.info(f"Started polling thread using threading ({reason})")
-        else:
-            # Use eventlet on macOS/Linux (or manual override)
-            try:
-                import eventlet
-                self.polling_emitter_thread = eventlet.spawn(self.polling_emit_running_or_queued_watches)
-                reason = "manual override" if force_eventlet else f"{system} default"
-                logger.info(f"Started polling thread using eventlet ({reason})")
-            except ImportError:
-                # Fallback to threading
-                import threading
-                self.polling_emitter_thread = threading.Thread(
-                    target=self.polling_emit_running_or_queued_watches_threaded, 
-                    daemon=True
-                )
-                self.polling_emitter_thread.start()
-                logger.info("Eventlet not available: Started polling thread using threading")
+        # Create and start the queue update thread using standard threading
+        import threading
+        self.polling_emitter_thread = threading.Thread(
+            target=self.polling_emit_running_or_queued_watches_threaded, 
+            daemon=True
+        )
+        self.polling_emitter_thread.start()
+        logger.info("Started polling thread using threading (eventlet-free)")
 
         # Store the thread reference in socketio for clean shutdown
         self.socketio_instance.polling_emitter_thread = self.polling_emitter_thread
@@ -104,43 +76,6 @@ class SignalHandler:
         except Exception as e:
             logger.error(f"Socket.IO error in handle_queue_length: {str(e)}")
 
-    def polling_emit_running_or_queued_watches(self):
-        """Greenlet that periodically updates the browser/frontend with current state of who is being checked or queued
-        This is because sometimes the browser page could reload (like on clicking on a link) but the data is old
-        """
-        logger.info("Queue update eventlet greenlet started")
-
-        # Import the watch_check_update signal, update_q, and worker_handler here to avoid circular imports
-        from changedetectionio.flask_app import app
-        from changedetectionio import worker_handler
-        watch_check_update = signal('watch_check_update')
-
-        # Use eventlet sleep for non-blocking operation
-        from eventlet import sleep as eventlet_sleep
-
-        # Get the stop event from the socketio instance
-        stop_event = self.socketio_instance.stop_event if hasattr(self.socketio_instance, 'stop_event') else None
-
-        # Run until explicitly stopped
-        while stop_event is None or not stop_event.ready():
-            try:
-                # Get current running UUIDs from async workers
-                running_uuids = set(worker_handler.get_running_uuids())
-
-                # Send updates for newly running UUIDs
-                with app.app_context():
-                    for uuid in running_uuids:
-                        watch_check_update.send(app_context=app, watch_uuid=uuid)
-                    eventlet_sleep(0.01)  # Small yield
-
-            except Exception as e:
-                logger.error(f"Error in queue update greenlet: {str(e)}")
-                # Sleep a bit to avoid flooding logs in case of persistent error
-                eventlet_sleep(0.5)
-
-            eventlet_sleep(10)
-
-        logger.info("Queue update eventlet greenlet stopped")
 
     def polling_emit_running_or_queued_watches_threaded(self):
         """Threading version of polling for Windows compatibility"""
@@ -156,8 +91,10 @@ class SignalHandler:
         # Track previous state to avoid unnecessary emissions
         previous_running_uuids = set()
         
-        # Run until app shutdown
-        while not getattr(app.config, 'exit', threading.Event()).is_set():
+        # Run until app shutdown - check exit flag more frequently for fast shutdown
+        exit_event = getattr(app.config, 'exit', threading.Event())
+        
+        while not exit_event.is_set():
             try:
                 # Get current running UUIDs from async workers
                 running_uuids = set(worker_handler.get_running_uuids())
@@ -166,29 +103,41 @@ class SignalHandler:
                 newly_running = running_uuids - previous_running_uuids
                 no_longer_running = previous_running_uuids - running_uuids
                 
-                # Send updates for newly running UUIDs
+                # Send updates for newly running UUIDs (but exit fast if shutdown requested)
                 for uuid in newly_running:
+                    if exit_event.is_set():
+                        break
                     logger.trace(f"Threading polling: UUID {uuid} started processing")
                     with app.app_context():
                         watch_check_update.send(app_context=app, watch_uuid=uuid)
                     time.sleep(0.01)  # Small yield
                 
-                # Send updates for UUIDs that finished processing  
-                for uuid in no_longer_running:
-                    logger.trace(f"Threading polling: UUID {uuid} finished processing")
-                    with app.app_context():
-                        watch_check_update.send(app_context=app, watch_uuid=uuid)
-                    time.sleep(0.01)  # Small yield
+                # Send updates for UUIDs that finished processing (but exit fast if shutdown requested)
+                if not exit_event.is_set():
+                    for uuid in no_longer_running:
+                        if exit_event.is_set():
+                            break
+                        logger.trace(f"Threading polling: UUID {uuid} finished processing")
+                        with app.app_context():
+                            watch_check_update.send(app_context=app, watch_uuid=uuid)
+                        time.sleep(0.01)  # Small yield
                 
                 # Update tracking for next iteration
                 previous_running_uuids = running_uuids
                 
-                # Sleep between polling cycles
-                time.sleep(10)  # Check every 10 seconds for state changes
+                # Sleep between polling cycles, but check exit flag every 0.5 seconds for fast shutdown
+                for _ in range(20):  # 20 * 0.5 = 10 seconds total
+                    if exit_event.is_set():
+                        break
+                    time.sleep(0.5)
                 
             except Exception as e:
                 logger.error(f"Error in threading polling: {str(e)}")
-                time.sleep(0.5)
+                # Even during error recovery, check for exit quickly
+                for _ in range(1):  # 1 * 0.5 = 0.5 seconds
+                    if exit_event.is_set():
+                        break
+                    time.sleep(0.5)
         
         logger.info("Queue update thread stopped (threading mode)")
 
@@ -273,39 +222,25 @@ def init_socketio(app, datastore):
     
     # Check for manual override via environment variable
     force_threading = strtobool(os.getenv('SOCKETIO_FORCE_THREADING', 'False'))
-    force_eventlet = strtobool(os.getenv('SOCKETIO_FORCE_EVENTLET', 'False'))
+    force_gevent = strtobool(os.getenv('SOCKETIO_FORCE_GEVENT', 'False'))
     
     if force_threading:
-        # Manual override to threading mode for testing
+        # Manual override to threading mode
         async_mode = 'threading'
         logger.info(f"SOCKETIO_FORCE_THREADING=True: Using {async_mode} mode for Socket.IO (manual override)")
-    elif force_eventlet:
-        # Manual override to eventlet mode for testing
+    elif force_gevent:
+        # Manual override to gevent mode for testing
         try:
-            import eventlet
-            async_mode = 'eventlet'
-            logger.info(f"SOCKETIO_FORCE_EVENTLET=True: Using {async_mode} mode for Socket.IO (manual override)")
+            import gevent
+            async_mode = 'gevent'
+            logger.info(f"SOCKETIO_FORCE_GEVENT=True: Using {async_mode} mode for Socket.IO (manual override)")
         except ImportError:
             async_mode = 'threading'
-            logger.warning(f"SOCKETIO_FORCE_EVENTLET=True but eventlet not available, falling back to {async_mode} mode")
-    elif system == 'windows':
-        # Windows: Use threading mode for better stability
-        # Eventlet can be problematic on Windows, especially with newer Python versions
-        async_mode = 'threading'
-        logger.info(f"Windows detected: Using {async_mode} mode for Socket.IO (more stable on Windows)")
-    elif system == 'darwin':  # macOS
-        # macOS: Use eventlet but with fallback to threading
-        try:
-            import eventlet
-            async_mode = 'eventlet'
-            logger.info(f"macOS detected: Using {async_mode} mode for Socket.IO")
-        except ImportError:
-            async_mode = 'threading'
-            logger.warning(f"macOS: eventlet not available, falling back to {async_mode} mode")
+            logger.warning(f"SOCKETIO_FORCE_GEVENT=True but gevent not available, falling back to {async_mode} mode")
     else:
-        # Linux and others: Use eventlet (most stable)
-        async_mode = 'eventlet'
-        logger.info(f"Linux/Unix detected: Using {async_mode} mode for Socket.IO")
+        # Use threading mode for all platforms - simpler, more reliable, and future-proof
+        async_mode = 'threading'
+        logger.info(f"Platform: {system}, Python: {python_version.major}.{python_version.minor} - Using {async_mode} mode for Socket.IO")
     
     # Log platform info for debugging
     logger.info(f"Platform: {system}, Python: {python_version.major}.{python_version.minor}, Socket.IO mode: {async_mode}")
@@ -370,38 +305,27 @@ def init_socketio(app, datastore):
     # Store the datastore reference on the socketio object for later use
     socketio.datastore = datastore
 
-    # Create a stop event for our queue update thread using eventlet Event
-    import eventlet.event
-    stop_event = eventlet.event.Event()
-    socketio.stop_event = stop_event
+    # No stop event needed for threading mode - threads check app.config.exit directly
 
     # Add a shutdown method to the socketio object
     def shutdown():
-        """Shutdown the SocketIO server gracefully"""
+        """Shutdown the SocketIO server fast and aggressively"""
         try:
-            logger.info("Socket.IO: Shutting down server...")
+            logger.info("Socket.IO: Fast shutdown initiated...")
 
-            # Signal the queue update thread to stop
-            if hasattr(socketio, 'stop_event'):
-                socketio.stop_event.send()
-                logger.info("Socket.IO: Signaled queue update thread to stop")
-
-            # Wait for the greenlet to exit (with timeout)
+            # For threading mode, give the thread a very short time to exit gracefully
             if hasattr(socketio, 'polling_emitter_thread'):
-                try:
-                    # For eventlet greenlets - just kill it directly to avoid MAINLOOP issues
-                    if not socketio.polling_emitter_thread.dead:
-                        socketio.polling_emitter_thread.kill()
-                        logger.info("Socket.IO: Queue update eventlet greenlet killed")
+                if socketio.polling_emitter_thread.is_alive():
+                    logger.info("Socket.IO: Waiting 1 second for polling thread to stop...")
+                    socketio.polling_emitter_thread.join(timeout=1.0)  # Only 1 second timeout
+                    if socketio.polling_emitter_thread.is_alive():
+                        logger.info("Socket.IO: Polling thread still running after timeout - continuing with shutdown")
                     else:
-                        logger.info("Socket.IO: Queue update eventlet greenlet already dead")
-                except Exception as e:
-                    logger.error(f"Error killing eventlet greenlet: {str(e)}")
+                        logger.info("Socket.IO: Polling thread stopped quickly")
+                else:
+                    logger.info("Socket.IO: Polling thread already stopped")
 
-            # Close any remaining client connections
-            # if hasattr(socketio, 'server'):
-            #    socketio.server.disconnect()
-            logger.info("Socket.IO: Server shutdown complete")
+            logger.info("Socket.IO: Fast shutdown complete")
         except Exception as e:
             logger.error(f"Socket.IO error during shutdown: {str(e)}")
 

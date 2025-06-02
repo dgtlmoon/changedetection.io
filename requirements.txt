@@ -1,4 +1,4 @@
-eventlet>=0.38.0
+# eventlet>=0.38.0  # Removed - replaced with threading mode for better Python 3.12+ compatibility
 feedgen~=0.9
 flask-compress
 # 0.6.3 included compatibility fix for werkzeug 3.x (2.x had deprecation of url handlers)
@@ -30,7 +30,9 @@ chardet>2.3.0
 wtforms~=3.0
 jsonpath-ng~=1.5.3
 
-dnspython==2.6.1 # related to eventlet fixes
+# dnspython - Used by paho-mqtt for MQTT broker resolution  
+# Version pin removed since eventlet (which required the specific 2.6.1 pin) has been eliminated
+# paho-mqtt will install compatible dnspython version automatically
 
 # jq not available on Windows so must be installed manually
 
