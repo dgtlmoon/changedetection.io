@@ -238,6 +238,7 @@ class ChangeDetectionStore:
         with self.lock:
             if uuid == 'all':
                 self.__data['watching'] = {}
+                time.sleep(1) # Mainly used for testing to allow all items to flush before running next test
 
                 # GitHub #30 also delete history records
                 for uuid in self.data['watching']:

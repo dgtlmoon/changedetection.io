@@ -129,25 +129,26 @@ def extract_UUID_from_client(client):
 
 def wait_for_all_checks(client=None):
     """
-    Waits until the queue is empty and remains empty for at least `required_empty_duration` seconds,
-    and also ensures no running workers have UUIDs being processed.
-    Retries for up to `max_attempts` times, sleeping `wait_between_attempts` seconds between checks.
+    Waits until the queue is empty and workers are idle.
+    Much faster than the original with adaptive timing.
     """
     from changedetectionio.flask_app import update_q as global_update_q
     from changedetectionio import worker_handler
 
-    # Configuration
-    attempt = 0
-    i=0
-    max_attempts = 60
-    required_empty_duration = 0.2
-
     logger = logging.getLogger()
-
     empty_since = None
+    attempt = 0
+    max_attempts = 150  # Still reasonable upper bound
 
     while attempt < max_attempts:
-        time.sleep(1.2)
+        # Start with fast checks, slow down if needed
+        if attempt < 10:
+            time.sleep(0.1)  # Very fast initial checks
+        elif attempt < 30:
+            time.sleep(0.3)  # Medium speed
+        else:
+            time.sleep(0.8)  # Slower for persistent issues
+
         q_length = global_update_q.qsize()
         running_uuids = worker_handler.get_running_uuids()
         any_workers_busy = len(running_uuids) > 0
@@ -155,21 +156,12 @@ def wait_for_all_checks(client=None):
         if q_length == 0 and not any_workers_busy:
             if empty_since is None:
                 empty_since = time.time()
-                logger.info(f"Queue empty and no active workers at attempt {attempt}, starting empty timer...")
-            elif time.time() - empty_since >= required_empty_duration:
-                logger.info(f"Queue has been empty and workers idle for {required_empty_duration} seconds. Done waiting.")
+            elif time.time() - empty_since >= 0.15:  # Shorter wait
                 break
-            else:
-                logger.info(f"Still waiting: queue empty and no active workers, but not yet {required_empty_duration} seconds...")
         else:
-            if q_length != 0:
-                logger.info(f"Queue not empty (size={q_length}), resetting timer.")
-            if any_workers_busy:
-                logger.info(f"Workers still busy with UUIDs: {running_uuids}, resetting timer.")
             empty_since = None
+        
         attempt += 1
-
-    time.sleep(1)
 
 def live_server_setup(live_server):
 
