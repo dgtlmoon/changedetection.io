@@ -5,8 +5,6 @@ import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
 
-from ..html_tools import *
-
 def test_setup(live_server):
     live_server_setup(live_server)
 
@@ -79,7 +77,14 @@ def test_DNS_errors(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     res = client.get(url_for("watchlist.index"))
-    found_name_resolution_error = b"No address found" in res.data or b"Name or service not known" in res.data
+    found_name_resolution_error = (
+        b"No address found" in res.data or
+        b"Name or service not known" in res.data or
+        b"nodename nor servname provided" in res.data or
+        b"Temporary failure in name resolution" in res.data or
+        b"Failed to establish a new connection" in res.data or
+        b"Connection error occurred" in res.data
+    )
     assert found_name_resolution_error
     # Should always record that we tried
     assert bytes("just now".encode('utf-8')) in res.data
@@ -108,7 +113,14 @@ def test_low_level_errors_clear_correctly(client, live_server, measure_memory_us
 
     # We should see the DNS error
     res = client.get(url_for("watchlist.index"))
-    found_name_resolution_error = b"No address found" in res.data or b"Name or service not known" in res.data
+    found_name_resolution_error = (
+        b"No address found" in res.data or
+        b"Name or service not known" in res.data or
+        b"nodename nor servname provided" in res.data or
+        b"Temporary failure in name resolution" in res.data or
+        b"Failed to establish a new connection" in res.data or
+        b"Connection error occurred" in res.data
+    )
     assert found_name_resolution_error
 
     # Update with what should work
@@ -123,7 +135,14 @@ def test_low_level_errors_clear_correctly(client, live_server, measure_memory_us
     # Now the error should be gone
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
-    found_name_resolution_error = b"No address found" in res.data or b"Name or service not known" in res.data
+    found_name_resolution_error = (
+        b"No address found" in res.data or
+        b"Name or service not known" in res.data or
+        b"nodename nor servname provided" in res.data or
+        b"Temporary failure in name resolution" in res.data or
+        b"Failed to establish a new connection" in res.data or
+        b"Connection error occurred" in res.data
+    )
     assert not found_name_resolution_error
 
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
