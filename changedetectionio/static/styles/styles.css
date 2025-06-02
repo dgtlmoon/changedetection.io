@@ -1076,6 +1076,12 @@ footer {
       align-items: center;
       gap: 1em; }
 
+.watch-favicon{
+  height: 24px;
+  width: 24px;
+  margin-right: 5px;
+  vertical-align: middle;}
+
 @media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
   .box {
     max-width: 95%; }

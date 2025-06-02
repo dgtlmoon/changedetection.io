@@ -100,6 +100,7 @@
             {% endif %}
             {% for watch in (watches|sort(attribute=sort_attribute, reverse=sort_order == 'asc'))|pagination_slice(skip=pagination.skip) %}
 
+                {% set favicon = 'https://www.google.com/s2/favicons?domain=' + watch['url'] + '&sz=48'%}
                 {% set is_unviewed = watch.newest_history_key| int > watch.last_viewed and watch.history_n>=2 %}
                 {% set checking_now = is_checking_now(watch) %}
             <tr id="{{ watch.uuid }}"
@@ -122,7 +123,9 @@
                     {% set mute_label = 'UnMute notification' if watch.notification_muted else 'Mute notification' %}
                     <a class="link-mute state-{{'on' if watch.notification_muted else 'off'}}" href="{{url_for('watchlist.index', op='mute', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="{{ mute_label }}" title="{{ mute_label }}" class="icon icon-mute" ></a>
                 </td>
-                <td class="title-col inline">{{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
+                <td class="title-col inline">
+                    <img class="watch-favicon" src="{{ favicon }}" alt="favicon" >
+                    {{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
                     <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}"></a>
                     <a class="link-spread" href="{{url_for('ui.form_share_put_watch', uuid=watch.uuid)}}"><img src="{{url_for('static_content', group='images', filename='spread.svg')}}" class="status-icon icon icon-spread" title="Create a link to share watch config with others" ></a>
 
