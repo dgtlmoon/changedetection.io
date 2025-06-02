@@ -100,7 +100,9 @@ levenshtein
 # Needed for > 3.10, https://github.com/microsoft/playwright-python/issues/2096
 greenlet >= 3.0.3
 
-# Used for realtime socketio mode (so its a different driver to eventlet/threading not to interfere with playwright)
+# Optional: Used for high-concurrency SocketIO mode (via SOCKETIO_MODE=gevent)
+# Note: gevent has cross-platform limitations (Windows 1024 socket limit, macOS ARM build issues)
+# Default SOCKETIO_MODE=threading is recommended for better compatibility
 gevent
 
 # Pinned or it causes problems with flask_expects_json which seems unmaintained

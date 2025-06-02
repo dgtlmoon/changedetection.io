@@ -220,27 +220,27 @@ def init_socketio(app, datastore):
     system = platform.system().lower()
     python_version = sys.version_info
     
-    # Check for manual override via environment variable
-    force_threading = strtobool(os.getenv('SOCKETIO_FORCE_THREADING', 'False'))
-    force_gevent = strtobool(os.getenv('SOCKETIO_FORCE_GEVENT', 'False'))
+    # Check for SocketIO mode configuration via environment variable
+    # Default is 'threading' for best cross-platform compatibility
+    socketio_mode = os.getenv('SOCKETIO_MODE', 'threading').lower()
     
-    if force_threading:
-        # Manual override to threading mode
-        async_mode = 'threading'
-        logger.info(f"SOCKETIO_FORCE_THREADING=True: Using {async_mode} mode for Socket.IO (manual override)")
-    elif force_gevent:
-        # Manual override to gevent mode for testing
+    if socketio_mode == 'gevent':
+        # Use gevent mode (higher concurrency but platform limitations)
         try:
             import gevent
             async_mode = 'gevent'
-            logger.info(f"SOCKETIO_FORCE_GEVENT=True: Using {async_mode} mode for Socket.IO (manual override)")
+            logger.info(f"SOCKETIO_MODE=gevent: Using {async_mode} mode for Socket.IO")
         except ImportError:
             async_mode = 'threading'
-            logger.warning(f"SOCKETIO_FORCE_GEVENT=True but gevent not available, falling back to {async_mode} mode")
-    else:
-        # Use threading mode for all platforms - simpler, more reliable, and future-proof
+            logger.warning(f"SOCKETIO_MODE=gevent but gevent not available, falling back to {async_mode} mode")
+    elif socketio_mode == 'threading':
+        # Use threading mode (default - best compatibility)
         async_mode = 'threading'
-        logger.info(f"Platform: {system}, Python: {python_version.major}.{python_version.minor} - Using {async_mode} mode for Socket.IO")
+        logger.info(f"SOCKETIO_MODE=threading: Using {async_mode} mode for Socket.IO")
+    else:
+        # Invalid mode specified, use default
+        async_mode = 'threading'
+        logger.warning(f"Invalid SOCKETIO_MODE='{socketio_mode}', using default {async_mode} mode for Socket.IO")
     
     # Log platform info for debugging
     logger.info(f"Platform: {system}, Python: {python_version.major}.{python_version.minor}, Socket.IO mode: {async_mode}")
