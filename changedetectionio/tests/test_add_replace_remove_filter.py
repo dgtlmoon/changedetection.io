@@ -4,7 +4,7 @@ import os.path
 
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks, wait_for_notification_endpoint_output
-
+import time
 
 def set_original(excluding=None, add_line=None):
     test_return_data = """<html>
@@ -39,6 +39,10 @@ def test_setup(client, live_server, measure_memory_usage):
     live_server_setup(live_server)
 
 def test_check_removed_line_contains_trigger(client, live_server, measure_memory_usage):
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+    time.sleep(1)
+
     #live_server_setup(live_server)
     # Give the endpoint time to spin up
     set_original()
@@ -106,6 +110,9 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
 
 def test_check_add_line_contains_trigger(client, live_server, measure_memory_usage):
     #live_server_setup(live_server)
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+    time.sleep(1)
 
     # Give the endpoint time to spin up
     test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://') + "?xxx={{ watch_url }}"
