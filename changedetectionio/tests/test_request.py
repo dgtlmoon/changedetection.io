@@ -154,7 +154,7 @@ def test_body_in_request(client, live_server, measure_memory_usage):
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
-
+    wait_for_all_checks()
     watches_with_body = 0
     with open('test-datastore/url-watches.json') as f:
         app_struct = json.load(f)
