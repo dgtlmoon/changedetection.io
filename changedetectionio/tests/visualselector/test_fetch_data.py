@@ -2,7 +2,7 @@
 
 import os
 from flask import url_for
-from ..util import live_server_setup, wait_for_all_checks, get_index
+from ..util import live_server_setup, wait_for_all_checks
 
 def test_setup(client, live_server):
     live_server_setup(live_server)
@@ -10,8 +10,6 @@ def test_setup(client, live_server):
 
 # Add a site in paused mode, add an invalid filter, we should still have visual selector data ready
 def test_visual_selector_content_ready(client, live_server, measure_memory_usage):
-    live_server.stop()
-    live_server.start()
 
     import os
     import json
@@ -89,9 +87,6 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
 
 def test_basic_browserstep(client, live_server, measure_memory_usage):
 
-    live_server.stop()
-    live_server.start()
-
     assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
 
     test_url = url_for('test_interactive_html_endpoint', _external=True)
@@ -144,12 +139,9 @@ def test_basic_browserstep(client, live_server, measure_memory_usage):
 
     assert b"testheader: yes" in res.data
     assert b"user-agent: mycustomagent" in res.data
-    live_server.stop()
 
 def test_non_200_errors_report_browsersteps(client, live_server):
 
-    live_server.stop()
-    live_server.start()
 
     four_o_four_url =  url_for('test_endpoint', status_code=404, _external=True)
     four_o_four_url = four_o_four_url.replace('localhost.localdomain', 'cdio')
@@ -183,7 +175,7 @@ def test_non_200_errors_report_browsersteps(client, live_server):
 
     wait_for_all_checks(client)
 
-    res = get_index(client)
+    res = client.get(url_for("watchlist.index"))
 
     assert b'Error - 404' in res.data
 
