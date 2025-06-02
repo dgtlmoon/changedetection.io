@@ -117,5 +117,18 @@
       display: block !important;
     }
   }
+
+  tr.single-history {
+    a.preview-link {
+      display: inline-block !important;
+    }
+  }
+  tr.multiple-history {
+    a.history-link {
+      display: inline-block !important;
+    }
+  }
 }
+
+
 

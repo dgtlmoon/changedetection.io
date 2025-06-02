@@ -582,6 +582,10 @@ body.preview-text-enabled {
     color: var(--color-watch-table-error); }
     .watch-table tr.has-error .error-text {
       display: block !important; }
+  .watch-table tr.single-history a.preview-link {
+    display: inline-block !important; }
+  .watch-table tr.multiple-history a.history-link {
+    display: inline-block !important; }
 
 ul#conditions_match_logic {
   list-style: none; }

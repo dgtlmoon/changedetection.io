@@ -97,6 +97,8 @@ $(document).ready(function () {
                     $($watchRow).toggleClass('has-error', watch.has_error);
                     $($watchRow).toggleClass('notification_muted', watch.notification_muted);
                     $($watchRow).toggleClass('paused', watch.paused);
+                    $($watchRow).toggleClass('single-history', watch.history_n === 1);
+                    $($watchRow).toggleClass('multiple-history', watch.history_n >= 2);
 
                     $('td.title-col .error-text', $watchRow).html(watch.error_text)
 
