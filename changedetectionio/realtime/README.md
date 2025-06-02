@@ -6,129 +6,119 @@ This directory contains the Socket.IO implementation for changedetection.io's re
 
 The real-time system provides live updates to the web interface for:
 - Watch status changes (checking, completed, errors)
-- Queue length updates
+- Queue length updates  
 - General statistics updates
-
-## Historical Issues and Solutions
-
-### Eventlet vs Playwright Conflicts
-
-**Problem**: The application originally used `eventlet.monkey_patch()` to enable green threading for Socket.IO, but this caused severe conflicts with Playwright's synchronous browser automation.
-
-#### Symptoms:
-1. **Playwright hanging**: The `with sync_playwright() as p:` context manager would hang when exiting, preventing proper cleanup
-2. **Greenlet thread switching errors**: 
-   ```
-   greenlet.error: Cannot switch to a different thread
-   Current:  <greenlet.greenlet object at 0x...> 
-   Expected: <greenlet.greenlet object at 0x...>
-   ```
-
-#### Root Cause:
-- `eventlet.monkey_patch()` globally patches Python's threading, socket, and I/O modules
-- Playwright's sync API relies on real OS threads for browser communication and cleanup
-- When eventlet patches threading, it replaces real threads with green threads (greenlets)
-- Playwright's internal operations try to switch between real threads, but eventlet expects greenlet switching
-- This creates an incompatible execution model
-
-### Solution Evolution
-
-#### Attempt 1: Selective Monkey Patching
-```python
-# Tried to patch only specific modules
-eventlet.monkey_patch(socket=True, select=True, time=True, thread=False, os=False)
-```
-**Result**: Still had conflicts because Socket.IO operations interacted with Playwright's threaded operations.
-
-#### Attempt 2: Complete Eventlet Removal
-**Final Solution**: Removed eventlet monkey patching entirely and switched to threading-based Socket.IO:
-
-```python
-# Before
-async_mode = 'eventlet'
-eventlet.monkey_patch()
-polling_thread = eventlet.spawn(polling_function)
-
-# After  
-async_mode = 'threading'
-# No monkey patching
-polling_thread = threading.Thread(target=polling_function, daemon=True)
-```
 
 ## Current Implementation
 
 ### Socket.IO Configuration
-- **Async Mode**: `eventlet` (restored)
-- **Server**: Eventlet WSGI server
-- **Threading**: Eventlet greenlets for background tasks
+- **Async Mode**: `threading` (default) or `gevent` (optional via SOCKETIO_MODE env var)
+- **Server**: Flask-SocketIO with threading support
+- **Background Tasks**: Python threading with daemon threads
 
-### Playwright Integration
-- **API**: `async_playwright()` instead of `sync_playwright()`
-- **Execution**: Runs in separate asyncio event loops when called from Flask routes
-- **Browser Steps**: Fully converted to async operations
+### Async Worker Integration
+- **Workers**: Async workers using asyncio for watch processing
+- **Queue**: AsyncSignalPriorityQueue for job distribution
+- **Signals**: Blinker signals for real-time updates between workers and Socket.IO
 
-### Background Tasks
-- **Queue polling**: Uses eventlet greenlets with `eventlet.Event` for clean shutdown
-- **Signal handling**: Blinker signals for watch updates
-- **Real-time updates**: Direct Socket.IO `emit()` calls to connected clients
+### Environment Variables
+- `SOCKETIO_MODE=threading` (default, recommended)
+- `SOCKETIO_MODE=gevent` (optional, has cross-platform limitations)
 
-### Trade-offs
+## Architecture Decision: Why Threading Mode?
 
-#### Benefits:
-- ✅ No conflicts between eventlet and Playwright (async mode)
-- ✅ No greenlet thread switching errors  
-- ✅ Full SocketIO functionality restored
-- ✅ Better performance with eventlet green threads
-- ✅ Production-ready eventlet server
+### Previous Issues with Eventlet
+**Eventlet was completely removed** due to fundamental compatibility issues:
 
-#### Implementation Details:
-- ✅ Async Playwright runs in isolated asyncio event loops
-- ✅ Flask routes use `asyncio.run_until_complete()` for async calls
-- ✅ Browser steps session management fully async
+1. **Monkey Patching Conflicts**: `eventlet.monkey_patch()` globally replaced Python's threading/socket modules, causing conflicts with:
+   - Playwright's synchronous browser automation
+   - Async worker event loops
+   - Various Python libraries expecting real threading
 
-## Alternative Approaches Considered
+2. **Python 3.12+ Compatibility**: Eventlet had issues with newer Python versions and asyncio integration
 
-### 1. Async Playwright
-Converting to `async_playwright()` would eliminate sync context conflicts, but:
-- Major refactoring required across the entire content fetcher system
-- Async/await propagation through the codebase
-- Potential compatibility issues with other sync operations
+3. **CVE-2023-29483**: Security vulnerability in eventlet's dnspython dependency
 
-### 2. Process Isolation  
-Running Playwright in separate processes via multiprocessing:
-- Added complexity for IPC
-- Overhead of process creation/communication
-- Difficult error handling and resource management
+### Current Solution Benefits
+✅ **Threading Mode Advantages**:
+- Full compatibility with async workers and Playwright
+- No monkey patching - uses standard Python threading
+- Better Python 3.12+ support
+- Cross-platform compatibility (Windows, macOS, Linux)
+- No external async library dependencies
+- Fast shutdown capabilities
 
-### 3. Eventlet Import Patching
-Using `eventlet.import_patched()` for specific modules:
-- Still had underlying thread model conflicts
-- Selective patching complexity
-- Maintenance burden
+✅ **Optional Gevent Support**:
+- Available via `SOCKETIO_MODE=gevent` for high-concurrency scenarios
+- Cross-platform limitations documented in requirements.txt
+- Not recommended as default due to Windows socket limits and macOS ARM build issues
 
-## Best Practices
+## Socket.IO Mode Configuration
 
-### When Adding New Features:
-1. **Avoid** `eventlet.monkey_patch()` calls
-2. **Use** standard Python threading for background tasks
-3. **Test** Socket.IO functionality with concurrent Playwright operations
-4. **Monitor** for thread safety issues in shared resources
+### Threading Mode (Default)
+```python
+# Enabled automatically
+async_mode = 'threading'
+socketio = SocketIO(app, async_mode='threading')
+```
 
-### For Production Deployment:
-Consider replacing Werkzeug with a production WSGI server that supports Socket.IO threading mode, such as:
-- Gunicorn with threading workers
-- uWSGI with threading support
-- Custom WSGI setup with proper Socket.IO integration
+### Gevent Mode (Optional)
+```bash
+# Set environment variable
+export SOCKETIO_MODE=gevent
+```
+
+## Background Tasks
+
+### Queue Polling
+- **Threading Mode**: `threading.Thread` with `threading.Event` for shutdown
+- **Signal Handling**: Blinker signals for watch state changes
+- **Real-time Updates**: Direct Socket.IO `emit()` calls to connected clients
+
+### Worker Integration
+- **Async Workers**: Run in separate asyncio event loop thread
+- **Communication**: AsyncSignalPriorityQueue bridges async workers and Socket.IO
+- **Updates**: Real-time updates sent when workers complete tasks
 
 ## Files in This Directory
 
 - `socket_server.py`: Main Socket.IO initialization and event handling
-- `events.py`: Watch operation event handlers
+- `events.py`: Watch operation event handlers  
 - `__init__.py`: Module initialization
+
+## Production Deployment
+
+### Recommended WSGI Servers
+For production with Socket.IO threading mode:
+- **Gunicorn**: `gunicorn --worker-class eventlet changedetection:app` (if using gevent mode)
+- **uWSGI**: With threading support
+- **Docker**: Built-in Flask server works well for containerized deployments
+
+### Performance Considerations
+- Threading mode: Better memory usage, standard Python threading
+- Gevent mode: Higher concurrency but platform limitations
+- Async workers: Separate from Socket.IO, provides scalability
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SOCKETIO_MODE` | `threading` | Socket.IO async mode (`threading` or `gevent`) |
+| `FETCH_WORKERS` | `10` | Number of async workers for watch processing |
+| `CHANGEDETECTION_HOST` | `0.0.0.0` | Server bind address |
+| `CHANGEDETECTION_PORT` | `5000` | Server port |
 
 ## Debugging Tips
 
-1. **Socket.IO Issues**: Enable logging with `SOCKETIO_LOGGING=True`
-2. **Threading Issues**: Monitor thread count and check for deadlocks
-3. **Playwright Issues**: Look for hanging processes and check browser cleanup
-4. **Performance**: Monitor memory usage as threading can have different characteristics than green threads
+1. **Socket.IO Issues**: Check browser dev tools for WebSocket connection errors
+2. **Threading Issues**: Monitor with `ps -T` to check thread count  
+3. **Worker Issues**: Use `/worker-health` endpoint to check async worker status
+4. **Queue Issues**: Use `/queue-status` endpoint to monitor job queue
+5. **Performance**: Use `/gc-cleanup` endpoint to trigger memory cleanup
+
+## Migration Notes
+
+If upgrading from eventlet-based versions:
+- Remove any `EVENTLET_*` environment variables
+- No code changes needed - Socket.IO mode is automatically configured
+- Optional: Set `SOCKETIO_MODE=gevent` if high concurrency is required and platform supports it
