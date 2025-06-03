@@ -1085,6 +1085,9 @@ ul {
     /* some space if they wrap the page */
     margin-bottom: 3px;
     margin-top: 3px;
+    /* vertically center icon and text */
+    display: inline-flex;
+    align-items: center;
   }
 }
 

@@ -62,7 +62,7 @@ def set_modified_response_minus_block_text():
 
 def test_check_block_changedetection_text_NOT_present(client, live_server, measure_memory_usage):
 
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
     # Use a mix of case in ZzZ to prove it works case-insensitive.
     ignore_text = "out of stoCk\r\nfoobar"
     set_original_ignore_response()

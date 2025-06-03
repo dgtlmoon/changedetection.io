@@ -14,7 +14,7 @@ def test_check_extract_text_from_diff(client, live_server, measure_memory_usage)
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write("Now it's {} seconds since epoch, time flies!".format(str(time.time())))
 
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
 
     # Add our URL to the import page
     res = client.post(

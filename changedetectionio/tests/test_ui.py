@@ -6,7 +6,7 @@ from .util import set_original_response, set_modified_response, live_server_setu
 def test_checkbox_open_diff_in_new_tab(client, live_server):
     
     set_original_response()
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
 
     # Add our URL to the import page
     res = client.post(

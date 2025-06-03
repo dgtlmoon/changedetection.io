@@ -2,11 +2,10 @@ from flask import url_for
 from .util import set_original_response, set_modified_response, live_server_setup
 import time
 
-def test_setup(live_server):
-    live_server_setup(live_server)
+
 
 def test_basic_search(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
 
     urls = ['https://localhost:12300?first-result=1',
             'https://localhost:5000?second-result=1'
@@ -39,7 +38,7 @@ def test_basic_search(client, live_server, measure_memory_usage):
 
 
 def test_search_in_tag_limit(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
 
     urls = ['https://localhost:12300?first-result=1 tag-one',
             'https://localhost:5000?second-result=1 tag-two'

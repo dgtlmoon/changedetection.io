@@ -57,7 +57,7 @@ def set_modified_with_trigger_text_response():
 
 def test_trigger_functionality(client, live_server, measure_memory_usage):
 
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
 
     trigger_text = "Add to cart"
     set_original_ignore_response()

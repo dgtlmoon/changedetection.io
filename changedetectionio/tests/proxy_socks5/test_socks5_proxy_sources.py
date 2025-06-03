@@ -21,7 +21,7 @@ def set_response():
 # should be proxies.json mounted from run_proxy_tests.sh already
 # -v `pwd`/tests/proxy_socks5/proxies.json-example:/app/changedetectionio/test-datastore/proxies.json
 def test_socks5_from_proxiesjson_file(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
     set_response()
     # Because the socks server should connect back to us
     test_url = url_for('test_endpoint', _external=True) + f"?socks-test-tag={os.getenv('SOCKSTEST', '')}"

@@ -6,7 +6,7 @@ from ..util import live_server_setup, wait_for_all_checks, extract_UUID_from_cli
 
 
 def test_noproxy_option(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
     # Run by run_proxy_tests.sh
     # Call this URL then scan the containers that it never went through them
     url = "http://noproxy.changedetection.io"

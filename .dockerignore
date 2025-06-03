@@ -29,3 +29,35 @@ venv/
 
 # Visual Studio
 .vscode/
+
+# Test and development files
+test-datastore/
+tests/
+docs/
+*.md
+!README.md
+
+# Temporary and log files
+*.log
+*.tmp
+tmp/
+temp/
+
+# Training data and large files
+train-data/
+works-data/
+
+# Container files
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Development certificates and keys
+*.pem
+*.key
+*.crt
+profile_output.prof
+
+# Large binary files that shouldn't be in container
+*.pdf
+chrome.json

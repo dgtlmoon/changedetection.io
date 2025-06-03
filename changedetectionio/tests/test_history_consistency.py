@@ -9,7 +9,7 @@ from .util import live_server_setup, wait_for_all_checks
 from urllib.parse import urlparse, parse_qs
 
 def test_consistent_history(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
     workers = int(os.getenv("FETCH_WORKERS", 10))
     r = range(1, 10+workers)
 

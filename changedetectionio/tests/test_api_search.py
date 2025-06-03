@@ -7,7 +7,7 @@ from .util import live_server_setup, wait_for_all_checks
 
 
 def test_api_search(client, live_server):
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
 
     watch_data = {}

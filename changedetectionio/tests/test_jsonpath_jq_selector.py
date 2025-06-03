@@ -12,8 +12,7 @@ try:
 except ModuleNotFoundError:
     jq_support = False
 
-def test_setup(live_server):
-    live_server_setup(live_server)
+
 
 def test_unittest_inline_html_extract():
     # So lets pretend that the JSON we want is inside some HTML

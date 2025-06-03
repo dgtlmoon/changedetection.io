@@ -8,8 +8,7 @@ from ..html_tools import *
 from .util import live_server_setup, wait_for_all_checks
 
 
-def test_setup(live_server):
-    live_server_setup(live_server)
+
 
 def set_response_with_multiple_index():
     data= """<!DOCTYPE html>
@@ -148,7 +147,7 @@ across multiple lines
 
 
 def test_element_removal_full(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
 
     set_original_response()
 
@@ -209,7 +208,7 @@ def test_element_removal_full(client, live_server, measure_memory_usage):
 
 # Re #2752
 def test_element_removal_nth_offset_no_shift(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
 
     set_response_with_multiple_index()
     subtractive_selectors_data = ["""
