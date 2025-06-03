@@ -33,6 +33,7 @@ $(document).ready(function () {
                 extra_data: $('#op_extradata').val() // Set by the alert() handler
             });
             $('input[name="uuids"]:checked').prop('checked', false);
+            $('#check-all:checked').prop('checked', false);
             return false;
         });
 
