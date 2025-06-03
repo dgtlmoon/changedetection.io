@@ -110,6 +110,8 @@ def test_conditions_with_text_and_number(client, live_server):
 
     wait_for_all_checks(client)
     client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
+    time.sleep(0.2)
+
     wait_for_all_checks(client)
 
     # Case 1
@@ -126,6 +128,8 @@ def test_conditions_with_text_and_number(client, live_server):
     # Case 2: Change with one condition violated
     # Number out of range (150) but contains '5'
     client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
+    time.sleep(0.2)
+
     set_number_out_of_range_response("150.5")
 
 

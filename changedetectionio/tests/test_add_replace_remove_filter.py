@@ -89,6 +89,8 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
 
     # Now add it back, and we should not get a trigger
     client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
+    time.sleep(0.2)
+
     time.sleep(1)
     set_original(excluding=None)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)

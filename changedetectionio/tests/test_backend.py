@@ -143,6 +143,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
     # hit the mark all viewed link
     res = client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
+    time.sleep(0.2)
 
     assert b'class="has-unviewed' not in res.data
     assert b'unviewed' not in res.data

@@ -114,6 +114,8 @@ def test_itemprop_price_change(client, live_server):
     assert b'180.45' in res.data
     assert b'unviewed' in res.data
     client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
+    time.sleep(0.2)
+
 
     # turning off price change trigger, but it should show the new price, with no change notification
     set_original_response(props_markup=instock_props[0], price='120.45')

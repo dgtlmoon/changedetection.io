@@ -96,6 +96,8 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
     client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
+    time.sleep(0.2)
+
 
     # A totally zero byte (#2528) response should also not trigger an error
     set_zero_byte_response()
