@@ -18,6 +18,24 @@ $(document).ready(function () {
             
             return false;
         });
+
+
+        $('#checkbox-operations button').on('click.socketHandlerNamespace', function (e) {
+            e.preventDefault();
+            const op = $(this).val();
+            const checkedUuids = $('input[name="uuids"]:checked').map(function () {
+                return this.value.trim();
+            }).get();
+            console.log(`Socket.IO: Sending watch operation '${op}' for UUIDs:`, checkedUuids);
+            socket.emit('checkbox-operation', {
+                op: op,
+                uuids: checkedUuids,
+                extra_data: $('#op_extradata').val() // Set by the alert() handler
+            });
+            $('input[name="uuids"]:checked').prop('checked', false);
+            return false;
+        });
+
     }
 
 

@@ -26,6 +26,9 @@ class SignalHandler:
         queue_length_signal.connect(self.handle_queue_length, weak=False)
         #       logger.info("SignalHandler: Connected to queue_length signal")
 
+        watch_delete_signal = signal('watch_deleted')
+        watch_delete_signal.connect(self.handle_deleted_signal, weak=False)
+
         # Create and start the queue update thread using standard threading
         import threading
         self.polling_emitter_thread = threading.Thread(
@@ -60,6 +63,16 @@ class SignalHandler:
                 logger.trace(f"Signal handler processed watch UUID {watch_uuid}")
             else:
                 logger.warning(f"Watch UUID {watch_uuid} not found in datastore")
+
+    def handle_deleted_signal(self, *args, **kwargs):
+        watch_uuid = kwargs.get('watch_uuid')
+        if watch_uuid:
+            # Emit the queue size to all connected clients
+            self.socketio_instance.emit("watch_deleted", {
+                "uuid": watch_uuid,
+                "event_timestamp": time.time()
+            })
+        logger.debug(f"Watch UUID {watch_uuid} was deleted")
 
     def handle_queue_length(self, *args, **kwargs):
         """Handle queue_length signal and emit to all clients"""
@@ -167,7 +180,6 @@ def handle_watch_update(socketio, **kwargs):
             if hasattr(q_item, 'item') and 'uuid' in q_item.item:
                 queue_list.append(q_item.item['uuid'])
 
-        error_texts = ""
         # Get the error texts from the watch
         error_texts = watch.compile_error_texts()
         # Create a simplified watch data object to send to clients
@@ -258,6 +270,29 @@ def init_socketio(app, datastore):
 
     # Set up event handlers
     logger.info("Socket.IO: Registering connect event handler")
+
+    @socketio.on('checkbox-operation')
+    def event_checkbox_operations(data):
+        from changedetectionio.blueprint.ui import _handle_operations
+        from changedetectionio import queuedWatchMetaData
+        from changedetectionio import worker_handler
+        from changedetectionio.flask_app import update_q, watch_check_update
+        logger.trace(f"Got checkbox operations event: {data}")
+
+        datastore = socketio.datastore
+
+        _handle_operations(
+            op=data.get('op'),
+            uuids=data.get('uuids'),
+            datastore=datastore,
+            extra_data=data.get('extra_data'),
+            worker_handler=worker_handler,
+            update_q=update_q,
+            queuedWatchMetaData=queuedWatchMetaData,
+            watch_check_update=watch_check_update,
+            emit_flash=False
+        )
+
 
     @socketio.on('connect')
     def handle_connect():
