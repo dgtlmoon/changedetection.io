@@ -56,6 +56,8 @@ jobs:
             context: ./
             file: ./.github/test/Dockerfile-alpine
             platforms: linux/amd64,linux/arm64
+            cache-from: type=gha
+            cache-to: type=gha,mode=max
 
         - name: Test that the docker containers can build
           id: docker_build
@@ -65,6 +67,6 @@ jobs:
             context: ./
             file: ./Dockerfile
             platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v8,linux/arm64/v8
-            cache-from: type=local,src=/tmp/.buildx-cache
-            cache-to: type=local,dest=/tmp/.buildx-cache
+            cache-from: type=gha
+            cache-to: type=gha,mode=max
 
