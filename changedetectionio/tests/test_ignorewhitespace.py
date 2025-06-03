@@ -4,8 +4,7 @@ import time
 from flask import url_for
 from . util import live_server_setup
 
-def test_setup(live_server):
-    live_server_setup(live_server)
+
 
 
 # Should be the same as set_original_ignore_response() but with a little more whitespacing

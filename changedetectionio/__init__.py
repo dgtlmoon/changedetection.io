@@ -10,10 +10,11 @@ import os
 import getopt
 import platform
 import signal
-import socket
-import sys
-from werkzeug.serving import run_simple
 
+import sys
+
+# Eventlet completely removed - using threading mode for SocketIO
+# This provides better Python 3.12+ compatibility and eliminates eventlet/asyncio conflicts
 from changedetectionio import store
 from changedetectionio.flask_app import changedetection_app
 from loguru import logger
@@ -28,22 +29,34 @@ def get_version():
 # Parent wrapper or OS sends us a SIGTERM/SIGINT, do everything required for a clean shutdown
 def sigshutdown_handler(_signo, _stack_frame):
     name = signal.Signals(_signo).name
-    logger.critical(f'Shutdown: Got Signal - {name} ({_signo}), Saving DB to disk and calling shutdown')
-    datastore.sync_to_json()
-    logger.success('Sync JSON to disk complete.')
+    logger.critical(f'Shutdown: Got Signal - {name} ({_signo}), Fast shutdown initiated')
     
-    # Shutdown socketio server if available
+    # Set exit flag immediately to stop all loops
+    app.config.exit.set()
+    datastore.stop_thread = True
+    
+    # Shutdown workers immediately
+    try:
+        from changedetectionio import worker_handler
+        worker_handler.shutdown_workers()
+    except Exception as e:
+        logger.error(f"Error shutting down workers: {str(e)}")
+    
+    # Shutdown socketio server fast
     from changedetectionio.flask_app import socketio_server
     if socketio_server and hasattr(socketio_server, 'shutdown'):
         try:
-            logger.info("Shutting down Socket.IO server...")
             socketio_server.shutdown()
         except Exception as e:
             logger.error(f"Error shutting down Socket.IO server: {str(e)}")
     
-    # Set flags for clean shutdown
-    datastore.stop_thread = True
-    app.config.exit.set()
+    # Save data quickly
+    try:
+        datastore.sync_to_json()
+        logger.success('Fast sync to disk complete.')
+    except Exception as e:
+        logger.error(f"Error syncing to disk: {str(e)}")
+    
     sys.exit()
 
 def main():
@@ -52,9 +65,9 @@ def main():
 
     datastore_path = None
     do_cleanup = False
-    host = ''
+    host = "0.0.0.0"
     ipv6_enabled = False
-    port = os.environ.get('PORT') or 5000
+    port = int(os.environ.get('PORT', 5000))
     ssl_mode = False
 
     # On Windows, create and use a default path.
@@ -150,6 +163,11 @@ def main():
 
     app = changedetection_app(app_config, datastore)
 
+    # Get the SocketIO instance from the Flask app (created in flask_app.py)
+    from changedetectionio.flask_app import socketio_server
+    global socketio
+    socketio = socketio_server
+
     signal.signal(signal.SIGTERM, sigshutdown_handler)
     signal.signal(signal.SIGINT, sigshutdown_handler)
     
@@ -174,10 +192,11 @@ def main():
 
 
     @app.context_processor
-    def inject_version():
+    def inject_template_globals():
         return dict(right_sticky="v{}".format(datastore.data['version_tag']),
                     new_version_available=app.config['NEW_VERSION_AVAILABLE'],
-                    has_password=datastore.data['settings']['application']['password'] != False
+                    has_password=datastore.data['settings']['application']['password'] != False,
+                    socket_io_enabled=datastore.data['settings']['application']['ui'].get('socket_io_enabled', True)
                     )
 
     # Monitored websites will not receive a Referer header when a user clicks on an outgoing link.
@@ -201,87 +220,21 @@ def main():
         from werkzeug.middleware.proxy_fix import ProxyFix
         app.wsgi_app = ProxyFix(app.wsgi_app, x_prefix=1, x_host=1)
 
-    s_type = socket.AF_INET6 if ipv6_enabled else socket.AF_INET
 
-    # Get socketio_server from flask_app
-    from changedetectionio.flask_app import socketio_server
+    # SocketIO instance is already initialized in flask_app.py
 
-    if socketio_server and datastore.data['settings']['application']['ui'].get('open_diff_in_new_tab'):
-        logger.info("Starting server with Socket.IO support (using threading)...")
-
-        # Use Flask-SocketIO's run method with error handling for Werkzeug warning
-        # This is the cleanest approach that works with all Flask-SocketIO versions
-        # Use '0.0.0.0' as the default host if none is specified
-        # This will listen on all available interfaces
-        listen_host = '0.0.0.0' if host == '' else host
-        logger.info(f"Using host: {listen_host} and port: {port}")
-
-        try:
-            # First try with the allow_unsafe_werkzeug parameter (newer versions)
-            if ssl_mode:
-                socketio_server.run(
-                    app,
-                    host=listen_host,
-                    port=int(port),
-                    certfile='cert.pem',
-                    keyfile='privkey.pem',
-                    debug=False,
-                    use_reloader=False,
-                    allow_unsafe_werkzeug=True  # Only in newer versions
-                )
-            else:
-                socketio_server.run(
-                    app,
-                    host=listen_host,
-                    port=int(port),
-                    debug=False,
-                    use_reloader=False,
-                    allow_unsafe_werkzeug=True  # Only in newer versions
-                )
-        except TypeError:
-            # If allow_unsafe_werkzeug is not a valid parameter, try without it
-            logger.info("Falling back to basic run method without allow_unsafe_werkzeug")
-            # Override the werkzeug safety check by setting an environment variable
-            os.environ['WERKZEUG_RUN_MAIN'] = 'true'
-            if ssl_mode:
-                socketio_server.run(
-                    app,
-                    host=listen_host,
-                    port=int(port),
-                    certfile='cert.pem',
-                    keyfile='privkey.pem',
-                    debug=False,
-                    use_reloader=False
-                )
-            else:
-                socketio_server.run(
-                    app,
-                    host=listen_host,
-                    port=int(port),
-                    debug=False,
-                    use_reloader=False
-                )
-    else:
-        logger.warning("Socket.IO server not initialized, falling back to standard WSGI server")
-        # Fallback to standard WSGI server if socketio_server is not available
-        listen_host = '0.0.0.0' if host == '' else host
+    # Launch using SocketIO run method for proper integration (if enabled)
+    if socketio_server:
         if ssl_mode:
-            # Use Werkzeug's run_simple with SSL support
-            run_simple(
-                hostname=listen_host,
-                port=int(port),
-                application=app,
-                use_reloader=False,
-                use_debugger=False,
-                ssl_context=('cert.pem', 'privkey.pem')
-            )
+            socketio.run(app, host=host, port=int(port), debug=False, 
+                        certfile='cert.pem', keyfile='privkey.pem', allow_unsafe_werkzeug=True)
         else:
-            # Use Werkzeug's run_simple for standard HTTP
-            run_simple(
-                hostname=listen_host,
-                port=int(port),
-                application=app,
-                use_reloader=False,
-                use_debugger=False
-            )
-
+            socketio.run(app, host=host, port=int(port), debug=False, allow_unsafe_werkzeug=True)
+    else:
+        # Run Flask app without Socket.IO if disabled
+        logger.info("Starting Flask app without Socket.IO server")
+        if ssl_mode:
+            app.run(host=host, port=int(port), debug=False, 
+                   ssl_context=('cert.pem', 'privkey.pem'))
+        else:
+            app.run(host=host, port=int(port), debug=False)

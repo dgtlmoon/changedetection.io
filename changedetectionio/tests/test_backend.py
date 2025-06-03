@@ -18,7 +18,7 @@ def test_inscriptus():
 
 def test_check_basic_change_detection_functionality(client, live_server, measure_memory_usage):
     set_original_response()
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
 
     # Add our URL to the import page
     res = client.post(
@@ -143,6 +143,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
     # hit the mark all viewed link
     res = client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
+    time.sleep(0.2)
 
     assert b'class="has-unviewed' not in res.data
     assert b'unviewed' not in res.data

@@ -4,6 +4,7 @@ import flask_login
 import locale
 import os
 import queue
+import sys
 import threading
 import time
 import timeago
@@ -11,7 +12,8 @@ from blinker import signal
 
 from changedetectionio.strtobool import strtobool
 from threading import Event
-from changedetectionio.custom_queue import SignalPriorityQueue
+from changedetectionio.custom_queue import SignalPriorityQueue, AsyncSignalPriorityQueue
+from changedetectionio import worker_handler
 
 from flask import (
     Flask,
@@ -45,12 +47,11 @@ from .time_handler import is_within_schedule
 datastore = None
 
 # Local
-running_update_threads = []
 ticker_thread = None
-
 extra_stylesheets = []
 
-update_q = SignalPriorityQueue()
+# Use async queue by default, keep sync for backward compatibility  
+update_q = AsyncSignalPriorityQueue() if worker_handler.USE_ASYNC_WORKERS else SignalPriorityQueue()
 notification_q = queue.Queue()
 MAX_QUEUE_SIZE = 2000
 
@@ -145,10 +146,32 @@ def _jinja2_filter_format_number_locale(value: float) -> str:
 
 @app.template_global('is_checking_now')
 def _watch_is_checking_now(watch_obj, format="%Y-%m-%d %H:%M:%S"):
-    # Worker thread tells us which UUID it is currently processing.
-    for t in running_update_threads:
-        if t.current_uuid == watch_obj['uuid']:
-            return True
+    return worker_handler.is_watch_running(watch_obj['uuid'])
+
+@app.template_global('get_watch_queue_position')
+def _get_watch_queue_position(watch_obj):
+    """Get the position of a watch in the queue"""
+    uuid = watch_obj['uuid']
+    return update_q.get_uuid_position(uuid)
+
+@app.template_global('get_current_worker_count')
+def _get_current_worker_count():
+    """Get the current number of operational workers"""
+    return worker_handler.get_worker_count()
+
+@app.template_global('get_worker_status_info')
+def _get_worker_status_info():
+    """Get detailed worker status information for display"""
+    status = worker_handler.get_worker_status()
+    running_uuids = worker_handler.get_running_uuids()
+    
+    return {
+        'count': status['worker_count'],
+        'type': status['worker_type'],
+        'active_workers': len(running_uuids),
+        'processing_watches': running_uuids,
+        'loop_running': status.get('async_loop_running', None)
+    }
 
 
 # We use the whole watch object from the store/JSON so we can see if there's some related status in terms of a thread
@@ -470,16 +493,21 @@ def changedetection_app(config=None, datastore_o=None):
 
     # watchlist UI buttons etc
     import changedetectionio.blueprint.ui as ui
-    app.register_blueprint(ui.construct_blueprint(datastore, update_q, running_update_threads, queuedWatchMetaData, watch_check_update))
+    app.register_blueprint(ui.construct_blueprint(datastore, update_q, worker_handler, queuedWatchMetaData, watch_check_update))
 
     import changedetectionio.blueprint.watchlist as watchlist
     app.register_blueprint(watchlist.construct_blueprint(datastore=datastore, update_q=update_q, queuedWatchMetaData=queuedWatchMetaData), url_prefix='')
 
-    # Initialize Socket.IO server
-    from changedetectionio.realtime.socket_server import init_socketio
-    global socketio_server
-    socketio_server = init_socketio(app, datastore)
-    logger.info("Socket.IO server initialized")
+    # Initialize Socket.IO server conditionally based on settings
+    socket_io_enabled = datastore.data['settings']['application']['ui'].get('socket_io_enabled', True)
+    if socket_io_enabled:
+        from changedetectionio.realtime.socket_server import init_socketio
+        global socketio_server
+        socketio_server = init_socketio(app, datastore)
+        logger.info("Socket.IO server initialized")
+    else:
+        logger.info("Socket.IO server disabled via settings")
+        socketio_server = None
 
     # Memory cleanup endpoint
     @app.route('/gc-cleanup', methods=['GET'])
@@ -491,12 +519,91 @@ def changedetection_app(config=None, datastore_o=None):
         result = memory_cleanup(app)
         return jsonify({"status": "success", "message": "Memory cleanup completed", "result": result})
 
+    # Worker health check endpoint
+    @app.route('/worker-health', methods=['GET'])
+    @login_optionally_required
+    def worker_health():
+        from flask import jsonify
+        
+        expected_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
+        
+        # Get basic status
+        status = worker_handler.get_worker_status()
+        
+        # Perform health check
+        health_result = worker_handler.check_worker_health(
+            expected_count=expected_workers,
+            update_q=update_q,
+            notification_q=notification_q,
+            app=app,
+            datastore=datastore
+        )
+        
+        return jsonify({
+            "status": "success",
+            "worker_status": status,
+            "health_check": health_result,
+            "expected_workers": expected_workers
+        })
+
+    # Queue status endpoint
+    @app.route('/queue-status', methods=['GET'])
+    @login_optionally_required
+    def queue_status():
+        from flask import jsonify, request
+        
+        # Get specific UUID position if requested
+        target_uuid = request.args.get('uuid')
+        
+        if target_uuid:
+            position_info = update_q.get_uuid_position(target_uuid)
+            return jsonify({
+                "status": "success",
+                "uuid": target_uuid,
+                "queue_position": position_info
+            })
+        else:
+            # Get pagination parameters
+            limit = request.args.get('limit', type=int)
+            offset = request.args.get('offset', type=int, default=0)
+            summary_only = request.args.get('summary', type=bool, default=False)
+            
+            if summary_only:
+                # Fast summary for large queues
+                summary = update_q.get_queue_summary()
+                return jsonify({
+                    "status": "success",
+                    "queue_summary": summary
+                })
+            else:
+                # Get queued items with pagination support
+                if limit is None:
+                    # Default limit for large queues to prevent performance issues
+                    queue_size = update_q.qsize()
+                    if queue_size > 100:
+                        limit = 50
+                        logger.warning(f"Large queue ({queue_size} items) detected, limiting to {limit} items. Use ?limit=N for more.")
+                
+                all_queued = update_q.get_all_queued_uuids(limit=limit, offset=offset)
+                return jsonify({
+                    "status": "success",
+                    "queue_size": update_q.qsize(),
+                    "queued_data": all_queued
+                })
+
+    # Start the async workers during app initialization
+    # Can be overridden by ENV or use the default settings
+    n_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
+    logger.info(f"Starting {n_workers} workers during app initialization")
+    worker_handler.start_workers(n_workers, update_q, notification_q, app, datastore)
+
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
     threading.Thread(target=notification_runner).start()
 
+    in_pytest = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
     # Check for new release version, but not when running in test/build or pytest
-    if not os.getenv("GITHUB_REF", False) and not strtobool(os.getenv('DISABLE_VERSION_CHECK', 'no')):
+    if not os.getenv("GITHUB_REF", False) and not strtobool(os.getenv('DISABLE_VERSION_CHECK', 'no')) and not in_pytest:
         threading.Thread(target=check_for_new_version).start()
 
     # Return the Flask app - the Socket.IO will be attached to it but initialized separately
@@ -588,27 +695,35 @@ def notification_runner():
 # Threaded runner, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():
     import random
-    from changedetectionio import update_worker
     proxy_last_called_time = {}
+    last_health_check = 0
 
     recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
     logger.debug(f"System env MINIMUM_SECONDS_RECHECK_TIME {recheck_time_minimum_seconds}")
 
-    # Spin up Workers that do the fetching
-    # Can be overriden by ENV or use the default settings
-    n_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
-    for _ in range(n_workers):
-        new_worker = update_worker.update_worker(update_q, notification_q, app, datastore)
-        running_update_threads.append(new_worker)
-        new_worker.start()
+    # Workers are now started during app initialization, not here
 
     while not app.config.exit.is_set():
 
+        # Periodic worker health check (every 60 seconds)
+        now = time.time()
+        if now - last_health_check > 60:
+            expected_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
+            health_result = worker_handler.check_worker_health(
+                expected_count=expected_workers,
+                update_q=update_q,
+                notification_q=notification_q,
+                app=app,
+                datastore=datastore
+            )
+            
+            if health_result['status'] != 'healthy':
+                logger.warning(f"Worker health check: {health_result['message']}")
+                
+            last_health_check = now
+
         # Get a list of watches by UUID that are currently fetching data
-        running_uuids = []
-        for t in running_update_threads:
-            if t.current_uuid:
-                running_uuids.append(t.current_uuid)
+        running_uuids = worker_handler.get_running_uuids()
 
         # Re #232 - Deepcopy the data incase it changes while we're iterating through it all
         watch_uuid_list = []
@@ -711,7 +826,7 @@ def ticker_thread_check_time_launch_checks():
                         f"{now - watch['last_checked']:0.2f}s since last checked")
 
                     # Into the queue with you
-                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=priority, item={'uuid': uuid}))
+                    worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=priority, item={'uuid': uuid}))
 
                     # Reset for next time
                     watch.jitter_seconds = 0

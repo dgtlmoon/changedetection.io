@@ -310,15 +310,15 @@ class fetcher(Fetcher):
     async def main(self, **kwargs):
         await self.fetch_page(**kwargs)
 
-    def run(self, url, timeout, request_headers, request_body, request_method, ignore_status_codes=False,
+    async def run(self, url, timeout, request_headers, request_body, request_method, ignore_status_codes=False,
             current_include_filters=None, is_binary=False, empty_pages_are_a_change=False):
 
         #@todo make update_worker async which could run any of these content_fetchers within memory and time constraints
-        max_time = os.getenv('PUPPETEER_MAX_PROCESSING_TIMEOUT_SECONDS', 180)
+        max_time = int(os.getenv('PUPPETEER_MAX_PROCESSING_TIMEOUT_SECONDS', 180))
 
-        # This will work in 3.10 but not >= 3.11 because 3.11 wants tasks only
+        # Now we run this properly in async context since we're called from async worker
         try:
-            asyncio.run(asyncio.wait_for(self.main(
+            await asyncio.wait_for(self.main(
                 url=url,
                 timeout=timeout,
                 request_headers=request_headers,
@@ -328,7 +328,7 @@ class fetcher(Fetcher):
                 current_include_filters=current_include_filters,
                 is_binary=is_binary,
                 empty_pages_are_a_change=empty_pages_are_a_change
-            ), timeout=max_time))
+            ), timeout=max_time)
         except asyncio.TimeoutError:
             raise(BrowserFetchTimedOut(msg=f"Browser connected but was unable to process the page in {max_time} seconds."))
 

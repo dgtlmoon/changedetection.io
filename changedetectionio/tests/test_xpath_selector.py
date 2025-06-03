@@ -7,8 +7,7 @@ from .util import live_server_setup, wait_for_all_checks
 from ..html_tools import *
 
 
-def test_setup(live_server):
-    live_server_setup(live_server)
+
 
 
 def set_original_response():
@@ -256,7 +255,7 @@ def test_xpath23_prefix_validation(client, live_server, measure_memory_usage):
     assert b'Deleted' in res.data
 
 def test_xpath1_lxml(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
 
     d = '''<?xml version="1.0" encoding="UTF-8"?>
     <rss xmlns:taxo="http://purl.org/rss/1.0/modules/taxonomy/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0">
@@ -380,7 +379,7 @@ def test_check_with_prefix_include_filters(client, live_server, measure_memory_u
 
 def test_various_rules(client, live_server, measure_memory_usage):
     # Just check these don't error
-    # live_server_setup(live_server)
+    ##  live_server_setup(live_server) # Setup on conftest per function
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write("""<html>
        <body>

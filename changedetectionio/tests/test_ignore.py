@@ -24,7 +24,7 @@ def set_original_ignore_response():
 
 
 def test_ignore(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
     set_original_ignore_response()
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(

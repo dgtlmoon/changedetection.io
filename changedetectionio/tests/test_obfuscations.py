@@ -20,7 +20,7 @@ def set_original_ignore_response():
 
 def test_obfuscations(client, live_server, measure_memory_usage):
     set_original_ignore_response()
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
     time.sleep(1)
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)

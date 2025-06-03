@@ -67,11 +67,11 @@ def set_multiline_response():
     return None
 
 
-def test_setup(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+# def test_setup(client, live_server, measure_memory_usage):
+   #  live_server_setup(live_server) # Setup on conftest per function
 
 def test_check_filter_multiline(client, live_server, measure_memory_usage):
-   # live_server_setup(live_server)
+   ##  live_server_setup(live_server) # Setup on conftest per function
     set_multiline_response()
 
     # Add our URL to the import page
@@ -206,7 +206,7 @@ def test_check_filter_and_regex_extract(client, live_server, measure_memory_usag
 
 def test_regex_error_handling(client, live_server, measure_memory_usage):
 
-    #live_server_setup(live_server)
+    
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)

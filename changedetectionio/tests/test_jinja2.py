@@ -5,12 +5,12 @@ from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
 
 
-def test_setup(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+# def test_setup(client, live_server, measure_memory_usage):
+   # #  live_server_setup(live_server) # Setup on conftest per function
 
 # If there was only a change in the whitespacing, then we shouldnt have a change detected
 def test_jinja2_in_url_query(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
 
     # Add our URL to the import page
     test_url = url_for('test_return_query', _external=True)
@@ -35,7 +35,7 @@ def test_jinja2_in_url_query(client, live_server, measure_memory_usage):
 
 # https://techtonics.medium.com/secure-templating-with-jinja2-understanding-ssti-and-jinja2-sandbox-environment-b956edd60456
 def test_jinja2_security_url_query(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
 
     # Add our URL to the import page
     test_url = url_for('test_return_query', _external=True)

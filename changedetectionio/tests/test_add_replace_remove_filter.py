@@ -4,7 +4,7 @@ import os.path
 
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks, wait_for_notification_endpoint_output
-
+import time
 
 def set_original(excluding=None, add_line=None):
     test_return_data = """<html>
@@ -35,11 +35,11 @@ def set_original(excluding=None, add_line=None):
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write(test_return_data)
 
-def test_setup(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+# def test_setup(client, live_server, measure_memory_usage):
+   #  live_server_setup(live_server) # Setup on conftest per function
 
 def test_check_removed_line_contains_trigger(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+
     # Give the endpoint time to spin up
     set_original()
     # Add our URL to the import page
@@ -72,6 +72,7 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
     res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
     wait_for_all_checks(client)
+    time.sleep(0.5)
     res = client.get(url_for("watchlist.index"))
     assert b'unviewed' not in res.data
 
@@ -84,12 +85,17 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
     res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
 
+    time.sleep(1)
 
     # Now add it back, and we should not get a trigger
     client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
+    time.sleep(0.2)
+
+    time.sleep(1)
     set_original(excluding=None)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
+    time.sleep(1)
     res = client.get(url_for("watchlist.index"))
     assert b'unviewed' not in res.data
 
@@ -105,7 +111,10 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
 
 
 def test_check_add_line_contains_trigger(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data
+    time.sleep(1)
 
     # Give the endpoint time to spin up
     test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://') + "?xxx={{ watch_url }}"

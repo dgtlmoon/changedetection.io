@@ -63,7 +63,7 @@ class steppable_browser_interface():
         self.start_url = start_url
 
     # Convert and perform "Click Button" for example
-    def call_action(self, action_name, selector=None, optional_value=None):
+    async def call_action(self, action_name, selector=None, optional_value=None):
         if self.page is None:
             logger.warning("Cannot call action on None page object")
             return
@@ -93,73 +93,74 @@ class steppable_browser_interface():
             optional_value = jinja_render(template_str=optional_value)
 
 
-        action_handler(selector, optional_value)
+        await action_handler(selector, optional_value)
         # Safely wait for timeout
-        self.page.wait_for_timeout(1.5 * 1000)
+        await self.page.wait_for_timeout(1.5 * 1000)
         logger.debug(f"Call action done in {time.time()-now:.2f}s")
 
-    def action_goto_url(self, selector=None, value=None):
+    async def action_goto_url(self, selector=None, value=None):
         if not value:
             logger.warning("No URL provided for goto_url action")
             return None
             
         now = time.time()
-        response = self.page.goto(value, timeout=0, wait_until='load')
+        response = await self.page.goto(value, timeout=0, wait_until='load')
         logger.debug(f"Time to goto URL {time.time()-now:.2f}s")
         return response
 
     # Incase they request to go back to the start
-    def action_goto_site(self, selector=None, value=None):
-        return self.action_goto_url(value=self.start_url)
+    async def action_goto_site(self, selector=None, value=None):
+        return await self.action_goto_url(value=self.start_url)
 
-    def action_click_element_containing_text(self, selector=None, value=''):
+    async def action_click_element_containing_text(self, selector=None, value=''):
         logger.debug("Clicking element containing text")
         if not value or not len(value.strip()):
             return
             
         elem = self.page.get_by_text(value)
-        if elem.count():
-            elem.first.click(delay=randint(200, 500), timeout=self.action_timeout)
+        if await elem.count():
+            await elem.first.click(delay=randint(200, 500), timeout=self.action_timeout)
 
 
-    def action_click_element_containing_text_if_exists(self, selector=None, value=''):
+    async def action_click_element_containing_text_if_exists(self, selector=None, value=''):
         logger.debug("Clicking element containing text if exists")
         if not value or not len(value.strip()):
             return
             
         elem = self.page.get_by_text(value)
-        logger.debug(f"Clicking element containing text - {elem.count()} elements found")
-        if elem.count():
-            elem.first.click(delay=randint(200, 500), timeout=self.action_timeout)
+        count = await elem.count()
+        logger.debug(f"Clicking element containing text - {count} elements found")
+        if count:
+            await elem.first.click(delay=randint(200, 500), timeout=self.action_timeout)
                 
 
-    def action_enter_text_in_field(self, selector, value):
+    async def action_enter_text_in_field(self, selector, value):
         if not selector or not len(selector.strip()):
             return
 
-        self.page.fill(selector, value, timeout=self.action_timeout)
+        await self.page.fill(selector, value, timeout=self.action_timeout)
 
-    def action_execute_js(self, selector, value):
+    async def action_execute_js(self, selector, value):
         if not value:
             return None
             
-        return self.page.evaluate(value)
+        return await self.page.evaluate(value)
 
-    def action_click_element(self, selector, value):
+    async def action_click_element(self, selector, value):
         logger.debug("Clicking element")
         if not selector or not len(selector.strip()):
             return
 
-        self.page.click(selector=selector, timeout=self.action_timeout + 20 * 1000, delay=randint(200, 500))
+        await self.page.click(selector=selector, timeout=self.action_timeout + 20 * 1000, delay=randint(200, 500))
 
-    def action_click_element_if_exists(self, selector, value):
+    async def action_click_element_if_exists(self, selector, value):
         import playwright._impl._errors as _api_types
         logger.debug("Clicking element if exists")
         if not selector or not len(selector.strip()):
             return
             
         try:
-            self.page.click(selector, timeout=self.action_timeout, delay=randint(200, 500))
+            await self.page.click(selector, timeout=self.action_timeout, delay=randint(200, 500))
         except _api_types.TimeoutError:
             return
         except _api_types.Error:
@@ -167,7 +168,7 @@ class steppable_browser_interface():
             return
                 
 
-    def action_click_x_y(self, selector, value):
+    async def action_click_x_y(self, selector, value):
         if not value or not re.match(r'^\s?\d+\s?,\s?\d+\s?$', value):
             logger.warning("'Click X,Y' step should be in the format of '100 , 90'")
             return
@@ -177,42 +178,42 @@ class steppable_browser_interface():
             x = int(float(x.strip()))
             y = int(float(y.strip()))
             
-            self.page.mouse.click(x=x, y=y, delay=randint(200, 500))
+            await self.page.mouse.click(x=x, y=y, delay=randint(200, 500))
                 
         except Exception as e:
             logger.error(f"Error parsing x,y coordinates: {str(e)}")
 
-    def action__select_by_option_text(self, selector, value):
+    async def action__select_by_option_text(self, selector, value):
         if not selector or not len(selector.strip()):
             return
 
-        self.page.select_option(selector, label=value, timeout=self.action_timeout)
+        await self.page.select_option(selector, label=value, timeout=self.action_timeout)
 
-    def action_scroll_down(self, selector, value):
+    async def action_scroll_down(self, selector, value):
         # Some sites this doesnt work on for some reason
-        self.page.mouse.wheel(0, 600)
-        self.page.wait_for_timeout(1000)
+        await self.page.mouse.wheel(0, 600)
+        await self.page.wait_for_timeout(1000)
 
-    def action_wait_for_seconds(self, selector, value):
+    async def action_wait_for_seconds(self, selector, value):
         try:
             seconds = float(value.strip()) if value else 1.0
-            self.page.wait_for_timeout(seconds * 1000)
+            await self.page.wait_for_timeout(seconds * 1000)
         except (ValueError, TypeError) as e:
             logger.error(f"Invalid value for wait_for_seconds: {str(e)}")
 
-    def action_wait_for_text(self, selector, value):
+    async def action_wait_for_text(self, selector, value):
         if not value:
             return
             
         import json
         v = json.dumps(value)
-        self.page.wait_for_function(
+        await self.page.wait_for_function(
             f'document.querySelector("body").innerText.includes({v});',
             timeout=30000
         )
             
 
-    def action_wait_for_text_in_element(self, selector, value):
+    async def action_wait_for_text_in_element(self, selector, value):
         if not selector or not value:
             return
             
@@ -220,49 +221,49 @@ class steppable_browser_interface():
         s = json.dumps(selector)
         v = json.dumps(value)
         
-        self.page.wait_for_function(
+        await self.page.wait_for_function(
             f'document.querySelector({s}).innerText.includes({v});',
             timeout=30000
         )
 
     # @todo - in the future make some popout interface to capture what needs to be set
     # https://playwright.dev/python/docs/api/class-keyboard
-    def action_press_enter(self, selector, value):
-        self.page.keyboard.press("Enter", delay=randint(200, 500))
+    async def action_press_enter(self, selector, value):
+        await self.page.keyboard.press("Enter", delay=randint(200, 500))
             
 
-    def action_press_page_up(self, selector, value):
-        self.page.keyboard.press("PageUp", delay=randint(200, 500))
+    async def action_press_page_up(self, selector, value):
+        await self.page.keyboard.press("PageUp", delay=randint(200, 500))
 
-    def action_press_page_down(self, selector, value):
-        self.page.keyboard.press("PageDown", delay=randint(200, 500))
+    async def action_press_page_down(self, selector, value):
+        await self.page.keyboard.press("PageDown", delay=randint(200, 500))
 
-    def action_check_checkbox(self, selector, value):
+    async def action_check_checkbox(self, selector, value):
         if not selector:
             return
 
-        self.page.locator(selector).check(timeout=self.action_timeout)
+        await self.page.locator(selector).check(timeout=self.action_timeout)
 
-    def action_uncheck_checkbox(self, selector, value):
+    async def action_uncheck_checkbox(self, selector, value):
         if not selector:
             return
             
-        self.page.locator(selector).uncheck(timeout=self.action_timeout)
+        await self.page.locator(selector).uncheck(timeout=self.action_timeout)
             
 
-    def action_remove_elements(self, selector, value):
+    async def action_remove_elements(self, selector, value):
         """Removes all elements matching the given selector from the DOM."""
         if not selector:
             return
             
-        self.page.locator(selector).evaluate_all("els => els.forEach(el => el.remove())")
+        await self.page.locator(selector).evaluate_all("els => els.forEach(el => el.remove())")
 
-    def action_make_all_child_elements_visible(self, selector, value):
+    async def action_make_all_child_elements_visible(self, selector, value):
         """Recursively makes all child elements inside the given selector fully visible."""
         if not selector:
             return
             
-        self.page.locator(selector).locator("*").evaluate_all("""
+        await self.page.locator(selector).locator("*").evaluate_all("""
             els => els.forEach(el => {
                 el.style.display = 'block';   // Forces it to be displayed
                 el.style.visibility = 'visible';   // Ensures it's not hidden
@@ -307,21 +308,22 @@ class browsersteps_live_ui(steppable_browser_interface):
         self.playwright_browser = playwright_browser
         self.start_url = start_url
         self._is_cleaned_up = False
-        if self.context is None:
-            self.connect(proxy=proxy)
+        self.proxy = proxy
+        # Note: connect() is now async and must be called separately
 
     def __del__(self):
         # Ensure cleanup happens if object is garbage collected
-        self.cleanup()
+        # Note: cleanup is now async, so we can only mark as cleaned up here
+        self._is_cleaned_up = True
 
     # Connect and setup a new context
-    def connect(self, proxy=None):
+    async def connect(self, proxy=None):
         # Should only get called once - test that
         keep_open = 1000 * 60 * 5
         now = time.time()
 
         # @todo handle multiple contexts, bind a unique id from the browser on each req?
-        self.context = self.playwright_browser.new_context(
+        self.context = await self.playwright_browser.new_context(
             accept_downloads=False,  # Should never be needed
             bypass_csp=True,  # This is needed to enable JavaScript execution on GitHub and others
             extra_http_headers=self.headers,
@@ -332,7 +334,7 @@ class browsersteps_live_ui(steppable_browser_interface):
             user_agent=manage_user_agent(headers=self.headers),
         )
 
-        self.page = self.context.new_page()
+        self.page = await self.context.new_page()
 
         # self.page.set_default_navigation_timeout(keep_open)
         self.page.set_default_timeout(keep_open)
@@ -342,13 +344,15 @@ class browsersteps_live_ui(steppable_browser_interface):
         self.page.on("console", lambda msg: print(f"Browser steps console - {msg.type}: {msg.text} {msg.args}"))
 
         logger.debug(f"Time to browser setup {time.time()-now:.2f}s")
-        self.page.wait_for_timeout(1 * 1000)
+        await self.page.wait_for_timeout(1 * 1000)
 
     def mark_as_closed(self):
         logger.debug("Page closed, cleaning up..")
-        self.cleanup()
+        # Note: This is called from a sync context (event handler)
+        # so we'll just mark as cleaned up and let __del__ handle the rest
+        self._is_cleaned_up = True
 
-    def cleanup(self):
+    async def cleanup(self):
         """Properly clean up all resources to prevent memory leaks"""
         if self._is_cleaned_up:
             return
@@ -359,7 +363,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         if hasattr(self, 'page') and self.page is not None:
             try:
                 # Force garbage collection before closing
-                self.page.request_gc()
+                await self.page.request_gc()
             except Exception as e:
                 logger.debug(f"Error during page garbage collection: {str(e)}")
                 
@@ -370,7 +374,7 @@ class browsersteps_live_ui(steppable_browser_interface):
                 logger.debug(f"Error removing event listeners: {str(e)}")
                 
             try:
-                self.page.close()
+                await self.page.close()
             except Exception as e:
                 logger.debug(f"Error closing page: {str(e)}")
             
@@ -379,7 +383,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         # Clean up context
         if hasattr(self, 'context') and self.context is not None:
             try:
-                self.context.close()
+                await self.context.close()
             except Exception as e:
                 logger.debug(f"Error closing context: {str(e)}")
             
@@ -401,12 +405,12 @@ class browsersteps_live_ui(steppable_browser_interface):
             
         return False
 
-    def get_current_state(self):
+    async def get_current_state(self):
         """Return the screenshot and interactive elements mapping, generally always called after action_()"""
         import importlib.resources
         import json
         # because we for now only run browser steps in playwright mode (not puppeteer mode)
-        from changedetectionio.content_fetchers.playwright import capture_full_page
+        from changedetectionio.content_fetchers.playwright import capture_full_page_async
 
         # Safety check - don't proceed if resources are cleaned up
         if self._is_cleaned_up or self.page is None:
@@ -416,29 +420,29 @@ class browsersteps_live_ui(steppable_browser_interface):
         xpath_element_js = importlib.resources.files("changedetectionio.content_fetchers.res").joinpath('xpath_element_scraper.js').read_text()
 
         now = time.time()
-        self.page.wait_for_timeout(1 * 1000)
+        await self.page.wait_for_timeout(1 * 1000)
 
         screenshot = None
         xpath_data = None
         
         try:
             # Get screenshot first
-            screenshot = capture_full_page(page=self.page)
+            screenshot = await capture_full_page_async(page=self.page)
             logger.debug(f"Time to get screenshot from browser {time.time() - now:.2f}s")
 
             # Then get interactive elements
             now = time.time()
-            self.page.evaluate("var include_filters=''")
-            self.page.request_gc()
+            await self.page.evaluate("var include_filters=''")
+            await self.page.request_gc()
 
             scan_elements = 'a,button,input,select,textarea,i,th,td,p,li,h1,h2,h3,h4,div,span'
 
             MAX_TOTAL_HEIGHT = int(os.getenv("SCREENSHOT_MAX_HEIGHT", SCREENSHOT_MAX_HEIGHT_DEFAULT))
-            xpath_data = json.loads(self.page.evaluate(xpath_element_js, {
+            xpath_data = json.loads(await self.page.evaluate(xpath_element_js, {
                 "visualselector_xpath_selectors": scan_elements,
                 "max_height": MAX_TOTAL_HEIGHT
             }))
-            self.page.request_gc()
+            await self.page.request_gc()
 
             # Sort elements by size
             xpath_data['size_pos'] = sorted(xpath_data['size_pos'], key=lambda k: k['width'] * k['height'], reverse=True)
@@ -448,13 +452,13 @@ class browsersteps_live_ui(steppable_browser_interface):
             logger.error(f"Error getting current state: {str(e)}")
             # Attempt recovery - force garbage collection
             try:
-                self.page.request_gc()
+                await self.page.request_gc()
             except:
                 pass
         
         # Request garbage collection one final time
         try:
-            self.page.request_gc()
+            await self.page.request_gc()
         except:
             pass
             
