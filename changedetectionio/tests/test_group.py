@@ -39,7 +39,7 @@ def set_modified_response():
         f.write(test_return_data)
     return None
 
-# def test_setup_group_tag(client, live_server, measure_memory_usage):
+def test_setup_group_tag(client, live_server, measure_memory_usage):
     
     set_original_response()
 
