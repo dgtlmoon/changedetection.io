@@ -102,7 +102,7 @@ $(document).ready(function () {
 
                     $('td.title-col .error-text', $watchRow).html(watch.error_text)
 
-                    $('td.last-changed', $watchRow).text(watch.last_checked_text)
+                    $('td.last-changed', $watchRow).text(watch.last_changed_text)
 
                     $('td.last-checked .innertext', $watchRow).text(watch.last_checked_text)
                     $('td.last-checked', $watchRow).data('timestamp', watch.last_checked).data('fetchduration', watch.fetch_time);
