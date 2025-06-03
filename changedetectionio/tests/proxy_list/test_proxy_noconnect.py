@@ -13,7 +13,7 @@ from ... import strtobool
 # WEBDRIVER_URL=http://127.0.0.1:4444/wd/hub pytest tests/proxy_list/test_proxy_noconnect.py
 
 def test_proxy_noconnect_custom(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
 
     # Goto settings, add our custom one
     res = client.post(

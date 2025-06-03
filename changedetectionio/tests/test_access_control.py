@@ -4,7 +4,7 @@ import time
 
 def test_check_access_control(app, client, live_server):
     # Still doesnt work, but this is closer.
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
 
     with app.test_client(use_cookies=True) as c:
         # Check we don't have any password protection enabled yet.

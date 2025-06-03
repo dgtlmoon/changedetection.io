@@ -6,7 +6,7 @@ import logging
 
 def test_check_notification_error_handling(client, live_server, measure_memory_usage):
 
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
     set_original_response()
 
     # Set a URL and fetch it, then set a notification URL which is going to give errors

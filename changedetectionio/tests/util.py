@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from operator import truediv
 
 from flask import make_response, request
 from flask import url_for
@@ -162,8 +163,13 @@ def wait_for_all_checks(client=None):
             empty_since = None
         
         attempt += 1
+        time.sleep(0.2)
 
-def live_server_setup(live_server):
+# Replaced by new_live_server_setup and calling per function scope in conftest.py
+def  live_server_setup(live_server):
+    return True
+
+def new_live_server_setup(live_server):
 
     @live_server.app.route('/test-random-content-endpoint')
     def test_random_content_endpoint():

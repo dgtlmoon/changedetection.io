@@ -10,6 +10,8 @@ import os
 import sys
 from loguru import logger
 
+from changedetectionio.tests.util import live_server_setup, new_live_server_setup
+
 # https://github.com/pallets/flask/blob/1.1.2/examples/tutorial/tests/test_auth.py
 # Much better boilerplate than the docs
 # https://www.python-boilerplate.com/py3+flask+pytest/
@@ -69,6 +71,22 @@ def cleanup(datastore_path):
                 continue
             if os.path.isfile(f):
                 os.unlink(f)
+
+@pytest.fixture(scope='function', autouse=True)
+def prepare_test_function(live_server):
+
+    routes = [rule.rule for rule in live_server.app.url_map.iter_rules()]
+    if '/test-random-content-endpoint' not in routes:
+        logger.debug("Setting up test URL routes")
+        new_live_server_setup(live_server)
+
+
+    yield
+    # Then cleanup/shutdown
+    live_server.app.config['DATASTORE'].data['watching']={}
+    time.sleep(0.3)
+    live_server.app.config['DATASTORE'].data['watching']={}
+
 
 @pytest.fixture(scope='session')
 def app(request):

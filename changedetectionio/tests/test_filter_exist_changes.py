@@ -46,7 +46,7 @@ def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_se
 #  And the page has that filter available
 #  Then I should get a notification
 
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
 
     # Give the endpoint time to spin up
     time.sleep(1)

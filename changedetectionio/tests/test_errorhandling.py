@@ -5,8 +5,7 @@ import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
 
-def test_setup(live_server):
-    live_server_setup(live_server)
+
 
 
 def _runner_test_http_errors(client, live_server, http_code, expected_text):
@@ -93,7 +92,7 @@ def test_DNS_errors(client, live_server, measure_memory_usage):
 
 # Re 1513
 def test_low_level_errors_clear_correctly(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
     # Give the endpoint time to spin up
     time.sleep(1)
 

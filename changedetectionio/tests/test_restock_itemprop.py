@@ -44,13 +44,13 @@ def set_original_response(props_markup='', price="121.95"):
 
 
 
-def test_setup(client, live_server):
+# def test_setup(client, live_server):
 
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
 
 def test_restock_itemprop_basic(client, live_server):
 
-    #live_server_setup(live_server)
+    
 
     test_url = url_for('test_endpoint', _external=True)
 
@@ -89,7 +89,7 @@ def test_restock_itemprop_basic(client, live_server):
         assert b'Deleted' in res.data
 
 def test_itemprop_price_change(client, live_server):
-    #live_server_setup(live_server)
+    
 
     # Out of the box 'Follow price changes' should be ON
     test_url = url_for('test_endpoint', _external=True)
@@ -214,7 +214,7 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
 
 
 def test_restock_itemprop_minmax(client, live_server):
-    #live_server_setup(live_server)
+    
     extras = {
         "restock_settings-follow_price_changes": "y",
         "restock_settings-price_change_min": 900.0,
@@ -223,7 +223,7 @@ def test_restock_itemprop_minmax(client, live_server):
     _run_test_minmax_limit(client, extra_watch_edit_form=extras)
 
 def test_restock_itemprop_with_tag(client, live_server):
-    #live_server_setup(live_server)
+    
 
     res = client.post(
         url_for("tags.form_tag_add"),
@@ -252,7 +252,7 @@ def test_restock_itemprop_with_tag(client, live_server):
 
 
 def test_itemprop_percent_threshold(client, live_server):
-    #live_server_setup(live_server)
+    
 
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
@@ -319,7 +319,7 @@ def test_itemprop_percent_threshold(client, live_server):
 
 
 def test_change_with_notification_values(client, live_server):
-    #live_server_setup(live_server)
+    
 
     if os.path.isfile("test-datastore/notification.txt"):
         os.unlink("test-datastore/notification.txt")
@@ -387,7 +387,7 @@ def test_change_with_notification_values(client, live_server):
 
 
 def test_data_sanity(client, live_server):
-    #live_server_setup(live_server)
+    
 
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
@@ -437,7 +437,7 @@ def test_data_sanity(client, live_server):
 # All examples should give a prive of 666.66
 def test_special_prop_examples(client, live_server):
     import glob
-    #live_server_setup(live_server)
+    
 
     test_url = url_for('test_endpoint', _external=True)
     check_path = os.path.join(os.path.dirname(__file__), "itemprop_test_examples", "*.txt")

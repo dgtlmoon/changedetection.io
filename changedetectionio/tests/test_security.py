@@ -5,11 +5,11 @@ from .util import live_server_setup, wait_for_all_checks
 from .. import strtobool
 
 
-def test_setup(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+# def test_setup(client, live_server, measure_memory_usage):
+   #  live_server_setup(live_server) # Setup on conftest per function
 
 def test_bad_access(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
     res = client.post(
         url_for("imports.import_page"),
         data={"urls": 'https://localhost'},
@@ -89,7 +89,7 @@ def _runner_test_various_file_slash(client, file_uri):
     assert b'Deleted' in res.data
 
 def test_file_slash_access(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
 
     # file: is NOT permitted by default, so it will be caught by ALLOW_FILE_URI check
 
@@ -99,7 +99,7 @@ def test_file_slash_access(client, live_server, measure_memory_usage):
     _runner_test_various_file_slash(client, file_uri=f"file:{test_file_path}") # CVE-2024-56509
 
 def test_xss(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
     from changedetectionio.notification import (
         default_notification_format
     )

@@ -4,8 +4,8 @@ import os
 from flask import url_for
 from ..util import live_server_setup, wait_for_all_checks
 
-def test_setup(client, live_server):
-    live_server_setup(live_server)
+# def test_setup(client, live_server):
+   #  live_server_setup(live_server) # Setup on conftest per function
 
 
 # Add a site in paused mode, add an invalid filter, we should still have visual selector data ready

@@ -27,7 +27,7 @@ def set_zero_byte_response():
 
 def test_check_basic_change_detection_functionality(client, live_server, measure_memory_usage):
     set_original_response()
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
 
     # Add our URL to the import page
     res = client.post(

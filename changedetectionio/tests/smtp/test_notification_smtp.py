@@ -20,8 +20,7 @@ from changedetectionio.notification import (
     valid_notification_formats,
 )
 
-def test_setup(live_server):
-    live_server_setup(live_server)
+
 
 def get_last_message_from_smtp_server():
     import socket
@@ -40,7 +39,7 @@ def get_last_message_from_smtp_server():
 # Requires running the test SMTP server
 
 def test_check_notification_email_formats_default_HTML(client, live_server, measure_memory_usage):
-    # live_server_setup(live_server)
+    ##  live_server_setup(live_server) # Setup on conftest per function
     set_original_response()
 
     notification_url = f'mailto://changedetection@{smtp_test_server}:11025/?to=fff@home.com'
@@ -91,7 +90,7 @@ def test_check_notification_email_formats_default_HTML(client, live_server, meas
 
 
 def test_check_notification_email_formats_default_Text_override_HTML(client, live_server, measure_memory_usage):
-    # live_server_setup(live_server)
+    ##  live_server_setup(live_server) # Setup on conftest per function
 
     # HTML problems? see this
     # https://github.com/caronc/apprise/issues/633

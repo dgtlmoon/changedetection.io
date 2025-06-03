@@ -17,13 +17,12 @@ from changedetectionio.notification import (
     valid_notification_formats,
 )
 
-def test_setup(live_server):
-    live_server_setup(live_server)
+
 
 # Hard to just add more live server URLs when one test is already running (I think)
 # So we add our test here (was in a different file)
 def test_check_notification(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
     set_original_response()
 
     # Re 360 - new install should have defaults set
@@ -285,7 +284,7 @@ def test_notification_validation(client, live_server, measure_memory_usage):
 
 
 def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
 
     # test_endpoint - that sends the contents of a file
     # test_notification_endpoint - that takes a POST and writes it to file (test-datastore/notification.txt)
@@ -371,7 +370,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
 #2510
 def test_global_send_test_notification(client, live_server, measure_memory_usage):
 
-    #live_server_setup(live_server)
+    
     set_original_response()
     if os.path.isfile("test-datastore/notification.txt"):
         os.unlink("test-datastore/notification.txt") \
@@ -516,7 +515,7 @@ def _test_color_notifications(client, notification_body_token):
 
 def test_html_color_notifications(client, live_server, measure_memory_usage):
 
-    #live_server_setup(live_server)
+    
     _test_color_notifications(client, '{{diff}}')
     _test_color_notifications(client, '{{diff_full}}')
     

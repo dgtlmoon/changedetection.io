@@ -20,7 +20,7 @@ def set_response():
     time.sleep(1)
 
 def test_socks5(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
     set_response()
 
     # Setup a proxy

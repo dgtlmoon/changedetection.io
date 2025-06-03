@@ -19,7 +19,7 @@ something to trigger<br>
         f.write(data)
 
 def test_content_filter_live_preview(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
     set_response()
 
     test_url = url_for('test_endpoint', _external=True)

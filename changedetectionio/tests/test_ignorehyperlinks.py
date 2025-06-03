@@ -6,8 +6,7 @@ from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
 
 
-def test_setup(live_server):
-    live_server_setup(live_server)
+
 
 def set_original_ignore_response():
     test_return_data = """<html>

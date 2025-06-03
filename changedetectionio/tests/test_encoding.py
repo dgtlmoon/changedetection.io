@@ -7,8 +7,7 @@ from .util import live_server_setup, wait_for_all_checks, extract_UUID_from_clie
 import pytest
 
 
-def test_setup(live_server):
-    live_server_setup(live_server)
+
 
 
 def set_html_response():
