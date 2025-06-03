@@ -163,7 +163,7 @@ def wait_for_all_checks(client=None):
             empty_since = None
         
         attempt += 1
-        time.sleep(0.2)
+        time.sleep(0.3)
 
 # Replaced by new_live_server_setup and calling per function scope in conftest.py
 def  live_server_setup(live_server):
