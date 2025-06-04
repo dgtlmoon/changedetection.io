@@ -12,7 +12,7 @@ from blinker import signal
 
 from changedetectionio.strtobool import strtobool
 from threading import Event
-from changedetectionio.custom_queue import SignalPriorityQueue, AsyncSignalPriorityQueue
+from changedetectionio.custom_queue import SignalPriorityQueue, AsyncSignalPriorityQueue, NotificationQueue
 from changedetectionio import worker_handler
 
 from flask import (
@@ -52,7 +52,7 @@ extra_stylesheets = []
 
 # Use async queue by default, keep sync for backward compatibility  
 update_q = AsyncSignalPriorityQueue() if worker_handler.USE_ASYNC_WORKERS else SignalPriorityQueue()
-notification_q = queue.Queue()
+notification_q = NotificationQueue()
 MAX_QUEUE_SIZE = 2000
 
 app = Flask(__name__,
