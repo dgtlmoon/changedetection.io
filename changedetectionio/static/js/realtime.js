@@ -94,6 +94,10 @@ $(document).ready(function () {
                 }
             });
 
+            socket.on('notification_event', function (data) {
+                console.log(`Stub handler for notification_event ${data.watch_uuid}`)
+            });
+
             // Listen for periodically emitted watch data
             console.log('Adding watch_update event listener');
 
