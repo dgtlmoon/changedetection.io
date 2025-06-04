@@ -93,13 +93,24 @@ class steppable_browser_interface():
         # Trigger click and cautiously handle potential navigation
         # This means the page redirects/reloads/changes JS etc etc
         if call_action_name.startswith('click_'):
-            with self.page.expect_navigation(timeout=3500) as navigation_info:
-                await action_handler(selector, optional_value)
             try:
-                navigation_info.value  # this line blocks/waits for the navigation promise
-                logger.debug(f"Navigation occurred on {call_action_name}.")
-            except TimeoutError:
-                logger.debug(f"No navigation occurred within timeout when calling {call_action_name}, that's OK, continuing.")
+                # Set up navigation expectation before the click (like sync version)
+                async with self.page.expect_event("framenavigated", timeout=3000) as navigation_info:
+                    await action_handler(selector, optional_value)
+                
+                # Check if navigation actually occurred
+                try:
+                    await navigation_info.value  # This waits for the navigation promise
+                    logger.debug(f"Navigation occurred on {call_action_name}.")
+                except Exception:
+                    logger.debug(f"No navigation occurred within timeout when calling {call_action_name}, that's OK, continuing.")
+                    
+            except Exception as e:
+                # If expect_event itself times out, that means no navigation occurred - that's OK
+                if "framenavigated" in str(e) and "exceeded" in str(e):
+                    logger.debug(f"No navigation occurred within timeout when calling {call_action_name}, that's OK, continuing.")
+                else:
+                    raise e
         else:
             # Some other action that probably a navigation is not expected
             await action_handler(selector, optional_value)
