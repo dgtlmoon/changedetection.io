@@ -23,8 +23,28 @@ on:
   # Changes to requirements.txt packages and Dockerfile may or may not always be compatible with arm etc, so worth testing
   # @todo: some kind of path filter for requirements.txt and Dockerfile
 jobs:
-  test-container-build:
+  builder:
+    name: Build ${{ matrix.platform }} (${{ matrix.dockerfile == './Dockerfile' && 'main' || 'alpine' }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # Main Dockerfile platforms
+          - platform: linux/amd64
+            dockerfile: ./Dockerfile
+          - platform: linux/arm64
+            dockerfile: ./Dockerfile
+          - platform: linux/arm/v7
+            dockerfile: ./Dockerfile
+          - platform: linux/arm/v8
+            dockerfile: ./Dockerfile
+          - platform: linux/arm64/v8
+            dockerfile: ./Dockerfile
+          # Alpine Dockerfile platforms (musl via alpine check)
+          - platform: linux/amd64
+            dockerfile: ./.github/test/Dockerfile-alpine
+          - platform: linux/arm64
+            dockerfile: ./.github/test/Dockerfile-alpine
     steps:
         - uses: actions/checkout@v4
         - name: Set up Python 3.11
@@ -47,26 +67,14 @@ jobs:
             version: latest
             driver-opts: image=moby/buildkit:master
 
-        # https://github.com/dgtlmoon/changedetection.io/pull/1067
-        # Check we can still build under alpine/musl
-        - name: Test that the docker containers can build (musl via alpine check)
-          id: docker_build_musl
-          uses: docker/build-push-action@v6
-          with:
-            context: ./
-            file: ./.github/test/Dockerfile-alpine
-            platforms: linux/amd64,linux/arm64
-            cache-from: type=gha
-            cache-to: type=gha,mode=max
-
-        - name: Test that the docker containers can build
+        - name: Test that the docker containers can build (${{ matrix.platform }} - ${{ matrix.dockerfile }})
           id: docker_build
           uses: docker/build-push-action@v6
           # https://github.com/docker/build-push-action#customizing
           with:
             context: ./
-            file: ./Dockerfile
-            platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v8,linux/arm64/v8
+            file: ${{ matrix.dockerfile }}
+            platforms: ${{ matrix.platform }}
             cache-from: type=gha
             cache-to: type=gha,mode=max
 
