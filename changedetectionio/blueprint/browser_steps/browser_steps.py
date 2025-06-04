@@ -1,8 +1,6 @@
 import os
 import time
 import re
-import sys
-import traceback
 from random import randint
 from loguru import logger
 
@@ -92,8 +90,21 @@ class steppable_browser_interface():
         if optional_value and ('{%' in optional_value or '{{' in optional_value):
             optional_value = jinja_render(template_str=optional_value)
 
+        # Trigger click and cautiously handle potential navigation
+        # This means the page redirects/reloads/changes JS etc etc
+        if call_action_name.startswith('click_'):
+            with self.page.expect_navigation(timeout=3500) as navigation_info:
+                await action_handler(selector, optional_value)
+            try:
+                navigation_info.value  # this line blocks/waits for the navigation promise
+                logger.debug(f"Navigation occurred on {call_action_name}.")
+            except TimeoutError:
+                logger.debug(f"No navigation occurred within timeout when calling {call_action_name}, that's OK, continuing.")
+        else:
+            # Some other action that probably a navigation is not expected
+            await action_handler(selector, optional_value)
 
-        await action_handler(selector, optional_value)
+
         # Safely wait for timeout
         await self.page.wait_for_timeout(1.5 * 1000)
         logger.debug(f"Call action done in {time.time()-now:.2f}s")
@@ -428,6 +439,9 @@ class browsersteps_live_ui(steppable_browser_interface):
         try:
             # Get screenshot first
             screenshot = await capture_full_page_async(page=self.page)
+            if not screenshot:
+                logger.error("No screenshot was retrieved :((")
+
             logger.debug(f"Time to get screenshot from browser {time.time() - now:.2f}s")
 
             # Then get interactive elements
@@ -450,6 +464,12 @@ class browsersteps_live_ui(steppable_browser_interface):
             
         except Exception as e:
             logger.error(f"Error getting current state: {str(e)}")
+            # If the page has navigated (common with logins) then the context is destroyed on navigation, continue
+            # I'm not sure that this is required anymore because we have the "expect navigation wrapper" at the top
+            if "Execution context was destroyed" in str(e):
+                logger.debug("Execution context was destroyed, most likely because of navigation, continuing...")
+            pass
+
             # Attempt recovery - force garbage collection
             try:
                 await self.page.request_gc()
