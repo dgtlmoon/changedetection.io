@@ -51,7 +51,15 @@ async def capture_full_page(page):
         await page.setViewport({'width': page.viewport['width'], 'height': step_size})
 
     while y < min(page_height, SCREENSHOT_MAX_TOTAL_HEIGHT):
-        await page.evaluate(f"window.scrollTo(0, {y})")
+        # better than scrollTo incase they override it in the page
+        await page.evaluate(
+            """(y) => {
+                document.documentElement.scrollTop = y;
+                document.body.scrollTop = y;
+            }""",
+            y
+        )
+
         screenshot_chunks.append(await page.screenshot(type_='jpeg',
                                                        fullPage=False,
                                                        quality=int(os.getenv("SCREENSHOT_QUALITY", 72))))
@@ -149,7 +157,11 @@ class fetcher(Fetcher):
                          ):
         import re
         self.delete_browser_steps_screenshots()
-        extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
+
+        n = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
+        extra_wait = min(n, 15)
+
+        logger.debug(f"Extra wait set to {extra_wait}s, requested was {n}s.")
 
         from pyppeteer import Pyppeteer
         pyppeteer_instance = Pyppeteer()
@@ -165,7 +177,7 @@ class fetcher(Fetcher):
         except websockets.exceptions.InvalidURI:
             raise BrowserConnectError(msg=f"Error connecting to the browser, check your browser connection address (should be ws:// or wss://")
         except Exception as e:
-            raise BrowserConnectError(msg=f"Error connecting to the browser {str(e)}")
+            raise BrowserConnectError(msg=f"Error connecting to the browser - Exception '{str(e)}'")
 
         # Better is to launch chrome with the URL as arg
         # non-headless - newPage() will launch an extra tab/window, .browser should already contain 1 page/tab
@@ -227,13 +239,35 @@ class fetcher(Fetcher):
         #            browsersteps_interface = steppable_browser_interface()
         #            browsersteps_interface.page = self.page
 
-        response = await self.page.goto(url, waitUntil="load")
+        async def handle_frame_navigation(event):
+            logger.debug(f"Frame navigated: {event}")
+            w = extra_wait - 2 if extra_wait > 4 else 2
+            logger.debug(f"Waiting {w} seconds before calling Page.stopLoading...")
+            await asyncio.sleep(w)
+            logger.debug("Issuing stopLoading command...")
+            await self.page._client.send('Page.stopLoading')
+            logger.debug("stopLoading command sent!")
 
-        if response is None:
-            await self.page.close()
-            await browser.close()
-            logger.warning("Content Fetcher > Response object was none (as in, the response from the browser was empty, not just the content)")
-            raise EmptyReply(url=url, status_code=None)
+        self.page._client.on('Page.frameStartedNavigating', lambda event: asyncio.create_task(handle_frame_navigation(event)))
+        self.page._client.on('Page.frameStartedLoading', lambda event: asyncio.create_task(handle_frame_navigation(event)))
+        self.page._client.on('Page.frameStoppedLoading', lambda event: logger.debug(f"Frame stopped loading: {event}"))
+
+        response = None
+        attempt=0
+        while not response:
+            logger.debug(f"Attempting page fetch {url} attempt {attempt}")
+            response = await self.page.goto(url)
+            await asyncio.sleep(1 + extra_wait)
+            if response:
+                break
+            if not response:
+                logger.warning("Page did not fetch! trying again!")
+            if response is None and attempt>=2:
+                await self.page.close()
+                await browser.close()
+                logger.warning(f"Content Fetcher > Response object was none (as in, the response from the browser was empty, not just the content) exiting attmpt {attempt}")
+                raise EmptyReply(url=url, status_code=None)
+            attempt+=1
 
         self.headers = response.headers
 
@@ -276,7 +310,6 @@ class fetcher(Fetcher):
         #            if self.browser_steps_get_valid_steps():
         #                self.iterate_browser_steps()
 
-        await asyncio.sleep(1 + extra_wait)
 
         # So we can find an element on the page where its selector was entered manually (maybe not xPath etc)
         # Setup the xPath/VisualSelector scraper
