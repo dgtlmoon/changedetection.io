@@ -29,6 +29,11 @@ class SignalHandler:
         watch_delete_signal = signal('watch_deleted')
         watch_delete_signal.connect(self.handle_deleted_signal, weak=False)
 
+        # Connect to the notification_event signal
+        notification_event_signal = signal('notification_event')
+        notification_event_signal.connect(self.handle_notification_event, weak=False)
+        logger.info("SignalHandler: Connected to notification_event signal")
+
         # Create and start the queue update thread using standard threading
         import threading
         self.polling_emitter_thread = threading.Thread(
@@ -88,6 +93,23 @@ class SignalHandler:
 
         except Exception as e:
             logger.error(f"Socket.IO error in handle_queue_length: {str(e)}")
+
+    def handle_notification_event(self, *args, **kwargs):
+        """Handle notification_event signal and emit to all clients"""
+        try:
+            watch_uuid = kwargs.get('watch_uuid')
+            logger.debug(f"SignalHandler: Notification event received for watch UUID: {watch_uuid}")
+
+            # Emit the notification event to all connected clients
+            self.socketio_instance.emit("notification_event", {
+                "watch_uuid": watch_uuid,
+                "event_timestamp": time.time()
+            })
+            
+            logger.trace(f"Socket.IO: Emitted notification_event for watch UUID {watch_uuid}")
+
+        except Exception as e:
+            logger.error(f"Socket.IO error in handle_notification_event: {str(e)}")
 
 
     def polling_emit_running_or_queued_watches_threaded(self):
