@@ -55,6 +55,7 @@ $(document).ready(function () {
 
             // Connection status logging
             socket.on('connect', function () {
+                $('#realtime-conn-error').hide();
                 console.log('Socket.IO connected with path:', socketio_url);
                 console.log('Socket transport:', socket.io.engine.transport.name);
                 bindSocketHandlerButtonsEvents(socket);
@@ -74,7 +75,8 @@ $(document).ready(function () {
 
             socket.on('disconnect', function (reason) {
                 console.log('Socket.IO disconnected, reason:', reason);
-                $('.ajax-op').off('.socketHandlerNamespace')
+                $('.ajax-op').off('.socketHandlerNamespace');
+                $('#realtime-conn-error').show();
             });
 
             socket.on('queue_size', function (data) {

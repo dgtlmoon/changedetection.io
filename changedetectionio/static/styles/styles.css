@@ -1535,3 +1535,12 @@ ul {
     height: 21px;
     padding: 2px;
     vertical-align: middle; }
+
+#realtime-conn-error {
+  position: absolute;
+  bottom: 0;
+  left: 30px;
+  background: var(--color-warning);
+  padding: 10px;
+  font-size: 0.8rem;
+  color: #fff; }
