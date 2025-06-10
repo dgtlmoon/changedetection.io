@@ -185,7 +185,7 @@ jobs:
           docker run --name test-changedetectionio-ssl --rm -e SSL_CERT_FILE=cert.pem -e SSL_PRIVKEY_FILE=privkey.pem -p 5000:5000 -v ./cert.pem:/app/cert.pem -v ./privkey.pem:/app/privkey.pem -d test-changedetectionio
           sleep 3
           # Should return 0 (no error) when grep finds it
-          curl --retry-connrefused --retry 6  -s https://localhost:5000 |grep -q checkbox-uuid
+          curl --retry-connrefused --retry 6  https://localhost:5000 -v|grep -q checkbox-uuid
           
           docker kill test-changedetectionio
 
