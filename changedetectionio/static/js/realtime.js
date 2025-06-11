@@ -48,9 +48,9 @@ $(document).ready(function () {
             // Connect to Socket.IO on the same host/port, with path from template
             const socket = io({
                 path: socketio_url,  // This will be the path prefix like "/app/socket.io" from the template
-                transports: ['polling', 'websocket'],  // Try WebSocket but fall back to polling
-                reconnectionDelay: 1000,
-                reconnectionAttempts: 15
+                transports: ['websocket', 'polling'],
+                reconnectionDelay: 3000,
+                reconnectionAttempts: 25
             });
 
             // Connection status logging
