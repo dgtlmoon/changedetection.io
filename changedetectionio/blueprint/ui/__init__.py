@@ -159,12 +159,20 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
     def mark_all_viewed():
         # Save the current newest history as the most recently viewed
         with_errors = request.args.get('with_errors') == "1"
+        tag_limit = request.args.get('tag')
+        logger.debug(f"Limiting to tag {tag_limit}")
+        now = int(time.time())
         for watch_uuid, watch in datastore.data['watching'].items():
             if with_errors and not watch.get('last_error'):
                 continue
-            datastore.set_last_viewed(watch_uuid, int(time.time()))
 
-        return redirect(url_for('watchlist.index'))
+            if tag_limit and ( not watch.get('tags') or tag_limit not in watch['tags'] ):
+                logger.debug(f"Skipping watch {watch_uuid}")
+                continue
+
+            datastore.set_last_viewed(watch_uuid, now)
+
+        return redirect(url_for('watchlist.index', tag=tag_limit))
 
     @ui_blueprint.route("/delete", methods=['GET'])
     @login_optionally_required
