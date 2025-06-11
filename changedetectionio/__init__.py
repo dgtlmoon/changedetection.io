@@ -65,8 +65,7 @@ def main():
 
     datastore_path = None
     do_cleanup = False
-    host = "0.0.0.0"
-    ipv6_enabled = False
+    host = os.environ.get("LISTEN_HOST", "0.0.0.0").strip()
     port = int(os.environ.get('PORT', 5000))
     ssl_mode = False
 
@@ -107,10 +106,6 @@ def main():
 
         if opt == '-d':
             datastore_path = arg
-
-        if opt == '-6':
-            logger.success("Enabling IPv6 listen support")
-            ipv6_enabled = True
 
         # Cleanup (remove text files that arent in the index)
         if opt == '-c':
