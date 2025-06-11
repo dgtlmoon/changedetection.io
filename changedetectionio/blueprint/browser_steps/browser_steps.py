@@ -132,7 +132,7 @@ class steppable_browser_interface():
 
     # Incase they request to go back to the start
     async def action_goto_site(self, selector=None, value=None):
-        return await self.action_goto_url(value=self.start_url)
+        return await self.action_goto_url(value=re.sub(r'^source:', '', self.start_url, flags=re.IGNORECASE))
 
     async def action_click_element_containing_text(self, selector=None, value=''):
         logger.debug("Clicking element containing text")
