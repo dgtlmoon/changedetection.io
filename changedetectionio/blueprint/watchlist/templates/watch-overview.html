@@ -18,18 +18,19 @@ document.addEventListener('DOMContentLoaded', function() {
     transition: background-size 0.9s ease
 }
 </style>
-<div class="box">
+<div class="box" id="form-quick-watch-add">
 
     <form class="pure-form" action="{{ url_for('ui.ui_views.form_quick_watch_add', tag=active_tag_uuid) }}" method="POST" id="new-watch-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
         <fieldset>
-            <legend>Add a new change detection watch</legend>
+            <legend>Add a new web page change detection watch</legend>
             <div id="watch-add-wrapper-zone">
-
                     {{ render_nolabel_field(form.url, placeholder="https://...", required=true) }}
-                    {{ render_nolabel_field(form.tags, value=active_tag.title if active_tag_uuid else '', placeholder="watch label / tag") }}
                     {{ render_nolabel_field(form.watch_submit_button, title="Watch this URL!" ) }}
                     {{ render_nolabel_field(form.edit_and_watch_submit_button, title="Edit first then Watch") }}
+            </div>
+            <div id="watch-group-tag">
+               {{ render_field(form.tags, value=active_tag.title if active_tag_uuid else '', placeholder="Watch group / tag", class="transparent-field") }}
             </div>
             <div id="quick-watch-processor-type">
                 {{ render_simple_field(form.processor) }}
@@ -38,7 +39,8 @@ document.addEventListener('DOMContentLoaded', function() {
         </fieldset>
         <span style="color:#eee; font-size: 80%;"><img alt="Create a shareable link" style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread-white.svg')}}" > Tip: You can also add 'shared' watches. <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Sharing-a-Watch">More info</a></span>
     </form>
-
+</div>
+<div class="box">
     <form class="pure-form" action="{{ url_for('ui.form_watch_list_checkbox_operations') }}" method="POST" id="watch-list-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
     <input type="hidden" id="op_extradata" name="op_extradata" value="" >

@@ -71,6 +71,7 @@
   --color-text-watch-tag-list: rgba(231, 0, 105, 0.4);
   --color-background-new-watch-form: rgba(0, 0, 0, 0.05);
   --color-background-new-watch-input: var(--color-white);
+  --color-background-new-watch-input-transparent: rgba(255, 255, 255, 0.1);
   --color-text-new-watch-input: var(--color-text);
   --color-border-input: var(--color-grey-500);
   --color-shadow-input: var(--color-grey-400);
@@ -97,6 +98,7 @@ html[data-darkmode="true"] {
   --color-background-gradient-second: #1e316c;
   --color-background-gradient-third: #4d2c64;
   --color-background-new-watch-input: var(--color-grey-100);
+  --color-background-new-watch-input-transparent: var(--color-grey-100);
   --color-text-new-watch-input: var(--color-text);
   --color-background-table-thead: var(--color-grey-200);
   --color-table-background: var(--color-grey-300);
