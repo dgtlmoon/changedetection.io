@@ -214,9 +214,14 @@ document.addEventListener('DOMContentLoaded', function() {
             <li id="post-list-mark-views" class="{%- if has_unviewed -%}has-unviewed{%- endif -%}" style="display: none;" >
                 <a href="{{url_for('ui.mark_all_viewed',with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag " id="mark-all-viewed">Mark all viewed</a>
             </li>
+        {%-  if active_tag_uuid -%}
+            <li id="post-list-mark-views-tag">
+                <a href="{{url_for('ui.mark_all_viewed', tag=active_tag_uuid) }}" class="pure-button button-tag " id="mark-all-viewed">Mark all viewed in '{{active_tag.title}}'</a>
+            </li>
+        {%-  endif -%}
             <li>
                <a href="{{ url_for('ui.form_watch_checknow', tag=active_tag_uuid, with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag" id="recheck-all">Recheck
-                all {%- if active_tag_uuid-%}  in "{{active_tag.title}}"{%endif%}</a>
+                all {% if active_tag_uuid %}  in '{{active_tag.title}}'{%endif%}</a>
             </li>
             <li>
                 <a href="{{ url_for('rss.feed', tag=active_tag_uuid, token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='generic_feed-icon.svg')}}" height="15"></a>
