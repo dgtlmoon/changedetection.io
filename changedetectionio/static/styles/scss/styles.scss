@@ -185,7 +185,8 @@ code {
 }
 
 .box {
-  max-width: 80%;
+  max-width: 100%;
+  margin: 0 1em;
   flex-direction: column;
   display: flex;
   justify-content: center;
@@ -620,10 +621,6 @@ footer {
 
 @media only screen and (max-width: 760px),
 (min-device-width: 768px) and (max-device-width: 1024px) {
-  .box {
-    max-width: 95%
-  }
-
   .edit-form {
     padding: 0.5em;
     margin: 0;
