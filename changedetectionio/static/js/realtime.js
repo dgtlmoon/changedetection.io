@@ -98,6 +98,12 @@ $(document).ready(function () {
                 console.log(`Stub handler for notification_event ${data.watch_uuid}`)
             });
 
+            socket.on('watch_deleted', function (data) {
+                $('tr[data-watch-uuid="' + data.uuid + '"] td').fadeOut(500, function () {
+                    $(this).closest('tr').remove();
+                });
+            });
+
             // Listen for periodically emitted watch data
             console.log('Adding watch_update event listener');
 
