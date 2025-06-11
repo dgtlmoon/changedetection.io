@@ -968,7 +968,7 @@ label:hover {
 
 .pure-form input[type=text].transparent-field {
   background-color: var(--color-background-new-watch-input-transparent) !important;
-  color: var(--color-text-new-watch-input) !important;
+  color: var(--color-white) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
   box-shadow: none !important;
   -webkit-box-shadow: none !important; }
