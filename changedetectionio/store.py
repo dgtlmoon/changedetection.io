@@ -45,7 +45,7 @@ class ChangeDetectionStore:
         # logging.basicConfig(filename='/dev/stdout', level=logging.INFO)
         self.__data = App.model()
         self.datastore_path = datastore_path
-        self.json_store_path = "{}/url-watches.json".format(self.datastore_path)
+        self.json_store_path = os.path.join(self.datastore_path, "url-watches.json")
         logger.info(f"Datastore path is '{self.json_store_path}'")
         self.needs_write = False
         self.start_time = time.time()
@@ -118,7 +118,7 @@ class ChangeDetectionStore:
         test_list = self.proxy_list
 
         # Helper to remove password protection
-        password_reset_lockfile = "{}/removepassword.lock".format(self.datastore_path)
+        password_reset_lockfile = os.path.join(self.datastore_path, "removepassword.lock")
         if path.isfile(password_reset_lockfile):
             self.__data['settings']['application']['password'] = False
             unlink(password_reset_lockfile)
@@ -386,9 +386,9 @@ class ChangeDetectionStore:
         return new_uuid
 
     def visualselector_data_is_ready(self, watch_uuid):
-        output_path = "{}/{}".format(self.datastore_path, watch_uuid)
-        screenshot_filename = "{}/last-screenshot.png".format(output_path)
-        elements_index_filename = "{}/elements.deflate".format(output_path)
+        output_path = os.path.join(self.datastore_path, watch_uuid)
+        screenshot_filename = os.path.join(output_path, "last-screenshot.png")
+        elements_index_filename = os.path.join(output_path, "elements.deflate")
         if path.isfile(screenshot_filename) and  path.isfile(elements_index_filename) :
             return True
 
@@ -474,7 +474,7 @@ class ChangeDetectionStore:
 
         # Load from external config file
         if path.isfile(proxy_list_file):
-            with open("{}/proxies.json".format(self.datastore_path)) as f:
+            with open(os.path.join(self.datastore_path, "proxies.json")) as f:
                 proxy_list = json.load(f)
 
         # Mapping from UI config if available
@@ -732,10 +732,10 @@ class ChangeDetectionStore:
                 logger.critical(f"Applying update_{update_n}")
                 # Wont exist on fresh installs
                 if os.path.exists(self.json_store_path):
-                    shutil.copyfile(self.json_store_path, self.datastore_path+"/url-watches-before-{}.json".format(update_n))
+                    shutil.copyfile(self.json_store_path, os.path.join(self.datastore_path, f"url-watches-before-{update_n}.json"))
 
                 try:
-                    update_method = getattr(self, "update_{}".format(update_n))()
+                    update_method = getattr(self, f"update_{update_n}")()
                 except Exception as e:
                     logger.error(f"Error while trying update_{update_n}")
                     logger.error(e)
