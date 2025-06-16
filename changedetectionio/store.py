@@ -13,6 +13,7 @@ import json
 import os
 import re
 import secrets
+import sys
 import threading
 import time
 import uuid as uuid_builder
@@ -124,8 +125,6 @@ class ChangeDetectionStore:
             unlink(password_reset_lockfile)
 
         if not 'app_guid' in self.__data:
-            import os
-            import sys
             if "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ:
                 self.__data['app_guid'] = "test-" + str(uuid_builder.uuid4())
             else:
