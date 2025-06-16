@@ -100,7 +100,7 @@ watch_api = Api(app, decorators=[csrf.exempt])
 def init_app_secret(datastore_path):
     secret = ""
 
-    path = "{}/secret.txt".format(datastore_path)
+    path = os.path.join(datastore_path, "secret.txt")
 
     try:
         with open(path, "r") as f:
