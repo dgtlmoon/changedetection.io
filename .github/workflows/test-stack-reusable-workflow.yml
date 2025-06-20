@@ -71,6 +71,7 @@ jobs:
           docker run test-changedetectionio  bash -c 'python3 -m unittest changedetectionio.tests.unit.test_watch_model'
           docker run test-changedetectionio  bash -c 'python3 -m unittest changedetectionio.tests.unit.test_jinja2_security'
           docker run test-changedetectionio  bash -c 'python3 -m unittest changedetectionio.tests.unit.test_semver'
+          docker run test-changedetectionio  bash -c 'python3 -m unittest changedetectionio.tests.unit.test_update_watch_deep_merge'
 
       - name: Test built container with Pytest (generally as requests/plaintext fetching)
         run: |
