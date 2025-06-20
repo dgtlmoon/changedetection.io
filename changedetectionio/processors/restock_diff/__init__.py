@@ -42,10 +42,10 @@ class Restock(dict):
 
         # Update with any provided positional arguments (dictionaries)
         if args:
-            if len(args) == 1 and isinstance(args[0], dict):
+            if len(args) == 1 and (isinstance(args[0], dict) or hasattr(args[0], 'keys')):
                 self.update(args[0])
             else:
-                raise ValueError("Only one positional argument of type 'dict' is allowed")
+                raise ValueError("Only one positional argument of type 'dict' or dict-like is allowed")
 
     def __setitem__(self, key, value):
         # Custom logic to handle setting price and original_price

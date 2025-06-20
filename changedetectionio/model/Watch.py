@@ -43,14 +43,14 @@ class model(watch_base):
         self.__datastore_path = kw.get('datastore_path')
         if kw.get('datastore_path'):
             del kw['datastore_path']
-            
+        
+        # Save default before passing to parent, since parent will delete it
+        default_values = kw.get('default')
+        
         super(model, self).__init__(*arg, **kw)
-        if kw.get('default'):
-            self.update(kw['default'])
-            del kw['default']
-
-        if self.get('default'):
-            del self['default']
+        
+        if default_values:
+            self.update(default_values)
 
         # Be sure the cached timestamp is ready
         bump = self.history
@@ -227,8 +227,8 @@ class model(watch_base):
 
     @property
     def has_history(self):
-        fname = os.path.join(self.watch_data_dir, "history.txt")
-        return os.path.isfile(fname)
+        fname = self._get_data_file_path("history.txt")
+        return fname and os.path.isfile(fname)
 
     @property
     def has_browser_steps(self):
@@ -405,16 +405,16 @@ class model(watch_base):
         return not local_lines.issubset(existing_history)
 
     def get_screenshot(self):
-        fname = os.path.join(self.watch_data_dir, "last-screenshot.png")
-        if os.path.isfile(fname):
+        fname = self._get_data_file_path("last-screenshot.png")
+        if fname and os.path.isfile(fname):
             return fname
 
         # False is not an option for AppRise, must be type None
         return None
 
     def __get_file_ctime(self, filename):
-        fname = os.path.join(self.watch_data_dir, filename)
-        if os.path.isfile(fname):
+        fname = self._get_data_file_path(filename)
+        if fname and os.path.isfile(fname):
             return int(os.path.getmtime(fname))
         return False
 
@@ -441,20 +441,28 @@ class model(watch_base):
     @property
     def watch_data_dir(self):
         # The base dir of the watch data
-        return os.path.join(self.__datastore_path, self['uuid']) if self.__datastore_path else None
+        if self.__datastore_path and self.get('uuid'):
+            return os.path.join(self.__datastore_path, self['uuid'])
+        return None
+
+    def _get_data_file_path(self, filename):
+        """Safely get the full path to a data file, returns None if watch_data_dir is None"""
+        if self.watch_data_dir:
+            return os.path.join(self.watch_data_dir, filename)
+        return None
 
     def get_error_text(self):
         """Return the text saved from a previous request that resulted in a non-200 error"""
-        fname = os.path.join(self.watch_data_dir, "last-error.txt")
-        if os.path.isfile(fname):
+        fname = self._get_data_file_path("last-error.txt")
+        if fname and os.path.isfile(fname):
             with open(fname, 'r') as f:
                 return f.read()
         return False
 
     def get_error_snapshot(self):
         """Return path to the screenshot that resulted in a non-200 error"""
-        fname = os.path.join(self.watch_data_dir, "last-error-screenshot.png")
-        if os.path.isfile(fname):
+        fname = self._get_data_file_path("last-error-screenshot.png")
+        if fname and os.path.isfile(fname):
             return fname
         return False
 

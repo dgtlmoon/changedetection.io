@@ -23,6 +23,13 @@ from blinker import signal
 from .processors import get_custom_watch_obj_for_processor
 from .processors.restock_diff import Restock
 
+class WatchEncoder(json.JSONEncoder):
+    def default(self, obj):
+        from .model import watch_base
+        if isinstance(obj, watch_base):
+            return dict(obj)
+        return super().default(obj)
+
 # Because the server will run as a daemon and wont know the URL for notification links when firing off a notification
 BASE_URL_NOT_SET_TEXT = '("Base URL" not set - see settings - notifications)'
 
@@ -51,9 +58,6 @@ class ChangeDetectionStore:
         self.needs_write = False
         self.start_time = time.time()
         self.stop_thread = False
-        # Base definition for all watchers
-        # deepcopy part of #569 - not sure why its needed exactly
-        self.generic_definition = deepcopy(Watch.model(datastore_path = datastore_path, default={}))
 
         if path.isfile('changedetectionio/source.txt'):
             with open('changedetectionio/source.txt') as f:
@@ -174,6 +178,14 @@ class ChangeDetectionStore:
         self.__data['settings']['application']['password'] = False
         self.needs_write = True
 
+    def _deep_merge(self, target, source):
+        """Recursively merge source dict into target dict"""
+        for key, value in source.items():
+            if key in target and isinstance(target[key], dict) and isinstance(value, dict):
+                self._deep_merge(target[key], value)
+            else:
+                target[key] = value
+
     def update_watch(self, uuid, update_obj):
 
         # It's possible that the watch could be deleted before update
@@ -181,15 +193,8 @@ class ChangeDetectionStore:
             return
 
         with self.lock:
-
-            # In python 3.9 we have the |= dict operator, but that still will lose data on nested structures...
-            for dict_key, d in self.generic_definition.items():
-                if isinstance(d, dict):
-                    if update_obj is not None and dict_key in update_obj:
-                        self.__data['watching'][uuid][dict_key].update(update_obj[dict_key])
-                        del (update_obj[dict_key])
-
-            self.__data['watching'][uuid].update(update_obj)
+            # Use recursive merge to handle nested dictionaries properly
+            self._deep_merge(self.__data['watching'][uuid], update_obj)
         self.needs_write = True
 
     @property
@@ -393,6 +398,51 @@ class ChangeDetectionStore:
 
         return False
 
+    import json
+    import os
+    import tempfile
+    from pathlib import Path  # just for nicer paths
+
+    JSON_INDENT = 2  # or None in production
+    ENCODER = WatchEncoder  # your custom encoder
+
+    def save_json_atomic(self, save_path: str | os.PathLike, data) -> None:
+        """
+        Atomically (re)write *path* with *data* encoded as JSON.
+        The original file is left untouched if anything fails.
+        """
+        import tempfile
+        from pathlib import Path  # just for nicer paths
+
+        JSON_INDENT = 2  # or None in production
+        ENCODER = WatchEncoder  # your custom encoder
+
+        datapath = Path(save_path)
+        directory = datapath.parent
+
+        # 1. create a unique temp file in the same directory
+        fd, tmp_name = tempfile.mkstemp(
+            dir=directory,
+            prefix=f"{datapath.name}.",
+            suffix=".tmp",
+        )
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as tmp:
+                json.dump(data, tmp, indent=JSON_INDENT, cls=ENCODER)
+                if os.getenv('JSON_SAVE_FORCE_FLUSH'):
+                    tmp.flush()  # push Python buffers
+                    os.fsync(tmp.fileno())  # force kernel to write to disk
+            os.replace(tmp_name, datapath)
+
+        except Exception as e:
+            logger.critical(f"Failed to write JSON to {datapath} - {str(e)}")
+            # if anything above blew up, ensure we don't leave junk lying around
+            try:
+                os.unlink(tmp_name)
+            finally:
+                raise
+
+
     def sync_to_json(self):
         logger.info("Saving JSON..")
         try:
@@ -404,18 +454,7 @@ class ChangeDetectionStore:
             self.sync_to_json()
             return
         else:
-
-            try:
-                # Re #286  - First write to a temp file, then confirm it looks OK and rename it
-                # This is a fairly basic strategy to deal with the case that the file is corrupted,
-                # system was out of memory, out of RAM etc
-                with open(self.json_store_path+".tmp", 'w') as json_file:
-                    # Use compact JSON in production for better performance
-                    json.dump(data, json_file, indent=2)
-                    os.replace(self.json_store_path+".tmp", self.json_store_path)
-            except Exception as e:
-                logger.error(f"Error writing JSON!! (Main JSON file save was skipped) : {str(e)}")
-
+            self.save_json_atomic(save_path = self.json_store_path, data =data)
             self.needs_write = False
             self.needs_write_urgent = False
 

@@ -303,7 +303,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
         watch['ignore_text'] += datastore.data['settings']['application']['global_ignore_text']
         watch['subtractive_selectors'] += datastore.data['settings']['application']['global_subtractive_selectors']
 
-        watch_json = json.dumps(watch)
+        watch_json = json.dumps(dict(watch))
 
         try:
             r = requests.request(method="POST",
