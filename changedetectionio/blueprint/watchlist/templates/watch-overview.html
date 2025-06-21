@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     {%- if watch.is_pdf  -%}<img class="status-icon" src="{{url_for('static_content', group='images', filename='pdf-icon.svg')}}" alt="Converting PDF to text" >{%- endif -%}
                     {%- if watch.has_browser_steps -%}<img class="status-icon status-browsersteps" src="{{url_for('static_content', group='images', filename='steps.svg')}}" alt="Browser Steps is enabled" >{%- endif -%}
 
-                    <div class="error-text" style="display:none;">{{ watch.compile_error_texts(has_proxies=datastore.proxy_list)|safe }}</div>
+                    <div class="error-text" style="display:none;">{{ watch.compile_error_texts(has_proxies=datastore.proxy_list) }}</div>
 
                     {%- if watch['processor'] == 'text_json_diff'  -%}
                         {%- if watch['has_ldjson_price_data'] and not watch['track_ldjson_price_data']  -%}
