@@ -412,7 +412,7 @@ class ChangeDetectionStore:
                 with open(self.json_store_path+".tmp", 'w') as json_file:
                     # Use compact JSON in production for better performance
                     json.dump(data, json_file, indent=2)
-                    os.replace(self.json_store_path+".tmp", self.json_store_path)
+                os.replace(self.json_store_path+".tmp", self.json_store_path)
             except Exception as e:
                 logger.error(f"Error writing JSON!! (Main JSON file save was skipped) : {str(e)}")
 
