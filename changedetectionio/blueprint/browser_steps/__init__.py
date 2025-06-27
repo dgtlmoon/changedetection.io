@@ -228,10 +228,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     watch.save_screenshot(screenshot=screenshot)
                     watch.save_xpath_data(data=xpath_data)
 
-        except playwright._impl._api_types.Error as e:
-            return make_response("Browser session ran out of time :( Please reload this page."+str(e), 401)
         except Exception as e:
-            return make_response("Error fetching screenshot and element data - " + str(e), 401)
+            return make_response(f"Error fetching screenshot and element data - {str(e)}", 401)
 
         # SEND THIS BACK TO THE BROWSER
         output = {

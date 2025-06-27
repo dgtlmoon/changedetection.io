@@ -5,8 +5,22 @@ from .util import live_server_setup, wait_for_all_checks
 from .. import strtobool
 
 
-# def test_setup(client, live_server, measure_memory_usage):
-   #  live_server_setup(live_server) # Setup on conftest per function
+def set_original_response():
+    test_return_data = """<html>
+    <head><title>head title</title></head>
+    <body>
+     Some initial text<br>
+     <p>Which is across multiple lines</p>
+     <br>
+     So let's see what happens.  <br>
+     <span class="foobar-detection" style='display:none'></span>
+     </body>
+     </html>
+    """
+
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write(test_return_data)
+    return None
 
 def test_bad_access(client, live_server, measure_memory_usage):
     
@@ -117,4 +131,34 @@ def test_xss(client, live_server, measure_memory_usage):
 
     assert b"<img src=x onerror=alert(" not in res.data
     assert b"&lt;img" in res.data
+
+
+def test_xss_watch_last_error(client, live_server, measure_memory_usage):
+    set_original_response()
+    # Add our URL to the import page
+    res = client.post(
+        url_for("imports.import_page"),
+        data={"urls": url_for('test_endpoint', _external=True)},
+        follow_redirects=True
+    )
+
+    assert b"1 Imported" in res.data
+
+    wait_for_all_checks(client)
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid="first"),
+        data={
+            "include_filters": '<a href="https://foobar"></a><script>alert(123);</script>',
+            "url": url_for('test_endpoint', _external=True),
+            'fetch_backend': "html_requests"
+        },
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+    wait_for_all_checks(client)
+    res = client.get(url_for("watchlist.index"))
+
+    assert b"<script>alert(123);</script>" not in res.data  # this text should be there
+    assert b'&lt;a href=&#34;https://foobar&#34;&gt;&lt;/a&gt;&lt;script&gt;alert(123);&lt;/script&gt;' in res.data
+    assert b"https://foobar" in res.data # this text should be there
 

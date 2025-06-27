@@ -26,6 +26,14 @@ class SignalHandler:
         queue_length_signal.connect(self.handle_queue_length, weak=False)
         #       logger.info("SignalHandler: Connected to queue_length signal")
 
+        watch_delete_signal = signal('watch_deleted')
+        watch_delete_signal.connect(self.handle_deleted_signal, weak=False)
+
+        # Connect to the notification_event signal
+        notification_event_signal = signal('notification_event')
+        notification_event_signal.connect(self.handle_notification_event, weak=False)
+        logger.info("SignalHandler: Connected to notification_event signal")
+
         # Create and start the queue update thread using standard threading
         import threading
         self.polling_emitter_thread = threading.Thread(
@@ -61,6 +69,16 @@ class SignalHandler:
             else:
                 logger.warning(f"Watch UUID {watch_uuid} not found in datastore")
 
+    def handle_deleted_signal(self, *args, **kwargs):
+        watch_uuid = kwargs.get('watch_uuid')
+        if watch_uuid:
+            # Emit the queue size to all connected clients
+            self.socketio_instance.emit("watch_deleted", {
+                "uuid": watch_uuid,
+                "event_timestamp": time.time()
+            })
+        logger.debug(f"Watch UUID {watch_uuid} was deleted")
+
     def handle_queue_length(self, *args, **kwargs):
         """Handle queue_length signal and emit to all clients"""
         try:
@@ -75,6 +93,23 @@ class SignalHandler:
 
         except Exception as e:
             logger.error(f"Socket.IO error in handle_queue_length: {str(e)}")
+
+    def handle_notification_event(self, *args, **kwargs):
+        """Handle notification_event signal and emit to all clients"""
+        try:
+            watch_uuid = kwargs.get('watch_uuid')
+            logger.debug(f"SignalHandler: Notification event received for watch UUID: {watch_uuid}")
+
+            # Emit the notification event to all connected clients
+            self.socketio_instance.emit("notification_event", {
+                "watch_uuid": watch_uuid,
+                "event_timestamp": time.time()
+            })
+            
+            logger.trace(f"Socket.IO: Emitted notification_event for watch UUID {watch_uuid}")
+
+        except Exception as e:
+            logger.error(f"Socket.IO error in handle_notification_event: {str(e)}")
 
 
     def polling_emit_running_or_queued_watches_threaded(self):
@@ -167,19 +202,14 @@ def handle_watch_update(socketio, **kwargs):
             if hasattr(q_item, 'item') and 'uuid' in q_item.item:
                 queue_list.append(q_item.item['uuid'])
 
-        error_texts = ""
         # Get the error texts from the watch
         error_texts = watch.compile_error_texts()
-
         # Create a simplified watch data object to send to clients
-        watch_uuid = watch.get('uuid')
-        
-        watch_data = {
-            'checking_now': True if watch_uuid in running_uuids else False,
 
+        watch_data = {
+            'checking_now': True if watch.get('uuid') in running_uuids else False,
             'fetch_time': watch.get('fetch_time'),
-            'has_error': True if error_texts else False,
-            
+            'has_error': True if error_texts else False,          
             'last_changed': watch.get('last_changed'),
             'last_changed_text': timeago.format(int(watch['last_changed']), time.time()) if watch.history_n >= 2 and int(watch.get('last_changed', 0)) > 0 else 'Not yet',
             'last_checked': watch.get('last_checked'),
@@ -187,15 +217,14 @@ def handle_watch_update(socketio, **kwargs):
             'history_n': watch.history_n,
             'has_thumbnail': True if watch.get_screenshot_as_thumbnail() else False,          
             'last_checked_text': _jinja2_filter_datetime(watch),
-            'last_changed_text': timeago.format(int(watch['last_changed']), time.time()) if watch.history_n >= 2 and int(
-                watch.get('last_changed', 0)) > 0 else 'Not yet',
-            'queued': True if watch_uuid in queue_list else False,
+            'last_changed_text': timeago.format(int(watch.last_changed), time.time()) if watch.history_n >= 2 and int(watch.last_changed) > 0 else 'Not yet',
+            'queued': True if watch.get('uuid') in queue_list else False,
             'paused': True if watch.get('paused') else False,
             'notification_muted': True if watch.get('notification_muted') else False,
             'paused': True if watch.get('paused') else False,
             'queued': True if watch.get('uuid') in queue_list else False,
             'unviewed': watch.has_unviewed,
-            'uuid': watch_uuid,
+            'uuid': watch.get('uuid'),
             'event_timestamp': time.time()
         }
 
@@ -267,6 +296,29 @@ def init_socketio(app, datastore):
 
     # Set up event handlers
     logger.info("Socket.IO: Registering connect event handler")
+
+    @socketio.on('checkbox-operation')
+    def event_checkbox_operations(data):
+        from changedetectionio.blueprint.ui import _handle_operations
+        from changedetectionio import queuedWatchMetaData
+        from changedetectionio import worker_handler
+        from changedetectionio.flask_app import update_q, watch_check_update
+        logger.trace(f"Got checkbox operations event: {data}")
+
+        datastore = socketio.datastore
+
+        _handle_operations(
+            op=data.get('op'),
+            uuids=data.get('uuids'),
+            datastore=datastore,
+            extra_data=data.get('extra_data'),
+            worker_handler=worker_handler,
+            update_q=update_q,
+            queuedWatchMetaData=queuedWatchMetaData,
+            watch_check_update=watch_check_update,
+            emit_flash=False
+        )
+
 
     @socketio.on('connect')
     def handle_connect():

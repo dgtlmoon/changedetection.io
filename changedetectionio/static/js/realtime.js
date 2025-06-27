@@ -18,6 +18,25 @@ $(document).ready(function () {
             
             return false;
         });
+
+
+        $('#checkbox-operations button').on('click.socketHandlerNamespace', function (e) {
+            e.preventDefault();
+            const op = $(this).val();
+            const checkedUuids = $('input[name="uuids"]:checked').map(function () {
+                return this.value.trim();
+            }).get();
+            console.log(`Socket.IO: Sending watch operation '${op}' for UUIDs:`, checkedUuids);
+            socket.emit('checkbox-operation', {
+                op: op,
+                uuids: checkedUuids,
+                extra_data: $('#op_extradata').val() // Set by the alert() handler
+            });
+            $('input[name="uuids"]:checked').prop('checked', false);
+            $('#check-all:checked').prop('checked', false);
+            return false;
+        });
+
     }
 
 
@@ -29,13 +48,14 @@ $(document).ready(function () {
             // Connect to Socket.IO on the same host/port, with path from template
             const socket = io({
                 path: socketio_url,  // This will be the path prefix like "/app/socket.io" from the template
-                transports: ['polling', 'websocket'],  // Try WebSocket but fall back to polling
-                reconnectionDelay: 1000,
-                reconnectionAttempts: 15
+                transports: ['websocket', 'polling'],
+                reconnectionDelay: 3000,
+                reconnectionAttempts: 25
             });
 
             // Connection status logging
             socket.on('connect', function () {
+                $('#realtime-conn-error').hide();
                 console.log('Socket.IO connected with path:', socketio_url);
                 console.log('Socket transport:', socket.io.engine.transport.name);
                 bindSocketHandlerButtonsEvents(socket);
@@ -55,7 +75,8 @@ $(document).ready(function () {
 
             socket.on('disconnect', function (reason) {
                 console.log('Socket.IO disconnected, reason:', reason);
-                $('.ajax-op').off('.socketHandlerNamespace')
+                $('.ajax-op').off('.socketHandlerNamespace');
+                $('#realtime-conn-error').show();
             });
 
             socket.on('queue_size', function (data) {
@@ -71,6 +92,16 @@ $(document).ready(function () {
                     console.error(`Socket.IO: Operation failed: ${data.error}`);
                     alert("There was a problem processing the request: " + data.error);
                 }
+            });
+
+            socket.on('notification_event', function (data) {
+                console.log(`Stub handler for notification_event ${data.watch_uuid}`)
+            });
+
+            socket.on('watch_deleted', function (data) {
+                $('tr[data-watch-uuid="' + data.uuid + '"] td').fadeOut(500, function () {
+                    $(this).closest('tr').remove();
+                });
             });
 
             // Listen for periodically emitted watch data
@@ -107,7 +138,7 @@ $(document).ready(function () {
                         $('img.thumbnail', $watchRow).attr('src', thumbnail_baseURL.replace('/PLACEHOLDER', `/${watch.uuid}`));
                     }
 
-                    $('td.last-changed', $watchRow).text(watch.last_checked_text)
+                  $('td.last-changed', $watchRow).text(watch.last_checked_text)
                     $('td.last-checked .innertext', $watchRow).text(watch.last_checked_text)
                     $('td.last-checked', $watchRow).data('timestamp', watch.last_checked).data('fetchduration', watch.fetch_time);
                     $('td.last-checked', $watchRow).data('eta_complete', watch.last_checked + watch.fetch_time);

@@ -2,7 +2,7 @@
 
 # Read more https://github.com/dgtlmoon/changedetection.io/wiki
 
-__version__ = '0.49.18'
+__version__ = '0.50.4'
 
 from changedetectionio.strtobool import strtobool
 from json.decoder import JSONDecodeError
@@ -65,8 +65,7 @@ def main():
 
     datastore_path = None
     do_cleanup = False
-    host = "0.0.0.0"
-    ipv6_enabled = False
+    host = os.environ.get("LISTEN_HOST", "0.0.0.0").strip()
     port = int(os.environ.get('PORT', 5000))
     ssl_mode = False
 
@@ -108,10 +107,6 @@ def main():
         if opt == '-d':
             datastore_path = arg
 
-        if opt == '-6':
-            logger.success("Enabling IPv6 listen support")
-            ipv6_enabled = True
-
         # Cleanup (remove text files that arent in the index)
         if opt == '-c':
             do_cleanup = True
@@ -122,6 +117,20 @@ def main():
 
         if opt == '-l':
             logger_level = int(arg) if arg.isdigit() else arg.upper()
+
+
+    logger.success(f"changedetection.io version {get_version()} starting.")
+    # Launch using SocketIO run method for proper integration (if enabled)
+    ssl_cert_file = os.getenv("SSL_CERT_FILE", 'cert.pem')
+    ssl_privkey_file = os.getenv("SSL_PRIVKEY_FILE", 'privkey.pem')
+    if os.getenv("SSL_CERT_FILE") and os.getenv("SSL_PRIVKEY_FILE"):
+        ssl_mode = True
+
+    # SSL mode could have been set by -s too, therefor fallback to default values
+    if ssl_mode:
+        if not os.path.isfile(ssl_cert_file) or not os.path.isfile(ssl_privkey_file):
+            logger.critical(f"Cannot start SSL/HTTPS mode, Please be sure that {ssl_cert_file}' and '{ssl_privkey_file}' exist in in {os.getcwd()}")
+            os._exit(2)
 
     # Without this, a logger will be duplicated
     logger.remove()
@@ -222,19 +231,19 @@ def main():
 
 
     # SocketIO instance is already initialized in flask_app.py
-
-    # Launch using SocketIO run method for proper integration (if enabled)
     if socketio_server:
         if ssl_mode:
-            socketio.run(app, host=host, port=int(port), debug=False, 
-                        certfile='cert.pem', keyfile='privkey.pem', allow_unsafe_werkzeug=True)
+            logger.success(f"SSL mode enabled, attempting to start with '{ssl_cert_file}' and '{ssl_privkey_file}' in {os.getcwd()}")
+            socketio.run(app, host=host, port=int(port), debug=False,
+                         ssl_context=(ssl_cert_file, ssl_privkey_file), allow_unsafe_werkzeug=True)
         else:
             socketio.run(app, host=host, port=int(port), debug=False, allow_unsafe_werkzeug=True)
     else:
         # Run Flask app without Socket.IO if disabled
         logger.info("Starting Flask app without Socket.IO server")
         if ssl_mode:
-            app.run(host=host, port=int(port), debug=False, 
-                   ssl_context=('cert.pem', 'privkey.pem'))
+            logger.success(f"SSL mode enabled, attempting to start with '{ssl_cert_file}' and '{ssl_privkey_file}' in {os.getcwd()}")
+            app.run(host=host, port=int(port), debug=False,
+                    ssl_context=(ssl_cert_file, ssl_privkey_file))
         else:
             app.run(host=host, port=int(port), debug=False)

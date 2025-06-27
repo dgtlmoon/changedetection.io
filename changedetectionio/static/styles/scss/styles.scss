@@ -187,7 +187,8 @@ code {
 }
 
 .box {
-  max-width: 80%;
+  max-width: 100%;
+  margin: 0 1em;
   flex-direction: column;
   display: flex;
   justify-content: center;
@@ -281,7 +282,7 @@ a.pure-button-selected {
   font-size: 65%;
   border-bottom-left-radius: initial;
   border-bottom-right-radius: initial;
-
+  margin-right: 4px;
   &.active {
     background: var(--color-background-button-tag-active);
     font-weight: bold;
@@ -374,11 +375,32 @@ label {
   }
 }
 
+// Some field colouring for transperant field
+.pure-form input[type=text].transparent-field {
+  background-color:  var(--color-background-new-watch-input-transparent) !important;
+  color: var(--color-white) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  &::placeholder {
+    opacity: 0.5;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: lighter;
+  }
+}
+
 #new-watch-form {
   background: var(--color-background-new-watch-form);
   padding: 1em;
   border-radius: 10px;
   margin-bottom: 1em;
+  max-width: 100%;
+
+  #url {
+    &::placeholder {
+      font-weight: bold;
+    }
+  }
 
   input {
     display: inline-block;
@@ -399,12 +421,13 @@ label {
     font-weight: bold;
   }
 
-  #watch-add-wrapper-zone {
 
+  #watch-add-wrapper-zone {
     @media only screen and (min-width: 760px) {
       display: flex;
       gap: 0.3rem;
       flex-direction: row;
+      min-width: 70vw;
     }
     /* URL field grows always, other stay static in width */
     > span {
@@ -424,6 +447,22 @@ label {
       #url {
         width: 100%;
       }
+    }
+  }
+
+  #watch-group-tag {
+    font-size: 0.9rem;
+    padding: 0.3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-white);
+    label, input {
+      margin: 0;
+    }
+
+    input {
+      flex: 1;
     }
   }
 }
@@ -622,10 +661,6 @@ footer {
 
 @media only screen and (max-width: 760px),
 (min-device-width: 768px) and (max-device-width: 1024px) {
-  .box {
-    max-width: 95%
-  }
-
   .edit-form {
     padding: 0.5em;
     margin: 0;
@@ -1145,16 +1180,14 @@ ul {
   color: #fff;
   ul {
     padding: 0.3rem;
-
     li {
       list-style: none;
-      font-size: 0.8rem;
+      font-size: 0.9rem;
       > * {
         display: inline-block;
       }
     }
   }
-
 }
 
 .restock-label {
@@ -1192,3 +1225,12 @@ ul {
   vertical-align: middle;
 }
 
+#realtime-conn-error {
+  position: absolute;
+  bottom: 0;
+  left: 30px;
+  background: var(--color-warning);
+  padding: 10px;
+  font-size: 0.8rem;
+  color: #fff;
+}

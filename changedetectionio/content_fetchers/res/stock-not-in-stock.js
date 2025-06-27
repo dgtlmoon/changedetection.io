@@ -18,6 +18,7 @@ async () => {
             'back-order or out of stock',
             'backordered',
             'benachrichtigt mich', // notify me
+            'binnenkort leverbaar', // coming soon
             'brak na stanie',
             'brak w magazynie',
             'coming soon',
@@ -85,6 +86,7 @@ async () => {
             'tidak tersedia',
             'tijdelijk uitverkocht',
             'tiket tidak tersedia',
+            'to subscribe to back in stock',
             'tükendi',
             'unavailable nearby',
             'unavailable tickets',
@@ -119,8 +121,7 @@ async () => {
             return text.toLowerCase().trim();
         }
 
-        const negateOutOfStockRegex = new RegExp('^([0-9] in stock|add to cart|in stock)', 'ig');
-
+        const negateOutOfStockRegex = new RegExp('^([0-9] in stock|add to cart|in stock|arrives approximately)', 'ig');
         // The out-of-stock or in-stock-text is generally always above-the-fold
         // and often below-the-fold is a list of related products that may or may not contain trigger text
         // so it's good to filter to just the 'above the fold' elements

@@ -23,18 +23,19 @@ document.addEventListener('DOMContentLoaded', function() {
     transition: background-size 0.9s ease
 }
 </style>
-<div class="box">
+<div class="box" id="form-quick-watch-add">
 
     <form class="pure-form" action="{{ url_for('ui.ui_views.form_quick_watch_add', tag=active_tag_uuid) }}" method="POST" id="new-watch-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
         <fieldset>
-            <legend>Add a new change detection watch</legend>
+            <legend>Add a new web page change detection watch</legend>
             <div id="watch-add-wrapper-zone">
-
                     {{ render_nolabel_field(form.url, placeholder="https://...", required=true) }}
-                    {{ render_nolabel_field(form.tags, value=active_tag.title if active_tag_uuid else '', placeholder="watch label / tag") }}
                     {{ render_nolabel_field(form.watch_submit_button, title="Watch this URL!" ) }}
                     {{ render_nolabel_field(form.edit_and_watch_submit_button, title="Edit first then Watch") }}
+            </div>
+            <div id="watch-group-tag">
+               {{ render_field(form.tags, value=active_tag.title if active_tag_uuid else '', placeholder="Watch group / tag", class="transparent-field") }}
             </div>
             <div id="quick-watch-processor-type">
                 {{ render_simple_field(form.processor) }}
@@ -43,7 +44,8 @@ document.addEventListener('DOMContentLoaded', function() {
         </fieldset>
         <span style="color:#eee; font-size: 80%;"><img alt="Create a shareable link" style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread-white.svg')}}" > Tip: You can also add 'shared' watches. <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Sharing-a-Watch">More info</a></span>
     </form>
-
+</div>
+<div class="box">
     <form class="pure-form" action="{{ url_for('ui.form_watch_list_checkbox_operations') }}" method="POST" id="watch-list-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
     <input type="hidden" id="op_extradata" name="op_extradata" value="" >
@@ -137,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <a class="ajax-op state-on mute-toggle" data-op="mute"  style="display: none" href="{{url_for('watchlist.index', op='mute', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="UnMute notification" title="UnMute notification" class="icon icon-mute" ></a>
                 </td>
                 <td class="title-col inline">{{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
-                    <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}"><i data-feather="external-link"></i></a>
+                    <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">&nbsp;</a>
                     <a class="link-spread" href="{{url_for('ui.form_share_put_watch', uuid=watch.uuid)}}"><img src="{{url_for('static_content', group='images', filename='spread.svg')}}" class="status-icon icon icon-spread" title="Create a link to share watch config with others" ></a>
 
                     {%- if watch.get_fetch_backend == "html_webdriver"
@@ -150,7 +152,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     {%- if watch.is_pdf  -%}<img class="status-icon" src="{{url_for('static_content', group='images', filename='pdf-icon.svg')}}" alt="Converting PDF to text" >{%- endif -%}
                     {%- if watch.has_browser_steps -%}<img class="status-icon status-browsersteps" src="{{url_for('static_content', group='images', filename='steps.svg')}}" alt="Browser Steps is enabled" >{%- endif -%}
 
-                    <div class="error-text" style="display:none;">{{ watch.compile_error_texts(has_proxies=datastore.proxy_list)|safe }}</div>
+                    <div class="error-text" style="display:none;">{{ watch.compile_error_texts(has_proxies=datastore.proxy_list) }}</div>
 
                     {%- if watch['processor'] == 'text_json_diff'  -%}
                         {%- if watch['has_ldjson_price_data'] and not watch['track_ldjson_price_data']  -%}
@@ -219,9 +221,14 @@ document.addEventListener('DOMContentLoaded', function() {
             <li id="post-list-mark-views" class="{%- if has_unviewed -%}has-unviewed{%- endif -%}" style="display: none;" >
                 <a href="{{url_for('ui.mark_all_viewed',with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag " id="mark-all-viewed">Mark all viewed</a>
             </li>
+        {%-  if active_tag_uuid -%}
+            <li id="post-list-mark-views-tag">
+                <a href="{{url_for('ui.mark_all_viewed', tag=active_tag_uuid) }}" class="pure-button button-tag " id="mark-all-viewed">Mark all viewed in '{{active_tag.title}}'</a>
+            </li>
+        {%-  endif -%}
             <li>
                <a href="{{ url_for('ui.form_watch_checknow', tag=active_tag_uuid, with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag" id="recheck-all">Recheck
-                all {%- if active_tag_uuid-%}  in "{{active_tag.title}}"{%endif%}</a>
+                all {% if active_tag_uuid %}  in '{{active_tag.title}}'{%endif%}</a>
             </li>
             <li>
                 <a href="{{ url_for('rss.feed', tag=active_tag_uuid, token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='generic_feed-icon.svg')}}" height="15"></a>

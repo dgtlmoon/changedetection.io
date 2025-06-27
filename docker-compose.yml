@@ -69,6 +69,16 @@ services:
   #        Maximum height of screenshots, default is 16000 px, screenshots will be clipped to this if exceeded.
   #        RAM usage will be higher if you increase this.
   #      - SCREENSHOT_MAX_HEIGHT=16000
+  #
+  #        HTTPS SSL Mode for webserver, unset both of these, you may need to volume mount these files also.
+  #        ./cert.pem:/app/cert.pem and ./privkey.pem:/app/privkey.pem
+  #      - SSL_CERT_FILE=cert.pem
+  #      - SSL_PRIVKEY_FILE=privkey.pem
+  #
+  #        LISTEN_HOST / "host", Same as -h
+  #      - LISTEN_HOST=::
+  #      - LISTEN_HOST=0.0.0.0
+
   
       # Comment out ports: when using behind a reverse proxy , enable networks: etc.
       ports:

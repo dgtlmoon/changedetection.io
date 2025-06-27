@@ -8,6 +8,7 @@ import re
 from pathlib import Path
 from loguru import logger
 
+from .. import safe_jinja
 from ..html_tools import TRANSLATE_WHITESPACE_TABLE
 
 # Allowable protocols, protects against javascript: etc
@@ -755,11 +756,11 @@ class model(watch_base):
                 output.append(str(Markup(f"<div class=\"notification-error\"><a href=\"{url_for('settings.notification_logs')}\">{ self.get('last_notification_error') }</a></div>")))
 
         else:
-            # Lo_Fi version
+            # Lo_Fi version - no app context, cant rely on Jinja2 Markup
             if last_error:
-                output.append(str(Markup(last_error)))
+                output.append(safe_jinja.render_fully_escaped(last_error))
             if self.get('last_notification_error'):
-                output.append(str(Markup(self.get('last_notification_error'))))
+                output.append(safe_jinja.render_fully_escaped(self.get('last_notification_error')))
 
         res = "\n".join(output)
         return res
