@@ -4,12 +4,17 @@
 <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
 <script>let nowtimeserver={{ now_time_server }};</script>
+
+<script>let ajax_toggle_url="{{ ajax_toggle_url }}";</script>
+<script>let thumbnail_baseURL="{{ url_for('static_content', group='thumbnail', filename="PLACEHOLDER", _external=True) }}"</script>
+
 <script>
 // Initialize Feather icons after the page loads
 document.addEventListener('DOMContentLoaded', function() {
     feather.replace();
 });
 </script>
+
 <style>
 .checking-now .last-checked {
     background-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.1) 100%);
@@ -116,13 +121,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     'paused' if watch.paused is defined and watch.paused != False else '',
                     'unviewed' if watch.has_unviewed else '',
                     'has-restock-info' if watch.has_restock_info else 'no-restock-info',
+                    'has-thumbnail' if watch.get_screenshot() else '',
                     'in-stock' if watch.has_restock_info and watch['restock']['in_stock'] else '',
                     'not-in-stock' if watch.has_restock_info and not watch['restock']['in_stock'] else '',
                     'queued' if watch.uuid in queued_uuids else '',
                     'checking-now' if checking_now else '',
                     'notification_muted' if watch.notification_muted else '',
                     'single-history' if history_n == 1 else '',
-                    'multiple-history' if history_n >= 2 else ''
+                    'multiple-history' if history_n >= 2 else '',                    
                 ] -%}
             <tr id="{{ watch.uuid }}" data-watch-uuid="{{ watch.uuid }}" class="{{ row_classes | reject('equalto', '') | join(' ') }}">
                 <td class="inline checkbox-uuid" ><input name="uuids"  type="checkbox" value="{{ watch.uuid}} " > <span>{{ loop.index+pagination.skip }}</span></td>
@@ -159,6 +165,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     {%- for watch_tag_uuid, watch_tag in datastore.get_all_tags_for_watch(watch['uuid']).items() -%}
                       <span class="watch-tag-list">{{ watch_tag.title }}</span>
                     {%- endfor -%}
+
                 </td>
 {%- if any_has_restock_price_processor -%}
                 <td class="restock-and-price">

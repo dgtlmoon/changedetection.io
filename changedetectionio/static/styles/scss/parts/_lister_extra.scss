@@ -1,0 +1,50 @@
+.watch-table {
+
+  td,
+  th {
+    vertical-align: middle;
+
+  }
+  tr.has-thumbnail {
+    img.thumbnail {
+      display: inline-block !important;
+    }
+    &.unviewed {
+      img.thumbnail {
+        opacity: 1.0 !important;
+      }
+    }
+  }
+
+  td.inline.title-col {
+    img.thumbnail {
+      background-color: #fff; /* fallback bg for SVGs without bg */
+      border-radius: 4px; /* subtle rounded corners */
+      border: 1px solid #ddd; /* light border for contrast */
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); /* soft shadow */
+      filter: contrast(1.05) saturate(1.1) drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.2));
+      object-fit: cover; /* crop/fill if needed */
+      opacity: 0.5;
+      height: 100%;
+      max-height: 100%;
+    }
+  }
+}
+
+
+.title-col {
+    /* Optional, for spacing */
+    padding: 10px;
+}
+
+.title-wrapper {
+    display: flex;
+    align-items: center; /* Vertical centering */
+    gap: 10px; /* Space between image and text */
+}
+
+/* Make sure .title-col-inner doesn't collapse or misalign */
+.title-col-inner {
+    display: inline-block;
+    vertical-align: middle;
+}
