@@ -1,4 +1,4 @@
-# Detect Website Changes Automatically — Monitor Web Page Updates in Real Time
+# Detect Website Changes Automatically — Monitor Web Page Changes in Real Time
 
 Monitor websites for updates — get notified via Discord, Email, Slack, Telegram, Webhooks, Office365 and many more.
 
