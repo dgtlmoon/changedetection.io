@@ -1,0 +1,10 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@ --with python-virtualenv --buildsystem=pybuild
+
+override_dh_virtualenv:
+	dh_virtualenv --sourcedirectory=. \
+	              --install-suffix='' \
+	              --requirements=requirements.txt \
+	              --python=/usr/bin/python3.11
