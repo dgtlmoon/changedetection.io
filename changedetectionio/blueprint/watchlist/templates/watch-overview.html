@@ -89,7 +89,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 {%- set link_order = "desc" if sort_order  == 'asc' else "asc" -%}
                 {%- set arrow_span = "" -%}
                 <th><input style="vertical-align: middle" type="checkbox" id="check-all" > <a class="{{ 'active '+link_order if sort_attribute == 'date_created' else 'inactive' }}"  href="{{url_for('watchlist.index', sort='date_created', order=link_order, tag=active_tag_uuid)}}"># <span class='arrow {{link_order}}'></span></a></th>
-                <th class="empty-cell"></th>
+                <th>
+                    <a class="{{ 'active '+link_order if sort_attribute == 'paused' else 'inactive' }}" href="{{url_for('watchlist.index', sort='paused', order=link_order, tag=active_tag_uuid)}}"><i data-feather="pause" style="vertical-align: bottom; width: 14px; height: 14px;  margin-right: 4px;"></i><span class='arrow {{link_order}}'></span></a>
+                    &nbsp;
+                    <a class="{{ 'active '+link_order if sort_attribute == 'notification_muted' else 'inactive' }}" href="{{url_for('watchlist.index', sort='notification_muted', order=link_order, tag=active_tag_uuid)}}"><i data-feather="volume-2" style="vertical-align: bottom; width: 14px; height: 14px;  margin-right: 4px;"></i><span class='arrow {{link_order}}'></span></a>
+                </th>
                 <th><a class="{{ 'active '+link_order if sort_attribute == 'label' else 'inactive' }}" href="{{url_for('watchlist.index', sort='label', order=link_order, tag=active_tag_uuid)}}">Website <span class='arrow {{link_order}}'></span></a></th>
              {%- if any_has_restock_price_processor -%}
                 <th>Restock &amp; Price</th>
