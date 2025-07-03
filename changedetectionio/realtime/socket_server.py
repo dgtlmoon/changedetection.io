@@ -208,7 +208,7 @@ def handle_watch_update(socketio, **kwargs):
         watch_data = {
             'checking_now': True if watch.get('uuid') in running_uuids else False,
             'error_text': error_texts,
-            'event_timestamp': time.time()
+            'event_timestamp': time.time(),
             'fetch_time': watch.get('fetch_time'),
             'has_error': True if error_texts else False,
             'has_thumbnail': True if watch.get_screenshot_as_thumbnail() else False,
