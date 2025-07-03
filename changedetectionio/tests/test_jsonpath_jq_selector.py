@@ -419,7 +419,7 @@ def check_json_ext_filter(json_filter, client, live_server):
     res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
 
-    res = client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
+    res = client.get(url_for("ui.ui_views.preview_page", uuid="first"))
 
     # We should never see 'ForSale' because we are selecting on 'Sold' in the rule,
     # But we should know it triggered ('unviewed' assert above)
