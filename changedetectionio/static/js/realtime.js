@@ -139,7 +139,6 @@ $(document).ready(function () {
                         $('img.thumbnail', $watchRow).attr('src', thumbnail_baseURL.replace('/PLACEHOLDER', `/${watch.uuid}`));
                     }
                     $('td.last-changed', $watchRow).text(watch.last_changed_text)
-
                     $('td.last-checked .innertext', $watchRow).text(watch.last_checked_text)
                     $('td.last-checked', $watchRow).data('timestamp', watch.last_checked).data('fetchduration', watch.fetch_time);
                     $('td.last-checked', $watchRow).data('eta_complete', watch.last_checked + watch.fetch_time);
