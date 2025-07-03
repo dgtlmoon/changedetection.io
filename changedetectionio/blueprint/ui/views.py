@@ -148,12 +148,14 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         try:
             to_version_file_contents = watch.get_history_snapshot(timestamp=to_version)
         except Exception as e:
-            to_version_file_contents = f"Unable to read to-version at index {to_version}.\n"
+            logger.error(f"Unable to read watch history to-version for version {to_version}: {str(e)}")
+            to_version_file_contents = f"Unable to read to-version at {to_version}.\n"
 
         try:
             from_version_file_contents = watch.get_history_snapshot(timestamp=from_version)
         except Exception as e:
-            from_version_file_contents = f"Unable to read to-version at index {from_version}.\n"
+            logger.error(f"Unable to read watch history from-version for version {from_version}: {str(e)}")
+            from_version_file_contents = f"Unable to read to-version {from_version}.\n"
 
         screenshot_url = watch.get_screenshot()
 
