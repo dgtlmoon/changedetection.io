@@ -144,7 +144,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         # Use the current one if nothing was specified
         to_version = request.args.get('to_version', str(dates[-1]))
 
-
         try:
             to_version_file_contents = watch.get_history_snapshot(timestamp=to_version)
         except Exception as e:

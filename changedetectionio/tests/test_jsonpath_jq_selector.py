@@ -426,6 +426,13 @@ def check_json_ext_filter(json_filter, client, live_server):
     assert b'ForSale' not in res.data
     assert b'Sold' in res.data
 
+
+    # And the difference should have both?
+
+    res = client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
+    assert b'ForSale' in res.data
+    assert b'Sold' in res.data
+
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
