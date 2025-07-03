@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from operator import truediv
 
 from flask import make_response, request
 from flask import url_for
@@ -129,52 +130,46 @@ def extract_UUID_from_client(client):
 
 def wait_for_all_checks(client=None):
     """
-    Waits until the queue is empty and remains empty for at least `required_empty_duration` seconds,
-    and also ensures no running threads have `current_uuid` set.
-    Retries for up to `max_attempts` times, sleeping `wait_between_attempts` seconds between checks.
+    Waits until the queue is empty and workers are idle.
+    Much faster than the original with adaptive timing.
     """
-    from changedetectionio.flask_app import update_q as global_update_q, running_update_threads
-
-    # Configuration
-    attempt = 0
-    i=0
-    max_attempts = 60
-    required_empty_duration = 0.2
+    from changedetectionio.flask_app import update_q as global_update_q
+    from changedetectionio import worker_handler
 
     logger = logging.getLogger()
-    time.sleep(1.2)
-
     empty_since = None
+    attempt = 0
+    max_attempts = 150  # Still reasonable upper bound
 
     while attempt < max_attempts:
+        # Start with fast checks, slow down if needed
+        if attempt < 10:
+            time.sleep(0.1)  # Very fast initial checks
+        elif attempt < 30:
+            time.sleep(0.3)  # Medium speed
+        else:
+            time.sleep(0.8)  # Slower for persistent issues
+
         q_length = global_update_q.qsize()
+        running_uuids = worker_handler.get_running_uuids()
+        any_workers_busy = len(running_uuids) > 0
 
-        # Check if any threads are still processing
-        time.sleep(1.2)
-        any_threads_busy = any(t.current_uuid for t in running_update_threads)
-
-
-        if q_length == 0 and not any_threads_busy:
+        if q_length == 0 and not any_workers_busy:
             if empty_since is None:
                 empty_since = time.time()
-                logger.info(f"Queue empty and no active threads at attempt {attempt}, starting empty timer...")
-            elif time.time() - empty_since >= required_empty_duration:
-                logger.info(f"Queue has been empty and threads idle for {required_empty_duration} seconds. Done waiting.")
+            elif time.time() - empty_since >= 0.15:  # Shorter wait
                 break
-            else:
-                logger.info(f"Still waiting: queue empty and no active threads, but not yet {required_empty_duration} seconds...")
         else:
-            if q_length != 0:
-                logger.info(f"Queue not empty (size={q_length}), resetting timer.")
-            if any_threads_busy:
-                busy_threads = [t.name for t in running_update_threads if t.current_uuid]
-                logger.info(f"Threads still busy: {busy_threads}, resetting timer.")
             empty_since = None
+        
         attempt += 1
+        time.sleep(0.3)
 
-    time.sleep(1)
+# Replaced by new_live_server_setup and calling per function scope in conftest.py
+def  live_server_setup(live_server):
+    return True
 
-def live_server_setup(live_server):
+def new_live_server_setup(live_server):
 
     @live_server.app.route('/test-random-content-endpoint')
     def test_random_content_endpoint():
@@ -328,20 +323,3 @@ def live_server_setup(live_server):
 
     live_server.start()
 
-
-
-def get_index(client):
-    import inspect
-    # Get the caller's frame (parent function)
-    frame = inspect.currentframe()
-    caller_frame = frame.f_back  # Go back to the caller's frame
-    caller_name = caller_frame.f_code.co_name
-    caller_line = caller_frame.f_lineno
-
-    print(f"Called by: {caller_name}, Line: {caller_line}")
-
-    res = client.get(url_for("watchlist.index"))
-    with open(f"test-datastore/index-{caller_name}-{caller_line}.html", 'wb') as f:
-        f.write(res.data)
-
-    return res

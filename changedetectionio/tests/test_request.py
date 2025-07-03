@@ -4,8 +4,7 @@ import time
 from flask import url_for
 from . util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks, extract_UUID_from_client
 
-def test_setup(live_server):
-    live_server_setup(live_server)
+
 
 # Hard to just add more live server URLs when one test is already running (I think)
 # So we add our test here (was in a different file)
@@ -154,7 +153,7 @@ def test_body_in_request(client, live_server, measure_memory_usage):
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
-
+    wait_for_all_checks(client)
     watches_with_body = 0
     with open('test-datastore/url-watches.json') as f:
         app_struct = json.load(f)
@@ -258,7 +257,7 @@ def test_method_in_request(client, live_server, measure_memory_usage):
 
 # Re #2408 - user-agent override test, also should handle case-insensitive header deduplication
 def test_ua_global_override(client, live_server, measure_memory_usage):
-    # live_server_setup(live_server)
+    ##  live_server_setup(live_server) # Setup on conftest per function
     test_url = url_for('test_headers', _external=True)
 
     res = client.post(
@@ -313,7 +312,7 @@ def test_ua_global_override(client, live_server, measure_memory_usage):
     assert b'Deleted' in res.data
 
 def test_headers_textfile_in_request(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
     # Add our URL to the import page
 
     webdriver_ua = "Hello fancy webdriver UA 1.0"
@@ -426,7 +425,7 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage):
     assert b'Deleted' in res.data
 
 def test_headers_validation(client, live_server):
-    #live_server_setup(live_server)
+    
 
     test_url = url_for('test_headers', _external=True)
     res = client.post(

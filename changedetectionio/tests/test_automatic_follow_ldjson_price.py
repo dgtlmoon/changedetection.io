@@ -76,12 +76,12 @@ def set_response_without_ldjson():
         f.write(test_return_data)
     return None
 
-def test_setup(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+# def test_setup(client, live_server, measure_memory_usage):
+   #  live_server_setup(live_server) # Setup on conftest per function
 
 # actually only really used by the distll.io importer, but could be handy too
 def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
     set_response_with_ldjson()
 
     # Add our URL to the import page
@@ -164,7 +164,7 @@ def _test_runner_check_bad_format_ignored(live_server, client, has_ldjson_price_
 
 
 def test_bad_ldjson_is_correctly_ignored(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
     test_return_data = """
             <html>
             <head>

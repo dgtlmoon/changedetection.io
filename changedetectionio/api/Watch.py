@@ -3,6 +3,7 @@ from changedetectionio.strtobool import strtobool
 
 from flask_expects_json import expects_json
 from changedetectionio import queuedWatchMetaData
+from changedetectionio import worker_handler
 from flask_restful import abort, Resource
 from flask import request, make_response
 import validators
@@ -47,7 +48,7 @@ class Watch(Resource):
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
 
         if request.args.get('recheck'):
-            self.update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+            worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
             return "OK", 200
         if request.args.get('paused', '') == 'paused':
             self.datastore.data['watching'].get(uuid).pause()
@@ -236,7 +237,7 @@ class CreateWatch(Resource):
 
         new_uuid = self.datastore.add_watch(url=url, extras=extras, tag=tags)
         if new_uuid:
-            self.update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))
+            worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))
             return {'uuid': new_uuid}, 201
         else:
             return "Invalid or unsupported URL", 400
@@ -291,7 +292,7 @@ class CreateWatch(Resource):
 
         if request.args.get('recheck_all'):
             for uuid in self.datastore.data['watching'].keys():
-                self.update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+                worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
             return {'status': "OK"}, 200
 
         return list, 200

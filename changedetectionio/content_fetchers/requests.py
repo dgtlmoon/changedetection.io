@@ -1,6 +1,7 @@
 from loguru import logger
 import hashlib
 import os
+import asyncio
 from changedetectionio import strtobool
 from changedetectionio.content_fetchers.exceptions import BrowserStepsInUnsupportedFetcher, EmptyReply, Non200ErrorCodeReceived
 from changedetectionio.content_fetchers.base import Fetcher
@@ -15,7 +16,7 @@ class fetcher(Fetcher):
         self.proxy_override = proxy_override
         # browser_connection_url is none because its always 'launched locally'
 
-    def run(self,
+    def _run_sync(self,
             url,
             timeout,
             request_headers,
@@ -25,6 +26,7 @@ class fetcher(Fetcher):
             current_include_filters=None,
             is_binary=False,
             empty_pages_are_a_change=False):
+        """Synchronous version of run - the original requests implementation"""
 
         import chardet
         import requests
@@ -36,7 +38,6 @@ class fetcher(Fetcher):
         proxies = {}
 
         # Allows override the proxy on a per-request basis
-
         # https://requests.readthedocs.io/en/latest/user/advanced/#socks
         # Should also work with `socks5://user:pass@host:port` type syntax.
 
@@ -100,8 +101,37 @@ class fetcher(Fetcher):
         else:
             self.content = r.text
 
-
         self.raw_content = r.content
+
+    async def run(self,
+            url,
+            timeout,
+            request_headers,
+            request_body,
+            request_method,
+            ignore_status_codes=False,
+            current_include_filters=None,
+            is_binary=False,
+            empty_pages_are_a_change=False):
+        """Async wrapper that runs the synchronous requests code in a thread pool"""
+        
+        loop = asyncio.get_event_loop()
+        
+        # Run the synchronous _run_sync in a thread pool to avoid blocking the event loop
+        await loop.run_in_executor(
+            None,  # Use default ThreadPoolExecutor
+            lambda: self._run_sync(
+                url=url,
+                timeout=timeout,
+                request_headers=request_headers,
+                request_body=request_body,
+                request_method=request_method,
+                ignore_status_codes=ignore_status_codes,
+                current_include_filters=current_include_filters,
+                is_binary=is_binary,
+                empty_pages_are_a_change=empty_pages_are_a_change
+            )
+        )
 
     def quit(self, watch=None):
 

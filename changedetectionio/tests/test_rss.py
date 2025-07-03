@@ -65,11 +65,11 @@ def set_html_content(content):
     with open("test-datastore/endpoint-content.txt", "wb") as f:
         f.write(test_return_data.encode('utf-8'))
 
-def test_setup(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+# def test_setup(client, live_server, measure_memory_usage):
+   #  live_server_setup(live_server) # Setup on conftest per function
 
 def test_rss_and_token(client, live_server, measure_memory_usage):
-    #    live_server_setup(live_server)
+    #   #  live_server_setup(live_server) # Setup on conftest per function
 
     set_original_response()
     rss_token = extract_rss_token_from_UI(client)
@@ -107,7 +107,7 @@ def test_rss_and_token(client, live_server, measure_memory_usage):
     client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
 def test_basic_cdata_rss_markup(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
 
     set_original_cdata_xml()
 
@@ -135,7 +135,7 @@ def test_basic_cdata_rss_markup(client, live_server, measure_memory_usage):
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
 def test_rss_xpath_filtering(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
 
     set_original_cdata_xml()
 
@@ -191,7 +191,7 @@ def test_rss_bad_chars_breaking(client, live_server):
 
     Otherwise feedgen should support regular unicode
     """
-    #live_server_setup(live_server)
+    
 
     with open("test-datastore/endpoint-content.txt", "w") as f:
         ten_kb_string = "A" * 10_000

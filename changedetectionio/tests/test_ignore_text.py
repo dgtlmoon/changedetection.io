@@ -5,8 +5,7 @@ from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
 from changedetectionio import html_tools
 
-def test_setup(live_server):
-    live_server_setup(live_server)
+
 
 # Unit test of the stripper
 # Always we are dealing in utf-8
@@ -256,9 +255,9 @@ def _run_test_global_ignore(client, as_source=False, extra_ignore=""):
     assert b'Deleted' in res.data
 
 def test_check_global_ignore_text_functionality(client, live_server):
-    #live_server_setup(live_server)
+    
     _run_test_global_ignore(client, as_source=False)
 
 def test_check_global_ignore_text_functionality_as_source(client, live_server):
-    #live_server_setup(live_server)
+    
     _run_test_global_ignore(client, as_source=True, extra_ignore='/\?v=\d/')

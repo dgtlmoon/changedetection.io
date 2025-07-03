@@ -86,10 +86,10 @@ jobs:
         run: |
           # Playwright via Sockpuppetbrowser fetch
           # tests/visualselector/test_fetch_data.py will do browser steps  
-          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_content.py'
-          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_errorhandling.py'
-          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/visualselector/test_fetch_data.py'
-          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_custom_js_before_content.py'
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest  -vv --capture=tee-sys --showlocals --tb=long --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_content.py'
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest  -vv --capture=tee-sys --showlocals --tb=long --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_errorhandling.py'
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest  -vv --capture=tee-sys --showlocals --tb=long --live-server-host=0.0.0.0 --live-server-port=5004 tests/visualselector/test_fetch_data.py'
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest  -vv --capture=tee-sys --showlocals --tb=long --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_custom_js_before_content.py'
 
 
       - name: Playwright and SocketPuppetBrowser - Headers and requests
@@ -178,6 +178,26 @@ jobs:
           docker logs test-changedetectionio 2>/dev/null | grep 'DEBUG' || exit 1
 
           docker kill test-changedetectionio
+
+      - name: Test HTTPS SSL mode
+        run: |
+          openssl req -x509 -newkey rsa:4096 -keyout privkey.pem -out cert.pem -days 365 -nodes -subj "/CN=localhost"
+          docker run --name test-changedetectionio-ssl --rm -e SSL_CERT_FILE=cert.pem -e SSL_PRIVKEY_FILE=privkey.pem -p 5000:5000 -v ./cert.pem:/app/cert.pem -v ./privkey.pem:/app/privkey.pem -d test-changedetectionio
+          sleep 3
+          # Should return 0 (no error) when grep finds it
+          # -k because its self-signed
+          curl --retry-connrefused --retry 6 -k https://localhost:5000 -v|grep -q checkbox-uuid
+      
+          docker kill test-changedetectionio-ssl
+
+      - name: Test IPv6 Mode
+        run: |
+          # IPv6 - :: bind to all interfaces inside container (like 0.0.0.0), ::1 would be localhost only
+          docker run --name test-changedetectionio-ipv6 --rm -p 5000:5000 -e LISTEN_HOST=:: -d test-changedetectionio
+          sleep 3
+          # Should return 0 (no error) when grep finds it on localhost
+          curl --retry-connrefused --retry 6 http://[::1]:5000 -v|grep -q checkbox-uuid
+          docker kill test-changedetectionio-ipv6
 
       - name: Test changedetection.io SIGTERM and SIGINT signal shutdown
         run: |

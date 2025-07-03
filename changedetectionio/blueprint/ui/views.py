@@ -1,12 +1,12 @@
 from flask import Blueprint, request, redirect, url_for, flash, render_template, make_response, send_from_directory, abort
-from flask_login import current_user
 import os
 import time
-from copy import deepcopy
+from loguru import logger
 
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
 from changedetectionio import html_tools
+from changedetectionio import worker_handler
 
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData, watch_check_update):
     views_blueprint = Blueprint('ui_views', __name__, template_folder="../ui/templates")
@@ -77,7 +77,42 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         return output
 
-    @views_blueprint.route("/diff/<string:uuid>", methods=['GET', 'POST'])
+    @views_blueprint.route("/diff/<string:uuid>", methods=['POST'])
+    @login_optionally_required
+    def diff_history_page_build_report(uuid):
+        from changedetectionio import forms
+
+        # More for testing, possible to return the first/only
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
+
+        try:
+            watch = datastore.data['watching'][uuid]
+        except KeyError:
+            flash("No history found for the specified link, bad link?", "error")
+            return redirect(url_for('watchlist.index'))
+
+        # For submission of requesting an extract
+        extract_form = forms.extractDataForm(request.form)
+        if not extract_form.validate():
+            flash("An error occurred, please see below.", "error")
+
+        else:
+            extract_regex = request.form.get('extract_regex').strip()
+            output = watch.extract_regex_from_all_history(extract_regex)
+            if output:
+                watch_dir = os.path.join(datastore.datastore_path, uuid)
+                response = make_response(send_from_directory(directory=watch_dir, path=output, as_attachment=True))
+                response.headers['Content-type'] = 'text/csv'
+                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+                response.headers['Pragma'] = 'no-cache'
+                response.headers['Expires'] = "0"
+                return response
+
+            flash('Nothing matches that RegEx', 'error')
+        redirect(url_for('ui_views.diff_history_page', uuid=uuid) + '#extract')
+
+    @views_blueprint.route("/diff/<string:uuid>", methods=['GET'])
     @login_optionally_required
     def diff_history_page(uuid):
         from changedetectionio import forms
@@ -95,60 +130,31 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         # For submission of requesting an extract
         extract_form = forms.extractDataForm(request.form)
-        if request.method == 'POST':
-            if not extract_form.validate():
-                flash("An error occurred, please see below.", "error")
-
-            else:
-                extract_regex = request.form.get('extract_regex').strip()
-                output = watch.extract_regex_from_all_history(extract_regex)
-                if output:
-                    watch_dir = os.path.join(datastore.datastore_path, uuid)
-                    response = make_response(send_from_directory(directory=watch_dir, path=output, as_attachment=True))
-                    response.headers['Content-type'] = 'text/csv'
-                    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-                    response.headers['Pragma'] = 'no-cache'
-                    response.headers['Expires'] = 0
-                    return response
-
-                flash('Nothing matches that RegEx', 'error')
-                redirect(url_for('ui_views.diff_history_page', uuid=uuid)+'#extract')
 
         history = watch.history
         dates = list(history.keys())
 
-        if len(dates) < 2:
-            flash("Not enough saved change detection snapshots to produce a report.", "error")
-            return redirect(url_for('watchlist.index'))
+        # If a "from_version" was requested, then find it (or the closest one)
+        # Also set "from version" to be the closest version to the one that was last viewed.
 
-        # Save the current newest history as the most recently viewed
-        datastore.set_last_viewed(uuid, time.time())
+        best_last_viewed_timestamp = watch.get_from_version_based_on_last_viewed
+        from_version_timestamp = best_last_viewed_timestamp if best_last_viewed_timestamp else dates[-2]
+        from_version = request.args.get('from_version', from_version_timestamp )
 
-        # Read as binary and force decode as UTF-8
-        # Windows may fail decode in python if we just use 'r' mode (chardet decode exception)
-        from_version = request.args.get('from_version')
-        from_version_index = -2  # second newest
-        if from_version and from_version in dates:
-            from_version_index = dates.index(from_version)
-        else:
-            from_version = dates[from_version_index]
+        # Use the current one if nothing was specified
+        to_version = request.args.get('to_version', str(dates[-1]))
 
         try:
-            from_version_file_contents = watch.get_history_snapshot(dates[from_version_index])
+            to_version_file_contents = watch.get_history_snapshot(timestamp=to_version)
         except Exception as e:
-            from_version_file_contents = f"Unable to read to-version at index {dates[from_version_index]}.\n"
-
-        to_version = request.args.get('to_version')
-        to_version_index = -1
-        if to_version and to_version in dates:
-            to_version_index = dates.index(to_version)
-        else:
-            to_version = dates[to_version_index]
+            logger.error(f"Unable to read watch history to-version for version {to_version}: {str(e)}")
+            to_version_file_contents = f"Unable to read to-version at {to_version}.\n"
 
         try:
-            to_version_file_contents = watch.get_history_snapshot(dates[to_version_index])
+            from_version_file_contents = watch.get_history_snapshot(timestamp=from_version)
         except Exception as e:
-            to_version_file_contents = "Unable to read to-version at index{}.\n".format(dates[to_version_index])
+            logger.error(f"Unable to read watch history from-version for version {from_version}: {str(e)}")
+            from_version_file_contents = f"Unable to read to-version {from_version}.\n"
 
         screenshot_url = watch.get_screenshot()
 
@@ -161,6 +167,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         password_enabled_and_share_is_off = False
         if datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False):
             password_enabled_and_share_is_off = not datastore.data['settings']['application'].get('shared_diff_access')
+
+        datastore.set_last_viewed(uuid, time.time())
 
         output = render_template("diff.html",
                                  current_diff_url=watch['url'],
@@ -212,7 +220,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 return redirect(url_for('ui.ui_edit.edit_page', uuid=new_uuid, unpause_on_save=1, tag=request.args.get('tag')))
             else:
                 # Straight into the queue.
-                update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))
+                worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))
                 flash("Watch added.")
 
         return redirect(url_for('watchlist.index', tag=request.args.get('tag','')))

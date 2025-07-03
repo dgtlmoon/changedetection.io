@@ -21,17 +21,21 @@ def register_operators():
     def length_max(_, text, strlen):
         return len(text) <= int(strlen)
 
-    # ✅ Custom function for case-insensitive regex matching
+    # Custom function for case-insensitive regex matching
     def contains_regex(_, text, pattern):
         """Returns True if `text` contains `pattern` (case-insensitive regex match)."""
         return bool(re.search(pattern, str(text), re.IGNORECASE))
 
-    # ✅ Custom function for NOT matching case-insensitive regex
+    # Custom function for NOT matching case-insensitive regex
     def not_contains_regex(_, text, pattern):
         """Returns True if `text` does NOT contain `pattern` (case-insensitive regex match)."""
         return not bool(re.search(pattern, str(text), re.IGNORECASE))
 
+    def not_contains(_, text, pattern):
+        return not pattern in text
+
     return {
+        "!in": not_contains,
         "!contains_regex": not_contains_regex,
         "contains_regex": contains_regex,
         "ends_with": ends_with,
@@ -43,6 +47,7 @@ def register_operators():
 @hookimpl
 def register_operator_choices():
     return [
+        ("!in", "Does NOT Contain"),
         ("starts_with", "Text Starts With"),
         ("ends_with", "Text Ends With"),
         ("length_min", "Length minimum"),

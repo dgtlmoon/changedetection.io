@@ -52,12 +52,12 @@ def is_valid_uuid(val):
         return False
 
 
-def test_setup(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+# def test_setup(client, live_server, measure_memory_usage):
+   #  live_server_setup(live_server) # Setup on conftest per function
 
 
 def test_api_simple(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
 
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
 
@@ -108,7 +108,7 @@ def test_api_simple(client, live_server, measure_memory_usage):
         headers={'x-api-key': api_key}
     )
     assert len(res.json) == 0
-
+    time.sleep(1)
     wait_for_all_checks(client)
 
     set_modified_response()
@@ -119,6 +119,7 @@ def test_api_simple(client, live_server, measure_memory_usage):
     )
     wait_for_all_checks(client)
 
+    time.sleep(1)
     # Did the recheck fire?
     res = client.get(
         url_for("createwatch"),
@@ -291,7 +292,7 @@ def test_access_denied(client, live_server, measure_memory_usage):
 
 def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
 
-    #live_server_setup(live_server)
+    
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
 
     # Create a watch
@@ -371,7 +372,7 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
 
 
 def test_api_import(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
 
     res = client.post(
@@ -393,7 +394,7 @@ def test_api_import(client, live_server, measure_memory_usage):
 
 def test_api_conflict_UI_password(client, live_server, measure_memory_usage):
 
-    #live_server_setup(live_server)
+    
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
 
     # Enable password check and diff page access bypass

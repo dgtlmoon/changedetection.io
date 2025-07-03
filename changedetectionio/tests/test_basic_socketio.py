@@ -110,7 +110,7 @@ def run_socketio_watch_update_test(client, live_server, password_mode=""):
 
 def test_everything(live_server, client):
 
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
 
     run_socketio_watch_update_test(password_mode="", live_server=live_server, client=client)
 

@@ -10,7 +10,7 @@ def test_fetch_pdf(client, live_server, measure_memory_usage):
     import shutil
     shutil.copy("tests/test.pdf", "test-datastore/endpoint-test.pdf")
 
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
     test_url = url_for('test_pdf_endpoint', _external=True)
     # Add our URL to the import page
     res = client.post(

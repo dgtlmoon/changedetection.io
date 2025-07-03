@@ -16,6 +16,12 @@ $(function () {
         $('#op_extradata').val(prompt("Enter a tag name"));
     });
 
+
+    $('.history-link').click(function (e) {
+        // Incase they click 'back' in the browser, it should be removed.
+        $(this).closest('tr').removeClass('unviewed');
+    });
+
     $('.with-share-link > *').click(function () {
         $("#copied-clipboard").remove();
 

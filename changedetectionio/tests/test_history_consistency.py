@@ -9,7 +9,7 @@ from .util import live_server_setup, wait_for_all_checks
 from urllib.parse import urlparse, parse_qs
 
 def test_consistent_history(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
     workers = int(os.getenv("FETCH_WORKERS", 10))
     r = range(1, 10+workers)
 
@@ -79,3 +79,48 @@ def test_consistent_history(client, live_server, measure_memory_usage):
     json_db_file = os.path.join(live_server.app.config['DATASTORE'].datastore_path, 'url-watches.json')
     with open(json_db_file, 'r') as f:
         assert '"default"' not in f.read(), "'default' probably shouldnt be here, it came from when the 'default' Watch vars were accidently being saved"
+
+
+def test_check_text_history_view(client, live_server):
+
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write("<html>test-one</html>")
+
+    # Add our URL to the import page
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("imports.import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+
+    # Give the thread time to pick it up
+    wait_for_all_checks(client)
+
+    # Set second version, Make a change
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write("<html>test-two</html>")
+
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    res = client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
+    assert b'test-one' in res.data
+    assert b'test-two' in res.data
+
+    # Set third version, Make a change
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write("<html>test-three</html>")
+
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    # It should remember the last viewed time, so the first difference is not shown
+    res = client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
+    assert b'test-three' in res.data
+    assert b'test-two' in res.data
+    assert b'test-one' not in res.data
+
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    assert b'Deleted' in res.data

@@ -6,7 +6,7 @@ from .util import live_server_setup, wait_for_all_checks
 
 # test pages with http://username@password:foobar.com/ work
 def test_basic_auth(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
 
 
     # This page will echo back any auth info

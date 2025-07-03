@@ -12,8 +12,7 @@ try:
 except ModuleNotFoundError:
     jq_support = False
 
-def test_setup(live_server):
-    live_server_setup(live_server)
+
 
 def test_unittest_inline_html_extract():
     # So lets pretend that the JSON we want is inside some HTML
@@ -420,11 +419,18 @@ def check_json_ext_filter(json_filter, client, live_server):
     res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
 
-    res = client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
+    res = client.get(url_for("ui.ui_views.preview_page", uuid="first"))
 
     # We should never see 'ForSale' because we are selecting on 'Sold' in the rule,
     # But we should know it triggered ('unviewed' assert above)
     assert b'ForSale' not in res.data
+    assert b'Sold' in res.data
+
+
+    # And the difference should have both?
+
+    res = client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
+    assert b'ForSale' in res.data
     assert b'Sold' in res.data
 
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)

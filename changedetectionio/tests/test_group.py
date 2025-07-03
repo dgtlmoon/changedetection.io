@@ -6,8 +6,8 @@ from .util import live_server_setup, wait_for_all_checks, extract_rss_token_from
 import os
 
 
-def test_setup(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+# def test_setup(client, live_server, measure_memory_usage):
+   #  live_server_setup(live_server) # Setup on conftest per function
 
 def set_original_response():
     test_return_data = """<html>
@@ -40,7 +40,7 @@ def set_modified_response():
     return None
 
 def test_setup_group_tag(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
     set_original_response()
 
     # Add a tag with some config, import a tag and it should roughly work
@@ -131,7 +131,7 @@ def test_setup_group_tag(client, live_server, measure_memory_usage):
     assert b'Deleted' in res.data
 
 def test_tag_import_singular(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
 
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
@@ -151,7 +151,7 @@ def test_tag_import_singular(client, live_server, measure_memory_usage):
     assert b'Deleted' in res.data
 
 def test_tag_add_in_ui(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
 #
     res = client.post(
         url_for("tags.form_tag_add"),
@@ -168,7 +168,7 @@ def test_tag_add_in_ui(client, live_server, measure_memory_usage):
     assert b'Deleted' in res.data
 
 def test_group_tag_notification(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
     set_original_response()
 
     test_url = url_for('test_endpoint', _external=True)
@@ -236,46 +236,48 @@ def test_group_tag_notification(client, live_server, measure_memory_usage):
     assert b'Deleted' in res.data
 
 def test_limit_tag_ui(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
 
-    test_url = url_for('test_endpoint', _external=True)
-    urls=[]
+    test_url = url_for('test_random_content_endpoint', _external=True)
 
-    for i in range(20):
-        urls.append(test_url+"?x="+str(i)+" test-tag")
-
-    for i in range(20):
-        urls.append(test_url+"?non-grouped="+str(i))
-
-    res = client.post(
+    # A space can label the tag, only the first one will have a tag
+    client.post(
         url_for("imports.import_page"),
-        data={"urls": "\r\n".join(urls)},
+        data={"urls": f"{test_url} test-tag\r\n{test_url}"},
         follow_redirects=True
     )
-
-    assert b"40 Imported" in res.data
+    tag_uuid = get_UUID_for_tag_name(client, name="test-tag")
+    assert tag_uuid
 
     res = client.get(url_for("watchlist.index"))
     assert b'test-tag' in res.data
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
 
-    # All should be here
-    assert res.data.count(b'processor-text_json_diff') == 40
+    # Should be both unviewed
+    res = client.get(url_for("watchlist.index"))
+    assert res.data.count(b' unviewed ') == 2
 
-    tag_uuid = get_UUID_for_tag_name(client, name="test-tag")
 
-    res = client.get(url_for("watchlist.index", tag=tag_uuid))
+    # Now we recheck only the tag
+    client.get(url_for('ui.mark_all_viewed', tag=tag_uuid), follow_redirects=True)
+    wait_for_all_checks(client)
 
-    # Just a subset should be here
-    assert b'test-tag' in res.data
-    assert res.data.count(b'processor-text_json_diff') == 20
-    assert b"object at" not in res.data
+    with open('/tmp/fuck.html', 'wb') as f:
+        f.write(res.data)
+    # Should be only 1 unviewed
+    res = client.get(url_for("watchlist.index"))
+    assert res.data.count(b' unviewed ') == 1
+
+
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
     res = client.get(url_for("tags.delete_all"), follow_redirects=True)
     assert b'All tags deleted' in res.data
 
 def test_clone_tag_on_import(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
         url_for("imports.import_page"),
@@ -301,7 +303,7 @@ def test_clone_tag_on_import(client, live_server, measure_memory_usage):
     assert b'Deleted' in res.data
 
 def test_clone_tag_on_quickwatchform_add(client, live_server, measure_memory_usage):
-    #live_server_setup(live_server)
+    
 
     test_url = url_for('test_endpoint', _external=True)
 

@@ -5,7 +5,7 @@ from .util import live_server_setup, wait_for_all_checks
 import json
 
 def test_api_tags_listing(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
     tag_title = 'Test Tag'
 

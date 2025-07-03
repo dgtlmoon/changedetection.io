@@ -10,6 +10,8 @@ import os
 import sys
 from loguru import logger
 
+from changedetectionio.tests.util import live_server_setup, new_live_server_setup
+
 # https://github.com/pallets/flask/blob/1.1.2/examples/tutorial/tests/test_auth.py
 # Much better boilerplate than the docs
 # https://www.python-boilerplate.com/py3+flask+pytest/
@@ -70,6 +72,22 @@ def cleanup(datastore_path):
             if os.path.isfile(f):
                 os.unlink(f)
 
+@pytest.fixture(scope='function', autouse=True)
+def prepare_test_function(live_server):
+
+    routes = [rule.rule for rule in live_server.app.url_map.iter_rules()]
+    if '/test-random-content-endpoint' not in routes:
+        logger.debug("Setting up test URL routes")
+        new_live_server_setup(live_server)
+
+
+    yield
+    # Then cleanup/shutdown
+    live_server.app.config['DATASTORE'].data['watching']={}
+    time.sleep(0.3)
+    live_server.app.config['DATASTORE'].data['watching']={}
+
+
 @pytest.fixture(scope='session')
 def app(request):
     """Create application for the tests."""
@@ -106,8 +124,33 @@ def app(request):
     app.config['STOP_THREADS'] = True
 
     def teardown():
+        # Stop all threads and services
         datastore.stop_thread = True
         app.config.exit.set()
+        
+        # Shutdown workers gracefully before loguru cleanup
+        try:
+            from changedetectionio import worker_handler
+            worker_handler.shutdown_workers()
+        except Exception:
+            pass
+            
+        # Stop socket server threads
+        try:
+            from changedetectionio.flask_app import socketio_server
+            if socketio_server and hasattr(socketio_server, 'shutdown'):
+                socketio_server.shutdown()
+        except Exception:
+            pass
+        
+        # Give threads a moment to finish their shutdown
+        import time
+        time.sleep(0.1)
+        
+        # Remove all loguru handlers to prevent "closed file" errors
+        logger.remove()
+        
+        # Cleanup files
         cleanup(app_config['datastore_path'])
 
        

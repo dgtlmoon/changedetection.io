@@ -8,8 +8,8 @@ from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
 
 
-def test_setup(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+# def test_setup(client, live_server, measure_memory_usage):
+   #  live_server_setup(live_server) # Setup on conftest per function
 
 def test_import(client, live_server, measure_memory_usage):
     # Give the endpoint time to spin up
@@ -126,7 +126,7 @@ def test_import_distillio(client, live_server, measure_memory_usage):
 def test_import_custom_xlsx(client, live_server, measure_memory_usage):
     """Test can upload a excel spreadsheet and the watches are created correctly"""
 
-    #live_server_setup(live_server)
+    
 
     dirname = os.path.dirname(__file__)
     filename = os.path.join(dirname, 'import/spreadsheet.xlsx')
@@ -175,7 +175,7 @@ def test_import_custom_xlsx(client, live_server, measure_memory_usage):
 def test_import_watchete_xlsx(client, live_server, measure_memory_usage):
     """Test can upload a excel spreadsheet and the watches are created correctly"""
 
-    #live_server_setup(live_server)
+    
     dirname = os.path.dirname(__file__)
     filename = os.path.join(dirname, 'import/spreadsheet.xlsx')
     with open(filename, 'rb') as f:
