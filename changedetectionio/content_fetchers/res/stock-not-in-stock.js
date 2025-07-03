@@ -17,6 +17,7 @@ async () => {
             'back in stock soon',
             'back-order or out of stock',
             'backordered',
+            'backorder',
             'benachrichtigt mich', // notify me
             'binnenkort leverbaar', // coming soon
             'brak na stanie',
@@ -39,6 +40,7 @@ async () => {
             'mail me when available',
             'message if back in stock',
             'mevcut değil',
+            'more on order',
             'nachricht bei',
             'nicht auf lager',
             'nicht lagernd',
