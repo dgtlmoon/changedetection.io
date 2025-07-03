@@ -707,9 +707,11 @@ ul#conditions_match_logic {
   filter: contrast(1.05) saturate(1.1) drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.2));
   object-fit: cover;
   /* crop/fill if needed */
-  opacity: 0.5;
+  opacity: 0.7;
   height: 100%;
-  max-height: 100%; }
+  vertical-align: middle;
+  max-width: 40px;
+  max-height: 60px; }
 
 .title-col {
   /* Optional, for spacing */
