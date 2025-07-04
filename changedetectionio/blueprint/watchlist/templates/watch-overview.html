@@ -81,13 +81,14 @@ document.addEventListener('DOMContentLoaded', function() {
     {%- set pagination_page = request.args.get('page', 0) -%}
     {%- set cols_required = 6 -%}
     {%- set any_has_restock_price_processor = datastore.any_watches_have_processor_by_name("restock_diff") -%}
+    {%- set thumbnail_type = datastore.data['settings']['application']['ui'].get('thumbnail_type') -%}
     {%- if any_has_restock_price_processor -%}
         {%- set cols_required = cols_required + 1 -%}
     {%- endif -%}
 
     <div id="watch-table-wrapper">
 
-        <table class="pure-table pure-table-striped watch-table">
+        <table class="pure-table pure-table-striped watch-table thumbnail-type-{{ thumbnail_type }}">
             <thead>
             <tr>
                 {%- set link_order = "desc" if sort_order  == 'asc' else "asc" -%}
@@ -109,6 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td colspan="{{ cols_required }}" style="text-wrap: wrap;">No website watches configured, please add a URL in the box above, or <a href="{{ url_for('imports.import_page')}}" >import a list</a>.</td>
             </tr>
             {%- endif -%}
+
             {%- for watch in (watches|sort(attribute=sort_attribute, reverse=sort_order == 'asc'))|pagination_slice(skip=pagination.skip) -%}
                 {%- set checking_now = is_checking_now(watch) -%}
                 {%- set history_n = watch.history_n -%}
@@ -120,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     'paused' if watch.paused is defined and watch.paused != False else '',
                     'unviewed' if watch.has_unviewed else '',
                     'has-restock-info' if watch.has_restock_info else 'no-restock-info',
-                    'has-thumbnail' if watch.get_screenshot() else '',
+                    'has-thumbnail' if watch.get_screenshot() or thumbnail_type not in ('', 'screenshot') else '',
                     'in-stock' if watch.has_restock_info and watch['restock']['in_stock'] else '',
                     'not-in-stock' if watch.has_restock_info and not watch['restock']['in_stock'] else '',
                     'queued' if watch.uuid in queued_uuids else '',
@@ -139,35 +141,47 @@ document.addEventListener('DOMContentLoaded', function() {
                 </td>
 
                 <td class="title-col inline">
-
-                    <img style="display: none;" class="thumbnail" src="{{url_for('static_content', group='thumbnail', filename=watch.uuid)}}">
-                    {{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
-                    <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">&nbsp;</a>
-                    <a class="link-spread" href="{{url_for('ui.form_share_put_watch', uuid=watch.uuid)}}"><img src="{{url_for('static_content', group='images', filename='spread.svg')}}" class="status-icon icon icon-spread" title="Create a link to share watch config with others" ></a>
-
-                    {%- if watch.get_fetch_backend == "html_webdriver"
-                         or ( watch.get_fetch_backend == "system" and system_default_fetcher == 'html_webdriver'  )
-                         or "extra_browser_" in watch.get_fetch_backend
-                    -%}
-                    <img class="status-icon" src="{{url_for('static_content', group='images', filename='google-chrome-icon.png')}}" alt="Using a Chrome browser" title="Using a Chrome browser" >
+                    <div class="flex-wrapper">
+                    {%- if thumbnail_type -%}
+                        <div>
+                            {%- if thumbnail_type == 'screenshot' -%}
+                                <img style="display: none;" class="thumbnail" src="{{url_for('static_content', group='thumbnail', filename=watch.uuid)}}">
+                            {% elif thumbnail_type == 'ddg_favicon' %}
+                                <img style="display: none;" class="thumbnail" src="https://icons.duckduckgo.com/ip3/{{ watch.domain_only_from_link }}.ico">
+                            {% elif thumbnail_type == 'google_favicon' %}
+                                <img style="display: none;" class="thumbnail" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://{{ watch.domain_only_from_link }}&size=64">
+                            {%- endif -%}
+                        </div>
                     {%- endif -%}
+                        <div>
+                            {{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
+                            <div class="error-text" style="display:none;">{{ watch.compile_error_texts(has_proxies=datastore.proxy_list) }}</div>
+                            {%- if watch['processor'] == 'text_json_diff'  -%}
+                                {%- if watch['has_ldjson_price_data'] and not watch['track_ldjson_price_data']  -%}
+                                <div class="ldjson-price-track-offer">Switch to Restock & Price watch mode? <a href="{{url_for('price_data_follower.accept', uuid=watch.uuid)}}" class="pure-button button-xsmall">Yes</a> <a href="{{url_for('price_data_follower.reject', uuid=watch.uuid)}}" class="">No</a></div>
+                                {%- endif -%}
+                            {%- endif -%}
+                            {%- if watch['processor'] == 'restock_diff' -%}
+                                <span class="tracking-ldjson-price-data" title="Automatically following embedded price information"><img src="{{url_for('static_content', group='images', filename='price-tag-icon.svg')}}"  class="status-icon price-follow-tag-icon" > Price</span>
+                            {%- endif -%}
+                            {%- for watch_tag_uuid, watch_tag in datastore.get_all_tags_for_watch(watch['uuid']).items() -%}
+                              <span class="watch-tag-list">{{ watch_tag.title }}</span>
+                            {%- endfor -%}
+                        </div>
+                    <div class="status-icons">
+                                                    <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">&nbsp;</a>
+                            <a class="link-spread" href="{{url_for('ui.form_share_put_watch', uuid=watch.uuid)}}"><img src="{{url_for('static_content', group='images', filename='spread.svg')}}" class="status-icon icon icon-spread" title="Create a link to share watch config with others" ></a>
+                            {%- if watch.get_fetch_backend == "html_webdriver"
+                                 or ( watch.get_fetch_backend == "system" and system_default_fetcher == 'html_webdriver'  )
+                                 or "extra_browser_" in watch.get_fetch_backend
+                            -%}
+                            <img class="status-icon" src="{{url_for('static_content', group='images', filename='google-chrome-icon.png')}}" alt="Using a Chrome browser" title="Using a Chrome browser" >
+                            {%- endif -%}
+                            {%- if watch.is_pdf  -%}<img class="status-icon" src="{{url_for('static_content', group='images', filename='pdf-icon.svg')}}" alt="Converting PDF to text" >{%- endif -%}
+                            {%- if watch.has_browser_steps -%}<img class="status-icon status-browsersteps" src="{{url_for('static_content', group='images', filename='steps.svg')}}" alt="Browser Steps is enabled" >{%- endif -%}
 
-                    {%- if watch.is_pdf  -%}<img class="status-icon" src="{{url_for('static_content', group='images', filename='pdf-icon.svg')}}" alt="Converting PDF to text" >{%- endif -%}
-                    {%- if watch.has_browser_steps -%}<img class="status-icon status-browsersteps" src="{{url_for('static_content', group='images', filename='steps.svg')}}" alt="Browser Steps is enabled" >{%- endif -%}
-
-                    <div class="error-text" style="display:none;">{{ watch.compile_error_texts(has_proxies=datastore.proxy_list) }}</div>
-
-                    {%- if watch['processor'] == 'text_json_diff'  -%}
-                        {%- if watch['has_ldjson_price_data'] and not watch['track_ldjson_price_data']  -%}
-                        <div class="ldjson-price-track-offer">Switch to Restock & Price watch mode? <a href="{{url_for('price_data_follower.accept', uuid=watch.uuid)}}" class="pure-button button-xsmall">Yes</a> <a href="{{url_for('price_data_follower.reject', uuid=watch.uuid)}}" class="">No</a></div>
-                        {%- endif -%}
-                    {%- endif -%}
-                    {%- if watch['processor'] == 'restock_diff' -%}
-                        <span class="tracking-ldjson-price-data" title="Automatically following embedded price information"><img src="{{url_for('static_content', group='images', filename='price-tag-icon.svg')}}"  class="status-icon price-follow-tag-icon" > Price</span>
-                    {%- endif -%}
-                    {%- for watch_tag_uuid, watch_tag in datastore.get_all_tags_for_watch(watch['uuid']).items() -%}
-                      <span class="watch-tag-list">{{ watch_tag.title }}</span>
-                    {%- endfor -%}
+                    </div>
+                    </div>
                 </td>
 {%- if any_has_restock_price_processor -%}
                 <td class="restock-and-price">

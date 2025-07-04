@@ -5,48 +5,82 @@
     vertical-align: middle;
 
   }
+
   tr.has-thumbnail {
     img.thumbnail {
       display: inline-block !important;
     }
+
     &.unviewed {
       img.thumbnail {
         opacity: 1.0 !important;
       }
     }
   }
-
-  td.inline.title-col {
-    img.thumbnail {
-      background-color: #fff; /* fallback bg for SVGs without bg */
-      border-radius: 4px; /* subtle rounded corners */
-      border: 1px solid #ddd; /* light border for contrast */
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); /* soft shadow */
-      filter: contrast(1.05) saturate(1.1) drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.2));
-      object-fit: cover; /* crop/fill if needed */
-      opacity: 0.7;
-      height: 100%;
+  .status-icons {
+    white-space: nowrap;
+      display: flex;
+  align-items: center; /* Vertical centering */
+  gap: 4px; /* Space between image and text */
+    > * {
       vertical-align: middle;
-      max-width: 25px;
-      max-height: 25px;
     }
   }
 }
 
-
 .title-col {
-    /* Optional, for spacing */
-    padding: 10px;
+  /* Optional, for spacing */
+  padding: 10px;
 }
 
 .title-wrapper {
-    display: flex;
-    align-items: center; /* Vertical centering */
-    gap: 10px; /* Space between image and text */
+  display: flex;
+  align-items: center; /* Vertical centering */
+  gap: 10px; /* Space between image and text */
 }
 
 /* Make sure .title-col-inner doesn't collapse or misalign */
 .title-col-inner {
-    display: inline-block;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* thumbnail styling */
+.watch-table {
+  img.thumbnail {
     vertical-align: middle;
+    max-width: 25px;
+    max-height: 25px;
+    height: 25px;
+    padding-right: 4px;
+  }
+
+  tr.has-thumbnail {
+    td.inline.title-col {
+      .flex-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+    }
+  }
+
+  &.thumbnail-type-screenshot {
+    tr.has-thumbnail {
+      td.inline.title-col {
+        img.thumbnail {
+          background-color: #fff; /* fallback bg for SVGs without bg */
+          border-radius: 4px; /* subtle rounded corners */
+          border: 1px solid #ddd; /* light border for contrast */
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); /* soft shadow */
+          filter: contrast(1.05) saturate(1.1) drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.2));
+          object-fit: cover; /* crop/fill if needed */
+          opacity: 0.8;
+          max-width: 30px;
+          max-height: 30px;
+          height: 30px;
+        }
+      }
+    }
+  }
 }

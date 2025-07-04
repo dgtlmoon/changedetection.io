@@ -103,6 +103,13 @@ class model(watch_base):
             return 'DISABLED'
         return ready_url
 
+    @property
+    def domain_only_from_link(self):
+        from urllib.parse import urlparse
+        parsed = urlparse(self.link)
+        domain = parsed.hostname
+        return domain
+
     def clear_watch(self):
         import pathlib
 

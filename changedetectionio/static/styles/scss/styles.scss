@@ -742,7 +742,7 @@ footer {
         // The last three children (from the end) of each row will take up the full width
         // This is useful for the "Last Checked", "Last Changed", and the action buttons columns, which should each take up the full width
         :nth-last-child(-n+3) {
-          flex-basis: 100%;
+          /*flex-basis: 100%;*/
         }
       }
     }

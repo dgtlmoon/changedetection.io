@@ -695,23 +695,15 @@ ul#conditions_match_logic {
 .watch-table tr.has-thumbnail.unviewed img.thumbnail {
   opacity: 1.0 !important; }
 
-.watch-table td.inline.title-col img.thumbnail {
-  background-color: #fff;
-  /* fallback bg for SVGs without bg */
-  border-radius: 4px;
-  /* subtle rounded corners */
-  border: 1px solid #ddd;
-  /* light border for contrast */
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  /* soft shadow */
-  filter: contrast(1.05) saturate(1.1) drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.2));
-  object-fit: cover;
-  /* crop/fill if needed */
-  opacity: 0.7;
-  height: 100%;
-  vertical-align: middle;
-  max-width: 25px;
-  max-height: 25px; }
+.watch-table .status-icons {
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  /* Vertical centering */
+  gap: 4px;
+  /* Space between image and text */ }
+  .watch-table .status-icons > * {
+    vertical-align: middle; }
 
 .title-col {
   /* Optional, for spacing */
@@ -728,6 +720,36 @@ ul#conditions_match_logic {
 .title-col-inner {
   display: inline-block;
   vertical-align: middle; }
+
+/* thumbnail styling */
+.watch-table img.thumbnail {
+  vertical-align: middle;
+  max-width: 25px;
+  max-height: 25px;
+  height: 25px;
+  padding-right: 4px; }
+
+.watch-table tr.has-thumbnail td.inline.title-col .flex-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px; }
+
+.watch-table.thumbnail-type-screenshot tr.has-thumbnail td.inline.title-col img.thumbnail {
+  background-color: #fff;
+  /* fallback bg for SVGs without bg */
+  border-radius: 4px;
+  /* subtle rounded corners */
+  border: 1px solid #ddd;
+  /* light border for contrast */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  /* soft shadow */
+  filter: contrast(1.05) saturate(1.1) drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.2));
+  object-fit: cover;
+  /* crop/fill if needed */
+  opacity: 0.8;
+  max-width: 30px;
+  max-height: 30px;
+  height: 30px; }
 
 body.checking-now #checking-now-fixed-tab {
   display: block !important; }
@@ -1251,7 +1273,7 @@ footer {
       .watch-table tbody tr :nth-child(3) {
         flex-grow: 1; }
       .watch-table tbody tr :nth-last-child(-n+3) {
-        flex-basis: 100%; }
+        /*flex-basis: 100%;*/ }
     .watch-table .last-checked > span {
       vertical-align: middle; }
     .watch-table .last-checked::before {
