@@ -63,14 +63,16 @@ def main():
     global datastore
     global app
 
-    datastore_path = None
+    datastore_path = os.environ.get('DATASTORE_PATH')
     do_cleanup = False
     host = os.environ.get("LISTEN_HOST", "0.0.0.0").strip()
     port = int(os.environ.get('PORT', 5000))
     ssl_mode = False
 
+    if datastore_path is not None:
+        pass
     # On Windows, create and use a default path.
-    if os.name == 'nt':
+    elif os.name == 'nt':
         datastore_path = os.path.expandvars(r'%APPDATA%\changedetection.io')
         os.makedirs(datastore_path, exist_ok=True)
     else:
