@@ -63,7 +63,6 @@ class model(dict):
                     'ui': {
                         'open_diff_in_new_tab': True,
                         'socket_io_enabled': True,
-                        'thumbnail_type': 'screenshot' # False (off), screenshot, ddg_favicon, google_favicon
                     },
                 }
             }

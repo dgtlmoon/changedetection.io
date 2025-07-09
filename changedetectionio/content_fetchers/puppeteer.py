@@ -8,7 +8,7 @@ from loguru import logger
 
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, visualselector_xpath_selectors, \
     SCREENSHOT_SIZE_STITCH_THRESHOLD, SCREENSHOT_DEFAULT_QUALITY, XPATH_ELEMENT_JS, INSTOCK_DATA_JS, \
-    SCREENSHOT_MAX_TOTAL_HEIGHT
+    SCREENSHOT_MAX_TOTAL_HEIGHT, FAVICON_FETCHER_JS
 from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, BrowserFetchTimedOut, \
     BrowserConnectError
@@ -179,10 +179,8 @@ class fetcher(Fetcher):
         except Exception as e:
             raise BrowserConnectError(msg=f"Error connecting to the browser - Exception '{str(e)}'")
 
-        # Better is to launch chrome with the URL as arg
-        # non-headless - newPage() will launch an extra tab/window, .browser should already contain 1 page/tab
-        # headless - ask a new page
-        self.page = (pages := await browser.pages) and len(pages) or await browser.newPage()
+        # more reliable is to just request a new page
+        self.page = await browser.newPage()
 
         if '--window-size' in self.browser_connection_url:
             # Be sure the viewport is always the window-size, this is often not the same thing
@@ -291,6 +289,11 @@ class fetcher(Fetcher):
             await self.page.close()
             await browser.close()
             raise PageUnloadable(url=url, status_code=None, message=str(e))
+
+        try:
+            self.favicon_blob = await self.page.evaluate(FAVICON_FETCHER_JS)
+        except Exception as e:
+            logger.error(f"Error fetching FavIcon info {str(e)}, continuing.")
 
         if self.status_code != 200 and not ignore_status_codes:
             screenshot = await capture_full_page(page=self.page)

@@ -6,7 +6,7 @@
 
   }
 
-  tr.has-thumbnail {
+  tr.has-favicon {
     img.thumbnail {
       display: inline-block !important;
     }
@@ -55,7 +55,7 @@
     padding-right: 4px;
   }
 
-  tr.has-thumbnail {
+  tr.has-favicon {
     td.inline.title-col {
       .flex-wrapper {
         display: flex;
@@ -66,7 +66,7 @@
   }
 
   &.thumbnail-type-screenshot {
-    tr.has-thumbnail {
+    tr.has-favicon {
       td.inline.title-col {
         img.thumbnail {
           background-color: #fff; /* fallback bg for SVGs without bg */

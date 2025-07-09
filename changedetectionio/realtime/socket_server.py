@@ -211,7 +211,7 @@ def handle_watch_update(socketio, **kwargs):
             'event_timestamp': time.time(),
             'fetch_time': watch.get('fetch_time'),
             'has_error': True if error_texts else False,
-            'has_thumbnail': True if watch.get_screenshot_as_thumbnail() else False,
+            'has_favicon': True if watch.get_screenshot_as_thumbnail() else False,
             'history_n': watch.history_n,
             'last_changed_text': timeago.format(int(watch.last_changed), time.time()) if watch.history_n >= 2 and int(watch.last_changed) > 0 else 'Not yet',
             'last_checked': watch.get('last_checked'),

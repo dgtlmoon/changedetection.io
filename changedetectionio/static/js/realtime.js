@@ -126,14 +126,14 @@ $(document).ready(function () {
                     $($watchRow).toggleClass('queued', watch.queued);
                     $($watchRow).toggleClass('unviewed', watch.unviewed);
                     $($watchRow).toggleClass('has-error', watch.has_error);
-                    $($watchRow).toggleClass('has-thumbnail', watch.has_thumbnail);
+                    $($watchRow).toggleClass('has-favicon', watch.has_favicon);
                     $($watchRow).toggleClass('notification_muted', watch.notification_muted);
                     $($watchRow).toggleClass('paused', watch.paused);
                     $($watchRow).toggleClass('single-history', watch.history_n === 1);
                     $($watchRow).toggleClass('multiple-history', watch.history_n >= 2);
 
                     $('td.title-col .error-text', $watchRow).html(watch.error_text)
-                    if (watch.has_thumbnail) {
+                    if (watch.has_favicon) {
                         // Because the event could be emitted from a process that is outside the app context, url_for() might not work.
                         // Lets use url_for at template generation time to give us a PLACEHOLDER instead
                         $('img.thumbnail', $watchRow).attr('src', thumbnail_baseURL.replace('/PLACEHOLDER', `/${watch.uuid}`));

@@ -420,6 +420,63 @@ class model(watch_base):
         # False is not an option for AppRise, must be type None
         return None
 
+    def bump_favicon(self, url, favicon_base_64: str) -> None:
+        from urllib.parse import urlparse
+        import base64
+        import binascii
+        decoded = None
+
+        if url:
+            try:
+                parsed = urlparse(url)
+                filename = os.path.basename(parsed.path)
+                (base, extension) = filename.lower().strip().rsplit('.', 1)
+            except ValueError:
+                logger.error(f"UUID: {self.get('uuid')} Cant work out file extension from '{url}'")
+                return None
+        else:
+            # Assume favicon.ico
+            base = "favicon"
+            extension = "ico"
+
+        fname = os.path.join(self.watch_data_dir, f"favicon.{extension}")
+
+        try:
+            # validate=True makes sure the string only contains valid base64 chars
+            decoded = base64.b64decode(favicon_base_64, validate=True)
+        except (binascii.Error, ValueError) as e:
+            logger.warning(f"UUID: {self.get('uuid')} FavIcon save data (Base64) corrupt? {str(e)}")
+        else:
+            if decoded:
+                try:
+                    with open(fname, 'wb') as f:
+                        f.write(decoded)
+                except Exception as e:
+                    logger.warning(f"UUID: {self.get('uuid')} error saving FavIcon to {fname} - {str(e)}")
+
+        # @todo - Store some checksum and only write when its different
+        logger.debug(f"UUID: {self.get('uuid')} updated favicon to at {fname}")
+
+    def get_favicon_filename(self) -> str | None:
+        """
+        Find any favicon.* file in the current working directory
+        and return the contents of the newest one.
+
+        Returns:
+            bytes: Contents of the newest favicon file, or None if not found.
+        """
+        import glob
+
+        # Search for all favicon.* files
+        files = glob.glob(os.path.join(self.watch_data_dir, "favicon.*"))
+
+        if not files:
+            return None
+
+        # Find the newest by modification time
+        newest_file = max(files, key=os.path.getmtime)
+        return os.path.basename(newest_file)
+
     def get_screenshot_as_thumbnail(self, max_age=3200):
         """Return path to a square thumbnail of the most recent screenshot.
 

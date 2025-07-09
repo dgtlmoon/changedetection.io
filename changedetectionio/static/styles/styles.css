@@ -689,10 +689,10 @@ ul#conditions_match_logic {
 .watch-table th {
   vertical-align: middle; }
 
-.watch-table tr.has-thumbnail img.thumbnail {
+.watch-table tr.has-favicon img.thumbnail {
   display: inline-block !important; }
 
-.watch-table tr.has-thumbnail.unviewed img.thumbnail {
+.watch-table tr.has-favicon.unviewed img.thumbnail {
   opacity: 1.0 !important; }
 
 .watch-table .status-icons {
@@ -729,12 +729,12 @@ ul#conditions_match_logic {
   height: 25px;
   padding-right: 4px; }
 
-.watch-table tr.has-thumbnail td.inline.title-col .flex-wrapper {
+.watch-table tr.has-favicon td.inline.title-col .flex-wrapper {
   display: flex;
   align-items: center;
   gap: 4px; }
 
-.watch-table.thumbnail-type-screenshot tr.has-thumbnail td.inline.title-col img.thumbnail {
+.watch-table.thumbnail-type-screenshot tr.has-favicon td.inline.title-col img.thumbnail {
   background-color: #fff;
   /* fallback bg for SVGs without bg */
   border-radius: 4px;

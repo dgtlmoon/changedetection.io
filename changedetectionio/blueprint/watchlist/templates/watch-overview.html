@@ -6,8 +6,6 @@
 <script>let nowtimeserver={{ now_time_server }};</script>
 
 <script>let ajax_toggle_url="{{ ajax_toggle_url }}";</script>
-<script>let thumbnail_baseURL="{{ url_for('static_content', group='thumbnail', filename="PLACEHOLDER", _external=True) }}"</script>
-
 <script>
 // Initialize Feather icons after the page loads
 document.addEventListener('DOMContentLoaded', function() {
@@ -81,14 +79,13 @@ document.addEventListener('DOMContentLoaded', function() {
     {%- set pagination_page = request.args.get('page', 0) -%}
     {%- set cols_required = 6 -%}
     {%- set any_has_restock_price_processor = datastore.any_watches_have_processor_by_name("restock_diff") -%}
-    {%- set thumbnail_type = datastore.data['settings']['application']['ui'].get('thumbnail_type') -%}
     {%- if any_has_restock_price_processor -%}
         {%- set cols_required = cols_required + 1 -%}
     {%- endif -%}
 
     <div id="watch-table-wrapper">
 
-        <table class="pure-table pure-table-striped watch-table thumbnail-type-{{ thumbnail_type }}">
+        <table class="pure-table pure-table-striped watch-table">
             <thead>
             <tr>
                 {%- set link_order = "desc" if sort_order  == 'asc' else "asc" -%}
@@ -122,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     'paused' if watch.paused is defined and watch.paused != False else '',
                     'unviewed' if watch.has_unviewed else '',
                     'has-restock-info' if watch.has_restock_info else 'no-restock-info',
-                    'has-thumbnail' if watch.get_screenshot() or thumbnail_type not in ('', 'screenshot') else '',
+                    'has-favicon' if watch.get_favicon_filename() else '',
                     'in-stock' if watch.has_restock_info and watch['restock']['in_stock'] else '',
                     'not-in-stock' if watch.has_restock_info and not watch['restock']['in_stock'] else '',
                     'queued' if watch.uuid in queued_uuids else '',
@@ -142,17 +139,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 <td class="title-col inline">
                     <div class="flex-wrapper">
-                    {%- if thumbnail_type -%}
                         <div>
-                            {%- if thumbnail_type == 'screenshot' -%}
-                                <img style="display: none;" class="thumbnail" src="{{url_for('static_content', group='thumbnail', filename=watch.uuid)}}">
-                            {% elif thumbnail_type == 'ddg_favicon' %}
-                                <img style="display: none;" class="thumbnail" src="https://icons.duckduckgo.com/ip3/{{ watch.domain_only_from_link }}.ico">
-                            {% elif thumbnail_type == 'google_favicon' %}
-                                <img style="display: none;" class="thumbnail" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://{{ watch.domain_only_from_link }}&size=64">
-                            {%- endif -%}
+                            <img style="display: none;" class="thumbnail" src="{{url_for('static_content', group='favicon', filename=watch.uuid)}}">
                         </div>
-                    {%- endif -%}
                         <div>
                             {{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
                             <div class="error-text" style="display:none;">{{ watch.compile_error_texts(has_proxies=datastore.proxy_list) }}</div>
@@ -169,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             {%- endfor -%}
                         </div>
                     <div class="status-icons">
-                                                    <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">&nbsp;</a>
+                            <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">&nbsp;</a>
                             <a class="link-spread" href="{{url_for('ui.form_share_put_watch', uuid=watch.uuid)}}"><img src="{{url_for('static_content', group='images', filename='spread.svg')}}" class="status-icon icon icon-spread" title="Create a link to share watch config with others" ></a>
                             {%- if watch.get_fetch_backend == "html_webdriver"
                                  or ( watch.get_fetch_backend == "system" and system_default_fetcher == 'html_webdriver'  )

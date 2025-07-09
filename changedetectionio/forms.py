@@ -740,7 +740,6 @@ class globalSettingsRequestForm(Form):
 class globalSettingsApplicationUIForm(Form):
     open_diff_in_new_tab = BooleanField("Open 'History' page in a new tab", default=True, validators=[validators.Optional()])
     socket_io_enabled = BooleanField('Realtime UI Updates Enabled', default=True, validators=[validators.Optional()])
-    thumbnail_type = RadioField(u'Icon / Thumbnail type', choices=[('screenshot', 'Screenshot based'), ('ddg_favicon', "Favicon from DuckDuckGo"), ('google_favicon', "Favicon from Google"), ('', 'None / Off')], default="screenshot")
 
 # datastore.data['settings']['application']..
 class globalSettingsApplicationForm(commonSettingsForm):

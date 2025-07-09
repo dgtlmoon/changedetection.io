@@ -427,43 +427,24 @@ def changedetection_app(config=None, datastore_o=None):
             except FileNotFoundError:
                 abort(404)
 
-        if group == 'thumbnail':
+        if group == 'favicon':
             # Could be sensitive, follow password requirements
             if datastore.data['settings']['application']['password'] and not flask_login.current_user.is_authenticated:
                 abort(403)
-
             # Get the watch object
             watch = datastore.data['watching'].get(filename)
             if not watch:
                 abort(404)
 
-            t_type =  datastore.data['settings']['application']['ui'].get('thumbnail_type')
-            if t_type == 'screenshot':
-                # Generate thumbnail if needed
-                max_age = int(request.args.get('max_age', '3200'))
-                thumbnail_path = watch.get_screenshot_as_thumbnail(max_age=max_age)
 
-                if not thumbnail_path:
-                    abort(404)
-
-                try:
-                    # Get file modification time for ETag
-                    file_mtime = int(os.path.getmtime(thumbnail_path))
-                    etag = f'"{file_mtime}"'
-
-                    # Check if browser has valid cached version
-                    if request.if_none_match and etag in request.if_none_match:
-                        return "", 304  # Not Modified
-
-                    # Set up response with appropriate cache headers
-                    response = make_response(send_from_directory(os.path.dirname(thumbnail_path), os.path.basename(thumbnail_path)))
-                    response.headers['Content-type'] = 'image/jpeg'
-                    response.headers['ETag'] = etag
-                    response.headers['Cache-Control'] = 'max-age=300, must-revalidate'  # Cache for 5 minutes, then revalidate
-                    return response
-
-                except FileNotFoundError:
-                    abort(404)
+            favicon_filename = watch.get_favicon_filename()
+            if favicon_filename:
+                import mimetypes
+                mime, encoding = mimetypes.guess_type(favicon_filename)
+                response = make_response(send_from_directory(watch.watch_data_dir, favicon_filename))
+                response.headers['Content-type'] = mime
+                response.headers['Cache-Control'] = 'max-age=300, must-revalidate'  # Cache for 5 minutes, then revalidate
+                return response
 
         if group == 'visual_selector_data':
             # Could be sensitive, follow password requirements

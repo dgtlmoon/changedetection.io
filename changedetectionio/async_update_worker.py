@@ -353,6 +353,12 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                 except Exception as e:
                     pass
 
+                # Store favicon if necessary
+                if update_handler.fetcher.favicon_blob and update_handler.fetcher.favicon_blob.get('base64'):
+                    watch.bump_favicon(url=update_handler.fetcher.favicon_blob.get('url'),
+                                       favicon_base_64=update_handler.fetcher.favicon_blob.get('base64')
+                                       )
+
                 datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - fetch_start_time, 3),
                                                                'check_count': count})
 
