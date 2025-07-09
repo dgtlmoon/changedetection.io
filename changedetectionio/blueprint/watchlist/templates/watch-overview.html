@@ -4,8 +4,6 @@
 <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
 <script>let nowtimeserver={{ now_time_server }};</script>
-
-<script>let ajax_toggle_url="{{ ajax_toggle_url }}";</script>
 <script>
 // Initialize Feather icons after the page loads
 document.addEventListener('DOMContentLoaded', function() {
@@ -146,7 +144,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div>
                         <span class="watch-title">
-                            {{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
+                            {{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}&nbsp;<a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">&nbsp;</a>
                         </span>
                             <div class="error-text" style="display:none;">{{ watch.compile_error_texts(has_proxies=datastore.proxy_list) }}</div>
                             {%- if watch['processor'] == 'text_json_diff'  -%}
@@ -162,7 +160,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             {%- endfor -%}
                         </div>
                     <div class="status-icons">
-                            <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">&nbsp;</a>
                             <a class="link-spread" href="{{url_for('ui.form_share_put_watch', uuid=watch.uuid)}}"><img src="{{url_for('static_content', group='images', filename='spread.svg')}}" class="status-icon icon icon-spread" title="Create a link to share watch config with others" ></a>
                             {%- if watch.get_fetch_backend == "html_webdriver"
                                  or ( watch.get_fetch_backend == "system" and system_default_fetcher == 'html_webdriver'  )
