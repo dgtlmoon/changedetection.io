@@ -45,9 +45,19 @@ def test_fetch_webdriver_content(client, live_server, measure_memory_usage):
         res = client.get(
             url_for("watchlist.index"),
         )
+        # The UI can access it here
         assert f'src="/static/favicon/{uuid}'.encode('utf8') in res.data
 
         # Attempt to fetch it, make sure that works
         res = client.get(url_for('static_content', group='favicon', filename=uuid))
+        assert res.status_code == 200
+        assert len(res.data) > 10
+
+        # Check the API also returns it
+        api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
+        res = client.get(
+            url_for("watchfavicon"),
+            headers={'x-api-key': api_key}
+        )
         assert res.status_code == 200
         assert len(res.data) > 10

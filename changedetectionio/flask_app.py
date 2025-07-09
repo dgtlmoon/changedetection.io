@@ -19,12 +19,10 @@ from flask import (
     Flask,
     abort,
     flash,
-    make_response,
     redirect,
     render_template,
     request,
     send_from_directory,
-    session,
     url_for,
 )
 from flask_compress import Compress as FlaskCompress
@@ -40,7 +38,7 @@ from loguru import logger
 
 from changedetectionio import __version__
 from changedetectionio import queuedWatchMetaData
-from changedetectionio.api import Watch, WatchHistory, WatchSingleHistory, CreateWatch, Import, SystemInfo, Tag, Tags, Notifications
+from changedetectionio.api import Watch, WatchHistory, WatchSingleHistory, CreateWatch, Import, SystemInfo, Tag, Tags, Notifications, WatchFavicon
 from changedetectionio.api.Search import Search
 from .time_handler import is_within_schedule
 
@@ -307,7 +305,9 @@ def changedetection_app(config=None, datastore_o=None):
     watch_api.add_resource(WatchSingleHistory,
                            '/api/v1/watch/<string:uuid>/history/<string:timestamp>',
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
-
+    watch_api.add_resource(WatchFavicon,
+                           '/api/v1/watch/<string:uuid>/favicon',
+                           resource_class_kwargs={'datastore': datastore})
     watch_api.add_resource(WatchHistory,
                            '/api/v1/watch/<string:uuid>/history',
                            resource_class_kwargs={'datastore': datastore})
@@ -435,7 +435,6 @@ def changedetection_app(config=None, datastore_o=None):
             watch = datastore.data['watching'].get(filename)
             if not watch:
                 abort(404)
-
 
             favicon_filename = watch.get_favicon_filename()
             if favicon_filename:
