@@ -585,6 +585,107 @@ body.preview-text-enabled {
   .watch-table tr.multiple-history a.history-link {
     display: inline-block !important; }
 
+@media (max-width: 767px) {
+  /*
+  Max width before this PARTICULAR table gets nasty
+  This query will take effect for any screen smaller than 760px
+  and also iPads specifically.
+  */
+  .watch-table {
+    /* make headings work on mobile */
+    /* Force table to not be like tables anymore */ }
+    .watch-table thead {
+      display: block; }
+      .watch-table thead tr th {
+        display: inline-block; } }
+      @media (max-width: 767px) and (max-width: 768px) {
+        .watch-table thead tr th .hide-on-mobile {
+          display: none; } }
+
+@media (max-width: 767px) {
+      .watch-table thead .empty-cell {
+        display: none; }
+    .watch-table .last-checked > span {
+      vertical-align: middle; }
+    .watch-table .last-checked::before {
+      color: var(--color-text);
+      content: "Last Checked "; }
+    .watch-table .last-changed::before {
+      color: var(--color-text);
+      content: "Last Changed "; }
+    .watch-table td.inline {
+      display: inline-block; }
+    .watch-table .pure-table td,
+    .watch-table .pure-table th {
+      border: none; }
+    .watch-table td {
+      /* Behave  like a "row" */
+      border: none;
+      border-bottom: 1px solid var(--color-border-watch-table-cell);
+      vertical-align: middle; }
+      .watch-table td:before {
+        /* Top/left values mimic padding */
+        top: 6px;
+        left: 6px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap; }
+    .watch-table.pure-table-striped tr {
+      background-color: var(--color-table-background); }
+    .watch-table.pure-table-striped tr:nth-child(2n-1) {
+      background-color: var(--color-table-stripe); }
+    .watch-table.pure-table-striped tr:nth-child(2n-1) td {
+      background-color: inherit; } }
+
+@media (max-width: 767px) {
+  .watch-table tbody tr {
+    padding-bottom: 10px;
+    padding-top: 10px;
+    display: grid;
+    grid-template-columns: 20px 1fr 100px;
+    grid-template-rows: auto auto auto auto;
+    gap: 0.5rem; }
+    .watch-table tbody tr .counter-i {
+      display: none; }
+    .watch-table tbody tr td.checkbox-uuid {
+      display: grid;
+      place-items: center; }
+    .watch-table tbody tr td.inline {
+      /* display: block !important;;*/ }
+    .watch-table tbody tr > td {
+      border-bottom: none; }
+    .watch-table tbody tr > td.title-col {
+      grid-column: 1 / -1;
+      grid-row: 1; }
+      .watch-table tbody tr > td.title-col .watch-title {
+        font-size: 0.92rem; }
+      .watch-table tbody tr > td.title-col .link-spread {
+        display: none; }
+    .watch-table tbody tr > td.last-checked {
+      grid-column: 1 / -1;
+      grid-row: 2; }
+    .watch-table tbody tr > td.last-changed {
+      grid-column: 1 / -1;
+      grid-row: 3; }
+    .watch-table tbody tr > td.checkbox-uuid {
+      grid-column: 1;
+      grid-row: 4; }
+    .watch-table tbody tr > td.buttons {
+      grid-column: 2;
+      grid-row: 4;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start; }
+    .watch-table tbody tr > td.watch-controls {
+      grid-column: 3;
+      grid-row: 4;
+      display: grid;
+      place-items: center; }
+      .watch-table tbody tr > td.watch-controls a img {
+        padding: 10px; }
+  .pure-table td {
+    padding: 5px !important; } }
+
 ul#conditions_match_logic {
   list-style: none; }
   ul#conditions_match_logic input, ul#conditions_match_logic label, ul#conditions_match_logic li {
@@ -684,6 +785,73 @@ ul#conditions_match_logic {
   color: var(--color-foreground-text, #fff); }
   .fieldlist_formfields .addRuleRow:hover, .fieldlist_formfields .removeRuleRow:hover, .fieldlist_formfields .verifyRuleRow:hover {
     background-color: #999; }
+
+.watch-table td,
+.watch-table th {
+  vertical-align: middle; }
+
+.watch-table tr.has-favicon img.favicon {
+  display: inline-block !important; }
+
+.watch-table tr.has-favicon.unviewed img.favicon {
+  opacity: 1.0 !important; }
+
+.watch-table .status-icons {
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  /* Vertical centering */
+  gap: 4px;
+  /* Space between image and text */ }
+  .watch-table .status-icons > * {
+    vertical-align: middle; }
+
+.title-col {
+  /* Optional, for spacing */
+  padding: 10px; }
+
+.title-wrapper {
+  display: flex;
+  align-items: center;
+  /* Vertical centering */
+  gap: 10px;
+  /* Space between image and text */ }
+
+/* Make sure .title-col-inner doesn't collapse or misalign */
+.title-col-inner {
+  display: inline-block;
+  vertical-align: middle; }
+
+/* favicon styling */
+.watch-table {
+  /*  &.thumbnail-type-screenshot {
+    tr.has-favicon {
+      td.inline.title-col {
+        img.thumbnail {
+          background-color: #fff; !* fallback bg for SVGs without bg *!
+          border-radius: 4px; !* subtle rounded corners *!
+          border: 1px solid #ddd; !* light border for contrast *!
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); !* soft shadow *!
+          filter: contrast(1.05) saturate(1.1) drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.2));
+          object-fit: cover; !* crop/fill if needed *!
+          opacity: 0.8;
+          max-width: 30px;
+          max-height: 30px;
+          height: 30px;
+        }
+      }
+    }
+  }*/ }
+  .watch-table img.favicon {
+    vertical-align: middle;
+    max-width: 25px;
+    max-height: 25px;
+    height: 25px;
+    padding-right: 4px; }
+  .watch-table tr.has-favicon td.inline.title-col .flex-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 4px; }
 
 body.checking-now #checking-now-fixed-tab {
   display: block !important; }
@@ -1177,68 +1345,7 @@ footer {
     border-radius: 0px;
     margin-right: 0px; }
   input[type='text'] {
-    width: 100%; }
-  /*
-  Max width before this PARTICULAR table gets nasty
-  This query will take effect for any screen smaller than 760px
-  and also iPads specifically.
-  */
-  .watch-table {
-    /* make headings work on mobile */
-    /* Force table to not be like tables anymore */
-    /* Force table to not be like tables anymore */ }
-    .watch-table thead {
-      display: block; }
-      .watch-table thead tr th {
-        display: inline-block; } }
-      @media only screen and (max-width: 760px) and (max-width: 768px), (min-device-width: 768px) and (max-device-width: 800px) and (max-width: 768px) {
-        .watch-table thead tr th .hide-on-mobile {
-          display: none; } }
-
-@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 800px) {
-      .watch-table thead .empty-cell {
-        display: none; }
-    .watch-table tbody td,
-    .watch-table tbody tr {
-      display: block; }
-    .watch-table tbody tr {
-      display: flex;
-      flex-wrap: wrap; }
-      .watch-table tbody tr :nth-child(3) {
-        flex-grow: 1; }
-      .watch-table tbody tr :nth-last-child(-n+3) {
-        flex-basis: 100%; }
-    .watch-table .last-checked > span {
-      vertical-align: middle; }
-    .watch-table .last-checked::before {
-      color: var(--color-last-checked);
-      content: "Last Checked "; }
-    .watch-table .last-changed::before {
-      color: var(--color-last-checked);
-      content: "Last Changed "; }
-    .watch-table td.inline {
-      display: inline-block; }
-    .watch-table .pure-table td,
-    .watch-table .pure-table th {
-      border: none; }
-    .watch-table td {
-      /* Behave  like a "row" */
-      border: none;
-      border-bottom: 1px solid var(--color-border-watch-table-cell);
-      vertical-align: middle; }
-      .watch-table td:before {
-        /* Top/left values mimic padding */
-        top: 6px;
-        left: 6px;
-        width: 45%;
-        padding-right: 10px;
-        white-space: nowrap; }
-    .watch-table.pure-table-striped tr {
-      background-color: var(--color-table-background); }
-    .watch-table.pure-table-striped tr:nth-child(2n-1) {
-      background-color: var(--color-table-stripe); }
-    .watch-table.pure-table-striped tr:nth-child(2n-1) td {
-      background-color: inherit; } }
+    width: 100%; } }
 
 .pure-table {
   border-color: var(--color-border-table-cell); }

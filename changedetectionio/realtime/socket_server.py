@@ -37,7 +37,7 @@ class SignalHandler:
         # Create and start the queue update thread using standard threading
         import threading
         self.polling_emitter_thread = threading.Thread(
-            target=self.polling_emit_running_or_queued_watches_threaded, 
+            target=self.polling_emit_running_or_queued_watches_threaded,
             daemon=True
         )
         self.polling_emitter_thread.start()
@@ -105,39 +105,38 @@ class SignalHandler:
                 "watch_uuid": watch_uuid,
                 "event_timestamp": time.time()
             })
-            
+
             logger.trace(f"Socket.IO: Emitted notification_event for watch UUID {watch_uuid}")
 
         except Exception as e:
             logger.error(f"Socket.IO error in handle_notification_event: {str(e)}")
-
 
     def polling_emit_running_or_queued_watches_threaded(self):
         """Threading version of polling for Windows compatibility"""
         import time
         import threading
         logger.info("Queue update thread started (threading mode)")
-        
+
         # Import here to avoid circular imports
         from changedetectionio.flask_app import app
         from changedetectionio import worker_handler
         watch_check_update = signal('watch_check_update')
-        
+
         # Track previous state to avoid unnecessary emissions
         previous_running_uuids = set()
-        
+
         # Run until app shutdown - check exit flag more frequently for fast shutdown
         exit_event = getattr(app.config, 'exit', threading.Event())
-        
+
         while not exit_event.is_set():
             try:
                 # Get current running UUIDs from async workers
                 running_uuids = set(worker_handler.get_running_uuids())
-                
+
                 # Only send updates for UUIDs that changed state
                 newly_running = running_uuids - previous_running_uuids
                 no_longer_running = previous_running_uuids - running_uuids
-                
+
                 # Send updates for newly running UUIDs (but exit fast if shutdown requested)
                 for uuid in newly_running:
                     if exit_event.is_set():
@@ -146,7 +145,7 @@ class SignalHandler:
                     with app.app_context():
                         watch_check_update.send(app_context=app, watch_uuid=uuid)
                     time.sleep(0.01)  # Small yield
-                
+
                 # Send updates for UUIDs that finished processing (but exit fast if shutdown requested)
                 if not exit_event.is_set():
                     for uuid in no_longer_running:
@@ -156,16 +155,16 @@ class SignalHandler:
                         with app.app_context():
                             watch_check_update.send(app_context=app, watch_uuid=uuid)
                         time.sleep(0.01)  # Small yield
-                
+
                 # Update tracking for next iteration
                 previous_running_uuids = running_uuids
-                
+
                 # Sleep between polling cycles, but check exit flag every 0.5 seconds for fast shutdown
                 for _ in range(20):  # 20 * 0.5 = 10 seconds total
                     if exit_event.is_set():
                         break
                     time.sleep(0.5)
-                
+
             except Exception as e:
                 logger.error(f"Error in threading polling: {str(e)}")
                 # Even during error recovery, check for exit quickly
@@ -173,11 +172,11 @@ class SignalHandler:
                     if exit_event.is_set():
                         break
                     time.sleep(0.5)
-        
+
         # Check if we're in pytest environment - if so, be more gentle with logging
         import sys
         in_pytest = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
-        
+
         if not in_pytest:
             logger.info("Queue update thread stopped (threading mode)")
 
@@ -208,20 +207,20 @@ def handle_watch_update(socketio, **kwargs):
 
         watch_data = {
             'checking_now': True if watch.get('uuid') in running_uuids else False,
+            'error_text': error_texts,
+            'event_timestamp': time.time(),
             'fetch_time': watch.get('fetch_time'),
             'has_error': True if error_texts else False,
-            'last_changed': watch.get('last_changed'),
-            'last_checked': watch.get('last_checked'),
-            'error_text': error_texts,
+            'has_favicon': True if watch.get_favicon_filename() else False,
             'history_n': watch.history_n,
-            'last_checked_text': _jinja2_filter_datetime(watch),
             'last_changed_text': timeago.format(int(watch.last_changed), time.time()) if watch.history_n >= 2 and int(watch.last_changed) > 0 else 'Not yet',
-            'queued': True if watch.get('uuid') in queue_list else False,
-            'paused': True if watch.get('paused') else False,
+            'last_checked': watch.get('last_checked'),
+            'last_checked_text': _jinja2_filter_datetime(watch),
             'notification_muted': True if watch.get('notification_muted') else False,
+            'paused': True if watch.get('paused') else False,
+            'queued': True if watch.get('uuid') in queue_list else False,
             'unviewed': watch.has_unviewed,
             'uuid': watch.get('uuid'),
-            'event_timestamp': time.time()
         }
 
         errored_count = 0
@@ -251,15 +250,15 @@ def init_socketio(app, datastore):
     """Initialize SocketIO with the main Flask app"""
     import platform
     import sys
-    
+
     # Platform-specific async_mode selection for better stability
     system = platform.system().lower()
     python_version = sys.version_info
-    
+
     # Check for SocketIO mode configuration via environment variable
     # Default is 'threading' for best cross-platform compatibility
     socketio_mode = os.getenv('SOCKETIO_MODE', 'threading').lower()
-    
+
     if socketio_mode == 'gevent':
         # Use gevent mode (higher concurrency but platform limitations)
         try:
@@ -277,7 +276,7 @@ def init_socketio(app, datastore):
         # Invalid mode specified, use default
         async_mode = 'threading'
         logger.warning(f"Invalid SOCKETIO_MODE='{socketio_mode}', using default {async_mode} mode for Socket.IO")
-    
+
     # Log platform info for debugging
     logger.info(f"Platform: {system}, Python: {python_version.major}.{python_version.minor}, Socket.IO mode: {async_mode}")
 
@@ -314,7 +313,6 @@ def init_socketio(app, datastore):
             watch_check_update=watch_check_update,
             emit_flash=False
         )
-
 
     @socketio.on('connect')
     def handle_connect():

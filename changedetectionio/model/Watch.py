@@ -103,6 +103,13 @@ class model(watch_base):
             return 'DISABLED'
         return ready_url
 
+    @property
+    def domain_only_from_link(self):
+        from urllib.parse import urlparse
+        parsed = urlparse(self.link)
+        domain = parsed.hostname
+        return domain
+
     def clear_watch(self):
         import pathlib
 
@@ -412,6 +419,127 @@ class model(watch_base):
 
         # False is not an option for AppRise, must be type None
         return None
+
+    def bump_favicon(self, url, favicon_base_64: str) -> None:
+        from urllib.parse import urlparse
+        import base64
+        import binascii
+        decoded = None
+
+        if url:
+            try:
+                parsed = urlparse(url)
+                filename = os.path.basename(parsed.path)
+                (base, extension) = filename.lower().strip().rsplit('.', 1)
+            except ValueError:
+                logger.error(f"UUID: {self.get('uuid')} Cant work out file extension from '{url}'")
+                return None
+        else:
+            # Assume favicon.ico
+            base = "favicon"
+            extension = "ico"
+
+        fname = os.path.join(self.watch_data_dir, f"favicon.{extension}")
+
+        try:
+            # validate=True makes sure the string only contains valid base64 chars
+            decoded = base64.b64decode(favicon_base_64, validate=True)
+        except (binascii.Error, ValueError) as e:
+            logger.warning(f"UUID: {self.get('uuid')} FavIcon save data (Base64) corrupt? {str(e)}")
+        else:
+            if decoded:
+                try:
+                    with open(fname, 'wb') as f:
+                        f.write(decoded)
+                except Exception as e:
+                    logger.warning(f"UUID: {self.get('uuid')} error saving FavIcon to {fname} - {str(e)}")
+
+        # @todo - Store some checksum and only write when its different
+        logger.debug(f"UUID: {self.get('uuid')} updated favicon to at {fname}")
+
+    def get_favicon_filename(self) -> str | None:
+        """
+        Find any favicon.* file in the current working directory
+        and return the contents of the newest one.
+
+        Returns:
+            bytes: Contents of the newest favicon file, or None if not found.
+        """
+        import glob
+
+        # Search for all favicon.* files
+        files = glob.glob(os.path.join(self.watch_data_dir, "favicon.*"))
+
+        if not files:
+            return None
+
+        # Find the newest by modification time
+        newest_file = max(files, key=os.path.getmtime)
+        return os.path.basename(newest_file)
+
+    def get_screenshot_as_thumbnail(self, max_age=3200):
+        """Return path to a square thumbnail of the most recent screenshot.
+
+        Creates a 150x150 pixel thumbnail from the top portion of the screenshot.
+
+        Args:
+            max_age: Maximum age in seconds before recreating thumbnail
+
+        Returns:
+            Path to thumbnail or None if no screenshot exists
+        """
+        import os
+        import time
+
+        thumbnail_path = os.path.join(self.watch_data_dir, "thumbnail.jpeg")
+        top_trim = 500  # Pixels from top of screenshot to use
+
+        screenshot_path = self.get_screenshot()
+        if not screenshot_path:
+            return None
+
+        # Reuse thumbnail if it's fresh and screenshot hasn't changed
+        if os.path.isfile(thumbnail_path):
+            thumbnail_mtime = os.path.getmtime(thumbnail_path)
+            screenshot_mtime = os.path.getmtime(screenshot_path)
+
+            if screenshot_mtime <= thumbnail_mtime and time.time() - thumbnail_mtime < max_age:
+                return thumbnail_path
+
+        try:
+            from PIL import Image
+
+            with Image.open(screenshot_path) as img:
+                # Crop top portion first (full width, top_trim height)
+                top_crop_height = min(top_trim, img.height)
+                img = img.crop((0, 0, img.width, top_crop_height))
+
+                # Create a smaller intermediate image (to reduce memory usage)
+                aspect = img.width / img.height
+                interim_width = min(top_trim, img.width)
+                interim_height = int(interim_width / aspect) if aspect > 0 else top_trim
+                img = img.resize((interim_width, interim_height), Image.NEAREST)
+
+                # Convert to RGB if needed
+                if img.mode != 'RGB':
+                    img = img.convert('RGB')
+
+                # Crop to square from top center
+                square_size = min(img.width, img.height)
+                left = (img.width - square_size) // 2
+                img = img.crop((left, 0, left + square_size, square_size))
+
+                # Final resize to exact thumbnail size with better filter
+                img = img.resize((350, 350), Image.BILINEAR)
+
+                # Save with optimized settings
+                img.save(thumbnail_path, "JPEG", quality=75, optimize=True)
+
+            return thumbnail_path
+
+        except Exception as e:
+            logger.error(f"Error creating thumbnail for {self.get('uuid')}: {str(e)}")
+            return None
 
     def __get_file_ctime(self, filename):
         fname = os.path.join(self.watch_data_dir, filename)

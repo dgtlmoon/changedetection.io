@@ -14,9 +14,12 @@
 @import "parts/_love";
 @import "parts/preview_text_filter";
 @import "parts/_watch_table";
+@import "parts/_watch_table-mobile";
 @import "parts/_edit";
 @import "parts/_conditions_table";
+@import "parts/_lister_extra";
 @import "parts/_socket";
+
 
 body {
   color: var(--color-text);
@@ -694,114 +697,6 @@ footer {
     width: 100%;
   }
 
-  /*
-  Max width before this PARTICULAR table gets nasty
-  This query will take effect for any screen smaller than 760px
-  and also iPads specifically.
-  */
-  .watch-table {
-    /* make headings work on mobile */
-    thead {
-      display: block;
-      tr {
-        th {
-          display: inline-block;
-          // Hide the "Last" text for smaller screens
-          @media (max-width: 768px) {
-            .hide-on-mobile {
-              display: none; 
-            }
-          }
-        }
-      }
-      .empty-cell {
-        display: none;
-      }
-    }
-
-    /* Force table to not be like tables anymore */
-    tbody {
-      td,
-      tr {
-        display: block;
-      }
-    }
-
-    tbody {
-      tr {
-        display: flex;
-        flex-wrap: wrap;
-
-        // The third child of each row will take up the remaining space
-        // This is useful for the URL column, which should expand to fill the remaining space
-        :nth-child(3) {
-          flex-grow: 1;
-        }
-        // The last three children (from the end) of each row will take up the full width
-        // This is useful for the "Last Checked", "Last Changed", and the action buttons columns, which should each take up the full width
-        :nth-last-child(-n+3) {
-          flex-basis: 100%;
-        }
-      }
-    }
-
-    .last-checked {
-      >span {
-        vertical-align: middle;
-      }
-    }
-
-    .last-checked::before {
-      color: var(--color-last-checked);
-      content: "Last Checked ";
-    }
-
-    .last-changed::before {
-      color: var(--color-last-checked);
-      content: "Last Changed ";
-    }
-
-    /* Force table to not be like tables anymore */
-    td.inline {
-      display: inline-block;
-    }
-
-    .pure-table td,
-    .pure-table th {
-      border: none;
-    }
-
-    td {
-      /* Behave  like a "row" */
-      border: none;
-      border-bottom: 1px solid var(--color-border-watch-table-cell);
-      vertical-align: middle;
-
-      &:before {
-        /* Top/left values mimic padding */
-        top: 6px;
-        left: 6px;
-        width: 45%;
-        padding-right: 10px;
-        white-space: nowrap;
-      }
-    }
-
-    &.pure-table-striped {
-      tr {
-        background-color: var(--color-table-background);
-      }
-
-      tr:nth-child(2n-1) {
-        background-color: var(--color-table-stripe);
-      }
-
-      tr:nth-child(2n-1) td {
-        background-color: inherit;
-      }
-    }
-
-  }
 }
 
 .pure-table {

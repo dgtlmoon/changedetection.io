@@ -116,29 +116,33 @@ $(document).ready(function () {
                 console.log(`${watch.event_timestamp} - Watch update ${watch.uuid} - Checking now - ${watch.checking_now} - UUID in URL ${window.location.href.includes(watch.uuid)}`);
                 console.log('Watch data:', watch);
                 console.log('General stats:', general_stats);
-                
+
                 // Updating watch table rows
                 const $watchRow = $('tr[data-watch-uuid="' + watch.uuid + '"]');
                 console.log('Found watch row elements:', $watchRow.length);
-                
+
                 if ($watchRow.length) {
                     $($watchRow).toggleClass('checking-now', watch.checking_now);
                     $($watchRow).toggleClass('queued', watch.queued);
                     $($watchRow).toggleClass('unviewed', watch.unviewed);
                     $($watchRow).toggleClass('has-error', watch.has_error);
+                    $($watchRow).toggleClass('has-favicon', watch.has_favicon);
                     $($watchRow).toggleClass('notification_muted', watch.notification_muted);
                     $($watchRow).toggleClass('paused', watch.paused);
                     $($watchRow).toggleClass('single-history', watch.history_n === 1);
                     $($watchRow).toggleClass('multiple-history', watch.history_n >= 2);
 
                     $('td.title-col .error-text', $watchRow).html(watch.error_text)
-
+                    if (watch.has_favicon) {
+                        // Because the event could be emitted from a process that is outside the app context, url_for() might not work.
+                        // Lets use url_for at template generation time to give us a PLACEHOLDER instead
+                        $('img.favicon', $watchRow).attr('src', favicon_baseURL.replace('/PLACEHOLDER', `/${watch.uuid}?cache=${watch.event_timestamp}`));
+                    }
                     $('td.last-changed', $watchRow).text(watch.last_changed_text)
-
                     $('td.last-checked .innertext', $watchRow).text(watch.last_checked_text)
                     $('td.last-checked', $watchRow).data('timestamp', watch.last_checked).data('fetchduration', watch.fetch_time);
                     $('td.last-checked', $watchRow).data('eta_complete', watch.last_checked + watch.fetch_time);
-                    
+
                     console.log('Updated UI for watch:', watch.uuid);
                 }
 

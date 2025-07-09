@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 from loguru import logger
 
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, visualselector_xpath_selectors, \
-    SCREENSHOT_SIZE_STITCH_THRESHOLD, SCREENSHOT_MAX_TOTAL_HEIGHT, XPATH_ELEMENT_JS, INSTOCK_DATA_JS
+    SCREENSHOT_SIZE_STITCH_THRESHOLD, SCREENSHOT_MAX_TOTAL_HEIGHT, XPATH_ELEMENT_JS, INSTOCK_DATA_JS, FAVICON_FETCHER_JS
 from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable
 
@@ -234,6 +234,12 @@ class fetcher(Fetcher):
                 await browser.close()
                 raise PageUnloadable(url=url, status_code=None, message=str(e))
 
+            try:
+                self.favicon_blob = await self.page.evaluate(FAVICON_FETCHER_JS)
+                await self.page.request_gc()
+            except Exception as e:
+                logger.error(f"Error fetching FavIcon info {str(e)}, continuing.")
+
             if self.status_code != 200 and not ignore_status_codes:
                 screenshot = await capture_full_page_async(self.page)
                 raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=screenshot)
@@ -273,6 +279,7 @@ class fetcher(Fetcher):
             self.content = await self.page.content()
             await self.page.request_gc()
             logger.debug(f"Scrape xPath element data in browser done in {time.time() - now:.2f}s")
+
 
             # Bug 3 in Playwright screenshot handling
             # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
