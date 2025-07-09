@@ -659,6 +659,8 @@ body.preview-text-enabled {
       grid-row: 1; }
       .watch-table tbody tr > td.title-col .watch-title {
         font-size: 0.92rem; }
+      .watch-table tbody tr > td.title-col .link-spread {
+        display: none; }
     .watch-table tbody tr > td.last-checked {
       grid-column: 1 / -1;
       grid-row: 2; }
