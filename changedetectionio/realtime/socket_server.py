@@ -29,6 +29,9 @@ class SignalHandler:
         watch_delete_signal = signal('watch_deleted')
         watch_delete_signal.connect(self.handle_deleted_signal, weak=False)
 
+        watch_favicon_bumped_signal = signal('watch_favicon_bump')
+        watch_favicon_bumped_signal.connect(self.handle_watch_bumped_favicon_signal, weak=False)
+
         # Connect to the notification_event signal
         notification_event_signal = signal('notification_event')
         notification_event_signal.connect(self.handle_notification_event, weak=False)
@@ -68,6 +71,16 @@ class SignalHandler:
                 logger.trace(f"Signal handler processed watch UUID {watch_uuid}")
             else:
                 logger.warning(f"Watch UUID {watch_uuid} not found in datastore")
+
+    def handle_watch_bumped_favicon_signal(self, *args, **kwargs):
+        watch_uuid = kwargs.get('watch_uuid')
+        if watch_uuid:
+            # Emit the queue size to all connected clients
+            self.socketio_instance.emit("watch_bumped_favicon", {
+                "uuid": watch_uuid,
+                "event_timestamp": time.time()
+            })
+        logger.debug(f"Watch UUID {watch_uuid} got its favicon updated")
 
     def handle_deleted_signal(self, *args, **kwargs):
         watch_uuid = kwargs.get('watch_uuid')

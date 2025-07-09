@@ -451,6 +451,11 @@ class model(watch_base):
                 try:
                     with open(fname, 'wb') as f:
                         f.write(decoded)
+                    # A signal that could trigger the socket server to update the browser also
+                    watch_check_update = signal('watch_favicon_bump')
+                    if watch_check_update:
+                        watch_check_update.send(watch_uuid=self.get('uuid'))
+
                 except Exception as e:
                     logger.warning(f"UUID: {self.get('uuid')} error saving FavIcon to {fname} - {str(e)}")
 

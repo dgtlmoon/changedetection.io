@@ -104,8 +104,17 @@ $(document).ready(function () {
                 });
             });
 
-            // Listen for periodically emitted watch data
-            console.log('Adding watch_update event listener');
+            // So that the favicon is only updated when the server has written the scraped favicon to disk.
+            socket.on('watch_bumped_favicon', function (data) {
+                const watch = data.watch;
+                const $watchRow = $('tr[data-watch-uuid="' + watch.uuid + '"]');
+                if ($watchRow.length) {
+                    $watchRow.addClass('has-favicon');
+                    // Because the event could be emitted from a process that is outside the app context, url_for() might not work.
+                    // Lets use url_for at template generation time to give us a PLACEHOLDER instead
+                    $('img.favicon', $watchRow).attr('src', favicon_baseURL.replace('/PLACEHOLDER', `/${watch.uuid}?cache=${watch.event_timestamp}`));
+                }
+            })
 
             socket.on('watch_update', function (data) {
                 const watch = data.watch;
@@ -133,11 +142,6 @@ $(document).ready(function () {
                     $($watchRow).toggleClass('multiple-history', watch.history_n >= 2);
 
                     $('td.title-col .error-text', $watchRow).html(watch.error_text)
-                    if (watch.has_favicon) {
-                        // Because the event could be emitted from a process that is outside the app context, url_for() might not work.
-                        // Lets use url_for at template generation time to give us a PLACEHOLDER instead
-                        $('img.favicon', $watchRow).attr('src', favicon_baseURL.replace('/PLACEHOLDER', `/${watch.uuid}?cache=${watch.event_timestamp}`));
-                    }
                     $('td.last-changed', $watchRow).text(watch.last_changed_text)
                     $('td.last-checked .innertext', $watchRow).text(watch.last_checked_text)
                     $('td.last-checked', $watchRow).data('timestamp', watch.last_checked).data('fetchduration', watch.fetch_time);

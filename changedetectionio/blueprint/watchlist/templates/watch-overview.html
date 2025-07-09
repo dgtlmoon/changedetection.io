@@ -4,7 +4,7 @@
 <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
 <script>let nowtimeserver={{ now_time_server }};</script>
-<script>let favicon_baseURL={{ url_for('static_content', group='favicon', filename="PLACEHOLDER")}}; </script>
+<script>let favicon_baseURL="{{ url_for('static_content', group='favicon', filename="PLACEHOLDER")}}";</script>
 <script>
 // Initialize Feather icons after the page loads
 document.addEventListener('DOMContentLoaded', function() {
