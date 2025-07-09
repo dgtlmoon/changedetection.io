@@ -136,7 +136,7 @@ $(document).ready(function () {
                     if (watch.has_favicon) {
                         // Because the event could be emitted from a process that is outside the app context, url_for() might not work.
                         // Lets use url_for at template generation time to give us a PLACEHOLDER instead
-                        $('img.thumbnail', $watchRow).attr('src', thumbnail_baseURL.replace('/PLACEHOLDER', `/${watch.uuid}`));
+                        $('img.favicon', $watchRow).attr('src', favicon_baseURL.replace('/PLACEHOLDER', `/${watch.uuid}?cache=${watch.event_timestamp}`));
                     }
                     $('td.last-changed', $watchRow).text(watch.last_changed_text)
                     $('td.last-checked .innertext', $watchRow).text(watch.last_checked_text)

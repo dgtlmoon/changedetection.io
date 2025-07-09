@@ -4,6 +4,7 @@
 <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
 <script>let nowtimeserver={{ now_time_server }};</script>
+<script>let favicon_baseURL={{ url_for('static_content', group='favicon', filename="PLACEHOLDER")}}; </script>
 <script>
 // Initialize Feather icons after the page loads
 document.addEventListener('DOMContentLoaded', function() {
@@ -140,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td class="title-col inline">
                     <div class="flex-wrapper">
                         <div>
-                            <img style="display: none;" class="thumbnail" src="{{url_for('static_content', group='favicon', filename=watch.uuid)}}">
+                            <img style="display: none;" class="favicon" src="{{url_for('static_content', group='favicon', filename=watch.uuid)}}">
                         </div>
                         <div>
                         <span class="watch-title">

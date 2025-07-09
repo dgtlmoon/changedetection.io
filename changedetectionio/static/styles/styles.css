@@ -790,10 +790,10 @@ ul#conditions_match_logic {
 .watch-table th {
   vertical-align: middle; }
 
-.watch-table tr.has-favicon img.thumbnail {
+.watch-table tr.has-favicon img.favicon {
   display: inline-block !important; }
 
-.watch-table tr.has-favicon.unviewed img.thumbnail {
+.watch-table tr.has-favicon.unviewed img.favicon {
   opacity: 1.0 !important; }
 
 .watch-table .status-icons {
@@ -822,35 +822,36 @@ ul#conditions_match_logic {
   display: inline-block;
   vertical-align: middle; }
 
-/* thumbnail styling */
-.watch-table img.thumbnail {
-  vertical-align: middle;
-  max-width: 25px;
-  max-height: 25px;
-  height: 25px;
-  padding-right: 4px; }
-
-.watch-table tr.has-favicon td.inline.title-col .flex-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 4px; }
-
-.watch-table.thumbnail-type-screenshot tr.has-favicon td.inline.title-col img.thumbnail {
-  background-color: #fff;
-  /* fallback bg for SVGs without bg */
-  border-radius: 4px;
-  /* subtle rounded corners */
-  border: 1px solid #ddd;
-  /* light border for contrast */
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  /* soft shadow */
-  filter: contrast(1.05) saturate(1.1) drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.2));
-  object-fit: cover;
-  /* crop/fill if needed */
-  opacity: 0.8;
-  max-width: 30px;
-  max-height: 30px;
-  height: 30px; }
+/* favicon styling */
+.watch-table {
+  /*  &.thumbnail-type-screenshot {
+    tr.has-favicon {
+      td.inline.title-col {
+        img.thumbnail {
+          background-color: #fff; !* fallback bg for SVGs without bg *!
+          border-radius: 4px; !* subtle rounded corners *!
+          border: 1px solid #ddd; !* light border for contrast *!
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); !* soft shadow *!
+          filter: contrast(1.05) saturate(1.1) drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.2));
+          object-fit: cover; !* crop/fill if needed *!
+          opacity: 0.8;
+          max-width: 30px;
+          max-height: 30px;
+          height: 30px;
+        }
+      }
+    }
+  }*/ }
+  .watch-table img.favicon {
+    vertical-align: middle;
+    max-width: 25px;
+    max-height: 25px;
+    height: 25px;
+    padding-right: 4px; }
+  .watch-table tr.has-favicon td.inline.title-col .flex-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 4px; }
 
 body.checking-now #checking-now-fixed-tab {
   display: block !important; }
