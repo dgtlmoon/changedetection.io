@@ -114,6 +114,7 @@ document.addEventListener('DOMContentLoaded', function() {
             {%- for watch in (watches|sort(attribute=sort_attribute, reverse=sort_order == 'asc'))|pagination_slice(skip=pagination.skip) -%}
                 {%- set checking_now = is_checking_now(watch) -%}
                 {%- set history_n = watch.history_n -%}
+                {%- set has_favicon = watch.get_favicon_filename() -%}
                 {#  Mirror in changedetectionio/static/js/realtime.js for the frontend #}
                 {%- set row_classes = [
                     loop.cycle('pure-table-odd', 'pure-table-even'),
@@ -122,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     'paused' if watch.paused is defined and watch.paused != False else '',
                     'unviewed' if watch.has_unviewed else '',
                     'has-restock-info' if watch.has_restock_info else 'no-restock-info',
-                    'has-favicon' if watch.get_favicon_filename() else '',
+                    'has-favicon' if has_favicon else '',
                     'in-stock' if watch.has_restock_info and watch['restock']['in_stock'] else '',
                     'not-in-stock' if watch.has_restock_info and not watch['restock']['in_stock'] else '',
                     'queued' if watch.uuid in queued_uuids else '',
@@ -144,8 +145,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 <td class="title-col inline">
                     <div class="flex-wrapper">
-                        <div>
-                            <img style="display: none;" class="favicon" src="{{url_for('static_content', group='favicon', filename=watch.uuid)}}">
+                        <div>{# A page might have hundreds of these images, set IMG options for lazy loading, don't set SRC if we dont have it so it doesnt fetch the placeholder'  #}
+                            <img alt="Favicon thumbnail" style="display: none;" class="favicon" loading="lazy" decoding="async" fetchpriority="low" {% if has_favicon %} src="{{url_for('static_content', group='favicon', filename=watch.uuid)}}"{%  endif %} />
                         </div>
                         <div>
                         <span class="watch-title">
