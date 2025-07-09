@@ -129,12 +129,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     'multiple-history' if history_n >= 2 else '',                    
                 ] -%}
             <tr id="{{ watch.uuid }}" data-watch-uuid="{{ watch.uuid }}" class="{{ row_classes | reject('equalto', '') | join(' ') }}">
-                <td class="inline checkbox-uuid" ><input name="uuids"  type="checkbox" value="{{ watch.uuid}} " > <span>{{ loop.index+pagination.skip }}</span></td>
+                <td class="inline checkbox-uuid" ><div><input name="uuids"  type="checkbox" value="{{ watch.uuid}} " > <span class="counter-i">{{ loop.index+pagination.skip }}</span></div></td>
                 <td class="inline watch-controls">
+                    <div>
                     <a class="ajax-op state-off pause-toggle" data-op="pause" href="{{url_for('watchlist.index', op='pause', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="Pause checks" title="Pause checks" class="icon icon-pause" ></a>
                     <a class="ajax-op state-on pause-toggle"  data-op="pause" style="display: none" href="{{url_for('watchlist.index', op='pause', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="UnPause checks" title="UnPause checks" class="icon icon-unpause" ></a>
                     <a class="ajax-op state-off mute-toggle" data-op="mute" href="{{url_for('watchlist.index', op='mute', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="Mute notification" title="Mute notification" class="icon icon-mute" ></a>
                     <a class="ajax-op state-on mute-toggle" data-op="mute"  style="display: none" href="{{url_for('watchlist.index', op='mute', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="UnMute notification" title="UnMute notification" class="icon icon-mute" ></a>
+                    </div>
                 </td>
 
                 <td class="title-col inline">
@@ -143,7 +145,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             <img style="display: none;" class="thumbnail" src="{{url_for('static_content', group='favicon', filename=watch.uuid)}}">
                         </div>
                         <div>
+                        <span class="watch-title">
                             {{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}
+                        </span>
                             <div class="error-text" style="display:none;">{{ watch.compile_error_texts(has_proxies=datastore.proxy_list) }}</div>
                             {%- if watch['processor'] == 'text_json_diff'  -%}
                                 {%- if watch['has_ldjson_price_data'] and not watch['track_ldjson_price_data']  -%}
@@ -207,13 +211,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     Not yet
                     {%- endif -%}
                 </td>
-                <td>
+                <td class="buttons">
+                    <div>
                     {%- set target_attr = ' target="' ~ watch.uuid ~ '"' if datastore.data['settings']['application']['ui'].get('open_diff_in_new_tab') else '' -%}
                     <a href="" class="already-in-queue-button recheck pure-button pure-button-primary" style="display: none;" disabled="disabled">Queued</a>
                     <a href="{{ url_for('ui.form_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}" data-op='recheck' class="ajax-op recheck pure-button pure-button-primary">Recheck</a>
                     <a href="{{ url_for('ui.ui_edit.edit_page', uuid=watch.uuid, tag=active_tag_uuid)}}#general" class="pure-button pure-button-primary">Edit</a>
                     <a href="{{ url_for('ui.ui_views.diff_history_page', uuid=watch.uuid)}}" {{target_attr}} class="pure-button pure-button-primary history-link" style="display: none;">History</a>
                     <a href="{{ url_for('ui.ui_views.preview_page', uuid=watch.uuid)}}" {{target_attr}} class="pure-button pure-button-primary preview-link" style="display: none;">Preview</a>
+                    </div>
                 </td>
             </tr>
             {%- endfor -%}

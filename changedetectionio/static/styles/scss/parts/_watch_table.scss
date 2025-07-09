@@ -7,6 +7,7 @@
     &.unviewed {
       font-weight: bold;
     }
+
     color: var(--color-watch-table-row-text);
   }
 
@@ -48,17 +49,17 @@
   /* Row with 'checking-now' */
   tr.checking-now {
     td:first-child {
-        position: relative;
+      position: relative;
     }
 
     td:first-child::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        width: 3px;
-        background-color: #293eff;
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 3px;
+      background-color: #293eff;
     }
 
     td.last-checked {
@@ -109,6 +110,7 @@
 
   tr.has-error {
     color: var(--color-watch-table-error);
+
     .error-text {
       display: block !important;
     }
@@ -119,12 +121,11 @@
       display: inline-block !important;
     }
   }
+
   tr.multiple-history {
     a.history-link {
       display: inline-block !important;
     }
   }
 }
-
-
 
