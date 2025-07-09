@@ -53,6 +53,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     locales \
     # For pdftohtml
     poppler-utils \
+    # favicon type detection and other uses
+    file \
     zlib1g \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 

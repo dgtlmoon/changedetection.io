@@ -18,6 +18,7 @@ RUN \
     libxslt-dev \
     openssl-dev \
     python3-dev \
+    file \
     zip \
     zlib-dev && \
   apk add --update --no-cache \
