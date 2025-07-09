@@ -56,7 +56,7 @@ def test_fetch_webdriver_content(client, live_server, measure_memory_usage):
         # Check the API also returns it
         api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
         res = client.get(
-            url_for("watchfavicon"),
+            url_for("watchfavicon", uuid=uuid),
             headers={'x-api-key': api_key}
         )
         assert res.status_code == 200
