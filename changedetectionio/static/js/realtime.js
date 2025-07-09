@@ -105,14 +105,15 @@ $(document).ready(function () {
             });
 
             // So that the favicon is only updated when the server has written the scraped favicon to disk.
-            socket.on('watch_bumped_favicon', function (data) {
-                const watch = data.watch;
-                const $watchRow = $('tr[data-watch-uuid="' + watch.uuid + '"]');
+            socket.on('watch_bumped_favicon', function (watch) {
+                const $watchRow = $(`tr[data-watch-uuid="${watch.uuid}"]`);
                 if ($watchRow.length) {
                     $watchRow.addClass('has-favicon');
                     // Because the event could be emitted from a process that is outside the app context, url_for() might not work.
                     // Lets use url_for at template generation time to give us a PLACEHOLDER instead
-                    $('img.favicon', $watchRow).attr('src', favicon_baseURL.replace('/PLACEHOLDER', `/${watch.uuid}?cache=${watch.event_timestamp}`));
+                    let favicon_url = favicon_baseURL.replace('/PLACEHOLDER', `/${watch.uuid}?cache=${watch.event_timestamp}`);
+                    console.log(`Setting favicon for UUID - ${watch.uuid} - ${favicon_url}`);
+                    $('img.favicon', $watchRow).attr('src', favicon_url);
                 }
             })
 

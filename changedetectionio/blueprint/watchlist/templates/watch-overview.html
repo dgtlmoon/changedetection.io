@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td class="title-col inline">
                     <div class="flex-wrapper">
                         <div>{# A page might have hundreds of these images, set IMG options for lazy loading, don't set SRC if we dont have it so it doesnt fetch the placeholder'  #}
-                            <img alt="Favicon thumbnail" style="display: none;" class="favicon" loading="lazy" decoding="async" fetchpriority="low" {% if has_favicon %} src="{{url_for('static_content', group='favicon', filename=watch.uuid)}}"{%  endif %} />
+                            <img alt="Favicon thumbnail" style="display: none;" class="favicon" loading="lazy" decoding="async" fetchpriority="low" {% if has_favicon %} src="{{url_for('static_content', group='favicon', filename=watch.uuid)}}" {% else %} src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="{%  endif %} />
                         </div>
                         <div>
                         <span class="watch-title">
