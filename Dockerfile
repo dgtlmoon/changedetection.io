@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl-dev \
     libxslt-dev \
     make \
+    patch \
     zlib1g-dev
 
 RUN mkdir /install
