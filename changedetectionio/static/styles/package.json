@@ -3,15 +3,16 @@
   "version": "0.0.3",
   "description": "",
   "main": "index.js",
-  "scripts": {
-    "watch": "node-sass -w scss -o .",
-    "build": "node-sass scss -o ."
+  "engines": {
+    "node": ">=18.0.0"
   },
-  "author": "",
-  "license": "ISC",
+  "scripts": {
+    "watch": "sass --watch scss:. --style=compressed --no-source-map",
+    "build": "sass scss:. --style=compressed --no-source-map"
+  },
+  "author": "Leigh Morresi / Web Technologies s.r.o.",
+  "license": "Apache",
   "dependencies": {
-    "node-sass": "^7.0.0",
-    "tar": "^6.1.9",
-    "trim-newlines": "^3.0.1"
+    "sass": "^1.77.8"
   }
 }

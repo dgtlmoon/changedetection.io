@@ -64,17 +64,17 @@ body.proxy-check-active {
 #recommended-proxy {
   display: grid;
   gap: 2rem;
-    @media  (min-width: 991px) {
-      grid-template-columns: repeat(2, 1fr);
-    }
+  padding-bottom: 1em;
+  
+  @media  (min-width: 991px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
 
   > div {
     border: 1px #aaa solid;
     border-radius: 4px;
     padding: 1em;
   }
-
-  padding-bottom: 1em;
 }
 
 #extra-proxies-setting {

@@ -2,23 +2,24 @@
  * -- BASE STYLES --
  */
 
-@import "parts/_arrows";
-@import "parts/_browser-steps";
-@import "parts/_extra_proxies";
-@import "parts/_extra_browsers";
-@import "parts/_pagination";
-@import "parts/_spinners";
-@import "parts/_variables";
-@import "parts/_darkmode";
-@import "parts/_menu";
-@import "parts/_love";
-@import "parts/preview_text_filter";
-@import "parts/_watch_table";
-@import "parts/_watch_table-mobile";
-@import "parts/_edit";
-@import "parts/_conditions_table";
-@import "parts/_lister_extra";
-@import "parts/_socket";
+@use "parts/variables";
+@use "parts/arrows";
+@use "parts/browser-steps";
+@use "parts/extra_proxies";
+@use "parts/extra_browsers";
+@use "parts/pagination";
+@use "parts/spinners";
+@use "parts/darkmode";
+@use "parts/menu";
+@use "parts/love";
+@use "parts/preview_text_filter";
+@use "parts/watch_table";
+@use "parts/watch_table-mobile";
+@use "parts/edit";
+@use "parts/conditions_table";
+@use "parts/lister_extra";
+@use "parts/socket";
+@use "parts/visualselector";
 
 
 body {
@@ -950,8 +951,6 @@ ul {
     }
   }
 }
-
-@import "parts/_visualselector";
 
 #webdriver_delay {
     width: 5em;
