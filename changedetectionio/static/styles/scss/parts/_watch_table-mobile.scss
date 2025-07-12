@@ -34,9 +34,15 @@ $grid-gap: 0.5rem;
 
 
     .last-checked {
+      margin-left: calc($grid-col-checkbox + $grid-gap);
+
       > span {
         vertical-align: middle;
       }
+    }
+
+    .last-changed {
+      margin-left: calc($grid-col-checkbox + $grid-gap);
     }
 
     .last-checked::before {
@@ -167,6 +173,6 @@ $grid-gap: 0.5rem;
     }
   }
   .pure-table td {
-    padding: 5px !important;
+    padding: 3px !important;
   }
 }

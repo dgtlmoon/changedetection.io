@@ -188,9 +188,15 @@ code {
   @extend .inline-tag;
 }
 
+@media (min-width: 768px) {
+  .box {
+    margin: 0 1em !important;
+  }
+}
+
 .box {
   max-width: 100%;
-  margin: 0 1em;
+  margin: 0 0.3em;
   flex-direction: column;
   display: flex;
   justify-content: center;
@@ -1069,16 +1075,21 @@ ul {
 
 
 #quick-watch-processor-type {
-  color: #fff;
-  ul {
-    padding: 0.3rem;
+  ul#processor {
+    color: #fff;
     li {
       list-style: none;
       font-size: 0.9rem;
-      > * {
-        display: inline-block;
-      }
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
     }
+  }
+  label, input {
+    padding: 0;
+    margin: 0;
   }
 }
 
