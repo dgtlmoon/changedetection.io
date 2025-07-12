@@ -117,6 +117,9 @@ price-parser
 
 # flask_socket_io - incorrect package name, already have flask-socketio above
 
+# So far for detecting correct favicon type, but for other things in the future
+python-magic
+
 # Scheduler - Windows seemed to miss a lot of default timezone info (even "UTC" !)
 tzdata
 
