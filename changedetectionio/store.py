@@ -78,10 +78,6 @@ class ChangeDetectionStore:
 
                 if 'settings' in from_disk:
                     # update the modal with whats on disk
-                    on_disk={'yes': '1'}
-                    existing = {'yes': '0', 'more': 'ok'}
-                    p=always_merger.merge(on_disk, existing)
-                    # yes should be 0
                     self.__data['settings'] = always_merger.merge(from_disk['settings'], self.__data['settings'])
 
                 # Convert each existing watch back to the Watch.model object
