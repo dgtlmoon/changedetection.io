@@ -63,6 +63,7 @@ class model(dict):
                     'ui': {
                         'open_diff_in_new_tab': True,
                         'socket_io_enabled': True,
+                        'favicons_enabled': True
                     },
                 }
             }

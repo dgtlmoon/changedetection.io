@@ -83,8 +83,10 @@ document.addEventListener('DOMContentLoaded', function() {
     {%- endif -%}
 
     <div id="watch-table-wrapper">
-
-        <table class="pure-table pure-table-striped watch-table">
+        {%- set table_classes = [
+            'favicon-enabled' if  datastore.data['settings']['application']['ui'].get('favicons_enabled') else 'favicon-not-enabled',
+        ] -%}
+        <table class="pure-table pure-table-striped watch-table {{ table_classes | reject('equalto', '') | join(' ') }}">
             <thead>
             <tr>
                 {%- set link_order = "desc" if sort_order  == 'asc' else "asc" -%}
@@ -114,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
             {%- for watch in (watches|sort(attribute=sort_attribute, reverse=sort_order == 'asc'))|pagination_slice(skip=pagination.skip) -%}
                 {%- set checking_now = is_checking_now(watch) -%}
                 {%- set history_n = watch.history_n -%}
-                {%- set has_favicon = watch.get_favicon_filename() -%}
+                {%- set favicon = watch.get_favicon_filename() -%}
                 {#  Mirror in changedetectionio/static/js/realtime.js for the frontend #}
                 {%- set row_classes = [
                     loop.cycle('pure-table-odd', 'pure-table-even'),
@@ -123,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     'paused' if watch.paused is defined and watch.paused != False else '',
                     'unviewed' if watch.has_unviewed else '',
                     'has-restock-info' if watch.has_restock_info else 'no-restock-info',
-                    'has-favicon' if has_favicon else '',
+                    'has-favicon' if favicon else '',
                     'in-stock' if watch.has_restock_info and watch['restock']['in_stock'] else '',
                     'not-in-stock' if watch.has_restock_info and not watch['restock']['in_stock'] else '',
                     'queued' if watch.uuid in queued_uuids else '',
@@ -145,9 +147,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 <td class="title-col inline">
                     <div class="flex-wrapper">
+                    {%  if datastore.data['settings']['application']['ui'].get('favicons_enabled') %}
                         <div>{# A page might have hundreds of these images, set IMG options for lazy loading, don't set SRC if we dont have it so it doesnt fetch the placeholder'  #}
-                            <img alt="Favicon thumbnail" style="display: none;" class="favicon" loading="lazy" decoding="async" fetchpriority="low" {% if has_favicon %} src="{{url_for('static_content', group='favicon', filename=watch.uuid)}}" {% else %} src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="{%  endif %} />
+                            <img alt="Favicon thumbnail" class="favicon" loading="lazy" decoding="async" fetchpriority="low" {% if favicon %} src="{{url_for('static_content', group='favicon', filename=watch.uuid)}}" {% else %} src='data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="7.087" height="7.087" viewBox="0 0 7.087 7.087"%3E%3Ccircle cx="3.543" cy="3.543" r="3.279" stroke="%23e1e1e1" stroke-width="0.45" fill="none" opacity="0.74"/%3E%3C/svg%3E' {%  endif %} />
                         </div>
+                    {%  endif %}
                         <div>
                         <span class="watch-title">
                             {{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}&nbsp;<a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">&nbsp;</a>
