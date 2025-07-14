@@ -44,6 +44,8 @@ class ChangeDetectionStore:
     def __init__(self, datastore_path="/datastore", include_default_watches=True, version_tag="0.0.0"):
         # Should only be active for docker
         # logging.basicConfig(filename='/dev/stdout', level=logging.INFO)
+        from deepmerge import always_merger
+
         self.__data = App.model()
         self.datastore_path = datastore_path
         self.json_store_path = os.path.join(self.datastore_path, "url-watches.json")
@@ -75,14 +77,12 @@ class ChangeDetectionStore:
                     self.__data['app_guid'] = from_disk['app_guid']
 
                 if 'settings' in from_disk:
-                    if 'headers' in from_disk['settings']:
-                        self.__data['settings']['headers'].update(from_disk['settings']['headers'])
-
-                    if 'requests' in from_disk['settings']:
-                        self.__data['settings']['requests'].update(from_disk['settings']['requests'])
-
-                    if 'application' in from_disk['settings']:
-                        self.__data['settings']['application'].update(from_disk['settings']['application'])
+                    # update the modal with whats on disk
+                    on_disk={'yes': '1'}
+                    existing = {'yes': '0', 'more': 'ok'}
+                    p=always_merger.merge(on_disk, existing)
+                    # yes should be 0
+                    self.__data['settings'] = always_merger.merge(from_disk['settings'], self.__data['settings'])
 
                 # Convert each existing watch back to the Watch.model object
                 for uuid, watch in self.__data['watching'].items():
