@@ -1,16 +1,7 @@
-                   <div class="pure-control-group" id="ai-filter-options">
-                        <div class="pure-control-group inline-radio">
-                            {{ render_field(form.LLM_prompt) }}
+                        <div class="pure-control-group">
+                        {%- include 'edit/llm_prompt.html' -%}
                         </div>
-                        <div class="pure-control-group inline-radio">
-                            {{ render_field(form.LLM_send_type) }}
-                        </div>
-                        <div class="pure-control-group inline-radio">
-                            {{ render_field(form.LLM_backend) }}
-                        </div>
-                    </div>
-
-                    <div class="pure-control-group">
+                        <div class="pure-control-group">
                         {% set field = render_field(form.include_filters,
                             rows=5,
                             placeholder=has_tag_filters_extra+"#example

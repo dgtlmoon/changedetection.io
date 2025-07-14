@@ -61,7 +61,11 @@ LLM_example_texts = ['Tell me simply "Price, In stock"',
                      'Look at this restaurant menu and only give me list of meals you think are good for type 2 diabetics, if nothing is found just say "nothing"',
                      ]
 
-LLM_send_type_choices = [('text', 'Text'), ('Screenshot', 'Image / Screenshot'), ('above_fold_text', 'Text above the fold'), ('HTML', 'HTML Source')]
+LLM_send_type_choices = [('text', 'Plain text after filters'),
+                         ('above_fold_text', 'Text above the fold'),
+                         ('Screenshot', 'Screenshot / Selection'),
+                         ('HTML', 'HTML Source')
+                         ]
 
 class StringListField(StringField):
     widget = widgets.TextArea()

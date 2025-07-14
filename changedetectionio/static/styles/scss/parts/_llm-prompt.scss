@@ -1,0 +1,53 @@
+#form-quick-watch-add #openai-prompt {
+   color: var(--color-white);
+}
+
+
+#llm-prompt-all {
+  .label {
+    display: block !important;
+  }
+
+  ul {
+    list-style: none;
+    padding-left: 0px;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+      padding-bottom: 0.3em;
+
+      > * {
+        margin: 0px;
+        padding: 0px;
+      }
+
+      label {
+        font-weight: normal;
+      }
+    }
+  }
+}
+
+@media (min-width: 768px) {
+  #llm-prompt-all {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    column-gap: 1.5rem;
+    align-items: start;
+
+    font-size: 0.9rem;
+    padding: 0.3rem;
+
+    #llm-prompt {
+      /* ensure the textarea stretches horizontally */
+      width: 100%;
+
+      textarea {
+        width: 100%;
+        box-sizing: border-box;
+      }
+    }
+  }
+}

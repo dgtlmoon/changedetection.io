@@ -29,21 +29,8 @@
                 <i data-feather="tag" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>
                {{ render_field(form.tags, value=active_tag.title if active_tag_uuid else '', placeholder="Watch group / tag", class="transparent-field") }}
             </div>
-            <div id="openai-prompt">
-                <span>
-                    <img alt="OpenAI your watches!" style="height: 1em;display:inline-block;" src="{{ url_for('static_content', group='images', filename='open-ai-logo.png') }}">
-                    <label>AI Prompt</label>
-                </span>
-                <span>
-                    {{ render_simple_field(form.LLM_prompt) }}
-                </span>
-                <span>
-                    {{ render_simple_field(form.LLM_send_type) }}
-                </span>
-                <span>
-                    {{ render_simple_field(form.LLM_backend) }}
-                </span>
-            </div>
+
+            {%- include 'edit/llm_prompt.html' -%}
 
             <div id="quick-watch-processor-type">
                 {{ render_simple_field(form.processor) }}

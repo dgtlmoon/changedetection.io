@@ -1,0 +1,15 @@
+                   <div class="pure-control-group" id="ai-filter-options">
+                        <div id="openai-prompt">
+                            <div id="llm-prompt-all">
+                                <div id="llm-prompt">
+                                    {{ render_simple_field(form.LLM_prompt, rows=5) }}
+                                </div>
+                                <div id="llm-send-type">
+                                    {{ render_simple_field(form.LLM_send_type) }}
+                                </div>
+                                <div id="llm-backend">
+                                    {{ render_simple_field(form.LLM_backend) }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
