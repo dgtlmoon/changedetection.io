@@ -64,6 +64,10 @@ class model(dict):
                         'open_diff_in_new_tab': True,
                         'socket_io_enabled': True,
                     },
+                    'ai': {
+                        'openai_key': None,
+                        'gemini_key': None
+                    }
                 }
             }
         }
