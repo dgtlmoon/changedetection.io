@@ -14,9 +14,12 @@ def test_fetch_webdriver_content(client, live_server, measure_memory_usage):
     #####################
     res = client.post(
         url_for("settings.settings_page"),
-        data={"application-empty_pages_are_a_change": "",
-              "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_webdriver"},
+        data={
+            "application-empty_pages_are_a_change": "",
+            "requests-time_between_check-minutes": 180,
+            'application-fetch_backend': "html_webdriver",
+            'application-ui-favicons_enabled': "y",
+        },
         follow_redirects=True
     )
 
@@ -61,3 +64,22 @@ def test_fetch_webdriver_content(client, live_server, measure_memory_usage):
         )
         assert res.status_code == 200
         assert len(res.data) > 10
+
+    ##################### disable favicons check
+    res = client.post(
+        url_for("settings.settings_page"),
+        data={
+            "requests-time_between_check-minutes": 180,
+            'application-ui-favicons_enabled': "",
+            "application-empty_pages_are_a_change": "",
+        },
+        follow_redirects=True
+    )
+
+    assert b"Settings updated." in res.data
+
+    res = client.get(
+        url_for("watchlist.index"),
+    )
+    # The UI can access it here
+    assert f'src="/static/favicon'.encode('utf8') not in res.data
