@@ -1,3 +1,5 @@
+@use "_llm-prompt";
+
 ul#conditions_match_logic {
     list-style: none;
   input, label, li {

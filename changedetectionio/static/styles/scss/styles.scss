@@ -792,7 +792,9 @@ textarea::placeholder {
       border-top-left-radius: 5px;
       border-top-right-radius: 5px;
       background-color: var(--color-background-tab);
-
+      svg {
+        stroke: var(--color-text-tab);
+      }
       &:not(.active) {
         &:hover {
           background-color: var(--color-background-tab-hover);
@@ -802,10 +804,12 @@ textarea::placeholder {
       &.active,
       :target {
         background-color: var(--color-background);
-
         a {
           color: var(--color-text-tab-active);
           font-weight: bold;
+        }
+        svg {
+          stroke: var(--color-text-tab-active);
         }
       }
 

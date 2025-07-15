@@ -38,6 +38,12 @@
     <script src="{{url_for('static_content', group='js', filename='socket.io.min.js')}}"></script>
     <script src="{{url_for('static_content', group='js', filename='realtime.js')}}" defer></script>
     {% endif %}
+  <script>
+    // Initialize Feather icons after the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        feather.replace();
+    });
+    </script>
   </head>
 
   <body class="">
