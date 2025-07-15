@@ -257,6 +257,11 @@ nav
                     {{ render_checkbox_field(form.application.form.ui.form.socket_io_enabled, class="socket_io_enabled") }}
                     <span class="pure-form-message-inline">Realtime UI Updates Enabled - (Restart required if this is changed)</span>
                 </div>
+                <div class="pure-control-group">
+                    {{ render_checkbox_field(form.application.form.ui.form.favicons_enabled, class="") }}
+                    <span class="pure-form-message-inline">Enable or Disable Favicons next to the watch list</span>
+                </div>
+
             </div>
             <div class="tab-pane-inner" id="ai-options">
                 <div class="pure-control-group">

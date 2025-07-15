@@ -768,6 +768,7 @@ class globalSettingsRequestForm(Form):
 class globalSettingsApplicationUIForm(Form):
     open_diff_in_new_tab = BooleanField("Open 'History' page in a new tab", default=True, validators=[validators.Optional()])
     socket_io_enabled = BooleanField('Realtime UI Updates Enabled', default=True, validators=[validators.Optional()])
+    favicons_enabled = BooleanField('Favicons Enabled', default=True, validators=[validators.Optional()])
 
 class globalSettingsApplicationAIForm(Form):
     openai_key = StringField('OpenAI Key',
