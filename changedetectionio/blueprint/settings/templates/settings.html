@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_simple_field, render_button, render_time_schedule_form %}
 {% from '_common_fields.html' import render_common_settings_form %}
 <script>
     const notification_base_url="{{url_for('ui.ui_notification.ajax_callback_send_notification_test', mode="global-settings")}}";
@@ -264,6 +264,11 @@ nav
 
             </div>
             <div class="tab-pane-inner" id="ai-options">
+                <div class="pure-control-group inline-radio">
+                    {{ render_simple_field(form.application.form.ai.form.LLM_backend) }}
+                    <span class="pure-form-message-inline">Preferred LLM connection</span>
+
+                </div>
                 <div class="pure-control-group">
                     {{ render_checkbox_field(form.application.form.ai.form.openai_key) }}
                     <span class="pure-form-message-inline">Go here to read more about OpenAI integration</span>

@@ -536,10 +536,6 @@ class quickWatchForm(Form):
     LLM_prompt = TextAreaField(u'AI Prompt', [validators.Optional()], render_kw={"placeholder": f'Example, "{random.choice(LLM_example_texts)}"'})
     LLM_send_type = RadioField(u'LLM Send', choices=LLM_send_type_choices, default="text")
 
-    #@todo use only configured types?
-    LLM_backend = RadioField(u'LLM Backend',
-                               choices=[('openai', 'Open AI'), ('gemini', 'Gemini')],
-                               default="text")
     edit_and_watch_submit_button = SubmitField('Edit > Watch', render_kw={"class": "pure-button pure-button-primary"})
 
 
@@ -567,11 +563,6 @@ class commonSettingsForm(Form):
 
     LLM_prompt = TextAreaField(u'AI Prompt', [validators.Optional()], render_kw={"placeholder": f'Example, "{random.choice(LLM_example_texts)}"'})
     LLM_send_type = RadioField(u'LLM Send', choices=LLM_send_type_choices, default="text")
-
-    #@todo use only configured types?
-    LLM_backend = RadioField(u'LLM Backend',
-                               choices=[('openai', 'Open AI'), ('gemini', 'Gemini')],
-                               default="text")
 
 class importForm(Form):
     from . import processors
@@ -771,6 +762,12 @@ class globalSettingsApplicationUIForm(Form):
     favicons_enabled = BooleanField('Favicons Enabled', default=True, validators=[validators.Optional()])
 
 class globalSettingsApplicationAIForm(Form):
+
+    #@todo use only configured types?
+    LLM_backend = RadioField(u'LLM Backend',
+                               choices=[('openai', 'Open AI'), ('gemini', 'Gemini')],
+                               default="text")
+
     openai_key = StringField('OpenAI Key',
                            validators=[validators.Optional()],
                            render_kw={"placeholder": 'xxxxxxxxx'}
