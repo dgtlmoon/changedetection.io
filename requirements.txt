@@ -78,6 +78,7 @@ jq~=1.3; python_version >= "3.8" and sys_platform == "linux"
 # playwright is installed at Dockerfile build time because it's not available on all platforms
 
 pyppeteer-ng==2.0.0rc10
+deepmerge
 
 pyppeteerstealth>=0.0.4
 
