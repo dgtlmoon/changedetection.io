@@ -21,6 +21,7 @@ function request_textpreview_update() {
         namespace: 'watchEdit'
     }).done(function (data) {
         console.debug(data['duration'])
+        $('#error-text').text('');
         $('#filters-and-triggers #text-preview-before-inner').text(data['before_filter']);
         $('#filters-and-triggers #text-preview-inner')
             .text(data['after_filter'])
@@ -37,9 +38,8 @@ function request_textpreview_update() {
     }).fail(function (error) {
         if (error.statusText === 'abort') {
             console.log('Request was aborted due to a new request being fired.');
-        } else {
-            $('#filters-and-triggers #text-preview-inner').text('There was an error communicating with the server.');
         }
+        $('#error-text').text(error.responseJSON['error']);
     })
 }
 

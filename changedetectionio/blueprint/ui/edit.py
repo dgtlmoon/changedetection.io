@@ -312,8 +312,27 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         '''For when viewing the "preview" of the rendered text from inside of Edit'''
         from flask import jsonify
         from changedetectionio.processors.text_json_diff import prepare_filter_prevew
-        result = prepare_filter_prevew(watch_uuid=uuid, form_data=request.form, datastore=datastore)
-        return jsonify(result)
+
+        watch = datastore.data["watching"].get(uuid)
+
+        if not watch:
+            return jsonify({
+                "error": "Watch not found",
+                "code": 400
+            }), 400
+
+        if not watch.history_n:
+            return jsonify({
+                "error": "Watch has empty history, at least one fetch of the page is required.",
+                "code": 400
+            }), 400
+        #
+        try:
+            result = prepare_filter_prevew(watch_uuid=uuid, form_data=request.form, datastore=datastore)
+            return jsonify(result)
+        except Exception as e:
+            return abort(500, str(e))
+
 
     @edit_blueprint.route("/highlight_submit_ignore_url", methods=['POST'])
     @login_optionally_required
