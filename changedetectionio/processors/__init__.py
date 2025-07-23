@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from changedetectionio.content_fetchers.base import Fetcher
+from changedetectionio.processors.LLM import LLM_integrate
 from changedetectionio.strtobool import strtobool
 from copy import deepcopy
 from loguru import logger

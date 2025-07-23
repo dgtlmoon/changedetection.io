@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_simple_field, render_button, render_time_schedule_form %}
 {% from '_common_fields.html' import render_common_settings_form %}
 <script>
     const notification_base_url="{{url_for('ui.ui_notification.ajax_callback_send_notification_test', mode="global-settings")}}";
@@ -23,6 +23,7 @@
             <li class="tab"><a href="#fetching">Fetching</a></li>
             <li class="tab"><a href="#filters">Global Filters</a></li>
             <li class="tab"><a href="#ui-options">UI Options</a></li>
+            <li class="tab"><a href="#ai-options"><i data-feather="aperture" style="width: 14px; height: 14px; margin-right: 4px;"></i> AI</a></li>
             <li class="tab"><a href="#api">API</a></li>
             <li class="tab"><a href="#timedate">Time &amp Date</a></li>
             <li class="tab"><a href="#proxies">CAPTCHA &amp; Proxies</a></li>
@@ -261,6 +262,24 @@ nav
                     <span class="pure-form-message-inline">Enable or Disable Favicons next to the watch list</span>
                 </div>
 
+            </div>
+            <div class="tab-pane-inner" id="ai-options">
+                <p><strong>New:</strong> click here (link to changedetection.io tutorial page) find out how to setup and example</p>
+                <br>
+                key fields should be some password type field so you can see its set but doesnt contain the key on view and doesnt lose it on save<br>
+
+                <div class="pure-control-group inline-radio">
+                    {{ render_simple_field(form.application.form.ai.form.LLM_backend) }}
+                    <span class="pure-form-message-inline">Preferred LLM connection</span>
+                </div>
+                <div class="pure-control-group">
+                    {{ render_checkbox_field(form.application.form.ai.form.API_keys.form.openai) }}
+                    <span class="pure-form-message-inline">Go here to read more about OpenAI integration</span>
+                </div>
+                <div class="pure-control-group">
+                    {{ render_checkbox_field(form.application.form.ai.form.API_keys.form.gemini) }}
+                    <span class="pure-form-message-inline">Go here to read more about Google Gemini integration</span>
+                </div>
             </div>
             <div class="tab-pane-inner" id="proxies">
                 <div id="recommended-proxy">

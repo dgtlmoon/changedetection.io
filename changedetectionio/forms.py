@@ -55,6 +55,18 @@ valid_method = {
 default_method = 'GET'
 allow_simplehost = not strtobool(os.getenv('BLOCK_SIMPLEHOSTS', 'False'))
 
+LLM_example_texts = ['Tell me simply "Price, In stock"',
+                     'Give me a list of all products for sale in this text',
+                     'Tell me simply "Yes" "No" or "Maybe" if you think the weather outlook is good for a 4-day small camping trip',
+                     'Look at this restaurant menu and only give me list of meals you think are good for type 2 diabetics, if nothing is found just say "nothing"',
+                     ]
+
+LLM_send_type_choices = [('text', 'Plain text after filters'),
+                         ('above_fold_text', 'Text above the fold'),
+                         ('Screenshot', 'Screenshot / Selection'),
+                         ('HTML', 'HTML Source')
+                         ]
+
 class StringListField(StringField):
     widget = widgets.TextArea()
 
@@ -515,11 +527,15 @@ class ValidateCSSJSONXPATHInput(object):
 
 class quickWatchForm(Form):
     from . import processors
+    import random
 
     url = fields.URLField('URL', validators=[validateURL()])
     tags = StringTagUUID('Group tag', [validators.Optional()])
     watch_submit_button = SubmitField('Watch', render_kw={"class": "pure-button pure-button-primary"})
     processor = RadioField(u'Processor', choices=processors.available_processors(), default="text_json_diff")
+    LLM_prompt = TextAreaField(u'AI Prompt', [validators.Optional()], render_kw={"placeholder": f'Example, "{random.choice(LLM_example_texts)}"'})
+    LLM_send_type = RadioField(u'LLM Send', choices=LLM_send_type_choices, default="text")
+
     edit_and_watch_submit_button = SubmitField('Edit > Watch', render_kw={"class": "pure-button pure-button-primary"})
 
 
@@ -527,6 +543,7 @@ class quickWatchForm(Form):
 # Common to a single watch and the global settings
 class commonSettingsForm(Form):
     from . import processors
+    import random
 
     def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
         super().__init__(formdata, obj, prefix, data, meta, **kwargs)
@@ -544,6 +561,8 @@ class commonSettingsForm(Form):
     timezone = StringField("Timezone for watch schedule", render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
     webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1, message="Should contain one or more seconds")])
 
+    LLM_prompt = TextAreaField(u'AI Prompt', [validators.Optional()], render_kw={"placeholder": f'Example, "{random.choice(LLM_example_texts)}"'})
+    LLM_send_type = RadioField(u'LLM Send', choices=LLM_send_type_choices, default="text")
 
 class importForm(Form):
     from . import processors
@@ -742,6 +761,29 @@ class globalSettingsApplicationUIForm(Form):
     socket_io_enabled = BooleanField('Realtime UI Updates Enabled', default=True, validators=[validators.Optional()])
     favicons_enabled = BooleanField('Favicons Enabled', default=True, validators=[validators.Optional()])
 
+class globalSettingsApplicationAIKeysForm(Form):
+
+    openai = StringField('OpenAI Key',
+                           validators=[validators.Optional()],
+                           render_kw={"placeholder": 'xxxxxxxxx'}
+                           )
+    gemini = StringField('Google Gemini Key',
+                           validators=[validators.Optional()],
+                           render_kw={"placeholder": 'ooooooooo'}
+                           )
+
+class globalSettingsApplicationAIForm(Form):
+
+    #@todo use only configured types?
+    LLM_backend = RadioField(u'LLM Backend',
+                               choices=[('openai', 'Open AI'), ('gemini', 'Gemini')],
+                               default="text")
+
+    # So that we can pass this to our LLM/__init__.py as a keys dict
+    API_keys = FormField(globalSettingsApplicationAIKeysForm)
+
+
+
 # datastore.data['settings']['application']..
 class globalSettingsApplicationForm(commonSettingsForm):
 
@@ -773,6 +815,8 @@ class globalSettingsApplicationForm(commonSettingsForm):
                                                                   validators=[validators.NumberRange(min=0,
                                                                                                      message="Should contain zero or more attempts")])
     ui = FormField(globalSettingsApplicationUIForm)
+
+    ai = FormField(globalSettingsApplicationAIForm)
 
 
 class globalSettingsForm(Form):

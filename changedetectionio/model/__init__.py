@@ -38,6 +38,9 @@ class watch_base(dict):
             'last_error': False,
             'last_notification_error': None,
             'last_viewed': 0,  # history key value of the last viewed via the [diff] link
+            'LLM_prompt': None,
+            'LLM_send_type': None,
+            'LLM_backend': None,
             'method': 'GET',
             'notification_alert_count': 0,
             'notification_body': None,

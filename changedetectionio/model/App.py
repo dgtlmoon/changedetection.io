@@ -65,6 +65,10 @@ class model(dict):
                         'socket_io_enabled': True,
                         'favicons_enabled': True
                     },
+                    'ai': {
+                        'openai_key': None,
+                        'gemini_key': None
+                    }
                 }
             }
         }

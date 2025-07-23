@@ -1,4 +1,7 @@
-                    <div class="pure-control-group">
+                        <div class="pure-control-group">
+                        {%- include 'edit/llm_prompt.html' -%}
+                        </div>
+                        <div class="pure-control-group">
                         {% set field = render_field(form.include_filters,
                             rows=5,
                             placeholder=has_tag_filters_extra+"#example

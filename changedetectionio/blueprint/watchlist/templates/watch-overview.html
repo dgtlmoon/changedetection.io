@@ -5,12 +5,7 @@
 <script src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
 <script>let nowtimeserver={{ now_time_server }};</script>
 <script>let favicon_baseURL="{{ url_for('static_content', group='favicon', filename="PLACEHOLDER")}}";</script>
-<script>
-// Initialize Feather icons after the page loads
-document.addEventListener('DOMContentLoaded', function() {
-    feather.replace();
-});
-</script>
+
 <style>
 .checking-now .last-checked {
     background-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.1) 100%);
@@ -31,8 +26,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     {{ render_nolabel_field(form.edit_and_watch_submit_button, title="Edit first then Watch") }}
             </div>
             <div id="watch-group-tag">
+                <i data-feather="tag" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>
                {{ render_field(form.tags, value=active_tag.title if active_tag_uuid else '', placeholder="Watch group / tag", class="transparent-field") }}
             </div>
+
+            {%- include 'edit/llm_prompt.html' -%}
+
             <div id="quick-watch-processor-type">
                 {{ render_simple_field(form.processor) }}
             </div>
