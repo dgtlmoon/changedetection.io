@@ -761,6 +761,17 @@ class globalSettingsApplicationUIForm(Form):
     socket_io_enabled = BooleanField('Realtime UI Updates Enabled', default=True, validators=[validators.Optional()])
     favicons_enabled = BooleanField('Favicons Enabled', default=True, validators=[validators.Optional()])
 
+class globalSettingsApplicationAIKeysForm(Form):
+
+    openai = StringField('OpenAI Key',
+                           validators=[validators.Optional()],
+                           render_kw={"placeholder": 'xxxxxxxxx'}
+                           )
+    gemini = StringField('Google Gemini Key',
+                           validators=[validators.Optional()],
+                           render_kw={"placeholder": 'ooooooooo'}
+                           )
+
 class globalSettingsApplicationAIForm(Form):
 
     #@todo use only configured types?
@@ -768,14 +779,9 @@ class globalSettingsApplicationAIForm(Form):
                                choices=[('openai', 'Open AI'), ('gemini', 'Gemini')],
                                default="text")
 
-    openai_key = StringField('OpenAI Key',
-                           validators=[validators.Optional()],
-                           render_kw={"placeholder": 'xxxxxxxxx'}
-                           )
-    gemini_key = StringField('Google Gemini Key',
-                           validators=[validators.Optional()],
-                           render_kw={"placeholder": 'ooooooooo'}
-                           )
+    # So that we can pass this to our LLM/__init__.py as a keys dict
+    API_keys = FormField(globalSettingsApplicationAIKeysForm)
+
 
 
 # datastore.data['settings']['application']..

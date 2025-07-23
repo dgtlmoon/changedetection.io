@@ -264,17 +264,20 @@ nav
 
             </div>
             <div class="tab-pane-inner" id="ai-options">
+                <p><strong>New:</strong> click here (link to changedetection.io tutorial page) find out how to setup and example</p>
+                <br>
+                key fields should be some password type field so you can see its set but doesnt contain the key on view and doesnt lose it on save<br>
+
                 <div class="pure-control-group inline-radio">
                     {{ render_simple_field(form.application.form.ai.form.LLM_backend) }}
                     <span class="pure-form-message-inline">Preferred LLM connection</span>
-
                 </div>
                 <div class="pure-control-group">
-                    {{ render_checkbox_field(form.application.form.ai.form.openai_key) }}
+                    {{ render_checkbox_field(form.application.form.ai.form.API_keys.form.openai) }}
                     <span class="pure-form-message-inline">Go here to read more about OpenAI integration</span>
                 </div>
                 <div class="pure-control-group">
-                    {{ render_checkbox_field(form.application.form.ai.form.gemini_key) }}
+                    {{ render_checkbox_field(form.application.form.ai.form.API_keys.form.gemini) }}
                     <span class="pure-form-message-inline">Go here to read more about Google Gemini integration</span>
                 </div>
             </div>

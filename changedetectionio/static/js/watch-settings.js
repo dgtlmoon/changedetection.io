@@ -21,7 +21,7 @@ function request_textpreview_update() {
         namespace: 'watchEdit'
     }).done(function (data) {
         console.debug(data['duration'])
-        $('#error-text').text('');
+        $('#error-text').text(data['duration']);
         $('#filters-and-triggers #text-preview-before-inner').text(data['before_filter']);
         $('#filters-and-triggers #text-preview-inner')
             .text(data['after_filter'])

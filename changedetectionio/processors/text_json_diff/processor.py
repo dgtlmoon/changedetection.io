@@ -7,7 +7,7 @@ import re
 import urllib3
 
 from changedetectionio.conditions import execute_ruleset_against_all_plugins
-from changedetectionio.processors import difference_detection_processor
+from changedetectionio.processors import difference_detection_processor, LLM_integrate
 from changedetectionio.html_tools import PERL_STYLE_REGEX, cdata_in_document_to_text, TRANSLATE_WHITESPACE_TABLE
 from changedetectionio import html_tools, content_fetchers
 from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT, PRICE_DATA_TRACK_REJECT
@@ -293,6 +293,30 @@ class perform_site_check(difference_detection_processor):
             # we end up with 'Some text\n\n', sorting will add all those extra \n at the start, so we remove them here.
             stripped_text_from_html = stripped_text_from_html.replace("\n\n", "\n")
             stripped_text_from_html = '\n'.join(sorted(stripped_text_from_html.splitlines(), key=lambda x: x.lower()))
+### OPENAI?
+
+
+        # And here we run LLM integration based on the content we received
+        LLM_keys =  self.datastore.data['settings']['application']['ai'].get('API_keys', {})
+        if watch.get('LLM_prompt') and stripped_text_from_html and LLM_keys:
+            response = ""
+            try:
+                integrator = LLM_integrate(api_keys=LLM_keys)
+                response = integrator.run(
+                    provider="openai",
+                    model="gpt-4.1", #gpt-4-turbo
+                    message=f"{watch.get('LLM_prompt')}\n----------- Content follows-----------\n\n{stripped_text_from_html}"
+                )
+            except Exception as e:
+                logger.critical(f"Error running LLM integration {str(e)} (type etc)")
+                raise(e)
+                x = 1
+                # todo is there something special when tokens are used up etc?
+            else:
+                stripped_text_from_html = response
+               # logger.trace("LLM done")
+            finally:
+                logger.debug("LLM request done (type etc)")
 
 ### CALCULATE MD5
         # If there's text to ignore
