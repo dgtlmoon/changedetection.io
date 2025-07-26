@@ -1,7 +1,8 @@
 from wtforms import (
     BooleanField,
     validators,
-    FloatField
+    FloatField,
+    TextAreaField
 )
 from wtforms.fields.choices import RadioField
 from wtforms.fields.form import FormField
@@ -28,6 +29,16 @@ class RestockSettingsForm(Form):
     ], render_kw={"placeholder": "0%", "size": "5"})
 
     follow_price_changes = BooleanField('Follow price changes', default=True)
+    
+    custom_outofstock_strings = TextAreaField('Custom out-of-stock detection strings', 
+        [validators.Optional()],
+        render_kw={"placeholder": "Enter custom out-of-stock strings, one per line\nExample:\nPronto estarán en stock!\nTemporarily out of stock", 
+                   "rows": "3"})
+    
+    custom_instock_strings = TextAreaField('Custom in-stock detection strings', 
+        [validators.Optional()],
+        render_kw={"placeholder": "Enter custom in-stock strings, one per line\nExample:\nDisponible ahora\nIn voorraad", 
+                   "rows": "3"})
 
 class processor_settings_form(processor_text_json_diff_form):
     restock_settings = FormField(RestockSettingsForm)
@@ -74,6 +85,14 @@ class processor_settings_form(processor_text_json_diff_form):
                     {{ render_field(form.restock_settings.price_change_threshold_percent) }}
                     <span class="pure-form-message-inline">Price must change more than this % to trigger a change since the first check.</span><br>
                     <span class="pure-form-message-inline">For example, If the product is $1,000 USD originally, <strong>2%</strong> would mean it has to change more than $20 since the first check.</span><br>
+                </fieldset>
+                <fieldset class="pure-group">
+                    {{ render_field(form.restock_settings.custom_outofstock_strings) }}
+                    <span class="pure-form-message-inline">Additional custom out-of-stock detection strings (one per line).</span>
+                </fieldset>
+                <fieldset class="pure-group">
+                    {{ render_field(form.restock_settings.custom_instock_strings) }}
+                    <span class="pure-form-message-inline">Additional custom in-stock detection strings (one per line).</span>
                 </fieldset>                
             </div>
         </fieldset>
