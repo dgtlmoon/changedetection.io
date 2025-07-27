@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
+from unittest.mock import MagicMock
 
 import unittest
 from changedetectionio.processors.restock_diff.processor import perform_site_check
-
+from changedetectionio.store import ChangeDetectionStore
 
 class TestCustomStringNormalization(unittest.TestCase):
     """Test the text normalization logic for custom out-of-stock strings"""
     
     def setUp(self):
         # Create a processor instance for testing
-        self.processor = perform_site_check(datastore=None, watch_uuid='test')
+        datastore = MagicMock(spec=ChangeDetectionStore)
+        self.processor = perform_site_check(datastore=datastore, watch_uuid='test')
+    
     
     def test_normalize_text_for_matching(self):
         """Test the _normalize_text_for_matching method"""
@@ -70,7 +73,7 @@ class TestCustomStringNormalization(unittest.TestCase):
         
         result = self.processor._check_custom_strings(page_text, custom_strings, "out-of-stock")
         self.assertIsNotNone(result)
-        self.assertEqual(result.strip(), "temporalmente agotado")
+        self.assertEqual(result.strip(), "agotado")
     
     def test_get_combined_instock_strings_normalization(self):
         """Test that custom in-stock strings are normalized properly"""

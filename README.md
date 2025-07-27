@@ -267,6 +267,18 @@ The application also supports notifying you that it can follow this information 
 
 See the wiki https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration , we also support using [Bright Data proxy services where possible](https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#brightdata-proxy-support) and [Oxylabs](https://oxylabs.go2cloud.org/SH2d) proxy services.
 
+## Development setup
+
+## How to run tests
+
+There are several kinds of tests, below are just some examples:
+
+- Run all unit tests: `just unittest`
+
+- Run a specific unit test: `just unittest changedetectionio.tests.unit.test_custom_string_normalization`
+
+- Run a test with a browser dependency: `just test-playwright-restock`
+
 ## Raspberry Pi support?
 
 Raspberry Pi and linux/arm/v6 linux/arm/v7 arm64 devices are supported! See the wiki for [details](https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver)

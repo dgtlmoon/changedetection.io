@@ -151,7 +151,8 @@ class fetcher(Fetcher):
             ignore_status_codes=False,
             current_include_filters=None,
             is_binary=False,
-            empty_pages_are_a_change=False):
+            empty_pages_are_a_change=False,
+            custom_outofstock_strings=None):
 
         from playwright.async_api import async_playwright
         import playwright._impl._errors
@@ -273,7 +274,12 @@ class fetcher(Fetcher):
             })
             await self.page.request_gc()
 
-            self.instock_data = await self.page.evaluate(INSTOCK_DATA_JS)
+            # Convert custom strings to array format
+            custom_strings_array = custom_outofstock_strings or []
+            if isinstance(custom_outofstock_strings, str):
+                custom_strings_array = [s.strip() for s in custom_outofstock_strings.split('\n') if s.strip()]
+            self.instock_data = await self.page.evaluate(INSTOCK_DATA_JS, custom_strings_array)
+
             await self.page.request_gc()
 
             self.content = await self.page.content()

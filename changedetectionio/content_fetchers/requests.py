@@ -112,7 +112,8 @@ class fetcher(Fetcher):
             ignore_status_codes=False,
             current_include_filters=None,
             is_binary=False,
-            empty_pages_are_a_change=False):
+            empty_pages_are_a_change=False,
+            custom_outofstock_strings=None):
         """Async wrapper that runs the synchronous requests code in a thread pool"""
         
         loop = asyncio.get_event_loop()

@@ -56,7 +56,8 @@ class fetcher(Fetcher):
             ignore_status_codes=False,
             current_include_filters=None,
             is_binary=False,
-            empty_pages_are_a_change=False):
+            empty_pages_are_a_change=False,
+            custom_outofstock_strings=None):
 
         import asyncio
         

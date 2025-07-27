@@ -113,8 +113,12 @@ async (customOutOfStockStrings = []) => {
         // Combine built-in strings with custom strings provided by user
         const outOfStockTexts = [...builtInOutOfStockTexts, ...customOutOfStockStrings];
 
-
         const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+
+        function normalizeForComparison(text) {
+            return text.toLowerCase().trim()
+                      .normalize('NFD')
+        }
 
         function getElementBaseText(element) {
             // .textContent can include text from children which may give the wrong results
@@ -123,7 +127,7 @@ async (customOutOfStockStrings = []) => {
             for (var i = 0; i < element.childNodes.length; ++i)
                 if (element.childNodes[i].nodeType === Node.TEXT_NODE)
                     text += element.childNodes[i].textContent;
-            return text.toLowerCase().trim();
+            return normalizeForComparison(text);
         }
 
         const negateOutOfStockRegex = new RegExp('^([0-9] in stock|add to cart|in stock|arrives approximately)', 'ig');
@@ -137,11 +141,12 @@ async (customOutOfStockStrings = []) => {
             // .getBoundingClientRect() was causing a crash in chrome 119, can only be run on contentVisibility != hidden
             // Note: theres also an automated test that places the 'out of stock' text fairly low down
             // Skip text that could be in the header area
-            if (element.getBoundingClientRect().bottom + window.scrollY <= 300 ) {
+            const bottomY = element.getBoundingClientRect().bottom + window.scrollY;
+            if (bottomY <= 300 ) {
                 return false;
             }
             // Skip text that could be much further down (like a list of "you may like" products that have 'sold out' in there
-            if (element.getBoundingClientRect().bottom + window.scrollY >= 1300 ) {
+            if (bottomY >= 1300 ) {
                 return false;
             }
             return true;
@@ -223,7 +228,7 @@ async (customOutOfStockStrings = []) => {
             if (elementText.length) {
                 // and these mean its out of stock
                 for (const outOfStockText of outOfStockTexts) {
-                    if (elementText.includes(outOfStockText)) {
+                    if (elementText.includes(normalizeForComparison(outOfStockText))) {
                         console.log(`Selected 'Out of Stock' - found text "${outOfStockText}" - "${elementText}" - offset top ${element.getBoundingClientRect().top}, page height is ${vh}`)
                         element.style.border = "2px solid red"; // highlight the element that was detected as out of stock
                         return outOfStockText; // item is out of stock

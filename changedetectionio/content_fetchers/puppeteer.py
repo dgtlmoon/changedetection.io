@@ -153,7 +153,8 @@ class fetcher(Fetcher):
                          ignore_status_codes,
                          current_include_filters,
                          is_binary,
-                         empty_pages_are_a_change
+                         empty_pages_are_a_change,
+                         custom_outofstock_strings
                          ):
         import re
         self.delete_browser_steps_screenshots()
@@ -330,7 +331,11 @@ class fetcher(Fetcher):
         if not self.xpath_data:
             raise Exception(f"Content Fetcher > xPath scraper failed. Please report this URL so we can fix it :)")
 
-        self.instock_data = await self.page.evaluate(INSTOCK_DATA_JS)
+        # Convert custom strings to array format
+        custom_strings_array = custom_outofstock_strings or []
+        if isinstance(custom_outofstock_strings, str):
+            custom_strings_array = [s.strip() for s in custom_outofstock_strings.split('\n') if s.strip()]
+        self.instock_data = await self.page.evaluate(INSTOCK_DATA_JS, custom_strings_array)
 
         self.content = await self.page.content
 
@@ -347,7 +352,7 @@ class fetcher(Fetcher):
         await self.fetch_page(**kwargs)
 
     async def run(self, url, timeout, request_headers, request_body, request_method, ignore_status_codes=False,
-            current_include_filters=None, is_binary=False, empty_pages_are_a_change=False):
+            current_include_filters=None, is_binary=False, empty_pages_are_a_change=False, custom_outofstock_strings=None):
 
         #@todo make update_worker async which could run any of these content_fetchers within memory and time constraints
         max_time = int(os.getenv('PUPPETEER_MAX_PROCESSING_TIMEOUT_SECONDS', 180))

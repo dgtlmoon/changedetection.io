@@ -1,0 +1,96 @@
+services:
+  changedetection:
+    build:
+      context: .
+      args:
+        - PYTHON_VERSION=${PYTHON_VERSION:-3.11}
+        - LOGGER_LEVEL=TRACE
+    image: test-changedetectionio
+    container_name: test-changedetectionio
+    environment:
+      - LOGGER_LEVEL=TRACE
+
+    depends_on:
+      - selenium
+      - sockpuppetbrowser
+      - sockpuppetbrowser-custom
+      - mailserver
+    
+    networks:
+      - test-network
+
+  # Selenium for WebDriver tests
+  selenium:
+    image: selenium/standalone-chrome:4
+    hostname: selenium
+    container_name: selenium-test
+    ports:
+      - "4444:4444"
+    shm_size: "2g"
+
+    environment:
+      - VNC_NO_PASSWORD=1
+      - SCREEN_WIDTH=1920
+      - SCREEN_HEIGHT=1080
+      - SCREEN_DEPTH=24
+    
+    networks:
+      - test-network
+
+  # SockPuppetBrowser for Playwright tests
+  sockpuppetbrowser:
+    image: dgtlmoon/sockpuppetbrowser:latest
+    hostname: sockpuppetbrowser
+    container_name: sockpuppetbrowser-test
+    ports:
+      - "3000:3000"
+    cap_add:
+      - SYS_ADMIN
+    environment:
+      - LOG_LEVEL=TRACE
+      - SCREEN_WIDTH=1920
+      - SCREEN_HEIGHT=1024
+      - SCREEN_DEPTH=16
+      - MAX_CONCURRENT_CHROME_PROCESSES=10
+    
+    networks:
+      - test-network
+
+
+  # Custom SockPuppetBrowser for custom browser URL tests
+  sockpuppetbrowser-custom:
+    image: dgtlmoon/sockpuppetbrowser:latest
+    hostname: sockpuppetbrowser-custom-url
+    container_name: sockpuppetbrowser-custom-test
+    ports:
+      - "3001:3000"
+    cap_add:
+      - SYS_ADMIN
+    environment:
+      - LOG_LEVEL=TRACE
+      - SCREEN_WIDTH=1920
+      - SCREEN_HEIGHT=1024
+      - SCREEN_DEPTH=16
+      - MAX_CONCURRENT_CHROME_PROCESSES=10
+    
+    networks:
+      - test-network
+
+
+  # SMTP test server
+  mailserver:
+    image: test-changedetectionio
+    hostname: mailserver
+    container_name: mailserver-test
+    ports:
+      - "11025:11025"
+      - "11080:11080"
+
+    command: bash -c 'pip3 install aiosmtpd && python changedetectionio/tests/smtp/smtp-test-server.py'
+  
+    networks:
+      - test-network
+
+networks:
+  test-network:
+    name: changedetectionio-test-network

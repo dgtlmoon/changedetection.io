@@ -247,7 +247,6 @@ class perform_site_check(difference_detection_processor):
         # Otherwise it will assume "in stock" because nothing suggesting the opposite was found
         from ...html_tools import html_to_text
         text = html_to_text(self.fetcher.content)
-        logger.debug(f"Length of text after conversion: {len(text)}")
         if not len(text):
             from ...content_fetchers.exceptions import ReplyWithContentButNoText
             raise ReplyWithContentButNoText(url=watch.link,
@@ -307,22 +306,63 @@ class perform_site_check(difference_detection_processor):
             # Before giving up, check if we have custom out-of-stock strings that might match
             custom_strings = restock_settings.get('custom_outofstock_strings', '').strip()
             if custom_strings:
-                custom_stock_result = self._check_custom_strings(text, custom_strings, "out-of-stock")
-                if custom_stock_result:
-                    # Found a match with custom strings
-                    update_obj['restock']['in_stock'] = False
-                    logger.debug(f"Watch UUID {watch.get('uuid')} custom out-of-stock detection found (no JS): '{custom_stock_result}'")
-                else:
-                    # No custom string match, assume in stock
-                    update_obj['restock']['in_stock'] = True
-                    logger.debug(f"Watch UUID {watch.get('uuid')} no custom out-of-stock strings matched, assuming in stock")
+                try:
+                    custom_stock_result = self._check_custom_strings(text, custom_strings, "out-of-stock")
+                    if custom_stock_result:
+                        # Found a match with custom strings
+                        update_obj['restock']['in_stock'] = False
+                        logger.debug(f"Watch UUID {watch.get('uuid')} custom out-of-stock detection found (no JS): '{custom_stock_result}'")
+                    else:
+                        # No custom string match, assume in stock
+                        update_obj['restock']['in_stock'] = True
+                        logger.debug(f"Watch UUID {watch.get('uuid')} no custom out-of-stock strings matched, assuming in stock")
+                except Exception as e:
+                    raise ProcessorException(
+                        message=f"Error processing custom out-of-stock strings: {str(e)}",
+                        url=watch.get('url'),
+                        status_code=self.fetcher.get_last_status_code(),
+                        screenshot=self.fetcher.screenshot,
+                        xpath_data=self.fetcher.xpath_data
+                    )
             else:
-                raise ProcessorException(
-                    message=f"Unable to extract restock data for this page unfortunately. (Got code {self.fetcher.get_last_status_code()} from server), no embedded stock information was found and nothing interesting in the text, try using this watch with Chrome.",
-                    url=watch.get('url'),
-                    status_code=self.fetcher.get_last_status_code(),
-                    screenshot=self.fetcher.screenshot,
-                    xpath_data=self.fetcher.xpath_data
+                # No custom strings configured, fall back to built-in detection
+                # Use the same built-in strings as the JavaScript version
+                builtin_outofstock_strings = """
+                out of stock
+                temporarily out of stock
+                currently unavailable
+                agotado
+                sold out
+                not available
+                no longer available
+                discontinued
+                unavailable
+                ausverkauft
+                épuisé
+                """
+                try:
+                    builtin_stock_result = self._check_custom_strings(text, builtin_outofstock_strings, "out-of-stock")
+                    if builtin_stock_result:
+                        # Found a match with built-in strings
+                        update_obj['restock']['in_stock'] = False
+                        logger.debug(f"Watch UUID {watch.get('uuid')} built-in out-of-stock detection found (no JS): '{builtin_stock_result}'")
+                    else:
+                        # No match found, raise the original exception
+                        raise ProcessorException(
+                            message=f"Unable to extract restock data for this page unfortunately. (Got code {self.fetcher.get_last_status_code()} from server), no embedded stock information was found and nothing interesting in the text, try using this watch with Chrome.",
+                            url=watch.get('url'),
+                            status_code=self.fetcher.get_last_status_code(),
+                            screenshot=self.fetcher.screenshot,
+                            xpath_data=self.fetcher.xpath_data
+                            )
+                except Exception as e:
+                    logger.error(f"Watch UUID {watch.get('uuid')} error in built-in string processing: {e}")
+                    raise ProcessorException(
+                        message=f"Error processing built-in out-of-stock strings: {str(e)}",
+                        url=watch.get('url'),
+                        status_code=self.fetcher.get_last_status_code(),
+                        screenshot=self.fetcher.screenshot,
+                        xpath_data=self.fetcher.xpath_data
                     )
 
         logger.debug(f"self.fetcher.instock_data is - '{self.fetcher.instock_data}' and itemprop_availability.get('availability') is {itemprop_availability.get('availability')}")

@@ -147,6 +147,12 @@ class difference_detection_processor():
         # And here we go! call the right browser with browser-specific settings
         empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
 
+        # Extract custom out-of-stock strings for restock detection (if available)
+        custom_outofstock_strings = None
+        restock_settings = self.watch.get('restock_settings', {})
+        if restock_settings.get('custom_outofstock_strings'):
+            custom_outofstock_strings = restock_settings.get('custom_outofstock_strings')
+
         # All fetchers are now async
         await self.fetcher.run(url=url,
                                timeout=timeout,
@@ -156,7 +162,8 @@ class difference_detection_processor():
                                ignore_status_codes=ignore_status_codes,
                                current_include_filters=self.watch.get('include_filters'),
                                is_binary=is_binary,
-                               empty_pages_are_a_change=empty_pages_are_a_change
+                               empty_pages_are_a_change=empty_pages_are_a_change,
+                               custom_outofstock_strings=custom_outofstock_strings
                                )
 
         #@todo .quit here could go on close object, so we can run JS if change-detected
