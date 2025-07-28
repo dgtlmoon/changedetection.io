@@ -396,6 +396,19 @@ def validate_url(test_url):
         # This should be wtforms.validators.
         raise ValidationError('Watch protocol is not permitted by SAFE_PROTOCOL_REGEX or incorrect URL format')
 
+
+class ValidateSinglePythonRegexString(object):
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+        try:
+            re.compile(field.data)
+        except re.error:
+            message = field.gettext('RegEx \'%s\' is not a valid regular expression.')
+            raise ValidationError(message % (field.data))
+
+
 class ValidateListRegex(object):
     """
     Validates that anything that looks like a regex passes as a regex
@@ -413,6 +426,7 @@ class ValidateListRegex(object):
                 except re.error:
                     message = field.gettext('RegEx \'%s\' is not a valid regular expression.')
                     raise ValidationError(message % (line))
+
 
 class ValidateCSSJSONXPATHInput(object):
     """
@@ -791,5 +805,5 @@ class globalSettingsForm(Form):
 
 
 class extractDataForm(Form):
-    extract_regex = StringField('RegEx to extract', validators=[validators.Length(min=1, message="Needs a RegEx")])
+    extract_regex = StringField('RegEx to extract', validators=[validators.DataRequired(), ValidateSinglePythonRegexString()])
     extract_submit_button = SubmitField('Extract as CSV', render_kw={"class": "pure-button pure-button-primary"})
