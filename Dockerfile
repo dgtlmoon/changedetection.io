@@ -84,6 +84,9 @@ COPY changedetection.py /app/changedetection.py
 ARG LOGGER_LEVEL=''
 ENV LOGGER_LEVEL="$LOGGER_LEVEL"
 
+# Default
+ENV LC_ALL=en_US.UTF-8
+
 WORKDIR /app
 CMD ["python", "./changedetection.py", "-d", "/datastore"]
 
