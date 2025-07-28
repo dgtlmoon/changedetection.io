@@ -66,6 +66,9 @@ services:
   #        A valid timezone name to run as (for scheduling watch checking) see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
   #      - TZ=America/Los_Angeles
   #
+  #        Text processing locale, en_US.UTF-8 used by default unless defined as something else here, UTF-8 should cover 99.99% of cases.
+  #      - LC_ALL=en_US.UTF-8
+  #
   #        Maximum height of screenshots, default is 16000 px, screenshots will be clipped to this if exceeded.
   #        RAM usage will be higher if you increase this.
   #      - SCREENSHOT_MAX_HEIGHT=16000
