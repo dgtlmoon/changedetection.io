@@ -774,6 +774,20 @@ class globalSettingsApplicationForm(commonSettingsForm):
                                                                                                      message="Should contain zero or more attempts")])
     ui = FormField(globalSettingsApplicationUIForm)
 
+    #@todo better validations?
+
+    custom_outofstock_strings = StringListField('Custom out-of-stock detection strings',
+                                              [validators.Optional()],
+                                              render_kw={
+                                                  "placeholder": "Enter custom out-of-stock strings, one per line\nExample:\nPronto estarán en stock!\nTemporarily out of stock",
+                                                  "rows": "3"})
+
+    custom_instock_strings = StringListField('Custom in-stock detection strings',
+                                           [validators.Optional()],
+                                           render_kw={
+                                               "placeholder": "Enter custom in-stock strings, one per line\nExample:\nDisponible ahora\nIn voorraad",
+                                               "rows": "3"})
+
 
 class globalSettingsForm(Form):
     # Define these as FormFields/"sub forms", this way it matches the JSON storage
