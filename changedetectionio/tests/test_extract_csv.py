@@ -46,7 +46,7 @@ def test_check_extract_text_from_diff(client, live_server, measure_memory_usage)
         follow_redirects=False
     )
 
-    assert b'Nothing matches that RegEx' not in res.data
+    assert b'No matches found while scanning all of the watch history for that RegEx.' not in res.data
     assert res.content_type == 'text/csv'
 
     # Read the csv reply as stringio

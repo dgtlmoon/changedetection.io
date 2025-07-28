@@ -639,7 +639,7 @@ class model(watch_base):
                     if res:
                         if not csv_writer:
                             # A file on the disk can be transferred much faster via flask than a string reply
-                            csv_output_filename = 'report.csv'
+                            csv_output_filename = f"report-{self.get('uuid')}.csv"
                             f = open(os.path.join(self.watch_data_dir, csv_output_filename), 'w')
                             # @todo some headers in the future
                             #fieldnames = ['Epoch seconds', 'Date']

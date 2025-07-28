@@ -93,12 +93,15 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             return redirect(url_for('watchlist.index'))
 
         # For submission of requesting an extract
-        extract_form = forms.extractDataForm(request.form)
+        extract_form = forms.extractDataForm(formdata=request.form,
+                                             data={'extract_regex': request.form.get('extract_regex', '')}
+                                             )
         if not extract_form.validate():
             flash("An error occurred, please see below.", "error")
+            return _render_diff_template(uuid, extract_form)
 
         else:
-            extract_regex = request.form.get('extract_regex').strip()
+            extract_regex = request.form.get('extract_regex', '').strip()
             output = watch.extract_regex_from_all_history(extract_regex)
             if output:
                 watch_dir = os.path.join(datastore.datastore_path, uuid)
@@ -109,12 +112,11 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 response.headers['Expires'] = "0"
                 return response
 
-            flash('Nothing matches that RegEx', 'error')
-        redirect(url_for('ui_views.diff_history_page', uuid=uuid) + '#extract')
+            flash('No matches found while scanning all of the watch history for that RegEx.', 'error')
+        return redirect(url_for('ui.ui_views.diff_history_page', uuid=uuid) + '#extract')
 
-    @views_blueprint.route("/diff/<string:uuid>", methods=['GET'])
-    @login_optionally_required
-    def diff_history_page(uuid):
+    def _render_diff_template(uuid, extract_form=None):
+        """Helper function to render the diff template with all required data"""
         from changedetectionio import forms
 
         # More for testing, possible to return the first/only
@@ -128,8 +130,11 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             flash("No history found for the specified link, bad link?", "error")
             return redirect(url_for('watchlist.index'))
 
-        # For submission of requesting an extract
-        extract_form = forms.extractDataForm(request.form)
+        # Use provided form or create a new one
+        if extract_form is None:
+            extract_form = forms.extractDataForm(formdata=request.form,
+                                                 data={'extract_regex': request.form.get('extract_regex', '')}
+                                                 )
 
         history = watch.history
         dates = list(history.keys())
@@ -170,7 +175,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         datastore.set_last_viewed(uuid, time.time())
 
-        output = render_template("diff.html",
+        return render_template("diff.html",
                                  current_diff_url=watch['url'],
                                  from_version=str(from_version),
                                  to_version=str(to_version),
@@ -193,7 +198,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                  watch_a=watch
                                  )
 
-        return output
+    @views_blueprint.route("/diff/<string:uuid>", methods=['GET'])
+    @login_optionally_required
+    def diff_history_page(uuid):
+        return _render_diff_template(uuid)
 
     @views_blueprint.route("/form/add/quickwatch", methods=['POST'])
     @login_optionally_required
