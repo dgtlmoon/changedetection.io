@@ -57,6 +57,9 @@
             {% endfor %}
             </tbody>
         </table>
+        <div style="margin-top: 20px;">
+            <a href="{{ url_for('tags.delete_all') }}" class="pure-button" onclick="return confirm('Are you sure you want to delete ALL groups/tags? This action cannot be undone.')" style="background: #dd4242; color: white;">Delete all groups</a>
+        </div>
     </div>
 </div>
 {% endblock %}

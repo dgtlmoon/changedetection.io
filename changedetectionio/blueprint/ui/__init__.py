@@ -191,6 +191,13 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
 
         return redirect(url_for('watchlist.index'))
 
+    @ui_blueprint.route("/delete_all_watches", methods=['GET'])
+    @login_optionally_required
+    def form_delete_all_watches():
+        datastore.delete('all')
+        flash('All watches deleted.')
+        return redirect(url_for('watchlist.index'))
+
     @ui_blueprint.route("/clone", methods=['GET'])
     @login_optionally_required
     def form_clone():
