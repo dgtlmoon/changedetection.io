@@ -2,7 +2,7 @@
 # Test that we can still build on Alpine (musl modified libc https://musl.libc.org/)
 # Some packages wont install via pypi because they dont have a wheel available under this architecture.
 
-FROM ghcr.io/linuxserver/baseimage-alpine:3.21
+FROM ghcr.io/linuxserver/baseimage-alpine:3.22
 ENV PYTHONUNBUFFERED=1
 
 COPY requirements.txt /requirements.txt
@@ -24,12 +24,13 @@ RUN \
   apk add --update --no-cache \
     libjpeg \
     libxslt \
+    file \
     nodejs \
     poppler-utils \
     python3 && \
   echo "**** pip3 install test of changedetection.io ****" && \
   python3 -m venv /lsiopy  && \
   pip install -U pip wheel setuptools && \
-  pip install -U --no-cache-dir --find-links https://wheel-index.linuxserver.io/alpine-3.21/ -r /requirements.txt && \
+  pip install -U --no-cache-dir --find-links https://wheel-index.linuxserver.io/alpine-3.22/ -r /requirements.txt && \
   apk del --purge \
     build-dependencies
