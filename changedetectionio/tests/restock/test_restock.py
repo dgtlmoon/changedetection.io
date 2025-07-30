@@ -111,3 +111,130 @@ def test_restock_detection(client, live_server, measure_memory_usage):
     res = client.get(url_for("watchlist.index"))
     assert b'not-in-stock' in res.data, "Correctly showing NOT IN STOCK in the list after it changed from IN STOCK"
 
+
+def test_restock_custom_strings(client, live_server):
+    """Test custom out-of-stock strings feature"""
+    
+    # Set up a response with custom out-of-stock text
+    test_return_data = """<html>
+       <body>
+       Some initial text<br>
+       <p>Which is across multiple lines</p>
+       <br>
+       So let's see what happens.  <br>
+       <div>price: $10.99</div>
+       <div id="custom">Pronto estarán en stock!</div>
+       </body>
+       </html>
+    """
+    
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write(test_return_data)
+    
+    test_url = url_for('test_endpoint', _external=True).replace('http://localhost', 'http://changedet')
+
+    # Add watch with custom out-of-stock strings
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": '', 'processor': 'restock_diff'},
+        follow_redirects=True
+    )
+    
+    # Get the UUID so we can configure the watch
+    uuid = extract_UUID_from_client(client)
+    
+    # Configure custom out-of-stock strings
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
+        data={
+            "url": test_url,
+            'processor': 'restock_diff',
+            'restock_settings-custom_outofstock_strings': 'Pronto estarán en stock!\nCustom unavailable message'
+        },
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+    
+    # Check that it detects as out of stock
+    wait_for_all_checks(client)
+    res = client.get(url_for("watchlist.index"))
+    assert b'not-in-stock' in res.data, "Should detect custom out-of-stock string"
+    
+    # Test custom in-stock strings by changing the content
+    test_return_data_instock = """<html>
+       <body>
+       Some initial text<br>
+       <p>Which is across multiple lines</p>
+       <br>
+       So let's see what happens.  <br>
+       <div>price: $10.99</div>
+       <div id="custom">Disponible ahora</div>
+       </body>
+       </html>
+    """
+    
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write(test_return_data_instock)
+    
+    # Update the watch to include custom in-stock strings
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
+        data={
+            "url": test_url,
+            'processor': 'restock_diff',
+            'restock_settings-custom_outofstock_strings': 'Pronto estarán en stock!\nCustom unavailable message',
+            'restock_settings-custom_instock_strings': 'Disponible ahora\nIn voorraad'
+        },
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+    
+    # Check again - should be detected as in stock now
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    res = client.get(url_for("watchlist.index"))
+    assert b'not-in-stock' not in res.data, "Should detect custom in-stock string and show as available"
+
+
+def test_restock_custom_strings_normalization(client, live_server):
+    """Test key normalization scenarios: accents, case, and spaces"""
+    
+    # Test page with Spanish text with accents and mixed case
+    test_return_data = """<html>
+       <body>
+       <div>price: $10.99</div>
+       <div id="status">¡TEMPORALMENTE    AGOTADO!</div>
+       </body>
+       </html>
+    """
+    
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write(test_return_data)
+    
+    test_url = url_for('test_endpoint', _external=True).replace('http://localhost', 'http://changedet')
+    
+    # Add watch
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": '', 'processor': 'restock_diff'},
+        follow_redirects=True
+    )
+    
+    uuid = extract_UUID_from_client(client)
+    
+    # Configure custom string without accents, lowercase, no extra spaces
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
+        data={
+            "url": test_url,
+            'processor': 'restock_diff',
+            'restock_settings-custom_outofstock_strings': 'temporalmente agotado'
+        },
+        follow_redirects=True
+    )
+    
+    # Should detect as out of stock despite text differences
+    wait_for_all_checks(client)
+    res = client.get(url_for("watchlist.index"))
+    assert b'not-in-stock' in res.data, "Should match despite accents, case, and spacing differences"
+
