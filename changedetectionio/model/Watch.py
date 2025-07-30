@@ -422,10 +422,31 @@ class model(watch_base):
         # False is not an option for AppRise, must be type None
         return None
 
+    def favicon_is_expired(self):
+        favicon_fname = self.get_favicon_filename()
+        import glob
+        import time
+
+        if not favicon_fname:
+            return True
+        try:
+            fname = next(iter(glob.glob(os.path.join(self.watch_data_dir, "favicon.*"))), None)
+            logger.trace(f"Favicon file maybe found at {fname}")
+            if os.path.isfile(fname):
+                file_age = int(time.time() - os.path.getmtime(fname))
+                logger.trace(f"Favicon file age is {file_age}s")
+                if file_age < FAVICON_RESAVE_THRESHOLD_SECONDS:
+                    return False
+        except Exception as e:
+            logger.critical(f"Exception checking Favicon age {str(e)}")
+            return True
+
+        # Also in the case that the file didnt exist
+        return True
+
     def bump_favicon(self, url, favicon_base_64: str) -> None:
         from urllib.parse import urlparse
         import base64
-        import time
         import binascii
         decoded = None
 
@@ -443,11 +464,6 @@ class model(watch_base):
             extension = "ico"
 
         fname = os.path.join(self.watch_data_dir, f"favicon.{extension}")
-        if os.path.isfile(fname):
-            m_age = int(time.time() - os.path.getmtime(fname))
-            if m_age < FAVICON_RESAVE_THRESHOLD_SECONDS:
-                logger.debug(f"UUID: {self.get('uuid')} Skipped FavIcon save {fname} is {m_age} < {FAVICON_RESAVE_THRESHOLD_SECONDS}")
-                return
 
         try:
             # validate=True makes sure the string only contains valid base64 chars
