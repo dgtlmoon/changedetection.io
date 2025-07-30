@@ -181,6 +181,9 @@ class fetcher(Fetcher):
 
         # more reliable is to just request a new page
         self.page = await browser.newPage()
+        
+        # Add console handler to capture console.log from favicon fetcher
+        #self.page.on('console', lambda msg: logger.debug(f"Browser console [{msg.type}]: {msg.text}"))
 
         if '--window-size' in self.browser_connection_url:
             # Be sure the viewport is always the window-size, this is often not the same thing
