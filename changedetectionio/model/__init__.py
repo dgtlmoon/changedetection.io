@@ -3,6 +3,7 @@ import uuid
 
 from changedetectionio import strtobool
 default_notification_format_for_watch = 'System default'
+CONDITIONS_MATCH_LOGIC_DEFAULT = 'ALL'
 
 class watch_base(dict):
 
@@ -15,6 +16,8 @@ class watch_base(dict):
             'body': None,
             'browser_steps': [],
             'browser_steps_last_error_step': None,
+            'conditions' : {},
+            'conditions_match_logic': CONDITIONS_MATCH_LOGIC_DEFAULT,
             'check_count': 0,
             'check_unique_lines': False,  # On change-detected, compare against all history if its something new
             'consecutive_filter_failures': 0,  # Every time the CSS/xPath filter cannot be located, reset when all is fine.

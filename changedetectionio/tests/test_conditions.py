@@ -4,6 +4,8 @@ import time
 
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
+from ..model import CONDITIONS_MATCH_LOGIC_DEFAULT
+
 
 def set_original_response(number="50"):
     test_return_data = f"""<html>
@@ -76,7 +78,7 @@ def test_conditions_with_text_and_number(client, live_server):
             "fetch_backend": "html_requests",
             "include_filters": ".number-container",
             "title": "Number AND Text Condition Test",
-            "conditions_match_logic": "ALL",  # ALL = AND logic
+            "conditions_match_logic": CONDITIONS_MATCH_LOGIC_DEFAULT,  # ALL = AND logic
             "conditions-0-operator": "in",
             "conditions-0-field": "page_filtered_text",
             "conditions-0-value": "5",
@@ -283,7 +285,7 @@ def test_lev_conditions_plugin(client, live_server, measure_memory_usage):
         data={
             "url": test_url,
             "fetch_backend": "html_requests",
-            "conditions_match_logic": "ALL",  # ALL = AND logic
+            "conditions_match_logic": CONDITIONS_MATCH_LOGIC_DEFAULT,  # ALL = AND logic
             "conditions-0-field": "levenshtein_ratio",
             "conditions-0-operator": "<",
             "conditions-0-value": "0.8" # needs to be more of a diff to trigger a change
