@@ -143,15 +143,17 @@ class fetcher(Fetcher):
             f.write(content)
 
     async def run(self,
-            url,
-            timeout,
-            request_headers,
-            request_body,
-            request_method,
-            ignore_status_codes=False,
-            current_include_filters=None,
-            is_binary=False,
-            empty_pages_are_a_change=False):
+                  fetch_favicon=True,
+                  current_include_filters=None,
+                  empty_pages_are_a_change=False,
+                  ignore_status_codes=False,
+                  is_binary=False,
+                  request_body=None,
+                  request_headers=None,
+                  request_method=None,
+                  timeout=None,
+                  url=None,
+                  ):
 
         from playwright.async_api import async_playwright
         import playwright._impl._errors
@@ -234,11 +236,12 @@ class fetcher(Fetcher):
                 await browser.close()
                 raise PageUnloadable(url=url, status_code=None, message=str(e))
 
-            try:
-                self.favicon_blob = await self.page.evaluate(FAVICON_FETCHER_JS)
-                await self.page.request_gc()
-            except Exception as e:
-                logger.error(f"Error fetching FavIcon info {str(e)}, continuing.")
+            if fetch_favicon:
+                try:
+                    self.favicon_blob = await self.page.evaluate(FAVICON_FETCHER_JS)
+                    await self.page.request_gc()
+                except Exception as e:
+                    logger.error(f"Error fetching FavIcon info {str(e)}, continuing.")
 
             if self.status_code != 200 and not ignore_status_codes:
                 screenshot = await capture_full_page_async(self.page)
