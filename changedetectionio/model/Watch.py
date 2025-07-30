@@ -14,6 +14,8 @@ from ..html_tools import TRANSLATE_WHITESPACE_TABLE
 # Allowable protocols, protects against javascript: etc
 # file:// is further checked by ALLOW_FILE_URI
 SAFE_PROTOCOL_REGEX='^(http|https|ftp|file):'
+FAVICON_RESAVE_THRESHOLD_SECONDS=86400
+
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
@@ -423,6 +425,7 @@ class model(watch_base):
     def bump_favicon(self, url, favicon_base_64: str) -> None:
         from urllib.parse import urlparse
         import base64
+        import time
         import binascii
         decoded = None
 
@@ -440,6 +443,11 @@ class model(watch_base):
             extension = "ico"
 
         fname = os.path.join(self.watch_data_dir, f"favicon.{extension}")
+        if os.path.isfile(fname):
+            m_age = int(time.time() - os.path.getmtime(fname))
+            if m_age < FAVICON_RESAVE_THRESHOLD_SECONDS:
+                logger.debug(f"UUID: {self.get('uuid')} Skipped FavIcon save {fname} is {m_age} < {FAVICON_RESAVE_THRESHOLD_SECONDS}")
+                return
 
         try:
             # validate=True makes sure the string only contains valid base64 chars
