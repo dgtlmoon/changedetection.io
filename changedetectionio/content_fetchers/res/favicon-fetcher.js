@@ -17,7 +17,8 @@
       return {
         size,
         rel: link.getAttribute('rel'),
-        href: link.href
+        href: link.href,
+        hasSizes: !!sizesStr
       };
     });
 
@@ -26,17 +27,31 @@
       icons.push({
         size: 16,
         rel: 'icon',
-        href: '/favicon.ico'
+        href: '/favicon.ico',
+        hasSizes: false
       });
     }
 
-    // sort preference
+    // sort preference: highest resolution first, then apple-touch-icon, then regular icons
     icons.sort((a, b) => {
+      // First priority: actual size (highest first)
+      if (a.size !== b.size) {
+        return b.size - a.size;
+      }
+      
+      // Second priority: apple-touch-icon over regular icon
       const isAppleA = /apple-touch-icon/.test(a.rel);
       const isAppleB = /apple-touch-icon/.test(b.rel);
       if (isAppleA && !isAppleB) return -1;
       if (!isAppleA && isAppleB) return 1;
-      return b.size - a.size;
+      
+      // Third priority: icons with no size attribute (fallback icons) last
+      const hasNoSizeA = !a.hasSizes;
+      const hasNoSizeB = !b.hasSizes;
+      if (hasNoSizeA && !hasNoSizeB) return 1;
+      if (!hasNoSizeA && hasNoSizeB) return -1;
+      
+      return 0;
     });
 
     const timeoutMs = 2000;
