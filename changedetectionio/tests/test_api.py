@@ -292,9 +292,7 @@ def test_access_denied(client, live_server, measure_memory_usage):
 
 def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
 
-    
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
-
     # Create a watch
     set_original_response()
     test_url = url_for('test_endpoint', _external=True)
@@ -302,14 +300,27 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
     # Create new
     res = client.post(
         url_for("createwatch"),
-        data=json.dumps({"url": test_url, 'tag': "One, Two", "title": "My test URL", 'headers': {'cookie': 'yum'} }),
+        data=json.dumps({"url": test_url,
+                         'tag': "One, Two",
+                         "title": "My test URL",
+                         'headers': {'cookie': 'yum'},
+                         "conditions": [
+                             {
+                                 "field": "page_filtered_text",
+                                 "operator": "contains_regex",
+                                 "value": "."  # contains anything
+                             }
+                         ],
+                         "conditions_match_logic": "ALL"
+                         }
+                        ),
         headers={'content-type': 'application/json', 'x-api-key': api_key},
         follow_redirects=True
     )
 
     assert res.status_code == 201
 
-
+    wait_for_all_checks(client)
     # Get a listing, it will be the first one
     res = client.get(
         url_for("createwatch"),
