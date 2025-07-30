@@ -1,4 +1,5 @@
 from changedetectionio.conditions import execute_ruleset_against_all_plugins
+from changedetectionio.model import CONDITIONS_MATCH_LOGIC_DEFAULT
 from changedetectionio.store import ChangeDetectionStore
 import shutil
 import tempfile
@@ -59,7 +60,7 @@ class TestTriggerConditions(unittest.TestCase):
 
         self.store.data['watching'][self.watch_uuid].update(
             {
-                "conditions_match_logic": "ALL",
+                "conditions_match_logic": CONDITIONS_MATCH_LOGIC_DEFAULT,
                 "conditions": [
                     {"operator": ">=", "field": "extracted_number", "value": "10"},
                     {"operator": "<=", "field": "extracted_number", "value": "5000"},
