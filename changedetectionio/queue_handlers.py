@@ -11,7 +11,7 @@ except ImportError:
     raise
 
 
-class ReliablePriorityQueue:
+class RecheckPriorityQueue:
     """
     Ultra-reliable priority queue using janus for async/sync bridging.
     
@@ -34,9 +34,9 @@ class ReliablePriorityQueue:
             # Signals for UI updates
             self.queue_length_signal = signal('queue_length')
             
-            logger.debug("ReliablePriorityQueue initialized successfully")
+            logger.debug("RecheckPriorityQueue initialized successfully")
         except Exception as e:
-            logger.critical(f"CRITICAL: Failed to initialize ReliablePriorityQueue: {e}")
+            logger.critical(f"CRITICAL: Failed to initialize RecheckPriorityQueue: {e}")
             raise
     
     # SYNC INTERFACE (for ticker thread)
@@ -161,9 +161,9 @@ class ReliablePriorityQueue:
         """Close the janus queue"""
         try:
             self._janus_queue.close()
-            logger.debug("ReliablePriorityQueue closed successfully")
+            logger.debug("RecheckPriorityQueue closed successfully")
         except Exception as e:
-            logger.critical(f"CRITICAL: Failed to close ReliablePriorityQueue: {e}")
+            logger.critical(f"CRITICAL: Failed to close RecheckPriorityQueue: {e}")
     
     # COMPATIBILITY METHODS (from original implementation)
     @property
@@ -318,7 +318,7 @@ class ReliablePriorityQueue:
             logger.critical(f"CRITICAL: Failed to emit get signals: {e}")
 
 
-class ReliableNotificationQueue:
+class NotificationQueue:
     """
     Ultra-reliable notification queue using pure janus.
     
@@ -331,9 +331,9 @@ class ReliableNotificationQueue:
             self.sync_q = self._janus_queue.sync_q
             self.async_q = self._janus_queue.async_q
             self.notification_event_signal = signal('notification_event')
-            logger.debug("ReliableNotificationQueue initialized successfully")
+            logger.debug("NotificationQueue initialized successfully")
         except Exception as e:
-            logger.critical(f"CRITICAL: Failed to initialize ReliableNotificationQueue: {e}")
+            logger.critical(f"CRITICAL: Failed to initialize NotificationQueue: {e}")
             raise
     
     def put(self, item: Dict[str, Any], block: bool = True, timeout: Optional[float] = None):
@@ -390,9 +390,9 @@ class ReliableNotificationQueue:
         """Close the janus queue"""
         try:
             self._janus_queue.close()
-            logger.debug("ReliableNotificationQueue closed successfully")
+            logger.debug("NotificationQueue closed successfully")
         except Exception as e:
-            logger.critical(f"CRITICAL: Failed to close ReliableNotificationQueue: {e}")
+            logger.critical(f"CRITICAL: Failed to close NotificationQueue: {e}")
     
     def _emit_notification_signal(self, item: Dict[str, Any]):
         """Emit notification signal"""

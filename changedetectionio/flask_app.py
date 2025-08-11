@@ -12,7 +12,7 @@ from blinker import signal
 
 from changedetectionio.strtobool import strtobool
 from threading import Event
-from changedetectionio.queue_handlers import ReliablePriorityQueue, ReliableNotificationQueue
+from changedetectionio.queue_handlers import RecheckPriorityQueue, NotificationQueue
 from changedetectionio import worker_handler
 
 from flask import (
@@ -49,8 +49,8 @@ ticker_thread = None
 extra_stylesheets = []
 
 # Use bulletproof janus-based queues for sync/async reliability  
-update_q = ReliablePriorityQueue()
-notification_q = ReliableNotificationQueue()
+update_q = RecheckPriorityQueue()
+notification_q = NotificationQueue()
 MAX_QUEUE_SIZE = 2000
 
 app = Flask(__name__,
