@@ -15,17 +15,32 @@ class RecheckPriorityQueue:
     """
     Ultra-reliable priority queue using janus for async/sync bridging.
     
+    CRITICAL DESIGN NOTE: Both sync_q and async_q are required because:
+    - sync_q: Used by Flask routes, ticker threads, and other synchronous code
+    - async_q: Used by async workers and coroutines
+    
+    DO NOT REMOVE EITHER INTERFACE - they bridge different execution contexts:
+    - Synchronous code (Flask, threads) cannot use async methods without blocking
+    - Async code cannot use sync methods without blocking the event loop
+    - janus provides the only safe bridge between these two worlds
+    
+    Attempting to unify to async-only would require:
+    - Converting all Flask routes to async (major breaking change)
+    - Using asyncio.run() in sync contexts (causes deadlocks)
+    - Thread-pool wrapping (adds complexity and overhead)
+    
     Minimal implementation focused on reliability:
     - Pure janus for sync/async bridge
-    - Thread-safe priority ordering
+    - Thread-safe priority ordering  
     - Bulletproof error handling with critical logging
     """
     
     def __init__(self, maxsize: int = 0):
         try:
             self._janus_queue = janus.Queue(maxsize=maxsize)
-            self.sync_q = self._janus_queue.sync_q  # For sync contexts (ticker)
-            self.async_q = self._janus_queue.async_q  # For async contexts (workers)
+            # BOTH interfaces required - see class docstring for why
+            self.sync_q = self._janus_queue.sync_q   # Flask routes, ticker thread
+            self.async_q = self._janus_queue.async_q # Async workers
             
             # Priority storage - thread-safe
             self._priority_items = []
@@ -322,14 +337,22 @@ class NotificationQueue:
     """
     Ultra-reliable notification queue using pure janus.
     
+    CRITICAL DESIGN NOTE: Both sync_q and async_q are required because:
+    - sync_q: Used by Flask routes, ticker threads, and other synchronous code
+    - async_q: Used by async workers and coroutines
+    
+    DO NOT REMOVE EITHER INTERFACE - they bridge different execution contexts.
+    See RecheckPriorityQueue docstring above for detailed explanation.
+    
     Simple wrapper around janus with bulletproof error handling.
     """
     
     def __init__(self, maxsize: int = 0):
         try:
             self._janus_queue = janus.Queue(maxsize=maxsize)
-            self.sync_q = self._janus_queue.sync_q
-            self.async_q = self._janus_queue.async_q
+            # BOTH interfaces required - see class docstring for why
+            self.sync_q = self._janus_queue.sync_q   # Flask routes, threads
+            self.async_q = self._janus_queue.async_q # Async workers
             self.notification_event_signal = signal('notification_event')
             logger.debug("NotificationQueue initialized successfully")
         except Exception as e:
