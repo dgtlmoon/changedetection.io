@@ -12,7 +12,7 @@ from blinker import signal
 
 from changedetectionio.strtobool import strtobool
 from threading import Event
-from changedetectionio.custom_queue import SignalPriorityQueue, AsyncSignalPriorityQueue, NotificationQueue
+from changedetectionio.queue_handlers import RecheckPriorityQueue, NotificationQueue
 from changedetectionio import worker_handler
 
 from flask import (
@@ -48,8 +48,8 @@ datastore = None
 ticker_thread = None
 extra_stylesheets = []
 
-# Use async queue by default, keep sync for backward compatibility  
-update_q = AsyncSignalPriorityQueue() if worker_handler.USE_ASYNC_WORKERS else SignalPriorityQueue()
+# Use bulletproof janus-based queues for sync/async reliability  
+update_q = RecheckPriorityQueue()
 notification_q = NotificationQueue()
 MAX_QUEUE_SIZE = 2000
 
@@ -844,16 +844,22 @@ def ticker_thread_check_time_launch_checks():
 
                     # Use Epoch time as priority, so we get a "sorted" PriorityQueue, but we can still push a priority 1 into it.
                     priority = int(time.time())
-                    logger.debug(
-                        f"> Queued watch UUID {uuid} "
-                        f"last checked at {watch['last_checked']} "
-                        f"queued at {now:0.2f} priority {priority} "
-                        f"jitter {watch.jitter_seconds:0.2f}s, "
-                        f"{now - watch['last_checked']:0.2f}s since last checked")
 
                     # Into the queue with you
-                    worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=priority, item={'uuid': uuid}))
-
+                    queued_successfully = worker_handler.queue_item_async_safe(update_q,
+                                                                               queuedWatchMetaData.PrioritizedItem(priority=priority,
+                                                                                                                   item={'uuid': uuid})
+                                                                               )
+                    if queued_successfully:
+                        logger.debug(
+                            f"> Queued watch UUID {uuid} "
+                            f"last checked at {watch['last_checked']} "
+                            f"queued at {now:0.2f} priority {priority} "
+                            f"jitter {watch.jitter_seconds:0.2f}s, "
+                            f"{now - watch['last_checked']:0.2f}s since last checked")
+                    else:
+                        logger.critical(f"CRITICAL: Failed to queue watch UUID {uuid} in ticker thread!")
+                        
                     # Reset for next time
                     watch.jitter_seconds = 0
 

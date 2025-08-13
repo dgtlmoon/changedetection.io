@@ -7,6 +7,7 @@ from changedetectionio.flask_app import watch_check_update
 import asyncio
 import importlib
 import os
+import queue
 import time
 
 from loguru import logger
@@ -37,13 +38,23 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
         watch = None
 
         try:
-            # Use asyncio wait_for to make queue.get() cancellable
-            queued_item_data = await asyncio.wait_for(q.get(), timeout=1.0)
+            # Use native janus async interface - no threads needed!
+            queued_item_data = await asyncio.wait_for(q.async_get(), timeout=1.0)
+            
         except asyncio.TimeoutError:
             # No jobs available, continue loop
             continue
         except Exception as e:
-            logger.error(f"Worker {worker_id} error getting queue item: {e}")
+            logger.critical(f"CRITICAL: Worker {worker_id} failed to get queue item: {type(e).__name__}: {e}")
+            
+            # Log queue health for debugging
+            try:
+                queue_size = q.qsize()
+                is_empty = q.empty()
+                logger.critical(f"CRITICAL: Worker {worker_id} queue health - size: {queue_size}, empty: {is_empty}")
+            except Exception as health_e:
+                logger.critical(f"CRITICAL: Worker {worker_id} queue health check failed: {health_e}")
+            
             await asyncio.sleep(0.1)
             continue
         
