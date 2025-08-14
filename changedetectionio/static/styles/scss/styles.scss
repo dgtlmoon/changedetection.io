@@ -424,13 +424,14 @@ label {
     display: none;
   }
 
-  legend {
+  legend, details summary {
     color: var(--color-text-legend);
     font-weight: bold;
   }
 
 
   #watch-add-wrapper-zone {
+    margin-top: 10px;
     @media only screen and (min-width: 760px) {
       display: flex;
       gap: 0.3rem;
