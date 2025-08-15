@@ -14,6 +14,8 @@ from ..html_tools import TRANSLATE_WHITESPACE_TABLE
 # Allowable protocols, protects against javascript: etc
 # file:// is further checked by ALLOW_FILE_URI
 SAFE_PROTOCOL_REGEX='^(http|https|ftp|file):'
+FAVICON_RESAVE_THRESHOLD_SECONDS=86400
+
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
@@ -419,6 +421,28 @@ class model(watch_base):
 
         # False is not an option for AppRise, must be type None
         return None
+
+    def favicon_is_expired(self):
+        favicon_fname = self.get_favicon_filename()
+        import glob
+        import time
+
+        if not favicon_fname:
+            return True
+        try:
+            fname = next(iter(glob.glob(os.path.join(self.watch_data_dir, "favicon.*"))), None)
+            logger.trace(f"Favicon file maybe found at {fname}")
+            if os.path.isfile(fname):
+                file_age = int(time.time() - os.path.getmtime(fname))
+                logger.trace(f"Favicon file age is {file_age}s")
+                if file_age < FAVICON_RESAVE_THRESHOLD_SECONDS:
+                    return False
+        except Exception as e:
+            logger.critical(f"Exception checking Favicon age {str(e)}")
+            return True
+
+        # Also in the case that the file didnt exist
+        return True
 
     def bump_favicon(self, url, favicon_base_64: str) -> None:
         from urllib.parse import urlparse

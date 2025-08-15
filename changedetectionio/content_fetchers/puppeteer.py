@@ -145,15 +145,16 @@ class fetcher(Fetcher):
     #         f.write(content)
 
     async def fetch_page(self,
-                         url,
-                         timeout,
-                         request_headers,
-                         request_body,
-                         request_method,
-                         ignore_status_codes,
                          current_include_filters,
+                         empty_pages_are_a_change,
+                         fetch_favicon,
+                         ignore_status_codes,
                          is_binary,
-                         empty_pages_are_a_change
+                         request_body,
+                         request_headers,
+                         request_method,
+                         timeout,
+                         url,
                          ):
         import re
         self.delete_browser_steps_screenshots()
@@ -181,6 +182,9 @@ class fetcher(Fetcher):
 
         # more reliable is to just request a new page
         self.page = await browser.newPage()
+        
+        # Add console handler to capture console.log from favicon fetcher
+        #self.page.on('console', lambda msg: logger.debug(f"Browser console [{msg.type}]: {msg.text}"))
 
         if '--window-size' in self.browser_connection_url:
             # Be sure the viewport is always the window-size, this is often not the same thing
@@ -290,10 +294,11 @@ class fetcher(Fetcher):
             await browser.close()
             raise PageUnloadable(url=url, status_code=None, message=str(e))
 
-        try:
-            self.favicon_blob = await self.page.evaluate(FAVICON_FETCHER_JS)
-        except Exception as e:
-            logger.error(f"Error fetching FavIcon info {str(e)}, continuing.")
+        if fetch_favicon:
+            try:
+                self.favicon_blob = await self.page.evaluate(FAVICON_FETCHER_JS)
+            except Exception as e:
+                logger.error(f"Error fetching FavIcon info {str(e)}, continuing.")
 
         if self.status_code != 200 and not ignore_status_codes:
             screenshot = await capture_full_page(page=self.page)
@@ -346,8 +351,18 @@ class fetcher(Fetcher):
     async def main(self, **kwargs):
         await self.fetch_page(**kwargs)
 
-    async def run(self, url, timeout, request_headers, request_body, request_method, ignore_status_codes=False,
-            current_include_filters=None, is_binary=False, empty_pages_are_a_change=False):
+    async def run(self,
+                  fetch_favicon=True,
+                  current_include_filters=None,
+                  empty_pages_are_a_change=False,
+                  ignore_status_codes=False,
+                  is_binary=False,
+                  request_body=None,
+                  request_headers=None,
+                  request_method=None,
+                  timeout=None,
+                  url=None,
+                  ):
 
         #@todo make update_worker async which could run any of these content_fetchers within memory and time constraints
         max_time = int(os.getenv('PUPPETEER_MAX_PROCESSING_TIMEOUT_SECONDS', 180))
@@ -355,16 +370,17 @@ class fetcher(Fetcher):
         # Now we run this properly in async context since we're called from async worker
         try:
             await asyncio.wait_for(self.main(
-                url=url,
-                timeout=timeout,
-                request_headers=request_headers,
-                request_body=request_body,
-                request_method=request_method,
-                ignore_status_codes=ignore_status_codes,
                 current_include_filters=current_include_filters,
+                empty_pages_are_a_change=empty_pages_are_a_change,
+                fetch_favicon=fetch_favicon,
+                ignore_status_codes=ignore_status_codes,
                 is_binary=is_binary,
-                empty_pages_are_a_change=empty_pages_are_a_change
-            ), timeout=max_time)
+                request_body=request_body,
+                request_headers=request_headers,
+                request_method=request_method,
+                timeout=timeout,
+                url=url,
+            ), timeout=max_time
+            )
         except asyncio.TimeoutError:
-            raise(BrowserFetchTimedOut(msg=f"Browser connected but was unable to process the page in {max_time} seconds."))
-
+            raise (BrowserFetchTimedOut(msg=f"Browser connected but was unable to process the page in {max_time} seconds."))

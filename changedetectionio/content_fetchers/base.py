@@ -70,15 +70,17 @@ class Fetcher():
 
     @abstractmethod
     async def run(self,
-            url,
-            timeout,
-            request_headers,
-            request_body,
-            request_method,
-            ignore_status_codes=False,
-            current_include_filters=None,
-            is_binary=False,
-            empty_pages_are_a_change=False):
+                  fetch_favicon=True,
+                  current_include_filters=None,
+                  empty_pages_are_a_change=False,
+                  ignore_status_codes=False,
+                  is_binary=False,
+                  request_body=None,
+                  request_headers=None,
+                  request_method=None,
+                  timeout=None,
+                  url=None,
+                  ):
         # Should set self.error, self.status_code and self.content
         pass
 
