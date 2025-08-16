@@ -7,8 +7,8 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "watch": "sass --watch scss:. --no-source-map",
-    "build": "sass scss:. --no-source-map"
+    "watch": "sass --watch scss:. --style=compressed --no-source-map",
+    "build": "sass scss:. --style=compressed --no-source-map"
   },
   "author": "Leigh Morresi / Web Technologies s.r.o.",
   "license": "Apache",
