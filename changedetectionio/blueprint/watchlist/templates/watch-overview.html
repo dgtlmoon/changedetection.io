@@ -22,25 +22,25 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="box" id="form-quick-watch-add">
 
     <form class="pure-form" action="{{ url_for('ui.ui_views.form_quick_watch_add', tag=active_tag_uuid) }}" method="POST" id="new-watch-form">
-    <details>
-        <summary style="text-align: center;">Add a web page change detection watch</summary>
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
-        <fieldset>
-            <div id="watch-add-wrapper-zone">
-                    {{ render_nolabel_field(form.url, placeholder="https://...", required=true) }}
-                    {{ render_nolabel_field(form.watch_submit_button, title="Watch this URL!" ) }}
-                    {{ render_nolabel_field(form.edit_and_watch_submit_button, title="Edit first then Watch") }}
-            </div>
-            <div id="watch-group-tag">
-               {{ render_field(form.tags, value=active_tag.title if active_tag_uuid else '', placeholder="Watch group / tag", class="transparent-field") }}
-            </div>
-            <div id="quick-watch-processor-type">
-                {{ render_simple_field(form.processor) }}
-            </div>
+        <details id="foldout-details">
+            <summary style="text-align: center;">Add a web page change detection watch</summary>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
+            <fieldset>
+                <div id="watch-add-wrapper-zone">
+                        {{ render_nolabel_field(form.url, placeholder="https://...", required=true) }}
+                        {{ render_nolabel_field(form.watch_submit_button, title="Watch this URL!" ) }}
+                        {{ render_nolabel_field(form.edit_and_watch_submit_button, title="Edit first then Watch") }}
+                </div>
+                <div id="watch-group-tag">
+                {{ render_field(form.tags, value=active_tag.title if active_tag_uuid else '', placeholder="Watch group / tag", class="transparent-field") }}
+                </div>
+                <div id="quick-watch-processor-type">
+                    {{ render_simple_field(form.processor) }}
+                </div>
 
-        </fieldset>
-        <span style="color:#eee; font-size: 80%;"><img alt="Create a shareable link" style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread-white.svg')}}" > Tip: You can also add 'shared' watches. <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Sharing-a-Watch">More info</a></span>
-    </details> 
+            </fieldset>
+            <span style="color:#eee; font-size: 80%;"><img alt="Create a shareable link" style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread-white.svg')}}" > Tip: You can also add 'shared' watches. <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Sharing-a-Watch">More info</a></span>
+        </details> 
     </form>
 </div>
 <div class="box">
