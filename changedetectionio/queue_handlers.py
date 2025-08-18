@@ -17,7 +17,7 @@ class RecheckPriorityQueue:
     
     CRITICAL DESIGN NOTE: Both sync_q and async_q are required because:
     - sync_q: Used by Flask routes, ticker threads, and other synchronous code
-    - async_q: Used by async workers and coroutines
+    - async_q: Used by async workers (the actual fetchers/processors) and coroutines
     
     DO NOT REMOVE EITHER INTERFACE - they bridge different execution contexts:
     - Synchronous code (Flask, threads) cannot use async methods without blocking
