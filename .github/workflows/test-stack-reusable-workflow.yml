@@ -20,7 +20,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Mainly just for link/flake8
       - name: Set up Python ${{ env.PYTHON_VERSION }}
