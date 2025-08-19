@@ -47,7 +47,7 @@ class Tag(Resource):
             for k in sorted(self.datastore.data['watching'].items(), key=lambda item: item[1].get('last_checked', 0)):
                 watch_uuid = k[0]
                 watch = k[1]
-                if not watch['paused'] and tag not in watch['tags']:
+                if not watch['paused'] and tag['uuid'] not in watch['tags']:
                     continue
                 worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
                 i+=1
