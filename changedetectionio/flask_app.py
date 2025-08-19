@@ -326,7 +326,7 @@ def changedetection_app(config=None, datastore_o=None):
                            resource_class_kwargs={'datastore': datastore})
 
     watch_api.add_resource(Tags, '/api/v1/tags',
-                           resource_class_kwargs={'datastore': datastore})
+                           resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
 
     watch_api.add_resource(Tag, '/api/v1/tag', '/api/v1/tag/<string:uuid>',
                            resource_class_kwargs={'datastore': datastore})
