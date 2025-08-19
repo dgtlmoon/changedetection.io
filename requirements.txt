@@ -7,6 +7,7 @@ flask-paginate
 flask_expects_json~=1.7
 flask_restful
 flask_cors # For the Chrome extension to operate
+janus # Thread-safe async/sync queue bridge
 flask_wtf~=1.2
 flask~=2.3
 flask-socketio~=5.5.1
@@ -45,7 +46,7 @@ apprise==1.9.3
 paho-mqtt!=2.0.*
 
 # Requires extra wheel for rPi
-cryptography~=42.0.8
+#cryptography~=42.0.8
 
 # Used for CSS filtering
 beautifulsoup4>=4.0.0
