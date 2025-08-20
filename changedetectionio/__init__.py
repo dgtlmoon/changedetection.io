@@ -2,7 +2,7 @@
 
 # Read more https://github.com/dgtlmoon/changedetection.io/wiki
 
-__version__ = '0.50.8'
+__version__ = '0.50.10'
 
 from changedetectionio.strtobool import strtobool
 from json.decoder import JSONDecodeError
@@ -35,12 +35,21 @@ def sigshutdown_handler(_signo, _stack_frame):
     app.config.exit.set()
     datastore.stop_thread = True
     
-    # Shutdown workers immediately
+    # Shutdown workers and queues immediately
     try:
         from changedetectionio import worker_handler
         worker_handler.shutdown_workers()
     except Exception as e:
         logger.error(f"Error shutting down workers: {str(e)}")
+    
+    # Close janus queues properly
+    try:
+        from changedetectionio.flask_app import update_q, notification_q
+        update_q.close()
+        notification_q.close()
+        logger.debug("Janus queues closed successfully")
+    except Exception as e:
+        logger.critical(f"CRITICAL: Failed to close janus queues: {e}")
     
     # Shutdown socketio server fast
     from changedetectionio.flask_app import socketio_server

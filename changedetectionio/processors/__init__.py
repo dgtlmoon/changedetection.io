@@ -146,18 +146,19 @@ class difference_detection_processor():
 
         # And here we go! call the right browser with browser-specific settings
         empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
-
         # All fetchers are now async
-        await self.fetcher.run(url=url,
-                               timeout=timeout,
-                               request_headers=request_headers,
-                               request_body=request_body,
-                               request_method=request_method,
-                               ignore_status_codes=ignore_status_codes,
-                               current_include_filters=self.watch.get('include_filters'),
-                               is_binary=is_binary,
-                               empty_pages_are_a_change=empty_pages_are_a_change
-                               )
+        await self.fetcher.run(
+            current_include_filters=self.watch.get('include_filters'),
+            empty_pages_are_a_change=empty_pages_are_a_change,
+            fetch_favicon=self.watch.favicon_is_expired(),
+            ignore_status_codes=ignore_status_codes,
+            is_binary=is_binary,
+            request_body=request_body,
+            request_headers=request_headers,
+            request_method=request_method,
+            timeout=timeout,
+            url=url,
+       )
 
         #@todo .quit here could go on close object, so we can run JS if change-detected
         self.fetcher.quit(watch=self.watch)
