@@ -7,7 +7,7 @@ from changedetectionio.content_fetchers.base import Fetcher
 
 class fetcher(Fetcher):
     if os.getenv("WEBDRIVER_URL"):
-        fetcher_description = f"WebDriver Chrome/Javascript via '{os.getenv("WEBDRIVER_URL", '')}'"
+        fetcher_description = f"WebDriver Chrome/Javascript via \"{os.getenv('WEBDRIVER_URL', '')}\""
     else:
         fetcher_description = "WebDriver Chrome/Javascript"
 
