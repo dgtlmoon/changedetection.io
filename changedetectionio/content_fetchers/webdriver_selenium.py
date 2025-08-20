@@ -4,9 +4,10 @@ import time
 from loguru import logger
 from changedetectionio.content_fetchers.base import Fetcher
 
+
 class fetcher(Fetcher):
     if os.getenv("WEBDRIVER_URL"):
-        fetcher_description = "WebDriver Chrome/Javascript via '{}'".format(os.getenv("WEBDRIVER_URL"))
+        fetcher_description = f"WebDriver Chrome/Javascript via '{os.getenv("WEBDRIVER_URL", '')}'"
     else:
         fetcher_description = "WebDriver Chrome/Javascript"
 
@@ -25,7 +26,6 @@ class fetcher(Fetcher):
             self.browser_connection_is_custom = True
             self.browser_connection_url = custom_browser_connection_url
 
-
         ##### PROXY SETUP #####
 
         proxy_sources = [
@@ -38,7 +38,7 @@ class fetcher(Fetcher):
             os.getenv('webdriver_proxyHttps'),
             os.getenv('webdriver_httpsProxy'),
             os.getenv('webdriver_sslProxy'),
-            proxy_override, # last one should override
+            proxy_override,  # last one should override
         ]
         # The built in selenium proxy handling is super unreliable!!! so we just grab which ever proxy setting we can find and throw it in --proxy-server=
         for k in filter(None, proxy_sources):
@@ -46,20 +46,21 @@ class fetcher(Fetcher):
                 continue
             self.proxy_url = k.strip()
 
-
     async def run(self,
-            url,
-            timeout,
-            request_headers,
-            request_body,
-            request_method,
-            ignore_status_codes=False,
-            current_include_filters=None,
-            is_binary=False,
-            empty_pages_are_a_change=False):
+                  fetch_favicon=True,
+                  current_include_filters=None,
+                  empty_pages_are_a_change=False,
+                  ignore_status_codes=False,
+                  is_binary=False,
+                  request_body=None,
+                  request_headers=None,
+                  request_method=None,
+                  timeout=None,
+                  url=None,
+                  ):
 
         import asyncio
-        
+
         # Wrap the entire selenium operation in a thread executor
         def _run_sync():
             from selenium.webdriver.chrome.options import Options as ChromeOptions
@@ -140,4 +141,3 @@ class fetcher(Fetcher):
         # Run the selenium operations in a thread pool to avoid blocking the event loop
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, _run_sync)
-
