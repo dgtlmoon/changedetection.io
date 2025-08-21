@@ -18,7 +18,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Watch_uuid could be unset in the case it`s used in tag editor, global settings
         import apprise
         import queue
-        from changedetectionio.update_worker import update_worker
+        from changedetectionio.notification_service import NotificationService
         from changedetectionio.notification.apprise_plugin.assets import apprise_asset
         from changedetectionio.notification.apprise_plugin.custom_handlers import apprise_http_custom_handler
 
@@ -96,15 +96,20 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             # Create a temporary notification queue for this test
             notification_q = queue.Queue()
             
-            # Create a temporary update_worker instance just for using queue_notification_for_watch
-            worker = update_worker(queue.Queue(), notification_q, None, datastore)
+            # Create notification service directly
+            notification_service = NotificationService(datastore, notification_q)
             
-            # Use queue_notification_for_watch to process the notification with all tokens
-            worker.queue_notification_for_watch(notification_q, n_object, watch)
+            # Use the service to queue the notification with all tokens
+            notification_service.queue_notification_for_watch(n_object, watch)
             
-            # Get the notification from the queue and process it
+            # Get all notifications from the queue and process them
             from changedetectionio.notification.handler import process_notification
-            sent_obj = process_notification(notification_q.get(), datastore)
+            while not notification_q.empty():
+                try:
+                    notification_obj = notification_q.get_nowait()
+                    sent_obj = process_notification(notification_obj, datastore)
+                except queue.Empty:
+                    break
 
         except Exception as e:
             e_str = str(e)
