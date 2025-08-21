@@ -27,7 +27,7 @@ class difference_detection_processor():
         # Generic fetcher that should be extended (requests, playwright etc)
         self.fetcher = Fetcher()
 
-    def call_browser(self, preferred_proxy_id=None):
+    async def call_browser(self, preferred_proxy_id=None):
 
         from requests.structures import CaseInsensitiveDict
 
@@ -89,7 +89,7 @@ class difference_detection_processor():
                 proxy_url = self.datastore.proxy_list.get(preferred_proxy_id).get('url')
                 logger.debug(f"Selected proxy key '{preferred_proxy_id}' as proxy URL '{proxy_url}' for {url}")
             else:
-                logger.debug(f"Skipping adding proxy data when custom Browser endpoint is specified. ")
+                logger.debug("Skipping adding proxy data when custom Browser endpoint is specified. ")
 
         # Now call the fetcher (playwright/requests/etc) with arguments that only a fetcher would need.
         # When browser_connection_url is None, it method should default to working out whats the best defaults (os env vars etc)
@@ -146,17 +146,19 @@ class difference_detection_processor():
 
         # And here we go! call the right browser with browser-specific settings
         empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
-
-        self.fetcher.run(url=url,
-                         timeout=timeout,
-                         request_headers=request_headers,
-                         request_body=request_body,
-                         request_method=request_method,
-                         ignore_status_codes=ignore_status_codes,
-                         current_include_filters=self.watch.get('include_filters'),
-                         is_binary=is_binary,
-                         empty_pages_are_a_change=empty_pages_are_a_change
-                         )
+        # All fetchers are now async
+        await self.fetcher.run(
+            current_include_filters=self.watch.get('include_filters'),
+            empty_pages_are_a_change=empty_pages_are_a_change,
+            fetch_favicon=self.watch.favicon_is_expired(),
+            ignore_status_codes=ignore_status_codes,
+            is_binary=is_binary,
+            request_body=request_body,
+            request_headers=request_headers,
+            request_method=request_method,
+            timeout=timeout,
+            url=url,
+       )
 
         #@todo .quit here could go on close object, so we can run JS if change-detected
         self.fetcher.quit(watch=self.watch)

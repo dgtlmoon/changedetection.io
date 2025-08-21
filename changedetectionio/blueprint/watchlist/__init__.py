@@ -72,31 +72,32 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                 per_page=datastore.data['settings']['application'].get('pager_size', 50), css_framework="semantic")
 
         sorted_tags = sorted(datastore.data['settings']['application'].get('tags').items(), key=lambda x: x[1]['title'])
+
         output = render_template(
             "watch-overview.html",
-                                 active_tag=active_tag,
-                                 active_tag_uuid=active_tag_uuid,
-                                 app_rss_token=datastore.data['settings']['application'].get('rss_access_token'),
-                                 datastore=datastore,
-                                 errored_count=errored_count,
-                                 form=form,
-                                 guid=datastore.data['app_guid'],
-                                 has_proxies=datastore.proxy_list,
-                                 has_unviewed=datastore.has_unviewed,
-                                 hosted_sticky=os.getenv("SALTED_PASS", False) == False,
-                                 now_time_server=time.time(),
-                                 pagination=pagination,
-                                 queued_uuids=[q_uuid.item['uuid'] for q_uuid in update_q.queue],
-                                 search_q=request.args.get('q', '').strip(),
-                                 sort_attribute=request.args.get('sort') if request.args.get('sort') else request.cookies.get('sort'),
-                                 sort_order=request.args.get('order') if request.args.get('order') else request.cookies.get('order'),
-                                 system_default_fetcher=datastore.data['settings']['application'].get('fetch_backend'),
-                                 tags=sorted_tags,
-                                 watches=sorted_watches
-                                 )
+            active_tag=active_tag,
+            active_tag_uuid=active_tag_uuid,
+            app_rss_token=datastore.data['settings']['application'].get('rss_access_token'),
+            datastore=datastore,
+            errored_count=errored_count,
+            form=form,
+            guid=datastore.data['app_guid'],
+            has_proxies=datastore.proxy_list,
+            has_unviewed=datastore.has_unviewed,
+            hosted_sticky=os.getenv("SALTED_PASS", False) == False,
+            now_time_server=round(time.time()),
+            pagination=pagination,
+            queued_uuids=[q_uuid.item['uuid'] for q_uuid in update_q.queue],
+            search_q=request.args.get('q', '').strip(),
+            sort_attribute=request.args.get('sort') if request.args.get('sort') else request.cookies.get('sort'),
+            sort_order=request.args.get('order') if request.args.get('order') else request.cookies.get('order'),
+            system_default_fetcher=datastore.data['settings']['application'].get('fetch_backend'),
+            tags=sorted_tags,
+            watches=sorted_watches
+        )
 
         if session.get('share-link'):
-            del(session['share-link'])
+            del (session['share-link'])
 
         resp = make_response(output)
 

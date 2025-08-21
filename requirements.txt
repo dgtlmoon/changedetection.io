@@ -1,4 +1,4 @@
-eventlet>=0.38.0
+# eventlet>=0.38.0  # Removed - replaced with threading mode for better Python 3.12+ compatibility
 feedgen~=0.9
 flask-compress
 # 0.6.3 included compatibility fix for werkzeug 3.x (2.x had deprecation of url handlers)
@@ -7,8 +7,12 @@ flask-paginate
 flask_expects_json~=1.7
 flask_restful
 flask_cors # For the Chrome extension to operate
+janus # Thread-safe async/sync queue bridge
 flask_wtf~=1.2
 flask~=2.3
+flask-socketio~=5.5.1
+python-socketio~=5.13.0
+python-engineio~=4.12.0
 inscriptis~=2.2
 pytz
 timeago~=1.0
@@ -21,28 +25,31 @@ brotli~=1.0
 requests[socks]
 requests-file
 
-urllib3==1.26.19
+# urllib3==1.26.19  # Unpinned - let requests decide compatible version
+# If specific version needed for security, use urllib3>=1.26.19,<3.0
 chardet>2.3.0
 
 wtforms~=3.0
 jsonpath-ng~=1.5.3
 
-dnspython==2.6.1 # related to eventlet fixes
+# dnspython - Used by paho-mqtt for MQTT broker resolution  
+# Version pin removed since eventlet (which required the specific 2.6.1 pin) has been eliminated
+# paho-mqtt will install compatible dnspython version automatically
 
 # jq not available on Windows so must be installed manually
 
 # Notification library
-apprise==1.9.2
+apprise==1.9.3
 
 # apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
 # use any version other than 2.0.x due to https://github.com/eclipse/paho.mqtt.python/issues/814
 paho-mqtt!=2.0.*
 
 # Requires extra wheel for rPi
-cryptography~=42.0.8
+#cryptography~=42.0.8
 
 # Used for CSS filtering
-beautifulsoup4
+beautifulsoup4>=4.0.0
 
 # XPath filtering, lxml is required by bs4 anyway, but put it here to be safe.
 # #2328 - 5.2.0 and 5.2.1 had extra CPU flag CFLAGS set which was not compatible on older hardware
@@ -50,10 +57,11 @@ beautifulsoup4
 #         https://bugs.launchpad.net/lxml/+bug/2059910/comments/16
 lxml >=4.8.0,<6,!=5.2.0,!=5.2.1
 
-# XPath 2.0-3.1 support - 4.2.0 broke something?
+# XPath 2.0-3.1 support - 4.2.0 had issues, 4.1.5 stable
+# Consider updating to latest stable version periodically
 elementpath==4.1.5
 
-selenium~=4.14.0
+selenium~=4.31.0
 
 # https://github.com/pallets/werkzeug/issues/2985
 # Maybe related to pytest?
@@ -70,7 +78,7 @@ jq~=1.3; python_version >= "3.8" and sys_platform == "linux"
 
 # playwright is installed at Dockerfile build time because it's not available on all platforms
 
-pyppeteer-ng==2.0.0rc9
+pyppeteer-ng==2.0.0rc10
 
 pyppeteerstealth>=0.0.4
 
@@ -95,6 +103,11 @@ levenshtein
 # Needed for > 3.10, https://github.com/microsoft/playwright-python/issues/2096
 greenlet >= 3.0.3
 
+# Optional: Used for high-concurrency SocketIO mode (via SOCKETIO_MODE=gevent)
+# Note: gevent has cross-platform limitations (Windows 1024 socket limit, macOS ARM build issues)
+# Default SOCKETIO_MODE=threading is recommended for better compatibility
+gevent
+
 # Pinned or it causes problems with flask_expects_json which seems unmaintained
 referencing==0.35.1
 
@@ -102,6 +115,11 @@ referencing==0.35.1
 panzi-json-logic
 # For conditions - extracted number from a body of text
 price-parser
+
+# flask_socket_io - incorrect package name, already have flask-socketio above
+
+# So far for detecting correct favicon type, but for other things in the future
+python-magic
 
 # Scheduler - Windows seemed to miss a lot of default timezone info (even "UTC" !)
 tzdata
@@ -115,3 +133,6 @@ psutil==7.0.0
 
 ruff >= 0.11.2
 pre_commit >= 4.2.0
+
+# For events between checking and socketio updates
+blinker

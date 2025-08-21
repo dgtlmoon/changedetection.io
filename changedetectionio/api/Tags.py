@@ -1,5 +1,8 @@
+from changedetectionio import queuedWatchMetaData
+from changedetectionio import worker_handler
 from flask_expects_json import expects_json
 from flask_restful import abort, Resource
+
 from flask import request
 from . import auth
 
@@ -11,21 +14,24 @@ class Tag(Resource):
     def __init__(self, **kwargs):
         # datastore is a black box dependency
         self.datastore = kwargs['datastore']
+        self.update_q = kwargs['update_q']
 
     # Get information about a single tag
     # curl http://localhost:5000/api/v1/tag/<string:uuid>
     @auth.check_token
     def get(self, uuid):
         """
-        @api {get} /api/v1/tag/:uuid Single tag - get data or toggle notification muting.
-        @apiDescription Retrieve tag information and set notification_muted status
+        @api {get} /api/v1/tag/:uuid Single tag - Get data, toggle notification muting, recheck all.
+        @apiDescription Retrieve tag information, set notification_muted status, recheck all in tag.
         @apiExample {curl} Example usage:
             curl http://localhost:5000/api/v1/tag/cc0cfffa-f449-477b-83ea-0caafd1dc091 -H"x-api-key:813031b16330fe25e3780cf0325daa45"
             curl "http://localhost:5000/api/v1/tag/cc0cfffa-f449-477b-83ea-0caafd1dc091?muted=muted" -H"x-api-key:813031b16330fe25e3780cf0325daa45"
+            curl "http://localhost:5000/api/v1/tag/cc0cfffa-f449-477b-83ea-0caafd1dc091?recheck=true" -H"x-api-key:813031b16330fe25e3780cf0325daa45"
         @apiName Tag
         @apiGroup Tag
         @apiParam {uuid} uuid Tag unique ID.
         @apiQuery {String} [muted] =`muted` or =`unmuted` , Sets the MUTE NOTIFICATIONS state
+        @apiQuery {String} [recheck] = True, Queue all watches with this tag for recheck
         @apiSuccess (200) {String} OK When muted operation OR full JSON object of the tag
         @apiSuccess (200) {JSON} TagJSON JSON Full JSON object of the tag
         """
@@ -33,6 +39,20 @@ class Tag(Resource):
         tag = deepcopy(self.datastore.data['settings']['application']['tags'].get(uuid))
         if not tag:
             abort(404, message=f'No tag exists with the UUID of {uuid}')
+
+        if request.args.get('recheck'):
+            # Recheck all, including muted
+            # Get most overdue first
+            i=0
+            for k in sorted(self.datastore.data['watching'].items(), key=lambda item: item[1].get('last_checked', 0)):
+                watch_uuid = k[0]
+                watch = k[1]
+                if not watch['paused'] and tag['uuid'] not in watch['tags']:
+                    continue
+                worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
+                i+=1
+
+            return f"OK, {i} watches queued", 200
 
         if request.args.get('muted', '') == 'muted':
             self.datastore.data['settings']['application']['tags'][uuid]['notification_muted'] = True

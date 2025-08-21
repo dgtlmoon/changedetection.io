@@ -4,14 +4,14 @@ import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
 
-
+# test pages with http://username@password:foobar.com/ work
 def test_basic_auth(client, live_server, measure_memory_usage):
+   #  live_server_setup(live_server) # Setup on conftest per function
 
-    live_server_setup(live_server)
 
-    # Add our URL to the import page
+    # This page will echo back any auth info
     test_url = url_for('test_basicauth_method', _external=True).replace("//","//myuser:mypass@")
-
+    time.sleep(1)
     res = client.post(
         url_for("imports.import_page"),
         data={"urls": test_url},

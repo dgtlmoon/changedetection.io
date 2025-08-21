@@ -6,7 +6,7 @@ from ..util import live_server_setup, wait_for_all_checks
 
 
 def test_preferred_proxy(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
     url = "http://chosen.changedetection.io"
 
 

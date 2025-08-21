@@ -1,17 +1,20 @@
-## Web Site Change Detection, Restock monitoring and notifications.
+# Detect Website Changes Automatically — Monitor Web Page Changes in Real Time
 
-**_Detect website content changes and perform meaningful actions - trigger notifications via Discord, Email, Slack, Telegram, API calls and many more._**
+Monitor websites for updates — get notified via Discord, Email, Slack, Telegram, Webhook and many more.
 
-_Live your data-life pro-actively._ 
+**Detect web page content changes and get instant alerts.**  
+
+Ideal for monitoring price changes, content edits, conditional changes and more.
 
 
-[<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/screenshot.png" style="max-width:100%;" alt="Self-hosted web site page change monitoring"  title="Self-hosted web site page change monitoring"  />](https://changedetection.io?src=github)
+[<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/screenshot.png" style="max-width:100%;" alt="Web site page change monitoring"  title="Web site page change monitoring"  />](https://changedetection.io?src=github)
 
 [![Release Version][release-shield]][release-link] [![Docker Pulls][docker-pulls]][docker-link] [![License][license-shield]](LICENSE.md)
 
 ![changedetection.io](https://github.com/dgtlmoon/changedetection.io/actions/workflows/test-only.yml/badge.svg?branch=master)
 
 [**Get started with website page change monitoring straight away. Don't have time? Try our $8.99/month subscription, use our proxies and support!**](https://changedetection.io) , _half the price of other website change monitoring services!_
+
 
 - Chrome browser included.
 - Nothing to install, access via browser login after signup.
@@ -99,9 +102,7 @@ _Need an actual Chrome runner with Javascript support? We support fetching via W
 - Configurable [proxy per watch](https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration)
 - Send a screenshot with the notification when a change is detected in the web page
 
-We [recommend and use Bright Data](https://brightdata.grsm.io/n0r16zf7eivq) global proxy services, Bright Data will match any first deposit up to $100 using our signup link.
-
-[Oxylabs](https://oxylabs.go2cloud.org/SH2d) is also an excellent proxy provider and well worth using, they offer Residental, ISP, Rotating and many other proxy types to suit your project. 
+We [recommend and use Bright Data](https://brightdata.grsm.io/n0r16zf7eivq) global proxy services, Bright Data will match any first deposit up to $150 using our signup link.
 
 Please :star: star :star: this project and help it grow! https://github.com/dgtlmoon/changedetection.io/
 

@@ -224,27 +224,37 @@ class StringDictKeyValue(StringField):
 
     def _value(self):
         if self.data:
-            output = u''
-            for k in self.data.keys():
-                output += "{}: {}\r\n".format(k, self.data[k])
-
+            output = ''
+            for k, v in self.data.items():
+                output += f"{k}: {v}\r\n"
             return output
         else:
-            return u''
+            return ''
 
-    # incoming
+    # incoming data processing + validation
     def process_formdata(self, valuelist):
+        self.data = {}
+        errors = []
         if valuelist:
-            self.data = {}
-            # Remove empty strings
-            cleaned = list(filter(None, valuelist[0].split("\n")))
-            for s in cleaned:
-                parts = s.strip().split(':', 1)
-                if len(parts) == 2:
-                    self.data.update({parts[0].strip(): parts[1].strip()})
+            # Remove empty strings (blank lines)
+            cleaned = [line.strip() for line in valuelist[0].split("\n") if line.strip()]
+            for idx, s in enumerate(cleaned, start=1):
+                if ':' not in s:
+                    errors.append(f"Line {idx} is missing a ':' separator.")
+                    continue
+                parts = s.split(':', 1)
+                key = parts[0].strip()
+                value = parts[1].strip()
 
-        else:
-            self.data = {}
+                if not key:
+                    errors.append(f"Line {idx} has an empty key.")
+                if not value:
+                    errors.append(f"Line {idx} has an empty value.")
+
+                self.data[key] = value
+
+        if errors:
+            raise ValidationError("Invalid input:\n" + "\n".join(errors))
 
 class ValidateContentFetcherIsReady(object):
     """
@@ -386,6 +396,19 @@ def validate_url(test_url):
         # This should be wtforms.validators.
         raise ValidationError('Watch protocol is not permitted by SAFE_PROTOCOL_REGEX or incorrect URL format')
 
+
+class ValidateSinglePythonRegexString(object):
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+        try:
+            re.compile(field.data)
+        except re.error:
+            message = field.gettext('RegEx \'%s\' is not a valid regular expression.')
+            raise ValidationError(message % (field.data))
+
+
 class ValidateListRegex(object):
     """
     Validates that anything that looks like a regex passes as a regex
@@ -403,6 +426,7 @@ class ValidateListRegex(object):
                 except re.error:
                     message = field.gettext('RegEx \'%s\' is not a valid regular expression.')
                     raise ValidationError(message % (line))
+
 
 class ValidateCSSJSONXPATHInput(object):
     """
@@ -709,6 +733,12 @@ class globalSettingsRequestForm(Form):
     jitter_seconds = IntegerField('Random jitter seconds ± check',
                                   render_kw={"style": "width: 5em;"},
                                   validators=[validators.NumberRange(min=0, message="Should contain zero or more seconds")])
+    
+    workers = IntegerField('Number of fetch workers',
+                          render_kw={"style": "width: 5em;"},
+                          validators=[validators.NumberRange(min=1, max=50,
+                                                             message="Should be between 1 and 50")])
+    
     extra_proxies = FieldList(FormField(SingleExtraProxy), min_entries=5)
     extra_browsers = FieldList(FormField(SingleExtraBrowser), min_entries=5)
 
@@ -722,7 +752,9 @@ class globalSettingsRequestForm(Form):
                     return False
 
 class globalSettingsApplicationUIForm(Form):
-    open_diff_in_new_tab = BooleanField('Open diff page in a new tab', default=True, validators=[validators.Optional()])
+    open_diff_in_new_tab = BooleanField("Open 'History' page in a new tab", default=True, validators=[validators.Optional()])
+    socket_io_enabled = BooleanField('Realtime UI Updates Enabled', default=True, validators=[validators.Optional()])
+    favicons_enabled = BooleanField('Favicons Enabled', default=True, validators=[validators.Optional()])
 
 # datastore.data['settings']['application']..
 class globalSettingsApplicationForm(commonSettingsForm):
@@ -773,5 +805,5 @@ class globalSettingsForm(Form):
 
 
 class extractDataForm(Form):
-    extract_regex = StringField('RegEx to extract', validators=[validators.Length(min=1, message="Needs a RegEx")])
+    extract_regex = StringField('RegEx to extract', validators=[validators.DataRequired(), ValidateSinglePythonRegexString()])
     extract_submit_button = SubmitField('Extract as CSV', render_kw={"class": "pure-button pure-button-primary"})

@@ -28,9 +28,16 @@
     <meta name="theme-color" content="#ffffff">
     <script>
         const csrftoken="{{ csrf_token() }}";
+        const socketio_url="{{ get_socketio_path() }}/socket.io";
+        const is_authenticated = {% if current_user.is_authenticated or not has_password %}true{% else %}false{% endif %};
     </script>
     <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
     <script src="{{url_for('static_content', group='js', filename='csrf.js')}}" defer></script>
+    <script src="{{url_for('static_content', group='js', filename='feather-icons.min.js')}}" defer></script>
+    {% if socket_io_enabled %}
+    <script src="{{url_for('static_content', group='js', filename='socket.io.min.js')}}"></script>
+    <script src="{{url_for('static_content', group='js', filename='realtime.js')}}" defer></script>
+    {% endif %}
   </head>
 
   <body class="">
@@ -227,6 +234,9 @@
       {% block content %}{% endblock %}
     </section>
     <script src="{{url_for('static_content', group='js', filename='toggle-theme.js')}}" defer></script>
+
+    <div id="checking-now-fixed-tab" style="display: none;"><span class="spinner"></span><span>&nbsp;Checking now</span></div>
+    <div id="realtime-conn-error" style="display:none">Offline</div>
   </body>
 
 </html>

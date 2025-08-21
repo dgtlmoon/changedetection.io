@@ -26,7 +26,7 @@ schema_delete_notification_urls = copy.deepcopy(schema_notification_urls)
 schema_delete_notification_urls['required'] = ['notification_urls']
 
 # Import all API resources
-from .Watch import Watch, WatchHistory, WatchSingleHistory, CreateWatch
+from .Watch import Watch, WatchHistory, WatchSingleHistory, CreateWatch, WatchFavicon
 from .Tags import Tags, Tag
 from .Import import Import
 from .SystemInfo import SystemInfo

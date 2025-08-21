@@ -25,35 +25,53 @@ io_interface_context = None
 import json
 import hashlib
 from flask import Response
+import asyncio
+import threading
+
+def run_async_in_browser_loop(coro):
+    """Run async coroutine using the existing async worker event loop"""
+    from changedetectionio import worker_handler
+    
+    # Use the existing async worker event loop instead of creating a new one
+    if worker_handler.USE_ASYNC_WORKERS and worker_handler.async_loop and not worker_handler.async_loop.is_closed():
+        logger.debug("Browser steps using existing async worker event loop")
+        future = asyncio.run_coroutine_threadsafe(coro, worker_handler.async_loop)
+        return future.result()
+    else:
+        # Fallback: create a new event loop (for sync workers or if async loop not available)
+        logger.debug("Browser steps creating temporary event loop")
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            return loop.run_until_complete(coro)
+        finally:
+            loop.close()
 
 def construct_blueprint(datastore: ChangeDetectionStore):
     browser_steps_blueprint = Blueprint('browser_steps', __name__, template_folder="templates")
 
-    def start_browsersteps_session(watch_uuid):
-        from . import nonContext
+    async def start_browsersteps_session(watch_uuid):
         from . import browser_steps
         import time
-        global io_interface_context
+        from playwright.async_api import async_playwright
 
         # We keep the playwright session open for many minutes
         keepalive_seconds = int(os.getenv('BROWSERSTEPS_MINUTES_KEEPALIVE', 10)) * 60
 
         browsersteps_start_session = {'start_time': time.time()}
 
-        # You can only have one of these running
-        # This should be very fine to leave running for the life of the application
-        # @idea - Make it global so the pool of watch fetchers can use it also
-        if not io_interface_context:
-            io_interface_context = nonContext.c_sync_playwright()
-            # Start the Playwright context, which is actually a nodejs sub-process and communicates over STDIN/STDOUT pipes
-            io_interface_context = io_interface_context.start()
+        # Create a new async playwright instance for browser steps
+        playwright_instance = async_playwright()
+        playwright_context = await playwright_instance.start()
 
         keepalive_ms = ((keepalive_seconds + 3) * 1000)
         base_url = os.getenv('PLAYWRIGHT_DRIVER_URL', '').strip('"')
         a = "?" if not '?' in base_url else '&'
         base_url += a + f"timeout={keepalive_ms}"
 
-        browsersteps_start_session['browser'] = io_interface_context.chromium.connect_over_cdp(base_url)
+        browser = await playwright_context.chromium.connect_over_cdp(base_url, timeout=keepalive_ms)
+        browsersteps_start_session['browser'] = browser
+        browsersteps_start_session['playwright_context'] = playwright_context
 
         proxy_id = datastore.get_preferred_proxy_for_watch(uuid=watch_uuid)
         proxy = None
@@ -75,15 +93,20 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 logger.debug(f"Browser Steps: UUID {watch_uuid} selected proxy {proxy_url}")
 
         # Tell Playwright to connect to Chrome and setup a new session via our stepper interface
-        browsersteps_start_session['browserstepper'] = browser_steps.browsersteps_live_ui(
-            playwright_browser=browsersteps_start_session['browser'],
+        browserstepper = browser_steps.browsersteps_live_ui(
+            playwright_browser=browser,
             proxy=proxy,
             start_url=datastore.data['watching'][watch_uuid].link,
             headers=datastore.data['watching'][watch_uuid].get('headers')
         )
+        
+        # Initialize the async connection
+        await browserstepper.connect(proxy=proxy)
+        
+        browsersteps_start_session['browserstepper'] = browserstepper
 
         # For test
-        #browsersteps_start_session['browserstepper'].action_goto_url(value="http://example.com?time="+str(time.time()))
+        #await browsersteps_start_session['browserstepper'].action_goto_url(value="http://example.com?time="+str(time.time()))
 
         return browsersteps_start_session
 
@@ -92,7 +115,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @browser_steps_blueprint.route("/browsersteps_start_session", methods=['GET'])
     def browsersteps_start_session():
         # A new session was requested, return sessionID
-
+        import asyncio
         import uuid
         browsersteps_session_id = str(uuid.uuid4())
         watch_uuid = request.args.get('uuid')
@@ -104,7 +127,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         logger.debug("browser_steps.py connecting")
 
         try:
-            browsersteps_sessions[browsersteps_session_id] = start_browsersteps_session(watch_uuid)
+            # Run the async function in the dedicated browser steps event loop
+            browsersteps_sessions[browsersteps_session_id] = run_async_in_browser_loop(
+                start_browsersteps_session(watch_uuid)
+            )
         except Exception as e:
             if 'ECONNREFUSED' in str(e):
                 return make_response('Unable to start the Playwright Browser session, is sockpuppetbrowser running? Network configuration is OK?', 401)
@@ -168,12 +194,15 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             step_optional_value = request.form.get('optional_value')
             is_last_step = strtobool(request.form.get('is_last_step'))
 
-            # @todo try.. accept.. nice errors not popups..
             try:
-
-                browsersteps_sessions[browsersteps_session_id]['browserstepper'].call_action(action_name=step_operation,
-                                         selector=step_selector,
-                                         optional_value=step_optional_value)
+                # Run the async call_action method in the dedicated browser steps event loop
+                run_async_in_browser_loop(
+                    browsersteps_sessions[browsersteps_session_id]['browserstepper'].call_action(
+                        action_name=step_operation,
+                        selector=step_selector,
+                        optional_value=step_optional_value
+                    )
+                )
 
             except Exception as e:
                 logger.error(f"Exception when calling step operation {step_operation} {str(e)}")
@@ -187,7 +216,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         # Screenshots and other info only needed on requesting a step (POST)
         try:
-            (screenshot, xpath_data) = browsersteps_sessions[browsersteps_session_id]['browserstepper'].get_current_state()
+            # Run the async get_current_state method in the dedicated browser steps event loop
+            (screenshot, xpath_data) = run_async_in_browser_loop(
+                browsersteps_sessions[browsersteps_session_id]['browserstepper'].get_current_state()
+            )
+                
             if is_last_step:
                 watch = datastore.data['watching'].get(uuid)
                 u = browsersteps_sessions[browsersteps_session_id]['browserstepper'].page.url
@@ -195,13 +228,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     watch.save_screenshot(screenshot=screenshot)
                     watch.save_xpath_data(data=xpath_data)
 
-        except playwright._impl._api_types.Error as e:
-            return make_response("Browser session ran out of time :( Please reload this page."+str(e), 401)
         except Exception as e:
-            return make_response("Error fetching screenshot and element data - " + str(e), 401)
+            return make_response(f"Error fetching screenshot and element data - {str(e)}", 401)
 
         # SEND THIS BACK TO THE BROWSER
-
         output = {
             "screenshot": f"data:image/jpeg;base64,{base64.b64encode(screenshot).decode('ascii')}",
             "xpath_data": xpath_data,

@@ -1,6 +1,8 @@
 import pluggy
 from loguru import logger
 
+LEVENSHTEIN_MAX_LEN_FOR_EDIT_STATS=100000
+
 # Support both plugin systems
 conditions_hookimpl = pluggy.HookimplMarker("changedetectionio_conditions")
 global_hookimpl = pluggy.HookimplMarker("changedetectionio")
@@ -72,7 +74,17 @@ def ui_edit_stats_extras(watch):
     """Generate the HTML for Levenshtein stats - shared by both plugin systems"""
     if len(watch.history.keys()) < 2:
         return "<p>Not enough history to calculate Levenshtein metrics</p>"
-    
+
+
+    # Protection against the algorithm getting stuck on huge documents
+    k = list(watch.history.keys())
+    if any(
+            len(watch.get_history_snapshot(timestamp=k[idx])) > LEVENSHTEIN_MAX_LEN_FOR_EDIT_STATS
+            for idx in (-1, -2)
+            if len(k) >= abs(idx)
+    ):
+        return "<p>Snapshot too large for edit statistics, skipping.</p>"
+
     try:
         lev_data = levenshtein_ratio_recent_history(watch)
         if not lev_data or not isinstance(lev_data, dict):

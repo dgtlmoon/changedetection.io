@@ -8,7 +8,7 @@ from loguru import logger
 
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, visualselector_xpath_selectors, \
     SCREENSHOT_SIZE_STITCH_THRESHOLD, SCREENSHOT_DEFAULT_QUALITY, XPATH_ELEMENT_JS, INSTOCK_DATA_JS, \
-    SCREENSHOT_MAX_TOTAL_HEIGHT
+    SCREENSHOT_MAX_TOTAL_HEIGHT, FAVICON_FETCHER_JS
 from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, BrowserFetchTimedOut, \
     BrowserConnectError
@@ -51,7 +51,15 @@ async def capture_full_page(page):
         await page.setViewport({'width': page.viewport['width'], 'height': step_size})
 
     while y < min(page_height, SCREENSHOT_MAX_TOTAL_HEIGHT):
-        await page.evaluate(f"window.scrollTo(0, {y})")
+        # better than scrollTo incase they override it in the page
+        await page.evaluate(
+            """(y) => {
+                document.documentElement.scrollTop = y;
+                document.body.scrollTop = y;
+            }""",
+            y
+        )
+
         screenshot_chunks.append(await page.screenshot(type_='jpeg',
                                                        fullPage=False,
                                                        quality=int(os.getenv("SCREENSHOT_QUALITY", 72))))
@@ -137,19 +145,24 @@ class fetcher(Fetcher):
     #         f.write(content)
 
     async def fetch_page(self,
-                         url,
-                         timeout,
-                         request_headers,
-                         request_body,
-                         request_method,
-                         ignore_status_codes,
                          current_include_filters,
+                         empty_pages_are_a_change,
+                         fetch_favicon,
+                         ignore_status_codes,
                          is_binary,
-                         empty_pages_are_a_change
+                         request_body,
+                         request_headers,
+                         request_method,
+                         timeout,
+                         url,
                          ):
         import re
         self.delete_browser_steps_screenshots()
-        extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
+
+        n = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
+        extra_wait = min(n, 15)
+
+        logger.debug(f"Extra wait set to {extra_wait}s, requested was {n}s.")
 
         from pyppeteer import Pyppeteer
         pyppeteer_instance = Pyppeteer()
@@ -165,12 +178,13 @@ class fetcher(Fetcher):
         except websockets.exceptions.InvalidURI:
             raise BrowserConnectError(msg=f"Error connecting to the browser, check your browser connection address (should be ws:// or wss://")
         except Exception as e:
-            raise BrowserConnectError(msg=f"Error connecting to the browser {str(e)}")
+            raise BrowserConnectError(msg=f"Error connecting to the browser - Exception '{str(e)}'")
 
-        # Better is to launch chrome with the URL as arg
-        # non-headless - newPage() will launch an extra tab/window, .browser should already contain 1 page/tab
-        # headless - ask a new page
-        self.page = (pages := await browser.pages) and len(pages) or await browser.newPage()
+        # more reliable is to just request a new page
+        self.page = await browser.newPage()
+        
+        # Add console handler to capture console.log from favicon fetcher
+        #self.page.on('console', lambda msg: logger.debug(f"Browser console [{msg.type}]: {msg.text}"))
 
         if '--window-size' in self.browser_connection_url:
             # Be sure the viewport is always the window-size, this is often not the same thing
@@ -227,13 +241,35 @@ class fetcher(Fetcher):
         #            browsersteps_interface = steppable_browser_interface()
         #            browsersteps_interface.page = self.page
 
-        response = await self.page.goto(url, waitUntil="load")
+        async def handle_frame_navigation(event):
+            logger.debug(f"Frame navigated: {event}")
+            w = extra_wait - 2 if extra_wait > 4 else 2
+            logger.debug(f"Waiting {w} seconds before calling Page.stopLoading...")
+            await asyncio.sleep(w)
+            logger.debug("Issuing stopLoading command...")
+            await self.page._client.send('Page.stopLoading')
+            logger.debug("stopLoading command sent!")
 
-        if response is None:
-            await self.page.close()
-            await browser.close()
-            logger.warning("Content Fetcher > Response object was none (as in, the response from the browser was empty, not just the content)")
-            raise EmptyReply(url=url, status_code=None)
+        self.page._client.on('Page.frameStartedNavigating', lambda event: asyncio.create_task(handle_frame_navigation(event)))
+        self.page._client.on('Page.frameStartedLoading', lambda event: asyncio.create_task(handle_frame_navigation(event)))
+        self.page._client.on('Page.frameStoppedLoading', lambda event: logger.debug(f"Frame stopped loading: {event}"))
+
+        response = None
+        attempt=0
+        while not response:
+            logger.debug(f"Attempting page fetch {url} attempt {attempt}")
+            response = await self.page.goto(url)
+            await asyncio.sleep(1 + extra_wait)
+            if response:
+                break
+            if not response:
+                logger.warning("Page did not fetch! trying again!")
+            if response is None and attempt>=2:
+                await self.page.close()
+                await browser.close()
+                logger.warning(f"Content Fetcher > Response object was none (as in, the response from the browser was empty, not just the content) exiting attmpt {attempt}")
+                raise EmptyReply(url=url, status_code=None)
+            attempt+=1
 
         self.headers = response.headers
 
@@ -258,6 +294,12 @@ class fetcher(Fetcher):
             await browser.close()
             raise PageUnloadable(url=url, status_code=None, message=str(e))
 
+        if fetch_favicon:
+            try:
+                self.favicon_blob = await self.page.evaluate(FAVICON_FETCHER_JS)
+            except Exception as e:
+                logger.error(f"Error fetching FavIcon info {str(e)}, continuing.")
+
         if self.status_code != 200 and not ignore_status_codes:
             screenshot = await capture_full_page(page=self.page)
 
@@ -276,7 +318,6 @@ class fetcher(Fetcher):
         #            if self.browser_steps_get_valid_steps():
         #                self.iterate_browser_steps()
 
-        await asyncio.sleep(1 + extra_wait)
 
         # So we can find an element on the page where its selector was entered manually (maybe not xPath etc)
         # Setup the xPath/VisualSelector scraper
@@ -310,25 +351,36 @@ class fetcher(Fetcher):
     async def main(self, **kwargs):
         await self.fetch_page(**kwargs)
 
-    def run(self, url, timeout, request_headers, request_body, request_method, ignore_status_codes=False,
-            current_include_filters=None, is_binary=False, empty_pages_are_a_change=False):
+    async def run(self,
+                  fetch_favicon=True,
+                  current_include_filters=None,
+                  empty_pages_are_a_change=False,
+                  ignore_status_codes=False,
+                  is_binary=False,
+                  request_body=None,
+                  request_headers=None,
+                  request_method=None,
+                  timeout=None,
+                  url=None,
+                  ):
 
         #@todo make update_worker async which could run any of these content_fetchers within memory and time constraints
-        max_time = os.getenv('PUPPETEER_MAX_PROCESSING_TIMEOUT_SECONDS', 180)
+        max_time = int(os.getenv('PUPPETEER_MAX_PROCESSING_TIMEOUT_SECONDS', 180))
 
-        # This will work in 3.10 but not >= 3.11 because 3.11 wants tasks only
+        # Now we run this properly in async context since we're called from async worker
         try:
-            asyncio.run(asyncio.wait_for(self.main(
-                url=url,
-                timeout=timeout,
-                request_headers=request_headers,
-                request_body=request_body,
-                request_method=request_method,
-                ignore_status_codes=ignore_status_codes,
+            await asyncio.wait_for(self.main(
                 current_include_filters=current_include_filters,
+                empty_pages_are_a_change=empty_pages_are_a_change,
+                fetch_favicon=fetch_favicon,
+                ignore_status_codes=ignore_status_codes,
                 is_binary=is_binary,
-                empty_pages_are_a_change=empty_pages_are_a_change
-            ), timeout=max_time))
+                request_body=request_body,
+                request_headers=request_headers,
+                request_method=request_method,
+                timeout=timeout,
+                url=url,
+            ), timeout=max_time
+            )
         except asyncio.TimeoutError:
-            raise(BrowserFetchTimedOut(msg=f"Browser connected but was unable to process the page in {max_time} seconds."))
-
+            raise (BrowserFetchTimedOut(msg=f"Browser connected but was unable to process the page in {max_time} seconds."))

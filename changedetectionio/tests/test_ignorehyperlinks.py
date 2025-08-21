@@ -3,11 +3,10 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup
+from .util import live_server_setup, wait_for_all_checks
 
 
-def test_setup(live_server):
-    live_server_setup(live_server)
+
 
 def set_original_ignore_response():
     test_return_data = """<html>
@@ -70,19 +69,18 @@ def test_render_anchor_tag_content_true(client, live_server, measure_memory_usag
     )
     assert b"1 Imported" in res.data
 
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # set a new html text with a modified link
     set_modified_ignore_response()
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
-    # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # We should not see the rendered anchor tag
     res = client.get(url_for("ui.ui_views.preview_page", uuid="first"))
@@ -104,7 +102,7 @@ def test_render_anchor_tag_content_true(client, live_server, measure_memory_usag
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
 
 

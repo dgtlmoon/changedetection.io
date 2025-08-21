@@ -1,5 +1,3 @@
-from flask import Blueprint
-
 from json_logic.builtins import BUILTINS
 
 from .exceptions import EmptyConditionRuleRowNotUsable
@@ -16,7 +14,6 @@ operator_choices = [
     ("==", "Equals"),
     ("!=", "Not Equals"),
     ("in", "Contains"),
-    ("!in", "Does Not Contain"),
 ]
 
 # Fields available in the rules

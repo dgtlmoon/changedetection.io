@@ -2,19 +2,25 @@
  * -- BASE STYLES --
  */
 
-@import "parts/_arrows";
-@import "parts/_browser-steps";
-@import "parts/_extra_proxies";
-@import "parts/_extra_browsers";
-@import "parts/_pagination";
-@import "parts/_spinners";
-@import "parts/_variables";
-@import "parts/_darkmode";
-@import "parts/_menu";
-@import "parts/_love";
-@import "parts/preview_text_filter";
-@import "parts/_edit";
-@import "parts/_conditions_table";
+@use "parts/variables";
+@use "parts/arrows";
+@use "parts/browser-steps";
+@use "parts/extra_proxies";
+@use "parts/extra_browsers";
+@use "parts/pagination";
+@use "parts/spinners";
+@use "parts/darkmode";
+@use "parts/menu";
+@use "parts/love";
+@use "parts/preview_text_filter";
+@use "parts/watch_table";
+@use "parts/watch_table-mobile";
+@use "parts/edit";
+@use "parts/conditions_table";
+@use "parts/lister_extra";
+@use "parts/socket";
+@use "parts/visualselector";
+
 
 body {
   color: var(--color-text);
@@ -169,56 +175,6 @@ code {
   color: var(--color-text);
 }
 
-/* table related */
-.watch-table {
-  width: 100%;
-  font-size: 80%;
-
-  tr {
-    &.unviewed {
-      font-weight: bold;
-    }
-    &.error {
-      color: var(--color-watch-table-error);
-    }
-    color: var(--color-watch-table-row-text);
-  }
-
-
-  td {
-    white-space: nowrap;
-    &.title-col {
-      word-break: break-all;
-      white-space: normal;
-    }
-  }
-
-
-  th {
-    white-space: nowrap;
-
-    a {
-      font-weight: normal;
-
-      &.active {
-        font-weight: bolder;
-      }
-
-      &.inactive {
-        .arrow {
-          display: none;
-        }
-      }
-    }
-  }
-
-  .title-col a[target="_blank"]::after,
-  .current-diff-url::after {
-    content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg==);
-    margin: 0 3px 0 5px;
-  }
-}
-
 .inline-tag {
   white-space: nowrap;
   border-radius: 5px;
@@ -232,8 +188,15 @@ code {
   @extend .inline-tag;
 }
 
+@media (min-width: 768px) {
+  .box {
+    margin: 0 1em !important;
+  }
+}
+
 .box {
-  max-width: 80%;
+  max-width: 100%;
+  margin: 0 0.3em;
   flex-direction: column;
   display: flex;
   justify-content: center;
@@ -327,7 +290,7 @@ a.pure-button-selected {
   font-size: 65%;
   border-bottom-left-radius: initial;
   border-bottom-right-radius: initial;
-
+  margin-right: 4px;
   &.active {
     background: var(--color-background-button-tag-active);
     font-weight: bold;
@@ -420,11 +383,32 @@ label {
   }
 }
 
+// Some field colouring for transperant field
+.pure-form input[type=text].transparent-field {
+  background-color:  var(--color-background-new-watch-input-transparent) !important;
+  color: var(--color-white) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  &::placeholder {
+    opacity: 0.5;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: lighter;
+  }
+}
+
 #new-watch-form {
   background: var(--color-background-new-watch-form);
   padding: 1em;
   border-radius: 10px;
   margin-bottom: 1em;
+  max-width: 100%;
+
+  #url {
+    &::placeholder {
+      font-weight: bold;
+    }
+  }
 
   input {
     display: inline-block;
@@ -445,12 +429,13 @@ label {
     font-weight: bold;
   }
 
-  #watch-add-wrapper-zone {
 
+  #watch-add-wrapper-zone {
     @media only screen and (min-width: 760px) {
       display: flex;
       gap: 0.3rem;
       flex-direction: row;
+      min-width: 70vw;
     }
     /* URL field grows always, other stay static in width */
     > span {
@@ -470,6 +455,22 @@ label {
       #url {
         width: 100%;
       }
+    }
+  }
+
+  #watch-group-tag {
+    font-size: 0.9rem;
+    padding: 0.3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-white);
+    label, input {
+      margin: 0;
+    }
+
+    input {
+      flex: 1;
     }
   }
 }
@@ -668,10 +669,6 @@ footer {
 
 @media only screen and (max-width: 760px),
 (min-device-width: 768px) and (max-device-width: 1024px) {
-  .box {
-    max-width: 95%
-  }
-
   .edit-form {
     padding: 0.5em;
     margin: 0;
@@ -707,114 +704,6 @@ footer {
     width: 100%;
   }
 
-  /*
-  Max width before this PARTICULAR table gets nasty
-  This query will take effect for any screen smaller than 760px
-  and also iPads specifically.
-  */
-  .watch-table {
-    /* make headings work on mobile */
-    thead {
-      display: block;
-      tr {
-        th {
-          display: inline-block;
-          // Hide the "Last" text for smaller screens
-          @media (max-width: 768px) {
-            .hide-on-mobile {
-              display: none; 
-            }
-          }
-        }
-      }
-      .empty-cell {
-        display: none;
-      }
-    }
-
-    /* Force table to not be like tables anymore */
-    tbody {
-      td,
-      tr {
-        display: block;
-      }
-    }
-
-    tbody {
-      tr {
-        display: flex;
-        flex-wrap: wrap;
-
-        // The third child of each row will take up the remaining space
-        // This is useful for the URL column, which should expand to fill the remaining space
-        :nth-child(3) {
-          flex-grow: 1;
-        }
-        // The last three children (from the end) of each row will take up the full width
-        // This is useful for the "Last Checked", "Last Changed", and the action buttons columns, which should each take up the full width
-        :nth-last-child(-n+3) {
-          flex-basis: 100%;
-        }
-      }
-    }
-
-    .last-checked {
-      >span {
-        vertical-align: middle;
-      }
-    }
-
-    .last-checked::before {
-      color: var(--color-last-checked);
-      content: "Last Checked ";
-    }
-
-    .last-changed::before {
-      color: var(--color-last-checked);
-      content: "Last Changed ";
-    }
-
-    /* Force table to not be like tables anymore */
-    td.inline {
-      display: inline-block;
-    }
-
-    .pure-table td,
-    .pure-table th {
-      border: none;
-    }
-
-    td {
-      /* Behave  like a "row" */
-      border: none;
-      border-bottom: 1px solid var(--color-border-watch-table-cell);
-      vertical-align: middle;
-
-      &:before {
-        /* Top/left values mimic padding */
-        top: 6px;
-        left: 6px;
-        width: 45%;
-        padding-right: 10px;
-        white-space: nowrap;
-      }
-    }
-
-    &.pure-table-striped {
-      tr {
-        background-color: var(--color-table-background);
-      }
-
-      tr:nth-child(2n-1) {
-        background-color: var(--color-table-stripe);
-      }
-
-      tr:nth-child(2n-1) td {
-        background-color: inherit;
-      }
-    }
-
-  }
 }
 
 .pure-table {
@@ -1069,8 +958,6 @@ ul {
   }
 }
 
-@import "parts/_visualselector";
-
 #webdriver_delay {
     width: 5em;
 }
@@ -1131,6 +1018,9 @@ ul {
     /* some space if they wrap the page */
     margin-bottom: 3px;
     margin-top: 3px;
+    /* vertically center icon and text */
+    display: inline-flex;
+    align-items: center;
   }
 }
 
@@ -1185,19 +1075,23 @@ ul {
 
 
 #quick-watch-processor-type {
-  color: #fff;
-  ul {
-    padding: 0.3rem;
-
+  ul#processor {
+    color: #fff;
+    padding-left: 0px;
     li {
       list-style: none;
-      font-size: 0.8rem;
-      > * {
-        display: inline-block;
-      }
+      font-size: 0.9rem;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
     }
   }
-
+  label, input {
+    padding: 0;
+    margin: 0;
+  }
 }
 
 .restock-label {
@@ -1235,3 +1129,12 @@ ul {
   vertical-align: middle;
 }
 
+#realtime-conn-error {
+  position: absolute;
+  bottom: 0;
+  left: 30px;
+  background: var(--color-warning);
+  padding: 10px;
+  font-size: 0.8rem;
+  color: #fff;
+}

@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks
+from .util import live_server_setup, wait_for_all_checks, set_original_response
 import json
+import time
 
 def test_api_tags_listing(client, live_server, measure_memory_usage):
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
     tag_title = 'Test Tag'
 
-    # Get a listing
+
+    set_original_response()
+
     res = client.get(
         url_for("tags"),
         headers={'x-api-key': api_key}
@@ -104,6 +107,8 @@ def test_api_tags_listing(client, live_server, measure_memory_usage):
     assert res.status_code == 201
     watch_uuid = res.json.get('uuid')
 
+
+    wait_for_all_checks()
     # Verify tag is associated with watch by name if need be
     res = client.get(
         url_for("watch", uuid=watch_uuid),
@@ -111,6 +116,21 @@ def test_api_tags_listing(client, live_server, measure_memory_usage):
     )
     assert res.status_code == 200
     assert new_tag_uuid in res.json.get('tags', [])
+
+    # Check recheck by tag
+    before_check_time = live_server.app.config['DATASTORE'].data['watching'][watch_uuid].get('last_checked')
+    time.sleep(1)
+    res = client.get(
+       url_for("tag", uuid=new_tag_uuid) + "?recheck=true",
+       headers={'x-api-key': api_key}
+    )
+    wait_for_all_checks()
+    assert res.status_code == 200
+    assert b'OK, 1 watches' in res.data
+
+    after_check_time = live_server.app.config['DATASTORE'].data['watching'][watch_uuid].get('last_checked')
+
+    assert before_check_time != after_check_time
 
     # Delete tag
     res = client.delete(
@@ -141,3 +161,6 @@ def test_api_tags_listing(client, live_server, measure_memory_usage):
         headers={'x-api-key': api_key},
     )
     assert res.status_code == 204
+
+
+

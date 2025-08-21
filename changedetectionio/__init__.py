@@ -2,20 +2,19 @@
 
 # Read more https://github.com/dgtlmoon/changedetection.io/wiki
 
-__version__ = '0.49.15'
+__version__ = '0.50.10'
 
 from changedetectionio.strtobool import strtobool
 from json.decoder import JSONDecodeError
 import os
-os.environ['EVENTLET_NO_GREENDNS'] = 'yes'
-import eventlet
-import eventlet.wsgi
 import getopt
 import platform
 import signal
-import socket
+
 import sys
 
+# Eventlet completely removed - using threading mode for SocketIO
+# This provides better Python 3.12+ compatibility and eliminates eventlet/asyncio conflicts
 from changedetectionio import store
 from changedetectionio.flask_app import changedetection_app
 from loguru import logger
@@ -30,13 +29,43 @@ def get_version():
 # Parent wrapper or OS sends us a SIGTERM/SIGINT, do everything required for a clean shutdown
 def sigshutdown_handler(_signo, _stack_frame):
     name = signal.Signals(_signo).name
-    logger.critical(f'Shutdown: Got Signal - {name} ({_signo}), Saving DB to disk and calling shutdown')
-    datastore.sync_to_json()
-    logger.success('Sync JSON to disk complete.')
-    # This will throw a SystemExit exception, because eventlet.wsgi.server doesn't know how to deal with it.
-    # Solution: move to gevent or other server in the future (#2014)
-    datastore.stop_thread = True
+    logger.critical(f'Shutdown: Got Signal - {name} ({_signo}), Fast shutdown initiated')
+    
+    # Set exit flag immediately to stop all loops
     app.config.exit.set()
+    datastore.stop_thread = True
+    
+    # Shutdown workers and queues immediately
+    try:
+        from changedetectionio import worker_handler
+        worker_handler.shutdown_workers()
+    except Exception as e:
+        logger.error(f"Error shutting down workers: {str(e)}")
+    
+    # Close janus queues properly
+    try:
+        from changedetectionio.flask_app import update_q, notification_q
+        update_q.close()
+        notification_q.close()
+        logger.debug("Janus queues closed successfully")
+    except Exception as e:
+        logger.critical(f"CRITICAL: Failed to close janus queues: {e}")
+    
+    # Shutdown socketio server fast
+    from changedetectionio.flask_app import socketio_server
+    if socketio_server and hasattr(socketio_server, 'shutdown'):
+        try:
+            socketio_server.shutdown()
+        except Exception as e:
+            logger.error(f"Error shutting down Socket.IO server: {str(e)}")
+    
+    # Save data quickly
+    try:
+        datastore.sync_to_json()
+        logger.success('Fast sync to disk complete.')
+    except Exception as e:
+        logger.error(f"Error syncing to disk: {str(e)}")
+    
     sys.exit()
 
 def main():
@@ -45,9 +74,8 @@ def main():
 
     datastore_path = None
     do_cleanup = False
-    host = ''
-    ipv6_enabled = False
-    port = os.environ.get('PORT') or 5000
+    host = os.environ.get("LISTEN_HOST", "0.0.0.0").strip()
+    port = int(os.environ.get('PORT', 5000))
     ssl_mode = False
 
     # On Windows, create and use a default path.
@@ -88,10 +116,6 @@ def main():
         if opt == '-d':
             datastore_path = arg
 
-        if opt == '-6':
-            logger.success("Enabling IPv6 listen support")
-            ipv6_enabled = True
-
         # Cleanup (remove text files that arent in the index)
         if opt == '-c':
             do_cleanup = True
@@ -102,6 +126,20 @@ def main():
 
         if opt == '-l':
             logger_level = int(arg) if arg.isdigit() else arg.upper()
+
+
+    logger.success(f"changedetection.io version {get_version()} starting.")
+    # Launch using SocketIO run method for proper integration (if enabled)
+    ssl_cert_file = os.getenv("SSL_CERT_FILE", 'cert.pem')
+    ssl_privkey_file = os.getenv("SSL_PRIVKEY_FILE", 'privkey.pem')
+    if os.getenv("SSL_CERT_FILE") and os.getenv("SSL_PRIVKEY_FILE"):
+        ssl_mode = True
+
+    # SSL mode could have been set by -s too, therefor fallback to default values
+    if ssl_mode:
+        if not os.path.isfile(ssl_cert_file) or not os.path.isfile(ssl_privkey_file):
+            logger.critical(f"Cannot start SSL/HTTPS mode, Please be sure that {ssl_cert_file}' and '{ssl_privkey_file}' exist in in {os.getcwd()}")
+            os._exit(2)
 
     # Without this, a logger will be duplicated
     logger.remove()
@@ -143,6 +181,11 @@ def main():
 
     app = changedetection_app(app_config, datastore)
 
+    # Get the SocketIO instance from the Flask app (created in flask_app.py)
+    from changedetectionio.flask_app import socketio_server
+    global socketio
+    socketio = socketio_server
+
     signal.signal(signal.SIGTERM, sigshutdown_handler)
     signal.signal(signal.SIGINT, sigshutdown_handler)
     
@@ -167,10 +210,11 @@ def main():
 
 
     @app.context_processor
-    def inject_version():
+    def inject_template_globals():
         return dict(right_sticky="v{}".format(datastore.data['version_tag']),
                     new_version_available=app.config['NEW_VERSION_AVAILABLE'],
-                    has_password=datastore.data['settings']['application']['password'] != False
+                    has_password=datastore.data['settings']['application']['password'] != False,
+                    socket_io_enabled=datastore.data['settings']['application']['ui'].get('socket_io_enabled', True)
                     )
 
     # Monitored websites will not receive a Referer header when a user clicks on an outgoing link.
@@ -194,15 +238,21 @@ def main():
         from werkzeug.middleware.proxy_fix import ProxyFix
         app.wsgi_app = ProxyFix(app.wsgi_app, x_prefix=1, x_host=1)
 
-    s_type = socket.AF_INET6 if ipv6_enabled else socket.AF_INET
 
-    if ssl_mode:
-        # @todo finalise SSL config, but this should get you in the right direction if you need it.
-        eventlet.wsgi.server(eventlet.wrap_ssl(eventlet.listen((host, port), s_type),
-                                               certfile='cert.pem',
-                                               keyfile='privkey.pem',
-                                               server_side=True), app)
-
+    # SocketIO instance is already initialized in flask_app.py
+    if socketio_server:
+        if ssl_mode:
+            logger.success(f"SSL mode enabled, attempting to start with '{ssl_cert_file}' and '{ssl_privkey_file}' in {os.getcwd()}")
+            socketio.run(app, host=host, port=int(port), debug=False,
+                         ssl_context=(ssl_cert_file, ssl_privkey_file), allow_unsafe_werkzeug=True)
+        else:
+            socketio.run(app, host=host, port=int(port), debug=False, allow_unsafe_werkzeug=True)
     else:
-        eventlet.wsgi.server(eventlet.listen((host, int(port)), s_type), app)
-
+        # Run Flask app without Socket.IO if disabled
+        logger.info("Starting Flask app without Socket.IO server")
+        if ssl_mode:
+            logger.success(f"SSL mode enabled, attempting to start with '{ssl_cert_file}' and '{ssl_privkey_file}' in {os.getcwd()}")
+            app.run(host=host, port=int(port), debug=False,
+                    ssl_context=(ssl_cert_file, ssl_privkey_file))
+        else:
+            app.run(host=host, port=int(port), debug=False)

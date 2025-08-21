@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from operator import truediv
 
 from flask import make_response, request
 from flask import url_for
@@ -126,23 +127,49 @@ def extract_UUID_from_client(client):
     uuid = m.group(1)
     return uuid.strip()
 
-def wait_for_all_checks(client):
-    # actually this is not entirely true, it can still be 'processing' but not in the queue
-    # Loop waiting until done..
-    attempt=0
-    # because sub-second rechecks are problematic in testing, use lots of delays
-    time.sleep(1)
-    while attempt < 60:
-        res = client.get(url_for("watchlist.index"))
-        if not b'Checking now' in res.data:
-            break
-        logging.getLogger().info("Waiting for watch-list to not say 'Checking now'.. {}".format(attempt))
-        time.sleep(1)
+
+def wait_for_all_checks(client=None):
+    """
+    Waits until the queue is empty and workers are idle.
+    Much faster than the original with adaptive timing.
+    """
+    from changedetectionio.flask_app import update_q as global_update_q
+    from changedetectionio import worker_handler
+
+    logger = logging.getLogger()
+    empty_since = None
+    attempt = 0
+    max_attempts = 150  # Still reasonable upper bound
+
+    while attempt < max_attempts:
+        # Start with fast checks, slow down if needed
+        if attempt < 10:
+            time.sleep(0.1)  # Very fast initial checks
+        elif attempt < 30:
+            time.sleep(0.3)  # Medium speed
+        else:
+            time.sleep(0.8)  # Slower for persistent issues
+
+        q_length = global_update_q.qsize()
+        running_uuids = worker_handler.get_running_uuids()
+        any_workers_busy = len(running_uuids) > 0
+
+        if q_length == 0 and not any_workers_busy:
+            if empty_since is None:
+                empty_since = time.time()
+            elif time.time() - empty_since >= 0.15:  # Shorter wait
+                break
+        else:
+            empty_since = None
+        
         attempt += 1
+        time.sleep(0.3)
 
-    time.sleep(1)
+# Replaced by new_live_server_setup and calling per function scope in conftest.py
+def  live_server_setup(live_server):
+    return True
 
-def live_server_setup(live_server):
+def new_live_server_setup(live_server):
 
     @live_server.app.route('/test-random-content-endpoint')
     def test_random_content_endpoint():
@@ -296,18 +323,3 @@ def live_server_setup(live_server):
 
     live_server.start()
 
-def get_index(client):
-    import inspect
-    # Get the caller's frame (parent function)
-    frame = inspect.currentframe()
-    caller_frame = frame.f_back  # Go back to the caller's frame
-    caller_name = caller_frame.f_code.co_name
-    caller_line = caller_frame.f_lineno
-
-    print(f"Called by: {caller_name}, Line: {caller_line}")
-
-    res = client.get(url_for("watchlist.index"))
-    with open(f"test-datastore/index-{caller_name}-{caller_line}.html", 'wb') as f:
-        f.write(res.data)
-
-    return res

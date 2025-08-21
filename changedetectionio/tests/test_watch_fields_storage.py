@@ -6,7 +6,7 @@ from . util import set_original_response, set_modified_response, live_server_set
 
 def test_check_watch_field_storage(client, live_server, measure_memory_usage):
     set_original_response()
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
 
     test_url = "http://somerandomsitewewatch.com"
 

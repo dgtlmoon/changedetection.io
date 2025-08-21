@@ -1,0 +1,92 @@
+.watch-table {
+  &.favicon-not-enabled {
+    tr {
+      .favicon {
+        display: none;
+      }
+    }
+  }
+
+  tr {
+    /* make the icons and the text inline-ish */
+    td.inline.title-col {
+      .flex-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+    }
+  }
+
+
+  td,
+  th {
+    vertical-align: middle;
+  }
+
+  tr.has-favicon {
+    &.unviewed {
+      img.favicon {
+        opacity: 1.0 !important;
+      }
+    }
+  }
+
+  .status-icons {
+    white-space: nowrap;
+    display: flex;
+    align-items: center; /* Vertical centering */
+    gap: 4px; /* Space between image and text */
+    > * {
+      vertical-align: middle;
+    }
+  }
+}
+
+.title-col {
+  /* Optional, for spacing */
+  padding: 10px;
+}
+
+.title-wrapper {
+  display: flex;
+  align-items: center; /* Vertical centering */
+  gap: 10px; /* Space between image and text */
+}
+
+/* Make sure .title-col-inner doesn't collapse or misalign */
+.title-col-inner {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* favicon styling */
+.watch-table {
+  img.favicon {
+    vertical-align: middle;
+    max-width: 25px;
+    max-height: 25px;
+    height: 25px;
+    padding-right: 4px;
+  }
+
+    // Reserved for future use
+  /*  &.thumbnail-type-screenshot {
+      tr.has-favicon {
+        td.inline.title-col {
+          img.thumbnail {
+            background-color: #fff; !* fallback bg for SVGs without bg *!
+            border-radius: 4px; !* subtle rounded corners *!
+            border: 1px solid #ddd; !* light border for contrast *!
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); !* soft shadow *!
+            filter: contrast(1.05) saturate(1.1) drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.2));
+            object-fit: cover; !* crop/fill if needed *!
+            opacity: 0.8;
+            max-width: 30px;
+            max-height: 30px;
+            height: 30px;
+          }
+        }
+      }
+    }*/
+}

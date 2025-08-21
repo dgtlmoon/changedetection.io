@@ -1,0 +1,178 @@
+$grid-col-checkbox: 20px;
+$grid-col-watch: 100px;
+$grid-gap: 0.5rem;
+
+
+@media (max-width: 767px) {
+
+  /*
+  Max width before this PARTICULAR table gets nasty
+  This query will take effect for any screen smaller than 760px
+  and also iPads specifically.
+  */
+  .watch-table {
+    /* make headings work on mobile */
+    thead {
+      display: block;
+
+      tr {
+        th {
+          display: inline-block;
+          // Hide the "Last" text for smaller screens
+          @media (max-width: 768px) {
+            .hide-on-mobile {
+              display: none;
+            }
+          }
+        }
+      }
+
+      .empty-cell {
+        display: none;
+      }
+    }
+
+
+    .last-checked {
+      margin-left: calc($grid-col-checkbox + $grid-gap);
+
+      > span {
+        vertical-align: middle;
+      }
+    }
+
+    .last-changed {
+      margin-left: calc($grid-col-checkbox + $grid-gap);
+    }
+
+    .last-checked::before {
+      color: var(--color-text);
+      content: "Last Checked ";
+    }
+
+    .last-changed::before {
+      color: var(--color-text);
+      content: "Last Changed ";
+    }
+
+    /* Force table to not be like tables anymore */
+    td.inline {
+      display: inline-block;
+    }
+
+    .pure-table td,
+    .pure-table th {
+      border: none;
+    }
+
+    td {
+      /* Behave  like a "row" */
+      border: none;
+      border-bottom: 1px solid var(--color-border-watch-table-cell);
+      vertical-align: middle;
+
+      &:before {
+        /* Top/left values mimic padding */
+        top: 6px;
+        left: 6px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+      }
+    }
+
+    &.pure-table-striped {
+      tr {
+        background-color: var(--color-table-background);
+      }
+
+      tr:nth-child(2n-1) {
+        background-color: var(--color-table-stripe);
+      }
+
+      tr:nth-child(2n-1) td {
+        background-color: inherit;
+      }
+    }
+  }
+}
+
+@media (max-width: 767px) {
+  .watch-table {
+    tbody {
+      tr {
+        padding-bottom: 10px;
+        padding-top: 10px;
+        display: grid;
+        grid-template-columns: $grid-col-checkbox 1fr $grid-col-watch;
+        grid-template-rows: auto auto auto auto;
+        gap: $grid-gap;
+
+        .counter-i {
+          display: none;
+        }
+
+        td.checkbox-uuid {
+          display: grid;
+          place-items: center;
+        }
+
+        td.inline {
+          /* display: block !important;;*/
+        }
+
+        > td {
+          border-bottom: none;
+        }
+
+        > td.title-col {
+          grid-column: 1 / -1;
+          grid-row: 1;
+          .watch-title {
+            font-size: 0.92rem;
+          }
+          .link-spread {
+            display: none;
+          }
+        }
+
+        > td.last-checked {
+          grid-column: 1 / -1;
+          grid-row: 2;
+        }
+
+        > td.last-changed {
+          grid-column: 1 / -1;
+          grid-row: 3;
+        }
+
+        > td.checkbox-uuid {
+          grid-column: 1;
+          grid-row: 4;
+        }
+
+        > td.buttons {
+          grid-column: 2;
+          grid-row: 4;
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+        }
+
+        > td.watch-controls {
+          grid-column: 3;
+          grid-row: 4;
+          display: grid;
+          place-items: center;
+
+          a img {
+            padding: 10px;
+          }
+        }
+      }
+    }
+  }
+  .pure-table td {
+    padding: 3px !important;
+  }
+}

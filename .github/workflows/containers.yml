@@ -39,7 +39,7 @@ jobs:
     # Or if we are in a tagged release scenario.
     if: ${{ github.event.workflow_run.conclusion == 'success' }} || ${{ github.event.release.tag_name }} != ''
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
@@ -103,6 +103,13 @@ jobs:
 #          provenance: false
 
       # A new tagged release is required, which builds :tag and :latest
+      - name: Debug release info
+        if: github.event_name == 'release' && startsWith(github.event.release.tag_name, '0.')
+        run: |
+          echo "Release tag: ${{ github.event.release.tag_name }}"
+          echo "Github ref: ${{ github.ref }}"
+          echo "Github ref name: ${{ github.ref_name }}"
+          
       - name: Docker meta :tag
         if: github.event_name == 'release' && startsWith(github.event.release.tag_name, '0.')
         uses: docker/metadata-action@v5
@@ -112,9 +119,10 @@ jobs:
                 ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io
                 ghcr.io/dgtlmoon/changedetection.io
             tags: |
-                type=semver,pattern={{version}}
-                type=semver,pattern={{major}}.{{minor}}
-                type=semver,pattern={{major}}
+                type=semver,pattern={{version}},value=${{ github.event.release.tag_name }}
+                type=semver,pattern={{major}}.{{minor}},value=${{ github.event.release.tag_name }}
+                type=semver,pattern={{major}},value=${{ github.event.release.tag_name }}
+                type=raw,value=latest
 
       - name: Build and push :tag
         id: docker_build_tag_release

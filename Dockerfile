@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl-dev \
     libxslt-dev \
     make \
+    patch \
     zlib1g-dev
 
 RUN mkdir /install
@@ -23,13 +24,24 @@ WORKDIR /install
 
 COPY requirements.txt /requirements.txt
 
-# --extra-index-url https://www.piwheels.org/simple  is for cryptography module to be prebuilt (or rustc etc needs to be installed)
-RUN pip install --extra-index-url https://www.piwheels.org/simple  --target=/dependencies -r /requirements.txt
+# Use cache mounts and multiple wheel sources for faster ARM builds
+ENV PIP_CACHE_DIR=/tmp/pip-cache
+RUN --mount=type=cache,target=/tmp/pip-cache \
+    pip install \
+    --extra-index-url https://www.piwheels.org/simple \
+    --extra-index-url https://pypi.anaconda.org/ARM-software/simple \
+    --cache-dir=/tmp/pip-cache \
+    --target=/dependencies \
+    -r /requirements.txt
 
 # Playwright is an alternative to Selenium
 # Excluded this package from requirements.txt to prevent arm/v6 and arm/v7 builds from failing
 # https://github.com/dgtlmoon/changedetection.io/pull/1067 also musl/alpine (not supported)
-RUN pip install --target=/dependencies playwright~=1.48.0 \
+RUN --mount=type=cache,target=/tmp/pip-cache \
+    pip install \
+    --cache-dir=/tmp/pip-cache \
+    --target=/dependencies \
+    playwright~=1.48.0 \
     || echo "WARN: Failed to install Playwright. The application can still run, but the Playwright option will be disabled."
 
 # Final image stage
@@ -42,6 +54,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     locales \
     # For pdftohtml
     poppler-utils \
+    # favicon type detection and other uses
+    file \
     zlib1g \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -69,6 +83,9 @@ COPY changedetection.py /app/changedetection.py
 # On production, it is effectively LOGGER_LEVEL=''.
 ARG LOGGER_LEVEL=''
 ENV LOGGER_LEVEL="$LOGGER_LEVEL"
+
+# Default
+ENV LC_ALL=en_US.UTF-8
 
 WORKDIR /app
 CMD ["python", "./changedetection.py", "-d", "/datastore"]

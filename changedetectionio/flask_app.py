@@ -4,55 +4,62 @@ import flask_login
 import locale
 import os
 import queue
+import sys
 import threading
 import time
 import timeago
+from blinker import signal
 
 from changedetectionio.strtobool import strtobool
 from threading import Event
+from changedetectionio.queue_handlers import RecheckPriorityQueue, NotificationQueue
+from changedetectionio import worker_handler
 
 from flask import (
     Flask,
     abort,
     flash,
-    make_response,
     redirect,
     render_template,
     request,
     send_from_directory,
-    session,
     url_for,
 )
 from flask_compress import Compress as FlaskCompress
 from flask_login import current_user
-from flask_paginate import Pagination, get_page_parameter
 from flask_restful import abort, Api
 from flask_cors import CORS
+
+# Create specific signals for application events
+# Make this a global singleton to avoid multiple signal objects
+watch_check_update = signal('watch_check_update', doc='Signal sent when a watch check is completed')
 from flask_wtf import CSRFProtect
 from loguru import logger
 
 from changedetectionio import __version__
 from changedetectionio import queuedWatchMetaData
-from changedetectionio.api import Watch, WatchHistory, WatchSingleHistory, CreateWatch, Import, SystemInfo, Tag, Tags, Notifications
+from changedetectionio.api import Watch, WatchHistory, WatchSingleHistory, CreateWatch, Import, SystemInfo, Tag, Tags, Notifications, WatchFavicon
 from changedetectionio.api.Search import Search
 from .time_handler import is_within_schedule
 
 datastore = None
 
 # Local
-running_update_threads = []
 ticker_thread = None
-
 extra_stylesheets = []
 
-update_q = queue.PriorityQueue()
-notification_q = queue.Queue()
+# Use bulletproof janus-based queues for sync/async reliability  
+update_q = RecheckPriorityQueue()
+notification_q = NotificationQueue()
 MAX_QUEUE_SIZE = 2000
 
 app = Flask(__name__,
             static_url_path="",
             static_folder="static",
             template_folder="templates")
+
+# Will be initialized in changedetection_app
+socketio_server = None
 
 # Enable CORS, especially useful for the Chrome extension to operate from anywhere
 CORS(app)
@@ -91,7 +98,7 @@ watch_api = Api(app, decorators=[csrf.exempt])
 def init_app_secret(datastore_path):
     secret = ""
 
-    path = "{}/secret.txt".format(datastore_path)
+    path = os.path.join(datastore_path, "secret.txt")
 
     try:
         with open(path, "r") as f:
@@ -115,6 +122,18 @@ def get_darkmode_state():
 def get_css_version():
     return __version__
 
+@app.template_global()
+def get_socketio_path():
+    """Generate the correct Socket.IO path prefix for the client"""
+    # If behind a proxy with a sub-path, we need to respect that path
+    prefix = ""
+    if os.getenv('USE_X_SETTINGS') and 'X-Forwarded-Prefix' in request.headers:
+        prefix = request.headers['X-Forwarded-Prefix']
+
+    # Socket.IO will be available at {prefix}/socket.io/
+    return prefix
+
+
 @app.template_filter('format_number_locale')
 def _jinja2_filter_format_number_locale(value: float) -> str:
     "Formats for example 4000.10 to the local locale default of 4,000.10"
@@ -125,10 +144,32 @@ def _jinja2_filter_format_number_locale(value: float) -> str:
 
 @app.template_global('is_checking_now')
 def _watch_is_checking_now(watch_obj, format="%Y-%m-%d %H:%M:%S"):
-    # Worker thread tells us which UUID it is currently processing.
-    for t in running_update_threads:
-        if t.current_uuid == watch_obj['uuid']:
-            return True
+    return worker_handler.is_watch_running(watch_obj['uuid'])
+
+@app.template_global('get_watch_queue_position')
+def _get_watch_queue_position(watch_obj):
+    """Get the position of a watch in the queue"""
+    uuid = watch_obj['uuid']
+    return update_q.get_uuid_position(uuid)
+
+@app.template_global('get_current_worker_count')
+def _get_current_worker_count():
+    """Get the current number of operational workers"""
+    return worker_handler.get_worker_count()
+
+@app.template_global('get_worker_status_info')
+def _get_worker_status_info():
+    """Get detailed worker status information for display"""
+    status = worker_handler.get_worker_status()
+    running_uuids = worker_handler.get_running_uuids()
+    
+    return {
+        'count': status['worker_count'],
+        'type': status['worker_type'],
+        'active_workers': len(running_uuids),
+        'processing_watches': running_uuids,
+        'loop_running': status.get('async_loop_running', None)
+    }
 
 
 # We use the whole watch object from the store/JSON so we can see if there's some related status in terms of a thread
@@ -215,12 +256,15 @@ class User(flask_login.UserMixin):
 def changedetection_app(config=None, datastore_o=None):
     logger.trace("TRACE log is enabled")
 
-    global datastore
+    global datastore, socketio_server
     datastore = datastore_o
 
     # so far just for read-only via tests, but this will be moved eventually to be the main source
     # (instead of the global var)
     app.config['DATASTORE'] = datastore_o
+    
+    # Store the signal in the app config to ensure it's accessible everywhere
+    app.config['watch_check_update_SIGNAL'] = watch_check_update
 
     login_manager = flask_login.LoginManager(app)
     login_manager.login_view = 'login'
@@ -248,6 +292,9 @@ def changedetection_app(config=None, datastore_o=None):
             # RSS access with token is allowed
             elif request.endpoint and 'rss.feed' in request.endpoint:
                 return None
+            # Socket.IO routes - need separate handling
+            elif request.path.startswith('/socket.io/'):
+                return None
             # API routes - use their own auth mechanism (@auth.check_token)
             elif request.path.startswith('/api/'):
                 return None
@@ -258,7 +305,9 @@ def changedetection_app(config=None, datastore_o=None):
     watch_api.add_resource(WatchSingleHistory,
                            '/api/v1/watch/<string:uuid>/history/<string:timestamp>',
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
-
+    watch_api.add_resource(WatchFavicon,
+                           '/api/v1/watch/<string:uuid>/favicon',
+                           resource_class_kwargs={'datastore': datastore})
     watch_api.add_resource(WatchHistory,
                            '/api/v1/watch/<string:uuid>/history',
                            resource_class_kwargs={'datastore': datastore})
@@ -280,7 +329,7 @@ def changedetection_app(config=None, datastore_o=None):
                            resource_class_kwargs={'datastore': datastore})
 
     watch_api.add_resource(Tag, '/api/v1/tag', '/api/v1/tag/<string:uuid>',
-                           resource_class_kwargs={'datastore': datastore})
+                           resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
                            
     watch_api.add_resource(Search, '/api/v1/search',
                            resource_class_kwargs={'datastore': datastore})
@@ -378,6 +427,32 @@ def changedetection_app(config=None, datastore_o=None):
             except FileNotFoundError:
                 abort(404)
 
+        if group == 'favicon':
+            # Could be sensitive, follow password requirements
+            if datastore.data['settings']['application']['password'] and not flask_login.current_user.is_authenticated:
+                abort(403)
+            # Get the watch object
+            watch = datastore.data['watching'].get(filename)
+            if not watch:
+                abort(404)
+
+            favicon_filename = watch.get_favicon_filename()
+            if favicon_filename:
+                try:
+                    import magic
+                    mime = magic.from_file(
+                        os.path.join(watch.watch_data_dir, favicon_filename),
+                        mime=True
+                    )
+                except ImportError:
+                    # Fallback, no python-magic
+                    import mimetypes
+                    mime, encoding = mimetypes.guess_type(favicon_filename)
+
+                response = make_response(send_from_directory(watch.watch_data_dir, favicon_filename))
+                response.headers['Content-type'] = mime
+                response.headers['Cache-Control'] = 'max-age=300, must-revalidate'  # Cache for 5 minutes, then revalidate
+                return response
 
         if group == 'visual_selector_data':
             # Could be sensitive, follow password requirements
@@ -444,11 +519,22 @@ def changedetection_app(config=None, datastore_o=None):
 
     # watchlist UI buttons etc
     import changedetectionio.blueprint.ui as ui
-    app.register_blueprint(ui.construct_blueprint(datastore, update_q, running_update_threads, queuedWatchMetaData))
+    app.register_blueprint(ui.construct_blueprint(datastore, update_q, worker_handler, queuedWatchMetaData, watch_check_update))
 
     import changedetectionio.blueprint.watchlist as watchlist
     app.register_blueprint(watchlist.construct_blueprint(datastore=datastore, update_q=update_q, queuedWatchMetaData=queuedWatchMetaData), url_prefix='')
-    
+
+    # Initialize Socket.IO server conditionally based on settings
+    socket_io_enabled = datastore.data['settings']['application']['ui'].get('socket_io_enabled', True)
+    if socket_io_enabled:
+        from changedetectionio.realtime.socket_server import init_socketio
+        global socketio_server
+        socketio_server = init_socketio(app, datastore)
+        logger.info("Socket.IO server initialized")
+    else:
+        logger.info("Socket.IO server disabled via settings")
+        socketio_server = None
+
     # Memory cleanup endpoint
     @app.route('/gc-cleanup', methods=['GET'])
     @login_optionally_required
@@ -459,14 +545,95 @@ def changedetection_app(config=None, datastore_o=None):
         result = memory_cleanup(app)
         return jsonify({"status": "success", "message": "Memory cleanup completed", "result": result})
 
+    # Worker health check endpoint
+    @app.route('/worker-health', methods=['GET'])
+    @login_optionally_required
+    def worker_health():
+        from flask import jsonify
+        
+        expected_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
+        
+        # Get basic status
+        status = worker_handler.get_worker_status()
+        
+        # Perform health check
+        health_result = worker_handler.check_worker_health(
+            expected_count=expected_workers,
+            update_q=update_q,
+            notification_q=notification_q,
+            app=app,
+            datastore=datastore
+        )
+        
+        return jsonify({
+            "status": "success",
+            "worker_status": status,
+            "health_check": health_result,
+            "expected_workers": expected_workers
+        })
+
+    # Queue status endpoint
+    @app.route('/queue-status', methods=['GET'])
+    @login_optionally_required
+    def queue_status():
+        from flask import jsonify, request
+        
+        # Get specific UUID position if requested
+        target_uuid = request.args.get('uuid')
+        
+        if target_uuid:
+            position_info = update_q.get_uuid_position(target_uuid)
+            return jsonify({
+                "status": "success",
+                "uuid": target_uuid,
+                "queue_position": position_info
+            })
+        else:
+            # Get pagination parameters
+            limit = request.args.get('limit', type=int)
+            offset = request.args.get('offset', type=int, default=0)
+            summary_only = request.args.get('summary', type=bool, default=False)
+            
+            if summary_only:
+                # Fast summary for large queues
+                summary = update_q.get_queue_summary()
+                return jsonify({
+                    "status": "success",
+                    "queue_summary": summary
+                })
+            else:
+                # Get queued items with pagination support
+                if limit is None:
+                    # Default limit for large queues to prevent performance issues
+                    queue_size = update_q.qsize()
+                    if queue_size > 100:
+                        limit = 50
+                        logger.warning(f"Large queue ({queue_size} items) detected, limiting to {limit} items. Use ?limit=N for more.")
+                
+                all_queued = update_q.get_all_queued_uuids(limit=limit, offset=offset)
+                return jsonify({
+                    "status": "success",
+                    "queue_size": update_q.qsize(),
+                    "queued_data": all_queued
+                })
+
+    # Start the async workers during app initialization
+    # Can be overridden by ENV or use the default settings
+    n_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
+    logger.info(f"Starting {n_workers} workers during app initialization")
+    worker_handler.start_workers(n_workers, update_q, notification_q, app, datastore)
+
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
     threading.Thread(target=notification_runner).start()
 
+    in_pytest = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
     # Check for new release version, but not when running in test/build or pytest
-    if not os.getenv("GITHUB_REF", False) and not strtobool(os.getenv('DISABLE_VERSION_CHECK', 'no')):
+    if not os.getenv("GITHUB_REF", False) and not strtobool(os.getenv('DISABLE_VERSION_CHECK', 'no')) and not in_pytest:
         threading.Thread(target=check_for_new_version).start()
 
+    # Return the Flask app - the Socket.IO will be attached to it but initialized separately
+    # This avoids circular dependencies
     return app
 
 
@@ -502,73 +669,87 @@ def notification_runner():
     global notification_debug_log
     from datetime import datetime
     import json
-    while not app.config.exit.is_set():
-        try:
-            # At the moment only one thread runs (single runner)
-            n_object = notification_q.get(block=False)
-        except queue.Empty:
-            time.sleep(1)
-
-        else:
-
-            now = datetime.now()
-            sent_obj = None
-
+    with app.app_context():
+        while not app.config.exit.is_set():
             try:
-                from changedetectionio.notification.handler import process_notification
+                # At the moment only one thread runs (single runner)
+                n_object = notification_q.get(block=False)
+            except queue.Empty:
+                time.sleep(1)
 
-                # Fallback to system config if not set
-                if not n_object.get('notification_body') and datastore.data['settings']['application'].get('notification_body'):
-                    n_object['notification_body'] = datastore.data['settings']['application'].get('notification_body')
+            else:
 
-                if not n_object.get('notification_title') and datastore.data['settings']['application'].get('notification_title'):
-                    n_object['notification_title'] = datastore.data['settings']['application'].get('notification_title')
+                now = datetime.now()
+                sent_obj = None
 
-                if not n_object.get('notification_format') and datastore.data['settings']['application'].get('notification_format'):
-                    n_object['notification_format'] = datastore.data['settings']['application'].get('notification_format')
-                if n_object.get('notification_urls', {}):
-                    sent_obj = process_notification(n_object, datastore)
+                try:
+                    from changedetectionio.notification.handler import process_notification
 
-            except Exception as e:
-                logger.error(f"Watch URL: {n_object['watch_url']}  Error {str(e)}")
+                    # Fallback to system config if not set
+                    if not n_object.get('notification_body') and datastore.data['settings']['application'].get('notification_body'):
+                        n_object['notification_body'] = datastore.data['settings']['application'].get('notification_body')
 
-                # UUID wont be present when we submit a 'test' from the global settings
-                if 'uuid' in n_object:
-                    datastore.update_watch(uuid=n_object['uuid'],
-                                           update_obj={'last_notification_error': "Notification error detected, goto notification log."})
+                    if not n_object.get('notification_title') and datastore.data['settings']['application'].get('notification_title'):
+                        n_object['notification_title'] = datastore.data['settings']['application'].get('notification_title')
 
-                log_lines = str(e).splitlines()
-                notification_debug_log += log_lines
+                    if not n_object.get('notification_format') and datastore.data['settings']['application'].get('notification_format'):
+                        n_object['notification_format'] = datastore.data['settings']['application'].get('notification_format')
+                    if n_object.get('notification_urls', {}):
+                        sent_obj = process_notification(n_object, datastore)
 
-            # Process notifications
-            notification_debug_log+= ["{} - SENDING - {}".format(now.strftime("%Y/%m/%d %H:%M:%S,000"), json.dumps(sent_obj))]
-            # Trim the log length
-            notification_debug_log = notification_debug_log[-100:]
+                except Exception as e:
+                    logger.error(f"Watch URL: {n_object['watch_url']}  Error {str(e)}")
+
+                    # UUID wont be present when we submit a 'test' from the global settings
+                    if 'uuid' in n_object:
+                        datastore.update_watch(uuid=n_object['uuid'],
+                                               update_obj={'last_notification_error': "Notification error detected, goto notification log."})
+
+                    log_lines = str(e).splitlines()
+                    notification_debug_log += log_lines
+
+                    with app.app_context():
+                        app.config['watch_check_update_SIGNAL'].send(app_context=app, watch_uuid=n_object.get('uuid'))
+
+                # Process notifications
+                notification_debug_log+= ["{} - SENDING - {}".format(now.strftime("%Y/%m/%d %H:%M:%S,000"), json.dumps(sent_obj))]
+                # Trim the log length
+                notification_debug_log = notification_debug_log[-100:]
+
+
 
 # Threaded runner, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():
     import random
-    from changedetectionio import update_worker
     proxy_last_called_time = {}
+    last_health_check = 0
 
     recheck_time_minimum_seconds = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
     logger.debug(f"System env MINIMUM_SECONDS_RECHECK_TIME {recheck_time_minimum_seconds}")
 
-    # Spin up Workers that do the fetching
-    # Can be overriden by ENV or use the default settings
-    n_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
-    for _ in range(n_workers):
-        new_worker = update_worker.update_worker(update_q, notification_q, app, datastore)
-        running_update_threads.append(new_worker)
-        new_worker.start()
+    # Workers are now started during app initialization, not here
 
     while not app.config.exit.is_set():
 
+        # Periodic worker health check (every 60 seconds)
+        now = time.time()
+        if now - last_health_check > 60:
+            expected_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
+            health_result = worker_handler.check_worker_health(
+                expected_count=expected_workers,
+                update_q=update_q,
+                notification_q=notification_q,
+                app=app,
+                datastore=datastore
+            )
+            
+            if health_result['status'] != 'healthy':
+                logger.warning(f"Worker health check: {health_result['message']}")
+                
+            last_health_check = now
+
         # Get a list of watches by UUID that are currently fetching data
-        running_uuids = []
-        for t in running_update_threads:
-            if t.current_uuid:
-                running_uuids.append(t.current_uuid)
+        running_uuids = worker_handler.get_running_uuids()
 
         # Re #232 - Deepcopy the data incase it changes while we're iterating through it all
         watch_uuid_list = []
@@ -663,16 +844,22 @@ def ticker_thread_check_time_launch_checks():
 
                     # Use Epoch time as priority, so we get a "sorted" PriorityQueue, but we can still push a priority 1 into it.
                     priority = int(time.time())
-                    logger.debug(
-                        f"> Queued watch UUID {uuid} "
-                        f"last checked at {watch['last_checked']} "
-                        f"queued at {now:0.2f} priority {priority} "
-                        f"jitter {watch.jitter_seconds:0.2f}s, "
-                        f"{now - watch['last_checked']:0.2f}s since last checked")
 
                     # Into the queue with you
-                    update_q.put(queuedWatchMetaData.PrioritizedItem(priority=priority, item={'uuid': uuid}))
-
+                    queued_successfully = worker_handler.queue_item_async_safe(update_q,
+                                                                               queuedWatchMetaData.PrioritizedItem(priority=priority,
+                                                                                                                   item={'uuid': uuid})
+                                                                               )
+                    if queued_successfully:
+                        logger.debug(
+                            f"> Queued watch UUID {uuid} "
+                            f"last checked at {watch['last_checked']} "
+                            f"queued at {now:0.2f} priority {priority} "
+                            f"jitter {watch.jitter_seconds:0.2f}s, "
+                            f"{now - watch['last_checked']:0.2f}s since last checked")
+                    else:
+                        logger.critical(f"CRITICAL: Failed to queue watch UUID {uuid} in ticker thread!")
+                        
                     # Reset for next time
                     watch.jitter_seconds = 0
 

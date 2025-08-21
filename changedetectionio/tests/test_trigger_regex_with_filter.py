@@ -24,7 +24,7 @@ def set_original_ignore_response():
 
 def test_trigger_regex_functionality_with_filter(client, live_server, measure_memory_usage):
 
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
     sleep_time_for_fetch_thread = 3
 
     set_original_ignore_response()

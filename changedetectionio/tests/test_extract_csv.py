@@ -14,7 +14,7 @@ def test_check_extract_text_from_diff(client, live_server, measure_memory_usage)
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write("Now it's {} seconds since epoch, time flies!".format(str(time.time())))
 
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
 
     # Add our URL to the import page
     res = client.post(
@@ -46,7 +46,7 @@ def test_check_extract_text_from_diff(client, live_server, measure_memory_usage)
         follow_redirects=False
     )
 
-    assert b'Nothing matches that RegEx' not in res.data
+    assert b'No matches found while scanning all of the watch history for that RegEx.' not in res.data
     assert res.content_type == 'text/csv'
 
     # Read the csv reply as stringio

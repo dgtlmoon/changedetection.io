@@ -3,8 +3,7 @@
 from . util import live_server_setup
 from changedetectionio import html_tools
 
-def test_setup(live_server):
-    live_server_setup(live_server)
+
 
 # Unit test of the stripper
 # Always we are dealing in utf-8

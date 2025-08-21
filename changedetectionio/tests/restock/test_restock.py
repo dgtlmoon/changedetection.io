@@ -54,7 +54,7 @@ def test_restock_detection(client, live_server, measure_memory_usage):
 
     set_original_response()
     #assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
-    live_server_setup(live_server)
+   #  live_server_setup(live_server) # Setup on conftest per function
     #####################
     notification_url = url_for('test_notification_endpoint', _external=True).replace('http://localhost', 'http://changedet').replace('http', 'json')
 

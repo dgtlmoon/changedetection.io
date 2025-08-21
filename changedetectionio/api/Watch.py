@@ -3,8 +3,9 @@ from changedetectionio.strtobool import strtobool
 
 from flask_expects_json import expects_json
 from changedetectionio import queuedWatchMetaData
+from changedetectionio import worker_handler
 from flask_restful import abort, Resource
-from flask import request, make_response
+from flask import request, make_response, send_from_directory
 import validators
 from . import auth
 import copy
@@ -47,7 +48,7 @@ class Watch(Resource):
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
 
         if request.args.get('recheck'):
-            self.update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+            worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
             return "OK", 200
         if request.args.get('paused', '') == 'paused':
             self.datastore.data['watching'].get(uuid).pause()
@@ -190,6 +191,47 @@ class WatchSingleHistory(Resource):
 
         return response
 
+class WatchFavicon(Resource):
+    def __init__(self, **kwargs):
+        # datastore is a black box dependency
+        self.datastore = kwargs['datastore']
+
+    @auth.check_token
+    def get(self, uuid):
+        """
+        @api {get} /api/v1/watch/<string:uuid>/favicon Get Favicon for a watch
+        @apiDescription Requires watch `uuid`
+        @apiExample {curl} Example usage:
+            curl http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091/favicon -H"x-api-key:813031b16330fe25e3780cf0325daa45"
+        @apiName Get latest Favicon
+        @apiGroup Watch History
+        @apiSuccess (200) {String} OK
+        @apiSuccess (404) {String} ERR Not found
+        """
+        watch = self.datastore.data['watching'].get(uuid)
+        if not watch:
+            abort(404, message=f"No watch exists with the UUID of {uuid}")
+
+        favicon_filename = watch.get_favicon_filename()
+        if favicon_filename:
+            try:
+                import magic
+                mime = magic.from_file(
+                    os.path.join(watch.watch_data_dir, favicon_filename),
+                    mime=True
+                )
+            except ImportError:
+                # Fallback, no python-magic
+                import mimetypes
+                mime, encoding = mimetypes.guess_type(favicon_filename)
+
+            response = make_response(send_from_directory(watch.watch_data_dir, favicon_filename))
+            response.headers['Content-type'] = mime
+            response.headers['Cache-Control'] = 'max-age=300, must-revalidate'  # Cache for 5 minutes, then revalidate
+            return response
+
+        abort(404, message=f'No Favicon available for {uuid}')
+
 
 class CreateWatch(Resource):
     def __init__(self, **kwargs):
@@ -236,7 +278,7 @@ class CreateWatch(Resource):
 
         new_uuid = self.datastore.add_watch(url=url, extras=extras, tag=tags)
         if new_uuid:
-            self.update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))
+            worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))
             return {'uuid': new_uuid}, 201
         else:
             return "Invalid or unsupported URL", 400
@@ -291,7 +333,7 @@ class CreateWatch(Resource):
 
         if request.args.get('recheck_all'):
             for uuid in self.datastore.data['watching'].keys():
-                self.update_q.put(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+                worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
             return {'status': "OK"}, 200
 
         return list, 200

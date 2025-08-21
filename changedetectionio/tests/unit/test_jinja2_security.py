@@ -51,6 +51,9 @@ class TestJinja2SSTI(unittest.TestCase):
         for attempt in attempt_list:
             self.assertEqual(len(safe_jinja.render(attempt)), 0, f"string test '{attempt}' is correctly empty")
 
+    def test_jinja2_escaped_html(self):
+        x = safe_jinja.render_fully_escaped('woo <a href="https://google.com">dfdfd</a>')
+        self.assertEqual(x, "woo &lt;a href=&#34;https://google.com&#34;&gt;dfdfd&lt;/a&gt;")
 
 
 if __name__ == '__main__':

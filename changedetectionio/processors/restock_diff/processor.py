@@ -7,7 +7,7 @@ import urllib3
 import time
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-name = 'Re-stock & Price detection for single product pages'
+name = 'Re-stock & Price detection for pages with a SINGLE product'
 description = 'Detects if the product goes back to in-stock'
 
 class UnableToExtractRestockData(Exception):
@@ -79,7 +79,7 @@ def get_itemprop_availability(html_content) -> Restock:
     # First phase, dead simple scanning of anything that looks useful
     value = Restock()
     if data:
-        logger.debug(f"Using jsonpath to find price/availability/etc")
+        logger.debug("Using jsonpath to find price/availability/etc")
         price_parse = parse('$..(price|Price)')
         pricecurrency_parse = parse('$..(pricecurrency|currency|priceCurrency )')
         availability_parse = parse('$..(availability|Availability)')
@@ -110,7 +110,7 @@ def get_itemprop_availability(html_content) -> Restock:
 
         # Second, go dig OpenGraph which is something that jsonpath_ng cant do because of the tuples and double-dots (:)
         if not value.get('price') or value.get('availability'):
-            logger.debug(f"Alternatively digging through OpenGraph properties for restock/price info..")
+            logger.debug("Alternatively digging through OpenGraph properties for restock/price info..")
             jsonpath_expr = parse('$..properties')
 
             for match in jsonpath_expr.find(data):

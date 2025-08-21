@@ -1,3 +1,5 @@
+from blinker import signal
+
 from changedetectionio.strtobool import strtobool
 from changedetectionio.safe_jinja import render as jinja_render
 from . import watch_base
@@ -6,11 +8,14 @@ import re
 from pathlib import Path
 from loguru import logger
 
+from .. import safe_jinja
 from ..html_tools import TRANSLATE_WHITESPACE_TABLE
 
 # Allowable protocols, protects against javascript: etc
 # file:// is further checked by ALLOW_FILE_URI
 SAFE_PROTOCOL_REGEX='^(http|https|ftp|file):'
+FAVICON_RESAVE_THRESHOLD_SECONDS=86400
+
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
@@ -41,6 +46,7 @@ class model(watch_base):
         self.__datastore_path = kw.get('datastore_path')
         if kw.get('datastore_path'):
             del kw['datastore_path']
+            
         super(model, self).__init__(*arg, **kw)
         if kw.get('default'):
             self.update(kw['default'])
@@ -59,6 +65,10 @@ class model(watch_base):
             return True
 
         return False
+
+    @property
+    def has_unviewed(self):
+        return int(self.newest_history_key) > int(self['last_viewed']) and self.__history_n >= 2
 
     def ensure_data_dir_exists(self):
         if not os.path.isdir(self.watch_data_dir):
@@ -95,6 +105,13 @@ class model(watch_base):
             return 'DISABLED'
         return ready_url
 
+    @property
+    def domain_only_from_link(self):
+        from urllib.parse import urlparse
+        parsed = urlparse(self.link)
+        domain = parsed.hostname
+        return domain
+
     def clear_watch(self):
         import pathlib
 
@@ -120,6 +137,10 @@ class model(watch_base):
             'remote_server_reply': None,
             'track_ldjson_price_data': None
         })
+        watch_check_update = signal('watch_check_update')
+        if watch_check_update:
+            watch_check_update.send(watch_uuid=self.get('uuid'))
+
         return
 
     @property
@@ -401,6 +422,154 @@ class model(watch_base):
         # False is not an option for AppRise, must be type None
         return None
 
+    def favicon_is_expired(self):
+        favicon_fname = self.get_favicon_filename()
+        import glob
+        import time
+
+        if not favicon_fname:
+            return True
+        try:
+            fname = next(iter(glob.glob(os.path.join(self.watch_data_dir, "favicon.*"))), None)
+            logger.trace(f"Favicon file maybe found at {fname}")
+            if os.path.isfile(fname):
+                file_age = int(time.time() - os.path.getmtime(fname))
+                logger.trace(f"Favicon file age is {file_age}s")
+                if file_age < FAVICON_RESAVE_THRESHOLD_SECONDS:
+                    return False
+        except Exception as e:
+            logger.critical(f"Exception checking Favicon age {str(e)}")
+            return True
+
+        # Also in the case that the file didnt exist
+        return True
+
+    def bump_favicon(self, url, favicon_base_64: str) -> None:
+        from urllib.parse import urlparse
+        import base64
+        import binascii
+        decoded = None
+
+        if url:
+            try:
+                parsed = urlparse(url)
+                filename = os.path.basename(parsed.path)
+                (base, extension) = filename.lower().strip().rsplit('.', 1)
+            except ValueError:
+                logger.error(f"UUID: {self.get('uuid')} Cant work out file extension from '{url}'")
+                return None
+        else:
+            # Assume favicon.ico
+            base = "favicon"
+            extension = "ico"
+
+        fname = os.path.join(self.watch_data_dir, f"favicon.{extension}")
+
+        try:
+            # validate=True makes sure the string only contains valid base64 chars
+            decoded = base64.b64decode(favicon_base_64, validate=True)
+        except (binascii.Error, ValueError) as e:
+            logger.warning(f"UUID: {self.get('uuid')} FavIcon save data (Base64) corrupt? {str(e)}")
+        else:
+            if decoded:
+                try:
+                    with open(fname, 'wb') as f:
+                        f.write(decoded)
+                    # A signal that could trigger the socket server to update the browser also
+                    watch_check_update = signal('watch_favicon_bump')
+                    if watch_check_update:
+                        watch_check_update.send(watch_uuid=self.get('uuid'))
+
+                except Exception as e:
+                    logger.warning(f"UUID: {self.get('uuid')} error saving FavIcon to {fname} - {str(e)}")
+
+        # @todo - Store some checksum and only write when its different
+        logger.debug(f"UUID: {self.get('uuid')} updated favicon to at {fname}")
+
+    def get_favicon_filename(self) -> str | None:
+        """
+        Find any favicon.* file in the current working directory
+        and return the contents of the newest one.
+
+        Returns:
+            bytes: Contents of the newest favicon file, or None if not found.
+        """
+        import glob
+
+        # Search for all favicon.* files
+        files = glob.glob(os.path.join(self.watch_data_dir, "favicon.*"))
+
+        if not files:
+            return None
+
+        # Find the newest by modification time
+        newest_file = max(files, key=os.path.getmtime)
+        return os.path.basename(newest_file)
+
+    def get_screenshot_as_thumbnail(self, max_age=3200):
+        """Return path to a square thumbnail of the most recent screenshot.
+
+        Creates a 150x150 pixel thumbnail from the top portion of the screenshot.
+
+        Args:
+            max_age: Maximum age in seconds before recreating thumbnail
+
+        Returns:
+            Path to thumbnail or None if no screenshot exists
+        """
+        import os
+        import time
+
+        thumbnail_path = os.path.join(self.watch_data_dir, "thumbnail.jpeg")
+        top_trim = 500  # Pixels from top of screenshot to use
+
+        screenshot_path = self.get_screenshot()
+        if not screenshot_path:
+            return None
+
+        # Reuse thumbnail if it's fresh and screenshot hasn't changed
+        if os.path.isfile(thumbnail_path):
+            thumbnail_mtime = os.path.getmtime(thumbnail_path)
+            screenshot_mtime = os.path.getmtime(screenshot_path)
+
+            if screenshot_mtime <= thumbnail_mtime and time.time() - thumbnail_mtime < max_age:
+                return thumbnail_path
+
+        try:
+            from PIL import Image
+
+            with Image.open(screenshot_path) as img:
+                # Crop top portion first (full width, top_trim height)
+                top_crop_height = min(top_trim, img.height)
+                img = img.crop((0, 0, img.width, top_crop_height))
+
+                # Create a smaller intermediate image (to reduce memory usage)
+                aspect = img.width / img.height
+                interim_width = min(top_trim, img.width)
+                interim_height = int(interim_width / aspect) if aspect > 0 else top_trim
+                img = img.resize((interim_width, interim_height), Image.NEAREST)
+
+                # Convert to RGB if needed
+                if img.mode != 'RGB':
+                    img = img.convert('RGB')
+
+                # Crop to square from top center
+                square_size = min(img.width, img.height)
+                left = (img.width - square_size) // 2
+                img = img.crop((left, 0, left + square_size, square_size))
+
+                # Final resize to exact thumbnail size with better filter
+                img = img.resize((350, 350), Image.BILINEAR)
+
+                # Save with optimized settings
+                img.save(thumbnail_path, "JPEG", quality=75, optimize=True)
+
+            return thumbnail_path
+
+        except Exception as e:
+            logger.error(f"Error creating thumbnail for {self.get('uuid')}: {str(e)}")
+            return None
+
     def __get_file_ctime(self, filename):
         fname = os.path.join(self.watch_data_dir, filename)
         if os.path.isfile(fname):
@@ -494,7 +663,7 @@ class model(watch_base):
                     if res:
                         if not csv_writer:
                             # A file on the disk can be transferred much faster via flask than a string reply
-                            csv_output_filename = 'report.csv'
+                            csv_output_filename = f"report-{self.get('uuid')}.csv"
                             f = open(os.path.join(self.watch_data_dir, csv_output_filename), 'w')
                             # @todo some headers in the future
                             #fieldnames = ['Epoch seconds', 'Date']
@@ -648,3 +817,44 @@ class model(watch_base):
             if step_n:
                 available.append(step_n.group(1))
         return available
+
+    def compile_error_texts(self, has_proxies=None):
+        """Compile error texts for this watch.
+        Accepts has_proxies parameter to ensure it works even outside app context"""
+        from flask import url_for
+        from markupsafe import Markup
+
+        output = []  # Initialize as list since we're using append
+        last_error = self.get('last_error','')
+
+        try:
+            url_for('settings.settings_page')
+        except Exception as e:
+            has_app_context = False
+        else:
+            has_app_context = True
+
+        # has app+request context, we can use url_for()
+        if has_app_context:
+            if last_error:
+                if '403' in last_error:
+                    if has_proxies:
+                        output.append(str(Markup(f"{last_error} - <a href=\"{url_for('settings.settings_page', uuid=self.get('uuid'))}\">Try other proxies/location</a>&nbsp;'")))
+                    else:
+                        output.append(str(Markup(f"{last_error} - <a href=\"{url_for('settings.settings_page', uuid=self.get('uuid'))}\">Try adding external proxies/locations</a>&nbsp;'")))
+                else:
+                    output.append(str(Markup(last_error)))
+
+            if self.get('last_notification_error'):
+                output.append(str(Markup(f"<div class=\"notification-error\"><a href=\"{url_for('settings.notification_logs')}\">{ self.get('last_notification_error') }</a></div>")))
+
+        else:
+            # Lo_Fi version - no app context, cant rely on Jinja2 Markup
+            if last_error:
+                output.append(safe_jinja.render_fully_escaped(last_error))
+            if self.get('last_notification_error'):
+                output.append(safe_jinja.render_fully_escaped(self.get('last_notification_error')))
+
+        res = "\n".join(output)
+        return res
+

@@ -1,0 +1,131 @@
+/* table related */
+.watch-table {
+  width: 100%;
+  font-size: 80%;
+
+  tr {
+    &.unviewed {
+      font-weight: bold;
+    }
+
+    color: var(--color-watch-table-row-text);
+  }
+
+
+  td {
+    white-space: nowrap;
+
+    &.title-col {
+      word-break: break-all;
+      white-space: normal;
+    }
+
+    a.external::after {
+      content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg==);
+      margin: 0 3px 0 5px;
+    }
+
+  }
+
+
+  th {
+    white-space: nowrap;
+
+    a {
+      font-weight: normal;
+
+      &.active {
+        font-weight: bolder;
+      }
+
+      &.inactive {
+        .arrow {
+          display: none;
+        }
+      }
+    }
+  }
+
+  /* Row with 'checking-now' */
+  tr.checking-now {
+    td:first-child {
+      position: relative;
+    }
+
+    td:first-child::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 3px;
+      background-color: #293eff;
+    }
+
+    td.last-checked {
+      .spinner-wrapper {
+        display: inline-block !important;
+      }
+
+      .innertext {
+        display: none !important;
+      }
+    }
+  }
+
+  tr.queued {
+    a.recheck {
+      display: none !important;
+    }
+
+    a.already-in-queue-button {
+      display: inline-block !important;
+    }
+  }
+
+  tr.paused {
+    a.pause-toggle {
+      &.state-on {
+        display: inline !important;
+      }
+
+      &.state-off {
+        display: none !important;
+      }
+    }
+  }
+
+  tr.notification_muted {
+    a.mute-toggle {
+      &.state-on {
+        display: inline !important;
+      }
+
+      &.state-off {
+        display: none !important;
+      }
+    }
+  }
+
+
+  tr.has-error {
+    color: var(--color-watch-table-error);
+
+    .error-text {
+      display: block !important;
+    }
+  }
+
+  tr.single-history {
+    a.preview-link {
+      display: inline-block !important;
+    }
+  }
+
+  tr.multiple-history {
+    a.history-link {
+      display: inline-block !important;
+    }
+  }
+}
+
