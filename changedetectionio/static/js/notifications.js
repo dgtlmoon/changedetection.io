@@ -15,6 +15,26 @@ $(document).ready(function () {
         "Preview": "#notification-preview"
     });
 
+    function setPreview(content) {
+        const iframe = document.getElementById("notification-iframe");
+        iframe.srcdoc = `
+        <html>
+          <head>
+            <style>
+              body {
+                font-family: "Courier New", Courier, monospace;
+                font-size: 70%;
+                word-break: break-word;
+                white-space: pre-wrap;
+                margin: 0;
+              }
+            </style>
+          </head>
+          <body>${content}</body>
+        </html>`;
+    }
+
+
     $('#send-test-notification').click(function (e) {
         e.preventDefault();
 
@@ -40,7 +60,7 @@ $(document).ready(function () {
             }
         }).done(function (data) {
             $("#notification-test-log>span").text(data['status']);
-            $("#notification-preview").text(data['result']['body']);
+            setPreview(data['result']['body']);
 
         }).fail(function (jqXHR, textStatus, errorThrown) {
             // Handle connection refused or other errors
@@ -55,5 +75,8 @@ $(document).ready(function () {
             $('.notifications-wrapper .spinner').hide();
         })
     });
+
+
+
 });
 
