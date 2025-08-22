@@ -33,112 +33,137 @@
                                 <div id="notification-test-log" style="display: none;"><span class="pure-form-message-inline">Processing..</span></div>
                             </div>
                         </div>
-                        <div id="notification-customisation" class="pure-control-group">
-                            <div class="pure-control-group">
-                                {{ render_field(form.notification_title, class="m-d notification-title", placeholder=settings_application['notification_title']) }}
-                                <span class="pure-form-message-inline">Title for all notifications</span>
-                            </div>
-                            <div class="pure-control-group">
-                                {{ render_field(form.notification_body , rows=5, class="notification-body", placeholder=settings_application['notification_body']) }}
-                                <span class="pure-form-message-inline">Body for all notifications &dash; You can use <a target="newwindow" href="https://jinja.palletsprojects.com/en/3.0.x/templates/">Jinja2</a> templating in the notification title, body and URL, and tokens from below.
-                                </span>
+                        <div class="pure-control-group">
+                        <p>Customise the contents of the notification using the form below, this is not necessary but you can create quite interesting integrations :-)</p>
+                            <div class="minitabs-wrapper" id="notifications-minitabs">
+                                <div class="minitabs-content">
+                                    <div id="notification-setup">
+                                        <div class="pure-control-group">
+                                            {{ render_field(form.notification_title, class="m-d notification-title", placeholder=settings_application['notification_title']) }}
+                                            <span class="pure-form-message-inline">Title for all notifications</span>
+                                        </div>
+                                        <div class="pure-control-group">
+                                            {{ render_field(form.notification_body , rows=5, class="notification-body", placeholder=settings_application['notification_body']) }}
+                                            <span class="pure-form-message-inline">Body for all notifications &dash; You can use <a
+                                                    target="newwindow"
+                                                    href="https://jinja.palletsprojects.com/en/3.0.x/templates/">Jinja2</a> templating in the notification title, body and URL, and tokens from below.
+                                            </span>
 
-                            </div>
-                            <div class="pure-controls">
-                                <div data-target="#notification-tokens-info" class="toggle-show pure-button button-tag button-xsmall">Show token/placeholders</div>
-                            </div>
-                            <div class="pure-controls" style="display: none;" id="notification-tokens-info">
-                                <table class="pure-table" id="token-table">
-                                    <thead>
-                                    <tr>
-                                        <th>Token</th>
-                                        <th>Description</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    <tr>
-                                        <td><code>{{ '{{base_url}}' }}</code></td>
-                                        <td>The URL of the changedetection.io instance you are running.</td>
-                                    </tr>
-                                    <tr>
-                                        <td><code>{{ '{{watch_url}}' }}</code></td>
-                                        <td>The URL being watched.</td>
-                                    </tr>
-                                    <tr>
-                                        <td><code>{{ '{{watch_uuid}}' }}</code></td>
-                                        <td>The UUID of the watch.</td>
-                                    </tr>
-                                    <tr>
-                                        <td><code>{{ '{{watch_title}}' }}</code></td>
-                                        <td>The title of the watch.</td>
-                                    </tr>
-                                    <tr>
-                                        <td><code>{{ '{{watch_tag}}' }}</code></td>
-                                        <td>The watch group / tag</td>
-                                    </tr>
-                                    <tr>
-                                        <td><code>{{ '{{preview_url}}' }}</code></td>
-                                        <td>The URL of the preview page generated by changedetection.io.</td>
-                                    </tr>
-                                    <tr>
-                                        <td><code>{{ '{{diff_url}}' }}</code></td>
-                                        <td>The URL of the diff output for the watch.</td>
-                                    </tr>
-									<tr>
-                                        <td><code>{{ '{{diff}}' }}</code></td>
-                                        <td>The diff output - only changes, additions, and removals</td>
-                                    </tr>
-									<tr>
-                                        <td><code>{{ '{{diff_added}}' }}</code></td>
-                                        <td>The diff output - only changes and additions</td>
-                                    </tr>
-									<tr>
-                                        <td><code>{{ '{{diff_removed}}' }}</code></td>
-                                        <td>The diff output - only changes and removals</td>
-                                    </tr>
-                                    <tr>
-                                        <td><code>{{ '{{diff_full}}' }}</code></td>
-                                        <td>The diff output - full difference output</td>
-                                    </tr>
-                                    <tr>
-                                        <td><code>{{ '{{diff_patch}}' }}</code></td>
-                                        <td>The diff output - patch in unified format</td>
-                                    </tr>
-                                    <tr>
-                                        <td><code>{{ '{{current_snapshot}}' }}</code></td>
-                                        <td>The current snapshot text contents value, useful when combined with JSON or CSS filters
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td><code>{{ '{{triggered_text}}' }}</code></td>
-                                        <td>Text that tripped the trigger from filters</td>
-
-                                        {% if extra_notification_token_placeholder_info %}
-                                            {% for token in extra_notification_token_placeholder_info %}
+                                        </div>
+                                        <div class="pure-controls">
+                                            <div data-target="#notification-tokens-info"
+                                                 class="toggle-show pure-button button-tag button-xsmall">Show
+                                                token/placeholders
+                                            </div>
+                                        </div>
+                                        <div class="pure-controls" style="display: none;" id="notification-tokens-info">
+                                            <table class="pure-table" id="token-table">
+                                                <thead>
                                                 <tr>
-                                                    <td><code>{{ '{{' }}{{ token[0] }}{{ '}}' }}</code></td>
-                                                    <td>{{ token[1] }}</td>
+                                                    <th>Token</th>
+                                                    <th>Description</th>
                                                 </tr>
-                                            {% endfor %}
-                                        {% endif %}
-                                    </tbody>
-                                </table>
-                                <div class="pure-form-message-inline">
-                                    <p>
-									Warning: Contents of <code>{{ '{{diff}}' }}</code>, <code>{{ '{{diff_removed}}' }}</code>, and <code>{{ '{{diff_added}}' }}</code> depend on how the difference algorithm perceives the change. <br>
-                                    For example, an addition or removal could be perceived as a change in some cases. <a target="newwindow" href="https://github.com/dgtlmoon/changedetection.io/wiki/Using-the-%7B%7Bdiff%7D%7D,-%7B%7Bdiff_added%7D%7D,-and-%7B%7Bdiff_removed%7D%7D-notification-tokens">More Here</a> <br>
-                                    </p>
-                                    <p>
-                                        For JSON payloads, use <strong>|tojson</strong> without quotes for automatic escaping, for example - <code>{ "name": {{ '{{ watch_title|tojson }}' }} }</code>
-                                    </p>
-                                    <p>
-                                        URL encoding, use <strong>|urlencode</strong>, for example - <code>gets://hook-website.com/test.php?title={{ '{{ watch_title|urlencode }}' }}</code>
-                                    </p>
+                                                </thead>
+                                                <tbody>
+                                                <tr>
+                                                    <td><code>{{ '{{base_url}}' }}</code></td>
+                                                    <td>The URL of the changedetection.io instance you are running.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>{{ '{{watch_url}}' }}</code></td>
+                                                    <td>The URL being watched.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>{{ '{{watch_uuid}}' }}</code></td>
+                                                    <td>The UUID of the watch.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>{{ '{{watch_title}}' }}</code></td>
+                                                    <td>The title of the watch.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>{{ '{{watch_tag}}' }}</code></td>
+                                                    <td>The watch group / tag</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>{{ '{{preview_url}}' }}</code></td>
+                                                    <td>The URL of the preview page generated by changedetection.io.
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>{{ '{{diff_url}}' }}</code></td>
+                                                    <td>The URL of the diff output for the watch.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>{{ '{{diff}}' }}</code></td>
+                                                    <td>The diff output - only changes, additions, and removals</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>{{ '{{diff_added}}' }}</code></td>
+                                                    <td>The diff output - only changes and additions</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>{{ '{{diff_removed}}' }}</code></td>
+                                                    <td>The diff output - only changes and removals</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>{{ '{{diff_full}}' }}</code></td>
+                                                    <td>The diff output - full difference output</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>{{ '{{diff_patch}}' }}</code></td>
+                                                    <td>The diff output - patch in unified format</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>{{ '{{current_snapshot}}' }}</code></td>
+                                                    <td>The current snapshot text contents value, useful when combined
+                                                        with JSON or CSS filters
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>{{ '{{triggered_text}}' }}</code></td>
+                                                    <td>Text that tripped the trigger from filters</td>
+
+                                                    {% if extra_notification_token_placeholder_info %}
+                                                        {% for token in extra_notification_token_placeholder_info %}
+                                                            <tr>
+                                                                <td><code>{{ '{{' }}{{ token[0] }}{{ '}}' }}</code></td>
+                                                                <td>{{ token[1] }}</td>
+                                                            </tr>
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                </tbody>
+                                            </table>
+                                            <div class="pure-form-message-inline">
+                                                <p>
+                                                    Warning: Contents of <code>{{ '{{diff}}' }}</code>,
+                                                    <code>{{ '{{diff_removed}}' }}</code>, and
+                                                    <code>{{ '{{diff_added}}' }}</code> depend on how the difference
+                                                    algorithm perceives the change. <br>
+                                                    For example, an addition or removal could be perceived as a change
+                                                    in some cases. <a target="newwindow"
+                                                                      href="https://github.com/dgtlmoon/changedetection.io/wiki/Using-the-%7B%7Bdiff%7D%7D,-%7B%7Bdiff_added%7D%7D,-and-%7B%7Bdiff_removed%7D%7D-notification-tokens">More
+                                                    Here</a> <br>
+                                                </p>
+                                                <p>
+                                                    For JSON payloads, use <strong>|tojson</strong> without quotes for
+                                                    automatic escaping, for example - <code>{
+                                                    "name": {{ '{{ watch_title|tojson }}' }} }</code>
+                                                </p>
+                                                <p>
+                                                    URL encoding, use <strong>|urlencode</strong>, for example - <code>gets://hook-website.com/test.php?title={{ '{{ watch_title|urlencode }}' }}</code>
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div class="pure-control-group">
+                                            {{ render_field(form.notification_format , class="notification-format") }}
+                                            <span class="pure-form-message-inline">Format for all notifications</span>
+                                        </div>
+                                    </div>
+                                    <div id="notification-preview" style="display: none;" class="tab-contents-monospace-preview">
+Send a test notification first.
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="pure-control-group">
-                                {{ render_field(form.notification_format , class="notification-format") }}
-                                <span class="pure-form-message-inline">Format for all notifications</span>
                             </div>
                         </div>
 {% endmacro %}

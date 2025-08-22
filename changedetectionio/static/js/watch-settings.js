@@ -73,7 +73,7 @@ $(document).ready(function () {
         $('#filters-and-triggers input')[method]('change', request_textpreview_update.throttle(1000));
         $("#filters-and-triggers-tab")[method]('click', request_textpreview_update.throttle(1000));
     });
-    $('.minitabs-wrapper').miniTabs({
+    $('#filter-preview-minitabs').miniTabs({
         "Content after filters": "#text-preview-inner",
         "Content raw/before filters": "#text-preview-before-inner"
     });

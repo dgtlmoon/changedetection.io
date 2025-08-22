@@ -2,6 +2,7 @@ from flask import Blueprint, request, make_response
 import random
 from loguru import logger
 
+from changedetectionio.notification.handler import process_notification
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
 
@@ -17,12 +18,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         # Watch_uuid could be unset in the case it`s used in tag editor, global settings
         import apprise
-        import queue
-        from changedetectionio.notification_service import NotificationService
         from changedetectionio.notification.apprise_plugin.assets import apprise_asset
+
+        # Necessary so that we import our custom handlers
         from changedetectionio.notification.apprise_plugin.custom_handlers import apprise_http_custom_handler
 
         apobj = apprise.Apprise(asset=apprise_asset)
+        sent_obj = {}
 
         is_global_settings_form = request.args.get('mode', '') == 'global-settings'
         is_group_settings_form = request.args.get('mode', '') == 'group-settings'
@@ -93,23 +95,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             n_object['as_async'] = False
             n_object.update(watch.extra_notification_token_values())
 
-            # Create a temporary notification queue for this test
-            notification_q = queue.Queue()
-            
-            # Create notification service directly
-            notification_service = NotificationService(datastore, notification_q)
-            
-            # Use the service to queue the notification with all tokens
-            notification_service.queue_notification_for_watch(n_object, watch)
-            
-            # Get all notifications from the queue and process them
-            from changedetectionio.notification.handler import process_notification
-            while not notification_q.empty():
-                try:
-                    notification_obj = notification_q.get_nowait()
-                    sent_obj = process_notification(notification_obj, datastore)
-                except queue.Empty:
-                    break
+            # This uses the same processor that the queue runner uses
+            # @todo - Split the notification URLs so we know which one worked, maybe highlight them in green in the UI
+            result = process_notification(n_object, datastore)
+            if result:
+                sent_obj['result'] = result[0]
+                sent_obj['status'] = 'OK - Sent test notifications'
 
         except Exception as e:
             e_str = str(e)
@@ -117,9 +108,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             e_str = e_str.replace(
                 "DEBUG - <class 'apprise.decorators.base.CustomNotifyPlugin.instantiate_plugin.<locals>.CustomNotifyPluginWrapper'>",
                 '')
-
             return make_response(e_str, 400)
 
-        return 'OK - Sent test notifications'
+        # it will be a list of things reached, for this purpose just the first is good so we can see the body that was sent
+        return make_response(sent_obj, 200)
 
     return notification_blueprint

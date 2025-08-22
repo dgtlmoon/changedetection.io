@@ -10,6 +10,11 @@ $(document).ready(function () {
         }
     });
 
+    $('#notifications-minitabs').miniTabs({
+        "Customise": "#notification-setup",
+        "Preview": "#notification-preview"
+    });
+
     $('#send-test-notification').click(function (e) {
         e.preventDefault();
 
@@ -34,7 +39,9 @@ $(document).ready(function () {
                 },
             }
         }).done(function (data) {
-            $("#notification-test-log>span").text(data);
+            $("#notification-test-log>span").text(data['status']);
+            $("#notification-preview").text(data['result']['body']);
+
         }).fail(function (jqXHR, textStatus, errorThrown) {
             // Handle connection refused or other errors
             if (textStatus === "error" && errorThrown === "") {
@@ -42,7 +49,7 @@ $(document).ready(function () {
                 $("#notification-test-log>span").text("Error: Connection refused or server is unreachable.");
             } else {
                 console.error("Error:", textStatus, errorThrown);
-                $("#notification-test-log>span").text("An error occurred: " + textStatus);
+                $("#notification-test-log>span").text("An error occurred: " + errorThrown);
             }
         }).always(function () {
             $('.notifications-wrapper .spinner').hide();
