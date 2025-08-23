@@ -1,0 +1,1266 @@
+openapi: 3.0.3
+info:
+  title: ChangeDetection.io API
+  description: |
+    # ChangeDetection.io Web page monitoring and notifications API
+    
+    REST API for managing Page watches, Group tags, and Notifications.
+    
+    changedetection.io can be driven by its built in simple API, in the examples below you will also find `curl` command line examples to help you.
+    
+    ## Where to find my API key?
+    
+    The API key can be easily found under the **SETTINGS** then **API** tab of changedetection.io dashboard.  
+    Simply click the API key to automatically copy it to your clipboard.
+    
+    ![Where to find the API key](./where-to-get-api-key.jpeg)
+    
+    ## Connection URL
+    
+    The API can be found at `/api/v1/`, so for example if you run changedetection.io locally on port 5000, then URL would be `http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091/history`.
+    
+    If you are using the hosted/subscription version of changedetection.io, then the URL is based on your login URL, for example:  
+    `https://<your login url>/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091/history`
+    
+    ## Authentication
+    
+    Almost all API requests require some authentication, this is provided as an **API Key** in the header of the HTTP request.
+    
+    For example: `x-api-key: YOUR_API_KEY`
+    
+  version: 1.0.0
+  contact:
+    name: ChangeDetection.io
+    url: https://github.com/dgtlmoon/changedetection.io
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+  - url: http://localhost:5000/api/v1
+    description: Development server
+  - url: https://yourdomain.com/api/v1
+    description: Production server
+  - url: '{protocol}://{host}/api/v1'
+    description: Custom server
+    variables:
+      protocol:
+        enum:
+          - http
+          - https
+        default: https
+      host:
+        default: yourdomain.com
+        description: Your changedetection.io host
+
+security:
+  - ApiKeyAuth: []
+
+tags:
+  - name: Watch Management
+    description: |
+      Core functionality for managing web page monitors. Create, retrieve, update, and delete individual watches. 
+      Each watch represents a single URL being monitored for changes, with configurable settings for check intervals, 
+      notification preferences, and content filtering options.
+      
+  - name: Watch History
+    description: |
+      Access historical snapshots and change data for your watches. View the complete timeline of detected changes 
+      and retrieve specific versions of monitored content for comparison and analysis.
+      
+  - name: Snapshots
+    description: |
+      Retrieve individual snapshots of monitored content. Access both the processed change detection data and 
+      the raw HTML content that was captured during monitoring checks.
+      
+  - name: Favicon
+    description: |
+      Retrieve favicon images associated with monitored web pages. These are used in the dashboard interface 
+      to visually identify different watches in your monitoring list.
+      
+  - name: Group / Tag Management
+    description: |
+      Organize your watches using tags and groups. Tags (also known as Groups) allow you to categorize monitors, set group-wide 
+      notification preferences, and perform bulk operations like mass rechecking or status changes across 
+      multiple related watches.
+      
+  - name: Notifications
+    description: |
+      Configure global notification endpoints that can be used across all your watches. Supports various 
+      notification services including email, Discord, Slack, webhooks, and many other popular platforms. 
+      These settings serve as defaults that can be overridden at the individual watch or tag level.
+      
+  - name: Search
+    description: |
+      Search and filter your watches by URL patterns, titles, or tags. Useful for quickly finding specific 
+      monitors in large collections or identifying watches that match certain criteria.
+      
+  - name: Import
+    description: |
+      Bulk import multiple URLs for monitoring. Accepts plain text lists of URLs and can automatically 
+      apply tags, proxy settings, and other configurations to all imported watches simultaneously.
+      
+  - name: System Information
+    description: |
+      Retrieve system status and statistics about your changedetection.io instance, including total watch 
+      counts, uptime information, and version details.
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: |
+        API key for authentication. You can find your API key in the changedetection.io dashboard under Settings > API.
+        
+        Enter your API key in the "Authorize" button above to automatically populate all code examples.
+
+  schemas:
+    Watch:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          description: Unique identifier for the watch
+          readOnly: true
+        url:
+          type: string
+          format: uri
+          description: URL to monitor for changes
+          maxLength: 5000
+        title:
+          type: string
+          description: Custom title for the watch
+          maxLength: 5000
+        tag:
+          type: string
+          description: Tag UUID to associate with this watch
+          maxLength: 5000
+        tags:
+          type: array
+          items:
+            type: string
+          description: Array of tag UUIDs
+        paused:
+          type: boolean
+          description: Whether the watch is paused
+        muted:
+          type: boolean
+          description: Whether notifications are muted
+        method:
+          type: string
+          enum: [GET, POST, DELETE, PUT]
+          description: HTTP method to use
+        fetch_backend:
+          type: string
+          enum: [html_requests, html_webdriver]
+          description: Backend to use for fetching content
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+          description: HTTP headers to include in requests
+        body:
+          type: string
+          description: HTTP request body
+          maxLength: 5000
+        proxy:
+          type: string
+          description: Proxy configuration
+          maxLength: 5000
+        webdriver_delay:
+          type: integer
+          description: Delay in seconds for webdriver
+        webdriver_js_execute_code:
+          type: string
+          description: JavaScript code to execute
+          maxLength: 5000
+        time_between_check:
+          type: object
+          properties:
+            weeks:
+              type: integer
+            days:
+              type: integer
+            hours:
+              type: integer
+            minutes:
+              type: integer
+            seconds:
+              type: integer
+          description: Time intervals between checks
+        notification_urls:
+          type: array
+          items:
+            type: string
+          description: Notification URLs for this watch
+        notification_title:
+          type: string
+          description: Custom notification title
+          maxLength: 5000
+        notification_body:
+          type: string
+          description: Custom notification body
+          maxLength: 5000
+        notification_format:
+          type: string
+          enum: [Text, HTML, Markdown]
+          description: Format for notifications
+        track_ldjson_price_data:
+          type: boolean
+          description: Whether to track JSON-LD price data
+        browser_steps:
+          type: array
+          items:
+            type: object
+            properties:
+              operation:
+                type: string
+                maxLength: 5000
+              selector:
+                type: string
+                maxLength: 5000
+              optional_value:
+                type: string
+                maxLength: 5000
+            required: [operation, selector, optional_value]
+          description: Browser automation steps
+        last_checked:
+          type: integer
+          description: Unix timestamp of last check
+          readOnly: true
+        last_changed:
+          type: integer
+          description: Unix timestamp of last change
+          readOnly: true
+        last_error:
+          type: string
+          description: Last error message
+          readOnly: true
+      required:
+        - url
+
+    CreateWatch:
+      allOf:
+        - $ref: '#/components/schemas/Watch'
+        - type: object
+          required:
+            - url
+
+    Tag:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          description: Unique identifier for the tag
+          readOnly: true
+        title:
+          type: string
+          description: Tag title
+          maxLength: 5000
+        notification_urls:
+          type: array
+          items:
+            type: string
+          description: Default notification URLs for watches with this tag
+        notification_muted:
+          type: boolean
+          description: Whether notifications are muted for this tag
+      required:
+        - title
+
+    NotificationUrls:
+      type: object
+      properties:
+        notification_urls:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: List of notification URLs
+      required:
+        - notification_urls
+
+    SystemInfo:
+      type: object
+      properties:
+        watch_count:
+          type: integer
+          description: Total number of watches
+        tag_count:
+          type: integer
+          description: Total number of tags
+        uptime:
+          type: string
+          description: System uptime
+        version:
+          type: string
+          description: Application version
+
+    SearchResult:
+      type: object
+      properties:
+        watches:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/Watch'
+          description: Dictionary of matching watches keyed by UUID
+
+    WatchHistory:
+      type: object
+      additionalProperties:
+        type: string
+        description: Path to snapshot file
+      description: Dictionary of timestamps and snapshot paths
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Error message
+
+paths:
+  /watch:
+    get:
+      tags: [Watch Management]
+      summary: List all watches
+      description: Return concise list of available watches and basic info
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X GET "http://localhost:5000/api/v1/watch" \
+              -H "x-api-key: YOUR_API_KEY"
+        - lang: 'Python'
+          source: |
+            import requests
+            
+            headers = {'x-api-key': 'YOUR_API_KEY'}
+            response = requests.get('http://localhost:5000/api/v1/watch', headers=headers)
+            print(response.json())
+      parameters:
+        - name: recheck_all
+          in: query
+          description: Set to 1 to force recheck of all watches
+          schema:
+            type: string
+            enum: ["1"]
+        - name: tag
+          in: query
+          description: Tag name to filter results
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of watches
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: '#/components/schemas/Watch'
+              example:
+                "095be615-a8ad-4c33-8e9c-c7612fbf6c9f":
+                  uuid: "095be615-a8ad-4c33-8e9c-c7612fbf6c9f"
+                  url: "http://example.com"
+                  title: "Example Website Monitor"
+                  tag: "550e8400-e29b-41d4-a716-446655440000"
+                  tags: ["550e8400-e29b-41d4-a716-446655440000"]
+                  paused: false
+                  muted: false
+                  method: "GET"
+                  fetch_backend: "html_requests"
+                  last_checked: 1640995200
+                  last_changed: 1640995200
+                "7c9e6b8d-f2a1-4e5c-9d3b-8a7f6e4c2d1a":
+                  uuid: "7c9e6b8d-f2a1-4e5c-9d3b-8a7f6e4c2d1a"
+                  url: "https://news.example.org"
+                  title: "News Site Tracker"
+                  tag: "330e8400-e29b-41d4-a716-446655440001"
+                  tags: ["330e8400-e29b-41d4-a716-446655440001"]
+                  paused: false
+                  muted: true
+                  method: "GET"
+                  fetch_backend: "html_webdriver"
+                  last_checked: 1640998800
+                  last_changed: 1640995200
+    post:
+      tags: [Watch Management]
+      summary: Create a new watch
+      description: Create a single watch. Requires at least 'url' to be set.
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X POST "http://localhost:5000/api/v1/watch" \
+              -H "x-api-key: YOUR_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "url": "https://example.com",
+                "title": "Example Site Monitor",
+                "time_between_check": {
+                  "hours": 1
+                }
+              }'
+        - lang: 'Python'
+          source: |
+            import requests
+            import json
+            
+            headers = {
+                'x-api-key': 'YOUR_API_KEY',
+                'Content-Type': 'application/json'
+            }
+            data = {
+                'url': 'https://example.com',
+                'title': 'Example Site Monitor',
+                'time_between_check': {
+                    'hours': 1
+                }
+            }
+            response = requests.post('http://localhost:5000/api/v1/watch', 
+                                   headers=headers, json=data)
+            print(response.text)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWatch'
+            example:
+              url: "https://example.com"
+              title: "Example Site Monitor"
+              time_between_check:
+                hours: 1
+      responses:
+        '200':
+          description: Watch created successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "OK"
+        '500':
+          description: Server error
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /watch/{uuid}:
+    get:
+      operationId: getSingleWatch
+      tags: [Watch Management]
+      summary: Get single watch
+      description: Retrieve watch information and set muted/paused status. Returns the FULL Watch JSON.
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X GET "http://localhost:5000/api/v1/watch/095be615-a8ad-4c33-8e9c-c7612fbf6c9f" \
+              -H "x-api-key: YOUR_API_KEY"
+        - lang: 'Python'
+          source: |
+            import requests
+            
+            headers = {'x-api-key': 'YOUR_API_KEY'}
+            uuid = '095be615-a8ad-4c33-8e9c-c7612fbf6c9f'
+            response = requests.get(f'http://localhost:5000/api/v1/watch/{uuid}', headers=headers)
+            print(response.json())
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: Watch unique ID
+          schema:
+            type: string
+            format: uuid
+        - name: recheck
+          in: query
+          description: Recheck this watch
+          schema:
+            type: string
+            enum: ["1", "true"]
+        - name: paused
+          in: query
+          description: Set pause state
+          schema:
+            type: string
+            enum: [paused, unpaused]
+        - name: muted
+          in: query
+          description: Set mute state
+          schema:
+            type: string
+            enum: [muted, unmuted]
+      responses:
+        '200':
+          description: Watch information or operation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Watch'
+            text/plain:
+              schema:
+                type: string
+                example: "OK"
+        '404':
+          description: Watch not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      operationId: updateWatch
+      tags: [Watch Management]
+      summary: Update watch
+      description: Update an existing watch using JSON. Accepts the same structure as returned in [get single watch information](#operation/getSingleWatch).
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X PUT "http://localhost:5000/api/v1/watch/095be615-a8ad-4c33-8e9c-c7612fbf6c9f" \
+              -H "x-api-key: YOUR_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "url": "https://updated-example.com",
+                "title": "Updated Monitor",
+                "paused": false
+              }'
+        - lang: 'Python'
+          source: |
+            import requests
+            
+            headers = {
+                'x-api-key': 'YOUR_API_KEY',
+                'Content-Type': 'application/json'
+            }
+            uuid = '095be615-a8ad-4c33-8e9c-c7612fbf6c9f'
+            data = {
+                'url': 'https://updated-example.com',
+                'title': 'Updated Monitor',
+                'paused': False
+            }
+            response = requests.put(f'http://localhost:5000/api/v1/watch/{uuid}', 
+                                  headers=headers, json=data)
+            print(response.text)
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: Watch unique ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Watch'
+      responses:
+        '200':
+          description: Watch updated successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "OK"
+        '500':
+          description: Server error
+
+    delete:
+      tags: [Watch Management]  
+      summary: Delete watch
+      description: Delete a watch and all related history
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X DELETE "http://localhost:5000/api/v1/watch/095be615-a8ad-4c33-8e9c-c7612fbf6c9f" \
+              -H "x-api-key: YOUR_API_KEY"
+        - lang: 'Python'
+          source: |
+            import requests
+            
+            headers = {'x-api-key': 'YOUR_API_KEY'}
+            uuid = '095be615-a8ad-4c33-8e9c-c7612fbf6c9f'
+            response = requests.delete(f'http://localhost:5000/api/v1/watch/{uuid}', headers=headers)
+            print(response.text)
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: Watch unique ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Watch deleted successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "OK"
+
+  /watch/{uuid}/history:
+    get:
+      tags: [Watch History]
+      summary: Get watch history
+      description: Get a list of all historical snapshots available for a watch
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X GET "http://localhost:5000/api/v1/watch/095be615-a8ad-4c33-8e9c-c7612fbf6c9f/history" \
+              -H "x-api-key: YOUR_API_KEY"
+        - lang: 'Python'
+          source: |
+            import requests
+            
+            headers = {'x-api-key': 'YOUR_API_KEY'}
+            uuid = '095be615-a8ad-4c33-8e9c-c7612fbf6c9f'
+            response = requests.get(f'http://localhost:5000/api/v1/watch/{uuid}/history', headers=headers)
+            print(response.json())
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: Watch unique ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of available snapshots
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WatchHistory'
+              example:
+                "1640995200": "/path/to/snapshot1.txt"
+                "1640998800": "/path/to/snapshot2.txt"
+        '404':
+          description: Watch not found
+
+  /watch/{uuid}/history/{timestamp}:
+    get:
+      tags: [Snapshots]
+      summary: Get single snapshot
+      description: Get single snapshot from watch. Use 'latest' for the most recent snapshot.
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X GET "http://localhost:5000/api/v1/watch/095be615-a8ad-4c33-8e9c-c7612fbf6c9f/history/latest" \
+              -H "x-api-key: YOUR_API_KEY"
+        - lang: 'Python'
+          source: |
+            import requests
+            
+            headers = {'x-api-key': 'YOUR_API_KEY'}
+            uuid = '095be615-a8ad-4c33-8e9c-c7612fbf6c9f'
+            timestamp = 'latest'  # or use specific timestamp like 1640995200
+            response = requests.get(f'http://localhost:5000/api/v1/watch/{uuid}/history/{timestamp}', headers=headers)
+            print(response.text)
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: Watch unique ID
+          schema:
+            type: string
+            format: uuid
+        - name: timestamp
+          in: path
+          required: true
+          description: Snapshot timestamp or 'latest'
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+                enum: [latest]
+        - name: html
+          in: query
+          description: Set to 1 to return the last HTML
+          schema:
+            type: string
+            enum: ["1"]
+      responses:
+        '200':
+          description: Snapshot content
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Snapshot not found
+
+  /watch/{uuid}/favicon:
+    get:
+      tags: [Favicon]
+      summary: Get watch favicon
+      description: Get the favicon for a watch as displayed in the watch overview list.
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X GET "http://localhost:5000/api/v1/watch/095be615-a8ad-4c33-8e9c-c7612fbf6c9f/favicon" \
+              -H "x-api-key: YOUR_API_KEY" \
+              --output favicon.ico
+        - lang: 'Python'
+          source: |
+            import requests
+            
+            headers = {'x-api-key': 'YOUR_API_KEY'}
+            uuid = '095be615-a8ad-4c33-8e9c-c7612fbf6c9f'
+            response = requests.get(f'http://localhost:5000/api/v1/watch/{uuid}/favicon', headers=headers)
+            with open('favicon.ico', 'wb') as f:
+                f.write(response.content)
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: Watch unique ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Favicon binary data
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Favicon not found
+
+  /tags:
+    get:
+      tags: [Group / Tag Management]
+      summary: List all tags
+      description: Return list of available tags/groups
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X GET "http://localhost:5000/api/v1/tags" \
+              -H "x-api-key: YOUR_API_KEY"
+        - lang: 'Python'
+          source: |
+            import requests
+            
+            headers = {'x-api-key': 'YOUR_API_KEY'}
+            response = requests.get('http://localhost:5000/api/v1/tags', headers=headers)
+            print(response.json())
+      responses:
+        '200':
+          description: List of tags
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: '#/components/schemas/Tag'
+              example:
+                "550e8400-e29b-41d4-a716-446655440000":
+                  uuid: "550e8400-e29b-41d4-a716-446655440000"
+                  title: "Production Sites"
+                  notification_urls: ["mailto:admin@example.com"]
+                  notification_muted: false
+                "330e8400-e29b-41d4-a716-446655440001":
+                  uuid: "330e8400-e29b-41d4-a716-446655440001"
+                  title: "News Sources"
+                  notification_urls: ["discord://webhook_id/webhook_token"]
+                  notification_muted: false
+
+  /tag/{uuid}:
+    get:
+      tags: [Group / Tag Management]
+      summary: Get single tag
+      description: Retrieve tag information, set notification_muted status, recheck all in tag.
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X GET "http://localhost:5000/api/v1/tag/550e8400-e29b-41d4-a716-446655440000" \
+              -H "x-api-key: YOUR_API_KEY"
+        - lang: 'Python'
+          source: |
+            import requests
+            
+            headers = {'x-api-key': 'YOUR_API_KEY'}
+            tag_uuid = '550e8400-e29b-41d4-a716-446655440000'
+            response = requests.get(f'http://localhost:5000/api/v1/tag/{tag_uuid}', headers=headers)
+            print(response.json())
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: Tag unique ID
+          schema:
+            type: string
+            format: uuid
+        - name: muted
+          in: query
+          description: Set mute state
+          schema:
+            type: string
+            enum: [muted, unmuted]
+        - name: recheck
+          in: query
+          description: Queue all watches with this tag for recheck
+          schema:
+            type: string
+            enum: ["true"]
+      responses:
+        '200':
+          description: Tag information or operation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+            text/plain:
+              schema:
+                type: string
+                example: "OK"
+        '404':
+          description: Tag not found
+
+    put:
+      tags: [Group / Tag Management]
+      summary: Update tag
+      description: Update an existing tag using JSON
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X PUT "http://localhost:5000/api/v1/tag/550e8400-e29b-41d4-a716-446655440000" \
+              -H "x-api-key: YOUR_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "title": "Updated Production Sites",
+                "notification_muted": false
+              }'
+        - lang: 'Python'
+          source: |
+            import requests
+            
+            headers = {
+                'x-api-key': 'YOUR_API_KEY',
+                'Content-Type': 'application/json'
+            }
+            tag_uuid = '550e8400-e29b-41d4-a716-446655440000'
+            data = {
+                'title': 'Updated Production Sites',
+                'notification_muted': False
+            }
+            response = requests.put(f'http://localhost:5000/api/v1/tag/{tag_uuid}', 
+                                  headers=headers, json=data)
+            print(response.text)
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: Tag unique ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tag'
+      responses:
+        '200':
+          description: Tag updated successfully
+        '500':
+          description: Server error
+
+    delete:
+      tags: [Group / Tag Management]
+      summary: Delete tag
+      description: Delete a tag/group and remove it from all watches
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X DELETE "http://localhost:5000/api/v1/tag/550e8400-e29b-41d4-a716-446655440000" \
+              -H "x-api-key: YOUR_API_KEY"
+        - lang: 'Python'
+          source: |
+            import requests
+            
+            headers = {'x-api-key': 'YOUR_API_KEY'}
+            tag_uuid = '550e8400-e29b-41d4-a716-446655440000'
+            response = requests.delete(f'http://localhost:5000/api/v1/tag/{tag_uuid}', headers=headers)
+            print(response.text)
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: Tag unique ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Tag deleted successfully
+
+    post:
+      tags: [Group / Tag Management]
+      summary: Create tag
+      description: Create a single tag/group
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X POST "http://localhost:5000/api/v1/tag/550e8400-e29b-41d4-a716-446655440000" \
+              -H "x-api-key: YOUR_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "title": "Important Sites"
+              }'
+        - lang: 'Python'
+          source: |
+            import requests
+            
+            headers = {
+                'x-api-key': 'YOUR_API_KEY',
+                'Content-Type': 'application/json'
+            }
+            tag_uuid = '550e8400-e29b-41d4-a716-446655440000'
+            data = {'title': 'Important Sites'}
+            response = requests.post(f'http://localhost:5000/api/v1/tag/{tag_uuid}', 
+                                   headers=headers, json=data)
+            print(response.text)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tag'
+            example:
+              title: "Important Sites"
+      responses:
+        '200':
+          description: Tag created successfully
+        '500':
+          description: Server error
+
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: Get notification URLs
+      description: Return the notification URL list from the configuration
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X GET "http://localhost:5000/api/v1/notifications" \
+              -H "x-api-key: YOUR_API_KEY"
+        - lang: 'Python'
+          source: |
+            import requests
+            
+            headers = {'x-api-key': 'YOUR_API_KEY'}
+            response = requests.get('http://localhost:5000/api/v1/notifications', headers=headers)
+            print(response.json())
+      responses:
+        '200':
+          description: List of notification URLs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationUrls'
+
+    post:
+      tags: [Notifications]
+      summary: Add notification URLs
+      description: Add one or more notification URLs to the configuration
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X POST "http://localhost:5000/api/v1/notifications" \
+              -H "x-api-key: YOUR_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "notification_urls": [
+                  "mailto:admin@example.com",
+                  "discord://webhook_id/webhook_token"
+                ]
+              }'
+        - lang: 'Python'
+          source: |
+            import requests
+            
+            headers = {
+                'x-api-key': 'YOUR_API_KEY',
+                'Content-Type': 'application/json'
+            }
+            data = {
+                'notification_urls': [
+                    'mailto:admin@example.com',
+                    'discord://webhook_id/webhook_token'
+                ]
+            }
+            response = requests.post('http://localhost:5000/api/v1/notifications', 
+                                   headers=headers, json=data)
+            print(response.json())
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationUrls'
+            example:
+              notification_urls:
+                - "mailto:admin@example.com"
+                - "discord://webhook_id/webhook_token"
+      responses:
+        '201':
+          description: Notification URLs added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationUrls'
+        '400':
+          description: Invalid input
+
+    put:
+      tags: [Notifications]
+      summary: Replace notification URLs
+      description: Replace all notification URLs with the provided list (can be empty)
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X PUT "http://localhost:5000/api/v1/notifications" \
+              -H "x-api-key: YOUR_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "notification_urls": [
+                  "mailto:newadmin@example.com"
+                ]
+              }'
+        - lang: 'Python'
+          source: |
+            import requests
+            
+            headers = {
+                'x-api-key': 'YOUR_API_KEY',
+                'Content-Type': 'application/json'
+            }
+            data = {
+                'notification_urls': [
+                    'mailto:newadmin@example.com'
+                ]
+            }
+            response = requests.put('http://localhost:5000/api/v1/notifications', 
+                                  headers=headers, json=data)
+            print(response.json())
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationUrls'
+      responses:
+        '200':
+          description: Notification URLs replaced successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationUrls'
+        '400':
+          description: Invalid input
+
+    delete:
+      tags: [Notifications]
+      summary: Delete notification URLs
+      description: Delete one or more notification URLs from the configuration
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X DELETE "http://localhost:5000/api/v1/notifications" \
+              -H "x-api-key: YOUR_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "notification_urls": [
+                  "mailto:admin@example.com"
+                ]
+              }'
+        - lang: 'Python'
+          source: |
+            import requests
+            
+            headers = {
+                'x-api-key': 'YOUR_API_KEY',
+                'Content-Type': 'application/json'
+            }
+            data = {
+                'notification_urls': [
+                    'mailto:admin@example.com'
+                ]
+            }
+            response = requests.delete('http://localhost:5000/api/v1/notifications', 
+                                     headers=headers, json=data)
+            print(response.status_code)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationUrls'
+      responses:
+        '204':
+          description: Notification URLs deleted successfully
+        '400':
+          description: No matching notification URLs found
+
+  /search:
+    get:
+      tags: [Search]
+      summary: Search watches
+      description: Search watches by URL or title text
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X GET "http://localhost:5000/api/v1/search?q=example.com" \
+              -H "x-api-key: YOUR_API_KEY"
+        - lang: 'Python'
+          source: |
+            import requests
+            
+            headers = {'x-api-key': 'YOUR_API_KEY'}
+            params = {'q': 'example.com'}
+            response = requests.get('http://localhost:5000/api/v1/search', 
+                                  headers=headers, params=params)
+            print(response.json())
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search query to match against watch URLs and titles
+          schema:
+            type: string
+        - name: tag
+          in: query
+          description: Tag name to limit results (name not UUID)
+          schema:
+            type: string
+        - name: partial
+          in: query
+          description: Allow partial matching of URL query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResult'
+              example:
+                watches:
+                  "095be615-a8ad-4c33-8e9c-c7612fbf6c9f":
+                    uuid: "095be615-a8ad-4c33-8e9c-c7612fbf6c9f"
+                    url: "http://example.com"
+                    title: "Example Website Monitor"
+                    tag: "550e8400-e29b-41d4-a716-446655440000"
+                    tags: ["550e8400-e29b-41d4-a716-446655440000"]
+                    paused: false
+                    muted: false
+
+  /import:
+    post:
+      tags: [Import]
+      summary: Import watch URLs
+      description: Import a list of URLs to monitor. Accepts line-separated URLs in request body.
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X POST "http://localhost:5000/api/v1/import" \
+              -H "x-api-key: YOUR_API_KEY" \
+              -H "Content-Type: text/plain" \
+              -d $'https://example.com\nhttps://example.org\nhttps://example.net'
+        - lang: 'Python'
+          source: |
+            import requests
+            
+            headers = {
+                'x-api-key': 'YOUR_API_KEY',
+                'Content-Type': 'text/plain'
+            }
+            urls = 'https://example.com\nhttps://example.org\nhttps://example.net'
+            response = requests.post('http://localhost:5000/api/v1/import', 
+                                   headers=headers, data=urls)
+            print(response.json())
+      parameters:
+        - name: tag_uuids
+          in: query
+          description: Tag UUID to apply to imported watches
+          schema:
+            type: string
+        - name: tag
+          in: query
+          description: Tag name to apply to imported watches
+          schema:
+            type: string
+        - name: proxy
+          in: query
+          description: Proxy key to use for imported watches
+          schema:
+            type: string
+        - name: dedupe
+          in: query
+          description: Remove duplicate URLs (default true)
+          schema:
+            type: boolean
+            default: true
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+            example: |
+              https://example.com
+              https://example.org
+              https://example.net
+      responses:
+        '200':
+          description: URLs imported successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+                description: List of created watch UUIDs
+        '500':
+          description: Server error
+
+  /systeminfo:
+    get:
+      tags: [System Information]
+      summary: Get system information
+      description: Return information about the current system state
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X GET "http://localhost:5000/api/v1/systeminfo" \
+              -H "x-api-key: YOUR_API_KEY"
+        - lang: 'Python'
+          source: |
+            import requests
+            
+            headers = {'x-api-key': 'YOUR_API_KEY'}
+            response = requests.get('http://localhost:5000/api/v1/systeminfo', headers=headers)
+            print(response.json())
+      responses:
+        '200':
+          description: System information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemInfo'
+              example:
+                watch_count: 42
+                tag_count: 5
+                uptime: "2 days, 3:45:12"
+                version: "0.50.10"
