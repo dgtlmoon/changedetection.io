@@ -1,0 +1,12 @@
+{
+  "name": "changedetection-api-docs",
+  "version": "1.0.0",
+  "description": "API documentation generation for changedetection.io",
+  "private": true,
+  "scripts": {
+    "build-docs": "redocly build-docs api-spec.yaml --output api_v1/index.html"
+  },
+  "devDependencies": {
+    "@redocly/cli": "^1.34.5"
+  }
+}

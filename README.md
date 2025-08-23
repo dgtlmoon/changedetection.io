@@ -280,7 +280,10 @@ Excel import is recommended - that way you can better organise tags/groups of we
 
 ## API Support
 
-Supports managing the website watch list [via our API](https://changedetection.io/docs/api_v1/index.html)
+Full REST API for programmatic management of watches, tags, notifications and more. 
+
+- **[Interactive API Documentation](docs/api_v1/index.html)** - Complete API reference with live testing
+- **[OpenAPI Specification](docs/api-spec.yaml)** - Generate SDKs for any programming language
 
 ## Support us
 

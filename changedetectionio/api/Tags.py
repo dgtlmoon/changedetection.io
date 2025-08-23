@@ -20,21 +20,7 @@ class Tag(Resource):
     # curl http://localhost:5000/api/v1/tag/<string:uuid>
     @auth.check_token
     def get(self, uuid):
-        """
-        @api {get} /api/v1/tag/:uuid Single tag / group - Get data, toggle notification muting, recheck all.
-        @apiDescription Retrieve tag information, set notification_muted status, recheck all in tag.
-        @apiExampleRequest 
-            curl http://localhost:5000/api/v1/tag/cc0cfffa-f449-477b-83ea-0caafd1dc091 -H"x-api-key:813031b16330fe25e3780cf0325daa45"
-            curl "http://localhost:5000/api/v1/tag/cc0cfffa-f449-477b-83ea-0caafd1dc091?muted=muted" -H"x-api-key:813031b16330fe25e3780cf0325daa45"
-            curl "http://localhost:5000/api/v1/tag/cc0cfffa-f449-477b-83ea-0caafd1dc091?recheck=true" -H"x-api-key:813031b16330fe25e3780cf0325daa45"
-        @apiName Tag
-        @apiGroup Group / Tag
-        @apiParam {uuid} uuid Tag unique ID.
-        @apiQuery {String} [muted] =`muted` or =`unmuted` , Sets the MUTE NOTIFICATIONS state
-        @apiQuery {String} [recheck] = True, Queue all watches with this tag for recheck
-        @apiSuccess (200) {String} OK When muted operation OR full JSON object of the tag
-        @apiSuccess (200) {JSON} TagJSON JSON Full JSON object of the tag
-        """
+        """Get data for a single tag/group, toggle notification muting, or recheck all."""
         from copy import deepcopy
         tag = deepcopy(self.datastore.data['settings']['application']['tags'].get(uuid))
         if not tag:
@@ -65,17 +51,7 @@ class Tag(Resource):
 
     @auth.check_token
     def delete(self, uuid):
-        """
-        @api {delete} /api/v1/tag/:uuid Delete a tag / group and remove it from all watches
-        @apiExampleRequest {curl} Example usage:
-            curl http://localhost:5000/api/v1/tag/cc0cfffa-f449-477b-83ea-0caafd1dc091 -X DELETE -H"x-api-key:813031b16330fe25e3780cf0325daa45"
-        @apiExampleResponse {string}
-            OK
-        @apiParam {uuid} uuid Tag unique ID.
-        @apiName DeleteTag
-        @apiGroup Group / Tag
-        @apiSuccess (200) {String} OK Was deleted
-        """
+        """Delete a tag/group and remove it from all watches."""
         if not self.datastore.data['settings']['application']['tags'].get(uuid):
             abort(400, message='No tag exists with the UUID of {}'.format(uuid))
 
@@ -92,19 +68,7 @@ class Tag(Resource):
     @auth.check_token
     @expects_json(schema_update_tag)
     def put(self, uuid):
-        """
-        @api {put} /api/v1/tag/:uuid Update tag information
-        @apiExampleRequest {curl} Request:
-            curl http://localhost:5000/api/v1/tag/cc0cfffa-f449-477b-83ea-0caafd1dc091 -X PUT -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"title": "New Tag Title"}'
-        @apiExampleResponse {json} Response:
-            "OK"
-        @apiDescription Updates an existing tag using JSON
-        @apiParam {uuid} uuid Tag unique ID.
-        @apiName UpdateTag
-        @apiGroup Group / Tag
-        @apiSuccess (200) {String} OK Was updated
-        @apiSuccess (500) {String} ERR Some other error
-        """
+        """Update tag information."""
         tag = self.datastore.data['settings']['application']['tags'].get(uuid)
         if not tag:
             abort(404, message='No tag exists with the UUID of {}'.format(uuid))
@@ -118,15 +82,7 @@ class Tag(Resource):
     @auth.check_token
     # Only cares for {'title': 'xxxx'}
     def post(self):
-        """
-        @api {post} /api/v1/watch Create a single tag / group
-        @apiExample {curl} Example usage:
-            curl http://localhost:5000/api/v1/watch -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"name": "Work related"}'
-        @apiName Create
-        @apiGroup Group / Tag
-        @apiSuccess (200) {String} OK Was created
-        @apiSuccess (500) {String} ERR Some other error
-        """
+        """Create a single tag/group."""
 
         json_data = request.get_json()
         title = json_data.get("title",'').strip()
@@ -145,28 +101,7 @@ class Tags(Resource):
 
     @auth.check_token
     def get(self):
-        """
-        @api {get} /api/v1/tags List tags / groups
-        @apiDescription Return list of available tags / groups
-        @apiExampleRequest {curl} Request:
-            curl http://localhost:5000/api/v1/tags -H"x-api-key:813031b16330fe25e3780cf0325daa45"
-        @apiExampleResponse {json} Response:
-            {
-                "cc0cfffa-f449-477b-83ea-0caafd1dc091": {
-                    "title": "Tech News",
-                    "notification_muted": false,
-                    "date_created": 1677103794
-                },
-                "e6f5fd5c-dbfe-468b-b8f3-f9d6ff5ad69b": {
-                    "title": "Shopping",
-                    "notification_muted": true,
-                    "date_created": 1676662819
-                }
-            }
-        @apiName ListTags
-        @apiGroup Group / Tag Management
-        @apiSuccess (200) {JSON} Short list of tags keyed by tag/group UUID
-        """
+        """List tags/groups."""
         result = {}
         for uuid, tag in self.datastore.data['settings']['application']['tags'].items():
             result[uuid] = {
