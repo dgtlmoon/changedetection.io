@@ -21,7 +21,7 @@ class Tag(Resource):
     @auth.check_token
     def get(self, uuid):
         """
-        @api {get} /api/v1/tag/:uuid Single tag - Get data, toggle notification muting, recheck all.
+        @api {get} /api/v1/tag/:uuid Single tag / group - Get data, toggle notification muting, recheck all.
         @apiDescription Retrieve tag information, set notification_muted status, recheck all in tag.
         @apiExampleRequest 
             curl http://localhost:5000/api/v1/tag/cc0cfffa-f449-477b-83ea-0caafd1dc091 -H"x-api-key:813031b16330fe25e3780cf0325daa45"
@@ -66,9 +66,11 @@ class Tag(Resource):
     @auth.check_token
     def delete(self, uuid):
         """
-        @api {delete} /api/v1/tag/:uuid Delete a tag and remove it from all watches
-        @apiExample {curl} Example usage:
+        @api {delete} /api/v1/tag/:uuid Delete a tag / group and remove it from all watches
+        @apiExampleRequest {curl} Example usage:
             curl http://localhost:5000/api/v1/tag/cc0cfffa-f449-477b-83ea-0caafd1dc091 -X DELETE -H"x-api-key:813031b16330fe25e3780cf0325daa45"
+        @apiExampleResponse {string}
+            OK
         @apiParam {uuid} uuid Tag unique ID.
         @apiName DeleteTag
         @apiGroup Group / Tag
@@ -117,7 +119,7 @@ class Tag(Resource):
     # Only cares for {'title': 'xxxx'}
     def post(self):
         """
-        @api {post} /api/v1/watch Create a single tag
+        @api {post} /api/v1/watch Create a single tag / group
         @apiExample {curl} Example usage:
             curl http://localhost:5000/api/v1/watch -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"name": "Work related"}'
         @apiName Create
@@ -144,8 +146,8 @@ class Tags(Resource):
     @auth.check_token
     def get(self):
         """
-        @api {get} /api/v1/tags List tags
-        @apiDescription Return list of available tags
+        @api {get} /api/v1/tags List tags / groups
+        @apiDescription Return list of available tags / groups
         @apiExampleRequest {curl} Request:
             curl http://localhost:5000/api/v1/tags -H"x-api-key:813031b16330fe25e3780cf0325daa45"
         @apiExampleResponse {json} Response:
@@ -163,7 +165,7 @@ class Tags(Resource):
             }
         @apiName ListTags
         @apiGroup Group / Tag Management
-        @apiSuccess (200) {String} OK JSON dict
+        @apiSuccess (200) {JSON} Short list of tags keyed by tag/group UUID
         """
         result = {}
         for uuid, tag in self.datastore.data['settings']['application']['tags'].items():

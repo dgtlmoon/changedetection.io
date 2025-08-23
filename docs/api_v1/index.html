@@ -131,7 +131,7 @@
                         <div class="ms-2 mb-1">
                             <a href="#favicon_GET" class="nav-link py-1 px-2 rounded" data-endpoint="favicon_GET">
                                 <span class="method get">get</span>
-                                Get Favicon for a watch
+                                Get favicon for a watch.
                             </a>
                         </div>
                         
@@ -155,21 +155,21 @@
                         <div class="ms-2 mb-1">
                             <a href="#group__tag_POST" class="nav-link py-1 px-2 rounded" data-endpoint="group__tag_POST">
                                 <span class="method post">post</span>
-                                Create a single tag
+                                Create a single tag / group
                             </a>
                         </div>
                         
                         <div class="ms-2 mb-1">
                             <a href="#group__tag_DELETE" class="nav-link py-1 px-2 rounded" data-endpoint="group__tag_DELETE">
                                 <span class="method delete">delete</span>
-                                Delete a tag and remove it from all watches
+                                Delete a tag / group and remove it from all watches
                             </a>
                         </div>
                         
                         <div class="ms-2 mb-1">
                             <a href="#group__tag_GET" class="nav-link py-1 px-2 rounded" data-endpoint="group__tag_GET">
                                 <span class="method get">get</span>
-                                Single tag - Get data, toggle notification muting, recheck all.
+                                Single tag / group - Get data, toggle notification muting, recheck all.
                             </a>
                         </div>
                         
@@ -188,7 +188,7 @@
                         <div class="ms-2 mb-1">
                             <a href="#group__tag_management_GET" class="nav-link py-1 px-2 rounded" data-endpoint="group__tag_management_GET">
                                 <span class="method get">get</span>
-                                List tags
+                                List tags / groups
                             </a>
                         </div>
                         
@@ -507,11 +507,8 @@ For example;
                     <h6 class="mt-4">Example</h6>
                     
                     
-                    
-                    
-                    
-                    
-                    <div class="example p-3 rounded position-relative">
+                    <h7 class="mt-3 mb-2 text-muted">Request</h7>
+                    <div class="example p-3 rounded position-relative mb-3">
                         <button class="btn btn-outline-secondary btn-sm position-absolute top-0 end-0 m-2 copy-btn" 
                                 data-bs-toggle="tooltip" 
                                 data-bs-placement="left" 
@@ -519,10 +516,24 @@ For example;
                                 onclick="copyToClipboard(this)">
                             <i class="bi bi-clipboard" aria-hidden="true"></i>
                         </button>
-                        <pre><code class="language-bash">Update (PUT)
-curl http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091 -X PUT -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"url": "https://my-nice.com" , "tag": "new list"}'
-</code></pre>
+                        <pre><code class="language-bash">curl http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091 -X PUT -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"url": "https://my-nice.com" , "tag": "new list"}'</code></pre>
                     </div>
+                    
+                    
+                    
+                    <h7 class="mt-3 mb-2 text-muted">Response</h7>
+                    <div class="example p-3 rounded position-relative mb-3">
+                        <button class="btn btn-outline-secondary btn-sm position-absolute top-0 end-0 m-2 copy-btn" 
+                                data-bs-toggle="tooltip" 
+                                data-bs-placement="left" 
+                                title="Copy to clipboard"
+                                onclick="copyToClipboard(this)">
+                            <i class="bi bi-clipboard" aria-hidden="true"></i>
+                        </button>
+                        <pre><code class="language-json">OK</code></pre>
+                    </div>
+                    
+                    
                     
                     
                 </div>
@@ -536,7 +547,7 @@ curl http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091 -X 
                             </h4>
                             <h5 class="text-muted">Watch</h5>
                             
-                            <p class="mt-3">Retrieve watch information and set muted/paused status</p>
+                            <p class="mt-3">Retrieve watch information and set muted/paused status, returns the FULL Watch JSON which can be used for any other PUT (update etc)</p>
                             
                         </div>
                     </div>
@@ -679,9 +690,9 @@ curl "http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091?pa
                     
                     <div class="mb-2">
                         <span class="badge bg-success">200</span>
-                        <span class="badge bg-secondary ms-1">String</span>
-                        <strong class="ms-2">OK</strong>
-                        <span class="ms-2 text-muted"></span>
+                        <span class="badge bg-secondary ms-1">JSON</span>
+                        <strong class="ms-2">List</strong>
+                        <span class="ms-2 text-muted">of keyed (by change date) paths to snapshot, use the key to <a href="#snapshots_GET">fetch a single snapshot</a>.</span>
                     </div>
                     
                     <div class="mb-2">
@@ -805,11 +816,8 @@ curl "http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091?pa
                     <h6 class="mt-4">Example</h6>
                     
                     
-                    
-                    
-                    
-                    
-                    <div class="example p-3 rounded position-relative">
+                    <h7 class="mt-3 mb-2 text-muted">Request</h7>
+                    <div class="example p-3 rounded position-relative mb-3">
                         <button class="btn btn-outline-secondary btn-sm position-absolute top-0 end-0 m-2 copy-btn" 
                                 data-bs-toggle="tooltip" 
                                 data-bs-placement="left" 
@@ -819,6 +827,22 @@ curl "http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091?pa
                         </button>
                         <pre><code class="language-bash">curl http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091/history/1677092977 -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json"</code></pre>
                     </div>
+                    
+                    
+                    
+                    <h7 class="mt-3 mb-2 text-muted">Response</h7>
+                    <div class="example p-3 rounded position-relative mb-3">
+                        <button class="btn btn-outline-secondary btn-sm position-absolute top-0 end-0 m-2 copy-btn" 
+                                data-bs-toggle="tooltip" 
+                                data-bs-placement="left" 
+                                title="Copy to clipboard"
+                                onclick="copyToClipboard(this)">
+                            <i class="bi bi-clipboard" aria-hidden="true"></i>
+                        </button>
+                        <pre><code class="language-json">Big bad fox flew over the moon at 2025-01-01 etc etc </code></pre>
+                    </div>
+                    
+                    
                     
                     
                 </div>
@@ -836,7 +860,7 @@ curl "http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091?pa
                             </h4>
                             <h5 class="text-muted">Get latest Favicon</h5>
                             
-                            <p class="mt-3">Requires watch `uuid`</p>
+                            <p class="mt-3">Requires watch `uuid`, ,The favicon is the favicon which is available in the page watch overview list.</p>
                             
                         </div>
                     </div>
@@ -850,9 +874,9 @@ curl "http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091?pa
                     
                     <div class="mb-2">
                         <span class="badge bg-success">200</span>
-                        <span class="badge bg-secondary ms-1">String</span>
-                        <strong class="ms-2">OK</strong>
-                        <span class="ms-2 text-muted"></span>
+                        <span class="badge bg-secondary ms-1">binary</span>
+                        <strong class="ms-2">Data</strong>
+                        <span class="ms-2 text-muted">( Binary data of the favicon )</span>
                     </div>
                     
                     <div class="mb-2">
@@ -870,11 +894,8 @@ curl "http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091?pa
                     <h6 class="mt-4">Example</h6>
                     
                     
-                    
-                    
-                    
-                    
-                    <div class="example p-3 rounded position-relative">
+                    <h7 class="mt-3 mb-2 text-muted">Request</h7>
+                    <div class="example p-3 rounded position-relative mb-3">
                         <button class="btn btn-outline-secondary btn-sm position-absolute top-0 end-0 m-2 copy-btn" 
                                 data-bs-toggle="tooltip" 
                                 data-bs-placement="left" 
@@ -884,6 +905,22 @@ curl "http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091?pa
                         </button>
                         <pre><code class="language-bash">curl http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091/favicon -H"x-api-key:813031b16330fe25e3780cf0325daa45"</code></pre>
                     </div>
+                    
+                    
+                    
+                    <h7 class="mt-3 mb-2 text-muted">Response</h7>
+                    <div class="example p-3 rounded position-relative mb-3">
+                        <button class="btn btn-outline-secondary btn-sm position-absolute top-0 end-0 m-2 copy-btn" 
+                                data-bs-toggle="tooltip" 
+                                data-bs-placement="left" 
+                                title="Copy to clipboard"
+                                onclick="copyToClipboard(this)">
+                            <i class="bi bi-clipboard" aria-hidden="true"></i>
+                        </button>
+                        <pre><code class="language-json">JPEG...</code></pre>
+                    </div>
+                    
+                    
                     
                     
                 </div>
@@ -1126,11 +1163,8 @@ curl "http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091?pa
                     <h6 class="mt-4">Example</h6>
                     
                     
-                    
-                    
-                    
-                    
-                    <div class="example p-3 rounded position-relative">
+                    <h7 class="mt-3 mb-2 text-muted">Request</h7>
+                    <div class="example p-3 rounded position-relative mb-3">
                         <button class="btn btn-outline-secondary btn-sm position-absolute top-0 end-0 m-2 copy-btn" 
                                 data-bs-toggle="tooltip" 
                                 data-bs-placement="left" 
@@ -1140,6 +1174,22 @@ curl "http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091?pa
                         </button>
                         <pre><code class="language-bash">curl http://localhost:5000/api/v1/tag/cc0cfffa-f449-477b-83ea-0caafd1dc091 -X DELETE -H"x-api-key:813031b16330fe25e3780cf0325daa45"</code></pre>
                     </div>
+                    
+                    
+                    
+                    <h7 class="mt-3 mb-2 text-muted">Response</h7>
+                    <div class="example p-3 rounded position-relative mb-3">
+                        <button class="btn btn-outline-secondary btn-sm position-absolute top-0 end-0 m-2 copy-btn" 
+                                data-bs-toggle="tooltip" 
+                                data-bs-placement="left" 
+                                title="Copy to clipboard"
+                                onclick="copyToClipboard(this)">
+                            <i class="bi bi-clipboard" aria-hidden="true"></i>
+                        </button>
+                        <pre><code class="language-json">OK</code></pre>
+                    </div>
+                    
+                    
                     
                     
                 </div>
@@ -1352,7 +1402,7 @@ curl "http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091?pa
                             </h4>
                             <h5 class="text-muted">ListTags</h5>
                             
-                            <p class="mt-3">Return list of available tags</p>
+                            <p class="mt-3">Return list of available tags / groups</p>
                             
                         </div>
                     </div>
@@ -1366,9 +1416,9 @@ curl "http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091?pa
                     
                     <div class="mb-2">
                         <span class="badge bg-success">200</span>
-                        <span class="badge bg-secondary ms-1">String</span>
-                        <strong class="ms-2">OK</strong>
-                        <span class="ms-2 text-muted">JSON dict</span>
+                        <span class="badge bg-secondary ms-1">JSON</span>
+                        <strong class="ms-2">Short</strong>
+                        <span class="ms-2 text-muted">list of tags keyed by tag/group UUID</span>
                     </div>
                     
                     
