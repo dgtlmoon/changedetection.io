@@ -28,13 +28,14 @@ class Watch(Resource):
     def get(self, uuid):
         """
         @api {get} /api/v1/watch/:uuid Single watch - get data, recheck, pause, mute.
-        @apiDescription Retrieve watch information and set muted/paused status
+        @apiDescription Retrieve watch information and set muted/paused status, returns the FULL Watch JSON which can be used for any other PUT (update etc)
         @apiExample {curl} Example usage:
             curl http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091  -H"x-api-key:813031b16330fe25e3780cf0325daa45"
             curl "http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091?muted=unmuted"  -H"x-api-key:813031b16330fe25e3780cf0325daa45"
             curl "http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091?paused=unpaused"  -H"x-api-key:813031b16330fe25e3780cf0325daa45"
         @apiName Watch
         @apiGroup Watch
+        @apiGroupDocOrder 0
         @apiParam {uuid} uuid Watch unique ID.
         @apiQuery {Boolean} [recheck] Recheck this watch `recheck=1`
         @apiQuery {String} [paused] =`paused` or =`unpaused` , Sets the PAUSED state
@@ -93,11 +94,11 @@ class Watch(Resource):
     def put(self, uuid):
         """
         @api {put} /api/v1/watch/:uuid Update watch information
-        @apiExample {curl} Example usage:
-            Update (PUT)
+        @apiExampleRequest {curl} Example usage:
             curl http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091 -X PUT -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"url": "https://my-nice.com" , "tag": "new list"}'
-
-        @apiDescription Updates an existing watch using JSON, accepts the same structure as returned in <a href="#api-Watch-Watch">get single watch information</a>
+        @apiExampleResponse {string} Example usage:
+            OK
+        @apiDescription Updates an existing watch using JSON, accepts the same structure as returned in <a href="#watch_GET">get single watch information</a>
         @apiParam {uuid} uuid Watch unique ID.
         @apiName Update a watch
         @apiGroup Watch
@@ -130,8 +131,10 @@ class WatchHistory(Resource):
         """
         @api {get} /api/v1/watch/<string:uuid>/history Get a list of all historical snapshots available for a watch
         @apiDescription Requires `uuid`, returns list
-        @apiExample {curl} Example usage:
+        @apiGroupDocOrder 1
+        @apiExampleRequest {curl} Request:
             curl http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091/history -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json"
+        @apiExampleResponse {json} Response:
             {
                 "1676649279": "/tmp/data/6a4b7d5c-fee4-4616-9f43-4ac97046b595/cb7e9be8258368262246910e6a2a4c30.txt",
                 "1677092785": "/tmp/data/6a4b7d5c-fee4-4616-9f43-4ac97046b595/e20db368d6fc633e34f559ff67bb4044.txt",
@@ -139,7 +142,7 @@ class WatchHistory(Resource):
             }
         @apiName Get list of available stored snapshots for watch
         @apiGroup Watch History
-        @apiSuccess (200) {String} OK
+        @apiSuccess (200) {JSON} List of keyed (by change date) paths to snapshot, use the key to <a href="#snapshots_GET">fetch a single snapshot</a>.
         @apiSuccess (404) {String} ERR Not found
         """
         watch = self.datastore.data['watching'].get(uuid)
@@ -157,11 +160,14 @@ class WatchSingleHistory(Resource):
     def get(self, uuid, timestamp):
         """
         @api {get} /api/v1/watch/<string:uuid>/history/<int:timestamp> Get single snapshot from watch
-        @apiDescription Requires watch `uuid` and `timestamp`. `timestamp` of "`latest`" for latest available snapshot, or <a href="#api-Watch_History-Get_list_of_available_stored_snapshots_for_watch">use the list returned here</a>
-        @apiExample {curl} Example usage:
+        @apiDescription Requires watch `uuid` and `timestamp`. `timestamp` of "`latest`" for latest available snapshot, or <a href="#watch_history_GET">use the list returned here</a>
+        @apiExampleRequest {curl} Example usage:
             curl http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091/history/1677092977 -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json"
+        @apiExampleResponse {string} Closes matching snapshot text
+            Big bad fox flew over the moon at 2025-01-01 etc etc 
         @apiName Get single snapshot content
-        @apiGroup Watch History
+        @apiGroup Snapshots
+        @apiGroupDocOrder 2
         @apiParam {String} [html]       Optional Set to =1 to return the last HTML (only stores last 2 snapshots, use `latest` as timestamp)
         @apiSuccess (200) {String} OK
         @apiSuccess (404) {String} ERR Not found
@@ -199,13 +205,16 @@ class WatchFavicon(Resource):
     @auth.check_token
     def get(self, uuid):
         """
-        @api {get} /api/v1/watch/<string:uuid>/favicon Get Favicon for a watch
-        @apiDescription Requires watch `uuid`
-        @apiExample {curl} Example usage:
+        @api {get} /api/v1/watch/<string:uuid>/favicon Get favicon for a watch.
+        @apiDescription Requires watch `uuid`, ,The favicon is the favicon which is available in the page watch overview list.
+        @apiExampleRequest {curl} Example usage:
             curl http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091/favicon -H"x-api-key:813031b16330fe25e3780cf0325daa45"
+        @apiExampleResponse {binary data}
+            JPEG...
         @apiName Get latest Favicon
-        @apiGroup Watch History
-        @apiSuccess (200) {String} OK
+        @apiGroup Favicon
+        @apiGroupDocOrder 3
+        @apiSuccess (200) {binary} Data ( Binary data of the favicon )
         @apiSuccess (404) {String} ERR Not found
         """
         watch = self.datastore.data['watching'].get(uuid)
@@ -244,7 +253,7 @@ class CreateWatch(Resource):
     def post(self):
         """
         @api {post} /api/v1/watch Create a single watch
-        @apiDescription Requires atleast `url` set, can accept the same structure as <a href="#api-Watch-Watch">get single watch information</a> to create.
+        @apiDescription Requires atleast `url` set, can accept the same structure as <a href="#watch_GET">get single watch information</a> to create.
         @apiExample {curl} Example usage:
             curl http://localhost:5000/api/v1/watch -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"url": "https://my-nice.com" , "tag": "nice list"}'
         @apiName Create
@@ -288,8 +297,9 @@ class CreateWatch(Resource):
         """
         @api {get} /api/v1/watch List watches
         @apiDescription Return concise list of available watches and some very basic info
-        @apiExample {curl} Example usage:
+        @apiExampleRequest {curl} Request:
             curl http://localhost:5000/api/v1/watch -H"x-api-key:813031b16330fe25e3780cf0325daa45"
+        @apiExampleResponse {json} Response:
             {
                 "6a4b7d5c-fee4-4616-9f43-4ac97046b595": {
                     "last_changed": 1677103794,
@@ -311,6 +321,7 @@ class CreateWatch(Resource):
         @apiParam {String} [tag]               Optional name of tag to limit results
         @apiName ListWatches
         @apiGroup Watch Management
+        @apiGroupDocOrder 4
         @apiSuccess (200) {String} OK JSON dict
         """
         list = {}

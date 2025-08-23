@@ -19,7 +19,7 @@ class Import(Resource):
         @apiExample {curl} Example usage:
             curl http://localhost:5000/api/v1/import --data-binary @list-of-sites.txt -H"x-api-key:8a111a21bc2f8f1dd9b9353bbd46049a"
         @apiName Import
-        @apiGroup Watch
+        @apiGroup Import
         @apiSuccess (200) {List} OK List of watch UUIDs added
         @apiSuccess (500) {String} ERR Some other error
         """

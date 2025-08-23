@@ -1,8 +1,0 @@
-{
-  "name": "changedetection.io API",
-  "version": "0.1.0",
-  "description": "Manage your changedetection.io watches via API, requires the `x-api-key` header which is found in the settings UI.",
-  "title": "changedetection.io API",
-  "url" : "",
-  "sampleUrl" : false
-}
