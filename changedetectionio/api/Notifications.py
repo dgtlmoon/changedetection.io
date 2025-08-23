@@ -13,18 +13,7 @@ class Notifications(Resource):
 
     @auth.check_token
     def get(self):
-        """
-        @api {get} /api/v1/notifications Return Notification URL List
-        @apiDescription Return the Notification URL List from the configuration
-        @apiExample {curl} Example usage:
-            curl http://localhost:5000/api/v1/notifications -H"x-api-key:813031b16330fe25e3780cf0325daa45"
-            HTTP/1.0 200
-            {
-                'notification_urls': ["notification-urls-list"]
-            }
-        @apiName Get
-        @apiGroup Notifications
-        """
+        """Return Notification URL List."""
 
         notification_urls = self.datastore.data.get('settings', {}).get('application', {}).get('notification_urls', [])        
 
@@ -35,16 +24,7 @@ class Notifications(Resource):
     @auth.check_token
     @expects_json(schema_create_notification_urls)
     def post(self):
-        """
-        @api {post} /api/v1/notifications Create Notification URLs
-        @apiDescription Add one or more notification URLs from the configuration
-        @apiExample {curl} Example usage:
-            curl http://localhost:5000/api/v1/notifications/batch -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"notification_urls": ["url1", "url2"]}'
-        @apiName CreateBatch
-        @apiGroup Notifications
-        @apiSuccess (201) {Object[]} notification_urls List of added notification URLs
-        @apiError (400) {String} Invalid input
-        """
+        """Create Notification URLs."""
 
         json_data = request.get_json()
         notification_urls = json_data.get("notification_urls", [])
@@ -71,16 +51,7 @@ class Notifications(Resource):
     @auth.check_token
     @expects_json(schema_create_notification_urls)
     def put(self):
-        """
-        @api {put} /api/v1/notifications Replace Notification URLs
-        @apiDescription Replace all notification URLs with the provided list (can be empty)
-        @apiExample {curl} Example usage:
-            curl -X PUT http://localhost:5000/api/v1/notifications -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"notification_urls": ["url1", "url2"]}'
-        @apiName Replace
-        @apiGroup Notifications
-        @apiSuccess (200) {Object[]} notification_urls List of current notification URLs
-        @apiError (400) {String} Invalid input
-        """
+        """Replace Notification URLs."""
         json_data = request.get_json()
         notification_urls = json_data.get("notification_urls", [])
 
@@ -102,17 +73,7 @@ class Notifications(Resource):
     @auth.check_token
     @expects_json(schema_delete_notification_urls)
     def delete(self):
-        """
-        @api {delete} /api/v1/notifications Delete Notification URLs
-        @apiDescription Deletes one or more notification URLs from the configuration
-        @apiExample {curl} Example usage:
-            curl http://localhost:5000/api/v1/notifications -X DELETE -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"notification_urls": ["url1", "url2"]}'
-        @apiParam {String[]} notification_urls The notification URLs to delete.
-        @apiName Delete
-        @apiGroup Notifications
-        @apiSuccess (204) {String} OK Deleted
-        @apiError (400) {String} No matching notification URLs found.
-        """
+        """Delete Notification URLs."""
 
         json_data = request.get_json()
         urls_to_delete = json_data.get("notification_urls", [])
