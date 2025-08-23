@@ -23,12 +23,12 @@ class Tag(Resource):
         """
         @api {get} /api/v1/tag/:uuid Single tag - Get data, toggle notification muting, recheck all.
         @apiDescription Retrieve tag information, set notification_muted status, recheck all in tag.
-        @apiExample {curl} Example usage:
+        @apiExampleRequest 
             curl http://localhost:5000/api/v1/tag/cc0cfffa-f449-477b-83ea-0caafd1dc091 -H"x-api-key:813031b16330fe25e3780cf0325daa45"
             curl "http://localhost:5000/api/v1/tag/cc0cfffa-f449-477b-83ea-0caafd1dc091?muted=muted" -H"x-api-key:813031b16330fe25e3780cf0325daa45"
             curl "http://localhost:5000/api/v1/tag/cc0cfffa-f449-477b-83ea-0caafd1dc091?recheck=true" -H"x-api-key:813031b16330fe25e3780cf0325daa45"
         @apiName Tag
-        @apiGroup Tag
+        @apiGroup Group / Tag
         @apiParam {uuid} uuid Tag unique ID.
         @apiQuery {String} [muted] =`muted` or =`unmuted` , Sets the MUTE NOTIFICATIONS state
         @apiQuery {String} [recheck] = True, Queue all watches with this tag for recheck
@@ -71,7 +71,7 @@ class Tag(Resource):
             curl http://localhost:5000/api/v1/tag/cc0cfffa-f449-477b-83ea-0caafd1dc091 -X DELETE -H"x-api-key:813031b16330fe25e3780cf0325daa45"
         @apiParam {uuid} uuid Tag unique ID.
         @apiName DeleteTag
-        @apiGroup Tag
+        @apiGroup Group / Tag
         @apiSuccess (200) {String} OK Was deleted
         """
         if not self.datastore.data['settings']['application']['tags'].get(uuid):
@@ -92,14 +92,14 @@ class Tag(Resource):
     def put(self, uuid):
         """
         @api {put} /api/v1/tag/:uuid Update tag information
-        @apiExample {curl} Example usage:
-            Update (PUT)
+        @apiExampleRequest {curl} Request:
             curl http://localhost:5000/api/v1/tag/cc0cfffa-f449-477b-83ea-0caafd1dc091 -X PUT -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"title": "New Tag Title"}'
-
+        @apiExampleResponse {json} Response:
+            "OK"
         @apiDescription Updates an existing tag using JSON
         @apiParam {uuid} uuid Tag unique ID.
         @apiName UpdateTag
-        @apiGroup Tag
+        @apiGroup Group / Tag
         @apiSuccess (200) {String} OK Was updated
         @apiSuccess (500) {String} ERR Some other error
         """
@@ -121,7 +121,7 @@ class Tag(Resource):
         @apiExample {curl} Example usage:
             curl http://localhost:5000/api/v1/watch -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"name": "Work related"}'
         @apiName Create
-        @apiGroup Tag
+        @apiGroup Group / Tag
         @apiSuccess (200) {String} OK Was created
         @apiSuccess (500) {String} ERR Some other error
         """
@@ -146,8 +146,9 @@ class Tags(Resource):
         """
         @api {get} /api/v1/tags List tags
         @apiDescription Return list of available tags
-        @apiExample {curl} Example usage:
+        @apiExampleRequest {curl} Request:
             curl http://localhost:5000/api/v1/tags -H"x-api-key:813031b16330fe25e3780cf0325daa45"
+        @apiExampleResponse {json} Response:
             {
                 "cc0cfffa-f449-477b-83ea-0caafd1dc091": {
                     "title": "Tech News",
@@ -161,7 +162,7 @@ class Tags(Resource):
                 }
             }
         @apiName ListTags
-        @apiGroup Tag Management
+        @apiGroup Group / Tag Management
         @apiSuccess (200) {String} OK JSON dict
         """
         result = {}

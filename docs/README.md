@@ -4,5 +4,6 @@ To regenerate API docs
 
 Run from this directory.
 
-`node_modules/apidoc/bin/apidoc -i ../changedetectionio/api/ -o api_v1`
+`python3 python-apidoc/apidoc.py -i ../changedetectionio -o api_v1/index.html`
+
 

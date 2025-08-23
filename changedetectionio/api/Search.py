@@ -17,7 +17,7 @@ class Search(Resource):
             curl "http://localhost:5000/api/v1/search?q=https://example.com/page1?tag=Favourites" -H"x-api-key:813031b16330fe25e3780cf0325daa45"
             curl "http://localhost:5000/api/v1/search?q=https://example.com?partial=true" -H"x-api-key:813031b16330fe25e3780cf0325daa45"
         @apiName Search
-        @apiGroup Watch Management
+        @apiGroup Search
         @apiQuery {String} q Search query to match against watch URLs and titles
         @apiQuery {String} [tag] Optional name of tag to limit results (name not UUID)
         @apiQuery {String} [partial] Allow partial matching of URL query
