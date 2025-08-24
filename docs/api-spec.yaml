@@ -28,7 +28,7 @@ info:
     
     For example: `x-api-key: YOUR_API_KEY`
     
-  version: 1.0.0
+  version: 0.1.0
   contact:
     name: ChangeDetection.io
     url: https://github.com/dgtlmoon/changedetection.io
@@ -89,6 +89,8 @@ tags:
       Configure global notification endpoints that can be used across all your watches. Supports various 
       notification services including email, Discord, Slack, webhooks, and many other popular platforms. 
       These settings serve as defaults that can be overridden at the individual watch or tag level.
+
+      The notification syntax uses [https://github.com/caronc/apprise](https://github.com/caronc/apprise).
       
   - name: Search
     description: |
