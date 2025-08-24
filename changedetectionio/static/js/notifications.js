@@ -10,6 +10,31 @@ $(document).ready(function () {
         }
     });
 
+    $('#notifications-minitabs').miniTabs({
+        "Customise": "#notification-setup",
+        "Preview": "#notification-preview"
+    });
+
+    function setPreview(content) {
+        const iframe = document.getElementById("notification-iframe");
+        iframe.srcdoc = `
+        <html>
+          <head>
+            <style>
+              body {
+                font-family: "Courier New", Courier, monospace;
+                font-size: 70%;
+                word-break: break-word;
+                white-space: pre-wrap;
+                margin: 0;
+              }
+            </style>
+          </head>
+          <body>${content}</body>
+        </html>`;
+    }
+
+
     $('#send-test-notification').click(function (e) {
         e.preventDefault();
 
@@ -34,7 +59,9 @@ $(document).ready(function () {
                 },
             }
         }).done(function (data) {
-            $("#notification-test-log>span").text(data);
+            $("#notification-test-log>span").text(data['status']);
+            setPreview(data['result']['body']);
+
         }).fail(function (jqXHR, textStatus, errorThrown) {
             // Handle connection refused or other errors
             if (textStatus === "error" && errorThrown === "") {
@@ -42,11 +69,14 @@ $(document).ready(function () {
                 $("#notification-test-log>span").text("Error: Connection refused or server is unreachable.");
             } else {
                 console.error("Error:", textStatus, errorThrown);
-                $("#notification-test-log>span").text("An error occurred: " + textStatus);
+                $("#notification-test-log>span").text("An error occurred: " + errorThrown);
             }
         }).always(function () {
             $('.notifications-wrapper .spinner').hide();
         })
     });
+
+
+
 });
 
