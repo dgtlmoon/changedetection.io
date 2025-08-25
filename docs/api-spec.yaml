@@ -125,7 +125,7 @@ components:
         uuid:
           type: string
           format: uuid
-          description: Unique identifier for the watch
+          description: Unique identifier for the web page change monitor (watch)
           readOnly: true
         url:
           type: string
@@ -134,11 +134,11 @@ components:
           maxLength: 5000
         title:
           type: string
-          description: Custom title for the watch
+          description: Custom title for the web page change monitor (watch)
           maxLength: 5000
         tag:
           type: string
-          description: Tag UUID to associate with this watch
+          description: Tag UUID to associate with this web page change monitor (watch)
           maxLength: 5000
         tags:
           type: array
@@ -147,7 +147,7 @@ components:
           description: Array of tag UUIDs
         paused:
           type: boolean
-          description: Whether the watch is paused
+          description: Whether the web page change monitor (watch) is paused
         muted:
           type: boolean
           description: Whether notifications are muted
@@ -197,7 +197,7 @@ components:
           type: array
           items:
             type: string
-          description: Notification URLs for this watch
+          description: Notification URLs for this web page change monitor (watch)
         notification_title:
           type: string
           description: Custom notification title
@@ -267,7 +267,7 @@ components:
           type: array
           items:
             type: string
-          description: Default notification URLs for watches with this tag
+          description: Default notification URLs for web page change monitors (watches) with this tag
         notification_muted:
           type: boolean
           description: Whether notifications are muted for this tag
@@ -291,7 +291,7 @@ components:
       properties:
         watch_count:
           type: integer
-          description: Total number of watches
+          description: Total number of web page change monitors (watches)
         tag_count:
           type: integer
           description: Total number of tags
@@ -309,7 +309,7 @@ components:
           type: object
           additionalProperties:
             $ref: '#/components/schemas/Watch'
-          description: Dictionary of matching watches keyed by UUID
+          description: Dictionary of matching web page change monitors (watches) keyed by UUID
 
     WatchHistory:
       type: object
@@ -330,7 +330,7 @@ paths:
     get:
       tags: [Watch Management]
       summary: List all watches
-      description: Return concise list of available watches and basic info
+      description: Return concise list of available web page change monitors (watches) and basic info
       x-code-samples:
         - lang: 'curl'
           source: |
@@ -392,7 +392,7 @@ paths:
     post:
       tags: [Watch Management]
       summary: Create a new watch
-      description: Create a single watch. Requires at least 'url' to be set.
+      description: Create a single web page change monitor (watch). Requires at least 'url' to be set.
       x-code-samples:
         - lang: 'curl'
           source: |
@@ -438,7 +438,7 @@ paths:
                 hours: 1
       responses:
         '200':
-          description: Watch created successfully
+          description: Web page change monitor (watch) created successfully
           content:
             text/plain:
               schema:
@@ -456,7 +456,7 @@ paths:
       operationId: getSingleWatch
       tags: [Watch Management]
       summary: Get single watch
-      description: Retrieve watch information and set muted/paused status. Returns the FULL Watch JSON.
+      description: Retrieve web page change monitor (watch) information and set muted/paused status. Returns the FULL Watch JSON.
       x-code-samples:
         - lang: 'curl'
           source: |
@@ -474,13 +474,13 @@ paths:
         - name: uuid
           in: path
           required: true
-          description: Watch unique ID
+          description: Web page change monitor (watch) unique ID
           schema:
             type: string
             format: uuid
         - name: recheck
           in: query
-          description: Recheck this watch
+          description: Recheck this web page change monitor (watch)
           schema:
             type: string
             enum: ["1", "true"]
@@ -508,7 +508,7 @@ paths:
                 type: string
                 example: "OK"
         '404':
-          description: Watch not found
+          description: Web page change monitor (watch) not found
           content:
             application/json:
               schema:
@@ -518,7 +518,7 @@ paths:
       operationId: updateWatch
       tags: [Watch Management]
       summary: Update watch
-      description: Update an existing watch using JSON. Accepts the same structure as returned in [get single watch information](#operation/getSingleWatch).
+      description: Update an existing web page change monitor (watch) using JSON. Accepts the same structure as returned in [get single watch information](#operation/getSingleWatch).
       x-code-samples:
         - lang: 'curl'
           source: |
@@ -551,7 +551,7 @@ paths:
         - name: uuid
           in: path
           required: true
-          description: Watch unique ID
+          description: Web page change monitor (watch) unique ID
           schema:
             type: string
             format: uuid
@@ -563,7 +563,7 @@ paths:
               $ref: '#/components/schemas/Watch'
       responses:
         '200':
-          description: Watch updated successfully
+          description: Web page change monitor (watch) updated successfully
           content:
             text/plain:
               schema:
@@ -575,7 +575,7 @@ paths:
     delete:
       tags: [Watch Management]  
       summary: Delete watch
-      description: Delete a watch and all related history
+      description: Delete a web page change monitor (watch) and all related history
       x-code-samples:
         - lang: 'curl'
           source: |
@@ -593,13 +593,13 @@ paths:
         - name: uuid
           in: path
           required: true
-          description: Watch unique ID
+          description: Web page change monitor (watch) unique ID
           schema:
             type: string
             format: uuid
       responses:
         '200':
-          description: Watch deleted successfully
+          description: Web page change monitor (watch) deleted successfully
           content:
             text/plain:
               schema:
@@ -610,7 +610,7 @@ paths:
     get:
       tags: [Watch History]
       summary: Get watch history
-      description: Get a list of all historical snapshots available for a watch
+      description: Get a list of all historical snapshots available for a web page change monitor (watch)
       x-code-samples:
         - lang: 'curl'
           source: |
@@ -628,7 +628,7 @@ paths:
         - name: uuid
           in: path
           required: true
-          description: Watch unique ID
+          description: Web page change monitor (watch) unique ID
           schema:
             type: string
             format: uuid
@@ -643,13 +643,13 @@ paths:
                 "1640995200": "/path/to/snapshot1.txt"
                 "1640998800": "/path/to/snapshot2.txt"
         '404':
-          description: Watch not found
+          description: Web page change monitor (watch) not found
 
   /watch/{uuid}/history/{timestamp}:
     get:
       tags: [Snapshots]
       summary: Get single snapshot
-      description: Get single snapshot from watch. Use 'latest' for the most recent snapshot.
+      description: Get single snapshot from web page change monitor (watch). Use 'latest' for the most recent snapshot.
       x-code-samples:
         - lang: 'curl'
           source: |
@@ -668,7 +668,7 @@ paths:
         - name: uuid
           in: path
           required: true
-          description: Watch unique ID
+          description: Web page change monitor (watch) unique ID
           schema:
             type: string
             format: uuid
@@ -701,7 +701,7 @@ paths:
     get:
       tags: [Favicon]
       summary: Get watch favicon
-      description: Get the favicon for a watch as displayed in the watch overview list.
+      description: Get the favicon for a web page change monitor (watch) as displayed in the watch overview list.
       x-code-samples:
         - lang: 'curl'
           source: |
@@ -721,7 +721,7 @@ paths:
         - name: uuid
           in: path
           required: true
-          description: Watch unique ID
+          description: Web page change monitor (watch) unique ID
           schema:
             type: string
             format: uuid
@@ -778,7 +778,7 @@ paths:
     get:
       tags: [Group / Tag Management]
       summary: Get single tag
-      description: Retrieve tag information, set notification_muted status, recheck all in tag.
+      description: Retrieve tag information, set notification_muted status, recheck all web page change monitors (watches) in tag.
       x-code-samples:
         - lang: 'curl'
           source: |
@@ -808,7 +808,7 @@ paths:
             enum: [muted, unmuted]
         - name: recheck
           in: query
-          description: Queue all watches with this tag for recheck
+          description: Queue all web page change monitors (watches) with this tag for recheck
           schema:
             type: string
             enum: ["true"]
@@ -879,7 +879,7 @@ paths:
     delete:
       tags: [Group / Tag Management]
       summary: Delete tag
-      description: Delete a tag/group and remove it from all watches
+      description: Delete a tag/group and remove it from all web page change monitors (watches)
       x-code-samples:
         - lang: 'curl'
           source: |
@@ -1117,7 +1117,7 @@ paths:
     get:
       tags: [Search]
       summary: Search watches
-      description: Search watches by URL or title text
+      description: Search web page change monitors (watches) by URL or title text
       x-code-samples:
         - lang: 'curl'
           source: |
@@ -1194,17 +1194,17 @@ paths:
       parameters:
         - name: tag_uuids
           in: query
-          description: Tag UUID to apply to imported watches
+          description: Tag UUID to apply to imported web page change monitors (watches)
           schema:
             type: string
         - name: tag
           in: query
-          description: Tag name to apply to imported watches
+          description: Tag name to apply to imported web page change monitors (watches)
           schema:
             type: string
         - name: proxy
           in: query
-          description: Proxy key to use for imported watches
+          description: Proxy key to use for imported web page change monitors (watches)
           schema:
             type: string
         - name: dedupe
