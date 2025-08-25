@@ -1,9 +1,7 @@
 from flask_expects_json import expects_json
-from flask_restful import Resource
-from . import auth
-from flask_restful import abort, Resource
+from flask_restful import Resource, abort
 from flask import request
-from . import auth
+from . import auth, validate_openapi_request
 from . import schema_create_notification_urls, schema_delete_notification_urls
 
 class Notifications(Resource):
@@ -12,6 +10,7 @@ class Notifications(Resource):
         self.datastore = kwargs['datastore']
 
     @auth.check_token
+    @validate_openapi_request('getNotifications')
     def get(self):
         """Return Notification URL List."""
 
@@ -22,6 +21,7 @@ class Notifications(Resource):
                }, 200
     
     @auth.check_token
+    @validate_openapi_request('addNotifications')
     @expects_json(schema_create_notification_urls)
     def post(self):
         """Create Notification URLs."""
@@ -49,6 +49,7 @@ class Notifications(Resource):
         return {'notification_urls': added_urls}, 201
     
     @auth.check_token
+    @validate_openapi_request('replaceNotifications')
     @expects_json(schema_create_notification_urls)
     def put(self):
         """Replace Notification URLs."""
@@ -71,6 +72,7 @@ class Notifications(Resource):
         return {'notification_urls': clean_urls}, 200
         
     @auth.check_token
+    @validate_openapi_request('deleteNotifications')
     @expects_json(schema_delete_notification_urls)
     def delete(self):
         """Delete Notification URLs."""

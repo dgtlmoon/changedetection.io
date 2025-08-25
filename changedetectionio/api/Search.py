@@ -1,6 +1,6 @@
 from flask_restful import Resource, abort
 from flask import request
-from . import auth
+from . import auth, validate_openapi_request
 
 class Search(Resource):
     def __init__(self, **kwargs):
@@ -8,6 +8,7 @@ class Search(Resource):
         self.datastore = kwargs['datastore']
 
     @auth.check_token
+    @validate_openapi_request('searchWatches')
     def get(self):
         """Search for watches by URL or title text."""
         query = request.args.get('q', '').strip()

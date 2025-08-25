@@ -11,7 +11,7 @@ from . import auth
 import copy
 
 # Import schemas from __init__.py
-from . import schema, schema_create_watch, schema_update_watch
+from . import schema, schema_create_watch, schema_update_watch, validate_openapi_request
 
 
 class Watch(Resource):
@@ -25,6 +25,7 @@ class Watch(Resource):
     # @todo - version2 - ?muted and ?paused should be able to be called together, return the watch struct not "OK"
     # ?recheck=true
     @auth.check_token
+    @validate_openapi_request('getWatch')
     def get(self, uuid):
         """Get information about a single watch, recheck, pause, or mute."""
         from copy import deepcopy
@@ -57,6 +58,7 @@ class Watch(Resource):
         return watch
 
     @auth.check_token
+    @validate_openapi_request('deleteWatch')
     def delete(self, uuid):
         """Delete a watch and related history."""
         if not self.datastore.data['watching'].get(uuid):
@@ -66,6 +68,7 @@ class Watch(Resource):
         return 'OK', 204
 
     @auth.check_token
+    @validate_openapi_request('updateWatch')
     @expects_json(schema_update_watch)
     def put(self, uuid):
         """Update watch information."""
@@ -91,6 +94,7 @@ class WatchHistory(Resource):
     # Get a list of available history for a watch by UUID
     # curl http://localhost:5000/api/v1/watch/<string:uuid>/history
     @auth.check_token
+    @validate_openapi_request('getWatchHistory')
     def get(self, uuid):
         """Get a list of all historical snapshots available for a watch."""
         watch = self.datastore.data['watching'].get(uuid)
@@ -105,6 +109,7 @@ class WatchSingleHistory(Resource):
         self.datastore = kwargs['datastore']
 
     @auth.check_token
+    @validate_openapi_request('getWatchSnapshot')
     def get(self, uuid, timestamp):
         """Get single snapshot from watch."""
         watch = self.datastore.data['watching'].get(uuid)
@@ -138,6 +143,7 @@ class WatchFavicon(Resource):
         self.datastore = kwargs['datastore']
 
     @auth.check_token
+    @validate_openapi_request('getWatchFavicon')
     def get(self, uuid):
         """Get favicon for a watch."""
         watch = self.datastore.data['watching'].get(uuid)
@@ -172,6 +178,7 @@ class CreateWatch(Resource):
         self.update_q = kwargs['update_q']
 
     @auth.check_token
+    @validate_openapi_request('createWatch')
     @expects_json(schema_create_watch)
     def post(self):
         """Create a single watch."""
@@ -207,6 +214,7 @@ class CreateWatch(Resource):
             return "Invalid or unsupported URL", 400
 
     @auth.check_token
+    @validate_openapi_request('listWatches')
     def get(self):
         """List watches."""
         list = {}
