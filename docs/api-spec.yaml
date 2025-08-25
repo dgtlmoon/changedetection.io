@@ -774,6 +774,55 @@ paths:
                   notification_urls: ["discord://webhook_id/webhook_token"]
                   notification_muted: false
 
+  /tag:
+    post:
+      tags: [Group / Tag Management]
+      summary: Create tag
+      description: Create a single tag/group
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X POST "http://localhost:5000/api/v1/tag" \
+              -H "x-api-key: YOUR_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "title": "Important Sites"
+              }'
+        - lang: 'Python'
+          source: |
+            import requests
+            
+            headers = {
+                'x-api-key': 'YOUR_API_KEY',
+                'Content-Type': 'application/json'
+            }
+            data = {'title': 'Important Sites'}
+            response = requests.post('http://localhost:5000/api/v1/tag', 
+                                   headers=headers, json=data)
+            print(response.json())
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tag'
+            example:
+              title: "Important Sites"
+      responses:
+        '201':
+          description: Tag created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  uuid:
+                    type: string
+                    format: uuid
+                    description: UUID of the created tag
+        '400':
+          description: Invalid or unsupported tag
+
   /tag/{uuid}:
     get:
       tags: [Group / Tag Management]
@@ -905,45 +954,6 @@ paths:
         '200':
           description: Tag deleted successfully
 
-    post:
-      tags: [Group / Tag Management]
-      summary: Create tag
-      description: Create a single tag/group
-      x-code-samples:
-        - lang: 'curl'
-          source: |
-            curl -X POST "http://localhost:5000/api/v1/tag/550e8400-e29b-41d4-a716-446655440000" \
-              -H "x-api-key: YOUR_API_KEY" \
-              -H "Content-Type: application/json" \
-              -d '{
-                "title": "Important Sites"
-              }'
-        - lang: 'Python'
-          source: |
-            import requests
-            
-            headers = {
-                'x-api-key': 'YOUR_API_KEY',
-                'Content-Type': 'application/json'
-            }
-            tag_uuid = '550e8400-e29b-41d4-a716-446655440000'
-            data = {'title': 'Important Sites'}
-            response = requests.post(f'http://localhost:5000/api/v1/tag/{tag_uuid}', 
-                                   headers=headers, json=data)
-            print(response.text)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Tag'
-            example:
-              title: "Important Sites"
-      responses:
-        '200':
-          description: Tag created successfully
-        '500':
-          description: Server error
 
   /notifications:
     get:
