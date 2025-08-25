@@ -114,7 +114,7 @@ def run_filter_test(client, live_server, content_filter):
         client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
         res = client.get(url_for("watchlist.index"))
-        assert b'Warning, no filters were found' in res.data
+        assert b'Warning: no content found with configured filters' in res.data
         assert not os.path.isfile("test-datastore/notification.txt")
         time.sleep(1)
         
