@@ -7,7 +7,7 @@ from flask import request
 from . import auth
 
 # Import schemas from __init__.py
-from . import schema_tag, schema_create_tag, schema_update_tag
+from . import schema_tag, schema_create_tag, schema_update_tag, validate_openapi_request
 
 
 class Tag(Resource):
@@ -19,6 +19,7 @@ class Tag(Resource):
     # Get information about a single tag
     # curl http://localhost:5000/api/v1/tag/<string:uuid>
     @auth.check_token
+    @validate_openapi_request('getTag')
     def get(self, uuid):
         """Get data for a single tag/group, toggle notification muting, or recheck all."""
         from copy import deepcopy
@@ -50,6 +51,7 @@ class Tag(Resource):
         return tag
 
     @auth.check_token
+    @validate_openapi_request('deleteTag')
     def delete(self, uuid):
         """Delete a tag/group and remove it from all watches."""
         if not self.datastore.data['settings']['application']['tags'].get(uuid):
@@ -66,6 +68,7 @@ class Tag(Resource):
         return 'OK', 204
 
     @auth.check_token
+    @validate_openapi_request('updateTag')
     @expects_json(schema_update_tag)
     def put(self, uuid):
         """Update tag information."""
@@ -80,6 +83,7 @@ class Tag(Resource):
 
 
     @auth.check_token
+    @validate_openapi_request('createTag')
     # Only cares for {'title': 'xxxx'}
     def post(self):
         """Create a single tag/group."""
@@ -100,6 +104,7 @@ class Tags(Resource):
         self.datastore = kwargs['datastore']
 
     @auth.check_token
+    @validate_openapi_request('listTags')
     def get(self):
         """List tags/groups."""
         result = {}
