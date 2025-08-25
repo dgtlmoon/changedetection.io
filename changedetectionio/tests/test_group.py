@@ -91,7 +91,7 @@ def test_setup_group_tag(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     res = client.get(url_for("watchlist.index"))
-    assert b'Warning, no filters were found' not in res.data
+    assert b'Warning: no content found with configured filters' not in res.data
 
     res = client.get(
         url_for("ui.ui_views.preview_page", uuid="first"),

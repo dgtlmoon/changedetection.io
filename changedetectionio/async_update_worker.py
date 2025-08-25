@@ -165,7 +165,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                     if not datastore.data['watching'].get(uuid):
                         continue
 
-                    err_text = "Warning, no filters were found, no change detection ran - Did the page change layout? update your Visual Filter if necessary."
+                    err_text = "Warning: no content found with configured filters; no change detection ran. Did the page change layout? update your Visual Filter if necessary."
                     datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text})
 
                     # Filter wasnt found, but we should still update the visual selector so that they can have a chance to set it up again
