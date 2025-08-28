@@ -6,7 +6,7 @@ info:
     
     REST API for managing Page watches, Group tags, and Notifications.
     
-    changedetection.io can be driven by its built in simple API, in the examples below you will also find `curl` command line examples to help you.
+    changedetection.io can be driven by its built in simple API, in the examples below you will also find `curl` command line and `python` examples to help you get started faster.
     
     ## Where to find my API key?
     
