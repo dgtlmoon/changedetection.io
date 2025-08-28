@@ -39,6 +39,14 @@ from loguru import logger
 from changedetectionio import __version__
 from changedetectionio import queuedWatchMetaData
 from changedetectionio.api import Watch, WatchHistory, WatchSingleHistory, CreateWatch, Import, SystemInfo, Tag, Tags, Notifications, WatchFavicon
+from changedetectionio.api.BrowserNotifications import (
+    BrowserNotificationsVapidPublicKey,
+    BrowserNotificationsSubscribe, 
+    BrowserNotificationsUnsubscribe,
+    BrowserNotificationsTest,
+    BrowserNotificationsSubscriptions,
+    BrowserNotificationsPendingKeywords
+)
 from changedetectionio.api.Search import Search
 from .time_handler import is_within_schedule
 
@@ -336,6 +344,14 @@ def changedetection_app(config=None, datastore_o=None):
 
     watch_api.add_resource(Notifications, '/api/v1/notifications',
                            resource_class_kwargs={'datastore': datastore})
+    
+    # Browser notification endpoints
+    watch_api.add_resource(BrowserNotificationsVapidPublicKey, '/api/v1/browser-notifications/vapid-public-key')
+    watch_api.add_resource(BrowserNotificationsSubscribe, '/api/v1/browser-notifications/subscribe')
+    watch_api.add_resource(BrowserNotificationsUnsubscribe, '/api/v1/browser-notifications/unsubscribe')
+    watch_api.add_resource(BrowserNotificationsTest, '/api/v1/browser-notifications/test')
+    watch_api.add_resource(BrowserNotificationsSubscriptions, '/api/v1/browser-notifications/subscriptions')
+    watch_api.add_resource(BrowserNotificationsPendingKeywords, '/api/v1/browser-notifications/pending-keywords')
 
     @login_manager.user_loader
     def user_loader(email):
@@ -489,6 +505,21 @@ def changedetection_app(config=None, datastore_o=None):
         except FileNotFoundError:
             abort(404)
 
+    @app.route("/service-worker.js", methods=['GET'])
+    def service_worker():
+        from flask import make_response
+        try:
+            # Serve from the changedetectionio/static/js directory
+            static_js_path = os.path.join(os.path.dirname(__file__), 'static', 'js')
+            response = make_response(send_from_directory(static_js_path, "service-worker.js"))
+            response.headers['Content-Type'] = 'application/javascript'
+            response.headers['Service-Worker-Allowed'] = '/'
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+            return response
+        except FileNotFoundError:
+            abort(404)
 
     import changedetectionio.blueprint.browser_steps as browser_steps
     app.register_blueprint(browser_steps.construct_blueprint(datastore), url_prefix='/browser-steps')

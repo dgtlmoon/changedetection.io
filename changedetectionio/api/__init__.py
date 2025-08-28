@@ -68,3 +68,11 @@ from .Tags import Tags, Tag
 from .Import import Import
 from .SystemInfo import SystemInfo
 from .Notifications import Notifications
+from .BrowserNotifications import (
+    BrowserNotificationsVapidPublicKey,
+    BrowserNotificationsSubscribe,
+    BrowserNotificationsUnsubscribe,
+    BrowserNotificationsTest,
+    BrowserNotificationsSubscriptions,
+    BrowserNotificationsPendingKeywords
+)

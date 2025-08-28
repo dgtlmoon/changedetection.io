@@ -1,0 +1,385 @@
+/**
+ * changedetection.io Browser Push Notifications
+ * Handles service worker registration, push subscription management, and notification permissions
+ */
+
+class BrowserNotifications {
+    constructor() {
+        this.serviceWorkerRegistration = null;
+        this.vapidPublicKey = null;
+        this.subscriptions = new Map(); // keyword -> subscription
+        this.init();
+    }
+
+    async init() {
+        if (!this.isSupported()) {
+            console.warn('Push notifications are not supported in this browser');
+            return;
+        }
+
+        try {
+            // Get VAPID public key from server
+            await this.fetchVapidPublicKey();
+            
+            // Register service worker
+            await this.registerServiceWorker();
+            
+            // Initialize UI elements
+            this.initializeUI();
+            
+            // Load existing subscriptions
+            await this.loadExistingSubscriptions();
+            
+            // Handle auto-subscription from form submission
+            await this.handleAutoSubscription();
+            
+        } catch (error) {
+            console.error('Failed to initialize browser notifications:', error);
+        }
+    }
+
+    isSupported() {
+        return 'serviceWorker' in navigator && 
+               'PushManager' in window && 
+               'Notification' in window;
+    }
+
+    async fetchVapidPublicKey() {
+        try {
+            const response = await fetch('/api/v1/browser-notifications/vapid-public-key');
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            const data = await response.json();
+            this.vapidPublicKey = data.publicKey;
+        } catch (error) {
+            console.error('Failed to fetch VAPID public key:', error);
+            throw error;
+        }
+    }
+
+    async registerServiceWorker() {
+        try {
+            this.serviceWorkerRegistration = await navigator.serviceWorker.register('/service-worker.js', {
+                scope: '/'
+            });
+
+            console.log('Service Worker registered successfully');
+
+            // Wait for service worker to be ready
+            await navigator.serviceWorker.ready;
+
+        } catch (error) {
+            console.error('Service Worker registration failed:', error);
+            throw error;
+        }
+    }
+
+    initializeUI() {
+        // Bind event handlers to existing elements in the template
+        this.bindEventHandlers();
+        
+        // Update UI based on current permission state
+        this.updatePermissionStatus();
+    }
+
+    bindEventHandlers() {
+        const enableBtn = document.querySelector('#enable-notifications-btn');
+        const testBtn = document.querySelector('#test-notification-btn');
+
+        if (enableBtn) {
+            enableBtn.addEventListener('click', () => this.requestNotificationPermission());
+        }
+
+        if (testBtn) {
+            testBtn.addEventListener('click', () => this.sendTestNotification());
+        }
+    }
+
+    async updatePermissionStatus() {
+        const statusElement = document.querySelector('#permission-status');
+        const enableBtn = document.querySelector('#enable-notifications-btn');
+        const testBtn = document.querySelector('#test-notification-btn');
+
+        if (!statusElement) return;
+
+        const permission = Notification.permission;
+        statusElement.textContent = permission;
+        statusElement.className = `permission-${permission}`;
+
+        // Show/hide controls based on permission
+        if (permission === 'default') {
+            if (enableBtn) enableBtn.style.display = 'inline-block';
+            if (testBtn) testBtn.style.display = 'none';
+        } else if (permission === 'granted') {
+            if (enableBtn) enableBtn.style.display = 'none';
+            if (testBtn) testBtn.style.display = 'inline-block';
+        } else { // denied
+            if (enableBtn) enableBtn.style.display = 'none';
+            if (testBtn) testBtn.style.display = 'none';
+        }
+    }
+
+    async requestNotificationPermission() {
+        try {
+            const permission = await Notification.requestPermission();
+            this.updatePermissionStatus();
+            
+            if (permission === 'granted') {
+                console.log('Notification permission granted');
+                // Check for pending auto-subscriptions
+                this.handleAutoSubscription();
+            } else {
+                console.log('Notification permission denied');
+            }
+        } catch (error) {
+            console.error('Error requesting notification permission:', error);
+        }
+    }
+
+    async subscribeToKeyword(keyword = null) {
+        if (Notification.permission !== 'granted') {
+            alert('Please enable notifications first');
+            return;
+        }
+
+        if (!keyword) {
+            keyword = document.querySelector('#notification-keyword-input')?.value?.trim() || 'default';
+        }
+
+        if (!keyword) {
+            alert('Please enter a keyword');
+            return;
+        }
+
+        try {
+            // Check if already subscribed to this keyword
+            if (this.subscriptions.has(keyword)) {
+                console.log(`Already subscribed to keyword: ${keyword}`);
+                return;
+            }
+
+            // Create push subscription
+            const subscription = await this.serviceWorkerRegistration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: this.urlBase64ToUint8Array(this.vapidPublicKey)
+            });
+
+            // Send subscription to server
+            const response = await fetch('/api/v1/browser-notifications/subscribe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('input[name=csrf_token]')?.value
+                },
+                body: JSON.stringify({
+                    keyword: keyword,
+                    subscription: subscription.toJSON()
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            // Store subscription locally
+            this.subscriptions.set(keyword, subscription);
+            
+            // Update UI
+            this.updateSubscriptionsList();
+            
+            console.log(`Successfully subscribed to keyword: ${keyword}`);
+            
+            // Clear input
+            const input = document.querySelector('#notification-keyword-input');
+            if (input) input.value = '';
+
+        } catch (error) {
+            console.error(`Failed to subscribe to keyword ${keyword}:`, error);
+            alert(`Failed to subscribe: ${error.message}`);
+        }
+    }
+
+    async unsubscribeFromKeyword(keyword) {
+        try {
+            const subscription = this.subscriptions.get(keyword);
+            if (!subscription) return;
+
+            // Unsubscribe from server
+            const response = await fetch('/api/v1/browser-notifications/unsubscribe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('input[name=csrf_token]')?.value
+                },
+                body: JSON.stringify({
+                    keyword: keyword,
+                    subscription: subscription.toJSON()
+                })
+            });
+
+            if (!response.ok) {
+                console.warn(`Server unsubscribe failed: ${response.status}`);
+            }
+
+            // Remove from local storage
+            this.subscriptions.delete(keyword);
+            
+            // Update UI
+            this.updateSubscriptionsList();
+            
+            console.log(`Unsubscribed from keyword: ${keyword}`);
+
+        } catch (error) {
+            console.error(`Failed to unsubscribe from keyword ${keyword}:`, error);
+        }
+    }
+
+    updateSubscriptionsList() {
+        const listElement = document.querySelector('#subscriptions-list');
+        if (!listElement) return;
+
+        listElement.innerHTML = '';
+
+        if (this.subscriptions.size === 0) {
+            listElement.innerHTML = '<li>No active subscriptions</li>';
+            return;
+        }
+
+        for (const [keyword] of this.subscriptions) {
+            const listItem = document.createElement('li');
+            listItem.innerHTML = `
+                <span>browser://${keyword}</span>
+                <button type="button" class="btn btn-sm btn-danger" onclick="browserNotifications.unsubscribeFromKeyword('${keyword}')" style="margin-left: 1em;">
+                    Unsubscribe
+                </button>
+            `;
+            listElement.appendChild(listItem);
+        }
+    }
+
+    async loadExistingSubscriptions() {
+        try {
+            const response = await fetch('/api/v1/browser-notifications/subscriptions');
+            if (response.ok) {
+                const data = await response.json();
+                // Note: This would require server-side implementation to track subscriptions per browser
+                // For now, we'll just check what the browser knows about
+            }
+        } catch (error) {
+            console.log('No existing subscriptions found');
+        }
+    }
+
+    async sendTestNotification() {
+        try {
+            // Get available channels from the form field
+            const channelsField = document.querySelector('textarea[name*="browser_notification_channels"]');
+            const channels = channelsField?.value ? channelsField.value.split('\n').filter(c => c.trim()) : [];
+            const keyword = channels.length > 0 ? channels[0] : 'default';
+            
+            const response = await fetch('/api/v1/browser-notifications/test', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('input[name=csrf_token]')?.value
+                },
+                body: JSON.stringify({
+                    keyword: keyword,
+                    title: 'Test Notification',
+                    body: `This is a test notification for channel: ${keyword}`
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            alert(`Test notification sent successfully to ${result.sent_count} subscriber(s)`);
+            console.log('Test notification sent');
+        } catch (error) {
+            console.error('Failed to send test notification:', error);
+            alert(`Failed to send test notification: ${error.message}`);
+        }
+    }
+
+    urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding)
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+    }
+
+    async handleAutoSubscription() {
+        // Handle auto-subscription for keywords detected from browser:// URLs
+        try {
+            // Check if there are pending keywords from form submission
+            const response = await fetch('/api/v1/browser-notifications/pending-keywords', {
+                headers: {
+                    'X-CSRFToken': document.querySelector('input[name=csrf_token]')?.value
+                }
+            });
+            
+            if (!response.ok) {
+                return; // No pending keywords or endpoint not available
+            }
+            
+            const data = await response.json();
+            if (!data.keywords || data.keywords.length === 0) {
+                return;
+            }
+            
+            // Check if notifications are already enabled
+            if (Notification.permission === 'granted') {
+                // Auto-subscribe to all pending keywords
+                for (const keyword of data.keywords) {
+                    try {
+                        await this.subscribeToKeyword(keyword);
+                        console.log(`Auto-subscribed to browser notifications for: ${keyword}`);
+                    } catch (error) {
+                        console.warn(`Failed to auto-subscribe to ${keyword}:`, error);
+                    }
+                }
+            } else {
+                // Show notification to enable browser notifications for detected keywords
+                this.showAutoSubscriptionPrompt(data.keywords);
+            }
+            
+        } catch (error) {
+            console.log('No auto-subscription needed or failed to check:', error);
+        }
+    }
+    
+    showAutoSubscriptionPrompt(keywords) {
+        // Show a prompt to enable notifications for detected browser:// URLs
+        const keywordList = keywords.join(', ');
+        const message = `Browser notification channels detected: ${keywordList}\n\nWould you like to enable browser notifications for these channels?`;
+        
+        if (confirm(message)) {
+            this.requestNotificationPermission().then(() => {
+                // After permission is granted, subscribe to all keywords
+                keywords.forEach(keyword => {
+                    this.subscribeToKeyword(keyword);
+                });
+            });
+        }
+    }
+}
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.browserNotifications = new BrowserNotifications();
+    });
+} else {
+    window.browserNotifications = new BrowserNotifications();
+}
