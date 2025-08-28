@@ -7,7 +7,7 @@ class BrowserNotifications {
     constructor() {
         this.serviceWorkerRegistration = null;
         this.vapidPublicKey = null;
-        this.subscriptions = new Map(); // keyword -> subscription
+        this.isSubscribed = false;
         this.init();
     }
 
@@ -27,11 +27,8 @@ class BrowserNotifications {
             // Initialize UI elements
             this.initializeUI();
             
-            // Load existing subscriptions
-            await this.loadExistingSubscriptions();
-            
-            // Handle auto-subscription from form submission
-            await this.handleAutoSubscription();
+            // Set up notification URL monitoring
+            this.setupNotificationUrlMonitoring();
             
         } catch (error) {
             console.error('Failed to initialize browser notifications:', error);
@@ -46,7 +43,7 @@ class BrowserNotifications {
 
     async fetchVapidPublicKey() {
         try {
-            const response = await fetch('/api/v1/browser-notifications/vapid-public-key');
+            const response = await fetch('/browser-notifications-api/vapid-public-key');
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
@@ -96,6 +93,35 @@ class BrowserNotifications {
         }
     }
 
+    setupNotificationUrlMonitoring() {
+        // Monitor the notification URLs textarea for browser:// URLs
+        const notificationUrlsField = document.querySelector('textarea[name*="notification_urls"]');
+        if (notificationUrlsField) {
+            const checkForBrowserUrls = async () => {
+                const urls = notificationUrlsField.value || '';
+                const hasBrowserUrls = /browser:\/\//.test(urls);
+                
+                // If browser URLs are detected and we're not subscribed, auto-subscribe
+                if (hasBrowserUrls && !this.isSubscribed && Notification.permission === 'default') {
+                    const shouldSubscribe = confirm('Browser notifications detected! Would you like to enable browser notifications now?');
+                    if (shouldSubscribe) {
+                        await this.requestNotificationPermission();
+                    }
+                } else if (hasBrowserUrls && !this.isSubscribed && Notification.permission === 'granted') {
+                    // Permission already granted but not subscribed - auto-subscribe silently
+                    console.log('Auto-subscribing to browser notifications...');
+                    await this.subscribe();
+                }
+            };
+            
+            // Check immediately
+            checkForBrowserUrls();
+            
+            // Check on input changes
+            notificationUrlsField.addEventListener('input', checkForBrowserUrls);
+        }
+    }
+
     async updatePermissionStatus() {
         const statusElement = document.querySelector('#permission-status');
         const enableBtn = document.querySelector('#enable-notifications-btn');
@@ -127,8 +153,8 @@ class BrowserNotifications {
             
             if (permission === 'granted') {
                 console.log('Notification permission granted');
-                // Check for pending auto-subscriptions
-                this.handleAutoSubscription();
+                // Automatically subscribe to browser notifications
+                this.subscribe();
             } else {
                 console.log('Notification permission denied');
             }
@@ -137,28 +163,18 @@ class BrowserNotifications {
         }
     }
 
-    async subscribeToKeyword(keyword = null) {
+    async subscribe() {
         if (Notification.permission !== 'granted') {
             alert('Please enable notifications first');
             return;
         }
 
-        if (!keyword) {
-            keyword = document.querySelector('#notification-keyword-input')?.value?.trim() || 'default';
-        }
-
-        if (!keyword) {
-            alert('Please enter a keyword');
+        if (this.isSubscribed) {
+            console.log('Already subscribed to browser notifications');
             return;
         }
 
         try {
-            // Check if already subscribed to this keyword
-            if (this.subscriptions.has(keyword)) {
-                console.log(`Already subscribed to keyword: ${keyword}`);
-                return;
-            }
-
             // First, try to clear any existing subscription with different keys
             await this.clearExistingSubscription();
 
@@ -169,14 +185,13 @@ class BrowserNotifications {
             });
 
             // Send subscription to server
-            const response = await fetch('/api/v1/browser-notifications/subscribe', {
+            const response = await fetch('/browser-notifications-api/subscribe', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': document.querySelector('input[name=csrf_token]')?.value
                 },
                 body: JSON.stringify({
-                    keyword: keyword,
                     subscription: subscription.toJSON()
                 })
             });
@@ -185,44 +200,42 @@ class BrowserNotifications {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
-            // Store subscription locally
-            this.subscriptions.set(keyword, subscription);
+            // Store subscription status
+            this.isSubscribed = true;
             
-            // Update UI
-            this.updateSubscriptionsList();
-            
-            console.log(`Successfully subscribed to keyword: ${keyword}`);
-            
-            // Clear input
-            const input = document.querySelector('#notification-keyword-input');
-            if (input) input.value = '';
+            console.log('Successfully subscribed to browser notifications');
 
         } catch (error) {
-            console.error(`Failed to subscribe to keyword ${keyword}:`, error);
+            console.error('Failed to subscribe to browser notifications:', error);
             
             // Show user-friendly error message
             if (error.message.includes('different applicationServerKey')) {
-                this.showSubscriptionConflictDialog(keyword, error);
+                this.showSubscriptionConflictDialog(error);
             } else {
                 alert(`Failed to subscribe: ${error.message}`);
             }
         }
     }
 
-    async unsubscribeFromKeyword(keyword) {
+    async unsubscribe() {
         try {
-            const subscription = this.subscriptions.get(keyword);
-            if (!subscription) return;
+            if (!this.isSubscribed) return;
+
+            // Get current subscription
+            const subscription = await this.serviceWorkerRegistration.pushManager.getSubscription();
+            if (!subscription) {
+                this.isSubscribed = false;
+                return;
+            }
 
             // Unsubscribe from server
-            const response = await fetch('/api/v1/browser-notifications/unsubscribe', {
+            const response = await fetch('/browser-notifications-api/unsubscribe', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': document.querySelector('input[name=csrf_token]')?.value
                 },
                 body: JSON.stringify({
-                    keyword: keyword,
                     subscription: subscription.toJSON()
                 })
             });
@@ -231,87 +244,62 @@ class BrowserNotifications {
                 console.warn(`Server unsubscribe failed: ${response.status}`);
             }
 
-            // Remove from local storage
-            this.subscriptions.delete(keyword);
+            // Unsubscribe locally
+            await subscription.unsubscribe();
+
+            // Update status
+            this.isSubscribed = false;
             
-            // Update UI
-            this.updateSubscriptionsList();
-            
-            console.log(`Unsubscribed from keyword: ${keyword}`);
+            console.log('Unsubscribed from browser notifications');
 
         } catch (error) {
-            console.error(`Failed to unsubscribe from keyword ${keyword}:`, error);
-        }
-    }
-
-    updateSubscriptionsList() {
-        const listElement = document.querySelector('#subscriptions-list');
-        if (!listElement) return;
-
-        listElement.innerHTML = '';
-
-        if (this.subscriptions.size === 0) {
-            listElement.innerHTML = '<li>No active subscriptions</li>';
-            return;
-        }
-
-        for (const [keyword] of this.subscriptions) {
-            const listItem = document.createElement('li');
-            listItem.innerHTML = `
-                <span>browser://${keyword}</span>
-                <button type="button" class="btn btn-sm btn-danger" onclick="browserNotifications.unsubscribeFromKeyword('${keyword}')" style="margin-left: 1em;">
-                    Unsubscribe
-                </button>
-            `;
-            listElement.appendChild(listItem);
-        }
-    }
-
-    async loadExistingSubscriptions() {
-        try {
-            const response = await fetch('/api/v1/browser-notifications/subscriptions');
-            if (response.ok) {
-                const data = await response.json();
-                // Note: This would require server-side implementation to track subscriptions per browser
-                // For now, we'll just check what the browser knows about
-            }
-        } catch (error) {
-            console.log('No existing subscriptions found');
+            console.error('Failed to unsubscribe from browser notifications:', error);
         }
     }
 
     async sendTestNotification() {
         try {
-            // Get available channels from the form field
-            const channelsField = document.querySelector('textarea[name*="browser_notification_channels"]');
-            const channels = channelsField?.value ? channelsField.value.split('\n').filter(c => c.trim()) : [];
-            const keyword = channels.length > 0 ? channels[0] : 'default';
-            
-            const response = await fetch('/api/v1/browser-notifications/test', {
+            // First, check if we're subscribed
+            if (!this.isSubscribed) {
+                const shouldSubscribe = confirm('You need to subscribe to browser notifications first. Subscribe now?');
+                if (shouldSubscribe) {
+                    await this.subscribe();
+                    // Give a moment for subscription to complete
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                } else {
+                    return;
+                }
+            }
+
+            const response = await fetch('/test-browser-notification', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': document.querySelector('input[name=csrf_token]')?.value
-                },
-                body: JSON.stringify({
-                    keyword: keyword,
-                    title: 'Test Notification',
-                    body: `This is a test notification for channel: ${keyword}`
-                })
+                }
             });
 
             if (!response.ok) {
+                if (response.status === 404) {
+                    // No subscriptions found on server - try subscribing
+                    alert('No browser subscriptions found. Subscribing now...');
+                    await this.subscribe();
+                    return;
+                }
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
             const result = await response.json();
-            alert(`Test notification sent successfully to ${result.sent_count} subscriber(s)`);
-            console.log('Test notification sent');
+            alert(result.message);
+            console.log('Test notification result:', result);
         } catch (error) {
             console.error('Failed to send test notification:', error);
             alert(`Failed to send test notification: ${error.message}`);
         }
     }
+
+
+
 
     urlBase64ToUint8Array(base64String) {
         const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -346,7 +334,7 @@ class BrowserNotifications {
         }
     }
 
-    showSubscriptionConflictDialog(keyword, error) {
+    showSubscriptionConflictDialog(error) {
         /**
          * Show user-friendly dialog for subscription conflicts
          */
@@ -362,7 +350,7 @@ Would you like to automatically clear the old subscription and retry?`;
             this.clearExistingSubscription().then(() => {
                 // Retry subscription after clearing
                 setTimeout(() => {
-                    this.subscribeToKeyword(keyword);
+                    this.subscribe();
                 }, 500);
             });
         } else {
@@ -381,11 +369,8 @@ Would you like to automatically clear the old subscription and retry?`;
                 await existingSubscription.unsubscribe();
             }
 
-            // Clear local storage
-            this.subscriptions.clear();
-            
-            // Update UI
-            this.updateSubscriptionsList();
+            // Update status
+            this.isSubscribed = false;
             
             console.log('All notifications cleared');
             alert('All browser notifications have been cleared. You can now subscribe again.');
@@ -396,60 +381,6 @@ Would you like to automatically clear the old subscription and retry?`;
         }
     }
 
-    async handleAutoSubscription() {
-        // Handle auto-subscription for keywords detected from browser:// URLs
-        try {
-            // Check if there are pending keywords from form submission
-            const response = await fetch('/api/v1/browser-notifications/pending-keywords', {
-                headers: {
-                    'X-CSRFToken': document.querySelector('input[name=csrf_token]')?.value
-                }
-            });
-            
-            if (!response.ok) {
-                return; // No pending keywords or endpoint not available
-            }
-            
-            const data = await response.json();
-            if (!data.keywords || data.keywords.length === 0) {
-                return;
-            }
-            
-            // Check if notifications are already enabled
-            if (Notification.permission === 'granted') {
-                // Auto-subscribe to all pending keywords
-                for (const keyword of data.keywords) {
-                    try {
-                        await this.subscribeToKeyword(keyword);
-                        console.log(`Auto-subscribed to browser notifications for: ${keyword}`);
-                    } catch (error) {
-                        console.warn(`Failed to auto-subscribe to ${keyword}:`, error);
-                    }
-                }
-            } else {
-                // Show notification to enable browser notifications for detected keywords
-                this.showAutoSubscriptionPrompt(data.keywords);
-            }
-            
-        } catch (error) {
-            console.log('No auto-subscription needed or failed to check:', error);
-        }
-    }
-    
-    showAutoSubscriptionPrompt(keywords) {
-        // Show a prompt to enable notifications for detected browser:// URLs
-        const keywordList = keywords.join(', ');
-        const message = `Browser notification channels detected: ${keywordList}\n\nWould you like to enable browser notifications for these channels?`;
-        
-        if (confirm(message)) {
-            this.requestNotificationPermission().then(() => {
-                // After permission is granted, subscribe to all keywords
-                keywords.forEach(keyword => {
-                    this.subscribeToKeyword(keyword);
-                });
-            });
-        }
-    }
 }
 
 // Initialize when DOM is ready

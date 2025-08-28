@@ -124,21 +124,11 @@ def apprise_browser_notification_handler(
 ) -> bool:
     """
     Browser push notification handler for browser:// URLs
-    Format: browser://keyword where keyword is the namespace for subscriptions
+    Ignores anything after browser:// and uses single default channel
     """
     try:
         from pywebpush import webpush, WebPushException
         from flask import current_app
-        
-        url: str = meta.get("url")
-        parsed_url = apprise_parse_url(url)
-        
-        if not parsed_url:
-            logger.error("Failed to parse browser notification URL")
-            return False
-            
-        # Extract keyword from URL - format is browser://keyword
-        keyword = parsed_url.get('host', 'default')
         
         # Get VAPID keys from app settings
         try:
@@ -160,11 +150,11 @@ def apprise_browser_notification_handler(
             logger.error(f"Failed to get VAPID configuration: {e}")
             return False
         
-        # Get subscriptions for this keyword from datastore
-        browser_subscriptions = datastore.data.get('browser_subscriptions', {}).get(keyword, [])
+        # Get subscriptions from datastore
+        browser_subscriptions = datastore.data.get('settings', {}).get('application', {}).get('browser_subscriptions', [])
         
         if not browser_subscriptions:
-            logger.info(f"No browser subscriptions found for keyword: {keyword}")
+            logger.info("No browser subscriptions found")
             return True  # Not an error - just no subscribers
             
         # Import helper functions
@@ -183,18 +173,13 @@ def apprise_browser_notification_handler(
             notification_payload=notification_payload,
             private_key=private_key,
             contact_email=contact_email,
-            keyword=keyword,
             datastore=datastore
         )
                 
         # Update datastore with cleaned subscriptions
-        if keyword not in datastore.data.get('browser_subscriptions', {}):
-            if 'browser_subscriptions' not in datastore.data:
-                datastore.data['browser_subscriptions'] = {}
-            datastore.data['browser_subscriptions'][keyword] = []
-        datastore.data['browser_subscriptions'][keyword] = browser_subscriptions
+        datastore.data['settings']['application']['browser_subscriptions'] = browser_subscriptions
         
-        logger.info(f"Sent browser notifications: {success_count}/{total_count} successful for keyword '{keyword}'")
+        logger.info(f"Sent browser notifications: {success_count}/{total_count} successful")
         return success_count > 0
         
     except ImportError:

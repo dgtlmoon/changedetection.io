@@ -39,13 +39,10 @@ from loguru import logger
 from changedetectionio import __version__
 from changedetectionio import queuedWatchMetaData
 from changedetectionio.api import Watch, WatchHistory, WatchSingleHistory, CreateWatch, Import, SystemInfo, Tag, Tags, Notifications, WatchFavicon
-from changedetectionio.api.BrowserNotifications import (
+from changedetectionio.notification.BrowserNotifications import (
     BrowserNotificationsVapidPublicKey,
     BrowserNotificationsSubscribe, 
-    BrowserNotificationsUnsubscribe,
-    BrowserNotificationsTest,
-    BrowserNotificationsSubscriptions,
-    BrowserNotificationsPendingKeywords
+    BrowserNotificationsUnsubscribe
 )
 from changedetectionio.api.Search import Search
 from .time_handler import is_within_schedule
@@ -102,6 +99,7 @@ except locale.Error:
     logger.warning(f"Unable to set locale {default_locale}, locale is not installed maybe?")
 
 watch_api = Api(app, decorators=[csrf.exempt])
+browser_notification_api = Api(app, decorators=[csrf.exempt])
 
 def init_app_secret(datastore_path):
     secret = ""
@@ -346,12 +344,9 @@ def changedetection_app(config=None, datastore_o=None):
                            resource_class_kwargs={'datastore': datastore})
     
     # Browser notification endpoints
-    watch_api.add_resource(BrowserNotificationsVapidPublicKey, '/api/v1/browser-notifications/vapid-public-key')
-    watch_api.add_resource(BrowserNotificationsSubscribe, '/api/v1/browser-notifications/subscribe')
-    watch_api.add_resource(BrowserNotificationsUnsubscribe, '/api/v1/browser-notifications/unsubscribe')
-    watch_api.add_resource(BrowserNotificationsTest, '/api/v1/browser-notifications/test')
-    watch_api.add_resource(BrowserNotificationsSubscriptions, '/api/v1/browser-notifications/subscriptions')
-    watch_api.add_resource(BrowserNotificationsPendingKeywords, '/api/v1/browser-notifications/pending-keywords')
+    browser_notification_api.add_resource(BrowserNotificationsVapidPublicKey, '/browser-notifications-api/vapid-public-key')
+    browser_notification_api.add_resource(BrowserNotificationsSubscribe, '/browser-notifications-api/subscribe')
+    browser_notification_api.add_resource(BrowserNotificationsUnsubscribe, '/browser-notifications-api/unsubscribe')
 
     @login_manager.user_loader
     def user_loader(email):
@@ -520,6 +515,38 @@ def changedetection_app(config=None, datastore_o=None):
             return response
         except FileNotFoundError:
             abort(404)
+
+    @app.route("/test-browser-notification", methods=['POST'])
+    def test_browser_notification():
+        """Send a test browser notification using the apprise handler"""
+        try:
+            from flask import jsonify
+            from changedetectionio.notification.apprise_plugin.custom_handlers import apprise_browser_notification_handler
+            
+            # Check if there are any subscriptions
+            browser_subscriptions = datastore.data.get('settings', {}).get('application', {}).get('browser_subscriptions', [])
+            if not browser_subscriptions:
+                return jsonify({'success': False, 'message': 'No browser subscriptions found'}), 404
+            
+            # Send test notification using apprise handler
+            success = apprise_browser_notification_handler(
+                body='This is a test browser notification from changedetection.io',
+                title='Test Browser Notification', 
+                notify_type='info',
+                meta={'url': 'browser://test'}
+            )
+            
+            if success:
+                return jsonify({
+                    'success': True,
+                    'message': f'Test notification sent to {len(browser_subscriptions)} subscriber(s)'
+                })
+            else:
+                return jsonify({'success': False, 'message': 'Failed to send test notification'}), 500
+                
+        except Exception as e:
+            logger.error(f"Test browser notification failed: {e}")
+            return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
 
     import changedetectionio.blueprint.browser_steps as browser_steps
     app.register_blueprint(browser_steps.construct_blueprint(datastore), url_prefix='/browser-steps')

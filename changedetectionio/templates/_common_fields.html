@@ -34,33 +34,32 @@
                             </div>
                         </div>
                         
-                        <!-- Browser Notification Channels (only show in global settings) -->
-                        {% if form.browser_notification_channels is defined %}
-                        <div class="pure-control-group">
-                            {{ render_field(form.browser_notification_channels, rows=3, class="browser-notification-channels") }}
-                            <div class="pure-form-message-inline">
-                                <p><strong>Browser Notification Channels</strong> - These are automatically detected when you use <code>browser://keyword</code> URLs in your notification settings above.</p>
-                                <p>When detected, you'll be prompted to enable browser notifications for these channels so you can receive real-time push notifications even when this tab is closed.</p>
-                                <p><small><strong>Troubleshooting:</strong> If you get "different applicationServerKey" errors, click "Clear All Notifications" below and try again. This happens when switching between different changedetection.io instances.</small></p>
-                                <div id="browser-notification-controls" style="margin-top: 1em;">
-                                    <div id="notification-permission-status">
-                                        <p>Browser notifications: <span id="permission-status">checking...</span></p>
-                                    </div>
-                                    <div id="browser-notification-actions">
-                                        <button type="button" id="enable-notifications-btn" class="pure-button button-secondary button-xsmall" style="display: none;">
-                                            Enable Browser Notifications
-                                        </button>
-                                        <button type="button" id="test-notification-btn" class="pure-button button-secondary button-xsmall" style="display: none;">
-                                            Test Notification
-                                        </button>
-                                        <button type="button" id="clear-notifications-btn" class="pure-button button-secondary button-xsmall" onclick="window.browserNotifications?.clearAllNotifications()" style="margin-left: 0.5em;">
-                                            Clear All Notifications
-                                        </button>
+                        <!-- Browser Notifications -->
+                        <div id="browser-notification-section">
+                            <div class="pure-control-group">
+                                <label>Browser Notifications</label>
+                                <div class="pure-form-message-inline">
+                                    <p><strong>Browser push notifications!</strong> Use <code>browser://</code> URLs in your notification settings to receive real-time push notifications even when this tab is closed.</p>
+                                    <p><small><strong>Troubleshooting:</strong> If you get "different applicationServerKey" errors, click "Clear All Notifications" below and try again. This happens when switching between different changedetection.io instances.</small></p>
+                                    <div id="browser-notification-controls" style="margin-top: 1em;">
+                                        <div id="notification-permission-status">
+                                            <p>Browser notifications: <span id="permission-status">checking...</span></p>
+                                        </div>
+                                        <div id="browser-notification-actions">
+                                            <button type="button" id="enable-notifications-btn" class="pure-button button-secondary button-xsmall" style="display: none;">
+                                                Enable Browser Notifications
+                                            </button>
+                                            <button type="button" id="test-notification-btn" class="pure-button button-secondary button-xsmall" style="display: none;">
+                                                Send browser test notification
+                                            </button>
+                                            <button type="button" id="clear-notifications-btn" class="pure-button button-secondary button-xsmall" onclick="window.browserNotifications?.clearAllNotifications()" style="margin-left: 0.5em;">
+                                                Clear All Notifications
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        {% endif %}
                         
                         <div id="notification-customisation" class="pure-control-group">
                             <div class="pure-control-group">

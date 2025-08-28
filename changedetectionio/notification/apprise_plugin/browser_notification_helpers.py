@@ -88,7 +88,7 @@ def convert_pem_public_key_for_browser(public_key_pem):
         return None
 
 
-def send_push_notifications(subscriptions, notification_payload, private_key, contact_email, keyword, datastore):
+def send_push_notifications(subscriptions, notification_payload, private_key, contact_email, datastore):
     """
     Send push notifications to a list of subscriptions
     
@@ -97,7 +97,6 @@ def send_push_notifications(subscriptions, notification_payload, private_key, co
         notification_payload: Dict with notification data (title, body, etc.)
         private_key: VAPID private key (will be converted if needed)
         contact_email: Contact email for VAPID claims
-        keyword: Keyword/channel name for logging
         datastore: Datastore object for updating subscriptions
         
     Returns:
@@ -133,7 +132,7 @@ def send_push_notifications(subscriptions, notification_payload, private_key, co
             logger.warning(f"Failed to send browser notification to subscription: {e}")
             # Remove invalid subscriptions (410 = Gone, 404 = Not Found)
             if e.response and e.response.status_code in [404, 410]:
-                logger.info(f"Removing invalid subscription for keyword {keyword}")
+                logger.info("Removing invalid browser notification subscription")
                 try:
                     subscriptions.remove(subscription)
                     datastore.needs_write = True
@@ -194,94 +193,52 @@ def get_vapid_config_from_datastore(datastore):
 
 
 
-def get_browser_subscriptions(datastore, keyword):
+def get_browser_subscriptions(datastore):
     """
-    Get browser subscriptions for a keyword from datastore
+    Get browser subscriptions from datastore
     
     Args:
         datastore: Datastore object
-        keyword: Subscription keyword/channel
         
     Returns:
-        List of subscriptions for the keyword
+        List of subscriptions
     """
     try:
         if not datastore:
             return []
             
-        return datastore.data.get('browser_subscriptions', {}).get(keyword, [])
+        return datastore.data.get('settings', {}).get('application', {}).get('browser_subscriptions', [])
         
     except Exception as e:
-        logger.error(f"Failed to get browser subscriptions for {keyword}: {e}")
+        logger.error(f"Failed to get browser subscriptions: {e}")
         return []
 
 
-def save_browser_subscriptions(datastore, keyword, subscriptions):
+def save_browser_subscriptions(datastore, subscriptions):
     """
-    Save browser subscriptions for a keyword to datastore
+    Save browser subscriptions to datastore
     
     Args:
         datastore: Datastore object
-        keyword: Subscription keyword/channel
         subscriptions: List of subscriptions to save
     """
     try:
         if not datastore:
             return
             
-        if 'browser_subscriptions' not in datastore.data:
-            datastore.data['browser_subscriptions'] = {}
+        # Ensure the settings structure exists
+        if 'settings' not in datastore.data:
+            datastore.data['settings'] = {}
+        if 'application' not in datastore.data['settings']:
+            datastore.data['settings']['application'] = {}
             
-        datastore.data['browser_subscriptions'][keyword] = subscriptions
+        datastore.data['settings']['application']['browser_subscriptions'] = subscriptions
         datastore.needs_write = True
         
     except Exception as e:
-        logger.error(f"Failed to save browser subscriptions for {keyword}: {e}")
+        logger.error(f"Failed to save browser subscriptions: {e}")
 
 
-def extract_keyword_from_browser_url(url):
-    """
-    Extract keyword from browser:// URL
-    
-    Args:
-        url: Browser notification URL (e.g., "browser://alerts")
-        
-    Returns:
-        Keyword string or None if invalid URL
-    """
-    try:
-        if not url or not isinstance(url, str):
-            return None
-            
-        match = re.match(r'browser://([^/?#]+)', url.strip())
-        return match.group(1) if match else None
-        
-    except Exception as e:
-        logger.warning(f"Failed to extract keyword from URL {url}: {e}")
-        return None
-
-
-def extract_keywords_from_notification_urls(notification_urls):
-    """
-    Extract all browser:// keywords from a list of notification URLs
-    
-    Args:
-        notification_urls: List of notification URL strings
-        
-    Returns:
-        List of unique keywords found
-    """
-    keywords = []
-    
-    if not notification_urls:
-        return keywords
-        
-    for url in notification_urls:
-        keyword = extract_keyword_from_browser_url(url)
-        if keyword and keyword not in keywords:
-            keywords.append(keyword)
-            
-    return keywords
 
 
 def create_error_response(message, sent_count=0, status_code=500):

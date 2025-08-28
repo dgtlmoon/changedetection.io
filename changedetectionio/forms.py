@@ -558,55 +558,6 @@ class commonSettingsForm(Form):
     timezone = StringField("Timezone for watch schedule", render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
     webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1, message="Should contain one or more seconds")])
     
-    def validate(self, extra_validators=None):
-        """Custom validation including browser notification auto-subscription"""
-        # Run standard validation first
-        if not super().validate(extra_validators):
-            return False
-            
-        # Handle browser notification auto-subscription
-        if hasattr(self, 'notification_urls') and self.notification_urls.data:
-            self._handle_browser_notification_subscriptions()
-            
-        return True
-    
-    def _handle_browser_notification_subscriptions(self):
-        """Auto-subscribe to browser notification keywords found in notification URLs"""
-        try:
-            from flask import current_app, session
-            from changedetectionio.notification.apprise_plugin.browser_notification_helpers import extract_keywords_from_notification_urls
-            
-            # Extract keywords from browser:// URLs using shared helper
-            keywords = extract_keywords_from_notification_urls(self.notification_urls.data)
-            
-            if not keywords:
-                return
-                
-            # Store keywords in session for frontend to handle subscription
-            # We can't directly subscribe here because we need user permission and push subscription
-            if 'browser_notification_keywords' not in session:
-                session['browser_notification_keywords'] = []
-                
-            for keyword in keywords:
-                if keyword not in session['browser_notification_keywords']:
-                    session['browser_notification_keywords'].append(keyword)
-                    
-            # Also update the global settings to track enabled channels
-            try:
-                datastore = current_app.config.get('DATASTORE')
-                if datastore:
-                    if 'browser_notification_channels' not in datastore.data['settings']['application']:
-                        datastore.data['settings']['application']['browser_notification_channels'] = []
-                        
-                    for keyword in keywords:
-                        if keyword not in datastore.data['settings']['application']['browser_notification_channels']:
-                            datastore.data['settings']['application']['browser_notification_channels'].append(keyword)
-                            datastore.needs_write = True
-            except Exception as e:
-                logger.warning(f"Failed to update browser notification channels: {e}")
-                
-        except Exception as e:
-            logger.error(f"Error handling browser notification subscriptions: {e}")
 
 
 class importForm(Form):
@@ -836,7 +787,6 @@ class globalSettingsApplicationForm(commonSettingsForm):
                                                                   render_kw={"style": "width: 5em;"},
                                                                   validators=[validators.NumberRange(min=0,
                                                                                                      message="Should contain zero or more attempts")])
-    browser_notification_channels = StringListField('Browser notification channels (detected from browser:// URLs)', validators=[validators.Optional()], render_kw={"readonly": True, "placeholder": "No channels detected yet"})
     ui = FormField(globalSettingsApplicationUIForm)
 
 
