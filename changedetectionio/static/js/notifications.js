@@ -32,7 +32,7 @@ $(document).ready(function () {
         var data = getNotificationData();
         $.ajax({
             type: "POST",
-            url: notification_test_render_preview_rul,
+            url: notification_test_render_preview_url,
             data: data,
 /*
             statusCode: {

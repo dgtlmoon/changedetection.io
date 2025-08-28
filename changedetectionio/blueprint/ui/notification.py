@@ -38,10 +38,18 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         is_group_settings_form = request.args.get('mode', '') == 'group-settings'
 
         # Use an existing random one on the global/main settings form
-        if not watch_uuid and (is_global_settings_form or is_group_settings_form) \
-                and datastore.data.get('watching'):
+        if not watch_uuid and is_global_settings_form and datastore.data.get('watching'):
             logger.debug(f"Send test notification - Choosing random Watch {watch_uuid}")
             watch_uuid = random.choice(list(datastore.data['watching'].keys()))
+
+        if is_group_settings_form  and datastore.data.get('watching'):
+            logger.debug(f"Send test notification - Choosing random Watch from group {watch_uuid}")
+            matching_watches = [uuid for uuid, watch in datastore.data['watching'].items() if watch.get('tags') and watch_uuid in watch['tags']]
+            if matching_watches:
+                watch_uuid = random.choice(matching_watches)
+            else:
+                # Just fallback to any
+                watch_uuid = random.choice(list(datastore.data['watching'].keys()))
 
         if not watch_uuid:
             return make_response("Error: You must have atleast one watch configured for 'test notification' to work", 400)
