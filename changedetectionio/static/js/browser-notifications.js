@@ -274,7 +274,7 @@ class BrowserNotifications {
                 }
             }
 
-            const response = await fetch('/test-browser-notification', {
+            const response = await fetch('/browser-notifications/test', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -403,7 +403,7 @@ Would you like to automatically clear the old subscription and retry?`;
          */
         try {
             // Call the server to clear ALL subscriptions from datastore
-            const response = await fetch('/clear-all-browser-notifications', {
+            const response = await fetch('/browser-notifications/clear', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

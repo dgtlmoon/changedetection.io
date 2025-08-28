@@ -516,70 +516,12 @@ def changedetection_app(config=None, datastore_o=None):
         except FileNotFoundError:
             abort(404)
 
-    @app.route("/test-browser-notification", methods=['POST'])
-    def test_browser_notification():
-        """Send a test browser notification using the apprise handler"""
-        try:
-            from flask import jsonify
-            from changedetectionio.notification.apprise_plugin.custom_handlers import apprise_browser_notification_handler
-            
-            # Check if there are any subscriptions
-            browser_subscriptions = datastore.data.get('settings', {}).get('application', {}).get('browser_subscriptions', [])
-            if not browser_subscriptions:
-                return jsonify({'success': False, 'message': 'No browser subscriptions found'}), 404
-            
-            # Send test notification using apprise handler
-            success = apprise_browser_notification_handler(
-                body='This is a test browser notification from changedetection.io',
-                title='Test Browser Notification', 
-                notify_type='info',
-                meta={'url': 'browser://test'}
-            )
-            
-            if success:
-                return jsonify({
-                    'success': True,
-                    'message': f'Test notification sent to {len(browser_subscriptions)} subscriber(s)'
-                })
-            else:
-                return jsonify({'success': False, 'message': 'Failed to send test notification'}), 500
-                
-        except Exception as e:
-            logger.error(f"Test browser notification failed: {e}")
-            return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
-
-    @app.route("/clear-all-browser-notifications", methods=['POST'])
-    def clear_all_browser_notifications():
-        """Clear all browser notification subscriptions from the datastore"""
-        try:
-            from flask import jsonify
-            
-            # Get current subscription count
-            browser_subscriptions = datastore.data.get('settings', {}).get('application', {}).get('browser_subscriptions', [])
-            subscription_count = len(browser_subscriptions)
-            
-            # Clear all subscriptions
-            if 'settings' not in datastore.data:
-                datastore.data['settings'] = {}
-            if 'application' not in datastore.data['settings']:
-                datastore.data['settings']['application'] = {}
-                
-            datastore.data['settings']['application']['browser_subscriptions'] = []
-            datastore.needs_write = True
-            
-            logger.info(f"Cleared {subscription_count} browser notification subscriptions")
-            
-            return jsonify({
-                'success': True, 
-                'message': f'Cleared {subscription_count} browser notification subscription(s)'
-            })
-            
-        except Exception as e:
-            logger.error(f"Failed to clear all browser notifications: {e}")
-            return jsonify({'success': False, 'message': f'Clear all failed: {str(e)}'}), 500
 
     import changedetectionio.blueprint.browser_steps as browser_steps
     app.register_blueprint(browser_steps.construct_blueprint(datastore), url_prefix='/browser-steps')
+
+    import changedetectionio.blueprint.browser_notifications.browser_notifications as browser_notifications
+    app.register_blueprint(browser_notifications.construct_blueprint(datastore), url_prefix='/browser-notifications')
 
     from changedetectionio.blueprint.imports import construct_blueprint as construct_import_blueprint
     app.register_blueprint(construct_import_blueprint(datastore, update_q, queuedWatchMetaData), url_prefix='/imports')
