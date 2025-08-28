@@ -1,4 +1,5 @@
 
+import os
 import time
 import apprise
 from loguru import logger
@@ -84,6 +85,7 @@ def _populate_notification_tokens(n_object, datastore):
         'diff_removed': diff.render_diff(prev_snapshot, current_snapshot, include_added=False, line_feed_sep=line_feed_sep),
         'screenshot': watch.get_screenshot() if watch and watch.get('notification_screenshot') else None,
         'triggered_text': triggered_text,
+        'watch_url_raw': watch.get('url'),
         'watch_url': watch_url,
     })
 
@@ -136,11 +138,30 @@ def process_notification(n_object, datastore):
     if not n_object.get('notification_urls'):
         return None
 
+    # Check for notification.html template in datastore directory
+    notification_template_path = os.path.join(datastore.datastore_path, 'notification.html')
+    notification_template = None
+    if os.path.exists(notification_template_path):
+        try:
+            with open(notification_template_path, 'r', encoding='utf-8') as f:
+                notification_template = f.read()
+                logger.info(f"Using notification template from {notification_template_path}")
+        except Exception as e:
+            logger.warning(f"Failed to load notification template {notification_template_path}: {e}")
+
     with apprise.LogCapture(level=apprise.logging.DEBUG) as logs:
         for url in n_object['notification_urls']:
 
             # Get the notification body from datastore
             n_body = jinja_render(template_str=n_object.get('notification_body', ''), **notification_parameters)
+
+            # Apply notification template wrapper if it exists
+            if notification_template:
+                template_params = notification_parameters.copy()
+                template_params['notification_body'] = n_body
+                template_params['notification_url_current'] = url
+                n_body = jinja_render(template_str=notification_template, **template_params)
+            
             if n_object.get('notification_format', '').startswith('HTML'):
                 n_body = n_body.replace("\n", '<br>')
 
