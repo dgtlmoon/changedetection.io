@@ -1,6 +1,6 @@
 from flask_restful import Resource, abort
 from flask import request
-from . import auth
+from . import auth, validate_openapi_request
 
 class Search(Resource):
     def __init__(self, **kwargs):
@@ -8,21 +8,9 @@ class Search(Resource):
         self.datastore = kwargs['datastore']
 
     @auth.check_token
+    @validate_openapi_request('searchWatches')
     def get(self):
-        """
-        @api {get} /api/v1/search Search for watches
-        @apiDescription Search watches by URL or title text
-        @apiExample {curl} Example usage:
-            curl "http://localhost:5000/api/v1/search?q=https://example.com/page1" -H"x-api-key:813031b16330fe25e3780cf0325daa45"
-            curl "http://localhost:5000/api/v1/search?q=https://example.com/page1?tag=Favourites" -H"x-api-key:813031b16330fe25e3780cf0325daa45"
-            curl "http://localhost:5000/api/v1/search?q=https://example.com?partial=true" -H"x-api-key:813031b16330fe25e3780cf0325daa45"
-        @apiName Search
-        @apiGroup Watch Management
-        @apiQuery {String} q Search query to match against watch URLs and titles
-        @apiQuery {String} [tag] Optional name of tag to limit results (name not UUID)
-        @apiQuery {String} [partial] Allow partial matching of URL query
-        @apiSuccess (200) {Object} JSON Object containing matched watches
-        """
+        """Search for watches by URL or title text."""
         query = request.args.get('q', '').strip()
         tag_limit = request.args.get('tag', '').strip()
         from changedetectionio.strtobool import strtobool

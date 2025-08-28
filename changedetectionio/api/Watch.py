@@ -11,7 +11,7 @@ from . import auth
 import copy
 
 # Import schemas from __init__.py
-from . import schema, schema_create_watch, schema_update_watch
+from . import schema, schema_create_watch, schema_update_watch, validate_openapi_request
 
 
 class Watch(Resource):
@@ -25,23 +25,9 @@ class Watch(Resource):
     # @todo - version2 - ?muted and ?paused should be able to be called together, return the watch struct not "OK"
     # ?recheck=true
     @auth.check_token
+    @validate_openapi_request('getWatch')
     def get(self, uuid):
-        """
-        @api {get} /api/v1/watch/:uuid Single watch - get data, recheck, pause, mute.
-        @apiDescription Retrieve watch information and set muted/paused status
-        @apiExample {curl} Example usage:
-            curl http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091  -H"x-api-key:813031b16330fe25e3780cf0325daa45"
-            curl "http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091?muted=unmuted"  -H"x-api-key:813031b16330fe25e3780cf0325daa45"
-            curl "http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091?paused=unpaused"  -H"x-api-key:813031b16330fe25e3780cf0325daa45"
-        @apiName Watch
-        @apiGroup Watch
-        @apiParam {uuid} uuid Watch unique ID.
-        @apiQuery {Boolean} [recheck] Recheck this watch `recheck=1`
-        @apiQuery {String} [paused] =`paused` or =`unpaused` , Sets the PAUSED state
-        @apiQuery {String} [muted] =`muted` or =`unmuted` , Sets the MUTE NOTIFICATIONS state
-        @apiSuccess (200) {String} OK When paused/muted/recheck operation OR full JSON object of the watch
-        @apiSuccess (200) {JSON} WatchJSON JSON Full JSON object of the watch
-        """
+        """Get information about a single watch, recheck, pause, or mute."""
         from copy import deepcopy
         watch = deepcopy(self.datastore.data['watching'].get(uuid))
         if not watch:
@@ -72,16 +58,9 @@ class Watch(Resource):
         return watch
 
     @auth.check_token
+    @validate_openapi_request('deleteWatch')
     def delete(self, uuid):
-        """
-        @api {delete} /api/v1/watch/:uuid Delete a watch and related history
-        @apiExample {curl} Example usage:
-            curl http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091 -X DELETE -H"x-api-key:813031b16330fe25e3780cf0325daa45"
-        @apiParam {uuid} uuid Watch unique ID.
-        @apiName Delete
-        @apiGroup Watch
-        @apiSuccess (200) {String} OK Was deleted
-        """
+        """Delete a watch and related history."""
         if not self.datastore.data['watching'].get(uuid):
             abort(400, message='No watch exists with the UUID of {}'.format(uuid))
 
@@ -89,21 +68,10 @@ class Watch(Resource):
         return 'OK', 204
 
     @auth.check_token
+    @validate_openapi_request('updateWatch')
     @expects_json(schema_update_watch)
     def put(self, uuid):
-        """
-        @api {put} /api/v1/watch/:uuid Update watch information
-        @apiExample {curl} Example usage:
-            Update (PUT)
-            curl http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091 -X PUT -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"url": "https://my-nice.com" , "tag": "new list"}'
-
-        @apiDescription Updates an existing watch using JSON, accepts the same structure as returned in <a href="#api-Watch-Watch">get single watch information</a>
-        @apiParam {uuid} uuid Watch unique ID.
-        @apiName Update a watch
-        @apiGroup Watch
-        @apiSuccess (200) {String} OK Was updated
-        @apiSuccess (500) {String} ERR Some other error
-        """
+        """Update watch information."""
         watch = self.datastore.data['watching'].get(uuid)
         if not watch:
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
@@ -126,22 +94,9 @@ class WatchHistory(Resource):
     # Get a list of available history for a watch by UUID
     # curl http://localhost:5000/api/v1/watch/<string:uuid>/history
     @auth.check_token
+    @validate_openapi_request('getWatchHistory')
     def get(self, uuid):
-        """
-        @api {get} /api/v1/watch/<string:uuid>/history Get a list of all historical snapshots available for a watch
-        @apiDescription Requires `uuid`, returns list
-        @apiExample {curl} Example usage:
-            curl http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091/history -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json"
-            {
-                "1676649279": "/tmp/data/6a4b7d5c-fee4-4616-9f43-4ac97046b595/cb7e9be8258368262246910e6a2a4c30.txt",
-                "1677092785": "/tmp/data/6a4b7d5c-fee4-4616-9f43-4ac97046b595/e20db368d6fc633e34f559ff67bb4044.txt",
-                "1677103794": "/tmp/data/6a4b7d5c-fee4-4616-9f43-4ac97046b595/02efdd37dacdae96554a8cc85dc9c945.txt"
-            }
-        @apiName Get list of available stored snapshots for watch
-        @apiGroup Watch History
-        @apiSuccess (200) {String} OK
-        @apiSuccess (404) {String} ERR Not found
-        """
+        """Get a list of all historical snapshots available for a watch."""
         watch = self.datastore.data['watching'].get(uuid)
         if not watch:
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
@@ -154,18 +109,9 @@ class WatchSingleHistory(Resource):
         self.datastore = kwargs['datastore']
 
     @auth.check_token
+    @validate_openapi_request('getWatchSnapshot')
     def get(self, uuid, timestamp):
-        """
-        @api {get} /api/v1/watch/<string:uuid>/history/<int:timestamp> Get single snapshot from watch
-        @apiDescription Requires watch `uuid` and `timestamp`. `timestamp` of "`latest`" for latest available snapshot, or <a href="#api-Watch_History-Get_list_of_available_stored_snapshots_for_watch">use the list returned here</a>
-        @apiExample {curl} Example usage:
-            curl http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091/history/1677092977 -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json"
-        @apiName Get single snapshot content
-        @apiGroup Watch History
-        @apiParam {String} [html]       Optional Set to =1 to return the last HTML (only stores last 2 snapshots, use `latest` as timestamp)
-        @apiSuccess (200) {String} OK
-        @apiSuccess (404) {String} ERR Not found
-        """
+        """Get single snapshot from watch."""
         watch = self.datastore.data['watching'].get(uuid)
         if not watch:
             abort(404, message=f"No watch exists with the UUID of {uuid}")
@@ -197,17 +143,9 @@ class WatchFavicon(Resource):
         self.datastore = kwargs['datastore']
 
     @auth.check_token
+    @validate_openapi_request('getWatchFavicon')
     def get(self, uuid):
-        """
-        @api {get} /api/v1/watch/<string:uuid>/favicon Get Favicon for a watch
-        @apiDescription Requires watch `uuid`
-        @apiExample {curl} Example usage:
-            curl http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091/favicon -H"x-api-key:813031b16330fe25e3780cf0325daa45"
-        @apiName Get latest Favicon
-        @apiGroup Watch History
-        @apiSuccess (200) {String} OK
-        @apiSuccess (404) {String} ERR Not found
-        """
+        """Get favicon for a watch."""
         watch = self.datastore.data['watching'].get(uuid)
         if not watch:
             abort(404, message=f"No watch exists with the UUID of {uuid}")
@@ -240,18 +178,10 @@ class CreateWatch(Resource):
         self.update_q = kwargs['update_q']
 
     @auth.check_token
+    @validate_openapi_request('createWatch')
     @expects_json(schema_create_watch)
     def post(self):
-        """
-        @api {post} /api/v1/watch Create a single watch
-        @apiDescription Requires atleast `url` set, can accept the same structure as <a href="#api-Watch-Watch">get single watch information</a> to create.
-        @apiExample {curl} Example usage:
-            curl http://localhost:5000/api/v1/watch -H"x-api-key:813031b16330fe25e3780cf0325daa45" -H "Content-Type: application/json" -d '{"url": "https://my-nice.com" , "tag": "nice list"}'
-        @apiName Create
-        @apiGroup Watch
-        @apiSuccess (200) {String} OK Was created
-        @apiSuccess (500) {String} ERR Some other error
-        """
+        """Create a single watch."""
 
         json_data = request.get_json()
         url = json_data['url'].strip()
@@ -284,35 +214,9 @@ class CreateWatch(Resource):
             return "Invalid or unsupported URL", 400
 
     @auth.check_token
+    @validate_openapi_request('listWatches')
     def get(self):
-        """
-        @api {get} /api/v1/watch List watches
-        @apiDescription Return concise list of available watches and some very basic info
-        @apiExample {curl} Example usage:
-            curl http://localhost:5000/api/v1/watch -H"x-api-key:813031b16330fe25e3780cf0325daa45"
-            {
-                "6a4b7d5c-fee4-4616-9f43-4ac97046b595": {
-                    "last_changed": 1677103794,
-                    "last_checked": 1677103794,
-                    "last_error": false,
-                    "title": "",
-                    "url": "http://www.quotationspage.com/random.php"
-                },
-                "e6f5fd5c-dbfe-468b-b8f3-f9d6ff5ad69b": {
-                    "last_changed": 0,
-                    "last_checked": 1676662819,
-                    "last_error": false,
-                    "title": "QuickLook",
-                    "url": "https://github.com/QL-Win/QuickLook/tags"
-                }
-            }
-
-        @apiParam {String} [recheck_all]       Optional Set to =1 to force recheck of all watches
-        @apiParam {String} [tag]               Optional name of tag to limit results
-        @apiName ListWatches
-        @apiGroup Watch Management
-        @apiSuccess (200) {String} OK JSON dict
-        """
+        """List watches."""
         list = {}
 
         tag_limit = request.args.get('tag', '').lower()
