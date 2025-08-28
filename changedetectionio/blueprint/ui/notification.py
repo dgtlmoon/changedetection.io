@@ -81,7 +81,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             # use the same as when it is triggered, but then override it with the form test values
             n_object = {
                 'watch_url': request.form.get('window_url', "https://changedetection.io"),
-                'notification_urls': notification_urls
+                'notification_urls': notification_urls,
+                'uuid': watch_uuid  # Ensure uuid is present so diff rendering works
             }
 
             # Only use if present, if not set in n_object it should use the default system value

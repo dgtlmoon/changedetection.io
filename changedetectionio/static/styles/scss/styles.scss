@@ -21,6 +21,7 @@
 @use "parts/socket";
 @use "parts/visualselector";
 @use "parts/_minitabs";
+@use "parts/_notification";
 
 body {
   color: var(--color-text);
