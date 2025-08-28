@@ -17,38 +17,38 @@ def convert_pem_private_key_for_pywebpush(private_key):
         private_key: PEM private key string or already converted key
         
     Returns:
-        Private key in the format pywebpush expects (PEM string for pywebpush)
+        Vapid instance for pywebpush (avoids PEM parsing compatibility issues)
     """
-    # pywebpush expects the PEM string directly
-    if not isinstance(private_key, str):
-        return private_key
-        
-    # If it doesn't look like PEM, return as-is
-    if not private_key.startswith('-----BEGIN'):
-        return private_key
-        
     try:
-        from cryptography.hazmat.primitives import serialization
-        from cryptography.hazmat.primitives.asymmetric import ec
+        from py_vapid import Vapid
+        import tempfile
+        import os
         
-        # Validate the key by loading it
-        private_key_bytes = private_key.encode('utf-8')
-        private_key_obj = serialization.load_pem_private_key(private_key_bytes, password=None)
-        
-        # Verify it's an ECDSA key (required for VAPID)
-        if not isinstance(private_key_obj, ec.EllipticCurvePrivateKey):
-            logger.error("Private key is not an ECDSA key - VAPID requires ECDSA")
+        # If we get a string, assume it's PEM and create a Vapid instance from it
+        if isinstance(private_key, str) and private_key.startswith('-----BEGIN'):
+            # Write PEM to temporary file and load with Vapid.from_file
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.pem', delete=False) as tmp_file:
+                tmp_file.write(private_key)
+                tmp_file.flush()
+                temp_path = tmp_file.name
+                
+            try:
+                # Load using Vapid.from_file - this is more compatible with pywebpush
+                vapid_instance = Vapid.from_file(temp_path)
+                os.unlink(temp_path)  # Clean up
+                logger.debug("Successfully created Vapid instance from PEM")
+                return vapid_instance
+            except Exception as e:
+                os.unlink(temp_path)  # Clean up even on error
+                logger.error(f"Failed to create Vapid instance from PEM: {e}")
+                # Fall back to returning the original PEM string
+                return private_key
+        else:
+            # Return as-is if not a PEM string  
             return private_key
             
-        # Ensure the key has the right curve (P-256 for VAPID)
-        if private_key_obj.curve.name != 'secp256r1':
-            logger.warning(f"Private key uses curve {private_key_obj.curve.name}, VAPID recommends secp256r1 (P-256)")
-            
-        # Return the original PEM - pywebpush handles PEM format correctly
-        return private_key
-        
     except Exception as e:
-        logger.warning(f"Failed to validate private key format: {e}")
+        logger.error(f"Failed to convert private key: {e}")
         return private_key
 
 
