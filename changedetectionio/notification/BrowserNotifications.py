@@ -152,6 +152,39 @@ class BrowserNotificationsUnsubscribe(Resource):
             return {'success': False, 'message': f'Unsubscribe failed: {str(e)}'}, 500
 
 
+class BrowserNotificationsClearAll(Resource):
+    """Clear all browser notification subscriptions"""
+    
+    @marshal_with(browser_notifications_fields)
+    def post(self):
+        try:
+            # Get datastore
+            datastore = current_app.config.get('DATASTORE')
+            if not datastore:
+                return {'success': False, 'message': 'Datastore not available'}, 500
+                
+            # Get current subscription count
+            browser_subscriptions = datastore.data.get('settings', {}).get('application', {}).get('browser_subscriptions', [])
+            subscription_count = len(browser_subscriptions)
+            
+            # Clear all subscriptions
+            if 'settings' not in datastore.data:
+                datastore.data['settings'] = {}
+            if 'application' not in datastore.data['settings']:
+                datastore.data['settings']['application'] = {}
+                
+            datastore.data['settings']['application']['browser_subscriptions'] = []
+            datastore.needs_write = True
+            
+            logger.info(f"Cleared {subscription_count} browser notification subscriptions")
+            
+            return {'success': True, 'message': f'Cleared {subscription_count} browser notification subscription(s)'}
+            
+        except Exception as e:
+            logger.error(f"Failed to clear all browser notifications: {e}")
+            return {'success': False, 'message': f'Clear all failed: {str(e)}'}, 500
+
+
 class BrowserNotificationsTest(Resource):
     """Send a test browser notification"""
     

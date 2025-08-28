@@ -548,6 +548,36 @@ def changedetection_app(config=None, datastore_o=None):
             logger.error(f"Test browser notification failed: {e}")
             return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
 
+    @app.route("/clear-all-browser-notifications", methods=['POST'])
+    def clear_all_browser_notifications():
+        """Clear all browser notification subscriptions from the datastore"""
+        try:
+            from flask import jsonify
+            
+            # Get current subscription count
+            browser_subscriptions = datastore.data.get('settings', {}).get('application', {}).get('browser_subscriptions', [])
+            subscription_count = len(browser_subscriptions)
+            
+            # Clear all subscriptions
+            if 'settings' not in datastore.data:
+                datastore.data['settings'] = {}
+            if 'application' not in datastore.data['settings']:
+                datastore.data['settings']['application'] = {}
+                
+            datastore.data['settings']['application']['browser_subscriptions'] = []
+            datastore.needs_write = True
+            
+            logger.info(f"Cleared {subscription_count} browser notification subscriptions")
+            
+            return jsonify({
+                'success': True, 
+                'message': f'Cleared {subscription_count} browser notification subscription(s)'
+            })
+            
+        except Exception as e:
+            logger.error(f"Failed to clear all browser notifications: {e}")
+            return jsonify({'success': False, 'message': f'Clear all failed: {str(e)}'}), 500
+
     import changedetectionio.blueprint.browser_steps as browser_steps
     app.register_blueprint(browser_steps.construct_blueprint(datastore), url_prefix='/browser-steps')
 

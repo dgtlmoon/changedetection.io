@@ -319,6 +319,42 @@ class BrowserNotifications {
         return outputArray;
     }
 
+    async checkExistingSubscription() {
+        /**
+         * Check if we already have a valid browser subscription
+         * Updates this.isSubscribed based on actual browser state
+         */
+        try {
+            if (!this.serviceWorkerRegistration) {
+                this.isSubscribed = false;
+                return;
+            }
+            
+            const existingSubscription = await this.serviceWorkerRegistration.pushManager.getSubscription();
+            
+            if (existingSubscription) {
+                // We have a subscription - verify it's still valid and matches our VAPID key
+                const subscriptionJson = existingSubscription.toJSON();
+                
+                // Check if the endpoint is still active (basic validation)
+                if (subscriptionJson.endpoint && subscriptionJson.keys) {
+                    console.log('Found existing valid subscription');
+                    this.isSubscribed = true;
+                } else {
+                    console.log('Found invalid subscription, clearing...');
+                    await existingSubscription.unsubscribe();
+                    this.isSubscribed = false;
+                }
+            } else {
+                console.log('No existing subscription found');
+                this.isSubscribed = false;
+            }
+        } catch (error) {
+            console.warn('Failed to check existing subscription:', error);
+            this.isSubscribed = false;
+        }
+    }
+
     async clearExistingSubscription() {
         /**
          * Clear any existing push subscription that might conflict with our VAPID keys
@@ -366,21 +402,39 @@ Would you like to automatically clear the old subscription and retry?`;
          * Clear all browser notification subscriptions (admin function)
          */
         try {
-            // Clear service worker subscription
-            const existingSubscription = await this.serviceWorkerRegistration.pushManager.getSubscription();
-            if (existingSubscription) {
-                await existingSubscription.unsubscribe();
-            }
-
-            // Update status
-            this.isSubscribed = false;
+            // Call the server to clear ALL subscriptions from datastore
+            const response = await fetch('/clear-all-browser-notifications', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('input[name=csrf_token]')?.value
+                }
+            });
             
-            console.log('All notifications cleared');
-            alert('All browser notifications have been cleared. You can now subscribe again.');
+            if (response.ok) {
+                const result = await response.json();
+                console.log('Server response:', result.message);
+                
+                // Also clear the current browser's subscription if it exists
+                const existingSubscription = await this.serviceWorkerRegistration.pushManager.getSubscription();
+                if (existingSubscription) {
+                    await existingSubscription.unsubscribe();
+                    console.log('Cleared current browser subscription');
+                }
+                
+                // Update status
+                this.isSubscribed = false;
+                
+                alert(result.message + '. All browser notifications have been cleared.');
+            } else {
+                const error = await response.json();
+                console.error('Server clear failed:', error.message);
+                alert('Failed to clear server subscriptions: ' + error.message);
+            }
             
         } catch (error) {
             console.error('Failed to clear all notifications:', error);
-            alert('Failed to clear notifications. Please manually clear them in browser settings.');
+            alert('Failed to clear notifications: ' + error.message);
         }
     }
 
