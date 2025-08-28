@@ -13,7 +13,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libffi-dev \
     libjpeg-dev \
     libssl-dev \
-    libssl3 \
     libxslt-dev \
     make \
     patch \
