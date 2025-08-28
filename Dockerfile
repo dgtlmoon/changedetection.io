@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxslt-dev \
     make \
     patch \
+    pkg-config \
     zlib1g-dev
 
 RUN mkdir /install
@@ -26,6 +27,11 @@ COPY requirements.txt /requirements.txt
 
 # Use cache mounts and multiple wheel sources for faster ARM builds
 ENV PIP_CACHE_DIR=/tmp/pip-cache
+# Help Rust find OpenSSL for cryptography package compilation on ARM
+ENV PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/lib/arm-linux-gnueabihf/pkgconfig"
+ENV OPENSSL_DIR="/usr"
+ENV OPENSSL_LIB_DIR="/usr/lib/arm-linux-gnueabihf"
+ENV OPENSSL_INCLUDE_DIR="/usr/include/openssl"
 RUN --mount=type=cache,target=/tmp/pip-cache \
     pip install \
     --extra-index-url https://www.piwheels.org/simple \
