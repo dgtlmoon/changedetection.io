@@ -1,4 +1,4 @@
-from flask import Blueprint, request, make_response
+from flask import Blueprint, request, make_response, jsonify
 import random
 from loguru import logger
 
@@ -8,20 +8,28 @@ from changedetectionio.auth_decorator import login_optionally_required
 
 def construct_blueprint(datastore: ChangeDetectionStore):
     notification_blueprint = Blueprint('ui_notification', __name__, template_folder="../ui/templates")
-    
+
+
+    @notification_blueprint.route("/notification/render-preview/<string:watch_uuid>", methods=['POST'])
+    @notification_blueprint.route("/notification/render-preview", methods=['POST'])
+    @notification_blueprint.route("/notification/render-preview/", methods=['POST'])
+    @login_optionally_required
+    def ajax_callback_test_render_preview(watch_uuid=None):
+        return ajax_callback_send_notification_test(watch_uuid=watch_uuid, send_as_null_test=True)
+
     # AJAX endpoint for sending a test
     @notification_blueprint.route("/notification/send-test/<string:watch_uuid>", methods=['POST'])
     @notification_blueprint.route("/notification/send-test", methods=['POST'])
     @notification_blueprint.route("/notification/send-test/", methods=['POST'])
     @login_optionally_required
-    def ajax_callback_send_notification_test(watch_uuid=None):
+    def ajax_callback_send_notification_test(watch_uuid=None, send_as_null_test=False):
 
         # Watch_uuid could be unset in the case it`s used in tag editor, global settings
         import apprise
         from changedetectionio.notification.apprise_plugin.assets import apprise_asset
 
         # Necessary so that we import our custom handlers
-        from changedetectionio.notification.apprise_plugin.custom_handlers import apprise_http_custom_handler
+        from changedetectionio.notification.apprise_plugin.custom_handlers import apprise_http_custom_handler, apprise_null_custom_handler
 
         apobj = apprise.Apprise(asset=apprise_asset)
         sent_obj = {}
@@ -40,10 +48,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         watch = datastore.data['watching'].get(watch_uuid)
 
-        notification_urls = None
+        notification_urls = []
+        if send_as_null_test:
+            notification_urls.append('null://null-test-just-to-render-everything-on-the-same-codepath-and-get-preview')
 
         if request.form.get('notification_urls'):
-            notification_urls = request.form['notification_urls'].strip().splitlines()
+            notification_urls += request.form['notification_urls'].strip().splitlines()
 
         if not notification_urls:
             logger.debug("Test notification - Trying by group/tag in the edit form if available")

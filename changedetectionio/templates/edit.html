@@ -21,6 +21,7 @@
     const email_notification_prefix=JSON.parse('{{ emailprefix|tojson }}');
 {% endif %}
     const notification_base_url="{{url_for('ui.ui_notification.ajax_callback_send_notification_test', watch_uuid=uuid)}}";
+    const notification_test_render_preview_rul="{{url_for('ui.ui_notification.ajax_callback_test_render_preview', watch_uuid=uuid)}}";
     const playwright_enabled={% if playwright_enabled %}true{% else %}false{% endif %};
     const recheck_proxy_start_url="{{url_for('check_proxies.start_check', uuid=uuid)}}";
     const proxy_recheck_status_url="{{url_for('check_proxies.get_recheck_status', uuid=uuid)}}";

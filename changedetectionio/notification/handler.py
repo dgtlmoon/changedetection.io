@@ -8,7 +8,10 @@ def process_notification(n_object, datastore):
     from changedetectionio.safe_jinja import render as jinja_render
     from . import default_notification_format_for_watch, default_notification_format, valid_notification_formats
     # be sure its registered
-    from .apprise_plugin.custom_handlers import apprise_http_custom_handler
+    from .apprise_plugin.custom_handlers import apprise_http_custom_handler, apprise_null_custom_handler
+
+    n_body = ''
+    n_title = ''
 
     now = time.time()
     if n_object.get('notification_timestamp'):
@@ -118,14 +121,15 @@ def process_notification(n_object, datastore):
                               'url': url,
                               'body_format': n_format})
 
-        # Blast off the notifications tht are set in .add()
-        apobj.notify(
-            title=n_title,
-            body=n_body,
-            body_format=n_format,
-            # False is not an option for AppRise, must be type None
-            attach=n_object.get('screenshot', None)
-        )
+        if n_object.get('notification_urls'):
+            # Blast off the notifications tht are set in .add()
+            apobj.notify(
+                title=n_title,
+                body=n_body,
+                body_format=n_format,
+                # False is not an option for AppRise, must be type None
+                attach=n_object.get('screenshot', None)
+            )
 
 
         # Returns empty string if nothing found, multi-line string otherwise
