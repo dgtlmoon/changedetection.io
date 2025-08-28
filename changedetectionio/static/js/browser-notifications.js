@@ -24,6 +24,9 @@ class BrowserNotifications {
             // Register service worker
             await this.registerServiceWorker();
             
+            // Check existing subscription state
+            await this.checkExistingSubscription();
+            
             // Initialize UI elements
             this.initializeUI();
             
