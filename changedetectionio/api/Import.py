@@ -3,7 +3,7 @@ from changedetectionio.strtobool import strtobool
 from flask_restful import abort, Resource
 from flask import request
 import validators
-from . import auth
+from . import auth, validate_openapi_request
 
 
 class Import(Resource):
@@ -12,6 +12,7 @@ class Import(Resource):
         self.datastore = kwargs['datastore']
 
     @auth.check_token
+    @validate_openapi_request('importWatches')
     def post(self):
         """Import a list of watched URLs."""
 

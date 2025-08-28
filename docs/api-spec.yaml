@@ -328,6 +328,7 @@ components:
 paths:
   /watch:
     get:
+      operationId: listWatches
       tags: [Watch Management]
       summary: List all watches
       description: Return concise list of available web page change monitors (watches) and basic info
@@ -390,6 +391,7 @@ paths:
                   last_checked: 1640998800
                   last_changed: 1640995200
     post:
+      operationId: createWatch
       tags: [Watch Management]
       summary: Create a new watch
       description: Create a single web page change monitor (watch). Requires at least 'url' to be set.
@@ -453,7 +455,7 @@ paths:
 
   /watch/{uuid}:
     get:
-      operationId: getSingleWatch
+      operationId: getWatch
       tags: [Watch Management]
       summary: Get single watch
       description: Retrieve web page change monitor (watch) information and set muted/paused status. Returns the FULL Watch JSON.
@@ -518,7 +520,7 @@ paths:
       operationId: updateWatch
       tags: [Watch Management]
       summary: Update watch
-      description: Update an existing web page change monitor (watch) using JSON. Accepts the same structure as returned in [get single watch information](#operation/getSingleWatch).
+      description: Update an existing web page change monitor (watch) using JSON. Accepts the same structure as returned in [get single watch information](#operation/getWatch).
       x-code-samples:
         - lang: 'curl'
           source: |
@@ -573,6 +575,7 @@ paths:
           description: Server error
 
     delete:
+      operationId: deleteWatch
       tags: [Watch Management]  
       summary: Delete watch
       description: Delete a web page change monitor (watch) and all related history
@@ -608,6 +611,7 @@ paths:
 
   /watch/{uuid}/history:
     get:
+      operationId: getWatchHistory
       tags: [Watch History]
       summary: Get watch history
       description: Get a list of all historical snapshots available for a web page change monitor (watch)
@@ -647,6 +651,7 @@ paths:
 
   /watch/{uuid}/history/{timestamp}:
     get:
+      operationId: getWatchSnapshot
       tags: [Snapshots]
       summary: Get single snapshot
       description: Get single snapshot from web page change monitor (watch). Use 'latest' for the most recent snapshot.
@@ -699,6 +704,7 @@ paths:
 
   /watch/{uuid}/favicon:
     get:
+      operationId: getWatchFavicon
       tags: [Favicon]
       summary: Get watch favicon
       description: Get the favicon for a web page change monitor (watch) as displayed in the watch overview list.
@@ -738,6 +744,7 @@ paths:
 
   /tags:
     get:
+      operationId: listTags
       tags: [Group / Tag Management]
       summary: List all tags
       description: Return list of available tags/groups
@@ -774,8 +781,59 @@ paths:
                   notification_urls: ["discord://webhook_id/webhook_token"]
                   notification_muted: false
 
+  /tag:
+    post:
+      operationId: createTag
+      tags: [Group / Tag Management]
+      summary: Create tag
+      description: Create a single tag/group
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X POST "http://localhost:5000/api/v1/tag" \
+              -H "x-api-key: YOUR_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "title": "Important Sites"
+              }'
+        - lang: 'Python'
+          source: |
+            import requests
+            
+            headers = {
+                'x-api-key': 'YOUR_API_KEY',
+                'Content-Type': 'application/json'
+            }
+            data = {'title': 'Important Sites'}
+            response = requests.post('http://localhost:5000/api/v1/tag', 
+                                   headers=headers, json=data)
+            print(response.json())
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tag'
+            example:
+              title: "Important Sites"
+      responses:
+        '201':
+          description: Tag created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  uuid:
+                    type: string
+                    format: uuid
+                    description: UUID of the created tag
+        '400':
+          description: Invalid or unsupported tag
+
   /tag/{uuid}:
     get:
+      operationId: getTag
       tags: [Group / Tag Management]
       summary: Get single tag
       description: Retrieve tag information, set notification_muted status, recheck all web page change monitors (watches) in tag.
@@ -827,6 +885,7 @@ paths:
           description: Tag not found
 
     put:
+      operationId: updateTag
       tags: [Group / Tag Management]
       summary: Update tag
       description: Update an existing tag using JSON
@@ -877,6 +936,7 @@ paths:
           description: Server error
 
     delete:
+      operationId: deleteTag
       tags: [Group / Tag Management]
       summary: Delete tag
       description: Delete a tag/group and remove it from all web page change monitors (watches)
@@ -905,48 +965,10 @@ paths:
         '200':
           description: Tag deleted successfully
 
-    post:
-      tags: [Group / Tag Management]
-      summary: Create tag
-      description: Create a single tag/group
-      x-code-samples:
-        - lang: 'curl'
-          source: |
-            curl -X POST "http://localhost:5000/api/v1/tag/550e8400-e29b-41d4-a716-446655440000" \
-              -H "x-api-key: YOUR_API_KEY" \
-              -H "Content-Type: application/json" \
-              -d '{
-                "title": "Important Sites"
-              }'
-        - lang: 'Python'
-          source: |
-            import requests
-            
-            headers = {
-                'x-api-key': 'YOUR_API_KEY',
-                'Content-Type': 'application/json'
-            }
-            tag_uuid = '550e8400-e29b-41d4-a716-446655440000'
-            data = {'title': 'Important Sites'}
-            response = requests.post(f'http://localhost:5000/api/v1/tag/{tag_uuid}', 
-                                   headers=headers, json=data)
-            print(response.text)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Tag'
-            example:
-              title: "Important Sites"
-      responses:
-        '200':
-          description: Tag created successfully
-        '500':
-          description: Server error
 
   /notifications:
     get:
+      operationId: getNotifications
       tags: [Notifications]
       summary: Get notification URLs
       description: Return the notification URL list from the configuration
@@ -971,6 +993,7 @@ paths:
                 $ref: '#/components/schemas/NotificationUrls'
 
     post:
+      operationId: addNotifications
       tags: [Notifications]
       summary: Add notification URLs
       description: Add one or more notification URLs to the configuration
@@ -1024,6 +1047,7 @@ paths:
           description: Invalid input
 
     put:
+      operationId: replaceNotifications
       tags: [Notifications]
       summary: Replace notification URLs
       description: Replace all notification URLs with the provided list (can be empty)
@@ -1071,6 +1095,7 @@ paths:
           description: Invalid input
 
     delete:
+      operationId: deleteNotifications
       tags: [Notifications]
       summary: Delete notification URLs
       description: Delete one or more notification URLs from the configuration
@@ -1115,6 +1140,7 @@ paths:
 
   /search:
     get:
+      operationId: searchWatches
       tags: [Search]
       summary: Search watches
       description: Search web page change monitors (watches) by URL or title text
@@ -1169,6 +1195,7 @@ paths:
 
   /import:
     post:
+      operationId: importWatches
       tags: [Import]
       summary: Import watch URLs
       description: Import a list of URLs to monitor. Accepts line-separated URLs in request body.
@@ -1239,6 +1266,7 @@ paths:
 
   /systeminfo:
     get:
+      operationId: getSystemInfo
       tags: [System Information]
       summary: Get system information
       description: Return information about the current system state

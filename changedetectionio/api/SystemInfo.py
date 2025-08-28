@@ -1,5 +1,5 @@
 from flask_restful import Resource
-from . import auth
+from . import auth, validate_openapi_request
 
 
 class SystemInfo(Resource):
@@ -9,6 +9,7 @@ class SystemInfo(Resource):
         self.update_q = kwargs['update_q']
 
     @auth.check_token
+    @validate_openapi_request('getSystemInfo')
     def get(self):
         """Return system info."""
         import time
