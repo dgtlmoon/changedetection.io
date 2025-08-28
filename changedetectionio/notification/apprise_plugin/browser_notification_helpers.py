@@ -11,32 +11,44 @@ from loguru import logger
 
 def convert_pem_private_key_for_pywebpush(private_key):
     """
-    Convert PEM private key to the raw bytes format that pywebpush expects
+    Convert PEM private key to the format that pywebpush expects
     
     Args:
         private_key: PEM private key string or already converted key
         
     Returns:
-        Private key in the format pywebpush expects
+        Private key in the format pywebpush expects (PEM string for pywebpush)
     """
-    if not isinstance(private_key, str) or not private_key.startswith('-----BEGIN'):
+    # pywebpush expects the PEM string directly
+    if not isinstance(private_key, str):
+        return private_key
+        
+    # If it doesn't look like PEM, return as-is
+    if not private_key.startswith('-----BEGIN'):
         return private_key
         
     try:
         from cryptography.hazmat.primitives import serialization
-        private_key_bytes = private_key.encode()
+        from cryptography.hazmat.primitives.asymmetric import ec
+        
+        # Validate the key by loading it
+        private_key_bytes = private_key.encode('utf-8')
         private_key_obj = serialization.load_pem_private_key(private_key_bytes, password=None)
         
-        # Get raw private key bytes for pywebpush
-        private_key_raw = private_key_obj.private_bytes(
-            encoding=serialization.Encoding.Raw,
-            format=serialization.PrivateFormat.Raw,
-            encryption_algorithm=serialization.NoEncryption()
-        )
-        return private_key_raw
+        # Verify it's an ECDSA key (required for VAPID)
+        if not isinstance(private_key_obj, ec.EllipticCurvePrivateKey):
+            logger.error("Private key is not an ECDSA key - VAPID requires ECDSA")
+            return private_key
+            
+        # Ensure the key has the right curve (P-256 for VAPID)
+        if private_key_obj.curve.name != 'secp256r1':
+            logger.warning(f"Private key uses curve {private_key_obj.curve.name}, VAPID recommends secp256r1 (P-256)")
+            
+        # Return the original PEM - pywebpush handles PEM format correctly
+        return private_key
         
     except Exception as e:
-        logger.warning(f"Failed to convert private key format, using as-is: {e}")
+        logger.warning(f"Failed to validate private key format: {e}")
         return private_key
 
 

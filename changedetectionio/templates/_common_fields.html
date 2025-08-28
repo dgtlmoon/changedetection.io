@@ -41,6 +41,7 @@
                             <div class="pure-form-message-inline">
                                 <p><strong>Browser Notification Channels</strong> - These are automatically detected when you use <code>browser://keyword</code> URLs in your notification settings above.</p>
                                 <p>When detected, you'll be prompted to enable browser notifications for these channels so you can receive real-time push notifications even when this tab is closed.</p>
+                                <p><small><strong>Troubleshooting:</strong> If you get "different applicationServerKey" errors, click "Clear All Notifications" below and try again. This happens when switching between different changedetection.io instances.</small></p>
                                 <div id="browser-notification-controls" style="margin-top: 1em;">
                                     <div id="notification-permission-status">
                                         <p>Browser notifications: <span id="permission-status">checking...</span></p>
@@ -51,6 +52,9 @@
                                         </button>
                                         <button type="button" id="test-notification-btn" class="pure-button button-secondary button-xsmall" style="display: none;">
                                             Test Notification
+                                        </button>
+                                        <button type="button" id="clear-notifications-btn" class="pure-button button-secondary button-xsmall" onclick="window.browserNotifications?.clearAllNotifications()" style="margin-left: 0.5em;">
+                                            Clear All Notifications
                                         </button>
                                     </div>
                                 </div>

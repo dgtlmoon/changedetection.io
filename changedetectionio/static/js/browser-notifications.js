@@ -159,6 +159,9 @@ class BrowserNotifications {
                 return;
             }
 
+            // First, try to clear any existing subscription with different keys
+            await this.clearExistingSubscription();
+
             // Create push subscription
             const subscription = await this.serviceWorkerRegistration.pushManager.subscribe({
                 userVisibleOnly: true,
@@ -196,7 +199,13 @@ class BrowserNotifications {
 
         } catch (error) {
             console.error(`Failed to subscribe to keyword ${keyword}:`, error);
-            alert(`Failed to subscribe: ${error.message}`);
+            
+            // Show user-friendly error message
+            if (error.message.includes('different applicationServerKey')) {
+                this.showSubscriptionConflictDialog(keyword, error);
+            } else {
+                alert(`Failed to subscribe: ${error.message}`);
+            }
         }
     }
 
@@ -317,6 +326,74 @@ class BrowserNotifications {
             outputArray[i] = rawData.charCodeAt(i);
         }
         return outputArray;
+    }
+
+    async clearExistingSubscription() {
+        /**
+         * Clear any existing push subscription that might conflict with our VAPID keys
+         */
+        try {
+            const existingSubscription = await this.serviceWorkerRegistration.pushManager.getSubscription();
+            
+            if (existingSubscription) {
+                console.log('Found existing subscription, unsubscribing...');
+                await existingSubscription.unsubscribe();
+                console.log('Successfully cleared existing subscription');
+            }
+        } catch (error) {
+            console.warn('Failed to clear existing subscription:', error);
+            // Don't throw - this is just cleanup
+        }
+    }
+
+    showSubscriptionConflictDialog(keyword, error) {
+        /**
+         * Show user-friendly dialog for subscription conflicts
+         */
+        const message = `Browser notifications are already set up for a different changedetection.io instance or with different settings.
+
+To fix this:
+1. Clear your existing subscription 
+2. Try subscribing again
+
+Would you like to automatically clear the old subscription and retry?`;
+
+        if (confirm(message)) {
+            this.clearExistingSubscription().then(() => {
+                // Retry subscription after clearing
+                setTimeout(() => {
+                    this.subscribeToKeyword(keyword);
+                }, 500);
+            });
+        } else {
+            alert('To use browser notifications, please manually clear your browser notifications for this site in browser settings, then try again.');
+        }
+    }
+
+    async clearAllNotifications() {
+        /**
+         * Clear all browser notification subscriptions (admin function)
+         */
+        try {
+            // Clear service worker subscription
+            const existingSubscription = await this.serviceWorkerRegistration.pushManager.getSubscription();
+            if (existingSubscription) {
+                await existingSubscription.unsubscribe();
+            }
+
+            // Clear local storage
+            this.subscriptions.clear();
+            
+            // Update UI
+            this.updateSubscriptionsList();
+            
+            console.log('All notifications cleared');
+            alert('All browser notifications have been cleared. You can now subscribe again.');
+            
+        } catch (error) {
+            console.error('Failed to clear all notifications:', error);
+            alert('Failed to clear notifications. Please manually clear them in browser settings.');
+        }
     }
 
     async handleAutoSubscription() {
