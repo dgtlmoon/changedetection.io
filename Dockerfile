@@ -5,7 +5,6 @@ ARG PYTHON_VERSION=3.11
 FROM python:${PYTHON_VERSION}-slim-bookworm AS builder
 
 # See `cryptography` pin comment in requirements.txt
-ARG CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     g++ \
@@ -14,6 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libffi-dev \
     libjpeg-dev \
     libssl-dev \
+    libssl3 \
     libxslt-dev \
     make \
     patch \
@@ -28,10 +28,13 @@ COPY requirements.txt /requirements.txt
 # Use cache mounts and multiple wheel sources for faster ARM builds
 ENV PIP_CACHE_DIR=/tmp/pip-cache
 # Help Rust find OpenSSL for cryptography package compilation on ARM
-ENV PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/lib/arm-linux-gnueabihf/pkgconfig"
+ENV PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/lib/arm-linux-gnueabihf/pkgconfig:/usr/lib/aarch64-linux-gnu/pkgconfig"
+ENV PKG_CONFIG_ALLOW_SYSTEM_CFLAGS=1
 ENV OPENSSL_DIR="/usr"
 ENV OPENSSL_LIB_DIR="/usr/lib/arm-linux-gnueabihf"
 ENV OPENSSL_INCLUDE_DIR="/usr/include/openssl"
+# Additional environment variables for cryptography Rust build
+ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
 RUN --mount=type=cache,target=/tmp/pip-cache \
     pip install \
     --extra-index-url https://www.piwheels.org/simple \
