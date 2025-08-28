@@ -42,7 +42,8 @@ jsonpath-ng~=1.5.3
 apprise==1.9.3
 
 # Needed for apprise/spush, and maybe others? hopefully doesnt trigger a rust compile.
-cryptography~=43.0.1
+cryptography>=45.0.1
+
 
 # apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
 # use any version other than 2.0.x due to https://github.com/eclipse/paho.mqtt.python/issues/814
