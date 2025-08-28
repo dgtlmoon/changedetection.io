@@ -65,6 +65,22 @@ $(function () {
         }
     });
 
+    // details - show/hide Add watch form details
+    $('summary').on('click', function (e) {
+    e.preventDefault();
+
+    const $details = $(this).parent();
+
+    if ($details.attr('open')) {
+        $details.find('fieldset').slideUp(function () {
+            $details.removeAttr('open');
+        });
+    } else {
+        $details.attr('open', '');
+        $details.find('fieldset').hide().slideDown();
+    }
+    });
+
     setInterval(function () {
         // Background ETA completion for 'checking now'
         $(".watch-table .checking-now .last-checked").each(function () {
