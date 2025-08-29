@@ -1,30 +1,126 @@
 
+import os
 import time
 import apprise
 from loguru import logger
 from .apprise_plugin.assets import apprise_asset, APPRISE_AVATAR_URL
+from changedetectionio.safe_jinja import render as jinja_render
+
+
+def _populate_notification_tokens(n_object, datastore):
+    """
+    Populate notification tokens (diff, current_snapshot, etc.) if not already present.
+    This ensures both queued notifications and test notifications have the same data.
+    """
+    from changedetectionio import diff
+    from changedetectionio.notification import default_notification_format_for_watch
+    
+    watch_uuid = n_object.get('uuid')
+    if not watch_uuid:
+        return
+        
+    watch = datastore.data['watching'].get(watch_uuid)
+    if not watch:
+        return
+
+    dates = []
+    trigger_text = ''
+    watch_html_link = ''
+
+    if watch:
+        watch_history = watch.history
+        dates = list(watch_history.keys())
+        trigger_text = watch.get('trigger_text', [])
+
+    # Add text that was triggered
+    if len(dates):
+        snapshot_contents = watch.get_history_snapshot(dates[-1])
+    else:
+        snapshot_contents = "No snapshot/history available, the watch should fetch atleast once."
+
+    # If we ended up here with "System default"
+    if n_object.get('notification_format') == default_notification_format_for_watch:
+        n_object['notification_format'] = datastore.data['settings']['application'].get('notification_format')
+
+    html_colour_enable = False
+    # HTML needs linebreak, but MarkDown and Text can use a linefeed
+    if n_object.get('notification_format') == 'HTML':
+        line_feed_sep = "<br>"
+        # Snapshot will be plaintext on the disk, convert to some kind of HTML
+        snapshot_contents = snapshot_contents.replace('\n', line_feed_sep)
+    elif n_object.get('notification_format') == 'HTML Color':
+        line_feed_sep = "<br>"
+        # Snapshot will be plaintext on the disk, convert to some kind of HTML
+        snapshot_contents = snapshot_contents.replace('\n', line_feed_sep)
+        html_colour_enable = True
+    else:
+        line_feed_sep = "\n"
+
+    triggered_text = ''
+    if len(trigger_text):
+        from changedetectionio import html_tools
+        triggered_text = html_tools.get_triggered_text(content=snapshot_contents, trigger_text=trigger_text)
+        if triggered_text:
+            triggered_text = line_feed_sep.join(triggered_text)
+
+    # Could be called as a 'test notification' with only 1 snapshot available
+    prev_snapshot = "Example text: example test\nExample text: change detection is cool\nExample text: some more examples\n"
+    current_snapshot = "Example text: example test\nExample text: change detection is fantastic\nExample text: even more examples\nExample text: a lot more examples"
+
+    if len(dates) > 1:
+        prev_snapshot = watch.get_history_snapshot(dates[-2])
+        current_snapshot = watch.get_history_snapshot(dates[-1])
+
+    if watch:
+        v = {'url': watch.get('url'), 'label': watch.label}
+        watch_html_link = jinja_render(template_str='<a href="{{ label or url | e }}" rel="noopener noreferrer">{{ url | e }}</a>', **v)
+
+
+    n_object.update({
+        'current_snapshot': snapshot_contents,
+        'diff': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=line_feed_sep, html_colour=html_colour_enable),
+        'diff_added': diff.render_diff(prev_snapshot, current_snapshot, include_removed=False, line_feed_sep=line_feed_sep),
+        'diff_full': diff.render_diff(prev_snapshot, current_snapshot, include_equal=True, line_feed_sep=line_feed_sep, html_colour=html_colour_enable),
+        'diff_patch': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=line_feed_sep, patch_format=True),
+        'diff_removed': diff.render_diff(prev_snapshot, current_snapshot, include_added=False, line_feed_sep=line_feed_sep),
+        'screenshot': watch.get_screenshot() if watch and watch.get('notification_screenshot') else None,
+        'triggered_text': triggered_text,
+        'watch_html_link': watch_html_link,
+        'watch_url': watch.link,
+        'watch_url_raw': watch.get('url'),
+    })
+
+    if watch:
+        n_object.update(watch.extra_notification_token_values())
 
 def process_notification(n_object, datastore):
-    from changedetectionio.safe_jinja import render as jinja_render
     from . import default_notification_format_for_watch, default_notification_format, valid_notification_formats
     # be sure its registered
-    from .apprise_plugin.custom_handlers import apprise_http_custom_handler
+    from .apprise_plugin.custom_handlers import apprise_http_custom_handler, apprise_null_custom_handler
+
+    n_body = ''
+    n_title = ''
 
     now = time.time()
     if n_object.get('notification_timestamp'):
         logger.trace(f"Time since queued {now-n_object['notification_timestamp']:.3f}s")
-    # Insert variables into the notification content
-    notification_parameters = create_notification_parameters(n_object, datastore)
 
     n_format = valid_notification_formats.get(
         n_object.get('notification_format', default_notification_format),
         valid_notification_formats[default_notification_format],
     )
-
     # If we arrived with 'System default' then look it up
     if n_format == default_notification_format_for_watch and datastore.data['settings']['application'].get('notification_format') != default_notification_format_for_watch:
         # Initially text or whatever
         n_format = datastore.data['settings']['application'].get('notification_format', valid_notification_formats[default_notification_format])
+
+    # Ensure diff rendering is done if not already present (for test notifications)
+    if not n_object.get('diff') and n_object.get('uuid'):
+        _populate_notification_tokens(n_object, datastore)
+
+    # Insert variables into the notification content
+    notification_parameters = create_notification_parameters(n_object, datastore)
+
 
     logger.trace(f"Complete notification body including Jinja and placeholders calculated in  {time.time() - now:.2f}s")
 
@@ -42,14 +138,32 @@ def process_notification(n_object, datastore):
     if not n_object.get('notification_urls'):
         return None
 
+    # Check for notification.html template in datastore directory
+    notification_template_path = os.path.join(datastore.datastore_path, 'notification.html')
+    notification_template = None
+    if os.path.exists(notification_template_path):
+        try:
+            with open(notification_template_path, 'r', encoding='utf-8') as f:
+                notification_template = f.read()
+                logger.info(f"Using notification template from {notification_template_path}")
+        except Exception as e:
+            logger.warning(f"Failed to load notification template {notification_template_path}: {e}")
+
     with apprise.LogCapture(level=apprise.logging.DEBUG) as logs:
         for url in n_object['notification_urls']:
 
             # Get the notification body from datastore
             n_body = jinja_render(template_str=n_object.get('notification_body', ''), **notification_parameters)
+
+            # Apply notification template wrapper if it exists (the one from the disk)
+            if notification_template:
+                template_params = notification_parameters.copy()
+                template_params['notification_body'] = n_body
+                template_params['notification_url_current'] = url
+                n_body = jinja_render(template_str=notification_template, **template_params)
+            
             if n_object.get('notification_format', '').startswith('HTML'):
                 n_body = n_body.replace("\n", '<br>')
-
             n_title = jinja_render(template_str=n_object.get('notification_title', ''), **notification_parameters)
 
             url = url.strip()
@@ -118,14 +232,15 @@ def process_notification(n_object, datastore):
                               'url': url,
                               'body_format': n_format})
 
-        # Blast off the notifications tht are set in .add()
-        apobj.notify(
-            title=n_title,
-            body=n_body,
-            body_format=n_format,
-            # False is not an option for AppRise, must be type None
-            attach=n_object.get('screenshot', None)
-        )
+        if n_object.get('notification_urls'):
+            # Blast off the notifications tht are set in .add()
+            apobj.notify(
+                title=n_title,
+                body=n_body,
+                body_format=n_format,
+                # False is not an option for AppRise, must be type None
+                attach=n_object.get('screenshot', None)
+            )
 
 
         # Returns empty string if nothing found, multi-line string otherwise
