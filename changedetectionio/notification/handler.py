@@ -4,7 +4,7 @@ import time
 import apprise
 from loguru import logger
 from .apprise_plugin.assets import apprise_asset, APPRISE_AVATAR_URL
-
+from changedetectionio.safe_jinja import render as jinja_render
 
 
 def _populate_notification_tokens(n_object, datastore):
@@ -25,7 +25,8 @@ def _populate_notification_tokens(n_object, datastore):
 
     dates = []
     trigger_text = ''
-    
+    watch_html_link = ''
+
     if watch:
         watch_history = watch.history
         dates = list(watch_history.keys())
@@ -70,11 +71,10 @@ def _populate_notification_tokens(n_object, datastore):
         prev_snapshot = watch.get_history_snapshot(dates[-2])
         current_snapshot = watch.get_history_snapshot(dates[-1])
 
-    watch_url = watch.link
-    if n_object.get('notification_format').startswith('HTML'):
-        from changedetectionio.safe_jinja import render as jinja_render
+    if watch:
         v = {'url': watch.get('url'), 'label': watch.label}
-        watch_url = jinja_render(template_str='<a href="{{ label or url | e }}" rel="noopener noreferrer">{{ url | e }}</a>', **v)
+        watch_html_link = jinja_render(template_str='<a href="{{ label or url | e }}" rel="noopener noreferrer">{{ url | e }}</a>', **v)
+
 
     n_object.update({
         'current_snapshot': snapshot_contents,
@@ -85,15 +85,15 @@ def _populate_notification_tokens(n_object, datastore):
         'diff_removed': diff.render_diff(prev_snapshot, current_snapshot, include_added=False, line_feed_sep=line_feed_sep),
         'screenshot': watch.get_screenshot() if watch and watch.get('notification_screenshot') else None,
         'triggered_text': triggered_text,
+        'watch_html_link': watch_html_link,
+        'watch_url': watch.link,
         'watch_url_raw': watch.get('url'),
-        'watch_url': watch_url,
     })
 
     if watch:
         n_object.update(watch.extra_notification_token_values())
 
 def process_notification(n_object, datastore):
-    from changedetectionio.safe_jinja import render as jinja_render
     from . import default_notification_format_for_watch, default_notification_format, valid_notification_formats
     # be sure its registered
     from .apprise_plugin.custom_handlers import apprise_http_custom_handler, apprise_null_custom_handler
@@ -155,7 +155,7 @@ def process_notification(n_object, datastore):
             # Get the notification body from datastore
             n_body = jinja_render(template_str=n_object.get('notification_body', ''), **notification_parameters)
 
-            # Apply notification template wrapper if it exists
+            # Apply notification template wrapper if it exists (the one from the disk)
             if notification_template:
                 template_params = notification_parameters.copy()
                 template_params['notification_body'] = n_body
@@ -164,7 +164,6 @@ def process_notification(n_object, datastore):
             
             if n_object.get('notification_format', '').startswith('HTML'):
                 n_body = n_body.replace("\n", '<br>')
-
             n_title = jinja_render(template_str=n_object.get('notification_title', ''), **notification_parameters)
 
             url = url.strip()
