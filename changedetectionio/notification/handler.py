@@ -8,7 +8,7 @@ def process_notification(n_object, datastore):
     from changedetectionio.safe_jinja import render as jinja_render
     from . import default_notification_format_for_watch, default_notification_format, valid_notification_formats
     # be sure its registered
-    from .apprise_plugin.custom_handlers import apprise_http_custom_handler
+    from .apprise_plugin.custom_handlers import apprise_http_custom_handler, apprise_browser_notification_handler
 
     now = time.time()
     if n_object.get('notification_timestamp'):

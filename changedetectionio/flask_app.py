@@ -39,6 +39,11 @@ from loguru import logger
 from changedetectionio import __version__
 from changedetectionio import queuedWatchMetaData
 from changedetectionio.api import Watch, WatchHistory, WatchSingleHistory, CreateWatch, Import, SystemInfo, Tag, Tags, Notifications, WatchFavicon
+from changedetectionio.notification.BrowserNotifications import (
+    BrowserNotificationsVapidPublicKey,
+    BrowserNotificationsSubscribe, 
+    BrowserNotificationsUnsubscribe
+)
 from changedetectionio.api.Search import Search
 from .time_handler import is_within_schedule
 
@@ -94,6 +99,7 @@ except locale.Error:
     logger.warning(f"Unable to set locale {default_locale}, locale is not installed maybe?")
 
 watch_api = Api(app, decorators=[csrf.exempt])
+browser_notification_api = Api(app, decorators=[csrf.exempt])
 
 def init_app_secret(datastore_path):
     secret = ""
@@ -336,6 +342,11 @@ def changedetection_app(config=None, datastore_o=None):
 
     watch_api.add_resource(Notifications, '/api/v1/notifications',
                            resource_class_kwargs={'datastore': datastore})
+    
+    # Browser notification endpoints
+    browser_notification_api.add_resource(BrowserNotificationsVapidPublicKey, '/browser-notifications-api/vapid-public-key')
+    browser_notification_api.add_resource(BrowserNotificationsSubscribe, '/browser-notifications-api/subscribe')
+    browser_notification_api.add_resource(BrowserNotificationsUnsubscribe, '/browser-notifications-api/unsubscribe')
 
     @login_manager.user_loader
     def user_loader(email):
@@ -489,9 +500,28 @@ def changedetection_app(config=None, datastore_o=None):
         except FileNotFoundError:
             abort(404)
 
+    @app.route("/service-worker.js", methods=['GET'])
+    def service_worker():
+        from flask import make_response
+        try:
+            # Serve from the changedetectionio/static/js directory
+            static_js_path = os.path.join(os.path.dirname(__file__), 'static', 'js')
+            response = make_response(send_from_directory(static_js_path, "service-worker.js"))
+            response.headers['Content-Type'] = 'application/javascript'
+            response.headers['Service-Worker-Allowed'] = '/'
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+            return response
+        except FileNotFoundError:
+            abort(404)
+
 
     import changedetectionio.blueprint.browser_steps as browser_steps
     app.register_blueprint(browser_steps.construct_blueprint(datastore), url_prefix='/browser-steps')
+
+    import changedetectionio.blueprint.browser_notifications.browser_notifications as browser_notifications
+    app.register_blueprint(browser_notifications.construct_blueprint(datastore), url_prefix='/browser-notifications')
 
     from changedetectionio.blueprint.imports import construct_blueprint as construct_import_blueprint
     app.register_blueprint(construct_import_blueprint(datastore, update_q, queuedWatchMetaData), url_prefix='/imports')

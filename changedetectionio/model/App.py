@@ -65,6 +65,11 @@ class model(dict):
                         'socket_io_enabled': True,
                         'favicons_enabled': True
                     },
+                    'vapid': {
+                        'private_key': None,
+                        'public_key': None,
+                        'contact_email': None
+                    },
                 }
             }
         }

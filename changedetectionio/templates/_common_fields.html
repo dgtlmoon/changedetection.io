@@ -33,6 +33,34 @@
                                 <div id="notification-test-log" style="display: none;"><span class="pure-form-message-inline">Processing..</span></div>
                             </div>
                         </div>
+                        
+                        <!-- Browser Notifications -->
+                        <div id="browser-notification-section">
+                            <div class="pure-control-group">
+                                <label>Browser Notifications</label>
+                                <div class="pure-form-message-inline">
+                                    <p><strong>Browser push notifications!</strong> Use <code>browser://</code> URLs in your notification settings to receive real-time push notifications even when this tab is closed.</p>
+                                    <p><small><strong>Troubleshooting:</strong> If you get "different applicationServerKey" errors, click "Clear All Notifications" below and try again. This happens when switching between different changedetection.io instances.</small></p>
+                                    <div id="browser-notification-controls" style="margin-top: 1em;">
+                                        <div id="notification-permission-status">
+                                            <p>Browser notifications: <span id="permission-status">checking...</span></p>
+                                        </div>
+                                        <div id="browser-notification-actions">
+                                            <button type="button" id="enable-notifications-btn" class="pure-button button-secondary button-xsmall" style="display: none;">
+                                                Enable Browser Notifications
+                                            </button>
+                                            <button type="button" id="test-notification-btn" class="pure-button button-secondary button-xsmall" style="display: none;">
+                                                Send browser test notification
+                                            </button>
+                                            <button type="button" id="clear-notifications-btn" class="pure-button button-secondary button-xsmall" onclick="window.browserNotifications?.clearAllNotifications()" style="margin-left: 0.5em;">
+                                                Clear All Notifications
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div id="notification-customisation" class="pure-control-group">
                             <div class="pure-control-group">
                                 {{ render_field(form.notification_title, class="m-d notification-title", placeholder=settings_application['notification_title']) }}
