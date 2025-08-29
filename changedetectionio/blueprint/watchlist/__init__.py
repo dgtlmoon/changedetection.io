@@ -44,10 +44,14 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         # Sort by last_changed and add the uuid which is usually the key..
         sorted_watches = []
         with_errors = request.args.get('with_errors') == "1"
+        unread_only = request.args.get('unread') == "1"
         errored_count = 0
         search_q = request.args.get('q').strip().lower() if request.args.get('q') else False
         for uuid, watch in datastore.data['watching'].items():
             if with_errors and not watch.get('last_error'):
+                continue
+
+            if unread_only and (watch.viewed or watch.last_changed == 0) :
                 continue
 
             if active_tag_uuid and not active_tag_uuid in watch['tags']:

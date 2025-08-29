@@ -153,6 +153,7 @@ $(document).ready(function () {
 
                 // Tabs at bottom of list
                 $('#post-list-mark-views').toggleClass("has-unviewed", general_stats.has_unviewed);
+                $('#post-list-unread').toggleClass("has-unviewed", general_stats.has_unviewed);
                 $('#post-list-with-errors').toggleClass("has-error", general_stats.count_errors !== 0)
                 $('#post-list-with-errors a').text(`With errors (${ general_stats.count_errors })`);
 
