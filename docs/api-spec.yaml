@@ -241,6 +241,10 @@ components:
           type: string
           description: Last error message
           readOnly: true
+        last_viewed:
+          type: integer
+          description: Unix timestamp in seconds of the last time the watch was viewed.
+          minimum: 0
       required:
         - url
 
