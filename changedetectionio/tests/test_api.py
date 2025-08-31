@@ -304,14 +304,7 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
                          'tag': "One, Two",
                          "title": "My test URL",
                          'headers': {'cookie': 'yum'},
-                         "conditions": [
-                             {
-                                 "field": "page_filtered_text",
-                                 "operator": "contains_regex",
-                                 "value": "."  # contains anything
-                             }
-                         ],
-                         "conditions_match_logic": "ALL"
+                         "conditions_match_logic": "ALL",
                          }
                         ),
         headers={'content-type': 'application/json', 'x-api-key': api_key},
@@ -328,7 +321,7 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
     )
 
     watch_uuid = list(res.json.keys())[0]
-    assert not res.json[watch_uuid].get('viewed'), 'If unspecified, a newly created watch is born as unviewed'
+    assert not res.json[watch_uuid].get('viewed'), 'A newly created watch can only be unviewed'
 
     # Check in the edit page just to be sure
     res = client.get(

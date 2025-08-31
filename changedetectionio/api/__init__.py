@@ -13,6 +13,8 @@ schema = api_schema.build_watch_json_schema(watch_base_config)
 
 schema_create_watch = copy.deepcopy(schema)
 schema_create_watch['required'] = ['url']
+del schema_create_watch['properties']['last_viewed']
+schema_create_watch['additionalProperties'] = False
 
 schema_update_watch = copy.deepcopy(schema)
 schema_update_watch['additionalProperties'] = False
@@ -51,7 +53,7 @@ def validate_openapi_request(operation_id):
             try:
                 spec = get_openapi_spec()
                 openapi_request = FlaskOpenAPIRequest(request)
-                result = spec.unmarshal_request(openapi_request, operation_id)
+                result = spec.unmarshal_request(openapi_request)
                 if result.errors:
                     abort(400, message=f"OpenAPI validation failed: {result.errors}")
                 return f(*args, **kwargs)
