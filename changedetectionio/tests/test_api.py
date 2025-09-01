@@ -304,6 +304,13 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
                          'tag': "One, Two",
                          "title": "My test URL",
                          'headers': {'cookie': 'yum'},
+                         "conditions": [
+                             {
+                                 "field": "page_filtered_text",
+                                 "operator": "contains_regex",
+                                 "value": "."  # contains anything
+                             }
+                         ],
                          "conditions_match_logic": "ALL",
                          }
                         ),
