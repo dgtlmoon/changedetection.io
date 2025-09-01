@@ -251,7 +251,7 @@ components:
               readOnly: true
             last_viewed:
               type: integer
-              description: Unix timestamp in seconds of the last time the watch was viewed. Setting it to a high enough value in the "Update watch" endpoint marks the watch as viewed.
+              description: Unix timestamp in seconds of the last time the watch was viewed. Setting it to a value higher than `last_changed` in the "Update watch" endpoint marks the watch as viewed.
               minimum: 0
 
     CreateWatch:
