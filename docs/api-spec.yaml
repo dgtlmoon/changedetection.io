@@ -119,14 +119,9 @@ components:
         Enter your API key in the "Authorize" button above to automatically populate all code examples.
 
   schemas:
-    Watch:
+    WatchBase:
       type: object
       properties:
-        uuid:
-          type: string
-          format: uuid
-          description: Unique identifier for the web page change monitor (watch)
-          readOnly: true
         url:
           type: string
           format: uri
@@ -229,25 +224,40 @@ components:
                 maxLength: 5000
             required: [operation, selector, optional_value]
           description: Browser automation steps
-        last_checked:
-          type: integer
-          description: Unix timestamp of last check
-          readOnly: true
-        last_changed:
-          type: integer
-          description: Unix timestamp of last change
-          readOnly: true
-        last_error:
-          type: string
-          description: Last error message
-          readOnly: true
       required:
         - url
 
+    Watch:
+      allOf:
+        - $ref: '#/components/schemas/WatchBase'
+        - type: object
+          properties:
+            uuid:
+              type: string
+              format: uuid
+              description: Unique identifier for the web page change monitor (watch)
+              readOnly: true
+            last_checked:
+              type: integer
+              description: Unix timestamp of last check
+              readOnly: true
+            last_changed:
+              type: integer
+              description: Unix timestamp of last change
+              readOnly: true
+            last_error:
+              type: string
+              description: Last error message
+              readOnly: true
+            last_viewed:
+              type: integer
+              description: Unix timestamp in seconds of the last time the watch was viewed. Setting it to a value higher than `last_changed` in the "Update watch" endpoint marks the watch as viewed.
+              minimum: 0
+
     CreateWatch:
       allOf:
-        - $ref: '#/components/schemas/Watch'
-        - type: object
+        - $ref: '#/components/schemas/WatchBase'
+        - type: 'object'
           required:
             - url
 
@@ -576,7 +586,7 @@ paths:
 
     delete:
       operationId: deleteWatch
-      tags: [Watch Management]  
+      tags: [Watch Management]
       summary: Delete watch
       description: Delete a web page change monitor (watch) and all related history
       x-code-samples:
