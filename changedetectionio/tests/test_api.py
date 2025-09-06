@@ -357,7 +357,7 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
         headers={'x-api-key': api_key}
     )
     assert res.json.get('title') == 'new title'
-    assert res.json.get('viewed'), 'With the right timestamp a watch can be updated to viewed'
+    assert res.json.get('viewed'), 'With the timestamp greater than "changed" a watch can be updated to viewed'
 
     # Check in the edit page just to be sure
     res = client.get(
