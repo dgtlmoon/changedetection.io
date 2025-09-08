@@ -47,6 +47,7 @@ async () => {
             'nicht lieferbar',
             'nicht verfügbar',
             'nicht vorrätig',
+            'nicht mehr lieferbar',
             'nicht zur verfügung',
             'nie znaleziono produktów',
             'niet beschikbaar',
