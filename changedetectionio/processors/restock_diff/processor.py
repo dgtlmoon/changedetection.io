@@ -91,7 +91,7 @@ def extract_price_from_html(html_content):
     if not text:
         return None, None
 
-    # Extract currency (any non-digit at start, e.g. "R", "$", "€")
+    # Extract currency (any non-digit at start, e.g. "R", "$", "â‚¬")
     match = re.match(r"([^\d]+)", text)
     currency = match.group(1).strip() if match else None
 
