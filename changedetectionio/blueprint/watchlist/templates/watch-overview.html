@@ -196,9 +196,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         {%- if watch.get('restock') and watch['restock']['price'] != None -%}
                             {%- if watch['restock']['price'] != None -%}
-                                <span class="restock-label price" title="Price">
-                                {{ watch['restock']['price']|format_number_locale }} {{ watch['restock']['currency'] }}
-                                </span>
+                            <span class="restock-label price" title="Price">
+                                {{ watch['restock']['currency'] }} {{ watch['restock']['price']|format_number_locale }}
+                            </span>
                             {%- endif -%}
                         {%- elif not watch.has_restock_info -%}
                             <span class="restock-label error">No information</span>
