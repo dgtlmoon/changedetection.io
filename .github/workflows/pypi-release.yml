@@ -9,7 +9,7 @@ jobs:
     steps:
     - uses: actions/checkout@v5
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: "3.11"
     - name: Install pypa/build
@@ -39,7 +39,7 @@ jobs:
         name: python-package-distributions
         path: dist/
     - name: Set up Python 3.11
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.11'
     - name: Test that the basic pip built package runs without error
