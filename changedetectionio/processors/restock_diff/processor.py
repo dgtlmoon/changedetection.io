@@ -183,15 +183,6 @@ def get_itemprop_availability(html_content) -> Restock:
                 if currency:
                     value['currency'] = currency
 
-        if value.get('availability'):
-            # Availability from classes or text
-            soup = BeautifulSoup(html_content, "html.parser")
-            availability_texts = soup.find_all("div", {"data-ref": "in-stock-indicator"})
-            if availability_texts:
-                value['availability'] = "in stock"
-            else:
-                value['availability'] = "out of stock"
-
     logger.trace(f"Processed with Extruct in {time.time()-now:.3f}s")
 
     return value
