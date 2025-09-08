@@ -24,7 +24,6 @@ class watch_base(dict):
             'content-type': None,
             'date_created': None,
             'extract_text': [],  # Extract text by regex after filters
-            'extract_title_as_title': False,
             'fetch_backend': 'system',  # plaintext, playwright etc
             'fetch_time': 0.0,
             'filter_failure_notification_send': strtobool(os.getenv('FILTER_FAILURE_NOTIFICATION_SEND_DEFAULT', 'True')),
@@ -128,6 +127,7 @@ class watch_base(dict):
             'remove_duplicate_lines': False,
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
             'url': '',
+            'use_page_title_in_list': False,
             'uuid': str(uuid.uuid4()),
             'webdriver_delay': None,
             'webdriver_js_execute_code': None,  # Run before change-detection

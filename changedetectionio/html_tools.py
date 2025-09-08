@@ -1,6 +1,7 @@
 from loguru import logger
 from lxml import etree
 from typing import List
+import html
 import json
 import re
 
@@ -8,6 +9,11 @@ import re
 TEXT_FILTER_LIST_LINE_SUFFIX = "<br>"
 TRANSLATE_WHITESPACE_TABLE = str.maketrans('', '', '\r\n\t ')
 PERL_STYLE_REGEX = r'^/(.*?)/([a-z]*)?$'
+
+TITLE_RE = re.compile(r"<title[^>]*>(.*?)</title>", re.I | re.S)
+META_CS  = re.compile(r'<meta[^>]+charset=["\']?\s*([a-z0-9_\-:+.]+)', re.I)
+META_CT  = re.compile(r'<meta[^>]+http-equiv=["\']?content-type["\']?[^>]*content=["\'][^>]*charset=([a-z0-9_\-:+.]+)', re.I)
+
 
 # 'price' , 'lowPrice', 'highPrice' are usually under here
 # All of those may or may not appear on different websites - I didnt find a way todo case-insensitive searching here
@@ -510,3 +516,41 @@ def get_triggered_text(content, trigger_text):
         i += 1
 
     return triggered_text
+
+
+def extract_title(data: bytes | str, sniff_bytes: int = 2048, scan_chars: int = 8192) -> str | None:
+    try:
+        # Only decode/process the prefix we need for title extraction
+        match data:
+            case bytes() if data.startswith((b"\xff\xfe", b"\xfe\xff")):
+                prefix = data[:scan_chars * 2].decode("utf-16", errors="replace")
+            case bytes() if data.startswith((b"\xff\xfe\x00\x00", b"\x00\x00\xfe\xff")):
+                prefix = data[:scan_chars * 4].decode("utf-32", errors="replace")
+            case bytes():
+                try:
+                    prefix = data[:scan_chars].decode("utf-8")
+                except UnicodeDecodeError:
+                    try:
+                        head = data[:sniff_bytes].decode("ascii", errors="ignore")
+                        if m := (META_CS.search(head) or META_CT.search(head)):
+                            enc = m.group(1).lower()
+                        else:
+                            enc = "cp1252"
+                        prefix = data[:scan_chars * 2].decode(enc, errors="replace")
+                    except Exception as e:
+                        logger.error(f"Title extraction encoding detection failed: {e}")
+                        return None
+            case str():
+                prefix = data[:scan_chars] if len(data) > scan_chars else data
+            case _:
+                logger.error(f"Title extraction received unsupported data type: {type(data)}")
+                return None
+
+        # Search only in the prefix
+        if m := TITLE_RE.search(prefix):
+            return html.unescape(" ".join(m.group(1).split())).strip()
+        return None
+        
+    except Exception as e:
+        logger.error(f"Title extraction failed: {e}")
+        return None

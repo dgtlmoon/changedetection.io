@@ -123,7 +123,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     # Enable auto pickup of <title> in settings
     res = client.post(
         url_for("settings.settings_page"),
-        data={"application-extract_title_as_title": "1", "requests-time_between_check-minutes": 180,
+        data={"application-use_page_title_in_list": "1", "requests-time_between_check-minutes": 180,
               'application-fetch_backend': "html_requests"},
         follow_redirects=True
     )
@@ -137,6 +137,15 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
     # It should have picked up the <title>
     assert b'head title' in res.data
+
+
+    # Recheck it but only with a title change
+    set_original_response(extra_title=" and more")
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    res = client.get(url_for("watchlist.index"))
+    assert b'head title and more' in res.data
+
 
     # Be sure the last_viewed is going to be greater than the last snapshot
     time.sleep(1)
