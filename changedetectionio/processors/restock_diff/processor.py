@@ -28,26 +28,46 @@ def _search_prop_by_value(matches, value):
 
 def _deduplicate_prices(data):
     import re
-
+    
     '''
-    Some price data has multiple entries, OR it has a single entry with ['$159', '159', 159, "$ 159"] or just "159"
+    Some price data has multiple entries, OR it has a single entry with
+    ['$159', '159', 159, "$ 159", "R 3,299"] or just "159"
     Get all the values, clean it and add it to a set then return the unique values
     '''
     unique_data = set()
 
-    # Return the complete 'datum' where its price was not seen before
-    for datum in data:
+    def normalize(value):
+        # Convert to string, strip spaces
+        s = str(value).strip()
+        if not s:
+            return None
 
+        # Remove currency symbols and spaces (keep digits, dots, commas)
+        s = re.sub(r'[^\d.,]', '', s)
+
+        # Remove thousands separators (commas)
+        s = s.replace(',', '')
+
+        # Convert to float
+        try:
+            return float(s)
+        except ValueError:
+            return None
+
+    # Process data
+    for datum in data:
         if isinstance(datum.value, list):
-            # Process each item in the list
-            normalized_value = set([float(re.sub(r'[^\d.]', '', str(item))) for item in datum.value if str(item).strip()])
-            unique_data.update(normalized_value)
+            for item in datum.value:
+                v = normalize(item)
+                if v is not None:
+                    unique_data.add(v)
         else:
-            # Process single value
-            v = float(re.sub(r'[^\d.]', '', str(datum.value)))
-            unique_data.add(v)
+            v = normalize(datum.value)
+            if v is not None:
+                unique_data.add(v)
 
     return list(unique_data)
+
 
 
 # should return Restock()
