@@ -72,6 +72,10 @@
                         <div class="pure-form-message">Some sites use JavaScript to create the content, for this you should <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">use the Chrome/WebDriver Fetcher</a></div>
                         <div class="pure-form-message">Variables are supported in the URL (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Handling-variables-in-the-watched-URL">help and examples here</a>).</div>
                     </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.tags) }}
+                        <span class="pure-form-message-inline">Organisational tag/group name used in the main listing page</span>
+                    </div>
                     <div class="pure-control-group inline-radio">
                         {{ render_field(form.processor) }}
                     </div>
@@ -80,8 +84,7 @@
                         <span class="pure-form-message-inline">Automatically uses the page title if found, you can also use your own title/description here</span>
                     </div>
                     <div class="pure-control-group">
-                        {{ render_field(form.tags) }}
-                        <span class="pure-form-message-inline">Organisational tag/group name used in the main listing page</span>
+                        {{ render_ternary_field(form.use_page_title_in_list) }}
                     </div>
                     <div class="pure-control-group time-between-check border-fieldset">
 
@@ -102,9 +105,7 @@
                         </div>
 <br>
               </div>
-                    <div class="pure-control-group">
-                        {{ render_ternary_field(form.use_page_title_in_list) }}
-                    </div>
+
                     <div class="pure-control-group">
                         {{ render_checkbox_field(form.filter_failure_notification_send) }}
                         <span class="pure-form-message-inline">
