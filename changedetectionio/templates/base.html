@@ -5,6 +5,7 @@
     <meta charset="utf-8" >
     <meta name="viewport" content="width=device-width, initial-scale=1.0" >
     <meta name="description" content="Self hosted website change detection." >
+    <meta name="robots" content="noindex">
     <title>Change Detection{{extra_title}}</title>
     {% if app_rss_token %}
       <link rel="alternate" type="application/rss+xml" title="Changedetection.io » Feed{% if active_tag_uuid %}- {{active_tag.title}}{% endif %}" href="{{ url_for('rss.feed', tag=active_tag_uuid , token=app_rss_token)}}" >
