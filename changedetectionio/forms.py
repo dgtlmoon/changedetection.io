@@ -624,7 +624,7 @@ class processor_text_json_diff_form(commonSettingsForm):
     # filter_failure_notification_send @todo make ternary
     filter_failure_notification_send = BooleanField(
         'Send a notification when the filter can no longer be found on the page', default=False)
-    notification_muted = TernaryNoneBooleanField('Notifications', default=None, yes_text="Muted", no_text="On", none_text="System default")
+    notification_muted = TernaryNoneBooleanField('Notifications', default=None, yes_text="Muted", no_text="On")
     notification_screenshot = BooleanField('Attach screenshot to notification (where possible)', default=False)
 
     conditions_match_logic = RadioField(u'Match', choices=[('ALL', 'Match all of the following'),('ANY', 'Match any of the following')], default='ALL')

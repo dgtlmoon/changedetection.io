@@ -16,7 +16,7 @@ class TernaryNoneBooleanWidget:
         # Get custom text or use defaults
         yes_text = getattr(field, 'yes_text', 'Yes')
         no_text = getattr(field, 'no_text', 'No')
-        none_text = getattr(field, 'none_text', 'Default')
+        none_text = getattr(field, 'none_text', 'Main settings')
         
         # True option
         checked_true = ' checked' if field.data is True else ''
@@ -147,7 +147,7 @@ class TernaryNoneBooleanField(Field):
     widget = TernaryNoneBooleanWidget()
     
     def __init__(self, label=None, validators=None, false_values=None, boolean_mode=False, 
-                 yes_text="Yes", no_text="No", none_text="Default", **kwargs):
+                 yes_text="Yes", no_text="No", none_text="Main settings", **kwargs):
         super(TernaryNoneBooleanField, self).__init__(label, validators, **kwargs)
         
         self.boolean_mode = boolean_mode
