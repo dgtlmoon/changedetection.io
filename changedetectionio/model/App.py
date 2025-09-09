@@ -58,7 +58,7 @@ class model(dict):
                     'shared_diff_access': False,
                     'tags': {}, #@todo use Tag.model initialisers
                     'timezone': None, # Default IANA timezone name
-                    'use_page_title_in_list': False,
+                    'use_page_title_in_list': True,
                     'webdriver_delay': None , # Extra delay in seconds before extracting text
                     'ui': {
                         'open_diff_in_new_tab': True,
