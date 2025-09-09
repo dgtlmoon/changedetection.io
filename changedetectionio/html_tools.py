@@ -548,7 +548,9 @@ def extract_title(data: bytes | str, sniff_bytes: int = 2048, scan_chars: int = 
 
         # Search only in the prefix
         if m := TITLE_RE.search(prefix):
-            return html.unescape(" ".join(m.group(1).split())).strip()
+            title = html.unescape(" ".join(m.group(1).split())).strip()
+            # Some safe limit
+            return title[:2000]
         return None
         
     except Exception as e:

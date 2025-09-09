@@ -48,6 +48,7 @@ class watch_base(dict):
             'notification_screenshot': False,  # Include the latest screenshot if available and supported by the apprise URL
             'notification_title': None,
             'notification_urls': [],  # List of URLs to add to the notification Queue (Usually AppRise)
+            'page_title': None, # <title> from the page
             'paused': False,
             'previous_md5': False,
             'previous_md5_before_filters': False,  # Used for skipping changedetection entirely
@@ -121,7 +122,7 @@ class watch_base(dict):
                     }
                 },
             },
-            'title': None,
+            'title': None, # An arbitrary field that overrides 'page_title'
             'track_ldjson_price_data': None,
             'trim_text_whitespace': False,
             'remove_duplicate_lines': False,
