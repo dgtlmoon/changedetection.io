@@ -76,7 +76,8 @@
                         {{ render_field(form.processor) }}
                     </div>
                     <div class="pure-control-group">
-                        {{ render_field(form.title, class="m-d") }}
+                        {{ render_field(form.title, class="m-d", placeholder=watch.label) }}
+                        <span class="pure-form-message-inline">Automatically uses the page title if found, you can also use your own title/description here</span>
                     </div>
                     <div class="pure-control-group">
                         {{ render_field(form.tags) }}
