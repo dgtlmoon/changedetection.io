@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, render_ternary_field %}
 {% from '_common_fields.html' import render_common_settings_form %}
 <script>
     const notification_base_url="{{url_for('ui.ui_notification.ajax_callback_send_notification_test', mode="global-settings")}}";
@@ -84,11 +84,11 @@
                         <span class="pure-form-message-inline">Love RSS? Does your reader support HTML? Set it here</span>
                     </div>
                     <div class="pure-control-group">
-                        {{ render_checkbox_field(form.application.form.use_page_title_in_list) }}
+                        {{ render_ternary_field(form.application.form.use_page_title_in_list, BooleanField=true) }}
                         <span class="pure-form-message-inline">Note: This will automatically apply to all existing watches.</span>
                     </div>
                     <div class="pure-control-group">
-                        {{ render_checkbox_field(form.application.form.empty_pages_are_a_change) }}
+                        {{ render_ternary_field(form.application.form.empty_pages_are_a_change, BooleanField=true) }}
                         <span class="pure-form-message-inline">When a request returns no content, or the HTML does not contain any text, is this considered a change?</span>
                     </div>
                 {% if form.requests.proxy %}

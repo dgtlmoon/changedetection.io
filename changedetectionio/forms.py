@@ -28,6 +28,8 @@ from wtforms.validators import ValidationError
 
 from validators.url import url as url_validator
 
+from changedetectionio.widgets import TernaryNoneBooleanField
+
 
 # default
 # each select <option data-enabled="enabled-0-0"
@@ -548,7 +550,7 @@ class commonSettingsForm(Form):
         self.notification_title.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
         self.notification_urls.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
 
-    use_page_title_in_list = BooleanField('Use page <title> in watch overview list', default=True)
+    use_page_title_in_list = TernaryNoneBooleanField('Use page <title> in watch overview list', default=None) #BooleanField=True
     fetch_backend = RadioField(u'Fetch Method', choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     notification_body = TextAreaField('Notification Body', default='{{ watch_url }} had a change.', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_format = SelectField('Notification format', choices=valid_notification_formats.keys())
@@ -621,8 +623,7 @@ class processor_text_json_diff_form(commonSettingsForm):
     proxy = RadioField('Proxy')
     filter_failure_notification_send = BooleanField(
         'Send a notification when the filter can no longer be found on the page', default=False)
-
-    notification_muted = BooleanField('Notifications Muted / Off', default=False)
+    notification_muted = TernaryNoneBooleanField('Notifications', default=None, yes_text="Muted", no_text="On", none_text="System default")
     notification_screenshot = BooleanField('Attach screenshot to notification (where possible)', default=False)
 
     conditions_match_logic = RadioField(u'Match', choices=[('ALL', 'Match all of the following'),('ANY', 'Match any of the following')], default='ALL')
@@ -764,7 +765,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
                            validators=[validators.Optional()],
                            render_kw={"placeholder": os.getenv('BASE_URL', 'Not set')}
                            )
-    empty_pages_are_a_change =  BooleanField('Treat empty pages as a change?', default=False)
+    empty_pages_are_a_change =  TernaryNoneBooleanField('Treat empty pages as a change?', default=False)
     fetch_backend = RadioField('Fetch Method', default="html_requests", choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_json=False)])
