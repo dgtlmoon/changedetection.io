@@ -128,7 +128,7 @@ class watch_base(dict):
             'remove_duplicate_lines': False,
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
             'url': '',
-            'use_page_title_in_list': False,
+            'use_page_title_in_list': None, # None = use system settings
             'uuid': str(uuid.uuid4()),
             'webdriver_delay': None,
             'webdriver_js_execute_code': None,  # Run before change-detection
