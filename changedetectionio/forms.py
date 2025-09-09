@@ -621,6 +621,7 @@ class processor_text_json_diff_form(commonSettingsForm):
     save_button = SubmitField('Save', render_kw={"class": "pure-button button-small pure-button-primary"})
 
     proxy = RadioField('Proxy')
+    # filter_failure_notification_send @todo make ternary
     filter_failure_notification_send = BooleanField(
         'Send a notification when the filter can no longer be found on the page', default=False)
     notification_muted = TernaryNoneBooleanField('Notifications', default=None, yes_text="Muted", no_text="On", none_text="System default")

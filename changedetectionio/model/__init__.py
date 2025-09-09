@@ -34,6 +34,7 @@ class watch_base(dict):
             'has_ldjson_price_data': None,
             'headers': {},  # Extra headers to send
             'ignore_text': [],  # List of text to ignore when calculating the comparison checksum
+            'ignore_status_codes': None,
             'in_stock_only': True,  # Only trigger change on going to instock from out-of-stock
             'include_filters': [],
             'last_checked': 0,

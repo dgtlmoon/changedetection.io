@@ -199,7 +199,7 @@ Math: {{ 1 + 1 }}") }}
                     </div>
             <fieldset data-visible-for="fetch_backend=html_requests fetch_backend=html_webdriver" >
                     <div class="pure-control-group inline-radio advanced-options"  style="display: none;">
-                    {{ render_ternary_field(form.ignore_status_codes, BooleanField=true) }}
+                    {{ render_checkbox_field(form.ignore_status_codes) }}
                     </div>
             </fieldset>
             </div>
@@ -267,7 +267,7 @@ Math: {{ 1 + 1 }}") }}
                     </div>
                     {% if watch_needs_selenium_or_playwright %}
                     <div class="pure-control-group inline-radio">
-                      {{ render_ternary_field(form.notification_screenshot, BooleanField=true) }}
+                      {{ render_checkbox_field(form.notification_screenshot) }}
                         <span class="pure-form-message-inline">
                             <strong>Use with caution!</strong> This will easily fill up your email storage quota or flood other storages.
                         </span>
@@ -323,27 +323,27 @@ Math: {{ 1 + 1 }}") }}
                 <fieldset class="pure-group" id="text-filtering-type-options">
                     <h3>Text filtering</h3>
                         Limit trigger/ignore/block/extract to;<br>
-                        {{ render_ternary_field(form.filter_text_added, BooleanField=true) }}
-                        {{ render_ternary_field(form.filter_text_replaced, BooleanField=true) }}
-                        {{ render_ternary_field(form.filter_text_removed, BooleanField=true) }}
+                        {{ render_checkbox_field(form.filter_text_added) }}
+                        {{ render_checkbox_field(form.filter_text_replaced) }}
+                        {{ render_checkbox_field(form.filter_text_removed) }}
                     <span class="pure-form-message-inline">Note: Depending on the length and similarity of the text on each line, the algorithm may consider an <strong>addition</strong> instead of <strong>replacement</strong> for example.</span><br>
                     <span class="pure-form-message-inline">&nbsp;So it's always better to select <strong>Added</strong>+<strong>Replaced</strong> when you're interested in new content.</span><br>
                     <span class="pure-form-message-inline">&nbsp;When content is merely moved in a list, it will also trigger an <strong>addition</strong>, consider enabling <code><strong>Only trigger when unique lines appear</strong></code></span>
                 </fieldset>
                 <fieldset class="pure-control-group">
-                    {{ render_ternary_field(form.check_unique_lines, BooleanField=true) }}
+                    {{ render_checkbox_field(form.check_unique_lines) }}
                     <span class="pure-form-message-inline">Good for websites that just move the content around, and you want to know when NEW content is added, compares new lines against all history for this watch.</span>
                 </fieldset>
                 <fieldset class="pure-control-group">
-                    {{ render_ternary_field(form.remove_duplicate_lines, BooleanField=true) }}
+                    {{ render_checkbox_field(form.remove_duplicate_lines) }}
                     <span class="pure-form-message-inline">Remove duplicate lines of text</span>
                 </fieldset>
                 <fieldset class="pure-control-group">
-                    {{ render_ternary_field(form.sort_text_alphabetically, BooleanField=true) }}
+                    {{ render_checkbox_field(form.sort_text_alphabetically) }}
                     <span class="pure-form-message-inline">Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below.</span>
                 </fieldset>
                 <fieldset class="pure-control-group">
-                    {{ render_ternary_field(form.trim_text_whitespace, BooleanField=true) }}
+                    {{ render_checkbox_field(form.trim_text_whitespace) }}
                     <span class="pure-form-message-inline">Remove any whitespace before and after each line of text</span>
                 </fieldset>
                 {% include "edit/text-options.html" %}

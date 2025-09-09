@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     {%  endif %}
                         <div>
                         <span class="watch-title">
-                            {{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}&nbsp;<a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">&nbsp;</a>
+                            {{watch.label}}&nbsp;<a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">&nbsp;</a>
                         </span>
                             <div class="error-text" style="display:none;">{{ watch.compile_error_texts(has_proxies=datastore.proxy_list) }}</div>
                             {%- if watch['processor'] == 'text_json_diff'  -%}

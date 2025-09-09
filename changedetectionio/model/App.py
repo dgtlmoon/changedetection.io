@@ -44,6 +44,7 @@ class model(dict):
                     'global_ignore_text': [], # List of text to ignore when calculating the comparison checksum
                     'global_subtractive_selectors': [],
                     'ignore_whitespace': True,
+                    'ignore_status_codes': False, #@todo implement, as ternary.
                     'notification_body': default_notification_body,
                     'notification_format': default_notification_format,
                     'notification_title': default_notification_title,
