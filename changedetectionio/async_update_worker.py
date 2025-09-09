@@ -351,7 +351,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                 # Always record page title (used in notifications, and can change even when the content is the same)
                 try:
                     page_title = html_tools.extract_title(data=update_handler.fetcher.content)
-                    logger.info(f"UUID: {uuid} Page <title> is '{page_title}")
+                    logger.debug(f"UUID: {uuid} Page <title> is '{page_title}'")
                     datastore.update_watch(uuid=uuid, update_obj={'page_title': page_title})
                 except Exception as e:
                     logger.warning(f"UUID: {uuid} Exception when extracting <title> - {str(e)}")
