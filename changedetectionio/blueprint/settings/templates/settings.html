@@ -76,19 +76,11 @@
                         {{ render_checkbox_field(form.application.form.rss_hide_muted_watches) }}
                     </div>
                     <div class="pure-control-group">
-                        {{ render_field(form.application.form.pager_size) }}
-                        <span class="pure-form-message-inline">Number of items per page in the watch overview list, 0 to disable.</span>
-                    </div>
-                    <div class="pure-control-group">
                         {{ render_field(form.application.form.rss_content_format) }}
                         <span class="pure-form-message-inline">Love RSS? Does your reader support HTML? Set it here</span>
                     </div>
                     <div class="pure-control-group">
-                        {{ render_ternary_field(form.application.form.use_page_title_in_list, BooleanField=true) }}
-                        <span class="pure-form-message-inline">Note: This will automatically apply to all existing watches.</span>
-                    </div>
-                    <div class="pure-control-group">
-                        {{ render_ternary_field(form.application.form.empty_pages_are_a_change, BooleanField=true) }}
+                        {{ render_checkbox_field(form.application.form.empty_pages_are_a_change) }}
                         <span class="pure-form-message-inline">When a request returns no content, or the HTML does not contain any text, is this considered a change?</span>
                     </div>
                 {% if form.requests.proxy %}
@@ -259,6 +251,13 @@ nav
                 <div class="pure-control-group">
                     {{ render_checkbox_field(form.application.form.ui.form.favicons_enabled, class="") }}
                     <span class="pure-form-message-inline">Enable or Disable Favicons next to the watch list</span>
+                </div>
+                <div class="pure-control-group">
+                    {{ render_checkbox_field(form.application.form.ui.use_page_title_in_list) }}
+                </div>
+                <div class="pure-control-group">
+                    {{ render_field(form.application.form.pager_size) }}
+                    <span class="pure-form-message-inline">Number of items per page in the watch overview list, 0 to disable.</span>
                 </div>
 
             </div>

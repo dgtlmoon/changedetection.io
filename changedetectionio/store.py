@@ -975,7 +975,7 @@ class ChangeDetectionStore:
                 del self.data['watching'][uuid]['extract_title_as_title']
 
         if self.data['settings']['application'].get('extract_title_as_title'):
-            self.data['settings']['application']['use_page_title_in_list'] = self.data['settings']['application'].get('extract_title_as_title')
+            self.data['settings']['application']['ui']['use_page_title_in_list'] = self.data['settings']['application'].get('extract_title_as_title')
 
 
     def add_notification_url(self, notification_url):

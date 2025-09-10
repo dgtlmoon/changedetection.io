@@ -89,7 +89,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     assert b'CDATA' in res.data
 
     assert expected_url.encode('utf-8') in res.data
-
+#
     # Following the 'diff' link, it should no longer display as 'unviewed' even after we recheck it a few times
     res = client.get(url_for("ui.ui_views.diff_history_page", uuid=uuid))
     assert b'selected=""' in res.data, "Confirm diff history page loaded"
@@ -104,26 +104,34 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
     wait_for_all_checks(client)
 
-    # Do this a few times.. ensures we dont accidently set the status
-    for n in range(2):
-        client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
+    # Do this a few times.. ensures we don't accidently set the status
+    for n in range(2):
+        res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
         # Give the thread time to pick it up
         wait_for_all_checks(client)
 
         # It should report nothing found (no new 'unviewed' class)
         res = client.get(url_for("watchlist.index"))
+
+
         assert b'unviewed' not in res.data
         assert b'class="has-unviewed' not in res.data
-        assert b'head title' not in res.data  # Should not be present because this is off by default
+        assert b'head title' in res.data  # Should be ON by default
         assert b'test-endpoint' in res.data
 
-    set_original_response()
+    # Recheck it but only with a title change, content wasnt changed
+    set_original_response(extra_title=" and more")
 
-    # Enable auto pickup of <title> in settings
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    res = client.get(url_for("watchlist.index"))
+    assert b'head title and more' in res.data
+
+    # disable <title> pickup
     res = client.post(
         url_for("settings.settings_page"),
-        data={"application-use_page_title_in_list": "1", "requests-time_between_check-minutes": 180,
+        data={"application-ui-use_page_title_in_list": "", "requests-time_between_check-minutes": 180,
               'application-fetch_backend': "html_requests"},
         follow_redirects=True
     )
@@ -134,17 +142,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     res = client.get(url_for("watchlist.index"))
     assert b'unviewed' in res.data
     assert b'class="has-unviewed' in res.data
-
-    # It should have picked up the <title>
-    assert b'head title' in res.data
-
-
-    # Recheck it but only with a title change
-    set_original_response(extra_title=" and more")
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
-    wait_for_all_checks(client)
-    res = client.get(url_for("watchlist.index"))
-    assert b'head title and more' in res.data
+    assert b'head title' not in res.data  # should now be off
 
 
     # Be sure the last_viewed is going to be greater than the last snapshot
@@ -152,7 +150,6 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
     # hit the mark all viewed link
     res = client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
-    time.sleep(0.2)
 
     assert b'class="has-unviewed' not in res.data
     assert b'unviewed' not in res.data

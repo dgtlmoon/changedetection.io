@@ -550,7 +550,6 @@ class commonSettingsForm(Form):
         self.notification_title.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
         self.notification_urls.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
 
-    use_page_title_in_list = TernaryNoneBooleanField('Use page <title> in watch overview list', default=None) #BooleanField=True
     fetch_backend = RadioField(u'Fetch Method', choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     notification_body = TextAreaField('Notification Body', default='{{ watch_url }} had a change.', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_format = SelectField('Notification format', choices=valid_notification_formats.keys())
@@ -757,6 +756,7 @@ class globalSettingsApplicationUIForm(Form):
     open_diff_in_new_tab = BooleanField("Open 'History' page in a new tab", default=True, validators=[validators.Optional()])
     socket_io_enabled = BooleanField('Realtime UI Updates Enabled', default=True, validators=[validators.Optional()])
     favicons_enabled = BooleanField('Favicons Enabled', default=True, validators=[validators.Optional()])
+    use_page_title_in_list = BooleanField('Use page <title> in watch overview list') #BooleanField=True
 
 # datastore.data['settings']['application']..
 class globalSettingsApplicationForm(commonSettingsForm):
@@ -766,7 +766,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
                            validators=[validators.Optional()],
                            render_kw={"placeholder": os.getenv('BASE_URL', 'Not set')}
                            )
-    empty_pages_are_a_change =  TernaryNoneBooleanField('Treat empty pages as a change?', default=False)
+    empty_pages_are_a_change =  BooleanField('Treat empty pages as a change?', default=False)
     fetch_backend = RadioField('Fetch Method', default="html_requests", choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_json=False)])
@@ -781,7 +781,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
 
     removepassword_button = SubmitField('Remove password', render_kw={"class": "pure-button pure-button-primary"})
     render_anchor_tag_content = BooleanField('Render anchor tag content', default=False)
-    shared_diff_access = BooleanField('Allow access to view diff page when password is enabled', default=False, validators=[validators.Optional()])
+    shared_diff_access = BooleanField('Allow anonymous access to watch history page when password is enabled', default=False, validators=[validators.Optional()])
     rss_hide_muted_watches = BooleanField('Hide muted watches from RSS feed', default=True,
                                       validators=[validators.Optional()])
     filter_failure_notification_threshold_attempts = IntegerField('Number of times the filter can be missing before sending a notification',
