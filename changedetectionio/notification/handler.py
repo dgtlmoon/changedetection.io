@@ -5,7 +5,7 @@ import apprise
 from loguru import logger
 from .apprise_plugin.assets import apprise_asset, APPRISE_AVATAR_URL
 from changedetectionio.safe_jinja import render as jinja_render
-
+from urllib.parse import urlparse
 
 def _populate_notification_tokens(n_object, datastore):
     """
@@ -93,6 +93,40 @@ def _populate_notification_tokens(n_object, datastore):
     if watch:
         n_object.update(watch.extra_notification_token_values())
 
+def scan_notification_file_templates(url, datastore, n_body, notification_parameters):
+    import glob
+    from urllib.parse import urlparse, parse_qs
+
+    try:
+        scheme = urlparse(url).scheme.lower().strip()
+
+        # schema could be overriden dynamically
+        if scheme == 'null' and 'test_schema=' in url:
+            scheme = parse_qs(urlparse(url).query).get("test_schema", [None])[0]
+
+        logger.debug(f"Looking for '{scheme}' notification wrapper templates...")
+
+        # Try exact match first, then wildcard matches
+        candidates = [
+            os.path.join(datastore.datastore_path, f"notification-wrapper-{scheme}.html"),
+            *[f for f in glob.glob(os.path.join(datastore.datastore_path, "notification-wrapper-*--.html"))
+              if scheme.startswith(os.path.basename(f).replace("notification-wrapper-", "").replace("--.html", ""))]
+        ]
+        
+        for tpl_name in candidates:
+            if os.path.isfile(tpl_name):
+                template_params = notification_parameters.copy()
+                template_params['notification_body'] = n_body
+                
+                with open(tpl_name, 'r', encoding='utf-8') as f:
+                    logger.info(f"Using HTML notification template wrapper from '{tpl_name}'")
+                    return jinja_render(template_str=f.read(), **template_params)
+                    
+    except Exception as e:
+        logger.warning(f"Failed to load notification template: {e}")
+
+    return None
+
 def process_notification(n_object, datastore):
     from . import default_notification_format_for_watch, default_notification_format, valid_notification_formats
     # be sure its registered
@@ -138,42 +172,27 @@ def process_notification(n_object, datastore):
     if not n_object.get('notification_urls'):
         return None
 
-    # Check for notification.html template in datastore directory
-    notification_template_path = os.path.join(datastore.datastore_path, 'notification.html')
-    notification_template = None
-    if os.path.exists(notification_template_path):
-        try:
-            with open(notification_template_path, 'r', encoding='utf-8') as f:
-                notification_template = f.read()
-                logger.info(f"Using notification template from {notification_template_path}")
-        except Exception as e:
-            logger.warning(f"Failed to load notification template {notification_template_path}: {e}")
-
     with apprise.LogCapture(level=apprise.logging.DEBUG) as logs:
         for url in n_object['notification_urls']:
+            # Commented out is OK
+            if url.startswith('#') or not url or not url.strip():
+                logger.trace(f"Skipping notification URL - '{url}'")
+                continue
 
             # Get the notification body from datastore
             n_body = jinja_render(template_str=n_object.get('notification_body', ''), **notification_parameters)
-
-            # Apply notification template wrapper if it exists (the one from the disk)
-            if notification_template:
-                template_params = notification_parameters.copy()
-                template_params['notification_body'] = n_body
-                template_params['notification_url_current'] = url
-                n_body = jinja_render(template_str=notification_template, **template_params)
-            
             if n_object.get('notification_format', '').startswith('HTML'):
                 n_body = n_body.replace("\n", '<br>')
             n_title = jinja_render(template_str=n_object.get('notification_title', ''), **notification_parameters)
 
-            url = url.strip()
-            if url.startswith('#'):
-                logger.trace(f"Skipping commented out notification URL - {url}")
-                continue
+            n_body_from_file_template = scan_notification_file_templates(url=url,
+                                                                         datastore=datastore,
+                                                                         n_body=n_body,
+                                                                         notification_parameters=notification_parameters)
+            if n_body_from_file_template:
+                n_body = n_body_from_file_template
 
-            if not url:
-                logger.warning(f"Process Notification: skipping empty notification URL.")
-                continue
+
 
             logger.info(f">> Process Notification: AppRise notifying {url}")
             url = jinja_render(template_str=url, **notification_parameters)

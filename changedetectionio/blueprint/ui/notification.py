@@ -26,6 +26,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         # Watch_uuid could be unset in the case it`s used in tag editor, global settings
         import apprise
+        from urllib.parse import urlparse
         from changedetectionio.notification.apprise_plugin.assets import apprise_asset
 
         # Necessary so that we import our custom handlers
@@ -39,8 +40,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         # Use an existing random one on the global/main settings form
         if not watch_uuid and is_global_settings_form and datastore.data.get('watching'):
-            logger.debug(f"Send test notification - Choosing random Watch {watch_uuid}")
             watch_uuid = random.choice(list(datastore.data['watching'].keys()))
+            logger.debug(f"Send test notification - Chose random watch UUID: {watch_uuid}")
 
         if is_group_settings_form  and datastore.data.get('watching'):
             logger.debug(f"Send test notification - Choosing random Watch from group {watch_uuid}")
@@ -57,11 +58,24 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         watch = datastore.data['watching'].get(watch_uuid)
 
         notification_urls = []
-        if send_as_null_test:
-            notification_urls.append('null://null-test-just-to-render-everything-on-the-same-codepath-and-get-preview')
 
-        if request.form.get('notification_urls'):
-            notification_urls += request.form['notification_urls'].strip().splitlines()
+        if send_as_null_test:
+            test_schema = ''
+            try:
+                if request.form.get('notification_urls') and '://' in request.form.get('notification_urls'):
+                    first_test_notification_url = request.form['notification_urls'].strip().splitlines()[0]
+                    test_schema = urlparse(first_test_notification_url).scheme.lower().strip()
+            except Exception as e:
+                logger.error(f"Error trying to get a test schema based on the first notification_url {str(e)}")
+
+            notification_urls = [
+                # Null lets us do the whole chain of the same code without any extra repeated code
+                f'null://null-test-just-to-render-everything-on-the-same-codepath-and-get-preview?test_schema={test_schema}'
+            ]
+
+        else:
+            if request.form.get('notification_urls'):
+                notification_urls += request.form['notification_urls'].strip().splitlines()
 
         if not notification_urls:
             logger.debug("Test notification - Trying by group/tag in the edit form if available")
@@ -83,7 +97,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         for n_url in notification_urls:
             if len(n_url.strip()):
                 if not apobj.add(n_url):
-                    return f'Error:  {n_url} is not a valid AppRise URL.'
+                    return make_response(f'Error: {n_url} is not a valid AppRise URL.', 400)
 
         try:
             # use the same as when it is triggered, but then override it with the form test values
