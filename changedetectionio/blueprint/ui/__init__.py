@@ -106,14 +106,14 @@ def _handle_operations(op, uuids, datastore, worker_handler, update_q, queuedWat
         for uuid in uuids:
             watch_check_update.send(watch_uuid=uuid)
 
-def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handler, queuedWatchMetaData, watch_check_update):
+def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handler, queuedWatchMetaData, watch_check_update, notification_q):
     ui_blueprint = Blueprint('ui', __name__, template_folder="templates")
     
     # Register the edit blueprint
     edit_blueprint = construct_edit_blueprint(datastore, update_q, queuedWatchMetaData)
     ui_blueprint.register_blueprint(edit_blueprint)
     
-    # Register the notification blueprint
+    # Register the notification blueprint - mostly used for sending test
     notification_blueprint = construct_notification_blueprint(datastore)
     ui_blueprint.register_blueprint(notification_blueprint)
     

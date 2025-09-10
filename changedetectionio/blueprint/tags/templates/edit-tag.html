@@ -4,6 +4,8 @@
 {% from '_common_fields.html' import render_common_settings_form %}
 <script>
     const notification_base_url="{{url_for('ui.ui_notification.ajax_callback_send_notification_test', mode="group-settings")}}";
+    const notification_test_render_preview_url="{{url_for('ui.ui_notification.ajax_callback_test_render_preview', mode="group-settings", watch_uuid=data.uuid)}}";
+    //alert(notification_test_render_preview_url)
 </script>
 
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
@@ -19,6 +21,8 @@
 
 <script src="{{url_for('static_content', group='js', filename='watch-settings.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='plugins.js')}}" defer></script>
+
 
 <div class="edit-form monospaced-textarea">
 

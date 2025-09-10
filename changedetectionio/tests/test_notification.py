@@ -289,6 +289,20 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
     # test_endpoint - that sends the contents of a file
     # test_notification_endpoint - that takes a POST and writes it to file (test-datastore/notification.txt)
 
+    # Drop in a custom wrapping template
+    with open("test-datastore/notification-wrapper.html", "w" ) as f:
+        f.write("""<html>
+        <body id="notification-wrapper">
+        
+        A change was detected at {{watch_html_link}}
+                        template_params = notification_parameters.copy()
+                template_params['notification_body'] = n_body
+                template_params['notification_url_current'] = url
+                n_body = jinja_render(template_str=notification_template, **template_params)
+        </body>
+        """)
+
+
     # CUSTOM JSON BODY CHECK for POST://
     set_original_response()
     # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#header-manipulation

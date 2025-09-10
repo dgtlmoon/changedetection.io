@@ -642,8 +642,10 @@ class model(watch_base):
 
     def extra_notification_token_placeholder_info(self):
         # Used for providing extra tokens
-        # return [('widget', "Get widget amounts")]
-        return []
+        values = []
+        values.append(('watch_html_link', "Link to URL as <a href>"))
+        values.append(('watch_url_raw', "Raw URL/link before any jinja2 macro"))
+        return values
 
 
     def extract_regex_from_all_history(self, regex):
