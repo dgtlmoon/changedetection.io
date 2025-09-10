@@ -1,6 +1,6 @@
 {
-    "name": "",
-    "short_name": "",
+    "name": "changedetection.io",
+    "short_name": "changedetection",
     "icons": [
         {
             "src": "android-chrome-192x192.png",
@@ -15,5 +15,8 @@
     ],
     "theme_color": "#ffffff",
     "background_color": "#ffffff",
-    "display": "standalone"
+    "display": "standalone",
+    "start_url": "/",
+    "scope": "/",
+    "gcm_sender_id": "103953800507"
 }
