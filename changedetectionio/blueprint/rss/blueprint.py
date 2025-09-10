@@ -108,9 +108,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
                 fe.link(link=diff_link)
 
-                # @todo watch should be a getter - watch.get('title') (internally if URL else..)
+                # Same logic as watch-overview.html
+                if datastore.data['settings']['application']['ui'].get('use_page_title_in_list') or watch.get('use_page_title_in_list'):
+                    watch_label = watch.label
+                else:
+                    watch_label = watch.get('url')
 
-                fe.title(title=watch.label)
+                fe.title(title=watch_label)
                 try:
 
                     html_diff = diff.render_diff(previous_version_file_contents=watch.get_history_snapshot(dates[-2]),
@@ -126,7 +130,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 # @todo User could decide if <link> goes to the diff page, or to the watch link
                 rss_template = "<html><body>\n<h4><a href=\"{{watch_url}}\">{{watch_title}}</a></h4>\n<p>{{html_diff}}</p>\n</body></html>\n"
 
-                content = jinja_render(template_str=rss_template, watch_title=watch_title, html_diff=html_diff, watch_url=watch.link)
+                content = jinja_render(template_str=rss_template, watch_title=watch_label, html_diff=html_diff, watch_url=watch.link)
 
                 # Out of range chars could also break feedgen
                 if scan_invalid_chars_in_rss(content):
