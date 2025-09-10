@@ -1,0 +1,115 @@
+
+// Ternary radio button group component
+.ternary-radio-group {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--color-grey-750);
+  border-radius: 4px;
+  overflow: hidden;
+  width: fit-content;
+  background: var(--color-background);
+
+  .ternary-radio-option {
+    position: relative;
+    cursor: pointer;
+    margin: 0;
+    display: flex;
+    align-items: center;
+
+    input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .ternary-radio-label {
+      padding: 8px 16px;
+      background: var(--color-grey-900);
+      border: none;
+      border-right: 1px solid var(--color-grey-750);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text);
+      transition: all 0.2s ease;
+      cursor: pointer;
+      display: block;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    &:last-child .ternary-radio-label {
+      border-right: none;
+    }
+
+    input:checked + .ternary-radio-label {
+      background: var(--color-link);
+      color: var(--color-text-button);
+      font-weight: 600;
+
+      &.ternary-default {
+        background: var(--color-grey-600);
+        color: var(--color-text-button);
+      }
+
+      &:hover {
+        background: #1a7bc4;
+
+        &.ternary-default {
+          background: var(--color-grey-500);
+        }
+      }
+    }
+
+    &:hover .ternary-radio-label {
+      background: var(--color-grey-800);
+    }
+  }
+
+  @media (max-width: 480px) {
+    width: 100%;
+
+    .ternary-radio-label {
+      flex: 1;
+      min-width: auto;
+    }
+  }
+}
+
+// Standard radio button styling
+input[type="radio"].pure-radio:checked + label,
+input[type="radio"].pure-radio:checked {
+  background: var(--color-link);
+  color: var(--color-text-button);
+}
+
+html[data-darkmode="true"] {
+  .ternary-radio-group {
+    .ternary-radio-option {
+      .ternary-radio-label {
+        background: var(--color-grey-350);
+      }
+
+      &:hover .ternary-radio-label {
+        background: var(--color-grey-400);
+      }
+
+      input:checked + .ternary-radio-label {
+        background: var(--color-link);
+        color: var(--color-text-button);
+
+        &.ternary-default {
+          background: var(--color-grey-600);
+        }
+
+        &:hover {
+          background: #1a7bc4;
+
+          &.ternary-default {
+            background: var(--color-grey-500);
+          }
+        }
+      }
+    }
+  }
+}
