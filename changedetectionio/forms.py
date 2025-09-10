@@ -628,7 +628,7 @@ class processor_text_json_diff_form(commonSettingsForm):
 
     conditions_match_logic = RadioField(u'Match', choices=[('ALL', 'Match all of the following'),('ANY', 'Match any of the following')], default='ALL')
     conditions = FieldList(FormField(ConditionFormRow), min_entries=1)  # Add rule logic here
-
+    use_page_title_in_list = TernaryNoneBooleanField('Use page <title> in list', default=None)
 
     def extra_tab_content(self):
         return None
