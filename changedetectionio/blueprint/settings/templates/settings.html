@@ -195,21 +195,12 @@ nav
            </div>
 
             <div class="tab-pane-inner" id="api">
-                <h4>API Access</h4>
-                <p>Drive your changedetection.io via API, More about <a href="https://changedetection.io/docs/api_v1/index.html">API access and examples here</a>.</p>
+                <p>
+                    <strong>Chrome extension and API Access</strong><br>
+                </p>
 
-                <div class="pure-control-group">
-                    {{ render_checkbox_field(form.application.form.api_access_token_enabled) }}
-                    <div class="pure-form-message-inline">Restrict API access limit by using <code>x-api-key</code> header - required for the Chrome Extension to work</div><br>
-                    <div class="pure-form-message-inline"><br>API Key <span id="api-key">{{api_key}}</span>
-                        <span style="display:none;" id="api-key-copy" >copy</span>
-                    </div>
-                </div>
-                <div class="pure-control-group">
-                    <a href="{{url_for('settings.settings_reset_api_key')}}" class="pure-button button-small button-cancel">Regenerate API key</a>
-                </div>
-                <div class="pure-control-group">
-                    <h4>Chrome Extension</h4>
+                <div class="pure-control-group border-fieldset">
+                    <strong>Chrome Extension</strong><br>
                     <p>Easily add any web-page to your changedetection.io installation from within Chrome.</p>
                     <strong>Step 1</strong> Install the extension, <strong>Step 2</strong> Navigate to this page,
                     <strong>Step 3</strong> Open the extension from the toolbar and click "<i>Sync API Access</i>"
@@ -222,6 +213,20 @@ nav
                         </a>
                     </p>
                 </div>
+                <div class="pure-control-group  border-fieldset">
+                    Drive your changedetection.io via API, More about <a href="https://changedetection.io/docs/api_v1/index.html">API access and examples here</a>.<br>
+                    <p>
+                        {{ render_checkbox_field(form.application.form.api_access_token_enabled) }}
+                    </p>
+                    <div class="pure-form-message-inline">Restrict API access limit by using <code>x-api-key</code> header - required for the Chrome Extension to work</div><br>
+                    <div class="pure-form-message-inline"><br>API Key <span id="api-key">{{api_key}}</span>
+                        <span style="display:none;" id="api-key-copy" >copy</span>
+                    </div>
+                    <p>
+                        <a href="{{url_for('settings.settings_reset_api_key')}}" class="pure-button button-small button-cancel">Regenerate API key</a>
+                    </p>
+                </div>
+
             </div>
             <div class="tab-pane-inner" id="timedate">
                 <div class="pure-control-group">
