@@ -264,7 +264,7 @@ Math: {{ 1 + 1 }}") }}
             <div class="tab-pane-inner" id="notifications">
                 <fieldset>
                     <div  class="pure-control-group inline-radio">
-                      {{ render_ternary_field(form.notification_muted) }}
+                      {{ render_ternary_field(form.notification_muted, BooleanField=true) }}
                     </div>
                     {% if watch_needs_selenium_or_playwright %}
                     <div class="pure-control-group inline-radio">
