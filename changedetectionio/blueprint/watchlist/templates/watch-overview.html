@@ -120,7 +120,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 {%- set checking_now = is_checking_now(watch) -%}
                 {%- set history_n = watch.history_n -%}
                 {%- set favicon = watch.get_favicon_filename() -%}
-                {#  Mirror in changedetectionio/static/js/realtime.js for the frontend #}
+                {%- set system_use_url_watchlist = datastore.data['settings']['application']['ui'].get('use_page_title_in_list')  -%}
+                {#  Class settings mirrored in changedetectionio/static/js/realtime.js for the frontend #}
                 {%- set row_classes = [
                     loop.cycle('pure-table-odd', 'pure-table-even'),
                     'processor-' ~ watch['processor'],
@@ -135,7 +136,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     'checking-now' if checking_now else '',
                     'notification_muted' if watch.notification_muted else '',
                     'single-history' if history_n == 1 else '',
-                    'multiple-history' if history_n >= 2 else '',                    
+                    'multiple-history' if history_n >= 2 else '',
+                    'use-html-title' if system_use_url_watchlist else 'no-html-title',
                 ] -%}
             <tr id="{{ watch.uuid }}" data-watch-uuid="{{ watch.uuid }}" class="{{ row_classes | reject('equalto', '') | join(' ') }}">
                 <td class="inline checkbox-uuid" ><div><input name="uuids"  type="checkbox" value="{{ watch.uuid}} " > <span class="counter-i">{{ loop.index+pagination.skip }}</span></div></td>
@@ -157,7 +159,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     {%  endif %}
                         <div>
                         <span class="watch-title">
-                            {{watch.title if watch.title is not none and watch.title|length > 0 else watch.url}}&nbsp;<a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">&nbsp;</a>
+                            {% if system_use_url_watchlist or watch.get('use_page_title_in_list') %}
+                                {{watch.label}}
+                            {% else %}
+                                {{watch.url}}
+                            {% endif %}
+                           <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">&nbsp;</a>
                         </span>
                             <div class="error-text" style="display:none;">{{ watch.compile_error_texts(has_proxies=datastore.proxy_list) }}</div>
                             {%- if watch['processor'] == 'text_json_diff'  -%}

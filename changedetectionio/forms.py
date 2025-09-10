@@ -28,6 +28,8 @@ from wtforms.validators import ValidationError
 
 from validators.url import url as url_validator
 
+from changedetectionio.widgets import TernaryNoneBooleanField
+
 
 # default
 # each select <option data-enabled="enabled-0-0"
@@ -548,7 +550,6 @@ class commonSettingsForm(Form):
         self.notification_title.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
         self.notification_urls.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
 
-    extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
     fetch_backend = RadioField(u'Fetch Method', choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     notification_body = TextAreaField('Notification Body', default='{{ watch_url }} had a change.', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_format = SelectField('Notification format', choices=valid_notification_formats.keys())
@@ -616,18 +617,18 @@ class processor_text_json_diff_form(commonSettingsForm):
     text_should_not_be_present = StringListField('Block change-detection while text matches', [validators.Optional(), ValidateListRegex()])
     webdriver_js_execute_code = TextAreaField('Execute JavaScript before change detection', render_kw={"rows": "5"}, validators=[validators.Optional()])
 
-    save_button = SubmitField('Save', render_kw={"class": "pure-button button-small pure-button-primary"})
+    save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
 
     proxy = RadioField('Proxy')
+    # filter_failure_notification_send @todo make ternary
     filter_failure_notification_send = BooleanField(
         'Send a notification when the filter can no longer be found on the page', default=False)
-
-    notification_muted = BooleanField('Notifications Muted / Off', default=False)
+    notification_muted = TernaryNoneBooleanField('Notifications', default=None, yes_text="Muted", no_text="On")
     notification_screenshot = BooleanField('Attach screenshot to notification (where possible)', default=False)
 
     conditions_match_logic = RadioField(u'Match', choices=[('ALL', 'Match all of the following'),('ANY', 'Match any of the following')], default='ALL')
     conditions = FieldList(FormField(ConditionFormRow), min_entries=1)  # Add rule logic here
-
+    use_page_title_in_list = TernaryNoneBooleanField('Use page <title> in list', default=None)
 
     def extra_tab_content(self):
         return None
@@ -755,6 +756,7 @@ class globalSettingsApplicationUIForm(Form):
     open_diff_in_new_tab = BooleanField("Open 'History' page in a new tab", default=True, validators=[validators.Optional()])
     socket_io_enabled = BooleanField('Realtime UI Updates Enabled', default=True, validators=[validators.Optional()])
     favicons_enabled = BooleanField('Favicons Enabled', default=True, validators=[validators.Optional()])
+    use_page_title_in_list = BooleanField('Use page <title> in watch overview list') #BooleanField=True
 
 # datastore.data['settings']['application']..
 class globalSettingsApplicationForm(commonSettingsForm):
@@ -779,7 +781,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
 
     removepassword_button = SubmitField('Remove password', render_kw={"class": "pure-button pure-button-primary"})
     render_anchor_tag_content = BooleanField('Render anchor tag content', default=False)
-    shared_diff_access = BooleanField('Allow access to view diff page when password is enabled', default=False, validators=[validators.Optional()])
+    shared_diff_access = BooleanField('Allow anonymous access to watch history page when password is enabled', default=False, validators=[validators.Optional()])
     rss_hide_muted_watches = BooleanField('Hide muted watches from RSS feed', default=True,
                                       validators=[validators.Optional()])
     filter_failure_notification_threshold_attempts = IntegerField('Number of times the filter can be missing before sending a notification',
@@ -801,7 +803,7 @@ class globalSettingsForm(Form):
 
     requests = FormField(globalSettingsRequestForm)
     application = FormField(globalSettingsApplicationForm)
-    save_button = SubmitField('Save', render_kw={"class": "pure-button button-small pure-button-primary"})
+    save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
 
 
 class extractDataForm(Form):

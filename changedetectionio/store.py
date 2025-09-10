@@ -262,11 +262,6 @@ class ChangeDetectionStore:
         extras = deepcopy(self.data['watching'][uuid])
         new_uuid = self.add_watch(url=url, extras=extras)
         watch = self.data['watching'][new_uuid]
-
-        if self.data['settings']['application'].get('extract_title_as_title') or watch['extract_title_as_title']:
-            # Because it will be recalculated on the next fetch
-            self.data['watching'][new_uuid]['title'] = None
-
         return new_uuid
 
     def url_exists(self, url):
@@ -308,7 +303,6 @@ class ChangeDetectionStore:
                     'browser_steps',
                     'css_filter',
                     'extract_text',
-                    'extract_title_as_title',
                     'headers',
                     'ignore_text',
                     'include_filters',
@@ -323,6 +317,7 @@ class ChangeDetectionStore:
                     'title',
                     'trigger_text',
                     'url',
+                    'use_page_title_in_list',
                     'webdriver_js_execute_code',
                 ]:
                     if res.get(k):
@@ -972,6 +967,16 @@ class ChangeDetectionStore:
                         logger.debug(f"Compressing {str(json_path)} to {str(deflate_path)}..")
                         f_d.write(zlib.compress(f_j.read()))
                         os.unlink(json_path)
+
+    def update_20(self):
+        for uuid, watch in self.data['watching'].items():
+            if self.data['watching'][uuid].get('extract_title_as_title'):
+                self.data['watching'][uuid]['use_page_title_in_list'] = self.data['watching'][uuid].get('extract_title_as_title')
+                del self.data['watching'][uuid]['extract_title_as_title']
+
+        if self.data['settings']['application'].get('extract_title_as_title'):
+            self.data['settings']['application']['ui']['use_page_title_in_list'] = self.data['settings']['application'].get('extract_title_as_title')
+
 
     def add_notification_url(self, notification_url):
         
