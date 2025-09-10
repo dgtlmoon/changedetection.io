@@ -20,7 +20,7 @@
 @use "parts/lister_extra";
 @use "parts/socket";
 @use "parts/visualselector";
-
+@use "parts/widgets";
 
 body {
   color: var(--color-text);

@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, playwright_warning, only_playwright_type_watches_warning, render_conditions_fieldlist_of_formfields_as_table %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, playwright_warning, only_playwright_type_watches_warning, render_conditions_fieldlist_of_formfields_as_table, render_ternary_field %}
 {% from '_common_fields.html' import render_common_settings_form %}
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='vis.js')}}" defer></script>
@@ -72,15 +72,16 @@
                         <div class="pure-form-message">Some sites use JavaScript to create the content, for this you should <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">use the Chrome/WebDriver Fetcher</a></div>
                         <div class="pure-form-message">Variables are supported in the URL (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Handling-variables-in-the-watched-URL">help and examples here</a>).</div>
                     </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.tags) }}
+                        <span class="pure-form-message-inline">Organisational tag/group name used in the main listing page</span>
+                    </div>
                     <div class="pure-control-group inline-radio">
                         {{ render_field(form.processor) }}
                     </div>
                     <div class="pure-control-group">
-                        {{ render_field(form.title, class="m-d") }}
-                    </div>
-                    <div class="pure-control-group">
-                        {{ render_field(form.tags) }}
-                        <span class="pure-form-message-inline">Organisational tag/group name used in the main listing page</span>
+                        {{ render_field(form.title, class="m-d", placeholder=watch.label) }}
+                        <span class="pure-form-message-inline">Automatically uses the page title if found, you can also use your own title/description here</span>
                     </div>
                     <div class="pure-control-group time-between-check border-fieldset">
 
@@ -101,14 +102,15 @@
                         </div>
 <br>
               </div>
-                    <div class="pure-control-group">
-                        {{ render_checkbox_field(form.extract_title_as_title) }}
-                    </div>
+
                     <div class="pure-control-group">
                         {{ render_checkbox_field(form.filter_failure_notification_send) }}
                         <span class="pure-form-message-inline">
                          Sends a notification when the filter can no longer be seen on the page, good for knowing when the page changed and your filter will not work anymore.
                         </span>
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_ternary_field(form.use_page_title_in_list) }}
                     </div>
                 </fieldset>
             </div>
@@ -262,7 +264,7 @@ Math: {{ 1 + 1 }}") }}
             <div class="tab-pane-inner" id="notifications">
                 <fieldset>
                     <div  class="pure-control-group inline-radio">
-                      {{ render_checkbox_field(form.notification_muted) }}
+                      {{ render_ternary_field(form.notification_muted, BooleanField=true) }}
                     </div>
                     {% if watch_needs_selenium_or_playwright %}
                     <div class="pure-control-group inline-radio">
@@ -469,11 +471,11 @@ Math: {{ 1 + 1 }}") }}
                 <div class="pure-control-group">
                     {{ render_button(form.save_button) }}
                     <a href="{{url_for('ui.form_delete', uuid=uuid)}}"
-                       class="pure-button button-small button-error ">Delete</a>
+                       class="pure-button button-error ">Delete</a>
                     {% if watch.history_n %}<a href="{{url_for('ui.clear_watch_history', uuid=uuid)}}"
-                       class="pure-button button-small button-error ">Clear History</a>{% endif %}
+                       class="pure-button button-error">Clear History</a>{% endif %}
                     <a href="{{url_for('ui.form_clone', uuid=uuid)}}"
-                       class="pure-button button-small ">Clone &amp; Edit</a>
+                       class="pure-button">Clone &amp; Edit</a>
                 </div>
             </div>
         </form>
