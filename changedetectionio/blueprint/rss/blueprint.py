@@ -110,8 +110,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
                 # @todo watch should be a getter - watch.get('title') (internally if URL else..)
 
-                watch_title = watch.get('title') if watch.get('title') else watch.get('url')
-                fe.title(title=watch_title)
+                fe.title(title=watch.label)
                 try:
 
                     html_diff = diff.render_diff(previous_version_file_contents=watch.get_history_snapshot(dates[-2]),
