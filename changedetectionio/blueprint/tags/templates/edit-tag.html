@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-{% from '_helpers.html' import render_field, render_checkbox_field, render_button %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_ternary_field %}
 {% from '_common_fields.html' import render_common_settings_form %}
 <script>
     const notification_base_url="{{url_for('ui.ui_notification.ajax_callback_send_notification_test', mode="group-settings")}}";
@@ -68,7 +68,7 @@
             <div class="tab-pane-inner" id="notifications">
                 <fieldset>
                     <div  class="pure-control-group inline-radio">
-                      {{ render_checkbox_field(form.notification_muted) }}
+                      {{ render_ternary_field(form.notification_muted, BooleanField=True) }}
                     </div>
                     {% if 1 %}
                     <div class="pure-control-group inline-radio">

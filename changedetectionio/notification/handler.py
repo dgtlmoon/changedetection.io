@@ -283,7 +283,7 @@ def create_notification_parameters(n_object, datastore):
     uuid = n_object['uuid'] if 'uuid' in n_object else ''
 
     if uuid:
-        watch_title = datastore.data['watching'][uuid].get('title', '')
+        watch_title = datastore.data['watching'][uuid].label
         tag_list = []
         tags = datastore.get_all_tags_for_watch(uuid)
         if tags:

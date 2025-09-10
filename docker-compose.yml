@@ -84,6 +84,7 @@ services:
 
   
       # Comment out ports: when using behind a reverse proxy , enable networks: etc.
+      # Mac users! Use "127.0.0.1:5050:5000" (port 5050) so theres no conflict with Airplay etc. (https://github.com/dgtlmoon/changedetection.io/issues/3401)
       ports:
         - 127.0.0.1:5000:5000
       restart: unless-stopped

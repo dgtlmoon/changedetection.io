@@ -51,6 +51,7 @@ $(document).ready(function () {
         $('#notification_body').val('');
         $('#notification_format').val('System default');
         $('#notification_urls').val('');
+        $('#notification_muted_none').prop('checked', true); // in the case of a ternary field
         e.preventDefault();
     });
     $("#notification-token-toggle").click(function (e) {

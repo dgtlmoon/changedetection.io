@@ -169,8 +169,8 @@ class model(watch_base):
 
     @property
     def label(self):
-        # Used for sorting
-        return self.get('title') if self.get('title') else self.get('url')
+        # Used for sorting, display, etc
+        return self.get('title') or self.get('page_title') or self.get('url')
 
     @property
     def last_changed(self):
