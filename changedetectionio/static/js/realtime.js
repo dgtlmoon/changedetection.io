@@ -157,6 +157,11 @@ $(document).ready(function () {
                 $('#post-list-with-errors').toggleClass("has-error", general_stats.count_errors !== 0)
                 $('#post-list-with-errors a').text(`With errors (${ general_stats.count_errors })`);
 
+                // Update unread counter after all UI updates
+                if (typeof window.updateUnreadCounter === 'function') {
+                    window.updateUnreadCounter();
+                }
+
                 $('body').toggleClass('checking-now', watch.checking_now && window.location.href.includes(watch.uuid));
             });
 

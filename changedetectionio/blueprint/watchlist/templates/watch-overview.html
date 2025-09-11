@@ -253,7 +253,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </li>
         {%-  endif -%}
             <li id="post-list-unread" class="{%- if has_unviewed -%}has-unviewed{%- endif -%}" style="display: none;" >
-                <a href="{{url_for('watchlist.index', unread=1, tag=request.args.get('tag')) }}" class="pure-button button-tag">Unread</a>
+                <a href="{{url_for('watchlist.index', unread=1, tag=request.args.get('tag')) }}" class="pure-button button-tag" id="unread-button">Unread</a>
             </li>
             <li>
                <a href="{{ url_for('ui.form_watch_checknow', tag=active_tag_uuid, with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag" id="recheck-all">Recheck
