@@ -1,7 +1,31 @@
 $(function () {
+    // Count unread items and update button text
+    function updateUnreadCounter() {
+        const unreadCount = $('.watch-table tr.unviewed').length;
+        const formattedCount = unreadCount.toLocaleString();
+        
+        // Update the unread button text
+        const $unreadButton = $('#post-list-unread a');
+        if (unreadCount > 0) {
+            $unreadButton.text(`Unread (${formattedCount})`);
+            $('#post-list-unread').addClass('has-unviewed').show();
+        } else {
+            $unreadButton.text('Unread');
+            $('#post-list-unread').removeClass('has-unviewed').hide();
+        }
+    }
+
+    // Make updateUnreadCounter globally available for realtime.js
+    window.updateUnreadCounter = updateUnreadCounter;
+
+    // Call on page load
+    updateUnreadCounter();
+
     // Remove unviewed status when normally clicked
     $('.diff-link').click(function () {
         $(this).closest('.unviewed').removeClass('unviewed');
+        // Update counter after class is removed
+        setTimeout(updateUnreadCounter, 100);
     });
 
     $('td[data-timestamp]').each(function () {
@@ -20,6 +44,8 @@ $(function () {
     $('.history-link').click(function (e) {
         // Incase they click 'back' in the browser, it should be removed.
         $(this).closest('tr').removeClass('unviewed');
+        // Update counter after class is removed
+        setTimeout(updateUnreadCounter, 100);
     });
 
     $('.with-share-link > *').click(function () {
