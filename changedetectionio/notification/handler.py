@@ -14,7 +14,8 @@ def _populate_notification_tokens(n_object, datastore):
     """
     from changedetectionio import diff
     from changedetectionio.notification import default_notification_format_for_watch
-    
+    from markupsafe import escape
+
     watch_uuid = n_object.get('uuid')
     if not watch_uuid:
         return
@@ -34,7 +35,7 @@ def _populate_notification_tokens(n_object, datastore):
 
     # Add text that was triggered
     if len(dates):
-        snapshot_contents = watch.get_history_snapshot(dates[-1])
+        snapshot_contents = str(escape(watch.get_history_snapshot(dates[-1])))
     else:
         snapshot_contents = "No snapshot/history available, the watch should fetch atleast once."
 
@@ -65,11 +66,11 @@ def _populate_notification_tokens(n_object, datastore):
 
     # Could be called as a 'test notification' with only 1 snapshot available
     prev_snapshot = "Example text: example test\nExample text: change detection is cool\nExample text: some more examples\n"
-    current_snapshot = "Example text: example test\nExample text: change detection is fantastic\nExample text: even more examples\nExample text: a lot more examples"
+    current_snapshot = "Example text: example test\nExample text: More than 1 watch change needs to exist to build a nice preview!"
 
     if len(dates) > 1:
-        prev_snapshot = watch.get_history_snapshot(dates[-2])
-        current_snapshot = watch.get_history_snapshot(dates[-1])
+        prev_snapshot = str(escape(watch.get_history_snapshot(dates[-2])))
+        current_snapshot = str(escape(watch.get_history_snapshot(dates[-1])))
 
     if watch:
         v = {'url': watch.get('url'), 'label': watch.label}
