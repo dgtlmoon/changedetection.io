@@ -84,6 +84,10 @@ EXPOSE 5000
 
 # The actual flask app module
 COPY changedetectionio /app/changedetectionio
+
+# Also for OpenAPI validation wrapper - needs the YML
+COPY docs /app/docs
+
 # Starting wrapper
 COPY changedetection.py /app/changedetection.py
 
