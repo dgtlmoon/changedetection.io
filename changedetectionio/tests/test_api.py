@@ -396,7 +396,7 @@ def test_api_import(client, live_server, measure_memory_usage):
     res = client.post(
         url_for("import") + "?tag=import-test",
         data='https://website1.com\r\nhttps://website2.com',
-        headers={'x-api-key': api_key},
+        headers={'x-api-key': api_key, 'content-type': 'text/plain'},
         follow_redirects=True
     )
 

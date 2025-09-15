@@ -47,16 +47,20 @@ def validate_openapi_request(operation_id):
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
             try:
-                spec = get_openapi_spec()
-                openapi_request = FlaskOpenAPIRequest(request)
-                result = spec.unmarshal_request(openapi_request)
-                if result.errors:
-                    from flask import jsonify
-                    from werkzeug.exceptions import BadRequest
-                    error_details = []
-                    for error in result.errors:
-                        error_details.append(str(error))
-                    raise BadRequest(f"OpenAPI validation failed: {error_details}")
+                # Skip OpenAPI validation for GET requests since they don't have request bodies
+                if request.method.upper() != 'GET':
+                    spec = get_openapi_spec()
+                    openapi_request = FlaskOpenAPIRequest(request)
+                    result = spec.unmarshal_request(openapi_request)
+                    if result.errors:
+                        from werkzeug.exceptions import BadRequest
+                        error_details = []
+                        for error in result.errors:
+                            error_details.append(str(error))
+                        raise BadRequest(f"OpenAPI validation failed: {error_details}")
+            except BadRequest:
+                # Re-raise BadRequest exceptions (validation failures)
+                raise
             except Exception as e:
                 # If OpenAPI spec loading fails, log but don't break existing functionality
                 logger.critical(f"OpenAPI validation warning for {operation_id}: {e}")
