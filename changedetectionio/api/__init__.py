@@ -2,6 +2,7 @@ import copy
 import yaml
 import functools
 from flask import request, abort
+from loguru import logger
 from openapi_core import OpenAPI
 from openapi_core.contrib.flask import FlaskOpenAPIRequest
 from . import api_schema
@@ -58,8 +59,8 @@ def validate_openapi_request(operation_id):
                 return f(*args, **kwargs)
             except Exception as e:
                 # If OpenAPI validation fails, log but don't break existing functionality
-                print(f"OpenAPI validation warning for {operation_id}: {e}")
-                return f(*args, **kwargs)
+                logger.critical(f"OpenAPI validation warning for {operation_id}: {e}")
+                abort(500, message=f"Application error while validating OpenAPI request")
         return wrapper
     return decorator
 
@@ -69,3 +70,4 @@ from .Tags import Tags, Tag
 from .Import import Import
 from .SystemInfo import SystemInfo
 from .Notifications import Notifications
+
