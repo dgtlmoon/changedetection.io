@@ -1,7 +1,7 @@
 import pluggy
 import os
 import importlib
-import sys
+from loguru import logger
 from . import default_plugin
 
 # ✅ Ensure that the namespace in HookspecMarker matches PluginManager
