@@ -2,6 +2,7 @@ import copy
 import yaml
 import functools
 from flask import request, abort
+from loguru import logger
 from openapi_core import OpenAPI
 from openapi_core.contrib.flask import FlaskOpenAPIRequest
 from . import api_schema
@@ -31,17 +32,13 @@ schema_create_notification_urls['required'] = ['notification_urls']
 schema_delete_notification_urls = copy.deepcopy(schema_notification_urls)
 schema_delete_notification_urls['required'] = ['notification_urls']
 
-# Load OpenAPI spec for validation
-_openapi_spec = None
-
+@functools.cache
 def get_openapi_spec():
-    global _openapi_spec
-    if _openapi_spec is None:
-        import os
-        spec_path = os.path.join(os.path.dirname(__file__), '../../docs/api-spec.yaml')
-        with open(spec_path, 'r') as f:
-            spec_dict = yaml.safe_load(f)
-        _openapi_spec = OpenAPI.from_dict(spec_dict)
+    import os
+    spec_path = os.path.join(os.path.dirname(__file__), '../../docs/api-spec.yaml')
+    with open(spec_path, 'r') as f:
+        spec_dict = yaml.safe_load(f)
+    _openapi_spec = OpenAPI.from_dict(spec_dict)
     return _openapi_spec
 
 def validate_openapi_request(operation_id):
@@ -50,16 +47,25 @@ def validate_openapi_request(operation_id):
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
             try:
-                spec = get_openapi_spec()
-                openapi_request = FlaskOpenAPIRequest(request)
-                result = spec.unmarshal_request(openapi_request)
-                if result.errors:
-                    abort(400, message=f"OpenAPI validation failed: {result.errors}")
-                return f(*args, **kwargs)
+                # Skip OpenAPI validation for GET requests since they don't have request bodies
+                if request.method.upper() != 'GET':
+                    spec = get_openapi_spec()
+                    openapi_request = FlaskOpenAPIRequest(request)
+                    result = spec.unmarshal_request(openapi_request)
+                    if result.errors:
+                        from werkzeug.exceptions import BadRequest
+                        error_details = []
+                        for error in result.errors:
+                            error_details.append(str(error))
+                        raise BadRequest(f"OpenAPI validation failed: {error_details}")
+            except BadRequest:
+                # Re-raise BadRequest exceptions (validation failures)
+                raise
             except Exception as e:
-                # If OpenAPI validation fails, log but don't break existing functionality
-                print(f"OpenAPI validation warning for {operation_id}: {e}")
-                return f(*args, **kwargs)
+                # If OpenAPI spec loading fails, log but don't break existing functionality
+                logger.critical(f"OpenAPI validation warning for {operation_id}: {e}")
+                abort(500)
+            return f(*args, **kwargs)
         return wrapper
     return decorator
 
@@ -69,3 +75,4 @@ from .Tags import Tags, Tag
 from .Import import Import
 from .SystemInfo import SystemInfo
 from .Notifications import Notifications
+
