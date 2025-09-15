@@ -33,7 +33,6 @@ venv/
 # Test and development files
 test-datastore/
 tests/
-docs/
 *.md
 !README.md
 
