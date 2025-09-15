@@ -51,12 +51,17 @@ def validate_openapi_request(operation_id):
                 openapi_request = FlaskOpenAPIRequest(request)
                 result = spec.unmarshal_request(openapi_request)
                 if result.errors:
-                    abort(400, message=f"OpenAPI validation failed: {result.errors}")
-                return f(*args, **kwargs)
+                    from flask import jsonify
+                    from werkzeug.exceptions import BadRequest
+                    error_details = []
+                    for error in result.errors:
+                        error_details.append(str(error))
+                    raise BadRequest(f"OpenAPI validation failed: {error_details}")
             except Exception as e:
-                # If OpenAPI validation fails, log but don't break existing functionality
+                # If OpenAPI spec loading fails, log but don't break existing functionality
                 logger.critical(f"OpenAPI validation warning for {operation_id}: {e}")
                 abort(500)
+            return f(*args, **kwargs)
         return wrapper
     return decorator
 
