@@ -32,17 +32,13 @@ schema_create_notification_urls['required'] = ['notification_urls']
 schema_delete_notification_urls = copy.deepcopy(schema_notification_urls)
 schema_delete_notification_urls['required'] = ['notification_urls']
 
-# Load OpenAPI spec for validation
-_openapi_spec = None
-
+@functools.cache
 def get_openapi_spec():
-    global _openapi_spec
-    if _openapi_spec is None:
-        import os
-        spec_path = os.path.join(os.path.dirname(__file__), '../../docs/api-spec.yaml')
-        with open(spec_path, 'r') as f:
-            spec_dict = yaml.safe_load(f)
-        _openapi_spec = OpenAPI.from_dict(spec_dict)
+    import os
+    spec_path = os.path.join(os.path.dirname(__file__), '../../docs/api-spec.yaml')
+    with open(spec_path, 'r') as f:
+        spec_dict = yaml.safe_load(f)
+    _openapi_spec = OpenAPI.from_dict(spec_dict)
     return _openapi_spec
 
 def validate_openapi_request(operation_id):
@@ -60,7 +56,7 @@ def validate_openapi_request(operation_id):
             except Exception as e:
                 # If OpenAPI validation fails, log but don't break existing functionality
                 logger.critical(f"OpenAPI validation warning for {operation_id}: {e}")
-                abort(500, message=f"Application error while validating OpenAPI request")
+                abort(500)
         return wrapper
     return decorator
 
