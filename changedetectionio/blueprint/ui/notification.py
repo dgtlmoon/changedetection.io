@@ -79,6 +79,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         if not notification_urls:
             logger.debug("Test notification - Trying by group/tag in the edit form if available")
+            # @todo this logic is not clear, omegaconf?
             # On an edit page, we should also fire off to the tags if they have notifications
             if request.form.get('tags') and request.form['tags'].strip():
                 for k in request.form['tags'].split(','):
@@ -92,7 +93,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 notification_urls = datastore.data['settings']['application']['notification_urls']
 
         if not notification_urls:
-            return 'Error: No Notification URLs set/found'
+            return make_response("Error: No Notification URLs set/found.", 400)
 
         for n_url in notification_urls:
             if len(n_url.strip()):

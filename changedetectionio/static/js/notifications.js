@@ -50,6 +50,8 @@ $(document).ready(function () {
     function setPreview(data) {
         const iframe = document.getElementById("notification-iframe");
         const isDark = document.documentElement.getAttribute('data-darkmode') === 'true';
+        const isTextFormat = $('select.notification-format').val() === 'Text';
+
         $('#notification-preview-title-text').text(data['title']);
 
         iframe.srcdoc = `
@@ -76,9 +78,15 @@ $(document).ready(function () {
                         color: var(--color-text);
                         padding: 5px;
                     }
+                    body.text-format {
+                        font-family: monospace;
+                        white-space: pre;
+                        overflow-wrap: normal;
+                        overflow-x: auto;
+                    }
             </style>
           </head>
-          <body>${data['body']}</body>
+          <body class="${isTextFormat ? 'text-format' : ''}">${data['body']}</body>
         </html>`;
     }
 

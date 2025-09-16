@@ -45,10 +45,6 @@
                         </div>
                     </div>
                     <div class="pure-control-group">
-                        {{ render_field(form.requests.form.jitter_seconds, class="jitter_seconds") }}
-                        <span class="pure-form-message-inline">Example - 3 seconds random jitter could trigger up to 3 seconds earlier or up to 3 seconds later</span>
-                    </div>
-                    <div class="pure-control-group">
                         {{ render_field(form.application.form.filter_failure_notification_threshold_attempts, class="filter_failure_notification_threshold_attempts") }}
                         <span class="pure-form-message-inline">After this many consecutive times that the CSS/xPath filter is missing, send a notification
                             <br>
@@ -133,6 +129,10 @@
                     {% set worker_info = get_worker_status_info() %}
                     <span class="pure-form-message-inline">Number of concurrent workers to process watches. More workers = faster processing but higher memory usage.<br>
                     Currently running: <strong>{{ worker_info.count }}</strong> operational {{ worker_info.type }} workers{% if worker_info.active_workers > 0 %} ({{ worker_info.active_workers }} actively processing){% endif %}.</span>
+                </div>
+                <div class="pure-control-group">
+                    {{ render_field(form.requests.form.jitter_seconds, class="jitter_seconds") }}
+                    <span class="pure-form-message-inline">Example - 3 seconds random jitter could trigger up to 3 seconds earlier or up to 3 seconds later</span>
                 </div>
                 <div class="pure-control-group inline-radio">
                     {{ render_field(form.requests.form.default_ua) }}

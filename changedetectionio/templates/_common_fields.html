@@ -159,11 +159,15 @@
                                             <span class="pure-form-message-inline">Format for all notifications</span>
                                         </div>
                                     </div>
-                                    <div id="notification-preview" style="display: none;" class="">
+                                    <div id="notification-preview" style="display: none; height:100%; display:flex; flex-direction:column;">
                                         <p><strong>Title: </strong><span id="notification-preview-title-text">Preview loading..</span></p>
-                                        <p><strong>Body: </strong><!-- setPreview in notifications.js sets this safely --->
-                                          <iframe id="notification-iframe" style="width:100%;border-radius: 4px;margin-top:0.5rem; height:95%; border:none;">Preview loading...</iframe>
-                                        </p>
+                                        <div style="flex:1; display:flex; flex-direction:column;">
+                                            <strong>Body: </strong>
+                                            <iframe id="notification-iframe"
+                                                    style="flex:1; height:95%; width:100%; border-radius:4px; margin-top:0.5rem; border:none;">
+                                                Preview loading...
+                                            </iframe>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

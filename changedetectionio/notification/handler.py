@@ -35,7 +35,11 @@ def _populate_notification_tokens(n_object, datastore):
 
     # Add text that was triggered
     if len(dates):
-        snapshot_contents = str(escape(watch.get_history_snapshot(dates[-1])))
+        snapshot_contents = watch.get_history_snapshot(dates[-1])
+
+        if n_object.get('notification_format').lower().startswith('html'):
+            snapshot_contents = str(escape(snapshot_contents))
+
     else:
         snapshot_contents = "No snapshot/history available, the watch should fetch atleast once."
 
@@ -44,18 +48,15 @@ def _populate_notification_tokens(n_object, datastore):
         n_object['notification_format'] = datastore.data['settings']['application'].get('notification_format')
 
     html_colour_enable = False
+    line_feed_sep = "\n"
+
     # HTML needs linebreak, but MarkDown and Text can use a linefeed
-    if n_object.get('notification_format') == 'HTML':
+    if n_object.get('notification_format').lower().startswith('html'):
         line_feed_sep = "<br>"
         # Snapshot will be plaintext on the disk, convert to some kind of HTML
         snapshot_contents = snapshot_contents.replace('\n', line_feed_sep)
-    elif n_object.get('notification_format') == 'HTML Color':
-        line_feed_sep = "<br>"
-        # Snapshot will be plaintext on the disk, convert to some kind of HTML
-        snapshot_contents = snapshot_contents.replace('\n', line_feed_sep)
+    if n_object.get('notification_format') == 'HTML Color':
         html_colour_enable = True
-    else:
-        line_feed_sep = "\n"
 
     triggered_text = ''
     if len(trigger_text):
@@ -69,8 +70,12 @@ def _populate_notification_tokens(n_object, datastore):
     current_snapshot = "Example text: example test\nExample text: More than 1 watch change needs to exist to build a nice preview!"
 
     if len(dates) > 1:
-        prev_snapshot = str(escape(watch.get_history_snapshot(dates[-2])))
-        current_snapshot = str(escape(watch.get_history_snapshot(dates[-1])))
+        prev_snapshot = watch.get_history_snapshot(dates[-2])
+        current_snapshot = watch.get_history_snapshot(dates[-1])
+        if n_object.get('notification_format').lower().startswith('html'):
+            prev_snapshot = str(escape(prev_snapshot))
+            current_snapshot = str(escape(current_snapshot))
+
 
     if watch:
         v = {'url': watch.get('url'), 'label': watch.label}
@@ -182,8 +187,10 @@ def process_notification(n_object, datastore):
 
             # Get the notification body from datastore
             n_body = jinja_render(template_str=n_object.get('notification_body', ''), **notification_parameters)
+            # hmm unsure about this, but why not
             if n_object.get('notification_format', '').startswith('HTML'):
                 n_body = n_body.replace("\n", '<br>')
+
             n_title = jinja_render(template_str=n_object.get('notification_title', ''), **notification_parameters)
 
             n_body_from_file_template = scan_notification_file_templates(url=url,
@@ -238,7 +245,7 @@ def process_notification(n_object, datastore):
                 # Apprise will default to HTML, so we need to override it
                 # So that whats' generated in n_body is in line with what is going to be sent.
                 # https://github.com/caronc/apprise/issues/633#issuecomment-1191449321
-                if not 'format=' in url and (n_format == 'Text' or n_format == 'Markdown'):
+                if not 'format=' in url and (n_format.lower() == 'text' or n_format.lower() == 'markdown'):
                     prefix = '?' if not '?' in url else '&'
                     # Apprise format is lowercase text https://github.com/caronc/apprise/issues/633
                     n_format = n_format.lower()
