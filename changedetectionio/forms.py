@@ -739,7 +739,7 @@ class processor_text_json_diff_form(commonSettingsForm):
 
     time_schedule_limit = FormField(ScheduleLimitForm)
 
-    time_between_check_use_default = BooleanField('Use global settings for time between check', default=False)
+    time_between_check_use_default = BooleanField('Use global settings for time between check and scheduler.', default=False)
 
     include_filters = StringListField('CSS/JSONPath/JQ/XPath Filters', [ValidateCSSJSONXPATHInput()], default='')
 

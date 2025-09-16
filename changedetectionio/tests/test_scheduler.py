@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import time
+from copy import copy
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 from flask import url_for
@@ -44,11 +45,12 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
 
     # Setup all the days of the weeks using XXX as the placeholder for monday/tuesday/etc
-
+    last_check = copy(live_server.app.config['DATASTORE'].data['watching'][uuid]['last_checked'])
     tpl = {
         "time_schedule_limit-XXX-start_time": "00:00",
         "time_schedule_limit-XXX-duration-hours": 24,
         "time_schedule_limit-XXX-duration-minutes": 0,
+        "time_between_check-seconds": 1,
         "time_schedule_limit-XXX-enabled": '',  # All days are turned off
         "time_schedule_limit-enabled": 'y',  # Scheduler is enabled, all days however are off.
     }
@@ -60,14 +62,13 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
             new_key = key.replace("XXX", day)
             scheduler_data[new_key] = value
 
-    last_check = live_server.app.config['DATASTORE'].data['watching'][uuid]['last_checked']
     data = {
         "url": test_url,
         "fetch_backend": "html_requests",
-        "time_between_check_use_default": "y"
+        "time_between_check_use_default": "" # no
     }
     data.update(scheduler_data)
-
+    time.sleep(1)
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
         data=data,
@@ -80,6 +81,7 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
 
     # "Edit" should not trigger a check because it's not enabled in the schedule.
     time.sleep(2)
+    # "time_schedule_limit-XXX-enabled": '',  # All days are turned off, therefor, nothing should happen here..
     assert live_server.app.config['DATASTORE'].data['watching'][uuid]['last_checked'] == last_check
 
     # Enabling today in Kiritimati should work flawless
@@ -219,3 +221,5 @@ def test_validation_time_interval_field(client, live_server, measure_memory_usag
     )
 
     assert REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT.encode('utf-8') not in res.data
+
+
