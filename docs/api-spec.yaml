@@ -188,6 +188,10 @@ components:
             seconds:
               type: integer
           description: Time intervals between checks
+        time_between_check_use_default:
+          type: boolean
+          default: true
+          description: Whether to use global settings for time between checks - defaults to true if not set
         notification_urls:
           type: array
           items:

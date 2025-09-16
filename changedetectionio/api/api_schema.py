@@ -119,6 +119,12 @@ def build_watch_json_schema(d):
 
     schema['properties']['time_between_check'] = build_time_between_check_json_schema()
 
+    schema['properties']['time_between_check_use_default'] = {
+        "type": "boolean",
+        "default": True,
+        "description": "Whether to use global settings for time between checks - defaults to true if not set"
+    }
+
     schema['properties']['browser_steps'] = {
         "anyOf": [
             {

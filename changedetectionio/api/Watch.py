@@ -14,6 +14,35 @@ import copy
 from . import schema, schema_create_watch, schema_update_watch, validate_openapi_request
 
 
+def validate_time_between_check_required(json_data):
+    """
+    Validate that at least one time interval is specified when not using default settings.
+    Returns None if valid, or error message string if invalid.
+    Defaults to using global settings if time_between_check_use_default is not provided.
+    """
+    # Default to using global settings if not specified
+    use_default = json_data.get('time_between_check_use_default', True)
+
+    # If using default settings, no validation needed
+    if use_default:
+        return None
+
+    # Check if time_between_check exists and has at least one non-zero value
+    time_check = json_data.get('time_between_check')
+    if time_check:
+        if any([
+            (time_check.get('weeks') or 0) > 0,
+            (time_check.get('days') or 0) > 0,
+            (time_check.get('hours') or 0) > 0,
+            (time_check.get('minutes') or 0) > 0,
+            (time_check.get('seconds') or 0) > 0
+        ]):
+            return None
+
+    # If we get here, validation failed
+    return "At least one time interval (weeks, days, hours, minutes, or seconds) must be specified when not using global settings."
+
+
 class Watch(Resource):
     def __init__(self, **kwargs):
         # datastore is a black box dependency
@@ -80,6 +109,11 @@ class Watch(Resource):
             plist = self.datastore.proxy_list
             if not request.json.get('proxy') in plist:
                 return "Invalid proxy choice, currently supported proxies are '{}'".format(', '.join(plist)), 400
+
+        # Validate time_between_check when not using defaults
+        validation_error = validate_time_between_check_required(request.json)
+        if validation_error:
+            return validation_error, 400
 
         watch.update(request.json)
 
@@ -195,6 +229,11 @@ class CreateWatch(Resource):
             plist = self.datastore.proxy_list
             if not json_data.get('proxy') in plist:
                 return "Invalid proxy choice, currently supported proxies are '{}'".format(', '.join(plist)), 400
+
+        # Validate time_between_check when not using defaults
+        validation_error = validate_time_between_check_required(json_data)
+        if validation_error:
+            return validation_error, 400
 
         extras = copy.deepcopy(json_data)
 

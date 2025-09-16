@@ -28,7 +28,8 @@ def test_check_watch_field_storage(client, live_server, measure_memory_usage):
                "url": test_url,
                "tags": "woohoo",
                "headers": "curl:foo",
-               'fetch_backend': "html_requests"
+               'fetch_backend': "html_requests",
+               "time_between_check_use_default": "y"
                },
         follow_redirects=True
     )
