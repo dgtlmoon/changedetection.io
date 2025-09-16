@@ -3,6 +3,7 @@
 import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
+from ..notification import default_notification_title, default_notification_body, default_notification_format
 
 
 # def test_setup(client, live_server, measure_memory_usage):
@@ -59,16 +60,16 @@ def test_jinja2_security_url_query(client, live_server, measure_memory_usage):
 
 def test_jinja2_notification(client, live_server, measure_memory_usage):
 
-
     res = client.post(
         url_for("settings.settings_page"),
-        data={"application-notification_urls": 'mailto://localhost@localhhost',
+        data={"application-notification_urls": "posts://127.0.0.1",
               "application-notification_title": "on the {% now  'America/New_York', '%Y-%m-%d' %}",
               "application-notification_body": "on the {% now  'America/New_York', '%Y-%m-%d' %}",
-              "application-notification_format": 'Text', # handler.py should be sure to add &format=text to override default html from apprise
+              "application-notification_format": default_notification_format,
               "requests-time_between_check-minutes": 180,
               'application-fetch_backend': "html_requests"},
         follow_redirects=True
     )
 
+    assert b"Settings updated." in res.data
     assert b"Settings updated." in res.data
