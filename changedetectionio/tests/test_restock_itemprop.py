@@ -155,7 +155,8 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
         "url": test_url,
         "headers": "",
         "time_between_check-hours": 5,
-        'fetch_backend': "html_requests"
+        'fetch_backend': "html_requests",
+        "time_between_check_use_default": "y"
     }
     data.update(extra_watch_edit_form)
     res = client.post(
