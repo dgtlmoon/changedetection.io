@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 from flask import url_for
 from .util import  live_server_setup, wait_for_all_checks, extract_UUID_from_client
+from ..forms import REQUIRE_ATLEAST_ONE_TIME_PART_MESSAGE_DEFAULT, REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT
+
 
 # def test_setup(client, live_server):
    #  live_server_setup(live_server) # Setup on conftest per function
@@ -177,3 +179,43 @@ def test_check_basic_global_scheduler_functionality(client, live_server, measure
     # Cleanup everything
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
+
+
+def test_validation_time_interval_field(client, live_server, measure_memory_usage):
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("imports.import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+
+
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid="first"),
+        data={"trigger_text": 'The golden line',
+              "url": test_url,
+              'fetch_backend': "html_requests",
+              'filter_text_removed': 'y',
+              "time_between_check_use_default": ""
+              },
+        follow_redirects=True
+    )
+
+    assert REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT.encode('utf-8') in res.data
+
+    # Now set atleast something
+
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid="first"),
+        data={"trigger_text": 'The golden line',
+              "url": test_url,
+              'fetch_backend': "html_requests",
+              "time_between_check-minutes": 1,
+              "time_between_check_use_default": ""
+              },
+        follow_redirects=True
+    )
+
+    assert REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT.encode('utf-8') not in res.data
+    

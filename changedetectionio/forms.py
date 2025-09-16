@@ -57,6 +57,8 @@ valid_method = {
 
 default_method = 'GET'
 allow_simplehost = not strtobool(os.getenv('BLOCK_SIMPLEHOSTS', 'False'))
+REQUIRE_ATLEAST_ONE_TIME_PART_MESSAGE_DEFAULT='At least one time interval (weeks, days, hours, minutes, or seconds) must be specified.'
+REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT='At least one time interval (weeks, days, hours, minutes, or seconds) must be specified when not using global settings.'
 
 class StringListField(StringField):
     widget = widgets.TextArea()
@@ -251,8 +253,7 @@ class TimeBetweenCheckForm(Form):
     def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
         super().__init__(formdata, obj, prefix, data, meta, **kwargs)
         self.require_at_least_one = kwargs.get('require_at_least_one', False)
-        self.require_at_least_one_message = kwargs.get('require_at_least_one_message',
-            'At least one time interval (weeks, days, hours, minutes, or seconds) must be specified.')
+        self.require_at_least_one_message = kwargs.get('require_at_least_one_message', REQUIRE_ATLEAST_ONE_TIME_PART_MESSAGE_DEFAULT)
 
     def validate(self, **kwargs):
         """Custom validation that can optionally require at least one time interval."""
@@ -732,7 +733,7 @@ class processor_text_json_diff_form(commonSettingsForm):
     time_between_check = EnhancedFormField(
         TimeBetweenCheckForm,
         conditional_field='time_between_check_use_default',
-        conditional_message='At least one time interval (weeks, days, hours, minutes, or seconds) must be specified when not using global settings.',
+        conditional_message=REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT,
         conditional_test_function=validate_time_between_check_has_values
     )
 
