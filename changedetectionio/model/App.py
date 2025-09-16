@@ -38,6 +38,8 @@ class model(dict):
                     # Custom notification content
                     'api_access_token_enabled': True,
                     'base_url' : None,
+                    'custom_instock_strings': [],
+                    'custom_outofstock_strings' : [],
                     'empty_pages_are_a_change': False,
                     'fetch_backend': getenv("DEFAULT_FETCH_BACKEND", "html_requests"),
                     'filter_failure_notification_threshold_attempts': _FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT,

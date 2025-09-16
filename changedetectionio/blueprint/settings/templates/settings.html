@@ -191,6 +191,14 @@ nav
                         </ul>
                      </span>
                     </fieldset>
+                    <fieldset class="pure-group">
+                        {{ render_field(form.application.form.custom_outofstock_strings) }}
+                        <span class="pure-form-message-inline">Additional custom out-of-stock detection strings (one per line).</span>
+                        </fieldset>
+                        <fieldset class="pure-group">
+                        {{ render_field(form.application.form.custom_instock_strings) }}
+                        <span class="pure-form-message-inline">Additional custom in-stock detection strings (one per line).</span>
+                    </fieldset>
            </div>
 
             <div class="tab-pane-inner" id="api">
