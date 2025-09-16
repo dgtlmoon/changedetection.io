@@ -218,4 +218,3 @@ def test_validation_time_interval_field(client, live_server, measure_memory_usag
     )
 
     assert REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT.encode('utf-8') not in res.data
-    
