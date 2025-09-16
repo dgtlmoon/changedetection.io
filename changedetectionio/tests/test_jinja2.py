@@ -10,7 +10,6 @@ from .util import live_server_setup, wait_for_all_checks
 
 # If there was only a change in the whitespacing, then we shouldnt have a change detected
 def test_jinja2_in_url_query(client, live_server, measure_memory_usage):
-    
 
     # Add our URL to the import page
     test_url = url_for('test_return_query', _external=True)
@@ -56,3 +55,20 @@ def test_jinja2_security_url_query(client, live_server, measure_memory_usage):
     assert b'is invalid and cannot be used' in res.data
     # Some of the spewed output from the subclasses
     assert b'dict_values' not in res.data
+
+
+def test_jinja2_notification(client, live_server, measure_memory_usage):
+
+
+    res = client.post(
+        url_for("settings.settings_page"),
+        data={"application-notification_urls": 'mailto://localhost@localhhost',
+              "application-notification_title": "on the {% now  'America/New_York', '%Y-%m-%d' %}",
+              "application-notification_body": "on the {% now  'America/New_York', '%Y-%m-%d' %}",
+              "application-notification_format": 'Text', # handler.py should be sure to add &format=text to override default html from apprise
+              "requests-time_between_check-minutes": 180,
+              'application-fetch_backend': "html_requests"},
+        follow_redirects=True
+    )
+
+    assert b"Settings updated." in res.data
