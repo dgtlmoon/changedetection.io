@@ -24,11 +24,11 @@
                               </ul>
                             </div>
                             <div class="notifications-wrapper">
-                              <a id="send-test-notification" class="pure-button button-secondary button-xsmall" >Send test notification</a> <div class="spinner"  style="display: none;"></div>
+                              <a id="send-test-notification" class="pure-button button-secondary" >Send test notification</a> <div class="spinner"  style="display: none;"></div>
                             {% if emailprefix %}
-                              <a id="add-email-helper" class="pure-button button-secondary button-xsmall" >Add email <img style="height: 1em; display: inline-block" src="{{url_for('static_content', group='images', filename='email.svg')}}" alt="Add an email address"> </a>
+                              <a id="add-email-helper" class="pure-button button-secondary" >Add email <img style="height: 1em; display: inline-block" src="{{url_for('static_content', group='images', filename='email.svg')}}" alt="Add an email address"> </a>
                             {% endif %}
-                              <a href="{{url_for('settings.notification_logs')}}" class="pure-button button-secondary button-xsmall" >Notification debug logs</a>
+                              <a href="{{url_for('settings.notification_logs')}}" class="pure-button button-secondary " >Notification debug logs</a>
                               <br>
                                 <div id="notification-test-log" style="display: none;"><span class="pure-form-message-inline">Processing..</span></div>
                             </div>
@@ -40,11 +40,10 @@
                                     <div id="notification-setup">
                                         <div class="pure-control-group">
                                             {{ render_field(form.notification_title, class="m-d notification-title", placeholder=settings_application['notification_title']) }}
-                                            <span class="pure-form-message-inline">Title for all notifications</span>
                                         </div>
                                         <div class="pure-control-group">
                                             {{ render_field(form.notification_body , rows=5, class="notification-body", placeholder=settings_application['notification_body']) }}
-                                            <span class="pure-form-message-inline">Body for all notifications &dash; You can use <a
+                                            <span class="pure-form-message-inline">Body for the notification &dash; You can use <a
                                                     target="newwindow"
                                                     href="https://jinja.palletsprojects.com/en/3.0.x/templates/">Jinja2</a> templating in the notification title, body and URL, and tokens from below.
                                             </span>
@@ -160,8 +159,11 @@
                                             <span class="pure-form-message-inline">Format for all notifications</span>
                                         </div>
                                     </div>
-                                    <div id="notification-preview" style="display: none;" class="tab-contents-monospace-preview">
-                                        <iframe id="notification-iframe" style="width:100%; height:100%; border:none;">here goes the preview :-)</iframe>
+                                    <div id="notification-preview" style="display: none;" class="">
+                                        <p><strong>Title: </strong><span id="notification-preview-title-text">Preview loading..</span></p>
+                                        <p><strong>Body: </strong><!-- setPreview in notifications.js sets this safely --->
+                                          <iframe id="notification-iframe" style="width:100%;border-radius: 4px;margin-top:0.5rem; height:95%; border:none;">Preview loading...</iframe>
+                                        </p>
                                     </div>
                                 </div>
                             </div>

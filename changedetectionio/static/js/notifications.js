@@ -1,12 +1,12 @@
 $(document).ready(function () {
 
-
+    // Could be from 'watch' or system settings or other
     function getNotificationData() {
         data = {
-            notification_body: $('#notification_body').val(),
-            notification_format: $('#notification_format').val(),
-            notification_title: $('#notification_title').val(),
-            notification_urls: $('.notification-urls').val(),
+            notification_body: $('textarea.notification-body').val(),
+            notification_format: $('select.notification-format').val(),
+            notification_title: $('input.notification-title').val(),
+            notification_urls: $('textarea.notification-urls').val(),
             tags: $('#tags').val(),
             window_url: window.location.href,
         }
@@ -25,7 +25,7 @@ $(document).ready(function () {
 
     $('#notifications-minitabs').miniTabs({
         "Customise": "#notification-setup",
-        "Preview": "#notification-preview"
+        "Preview": "#notification-preview",
     });
 
     $(document).on('click', '[data-target="#notification-preview"]', function (e) {
@@ -49,17 +49,33 @@ $(document).ready(function () {
 
     function setPreview(data) {
         const iframe = document.getElementById("notification-iframe");
+        const isDark = document.documentElement.getAttribute('data-darkmode') === 'true';
+        $('#notification-preview-title-text').text(data['title']);
+
         iframe.srcdoc = `
-        <html>
-          <head>
+        <html data-darkmode="${isDark}">
+          <head>            
             <style>
-              body {
-                font-family: "Courier New", Courier, monospace;
-                font-size: 70%;
-                word-break: break-word;
-                white-space: pre-wrap;
-                margin: 0;
-              }
+                :root {
+                  --color-white: #fff;
+                  --color-grey-200: #333;
+                  --color-grey-800: #e0e0e0;
+                  --color-black: #000;
+                  --color-dark-red: #a00;
+                  --color-light-red: #dd0000;
+                  --color-background: var(--color-grey-800);
+                  --color-text: var(--color-grey-200);
+                  }
+                  
+                    html[data-darkmode="true"] {
+                      --color-background: var(--color-grey-200);
+                      --color-text: var(--color-white);
+                    }
+                    body { /* no darkmode */
+                        background-color: var(--color-background);
+                        color: var(--color-text);
+                        padding: 5px;
+                    }
             </style>
           </head>
           <body>${data['body']}</body>
