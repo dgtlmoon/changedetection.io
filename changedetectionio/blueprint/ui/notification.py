@@ -109,7 +109,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             }
 
             # Only use if present, if not set in n_object it should use the default system value
-            n_object['notification_format'] = request.form.get('notification_format', '').strip() if request.form.get('notification_format', '') else datastore.data['settings']['application'].get('notification_format')
+            notif_format = request.form.get('notification_format', '').strip()
+            # Use it if provided and not "System default", otherwise fall back
+            if notif_format and notif_format != 'System default':
+                n_object['notification_format'] = notif_format
+            else:
+                n_object['notification_format'] = datastore.data['settings']['application'].get('notification_format')
 
             if 'notification_title' in request.form and request.form['notification_title'].strip():
                 n_object['notification_title'] = request.form.get('notification_title', '').strip()
