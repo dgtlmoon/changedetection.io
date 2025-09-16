@@ -171,6 +171,7 @@ def test_element_removal_full(client, live_server, measure_memory_usage):
             "tags": "",
             "headers": "",
             "fetch_backend": "html_requests",
+            "time_between_check_use_default": "y",
         },
         follow_redirects=True,
     )
@@ -245,6 +246,7 @@ body > table > tr:nth-child(3) > td:nth-child(3)""",
                 "url": test_url,
                 "tags": "",
                 "fetch_backend": "html_requests",
+                "time_between_check_use_default": "y",
             },
             follow_redirects=True,
         )

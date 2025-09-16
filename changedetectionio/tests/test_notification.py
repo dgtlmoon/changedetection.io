@@ -108,7 +108,8 @@ def test_check_notification(client, live_server, measure_memory_usage):
         "tags": "my tag, my second tag",
         "title": "my title",
         "headers": "",
-        "fetch_backend": "html_requests"})
+        "fetch_backend": "html_requests",
+        "time_between_check_use_default": "y"})
 
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
@@ -225,7 +226,8 @@ def test_check_notification(client, live_server, measure_memory_usage):
         "notification_title": '',
         "notification_body": '',
         "notification_format": default_notification_format,
-        "fetch_backend": "html_requests"},
+        "fetch_backend": "html_requests",
+        "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data

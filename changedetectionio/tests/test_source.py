@@ -77,7 +77,7 @@ def test_check_ignore_elements(client, live_server, measure_memory_usage):
 
     client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
-        data={"include_filters": 'span,p', "url": test_url, "tags": "", "subtractive_selectors": ".foobar-detection", 'fetch_backend': "html_requests"},
+        data={"include_filters": 'span,p', "url": test_url, "tags": "", "subtractive_selectors": ".foobar-detection", 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
 

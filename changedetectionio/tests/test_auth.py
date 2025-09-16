@@ -23,7 +23,7 @@ def test_basic_auth(client, live_server, measure_memory_usage):
     # Check form validation
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
-        data={"include_filters": "", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests"},
+        data={"include_filters": "", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data

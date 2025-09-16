@@ -44,6 +44,7 @@ def test_proxy_noconnect_custom(client, live_server, measure_memory_usage):
         "url": test_url,
         "fetch_backend": "html_webdriver" if os.getenv('PLAYWRIGHT_DRIVER_URL') or os.getenv("WEBDRIVER_URL") else "html_requests",
         "proxy": "ui-0custom-test-proxy",
+        "time_between_check_use_default": "y",
     }
 
     res = client.post(

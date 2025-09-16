@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: ChangeDetection.io API
   description: |
@@ -188,6 +188,10 @@ components:
             seconds:
               type: integer
           description: Time intervals between checks
+        time_between_check_use_default:
+          type: boolean
+          default: true
+          description: Whether to use global settings for time between checks - defaults to true if not set
         notification_urls:
           type: array
           items:
@@ -224,8 +228,6 @@ components:
                 maxLength: 5000
             required: [operation, selector, optional_value]
           description: Browser automation steps
-      required:
-        - url
 
     Watch:
       allOf:
@@ -261,6 +263,16 @@ components:
           required:
             - url
 
+    UpdateWatch:
+      allOf:
+        - $ref: '#/components/schemas/WatchBase'
+        - type: object
+          properties:
+            last_viewed:
+              type: integer
+              description: Unix timestamp in seconds of the last time the watch was viewed. Setting it to a value higher than `last_changed` in the "Update watch" endpoint marks the watch as viewed.
+              minimum: 0
+
     Tag:
       type: object
       properties:
@@ -281,8 +293,13 @@ components:
         notification_muted:
           type: boolean
           description: Whether notifications are muted for this tag
-      required:
-        - title
+
+    CreateTag:
+      allOf:
+        - $ref: '#/components/schemas/Tag'
+        - type: object
+          required:
+            - title
 
     NotificationUrls:
       type: object
@@ -572,7 +589,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Watch'
+              $ref: '#/components/schemas/UpdateWatch'
       responses:
         '200':
           description: Web page change monitor (watch) updated successfully
@@ -815,7 +832,7 @@ paths:
                 'Content-Type': 'application/json'
             }
             data = {'title': 'Important Sites'}
-            response = requests.post('http://localhost:5000/api/v1/tag', 
+            response = requests.post('http://localhost:5000/api/v1/tag',
                                    headers=headers, json=data)
             print(response.json())
       requestBody:
@@ -823,7 +840,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Tag'
+              $ref: '#/components/schemas/CreateTag'
             example:
               title: "Important Sites"
       responses:
