@@ -36,6 +36,7 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
             # For now, cookies doesnt work in headers because it must be a full cookiejar object
             'headers': "testheader: yes\buser-agent: MyCustomAgent",
             'fetch_backend': "html_webdriver",
+            "time_between_check_use_default": "y",
         },
         follow_redirects=True
     )
@@ -116,6 +117,7 @@ def test_basic_browserstep(client, live_server, measure_memory_usage):
             'browser_steps-1-optional_value': '',
             # For now, cookies doesnt work in headers because it must be a full cookiejar object
             'headers': "testheader: yes\buser-agent: MyCustomAgent",
+            "time_between_check_use_default": "y",
         },
         follow_redirects=True
     )
@@ -167,7 +169,8 @@ def test_non_200_errors_report_browsersteps(client, live_server):
               'fetch_backend': "html_webdriver",
               'browser_steps-0-operation': 'Click element',
               'browser_steps-0-selector': 'button[name=test-button]',
-              'browser_steps-0-optional_value': ''
+              'browser_steps-0-optional_value': '',
+              "time_between_check_use_default": "y"
         },
         follow_redirects=True
     )

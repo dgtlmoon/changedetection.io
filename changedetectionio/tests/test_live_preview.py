@@ -38,6 +38,7 @@ def test_content_filter_live_preview(client, live_server, measure_memory_usage):
             "ignore_text": "something to ignore",
             "trigger_text": "something to trigger",
             "url": test_url,
+            "time_between_check_use_default": "y",
         },
         follow_redirects=True
     )

@@ -95,7 +95,8 @@ def test_check_filter_multiline(client, live_server, measure_memory_usage):
               "url": test_url,
               "tags": "",
               "headers": "",
-              'fetch_backend': "html_requests"
+              'fetch_backend': "html_requests",
+              "time_between_check_use_default": "y"
               },
         follow_redirects=True
     )
@@ -149,7 +150,8 @@ def test_check_filter_and_regex_extract(client, live_server, measure_memory_usag
               "url": test_url,
               "tags": "",
               "headers": "",
-              'fetch_backend': "html_requests"
+              'fetch_backend': "html_requests",
+              "time_between_check_use_default": "y"
               },
         follow_redirects=True
     )
@@ -222,7 +224,8 @@ def test_regex_error_handling(client, live_server, measure_memory_usage):
         url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"extract_text": '/something bad\d{3/XYZ',
               "url": test_url,
-              "fetch_backend": "html_requests"},
+              "fetch_backend": "html_requests",
+              "time_between_check_use_default": "y"},
         follow_redirects=True
     )
 

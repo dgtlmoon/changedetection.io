@@ -41,7 +41,8 @@ def test_bad_access(client, live_server, measure_memory_usage):
               "tags": "",
               "method": "GET",
               "fetch_backend": "html_requests",
-              "body": ""},
+              "body": "",
+              "time_between_check_use_default": "y"},
         follow_redirects=True
     )
 
@@ -150,7 +151,8 @@ def test_xss_watch_last_error(client, live_server, measure_memory_usage):
         data={
             "include_filters": '<a href="https://foobar"></a><script>alert(123);</script>',
             "url": url_for('test_endpoint', _external=True),
-            'fetch_backend': "html_requests"
+            'fetch_backend': "html_requests",
+            "time_between_check_use_default": "y"
         },
         follow_redirects=True
     )

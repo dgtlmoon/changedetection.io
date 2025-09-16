@@ -62,6 +62,7 @@ def test_noproxy_option(client, live_server, measure_memory_usage):
                 "proxy": "no-proxy",
                 "tags": "",
                 "url": url,
+                "time_between_check_use_default": "y",
               },
         follow_redirects=True
     )

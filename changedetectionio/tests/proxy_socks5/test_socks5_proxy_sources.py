@@ -53,6 +53,7 @@ def test_socks5_from_proxiesjson_file(client, live_server, measure_memory_usage)
             "proxy": "socks5proxy",
             "tags": "",
             "url": test_url,
+            "time_between_check_use_default": "y",
         },
         follow_redirects=True
     )

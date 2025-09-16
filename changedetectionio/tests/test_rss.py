@@ -158,6 +158,7 @@ def test_rss_xpath_filtering(client, live_server, measure_memory_usage):
                 "proxy": "no-proxy",
                 "tags": "",
                 "url": test_url,
+                "time_between_check_use_default": "y",
               },
         follow_redirects=True
     )

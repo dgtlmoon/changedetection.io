@@ -105,6 +105,7 @@ def test_conditions_with_text_and_number(client, live_server):
             "conditions-5-operator": "contains_regex",
             "conditions-5-field": "page_filtered_text",
             "conditions-5-value": "\d",
+            "time_between_check_use_default": "y",
         },
         follow_redirects=True
     )
@@ -288,7 +289,8 @@ def test_lev_conditions_plugin(client, live_server, measure_memory_usage):
             "conditions_match_logic": CONDITIONS_MATCH_LOGIC_DEFAULT,  # ALL = AND logic
             "conditions-0-field": "levenshtein_ratio",
             "conditions-0-operator": "<",
-            "conditions-0-value": "0.8" # needs to be more of a diff to trigger a change
+            "conditions-0-value": "0.8", # needs to be more of a diff to trigger a change
+            "time_between_check_use_default": "y"
         },
         follow_redirects=True
     )

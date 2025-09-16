@@ -55,7 +55,8 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
                   "tags": "",
                   "headers": "",
                   'fetch_backend': f"extra_browser_{custom_browser_name}",
-                  'webdriver_js_execute_code': ''
+                  'webdriver_js_execute_code': '',
+                  "time_between_check_use_default": "y"
             },
             follow_redirects=True
         )

@@ -27,7 +27,7 @@ def test_basic_search(client, live_server, measure_memory_usage):
 
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
-        data={"title": "xxx-title", "url": urls[0], "tags": "", "headers": "", 'fetch_backend': "html_requests"},
+        data={"title": "xxx-title", "url": urls[0], "tags": "", "headers": "", 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -62,7 +62,7 @@ def test_search_in_tag_limit(client, live_server, measure_memory_usage):
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"title": "xxx-title", "url": urls[0].split(' ')[0], "tags": urls[0].split(' ')[1], "headers": "",
-              'fetch_backend': "html_requests"},
+              'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data

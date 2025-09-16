@@ -72,6 +72,7 @@ def run_filter_test(client, live_server, content_filter):
                   "notification_format": "Text",
                   "fetch_backend": "html_requests",
                   "filter_failure_notification_send": 'y',
+                  "time_between_check_use_default": "y",
                   "headers": "",
                   "tags": "my tag",
                   "title": "my title 123",
