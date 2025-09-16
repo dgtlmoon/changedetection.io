@@ -61,7 +61,8 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
         data={"trigger_text": 'The golden line',
               "url": test_url,
               'fetch_backend': "html_requests",
-              'filter_text_removed': 'y'},
+              'filter_text_removed': 'y',
+              "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -154,7 +155,8 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
               'processor': 'text_json_diff',
               'fetch_backend': "html_requests",
               'filter_text_removed': '',
-              'filter_text_added': 'y'},
+              'filter_text_added': 'y',
+              "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data

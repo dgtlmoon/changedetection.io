@@ -86,7 +86,8 @@ def test_check_block_changedetection_text_NOT_present(client, live_server, measu
         url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"text_should_not_be_present": ignore_text,
               "url": test_url,
-              'fetch_backend': "html_requests"
+              'fetch_backend': "html_requests",
+              "time_between_check_use_default": "y"
               },
         follow_redirects=True
     )

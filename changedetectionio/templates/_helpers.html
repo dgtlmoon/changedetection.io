@@ -1,6 +1,13 @@
 {% macro render_field(field) %}
-  <div {% if field.errors %} class="error" {% endif %}>{{ field.label }}</div>
-  <div {% if field.errors %} class="error" {% endif %}>{{ field(**kwargs)|safe }}
+  <div {% if field.errors or field.top_errors %} class="error" {% endif %}>{{ field.label }}</div>
+  <div {% if field.errors or field.top_errors %} class="error" {% endif %}>{{ field(**kwargs)|safe }}
+  {% if field.top_errors %}
+    <ul class="errors top-errors">
+    {% for error in field.top_errors %}
+      <li>{{ error }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
   {% if field.errors %}
     <ul class=errors>
     {% for error in field.errors %}

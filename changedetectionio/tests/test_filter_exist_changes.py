@@ -94,7 +94,8 @@ def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_se
         "title": "my title",
         "headers": "",
         "include_filters": '.ticket-available',
-        "fetch_backend": "html_requests"})
+        "fetch_backend": "html_requests",
+        "time_between_check_use_default": "y"})
 
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),

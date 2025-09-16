@@ -157,7 +157,8 @@ def test_check_notification_email_formats_default_Text_override_HTML(client, liv
         data={
             "url": test_url,
             "notification_format": 'HTML',
-            'fetch_backend': "html_requests"},
+            'fetch_backend': "html_requests",
+            "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
