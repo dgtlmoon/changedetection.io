@@ -27,19 +27,23 @@ def validate_time_between_check_required(json_data):
     if use_default:
         return None
 
-    # Check if time_between_check exists and has at least one non-zero value
+    # If not using defaults, check if time_between_check exists and has at least one non-zero value
     time_check = json_data.get('time_between_check')
-    if time_check:
-        if any([
-            (time_check.get('weeks') or 0) > 0,
-            (time_check.get('days') or 0) > 0,
-            (time_check.get('hours') or 0) > 0,
-            (time_check.get('minutes') or 0) > 0,
-            (time_check.get('seconds') or 0) > 0
-        ]):
-            return None
+    if not time_check:
+        # No time_between_check provided and not using defaults - this is an error
+        return "At least one time interval (weeks, days, hours, minutes, or seconds) must be specified when not using global settings."
 
-    # If we get here, validation failed
+    # time_between_check exists, check if it has at least one non-zero value
+    if any([
+        (time_check.get('weeks') or 0) > 0,
+        (time_check.get('days') or 0) > 0,
+        (time_check.get('hours') or 0) > 0,
+        (time_check.get('minutes') or 0) > 0,
+        (time_check.get('seconds') or 0) > 0
+    ]):
+        return None
+
+    # time_between_check exists but all values are 0 or empty - this is an error
     return "At least one time interval (weeks, days, hours, minutes, or seconds) must be specified when not using global settings."
 
 
