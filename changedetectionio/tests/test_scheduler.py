@@ -63,7 +63,8 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
     last_check = live_server.app.config['DATASTORE'].data['watching'][uuid]['last_checked']
     data = {
         "url": test_url,
-        "fetch_backend": "html_requests"
+        "fetch_backend": "html_requests",
+        "time_between_check_use_default": "y"
     }
     data.update(scheduler_data)
 

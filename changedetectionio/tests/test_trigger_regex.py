@@ -49,7 +49,8 @@ def test_trigger_regex_functionality(client, live_server, measure_memory_usage):
         url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"trigger_text": '/something \d{3}/',
               "url": test_url,
-              "fetch_backend": "html_requests"},
+              "fetch_backend": "html_requests",
+              "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     wait_for_all_checks(client)

@@ -66,6 +66,7 @@ def test_socks5(client, live_server, measure_memory_usage):
             "proxy": "ui-0socks5proxy",
             "tags": "",
             "url": test_url,
+            "time_between_check_use_default": "y",
         },
         follow_redirects=True
     )
