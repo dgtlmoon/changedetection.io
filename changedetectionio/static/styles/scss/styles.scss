@@ -355,6 +355,11 @@ a.pure-button-selected {
     overflow-wrap: break-word;
     max-width: 100%;
     box-sizing: border-box;
+    &.error {
+      > span {
+        color: var(--color-error) !important;
+      }
+    }
   }
 }
 

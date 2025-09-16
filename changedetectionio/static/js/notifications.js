@@ -30,18 +30,19 @@ $(document).ready(function () {
 
     $(document).on('click', '[data-target="#notification-preview"]', function (e) {
         var data = getNotificationData();
+        $('#notification-iframe').contents().find('body').html('Loading...');
         $.ajax({
             type: "POST",
             url: notification_test_render_preview_url,
             data: data,
-/*
             statusCode: {
                 400: function (data) {
+                    $('#notification-test-log').show().toggleClass('error', true);
                     $("#notification-test-log>span").text(data.responseText);
                 },
             }
-*/
         }).done(function (data) {
+            $('#notification-test-log').toggleClass('error', false);
             setPreview(data['result']);
         })
 
@@ -104,11 +105,14 @@ $(document).ready(function () {
             data: data,
             statusCode: {
                 400: function (data) {
+                    $("#notification-test-log").toggleClass('error', true);
                     $("#notification-test-log>span").text(data.responseText);
                 },
             }
         }).done(function (data) {
+            $("#notification-test-log").toggleClass('error', false);
             $("#notification-test-log>span").text(data['status']);
+
         }).fail(function (jqXHR, textStatus, errorThrown) {
             // Handle connection refused or other errors
             if (textStatus === "error" && errorThrown === "") {
