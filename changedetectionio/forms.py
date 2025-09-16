@@ -348,7 +348,7 @@ class ValidateJinja2Template(object):
         joined_data = ' '.join(map(str, field.data)) if isinstance(field.data, list) else f"{field.data}"
 
         try:
-            jinja2_env = ImmutableSandboxedEnvironment(loader=BaseLoader)
+            jinja2_env = ImmutableSandboxedEnvironment(loader=BaseLoader, extensions=['jinja2_time.TimeExtension'])
             jinja2_env.globals.update(notification.valid_tokens)
             # Extra validation tokens provided on the form_class(... extra_tokens={}) setup
             if hasattr(field, 'extra_notification_tokens'):
