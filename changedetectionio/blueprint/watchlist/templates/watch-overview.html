@@ -160,9 +160,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div>
                         <span class="watch-title">
                             {% if system_use_url_watchlist or watch.get('use_page_title_in_list') %}
-                                {{watch.label}}
+                                {{ watch.label }}
                             {% else %}
-                                {{watch.url}}
+                                {{ watch.get('title') or watch.link }}
                             {% endif %}
                            <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">&nbsp;</a>
                         </span>
