@@ -1,4 +1,4 @@
-openapi: 3.0.4
+openapi: 3.1.0
 info:
   title: ChangeDetection.io API
   description: |
@@ -28,7 +28,7 @@ info:
     
     For example: `x-api-key: YOUR_API_KEY`
     
-  version: 0.1.0
+  version: 0.1.1
   contact:
     name: ChangeDetection.io
     url: https://github.com/dgtlmoon/changedetection.io
@@ -129,7 +129,7 @@ components:
           maxLength: 5000
         title:
           type: string
-          description: Custom title for the web page change monitor (watch)
+          description: Custom title for the web page change monitor (watch), not to be confused with page_title
           maxLength: 5000
         tag:
           type: string
@@ -255,6 +255,11 @@ components:
               type: integer
               description: Unix timestamp in seconds of the last time the watch was viewed. Setting it to a value higher than `last_changed` in the "Update watch" endpoint marks the watch as viewed.
               minimum: 0
+            link:
+              type: string
+              format: string
+              description: The watch URL rendered in case of any Jinja2 markup, always use this for listing.
+              readOnly: true
 
     CreateWatch:
       allOf:
@@ -395,9 +400,10 @@ paths:
               example:
                 "095be615-a8ad-4c33-8e9c-c7612fbf6c9f":
                   uuid: "095be615-a8ad-4c33-8e9c-c7612fbf6c9f"
-                  url: "http://example.com"
-                  title: "Example Website Monitor"
-                  tag: "550e8400-e29b-41d4-a716-446655440000"
+                  url: "http://example.com?id={{1+1}} - the raw URL"
+                  link: "http://example.com?id=2 - the rendered URL, always use this for listing."
+                  title: "Example Website Monitor - manually entered title/description"
+                  page_title: "The HTML <title> from the page"
                   tags: ["550e8400-e29b-41d4-a716-446655440000"]
                   paused: false
                   muted: false
@@ -407,9 +413,10 @@ paths:
                   last_changed: 1640995200
                 "7c9e6b8d-f2a1-4e5c-9d3b-8a7f6e4c2d1a":
                   uuid: "7c9e6b8d-f2a1-4e5c-9d3b-8a7f6e4c2d1a"
-                  url: "https://news.example.org"
-                  title: "News Site Tracker"
-                  tag: "330e8400-e29b-41d4-a716-446655440001"
+                  url: "http://example.com?id={{1+1}} - the raw URL"
+                  link: "http://example.com?id=2 - the rendered URL, always use this for listing."
+                  title: "News Site Tracker - manually entered title/description"
+                  page_title: "The HTML <title> from the page"
                   tags: ["330e8400-e29b-41d4-a716-446655440001"]
                   paused: false
                   muted: true
@@ -1215,7 +1222,6 @@ paths:
                     uuid: "095be615-a8ad-4c33-8e9c-c7612fbf6c9f"
                     url: "http://example.com"
                     title: "Example Website Monitor"
-                    tag: "550e8400-e29b-41d4-a716-446655440000"
                     tags: ["550e8400-e29b-41d4-a716-446655440000"]
                     paused: false
                     muted: false
