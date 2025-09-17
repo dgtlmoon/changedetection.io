@@ -152,10 +152,12 @@ $(document).ready(function () {
                 }
 
                 // Tabs at bottom of list
-                $('#post-list-mark-views').toggleClass("has-unviewed", general_stats.has_unviewed);
-                $('#post-list-unread').toggleClass("has-unviewed", general_stats.has_unviewed);
+                $('#watch-table-wrapper').toggleClass("has-unread-changes", general_stats.unread_changes_count !==0)
+
                 $('#post-list-with-errors').toggleClass("has-error", general_stats.count_errors !== 0)
                 $('#post-list-with-errors a').text(`With errors (${ general_stats.count_errors })`);
+
+                $('#unread-tab-counter').text(new Intl.NumberFormat(navigator.language).format(general_stats.unread_changes_count));
 
                 $('body').toggleClass('checking-now', watch.checking_now && window.location.href.includes(watch.uuid));
             });

@@ -202,14 +202,13 @@ class ChangeDetectionStore:
         return seconds
 
     @property
-    def has_unviewed(self):
-        if not self.__data.get('watching'):
-            return None
-
+    def unread_changes_count(self):
+        unread_changes_count = 0
         for uuid, watch in self.__data['watching'].items():
             if watch.history_n >= 2 and watch.viewed == False:
-                return True
-        return False
+                unread_changes_count += 1
+
+        return unread_changes_count
 
     @property
     def data(self):

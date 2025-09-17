@@ -243,7 +243,7 @@ def handle_watch_update(socketio, **kwargs):
 
         general_stats = {
             'count_errors': errored_count,
-            'has_unviewed': datastore.has_unviewed
+            'unread_changes_count': datastore.unread_changes_count
         }
 
         # Debug what's being emitted
