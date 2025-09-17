@@ -23,10 +23,13 @@ from wtforms import (
 )
 from flask_wtf.file import FileField, FileAllowed
 from wtforms.fields import FieldList
+from wtforms.utils import unset_value
 
 from wtforms.validators import ValidationError
 
 from validators.url import url as url_validator
+
+from changedetectionio.widgets import TernaryNoneBooleanField
 
 
 # default
@@ -54,6 +57,8 @@ valid_method = {
 
 default_method = 'GET'
 allow_simplehost = not strtobool(os.getenv('BLOCK_SIMPLEHOSTS', 'False'))
+REQUIRE_ATLEAST_ONE_TIME_PART_MESSAGE_DEFAULT='At least one time interval (weeks, days, hours, minutes, or seconds) must be specified.'
+REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT='At least one time interval (weeks, days, hours, minutes, or seconds) must be specified when not using global settings.'
 
 class StringListField(StringField):
     widget = widgets.TextArea()
@@ -210,6 +215,35 @@ class ScheduleLimitForm(Form):
         self.sunday.form.enabled.label.text = "Sunday"
 
 
+def validate_time_between_check_has_values(form):
+    """
+    Custom validation function for TimeBetweenCheckForm.
+    Returns True if at least one time interval field has a value > 0.
+    """
+    res = any([
+        form.weeks.data and int(form.weeks.data) > 0,
+        form.days.data and int(form.days.data) > 0,
+        form.hours.data and int(form.hours.data) > 0,
+        form.minutes.data and int(form.minutes.data) > 0,
+        form.seconds.data and int(form.seconds.data) > 0
+    ])
+
+    return res
+
+
+class RequiredTimeInterval(object):
+    """
+    WTForms validator that ensures at least one time interval field has a value > 0.
+    Use this with FormField(TimeBetweenCheckForm, validators=[RequiredTimeInterval()]).
+    """
+    def __init__(self, message=None):
+        self.message = message or 'At least one time interval (weeks, days, hours, minutes, or seconds) must be specified.'
+
+    def __call__(self, form, field):
+        if not validate_time_between_check_has_values(field.form):
+            raise ValidationError(self.message)
+
+
 class TimeBetweenCheckForm(Form):
     weeks = IntegerField('Weeks', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
     days = IntegerField('Days', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
@@ -217,6 +251,123 @@ class TimeBetweenCheckForm(Form):
     minutes = IntegerField('Minutes', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
     seconds = IntegerField('Seconds', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
     # @todo add total seconds minimum validatior = minimum_seconds_recheck_time
+
+    def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
+        super().__init__(formdata, obj, prefix, data, meta, **kwargs)
+        self.require_at_least_one = kwargs.get('require_at_least_one', False)
+        self.require_at_least_one_message = kwargs.get('require_at_least_one_message', REQUIRE_ATLEAST_ONE_TIME_PART_MESSAGE_DEFAULT)
+
+    def validate(self, **kwargs):
+        """Custom validation that can optionally require at least one time interval."""
+        # Run normal field validation first
+        if not super().validate(**kwargs):
+            return False
+
+        # Apply optional "at least one" validation
+        if self.require_at_least_one:
+            if not validate_time_between_check_has_values(self):
+                # Add error to the form's general errors (not field-specific)
+                if not hasattr(self, '_formdata_errors'):
+                    self._formdata_errors = []
+                self._formdata_errors.append(self.require_at_least_one_message)
+                return False
+
+        return True
+
+
+class EnhancedFormField(FormField):
+    """
+    An enhanced FormField that supports conditional validation with top-level error messages.
+    Adds a 'top_errors' property for validation errors at the FormField level.
+    """
+
+    def __init__(self, form_class, label=None, validators=None, separator="-",
+                 conditional_field=None, conditional_message=None, conditional_test_function=None, **kwargs):
+        """
+        Initialize EnhancedFormField with optional conditional validation.
+
+        :param conditional_field: Name of the field this FormField depends on (e.g. 'time_between_check_use_default')
+        :param conditional_message: Error message to show when validation fails
+        :param conditional_test_function: Custom function to test if FormField has valid values.
+                                        Should take self.form as parameter and return True if valid.
+        """
+        super().__init__(form_class, label, validators, separator, **kwargs)
+        self.top_errors = []
+        self.conditional_field = conditional_field
+        self.conditional_message = conditional_message or "At least one field must have a value when not using defaults."
+        self.conditional_test_function = conditional_test_function
+
+    def validate(self, form, extra_validators=()):
+        """
+        Custom validation that supports conditional logic and stores top-level errors.
+        """
+        self.top_errors = []
+
+        # First run the normal FormField validation
+        base_valid = super().validate(form, extra_validators)
+
+        # Apply conditional validation if configured
+        if self.conditional_field and hasattr(form, self.conditional_field):
+            conditional_field_obj = getattr(form, self.conditional_field)
+
+            # If the conditional field is False/unchecked, check if this FormField has any values
+            if not conditional_field_obj.data:
+                # Use custom test function if provided, otherwise use generic fallback
+                if self.conditional_test_function:
+                    has_any_value = self.conditional_test_function(self.form)
+                else:
+                    # Generic fallback - check if any field has truthy data
+                    has_any_value = any(field.data for field in self.form if hasattr(field, 'data') and field.data)
+
+                if not has_any_value:
+                    self.top_errors.append(self.conditional_message)
+                    base_valid = False
+
+        return base_valid
+
+
+class RequiredFormField(FormField):
+    """
+    A FormField that passes require_at_least_one=True to TimeBetweenCheckForm.
+    Use this when you want the sub-form to always require at least one value.
+    """
+
+    def __init__(self, form_class, label=None, validators=None, separator="-", **kwargs):
+        super().__init__(form_class, label, validators, separator, **kwargs)
+
+    def process(self, formdata, data=unset_value, extra_filters=None):
+        if extra_filters:
+            raise TypeError(
+                "FormField cannot take filters, as the encapsulated"
+                "data is not mutable."
+            )
+
+        if data is unset_value:
+            try:
+                data = self.default()
+            except TypeError:
+                data = self.default
+            self._obj = data
+
+        self.object_data = data
+
+        prefix = self.name + self.separator
+        # Pass require_at_least_one=True to the sub-form
+        if isinstance(data, dict):
+            self.form = self.form_class(formdata=formdata, prefix=prefix, require_at_least_one=True, **data)
+        else:
+            self.form = self.form_class(formdata=formdata, obj=data, prefix=prefix, require_at_least_one=True)
+
+    @property
+    def errors(self):
+        """Include sub-form validation errors"""
+        form_errors = self.form.errors
+        # Add any general form errors to a special 'form' key
+        if hasattr(self.form, '_formdata_errors') and self.form._formdata_errors:
+            form_errors = dict(form_errors)  # Make a copy
+            form_errors['form'] = self.form._formdata_errors
+        return form_errors
+
 
 # Separated by  key:value
 class StringDictKeyValue(StringField):
@@ -346,7 +497,7 @@ class ValidateJinja2Template(object):
         joined_data = ' '.join(map(str, field.data)) if isinstance(field.data, list) else f"{field.data}"
 
         try:
-            jinja2_env = ImmutableSandboxedEnvironment(loader=BaseLoader)
+            jinja2_env = ImmutableSandboxedEnvironment(loader=BaseLoader, extensions=['jinja2_time.TimeExtension'])
             jinja2_env.globals.update(notification.valid_tokens)
             # Extra validation tokens provided on the form_class(... extra_tokens={}) setup
             if hasattr(field, 'extra_notification_tokens'):
@@ -548,7 +699,6 @@ class commonSettingsForm(Form):
         self.notification_title.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
         self.notification_urls.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
 
-    extract_title_as_title = BooleanField('Extract <title> from document and use as watch title', default=False)
     fetch_backend = RadioField(u'Fetch Method', choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     notification_body = TextAreaField('Notification Body', default='{{ watch_url }} had a change.', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_format = SelectField('Notification format', choices=valid_notification_formats.keys())
@@ -583,11 +733,16 @@ class processor_text_json_diff_form(commonSettingsForm):
     url = fields.URLField('URL', validators=[validateURL()])
     tags = StringTagUUID('Group tag', [validators.Optional()], default='')
 
-    time_between_check = FormField(TimeBetweenCheckForm)
+    time_between_check = EnhancedFormField(
+        TimeBetweenCheckForm,
+        conditional_field='time_between_check_use_default',
+        conditional_message=REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT,
+        conditional_test_function=validate_time_between_check_has_values
+    )
 
     time_schedule_limit = FormField(ScheduleLimitForm)
 
-    time_between_check_use_default = BooleanField('Use global settings for time between check', default=False)
+    time_between_check_use_default = BooleanField('Use global settings for time between check and scheduler.', default=False)
 
     include_filters = StringListField('CSS/JSONPath/JQ/XPath Filters', [ValidateCSSJSONXPATHInput()], default='')
 
@@ -617,18 +772,18 @@ class processor_text_json_diff_form(commonSettingsForm):
     text_should_not_be_present = StringListField('Block change-detection while text matches', [validators.Optional(), ValidateListRegex()])
     webdriver_js_execute_code = TextAreaField('Execute JavaScript before change detection', render_kw={"rows": "5"}, validators=[validators.Optional()])
 
-    save_button = SubmitField('Save', render_kw={"class": "pure-button button-small pure-button-primary"})
+    save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
 
     proxy = RadioField('Proxy')
+    # filter_failure_notification_send @todo make ternary
     filter_failure_notification_send = BooleanField(
         'Send a notification when the filter can no longer be found on the page', default=False)
-
-    notification_muted = BooleanField('Notifications Muted / Off', default=False)
+    notification_muted = TernaryNoneBooleanField('Notifications', default=None, yes_text="Muted", no_text="On")
     notification_screenshot = BooleanField('Attach screenshot to notification (where possible)', default=False)
 
     conditions_match_logic = RadioField(u'Match', choices=[('ALL', 'Match all of the following'),('ANY', 'Match any of the following')], default='ALL')
     conditions = FieldList(FormField(ConditionFormRow), min_entries=1)  # Add rule logic here
-
+    use_page_title_in_list = TernaryNoneBooleanField('Use page <title> in list', default=None)
 
     def extra_tab_content(self):
         return None
@@ -728,7 +883,7 @@ class DefaultUAInputForm(Form):
 
 # datastore.data['settings']['requests']..
 class globalSettingsRequestForm(Form):
-    time_between_check = FormField(TimeBetweenCheckForm)
+    time_between_check = RequiredFormField(TimeBetweenCheckForm)
     time_schedule_limit = FormField(ScheduleLimitForm)
     proxy = RadioField('Proxy')
     jitter_seconds = IntegerField('Random jitter seconds ± check',
@@ -756,6 +911,7 @@ class globalSettingsApplicationUIForm(Form):
     open_diff_in_new_tab = BooleanField("Open 'History' page in a new tab", default=True, validators=[validators.Optional()])
     socket_io_enabled = BooleanField('Realtime UI Updates Enabled', default=True, validators=[validators.Optional()])
     favicons_enabled = BooleanField('Favicons Enabled', default=True, validators=[validators.Optional()])
+    use_page_title_in_list = BooleanField('Use page <title> in watch overview list') #BooleanField=True
 
 # datastore.data['settings']['application']..
 class globalSettingsApplicationForm(commonSettingsForm):
@@ -780,7 +936,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
 
     removepassword_button = SubmitField('Remove password', render_kw={"class": "pure-button pure-button-primary"})
     render_anchor_tag_content = BooleanField('Render anchor tag content', default=False)
-    shared_diff_access = BooleanField('Allow access to view diff page when password is enabled', default=False, validators=[validators.Optional()])
+    shared_diff_access = BooleanField('Allow anonymous access to watch history page when password is enabled', default=False, validators=[validators.Optional()])
     rss_hide_muted_watches = BooleanField('Hide muted watches from RSS feed', default=True,
                                       validators=[validators.Optional()])
     filter_failure_notification_threshold_attempts = IntegerField('Number of times the filter can be missing before sending a notification',
@@ -802,7 +958,7 @@ class globalSettingsForm(Form):
 
     requests = FormField(globalSettingsRequestForm)
     application = FormField(globalSettingsApplicationForm)
-    save_button = SubmitField('Save', render_kw={"class": "pure-button button-small pure-button-primary"})
+    save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
 
 
 class extractDataForm(Form):

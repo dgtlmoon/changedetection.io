@@ -310,15 +310,6 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                     continue
 
                 if process_changedetection_results:
-                    # Extract title if needed
-                    if datastore.data['settings']['application'].get('extract_title_as_title') or watch['extract_title_as_title']:
-                        if not watch['title'] or not len(watch['title']):
-                            try:
-                                update_obj['title'] = html_tools.extract_element(find='title', html_content=update_handler.fetcher.content)
-                                logger.info(f"UUID: {uuid} Extract <title> updated title to '{update_obj['title']}")
-                            except Exception as e:
-                                logger.warning(f"UUID: {uuid} Extract <title> as watch title was enabled, but couldn't find a <title>.")
-
                     try:
                         datastore.update_watch(uuid=uuid, update_obj=update_obj)
 
@@ -356,6 +347,14 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
 
                 # Always record attempt count
                 count = watch.get('check_count', 0) + 1
+
+                # Always record page title (used in notifications, and can change even when the content is the same)
+                try:
+                    page_title = html_tools.extract_title(data=update_handler.fetcher.content)
+                    logger.debug(f"UUID: {uuid} Page <title> is '{page_title}'")
+                    datastore.update_watch(uuid=uuid, update_obj={'page_title': page_title})
+                except Exception as e:
+                    logger.warning(f"UUID: {uuid} Exception when extracting <title> - {str(e)}")
 
                 # Record server header
                 try:

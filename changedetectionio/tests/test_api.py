@@ -311,7 +311,7 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
                                  "value": "."  # contains anything
                              }
                          ],
-                         "conditions_match_logic": "ALL"
+                         "conditions_match_logic": "ALL",
                          }
                         ),
         headers={'content-type': 'application/json', 'x-api-key': api_key},
@@ -328,6 +328,7 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
     )
 
     watch_uuid = list(res.json.keys())[0]
+    assert not res.json[watch_uuid].get('viewed'), 'A newly created watch can only be unviewed'
 
     # Check in the edit page just to be sure
     res = client.get(
@@ -341,7 +342,12 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
     res = client.put(
         url_for("watch", uuid=watch_uuid),
         headers={'x-api-key': api_key, 'content-type': 'application/json'},
-        data=json.dumps({"title": "new title", 'time_between_check': {'minutes': 552}, 'headers': {'cookie': 'all eaten'}}),
+        data=json.dumps({
+            "title": "new title",
+            'time_between_check': {'minutes': 552},
+            'headers': {'cookie': 'all eaten'},
+            'last_viewed': int(time.time())
+        }),
     )
     assert res.status_code == 200, "HTTP PUT update was sent OK"
 
@@ -351,6 +357,7 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
         headers={'x-api-key': api_key}
     )
     assert res.json.get('title') == 'new title'
+    assert res.json.get('viewed'), 'With the timestamp greater than "changed" a watch can be updated to viewed'
 
     # Check in the edit page just to be sure
     res = client.get(
@@ -383,13 +390,13 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
 
 
 def test_api_import(client, live_server, measure_memory_usage):
-    
+
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
 
     res = client.post(
         url_for("import") + "?tag=import-test",
         data='https://website1.com\r\nhttps://website2.com',
-        headers={'x-api-key': api_key},
+        headers={'x-api-key': api_key, 'content-type': 'text/plain'},
         follow_redirects=True
     )
 

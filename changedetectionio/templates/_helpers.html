@@ -1,14 +1,29 @@
 {% macro render_field(field) %}
-  <div {% if field.errors %} class="error" {% endif %}>{{ field.label }}</div>
-  <div {% if field.errors %} class="error" {% endif %}>{{ field(**kwargs)|safe }}
-  {% if field.errors %}
-    <ul class=errors>
-    {% for error in field.errors %}
-      <li>{{ error }}</li>
-    {% endfor %}
-    </ul>
-  {% endif %}
-  </div>
+    <div {% if field.errors or field.top_errors %} class="error" {% endif %}>{{ field.label }}</div>
+    <div {% if field.errors or field.top_errors %} class="error" {% endif %}>{{ field(**kwargs)|safe }}
+        {% if field.top_errors %}
+            top
+            <ul class="errors top-errors">
+                {% for error in field.top_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        {% if field.errors %}
+            <ul class=errors>
+                {% if field.errors is mapping and 'form' in field.errors %}
+                    {#  and subfield form errors, such as used in RequiredFormField() for TimeBetweenCheckForm sub form #}
+                    {% set errors = field.errors['form'] %}
+                {% else %}
+                    {#  regular list of errors with this field #}
+                    {% set errors = field.errors %}
+                {% endif %}
+                {% for error in errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
 {% endmacro %}
 
 {% macro render_checkbox_field(field) %}
@@ -21,6 +36,23 @@
     {% endfor %}
     </ul>
   {% endif %}
+  </div>
+{% endmacro %}
+
+{% macro render_ternary_field(field, BooleanField=false) %}
+  {% if BooleanField %}
+    {% set _ = field.__setattr__('boolean_mode', true) %}
+  {% endif %}
+  <div class="ternary-field {% if field.errors %} error {% endif %}">
+    <div class="ternary-field-label">{{ field.label }}</div>
+    <div class="ternary-field-widget">{{ field(**kwargs)|safe }}</div>
+    {% if field.errors %}
+      <ul class=errors>
+      {% for error in field.errors %}
+        <li>{{ error }}</li>
+      {% endfor %}
+      </ul>
+    {% endif %}
   </div>
 {% endmacro %}
 

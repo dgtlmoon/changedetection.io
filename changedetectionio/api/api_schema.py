@@ -78,6 +78,13 @@ def build_watch_json_schema(d):
               ]:
         schema['properties'][v]['anyOf'].append({'type': 'string', "maxLength": 5000})
 
+    for v in ['last_viewed']:
+        schema['properties'][v] = {
+            "type": "integer",
+            "description": "Unix timestamp in seconds of the last time the watch was viewed.",
+            "minimum": 0
+        }
+
     # None or Boolean
     schema['properties']['track_ldjson_price_data']['anyOf'].append({'type': 'boolean'})
 
@@ -111,6 +118,12 @@ def build_watch_json_schema(d):
     schema['properties']['webdriver_delay']['anyOf'].append({'type': 'integer'})
 
     schema['properties']['time_between_check'] = build_time_between_check_json_schema()
+
+    schema['properties']['time_between_check_use_default'] = {
+        "type": "boolean",
+        "default": True,
+        "description": "Whether to use global settings for time between checks - defaults to true if not set"
+    }
 
     schema['properties']['browser_steps'] = {
         "anyOf": [

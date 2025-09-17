@@ -81,7 +81,8 @@ def test_trigger_functionality(client, live_server, measure_memory_usage):
         url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"trigger_text": trigger_text,
               "url": test_url,
-              "fetch_backend": "html_requests"},
+              "fetch_backend": "html_requests",
+              "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data

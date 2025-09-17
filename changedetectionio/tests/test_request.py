@@ -44,7 +44,8 @@ def test_headers_in_request(client, live_server, measure_memory_usage):
               "url": test_url,
               "tags": "",
               "fetch_backend": 'html_webdriver' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'html_requests',
-              "headers": "jinja2:{{ 1+1 }}\nxxx:ooo\ncool:yeah\r\ncookie:"+cookie_header},
+              "headers": "jinja2:{{ 1+1 }}\nxxx:ooo\ncool:yeah\r\ncookie:"+cookie_header,
+              "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -109,7 +110,8 @@ def test_body_in_request(client, live_server, measure_memory_usage):
               "tags": "",
               "method": "POST",
               "fetch_backend": "html_requests",
-              "body": "something something"},
+              "body": "something something",
+              "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -126,7 +128,8 @@ def test_body_in_request(client, live_server, measure_memory_usage):
               "tags": "",
               "method": "POST",
               "fetch_backend": "html_requests",
-              "body": body_value},
+              "body": body_value,
+              "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -172,7 +175,8 @@ def test_body_in_request(client, live_server, measure_memory_usage):
               "tags": "",
               "method": "GET",
               "fetch_backend": "html_requests",
-              "body": "invalid"},
+              "body": "invalid",
+              "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Body must be empty when Request Method is set to GET" in res.data
@@ -211,7 +215,8 @@ def test_method_in_request(client, live_server, measure_memory_usage):
             "url": test_url,
             "tags": "",
             "fetch_backend": "html_requests",
-            "method": "invalid"},
+            "method": "invalid",
+            "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Not a valid choice" in res.data
@@ -223,7 +228,8 @@ def test_method_in_request(client, live_server, measure_memory_usage):
             "url": test_url,
             "tags": "",
             "fetch_backend": "html_requests",
-            "method": "PATCH"},
+            "method": "PATCH",
+            "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -297,7 +303,8 @@ def test_ua_global_override(client, live_server, measure_memory_usage):
             "tags": "testtag",
             "fetch_backend": 'html_requests',
             # Important - also test case-insensitive
-            "headers": "User-AGent: agent-from-watch"},
+            "headers": "User-AGent: agent-from-watch",
+            "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -365,7 +372,8 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage):
             "url": test_url,
             "tags": "testtag",
             "fetch_backend": 'html_webdriver' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'html_requests',
-            "headers": "xxx:ooo\ncool:yeah\r\n"},
+            "headers": "xxx:ooo\ncool:yeah\r\n",
+            "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -440,7 +448,8 @@ def test_headers_validation(client, live_server):
         data={
             "url": test_url,
             "fetch_backend": 'html_requests',
-            "headers": "User-AGent agent-from-watch\r\nsadfsadfsadfsdaf\r\n:foobar"},
+            "headers": "User-AGent agent-from-watch\r\nsadfsadfsadfsdaf\r\n:foobar",
+            "time_between_check_use_default": "y"},
         follow_redirects=True
     )
 

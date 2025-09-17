@@ -24,7 +24,6 @@ class watch_base(dict):
             'content-type': None,
             'date_created': None,
             'extract_text': [],  # Extract text by regex after filters
-            'extract_title_as_title': False,
             'fetch_backend': 'system',  # plaintext, playwright etc
             'fetch_time': 0.0,
             'filter_failure_notification_send': strtobool(os.getenv('FILTER_FAILURE_NOTIFICATION_SEND_DEFAULT', 'True')),
@@ -35,6 +34,7 @@ class watch_base(dict):
             'has_ldjson_price_data': None,
             'headers': {},  # Extra headers to send
             'ignore_text': [],  # List of text to ignore when calculating the comparison checksum
+            'ignore_status_codes': None,
             'in_stock_only': True,  # Only trigger change on going to instock from out-of-stock
             'include_filters': [],
             'last_checked': 0,
@@ -49,6 +49,7 @@ class watch_base(dict):
             'notification_screenshot': False,  # Include the latest screenshot if available and supported by the apprise URL
             'notification_title': None,
             'notification_urls': [],  # List of URLs to add to the notification Queue (Usually AppRise)
+            'page_title': None, # <title> from the page
             'paused': False,
             'previous_md5': False,
             'previous_md5_before_filters': False,  # Used for skipping changedetection entirely
@@ -122,12 +123,13 @@ class watch_base(dict):
                     }
                 },
             },
-            'title': None,
+            'title': None, # An arbitrary field that overrides 'page_title'
             'track_ldjson_price_data': None,
             'trim_text_whitespace': False,
             'remove_duplicate_lines': False,
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
             'url': '',
+            'use_page_title_in_list': None, # None = use system settings
             'uuid': str(uuid.uuid4()),
             'webdriver_delay': None,
             'webdriver_js_execute_code': None,  # Run before change-detection

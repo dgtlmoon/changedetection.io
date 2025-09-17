@@ -39,12 +39,12 @@ class model(dict):
                     'api_access_token_enabled': True,
                     'base_url' : None,
                     'empty_pages_are_a_change': False,
-                    'extract_title_as_title': False,
                     'fetch_backend': getenv("DEFAULT_FETCH_BACKEND", "html_requests"),
                     'filter_failure_notification_threshold_attempts': _FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT,
                     'global_ignore_text': [], # List of text to ignore when calculating the comparison checksum
                     'global_subtractive_selectors': [],
                     'ignore_whitespace': True,
+                    'ignore_status_codes': False, #@todo implement, as ternary.
                     'notification_body': default_notification_body,
                     'notification_format': default_notification_format,
                     'notification_title': default_notification_title,
@@ -57,10 +57,11 @@ class model(dict):
                     'rss_hide_muted_watches': True,
                     'schema_version' : 0,
                     'shared_diff_access': False,
-                    'webdriver_delay': None , # Extra delay in seconds before extracting text
                     'tags': {}, #@todo use Tag.model initialisers
                     'timezone': None, # Default IANA timezone name
+                    'webdriver_delay': None , # Extra delay in seconds before extracting text
                     'ui': {
+                        'use_page_title_in_list': True,
                         'open_diff_in_new_tab': True,
                         'socket_io_enabled': True,
                         'favicons_enabled': True

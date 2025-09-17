@@ -27,6 +27,7 @@ def test_preferred_proxy(client, live_server, measure_memory_usage):
                 "proxy": "proxy-two",
                 "tags": "",
                 "url": url,
+                "time_between_check_use_default": "y",
               },
         follow_redirects=True
     )

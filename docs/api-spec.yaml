@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
   title: ChangeDetection.io API
   description: |
@@ -28,7 +28,7 @@ info:
     
     For example: `x-api-key: YOUR_API_KEY`
     
-  version: 0.1.0
+  version: 0.1.1
   contact:
     name: ChangeDetection.io
     url: https://github.com/dgtlmoon/changedetection.io
@@ -119,14 +119,9 @@ components:
         Enter your API key in the "Authorize" button above to automatically populate all code examples.
 
   schemas:
-    Watch:
+    WatchBase:
       type: object
       properties:
-        uuid:
-          type: string
-          format: uuid
-          description: Unique identifier for the web page change monitor (watch)
-          readOnly: true
         url:
           type: string
           format: uri
@@ -134,7 +129,7 @@ components:
           maxLength: 5000
         title:
           type: string
-          description: Custom title for the web page change monitor (watch)
+          description: Custom title for the web page change monitor (watch), not to be confused with page_title
           maxLength: 5000
         tag:
           type: string
@@ -193,6 +188,10 @@ components:
             seconds:
               type: integer
           description: Time intervals between checks
+        time_between_check_use_default:
+          type: boolean
+          default: true
+          description: Whether to use global settings for time between checks - defaults to true if not set
         notification_urls:
           type: array
           items:
@@ -229,27 +228,55 @@ components:
                 maxLength: 5000
             required: [operation, selector, optional_value]
           description: Browser automation steps
-        last_checked:
-          type: integer
-          description: Unix timestamp of last check
-          readOnly: true
-        last_changed:
-          type: integer
-          description: Unix timestamp of last change
-          readOnly: true
-        last_error:
-          type: string
-          description: Last error message
-          readOnly: true
-      required:
-        - url
+
+    Watch:
+      allOf:
+        - $ref: '#/components/schemas/WatchBase'
+        - type: object
+          properties:
+            uuid:
+              type: string
+              format: uuid
+              description: Unique identifier for the web page change monitor (watch)
+              readOnly: true
+            last_checked:
+              type: integer
+              description: Unix timestamp of last check
+              readOnly: true
+            last_changed:
+              type: integer
+              description: Unix timestamp of last change
+              readOnly: true
+            last_error:
+              type: string
+              description: Last error message
+              readOnly: true
+            last_viewed:
+              type: integer
+              description: Unix timestamp in seconds of the last time the watch was viewed. Setting it to a value higher than `last_changed` in the "Update watch" endpoint marks the watch as viewed.
+              minimum: 0
+            link:
+              type: string
+              format: string
+              description: The watch URL rendered in case of any Jinja2 markup, always use this for listing.
+              readOnly: true
 
     CreateWatch:
       allOf:
-        - $ref: '#/components/schemas/Watch'
-        - type: object
+        - $ref: '#/components/schemas/WatchBase'
+        - type: 'object'
           required:
             - url
+
+    UpdateWatch:
+      allOf:
+        - $ref: '#/components/schemas/WatchBase'
+        - type: object
+          properties:
+            last_viewed:
+              type: integer
+              description: Unix timestamp in seconds of the last time the watch was viewed. Setting it to a value higher than `last_changed` in the "Update watch" endpoint marks the watch as viewed.
+              minimum: 0
 
     Tag:
       type: object
@@ -271,8 +298,13 @@ components:
         notification_muted:
           type: boolean
           description: Whether notifications are muted for this tag
-      required:
-        - title
+
+    CreateTag:
+      allOf:
+        - $ref: '#/components/schemas/Tag'
+        - type: object
+          required:
+            - title
 
     NotificationUrls:
       type: object
@@ -368,9 +400,10 @@ paths:
               example:
                 "095be615-a8ad-4c33-8e9c-c7612fbf6c9f":
                   uuid: "095be615-a8ad-4c33-8e9c-c7612fbf6c9f"
-                  url: "http://example.com"
-                  title: "Example Website Monitor"
-                  tag: "550e8400-e29b-41d4-a716-446655440000"
+                  url: "http://example.com?id={{1+1}} - the raw URL"
+                  link: "http://example.com?id=2 - the rendered URL, always use this for listing."
+                  title: "Example Website Monitor - manually entered title/description"
+                  page_title: "The HTML <title> from the page"
                   tags: ["550e8400-e29b-41d4-a716-446655440000"]
                   paused: false
                   muted: false
@@ -380,9 +413,10 @@ paths:
                   last_changed: 1640995200
                 "7c9e6b8d-f2a1-4e5c-9d3b-8a7f6e4c2d1a":
                   uuid: "7c9e6b8d-f2a1-4e5c-9d3b-8a7f6e4c2d1a"
-                  url: "https://news.example.org"
-                  title: "News Site Tracker"
-                  tag: "330e8400-e29b-41d4-a716-446655440001"
+                  url: "http://example.com?id={{1+1}} - the raw URL"
+                  link: "http://example.com?id=2 - the rendered URL, always use this for listing."
+                  title: "News Site Tracker - manually entered title/description"
+                  page_title: "The HTML <title> from the page"
                   tags: ["330e8400-e29b-41d4-a716-446655440001"]
                   paused: false
                   muted: true
@@ -562,7 +596,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Watch'
+              $ref: '#/components/schemas/UpdateWatch'
       responses:
         '200':
           description: Web page change monitor (watch) updated successfully
@@ -576,7 +610,7 @@ paths:
 
     delete:
       operationId: deleteWatch
-      tags: [Watch Management]  
+      tags: [Watch Management]
       summary: Delete watch
       description: Delete a web page change monitor (watch) and all related history
       x-code-samples:
@@ -805,7 +839,7 @@ paths:
                 'Content-Type': 'application/json'
             }
             data = {'title': 'Important Sites'}
-            response = requests.post('http://localhost:5000/api/v1/tag', 
+            response = requests.post('http://localhost:5000/api/v1/tag',
                                    headers=headers, json=data)
             print(response.json())
       requestBody:
@@ -813,7 +847,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Tag'
+              $ref: '#/components/schemas/CreateTag'
             example:
               title: "Important Sites"
       responses:
@@ -1188,7 +1222,6 @@ paths:
                     uuid: "095be615-a8ad-4c33-8e9c-c7612fbf6c9f"
                     url: "http://example.com"
                     title: "Example Website Monitor"
-                    tag: "550e8400-e29b-41d4-a716-446655440000"
                     tags: ["550e8400-e29b-41d4-a716-446655440000"]
                     paused: false
                     muted: false

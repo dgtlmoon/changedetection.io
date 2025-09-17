@@ -6,9 +6,9 @@ from flask import url_for
 import logging
 import time
 
-def set_original_response():
-    test_return_data = """<html>
-    <head><title>head title</title></head>
+def set_original_response(extra_title=''):
+    test_return_data = f"""<html>
+    <head><title>head title{extra_title}</title></head>
     <body>
      Some initial text<br>
      <p>Which is across multiple lines</p>
