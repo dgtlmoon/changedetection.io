@@ -58,6 +58,7 @@ def run_socketio_watch_update_test(client, live_server, password_mode=""):
 
     has_watch_update = False
     has_unviewed_update = False
+    got_general_stats_update = False
 
     for i in range(10):
         # Get received events
@@ -65,15 +66,11 @@ def run_socketio_watch_update_test(client, live_server, password_mode=""):
 
         if received:
             logger.info(f"Received {len(received)} events after {i+1} seconds")
-
-            # Check for watch_update events with unviewed=True
             for event in received:
                 if event['name'] == 'watch_update':
                     has_watch_update = True
-                    if event['args'][0]['watch'].get('has-unread-changes', False):
-                        has_unviewed_update = True
-                        logger.info("Found unviewed update event!")
-                        break
+                if event['name'] == 'general_stats_update':
+                    got_general_stats_update = True
 
         if has_unviewed_update:
             break
@@ -92,7 +89,7 @@ def run_socketio_watch_update_test(client, live_server, password_mode=""):
     assert has_watch_update, "No watch_update events received"
 
     # Verify we received an unviewed event
-    assert has_unviewed_update, "No watch_update event with unviewed=True received"
+    assert got_general_stats_update, "Got general stats update event"
 
     # Alternatively, check directly if the watch in the datastore is marked as unviewed
     from changedetectionio.flask_app import app

@@ -250,7 +250,8 @@ def handle_watch_update(socketio, **kwargs):
         # logger.debug(f"Emitting 'watch_update' event for {watch.get('uuid')}, data: {watch_data}")
 
         # Emit to all clients (no 'broadcast' parameter needed - it's the default behavior)
-        socketio.emit("watch_update", {'watch': watch_data, 'general_stats': general_stats})
+        socketio.emit("watch_update", {'watch': watch_data})
+        socketio.emit("general_stats_update", general_stats)
 
         # Log after successful emit - use watch_data['uuid'] to avoid variable shadowing issues
         logger.trace(f"Socket.IO: Emitted update for watch {watch_data['uuid']}, Checking now: {watch_data['checking_now']}")
