@@ -69,7 +69,7 @@ def test_trigger_regex_functionality_with_filter(client, live_server, measure_me
 
     # It should report nothing found (nothing should match the regex and filter)
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' not in res.data
+    assert b'has-unread-changes' not in res.data
 
     # now this should trigger something
     with open("test-datastore/endpoint-content.txt", "w") as f:
@@ -78,7 +78,7 @@ def test_trigger_regex_functionality_with_filter(client, live_server, measure_me
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     time.sleep(sleep_time_for_fetch_thread)
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' in res.data
+    assert b'has-unread-changes' in res.data
 
 # Cleanup everything
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)

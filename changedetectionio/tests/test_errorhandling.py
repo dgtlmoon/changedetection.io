@@ -31,7 +31,7 @@ def _runner_test_http_errors(client, live_server, http_code, expected_text):
 
     res = client.get(url_for("watchlist.index"))
     # no change
-    assert b'unviewed' not in res.data
+    assert b'has-unread-changes' not in res.data
     assert bytes(expected_text.encode('utf-8')) in res.data
 
 

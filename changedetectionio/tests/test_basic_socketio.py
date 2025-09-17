@@ -70,7 +70,7 @@ def run_socketio_watch_update_test(client, live_server, password_mode=""):
             for event in received:
                 if event['name'] == 'watch_update':
                     has_watch_update = True
-                    if event['args'][0]['watch'].get('unviewed', False):
+                    if event['args'][0]['watch'].get('has-unread-changes', False):
                         has_unviewed_update = True
                         logger.info("Found unviewed update event!")
                         break
