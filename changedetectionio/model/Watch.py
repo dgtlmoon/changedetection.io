@@ -170,7 +170,7 @@ class model(watch_base):
     @property
     def label(self):
         # Used for sorting, display, etc
-        return self.get('title') or self.get('page_title') or self.get('url')
+        return self.get('title') or self.get('page_title') or self.link
 
     @property
     def last_changed(self):

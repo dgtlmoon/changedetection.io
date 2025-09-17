@@ -88,6 +88,8 @@ class Watch(Resource):
         # attr .last_changed will check for the last written text snapshot on change
         watch['last_changed'] = watch.last_changed
         watch['viewed'] = watch.viewed
+        watch['link'] = watch.link,
+
         return watch
 
     @auth.check_token
@@ -273,6 +275,8 @@ class CreateWatch(Resource):
                 'last_changed': watch.last_changed,
                 'last_checked': watch['last_checked'],
                 'last_error': watch['last_error'],
+                'link': watch.link,
+                'page_title': watch['page_title'],
                 'title': watch['title'],
                 'url': watch['url'],
                 'viewed': watch.viewed
