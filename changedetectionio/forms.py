@@ -220,13 +220,15 @@ def validate_time_between_check_has_values(form):
     Custom validation function for TimeBetweenCheckForm.
     Returns True if at least one time interval field has a value > 0.
     """
-    return any([
-        form.weeks.data and form.weeks.data > 0,
-        form.days.data and form.days.data > 0,
-        form.hours.data and form.hours.data > 0,
-        form.minutes.data and form.minutes.data > 0,
-        form.seconds.data and form.seconds.data > 0
+    res = any([
+        form.weeks.data and int(form.weeks.data) > 0,
+        form.days.data and int(form.days.data) > 0,
+        form.hours.data and int(form.hours.data) > 0,
+        form.minutes.data and int(form.minutes.data) > 0,
+        form.seconds.data and int(form.seconds.data) > 0
     ])
+
+    return res
 
 
 class RequiredTimeInterval(object):
