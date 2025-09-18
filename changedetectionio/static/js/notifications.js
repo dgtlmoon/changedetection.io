@@ -30,7 +30,7 @@ $(document).ready(function () {
 
     $(document).on('click', '[data-target="#notification-preview"]', function (e) {
         var data = getNotificationData();
-        $('#notification-iframe').contents().find('body').html('Loading...');
+        $('#notification-iframe-html-preview').contents().find('body').html('Loading...');
         $.ajax({
             type: "POST",
             url: notification_test_render_preview_url,
@@ -49,12 +49,15 @@ $(document).ready(function () {
     });
 
     function setPreview(data) {
-        const iframe = document.getElementById("notification-iframe");
+        const iframe = document.getElementById("notification-iframe-html-preview");
         const isDark = document.documentElement.getAttribute('data-darkmode') === 'true';
+
+        // this should come back in the data objk
         const isTextFormat = $('select.notification-format').val() === 'Text';
 
         $('#notification-preview-title-text').text(data['title']);
-
+        $('#notification-div-text-preview').text(data['body']);
+        return;
         iframe.srcdoc = `
         <html data-darkmode="${isDark}">
           <head>            
