@@ -120,8 +120,8 @@ $(document).ready(function () {
             socket.on('general_stats_update', function (general_stats) {
                 // Tabs at bottom of list
                 $('#watch-table-wrapper').toggleClass("has-unread-changes", general_stats.unread_changes_count !==0)
-                $('#post-list-with-errors').toggleClass("has-error", general_stats.count_errors !== 0)
-                $('#post-list-with-errors a').text(`With errors (${ general_stats.count_errors })`);
+                $('#watch-table-wrapper').toggleClass("has-error", general_stats.count_errors !== 0)
+                $('#post-list-with-errors a').text(`With errors (${ new Intl.NumberFormat(navigator.language).format(general_stats.count_errors) })`);
                 $('#unread-tab-counter').text(new Intl.NumberFormat(navigator.language).format(general_stats.unread_changes_count));
             });
 
