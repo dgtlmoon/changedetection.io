@@ -84,8 +84,11 @@ document.addEventListener('DOMContentLoaded', function() {
         {%- set cols_required = cols_required + 1 -%}
     {%- endif -%}
     {%- set ui_settings = datastore.data['settings']['application']['ui'] -%}
-
-    <div id="watch-table-wrapper">
+    {%- set wrapper_classes = [
+        'has-unread-changes' if unread_changes_count else '',
+        'has-error' if errored_count else '',
+    ] -%}
+    <div id="watch-table-wrapper" class="{{ wrapper_classes | reject('equalto', '') | join(' ') }}">
         {%- set table_classes = [
             'favicon-enabled' if 'favicons_enabled' not in ui_settings or ui_settings['favicons_enabled'] else 'favicon-not-enabled',
         ] -%}
@@ -243,10 +246,10 @@ document.addEventListener('DOMContentLoaded', function() {
             </tbody>
         </table>
         <ul id="post-list-buttons">
-            <li id="post-list-with-errors" class="{%- if errored_count -%}has-error{%- endif -%}" style="display: none;" >
+            <li id="post-list-with-errors" style="display: none;" >
                 <a href="{{url_for('watchlist.index', with_errors=1, tag=request.args.get('tag')) }}" class="pure-button button-tag button-error">With errors ({{ errored_count }})</a>
             </li>
-            <li id="post-list-mark-views" class="{%- if has_unviewed -%}has-unviewed{%- endif -%}" style="display: none;" >
+            <li id="post-list-mark-views" style="display: none;" >
                 <a href="{{url_for('ui.mark_all_viewed',with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag " id="mark-all-viewed">Mark all viewed</a>
             </li>
         {%-  if active_tag_uuid -%}
@@ -254,8 +257,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 <a href="{{url_for('ui.mark_all_viewed', tag=active_tag_uuid) }}" class="pure-button button-tag " id="mark-all-viewed">Mark all viewed in '{{active_tag.title}}'</a>
             </li>
         {%-  endif -%}
-            <li id="post-list-unread" class="{%- if has_unviewed -%}has-unviewed{%- endif -%}" style="display: none;" >
-                <a href="{{url_for('watchlist.index', unread=1, tag=request.args.get('tag')) }}" class="pure-button button-tag">Unread</a>
+            <li id="post-list-unread" style="display: none;" >
+                <a href="{{url_for('watchlist.index', unread=1, tag=request.args.get('tag')) }}" class="pure-button button-tag">Unread (<span id="unread-tab-counter">{{ unread_changes_count }}</span>)</a>
             </li>
             <li>
                <a href="{{ url_for('ui.form_watch_checknow', tag=active_tag_uuid, with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag" id="recheck-all">Recheck
