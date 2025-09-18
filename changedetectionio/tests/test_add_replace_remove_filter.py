@@ -75,7 +75,7 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
     wait_for_all_checks(client)
     time.sleep(0.5)
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' not in res.data
+    assert b'has-unread-changes' not in res.data
 
     # The trigger line is REMOVED,  this should trigger
     set_original(excluding='The golden line')
@@ -84,7 +84,7 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' in res.data
+    assert b'has-unread-changes' in res.data
 
     time.sleep(1)
 
@@ -98,14 +98,14 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
     wait_for_all_checks(client)
     time.sleep(1)
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' not in res.data
+    assert b'has-unread-changes' not in res.data
 
     # Remove it again, and we should get a trigger
     set_original(excluding='The golden line')
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' in res.data
+    assert b'has-unread-changes' in res.data
 
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
@@ -169,7 +169,7 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
 
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' not in res.data
+    assert b'has-unread-changes' not in res.data
 
     # The trigger line is ADDED,  this should trigger
     set_original(add_line='<p>Oh yes please</p>')
@@ -177,7 +177,7 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
 
-    assert b'unviewed' in res.data
+    assert b'has-unread-changes' in res.data
 
     # Takes a moment for apprise to fire
     wait_for_notification_endpoint_output()

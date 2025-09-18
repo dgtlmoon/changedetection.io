@@ -112,7 +112,7 @@ def test_itemprop_price_change(client, live_server):
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'180.45' in res.data
-    assert b'unviewed' in res.data
+    assert b'has-unread-changes' in res.data
     client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
     time.sleep(0.2)
 
@@ -129,7 +129,7 @@ def test_itemprop_price_change(client, live_server):
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'120.45' in res.data
-    assert b'unviewed' not in res.data
+    assert b'has-unread-changes' not in res.data
 
 
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
@@ -178,7 +178,7 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
     assert b'more than one price detected' not in res.data
     # BUT the new price should show, even tho its within limits
     assert b'1,000.45' or b'1000.45' in res.data #depending on locale
-    assert b'unviewed' not in res.data
+    assert b'has-unread-changes' not in res.data
 
     # price changed to something LESS than min (900), SHOULD be a change
     set_original_response(props_markup=instock_props[0], price='890.45')
@@ -188,7 +188,7 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'890.45' in res.data
-    assert b'unviewed' in res.data
+    assert b'has-unread-changes' in res.data
 
     client.get(url_for("ui.mark_all_viewed"))
 
@@ -200,7 +200,7 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'820.45' in res.data
-    assert b'unviewed' in res.data
+    assert b'has-unread-changes' in res.data
     client.get(url_for("ui.mark_all_viewed"))
 
     # price changed to something MORE than max (1100.10), SHOULD be a change
@@ -210,7 +210,7 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
     res = client.get(url_for("watchlist.index"))
     # Depending on the LOCALE it may be either of these (generally for US/default/etc)
     assert b'1,890.45' in res.data or b'1890.45' in res.data
-    assert b'unviewed' in res.data
+    assert b'has-unread-changes' in res.data
 
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
@@ -294,7 +294,7 @@ def test_itemprop_percent_threshold(client, live_server):
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'960.45' in res.data
-    assert b'unviewed' not in res.data
+    assert b'has-unread-changes' not in res.data
 
     # Bigger INCREASE change than the threshold should trigger
     set_original_response(props_markup=instock_props[0], price='1960.45')
@@ -302,7 +302,7 @@ def test_itemprop_percent_threshold(client, live_server):
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'1,960.45' or b'1960.45' in res.data #depending on locale
-    assert b'unviewed' in res.data
+    assert b'has-unread-changes' in res.data
 
 
     # Small decrease should NOT trigger
@@ -312,7 +312,7 @@ def test_itemprop_percent_threshold(client, live_server):
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'1,950.45' or b'1950.45' in res.data #depending on locale
-    assert b'unviewed' not in res.data
+    assert b'has-unread-changes' not in res.data
 
 
 

@@ -40,9 +40,9 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
     wait_for_all_checks(client)
 
-    # It should report nothing found (no new 'unviewed' class)
+    # It should report nothing found (no new 'has-unread-changes' class)
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' not in res.data
+    assert b'has-unread-changes' not in res.data
 
 
     #####################
@@ -62,9 +62,9 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
-    # It should report nothing found (no new 'unviewed' class)
+    # It should report nothing found (no new 'has-unread-changes' class)
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' not in res.data
+    assert b'has-unread-changes' not in res.data
 
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
@@ -92,9 +92,9 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
-    # It should report nothing found (no new 'unviewed' class)
+    # It should report nothing found (no new 'has-unread-changes' class)
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' in res.data
+    assert b'has-unread-changes' in res.data
     client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
     time.sleep(0.2)
 
@@ -108,7 +108,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' in res.data # A change should have registered because empty_pages_are_a_change is ON
+    assert b'has-unread-changes' in res.data # A change should have registered because empty_pages_are_a_change is ON
     assert b'fetch-error' not in res.data
 
     #

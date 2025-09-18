@@ -128,9 +128,9 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
-    # It should report nothing found (no new 'unviewed' class)
+    # It should report nothing found (no new 'has-unread-changes' class)
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' not in res.data
+    assert b'has-unread-changes' not in res.data
     assert b'/test-endpoint' in res.data
 
     #  Make a change
@@ -141,9 +141,9 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
-    # It should report nothing found (no new 'unviewed' class)
+    # It should report nothing found (no new 'has-unread-changes' class)
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' not in res.data
+    assert b'has-unread-changes' not in res.data
     assert b'/test-endpoint' in res.data
 
 
@@ -154,7 +154,7 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
     wait_for_all_checks(client)
 
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' in res.data
+    assert b'has-unread-changes' in res.data
 
     res = client.get(url_for("ui.ui_views.preview_page", uuid="first"))
 
@@ -222,9 +222,9 @@ def _run_test_global_ignore(client, as_source=False, extra_ignore=""):
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-    # It should report nothing found (no new 'unviewed' class), adding random ignore text should not cause a change
+    # It should report nothing found (no new 'has-unread-changes' class), adding random ignore text should not cause a change
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' not in res.data
+    assert b'has-unread-changes' not in res.data
     assert b'/test-endpoint' in res.data
 #####
 
@@ -238,10 +238,10 @@ def _run_test_global_ignore(client, as_source=False, extra_ignore=""):
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
-    # It should report nothing found (no new 'unviewed' class)
+    # It should report nothing found (no new 'has-unread-changes' class)
     res = client.get(url_for("watchlist.index"))
 
-    assert b'unviewed' not in res.data
+    assert b'has-unread-changes' not in res.data
     assert b'/test-endpoint' in res.data
 
     # Just to be sure.. set a regular modified change that will trigger it
@@ -249,7 +249,7 @@ def _run_test_global_ignore(client, as_source=False, extra_ignore=""):
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' in res.data
+    assert b'has-unread-changes' in res.data
 
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data

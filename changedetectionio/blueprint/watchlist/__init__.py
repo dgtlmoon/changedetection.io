@@ -87,7 +87,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             form=form,
             guid=datastore.data['app_guid'],
             has_proxies=datastore.proxy_list,
-            has_unviewed=datastore.has_unviewed,
             hosted_sticky=os.getenv("SALTED_PASS", False) == False,
             now_time_server=round(time.time()),
             pagination=pagination,
@@ -97,6 +96,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             sort_order=request.args.get('order') if request.args.get('order') else request.cookies.get('order'),
             system_default_fetcher=datastore.data['settings']['application'].get('fetch_backend'),
             tags=sorted_tags,
+            unread_changes_count=datastore.unread_changes_count,
             watches=sorted_watches
         )
 

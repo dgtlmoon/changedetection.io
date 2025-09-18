@@ -38,9 +38,9 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
         # Give the thread time to pick it up
         wait_for_all_checks(client)
 
-        # It should report nothing found (no new 'unviewed' class)
+        # It should report nothing found (no new 'has-unread-changes' class)
         res = client.get(url_for("watchlist.index"))
-        assert b'unviewed' not in res.data
+        assert b'has-unread-changes' not in res.data
         assert b'test-endpoint' in res.data
 
         # Default no password set, this stuff should be always available.
@@ -74,9 +74,9 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     res = client.get(url_for("ui.ui_edit.watch_get_latest_html", uuid=uuid))
     assert b'which has this one new line' in res.data
 
-    # Now something should be ready, indicated by having a 'unviewed' class
+    # Now something should be ready, indicated by having a 'has-unread-changes' class
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' in res.data
+    assert b'has-unread-changes' in res.data
 
     # #75, and it should be in the RSS feed
     rss_token = extract_rss_token_from_UI(client)
@@ -90,7 +90,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
     assert expected_url.encode('utf-8') in res.data
 #
-    # Following the 'diff' link, it should no longer display as 'unviewed' even after we recheck it a few times
+    # Following the 'diff' link, it should no longer display as 'has-unread-changes' even after we recheck it a few times
     res = client.get(url_for("ui.ui_views.diff_history_page", uuid=uuid))
     assert b'selected=""' in res.data, "Confirm diff history page loaded"
 
@@ -111,12 +111,12 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
         # Give the thread time to pick it up
         wait_for_all_checks(client)
 
-        # It should report nothing found (no new 'unviewed' class)
+        # It should report nothing found (no new 'has-unread-changes' class)
         res = client.get(url_for("watchlist.index"))
 
 
-        assert b'unviewed' not in res.data
-        assert b'class="has-unviewed' not in res.data
+        assert b'has-unread-changes' not in res.data
+        assert b'class="has-unread-changes' not in res.data
         assert b'head title' in res.data  # Should be ON by default
         assert b'test-endpoint' in res.data
 
@@ -140,8 +140,8 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     wait_for_all_checks(client)
 
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' in res.data
-    assert b'class="has-unviewed' in res.data
+    assert b'has-unread-changes' in res.data
+    assert b'class="has-unread-changes' in res.data
     assert b'head title' not in res.data  # should now be off
 
 
@@ -151,8 +151,8 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     # hit the mark all viewed link
     res = client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
 
-    assert b'class="has-unviewed' not in res.data
-    assert b'unviewed' not in res.data
+    assert b'class="has-unread-changes' not in res.data
+    assert b'has-unread-changes' not in res.data
 
     # #2458 "clear history" should make the Watch object update its status correctly when the first snapshot lands again
     client.get(url_for("ui.clear_watch_history", uuid=uuid))

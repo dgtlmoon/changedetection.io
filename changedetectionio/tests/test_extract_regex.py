@@ -174,10 +174,10 @@ def test_check_filter_and_regex_extract(client, live_server, measure_memory_usag
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
-    # It should have 'unviewed' still
+    # It should have 'has-unread-changes' still
     # Because it should be looking at only that 'sametext' id
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' in res.data
+    assert b'has-unread-changes' in res.data
 
     # Check HTML conversion detected and workd
     res = client.get(

@@ -89,7 +89,7 @@ def test_check_ignore_whitespace(client, live_server, measure_memory_usage):
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
 
-    # It should report nothing found (no new 'unviewed' class)
+    # It should report nothing found (no new 'has-unread-changes' class)
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' not in res.data
+    assert b'has-unread-changes' not in res.data
     assert b'/test-endpoint' in res.data

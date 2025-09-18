@@ -125,7 +125,7 @@ def test_conditions_with_text_and_number(client, live_server):
     time.sleep(2)
     # 75 is > 20 and < 100 and contains "5"
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' in res.data
+    assert b'has-unread-changes' in res.data
 
 
     # Case 2: Change with one condition violated
@@ -141,7 +141,7 @@ def test_conditions_with_text_and_number(client, live_server):
 
     # Should NOT be marked as having changes since not all conditions are met
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' not in res.data
+    assert b'has-unread-changes' not in res.data
 
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
@@ -299,7 +299,7 @@ def test_lev_conditions_plugin(client, live_server, measure_memory_usage):
 
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' not in res.data
+    assert b'has-unread-changes' not in res.data
 
     # Check the content saved initially, even tho a condition was set - this is the first snapshot so shouldnt be affected by conditions
     res = client.get(
@@ -326,7 +326,7 @@ def test_lev_conditions_plugin(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' not in res.data #because this will be like 0.90 not 0.8 threshold
+    assert b'has-unread-changes' not in res.data #because this will be like 0.90 not 0.8 threshold
 
     ############### Now change it a MORE THAN 50%
     test_return_data = """<html>
@@ -345,7 +345,7 @@ def test_lev_conditions_plugin(client, live_server, measure_memory_usage):
     assert b'Queued 1 watch for rechecking.' in res.data
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' in res.data
+    assert b'has-unread-changes' in res.data
     # cleanup for the next
     client.get(
         url_for("ui.form_delete", uuid="all"),

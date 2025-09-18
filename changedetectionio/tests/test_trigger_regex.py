@@ -42,7 +42,7 @@ def test_trigger_regex_functionality(client, live_server, measure_memory_usage):
 
     # It should report nothing found (just a new one shouldnt have anything)
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' not in res.data
+    assert b'has-unread-changes' not in res.data
 
     ### test regex
     res = client.post(
@@ -54,7 +54,7 @@ def test_trigger_regex_functionality(client, live_server, measure_memory_usage):
         follow_redirects=True
     )
     wait_for_all_checks(client)
-    # so that we set the state to 'unviewed' after all the edits
+    # so that we set the state to 'has-unread-changes' after all the edits
     client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
 
     with open("test-datastore/endpoint-content.txt", "w") as f:
@@ -65,7 +65,7 @@ def test_trigger_regex_functionality(client, live_server, measure_memory_usage):
 
     # It should report nothing found (nothing should match the regex)
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' not in res.data
+    assert b'has-unread-changes' not in res.data
 
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write("regex test123<br>\nsomething 123")
@@ -73,7 +73,7 @@ def test_trigger_regex_functionality(client, live_server, measure_memory_usage):
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' in res.data
+    assert b'has-unread-changes' in res.data
 
     # Cleanup everything
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
