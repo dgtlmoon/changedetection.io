@@ -84,6 +84,7 @@ document.addEventListener('DOMContentLoaded', function() {
     {%- set ui_settings = datastore.data['settings']['application']['ui'] -%}
     {%- set wrapper_classes = [
         'has-unread-changes' if unread_changes_count else '',
+        'has-error' if errored_count else '',
     ] -%}
     <div id="watch-table-wrapper" class="{{ wrapper_classes | reject('equalto', '') | join(' ') }}">
         {%- set table_classes = [
@@ -243,10 +244,10 @@ document.addEventListener('DOMContentLoaded', function() {
             </tbody>
         </table>
         <ul id="post-list-buttons">
-            <li id="post-list-with-errors" class="{%- if errored_count -%}has-error{%- endif -%}" style="display: none;" >
+            <li id="post-list-with-errors" style="display: none;" >
                 <a href="{{url_for('watchlist.index', with_errors=1, tag=request.args.get('tag')) }}" class="pure-button button-tag button-error">With errors ({{ errored_count }})</a>
             </li>
-            <li id="post-list-mark-views" class="{%- if unviewed_count -%}has-unviewed{%- endif -%}" style="display: none;" >
+            <li id="post-list-mark-views" style="display: none;" >
                 <a href="{{url_for('ui.mark_all_viewed',with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag " id="mark-all-viewed">Mark all viewed</a>
             </li>
         {%-  if active_tag_uuid -%}
