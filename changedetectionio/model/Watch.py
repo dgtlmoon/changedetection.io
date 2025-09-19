@@ -46,7 +46,7 @@ class model(watch_base):
         self.__datastore_path = kw.get('datastore_path')
         if kw.get('datastore_path'):
             del kw['datastore_path']
-            
+
         super(model, self).__init__(*arg, **kw)
         if kw.get('default'):
             self.update(kw['default'])

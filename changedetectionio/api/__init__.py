@@ -7,6 +7,7 @@ from openapi_core import OpenAPI
 from openapi_core.contrib.flask import FlaskOpenAPIRequest
 from . import api_schema
 from ..model import watch_base
+from ..model.Watch import model as WatchModel
 
 # Build a JSON Schema atleast partially based on our Watch model
 watch_base_config = watch_base()
@@ -68,6 +69,14 @@ def validate_openapi_request(operation_id):
             return f(*args, **kwargs)
         return wrapper
     return decorator
+
+def enrich_watch_model_for_api(_watch: WatchModel) -> WatchModel:
+    watch = copy.deepcopy(_watch)
+    watch['last_changed'] = _watch.last_changed
+    watch['history_n'] = _watch.history_n
+    watch['viewed'] = _watch.viewed
+    watch['link'] = _watch.link
+    return watch
 
 # Import all API resources
 from .Watch import Watch, WatchHistory, WatchSingleHistory, CreateWatch, WatchFavicon

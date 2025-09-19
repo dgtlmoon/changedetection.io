@@ -1,6 +1,6 @@
 from flask_restful import Resource, abort
 from flask import request
-from . import auth, validate_openapi_request
+from . import auth, enrich_watch_model_for_api, validate_openapi_request
 
 class Search(Resource):
     def __init__(self, **kwargs):
@@ -26,14 +26,7 @@ class Search(Resource):
         # Build the response with watch details
         results = {}
         for uuid in matching_uuids:
-            watch = self.datastore.data['watching'].get(uuid)
-            results[uuid] = {
-                'last_changed': watch.last_changed,
-                'last_checked': watch['last_checked'],
-                'last_error': watch['last_error'],
-                'title': watch['title'],
-                'url': watch['url'],
-                'viewed': watch.viewed
-            }
+            results[uuid] = enrich_watch_model_for_api(self.datastore.data['watching'].get(uuid))
 
         return results, 200
+

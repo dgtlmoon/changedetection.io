@@ -1,4 +1,5 @@
 import os
+from typing import TYPE_CHECKING, cast
 from changedetectionio.strtobool import strtobool
 
 from flask_expects_json import expects_json
@@ -7,11 +8,11 @@ from changedetectionio import worker_handler
 from flask_restful import abort, Resource
 from flask import request, make_response, send_from_directory
 import validators
-from . import auth
+from . import auth, enrich_watch_model_for_api
 import copy
 
 # Import schemas from __init__.py
-from . import schema, schema_create_watch, schema_update_watch, validate_openapi_request
+from . import schema_create_watch, schema_update_watch, validate_openapi_request
 
 
 def validate_time_between_check_required(json_data):
@@ -61,10 +62,12 @@ class Watch(Resource):
     @validate_openapi_request('getWatch')
     def get(self, uuid):
         """Get information about a single watch, recheck, pause, or mute."""
-        from copy import deepcopy
-        watch = deepcopy(self.datastore.data['watching'].get(uuid))
+        watch = enrich_watch_model_for_api(self.datastore.data['watching'].get(uuid))
         if not watch:
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
+        if TYPE_CHECKING:
+            from changedetectionio.model.Watch import model as WatchModel
+            watch = cast(WatchModel, watch)
 
         if request.args.get('recheck'):
             worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
@@ -265,22 +268,12 @@ class CreateWatch(Resource):
         list = {}
 
         tag_limit = request.args.get('tag', '').lower()
-        for uuid, watch in self.datastore.data['watching'].items():
+        for uuid, _watch in self.datastore.data['watching'].items():
             # Watch tags by name (replace the other calls?)
             tags = self.datastore.get_all_tags_for_watch(uuid=uuid)
             if tag_limit and not any(v.get('title').lower() == tag_limit for k, v in tags.items()):
                 continue
-
-            list[uuid] = {
-                'last_changed': watch.last_changed,
-                'last_checked': watch['last_checked'],
-                'last_error': watch['last_error'],
-                'link': watch.link,
-                'page_title': watch['page_title'],
-                'title': watch['title'],
-                'url': watch['url'],
-                'viewed': watch.viewed
-            }
+            list[uuid] = enrich_watch_model_for_api(_watch)
 
         if request.args.get('recheck_all'):
             for uuid in self.datastore.data['watching'].keys():
