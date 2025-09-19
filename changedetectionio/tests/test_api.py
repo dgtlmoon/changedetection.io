@@ -6,6 +6,7 @@ from .util import live_server_setup, wait_for_all_checks
 
 import json
 import uuid
+from .test_api_search import all_expected_watch_keys
 
 
 def set_original_response():
@@ -126,6 +127,8 @@ def test_api_simple(client, live_server, measure_memory_usage):
         headers={'x-api-key': api_key},
     )
     after_recheck_info = res.json[watch_uuid]
+    missing_keys = all_expected_watch_keys - after_recheck_info.keys()
+    assert not missing_keys, 'A single item in the result of a list watches api call must be a full watch model'
     assert after_recheck_info['last_checked'] != before_recheck_info['last_checked']
     assert after_recheck_info['last_changed'] != 0
 
@@ -329,6 +332,8 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
 
     watch_uuid = list(res.json.keys())[0]
     assert not res.json[watch_uuid].get('viewed'), 'A newly created watch can only be unviewed'
+    missing_keys = all_expected_watch_keys - res.json[watch_uuid].keys()
+    assert not missing_keys, 'A single item in the result of a list watches api call must be a full watch model'
 
     # Check in the edit page just to be sure
     res = client.get(
