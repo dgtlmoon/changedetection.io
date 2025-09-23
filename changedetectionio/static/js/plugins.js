@@ -100,6 +100,7 @@
             $pre.html(newContent);
         });
     };
+
     $.fn.miniTabs = function (tabsConfig, options) {
         const settings = {
             tabClass: 'minitab',

@@ -42,13 +42,7 @@
                 <input type="radio" name="diff_type" id="diffWords" value="diffWords"> Words</label>
             <label for="diffLines" class="pure-checkbox">
                 <input type="radio" name="diff_type" id="diffLines" value="diffLines" checked=""> Lines</label>
-
-            <label for="diffChars" class="pure-checkbox">
-                <input type="radio" name="diff_type" id="diffChars" value="diffChars"> Chars</label>
-            <!-- @todo - when mimetype is JSON, select this by default? -->
-            <label for="diffJson" class="pure-checkbox">
-                <input type="radio" name="diff_type" id="diffJson" value="diffJson"> JSON</label>
-
+            {#  @todo choose other types by their mimetype? #}
             <span>
         <!-- https://github.com/kpdecker/jsdiff/issues/389 ? -->
         <label for="ignoreWhitespace" class="pure-checkbox" id="label-diff-ignorewhitespace">
@@ -93,21 +87,19 @@
          {% endif %}
 
          <div class="snapshot-age">{{watch_a.snapshot_text_ctime|format_timestamp_timeago}}</div>
-
-         <table>
-             <tbody>
-             <tr>
-                 <!-- just proof of concept copied straight from github.com/kpdecker/jsdiff -->
-                 <td id="a" style="display: none;">{{from_version_file_contents}}</td>
-                 <td id="b" style="display: none;">{{to_version_file_contents}}</td>
-                 <td id="diff-col">
-                     <span id="result" class="highlightable-filter"></span>
-                 </td>
-             </tr>
-             </tbody>
-         </table>
-         Diff algorithm from the amazing <a href="https://github.com/kpdecker/jsdiff">github.com/kpdecker/jsdiff</a>
+            <table>
+                <tbody>
+                <tr>
+                    <td id="diff-col" class="highlightable-filter">
+                        <pre style="border-left: 2px solid #ddd;">
+{{ content| diff_unescape_difference_spans  }}
+                        </pre>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
      </div>
+
      <div class="tab-pane-inner" id="screenshot">
          <div class="tip">
              For now, Differences are performed on text, not graphically, only the latest screenshot is available.
@@ -159,8 +151,6 @@
 <script>
     const newest_version_timestamp = {{newest_version_timestamp}};
 </script>
-<script src="{{url_for('static_content', group='js', filename='diff.min.js')}}"></script>
-
 <script src="{{url_for('static_content', group='js', filename='diff-render.js')}}"></script>
 
 
