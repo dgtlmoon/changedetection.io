@@ -4,11 +4,13 @@ updates:
     directory: /
     schedule:
       interval: "weekly"
-    "caronc/apprise":
-      versioning-strategy: "increase"
-      schedule:
-        interval: "daily"
     groups:
       all:
         patterns:
         - "*"
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: "daily"
+    allow:
+      - dependency-name: "apprise"
