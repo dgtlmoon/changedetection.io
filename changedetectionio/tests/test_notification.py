@@ -507,7 +507,7 @@ def _test_color_notifications(client, notification_body_token):
 
     with open("test-datastore/notification.txt", 'r') as f:
         x = f.read()
-        assert f'<span style="{REMOVED_STYLE}">Which is across multiple lines' in x
+        assert f'<span style="{REMOVED_STYLE}" title="Removed">Which is across multiple lines' in x
 
 
     client.get(

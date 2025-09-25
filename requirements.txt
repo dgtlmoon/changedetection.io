@@ -18,7 +18,6 @@ pytz
 timeago~=1.0
 validators~=0.21
 
-
 # Set these versions together to avoid a RequestsDependencyWarning
 # >= 2.26 also adds Brotli support if brotli is installed
 brotli~=1.0

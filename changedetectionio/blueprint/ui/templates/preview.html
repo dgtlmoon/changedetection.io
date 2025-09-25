@@ -4,6 +4,7 @@
     <script>
         const screenshot_url = "{{url_for('static_content', group='screenshot', filename=uuid)}}";
         const triggered_line_numbers = {{ triggered_line_numbers|tojson }};
+        const ignored_line_numbers = {{ ignored_line_numbers|tojson }};
         {% if last_error_screenshot %}
             const error_screenshot_url = "{{url_for('static_content', group='screenshot', filename=uuid, error_screenshot=1) }}";
         {% endif %}

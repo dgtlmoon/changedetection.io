@@ -57,7 +57,11 @@ $(document).ready(function () {
     $('#diff-col > pre').highlightLines([
         {
             'color': '#ee0000',
-            'lines': triggered_line_numbers
+            'lines': triggered_line_numbers,
+        },
+        {
+            'color': '#aaa',
+            'lines': ignored_line_numbers,
         }
     ]);
 });

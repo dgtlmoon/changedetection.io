@@ -1,16 +1,49 @@
 from flask import Blueprint, request, redirect, url_for, flash, render_template, make_response, send_from_directory, abort
 import os
 import time
+import re
 from loguru import logger
+from markupsafe import Markup
 
+from changedetectionio.diff import REMOVED_STYLE, ADDED_STYLE
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
-from changedetectionio import html_tools
+from changedetectionio import html_tools, diff
 from changedetectionio import worker_handler
 
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData, watch_check_update):
     views_blueprint = Blueprint('ui_views', __name__, template_folder="../ui/templates")
-    
+
+    @views_blueprint.app_template_filter('diff_unescape_difference_spans')
+    def diff_unescape_difference_spans(content):
+        """Emulate Jinja2's auto-escape, then selectively unescape our diff spans."""
+        from markupsafe import escape
+
+        if not content:
+            return Markup('')
+
+        # Step 1: Escape everything like Jinja2 would (this makes it XSS-safe)
+        escaped_content = escape(str(content))
+
+        # Step 2: Simple regex to unescape only our exact diff spans
+        # Unescape opening tags with exact styles
+        result = re.sub(
+            rf'&lt;span style=&#34;({REMOVED_STYLE}|{ADDED_STYLE})&#34; title=&#34;([A-Za-z0-9]+)&#34;&gt;',
+            r'<span style="\1" title="\2">',
+            str(escaped_content),
+            flags=re.IGNORECASE
+        )
+
+        # Unescape closing tags (but only as many as we opened)
+        open_count = result.count('<span style=')
+        close_count = str(escaped_content).count('&lt;/span&gt;')
+
+        # Replace up to the number of spans we opened
+        for _ in range(min(open_count, close_count)):
+            result = result.replace('&lt;/span&gt;', '</span>', 1)
+
+        return Markup(result)
+
     @views_blueprint.route("/preview/<string:uuid>", methods=['GET'])
     @login_optionally_required
     def preview_page(uuid):
@@ -34,7 +67,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         is_html_webdriver = False
         if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver' or watch.get('fetch_backend', '').startswith('extra_browser_'):
             is_html_webdriver = True
+
         triggered_line_numbers = []
+        ignored_line_numbers = []
+
         if datastore.data['watching'][uuid].history_n == 0 and (watch.get_error_text() or watch.get_error_snapshot()):
             flash("Preview unavailable - No fetch/check completed or triggers not reached", "error")
         else:
@@ -53,27 +89,31 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                                                       wordlist=watch['trigger_text'],
                                                                       mode='line numbers'
                                                                       )
-
+                ignored_line_numbers = html_tools.strip_ignore_text(content=content,
+                                                                      wordlist=watch['ignore_text'],
+                                                                      mode='line numbers'
+                                                                      )
             except Exception as e:
                 content.append({'line': f"File doesnt exist or unable to read timestamp {timestamp}", 'classes': ''})
 
         output = render_template("preview.html",
                                  content=content,
+                                 current_diff_url=watch['url'],
                                  current_version=timestamp,
-                                 history_n=watch.history_n,
                                  extra_stylesheets=extra_stylesheets,
                                  extra_title=f" - Diff - {watch.label} @ {timestamp}",
-                                 triggered_line_numbers=triggered_line_numbers,
-                                 current_diff_url=watch['url'],
-                                 screenshot=watch.get_screenshot(),
-                                 watch=watch,
-                                 uuid=uuid,
+                                 history_n=watch.history_n,
                                  is_html_webdriver=is_html_webdriver,
+                                 ignored_line_numbers=ignored_line_numbers,
                                  last_error=watch['last_error'],
-                                 last_error_text=watch.get_error_text(),
                                  last_error_screenshot=watch.get_error_snapshot(),
-                                 versions=versions
-                                )
+                                 last_error_text=watch.get_error_text(),
+                                 screenshot=watch.get_screenshot(),
+                                 triggered_line_numbers=triggered_line_numbers,
+                                 uuid=uuid,
+                                 versions=versions,
+                                 watch=watch,
+                                 )
 
         return output
 
@@ -174,14 +214,15 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             password_enabled_and_share_is_off = not datastore.data['settings']['application'].get('shared_diff_access')
 
         datastore.set_last_viewed(uuid, time.time())
+        content = diff.render_diff(from_version_file_contents, to_version_file_contents, include_equal=True, html_colour=True)
 
         return render_template("diff.html",
+                                 content=content,
                                  current_diff_url=watch['url'],
-                                 from_version=str(from_version),
-                                 to_version=str(to_version),
                                  extra_stylesheets=extra_stylesheets,
                                  extra_title=f" - Diff - {watch.label}",
                                  extract_form=extract_form,
+                                 from_version=str(from_version),
                                  is_html_webdriver=is_html_webdriver,
                                  last_error=watch['last_error'],
                                  last_error_screenshot=watch.get_error_snapshot(),
@@ -190,9 +231,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                  newest=to_version_file_contents,
                                  newest_version_timestamp=dates[-1],
                                  password_enabled_and_share_is_off=password_enabled_and_share_is_off,
-                                 from_version_file_contents=from_version_file_contents,
-                                 to_version_file_contents=to_version_file_contents,
                                  screenshot=screenshot_url,
+                                 to_version=str(to_version),
                                  uuid=uuid,
                                  versions=dates, # All except current/last
                                  watch_a=watch
