@@ -133,6 +133,11 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
     assert b'has-unread-changes' not in res.data
     assert b'/test-endpoint' in res.data
 
+
+    res = client.get(url_for("ui.ui_views.preview_page", uuid="first"))
+    # nothing ignored because none of the text matched
+    assert b'ignored_line_numbers = []' in res.data
+
     #  Make a change
     set_modified_ignore_response()
 
@@ -162,6 +167,8 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
     # and we have "new ignore stuff" in ignore_text
     # it is only ignored, it is not removed (it will be highlighted too)
     assert b'new ignore stuff' in res.data
+    # Data for the highlighting is present (this is done in JS for now)
+    assert b'ignored_line_numbers = [8]' in res.data
 
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
