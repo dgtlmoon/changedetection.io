@@ -1131,11 +1131,12 @@ ul {
 }
 
 #realtime-conn-error {
-  position: absolute;
+  position: fixed;
   bottom: 0;
-  left: 30px;
+  left: 0;
   background: var(--color-warning);
   padding: 10px;
   font-size: 0.8rem;
   color: #fff;
+  opacity: 0.8;
 }
