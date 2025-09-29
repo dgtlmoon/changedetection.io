@@ -38,7 +38,7 @@ jsonpath-ng~=1.5.3
 # jq not available on Windows so must be installed manually
 
 # Notification library
-apprise==1.9.3
+apprise==1.9.4
 
 # - Needed for apprise/spush, and maybe others? hopefully doesnt trigger a rust compile.
 # - Requires extra wheel for rPi, adds build time for arm/v8 which is not in piwheels
@@ -50,8 +50,8 @@ cryptography==44.0.1
 # use any version other than 2.0.x due to https://github.com/eclipse/paho.mqtt.python/issues/814
 paho-mqtt!=2.0.*
 
-# Used for CSS filtering
-beautifulsoup4>=4.0.0
+# Used for CSS filtering, JSON extraction from HTML
+beautifulsoup4>=4.0.0,<=4.13.5
 
 # XPath filtering, lxml is required by bs4 anyway, but put it here to be safe.
 # #2328 - 5.2.0 and 5.2.1 had extra CPU flag CFLAGS set which was not compatible on older hardware
