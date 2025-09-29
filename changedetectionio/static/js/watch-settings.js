@@ -20,7 +20,6 @@ function request_textpreview_update() {
         data: data,
         namespace: 'watchEdit'
     }).done(function (data) {
-        alert(data['blocked_line_numbers'])
         console.debug(data['duration'])
         $('#filters-and-triggers #text-preview-before-inner').text(data['before_filter']);
         $('#filters-and-triggers #text-preview-inner')
