@@ -130,40 +130,47 @@ def extract_UUID_from_client(client):
 
 def wait_for_all_checks(client=None):
     """
-    Waits until the queue is empty and workers are idle.
-    Much faster than the original with adaptive timing.
+    Waits until both queues are empty and all workers are idle.
+    Optimized for Janus queues with minimal delays.
     """
-    from changedetectionio.flask_app import update_q as global_update_q
+    from changedetectionio.flask_app import update_q as global_update_q, notification_q
     from changedetectionio import worker_handler
 
     logger = logging.getLogger()
-    empty_since = None
-    attempt = 0
-    max_attempts = 150  # Still reasonable upper bound
 
-    while attempt < max_attempts:
-        # Start with fast checks, slow down if needed
-        if attempt < 10:
-            time.sleep(0.1)  # Very fast initial checks
-        elif attempt < 30:
-            time.sleep(0.3)  # Medium speed
-        else:
-            time.sleep(0.8)  # Slower for persistent issues
+    # Much tighter timing with reliable Janus queues
+    max_attempts = 100  # Reduced from 150
 
-        q_length = global_update_q.qsize()
+    for attempt in range(max_attempts):
+        # Check both queues and worker status
+        update_q_size = global_update_q.qsize()
+        notification_q_size = notification_q.qsize()
         running_uuids = worker_handler.get_running_uuids()
         any_workers_busy = len(running_uuids) > 0
 
-        if q_length == 0 and not any_workers_busy:
-            if empty_since is None:
-                empty_since = time.time()
-            elif time.time() - empty_since >= 0.15:  # Shorter wait
-                break
+        # Both queues empty and no workers processing
+        if update_q_size == 0 and notification_q_size == 0 and not any_workers_busy:
+            # Small delay to account for items being added to queue during processing
+            time.sleep(0.05)
+
+            # Double-check after brief delay
+            update_q_size = global_update_q.qsize()
+            notification_q_size = notification_q.qsize()
+            running_uuids = worker_handler.get_running_uuids()
+            any_workers_busy = len(running_uuids) > 0
+
+            if update_q_size == 0 and notification_q_size == 0 and not any_workers_busy:
+                return  # All clear!
+
+        # Adaptive sleep timing - start fast, get slightly slower
+        if attempt < 20:
+            time.sleep(0.05)  # Very fast initial checks
+        elif attempt < 50:
+            time.sleep(0.1)   # Medium speed
         else:
-            empty_since = None
-        
-        attempt += 1
-        time.sleep(0.3)
+            time.sleep(0.2)   # Slower for edge cases
+
+    logger.warning(f"wait_for_all_checks() timed out after {max_attempts} attempts")
 
 # Replaced by new_live_server_setup and calling per function scope in conftest.py
 def  live_server_setup(live_server):
