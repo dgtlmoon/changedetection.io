@@ -38,8 +38,6 @@ jobs:
             dockerfile: ./Dockerfile
           - platform: linux/arm/v8
             dockerfile: ./Dockerfile
-          - platform: linux/arm64/v8
-            dockerfile: ./Dockerfile
           # Alpine Dockerfile platforms (musl via alpine check)
           - platform: linux/amd64
             dockerfile: ./.github/test/Dockerfile-alpine
