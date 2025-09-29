@@ -53,8 +53,6 @@ $(document).ready(function () {
     if ($('#preview-version').length) {
         setupDateWidget();
     }
-    alert(blocked_line_numbers);
-
     $('#diff-col > pre').highlightLines([
         {
             'color': 'var(--highlight-trigger-text-bg-color)',
