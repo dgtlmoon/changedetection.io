@@ -67,7 +67,7 @@ $(document).ready(function () {
         {
             'color': 'var(--highlight-blocked-text-bg-color)',
             'lines': blocked_line_numbers,
-            'title': "Ignored for calculating changes, but still shown."
+            'title': "No change-detection will occur because this text exists."
         }
     ]);
 });

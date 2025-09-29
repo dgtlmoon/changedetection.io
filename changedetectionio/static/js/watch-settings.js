@@ -39,7 +39,7 @@ function request_textpreview_update() {
                 {
                     'color': 'var(--highlight-blocked-text-bg-color)',
                     'lines': data['blocked_line_numbers'],
-                    'title': "Ignored for calculating changes, but still shown."
+                    'title': "No change-detection will occur because this text exists."
                 }
             ])
     }).fail(function (error) {
