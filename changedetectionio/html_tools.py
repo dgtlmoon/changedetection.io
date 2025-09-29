@@ -377,6 +377,9 @@ def strip_ignore_text(content, wordlist, mode="content"):
     ignore_regex_multiline = []
     ignored_lines = []
 
+    if not content:
+        return ''
+
     for k in wordlist:
         # Is it a regex?
         res = re.search(PERL_STYLE_REGEX, k, re.IGNORECASE)

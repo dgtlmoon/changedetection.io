@@ -45,6 +45,7 @@ def prepare_filter_prevew(datastore, watch_uuid, form_data):
     text_before_filter = ''
     trigger_line_numbers = []
     ignore_line_numbers = []
+    blocked_line_numbers = []
 
     tmp_watch = deepcopy(datastore.data['watching'].get(watch_uuid))
 
@@ -101,14 +102,23 @@ def prepare_filter_prevew(datastore, watch_uuid, form_data):
     except Exception as e:
         text_before_filter = f"Error: {str(e)}"
 
+    try:
+        blocked_line_numbers = html_tools.strip_ignore_text(content=text_after_filter,
+                                                           wordlist=tmp_watch.get('text_should_not_be_present', []) + datastore.data['settings']['application'].get('text_should_not_be_present', []),
+                                                           mode='line numbers'
+                                                           )
+    except Exception as e:
+        text_before_filter = f"Error: {str(e)}"
+
     logger.trace(f"Parsed in {time.time() - now:.3f}s")
 
     return ({
-            'after_filter': text_after_filter,
-            'before_filter': text_before_filter.decode('utf-8') if isinstance(text_before_filter, bytes) else text_before_filter,
-            'duration': time.time() - now,
-            'trigger_line_numbers': trigger_line_numbers,
-            'ignore_line_numbers': ignore_line_numbers,
+        'after_filter': text_after_filter,
+        'before_filter': text_before_filter.decode('utf-8') if isinstance(text_before_filter, bytes) else text_before_filter,
+        'blocked_line_numbers': blocked_line_numbers,
+        'duration': time.time() - now,
+        'ignore_line_numbers': ignore_line_numbers,
+        'trigger_line_numbers': trigger_line_numbers,
         })
 
 

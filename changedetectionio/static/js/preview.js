@@ -53,15 +53,23 @@ $(document).ready(function () {
     if ($('#preview-version').length) {
         setupDateWidget();
     }
+    alert(blocked_line_numbers);
 
     $('#diff-col > pre').highlightLines([
         {
-            'color': '#ee0000',
+            'color': 'var(--highlight-trigger-text-bg-color)',
             'lines': triggered_line_numbers,
+            'title': "Triggers a change if this text appears, AND something changed in the document."
         },
         {
-            'color': '#aaa',
+            'color': 'var(--highlight-ignored-text-bg-color)',
             'lines': ignored_line_numbers,
+            'title': "Ignored for calculating changes, but still shown."
+        },
+        {
+            'color': 'var(--highlight-blocked-text-bg-color)',
+            'lines': blocked_line_numbers,
+            'title': "Ignored for calculating changes, but still shown."
         }
     ]);
 });

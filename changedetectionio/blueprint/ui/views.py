@@ -70,6 +70,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         triggered_line_numbers = []
         ignored_line_numbers = []
+        blocked_line_numbers = []
 
         if datastore.data['watching'][uuid].history_n == 0 and (watch.get_error_text() or watch.get_error_snapshot()):
             flash("Preview unavailable - No fetch/check completed or triggers not reached", "error")
@@ -86,11 +87,15 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 content = watch.get_history_snapshot(timestamp)
 
                 triggered_line_numbers = html_tools.strip_ignore_text(content=content,
-                                                                      wordlist=watch['trigger_text'],
+                                                                      wordlist=watch.get('trigger_text'),
                                                                       mode='line numbers'
                                                                       )
                 ignored_line_numbers = html_tools.strip_ignore_text(content=content,
-                                                                      wordlist=watch['ignore_text'],
+                                                                      wordlist=watch.get('ignore_text'),
+                                                                      mode='line numbers'
+                                                                      )
+                blocked_line_numbers = html_tools.strip_ignore_text(content=content,
+                                                                      wordlist=watch.get("text_should_not_be_present"),
                                                                       mode='line numbers'
                                                                       )
             except Exception as e:
@@ -102,14 +107,15 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                  current_version=timestamp,
                                  extra_stylesheets=extra_stylesheets,
                                  extra_title=f" - Diff - {watch.label} @ {timestamp}",
+                                 highlight_ignored_line_numbers=ignored_line_numbers,
+                                 highlight_triggered_line_numbers=triggered_line_numbers,
+                                 highlight_blocked_line_numbers=blocked_line_numbers,
                                  history_n=watch.history_n,
                                  is_html_webdriver=is_html_webdriver,
-                                 ignored_line_numbers=ignored_line_numbers,
                                  last_error=watch['last_error'],
                                  last_error_screenshot=watch.get_error_snapshot(),
                                  last_error_text=watch.get_error_text(),
                                  screenshot=watch.get_screenshot(),
-                                 triggered_line_numbers=triggered_line_numbers,
                                  uuid=uuid,
                                  versions=versions,
                                  watch=watch,

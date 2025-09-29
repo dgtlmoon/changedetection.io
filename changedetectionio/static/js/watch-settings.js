@@ -20,18 +20,26 @@ function request_textpreview_update() {
         data: data,
         namespace: 'watchEdit'
     }).done(function (data) {
+        alert(data['blocked_line_numbers'])
         console.debug(data['duration'])
         $('#filters-and-triggers #text-preview-before-inner').text(data['before_filter']);
         $('#filters-and-triggers #text-preview-inner')
             .text(data['after_filter'])
             .highlightLines([
                 {
-                    'color': '#ee0000',
-                    'lines': data['trigger_line_numbers']
+                    'color': 'var(--highlight-trigger-text-bg-color)',
+                    'lines': data['trigger_line_numbers'],
+                    'title': "Triggers a change if this text appears, AND something changed in the document."
                 },
                 {
-                    'color': '#757575',
-                    'lines': data['ignore_line_numbers']
+                    'color': 'var(--highlight-ignored-text-bg-color)',
+                    'lines': data['ignore_line_numbers'],
+                    'title': "Ignored for calculating changes, but still shown."
+                },
+                {
+                    'color': 'var(--highlight-blocked-text-bg-color)',
+                    'lines': data['blocked_line_numbers'],
+                    'title': "Ignored for calculating changes, but still shown."
                 }
             ])
     }).fail(function (error) {

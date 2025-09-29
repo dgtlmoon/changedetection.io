@@ -102,6 +102,10 @@
 
   --color-watch-table-error: var(--color-dark-red);
   --color-watch-table-row-text: var(--color-grey-100);
+
+  --highlight-trigger-text-bg-color: #1b98f8;
+  --highlight-ignored-text-bg-color: var(--color-grey-700);
+  --highlight-blocked-text-bg-color: rgb(202, 60, 60);
 }
 
 html[data-darkmode="true"] {
