@@ -315,6 +315,11 @@ class perform_site_check(difference_detection_processor):
         text_for_checksuming = stripped_text_from_html
         if text_to_ignore:
             text_for_checksuming = html_tools.strip_ignore_text(stripped_text_from_html, text_to_ignore)
+            # Some people prefer to also completely remove it
+            strip_ignored_lines = watch.get('strip_ignored_lines') if watch.get('strip_ignored_lines') is not None else self.datastore.data['settings']['application'].get('strip_ignored_lines')
+            if strip_ignored_lines:
+                # @todo add test in the 'preview' mode, check the widget works? compare to datastruct
+                stripped_text_from_html = text_for_checksuming
 
         # Re #133 - if we should strip whitespaces from triggering the change detected comparison
         if text_for_checksuming and self.datastore.data['settings']['application'].get('ignore_whitespace', False):

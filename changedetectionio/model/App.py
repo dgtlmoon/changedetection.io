@@ -57,6 +57,7 @@ class model(dict):
                     'rss_hide_muted_watches': True,
                     'schema_version' : 0,
                     'shared_diff_access': False,
+                    'strip_ignored_lines': False,
                     'tags': {}, #@todo use Tag.model initialisers
                     'timezone': None, # Default IANA timezone name
                     'webdriver_delay': None , # Extra delay in seconds before extracting text

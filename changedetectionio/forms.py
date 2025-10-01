@@ -759,6 +759,7 @@ class processor_text_json_diff_form(commonSettingsForm):
     check_unique_lines = BooleanField('Only trigger when unique lines appear in all history', default=False)
     remove_duplicate_lines = BooleanField('Remove duplicate lines of text', default=False)
     sort_text_alphabetically =  BooleanField('Sort text alphabetically', default=False)
+    strip_ignored_lines = TernaryNoneBooleanField('Strip ignored lines', default=None)
     trim_text_whitespace = BooleanField('Trim whitespace before and after text', default=False)
 
     filter_text_added = BooleanField('Added lines', default=True)
@@ -936,6 +937,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
     removepassword_button = SubmitField('Remove password', render_kw={"class": "pure-button pure-button-primary"})
     render_anchor_tag_content = BooleanField('Render anchor tag content', default=False)
     shared_diff_access = BooleanField('Allow anonymous access to watch history page when password is enabled', default=False, validators=[validators.Optional()])
+    strip_ignored_lines = BooleanField('Strip ignored lines')
     rss_hide_muted_watches = BooleanField('Hide muted watches from RSS feed', default=True,
                                       validators=[validators.Optional()])
     filter_failure_notification_threshold_attempts = IntegerField('Number of times the filter can be missing before sending a notification',

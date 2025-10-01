@@ -26,7 +26,10 @@
                             <li>Changing this will affect the comparison checksum which may trigger an alert</li>
                         </ul>
                 </span>
-
+                <br><br>
+                    <div class="pure-control-group">
+                      {{ render_ternary_field(form.strip_ignored_lines) }}
+                    </div>
                 </fieldset>
 
                 <fieldset>
