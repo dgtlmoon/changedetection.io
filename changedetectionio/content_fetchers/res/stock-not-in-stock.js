@@ -1,8 +1,8 @@
-async () => {
+async (customOutOfStockStrings = []) => {
 
     function isItemInStock() {
         // @todo Pass these in so the same list can be used in non-JS fetchers
-        const outOfStockTexts = [
+        const builtInOutOfStockTexts = [
             ' أخبرني عندما يتوفر',
             '0 in stock',
             'actuellement indisponible',
@@ -110,6 +110,9 @@ async () => {
             '已售完',
             '품절'
         ];
+
+        // Combine built-in strings with custom strings provided by user
+        const outOfStockTexts = [...builtInOutOfStockTexts, ...customOutOfStockStrings];
 
 
         const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);

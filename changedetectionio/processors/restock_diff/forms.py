@@ -1,7 +1,8 @@
 from wtforms import (
     BooleanField,
     validators,
-    FloatField
+    FloatField,
+    TextAreaField
 )
 from wtforms.fields.choices import RadioField
 from wtforms.fields.form import FormField
@@ -28,6 +29,7 @@ class RestockSettingsForm(Form):
     ], render_kw={"placeholder": "0%", "size": "5"})
 
     follow_price_changes = BooleanField('Follow price changes', default=True)
+
 
 class processor_settings_form(processor_text_json_diff_form):
     restock_settings = FormField(RestockSettingsForm)
@@ -74,7 +76,7 @@ class processor_settings_form(processor_text_json_diff_form):
                     {{ render_field(form.restock_settings.price_change_threshold_percent) }}
                     <span class="pure-form-message-inline">Price must change more than this % to trigger a change since the first check.</span><br>
                     <span class="pure-form-message-inline">For example, If the product is $1,000 USD originally, <strong>2%</strong> would mean it has to change more than $20 since the first check.</span><br>
-                </fieldset>                
+                </fieldset>           
             </div>
         </fieldset>
         """

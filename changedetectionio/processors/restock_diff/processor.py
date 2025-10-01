@@ -143,6 +143,89 @@ def is_between(number, lower=None, upper=None):
 class perform_site_check(difference_detection_processor):
     screenshot = None
     xpath_data = None
+    
+    def _normalize_text_for_matching(self, text):
+        """
+        Normalize text for more robust matching:
+        - Convert to lowercase
+        - Remove accents/diacritics  
+        - Normalize whitespace
+        """
+        import unicodedata
+        import re
+        
+        if not text:
+            return ""
+            
+        # Convert to lowercase
+        text = text.lower()
+        
+        # Remove accents/diacritics (NFD normalization + filter)
+        # This converts "é" to "e", "ñ" to "n", etc.
+        text = unicodedata.normalize('NFD', text)
+        text = ''.join(char for char in text if unicodedata.category(char) != 'Mn')
+        
+        # Normalize whitespace (replace multiple spaces/tabs/newlines with single space)
+        text = re.sub(r'\s+', ' ', text).strip()
+        
+        return text
+
+    def _check_custom_strings(self, text_to_check, custom_strings, string_type="out-of-stock"):
+        """
+        Check text against custom strings (either in-stock or out-of-stock).
+        Uses normalized matching for better international support.
+        Returns the matched string if found, None otherwise.
+        """
+        if not custom_strings:
+            return None
+            
+        # Split custom strings by newlines and clean them up
+        raw_custom_list = [s.strip() for s in custom_strings.split('\n') if s.strip()]
+        
+        if not raw_custom_list:
+            return None
+            
+        # Normalize both the page text and custom strings for matching
+        normalized_text = self._normalize_text_for_matching(text_to_check)
+        
+        # Check each custom string against the text
+        for original_custom_text in raw_custom_list:
+            normalized_custom_text = self._normalize_text_for_matching(original_custom_text)
+            
+            if normalized_custom_text and normalized_custom_text in normalized_text:
+                logger.debug(f"Custom {string_type} string found: '{original_custom_text}' (normalized: '{normalized_custom_text}')")
+                return original_custom_text  # Return the original user-provided string
+                
+        return None
+    
+    def _get_combined_instock_strings(self, restock_settings):
+        """
+        Get combined list of built-in and custom in-stock strings.
+        Custom strings are normalized for better matching.
+        """
+        # Built-in in-stock strings (from the TODO line)
+        builtin_instock_strings = [
+            'instock',
+            'instoreonly', 
+            'limitedavailability',
+            'onlineonly',
+            'presale'
+        ]
+        
+        # Add custom in-stock strings if provided
+        custom_strings = restock_settings.get('custom_instock_strings', '').strip()
+        if custom_strings:
+            # Normalize custom strings for better matching
+            custom_list = []
+            for s in custom_strings.split('\n'):
+                s = s.strip()
+                if s:
+                    normalized = self._normalize_text_for_matching(s)
+                    if normalized:
+                        custom_list.append(normalized)
+            builtin_instock_strings.extend(custom_list)
+            
+        return builtin_instock_strings
 
     def run_changedetection(self, watch):
         import hashlib
@@ -205,6 +288,7 @@ class perform_site_check(difference_detection_processor):
 
             if itemprop_availability.get('availability'):
                 # @todo: Configurable?
+
                 if any(substring.lower() in itemprop_availability['availability'].lower() for substring in [
                     'instock',
                     'instoreonly',
@@ -238,6 +322,8 @@ class perform_site_check(difference_detection_processor):
         if self.fetcher.instock_data and itemprop_availability.get('availability') is None:
             # 'Possibly in stock' comes from stock-not-in-stock.js when no string found above the fold.
             # Careful! this does not really come from chrome/js when the watch is set to plaintext
+            stock_detection_result = self.fetcher.instock_data
+
             update_obj['restock']["in_stock"] = True if self.fetcher.instock_data == 'Possibly in stock' else False
             logger.debug(f"Watch UUID {watch.get('uuid')} restock check returned instock_data - '{self.fetcher.instock_data}' from JS scraper.")
 
