@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% from '_helpers.html' import highlight_trigger_ignored_explainer %}
 {% block content %}
     <script>
         const screenshot_url = "{{url_for('static_content', group='screenshot', filename=uuid)}}";
@@ -84,6 +84,7 @@
                 </tr>
                 </tbody>
             </table>
+            {{ highlight_trigger_ignored_explainer() }}
         </div>
 
         <div class="tab-pane-inner" id="screenshot">
