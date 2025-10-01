@@ -58,6 +58,7 @@ class watch_base(dict):
             'proxy': None,  # Preferred proxy connection
             'remote_server_reply': None,  # From 'server' reply header
             'sort_text_alphabetically': False,
+            'strip_ignored_lines': None,
             'subtractive_selectors': [],
             'tag': '',  # Old system of text name for a tag, to be removed
             'tags': [],  # list of UUIDs to App.Tags
