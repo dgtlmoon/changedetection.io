@@ -58,3 +58,39 @@ def test_ignore(client, live_server, measure_memory_usage):
     # Should be in base.html
     assert b'csrftoken' in res.data
 
+
+def test_strip_ignore_lines(client, live_server, measure_memory_usage):
+   #  live_server_setup(live_server) # Setup on conftest per function
+    set_original_ignore_response()
+
+
+    # Goto the settings page, add our ignore text
+    res = client.post(
+        url_for("settings.settings_page"),
+        data={
+            "requests-time_between_check-minutes": 180,
+            "application-ignore_whitespace": "y",
+            "application-strip_ignored_lines": "y",
+            "application-global_ignore_text": "Which is across multiple",
+            'application-fetch_backend': "html_requests"
+        },
+        follow_redirects=True
+    )
+    assert b"Settings updated." in res.data
+
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("imports.import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+
+    # Give the thread time to pick it up
+    wait_for_all_checks(client)
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
+
+    # It should not be in the preview anymore
+    res = client.get(url_for("ui.ui_views.preview_page", uuid=uuid))
+    assert b'<div class="ignored">' not in res.data
+    assert b'Which is across multiple' not in res.data
