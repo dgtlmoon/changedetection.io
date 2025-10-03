@@ -121,7 +121,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                                  newest_version_file_contents=watch.get_history_snapshot(dates[-1]),
                                                  include_equal=False,
                                                  line_feed_sep="<br>",
-                                                 html_colour=html_colour_enable
+                                                 html_colour=html_colour_enable,
+                                                 word_diff=False
                                                  )
                 except FileNotFoundError as e:
                     html_diff = f"History snapshot file for watch {watch.get('uuid')}@{watch.last_changed} - '{watch.get('title')} not found."
