@@ -190,7 +190,7 @@ Line 4"""
         after = "The QUICK brown FOX"
 
         # With case-sensitive (default), should detect changes
-        output = diff.render_diff(before, after, include_equal=False, case_insensitive=False)
+        output = diff.render_diff(before, after, include_equal=False, case_insensitive=False, word_diff=False)
         self.assertIn('(changed)', output)
 
         # With case-insensitive, should detect no changes
