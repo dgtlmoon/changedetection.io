@@ -201,8 +201,8 @@ Line 4"""
 
     def test_case_insensitive_with_real_changes(self):
         """Test case-insensitive comparison with actual content differences"""
-        before = "Hello World\nGoodbye WORLD"
-        after = "HELLO world\nGoodbye Friend"
+        before = "Hello World\nGoodbye WORLD to all my friends and family"
+        after = "HELLO world\nGoodbye Friend to all my friends and family"
 
         # Case-insensitive should only detect the second line change
         output = diff.render_diff(before, after, include_equal=False, case_insensitive=True, word_diff=True)
@@ -301,8 +301,8 @@ Line 4"""
 
     def test_ignore_junk_case_insensitive_combination(self):
         """Test ignore_junk combined with case_insensitive"""
-        before = "The  QUICK   Brown  Fox"
-        after = "The quick brown FOX"
+        before = "The  QUICK   Brown  Fox jumps over the lazy dog every day"
+        after = "The quick brown FOX jumps over the lazy dog every day"
 
         # Both enabled: should ignore case and whitespace
         output = diff.render_diff(before, after, include_equal=False, word_diff=True,
