@@ -127,5 +127,44 @@
       display: inline-block !important;
     }
   }
+
+
 }
 
+#watch-table-wrapper {
+  /* general styling */
+  #post-list-buttons {
+    text-align: right;
+    padding: 0px;
+    margin: 0px;
+
+    li {
+      display: inline-block;
+    }
+
+    a {
+      border-top-left-radius: initial;
+      border-top-right-radius: initial;
+      border-bottom-left-radius: 5px;
+      border-bottom-right-radius: 5px;
+    }
+  }
+
+  /* post list dynamically on/off stuff */
+
+  &.has-error {
+    #post-list-buttons {
+      #post-list-with-errors {
+        display: inline-block !important;
+      }
+    }
+  }
+
+  &.has-unread-changes {
+    #post-list-buttons {
+      #post-list-unread, #post-list-mark-views, #post-list-unread {
+        display: inline-block !important;
+      }
+    }
+  }
+}

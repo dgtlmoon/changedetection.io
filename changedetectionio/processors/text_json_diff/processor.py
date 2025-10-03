@@ -153,12 +153,26 @@ class perform_site_check(difference_detection_processor):
             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
             self.fetcher.content = html_tools.workarounds_for_obfuscations(self.fetcher.content)
             html_content = self.fetcher.content
+            content_type = self.fetcher.get_all_headers().get('content-type', '').lower()
+            is_attachment = 'attachment' in self.fetcher.get_all_headers().get('content-disposition', '').lower()
 
-            # If not JSON,  and if it's not text/plain..
-            if 'text/plain' in self.fetcher.get_all_headers().get('content-type', '').lower():
+            # Try to detect better mime types if its a download or not announced as HTML
+            if is_attachment or 'octet-stream' in content_type or not 'html' in content_type:
+                logger.debug(f"Got a reply that may be a download or possibly a text attachment, checking..")
+                try:
+                    import magic
+                    mime = magic.from_buffer(html_content, mime=True)
+                    logger.debug(f"Guessing mime type, original content_type '{content_type}', mime type detected '{mime}'")
+                    if mime and "/" in mime: # looks valid and is a valid mime type
+                        content_type = mime
+                except Exception as e:
+                    logger.error(f"Error getting a more precise mime type from 'magic' library ({str(e)}")
+
+            if 'text/' in content_type and not 'html' in content_type:
                 # Don't run get_text or xpath/css filters on plaintext
                 stripped_text_from_html = html_content
             else:
+                # If not JSON, and if it's not text/plain..
                 # Does it have some ld+json price data? used for easier monitoring
                 update_obj['has_ldjson_price_data'] = html_tools.has_ldjson_product_info(self.fetcher.content)
 
@@ -301,6 +315,11 @@ class perform_site_check(difference_detection_processor):
         text_for_checksuming = stripped_text_from_html
         if text_to_ignore:
             text_for_checksuming = html_tools.strip_ignore_text(stripped_text_from_html, text_to_ignore)
+            # Some people prefer to also completely remove it
+            strip_ignored_lines = watch.get('strip_ignored_lines') if watch.get('strip_ignored_lines') is not None else self.datastore.data['settings']['application'].get('strip_ignored_lines')
+            if strip_ignored_lines:
+                # @todo add test in the 'preview' mode, check the widget works? compare to datastruct
+                stripped_text_from_html = text_for_checksuming
 
         # Re #133 - if we should strip whitespaces from triggering the change detected comparison
         if text_for_checksuming and self.datastore.data['settings']['application'].get('ignore_whitespace', False):

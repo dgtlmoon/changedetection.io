@@ -205,24 +205,6 @@ code {
 }
 
 
-#post-list-buttons {
-  text-align: right;
-  padding: 0px;
-  margin: 0px;
-
-  li {
-    display: inline-block;
-  }
-
-  a {
-    border-top-left-radius: initial;
-    border-top-right-radius: initial;
-    border-bottom-left-radius: 5px;
-    border-bottom-right-radius: 5px;
-  }
-}
-
-
 body:after {
   content: "";
   background: linear-gradient(130deg, var(--color-background-gradient-first), var(--color-background-gradient-second) 41.07%, var(--color-background-gradient-third) 84.05%);

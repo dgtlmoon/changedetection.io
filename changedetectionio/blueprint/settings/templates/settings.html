@@ -192,6 +192,12 @@ nav
                         </ul>
                      </span>
                     </fieldset>
+                    <fieldset class="pure-group">
+                        {{ render_checkbox_field(form.application.form.strip_ignored_lines) }}
+                        <span class="pure-form-message-inline">Remove any text that appears in the "Ignore text" from the output (otherwise its just ignored for change-detection)<br>
+                        <i>Note:</i> Changing this will change the status of your existing watches, possibly trigger alerts etc.
+                        </span>
+                    </fieldset>
            </div>
 
             <div class="tab-pane-inner" id="api">

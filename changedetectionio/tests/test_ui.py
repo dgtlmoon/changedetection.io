@@ -248,3 +248,44 @@ def test_page_title_listing_behaviour(client, live_server):
     res = client.get(url_for("watchlist.index"))
     assert b"head titlecustom html" in res.data
 
+
+def test_ui_viewed_unread_flag(client, live_server):
+
+    import time
+
+    set_original_response(extra_title="custom html")
+
+    # Add our URL to the import page
+    res = client.post(
+        url_for("imports.import_page"),
+        data={"urls": url_for('test_endpoint', _external=True)+"\r\n"+url_for('test_endpoint', _external=True)},
+        follow_redirects=True
+    )
+
+    assert b"2 Imported" in res.data
+    wait_for_all_checks(client)
+
+    set_modified_response()
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 2 watches for rechecking.' in res.data
+    wait_for_all_checks(client)
+    res = client.get(url_for("watchlist.index"))
+    assert b'<span id="unread-tab-counter">2</span>' in res.data
+    assert res.data.count(b'data-watch-uuid') == 2
+
+    # one should now be viewed, but two in total still
+    client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
+    res = client.get(url_for("watchlist.index"))
+    assert b'<span id="unread-tab-counter">1</span>' in res.data
+    assert res.data.count(b'data-watch-uuid') == 2
+
+    # check ?unread=1 works
+    res = client.get(url_for("watchlist.index")+"?unread=1")
+    assert res.data.count(b'data-watch-uuid') == 1
+    assert b'<span id="unread-tab-counter">1</span>' in res.data
+
+    # Mark all viewed test again
+    client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
+    time.sleep(0.2)
+    res = client.get(url_for("watchlist.index"))
+    assert b'<span id="unread-tab-counter">0</span>' in res.data

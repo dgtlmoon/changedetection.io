@@ -26,7 +26,7 @@ def test_jinja2_in_url_query(client, live_server, measure_memory_usage):
     assert b"Watch added" in res.data
     wait_for_all_checks(client)
 
-    # It should report nothing found (no new 'unviewed' class)
+    # It should report nothing found (no new 'has-unread-changes' class)
     res = client.get(
         url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
@@ -51,7 +51,7 @@ def test_jinja2_security_url_query(client, live_server, measure_memory_usage):
     assert b"Watch added" in res.data
     wait_for_all_checks(client)
 
-    # It should report nothing found (no new 'unviewed' class)
+    # It should report nothing found (no new 'has-unread-changes' class)
     res = client.get(url_for("watchlist.index"))
     assert b'is invalid and cannot be used' in res.data
     # Some of the spewed output from the subclasses

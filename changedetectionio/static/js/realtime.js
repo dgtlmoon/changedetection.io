@@ -117,15 +117,16 @@ $(document).ready(function () {
                 }
             })
 
+            socket.on('general_stats_update', function (general_stats) {
+                // Tabs at bottom of list
+                $('#watch-table-wrapper').toggleClass("has-unread-changes", general_stats.unread_changes_count !==0)
+                $('#watch-table-wrapper').toggleClass("has-error", general_stats.count_errors !== 0)
+                $('#post-list-with-errors a').text(`With errors (${ new Intl.NumberFormat(navigator.language).format(general_stats.count_errors) })`);
+                $('#unread-tab-counter').text(new Intl.NumberFormat(navigator.language).format(general_stats.unread_changes_count));
+            });
+
             socket.on('watch_update', function (data) {
                 const watch = data.watch;
-                const general_stats = data.general_stats;
-
-                // Log the entire watch object for debugging
-                console.log('!!! WATCH UPDATE EVENT RECEIVED !!!');
-                console.log(`${watch.event_timestamp} - Watch update ${watch.uuid} - Checking now - ${watch.checking_now} - UUID in URL ${window.location.href.includes(watch.uuid)}`);
-                console.log('Watch data:', watch);
-                console.log('General stats:', general_stats);
 
                 // Updating watch table rows
                 const $watchRow = $('tr[data-watch-uuid="' + watch.uuid + '"]');
@@ -150,13 +151,6 @@ $(document).ready(function () {
 
                     console.log('Updated UI for watch:', watch.uuid);
                 }
-
-                // Tabs at bottom of list
-                $('#post-list-mark-views').toggleClass("has-unviewed", general_stats.has_unviewed);
-                $('#post-list-unread').toggleClass("has-unviewed", general_stats.has_unviewed);
-                $('#post-list-with-errors').toggleClass("has-error", general_stats.count_errors !== 0)
-                $('#post-list-with-errors a').text(`With errors (${ general_stats.count_errors })`);
-
                 $('body').toggleClass('checking-now', watch.checking_now && window.location.href.includes(watch.uuid));
             });
 

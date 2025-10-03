@@ -116,10 +116,10 @@ def test_check_markup_include_filters_restriction(client, live_server, measure_m
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
 
-    # It should have 'unviewed' still
+    # It should have 'has-unread-changes' still
     # Because it should be looking at only that 'sametext' id
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' in res.data
+    assert b'has-unread-changes' in res.data
 
 
 # Tests the whole stack works with the CSS Filter

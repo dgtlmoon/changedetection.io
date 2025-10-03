@@ -208,7 +208,7 @@ def test_check_markup_xpath_filter_restriction(client, live_server, measure_memo
     wait_for_all_checks(client)
 
     res = client.get(url_for("watchlist.index"))
-    assert b'unviewed' not in res.data
+    assert b'has-unread-changes' not in res.data
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
     assert b'Deleted' in res.data
 
