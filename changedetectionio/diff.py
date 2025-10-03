@@ -6,6 +6,9 @@ from typing import List, Iterator, Union
 REMOVED_STYLE = "background-color: #fadad7; color: #b30000;"
 ADDED_STYLE = "background-color: #eaf2c2; color: #406619;"
 
+# If a line is more than 60% similar, we will word diff it, otherwise treat it as a whole replaced line
+LINE_SIMILARITY_THRESHOLD_FOR_WORD_DIFF = 0.6
+
 def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool = False, ignore_junk: bool = False) -> str:
     """
     Render word-level differences between two lines inline.
@@ -232,18 +235,31 @@ def customSequenceMatcher(
 
             # Use word-level diff for single line replacements when enabled
             if word_diff and len(before_lines) == 1 and len(after_lines) == 1:
-                inline_diff = render_inline_word_diff(before_lines[0], after_lines[0], html_colour, ignore_junk)
-                # Check if there are any actual changes (not just whitespace when ignore_junk is enabled)
-                if ignore_junk:
-                    # Check if the output contains any change markers
+                # Check similarity between lines first - only use word diff if lines are sufficiently similar
+                similarity = difflib.SequenceMatcher(None, before_lines[0], after_lines[0]).ratio()
+
+                # Only use word diff if lines are >30% similar, otherwise the output is too noisy
+                if similarity > LINE_SIMILARITY_THRESHOLD_FOR_WORD_DIFF:
+                    inline_diff = render_inline_word_diff(before_lines[0], after_lines[0], html_colour, ignore_junk)
+                    # Check if there are any actual changes (not just whitespace when ignore_junk is enabled)
+                    if ignore_junk:
+                        # Check if the output contains any change markers
+                        if html_colour:
+                            has_changes = '<span style=' in inline_diff
+                        else:
+                            has_changes = '[-' in inline_diff or '[+' in inline_diff
+                        if not has_changes:
+                            # No real changes, skip this line
+                            continue
+                    yield [inline_diff]
+                else:
+                    # Lines are too different, fall back to line-level diff
                     if html_colour:
-                        has_changes = '<span style=' in inline_diff
+                        yield [f'<span style="{REMOVED_STYLE}" title="Removed">{line}</span>' for line in before_lines] + \
+                              [f'<span style="{ADDED_STYLE}" title="Replaced">{line}</span>' for line in after_lines]
                     else:
-                        has_changes = '[-' in inline_diff or '[+' in inline_diff
-                    if not has_changes:
-                        # No real changes, skip this line
-                        continue
-                yield [inline_diff]
+                        yield [f"(changed) {line}" for line in before_lines] + \
+                              [f"(into) {line}" for line in after_lines] if include_change_type_prefix else before_lines + after_lines
             else:
                 # Fall back to line-level diff for multi-line changes or when word_diff disabled
                 if html_colour:
