@@ -1,11 +1,11 @@
 // Rewrite this is a plugin.. is all this JS really 'worth it?'
 
 window.addEventListener('hashchange', function () {
-    var tabs = document.getElementsByClassName('active');
-    while (tabs[0]) {
-        tabs[0].classList.remove('active');
+    var tabs = document.querySelectorAll('.tabs .active');
+    tabs.forEach(function (tab) {
+        tab.classList.remove('active');
         document.body.classList.remove('full-width');
-    }
+    });
     set_active_tab();
 }, false);
 

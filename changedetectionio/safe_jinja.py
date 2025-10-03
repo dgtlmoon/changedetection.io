@@ -18,7 +18,7 @@ def render(template_str, **args: t.Any) -> str:
     return output[:JINJA2_MAX_RETURN_PAYLOAD_SIZE]
 
 def render_fully_escaped(content):
-    env = jinja2.sandbox.ImmutableSandboxedEnvironment(autoescape=True)
+    env = jinja2.sandbox.ImmutableSandboxedEnvironment(autoescape=True, extensions=['jinja2_time.TimeExtension'])
     template = env.from_string("{{ some_html|e }}")
     return template.render(some_html=content)
 

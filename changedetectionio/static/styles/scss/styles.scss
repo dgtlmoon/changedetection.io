@@ -20,6 +20,8 @@
 @use "parts/lister_extra";
 @use "parts/socket";
 @use "parts/visualselector";
+@use "parts/_minitabs";
+@use "parts/_notification";
 @use "parts/widgets";
 
 body {
@@ -335,6 +337,11 @@ a.pure-button-selected {
     overflow-wrap: break-word;
     max-width: 100%;
     box-sizing: border-box;
+    &.error {
+      > span {
+        color: var(--color-error) !important;
+      }
+    }
   }
 }
 
@@ -344,11 +351,6 @@ label {
  }  
 }
 
-#notification-customisation {
-  border: 1px solid var(--color-border-notification);
-  padding: 0.5rem;
-  border-radius: 5px;
-}
 
 #notification-error-log {
   border: 1px solid var(--color-border-notification);

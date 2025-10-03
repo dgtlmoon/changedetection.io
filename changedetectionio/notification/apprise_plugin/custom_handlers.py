@@ -19,6 +19,11 @@ def notify_supported_methods(func):
     return func
 
 
+def notify_null_method(func):
+    func = notify(on="null")(func)
+    return func
+
+
 def _get_auth(parsed_url: dict) -> str | tuple[str, str]:
     user: str | None = parsed_url.get("user")
     password: str | None = parsed_url.get("password")
@@ -110,3 +115,21 @@ def apprise_http_custom_handler(
     except Exception as e:
         logger.error(f"Unexpected error occurred while sending custom notification to {url}: {e}")
         return False
+
+
+@notify_null_method
+def apprise_null_custom_handler(
+    body: str,
+    title: str,
+    notify_type: str,
+    meta: dict,
+    *args,
+    **kwargs,
+) -> bool:
+    url: str = meta.get("url")
+    schema: str = meta.get("schema")
+    method: str = re.sub(r"s$", "", schema).upper()
+    logger.info(f"Processed 'null' notification")
+
+    return True
+
