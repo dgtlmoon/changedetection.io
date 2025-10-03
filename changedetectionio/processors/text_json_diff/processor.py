@@ -236,7 +236,9 @@ class perform_site_check(difference_detection_processor):
                                              include_removed=watch.get('filter_text_removed', True),
                                              include_replaced=watch.get('filter_text_replaced', True),
                                              line_feed_sep="\n",
-                                             include_change_type_prefix=False)
+                                             include_change_type_prefix=False,
+                                             ignore_junk=self.datastore.data['settings']['application'].get('ignore_whitespace', False)
+                                             )
 
             watch.save_last_text_fetched_before_filters(text_content_before_ignored_filter.encode('utf-8'))
 
