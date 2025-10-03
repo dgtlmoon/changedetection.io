@@ -224,7 +224,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                    to_version_file_contents,
                                    include_equal=True,
                                    html_colour=True,
-                                   case_insensitive=datastore.data['settings']['application'].get('ignore_whitespace', False)
+                                   case_insensitive=datastore.data['settings']['application'].get('ignore_whitespace', False),
                                    )
 
         return render_template("diff.html",

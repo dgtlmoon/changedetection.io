@@ -6,7 +6,7 @@ from typing import List, Iterator, Union
 REMOVED_STYLE = "background-color: #fadad7; color: #b30000;"
 ADDED_STYLE = "background-color: #eaf2c2; color: #406619;"
 
-def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool = False) -> str:
+def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool = False, ignore_junk: bool = False) -> str:
     """
     Render word-level differences between two lines inline.
 
@@ -14,6 +14,7 @@ def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool
         before_line: Original line text
         after_line: Modified line text
         html_colour: Use HTML background colors for differences
+        ignore_junk: Ignore whitespace-only changes
 
     Returns:
         str: Single line with inline word-level highlighting
@@ -30,7 +31,9 @@ def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool
     after_tokens = tokenize(after_line)
 
     # Use SequenceMatcher to find word-level differences
-    matcher = difflib.SequenceMatcher(None, before_tokens, after_tokens)
+    # If ignore_junk is True, treat whitespace tokens as junk
+    isjunk = (lambda x: x.strip() == '') if ignore_junk else None
+    matcher = difflib.SequenceMatcher(isjunk, before_tokens, after_tokens)
 
     if html_colour:
         result = []
@@ -39,15 +42,45 @@ def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool
                 result.append(''.join(before_tokens[i1:i2]))
             elif tag == 'delete':
                 deleted = ''.join(before_tokens[i1:i2])
+                # If only whitespace and ignore_junk is enabled, preserve whitespace without marking
+                if ignore_junk and deleted.strip() == '':
+                    result.append(deleted)
+                    continue
                 result.append(f'<span style="{REMOVED_STYLE}" title="Removed">{deleted}</span>')
             elif tag == 'insert':
                 inserted = ''.join(after_tokens[j1:j2])
+                # If only whitespace and ignore_junk is enabled, preserve whitespace without marking
+                if ignore_junk and inserted.strip() == '':
+                    result.append(inserted)
+                    continue
                 result.append(f'<span style="{ADDED_STYLE}" title="Added">{inserted}</span>')
             elif tag == 'replace':
                 deleted = ''.join(before_tokens[i1:i2])
                 inserted = ''.join(after_tokens[j1:j2])
-                result.append(f'<span style="{REMOVED_STYLE}" title="Removed">{deleted}</span>')
-                result.append(f'<span style="{ADDED_STYLE}" title="Added">{inserted}</span>')
+                # If both are only whitespace and ignore_junk is enabled, use the after version
+                if ignore_junk and deleted.strip() == '' and inserted.strip() == '':
+                    result.append(inserted)
+                    continue
+                # When ignore_junk is enabled, filter out whitespace-only tokens from replace operations
+                if ignore_junk:
+                    deleted_parts = []
+                    inserted_parts = []
+                    for token in before_tokens[i1:i2]:
+                        if token.strip() != '':
+                            deleted_parts.append(token)
+                    for token in after_tokens[j1:j2]:
+                        if token.strip() != '':
+                            inserted_parts.append(token)
+                    # Add a single space between words (normalized whitespace)
+                    if deleted_parts or inserted_parts:
+                        result.append(' ')
+                    if deleted_parts:
+                        result.append(f'<span style="{REMOVED_STYLE}" title="Removed">{"".join(deleted_parts)}</span>')
+                    if inserted_parts:
+                        result.append(f'<span style="{ADDED_STYLE}" title="Added">{"".join(inserted_parts)}</span>')
+                else:
+                    result.append(f'<span style="{REMOVED_STYLE}" title="Removed">{deleted}</span>')
+                    result.append(f'<span style="{ADDED_STYLE}" title="Added">{inserted}</span>')
         return ''.join(result)
     else:
         # Plain text format with markers
@@ -57,14 +90,45 @@ def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool
                 result.append(''.join(before_tokens[i1:i2]))
             elif tag == 'delete':
                 deleted = ''.join(before_tokens[i1:i2])
+                # If only whitespace and ignore_junk is enabled, preserve whitespace without marking
+                if ignore_junk and deleted.strip() == '':
+                    result.append(deleted)
+                    continue
                 result.append(f'[-{deleted}-]')
             elif tag == 'insert':
                 inserted = ''.join(after_tokens[j1:j2])
+                # If only whitespace and ignore_junk is enabled, preserve whitespace without marking
+                if ignore_junk and inserted.strip() == '':
+                    result.append(inserted)
+                    continue
                 result.append(f'[+{inserted}+]')
             elif tag == 'replace':
                 deleted = ''.join(before_tokens[i1:i2])
                 inserted = ''.join(after_tokens[j1:j2])
-                result.append(f'[-{deleted}-][+{inserted}+]')
+                # If both are only whitespace and ignore_junk is enabled, use the after version
+                if ignore_junk and deleted.strip() == '' and inserted.strip() == '':
+                    result.append(inserted)
+                    continue
+                # When ignore_junk is enabled, filter out whitespace-only tokens from replace operations
+                if ignore_junk:
+                    deleted_parts = []
+                    inserted_parts = []
+                    for token in before_tokens[i1:i2]:
+                        if token.strip() != '':
+                            deleted_parts.append(token)
+                    for token in after_tokens[j1:j2]:
+                        if token.strip() != '':
+                            inserted_parts.append(token)
+                    # Add a single space between words (normalized whitespace)
+                    if deleted_parts or inserted_parts:
+                        result.append(' ')
+                    if deleted_parts:
+                        result.append(f'[-{"".join(deleted_parts)}-]')
+                    if inserted_parts:
+                        result.append(f'[+{"".join(inserted_parts)}+]')
+                else:
+                    result.append(f'[-{deleted}-]')
+                    result.append(f'[+{inserted}+]')
         return ''.join(result)
 
 def same_slicer(lst: List[str], start: int, end: int) -> List[str]:
@@ -82,7 +146,8 @@ def customSequenceMatcher(
     html_colour: bool = False,
     word_diff: bool = False,
     context_lines: int = 0,
-    case_insensitive: bool = False
+    case_insensitive: bool = False,
+    ignore_junk: bool = False
 ) -> Iterator[List[str]]:
     """
     Compare two sequences and yield differences based on specified parameters.
@@ -99,13 +164,23 @@ def customSequenceMatcher(
         word_diff (bool): Use word-level diffing for replaced lines
         context_lines (int): Number of unchanged lines to show around changes (like grep -C)
         case_insensitive (bool): Perform case-insensitive comparison
+        ignore_junk (bool): Ignore whitespace-only changes
 
     Yields:
         List[str]: Differences between sequences
     """
-    # Prepare sequences for comparison (lowercase if case-insensitive)
-    compare_before = [line.lower() for line in before] if case_insensitive else before
-    compare_after = [line.lower() for line in after] if case_insensitive else after
+    # Prepare sequences for comparison (lowercase if case-insensitive, normalize whitespace if ignore_junk)
+    import re
+    def prepare_line(line):
+        if case_insensitive:
+            line = line.lower()
+        if ignore_junk:
+            # Normalize whitespace: replace multiple spaces/tabs with single space
+            line = re.sub(r'\s+', ' ', line)
+        return line
+
+    compare_before = [prepare_line(line) for line in before]
+    compare_after = [prepare_line(line) for line in after]
 
     cruncher = difflib.SequenceMatcher(isjunk=lambda x: x in " \t", a=compare_before, b=compare_after)
 
@@ -157,7 +232,17 @@ def customSequenceMatcher(
 
             # Use word-level diff for single line replacements when enabled
             if word_diff and len(before_lines) == 1 and len(after_lines) == 1:
-                inline_diff = render_inline_word_diff(before_lines[0], after_lines[0], html_colour)
+                inline_diff = render_inline_word_diff(before_lines[0], after_lines[0], html_colour, ignore_junk)
+                # Check if there are any actual changes (not just whitespace when ignore_junk is enabled)
+                if ignore_junk:
+                    # Check if the output contains any change markers
+                    if html_colour:
+                        has_changes = '<span style=' in inline_diff
+                    else:
+                        has_changes = '[-' in inline_diff or '[+' in inline_diff
+                    if not has_changes:
+                        # No real changes, skip this line
+                        continue
                 yield [inline_diff]
             else:
                 # Fall back to line-level diff for multi-line changes or when word_diff disabled
@@ -186,7 +271,8 @@ def render_diff(
     html_colour: bool = False,
     word_diff: bool = True,
     context_lines: int = 0,
-    case_insensitive: bool = False
+    case_insensitive: bool = False,
+    ignore_junk: bool = False
 ) -> str:
     """
     Render the difference between two file contents.
@@ -204,7 +290,8 @@ def render_diff(
         html_colour (bool): Use HTML background colors for differences
         word_diff (bool): Use word-level diffing for replaced lines
         context_lines (int): Number of unchanged lines to show around changes (like grep -C)
-        case_insensitive (bool): Perform case-insensitive comparison
+        case_insensitive (bool): Perform case-insensitive comparison, By default the test_json_diff/process.py is case sensitive, so this follows same logic
+        ignore_junk (bool): Ignore whitespace-only changes
 
     Returns:
         str: Rendered difference
@@ -227,7 +314,8 @@ def render_diff(
         html_colour=html_colour,
         word_diff=word_diff,
         context_lines=context_lines,
-        case_insensitive=case_insensitive
+        case_insensitive=case_insensitive,
+        ignore_junk=ignore_junk
     )
 
     def flatten(lst: List[Union[str, List[str]]]) -> str:

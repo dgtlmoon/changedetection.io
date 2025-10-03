@@ -76,15 +76,15 @@ class NotificationService:
             prev_snapshot = watch.get_history_snapshot(dates[-2])
             current_snapshot = watch.get_history_snapshot(dates[-1])
 
-        case_insensitive=self. datastore.data['settings']['application'].get('ignore_whitespace', False)
+        ignore_junk = self.datastore.data['settings']['application'].get('ignore_whitespace', False)
 
         n_object.update({
             'current_snapshot': snapshot_contents,
-            'diff': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=line_feed_sep, html_colour=html_colour_enable, case_insensitive=case_insensitive),
-            'diff_added': diff.render_diff(prev_snapshot, current_snapshot, include_removed=False, line_feed_sep=line_feed_sep, case_insensitive=case_insensitive),
-            'diff_full': diff.render_diff(prev_snapshot, current_snapshot, include_equal=True, line_feed_sep=line_feed_sep, html_colour=html_colour_enable, case_insensitive=case_insensitive),
-            'diff_patch': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=line_feed_sep, patch_format=True, case_insensitive=case_insensitive),
-            'diff_removed': diff.render_diff(prev_snapshot, current_snapshot, include_added=False, line_feed_sep=line_feed_sep, case_insensitive=case_insensitive),
+            'diff': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=line_feed_sep, html_colour=html_colour_enable, ignore_junk=ignore_junk),
+            'diff_added': diff.render_diff(prev_snapshot, current_snapshot, include_removed=False, line_feed_sep=line_feed_sep, ignore_junk=ignore_junk),
+            'diff_full': diff.render_diff(prev_snapshot, current_snapshot, include_equal=True, line_feed_sep=line_feed_sep, html_colour=html_colour_enable, ignore_junk=ignore_junk),
+            'diff_patch': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=line_feed_sep, patch_format=True, ignore_junk=ignore_junk),
+            'diff_removed': diff.render_diff(prev_snapshot, current_snapshot, include_added=False, line_feed_sep=line_feed_sep, ignore_junk=ignore_junk),
             'notification_timestamp': now,
             'screenshot': watch.get_screenshot() if watch and watch.get('notification_screenshot') else None,
             'triggered_text': triggered_text,
