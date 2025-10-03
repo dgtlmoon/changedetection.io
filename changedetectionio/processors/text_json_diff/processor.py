@@ -336,7 +336,7 @@ class perform_site_check(difference_detection_processor):
             # Filter and trigger works the same, so reuse it
             # It should return the line numbers that match
             # Unblock flow if the trigger was found (some text remained after stripped what didnt match)
-            result = html_tools.strip_ignore_text(content=str(stripped_text_from_html),
+            result = html_tools.strip_ignore_text(content=str(text_for_checksuming),
                                                   wordlist=trigger_text,
                                                   mode="line numbers")
             # Unblock if the trigger was found

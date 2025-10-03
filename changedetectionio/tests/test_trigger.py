@@ -72,7 +72,13 @@ def test_trigger_functionality(client, live_server, measure_memory_usage):
     )
     assert b"1 Imported" in res.data
 
-    # Trigger a check
+
+    # And set the trigger text as 'ignore text', it should then not trigger
+    live_server.app.config['DATASTORE'].data['settings']['application']['global_ignore_text'] = [trigger_text]
+
+
+
+# Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Goto the edit page, add our ignore text
@@ -123,12 +129,23 @@ def test_trigger_functionality(client, live_server, measure_memory_usage):
     # Now set the content which contains the trigger text
     set_modified_with_trigger_text_response()
 
+    # There is a "ignore text" set of the change that should be also the trigger, it should not trigger
+    # because the ignore text should be stripped from the response, therefor, the trigger should not fire
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    res = client.get(url_for("watchlist.index"))
+    assert b'has-unread-changes' not in res.data
+
+
+    live_server.app.config['DATASTORE'].data['settings']['application']['global_ignore_text'] = []
+    # check that the trigger fired once we stopped ignore it
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' in res.data
-    
-    # https://github.com/dgtlmoon/changedetection.io/issues/616
+
+
+# https://github.com/dgtlmoon/changedetection.io/issues/616
     # Apparently the actual snapshot that contains the trigger never shows
     res = client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
     assert b'Add to cart' in res.data
