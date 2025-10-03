@@ -220,7 +220,12 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             password_enabled_and_share_is_off = not datastore.data['settings']['application'].get('shared_diff_access')
 
         datastore.set_last_viewed(uuid, time.time())
-        content = diff.render_diff(from_version_file_contents, to_version_file_contents, include_equal=True, html_colour=True)
+        content = diff.render_diff(from_version_file_contents,
+                                   to_version_file_contents,
+                                   include_equal=True,
+                                   html_colour=True,
+                                   case_insensitive=datastore.data['settings']['application'].get('ignore_whitespace', False)
+                                   )
 
         return render_template("diff.html",
                                  content=content,

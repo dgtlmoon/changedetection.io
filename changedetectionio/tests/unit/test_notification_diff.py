@@ -184,5 +184,49 @@ Line 4"""
         self.assertIn('Line 1', output_without_context)
         self.assertIn('Line 4', output_without_context)
 
+    def test_case_insensitive_comparison(self):
+        """Test case-insensitive diff comparison"""
+        before = "The Quick Brown Fox"
+        after = "The QUICK brown FOX"
+
+        # With case-sensitive (default), should detect changes
+        output = diff.render_diff(before, after, include_equal=False, case_insensitive=False)
+        self.assertIn('(changed)', output)
+
+        # With case-insensitive, should detect no changes
+        output = diff.render_diff(before, after, include_equal=False, case_insensitive=True)
+        # Should be empty or minimal since texts are equal when ignoring case
+        lines = [l for l in output.split("\n") if l.strip()]
+        self.assertEqual(len(lines), 0, "Case-insensitive comparison should find no differences")
+
+    def test_case_insensitive_with_real_changes(self):
+        """Test case-insensitive comparison with actual content differences"""
+        before = "Hello World\nGoodbye WORLD"
+        after = "HELLO world\nGoodbye Friend"
+
+        # Case-insensitive should only detect the second line change
+        output = diff.render_diff(before, after, include_equal=False, case_insensitive=True, word_diff=True)
+
+        # First line should not appear (same when ignoring case)
+        self.assertNotIn('Hello', output)
+        self.assertNotIn('HELLO', output)
+
+        # Second line should show the word change
+        self.assertIn('[-WORLD-]', output)
+        self.assertIn('[+Friend+]', output)
+
+    def test_case_insensitive_html_output(self):
+        """Test case-insensitive comparison with HTML output"""
+        before = "Price: $100"
+        after = "PRICE: $200"
+
+        # Case-insensitive should only highlight the price change
+        output = diff.render_diff(before, after, include_equal=False, case_insensitive=True, word_diff=True, html_colour=True)
+
+        # Should highlight the changed number
+        self.assertIn('100', output)
+        self.assertIn('200', output)
+        self.assertIn('background-color', output)
+
 if __name__ == '__main__':
     unittest.main()

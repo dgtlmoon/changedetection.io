@@ -81,7 +81,8 @@ def customSequenceMatcher(
     include_change_type_prefix: bool = True,
     html_colour: bool = False,
     word_diff: bool = False,
-    context_lines: int = 0
+    context_lines: int = 0,
+    case_insensitive: bool = False
 ) -> Iterator[List[str]]:
     """
     Compare two sequences and yield differences based on specified parameters.
@@ -97,11 +98,16 @@ def customSequenceMatcher(
         html_colour (bool): Use HTML background colors for differences
         word_diff (bool): Use word-level diffing for replaced lines
         context_lines (int): Number of unchanged lines to show around changes (like grep -C)
+        case_insensitive (bool): Perform case-insensitive comparison
 
     Yields:
         List[str]: Differences between sequences
     """
-    cruncher = difflib.SequenceMatcher(isjunk=lambda x: x in " \t", a=before, b=after)
+    # Prepare sequences for comparison (lowercase if case-insensitive)
+    compare_before = [line.lower() for line in before] if case_insensitive else before
+    compare_after = [line.lower() for line in after] if case_insensitive else after
+
+    cruncher = difflib.SequenceMatcher(isjunk=lambda x: x in " \t", a=compare_before, b=compare_after)
 
     # When context_lines is set and include_equal is False, we need to track which equal lines to include
     if context_lines > 0 and not include_equal:
@@ -179,7 +185,8 @@ def render_diff(
     patch_format: bool = False,
     html_colour: bool = False,
     word_diff: bool = True,
-    context_lines: int = 0
+    context_lines: int = 0,
+    case_insensitive: bool = False
 ) -> str:
     """
     Render the difference between two file contents.
@@ -197,6 +204,7 @@ def render_diff(
         html_colour (bool): Use HTML background colors for differences
         word_diff (bool): Use word-level diffing for replaced lines
         context_lines (int): Number of unchanged lines to show around changes (like grep -C)
+        case_insensitive (bool): Perform case-insensitive comparison
 
     Returns:
         str: Rendered difference
@@ -218,7 +226,8 @@ def render_diff(
         include_change_type_prefix=include_change_type_prefix,
         html_colour=html_colour,
         word_diff=word_diff,
-        context_lines=context_lines
+        context_lines=context_lines,
+        case_insensitive=case_insensitive
     )
 
     def flatten(lst: List[Union[str, List[str]]]) -> str:
