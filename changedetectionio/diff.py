@@ -23,12 +23,6 @@ DIFF_HTML_LABEL_INSERTED = f'<span style="{ADDED_STYLE}" title="Inserted">{{cont
 # Compiled regex patterns for performance
 WHITESPACE_NORMALIZE_RE = re.compile(r'\s+')
 
-# Because `redlines` wont let us easily add our own format, so we replace it.
-# Note: Use .*? with DOTALL to match content including HTML tags
-REDLINES_REMOVED_RE = re.compile(r"<span style='color:red;font-weight:700;text-decoration:line-through;'>(.*?)</span>", re.DOTALL)
-REDLINES_ADDED_RE = re.compile(r"<span style='color:green;font-weight:700;'>(.*?)</span>", re.DOTALL)
-
-
 def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool = False, ignore_junk: bool = False, markdown_style: str = None) -> tuple[str, bool]:
     """
     Render word-level differences between two lines inline using diff-match-patch library.
