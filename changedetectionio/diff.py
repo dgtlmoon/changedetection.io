@@ -45,18 +45,36 @@ def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool
         redlines = Redlines(before_normalized, after_normalized or ' ')
     diff_output = redlines.output_markdown
 
+    # Check if the whole line is replaced by testing if all content has changed
+    # A whole line is replaced when there's only removed and added content with no unchanged text
+    whole_line_replaced = False
+
+    # Check if whole line is replaced before transforming
+    removed_matches = list(REDLINES_REMOVED_RE.finditer(diff_output))
+    added_matches = list(REDLINES_ADDED_RE.finditer(diff_output))
+
+    if removed_matches and added_matches:
+        # Calculate total changed content length vs original output length
+        # Remove all the span tags to see what's left
+        temp_output = REDLINES_REMOVED_RE.sub('', diff_output)
+        temp_output = REDLINES_ADDED_RE.sub('', temp_output)
+        # If there's no unchanged content left (only whitespace), it's a whole line replacement
+        whole_line_replaced = temp_output.strip() == ''
+
     if html_colour:
         # Replace redlines' default styles with our custom inline styles
         # Strip trailing spaces from content but preserve them outside the span
         def replace_removed(m):
             content = m.group(1).rstrip()
             trailing = m.group(1)[len(content):] if len(m.group(1)) > len(content) else ''
-            return f'<span style="{REMOVED_STYLE}" title="Removed">{content}</span>{trailing}'
+            line_break = '\n' if whole_line_replaced else ''
+            return f'<span style="{REMOVED_STYLE}" title="Removed">{content}</span>{trailing}{line_break}'
 
         def replace_added(m):
             content = m.group(1).rstrip()
             trailing = m.group(1)[len(content):] if len(m.group(1)) > len(content) else ''
-            return f'<span style="{ADDED_STYLE}" title="Added">{content}</span>{trailing}'
+            line_break = '\n' if whole_line_replaced else ''
+            return f'<span style="{ADDED_STYLE}" title="Added">{content}</span>{trailing}{line_break}'
 
         diff_output = REDLINES_REMOVED_RE.sub(replace_removed, diff_output)
         diff_output = REDLINES_ADDED_RE.sub(replace_added, diff_output)
@@ -70,12 +88,14 @@ def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool
         def replace_removed_plain(m):
             content = m.group(1).rstrip()
             trailing = m.group(1)[len(content):] if len(m.group(1)) > len(content) else ''
-            return f'[-{content}-]{trailing}'
+            line_break = '\n' if whole_line_replaced else ''
+            return f'[-{content}-]{trailing}{line_break}'
 
         def replace_added_plain(m):
             content = m.group(1).rstrip()
             trailing = m.group(1)[len(content):] if len(m.group(1)) > len(content) else ''
-            return f'[+{content}+]{trailing}'
+            line_break = '\n' if whole_line_replaced else ''
+            return f'[+{content}+]{trailing}{line_break}'
 
         diff_output = REDLINES_REMOVED_RE.sub(replace_removed_plain, diff_output)
         diff_output = REDLINES_ADDED_RE.sub(replace_added_plain, diff_output)
