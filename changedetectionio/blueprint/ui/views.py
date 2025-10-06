@@ -223,7 +223,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         content = diff.render_diff(from_version_file_contents,
                                    to_version_file_contents,
                                    include_equal=True,
-                                   html_colour=True,
+                                   html_colour=False,
                                    ignore_junk=datastore.data['settings']['application'].get('ignore_whitespace', False),
                                    )
 

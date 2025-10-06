@@ -14,7 +14,7 @@ REDLINES_REMOVED_RE = re.compile(r"<span style='color:red;font-weight:700;text-d
 REDLINES_ADDED_RE = re.compile(r"<span style='color:green;font-weight:700;'>([^<]*)</span>")
 
 
-def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool = False, ignore_junk: bool = False, markdown_style: str = None) -> str:
+def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool = False, ignore_junk: bool = False, markdown_style: str = None) -> tuple[str, bool]:
     """
     Render word-level differences between two lines inline using redlines library.
 
@@ -27,7 +27,7 @@ def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool
                        If None, uses default with custom inline style replacement
 
     Returns:
-        str: Single line with inline word-level highlighting
+        tuple[str, bool]: (diff output with inline word-level highlighting, has_changes flag)
     """
     # Normalize whitespace if ignore_junk is enabled
     if ignore_junk:
@@ -52,6 +52,8 @@ def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool
     # Check if whole line is replaced before transforming
     removed_matches = list(REDLINES_REMOVED_RE.finditer(diff_output))
     added_matches = list(REDLINES_ADDED_RE.finditer(diff_output))
+
+    has_changes = bool(removed_matches or added_matches)
 
     if removed_matches and added_matches:
         # Calculate total changed content length vs original output length
@@ -80,31 +82,33 @@ def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool
         diff_output = REDLINES_ADDED_RE.sub(replace_added, diff_output)
 
         # Handle ignore_junk - check if there are any actual changes
-        if ignore_junk and REMOVED_STYLE not in diff_output and ADDED_STYLE not in diff_output:
-            return after_line
+        if ignore_junk and not has_changes:
+            return after_line, False
     else:
-        # Convert redlines HTML to plain text markers
+        # Convert redlines HTML to plain text with (changed)/(into) prefixes when whole line replaced, otherwise (removed)/(added)
         # Strip trailing spaces from content but preserve them outside the markers
         def replace_removed_plain(m):
             content = m.group(1).rstrip()
             trailing = m.group(1)[len(content):] if len(m.group(1)) > len(content) else ''
             line_break = '\n' if whole_line_replaced else ''
-            return f'[-{content}-]{trailing}{line_break}'
+            prefix = '(changed)' if whole_line_replaced else '(removed)'
+            return f'{prefix} {content}{trailing}{line_break}'
 
         def replace_added_plain(m):
             content = m.group(1).rstrip()
             trailing = m.group(1)[len(content):] if len(m.group(1)) > len(content) else ''
             line_break = '\n' if whole_line_replaced else ''
-            return f'[+{content}+]{trailing}{line_break}'
+            prefix = '(into)' if whole_line_replaced else '(added)'
+            return f'{prefix} {content}{trailing}{line_break}'
 
         diff_output = REDLINES_REMOVED_RE.sub(replace_removed_plain, diff_output)
         diff_output = REDLINES_ADDED_RE.sub(replace_added_plain, diff_output)
 
         # Handle ignore_junk - check if there are any actual changes
-        if ignore_junk and '[-' not in diff_output and '[+' not in diff_output:
-            return after_line
+        if ignore_junk and not has_changes:
+            return after_line, False
 
-    return diff_output
+    return diff_output, has_changes
 
 def same_slicer(lst: List[str], start: int, end: int) -> List[str]:
     """Return a slice of the list, or a single element if start == end."""
@@ -206,17 +210,11 @@ def customSequenceMatcher(
 
             # Use word-level diff for single line replacements when enabled
             if word_diff and len(before_lines) == 1 and len(after_lines) == 1:
-                inline_diff = render_inline_word_diff(before_lines[0], after_lines[0], html_colour, ignore_junk)
+                inline_diff, has_changes = render_inline_word_diff(before_lines[0], after_lines[0], html_colour, ignore_junk)
                 # Check if there are any actual changes (not just whitespace when ignore_junk is enabled)
-                if ignore_junk:
-                    # Check if the output contains any change markers
-                    if html_colour:
-                        has_changes = '<span style=' in inline_diff
-                    else:
-                        has_changes = '[-' in inline_diff or '[+' in inline_diff
-                    if not has_changes:
-                        # No real changes, skip this line
-                        continue
+                if ignore_junk and not has_changes:
+                    # No real changes, skip this line
+                    continue
                 yield [inline_diff]
             else:
                 # Fall back to line-level diff for multi-line changes or when word_diff disabled
