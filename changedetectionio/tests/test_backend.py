@@ -167,6 +167,18 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     assert b'Deleted' in res.data
 
 def test_non_text_mime_or_downloads(client, live_server, measure_memory_usage):
+    """
+
+    https://github.com/dgtlmoon/changedetection.io/issues/3434
+    I noticed that a watched website can be monitored fine as long as the server sends content-type: text/plain; charset=utf-8,
+    but once the server sends content-type: application/octet-stream (which is usually done to force the browser to show the Download dialog),
+    changedetection somehow ignores all line breaks and treats the document file as if everything is on one line.
+
+    :param client:
+    :param live_server:
+    :param measure_memory_usage:
+    :return:
+    """
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write("""some random text that should be split by line
 and not parsed with html_to_text
@@ -212,6 +224,71 @@ got it\r\n
     )
     assert b"some random text that should be split by line\n" in res.data
 
+
+    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+
+
+def test_standard_text_plain(client, live_server, measure_memory_usage):
+    """
+
+    https://github.com/dgtlmoon/changedetection.io/issues/3434
+    I noticed that a watched website can be monitored fine as long as the server sends content-type: text/plain; charset=utf-8,
+    but once the server sends content-type: application/octet-stream (which is usually done to force the browser to show the Download dialog),
+    changedetection somehow ignores all line breaks and treats the document file as if everything is on one line.
+
+    The real bug here can be that it will try to process plain-text as HTML, losing <etc>
+
+    :param client:
+    :param live_server:
+    :param measure_memory_usage:
+    :return:
+    """
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write("""some random text that should be split by line
+and not parsed with html_to_text
+<title>Even this title should stay because we are just plain text</title>
+this way we know that it correctly parsed as plain text
+\r\n
+ok\r\n
+got it\r\n
+""")
+
+    test_url = url_for('test_endpoint', content_type="text/plain", _external=True)
+
+    # Add our URL to the import page
+    res = client.post(
+        url_for("imports.import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+
+    assert b"1 Imported" in res.data
+
+    wait_for_all_checks(client)
+
+    ### check the front end
+    res = client.get(
+        url_for("ui.ui_views.preview_page", uuid="first"),
+        follow_redirects=True
+    )
+    assert b"some random text that should be split by line\n" in res.data
+    ####
+
+    # Check the snapshot by API that it has linefeeds too
+    watch_uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
+    api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
+    res = client.get(
+        url_for("watchhistory", uuid=watch_uuid),
+        headers={'x-api-key': api_key},
+    )
+
+    # Fetch a snapshot by timestamp, check the right one was found
+    res = client.get(
+        url_for("watchsinglehistory", uuid=watch_uuid, timestamp=list(res.json.keys())[-1]),
+        headers={'x-api-key': api_key},
+    )
+    assert b"some random text that should be split by line\n" in res.data
+    assert b"<title>Even this title should stay because we are just plain text</title>" in res.data
 
     res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 

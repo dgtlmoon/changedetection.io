@@ -154,10 +154,10 @@ class perform_site_check(difference_detection_processor):
             self.fetcher.content = html_tools.workarounds_for_obfuscations(self.fetcher.content)
             html_content = self.fetcher.content
             content_type = self.fetcher.get_all_headers().get('content-type', '').lower()
-            is_attachment = 'attachment' in self.fetcher.get_all_headers().get('content-disposition', '').lower()
+            is_attachment = 'attachment' in self.fetcher.get_all_headers().get('content-disposition', '').lower() or 'octet-stream' in content_type
 
-            # Try to detect better mime types if its a download or not announced as HTML
-            if is_attachment or 'octet-stream' in content_type or not 'html' in content_type:
+            # Try to detect better mime types if its a download or not announced as s
+            if is_attachment:
                 logger.debug(f"Got a reply that may be a download or possibly a text attachment, checking..")
                 try:
                     import magic
