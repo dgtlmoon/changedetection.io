@@ -143,3 +143,5 @@ pre_commit >= 4.2.0
 
 # For events between checking and socketio updates
 blinker
+redlines
+

@@ -4,6 +4,7 @@ import time
 from flask import url_for
 from urllib.request import urlopen
 from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
+from ..diff import ADDED_STYLE
 
 sleep_time_for_fetch_thread = 3
 
@@ -21,7 +22,7 @@ def test_check_basic_change_detection_functionality_source(client, live_server, 
 
     assert b"1 Imported" in res.data
 
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     #####################
 
@@ -52,7 +53,7 @@ def test_check_basic_change_detection_functionality_source(client, live_server, 
         follow_redirects=True
     )
 
-    assert b'&lt;title&gt;modified head title' in res.data
+    assert f'<span style="{ADDED_STYLE}" title="Added">modified </span>head title&lt;/title&gt;&lt;/head&gt;'.encode('utf-8') in res.data
 
 
 

@@ -1,138 +1,90 @@
 import difflib
 from typing import List, Iterator, Union
+from redlines import Redlines
+import re
 
 # Remember! gmail, outlook etc dont support <style> must be inline.
 # Gmail: strips <ins> and <del> tags entirely.
 REMOVED_STYLE = "background-color: #fadad7; color: #b30000;"
 ADDED_STYLE = "background-color: #eaf2c2; color: #406619;"
 
-# If a line is more than 60% similar, we will word diff it, otherwise treat it as a whole replaced line
-LINE_SIMILARITY_THRESHOLD_FOR_WORD_DIFF = 0.6
+# Compiled regex patterns for performance
+WHITESPACE_NORMALIZE_RE = re.compile(r'\s+')
+REDLINES_REMOVED_RE = re.compile(r"<span style='color:red;font-weight:700;text-decoration:line-through;'>([^<]*)</span>")
+REDLINES_ADDED_RE = re.compile(r"<span style='color:green;font-weight:700;'>([^<]*)</span>")
 
-def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool = False, ignore_junk: bool = False) -> str:
+
+def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool = False, ignore_junk: bool = False, markdown_style: str = None) -> str:
     """
-    Render word-level differences between two lines inline.
+    Render word-level differences between two lines inline using redlines library.
 
     Args:
         before_line: Original line text
         after_line: Modified line text
         html_colour: Use HTML background colors for differences
         ignore_junk: Ignore whitespace-only changes
+        markdown_style: Redlines markdown style ("red-green", "none", "red", "ghfm", "bbcode", "streamlit", "custom_css")
+                       If None, uses default with custom inline style replacement
 
     Returns:
         str: Single line with inline word-level highlighting
     """
-    # Use difflib for word-level comparison (splitting on whitespace)
-    import re
+    # Normalize whitespace if ignore_junk is enabled
+    if ignore_junk:
+        # Normalize whitespace: replace multiple spaces/tabs with single space
+        before_normalized = WHITESPACE_NORMALIZE_RE.sub(' ', before_line)
+        after_normalized = WHITESPACE_NORMALIZE_RE.sub(' ', after_line)
+    else:
+        before_normalized = before_line
+        after_normalized = after_line
 
-    # Tokenize into words and whitespace
-    def tokenize(text):
-        # Split on word boundaries, keeping delimiters
-        return re.findall(r'\S+|\s+', text)
-
-    before_tokens = tokenize(before_line)
-    after_tokens = tokenize(after_line)
-
-    # Use SequenceMatcher to find word-level differences
-    # If ignore_junk is True, treat whitespace tokens as junk
-    isjunk = (lambda x: x.strip() == '') if ignore_junk else None
-    matcher = difflib.SequenceMatcher(isjunk, before_tokens, after_tokens)
+    # Use redlines for word-level comparison
+    if markdown_style:
+        redlines = Redlines(before_normalized, after_normalized or ' ', markdown_style=markdown_style)
+    else:
+        redlines = Redlines(before_normalized, after_normalized or ' ')
+    diff_output = redlines.output_markdown
 
     if html_colour:
-        result = []
-        for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-            if tag == 'equal':
-                result.append(''.join(before_tokens[i1:i2]))
-            elif tag == 'delete':
-                deleted = ''.join(before_tokens[i1:i2])
-                # If only whitespace and ignore_junk is enabled, preserve whitespace without marking
-                if ignore_junk and deleted.strip() == '':
-                    result.append(deleted)
-                    continue
-                result.append(f'<span style="{REMOVED_STYLE}" title="Removed">{deleted}</span>')
-            elif tag == 'insert':
-                inserted = ''.join(after_tokens[j1:j2])
-                # If only whitespace and ignore_junk is enabled, preserve whitespace without marking
-                if ignore_junk and inserted.strip() == '':
-                    result.append(inserted)
-                    continue
-                result.append(f'<span style="{ADDED_STYLE}" title="Added">{inserted}</span>')
-            elif tag == 'replace':
-                deleted = ''.join(before_tokens[i1:i2])
-                inserted = ''.join(after_tokens[j1:j2])
-                # If both are only whitespace and ignore_junk is enabled, use the after version
-                if ignore_junk and deleted.strip() == '' and inserted.strip() == '':
-                    result.append(inserted)
-                    continue
-                # When ignore_junk is enabled, filter out whitespace-only tokens from replace operations
-                if ignore_junk:
-                    deleted_parts = []
-                    inserted_parts = []
-                    for token in before_tokens[i1:i2]:
-                        if token.strip() != '':
-                            deleted_parts.append(token)
-                    for token in after_tokens[j1:j2]:
-                        if token.strip() != '':
-                            inserted_parts.append(token)
-                    # Add a single space between words (normalized whitespace)
-                    if deleted_parts or inserted_parts:
-                        result.append(' ')
-                    if deleted_parts:
-                        result.append(f'<span style="{REMOVED_STYLE}" title="Removed">{"".join(deleted_parts)}</span>')
-                    if inserted_parts:
-                        result.append(f'<span style="{ADDED_STYLE}" title="Added">{"".join(inserted_parts)}</span>')
-                else:
-                    result.append(f'<span style="{REMOVED_STYLE}" title="Removed">{deleted}</span>')
-                    result.append(f'<span style="{ADDED_STYLE}" title="Added">{inserted}</span>')
-        return ''.join(result)
+        # Replace redlines' default styles with our custom inline styles
+        # Strip trailing spaces from content but preserve them outside the span
+        def replace_removed(m):
+            content = m.group(1).rstrip()
+            trailing = m.group(1)[len(content):] if len(m.group(1)) > len(content) else ''
+            return f'<span style="{REMOVED_STYLE}" title="Removed">{content}</span>{trailing}'
+
+        def replace_added(m):
+            content = m.group(1).rstrip()
+            trailing = m.group(1)[len(content):] if len(m.group(1)) > len(content) else ''
+            return f'<span style="{ADDED_STYLE}" title="Added">{content}</span>{trailing}'
+
+        diff_output = REDLINES_REMOVED_RE.sub(replace_removed, diff_output)
+        diff_output = REDLINES_ADDED_RE.sub(replace_added, diff_output)
+
+        # Handle ignore_junk - check if there are any actual changes
+        if ignore_junk and REMOVED_STYLE not in diff_output and ADDED_STYLE not in diff_output:
+            return after_line
     else:
-        # Plain text format with markers
-        result = []
-        for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-            if tag == 'equal':
-                result.append(''.join(before_tokens[i1:i2]))
-            elif tag == 'delete':
-                deleted = ''.join(before_tokens[i1:i2])
-                # If only whitespace and ignore_junk is enabled, preserve whitespace without marking
-                if ignore_junk and deleted.strip() == '':
-                    result.append(deleted)
-                    continue
-                result.append(f'[-{deleted}-]')
-            elif tag == 'insert':
-                inserted = ''.join(after_tokens[j1:j2])
-                # If only whitespace and ignore_junk is enabled, preserve whitespace without marking
-                if ignore_junk and inserted.strip() == '':
-                    result.append(inserted)
-                    continue
-                result.append(f'[+{inserted}+]')
-            elif tag == 'replace':
-                deleted = ''.join(before_tokens[i1:i2])
-                inserted = ''.join(after_tokens[j1:j2])
-                # If both are only whitespace and ignore_junk is enabled, use the after version
-                if ignore_junk and deleted.strip() == '' and inserted.strip() == '':
-                    result.append(inserted)
-                    continue
-                # When ignore_junk is enabled, filter out whitespace-only tokens from replace operations
-                if ignore_junk:
-                    deleted_parts = []
-                    inserted_parts = []
-                    for token in before_tokens[i1:i2]:
-                        if token.strip() != '':
-                            deleted_parts.append(token)
-                    for token in after_tokens[j1:j2]:
-                        if token.strip() != '':
-                            inserted_parts.append(token)
-                    # Add a single space between words (normalized whitespace)
-                    if deleted_parts or inserted_parts:
-                        result.append(' ')
-                    if deleted_parts:
-                        result.append(f'[-{"".join(deleted_parts)}-]')
-                    if inserted_parts:
-                        result.append(f'[+{"".join(inserted_parts)}+]')
-                else:
-                    result.append(f'[-{deleted}-]')
-                    result.append(f'[+{inserted}+]')
-        return ''.join(result)
+        # Convert redlines HTML to plain text markers
+        # Strip trailing spaces from content but preserve them outside the markers
+        def replace_removed_plain(m):
+            content = m.group(1).rstrip()
+            trailing = m.group(1)[len(content):] if len(m.group(1)) > len(content) else ''
+            return f'[-{content}-]{trailing}'
+
+        def replace_added_plain(m):
+            content = m.group(1).rstrip()
+            trailing = m.group(1)[len(content):] if len(m.group(1)) > len(content) else ''
+            return f'[+{content}+]{trailing}'
+
+        diff_output = REDLINES_REMOVED_RE.sub(replace_removed_plain, diff_output)
+        diff_output = REDLINES_ADDED_RE.sub(replace_added_plain, diff_output)
+
+        # Handle ignore_junk - check if there are any actual changes
+        if ignore_junk and '[-' not in diff_output and '[+' not in diff_output:
+            return after_line
+
+    return diff_output
 
 def same_slicer(lst: List[str], start: int, end: int) -> List[str]:
     """Return a slice of the list, or a single element if start == end."""
@@ -173,13 +125,12 @@ def customSequenceMatcher(
         List[str]: Differences between sequences
     """
     # Prepare sequences for comparison (lowercase if case-insensitive, normalize whitespace if ignore_junk)
-    import re
     def prepare_line(line):
         if case_insensitive:
             line = line.lower()
         if ignore_junk:
             # Normalize whitespace: replace multiple spaces/tabs with single space
-            line = re.sub(r'\s+', ' ', line)
+            line = WHITESPACE_NORMALIZE_RE.sub(' ', line)
         return line
 
     compare_before = [prepare_line(line) for line in before]
@@ -235,31 +186,18 @@ def customSequenceMatcher(
 
             # Use word-level diff for single line replacements when enabled
             if word_diff and len(before_lines) == 1 and len(after_lines) == 1:
-                # Check similarity between lines first - only use word diff if lines are sufficiently similar
-                similarity = difflib.SequenceMatcher(None, before_lines[0], after_lines[0]).ratio()
-
-                # Only use word diff if lines are >30% similar, otherwise the output is too noisy
-                if similarity > LINE_SIMILARITY_THRESHOLD_FOR_WORD_DIFF:
-                    inline_diff = render_inline_word_diff(before_lines[0], after_lines[0], html_colour, ignore_junk)
-                    # Check if there are any actual changes (not just whitespace when ignore_junk is enabled)
-                    if ignore_junk:
-                        # Check if the output contains any change markers
-                        if html_colour:
-                            has_changes = '<span style=' in inline_diff
-                        else:
-                            has_changes = '[-' in inline_diff or '[+' in inline_diff
-                        if not has_changes:
-                            # No real changes, skip this line
-                            continue
-                    yield [inline_diff]
-                else:
-                    # Lines are too different, fall back to line-level diff
+                inline_diff = render_inline_word_diff(before_lines[0], after_lines[0], html_colour, ignore_junk)
+                # Check if there are any actual changes (not just whitespace when ignore_junk is enabled)
+                if ignore_junk:
+                    # Check if the output contains any change markers
                     if html_colour:
-                        yield [f'<span style="{REMOVED_STYLE}" title="Removed">{line}</span>' for line in before_lines] + \
-                              [f'<span style="{ADDED_STYLE}" title="Replaced">{line}</span>' for line in after_lines]
+                        has_changes = '<span style=' in inline_diff
                     else:
-                        yield [f"(changed) {line}" for line in before_lines] + \
-                              [f"(into) {line}" for line in after_lines] if include_change_type_prefix else before_lines + after_lines
+                        has_changes = '[-' in inline_diff or '[+' in inline_diff
+                    if not has_changes:
+                        # No real changes, skip this line
+                        continue
+                yield [inline_diff]
             else:
                 # Fall back to line-level diff for multi-line changes or when word_diff disabled
                 if html_colour:
@@ -335,6 +273,12 @@ def render_diff(
     )
 
     def flatten(lst: List[Union[str, List[str]]]) -> str:
-        return line_feed_sep.join(flatten(x) if isinstance(x, list) else x for x in lst)
+        result = []
+        for x in lst:
+            if isinstance(x, list):
+                result.extend(x)
+            else:
+                result.append(x)
+        return line_feed_sep.join(result)
 
     return flatten(rendered_diff)
