@@ -8,8 +8,16 @@ import re
 REMOVED_STYLE = "background-color: #fadad7; color: #b30000;"
 ADDED_STYLE = "background-color: #eaf2c2; color: #406619;"
 
+# Diff label text formats (use {content} as placeholder)
+DIFF_LABEL_TEXT_ADDED = '(added) {content}'
+DIFF_LABEL_TEXT_REMOVED = '(removed) {content}'
+DIFF_LABEL_TEXT_CHANGED = '(changed) {content}'
+DIFF_LABEL_TEXT_INTO = '(into) {content}'
+
 # Compiled regex patterns for performance
 WHITESPACE_NORMALIZE_RE = re.compile(r'\s+')
+
+# Because `redlines` wont let us easily add our own format, so we replace it.
 REDLINES_REMOVED_RE = re.compile(r"<span style='color:red;font-weight:700;text-decoration:line-through;'>([^<]*)</span>")
 REDLINES_ADDED_RE = re.compile(r"<span style='color:green;font-weight:700;'>([^<]*)</span>")
 
@@ -91,15 +99,15 @@ def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool
             content = m.group(1).rstrip()
             trailing = m.group(1)[len(content):] if len(m.group(1)) > len(content) else ''
             line_break = '\n' if whole_line_replaced else ''
-            prefix = '(changed)' if whole_line_replaced else '(removed)'
-            return f'{prefix} {content}{trailing}{line_break}'
+            label = DIFF_LABEL_TEXT_CHANGED if whole_line_replaced else DIFF_LABEL_TEXT_REMOVED
+            return f'{label.format(content=content)}{trailing}{line_break}'
 
         def replace_added_plain(m):
             content = m.group(1).rstrip()
             trailing = m.group(1)[len(content):] if len(m.group(1)) > len(content) else ''
             line_break = '\n' if whole_line_replaced else ''
-            prefix = '(into)' if whole_line_replaced else '(added)'
-            return f'{prefix} {content}{trailing}{line_break}'
+            label = DIFF_LABEL_TEXT_INTO if whole_line_replaced else DIFF_LABEL_TEXT_ADDED
+            return f'{label.format(content=content)}{trailing}{line_break}'
 
         diff_output = REDLINES_REMOVED_RE.sub(replace_removed_plain, diff_output)
         diff_output = REDLINES_ADDED_RE.sub(replace_added_plain, diff_output)
@@ -203,7 +211,7 @@ def customSequenceMatcher(
             if html_colour:
                 yield [f'<span style="{REMOVED_STYLE}" title="Removed">{line}</span>' for line in same_slicer(before, alo, ahi)]
             else:
-                yield [f"(removed) {line}" for line in same_slicer(before, alo, ahi)] if include_change_type_prefix else same_slicer(before, alo, ahi)
+                yield [DIFF_LABEL_TEXT_REMOVED.format(content=line) for line in same_slicer(before, alo, ahi)] if include_change_type_prefix else same_slicer(before, alo, ahi)
         elif include_replaced and tag == 'replace':
             before_lines = same_slicer(before, alo, ahi)
             after_lines = same_slicer(after, blo, bhi)
@@ -222,13 +230,13 @@ def customSequenceMatcher(
                     yield [f'<span style="{REMOVED_STYLE}" title="Removed">{line}</span>' for line in before_lines] + \
                           [f'<span style="{ADDED_STYLE}" title="Replaced">{line}</span>' for line in after_lines]
                 else:
-                    yield [f"(changed) {line}" for line in before_lines] + \
-                          [f"(into) {line}" for line in after_lines] if include_change_type_prefix else before_lines + after_lines
+                    yield [DIFF_LABEL_TEXT_CHANGED.format(content=line) for line in before_lines] + \
+                          [DIFF_LABEL_TEXT_INTO.format(content=line) for line in after_lines] if include_change_type_prefix else before_lines + after_lines
         elif include_added and tag == 'insert':
             if html_colour:
                 yield [f'<span style="{ADDED_STYLE}" title="Inserted">{line}</span>' for line in same_slicer(after, blo, bhi)]
             else:
-                yield [f"(added) {line}" for line in same_slicer(after, blo, bhi)] if include_change_type_prefix else same_slicer(after, blo, bhi)
+                yield [DIFF_LABEL_TEXT_ADDED.format(content=line) for line in same_slicer(after, blo, bhi)] if include_change_type_prefix else same_slicer(after, blo, bhi)
 
 def render_diff(
     previous_version_file_contents: str,
