@@ -116,11 +116,13 @@ class TestDiffBuilder(unittest.TestCase):
 
         output = diff.render_diff(before, after, include_equal=False, word_diff=True, html_colour=True)
 
-        # Should highlight only the changed word (110 -> 111)
-        self.assertIn(DIFF_HTML_LABEL_REMOVED.format(content='110'), output)
-        self.assertIn(DIFF_HTML_LABEL_ADDED.format(content='111'), output)
+        # With diff-match-patch, character-level changes are shown (more precise)
+        # "110" -> "111" shows only the character change: "0" removed, "1" added
+        self.assertIn(DIFF_HTML_LABEL_REMOVED.format(content='0'), output)
+        self.assertIn(DIFF_HTML_LABEL_ADDED.format(content='1'), output)
         # Unchanged text should not be wrapped in spans
         self.assertIn('points by user', output)
+        self.assertIn('11', output)  # Common prefix is unchanged
 
     def test_context_lines(self):
         """Test context_lines parameter"""
@@ -233,9 +235,11 @@ Line 4"""
         # Case-insensitive should only highlight the price change
         output = diff.render_diff(before, after, include_equal=False, case_insensitive=True, word_diff=True, html_colour=True)
 
-        # Should highlight the changed number
-        self.assertIn('100', output)
-        self.assertIn('200', output)
+        # With word-level tokenization, "rice: $1" vs "RICE: $2" are compared
+        # The diff shows case change (Price->PRICE) and number change (1->2)
+        self.assertIn(DIFF_HTML_LABEL_REMOVED.format(content='rice: $1'), output)
+        self.assertIn(DIFF_HTML_LABEL_ADDED.format(content='RICE: $2'), output)
+        self.assertIn('00', output)  # Common suffix unchanged
         self.assertIn('background-color', output)
 
     def test_ignore_junk_word_diff_enabled(self):

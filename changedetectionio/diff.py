@@ -1,6 +1,6 @@
 import difflib
 from typing import List, Iterator, Union
-from redlines import Redlines
+import diff_match_patch as dmp_module
 import re
 
 # Remember! gmail, outlook etc dont support <style> must be inline.
@@ -24,21 +24,21 @@ DIFF_HTML_LABEL_INSERTED = f'<span style="{ADDED_STYLE}" title="Inserted">{{cont
 WHITESPACE_NORMALIZE_RE = re.compile(r'\s+')
 
 # Because `redlines` wont let us easily add our own format, so we replace it.
-REDLINES_REMOVED_RE = re.compile(r"<span style='color:red;font-weight:700;text-decoration:line-through;'>([^<]*)</span>")
-REDLINES_ADDED_RE = re.compile(r"<span style='color:green;font-weight:700;'>([^<]*)</span>")
+# Note: Use .*? with DOTALL to match content including HTML tags
+REDLINES_REMOVED_RE = re.compile(r"<span style='color:red;font-weight:700;text-decoration:line-through;'>(.*?)</span>", re.DOTALL)
+REDLINES_ADDED_RE = re.compile(r"<span style='color:green;font-weight:700;'>(.*?)</span>", re.DOTALL)
 
 
 def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool = False, ignore_junk: bool = False, markdown_style: str = None) -> tuple[str, bool]:
     """
-    Render word-level differences between two lines inline using redlines library.
+    Render word-level differences between two lines inline using diff-match-patch library.
 
     Args:
         before_line: Original line text
         after_line: Modified line text
         html_colour: Use HTML background colors for differences
         ignore_junk: Ignore whitespace-only changes
-        markdown_style: Redlines markdown style ("red-green", "none", "red", "ghfm", "bbcode", "streamlit", "custom_css")
-                       If None, uses default with custom inline style replacement
+        markdown_style: Unused (kept for backwards compatibility)
 
     Returns:
         tuple[str, bool]: (diff output with inline word-level highlighting, has_changes flag)
@@ -52,77 +52,109 @@ def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool
         before_normalized = before_line
         after_normalized = after_line
 
-    # Use redlines for word-level comparison
-    if markdown_style:
-        redlines = Redlines(before_normalized, after_normalized or ' ', markdown_style=markdown_style)
-    else:
-        redlines = Redlines(before_normalized, after_normalized or ' ')
-    diff_output = redlines.output_markdown
+    # Use diff-match-patch with word-level tokenization
+    # Strategy: Use linesToChars to treat words as atomic units
+    dmp = dmp_module.diff_match_patch()
 
-    # Check if the whole line is replaced by testing if all content has changed
-    # A whole line is replaced when there's only removed and added content with no unchanged text
-    whole_line_replaced = False
+    # Split into words while preserving boundaries
+    def tokenize_with_boundaries(text):
+        """Split text into words and boundaries (spaces, HTML tags)"""
+        tokens = []
+        current = ''
+        in_tag = False
 
-    # Check if whole line is replaced before transforming
-    removed_matches = list(REDLINES_REMOVED_RE.finditer(diff_output))
-    added_matches = list(REDLINES_ADDED_RE.finditer(diff_output))
+        for char in text:
+            if char == '<':
+                # Start of HTML tag
+                if current:
+                    tokens.append(current)
+                    current = ''
+                current = '<'
+                in_tag = True
+            elif char == '>' and in_tag:
+                # End of HTML tag
+                current += '>'
+                tokens.append(current)
+                current = ''
+                in_tag = False
+            elif char.isspace() and not in_tag:
+                # Space outside of tag
+                if current:
+                    tokens.append(current)
+                    current = ''
+                tokens.append(char)
+            else:
+                current += char
 
-    has_changes = bool(removed_matches or added_matches)
+        if current:
+            tokens.append(current)
+        return tokens
 
-    if removed_matches and added_matches:
-        # Calculate total changed content length vs original output length
-        # Remove all the span tags to see what's left
-        temp_output = REDLINES_REMOVED_RE.sub('', diff_output)
-        temp_output = REDLINES_ADDED_RE.sub('', temp_output)
-        # If there's no unchanged content left (only whitespace), it's a whole line replacement
-        whole_line_replaced = temp_output.strip() == ''
+    before_tokens = tokenize_with_boundaries(before_normalized)
+    after_tokens = tokenize_with_boundaries(after_normalized or ' ')
 
-    if html_colour:
-        # Replace redlines' default styles with our custom inline styles
-        # Strip trailing spaces from content but preserve them outside the span
-        def replace_removed(m):
-            content = m.group(1).rstrip()
-            trailing = m.group(1)[len(content):] if len(m.group(1)) > len(content) else ''
-            line_break = '\n' if whole_line_replaced else ''
-            return f'{DIFF_HTML_LABEL_REMOVED.format(content=content)}{trailing}{line_break}'
+    # Create mappings for linesToChars (using it for word-mode)
+    # Join tokens with newline so each "line" is a token
+    before_text = '\n'.join(before_tokens)
+    after_text = '\n'.join(after_tokens)
 
-        def replace_added(m):
-            content = m.group(1).rstrip()
-            trailing = m.group(1)[len(content):] if len(m.group(1)) > len(content) else ''
-            line_break = '\n' if whole_line_replaced else ''
-            return f'{DIFF_HTML_LABEL_ADDED.format(content=content)}{trailing}{line_break}'
+    # Use linesToChars for word-mode diffing
+    lines_result = dmp.diff_linesToChars(before_text, after_text)
+    line_before, line_after, line_array = lines_result
 
-        diff_output = REDLINES_REMOVED_RE.sub(replace_removed, diff_output)
-        diff_output = REDLINES_ADDED_RE.sub(replace_added, diff_output)
+    # Perform diff on the encoded strings
+    diffs = dmp.diff_main(line_before, line_after, False)
 
-        # Handle ignore_junk - check if there are any actual changes
-        if ignore_junk and not has_changes:
-            return after_line, False
-    else:
-        # Convert redlines HTML to plain text with (changed)/(into) prefixes when whole line replaced, otherwise (removed)/(added)
-        # Strip trailing spaces from content but preserve them outside the markers
-        def replace_removed_plain(m):
-            content = m.group(1).rstrip()
-            trailing = m.group(1)[len(content):] if len(m.group(1)) > len(content) else ''
-            line_break = '\n' if whole_line_replaced else ''
-            label = DIFF_LABEL_TEXT_CHANGED if whole_line_replaced else DIFF_LABEL_TEXT_REMOVED
-            return f'{label.format(content=content)}{trailing}{line_break}'
+    # Convert back to original text
+    dmp.diff_charsToLines(diffs, line_array)
 
-        def replace_added_plain(m):
-            content = m.group(1).rstrip()
-            trailing = m.group(1)[len(content):] if len(m.group(1)) > len(content) else ''
-            line_break = '\n' if whole_line_replaced else ''
-            label = DIFF_LABEL_TEXT_INTO if whole_line_replaced else DIFF_LABEL_TEXT_ADDED
-            return f'{label.format(content=content)}{trailing}{line_break}'
+    # Remove the newlines we added for tokenization
+    diffs = [(op, text.replace('\n', '')) for op, text in diffs]
 
-        diff_output = REDLINES_REMOVED_RE.sub(replace_removed_plain, diff_output)
-        diff_output = REDLINES_ADDED_RE.sub(replace_added_plain, diff_output)
+    # Apply semantic cleanup for more human-readable diffs
+    dmp.diff_cleanupSemantic(diffs)
 
-        # Handle ignore_junk - check if there are any actual changes
-        if ignore_junk and not has_changes:
-            return after_line, False
+    # Check if there are any changes
+    has_changes = any(op != 0 for op, _ in diffs)
 
-    return diff_output, has_changes
+    if ignore_junk and not has_changes:
+        return after_line, False
+
+    # Check if the whole line is replaced (no unchanged content)
+    whole_line_replaced = not any(op == 0 and text.strip() for op, text in diffs)
+
+    # Build the output
+    result_parts = []
+
+    for op, text in diffs:
+        if op == 0:  # Equal
+            result_parts.append(text)
+        elif op == 1:  # Insertion
+            if html_colour:
+                content = text.rstrip()
+                trailing = text[len(content):] if len(text) > len(content) else ''
+                line_break = '\n' if whole_line_replaced else ''
+                result_parts.append(f'{DIFF_HTML_LABEL_ADDED.format(content=content)}{trailing}{line_break}')
+            else:
+                content = text.rstrip()
+                trailing = text[len(content):] if len(text) > len(content) else ''
+                line_break = '\n' if whole_line_replaced else ''
+                label = DIFF_LABEL_TEXT_INTO if whole_line_replaced else DIFF_LABEL_TEXT_ADDED
+                result_parts.append(f'{label.format(content=content)}{trailing}{line_break}')
+        elif op == -1:  # Deletion
+            if html_colour:
+                content = text.rstrip()
+                trailing = text[len(content):] if len(text) > len(content) else ''
+                line_break = '\n' if whole_line_replaced else ''
+                result_parts.append(f'{DIFF_HTML_LABEL_REMOVED.format(content=content)}{trailing}{line_break}')
+            else:
+                content = text.rstrip()
+                trailing = text[len(content):] if len(text) > len(content) else ''
+                line_break = '\n' if whole_line_replaced else ''
+                label = DIFF_LABEL_TEXT_CHANGED if whole_line_replaced else DIFF_LABEL_TEXT_REMOVED
+                result_parts.append(f'{label.format(content=content)}{trailing}{line_break}')
+
+    return ''.join(result_parts), has_changes
 
 def same_slicer(lst: List[str], start: int, end: int) -> List[str]:
     """Return a slice of the list, or a single element if start == end."""
