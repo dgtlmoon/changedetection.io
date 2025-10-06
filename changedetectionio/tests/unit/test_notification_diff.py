@@ -85,10 +85,10 @@ class TestDiffBuilder(unittest.TestCase):
         # Test with word_diff enabled
         output = diff.render_diff(before, after, include_equal=False, word_diff=True)
         # Should highlight only changed words, not entire line
-        self.assertIn('[-quick-]', output)
-        self.assertIn('[+fast+]', output)
-        self.assertIn('[-fox-]', output)
-        self.assertIn('[+cat+]', output)
+        self.assertIn('(removed) quick', output)
+        self.assertIn('(added) fast', output)
+        self.assertIn('(removed) fox', output)
+        self.assertIn('(added) cat', output)
         # Unchanged words should appear without markers
         self.assertIn('brown', output)
         self.assertIn('jumps', output)
@@ -141,8 +141,8 @@ Line 10"""
         lines = output.split("\n")
         # Should only show changed lines
         self.assertEqual(len([l for l in lines if l.strip()]), 2)  # Two changed lines
-        self.assertIn('[-Old-]', output)
-        self.assertIn('[+New+]', output)
+        self.assertIn('(removed) Old', output)
+        self.assertIn('(added) New', output)
 
         # Test with 1 line of context
         output = diff.render_diff(before, after, include_equal=False, context_lines=1, word_diff=True)
@@ -212,8 +212,8 @@ Line 4"""
         self.assertNotIn('HELLO', output)
 
         # Second line should show the word change
-        self.assertIn('[-WORLD-]', output)
-        self.assertIn('[+Friend+]', output)
+        self.assertIn('(removed) WORLD', output)
+        self.assertIn('(added) Friend', output)
 
     def test_case_insensitive_html_output(self):
         """Test case-insensitive comparison with HTML output"""
@@ -268,8 +268,8 @@ Line 4"""
         output = diff.render_diff(before, after, include_equal=False, word_diff=True, ignore_junk=True)
 
         # Should still detect the word change (fox -> cat)
-        self.assertIn('[-fox-]', output)
-        self.assertIn('[+cat+]', output)
+        self.assertIn('(removed) fox', output)
+        self.assertIn('(added) cat', output)
         # But shouldn't highlight whitespace differences
 
     def test_ignore_junk_tabs_vs_spaces(self):
@@ -324,8 +324,8 @@ Line 4"""
         self.assertIn('Brown', output)
         self.assertIn('brown', output)
         # Should show changes (though may be grouped together)
-        self.assertTrue('[-' in output and '-]' in output, "Should show removed text")
-        self.assertTrue('[+' in output and '+]' in output, "Should show added text")
+        self.assertTrue('(removed)' in output, "Should show removed text")
+        self.assertTrue('(added)' in output, "Should show added text")
 
     def test_ignore_junk_multiline(self):
         """Test ignore_junk with multiple lines"""
