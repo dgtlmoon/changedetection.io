@@ -14,6 +14,12 @@ DIFF_LABEL_TEXT_REMOVED = '(removed) {content}'
 DIFF_LABEL_TEXT_CHANGED = '(changed) {content}'
 DIFF_LABEL_TEXT_INTO = '(into) {content}'
 
+# Diff HTML label formats (use {content} as placeholder)
+DIFF_HTML_LABEL_REMOVED = f'<span style="{REMOVED_STYLE}" title="Removed">{{content}}</span>'
+DIFF_HTML_LABEL_ADDED = f'<span style="{ADDED_STYLE}" title="Added">{{content}}</span>'
+DIFF_HTML_LABEL_REPLACED = f'<span style="{ADDED_STYLE}" title="Replaced">{{content}}</span>'
+DIFF_HTML_LABEL_INSERTED = f'<span style="{ADDED_STYLE}" title="Inserted">{{content}}</span>'
+
 # Compiled regex patterns for performance
 WHITESPACE_NORMALIZE_RE = re.compile(r'\s+')
 
@@ -78,13 +84,13 @@ def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool
             content = m.group(1).rstrip()
             trailing = m.group(1)[len(content):] if len(m.group(1)) > len(content) else ''
             line_break = '\n' if whole_line_replaced else ''
-            return f'<span style="{REMOVED_STYLE}" title="Removed">{content}</span>{trailing}{line_break}'
+            return f'{DIFF_HTML_LABEL_REMOVED.format(content=content)}{trailing}{line_break}'
 
         def replace_added(m):
             content = m.group(1).rstrip()
             trailing = m.group(1)[len(content):] if len(m.group(1)) > len(content) else ''
             line_break = '\n' if whole_line_replaced else ''
-            return f'<span style="{ADDED_STYLE}" title="Added">{content}</span>{trailing}{line_break}'
+            return f'{DIFF_HTML_LABEL_ADDED.format(content=content)}{trailing}{line_break}'
 
         diff_output = REDLINES_REMOVED_RE.sub(replace_removed, diff_output)
         diff_output = REDLINES_ADDED_RE.sub(replace_added, diff_output)
@@ -209,7 +215,7 @@ def customSequenceMatcher(
                     yield context_lines_to_include
         elif include_removed and tag == 'delete':
             if html_colour:
-                yield [f'<span style="{REMOVED_STYLE}" title="Removed">{line}</span>' for line in same_slicer(before, alo, ahi)]
+                yield [DIFF_HTML_LABEL_REMOVED.format(content=line) for line in same_slicer(before, alo, ahi)]
             else:
                 yield [DIFF_LABEL_TEXT_REMOVED.format(content=line) for line in same_slicer(before, alo, ahi)] if include_change_type_prefix else same_slicer(before, alo, ahi)
         elif include_replaced and tag == 'replace':
@@ -227,14 +233,14 @@ def customSequenceMatcher(
             else:
                 # Fall back to line-level diff for multi-line changes or when word_diff disabled
                 if html_colour:
-                    yield [f'<span style="{REMOVED_STYLE}" title="Removed">{line}</span>' for line in before_lines] + \
-                          [f'<span style="{ADDED_STYLE}" title="Replaced">{line}</span>' for line in after_lines]
+                    yield [DIFF_HTML_LABEL_REMOVED.format(content=line) for line in before_lines] + \
+                          [DIFF_HTML_LABEL_REPLACED.format(content=line) for line in after_lines]
                 else:
                     yield [DIFF_LABEL_TEXT_CHANGED.format(content=line) for line in before_lines] + \
                           [DIFF_LABEL_TEXT_INTO.format(content=line) for line in after_lines] if include_change_type_prefix else before_lines + after_lines
         elif include_added and tag == 'insert':
             if html_colour:
-                yield [f'<span style="{ADDED_STYLE}" title="Inserted">{line}</span>' for line in same_slicer(after, blo, bhi)]
+                yield [DIFF_HTML_LABEL_INSERTED.format(content=line) for line in same_slicer(after, blo, bhi)]
             else:
                 yield [DIFF_LABEL_TEXT_ADDED.format(content=line) for line in same_slicer(after, blo, bhi)] if include_change_type_prefix else same_slicer(after, blo, bhi)
 

@@ -459,7 +459,7 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
 
 def _test_color_notifications(client, notification_body_token):
 
-    from changedetectionio.diff import ADDED_STYLE, REMOVED_STYLE
+    from changedetectionio.diff import ADDED_STYLE, REMOVED_STYLE, DIFF_HTML_LABEL_REMOVED
 
     set_original_response()
 
@@ -507,7 +507,7 @@ def _test_color_notifications(client, notification_body_token):
 
     with open("test-datastore/notification.txt", 'r') as f:
         x = f.read()
-        assert f'<span style="{REMOVED_STYLE}" title="Removed">Which is across multiple lines' in x
+        assert DIFF_HTML_LABEL_REMOVED.format(content='Which is across multiple lines') in x
 
 
     client.get(

@@ -5,7 +5,7 @@ import re
 from loguru import logger
 from markupsafe import Markup
 
-from changedetectionio.diff import REMOVED_STYLE, ADDED_STYLE
+from changedetectionio.diff import REMOVED_STYLE, ADDED_STYLE, DIFF_HTML_LABEL_REMOVED, DIFF_HTML_LABEL_ADDED
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
 from changedetectionio import html_tools, diff
@@ -27,6 +27,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         # Step 2: Simple regex to unescape only our exact diff spans
         # Unescape opening tags with exact styles
+        # This matches the styles used in DIFF_HTML_LABEL_REMOVED, DIFF_HTML_LABEL_ADDED, etc.
         result = re.sub(
             rf'&lt;span style=&#34;({REMOVED_STYLE}|{ADDED_STYLE})&#34; title=&#34;([A-Za-z0-9]+)&#34;&gt;',
             r'<span style="\1" title="\2">',

@@ -11,7 +11,11 @@ from changedetectionio.diff import (
     DIFF_LABEL_TEXT_ADDED,
     DIFF_LABEL_TEXT_REMOVED,
     DIFF_LABEL_TEXT_CHANGED,
-    DIFF_LABEL_TEXT_INTO
+    DIFF_LABEL_TEXT_INTO,
+    DIFF_HTML_LABEL_REMOVED,
+    DIFF_HTML_LABEL_ADDED,
+    DIFF_HTML_LABEL_REPLACED,
+    DIFF_HTML_LABEL_INSERTED
 )
 
 # mostly
@@ -113,8 +117,8 @@ class TestDiffBuilder(unittest.TestCase):
         output = diff.render_diff(before, after, include_equal=False, word_diff=True, html_colour=True)
 
         # Should highlight only the changed word (110 -> 111)
-        self.assertIn('<span style="background-color: #fadad7; color: #b30000;" title="Removed">110</span>', output)
-        self.assertIn('<span style="background-color: #eaf2c2; color: #406619;" title="Added">111</span>', output)
+        self.assertIn(DIFF_HTML_LABEL_REMOVED.format(content='110'), output)
+        self.assertIn(DIFF_HTML_LABEL_ADDED.format(content='111'), output)
         # Unchanged text should not be wrapped in spans
         self.assertIn('points by user', output)
 

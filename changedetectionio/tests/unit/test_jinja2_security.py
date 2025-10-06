@@ -61,7 +61,7 @@ class TestJinja2SSTI(unittest.TestCase):
         from markupsafe import Markup, escape
 
         # Import the constants from diff module
-        from changedetectionio.diff import REMOVED_STYLE, ADDED_STYLE
+        from changedetectionio.diff import REMOVED_STYLE, ADDED_STYLE, DIFF_HTML_LABEL_REMOVED, DIFF_HTML_LABEL_ADDED, DIFF_HTML_LABEL_INSERTED
 
         # Recreate the filter logic for testing
         def diff_unescape_difference_spans(content):
@@ -89,7 +89,7 @@ class TestJinja2SSTI(unittest.TestCase):
             return Markup(result)
 
         # Test 1: Valid diff spans should be unescaped
-        valid_diff_content = f'<span style="{REMOVED_STYLE}" title="Removed">old text</span>\n<span style="{ADDED_STYLE}" title="Inserted">new text</span>'
+        valid_diff_content = f'{DIFF_HTML_LABEL_REMOVED.format(content="old text")}\n{DIFF_HTML_LABEL_INSERTED.format(content="new text")}'
         result = diff_unescape_difference_spans(valid_diff_content)
         self.assertIn('<span style=', str(result))  # Should contain unescaped spans
         self.assertIn('old text', str(result))
@@ -122,7 +122,7 @@ class TestJinja2SSTI(unittest.TestCase):
         # Test 3: Invalid diff spans should remain escaped
         invalid_diff_spans = [
             '<span style="color: red;" title="Evil">bad</span>',  # Wrong style
-            f'<span style="{REMOVED_STYLE}" title="Evil Script">bad</span>',  # Invalid title chars
+            f'<span style="{REMOVED_STYLE}" title="Evil Script">bad</span>',  # Invalid title chars (space not allowed)
             f'<span style="{REMOVED_STYLE}">no title</span>',  # Missing title
         ]
 
@@ -132,7 +132,7 @@ class TestJinja2SSTI(unittest.TestCase):
             self.assertIn('&lt;span', str(result), f"Invalid span remained escaped: {invalid_span}")
 
         # Test 4: Mixed content - valid diffs + XSS should only unescape valid parts
-        mixed_content = f'<span style="{REMOVED_STYLE}" title="Removed">safe</span><script>alert(1)</script>'
+        mixed_content = f'{DIFF_HTML_LABEL_REMOVED.format(content="safe")}<script>alert(1)</script>'
         result = diff_unescape_difference_spans(mixed_content)
         self.assertIn('<span style=', str(result))  # Valid diff unescaped
         self.assertIn('&lt;script&gt;', str(result))  # XSS remained escaped
