@@ -44,9 +44,11 @@
                 <input type="radio" name="diff_type" id="diffLines" value="diffLines" checked=""> Lines</label>
             {#  @todo choose other types by their mimetype? #}
             <span>
-        <!-- https://github.com/kpdecker/jsdiff/issues/389 ? -->
+
         <label for="ignoreWhitespace" class="pure-checkbox" id="label-diff-ignorewhitespace">
             <input type="checkbox" id="ignoreWhitespace" name="ignoreWhitespace"> Ignore Whitespace</label>
+        <label for="plainText" class="pure-checkbox" id="label-diff-plaintext">
+            <input type="checkbox" id="plainText" name="plainText"> Plain-text</label>
     </span>
         </fieldset>
     </form>
