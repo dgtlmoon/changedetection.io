@@ -7,6 +7,12 @@ import unittest
 import os
 
 from changedetectionio import diff
+from changedetectionio.diff import (
+    DIFF_LABEL_TEXT_ADDED,
+    DIFF_LABEL_TEXT_REMOVED,
+    DIFF_LABEL_TEXT_CHANGED,
+    DIFF_LABEL_TEXT_INTO
+)
 
 # mostly
 class TestDiffBuilder(unittest.TestCase):
@@ -25,17 +31,17 @@ class TestDiffBuilder(unittest.TestCase):
         output = output.split("\n")
 
 
-        self.assertIn('(changed) ok', output)
-        self.assertIn('(into) xok', output)
-        self.assertIn('(into) next-x-ok', output)
-        self.assertIn('(added) and something new', output)
+        self.assertIn(DIFF_LABEL_TEXT_CHANGED.format(content='ok'), output)
+        self.assertIn(DIFF_LABEL_TEXT_INTO.format(content='xok'), output)
+        self.assertIn(DIFF_LABEL_TEXT_INTO.format(content='next-x-ok'), output)
+        self.assertIn(DIFF_LABEL_TEXT_ADDED.format(content='and something new'), output)
 
         with open(base_dir + "/test-content/after-2.txt", 'r') as f:
             newest_version_file_contents = f.read()
         output = diff.render_diff(previous_version_file_contents, newest_version_file_contents)
         output = output.split("\n")
-        self.assertIn('(removed) for having learned computerese,', output)
-        self.assertIn('(removed) I continue to examine bits, bytes and words', output)
+        self.assertIn(DIFF_LABEL_TEXT_REMOVED.format(content='for having learned computerese,'), output)
+        self.assertIn(DIFF_LABEL_TEXT_REMOVED.format(content='I continue to examine bits, bytes and words'), output)
 
         #diff_removed
         with open(base_dir + "/test-content/before.txt", 'r') as f:
@@ -45,18 +51,18 @@ class TestDiffBuilder(unittest.TestCase):
             newest_version_file_contents = f.read()
         output = diff.render_diff(previous_version_file_contents, newest_version_file_contents, include_equal=False, include_removed=True, include_added=False)
         output = output.split("\n")
-        self.assertIn('(changed) ok', output)
-        self.assertIn('(into) xok', output)
-        self.assertIn('(into) next-x-ok', output)
-        self.assertNotIn('(added) and something new', output)
+        self.assertIn(DIFF_LABEL_TEXT_CHANGED.format(content='ok'), output)
+        self.assertIn(DIFF_LABEL_TEXT_INTO.format(content='xok'), output)
+        self.assertIn(DIFF_LABEL_TEXT_INTO.format(content='next-x-ok'), output)
+        self.assertNotIn(DIFF_LABEL_TEXT_ADDED.format(content='and something new'), output)
 
         #diff_removed
         with open(base_dir + "/test-content/after-2.txt", 'r') as f:
             newest_version_file_contents = f.read()
         output = diff.render_diff(previous_version_file_contents, newest_version_file_contents, include_equal=False, include_removed=True, include_added=False)
         output = output.split("\n")
-        self.assertIn('(removed) for having learned computerese,', output)
-        self.assertIn('(removed) I continue to examine bits, bytes and words', output)
+        self.assertIn(DIFF_LABEL_TEXT_REMOVED.format(content='for having learned computerese,'), output)
+        self.assertIn(DIFF_LABEL_TEXT_REMOVED.format(content='I continue to examine bits, bytes and words'), output)
 
     def test_expected_diff_patch_output(self):
         base_dir = os.path.dirname(__file__)
@@ -85,10 +91,10 @@ class TestDiffBuilder(unittest.TestCase):
         # Test with word_diff enabled
         output = diff.render_diff(before, after, include_equal=False, word_diff=True)
         # Should highlight only changed words, not entire line
-        self.assertIn('(removed) quick', output)
-        self.assertIn('(added) fast', output)
-        self.assertIn('(removed) fox', output)
-        self.assertIn('(added) cat', output)
+        self.assertIn(DIFF_LABEL_TEXT_REMOVED.format(content='quick'), output)
+        self.assertIn(DIFF_LABEL_TEXT_ADDED.format(content='fast'), output)
+        self.assertIn(DIFF_LABEL_TEXT_REMOVED.format(content='fox'), output)
+        self.assertIn(DIFF_LABEL_TEXT_ADDED.format(content='cat'), output)
         # Unchanged words should appear without markers
         self.assertIn('brown', output)
         self.assertIn('jumps', output)
@@ -96,8 +102,8 @@ class TestDiffBuilder(unittest.TestCase):
         # Test with word_diff disabled (line-level)
         output = diff.render_diff(before, after, include_equal=False, word_diff=False)
         # Should show full line changes
-        self.assertIn('(changed)', output)
-        self.assertIn('(into)', output)
+        self.assertIn(DIFF_LABEL_TEXT_CHANGED.format(content='The quick brown fox jumps over the lazy dog'), output)
+        self.assertIn(DIFF_LABEL_TEXT_INTO.format(content='The fast brown cat jumps over the lazy dog'), output)
 
     def test_word_level_diff_html(self):
         """Test word-level diff with HTML coloring"""
@@ -141,8 +147,8 @@ Line 10"""
         lines = output.split("\n")
         # Should only show changed lines
         self.assertEqual(len([l for l in lines if l.strip()]), 2)  # Two changed lines
-        self.assertIn('(removed) Old', output)
-        self.assertIn('(added) New', output)
+        self.assertIn(DIFF_LABEL_TEXT_REMOVED.format(content='Old'), output)
+        self.assertIn(DIFF_LABEL_TEXT_ADDED.format(content='New'), output)
 
         # Test with 1 line of context
         output = diff.render_diff(before, after, include_equal=False, context_lines=1, word_diff=True)
@@ -191,7 +197,7 @@ Line 4"""
 
         # With case-sensitive (default), should detect changes
         output = diff.render_diff(before, after, include_equal=False, case_insensitive=False, word_diff=False)
-        self.assertIn('(changed)', output)
+        self.assertIn(DIFF_LABEL_TEXT_CHANGED.format(content='The Quick Brown Fox'), output)
 
         # With case-insensitive, should detect no changes
         output = diff.render_diff(before, after, include_equal=False, case_insensitive=True)
@@ -212,8 +218,8 @@ Line 4"""
         self.assertNotIn('HELLO', output)
 
         # Second line should show the word change
-        self.assertIn('(removed) WORLD', output)
-        self.assertIn('(added) Friend', output)
+        self.assertIn(DIFF_LABEL_TEXT_REMOVED.format(content='WORLD'), output)
+        self.assertIn(DIFF_LABEL_TEXT_ADDED.format(content='Friend'), output)
 
     def test_case_insensitive_html_output(self):
         """Test case-insensitive comparison with HTML output"""
@@ -250,8 +256,8 @@ Line 4"""
 
         # Without ignore_junk, should detect line change
         output = diff.render_diff(before, after, include_equal=False, word_diff=False, ignore_junk=False)
-        self.assertIn('(changed)', output)
-        self.assertIn('(into)', output)
+        self.assertIn(DIFF_LABEL_TEXT_CHANGED.format(content='Hello  World'), output)
+        self.assertIn(DIFF_LABEL_TEXT_INTO.format(content='Hello World'), output)
 
         # With ignore_junk enabled and word_diff disabled
         # When ignore_junk is enabled, whitespace is normalized at line level so lines match
@@ -268,8 +274,8 @@ Line 4"""
         output = diff.render_diff(before, after, include_equal=False, word_diff=True, ignore_junk=True)
 
         # Should still detect the word change (fox -> cat)
-        self.assertIn('(removed) fox', output)
-        self.assertIn('(added) cat', output)
+        self.assertIn(DIFF_LABEL_TEXT_REMOVED.format(content='fox'), output)
+        self.assertIn(DIFF_LABEL_TEXT_ADDED.format(content='cat'), output)
         # But shouldn't highlight whitespace differences
 
     def test_ignore_junk_tabs_vs_spaces(self):
@@ -324,8 +330,9 @@ Line 4"""
         self.assertIn('Brown', output)
         self.assertIn('brown', output)
         # Should show changes (though may be grouped together)
-        self.assertTrue('(removed)' in output, "Should show removed text")
-        self.assertTrue('(added)' in output, "Should show added text")
+        # Check that the labels appear in the output (without the content placeholder)
+        self.assertTrue(DIFF_LABEL_TEXT_REMOVED.split(' {content}')[0] in output, "Should show removed text")
+        self.assertTrue(DIFF_LABEL_TEXT_ADDED.split(' {content}')[0] in output, "Should show added text")
 
     def test_ignore_junk_multiline(self):
         """Test ignore_junk with multiple lines"""
