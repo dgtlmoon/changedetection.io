@@ -156,7 +156,7 @@ class perform_site_check(difference_detection_processor):
             content_type = self.fetcher.get_all_headers().get('content-type', '').lower()
             is_attachment = 'attachment' in self.fetcher.get_all_headers().get('content-disposition', '').lower() or 'octet-stream' in content_type
 
-            # Try to detect better mime types if its a download or not announced as s
+            # Try to detect better mime types if its a download or not announced as HTML
             if is_attachment:
                 logger.debug(f"Got a reply that may be a download or possibly a text attachment, checking..")
                 try:
