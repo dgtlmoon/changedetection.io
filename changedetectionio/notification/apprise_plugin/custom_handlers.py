@@ -1,5 +1,6 @@
 import json
 import re
+import time
 from urllib.parse import unquote_plus
 
 import requests
@@ -109,4 +110,81 @@ def apprise_http_custom_handler(
 
     except Exception as e:
         logger.error(f"Unexpected error occurred while sending custom notification to {url}: {e}")
+        return False
+
+
+@notify(on="browser")
+def apprise_browser_notification_handler(
+    body: str,
+    title: str,
+    notify_type: str,
+    meta: dict,
+    *args,
+    **kwargs,
+) -> bool:
+    """
+    Browser push notification handler for browser:// URLs
+    Ignores anything after browser:// and uses single default channel
+    """
+    try:
+        from pywebpush import webpush, WebPushException
+        from flask import current_app
+        
+        # Get VAPID keys from app settings
+        try:
+            datastore = current_app.config.get('DATASTORE')
+            if not datastore:
+                logger.error("No datastore available for browser notifications")
+                return False
+                
+            vapid_config = datastore.data.get('settings', {}).get('application', {}).get('vapid', {})
+            private_key = vapid_config.get('private_key')
+            public_key = vapid_config.get('public_key')
+            contact_email = vapid_config.get('contact_email', 'admin@changedetection.io')
+            
+            if not private_key or not public_key:
+                logger.error("VAPID keys not configured for browser notifications")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Failed to get VAPID configuration: {e}")
+            return False
+        
+        # Get subscriptions from datastore
+        browser_subscriptions = datastore.data.get('settings', {}).get('application', {}).get('browser_subscriptions', [])
+        
+        if not browser_subscriptions:
+            logger.info("No browser subscriptions found")
+            return True  # Not an error - just no subscribers
+            
+        # Import helper functions
+        try:
+            from .browser_notification_helpers import create_notification_payload, send_push_notifications
+        except ImportError:
+            logger.error("Browser notification helpers not available")
+            return False
+        
+        # Prepare notification payload
+        notification_payload = create_notification_payload(title, body)
+        
+        # Send notifications using shared helper
+        success_count, total_count = send_push_notifications(
+            subscriptions=browser_subscriptions,
+            notification_payload=notification_payload,
+            private_key=private_key,
+            contact_email=contact_email,
+            datastore=datastore
+        )
+                
+        # Update datastore with cleaned subscriptions
+        datastore.data['settings']['application']['browser_subscriptions'] = browser_subscriptions
+        
+        logger.info(f"Sent browser notifications: {success_count}/{total_count} successful")
+        return success_count > 0
+        
+    except ImportError:
+        logger.error("pywebpush not available - cannot send browser notifications")
+        return False
+    except Exception as e:
+        logger.error(f"Unexpected error in browser notification handler: {e}")
         return False

@@ -140,6 +140,28 @@ class ChangeDetectionStore:
             secret = secrets.token_hex(16)
             self.__data['settings']['application']['api_access_token'] = secret
 
+        # Generate VAPID keys for browser push notifications
+        if not self.__data['settings']['application']['vapid'].get('private_key'):
+            try:
+                from py_vapid import Vapid
+                vapid = Vapid()
+                vapid.generate_keys()
+                # Convert bytes to strings for JSON serialization
+                private_pem = vapid.private_pem()
+                public_pem = vapid.public_pem()
+                
+                self.__data['settings']['application']['vapid']['private_key'] = private_pem.decode() if isinstance(private_pem, bytes) else private_pem
+                self.__data['settings']['application']['vapid']['public_key'] = public_pem.decode() if isinstance(public_pem, bytes) else public_pem
+                
+                # Set default contact email if not present
+                if not self.__data['settings']['application']['vapid'].get('contact_email'):
+                    self.__data['settings']['application']['vapid']['contact_email'] = 'citizen@example.com'
+                logger.info("Generated new VAPID keys for browser push notifications")
+            except ImportError:
+                logger.warning("py_vapid not available - browser notifications will not work")
+            except Exception as e:
+                logger.warning(f"Failed to generate VAPID keys: {e}")
+
         self.needs_write = True
 
         # Finally start the thread that will manage periodic data saves to JSON
