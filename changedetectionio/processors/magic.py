@@ -72,8 +72,11 @@ class guess_stream_type():
             logger.debug(f"Guessing mime type, original content_type '{content_header}', mime type detected '{mime}'")
             if mime and "/" in mime:
                 magic_result = mime
+                # Ignore generic/fallback mime types from magic
+                if mime in ['application/octet-stream', 'application/x-empty', 'binary']:
+                    logger.debug(f"Ignoring generic mime type '{mime}' from magic library")
                 # Trust magic for non-text types immediately
-                if mime not in ['text/html', 'text/plain']:
+                elif mime not in ['text/html', 'text/plain']:
                     magic_content_header = mime
 
         except Exception as e:
@@ -98,11 +101,6 @@ class guess_stream_type():
         elif test_content_normalized.startswith('<?xml'):
             # Generic XML that's not RSS/Atom (RSS/Atom checked above)
             self.is_xml = True
-        elif test_content.startswith('{') or test_content.startswith('['):
-            self.is_json = True
-        elif test_content.startswith('---') or test_content.startswith('%yaml'):
-            # YAML typically starts with --- or %YAML directive
-            self.is_yaml = True
         elif '%pdf-1' in test_content:
             self.is_pdf = True
         # Check headers for types we didn't detect by content
