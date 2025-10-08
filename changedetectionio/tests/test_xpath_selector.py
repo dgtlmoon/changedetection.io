@@ -3,7 +3,7 @@
 
 from flask import url_for
 from .util import  wait_for_all_checks
-from ..processors.text_json_diff.processor import RSS_XML_CONTENT_TYPES
+from ..processors.magic import RSS_XML_CONTENT_TYPES
 
 
 def set_rss_atom_feed_response(header=''):
