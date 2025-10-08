@@ -1,12 +1,42 @@
 # -*- coding: utf-8 -*-
 
-import time
+
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks
+from .util import  wait_for_all_checks
+from ..processors.magic import RSS_XML_CONTENT_TYPES
 
-from ..html_tools import *
 
+def set_rss_atom_feed_response(header=''):
+    test_return_data = f"""{header}<!-- Generated on Wed, 08 Oct 2025 08:42:33 -0700, really really honestly  -->
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+<channel>
+    <atom:link href="https://store.waterpowered.com/news/collection//" rel="self" type="application/rss+xml"/>
+    <title>RSS Feed</title>
+    <link>
+        <![CDATA[ https://store.waterpowered.com/news/collection// ]]>
+    </link>
+    <description>
+        <![CDATA[ Events and Announcements for ]]>
+    </description>
+    <language>en-us</language>
+    <generator>water News RSS</generator>
+    <item>
+        <title> 🍁 Lets go discount</title>
+        <description><p class="bb_paragraph">ok heres the description</p></description>
+        <link>
+        <![CDATA[ https://store.waterpowered.com/news/app/1643320/view/511845698831908921 ]]>
+        </link>
+        <pubDate>Wed, 08 Oct 2025 15:28:55 +0000</pubDate>
+        <guid isPermaLink="true">https://store.waterpowered.com/news/app/1643320/view/511845698831908921</guid>
+        <enclosure url="https://clan.fastly.waterstatic.com/images/40721482/42822e5f00b2becf520ace9500981bb56f3a89f2.jpg" length="0" type="image/jpeg"/>
+    </item>
+</channel>
+</rss>"""
 
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write(test_return_data)
+
+    return None
 
 
 
@@ -575,3 +605,47 @@ def test_xpath_20_function_string_join_matches(client, live_server, measure_memo
 
     client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
+
+def _subtest_xpath_rss(client, content_type='text/html'):
+
+    # Add our URL to the import page
+    test_url = url_for('test_endpoint', content_type=content_type, _external=True)
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
+        follow_redirects=True
+    )
+
+    assert b"Watch added in Paused state, saving will unpause" in res.data
+
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid="first", unpause_on_save=1),
+        data={
+            "url": test_url,
+            "include_filters": "xpath://item",
+            "tags": '',
+            "fetch_backend": "html_requests",
+            "time_between_check_use_default": "y",
+        },
+        follow_redirects=True
+    )
+
+    assert b"unpaused" in res.data
+    wait_for_all_checks(client)
+
+    res = client.get(
+        url_for("ui.ui_views.preview_page", uuid="first"),
+        follow_redirects=True
+    )
+
+    assert b"Lets go discount" in res.data, f"When testing for Lets go discount called with content type '{content_type}'"
+    assert b"Events and Announcements" not in res.data, f"When testing for Lets go discount called with content type '{content_type}'" # It should not be here because thats not our selector target
+
+    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+
+# Be sure all-in-the-wild types of RSS feeds work with xpath
+def test_rss_xpath(client, live_server):
+    for feed_header in ['', '<?xml version="1.0" encoding="utf-8"?>']:
+        set_rss_atom_feed_response(header=feed_header)
+        for content_type in RSS_XML_CONTENT_TYPES:
+            _subtest_xpath_rss(client, content_type=content_type)

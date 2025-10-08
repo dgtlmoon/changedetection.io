@@ -13,12 +13,17 @@ from changedetectionio import html_tools, content_fetchers
 from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT, PRICE_DATA_TRACK_REJECT
 from loguru import logger
 
+from changedetectionio.processors.magic import guess_stream_type
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 name = 'Webpage Text/HTML, JSON and PDF changes'
 description = 'Detects all text changes where possible'
 
 json_filter_prefixes = ['json:', 'jq:', 'jqraw:']
+
+# Assume it's this type if the server says nothing on content-type
+DEFAULT_WHEN_NO_CONTENT_TYPE_HEADER = 'text/html'
 
 class FilterNotFoundInResponse(ValueError):
     def __init__(self, msg, screenshot=None, xpath_data=None):
@@ -45,6 +50,9 @@ class perform_site_check(difference_detection_processor):
         if not watch:
             raise Exception("Watch no longer exists.")
 
+        ctype_header = self.fetcher.get_all_headers().get('content-type', DEFAULT_WHEN_NO_CONTENT_TYPE_HEADER).lower()
+        stream_content_type = guess_stream_type(http_content_header=ctype_header, content=self.fetcher.content)
+
         # Unset any existing notification error
         update_obj = {'last_notification_error': False, 'last_error': False}
 
@@ -54,7 +62,7 @@ class perform_site_check(difference_detection_processor):
         self.xpath_data = self.fetcher.xpath_data
 
         # Track the content type
-        update_obj['content_type'] = self.fetcher.get_all_headers().get('content-type', '').lower()
+        update_obj['content_type'] = ctype_header
 
         # Watches added automatically in the queue manager will skip if its the same checksum as the previous run
         # Saves a lot of CPU
@@ -69,24 +77,12 @@ class perform_site_check(difference_detection_processor):
         # https://stackoverflow.com/questions/41817578/basic-method-chaining ?
         # return content().textfilter().jsonextract().checksumcompare() ?
 
-        is_json = 'application/json' in self.fetcher.get_all_headers().get('content-type', '').lower()
-        is_html = not is_json
-        is_rss = False
 
-        ctype_header = self.fetcher.get_all_headers().get('content-type', '').lower()
         # Go into RSS preprocess for converting CDATA/comment to usable text
-        if any(substring in ctype_header for substring in ['application/xml', 'application/rss', 'text/xml']):
-            if '<rss' in self.fetcher.content[:100].lower():
-                self.fetcher.content = cdata_in_document_to_text(html_content=self.fetcher.content)
-                is_rss = True
+        if stream_content_type.is_rss:
+            self.fetcher.content = cdata_in_document_to_text(html_content=self.fetcher.content)
 
-        # source: support, basically treat it as plaintext
-        if watch.is_source_type_url:
-            is_html = False
-            is_json = False
-
-        inline_pdf = self.fetcher.get_all_headers().get('content-disposition', '') and '%PDF-1' in self.fetcher.content[:10]
-        if watch.is_pdf or 'application/pdf' in self.fetcher.get_all_headers().get('content-type', '').lower() or inline_pdf:
+        if watch.is_pdf or stream_content_type.is_pdf:
             from shutil import which
             tool = os.getenv("PDF_TO_HTML_TOOL", "pdftohtml")
             if not which(tool):
@@ -130,11 +126,12 @@ class perform_site_check(difference_detection_processor):
         has_filter_rule = len(include_filters_rule) and len(include_filters_rule[0].strip())
         has_subtractive_selectors = len(subtractive_selectors) and len(subtractive_selectors[0].strip())
 
-        if is_json and not has_filter_rule:
-            include_filters_rule.append("json:$")
-            has_filter_rule = True
+        if stream_content_type.is_json:
+            if not has_filter_rule:
+                # Force a reformat
+                include_filters_rule.append("json:$")
+                has_filter_rule = True
 
-        if is_json:
             # Sort the JSON so we dont get false alerts when the content is just re-ordered
             try:
                 self.fetcher.content = json.dumps(json.loads(self.fetcher.content), sort_keys=True)
@@ -142,34 +139,25 @@ class perform_site_check(difference_detection_processor):
                 # Might have just been a snippet, or otherwise bad JSON, continue
                 pass
 
-        if has_filter_rule:
-            for filter in include_filters_rule:
-                if any(prefix in filter for prefix in json_filter_prefixes):
-                    stripped_text_from_html += html_tools.extract_json_as_string(content=self.fetcher.content, json_filter=filter)
-                    is_html = False
+            if has_filter_rule:
+                for filter in include_filters_rule:
+                    if any(prefix in filter for prefix in json_filter_prefixes):
+                        stripped_text_from_html += html_tools.extract_json_as_string(content=self.fetcher.content, json_filter=filter)
+                        if stripped_text_from_html:
+                            stream_content_type.is_json = True
+                            stream_content_type.is_html = False
 
-        if is_html or watch.is_source_type_url:
+        # We have 'watch.is_source_type_url' because we should be able to use selectors on the raw HTML but return just that selected HTML
+        if stream_content_type.is_html or watch.is_source_type_url or stream_content_type.is_plaintext or stream_content_type.is_rss or stream_content_type.is_xml or stream_content_type.is_pdf:
 
             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
             self.fetcher.content = html_tools.workarounds_for_obfuscations(self.fetcher.content)
             html_content = self.fetcher.content
-            content_type = self.fetcher.get_all_headers().get('content-type', '').lower()
-            is_attachment = 'attachment' in self.fetcher.get_all_headers().get('content-disposition', '').lower() or 'octet-stream' in content_type
 
-            # Try to detect better mime types if its a download or not announced as HTML
-            if is_attachment:
-                logger.debug(f"Got a reply that may be a download or possibly a text attachment, checking..")
-                try:
-                    import magic
-                    mime = magic.from_buffer(html_content, mime=True)
-                    logger.debug(f"Guessing mime type, original content_type '{content_type}', mime type detected '{mime}'")
-                    if mime and "/" in mime: # looks valid and is a valid mime type
-                        content_type = mime
-                except Exception as e:
-                    logger.error(f"Error getting a more precise mime type from 'magic' library ({str(e)}")
-
-            if 'text/' in content_type and not 'html' in content_type:
+            # Some kind of "text" but definitely not RSS looking
+            if stream_content_type.is_plaintext:
                 # Don't run get_text or xpath/css filters on plaintext
+                # We are not HTML, we are not any kind of RSS, doesnt even look like HTML
                 stripped_text_from_html = html_content
             else:
                 # If not JSON, and if it's not text/plain..
@@ -186,13 +174,13 @@ class perform_site_check(difference_detection_processor):
                             html_content += html_tools.xpath_filter(xpath_filter=filter_rule.replace('xpath:', ''),
                                                                     html_content=self.fetcher.content,
                                                                     append_pretty_line_formatting=not watch.is_source_type_url,
-                                                                    is_rss=is_rss)
+                                                                    is_rss=stream_content_type.is_rss)
 
                         elif filter_rule.startswith('xpath1:'):
                             html_content += html_tools.xpath1_filter(xpath_filter=filter_rule.replace('xpath1:', ''),
                                                                      html_content=self.fetcher.content,
                                                                      append_pretty_line_formatting=not watch.is_source_type_url,
-                                                                     is_rss=is_rss)
+                                                                     is_rss=stream_content_type.is_rss)
                         else:
                             html_content += html_tools.include_filters(include_filters=filter_rule,
                                                                        html_content=self.fetcher.content,
@@ -211,7 +199,7 @@ class perform_site_check(difference_detection_processor):
                     do_anchor = self.datastore.data["settings"]["application"].get("render_anchor_tag_content", False)
                     stripped_text_from_html = html_tools.html_to_text(html_content=html_content,
                                                                       render_anchor_tag_content=do_anchor,
-                                                                      is_rss=is_rss)  # 1874 activate the <title workaround hack
+                                                                      is_rss=stream_content_type.is_rss)  # 1874 activate the <title workaround hack
 
         if watch.get('trim_text_whitespace'):
             stripped_text_from_html = '\n'.join(line.strip() for line in stripped_text_from_html.replace("\n\n", "\n").splitlines())
@@ -250,7 +238,7 @@ class perform_site_check(difference_detection_processor):
 
         # Treat pages with no renderable text content as a change? No by default
         empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
-        if not is_json and not empty_pages_are_a_change and len(stripped_text_from_html.strip()) == 0:
+        if not stream_content_type.is_json and not empty_pages_are_a_change and len(stripped_text_from_html.strip()) == 0:
             raise content_fetchers.exceptions.ReplyWithContentButNoText(url=url,
                                                             status_code=self.fetcher.get_last_status_code(),
                                                             screenshot=self.fetcher.screenshot,
