@@ -87,21 +87,8 @@ class guess_stream_type():
         # Check for HTML patterns first - if found, override magic's text/plain
         has_html_patterns = any(p in test_content_normalized for p in HTML_PATTERNS)
 
-        if has_html_patterns or content_header == 'text/html':
-            self.is_html = True
-        # If magic says text/plain and we found no HTML patterns, trust it
-        elif magic_result == 'text/plain':
-            self.is_plaintext = True
-            logger.debug(f"Trusting magic's text/plain result (no HTML patterns detected)")
-        elif '<rss' in test_content_normalized or '<feed' in test_content_normalized:
-            self.is_rss = True
-        elif test_content_normalized.startswith('<?xml'):
-            # Generic XML that's not RSS/Atom (RSS/Atom checked above)
-            self.is_xml = True
-        elif '%pdf-1' in test_content:
-            self.is_pdf = True
-        # Check headers for types we didn't detect by content
-        elif any(s in content_header for s in RSS_XML_CONTENT_TYPES) or any(s in magic_content_header for s in RSS_XML_CONTENT_TYPES):
+        # Always trust headers first
+        if any(s in content_header for s in RSS_XML_CONTENT_TYPES) or any(s in magic_content_header for s in RSS_XML_CONTENT_TYPES):
             self.is_rss = True
         elif any(s in content_header for s in JSON_CONTENT_TYPES) or any(s in magic_content_header for s in JSON_CONTENT_TYPES):
             self.is_json = True
@@ -114,6 +101,20 @@ class guess_stream_type():
         elif any(s in content_header for s in YAML_CONTENT_TYPES) or any(s in magic_content_header for s in YAML_CONTENT_TYPES):
             self.is_yaml = True
         elif 'pdf' in magic_content_header:
+            self.is_pdf = True
+###
+        elif has_html_patterns or content_header == 'text/html':
+            self.is_html = True
+        # If magic says text/plain and we found no HTML patterns, trust it
+        elif magic_result == 'text/plain':
+            self.is_plaintext = True
+            logger.debug(f"Trusting magic's text/plain result (no HTML patterns detected)")
+        elif '<rss' in test_content_normalized or '<feed' in test_content_normalized:
+            self.is_rss = True
+        elif test_content_normalized.startswith('<?xml'):
+            # Generic XML that's not RSS/Atom (RSS/Atom checked above)
+            self.is_xml = True
+        elif '%pdf-1' in test_content:
             self.is_pdf = True
         # Only trust magic for 'text' if no other patterns matched
         elif 'text' in magic_content_header:
