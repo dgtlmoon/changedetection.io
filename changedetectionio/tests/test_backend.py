@@ -174,6 +174,8 @@ def test_non_text_mime_or_downloads(client, live_server, measure_memory_usage):
     but once the server sends content-type: application/octet-stream (which is usually done to force the browser to show the Download dialog),
     changedetection somehow ignores all line breaks and treats the document file as if everything is on one line.
 
+    WHAT THIS DOES - makes the system rely on 'magic' to determine what is it
+
     :param client:
     :param live_server:
     :param measure_memory_usage:
@@ -271,6 +273,7 @@ got it\r\n
         url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
+
     assert b"some random text that should be split by line\n" in res.data
     ####
 
