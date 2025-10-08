@@ -24,18 +24,26 @@ json_filter_prefixes = ['json:', 'jq:', 'jqraw:']
 DEFAULT_WHEN_NO_CONTENT_TYPE_HEADER = 'text/html'
 
 # When to apply the 'cdata to real HTML' hack
+# @todo Some heuristic check instead? first and last bytes?
 RSS_XML_CONTENT_TYPES = [
     "application/rss+xml",
     "application/rdf+xml",
     "text/xml",
     "application/xml",
-    "application/xml; charset=utf-8",
-    "text/xml; charset=utf-8",
     "application/atom+xml",
-    "application/atom+xml; charset=utf-8",
     "text/rss+xml",  # rare, non-standard
     "application/x-rss+xml",  # legacy (older feed software)
     "application/x-atom+xml",  # legacy (older Atom)
+]
+
+# JSON Content-types
+# @todo Some heuristic check instead? first and last bytes?
+JSON_CONTENT_TYPES = [
+    "application/activity+json",
+    "application/feed+json",
+    "application/json",
+    "application/ld+json",
+    "application/vnd.api+json",
 ]
 
 class FilterNotFoundInResponse(ValueError):
@@ -89,12 +97,12 @@ class perform_site_check(difference_detection_processor):
         # https://stackoverflow.com/questions/41817578/basic-method-chaining ?
         # return content().textfilter().jsonextract().checksumcompare() ?
 
-        is_json = 'application/json' in ctype_header
+        is_json = any(s in ctype_header for s in JSON_CONTENT_TYPES)
         is_html = not is_json
         is_rss = False
 
         # Go into RSS preprocess for converting CDATA/comment to usable text
-        if 'xml' in ctype_header and '<rss' in self.fetcher.content[:200].lower():
+        if '<rss' in self.fetcher.content[:200].lower():
             self.fetcher.content = cdata_in_document_to_text(html_content=self.fetcher.content)
             is_rss = True
 
