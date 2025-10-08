@@ -148,7 +148,7 @@ class perform_site_check(difference_detection_processor):
                             stream_content_type.is_html = False
 
         # We have 'watch.is_source_type_url' because we should be able to use selectors on the raw HTML but return just that selected HTML
-        if stream_content_type.is_html or watch.is_source_type_url or stream_content_type.is_plaintext or stream_content_type.is_rss or stream_content_type.is_xml:
+        if stream_content_type.is_html or watch.is_source_type_url or stream_content_type.is_plaintext or stream_content_type.is_rss or stream_content_type.is_xml or stream_content_type.is_pdf:
 
             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
             self.fetcher.content = html_tools.workarounds_for_obfuscations(self.fetcher.content)
