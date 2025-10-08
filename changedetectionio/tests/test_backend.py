@@ -271,6 +271,8 @@ got it\r\n
         url_for("ui.ui_views.preview_page", uuid="first"),
         follow_redirects=True
     )
+    with open('/tmp/fuck.html', 'wb') as f:
+        f.write(res.data)
     assert b"some random text that should be split by line\n" in res.data
     ####
 

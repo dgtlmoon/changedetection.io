@@ -20,6 +20,24 @@ description = 'Detects all text changes where possible'
 
 json_filter_prefixes = ['json:', 'jq:', 'jqraw:']
 
+# Assume it's this type if the server says nothing on content-type
+DEFAULT_WHEN_NO_CONTENT_TYPE_HEADER = 'text/html'
+
+# When to apply the 'cdata to real HTML' hack
+RSS_XML_CONTENT_TYPES = [
+    "application/rss+xml",
+    "application/rdf+xml",
+    "text/xml",
+    "application/xml",
+    "application/xml; charset=utf-8",
+    "text/xml; charset=utf-8",
+    "application/atom+xml",
+    "application/atom+xml; charset=utf-8",
+    "text/rss+xml",  # rare, non-standard
+    "application/x-rss+xml",  # legacy (older feed software)
+    "application/x-atom+xml",  # legacy (older Atom)
+]
+
 class FilterNotFoundInResponse(ValueError):
     def __init__(self, msg, screenshot=None, xpath_data=None):
         self.screenshot = screenshot
@@ -45,6 +63,8 @@ class perform_site_check(difference_detection_processor):
         if not watch:
             raise Exception("Watch no longer exists.")
 
+        ctype_header = self.fetcher.get_all_headers().get('content-type', DEFAULT_WHEN_NO_CONTENT_TYPE_HEADER).lower()
+
         # Unset any existing notification error
         update_obj = {'last_notification_error': False, 'last_error': False}
 
@@ -54,7 +74,7 @@ class perform_site_check(difference_detection_processor):
         self.xpath_data = self.fetcher.xpath_data
 
         # Track the content type
-        update_obj['content_type'] = self.fetcher.get_all_headers().get('content-type', '').lower()
+        update_obj['content_type'] = ctype_header
 
         # Watches added automatically in the queue manager will skip if its the same checksum as the previous run
         # Saves a lot of CPU
@@ -69,16 +89,14 @@ class perform_site_check(difference_detection_processor):
         # https://stackoverflow.com/questions/41817578/basic-method-chaining ?
         # return content().textfilter().jsonextract().checksumcompare() ?
 
-        is_json = 'application/json' in self.fetcher.get_all_headers().get('content-type', '').lower()
+        is_json = 'application/json' in ctype_header
         is_html = not is_json
         is_rss = False
 
-        ctype_header = self.fetcher.get_all_headers().get('content-type', '').lower()
         # Go into RSS preprocess for converting CDATA/comment to usable text
-        if any(substring in ctype_header for substring in ['application/xml', 'application/rss', 'text/xml']):
-            if '<rss' in self.fetcher.content[:100].lower():
-                self.fetcher.content = cdata_in_document_to_text(html_content=self.fetcher.content)
-                is_rss = True
+        if 'xml' in ctype_header and '<rss' in self.fetcher.content[:200].lower():
+            self.fetcher.content = cdata_in_document_to_text(html_content=self.fetcher.content)
+            is_rss = True
 
         # source: support, basically treat it as plaintext
         if watch.is_source_type_url:
@@ -86,7 +104,7 @@ class perform_site_check(difference_detection_processor):
             is_json = False
 
         inline_pdf = self.fetcher.get_all_headers().get('content-disposition', '') and '%PDF-1' in self.fetcher.content[:10]
-        if watch.is_pdf or 'application/pdf' in self.fetcher.get_all_headers().get('content-type', '').lower() or inline_pdf:
+        if watch.is_pdf or 'application/pdf' in ctype_header or inline_pdf:
             from shutil import which
             tool = os.getenv("PDF_TO_HTML_TOOL", "pdftohtml")
             if not which(tool):
@@ -153,8 +171,8 @@ class perform_site_check(difference_detection_processor):
             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
             self.fetcher.content = html_tools.workarounds_for_obfuscations(self.fetcher.content)
             html_content = self.fetcher.content
-            content_type = self.fetcher.get_all_headers().get('content-type', '').lower()
-            is_attachment = 'attachment' in self.fetcher.get_all_headers().get('content-disposition', '').lower() or 'octet-stream' in content_type
+
+            is_attachment = 'attachment' in self.fetcher.get_all_headers().get('content-disposition', '').lower() or 'octet-stream' in ctype_header
 
             # Try to detect better mime types if its a download or not announced as HTML
             if is_attachment:
@@ -162,14 +180,20 @@ class perform_site_check(difference_detection_processor):
                 try:
                     import magic
                     mime = magic.from_buffer(html_content, mime=True)
-                    logger.debug(f"Guessing mime type, original content_type '{content_type}', mime type detected '{mime}'")
+                    logger.debug(f"Guessing mime type, original content_type '{ctype_header}', mime type detected '{mime}'")
                     if mime and "/" in mime: # looks valid and is a valid mime type
                         content_type = mime
                 except Exception as e:
                     logger.error(f"Error getting a more precise mime type from 'magic' library ({str(e)}")
 
-            if 'text/' in content_type and not 'html' in content_type:
+            # Some kind of "text" but definitely not RSS looking
+            if (not is_rss and
+                    not 'html' in ctype_header
+                    and 'text/' in ctype_header
+                    and not any(s in ctype_header for s in RSS_XML_CONTENT_TYPES)
+                    and not '<html' in self.fetcher.content[:200].lower()):
                 # Don't run get_text or xpath/css filters on plaintext
+                # We are not HTML, we are not any kind of RSS, doesnt even look like HTML
                 stripped_text_from_html = html_content
             else:
                 # If not JSON, and if it's not text/plain..
