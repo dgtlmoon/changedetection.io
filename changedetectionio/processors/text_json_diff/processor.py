@@ -24,7 +24,7 @@ json_filter_prefixes = ['json:', 'jq:', 'jqraw:']
 DEFAULT_WHEN_NO_CONTENT_TYPE_HEADER = 'text/html'
 
 # When to apply the 'cdata to real HTML' hack
-# @todo Some heuristic check instead? first and last bytes?
+# @todo Some heuristic check instead? first and last bytes? maybe some new def that gets header+first 200 bytes? then we can unittest
 RSS_XML_CONTENT_TYPES = [
     "application/rss+xml",
     "application/rdf+xml",
@@ -37,7 +37,7 @@ RSS_XML_CONTENT_TYPES = [
 ]
 
 # JSON Content-types
-# @todo Some heuristic check instead? first and last bytes?
+# @todo Some heuristic check instead? first and last bytes? maybe some new def that gets header+first 200 bytes? then we can unittest
 JSON_CONTENT_TYPES = [
     "application/activity+json",
     "application/feed+json",
@@ -72,6 +72,20 @@ class perform_site_check(difference_detection_processor):
             raise Exception("Watch no longer exists.")
 
         ctype_header = self.fetcher.get_all_headers().get('content-type', DEFAULT_WHEN_NO_CONTENT_TYPE_HEADER).lower()
+
+        # Try to detect better mime types if its a download or not announced as HTML
+        #@todo also goes into our heurestic detcet class
+        if 'attachment' in self.fetcher.get_all_headers().get('content-disposition','').lower() or 'octet-stream' in ctype_header:
+            logger.debug(f"Got a reply that may be a download or possibly a text attachment, checking..")
+            try:
+                import magic
+                mime = magic.from_buffer(self.fetcher.content, mime=True)
+                logger.debug(f"Guessing mime type, original content_type '{ctype_header}', mime type detected '{mime}'")
+                if mime and "/" in mime:  # looks valid and is a valid mime type
+                   ctype_header = mime
+
+            except Exception as e:
+                logger.error(f"Error getting a more precise mime type from 'magic' library ({str(e)}")
 
         # Unset any existing notification error
         update_obj = {'last_notification_error': False, 'last_error': False}
@@ -179,20 +193,6 @@ class perform_site_check(difference_detection_processor):
             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
             self.fetcher.content = html_tools.workarounds_for_obfuscations(self.fetcher.content)
             html_content = self.fetcher.content
-
-            is_attachment = 'attachment' in self.fetcher.get_all_headers().get('content-disposition', '').lower() or 'octet-stream' in ctype_header
-
-            # Try to detect better mime types if its a download or not announced as HTML
-            if is_attachment:
-                logger.debug(f"Got a reply that may be a download or possibly a text attachment, checking..")
-                try:
-                    import magic
-                    mime = magic.from_buffer(html_content, mime=True)
-                    logger.debug(f"Guessing mime type, original content_type '{ctype_header}', mime type detected '{mime}'")
-                    if mime and "/" in mime: # looks valid and is a valid mime type
-                        content_type = mime
-                except Exception as e:
-                    logger.error(f"Error getting a more precise mime type from 'magic' library ({str(e)}")
 
             # Some kind of "text" but definitely not RSS looking
             if (not is_rss and
