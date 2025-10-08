@@ -51,7 +51,7 @@ class perform_site_check(difference_detection_processor):
             raise Exception("Watch no longer exists.")
 
         ctype_header = self.fetcher.get_all_headers().get('content-type', DEFAULT_WHEN_NO_CONTENT_TYPE_HEADER).lower()
-        stream_content_type = guess_stream_type(content_header=ctype_header, content=self.fetcher.content)
+        stream_content_type = guess_stream_type(http_content_header=ctype_header, content=self.fetcher.content)
 
         # Unset any existing notification error
         update_obj = {'last_notification_error': False, 'last_error': False}

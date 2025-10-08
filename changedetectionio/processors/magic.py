@@ -74,9 +74,9 @@ class guess_stream_type():
     is_xml = False  # Generic XML, not RSS/Atom
     is_yaml = False
 
-    def __init__(self, content_header, content):
+    def __init__(self, http_content_header, content):
 
-        magic_content_header = content_header
+        magic_content_header = http_content_header
         test_content = content[:200].lower().strip()
 
         # Remove whitespace between < and tag name for robust detection (handles '< html', '<\nhtml', etc.)
@@ -86,7 +86,7 @@ class guess_stream_type():
         magic_result = None
         try:
             mime = magic.from_buffer(content[:200], mime=True) # Send the original content
-            logger.debug(f"Guessing mime type, original content_type '{content_header}', mime type detected '{mime}'")
+            logger.debug(f"Guessing mime type, original content_type '{http_content_header}', mime type detected '{mime}'")
             if mime and "/" in mime:
                 magic_result = mime
                 # Ignore generic/fallback mime types from magic
@@ -104,22 +104,22 @@ class guess_stream_type():
         has_html_patterns = any(p in test_content_normalized for p in HTML_PATTERNS)
 
         # Always trust headers first
-        if any(s in content_header for s in RSS_XML_CONTENT_TYPES) or any(s in magic_content_header for s in RSS_XML_CONTENT_TYPES):
+        if any(s in http_content_header for s in RSS_XML_CONTENT_TYPES) or any(s in magic_content_header for s in RSS_XML_CONTENT_TYPES):
             self.is_rss = True
-        elif any(s in content_header for s in JSON_CONTENT_TYPES) or any(s in magic_content_header for s in JSON_CONTENT_TYPES):
+        elif any(s in http_content_header for s in JSON_CONTENT_TYPES) or any(s in magic_content_header for s in JSON_CONTENT_TYPES):
             self.is_json = True
-        elif any(s in content_header for s in CSV_CONTENT_TYPES) or any(s in magic_content_header for s in CSV_CONTENT_TYPES):
+        elif any(s in http_content_header for s in CSV_CONTENT_TYPES) or any(s in magic_content_header for s in CSV_CONTENT_TYPES):
             self.is_csv = True
-        elif any(s in content_header for s in XML_CONTENT_TYPES) or any(s in magic_content_header for s in XML_CONTENT_TYPES):
+        elif any(s in http_content_header for s in XML_CONTENT_TYPES) or any(s in magic_content_header for s in XML_CONTENT_TYPES):
             # Only mark as generic XML if not already detected as RSS
             if not self.is_rss:
                 self.is_xml = True
-        elif any(s in content_header for s in YAML_CONTENT_TYPES) or any(s in magic_content_header for s in YAML_CONTENT_TYPES):
+        elif any(s in http_content_header for s in YAML_CONTENT_TYPES) or any(s in magic_content_header for s in YAML_CONTENT_TYPES):
             self.is_yaml = True
         elif 'pdf' in magic_content_header:
             self.is_pdf = True
 ###
-        elif has_html_patterns or content_header == 'text/html':
+        elif has_html_patterns or http_content_header == 'text/html':
             self.is_html = True
         # If magic says text/plain and we found no HTML patterns, trust it
         elif magic_result == 'text/plain':
