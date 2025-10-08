@@ -13,9 +13,9 @@
 <script src="{{url_for('static_content', group='js', filename='diff-overview.js')}}" defer></script>
 
 <div id="settings">
-    <form class="pure-form " action="" method="GET" id="diff-form">
         <fieldset class="diff-fieldset">
             {% if versions|length >= 1 %}
+                <form class="pure-form " action="" method="GET" id="diff-form">
                 <strong>Compare</strong>
                 <del class="change"><span>from</span></del>
                 <select id="diff-version" name="from_version" class="needs-localtime">
@@ -34,27 +34,35 @@
                     {% endfor %}
                 </select>
                 <button type="submit" class="pure-button pure-button-primary reset-margin">Go</button>
+                </form>
             {% endif %}
         </fieldset>
         <fieldset>
-            <strong>Style</strong>
-            <label for="diffWords" class="pure-checkbox">
-                <input type="radio" name="diff_type" id="diffWords" value="diffWords"> Words</label>
-            <label for="diffLines" class="pure-checkbox">
-                <input type="radio" name="diff_type" id="diffLines" value="diffLines" checked=""> Lines</label>
-            {#  @todo choose other types by their mimetype? #}
-            <span>
 
-        <label for="ignoreWhitespace" class="pure-checkbox" id="label-diff-ignorewhitespace">
-            <input type="checkbox" id="ignoreWhitespace" name="ignoreWhitespace"> Ignore Whitespace</label>
-        <label for="plainText" class="pure-checkbox" id="label-diff-plaintext">
-            <input type="checkbox" id="plainText" name="plainText"> Plain-text</label>
-        <label for="changesOnly" class="pure-checkbox" id="label-diff-plaintext">
-            <input type="checkbox" id="changesOnly" name="changesOnly"> Plain-text</label>
-    </span>
+            <form class="pure-form" action="{{ url_for("ui.ui_views.diff_history_page_set_preferences", uuid=uuid) }}" method="POST" id="diff-text-options">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <strong>Style</strong>
+
+                <label for="diffWords" class="pure-checkbox">
+                    <input type="radio" name="diff_type" id="diffWords" value="diffWords" {% if diff_prefs.diff_type == 'diffWords' %}checked=""{% endif %}> Words</label>
+                <label for="diffLines" class="pure-checkbox">
+                    <input type="radio" name="diff_type" id="diffLines" value="diffLines" {% if diff_prefs.diff_type == 'diffLines' %}checked=""{% endif %}> Lines</label>
+
+                <label for="ignoreWhitespace" class="pure-checkbox" id="label-diff-ignorewhitespace">
+                    <input type="checkbox" name="ignoreWhitespace" {% if diff_prefs.ignoreWhitespace %}checked=""{% endif %}> Ignore Whitespace</label>
+
+                <label for="changesOnly" class="pure-checkbox" id="label-diff-changes">
+                    <input type="checkbox" name="diff_changesOnly" {% if diff_prefs.diff_changesOnly %}checked=""{% endif %}> Changes only</label>
+
+                <label for="changesOnly" class="pure-checkbox" id="label-diff-removed">
+                    <input type="checkbox"  name="diff_removed" {% if diff_prefs.diff_removed %}checked=""{% endif %}> Removed</label>
+                <label for="changesOnly" class="pure-checkbox" id="label-diff-added">
+                    <input type="checkbox"  name="diff_added" {% if diff_prefs.diff_added %}checked=""{% endif %}> Added</label>
+                <label for="changesOnly" class="pure-checkbox" id="label-diff-replaced">
+                    <input type="checkbox"  name="diff_replaced" {% if diff_prefs.diff_replaced %}checked=""{% endif %}> Replaced</label>
+                <input type="submit">
+            </form>
         </fieldset>
-    </form>
-
 </div>
 
 <div id="diff-jump">

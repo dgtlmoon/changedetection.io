@@ -10,9 +10,20 @@ from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
 from changedetectionio import html_tools, diff
 from changedetectionio import worker_handler
+from changedetectionio.blueprint.cookie_preferences import PreferenceManager
 
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData, watch_check_update):
     views_blueprint = Blueprint('ui_views', __name__, template_folder="../ui/templates")
+
+    # Diff display preferences configuration
+    DIFF_PREFERENCES_CONFIG = {
+        'diff_changesOnly': {'default': False, 'type': 'bool'},
+        'diff_ignoreWhitespace': {'default': False, 'type': 'bool'},
+        'diff_removed': {'default': True, 'type': 'bool'},
+        'diff_added': {'default': True, 'type': 'bool'},
+        'diff_replaced': {'default': True, 'type': 'bool'},
+        'diff_type': {'default': 'diffLines', 'type': 'value'},
+    }
 
     @views_blueprint.app_template_filter('diff_unescape_difference_spans')
     def diff_unescape_difference_spans(content):
@@ -183,6 +194,11 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                                  data={'extract_regex': request.form.get('extract_regex', '')}
                                                  )
 
+        # Handle diff display preferences using PreferenceManager
+        # Load preferences from cookies, with URL query params as temporary overrides
+        pref_manager = PreferenceManager(DIFF_PREFERENCES_CONFIG, cookie_scope='global')
+        diff_prefs = pref_manager.load_preferences()
+
         history = watch.history
         dates = list(history.keys())
 
@@ -221,18 +237,21 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             password_enabled_and_share_is_off = not datastore.data['settings']['application'].get('shared_diff_access')
 
         datastore.set_last_viewed(uuid, time.time())
-        content = diff.render_diff(from_version_file_contents,
-                                   to_version_file_contents,
-                                   include_equal=True,
+
+        content = diff.render_diff(previous_version_file_contents=from_version_file_contents,
+                                   newest_version_file_contents=to_version_file_contents,
                                    html_colour=True,
-                                   ignore_junk=datastore.data['settings']['application'].get('ignore_whitespace', False),
+                                   ignore_junk=diff_prefs.get('ignoreWhitespace'),
+                                   include_equal=not diff_prefs.get('changesOnly'),
+                                   word_diff=diff_prefs.get('diff_type') == 'diffWords',
                                    )
 
-        return render_template("diff.html",
+        output = render_template("diff.html",
                                  content=content,
                                  current_diff_url=watch['url'],
+                                 diff_prefs=diff_prefs,
                                  extra_stylesheets=extra_stylesheets,
-                                 extra_title=f" - Diff - {watch.label}",
+                                 extra_title=f" - {watch.label} - History",
                                  extract_form=extract_form,
                                  from_version=str(from_version),
                                  is_html_webdriver=is_html_webdriver,
@@ -249,11 +268,43 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                  versions=dates, # All except current/last
                                  watch_a=watch
                                  )
+        return output
 
     @views_blueprint.route("/diff/<string:uuid>", methods=['GET'])
     @login_optionally_required
     def diff_history_page(uuid):
         return _render_diff_template(uuid)
+
+    @views_blueprint.route("/diff/<string:uuid>/style", methods=['POST'])
+    @login_optionally_required
+    def diff_history_page_set_preferences(uuid):
+        """Handle POST request to set diff display preferences via cookies"""
+        # Load preferences from POST form and set cookies
+        pref_manager = PreferenceManager(DIFF_PREFERENCES_CONFIG, cookie_scope='global')
+        diff_prefs = pref_manager.load_from_form()
+
+        # Build redirect params including preferences (for shareable URLs) and preserved params
+        redirect_params = {}
+
+        # Add diff preferences to URL so it's shareable
+        for key, value in diff_prefs.items():
+            if isinstance(value, bool):
+                redirect_params[key] = 'on' if value else 'off'
+            else:
+                redirect_params[key] = value
+
+        # Preserve query parameters (from_version, to_version) but exclude csrf_token
+        for param in ['from_version', 'to_version']:
+            if param in request.args:
+                redirect_params[param] = request.args.get(param)
+
+        # Ensure csrf_token is never included in redirect URL
+        redirect_params.pop('csrf_token', None)
+
+        # Redirect back to GET with all params and apply cookies
+        redirect_url = url_for('ui.ui_views.diff_history_page', uuid=uuid, **redirect_params) + '#text'
+        response = make_response(redirect(redirect_url))
+        return pref_manager.apply_cookies_to_response(response)
 
     @views_blueprint.route("/form/add/quickwatch", methods=['POST'])
     @login_optionally_required
