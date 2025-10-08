@@ -44,7 +44,9 @@ YAML_CONTENT_TYPES = [
 HTML_PATTERNS = ['<!doctype html', '<html', '<head', '<body', '<script', '<iframe', '<div']
 
 import re
+import magic
 from loguru import logger
+
 
 class guess_stream_type():
     is_pdf = False
@@ -67,7 +69,6 @@ class guess_stream_type():
         # Magic will sometimes call text/plain as text/html!
         magic_result = None
         try:
-            import magic
             mime = magic.from_buffer(content[:200], mime=True) # Send the original content
             logger.debug(f"Guessing mime type, original content_type '{content_header}', mime type detected '{mime}'")
             if mime and "/" in mime:
@@ -86,12 +87,8 @@ class guess_stream_type():
         # Check for HTML patterns first - if found, override magic's text/plain
         has_html_patterns = any(p in test_content_normalized for p in HTML_PATTERNS)
 
-        if has_html_patterns:
+        if has_html_patterns or content_header == 'text/html':
             self.is_html = True
-            # Override magic if it said text/plain
-            if magic_result == 'text/plain':
-                logger.debug(f"Overriding magic's text/plain with HTML detection based on content patterns")
-                magic_content_header = 'text/html'
         # If magic says text/plain and we found no HTML patterns, trust it
         elif magic_result == 'text/plain':
             self.is_plaintext = True
