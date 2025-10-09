@@ -13,9 +13,9 @@
 <script src="{{url_for('static_content', group='js', filename='diff-overview.js')}}" defer></script>
 
 <div id="settings">
-    <form class="pure-form " action="" method="GET" id="diff-form">
         <fieldset class="diff-fieldset">
             {% if versions|length >= 1 %}
+                <form class="pure-form " action="" method="GET" id="diff-form">
                 <strong>Compare</strong>
                 <del class="change"><span>from</span></del>
                 <select id="diff-version" name="from_version" class="needs-localtime">
@@ -34,29 +34,35 @@
                     {% endfor %}
                 </select>
                 <button type="submit" class="pure-button pure-button-primary reset-margin">Go</button>
+                </form>
             {% endif %}
         </fieldset>
         <fieldset>
-            <strong>Style</strong>
-            <label for="diffWords" class="pure-checkbox">
-                <input type="radio" name="diff_type" id="diffWords" value="diffWords"> Words</label>
-            <label for="diffLines" class="pure-checkbox">
-                <input type="radio" name="diff_type" id="diffLines" value="diffLines" checked=""> Lines</label>
 
-            <label for="diffChars" class="pure-checkbox">
-                <input type="radio" name="diff_type" id="diffChars" value="diffChars"> Chars</label>
-            <!-- @todo - when mimetype is JSON, select this by default? -->
-            <label for="diffJson" class="pure-checkbox">
-                <input type="radio" name="diff_type" id="diffJson" value="diffJson"> JSON</label>
+            <form class="pure-form" action="{{ url_for("ui.ui_views.diff_history_page_set_preferences", uuid=uuid) }}" method="POST" id="diff-text-options">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <strong>Style</strong>
 
-            <span>
-        <!-- https://github.com/kpdecker/jsdiff/issues/389 ? -->
-        <label for="ignoreWhitespace" class="pure-checkbox" id="label-diff-ignorewhitespace">
-            <input type="checkbox" id="ignoreWhitespace" name="ignoreWhitespace"> Ignore Whitespace</label>
-    </span>
+                <label for="diffWords" class="pure-checkbox">
+                    <input type="radio" name="diff_type" id="diffWords" value="diffWords" {% if diff_prefs.diff_type == 'diffWords' %}checked=""{% endif %}> Words</label>
+                <label for="diffLines" class="pure-checkbox">
+                    <input type="radio" name="diff_type" id="diffLines" value="diffLines" {% if diff_prefs.diff_type == 'diffLines' %}checked=""{% endif %}> Lines</label>
+
+                <label for="ignoreWhitespace" class="pure-checkbox" id="label-diff-ignorewhitespace">
+                    <input type="checkbox" name="ignoreWhitespace" {% if diff_prefs.ignoreWhitespace %}checked=""{% endif %}> Ignore Whitespace</label>
+
+                <label for="changesOnly" class="pure-checkbox" id="label-diff-changes">
+                    <input type="checkbox" name="diff_changesOnly" {% if diff_prefs.diff_changesOnly %}checked=""{% endif %}> Changes only</label>
+
+                <label for="changesOnly" class="pure-checkbox" id="label-diff-removed">
+                    <input type="checkbox"  name="diff_removed" {% if diff_prefs.diff_removed %}checked=""{% endif %}> Removed</label>
+                <label for="changesOnly" class="pure-checkbox" id="label-diff-added">
+                    <input type="checkbox"  name="diff_added" {% if diff_prefs.diff_added %}checked=""{% endif %}> Added</label>
+                <label for="changesOnly" class="pure-checkbox" id="label-diff-replaced">
+                    <input type="checkbox"  name="diff_replaced" {% if diff_prefs.diff_replaced %}checked=""{% endif %}> Replaced</label>
+                <input type="submit">
+            </form>
         </fieldset>
-    </form>
-
 </div>
 
 <div id="diff-jump">
@@ -93,21 +99,17 @@
          {% endif %}
 
          <div class="snapshot-age">{{watch_a.snapshot_text_ctime|format_timestamp_timeago}}</div>
-
-         <table>
-             <tbody>
-             <tr>
-                 <!-- just proof of concept copied straight from github.com/kpdecker/jsdiff -->
-                 <td id="a" style="display: none;">{{from_version_file_contents}}</td>
-                 <td id="b" style="display: none;">{{to_version_file_contents}}</td>
-                 <td id="diff-col">
-                     <span id="result" class="highlightable-filter"></span>
-                 </td>
-             </tr>
-             </tbody>
-         </table>
-         Diff algorithm from the amazing <a href="https://github.com/kpdecker/jsdiff">github.com/kpdecker/jsdiff</a>
+            <table>
+                <tbody>
+                <tr>
+                    <td id="diff-col" class="highlightable-filter">
+                        <pre style="border-left: 2px solid #ddd;">{{ content| diff_unescape_difference_spans  }}</pre>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
      </div>
+
      <div class="tab-pane-inner" id="screenshot">
          <div class="tip">
              For now, Differences are performed on text, not graphically, only the latest screenshot is available.
@@ -159,8 +161,6 @@
 <script>
     const newest_version_timestamp = {{newest_version_timestamp}};
 </script>
-<script src="{{url_for('static_content', group='js', filename='diff.min.js')}}"></script>
-
 <script src="{{url_for('static_content', group='js', filename='diff-render.js')}}"></script>
 
 

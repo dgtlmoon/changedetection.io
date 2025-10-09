@@ -4,10 +4,9 @@ import time
 from flask import url_for
 from urllib.request import urlopen
 from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
+from ..diff import ADDED_STYLE, DIFF_HTML_LABEL_ADDED
 
 sleep_time_for_fetch_thread = 3
-
-
 
 def test_check_basic_change_detection_functionality_source(client, live_server, measure_memory_usage):
     set_original_response()
@@ -21,7 +20,7 @@ def test_check_basic_change_detection_functionality_source(client, live_server, 
 
     assert b"1 Imported" in res.data
 
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     #####################
 
@@ -51,9 +50,12 @@ def test_check_basic_change_detection_functionality_source(client, live_server, 
         url_for("ui.ui_views.diff_history_page", uuid="first"),
         follow_redirects=True
     )
-
-    assert b'&lt;title&gt;modified head title' in res.data
-
+    # With diff-match-patch, HTML tags are properly tokenized and excluded from diff spans
+    # Only "modified" is shown as added, while <head> and <title> tags remain unchanged
+    assert b'&lt;head&gt;&lt;title&gt;' in res.data
+    assert b'title="Added"' in res.data
+    assert b'>modified<' in res.data
+    assert b'head title&lt;/title&gt;&lt;/head&gt;' in res.data
 
 
 # `subtractive_selectors` should still work in `source:` type requests

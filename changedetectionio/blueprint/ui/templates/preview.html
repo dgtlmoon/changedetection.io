@@ -1,9 +1,11 @@
 {% extends 'base.html' %}
-
+{% from '_helpers.html' import highlight_trigger_ignored_explainer %}
 {% block content %}
     <script>
         const screenshot_url = "{{url_for('static_content', group='screenshot', filename=uuid)}}";
-        const triggered_line_numbers = {{ triggered_line_numbers|tojson }};
+        const triggered_line_numbers = {{ highlight_triggered_line_numbers|tojson }};
+        const ignored_line_numbers = {{ highlight_ignored_line_numbers|tojson }};
+        const blocked_line_numbers = {{ highlight_blocked_line_numbers|tojson }};
         {% if last_error_screenshot %}
             const error_screenshot_url = "{{url_for('static_content', group='screenshot', filename=uuid, error_screenshot=1) }}";
         {% endif %}
@@ -82,6 +84,7 @@
                 </tr>
                 </tbody>
             </table>
+            {{ highlight_trigger_ignored_explainer() }}
         </div>
 
         <div class="tab-pane-inner" id="screenshot">

@@ -1,16 +1,61 @@
 from flask import Blueprint, request, redirect, url_for, flash, render_template, make_response, send_from_directory, abort
 import os
 import time
+import re
 from loguru import logger
+from markupsafe import Markup
 
+from changedetectionio.diff import REMOVED_STYLE, ADDED_STYLE, DIFF_HTML_LABEL_REMOVED, DIFF_HTML_LABEL_ADDED
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
-from changedetectionio import html_tools
+from changedetectionio import html_tools, diff
 from changedetectionio import worker_handler
+from changedetectionio.blueprint.cookie_preferences import PreferenceManager
 
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData, watch_check_update):
     views_blueprint = Blueprint('ui_views', __name__, template_folder="../ui/templates")
-    
+
+    # Diff display preferences configuration
+    DIFF_PREFERENCES_CONFIG = {
+        'diff_changesOnly': {'default': False, 'type': 'bool'},
+        'diff_ignoreWhitespace': {'default': False, 'type': 'bool'},
+        'diff_removed': {'default': True, 'type': 'bool'},
+        'diff_added': {'default': True, 'type': 'bool'},
+        'diff_replaced': {'default': True, 'type': 'bool'},
+        'diff_type': {'default': 'diffLines', 'type': 'value'},
+    }
+
+    @views_blueprint.app_template_filter('diff_unescape_difference_spans')
+    def diff_unescape_difference_spans(content):
+        """Emulate Jinja2's auto-escape, then selectively unescape our diff spans."""
+        from markupsafe import escape
+
+        if not content:
+            return Markup('')
+
+        # Step 1: Escape everything like Jinja2 would (this makes it XSS-safe)
+        escaped_content = escape(str(content))
+
+        # Step 2: Simple regex to unescape only our exact diff spans
+        # Unescape opening tags with exact styles
+        # This matches the styles used in DIFF_HTML_LABEL_REMOVED, DIFF_HTML_LABEL_ADDED, etc.
+        result = re.sub(
+            rf'&lt;span style=&#34;({REMOVED_STYLE}|{ADDED_STYLE})&#34; title=&#34;([A-Za-z0-9]+)&#34;&gt;',
+            r'<span style="\1" title="\2">',
+            str(escaped_content),
+            flags=re.IGNORECASE
+        )
+
+        # Unescape closing tags (but only as many as we opened)
+        open_count = result.count('<span style=')
+        close_count = str(escaped_content).count('&lt;/span&gt;')
+
+        # Replace up to the number of spans we opened
+        for _ in range(min(open_count, close_count)):
+            result = result.replace('&lt;/span&gt;', '</span>', 1)
+
+        return Markup(result)
+
     @views_blueprint.route("/preview/<string:uuid>", methods=['GET'])
     @login_optionally_required
     def preview_page(uuid):
@@ -34,7 +79,11 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         is_html_webdriver = False
         if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver' or watch.get('fetch_backend', '').startswith('extra_browser_'):
             is_html_webdriver = True
+
         triggered_line_numbers = []
+        ignored_line_numbers = []
+        blocked_line_numbers = []
+
         if datastore.data['watching'][uuid].history_n == 0 and (watch.get_error_text() or watch.get_error_snapshot()):
             flash("Preview unavailable - No fetch/check completed or triggers not reached", "error")
         else:
@@ -50,30 +99,39 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 content = watch.get_history_snapshot(timestamp)
 
                 triggered_line_numbers = html_tools.strip_ignore_text(content=content,
-                                                                      wordlist=watch['trigger_text'],
+                                                                      wordlist=watch.get('trigger_text'),
                                                                       mode='line numbers'
                                                                       )
-
+                ignored_line_numbers = html_tools.strip_ignore_text(content=content,
+                                                                      wordlist=watch.get('ignore_text'),
+                                                                      mode='line numbers'
+                                                                      )
+                blocked_line_numbers = html_tools.strip_ignore_text(content=content,
+                                                                      wordlist=watch.get("text_should_not_be_present"),
+                                                                      mode='line numbers'
+                                                                      )
             except Exception as e:
                 content.append({'line': f"File doesnt exist or unable to read timestamp {timestamp}", 'classes': ''})
 
         output = render_template("preview.html",
                                  content=content,
+                                 current_diff_url=watch['url'],
                                  current_version=timestamp,
-                                 history_n=watch.history_n,
                                  extra_stylesheets=extra_stylesheets,
                                  extra_title=f" - Diff - {watch.label} @ {timestamp}",
-                                 triggered_line_numbers=triggered_line_numbers,
-                                 current_diff_url=watch['url'],
-                                 screenshot=watch.get_screenshot(),
-                                 watch=watch,
-                                 uuid=uuid,
+                                 highlight_ignored_line_numbers=ignored_line_numbers,
+                                 highlight_triggered_line_numbers=triggered_line_numbers,
+                                 highlight_blocked_line_numbers=blocked_line_numbers,
+                                 history_n=watch.history_n,
                                  is_html_webdriver=is_html_webdriver,
                                  last_error=watch['last_error'],
-                                 last_error_text=watch.get_error_text(),
                                  last_error_screenshot=watch.get_error_snapshot(),
-                                 versions=versions
-                                )
+                                 last_error_text=watch.get_error_text(),
+                                 screenshot=watch.get_screenshot(),
+                                 uuid=uuid,
+                                 versions=versions,
+                                 watch=watch,
+                                 )
 
         return output
 
@@ -136,6 +194,11 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                                  data={'extract_regex': request.form.get('extract_regex', '')}
                                                  )
 
+        # Handle diff display preferences using PreferenceManager
+        # Load preferences from cookies, with URL query params as temporary overrides
+        pref_manager = PreferenceManager(DIFF_PREFERENCES_CONFIG, cookie_scope='global')
+        diff_prefs = pref_manager.load_preferences()
+
         history = watch.history
         dates = list(history.keys())
 
@@ -175,13 +238,22 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         datastore.set_last_viewed(uuid, time.time())
 
-        return render_template("diff.html",
+        content = diff.render_diff(previous_version_file_contents=from_version_file_contents,
+                                   newest_version_file_contents=to_version_file_contents,
+                                   html_colour=True,
+                                   ignore_junk=diff_prefs.get('ignoreWhitespace'),
+                                   include_equal=not diff_prefs.get('changesOnly'),
+                                   word_diff=diff_prefs.get('diff_type') == 'diffWords',
+                                   )
+
+        output = render_template("diff.html",
+                                 content=content,
                                  current_diff_url=watch['url'],
-                                 from_version=str(from_version),
-                                 to_version=str(to_version),
+                                 diff_prefs=diff_prefs,
                                  extra_stylesheets=extra_stylesheets,
-                                 extra_title=f" - Diff - {watch.label}",
+                                 extra_title=f" - {watch.label} - History",
                                  extract_form=extract_form,
+                                 from_version=str(from_version),
                                  is_html_webdriver=is_html_webdriver,
                                  last_error=watch['last_error'],
                                  last_error_screenshot=watch.get_error_snapshot(),
@@ -190,18 +262,49 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                  newest=to_version_file_contents,
                                  newest_version_timestamp=dates[-1],
                                  password_enabled_and_share_is_off=password_enabled_and_share_is_off,
-                                 from_version_file_contents=from_version_file_contents,
-                                 to_version_file_contents=to_version_file_contents,
                                  screenshot=screenshot_url,
+                                 to_version=str(to_version),
                                  uuid=uuid,
                                  versions=dates, # All except current/last
                                  watch_a=watch
                                  )
+        return output
 
     @views_blueprint.route("/diff/<string:uuid>", methods=['GET'])
     @login_optionally_required
     def diff_history_page(uuid):
         return _render_diff_template(uuid)
+
+    @views_blueprint.route("/diff/<string:uuid>/style", methods=['POST'])
+    @login_optionally_required
+    def diff_history_page_set_preferences(uuid):
+        """Handle POST request to set diff display preferences via cookies"""
+        # Load preferences from POST form and set cookies
+        pref_manager = PreferenceManager(DIFF_PREFERENCES_CONFIG, cookie_scope='global')
+        diff_prefs = pref_manager.load_from_form()
+
+        # Build redirect params including preferences (for shareable URLs) and preserved params
+        redirect_params = {}
+
+        # Add diff preferences to URL so it's shareable
+        for key, value in diff_prefs.items():
+            if isinstance(value, bool):
+                redirect_params[key] = 'on' if value else 'off'
+            else:
+                redirect_params[key] = value
+
+        # Preserve query parameters (from_version, to_version) but exclude csrf_token
+        for param in ['from_version', 'to_version']:
+            if param in request.args:
+                redirect_params[param] = request.args.get(param)
+
+        # Ensure csrf_token is never included in redirect URL
+        redirect_params.pop('csrf_token', None)
+
+        # Redirect back to GET with all params and apply cookies
+        redirect_url = url_for('ui.ui_views.diff_history_page', uuid=uuid, **redirect_params) + '#text'
+        response = make_response(redirect(redirect_url))
+        return pref_manager.apply_cookies_to_response(response)
 
     @views_blueprint.route("/form/add/quickwatch", methods=['POST'])
     @login_optionally_required
