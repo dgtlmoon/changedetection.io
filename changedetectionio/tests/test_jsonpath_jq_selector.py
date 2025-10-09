@@ -3,7 +3,7 @@
 
 import time
 from flask import url_for, escape
-from . util import live_server_setup, wait_for_all_checks
+from . util import live_server_setup, wait_for_all_checks, delete_all_watches
 import pytest
 jq_support = True
 
@@ -207,11 +207,8 @@ def test_check_json_without_filter(client, live_server, measure_memory_usage):
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
-    client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -225,8 +222,7 @@ def test_check_json_without_filter(client, live_server, measure_memory_usage):
     assert b'&#34;html&#34;: &#34;&lt;b&gt;&#34;' in res.data
     assert res.data.count(b'{') >= 2
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 def check_json_filter(json_filter, client, live_server):
     set_original_response()
@@ -234,12 +230,8 @@ def check_json_filter(json_filter, client, live_server):
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -286,8 +278,7 @@ def check_json_filter(json_filter, client, live_server):
     # And #462 - check we see the proper utf-8 string there
     assert "Örnsköldsvik".encode('utf-8') in res.data
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 def test_check_jsonpath_filter(client, live_server, measure_memory_usage):
     check_json_filter('json:boss.name', client, live_server)
@@ -308,12 +299,8 @@ def check_json_filter_bool_val(json_filter, client, live_server):
 
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
 
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
     # Goto the edit page, add our ignore text
@@ -345,8 +332,7 @@ def check_json_filter_bool_val(json_filter, client, live_server):
     # But the change should be there, tho its hard to test the change was detected because it will show old and new versions
     assert b'false' in res.data
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 def test_check_jsonpath_filter_bool_val(client, live_server, measure_memory_usage):
     check_json_filter_bool_val("json:$['available']", client, live_server)
@@ -372,12 +358,8 @@ def check_json_ext_filter(json_filter, client, live_server):
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -431,8 +413,7 @@ def check_json_ext_filter(json_filter, client, live_server):
     assert b'ForSale' in res.data
     assert b'Sold' in res.data
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 def test_ignore_json_order(client, live_server, measure_memory_usage):
     # A change in order shouldn't trigger a notification
@@ -443,12 +424,8 @@ def test_ignore_json_order(client, live_server, measure_memory_usage):
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -473,8 +450,7 @@ def test_ignore_json_order(client, live_server, measure_memory_usage):
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' in res.data
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 def test_correct_header_detect(client, live_server, measure_memory_usage):
     # Like in https://github.com/dgtlmoon/changedetection.io/pull/1593
@@ -485,12 +461,8 @@ def test_correct_header_detect(client, live_server, measure_memory_usage):
     # Add our URL to the import page
     # Check weird casing is cleaned up and detected also
     test_url = url_for('test_endpoint', content_type="aPPlication/JSon", uppercase_headers=True, _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
 
@@ -505,8 +477,7 @@ def test_correct_header_detect(client, live_server, measure_memory_usage):
     assert b'&#34;hello&#34;: 123,' in res.data
     assert b'&#34;world&#34;: 123' in res.data
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 def test_check_jsonpath_ext_filter(client, live_server, measure_memory_usage):
     check_json_ext_filter('json:$[?(@.status==Sold)]', client, live_server)

@@ -3,9 +3,7 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks
-
-
+from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 
 
 def set_original_ignore_response():
@@ -117,7 +115,5 @@ def test_render_anchor_tag_content_true(client, live_server, measure_memory_usag
     assert b"/test-endpoint" in res.data
 
     # Cleanup everything
-    res = client.get(url_for("ui.form_delete", uuid="all"),
-                     follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 

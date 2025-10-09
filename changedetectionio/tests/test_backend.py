@@ -3,7 +3,7 @@
 import time
 from flask import url_for
 from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, \
-    extract_UUID_from_client
+    extract_UUID_from_client, delete_all_watches
 
 sleep_time_for_fetch_thread = 3
 
@@ -163,8 +163,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
     #
     # Cleanup everything
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 def test_non_text_mime_or_downloads(client, live_server, measure_memory_usage):
     """
@@ -193,13 +192,8 @@ got it\r\n
     test_url = url_for('test_endpoint', content_type="application/octet-stream", _external=True)
 
     # Add our URL to the import page
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -227,7 +221,7 @@ got it\r\n
     assert b"some random text that should be split by line\n" in res.data
 
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
 
 def test_standard_text_plain(client, live_server, measure_memory_usage):
@@ -258,13 +252,8 @@ got it\r\n
     test_url = url_for('test_endpoint', content_type="text/plain", _external=True)
 
     # Add our URL to the import page
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -293,7 +282,7 @@ got it\r\n
     assert b"some random text that should be split by line\n" in res.data
     assert b"<title>Even this title should stay because we are just plain text</title>" in res.data
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
 # Server says its plaintext, we should always treat it as plaintext
 def test_plaintext_even_if_xml_content(client, live_server, measure_memory_usage):
@@ -309,13 +298,8 @@ def test_plaintext_even_if_xml_content(client, live_server, measure_memory_usage
     test_url = url_for('test_endpoint', content_type="text/plain", _external=True)
 
     # Add our URL to the import page
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -326,7 +310,7 @@ def test_plaintext_even_if_xml_content(client, live_server, measure_memory_usage
 
     assert b'&lt;string name=&#34;feed_update_receiver_name&#34;' in res.data
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
 # Server says its plaintext, we should always treat it as plaintext, and then if they have a filter, try to apply that
 def test_plaintext_even_if_xml_content_and_can_apply_filters(client, live_server, measure_memory_usage):

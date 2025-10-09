@@ -3,7 +3,7 @@
 import time
 from flask import url_for
 from urllib.request import urlopen
-from .util import set_original_response, set_modified_response, live_server_setup
+from .util import set_original_response, set_modified_response, live_server_setup, delete_all_watches
 import re
 
 sleep_time_for_fetch_thread = 3
@@ -17,13 +17,8 @@ def test_share_watch(client, live_server, measure_memory_usage):
     include_filters = ".nice-filter"
 
     # Add our URL to the import page
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
@@ -54,8 +49,7 @@ def test_share_watch(client, live_server, measure_memory_usage):
 
     # Now delete what we have, we will try to re-import it
     # Cleanup everything
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
     # Add our URL to the import page
     res = client.post(

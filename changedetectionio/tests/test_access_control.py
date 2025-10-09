@@ -2,7 +2,7 @@ from .util import live_server_setup, wait_for_all_checks
 from flask import url_for
 import time
 
-def test_check_access_control(app, client, live_server):
+def test_check_access_control(app, client, live_server, measure_memory_usage):
     # Still doesnt work, but this is closer.
    #  live_server_setup(live_server) # Setup on conftest per function
 

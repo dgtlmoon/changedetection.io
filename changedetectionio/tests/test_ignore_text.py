@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks
+from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 from changedetectionio import html_tools
 
 
@@ -97,12 +97,8 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -163,8 +159,7 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
     # it is only ignored, it is not removed (it will be highlighted too)
     assert b'new ignore stuff' in res.data
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 # When adding some ignore text, it should not trigger a change, even if something else on that line changes
 def _run_test_global_ignore(client, as_source=False, extra_ignore=""):
@@ -192,12 +187,8 @@ def _run_test_global_ignore(client, as_source=False, extra_ignore=""):
         # Switch to source mode so we can test that too!
         test_url = "source:"+test_url
 
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -251,13 +242,12 @@ def _run_test_global_ignore(client, as_source=False, extra_ignore=""):
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' in res.data
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
-def test_check_global_ignore_text_functionality(client, live_server):
+def test_check_global_ignore_text_functionality(client, live_server, measure_memory_usage):
     
     _run_test_global_ignore(client, as_source=False)
 
-def test_check_global_ignore_text_functionality_as_source(client, live_server):
+def test_check_global_ignore_text_functionality_as_source(client, live_server, measure_memory_usage):
     
     _run_test_global_ignore(client, as_source=True, extra_ignore='/\?v=\d/')

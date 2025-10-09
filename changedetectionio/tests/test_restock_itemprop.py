@@ -3,7 +3,7 @@ import os
 import time
 
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks, wait_for_notification_endpoint_output, extract_UUID_from_client
+from .util import live_server_setup, wait_for_all_checks, wait_for_notification_endpoint_output, extract_UUID_from_client, delete_all_watches
 from ..notification import default_notification_format
 
 instock_props = [
@@ -44,11 +44,11 @@ def set_original_response(props_markup='', price="121.95"):
 
 
 
-# def test_setup(client, live_server):
+# def test_setup(client, live_server, measure_memory_usage):
 
    #  live_server_setup(live_server) # Setup on conftest per function
 
-def test_restock_itemprop_basic(client, live_server):
+def test_restock_itemprop_basic(client, live_server, measure_memory_usage):
 
     
 
@@ -69,8 +69,7 @@ def test_restock_itemprop_basic(client, live_server):
         assert b'has-restock-info' in res.data
         assert b' in-stock' in res.data
         assert b' not-in-stock' not in res.data
-        res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-        assert b'Deleted' in res.data
+        delete_all_watches(client)
 
 
     for p in out_of_stock_props:
@@ -85,10 +84,9 @@ def test_restock_itemprop_basic(client, live_server):
 
         assert b'has-restock-info not-in-stock' in res.data
 
-        res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-        assert b'Deleted' in res.data
+        delete_all_watches(client)
 
-def test_itemprop_price_change(client, live_server):
+def test_itemprop_price_change(client, live_server, measure_memory_usage):
     
 
     # Out of the box 'Follow price changes' should be ON
@@ -132,13 +130,11 @@ def test_itemprop_price_change(client, live_server):
     assert b'has-unread-changes' not in res.data
 
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 def _run_test_minmax_limit(client, extra_watch_edit_form):
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
     test_url = url_for('test_endpoint', _external=True)
 
@@ -212,11 +208,10 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
     assert b'1,890.45' in res.data or b'1890.45' in res.data
     assert b'has-unread-changes' in res.data
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 
-def test_restock_itemprop_minmax(client, live_server):
+def test_restock_itemprop_minmax(client, live_server, measure_memory_usage):
     
     extras = {
         "restock_settings-follow_price_changes": "y",
@@ -225,7 +220,7 @@ def test_restock_itemprop_minmax(client, live_server):
     }
     _run_test_minmax_limit(client, extra_watch_edit_form=extras)
 
-def test_restock_itemprop_with_tag(client, live_server):
+def test_restock_itemprop_with_tag(client, live_server, measure_memory_usage):
     
 
     res = client.post(
@@ -254,11 +249,10 @@ def test_restock_itemprop_with_tag(client, live_server):
 
 
 
-def test_itemprop_percent_threshold(client, live_server):
+def test_itemprop_percent_threshold(client, live_server, measure_memory_usage):
     
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
     test_url = url_for('test_endpoint', _external=True)
 
@@ -317,12 +311,11 @@ def test_itemprop_percent_threshold(client, live_server):
 
 
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 
 
-def test_change_with_notification_values(client, live_server):
+def test_change_with_notification_values(client, live_server, measure_memory_usage):
     
 
     if os.path.isfile("test-datastore/notification.txt"):
@@ -390,11 +383,10 @@ def test_change_with_notification_values(client, live_server):
     assert os.path.isfile("test-datastore/notification.txt"), "Notification received"
 
 
-def test_data_sanity(client, live_server):
+def test_data_sanity(client, live_server, measure_memory_usage):
     
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
     test_url = url_for('test_endpoint', _external=True)
     test_url2 = url_for('test_endpoint2', _external=True)
@@ -421,8 +413,7 @@ def test_data_sanity(client, live_server):
     assert str(res.data.decode()).count("950.95") == 1, "Price should only show once (for the watch added, no other watches yet)"
 
     ## different test, check the edit page works on an empty request result
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
     client.post(
         url_for("ui.ui_views.form_quick_watch_add"),
@@ -435,11 +426,10 @@ def test_data_sanity(client, live_server):
         url_for("ui.ui_edit.edit_page", uuid="first"))
     assert test_url2.encode('utf-8') in res.data
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 # All examples should give a prive of 666.66
-def test_special_prop_examples(client, live_server):
+def test_special_prop_examples(client, live_server, measure_memory_usage):
     import glob
     
 

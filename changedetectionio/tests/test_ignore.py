@@ -27,12 +27,8 @@ def test_ignore(client, live_server, measure_memory_usage):
    #  live_server_setup(live_server) # Setup on conftest per function
     set_original_ignore_response()
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -79,12 +75,8 @@ def test_strip_ignore_lines(client, live_server, measure_memory_usage):
     assert b"Settings updated." in res.data
 
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)

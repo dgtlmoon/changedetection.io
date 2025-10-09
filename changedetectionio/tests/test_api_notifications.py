@@ -4,7 +4,7 @@ from flask import url_for
 from .util import live_server_setup
 import json
 
-def test_api_notifications_crud(client, live_server):
+def test_api_notifications_crud(client, live_server, measure_memory_usage):
    #  live_server_setup(live_server) # Setup on conftest per function
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
 

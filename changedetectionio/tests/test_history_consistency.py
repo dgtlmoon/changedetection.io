@@ -4,7 +4,7 @@ import time
 import os
 import json
 from flask import url_for
-from .util import wait_for_all_checks
+from .util import wait_for_all_checks, delete_all_watches
 from urllib.parse import urlparse, parse_qs
 
 def test_consistent_history(client, live_server, measure_memory_usage):
@@ -80,19 +80,15 @@ def test_consistent_history(client, live_server, measure_memory_usage):
         assert '"default"' not in f.read(), "'default' probably shouldnt be here, it came from when the 'default' Watch vars were accidently being saved"
 
 
-def test_check_text_history_view(client, live_server):
+def test_check_text_history_view(client, live_server, measure_memory_usage):
 
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write("<html>test-one</html>")
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -121,5 +117,4 @@ def test_check_text_history_view(client, live_server):
     assert b'test-two' in res.data
     assert b'test-one' not in res.data
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)

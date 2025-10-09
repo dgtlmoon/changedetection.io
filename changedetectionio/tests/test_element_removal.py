@@ -5,7 +5,7 @@ import time
 from flask import url_for
 
 from ..html_tools import *
-from .util import live_server_setup, wait_for_all_checks
+from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 
 
 
@@ -231,8 +231,7 @@ body > table > tr:nth-child(3) > td:nth-child(3)""",
 
     for selector_list in subtractive_selectors_data:
 
-        res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-        assert b'Deleted' in res.data
+        delete_all_watches(client)
 
         uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, extras={"subtractive_selectors": selector_list.splitlines()})
         client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)

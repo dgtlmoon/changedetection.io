@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, get_UUID_for_tag_name, extract_UUID_from_client
+from .util import live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, get_UUID_for_tag_name, extract_UUID_from_client, delete_all_watches
 import os
 
 
@@ -127,8 +127,7 @@ def test_setup_group_tag(client, live_server, measure_memory_usage):
     assert b"should-be-excluded" not in res.data
     assert res.status_code == 200
     assert b"first-imported=1" in res.data
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 def test_tag_import_singular(client, live_server, measure_memory_usage):
     
@@ -147,8 +146,7 @@ def test_tag_import_singular(client, live_server, measure_memory_usage):
     )
     # Should be only 1 tag because they both had the same
     assert res.data.count(b'test-tag') == 1
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 def test_tag_add_in_ui(client, live_server, measure_memory_usage):
     
@@ -164,8 +162,7 @@ def test_tag_add_in_ui(client, live_server, measure_memory_usage):
     res = client.get(url_for("tags.delete_all"), follow_redirects=True)
     assert b'All tags deleted' in res.data
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 def test_group_tag_notification(client, live_server, measure_memory_usage):
     
@@ -232,8 +229,7 @@ def test_group_tag_notification(client, live_server, measure_memory_usage):
 
     #@todo Test that multiple notifications fired
     #@todo Test that each of multiple notifications with different settings
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 def test_limit_tag_ui(client, live_server, measure_memory_usage):
 
@@ -269,8 +265,7 @@ def test_limit_tag_ui(client, live_server, measure_memory_usage):
     assert res.data.count(b' unviewed ') == 1
 
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
     res = client.get(url_for("tags.delete_all"), follow_redirects=True)
     assert b'All tags deleted' in res.data
 
@@ -297,8 +292,7 @@ def test_clone_tag_on_import(client, live_server, measure_memory_usage):
     # 2 times plus the top link to tag
     assert res.data.count(b'test-tag') == 3
     assert res.data.count(b'another-tag') == 3
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 def test_clone_tag_on_quickwatchform_add(client, live_server, measure_memory_usage):
     
@@ -325,8 +319,7 @@ def test_clone_tag_on_quickwatchform_add(client, live_server, measure_memory_usa
     # 2 times plus the top link to tag
     assert res.data.count(b'test-tag') == 3
     assert res.data.count(b'another-tag') == 3
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
     res = client.get(url_for("tags.delete_all"), follow_redirects=True)
     assert b'All tags deleted' in res.data
@@ -389,12 +382,8 @@ def test_order_of_filters_tag_filter_and_watch_filter(client, live_server, measu
         f.write(d)
 
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     filters = [
@@ -480,5 +469,4 @@ the {test} appeared before. {test in res.data[:n]=}
         """
         n += t_index + len(test)
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
