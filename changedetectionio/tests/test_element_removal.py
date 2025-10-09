@@ -212,20 +212,21 @@ def test_element_removal_nth_offset_no_shift(client, live_server, measure_memory
 
     set_response_with_multiple_index()
     subtractive_selectors_data = [
-        ### css style ###
-        """body > table > tr:nth-child(1) > th:nth-child(2)
-        body > table >  tr:nth-child(2) > td:nth-child(2)
-        body > table > tr:nth-child(3) > td:nth-child(2)
-        body > table > tr:nth-child(1) > th:nth-child(3)
-        body > table >  tr:nth-child(2) > td:nth-child(3)
-        body > table > tr:nth-child(3) > td:nth-child(3)""",
-        ### second type, xpath ###
-        """//body/table/tr[1]/th[2]
-        //body/table/tr[2]/td[2]
-        //body/table/tr[3]/td[2]
-        //body/table/tr[1]/th[3]
-        //body/table/tr[2]/td[3]
-        //body/table/tr[3]/td[3]"""]
+### css style ###
+"""body > table > tr:nth-child(1) > th:nth-child(2)
+body > table >  tr:nth-child(2) > td:nth-child(2)
+body > table > tr:nth-child(3) > td:nth-child(2)
+body > table > tr:nth-child(1) > th:nth-child(3)
+body > table >  tr:nth-child(2) > td:nth-child(3)
+body > table > tr:nth-child(3) > td:nth-child(3)""",
+### second type, xpath ###
+"""//body/table/tr[1]/th[2]
+//body/table/tr[2]/td[2]
+//body/table/tr[3]/td[2]
+//body/table/tr[1]/th[3]
+//body/table/tr[2]/td[3]
+//body/table/tr[3]/td[3]"""]
+    
     test_url = url_for("test_endpoint", _external=True)
 
     for selector_list in subtractive_selectors_data:
