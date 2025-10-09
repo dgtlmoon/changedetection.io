@@ -86,12 +86,8 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Should get a notice that it's available
@@ -129,12 +125,8 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'ldjson-price-track-offer' not in res.data
@@ -146,12 +138,8 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
 def _test_runner_check_bad_format_ignored(live_server, client, has_ldjson_price_data):
 
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     for k,v in client.application.config.get('DATASTORE').data['watching'].items():

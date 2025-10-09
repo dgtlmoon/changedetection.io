@@ -3,7 +3,7 @@
 import time
 from flask import url_for
 from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, \
-    extract_UUID_from_client
+    extract_UUID_from_client, delete_all_watches
 
 
 def set_original_cdata_xml():
@@ -114,13 +114,8 @@ def test_basic_cdata_rss_markup(client, live_server, measure_memory_usage):
     test_url = url_for('test_endpoint', content_type="application/atom+xml; charset=UTF-8", _external=True)
 
     # Add our URL to the import page
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -132,7 +127,7 @@ def test_basic_cdata_rss_markup(client, live_server, measure_memory_usage):
     assert b'<![' not in res.data
     assert b'Hackers can access your computer' in res.data
     assert b'The days of Terminator' in res.data
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
 def test_rss_xpath_filtering(client, live_server, measure_memory_usage):
     
@@ -180,7 +175,7 @@ def test_rss_xpath_filtering(client, live_server, measure_memory_usage):
     assert b'The days of Terminator' not in res.data # Should NOT be selected by the xpath
     assert b'Some other description' not in res.data  # Should NOT be selected by the xpath
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
 
 def test_rss_bad_chars_breaking(client, live_server):

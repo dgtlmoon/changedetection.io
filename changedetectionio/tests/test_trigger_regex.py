@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks
+from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 
 
 def set_original_ignore_response():
@@ -30,12 +30,8 @@ def test_trigger_regex_functionality(client, live_server, measure_memory_usage):
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -76,5 +72,4 @@ def test_trigger_regex_functionality(client, live_server, measure_memory_usage):
     assert b'has-unread-changes' in res.data
 
     # Cleanup everything
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)

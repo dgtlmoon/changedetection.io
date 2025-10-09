@@ -5,7 +5,7 @@ from copy import copy
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 from flask import url_for
-from .util import  live_server_setup, wait_for_all_checks, extract_UUID_from_client
+from .util import  live_server_setup, wait_for_all_checks, extract_UUID_from_client, delete_all_watches
 from ..forms import REQUIRE_ATLEAST_ONE_TIME_PART_MESSAGE_DEFAULT, REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT
 
 
@@ -34,13 +34,8 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
     res = client.get(url_for("settings.settings_page"))
     assert b'Pacific/Kiritimati' in res.data
 
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
 
@@ -92,8 +87,7 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
     assert live_server.app.config['DATASTORE'].data['watching'][uuid]['last_checked'] != last_check
 
     # Cleanup everything
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 
 def test_check_basic_global_scheduler_functionality(client, live_server, measure_memory_usage):
@@ -101,13 +95,8 @@ def test_check_basic_global_scheduler_functionality(client, live_server, measure
     days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
     test_url = url_for('test_random_content_endpoint', _external=True)
 
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
 
@@ -180,18 +169,13 @@ def test_check_basic_global_scheduler_functionality(client, live_server, measure
     assert live_server.app.config['DATASTORE'].data['watching'][uuid]['last_checked'] != last_check
 
     # Cleanup everything
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 
 def test_validation_time_interval_field(client, live_server, measure_memory_usage):
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
 
     res = client.post(

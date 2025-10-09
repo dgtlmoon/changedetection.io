@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from flask import url_for
-from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
+from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks, delete_all_watches
 from ..forms import REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT, REQUIRE_ATLEAST_ONE_TIME_PART_MESSAGE_DEFAULT
 
 
@@ -36,13 +36,8 @@ def test_recheck_time_field_validation_single_watch(client, live_server):
     test_url = url_for('test_endpoint', _external=True)
 
     # Add our URL to the import page
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
@@ -171,8 +166,7 @@ def test_checkbox_open_diff_in_new_tab(client, live_server):
     assert 'target=' not in target_line
 
     # Cleanup everything
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 def test_page_title_listing_behaviour(client, live_server):
 

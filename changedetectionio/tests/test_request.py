@@ -2,7 +2,7 @@ import json
 import os
 import time
 from flask import url_for
-from . util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks, extract_UUID_from_client
+from . util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks, extract_UUID_from_client, delete_all_watches
 
 
 
@@ -17,21 +17,13 @@ def test_headers_in_request(client, live_server, measure_memory_usage):
         test_url = test_url.replace('localhost', 'changedet')
 
     # Add the test URL twice, we will check
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
     cookie_header = '_ga=GA1.2.1022228332; cookie-preferences=analytics:accepted;'
@@ -82,8 +74,7 @@ def test_headers_in_request(client, live_server, measure_memory_usage):
     for k, watch in client.application.config.get('DATASTORE').data.get('watching').items():
         assert 'custom' in watch.get('remote_server_reply') # added in util.py
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 def test_body_in_request(client, live_server, measure_memory_usage):
 
@@ -93,12 +84,8 @@ def test_body_in_request(client, live_server, measure_memory_usage):
         # Because its no longer calling back to localhost but from the browser container, set in test-only.yml
         test_url = test_url.replace('localhost', 'cdio')
 
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -150,12 +137,8 @@ def test_body_in_request(client, live_server, measure_memory_usage):
 
     ####### data sanity checks
     # Add the test URL twice, we will check
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     watches_with_body = 0
     with open('test-datastore/url-watches.json') as f:
@@ -180,8 +163,7 @@ def test_body_in_request(client, live_server, measure_memory_usage):
         follow_redirects=True
     )
     assert b"Body must be empty when Request Method is set to GET" in res.data
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 def test_method_in_request(client, live_server, measure_memory_usage):
     # Add our URL to the import page
@@ -191,20 +173,12 @@ def test_method_in_request(client, live_server, measure_memory_usage):
         test_url = test_url.replace('localhost', 'cdio')
 
     # Add the test URL twice, we will check
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -258,8 +232,7 @@ def test_method_in_request(client, live_server, measure_memory_usage):
     # Should be only one with method set to PATCH
     assert watches_with_method == 1
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 # Re #2408 - user-agent override test, also should handle case-insensitive header deduplication
 def test_ua_global_override(client, live_server, measure_memory_usage):
@@ -277,12 +250,8 @@ def test_ua_global_override(client, live_server, measure_memory_usage):
     )
     assert b'Settings updated' in res.data
 
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
     res = client.get(
@@ -315,8 +284,7 @@ def test_ua_global_override(client, live_server, measure_memory_usage):
     )
     assert b"agent-from-watch" in res.data
     assert b"html-requests-user-agent" not in res.data
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 def test_headers_textfile_in_request(client, live_server, measure_memory_usage):
     
@@ -356,12 +324,8 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage):
     assert b"requests-default_ua-html_requests" in res.data
 
     # Add the test URL twice, we will check
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -429,19 +393,14 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage):
         assert "User-Agent:".encode('utf-8') + requests_ua.encode('utf-8') in res.data
 
     # unlink headers.txt on start/stop
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 def test_headers_validation(client, live_server):
     
 
     test_url = url_for('test_headers', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),

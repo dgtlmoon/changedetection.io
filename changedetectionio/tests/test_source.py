@@ -13,13 +13,8 @@ def test_check_basic_change_detection_functionality_source(client, live_server, 
     set_original_response()
     test_url = 'source:'+url_for('test_endpoint', _external=True)
     # Add our URL to the import page
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     time.sleep(sleep_time_for_fetch_thread)
 
@@ -62,13 +57,8 @@ def test_check_ignore_elements(client, live_server, measure_memory_usage):
     time.sleep(1)
     test_url = 'source:'+url_for('test_endpoint', _external=True)
     # Add our URL to the import page
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 

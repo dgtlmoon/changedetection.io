@@ -12,12 +12,8 @@ def test_basic_auth(client, live_server, measure_memory_usage):
     # This page will echo back any auth info
     test_url = url_for('test_basicauth_method', _external=True).replace("//","//myuser:mypass@")
     time.sleep(1)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     time.sleep(1)
     # Check form validation

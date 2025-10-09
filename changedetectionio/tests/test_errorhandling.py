@@ -3,7 +3,7 @@
 import time
 
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks
+from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 
 
 
@@ -19,12 +19,8 @@ def _runner_test_http_errors(client, live_server, http_code, expected_text):
                        status_code=http_code,
                        _external=True)
 
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -47,8 +43,7 @@ def _runner_test_http_errors(client, live_server, http_code, expected_text):
     #assert b'Error Screenshot' in res.data
 
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 
 def test_http_error_handler(client, live_server, measure_memory_usage):
@@ -56,8 +51,7 @@ def test_http_error_handler(client, live_server, measure_memory_usage):
     _runner_test_http_errors(client, live_server, 404, 'Page not found')
     _runner_test_http_errors(client, live_server, 500, '(Internal server error) received')
     _runner_test_http_errors(client, live_server, 400, 'Error - Request returned a HTTP error code 400')
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 # Just to be sure error text is properly handled
 def test_DNS_errors(client, live_server, measure_memory_usage):
@@ -87,8 +81,7 @@ def test_DNS_errors(client, live_server, measure_memory_usage):
     assert found_name_resolution_error
     # Should always record that we tried
     assert bytes("just now".encode('utf-8')) in res.data
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 # Re 1513
 def test_low_level_errors_clear_correctly(client, live_server, measure_memory_usage):
@@ -145,5 +138,4 @@ def test_low_level_errors_clear_correctly(client, live_server, measure_memory_us
     )
     assert not found_name_resolution_error
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)

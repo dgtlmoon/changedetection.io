@@ -3,7 +3,7 @@
 import os.path
 
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks, wait_for_notification_endpoint_output
+from .util import live_server_setup, wait_for_all_checks, wait_for_notification_endpoint_output, delete_all_watches
 import time
 
 def set_original(excluding=None, add_line=None):
@@ -44,12 +44,8 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
     set_original()
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -107,14 +103,12 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' in res.data
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 
 def test_check_add_line_contains_trigger(client, live_server, measure_memory_usage):
     
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
     time.sleep(1)
 
     # Give the endpoint time to spin up
@@ -137,12 +131,8 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
     set_original()
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -187,5 +177,4 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
         assert b'-Oh yes please' in response
         assert '网站监测 内容更新了'.encode('utf-8') in response
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)

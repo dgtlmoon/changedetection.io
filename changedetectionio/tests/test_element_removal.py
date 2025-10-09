@@ -5,7 +5,7 @@ import time
 from flask import url_for
 
 from ..html_tools import *
-from .util import live_server_setup, wait_for_all_checks
+from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 
 
 
@@ -209,7 +209,6 @@ def test_element_removal_full(client, live_server, measure_memory_usage):
 
 # Re #2752
 def test_element_removal_nth_offset_no_shift(client, live_server, measure_memory_usage):
-    
 
     set_response_with_multiple_index()
     subtractive_selectors_data = ["""
@@ -228,8 +227,7 @@ body > table > tr:nth-child(3) > td:nth-child(3)""",
 
     for selector_list in subtractive_selectors_data:
 
-        res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-        assert b'Deleted' in res.data
+        delete_all_watches(client)
 
         # Add our URL to the import page
         test_url = url_for("test_endpoint", _external=True)
