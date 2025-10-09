@@ -1,7 +1,7 @@
 import pluggy
 import os
 import importlib
-import sys
+from loguru import logger
 
 # Global plugin namespace for changedetection.io
 PLUGIN_NAMESPACE = "changedetectionio"
@@ -57,7 +57,7 @@ def load_plugins_from_directories():
                     # Register the plugin with pluggy
                     plugin_manager.register(module, module_name)
                 except (ImportError, AttributeError) as e:
-                    print(f"Error loading plugin {module_name}: {e}")
+                    logger.critical(f"Error loading plugin {module_name}: {e}")
 
 # Load plugins
 load_plugins_from_directories()

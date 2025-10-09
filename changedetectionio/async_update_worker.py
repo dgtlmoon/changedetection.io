@@ -91,7 +91,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                     try:
                         processor_module = importlib.import_module(processor_module_name)
                     except ModuleNotFoundError as e:
-                        print(f"Processor module '{processor}' not found.")
+                        logger.error(f"Processor module '{processor}' not found.")
                         raise e
 
                     update_handler = processor_module.perform_site_check(datastore=datastore,

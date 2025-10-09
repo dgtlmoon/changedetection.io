@@ -27,8 +27,15 @@
 {% endmacro %}
 
 {% macro render_checkbox_field(field) %}
-  <div class="checkbox {% if field.errors %} error {% endif %}">
+  <div class="checkbox {% if field.errors or field.top_errors %} error {% endif %}">
   {{ field(**kwargs)|safe }} {{ field.label }}
+  {% if field.top_errors %}
+    <ul class="errors top-errors">
+    {% for error in field.top_errors %}
+      <li>{{ error }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
   {% if field.errors %}
     <ul class=errors>
     {% for error in field.errors %}
@@ -43,9 +50,16 @@
   {% if BooleanField %}
     {% set _ = field.__setattr__('boolean_mode', true) %}
   {% endif %}
-  <div class="ternary-field {% if field.errors %} error {% endif %}">
+  <div class="ternary-field {% if field.errors or field.top_errors %} error {% endif %}">
     <div class="ternary-field-label">{{ field.label }}</div>
     <div class="ternary-field-widget">{{ field(**kwargs)|safe }}</div>
+    {% if field.top_errors %}
+      <ul class="errors top-errors">
+      {% for error in field.top_errors %}
+        <li>{{ error }}</li>
+      {% endfor %}
+      </ul>
+    {% endif %}
     {% if field.errors %}
       <ul class=errors>
       {% for error in field.errors %}
@@ -58,8 +72,15 @@
 
 
 {% macro render_simple_field(field) %}
-  <span class="label {% if field.errors %}error{% endif %}">{{ field.label }}</span>
-  <span {% if field.errors %} class="error" {% endif %}>{{ field(**kwargs)|safe }}
+  <span class="label {% if field.errors or field.top_errors %}error{% endif %}">{{ field.label }}</span>
+  <span {% if field.errors or field.top_errors %} class="error" {% endif %}>{{ field(**kwargs)|safe }}
+  {% if field.top_errors %}
+    <ul class="errors top-errors">
+    {% for error in field.top_errors %}
+      <li>{{ error }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
   {% if field.errors %}
     <ul class=errors>
     {% for error in field.errors %}
@@ -74,8 +95,15 @@
 {% macro render_nolabel_field(field) %}
     <span>
     {{ field(**kwargs)|safe }}
-        {% if field.errors %}
+        {% if field.top_errors or field.errors %}
             <span class="error">
+      {% if field.top_errors %}
+          <ul class="errors top-errors">
+        {% for error in field.top_errors %}
+            <li>{{ error }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
       {% if field.errors %}
           <ul class=errors>
         {% for error in field.errors %}

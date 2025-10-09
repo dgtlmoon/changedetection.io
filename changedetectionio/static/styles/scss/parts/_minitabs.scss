@@ -1,6 +1,13 @@
 .minitabs-wrapper {
   width: 100%;
 
+  .tab-contents-monospace-preview {
+    font-family: "Courier New", Courier, monospace; /* Sets the font to a monospace type */
+    font-size: 70%;
+    word-break: break-word;
+    white-space: pre-wrap; /* Preserves whitespace and line breaks like <pre> */
+  }
+
   > div[id] {
     padding: 20px;
     border: 1px solid #ccc;
@@ -10,38 +17,45 @@
   .minitabs-content {
     width: 100%;
     display: flex;
+
     > div {
       flex: 1 1 auto;
       min-width: 0;
-      overflow: scroll;
+      padding: 1rem;
+      border: 1px solid #ddd;
+      background-color: #eee;
     }
   }
 
   .minitabs {
     display: flex;
     border-bottom: 1px solid #ccc;
-  }
 
-  .minitab {
-    flex: 1;
-    text-align: center;
-    padding: 12px 0;
-    text-decoration: none;
-    color: #333;
-    background-color: #f1f1f1;
-    border: 1px solid #ccc;
-    border-bottom: none;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
+    .minitab {
+      flex: 1;
+      text-align: center;
+      padding: 12px 0;
+      text-decoration: none;
+      color: #333;
+      background-color: #f1f1f1;
+      border: 1px solid #ccc;
+      border-bottom: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      border-top-left-radius: 5px;
+      border-top-right-radius: 5px;
+      opacity: 0.45;
+      &:hover {
+        background-color: #ddd;
+      }
 
-  .minitab:hover {
-    background-color: #ddd;
+      &.active {
+        background-color: #eee;
+        font-weight: bold;
+        opacity: 1.0;
+      }
+    }
   }
-
-  .minitab.active {
-    background-color: #fff;
-    font-weight: bold;
-  }
-
 }
+
+

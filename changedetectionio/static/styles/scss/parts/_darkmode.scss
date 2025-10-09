@@ -18,7 +18,14 @@ html[data-darkmode="true"] {
       display: block;
     }
   }
+
+  .minitabs-content {
+    > div {
+       background-color: rgb(249 249 249 / 13%) !important;
+    }
+  }
 }
+
 
 
 
