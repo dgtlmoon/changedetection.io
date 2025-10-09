@@ -20,8 +20,6 @@ Used by: processors/text_json_diff/processor.py and other content processors
 RSS_XML_CONTENT_TYPES = [
     "application/rss+xml",
     "application/rdf+xml",
-    "text/xml",
-    "application/xml",
     "application/atom+xml",
     "text/rss+xml",  # rare, non-standard
     "application/x-rss+xml",  # legacy (older feed software)
@@ -37,24 +35,11 @@ JSON_CONTENT_TYPES = [
     "application/vnd.api+json",
 ]
 
-# CSV Content-types
-CSV_CONTENT_TYPES = [
-    "text/csv",
-    "application/csv",
-]
 
 # Generic XML Content-types (non-RSS/Atom)
 XML_CONTENT_TYPES = [
     "text/xml",
     "application/xml",
-]
-
-# YAML Content-types
-YAML_CONTENT_TYPES = [
-    "text/yaml",
-    "text/x-yaml",
-    "application/yaml",
-    "application/x-yaml",
 ]
 
 HTML_PATTERNS = ['<!doctype html', '<html', '<head', '<body', '<script', '<iframe', '<div']
@@ -104,18 +89,16 @@ class guess_stream_type():
         has_html_patterns = any(p in test_content_normalized for p in HTML_PATTERNS)
 
         # Always trust headers first
-        if any(s in http_content_header for s in RSS_XML_CONTENT_TYPES) or any(s in magic_content_header for s in RSS_XML_CONTENT_TYPES):
+        if 'text/plain' in http_content_header:
+            self.is_plaintext = True
+        if any(s in http_content_header for s in RSS_XML_CONTENT_TYPES):
             self.is_rss = True
-        elif any(s in http_content_header for s in JSON_CONTENT_TYPES) or any(s in magic_content_header for s in JSON_CONTENT_TYPES):
+        elif any(s in http_content_header for s in JSON_CONTENT_TYPES):
             self.is_json = True
-        elif any(s in http_content_header for s in CSV_CONTENT_TYPES) or any(s in magic_content_header for s in CSV_CONTENT_TYPES):
-            self.is_csv = True
-        elif any(s in http_content_header for s in XML_CONTENT_TYPES) or any(s in magic_content_header for s in XML_CONTENT_TYPES):
+        elif any(s in http_content_header for s in XML_CONTENT_TYPES):
             # Only mark as generic XML if not already detected as RSS
             if not self.is_rss:
                 self.is_xml = True
-        elif any(s in http_content_header for s in YAML_CONTENT_TYPES) or any(s in magic_content_header for s in YAML_CONTENT_TYPES):
-            self.is_yaml = True
         elif 'pdf' in magic_content_header:
             self.is_pdf = True
 ###
@@ -125,13 +108,18 @@ class guess_stream_type():
         elif magic_result == 'text/plain':
             self.is_plaintext = True
             logger.debug(f"Trusting magic's text/plain result (no HTML patterns detected)")
-        elif '<rss' in test_content_normalized or '<feed' in test_content_normalized:
+        elif any(s in magic_content_header for s in JSON_CONTENT_TYPES):
+            self.is_json = True
+        # magic will call a rss document 'xml'
+        elif '<rss' in test_content_normalized or '<feed' in test_content_normalized or any(s in magic_content_header for s in RSS_XML_CONTENT_TYPES):
             self.is_rss = True
-        elif test_content_normalized.startswith('<?xml'):
+        elif test_content_normalized.startswith('<?xml') or any(s in magic_content_header for s in XML_CONTENT_TYPES):
             # Generic XML that's not RSS/Atom (RSS/Atom checked above)
             self.is_xml = True
         elif '%pdf-1' in test_content:
             self.is_pdf = True
+        elif http_content_header.startswith('text/'):
+            self.is_plaintext = True
         # Only trust magic for 'text' if no other patterns matched
         elif 'text' in magic_content_header:
             self.is_plaintext = True

@@ -111,7 +111,7 @@ def test_basic_cdata_rss_markup(client, live_server, measure_memory_usage):
 
     set_original_cdata_xml()
 
-    test_url = url_for('test_endpoint', content_type="application/xml", _external=True)
+    test_url = url_for('test_endpoint', content_type="application/atom+xml; charset=UTF-8", _external=True)
 
     # Add our URL to the import page
     res = client.post(
@@ -139,7 +139,7 @@ def test_rss_xpath_filtering(client, live_server, measure_memory_usage):
 
     set_original_cdata_xml()
 
-    test_url = url_for('test_endpoint', content_type="application/xml", _external=True)
+    test_url = url_for('test_endpoint', content_type="application/atom+xml; charset=UTF-8", _external=True)
 
     res = client.post(
         url_for("ui.ui_views.form_quick_watch_add"),
