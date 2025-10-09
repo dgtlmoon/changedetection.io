@@ -141,7 +141,6 @@ def wait_for_all_checks(client=None):
     from changedetectionio.flask_app import update_q as global_update_q
     from changedetectionio import worker_handler
 
-    logger = logging.getLogger()
     empty_since = None
     attempt = 0
     max_attempts = 150  # Still reasonable upper bound
@@ -151,9 +150,9 @@ def wait_for_all_checks(client=None):
         if attempt < 10:
             time.sleep(0.1)  # Very fast initial checks
         elif attempt < 30:
-            time.sleep(0.3)  # Medium speed
+            time.sleep(0.2)  # Medium speed
         else:
-            time.sleep(0.8)  # Slower for persistent issues
+            time.sleep(0.4)  # Slower for persistent issues
 
         q_length = global_update_q.qsize()
         running_uuids = worker_handler.get_running_uuids()
@@ -168,7 +167,7 @@ def wait_for_all_checks(client=None):
             empty_since = None
         
         attempt += 1
-        time.sleep(0.3)
+        time.sleep(0.1)
 
 # Replaced by new_live_server_setup and calling per function scope in conftest.py
 def  live_server_setup(live_server):
