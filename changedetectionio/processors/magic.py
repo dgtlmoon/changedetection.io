@@ -44,10 +44,7 @@ XML_CONTENT_TYPES = [
 
 HTML_PATTERNS = ['<!doctype html', '<html', '<head', '<body', '<script', '<iframe', '<div']
 
-import re
-import magic
 from loguru import logger
-
 
 class guess_stream_type():
     is_pdf = False
@@ -60,7 +57,7 @@ class guess_stream_type():
     is_yaml = False
 
     def __init__(self, http_content_header, content):
-
+        import re
         magic_content_header = http_content_header
         test_content = content[:200].lower().strip()
 
@@ -70,6 +67,8 @@ class guess_stream_type():
         # Magic will sometimes call text/plain as text/html!
         magic_result = None
         try:
+            import magic
+
             mime = magic.from_buffer(content[:200], mime=True) # Send the original content
             logger.debug(f"Guessing mime type, original content_type '{http_content_header}', mime type detected '{mime}'")
             if mime and "/" in mime:

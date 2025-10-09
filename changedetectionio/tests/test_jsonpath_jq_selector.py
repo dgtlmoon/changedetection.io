@@ -205,9 +205,6 @@ def test_check_json_without_filter(client, live_server, measure_memory_usage):
     # and be sure it doesn't get chewed up by instriptis
     set_json_response_with_html()
 
-    # Give the endpoint time to spin up
-    time.sleep(1)
-
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
@@ -230,8 +227,6 @@ def test_check_json_without_filter(client, live_server, measure_memory_usage):
 def check_json_filter(json_filter, client, live_server):
     set_original_response()
 
-    # Give the endpoint time to spin up
-    time.sleep(1)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)

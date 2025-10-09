@@ -100,7 +100,7 @@ def element_removal(selectors: List[str], html_content):
     xpath_selectors = []
 
     for selector in selectors:
-        if selector.startswith(('xpath:', 'xpath1:', '//')):
+        if selector.strip().startswith(('xpath:', 'xpath1:', '//')):
             # Handle XPath selectors separately
             xpath_selector = selector.removeprefix('xpath:').removeprefix('xpath1:')
             xpath_selectors.append(xpath_selector)
