@@ -5,7 +5,7 @@ from .util import set_original_response, set_modified_response, live_server_setu
 from ..forms import REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT, REQUIRE_ATLEAST_ONE_TIME_PART_MESSAGE_DEFAULT
 
 
-def test_recheck_time_field_validation_global_settings(client, live_server):
+def test_recheck_time_field_validation_global_settings(client, live_server, measure_memory_usage):
     """
     Tests that the global settings time field has atleast one value for week/day/hours/minute/seconds etc entered
     class globalSettingsRequestForm(Form):
@@ -27,7 +27,7 @@ def test_recheck_time_field_validation_global_settings(client, live_server):
     assert REQUIRE_ATLEAST_ONE_TIME_PART_MESSAGE_DEFAULT.encode('utf-8') in res.data
 
 
-def test_recheck_time_field_validation_single_watch(client, live_server):
+def test_recheck_time_field_validation_single_watch(client, live_server, measure_memory_usage):
     """
     Tests that the global settings time field has atleast one value for week/day/hours/minute/seconds etc entered
     class globalSettingsRequestForm(Form):
@@ -95,7 +95,7 @@ def test_recheck_time_field_validation_single_watch(client, live_server):
     assert b"Updated watch." in res.data
     assert REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT.encode('utf-8') not in res.data
 
-def test_checkbox_open_diff_in_new_tab(client, live_server):
+def test_checkbox_open_diff_in_new_tab(client, live_server, measure_memory_usage):
     
     set_original_response()
     # Add our URL to the import page
@@ -168,7 +168,7 @@ def test_checkbox_open_diff_in_new_tab(client, live_server):
     # Cleanup everything
     delete_all_watches(client)
 
-def test_page_title_listing_behaviour(client, live_server):
+def test_page_title_listing_behaviour(client, live_server, measure_memory_usage):
 
     set_original_response(extra_title="custom html")
 
@@ -243,7 +243,7 @@ def test_page_title_listing_behaviour(client, live_server):
     assert b"head titlecustom html" in res.data
 
 
-def test_ui_viewed_unread_flag(client, live_server):
+def test_ui_viewed_unread_flag(client, live_server, measure_memory_usage):
 
     import time
 

@@ -80,7 +80,7 @@ def test_consistent_history(client, live_server, measure_memory_usage):
         assert '"default"' not in f.read(), "'default' probably shouldnt be here, it came from when the 'default' Watch vars were accidently being saved"
 
 
-def test_check_text_history_view(client, live_server):
+def test_check_text_history_view(client, live_server, measure_memory_usage):
 
     with open("test-datastore/endpoint-content.txt", "w") as f:
         f.write("<html>test-one</html>")

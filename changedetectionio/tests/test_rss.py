@@ -178,7 +178,7 @@ def test_rss_xpath_filtering(client, live_server, measure_memory_usage):
     delete_all_watches(client)
 
 
-def test_rss_bad_chars_breaking(client, live_server):
+def test_rss_bad_chars_breaking(client, live_server, measure_memory_usage):
     """This should absolutely trigger the RSS builder to go into worst state mode
 
     - source: prefix means no html conversion (which kinda filters out the bad stuff)

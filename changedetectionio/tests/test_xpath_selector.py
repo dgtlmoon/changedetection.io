@@ -584,7 +584,7 @@ def _subtest_xpath_rss(client, content_type='text/html'):
     client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
 # Be sure all-in-the-wild types of RSS feeds work with xpath
-def test_rss_xpath(client, live_server):
+def test_rss_xpath(client, live_server, measure_memory_usage):
     for feed_header in ['', '<?xml version="1.0" encoding="utf-8"?>']:
         set_rss_atom_feed_response(header=feed_header)
         for content_type in RSS_XML_CONTENT_TYPES:

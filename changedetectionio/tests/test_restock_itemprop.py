@@ -44,11 +44,11 @@ def set_original_response(props_markup='', price="121.95"):
 
 
 
-# def test_setup(client, live_server):
+# def test_setup(client, live_server, measure_memory_usage):
 
    #  live_server_setup(live_server) # Setup on conftest per function
 
-def test_restock_itemprop_basic(client, live_server):
+def test_restock_itemprop_basic(client, live_server, measure_memory_usage):
 
     
 
@@ -86,7 +86,7 @@ def test_restock_itemprop_basic(client, live_server):
 
         delete_all_watches(client)
 
-def test_itemprop_price_change(client, live_server):
+def test_itemprop_price_change(client, live_server, measure_memory_usage):
     
 
     # Out of the box 'Follow price changes' should be ON
@@ -211,7 +211,7 @@ def _run_test_minmax_limit(client, extra_watch_edit_form):
     delete_all_watches(client)
 
 
-def test_restock_itemprop_minmax(client, live_server):
+def test_restock_itemprop_minmax(client, live_server, measure_memory_usage):
     
     extras = {
         "restock_settings-follow_price_changes": "y",
@@ -220,7 +220,7 @@ def test_restock_itemprop_minmax(client, live_server):
     }
     _run_test_minmax_limit(client, extra_watch_edit_form=extras)
 
-def test_restock_itemprop_with_tag(client, live_server):
+def test_restock_itemprop_with_tag(client, live_server, measure_memory_usage):
     
 
     res = client.post(
@@ -249,7 +249,7 @@ def test_restock_itemprop_with_tag(client, live_server):
 
 
 
-def test_itemprop_percent_threshold(client, live_server):
+def test_itemprop_percent_threshold(client, live_server, measure_memory_usage):
     
 
     delete_all_watches(client)
@@ -315,7 +315,7 @@ def test_itemprop_percent_threshold(client, live_server):
 
 
 
-def test_change_with_notification_values(client, live_server):
+def test_change_with_notification_values(client, live_server, measure_memory_usage):
     
 
     if os.path.isfile("test-datastore/notification.txt"):
@@ -383,7 +383,7 @@ def test_change_with_notification_values(client, live_server):
     assert os.path.isfile("test-datastore/notification.txt"), "Notification received"
 
 
-def test_data_sanity(client, live_server):
+def test_data_sanity(client, live_server, measure_memory_usage):
     
 
     delete_all_watches(client)
@@ -429,7 +429,7 @@ def test_data_sanity(client, live_server):
     delete_all_watches(client)
 
 # All examples should give a prive of 666.66
-def test_special_prop_examples(client, live_server):
+def test_special_prop_examples(client, live_server, measure_memory_usage):
     import glob
     
 

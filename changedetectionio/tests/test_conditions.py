@@ -47,11 +47,11 @@ def set_number_out_of_range_response(number="150"):
         f.write(test_return_data)
 
 
-# def test_setup(client, live_server):
+# def test_setup(client, live_server, measure_memory_usage):
     """Test that both text and number conditions work together with AND logic."""
    #  live_server_setup(live_server) # Setup on conftest per function
 
-def test_conditions_with_text_and_number(client, live_server):
+def test_conditions_with_text_and_number(client, live_server, measure_memory_usage):
     """Test that both text and number conditions work together with AND logic."""
     
     set_original_response("50")
@@ -142,7 +142,7 @@ def test_conditions_with_text_and_number(client, live_server):
     delete_all_watches(client)
 
 # The 'validate' button next to each rule row
-def test_condition_validate_rule_row(client, live_server):
+def test_condition_validate_rule_row(client, live_server, measure_memory_usage):
 
     set_original_response("50")
 

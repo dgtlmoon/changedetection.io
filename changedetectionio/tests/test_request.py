@@ -395,7 +395,7 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage):
     # unlink headers.txt on start/stop
     delete_all_watches(client)
 
-def test_headers_validation(client, live_server):
+def test_headers_validation(client, live_server, measure_memory_usage):
     
 
     test_url = url_for('test_headers', _external=True)

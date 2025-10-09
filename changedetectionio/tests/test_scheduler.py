@@ -9,7 +9,7 @@ from .util import  live_server_setup, wait_for_all_checks, extract_UUID_from_cli
 from ..forms import REQUIRE_ATLEAST_ONE_TIME_PART_MESSAGE_DEFAULT, REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT
 
 
-# def test_setup(client, live_server):
+# def test_setup(client, live_server, measure_memory_usage):
    #  live_server_setup(live_server) # Setup on conftest per function
 
 def test_check_basic_scheduler_functionality(client, live_server, measure_memory_usage):

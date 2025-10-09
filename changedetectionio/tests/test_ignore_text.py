@@ -244,10 +244,10 @@ def _run_test_global_ignore(client, as_source=False, extra_ignore=""):
 
     delete_all_watches(client)
 
-def test_check_global_ignore_text_functionality(client, live_server):
+def test_check_global_ignore_text_functionality(client, live_server, measure_memory_usage):
     
     _run_test_global_ignore(client, as_source=False)
 
-def test_check_global_ignore_text_functionality_as_source(client, live_server):
+def test_check_global_ignore_text_functionality_as_source(client, live_server, measure_memory_usage):
     
     _run_test_global_ignore(client, as_source=True, extra_ignore='/\?v=\d/')
