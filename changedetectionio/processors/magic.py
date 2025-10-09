@@ -45,8 +45,8 @@ XML_CONTENT_TYPES = [
 HTML_PATTERNS = ['<!doctype html', '<html', '<head', '<body', '<script', '<iframe', '<div']
 
 import re
-import magic
 from loguru import logger
+# magic import moved to lazy load in __init__ to save ~14.5 MB on startup
 
 
 class guess_stream_type():
@@ -70,6 +70,8 @@ class guess_stream_type():
         # Magic will sometimes call text/plain as text/html!
         magic_result = None
         try:
+            import magic
+
             mime = magic.from_buffer(content[:200], mime=True) # Send the original content
             logger.debug(f"Guessing mime type, original content_type '{http_content_header}', mime type detected '{mime}'")
             if mime and "/" in mime:
