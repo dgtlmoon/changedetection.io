@@ -12,7 +12,7 @@ flask_wtf~=1.2
 flask~=2.3
 flask-socketio~=5.5.1
 python-socketio~=5.13.0
-python-engineio~=4.12.0
+python-engineio~=4.12.3
 inscriptis~=2.2
 pytz
 timeago~=1.0
@@ -137,7 +137,7 @@ tzdata
 pluggy ~= 1.5
 
 # Needed for testing, cross-platform for process and system monitoring
-psutil==7.0.0
+psutil==7.1.0
 
 ruff >= 0.11.2
 pre_commit >= 4.2.0
