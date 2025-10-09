@@ -44,10 +44,7 @@ XML_CONTENT_TYPES = [
 
 HTML_PATTERNS = ['<!doctype html', '<html', '<head', '<body', '<script', '<iframe', '<div']
 
-import re
 from loguru import logger
-# magic import moved to lazy load in __init__ to save ~14.5 MB on startup
-
 
 class guess_stream_type():
     is_pdf = False
@@ -60,7 +57,7 @@ class guess_stream_type():
     is_yaml = False
 
     def __init__(self, http_content_header, content):
-
+        import re
         magic_content_header = http_content_header
         test_content = content[:200].lower().strip()
 
