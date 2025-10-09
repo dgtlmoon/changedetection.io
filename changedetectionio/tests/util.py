@@ -147,9 +147,9 @@ def wait_for_all_checks(client=None):
     while attempt < max_attempts:
         # Start with fast checks, slow down if needed
         if attempt < 10:
-            time.sleep(0.1)  # Very fast initial checks
+            time.sleep(0.2)  # Very fast initial checks
         elif attempt < 30:
-            time.sleep(0.3)  # Medium speed
+            time.sleep(0.4)  # Medium speed
         else:
             time.sleep(0.8)  # Slower for persistent issues
 
@@ -166,7 +166,7 @@ def wait_for_all_checks(client=None):
             empty_since = None
         
         attempt += 1
-        time.sleep(0.15)
+        time.sleep(0.3)
 
 # Replaced by new_live_server_setup and calling per function scope in conftest.py
 def  live_server_setup(live_server):
