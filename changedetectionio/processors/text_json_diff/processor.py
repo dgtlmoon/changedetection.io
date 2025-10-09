@@ -411,10 +411,15 @@ class perform_site_check(difference_detection_processor):
             html_content = content_processor.apply_subtractive_selectors(html_content)
 
         # === TEXT EXTRACTION ===
-        if stream_content_type.is_html and not watch.is_source_type_url:
-            stripped_text = content_processor.extract_text_from_html(html_content, stream_content_type)
-        else:
+        if watch.is_source_type_url:
+            # For source URLs, keep raw content
             stripped_text = html_content
+        else:
+            # Extract text from HTML/RSS content (not generic XML)
+            if stream_content_type.is_html or stream_content_type.is_rss:
+                stripped_text = content_processor.extract_text_from_html(html_content, stream_content_type)
+            else:
+                stripped_text = html_content
 
         # === TEXT TRANSFORMATIONS ===
         if watch.get('trim_text_whitespace'):
