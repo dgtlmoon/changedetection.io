@@ -49,7 +49,7 @@ def measure_memory_usage(request):
 
     # Note: ru_maxrss is in kilobytes on Unix-based systems
     max_memory_used = memory_usage["peak"] / 1024  # Convert to MB
-    s = f"Peak memory used by the test {request.node.fspath} - '{request.node.name}': {max_memory_used:.2f} MB"
+    s = f"{time.time()} Peak memory used by the test {request.node.fspath} - '{request.node.name}': {max_memory_used:.2f} MB"
     logger.debug(s)
 
     with open("test-memory.log", 'a') as f:

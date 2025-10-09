@@ -123,14 +123,13 @@ class perform_site_check(difference_detection_processor):
         if watch.get('track_ldjson_price_data', '') == PRICE_DATA_TRACK_ACCEPT:
             include_filters_rule += html_tools.LD_JSON_PRODUCT_OFFER_SELECTORS
 
-        has_filter_rule = len(include_filters_rule) and len(include_filters_rule[0].strip())
+        has_include_filter_selectors = len(include_filters_rule) and len(include_filters_rule[0].strip())
         has_subtractive_selectors = len(subtractive_selectors) and len(subtractive_selectors[0].strip())
 
         if stream_content_type.is_json:
-            if not has_filter_rule:
+            if not has_include_filter_selectors:
                 # Force a reformat
-                include_filters_rule.append("json:$")
-                has_filter_rule = True
+                self.fetcher.content = html_tools.extract_json_as_string(content=self.fetcher.content, json_filter="json:$")
 
             # Sort the JSON so we dont get false alerts when the content is just re-ordered
             try:
@@ -139,67 +138,57 @@ class perform_site_check(difference_detection_processor):
                 # Might have just been a snippet, or otherwise bad JSON, continue
                 pass
 
-            if has_filter_rule:
-                for filter in include_filters_rule:
-                    if any(prefix in filter for prefix in json_filter_prefixes):
-                        stripped_text_from_html += html_tools.extract_json_as_string(content=self.fetcher.content, json_filter=filter)
-                        if stripped_text_from_html:
-                            stream_content_type.is_json = True
-                            stream_content_type.is_html = False
-
-        # We have 'watch.is_source_type_url' because we should be able to use selectors on the raw HTML but return just that selected HTML
-        if stream_content_type.is_html or watch.is_source_type_url or stream_content_type.is_plaintext or stream_content_type.is_rss or stream_content_type.is_xml or stream_content_type.is_pdf:
-
+        if stream_content_type.is_html:
             # CSS Filter, extract the HTML that matches and feed that into the existing inscriptis::get_text
             self.fetcher.content = html_tools.workarounds_for_obfuscations(self.fetcher.content)
-            html_content = self.fetcher.content
 
-            # Some kind of "text" but definitely not RSS looking
-            if stream_content_type.is_plaintext:
-                # Don't run get_text or xpath/css filters on plaintext
-                # We are not HTML, we are not any kind of RSS, doesnt even look like HTML
-                stripped_text_from_html = html_content
-            else:
-                # If not JSON, and if it's not text/plain..
-                # Does it have some ld+json price data? used for easier monitoring
-                update_obj['has_ldjson_price_data'] = html_tools.has_ldjson_product_info(self.fetcher.content)
+        html_content = self.fetcher.content
 
-                # Then we assume HTML
-                if has_filter_rule:
-                    html_content = ""
+        if stream_content_type.is_html:
+            # If not JSON, and if it's not text/plain..
+            # Does it have some ld+json price data? used for easier monitoring
+            update_obj['has_ldjson_price_data'] = html_tools.has_ldjson_product_info(self.fetcher.content)
 
-                    for filter_rule in include_filters_rule:
-                        # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
-                        if filter_rule[0] == '/' or filter_rule.startswith('xpath:'):
-                            html_content += html_tools.xpath_filter(xpath_filter=filter_rule.replace('xpath:', ''),
-                                                                    html_content=self.fetcher.content,
-                                                                    append_pretty_line_formatting=not watch.is_source_type_url,
-                                                                    is_rss=stream_content_type.is_rss)
+        if has_include_filter_selectors:
+            html_content = ""
+            for filter_rule in include_filters_rule:
+                # For HTML/XML we offer xpath as an option, just start a regular xPath "/.."
+                if filter_rule[0] == '/' or filter_rule.startswith('xpath:'):
+                    html_content += html_tools.xpath_filter(xpath_filter=filter_rule.replace('xpath:', ''),
+                                                            html_content=self.fetcher.content,
+                                                            append_pretty_line_formatting=not watch.is_source_type_url,
+                                                            is_rss=stream_content_type.is_rss)
 
-                        elif filter_rule.startswith('xpath1:'):
-                            html_content += html_tools.xpath1_filter(xpath_filter=filter_rule.replace('xpath1:', ''),
-                                                                     html_content=self.fetcher.content,
-                                                                     append_pretty_line_formatting=not watch.is_source_type_url,
-                                                                     is_rss=stream_content_type.is_rss)
-                        else:
-                            html_content += html_tools.include_filters(include_filters=filter_rule,
-                                                                       html_content=self.fetcher.content,
-                                                                       append_pretty_line_formatting=not watch.is_source_type_url)
+                elif filter_rule.startswith('xpath1:'):
+                    html_content += html_tools.xpath1_filter(xpath_filter=filter_rule.replace('xpath1:', ''),
+                                                             html_content=self.fetcher.content,
+                                                             append_pretty_line_formatting=not watch.is_source_type_url,
+                                                             is_rss=stream_content_type.is_rss)
 
-                    if not html_content.strip():
-                        raise FilterNotFoundInResponse(msg=include_filters_rule, screenshot=self.fetcher.screenshot, xpath_data=self.fetcher.xpath_data)
+                elif any(filter_rule.startswith(prefix) for prefix in json_filter_prefixes):
+                    html_content += html_tools.extract_json_as_string(content=self.fetcher.content, json_filter=filter_rule )
 
-                if has_subtractive_selectors:
-                    html_content = html_tools.element_removal(subtractive_selectors, html_content)
 
-                if watch.is_source_type_url:
-                    stripped_text_from_html = html_content
                 else:
-                    # extract text
-                    do_anchor = self.datastore.data["settings"]["application"].get("render_anchor_tag_content", False)
-                    stripped_text_from_html = html_tools.html_to_text(html_content=html_content,
-                                                                      render_anchor_tag_content=do_anchor,
-                                                                      is_rss=stream_content_type.is_rss)  # 1874 activate the <title workaround hack
+                    html_content += html_tools.include_filters(include_filters=filter_rule,
+                                                               html_content=self.fetcher.content,
+                                                               append_pretty_line_formatting=not watch.is_source_type_url)
+
+                if not html_content.strip():
+                    raise FilterNotFoundInResponse(msg=include_filters_rule, screenshot=self.fetcher.screenshot, xpath_data=self.fetcher.xpath_data)
+
+        if has_subtractive_selectors:
+            html_content = html_tools.element_removal(subtractive_selectors, html_content)
+
+        if stream_content_type.is_html and not watch.is_source_type_url:
+            # extract text
+            do_anchor = self.datastore.data["settings"]["application"].get("render_anchor_tag_content", False)
+            stripped_text_from_html = html_tools.html_to_text(html_content=html_content,
+                                                              render_anchor_tag_content=do_anchor,
+                                                              is_rss=stream_content_type.is_rss)  # 1874 activate the <title workaround hack
+        else:
+            stripped_text_from_html = html_content
+
 
         if watch.get('trim_text_whitespace'):
             stripped_text_from_html = '\n'.join(line.strip() for line in stripped_text_from_html.replace("\n\n", "\n").splitlines())
@@ -242,7 +231,7 @@ class perform_site_check(difference_detection_processor):
             raise content_fetchers.exceptions.ReplyWithContentButNoText(url=url,
                                                             status_code=self.fetcher.get_last_status_code(),
                                                             screenshot=self.fetcher.screenshot,
-                                                            has_filters=has_filter_rule,
+                                                            has_filters=has_include_filter_selectors,
                                                             html_content=html_content,
                                                             xpath_data=self.fetcher.xpath_data
                                                             )
