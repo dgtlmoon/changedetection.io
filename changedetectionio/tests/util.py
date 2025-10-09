@@ -325,4 +325,3 @@ def new_live_server_setup(live_server):
         return resp
 
     live_server.start()
-
