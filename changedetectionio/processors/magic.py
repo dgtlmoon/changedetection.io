@@ -94,24 +94,21 @@ class guess_stream_type():
             self.is_rss = True
         elif any(s in http_content_header for s in JSON_CONTENT_TYPES):
             self.is_json = True
+        elif 'pdf' in magic_content_header:
+            self.is_pdf = True
+        elif has_html_patterns or http_content_header == 'text/html':
+            self.is_html = True
+        elif any(s in magic_content_header for s in JSON_CONTENT_TYPES):
+            self.is_json = True
+        # magic will call a rss document 'xml'
+        # Rarely do endpoints give the right header, usually just text/xml, so we check also for <rss
+        # This also triggers the automatic CDATA text parser so the RSS goes back a nice content list
+        elif '<rss' in test_content_normalized or '<feed' in test_content_normalized or any(s in magic_content_header for s in RSS_XML_CONTENT_TYPES):
+            self.is_rss = True
         elif any(s in http_content_header for s in XML_CONTENT_TYPES):
             # Only mark as generic XML if not already detected as RSS
             if not self.is_rss:
                 self.is_xml = True
-        elif 'pdf' in magic_content_header:
-            self.is_pdf = True
-###
-        elif has_html_patterns or http_content_header == 'text/html':
-            self.is_html = True
-        # If magic says text/plain and we found no HTML patterns, trust it
-        elif magic_result == 'text/plain':
-            self.is_plaintext = True
-            logger.debug(f"Trusting magic's text/plain result (no HTML patterns detected)")
-        elif any(s in magic_content_header for s in JSON_CONTENT_TYPES):
-            self.is_json = True
-        # magic will call a rss document 'xml'
-        elif '<rss' in test_content_normalized or '<feed' in test_content_normalized or any(s in magic_content_header for s in RSS_XML_CONTENT_TYPES):
-            self.is_rss = True
         elif test_content_normalized.startswith('<?xml') or any(s in magic_content_header for s in XML_CONTENT_TYPES):
             # Generic XML that's not RSS/Atom (RSS/Atom checked above)
             self.is_xml = True
@@ -122,4 +119,8 @@ class guess_stream_type():
         # Only trust magic for 'text' if no other patterns matched
         elif 'text' in magic_content_header:
             self.is_plaintext = True
+        # If magic says text/plain and we found no HTML patterns, trust it
+        elif magic_result == 'text/plain':
+            self.is_plaintext = True
+            logger.debug(f"Trusting magic's text/plain result (no HTML patterns detected)")
 

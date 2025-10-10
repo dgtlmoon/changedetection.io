@@ -110,8 +110,9 @@ def test_basic_cdata_rss_markup(client, live_server, measure_memory_usage):
     
 
     set_original_cdata_xml()
-
-    test_url = url_for('test_endpoint', content_type="application/atom+xml; charset=UTF-8", _external=True)
+    # Rarely do endpoints give the right header, usually just text/xml, so we check also for <rss
+    # This also triggers the automatic CDATA text parser so the RSS goes back a nice content list
+    test_url = url_for('test_endpoint', content_type="text/xml; charset=UTF-8", _external=True)
 
     # Add our URL to the import page
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
