@@ -103,7 +103,7 @@ class guess_stream_type():
         # magic will call a rss document 'xml'
         # Rarely do endpoints give the right header, usually just text/xml, so we check also for <rss
         # This also triggers the automatic CDATA text parser so the RSS goes back a nice content list
-        elif '<rss' in test_content_normalized or '<feed' in test_content_normalized or any(s in magic_content_header for s in RSS_XML_CONTENT_TYPES):
+        elif '<rss' in test_content_normalized or '<feed' in test_content_normalized or any(s in magic_content_header for s in RSS_XML_CONTENT_TYPES) or '<rdf:' in test_content_normalized:
             self.is_rss = True
         elif any(s in http_content_header for s in XML_CONTENT_TYPES):
             # Only mark as generic XML if not already detected as RSS
