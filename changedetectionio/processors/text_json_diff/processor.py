@@ -227,7 +227,7 @@ class ContentProcessor:
         """Convert CDATA/comments in RSS to usable text."""
         return cdata_in_document_to_text(html_content=content)
 
-    def preprocess_pdf(self, content, raw_content):
+    def preprocess_pdf(self, raw_content):
         """Convert PDF to HTML using external tool."""
         from shutil import which
         tool = os.getenv("PDF_TO_HTML_TOOL", "pdftohtml")
@@ -251,7 +251,7 @@ class ContentProcessor:
         metadata = (
             f"<p>Added by changedetection.io: Document checksum - "
             f"{hashlib.md5(raw_content).hexdigest().upper()} "
-            f"Filesize - {len(html_content)} bytes</p>"
+            f"Original file size - {len(raw_content)} bytes</p>"
         )
         return html_content.replace('</body>', metadata + '</body>')
 
@@ -384,7 +384,8 @@ class perform_site_check(difference_detection_processor):
 
         # PDF preprocessing
         if watch.is_pdf or stream_content_type.is_pdf:
-            content = content_processor.preprocess_pdf(content, self.fetcher.raw_content)
+            content = content_processor.preprocess_pdf(raw_content=self.fetcher.raw_content)
+            stream_content_type.is_html = True
 
         # JSON preprocessing
         if stream_content_type.is_json:
@@ -413,6 +414,9 @@ class perform_site_check(difference_detection_processor):
         # === TEXT EXTRACTION ===
         if watch.is_source_type_url:
             # For source URLs, keep raw content
+            stripped_text = html_content
+        elif stream_content_type.is_plaintext:
+            # For plaintext, keep as-is without HTML-to-text conversion
             stripped_text = html_content
         else:
             # Extract text from HTML/RSS content (not generic XML)
