@@ -251,7 +251,7 @@ class ContentProcessor:
         metadata = (
             f"<p>Added by changedetection.io: Document checksum - "
             f"{hashlib.md5(raw_content).hexdigest().upper()} "
-            f"Filesize - {len(html_content)} bytes</p>"
+            f"Original file size - {len(raw_content)} bytes</p>"
         )
         return html_content.replace('</body>', metadata + '</body>')
 
