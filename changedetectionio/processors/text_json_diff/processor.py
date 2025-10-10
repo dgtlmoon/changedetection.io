@@ -227,7 +227,7 @@ class ContentProcessor:
         """Convert CDATA/comments in RSS to usable text."""
         return cdata_in_document_to_text(html_content=content)
 
-    def preprocess_pdf(self, content, raw_content):
+    def preprocess_pdf(self, raw_content):
         """Convert PDF to HTML using external tool."""
         from shutil import which
         tool = os.getenv("PDF_TO_HTML_TOOL", "pdftohtml")
@@ -384,7 +384,7 @@ class perform_site_check(difference_detection_processor):
 
         # PDF preprocessing
         if watch.is_pdf or stream_content_type.is_pdf:
-            content = content_processor.preprocess_pdf(content, self.fetcher.raw_content)
+            content = content_processor.preprocess_pdf(raw_content=self.fetcher.raw_content)
             stream_content_type.is_html = True
 
         # JSON preprocessing
