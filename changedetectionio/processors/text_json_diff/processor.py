@@ -404,6 +404,8 @@ class perform_site_check(difference_detection_processor):
         html_content = content
 
         # Apply include filters (CSS, XPath, JSON)
+        # Except for plaintext (incase they tried to confuse the system, it will HTML escape
+        #if not stream_content_type.is_plaintext:
         if filter_config.has_include_filters:
             html_content = content_processor.apply_include_filters(content, stream_content_type)
 
