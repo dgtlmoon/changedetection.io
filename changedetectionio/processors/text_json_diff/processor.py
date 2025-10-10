@@ -255,7 +255,7 @@ class ContentProcessor:
         )
         return html_content.replace('</body>', metadata + '</body>')
 
-    def preprocess_json(self, content, has_filters):
+    def preprocess_json(self, content):
         """Format and sort JSON content."""
 
         # if it doesnt look like JSON then try to extract it
