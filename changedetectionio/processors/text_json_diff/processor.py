@@ -20,7 +20,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 name = 'Webpage Text/HTML, JSON and PDF changes'
 description = 'Detects all text changes where possible'
 
-json_filter_prefixes = ['json:', 'jq:', 'jqraw:']
+JSON_FILTER_PREFIXES = ['json:', 'jq:', 'jqraw:']
 
 # Assume it's this type if the server says nothing on content-type
 DEFAULT_WHEN_NO_CONTENT_TYPE_HEADER = 'text/html'
@@ -98,6 +98,10 @@ class FilterConfig:
     @property
     def has_include_filters(self):
         return bool(self.include_filters) and bool(self.include_filters[0].strip())
+
+    @property
+    def has_include_json_filters(self):
+        return any(f.strip().startswith(prefix) for f in self.include_filters for prefix in JSON_FILTER_PREFIXES)
 
     @property
     def has_subtractive_selectors(self):
@@ -255,15 +259,14 @@ class ContentProcessor:
         )
         return html_content.replace('</body>', metadata + '</body>')
 
-    def preprocess_json(self, content, has_filters):
+    def preprocess_json(self, raw_content):
         """Format and sort JSON content."""
-        # Force reformat if no filters specified
-        if not has_filters:
-            content = html_tools.extract_json_as_string(content=content, json_filter="json:$")
+        # Then we re-format it, else it does have filters (later on) which will reformat it anyway
+        content = html_tools.extract_json_as_string(content=raw_content, json_filter="json:$")
 
         # Sort JSON to avoid false alerts from reordering
         try:
-            content = json.dumps(json.loads(content), sort_keys=True)
+            content = json.dumps(json.loads(content), sort_keys=True, indent=4)
         except Exception:
             # Might be malformed JSON, continue anyway
             pass
@@ -294,7 +297,7 @@ class ContentProcessor:
                 )
 
             # JSON filters
-            elif any(filter_rule.startswith(prefix) for prefix in json_filter_prefixes):
+            elif any(filter_rule.startswith(prefix) for prefix in JSON_FILTER_PREFIXES):
                 filtered_content += html_tools.extract_json_as_string(
                     content=content,
                     json_filter=filter_rule
@@ -387,9 +390,12 @@ class perform_site_check(difference_detection_processor):
             content = content_processor.preprocess_pdf(raw_content=self.fetcher.raw_content)
             stream_content_type.is_html = True
 
-        # JSON preprocessing
+        # JSON - Always reformat it nicely for consistency.
+
         if stream_content_type.is_json:
-            content = content_processor.preprocess_json(content, filter_config.has_include_filters)
+            if not filter_config.has_include_json_filters:
+                content = content_processor.preprocess_json(raw_content=content)
+        #else, otherwise it gets sorted/formatted in the filter stage anyway
 
         # HTML obfuscation workarounds
         if stream_content_type.is_html:
