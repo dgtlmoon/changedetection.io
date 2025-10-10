@@ -1,5 +1,4 @@
 from loguru import logger
-from lxml import etree
 from typing import List
 import html
 import json
@@ -58,12 +57,16 @@ def include_filters(include_filters, html_content, append_pretty_line_formatting
 
     return html_block
 
-def subtractive_css_selector(css_selector, html_content):
+def subtractive_css_selector(css_selector, content):
     from bs4 import BeautifulSoup
-    soup = BeautifulSoup(html_content, "html.parser")
+    soup = BeautifulSoup(content, "html.parser")
 
     # So that the elements dont shift their index, build a list of elements here which will be pointers to their place in the DOM
     elements_to_remove = soup.select(css_selector)
+
+    if not elements_to_remove:
+        # Better to return the original that rebuild with BeautifulSoup
+        return content
 
     # Then, remove them in a separate loop
     for item in elements_to_remove:
@@ -72,6 +75,7 @@ def subtractive_css_selector(css_selector, html_content):
     return str(soup)
 
 def subtractive_xpath_selector(selectors: List[str], html_content: str) -> str:
+    from lxml import etree
     # Parse the HTML content using lxml
     html_tree = etree.HTML(html_content)
 
@@ -82,6 +86,10 @@ def subtractive_xpath_selector(selectors: List[str], html_content: str) -> str:
     for selector in selectors:
         # Collect elements for each selector
         elements_to_remove.extend(html_tree.xpath(selector))
+
+    # If no elements were found, return the original HTML content
+    if not elements_to_remove:
+        return html_content
 
     # Then, remove them in a separate loop
     for element in elements_to_remove:
