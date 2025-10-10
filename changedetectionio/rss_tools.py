@@ -122,9 +122,7 @@ def format_rss_items(rss_content: str, render_anchor_tag_content=False) -> str:
 
             class_str = ' '.join(classes)
             items_html.append(f'<div class="{class_str}">{item}</div>')
-
-        # Join items with two <br> tags
-        return f'<html><body>{"\n<br><br>".join(items_html)}</body></html>'
+        return '<html><body>\n'+"\n<br><br>".join(items_html)+'\n</body></html>'
 
     except Exception as e:
         logger.warning(f"Error formatting RSS items: {str(e)}")
