@@ -385,6 +385,7 @@ class perform_site_check(difference_detection_processor):
         # PDF preprocessing
         if watch.is_pdf or stream_content_type.is_pdf:
             content = content_processor.preprocess_pdf(content, self.fetcher.raw_content)
+            stream_content_type.is_html = True
 
         # JSON preprocessing
         if stream_content_type.is_json:
@@ -413,6 +414,9 @@ class perform_site_check(difference_detection_processor):
         # === TEXT EXTRACTION ===
         if watch.is_source_type_url:
             # For source URLs, keep raw content
+            stripped_text = html_content
+        elif stream_content_type.is_plaintext:
+            # For plaintext, keep as-is without HTML-to-text conversion
             stripped_text = html_content
         else:
             # Extract text from HTML/RSS content (not generic XML)

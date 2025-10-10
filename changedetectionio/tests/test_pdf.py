@@ -26,6 +26,7 @@ def test_fetch_pdf(client, live_server, measure_memory_usage):
 
     # PDF header should not be there (it was converted to text)
     assert b'PDF' not in res.data[:10]
+    assert b'<meta name="generator" content="pdftohtml' not in res.data
     assert b'hello world' in res.data
 
     # So we know if the file changes in other ways
@@ -57,7 +58,6 @@ def test_fetch_pdf(client, live_server, measure_memory_usage):
 
     assert original_md5.encode('utf-8') not in res.data
     assert changed_md5.encode('utf-8') in res.data
-
 
     res = client.get(
         url_for("ui.ui_views.diff_history_page", uuid="first"),
