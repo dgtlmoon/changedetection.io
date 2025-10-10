@@ -228,8 +228,21 @@ class ContentProcessor:
         self.datastore = datastore
 
     def preprocess_rss(self, content):
-        """Convert CDATA/comments in RSS to usable text."""
-        return cdata_in_document_to_text(html_content=content)
+        """
+        Convert CDATA/comments in RSS to usable text.
+
+        Supports two RSS processing modes:
+        - 'default': Inline CDATA replacement (original behavior)
+        - 'formatted': Format RSS items with title, link, guid, pubDate, and description (CDATA unmarked)
+        """
+        from changedetectionio import rss_tools
+        rss_mode = self.datastore.data["settings"]["application"].get("rss_reader_mode")
+        if rss_mode:
+            # Format RSS items nicely with CDATA content unmarked and converted to text
+            return rss_tools.format_rss_items(content)
+        else:
+            # Default: Original inline CDATA replacement
+            return cdata_in_document_to_text(html_content=content)
 
     def preprocess_pdf(self, raw_content):
         """Convert PDF to HTML using external tool."""
@@ -384,6 +397,11 @@ class perform_site_check(difference_detection_processor):
         # RSS preprocessing
         if stream_content_type.is_rss:
             content = content_processor.preprocess_rss(content)
+            if self.datastore.data["settings"]["application"].get("rss_reader_mode"):
+                # Now just becomes regular HTML that can have xpath/CSS applied (first of the set etc)
+                stream_content_type.is_rss = False
+                stream_content_type.is_html = True
+                self.fetcher.content = content
 
         # PDF preprocessing
         if watch.is_pdf or stream_content_type.is_pdf:
