@@ -456,7 +456,7 @@ def test_correct_header_detect(client, live_server, measure_memory_usage):
     # Like in https://github.com/dgtlmoon/changedetection.io/pull/1593
     # Specify extra html that JSON is sometimes wrapped in - when using SockpuppetBrowser / Puppeteer / Playwrightetc
     with open("test-datastore/endpoint-content.txt", "w") as f:
-        f.write('<html><body>{"hello" : 123, "world": 123}')
+        f.write('<html><body>{ "world": 123, "hello" : 123}')
 
     # Add our URL to the import page
     # Check weird casing is cleaned up and detected also
@@ -474,8 +474,17 @@ def test_correct_header_detect(client, live_server, measure_memory_usage):
         follow_redirects=True
     )
 
-    assert b'&#34;hello&#34;: 123,' in res.data
-    assert b'&#34;world&#34;: 123' in res.data
+    assert b'&#34;hello&#34;: 123,' in res.data # properly html escaped in the front end
+
+    watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
+    dates = list(watch.history.keys())
+    snapshot_contents = watch.get_history_snapshot(dates[0])
+
+    # Should be correctly formatted and sorted,  ("world" goes to end)
+    assert snapshot_contents == """{
+    "hello": 123,
+    "world": 123
+}"""
 
     delete_all_watches(client)
 

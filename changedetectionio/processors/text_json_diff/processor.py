@@ -20,7 +20,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 name = 'Webpage Text/HTML, JSON and PDF changes'
 description = 'Detects all text changes where possible'
 
-json_filter_prefixes = ['json:', 'jq:', 'jqraw:']
+JSON_FILTER_PREFIXES = ['json:', 'jq:', 'jqraw:']
 
 # Assume it's this type if the server says nothing on content-type
 DEFAULT_WHEN_NO_CONTENT_TYPE_HEADER = 'text/html'
@@ -257,13 +257,14 @@ class ContentProcessor:
 
     def preprocess_json(self, content, has_filters):
         """Format and sort JSON content."""
-        # Force reformat if no filters specified
-        if not has_filters:
+
+        # if it doesnt look like JSON then try to extract it
+        if not '{' in content[:5]:
             content = html_tools.extract_json_as_string(content=content, json_filter="json:$")
 
         # Sort JSON to avoid false alerts from reordering
         try:
-            content = json.dumps(json.loads(content), sort_keys=True)
+            content = json.dumps(json.loads(content), sort_keys=True, indent=4)
         except Exception:
             # Might be malformed JSON, continue anyway
             pass
@@ -294,7 +295,7 @@ class ContentProcessor:
                 )
 
             # JSON filters
-            elif any(filter_rule.startswith(prefix) for prefix in json_filter_prefixes):
+            elif any(filter_rule.startswith(prefix) for prefix in JSON_FILTER_PREFIXES):
                 filtered_content += html_tools.extract_json_as_string(
                     content=content,
                     json_filter=filter_rule
@@ -387,7 +388,7 @@ class perform_site_check(difference_detection_processor):
             content = content_processor.preprocess_pdf(raw_content=self.fetcher.raw_content)
             stream_content_type.is_html = True
 
-        # JSON preprocessing
+        # JSON - Extract JSON from some HTML blob, and always reformat it nicely for consistency.
         if stream_content_type.is_json:
             content = content_processor.preprocess_json(content, filter_config.has_include_filters)
 
