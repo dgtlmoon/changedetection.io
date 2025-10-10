@@ -941,7 +941,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
     rss_hide_muted_watches = BooleanField('Hide muted watches from RSS feed', default=True,
                                       validators=[validators.Optional()])
 
-    rss_reader_mode = BooleanField('RSS Reader mode - Format contents of RSS feeds', default=False,
+    rss_reader_mode = BooleanField('RSS reader mode ', default=False,
                                       validators=[validators.Optional()])
 
     filter_failure_notification_threshold_attempts = IntegerField('Number of times the filter can be missing before sending a notification',

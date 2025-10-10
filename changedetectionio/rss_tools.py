@@ -31,98 +31,86 @@ def cdata_in_document_to_text(html_content: str, render_anchor_tag_content=False
 
 def format_rss_items(rss_content: str, render_anchor_tag_content=False) -> str:
     """
-    Format RSS/Atom feed items in a readable text format.
+    Format RSS/Atom feed items in a readable text format using feedparser.
 
     Converts RSS <item> or Atom <entry> elements to formatted text with:
     - <title> → <h1>Title</h1>
     - <link> → Link: [url]
     - <guid> → Guid: [id]
     - <pubDate> → PubDate: [date]
-    - <description> or <content> → Full html_to_text conversion
+    - <description> or <content> → Raw HTML content (CDATA and entities automatically handled)
 
     Args:
         rss_content: The RSS/Atom feed content
-        render_anchor_tag_content: Whether to render anchor tag content in descriptions
+        render_anchor_tag_content: Whether to render anchor tag content in descriptions (unused, kept for compatibility)
 
     Returns:
         Formatted HTML content ready for html_to_text conversion
     """
-    from lxml import etree
-    from xml.sax.saxutils import escape as xml_escape
-
     try:
-        # Parse with XMLParser to preserve CDATA
-        parser = etree.XMLParser(strip_cdata=False)
-        root = etree.fromstring(rss_content.encode('utf-8'), parser=parser)
+        import feedparser
+        from xml.sax.saxutils import escape as xml_escape
+
+        # Parse the feed - feedparser handles all RSS/Atom variants, CDATA, entity unescaping, etc.
+        feed = feedparser.parse(rss_content)
 
         formatted_items = []
 
-        # Handle both RSS (<item>) and Atom (<entry>) formats
-        items = root.xpath('//item | //entry')
+        # Determine feed type for appropriate labels when fields are missing
+        # feedparser sets feed.version to things like 'rss20', 'atom10', etc.
+        is_atom = feed.version and 'atom' in feed.version
 
-        for item in items:
+        for entry in feed.entries:
             item_parts = []
 
-            # Extract title
-            title_elem = item.find('title')
-            if title_elem is not None and title_elem.text:
-                # Convert CDATA in title if present
-                title_text = etree.tostring(title_elem, encoding='unicode', method='html')
-                title_text = cdata_in_document_to_text(title_text)
-                # Strip the title tags and get just the content
-                title_clean = re.sub(r'</?title[^>]*>', '', title_text).strip()
-                if title_clean:
-                    item_parts.append(f'<h1>{xml_escape(title_clean)}</h1>')
+            # Title - feedparser handles CDATA and entity unescaping automatically
+            if hasattr(entry, 'title') and entry.title:
+                item_parts.append(f'<h1>{xml_escape(entry.title)}</h1>')
 
-            # Extract link
-            link_elem = item.find('link')
-            if link_elem is not None:
-                link_text = link_elem.text if link_elem.text else link_elem.get('href', '')
-                if link_text:
-                    item_parts.append(f'Link: {xml_escape(link_text.strip())}')
+            # Link
+            if hasattr(entry, 'link') and entry.link:
+                item_parts.append(f'Link: {xml_escape(entry.link)}<br>')
 
-            # Extract guid/id
-            guid_elem = item.find('guid')
-            if guid_elem is None:
-                guid_elem = item.find('id')
-            if guid_elem is not None and guid_elem.text:
-                item_parts.append(f'Guid: {xml_escape(guid_elem.text.strip())}')
+            # GUID/ID
+            if hasattr(entry, 'id') and entry.id:
+                item_parts.append(f'Guid: {xml_escape(entry.id)}<br>')
 
-            # Extract pubDate/published/updated
-            date_elem = item.find('pubDate')
-            if date_elem is None:
-                date_elem = item.find('published')
-            if date_elem is None:
-                date_elem = item.find('updated')
-            if date_elem is not None and date_elem.text:
-                item_parts.append(f'PubDate: {xml_escape(date_elem.text.strip())}')
+            # Date - feedparser normalizes all date field names to 'published'
+            if hasattr(entry, 'published') and entry.published:
+                item_parts.append(f'PubDate: {xml_escape(entry.published)}<br>')
 
-            # Extract description/content/summary
-            desc_elem = item.find('description')
-            if desc_elem is None:
-                desc_elem = item.find('content')
-            if desc_elem is None:
-                desc_elem = item.find('summary')
-            if desc_elem is not None:
-                # Get the full element as string to preserve CDATA and nested HTML
-                desc_html = etree.tostring(desc_elem, encoding='unicode', method='html')
+            # Description/Content - feedparser handles CDATA and entity unescaping automatically
+            # Only add "Summary:" label for Atom <summary> tags
+            content = None
+            add_label = False
 
-                # First process CDATA sections
-                desc_processed = cdata_in_document_to_text(desc_html, render_anchor_tag_content=render_anchor_tag_content)
+            if hasattr(entry, 'content') and entry.content:
+                # Atom <content> - no label, just content
+                content = entry.content[0].value if entry.content[0].value else None
+            elif hasattr(entry, 'summary'):
+                # Could be RSS <description> or Atom <summary>
+                # feedparser maps both to entry.summary
+                content = entry.summary if entry.summary else None
+                # Only add "Summary:" label for Atom feeds (which use <summary> tag)
+                if is_atom:
+                    add_label = True
 
-                # Strip the outer description/content/summary tags
-                desc_processed = re.sub(r'^<(description|content|summary)[^>]*>', '', desc_processed)
-                desc_processed = re.sub(r'</(description|content|summary)>$', '', desc_processed)
-
-                if desc_processed.strip():
-                    item_parts.append(desc_processed)
+            # Add content with or without label
+            if content:
+                if add_label:
+                    item_parts.append(f'Summary:<br>{content}')
+                else:
+                    item_parts.append(content)
+            else:
+                # No content - just show <none>
+                item_parts.append('&lt;none&gt;')
 
             # Join all parts of this item
             if item_parts:
                 formatted_items.append('\n'.join(item_parts))
 
         # Join all items with <br><br><hr>
-        return '<br><br><hr>'.join(formatted_items)
+        return '<html><body>'+'<br><hr><br>'.join(formatted_items)
 
     except Exception as e:
         logger.warning(f"Error formatting RSS items: {str(e)}")
