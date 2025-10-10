@@ -109,8 +109,22 @@ def format_rss_items(rss_content: str, render_anchor_tag_content=False) -> str:
             if item_parts:
                 formatted_items.append('\n'.join(item_parts))
 
-        # Join all items with <br><br><hr>
-        return '<html><body>'+'<br><hr><br>'.join(formatted_items)
+        # Wrap each item in a div with classes (first, last, item-N)
+        items_html = []
+        total_items = len(formatted_items)
+        for idx, item in enumerate(formatted_items):
+            classes = ['rss-item']
+            if idx == 0:
+                classes.append('first')
+            if idx == total_items - 1:
+                classes.append('last')
+            classes.append(f'item-{idx + 1}')
+
+            class_str = ' '.join(classes)
+            items_html.append(f'<div class="{class_str}">{item}</div>')
+
+        # Join items with two <br> tags
+        return f'<html><body>{"\n<br><br>".join(items_html)}</body></html>'
 
     except Exception as e:
         logger.warning(f"Error formatting RSS items: {str(e)}")

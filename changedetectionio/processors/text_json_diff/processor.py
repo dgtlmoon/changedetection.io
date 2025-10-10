@@ -397,6 +397,11 @@ class perform_site_check(difference_detection_processor):
         # RSS preprocessing
         if stream_content_type.is_rss:
             content = content_processor.preprocess_rss(content)
+            if self.datastore.data["settings"]["application"].get("rss_reader_mode"):
+                # Now just becomes regular HTML that can have xpath/CSS applied (first of the set etc)
+                stream_content_type.is_rss = False
+                stream_content_type.is_html = True
+                self.fetcher.content = content
 
         # PDF preprocessing
         if watch.is_pdf or stream_content_type.is_pdf:
