@@ -14,7 +14,7 @@ class TimeExtension(Extension):
         """Jinja2 Extension constructor."""
         super().__init__(environment)
 
-        environment.extend(datetime_format='%Y-%m-%d')
+        environment.extend(datetime_format='%a, %d %b %Y %H:%M:%S')
 
     def _datetime(self, timezone, operator, offset, datetime_format):
         d = arrow.now(timezone)

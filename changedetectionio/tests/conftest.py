@@ -4,6 +4,7 @@ import time
 from threading import Thread
 
 import pytest
+import arrow
 from changedetectionio import changedetection_app
 from changedetectionio import store
 import os
@@ -27,6 +28,17 @@ def reportlog(pytestconfig):
     handler_id = logger.add(logging_plugin.report_handler, format="{message}")
     yield
     logger.remove(handler_id)
+
+
+@pytest.fixture
+def environment(mocker):
+    """Mock arrow.now() to return a fixed datetime for testing jinja2 time extension."""
+    # Fixed datetime: Wed, 09 Dec 2015 23:33:01 UTC
+    # This is calculated to match the test expectations when offsets are applied
+    fixed_datetime = arrow.Arrow(2015, 12, 9, 23, 33, 1, tzinfo='UTC')
+    # Patch arrow.now in the jinja_extensions module where it's actually used
+    mocker.patch('changedetectionio.jinja_extensions.arrow.now', return_value=fixed_datetime)
+    return fixed_datetime
 
 
 def format_memory_human(bytes_value):
