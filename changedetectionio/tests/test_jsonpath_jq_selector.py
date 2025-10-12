@@ -113,8 +113,14 @@ def set_original_ext_response():
     return None
 
 def set_modified_ext_response():
-    # This should get reformatted
-    data = """ [ { "isPriceLowered": false,  "status": "Sold",  "statusOrig": "sold" }, {
+    data = """
+    [
+    {
+        "isPriceLowered": false,
+        "status": "Sold",
+        "statusOrig": "sold"
+    },
+    {
         "_id": "5e7b3e1fb3262d306323ff1e",
         "listingsType": "consumer",
         "isPriceLowered": false,
@@ -224,15 +230,30 @@ def check_json_filter(json_filter, client, live_server):
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
-    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, extras={"include_filters": json_filter.splitlines()})
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
+    # Goto the edit page, add our ignore text
+    # Add our URL to the import page
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid="first"),
+        data={"include_filters": json_filter,
+              "url": test_url,
+              "tags": "",
+              "headers": "",
+              "fetch_backend": "html_requests",
+              "time_between_check_use_default": "y"
+              },
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+
     # Check it saved
     res = client.get(
-        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
     )
     assert bytes(escape(json_filter).encode('utf-8')) in res.data
 
@@ -251,7 +272,7 @@ def check_json_filter(json_filter, client, live_server):
     assert b'has-unread-changes' in res.data
 
     # Should not see this, because its not in the JSONPath we entered
-    res = client.get(url_for("ui.ui_views.diff_history_page", uuid=uuid))
+    res = client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
 
     # But the change should be there, tho its hard to test the change was detected because it will show old and new versions
     # And #462 - check we see the proper utf-8 string there
@@ -273,12 +294,32 @@ def test_check_jqraw_filter(client, live_server, measure_memory_usage):
 def check_json_filter_bool_val(json_filter, client, live_server):
     set_original_response()
 
+    # Give the endpoint time to spin up
+    time.sleep(1)
+
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
 
-    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, extras={"include_filters": [json_filter]})
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
-    wait_for_all_checks(client)
 
+    wait_for_all_checks(client)
+    # Goto the edit page, add our ignore text
+    # Add our URL to the import page
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid="first"),
+        data={"include_filters": json_filter,
+              "url": test_url,
+              "tags": "",
+              "headers": "",
+              "fetch_backend": "html_requests",
+              "time_between_check_use_default": "y"
+              },
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+
+    # Give the thread time to pick it up
+    wait_for_all_checks(client)
     #  Make a change
     set_modified_response()
 
@@ -312,16 +353,21 @@ def test_check_jqraw_filter_bool_val(client, live_server, measure_memory_usage):
 def check_json_ext_filter(json_filter, client, live_server):
     set_original_ext_response()
 
+    # Give the endpoint time to spin up
+    time.sleep(1)
+
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+
+    # Give the thread time to pick it up
     wait_for_all_checks(client)
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": json_filter,
               "url": test_url,
               "tags": "",
@@ -335,7 +381,7 @@ def check_json_ext_filter(json_filter, client, live_server):
 
     # Check it saved
     res = client.get(
-        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
     )
     assert bytes(escape(json_filter).encode('utf-8')) in res.data
 
@@ -348,12 +394,6 @@ def check_json_ext_filter(json_filter, client, live_server):
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
     wait_for_all_checks(client)
-
-    watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
-    dates = list(watch.history.keys())
-    snapshot_contents = watch.get_history_snapshot(dates[0])
-
-    assert snapshot_contents[0] == '['
 
     # It should have 'has-unread-changes'
     res = client.get(url_for("watchlist.index"))
@@ -416,7 +456,7 @@ def test_correct_header_detect(client, live_server, measure_memory_usage):
     # Like in https://github.com/dgtlmoon/changedetection.io/pull/1593
     # Specify extra html that JSON is sometimes wrapped in - when using SockpuppetBrowser / Puppeteer / Playwrightetc
     with open("test-datastore/endpoint-content.txt", "w") as f:
-        f.write('<html><body>{ "world": 123, "hello" : 123}')
+        f.write('<html><body>{"hello" : 123, "world": 123}')
 
     # Add our URL to the import page
     # Check weird casing is cleaned up and detected also
@@ -434,18 +474,8 @@ def test_correct_header_detect(client, live_server, measure_memory_usage):
         follow_redirects=True
     )
 
-
-    watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
-    dates = list(watch.history.keys())
-    snapshot_contents = watch.get_history_snapshot(dates[0])
-
-    assert b'&#34;hello&#34;: 123,' in res.data # properly html escaped in the front end
-
-    # Should be correctly formatted and sorted,  ("world" goes to end)
-    assert snapshot_contents == """{
-    "hello": 123,
-    "world": 123
-}"""
+    assert b'&#34;hello&#34;: 123,' in res.data
+    assert b'&#34;world&#34;: 123' in res.data
 
     delete_all_watches(client)
 

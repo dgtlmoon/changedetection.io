@@ -20,7 +20,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 name = 'Webpage Text/HTML, JSON and PDF changes'
 description = 'Detects all text changes where possible'
 
-JSON_FILTER_PREFIXES = ['json:', 'jq:', 'jqraw:']
+json_filter_prefixes = ['json:', 'jq:', 'jqraw:']
 
 # Assume it's this type if the server says nothing on content-type
 DEFAULT_WHEN_NO_CONTENT_TYPE_HEADER = 'text/html'
@@ -98,10 +98,6 @@ class FilterConfig:
     @property
     def has_include_filters(self):
         return bool(self.include_filters) and bool(self.include_filters[0].strip())
-
-    @property
-    def has_include_json_filters(self):
-        return any(f.strip().startswith(prefix) for f in self.include_filters for prefix in JSON_FILTER_PREFIXES)
 
     @property
     def has_subtractive_selectors(self):
@@ -228,23 +224,10 @@ class ContentProcessor:
         self.datastore = datastore
 
     def preprocess_rss(self, content):
-        """
-        Convert CDATA/comments in RSS to usable text.
+        """Convert CDATA/comments in RSS to usable text."""
+        return cdata_in_document_to_text(html_content=content)
 
-        Supports two RSS processing modes:
-        - 'default': Inline CDATA replacement (original behavior)
-        - 'formatted': Format RSS items with title, link, guid, pubDate, and description (CDATA unmarked)
-        """
-        from changedetectionio import rss_tools
-        rss_mode = self.datastore.data["settings"]["application"].get("rss_reader_mode")
-        if rss_mode:
-            # Format RSS items nicely with CDATA content unmarked and converted to text
-            return rss_tools.format_rss_items(content)
-        else:
-            # Default: Original inline CDATA replacement
-            return cdata_in_document_to_text(html_content=content)
-
-    def preprocess_pdf(self, raw_content):
+    def preprocess_pdf(self, content, raw_content):
         """Convert PDF to HTML using external tool."""
         from shutil import which
         tool = os.getenv("PDF_TO_HTML_TOOL", "pdftohtml")
@@ -268,18 +251,19 @@ class ContentProcessor:
         metadata = (
             f"<p>Added by changedetection.io: Document checksum - "
             f"{hashlib.md5(raw_content).hexdigest().upper()} "
-            f"Original file size - {len(raw_content)} bytes</p>"
+            f"Filesize - {len(html_content)} bytes</p>"
         )
         return html_content.replace('</body>', metadata + '</body>')
 
-    def preprocess_json(self, raw_content):
+    def preprocess_json(self, content, has_filters):
         """Format and sort JSON content."""
-        # Then we re-format it, else it does have filters (later on) which will reformat it anyway
-        content = html_tools.extract_json_as_string(content=raw_content, json_filter="json:$")
+        # Force reformat if no filters specified
+        if not has_filters:
+            content = html_tools.extract_json_as_string(content=content, json_filter="json:$")
 
         # Sort JSON to avoid false alerts from reordering
         try:
-            content = json.dumps(json.loads(content), sort_keys=True, indent=4)
+            content = json.dumps(json.loads(content), sort_keys=True)
         except Exception:
             # Might be malformed JSON, continue anyway
             pass
@@ -310,7 +294,7 @@ class ContentProcessor:
                 )
 
             # JSON filters
-            elif any(filter_rule.startswith(prefix) for prefix in JSON_FILTER_PREFIXES):
+            elif any(filter_rule.startswith(prefix) for prefix in json_filter_prefixes):
                 filtered_content += html_tools.extract_json_as_string(
                     content=content,
                     json_filter=filter_rule
@@ -397,23 +381,14 @@ class perform_site_check(difference_detection_processor):
         # RSS preprocessing
         if stream_content_type.is_rss:
             content = content_processor.preprocess_rss(content)
-            if self.datastore.data["settings"]["application"].get("rss_reader_mode"):
-                # Now just becomes regular HTML that can have xpath/CSS applied (first of the set etc)
-                stream_content_type.is_rss = False
-                stream_content_type.is_html = True
-                self.fetcher.content = content
 
         # PDF preprocessing
         if watch.is_pdf or stream_content_type.is_pdf:
-            content = content_processor.preprocess_pdf(raw_content=self.fetcher.raw_content)
-            stream_content_type.is_html = True
+            content = content_processor.preprocess_pdf(content, self.fetcher.raw_content)
 
-        # JSON - Always reformat it nicely for consistency.
-
+        # JSON preprocessing
         if stream_content_type.is_json:
-            if not filter_config.has_include_json_filters:
-                content = content_processor.preprocess_json(raw_content=content)
-        #else, otherwise it gets sorted/formatted in the filter stage anyway
+            content = content_processor.preprocess_json(content, filter_config.has_include_filters)
 
         # HTML obfuscation workarounds
         if stream_content_type.is_html:
@@ -428,8 +403,6 @@ class perform_site_check(difference_detection_processor):
         html_content = content
 
         # Apply include filters (CSS, XPath, JSON)
-        # Except for plaintext (incase they tried to confuse the system, it will HTML escape
-        #if not stream_content_type.is_plaintext:
         if filter_config.has_include_filters:
             html_content = content_processor.apply_include_filters(content, stream_content_type)
 
@@ -440,9 +413,6 @@ class perform_site_check(difference_detection_processor):
         # === TEXT EXTRACTION ===
         if watch.is_source_type_url:
             # For source URLs, keep raw content
-            stripped_text = html_content
-        elif stream_content_type.is_plaintext:
-            # For plaintext, keep as-is without HTML-to-text conversion
             stripped_text = html_content
         else:
             # Extract text from HTML/RSS content (not generic XML)

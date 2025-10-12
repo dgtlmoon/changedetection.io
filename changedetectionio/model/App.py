@@ -55,7 +55,6 @@ class model(dict):
                     'rss_access_token': None,
                     'rss_content_format': RSS_FORMAT_TYPES[0][0],
                     'rss_hide_muted_watches': True,
-                    'rss_reader_mode': False,
                     'schema_version' : 0,
                     'shared_diff_access': False,
                     'strip_ignored_lines': False,

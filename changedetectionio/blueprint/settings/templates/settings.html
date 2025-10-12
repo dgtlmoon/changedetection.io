@@ -73,23 +73,16 @@
                         </span>
                     </div>
                     <div class="pure-control-group">
+                        {{ render_checkbox_field(form.application.form.rss_hide_muted_watches) }}
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.application.form.rss_content_format) }}
+                        <span class="pure-form-message-inline">Love RSS? Does your reader support HTML? Set it here</span>
+                    </div>
+                    <div class="pure-control-group">
                         {{ render_checkbox_field(form.application.form.empty_pages_are_a_change) }}
                         <span class="pure-form-message-inline">When a request returns no content, or the HTML does not contain any text, is this considered a change?</span>
                     </div>
-                    <div class="grey-form-border">
-                        <div class="pure-control-group">
-                            {{ render_checkbox_field(form.application.form.rss_hide_muted_watches) }}
-                        </div>
-                        <div class="pure-control-group">
-                            {{ render_field(form.application.form.rss_content_format) }}
-                            <span class="pure-form-message-inline">Love RSS? Does your reader support HTML? Set it here</span>
-                        </div>
-                        <div class="pure-control-group">
-                            {{ render_checkbox_field(form.application.form.rss_reader_mode) }}
-                            <span class="pure-form-message-inline">Transforms RSS/RDF feed watches into beautiful text only</span>
-                        </div>
-                    </div>
-
                 {% if form.requests.proxy %}
                     <div class="pure-control-group inline-radio">
                         {{ render_field(form.requests.form.proxy, class="fetch-backend-proxy") }}
