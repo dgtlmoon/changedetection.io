@@ -1,5 +1,6 @@
 import os
 import re
+
 from loguru import logger
 from wtforms.widgets.core import TimeInput
 
@@ -864,6 +865,7 @@ class processor_text_json_diff_form(commonSettingsForm):
 
 
 
+
 class SingleExtraProxy(Form):
 
     # maybe better to set some <script>var..
@@ -889,23 +891,47 @@ class globalSettingsRequestForm(Form):
     jitter_seconds = IntegerField('Random jitter seconds ± check',
                                   render_kw={"style": "width: 5em;"},
                                   validators=[validators.NumberRange(min=0, message="Should contain zero or more seconds")])
-    
+
     workers = IntegerField('Number of fetch workers',
                           render_kw={"style": "width: 5em;"},
                           validators=[validators.NumberRange(min=1, max=50,
                                                              message="Should be between 1 and 50")])
-    
+
     extra_proxies = FieldList(FormField(SingleExtraProxy), min_entries=5)
     extra_browsers = FieldList(FormField(SingleExtraBrowser), min_entries=5)
 
     default_ua = FormField(DefaultUAInputForm, label="Default User-Agent overrides")
 
+
+
     def validate_extra_proxies(self, extra_validators=None):
         for e in self.data['extra_proxies']:
-            if e.get('proxy_name') or e.get('proxy_url'):
-                if not e.get('proxy_name','').strip() or not e.get('proxy_url','').strip():
+            name = e.get('proxy_name', '').strip()
+            url = e.get('proxy_url', '').strip().lower()
+
+            if name or url:
+                if not name or not url:
                     self.extra_proxies.errors.append('Both a name, and a Proxy URL is required.')
                     return False
+            if not (url.startswith('http') or url.startswith('socks5')):
+                self.extra_proxies.errors.append('Please use only http or socks5 protocol.')
+                return False
+
+            if proxy_validator(url) not in [True, "valid"]:
+                return False
+        return True
+
+    def proxy_validator(proxy: str):
+
+
+        proxy = proxy.strip().lower()
+        if not proxy:
+            return False  # or "invalid"
+        if proxy.startswith("http") or proxy.startswith("https") or proxy.startswith("socks5"):
+            return True  # or "valid"
+
+        return False
+
 
 class globalSettingsApplicationUIForm(Form):
     open_diff_in_new_tab = BooleanField("Open 'History' page in a new tab", default=True, validators=[validators.Optional()])
@@ -940,10 +966,6 @@ class globalSettingsApplicationForm(commonSettingsForm):
     strip_ignored_lines = BooleanField('Strip ignored lines')
     rss_hide_muted_watches = BooleanField('Hide muted watches from RSS feed', default=True,
                                       validators=[validators.Optional()])
-
-    rss_reader_mode = BooleanField('RSS reader mode ', default=False,
-                                      validators=[validators.Optional()])
-
     filter_failure_notification_threshold_attempts = IntegerField('Number of times the filter can be missing before sending a notification',
                                                                   render_kw={"style": "width: 5em;"},
                                                                   validators=[validators.NumberRange(min=0,
