@@ -933,7 +933,6 @@ class SingleExtraBrowser(Form):
         ),
         ValidateSimpleURL()
     ], render_kw={"placeholder": "wss://brightdata... wss://oxylabs etc", "size":50})
-    # @todo do the validation here instead
 
 class DefaultUAInputForm(Form):
     html_requests = StringField('Plaintext requests', validators=[validators.Optional()], render_kw={"placeholder": "<default>"})
