@@ -498,6 +498,24 @@ class ValidateJinja2Template(object):
 
         try:
             jinja2_env = ImmutableSandboxedEnvironment(loader=BaseLoader, extensions=['changedetectionio.jinja_extensions.TimeExtension'])
+
+            # Try to get the application's default timezone from datastore
+            # Fall back to 'UTC' if not available (e.g., in tests or outside Flask context)
+            default_timezone = 'UTC'
+            try:
+                from flask import current_app
+                if current_app:
+                    datastore = current_app.config.get('DATASTORE')
+                    if datastore:
+                        default_timezone = datastore.data['settings']['application'].get('scheduler_timezone_default', 'UTC')
+            except (RuntimeError, KeyError):
+                # RuntimeError: Working outside of application context
+                # KeyError: DATASTORE not in config
+                pass
+
+            # Override the default timezone in the extension
+            jinja2_env.default_timezone = default_timezone
+
             jinja2_env.globals.update(notification.valid_tokens)
             # Extra validation tokens provided on the form_class(... extra_tokens={}) setup
             if hasattr(field, 'extra_notification_tokens'):
@@ -903,7 +921,7 @@ class processor_text_json_diff_form(commonSettingsForm):
     ):
         super().__init__(formdata, obj, prefix, data, meta, **kwargs)
         if kwargs and kwargs.get('default_system_settings'):
-            default_tz = kwargs.get('default_system_settings').get('application', {}).get('timezone')
+            default_tz = kwargs.get('default_system_settings').get('application', {}).get('scheduler_timezone_default')
             if default_tz:
                 self.time_schedule_limit.form.timezone.render_kw['placeholder'] = default_tz
 

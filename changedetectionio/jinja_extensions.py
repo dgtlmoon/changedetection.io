@@ -14,9 +14,16 @@ class TimeExtension(Extension):
         """Jinja2 Extension constructor."""
         super().__init__(environment)
 
-        environment.extend(datetime_format='%a, %d %b %Y %H:%M:%S')
+        environment.extend(
+            datetime_format='%a, %d %b %Y %H:%M:%S',
+            default_timezone='UTC'
+        )
 
     def _datetime(self, timezone, operator, offset, datetime_format):
+        # Use default timezone if none specified
+        if not timezone or timezone == '':
+            timezone = self.environment.default_timezone
+
         d = arrow.now(timezone)
 
         # parse shift params from offset and include operator
@@ -24,7 +31,7 @@ class TimeExtension(Extension):
         for param in offset.split(','):
             interval, value = param.split('=')
             shift_params[interval.strip()] = float(operator + value.strip())
-        
+
         # Fix weekday parameter can not be float
         if 'weekday' in shift_params:
             shift_params['weekday'] = int(shift_params['weekday'])
@@ -36,6 +43,10 @@ class TimeExtension(Extension):
         return d.strftime(datetime_format)
 
     def _now(self, timezone, datetime_format):
+        # Use default timezone if none specified
+        if not timezone or timezone == '':
+            timezone = self.environment.default_timezone
+
         if datetime_format is None:
             datetime_format = self.environment.datetime_format
         return arrow.now(timezone).strftime(datetime_format)
