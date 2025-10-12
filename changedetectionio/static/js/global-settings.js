@@ -29,7 +29,7 @@ $(document).ready(function () {
         $(this).text(new Date($(this).data("utc")).toLocaleString());
     })
 
-    const timezoneInput = $('#application-timezone');
+    const timezoneInput = $('#application-scheduler_timezone_default');
     if(timezoneInput.length) {
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         if (!timezoneInput.val().trim()) {
