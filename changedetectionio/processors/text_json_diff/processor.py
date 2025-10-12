@@ -556,6 +556,20 @@ class perform_site_check(difference_detection_processor):
             else:
                 logger.debug(f"check_unique_lines: UUID {watch.get('uuid')} had unique content")
 
+        # Note: Explicit cleanup is only needed here because text_json_diff handles
+        # large strings (100KB-300KB for RSS/HTML). The other processors work with
+        # small strings and don't need this.
+        #
+        # Python would clean these up automatically, but explicit `del` frees memory
+        # immediately rather than waiting for function return, reducing peak memory usage.
+        del content
+        if 'html_content' in locals() and html_content is not stripped_text:
+            del html_content
+        if 'text_content_before_ignored_filter' in locals() and text_content_before_ignored_filter is not stripped_text:
+            del text_content_before_ignored_filter
+        if 'text_for_checksuming' in locals() and text_for_checksuming is not stripped_text:
+            del text_for_checksuming
+
         return changed_detected, update_obj, stripped_text
 
     def _apply_diff_filtering(self, watch, stripped_text, text_before_filter):
