@@ -678,6 +678,51 @@ class ValidateCSSJSONXPATHInput(object):
                 except:
                     raise ValidationError("A system-error occurred when validating your jq expression")
 
+class ValidateSimpleURL:
+    """Validate that the value can be parsed by urllib.parse.urlparse() and has a scheme/netloc."""
+    def __init__(self, message=None):
+        self.message = message or "Invalid URL."
+
+    def __call__(self, form, field):
+        data = (field.data or "").strip()
+        if not data:
+            return  # empty is OK — pair with validators.Optional()
+        from urllib.parse import urlparse
+
+        parsed = urlparse(data)
+        if not parsed.scheme or not parsed.netloc:
+            raise ValidationError(self.message)
+
+class ValidateStartsWithRegex(object):
+    def __init__(self, regex, *, flags=0, message=None, allow_empty=True, split_lines=True):
+        # compile with given flags (we’ll pass re.IGNORECASE below)
+        self.pattern = re.compile(regex, flags) if isinstance(regex, str) else regex
+        self.message = message
+        self.allow_empty = allow_empty
+        self.split_lines = split_lines
+
+    def __call__(self, form, field):
+        data = field.data
+        if not data:
+            return
+
+        # normalize into list of lines
+        if isinstance(data, str) and self.split_lines:
+            lines = data.splitlines()
+        elif isinstance(data, (list, tuple)):
+            lines = data
+        else:
+            lines = [data]
+
+        for line in lines:
+            stripped = line.strip()
+            if not stripped:
+                if self.allow_empty:
+                    continue
+                raise ValidationError(self.message or "Empty value not allowed.")
+            if not self.pattern.match(stripped):
+                raise ValidationError(self.message or "Invalid value.")
+
 class quickWatchForm(Form):
     from . import processors
 
@@ -865,15 +910,29 @@ class processor_text_json_diff_form(commonSettingsForm):
 
 
 class SingleExtraProxy(Form):
-
     # maybe better to set some <script>var..
     proxy_name = StringField('Name', [validators.Optional()], render_kw={"placeholder": "Name"})
-    proxy_url = StringField('Proxy URL', [validators.Optional()], render_kw={"placeholder": "socks5:// or regular proxy http://user:pass@...:3128", "size":50})
-    # @todo do the validation here instead
+    proxy_url = StringField('Proxy URL', [
+        validators.Optional(),
+        ValidateStartsWithRegex(
+            regex=r'^(https?|socks5)://',  # ✅ main pattern
+            flags=re.IGNORECASE,  # ✅ makes it case-insensitive
+            message='Proxy URLs must start with http://, https:// or socks5://',
+        ),
+        ValidateSimpleURL()
+    ], render_kw={"placeholder": "socks5:// or regular proxy http://user:pass@...:3128", "size":50})
 
 class SingleExtraBrowser(Form):
     browser_name = StringField('Name', [validators.Optional()], render_kw={"placeholder": "Name"})
-    browser_connection_url = StringField('Browser connection URL', [validators.Optional()], render_kw={"placeholder": "wss://brightdata... wss://oxylabs etc", "size":50})
+    browser_connection_url = StringField('Browser connection URL', [
+        validators.Optional(),
+        ValidateStartsWithRegex(
+            regex=r'^(wss?|ws)://',
+            flags=re.IGNORECASE,
+            message='Browser URLs must start with wss:// or ws://'
+        ),
+        ValidateSimpleURL()
+    ], render_kw={"placeholder": "wss://brightdata... wss://oxylabs etc", "size":50})
     # @todo do the validation here instead
 
 class DefaultUAInputForm(Form):
