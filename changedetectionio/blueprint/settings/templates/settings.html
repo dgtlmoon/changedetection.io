@@ -89,15 +89,6 @@
                             <span class="pure-form-message-inline">Transforms RSS/RDF feed watches into beautiful text only</span>
                         </div>
                     </div>
-
-                {% if form.requests.proxy %}
-                    <div class="pure-control-group inline-radio">
-                        {{ render_field(form.requests.form.proxy, class="fetch-backend-proxy") }}
-                        <span class="pure-form-message-inline">
-                        Choose a default proxy for all watches
-                        </span>
-                    </div>
-                {% endif %}
                 </fieldset>
             </div>
 
@@ -324,6 +315,15 @@ nav
                 {{ render_fieldlist_with_inline_errors(form.requests.form.extra_proxies) }}
                 <span class="pure-form-message-inline">"Name" will be used for selecting the proxy in the Watch Edit settings</span><br>
                 <span class="pure-form-message-inline">SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should whitelist the IP access instead</span>
+                {% if form.requests.proxy %}
+                <div>
+                <br>
+                    <div class="inline-radio">
+                        {{ render_field(form.requests.form.proxy, class="fetch-backend-proxy") }}
+                        <span class="pure-form-message-inline">Choose a default proxy for all watches</span>
+                    </div>
+                </div>
+                {% endif %}
                 </div>
                 <div class="pure-control-group" id="extra-browsers-setting">
                     <p>
@@ -332,6 +332,7 @@ nav
                     </p>
                     {{ render_fieldlist_with_inline_errors(form.requests.form.extra_browsers) }}
                 </div>
+            
             </div>
             <div id="actions">
                 <div class="pure-control-group">

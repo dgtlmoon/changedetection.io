@@ -943,7 +943,7 @@ class DefaultUAInputForm(Form):
 class globalSettingsRequestForm(Form):
     time_between_check = RequiredFormField(TimeBetweenCheckForm)
     time_schedule_limit = FormField(ScheduleLimitForm)
-    proxy = RadioField('Proxy')
+    proxy = RadioField('Default proxy')
     jitter_seconds = IntegerField('Random jitter seconds ± check',
                                   render_kw={"style": "width: 5em;"},
                                   validators=[validators.NumberRange(min=0, message="Should contain zero or more seconds")])
