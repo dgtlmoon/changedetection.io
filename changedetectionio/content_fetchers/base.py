@@ -64,6 +64,19 @@ class Fetcher():
     # Time ONTOP of the system defined env minimum time
     render_extract_delay = 0
 
+    def clear_content(self):
+        """
+        Explicitly clear all content from memory to free up heap space.
+        Call this after content has been saved to disk.
+        """
+        self.content = None
+        if hasattr(self, 'raw_content'):
+            self.raw_content = None
+        self.screenshot = None
+        self.xpath_data = None
+        # Keep headers and status_code as they're small
+        logger.trace("Fetcher content cleared from memory")
+
     @abstractmethod
     def get_error(self):
         return self.error

@@ -64,24 +64,31 @@ class guess_stream_type():
         # Remove whitespace between < and tag name for robust detection (handles '< html', '<\nhtml', etc.)
         test_content_normalized = re.sub(r'<\s+', '<', test_content)
 
-        # Magic will sometimes call text/plain as text/html!
+        # Use puremagic for lightweight MIME detection (saves ~14MB vs python-magic)
         magic_result = None
         try:
-            import magic
+            import puremagic
 
-            mime = magic.from_buffer(content[:200], mime=True) # Send the original content
-            logger.debug(f"Guessing mime type, original content_type '{http_content_header}', mime type detected '{mime}'")
-            if mime and "/" in mime:
-                magic_result = mime
-                # Ignore generic/fallback mime types from magic
-                if mime in ['application/octet-stream', 'application/x-empty', 'binary']:
-                    logger.debug(f"Ignoring generic mime type '{mime}' from magic library")
-                # Trust magic for non-text types immediately
-                elif mime not in ['text/html', 'text/plain']:
-                    magic_content_header = mime
+            # puremagic needs bytes, so encode if we have a string
+            content_bytes = content[:200].encode('utf-8') if isinstance(content, str) else content[:200]
+
+            # puremagic returns a list of PureMagic objects with confidence scores
+            detections = puremagic.magic_string(content_bytes)
+            if detections:
+                # Get the highest confidence detection
+                mime = detections[0].mime_type
+                logger.debug(f"Guessing mime type, original content_type '{http_content_header}', mime type detected '{mime}'")
+                if mime and "/" in mime:
+                    magic_result = mime
+                    # Ignore generic/fallback mime types
+                    if mime in ['application/octet-stream', 'application/x-empty', 'binary']:
+                        logger.debug(f"Ignoring generic mime type '{mime}' from puremagic library")
+                    # Trust puremagic for non-text types immediately
+                    elif mime not in ['text/html', 'text/plain']:
+                        magic_content_header = mime
 
         except Exception as e:
-            logger.error(f"Error getting a more precise mime type from 'magic' library ({str(e)}), using content-based detection")
+            logger.error(f"Error getting a more precise mime type from 'puremagic' library ({str(e)}), using content-based detection")
 
         # Content-based detection (most reliable for text formats)
         # Check for HTML patterns first - if found, override magic's text/plain
