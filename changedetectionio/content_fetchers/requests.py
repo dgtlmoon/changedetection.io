@@ -51,6 +51,7 @@ class fetcher(Fetcher):
 
         session = requests.Session()
 
+
         if strtobool(os.getenv('ALLOW_FILE_URI', 'false')) and url.startswith('file://'):
             from requests_file import FileAdapter
             session.mount('file://', FileAdapter())

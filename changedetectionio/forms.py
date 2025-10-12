@@ -952,7 +952,12 @@ class globalSettingsRequestForm(Form):
                           render_kw={"style": "width: 5em;"},
                           validators=[validators.NumberRange(min=1, max=50,
                                                              message="Should be between 1 and 50")])
-    
+
+    timeout = IntegerField('Requests timeout in seconds',
+                           render_kw={"style": "width: 5em;"},
+                           validators=[validators.NumberRange(min=1, max=999,
+                                                              message="Should be between 1 and 999")])
+
     extra_proxies = FieldList(FormField(SingleExtraProxy), min_entries=5)
     extra_browsers = FieldList(FormField(SingleExtraBrowser), min_entries=5)
 

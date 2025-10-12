@@ -131,6 +131,10 @@
                     <span class="pure-form-message-inline">Number of concurrent workers to process watches. More workers = faster processing but higher memory usage.<br>
                     Currently running: <strong>{{ worker_info.count }}</strong> operational {{ worker_info.type }} workers{% if worker_info.active_workers > 0 %} ({{ worker_info.active_workers }} actively processing){% endif %}.</span>
                 </div>
+                <div class="pure-control-group">
+                    {{ render_field(form.requests.form.timeout) }}
+                    <span class="pure-form-message-inline">For regular plain requests (not chrome based), maximum number of seconds until timeout, 1-999.<br>
+                </div>
                 <div class="pure-control-group inline-radio">
                     {{ render_field(form.requests.form.default_ua) }}
                     <span class="pure-form-message-inline">
