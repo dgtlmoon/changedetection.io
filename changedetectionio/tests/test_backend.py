@@ -165,6 +165,46 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     # Cleanup everything
     delete_all_watches(client)
 
+
+# Server says its plaintext, we should always treat it as plaintext, and then if they have a filter, try to apply that
+def test_requests_timeout(client, live_server, measure_memory_usage):
+    delay = 2
+    test_url = url_for('test_endpoint', delay=delay, _external=True)
+
+    res = client.post(
+        url_for("settings.settings_page"),
+        data={"application-ui-use_page_title_in_list": "",
+              "requests-time_between_check-minutes": 180,
+              "requests-timeout": delay - 1,
+              'application-fetch_backend': "html_requests"},
+        follow_redirects=True
+    )
+
+    # Add our URL to the import page
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    # requests takes >2 sec but we timeout at 1 second
+    res = client.get(url_for("watchlist.index"))
+    assert b'Read timed out. (read timeout=1)' in res.data
+
+    ##### Now set a longer timeout
+    res = client.post(
+        url_for("settings.settings_page"),
+        data={"application-ui-use_page_title_in_list": "",
+              "requests-time_between_check-minutes": 180,
+              "requests-timeout": delay + 1, # timeout should be a second more than the reply time
+              'application-fetch_backend': "html_requests"},
+        follow_redirects=True
+    )
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+
+    wait_for_all_checks(client)
+
+    res = client.get(url_for("watchlist.index"))
+    assert b'Read timed out' not in res.data
+
 def test_non_text_mime_or_downloads(client, live_server, measure_memory_usage):
     """
 

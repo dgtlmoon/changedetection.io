@@ -188,6 +188,10 @@ def new_live_server_setup(live_server):
         ctype = request.args.get('content_type')
         status_code = request.args.get('status_code')
         content = request.args.get('content') or None
+        delay = int(request.args.get('delay', 0))
+
+        if delay:
+            time.sleep(delay)
 
         # Used to just try to break the header detection
         uppercase_headers = request.args.get('uppercase_headers')
