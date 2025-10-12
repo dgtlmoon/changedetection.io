@@ -24,7 +24,7 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
         url_for("settings.settings_page"),
         data={"application-empty_pages_are_a_change": "",
               "requests-time_between_check-seconds": 1,
-              "application-timezone": "Pacific/Kiritimati",  # Most Forward Time Zone (UTC+14:00)
+              "application-scheduler_timezone_default": "Pacific/Kiritimati",  # Most Forward Time Zone (UTC+14:00)
               'application-fetch_backend': "html_requests"},
         follow_redirects=True
     )
@@ -119,7 +119,7 @@ def test_check_basic_global_scheduler_functionality(client, live_server, measure
 
     data = {
         "application-empty_pages_are_a_change": "",
-        "application-timezone": "Pacific/Kiritimati",  # Most Forward Time Zone (UTC+14:00)
+        "application-scheduler_timezone_default": "Pacific/Kiritimati",  # Most Forward Time Zone (UTC+14:00)
         'application-fetch_backend': "html_requests",
         "requests-time_between_check-hours": 0,
         "requests-time_between_check-minutes": 0,
