@@ -795,7 +795,7 @@ def ticker_thread_check_time_launch_checks():
             else:
                 time_schedule_limit = watch.get('time_schedule_limit')
                 logger.trace(f"{uuid} Time scheduler - Using watch settings (not global settings)")
-            tz_name = datastore.data['settings']['application'].get('timezone', 'UTC')
+            tz_name = datastore.data['settings']['application'].get('scheduler_timezone_default', 'UTC')
 
             if time_schedule_limit and time_schedule_limit.get('enabled'):
                 try:
