@@ -256,6 +256,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                    ignore_junk=diff_prefs.get('diff_ignoreWhitespace'),
                                    include_equal=not diff_prefs.get('diff_changesOnly'),
                                    word_diff=diff_prefs.get('diff_type') == 'diffWords',
+                                   context_lines=5
                                    )
 
         output = render_template("diff.html",
