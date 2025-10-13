@@ -14,7 +14,6 @@ from .words_and_html import tokenize_words_and_html
 TOKENIZERS = {
     'words': tokenize_words,
     'words_and_html': tokenize_words_and_html,
-    'html_tags': tokenize_words_and_html,  # Alias for backwards compatibility
 }
 
 __all__ = [

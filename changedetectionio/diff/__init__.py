@@ -17,6 +17,10 @@ from .tokenizers import TOKENIZERS, tokenize_words_and_html
 REMOVED_STYLE = "background-color: #fadad7; color: #b30000;"
 ADDED_STYLE = "background-color: #eaf2c2; color: #406619;"
 
+# Darker backgrounds for nested highlighting (changed parts within lines)
+REMOVED_INNER_STYLE = "background-color: #ff867a; color: #111;"
+ADDED_INNER_STYLE = "background-color: #b2e841; color: #444;"
+
 # Diff label text formats (use {content} as placeholder)
 DIFF_LABEL_TEXT_ADDED = '(added) {content}'
 DIFF_LABEL_TEXT_REMOVED = '(removed) {content}'
@@ -86,8 +90,9 @@ def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool
     # Remove the newlines we added for tokenization
     diffs = [(op, text.replace('\n', '')) for op, text in diffs]
 
-    # Apply semantic cleanup for more human-readable diffs
-    dmp.diff_cleanupSemantic(diffs)
+    # DON'T apply semantic cleanup here - it would break token boundaries
+    # (e.g., "63" -> "66" would become "6" + "3" vs "6" + "6")
+    # We want to preserve the tokenizer's word boundaries
 
     # Check if there are any changes
     has_changes = any(op != 0 for op, _ in diffs)
@@ -130,6 +135,98 @@ def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool
                 result_parts.append(f'{label.format(content=content)}{trailing}{line_break}')
 
     return ''.join(result_parts), has_changes
+
+
+def render_nested_line_diff(before_line: str, after_line: str, ignore_junk: bool = False, tokenizer: str = 'words_and_html') -> tuple[str, str, bool]:
+    """
+    Render line-level differences with nested highlighting for changed parts.
+
+    Returns two separate lines:
+    - Before line: light red background with dark red on removed parts
+    - After line: light green background with dark green on added parts
+
+    Args:
+        before_line: Original line text
+        after_line: Modified line text
+        ignore_junk: Ignore whitespace-only changes
+        tokenizer: Name of tokenizer to use from TOKENIZERS registry
+
+    Returns:
+        tuple[str, str, bool]: (before_with_highlights, after_with_highlights, has_changes)
+    """
+    # Normalize whitespace if ignore_junk is enabled
+    if ignore_junk:
+        before_normalized = WHITESPACE_NORMALIZE_RE.sub(' ', before_line)
+        after_normalized = WHITESPACE_NORMALIZE_RE.sub(' ', after_line)
+    else:
+        before_normalized = before_line
+        after_normalized = after_line
+
+    # Use diff-match-patch with word-level tokenization
+    dmp = dmp_module.diff_match_patch()
+
+    # Get the tokenizer function from the registry
+    tokenizer_func = TOKENIZERS.get(tokenizer, tokenize_words_and_html)
+
+    # Tokenize both lines
+    before_tokens = tokenizer_func(before_normalized)
+    after_tokens = tokenizer_func(after_normalized or ' ')
+
+    # Create mappings for linesToChars
+    before_text = '\n'.join(before_tokens)
+    after_text = '\n'.join(after_tokens)
+
+    # Use linesToChars for word-mode diffing
+    lines_result = dmp.diff_linesToChars(before_text, after_text)
+    line_before, line_after, line_array = lines_result
+
+    # Perform diff on the encoded strings
+    diffs = dmp.diff_main(line_before, line_after, False)
+
+    # Convert back to original text
+    dmp.diff_charsToLines(diffs, line_array)
+
+    # Remove the newlines we added for tokenization
+    diffs = [(op, text.replace('\n', '')) for op, text in diffs]
+
+    # DON'T apply semantic cleanup here - it would break token boundaries
+    # (e.g., "63" -> "66" would become "6" + "3" vs "6" + "6")
+    # We want to preserve the tokenizer's word boundaries
+
+    # Check if there are any changes
+    has_changes = any(op != 0 for op, _ in diffs)
+
+    if ignore_junk and not has_changes:
+        return before_line, after_line, False
+
+    # Build the before line (with nested highlighting for removed parts)
+    before_parts = []
+    for op, text in diffs:
+        if op == 0:  # Equal
+            before_parts.append(text)
+        elif op == -1:  # Deletion (in before)
+            before_parts.append(f'<span style="{REMOVED_INNER_STYLE}">{text}</span>')
+        # Skip insertions (op == 1) for the before line
+
+    before_content = ''.join(before_parts)
+
+    # Build the after line (with nested highlighting for added parts)
+    after_parts = []
+    for op, text in diffs:
+        if op == 0:  # Equal
+            after_parts.append(text)
+        elif op == 1:  # Insertion (in after)
+            after_parts.append(f'<span style="{ADDED_INNER_STYLE}">{text}</span>')
+        # Skip deletions (op == -1) for the after line
+
+    after_content = ''.join(after_parts)
+
+    # Wrap in outer spans with light backgrounds
+    before_html = f'<span style="{REMOVED_STYLE}" title="Removed">{before_content}</span>'
+    after_html = f'<span style="{ADDED_STYLE}" title="Replaced">{after_content}</span>'
+
+    return before_html, after_html, has_changes
+
 
 def same_slicer(lst: List[str], start: int, end: int) -> List[str]:
     """Return a slice of the list, or a single element if start == end."""
@@ -231,7 +328,7 @@ def customSequenceMatcher(
             before_lines = same_slicer(before, alo, ahi)
             after_lines = same_slicer(after, blo, bhi)
 
-            # Use word-level diff for single line replacements when enabled
+            # Use inline word-level diff for single line replacements when word_diff is enabled
             if word_diff and len(before_lines) == 1 and len(after_lines) == 1:
                 inline_diff, has_changes = render_inline_word_diff(before_lines[0], after_lines[0], html_colour, ignore_junk, tokenizer=tokenizer)
                 # Check if there are any actual changes (not just whitespace when ignore_junk is enabled)
@@ -239,8 +336,15 @@ def customSequenceMatcher(
                     # No real changes, skip this line
                     continue
                 yield [inline_diff]
+            # Use nested highlighting for line mode with HTML (shows both lines with inner highlights)
+            elif html_colour and len(before_lines) == 1 and len(after_lines) == 1:
+                before_html, after_html, has_changes = render_nested_line_diff(before_lines[0], after_lines[0], ignore_junk, tokenizer=tokenizer)
+                if ignore_junk and not has_changes:
+                    # No real changes, skip this line
+                    continue
+                yield [before_html, after_html]
             else:
-                # Fall back to line-level diff for multi-line changes or when word_diff disabled
+                # Fall back to line-level diff for multi-line changes or text mode
                 if html_colour:
                     yield [DIFF_HTML_LABEL_REMOVED.format(content=line) for line in before_lines] + \
                           [DIFF_HTML_LABEL_REPLACED.format(content=line) for line in after_lines]
@@ -296,6 +400,10 @@ def render_diff(
     newest_lines = [line.rstrip() for line in newest_version_file_contents.splitlines()]
     previous_lines = [line.rstrip() for line in previous_version_file_contents.splitlines()] if previous_version_file_contents else []
 
+    if newest_lines == previous_lines:
+        x=1
+
+
     if patch_format:
         patch = difflib.unified_diff(previous_lines, newest_lines)
         return line_feed_sep.join(patch)
@@ -333,5 +441,10 @@ __all__ = [
     'render_diff',
     'customSequenceMatcher',
     'render_inline_word_diff',
+    'render_nested_line_diff',
     'TOKENIZERS',
+    'REMOVED_STYLE',
+    'ADDED_STYLE',
+    'REMOVED_INNER_STYLE',
+    'ADDED_INNER_STYLE',
 ]
