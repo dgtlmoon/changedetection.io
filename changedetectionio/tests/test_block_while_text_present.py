@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks
+from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 from changedetectionio import html_tools
 
 
@@ -69,12 +69,8 @@ def test_check_block_changedetection_text_NOT_present(client, live_server, measu
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     # Give the thread time to pick it up
@@ -152,5 +148,4 @@ def test_check_block_changedetection_text_NOT_present(client, live_server, measu
     assert b'blocked_line_numbers = [10]' in res.data
 
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)

@@ -127,6 +127,11 @@ def extract_UUID_from_client(client):
     uuid = m.group(1)
     return uuid.strip()
 
+def delete_all_watches(client=None):
+    uuids = list(client.application.config.get('DATASTORE').data['watching'])
+    for uuid in uuids:
+        client.application.config.get('DATASTORE').delete(uuid)
+
 
 def wait_for_all_checks(client=None):
     """
@@ -135,8 +140,6 @@ def wait_for_all_checks(client=None):
     """
     from changedetectionio.flask_app import update_q as global_update_q
     from changedetectionio import worker_handler
-
-    logger = logging.getLogger()
     empty_since = None
     attempt = 0
     max_attempts = 150  # Still reasonable upper bound
@@ -144,9 +147,9 @@ def wait_for_all_checks(client=None):
     while attempt < max_attempts:
         # Start with fast checks, slow down if needed
         if attempt < 10:
-            time.sleep(0.1)  # Very fast initial checks
+            time.sleep(0.2)  # Very fast initial checks
         elif attempt < 30:
-            time.sleep(0.3)  # Medium speed
+            time.sleep(0.4)  # Medium speed
         else:
             time.sleep(0.8)  # Slower for persistent issues
 
@@ -185,6 +188,10 @@ def new_live_server_setup(live_server):
         ctype = request.args.get('content_type')
         status_code = request.args.get('status_code')
         content = request.args.get('content') or None
+        delay = int(request.args.get('delay', 0))
+
+        if delay:
+            time.sleep(delay)
 
         # Used to just try to break the header detection
         uppercase_headers = request.args.get('uppercase_headers')
@@ -322,4 +329,3 @@ def new_live_server_setup(live_server):
         return resp
 
     live_server.start()
-

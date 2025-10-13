@@ -5,7 +5,7 @@ import time
 
 from flask import url_for
 
-from .util import live_server_setup, wait_for_all_checks
+from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 
 
 # def test_setup(client, live_server, measure_memory_usage):
@@ -28,7 +28,7 @@ https://example.com tag1, other tag"""
     assert b"3 Imported" in res.data
     assert b"tag1" in res.data
     assert b"other tag" in res.data
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
     # Clear flask alerts
     res = client.get( url_for("watchlist.index"))
@@ -53,7 +53,7 @@ def xtest_import_skip_url(client, live_server, measure_memory_usage):
     assert b"1 Imported" in res.data
     assert b"ht000000broken" in res.data
     assert b"1 Skipped" in res.data
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
     # Clear flask alerts
     res = client.get( url_for("watchlist.index"))
 
@@ -119,7 +119,7 @@ def test_import_distillio(client, live_server, measure_memory_usage):
     assert b"nice stuff" in res.data
     assert b"nerd-news" in res.data
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
     # Clear flask alerts
     res = client.get(url_for("watchlist.index"))
 
@@ -169,8 +169,7 @@ def test_import_custom_xlsx(client, live_server, measure_memory_usage):
             assert filters[0] == '/html[1]/body[1]/div[4]/div[1]/div[1]/div[1]||//*[@id=\'content\']/div[3]/div[1]/div[1]||//*[@id=\'content\']/div[1]'
             assert watch.get('time_between_check') == {'weeks': 0, 'days': 1, 'hours': 6, 'minutes': 24, 'seconds': 0}
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 def test_import_watchete_xlsx(client, live_server, measure_memory_usage):
     """Test can upload a excel spreadsheet and the watches are created correctly"""
@@ -214,5 +213,4 @@ def test_import_watchete_xlsx(client, live_server, measure_memory_usage):
         if watch.get('title') == 'system default website':
             assert watch.get('fetch_backend') == 'system' # uses default if blank
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)

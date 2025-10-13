@@ -253,6 +253,30 @@ jobs:
           docker logs test-cdio-basic-tests > output-logs/test-cdio-basic-tests-stdout-${{ env.PYTHON_VERSION }}.txt
           docker logs test-cdio-basic-tests 2> output-logs/test-cdio-basic-tests-stderr-${{ env.PYTHON_VERSION }}.txt
 
+      - name: Extract and display memory test report
+        if: always()
+        run: |
+          # Extract test-memory.log from the container
+          echo "Extracting test-memory.log from container..."
+          docker cp test-cdio-basic-tests:/app/changedetectionio/test-memory.log output-logs/test-memory-${{ env.PYTHON_VERSION }}.log || echo "test-memory.log not found in container"
+
+          # Display the memory log contents for immediate visibility in workflow output
+          echo "=== Top 10 Highest Peak Memory Tests ==="
+          if [ -f output-logs/test-memory-${{ env.PYTHON_VERSION }}.log ]; then
+            # Sort by peak memory value (extract number before MB and sort numerically, reverse order)
+            grep "Peak memory:" output-logs/test-memory-${{ env.PYTHON_VERSION }}.log | \
+              sed 's/.*Peak memory: //' | \
+              paste -d'|' - <(grep "Peak memory:" output-logs/test-memory-${{ env.PYTHON_VERSION }}.log) | \
+              sort -t'|' -k1 -nr | \
+              cut -d'|' -f2 | \
+              head -10
+            echo ""
+            echo "=== Full Memory Test Report ==="
+            cat output-logs/test-memory-${{ env.PYTHON_VERSION }}.log
+          else
+            echo "No memory log available"
+          fi
+
       - name: Store everything including test-datastore
         if: always()
         uses: actions/upload-artifact@v4

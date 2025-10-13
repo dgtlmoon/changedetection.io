@@ -6,7 +6,7 @@ from loguru import logger
 
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT
 from changedetectionio.content_fetchers.base import manage_user_agent
-from changedetectionio.safe_jinja import render as jinja_render
+from changedetectionio.jinja2_custom import render as jinja_render
 
 
 

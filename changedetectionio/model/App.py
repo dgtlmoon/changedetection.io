@@ -55,11 +55,12 @@ class model(dict):
                     'rss_access_token': None,
                     'rss_content_format': RSS_FORMAT_TYPES[0][0],
                     'rss_hide_muted_watches': True,
+                    'rss_reader_mode': False,
+                    'scheduler_timezone_default': None,  # Default IANA timezone name
                     'schema_version' : 0,
                     'shared_diff_access': False,
                     'strip_ignored_lines': False,
                     'tags': {}, #@todo use Tag.model initialisers
-                    'timezone': None, # Default IANA timezone name
                     'webdriver_delay': None , # Extra delay in seconds before extracting text
                     'ui': {
                         'use_page_title_in_list': True,

@@ -4,7 +4,7 @@ import os
 from flask import url_for
 from ..util import live_server_setup, wait_for_all_checks
 
-# def test_setup(client, live_server):
+# def test_setup(client, live_server, measure_memory_usage):
    #  live_server_setup(live_server) # Setup on conftest per function
 
 
@@ -142,7 +142,7 @@ def test_basic_browserstep(client, live_server, measure_memory_usage):
     assert b"testheader: yes" in res.data
     assert b"user-agent: mycustomagent" in res.data
 
-def test_non_200_errors_report_browsersteps(client, live_server):
+def test_non_200_errors_report_browsersteps(client, live_server, measure_memory_usage):
 
 
     four_o_four_url =  url_for('test_endpoint', status_code=404, _external=True)

@@ -64,6 +64,19 @@ class Fetcher():
     # Time ONTOP of the system defined env minimum time
     render_extract_delay = 0
 
+    def clear_content(self):
+        """
+        Explicitly clear all content from memory to free up heap space.
+        Call this after content has been saved to disk.
+        """
+        self.content = None
+        if hasattr(self, 'raw_content'):
+            self.raw_content = None
+        self.screenshot = None
+        self.xpath_data = None
+        # Keep headers and status_code as they're small
+        logger.trace("Fetcher content cleared from memory")
+
     @abstractmethod
     def get_error(self):
         return self.error
@@ -128,7 +141,7 @@ class Fetcher():
     async def iterate_browser_steps(self, start_url=None):
         from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
         from playwright._impl._errors import TimeoutError, Error
-        from changedetectionio.safe_jinja import render as jinja_render
+        from changedetectionio.jinja2_custom import render as jinja_render
         step_n = 0
 
         if self.browser_steps is not None and len(self.browser_steps):

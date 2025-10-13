@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks
+from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 
 
 def set_original_ignore_response():
@@ -79,12 +79,8 @@ def test_unique_lines_functionality(client, live_server, measure_memory_usage):
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Add our URL to the import page
@@ -118,8 +114,7 @@ def test_unique_lines_functionality(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' in res.data
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 def test_sort_lines_functionality(client, live_server, measure_memory_usage):
     
@@ -128,12 +123,8 @@ def test_sort_lines_functionality(client, live_server, measure_memory_usage):
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Add our URL to the import page
@@ -168,8 +159,7 @@ def test_sort_lines_functionality(client, live_server, measure_memory_usage):
     assert res.data.find(b'A uppercase') < res.data.find(b'Z last')
     assert res.data.find(b'Some initial text') < res.data.find(b'Which is across multiple lines')
     
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 
 def test_extra_filters(client, live_server, measure_memory_usage):
@@ -179,12 +169,8 @@ def test_extra_filters(client, live_server, measure_memory_usage):
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Add our URL to the import page
@@ -216,5 +202,4 @@ def test_extra_filters(client, live_server, measure_memory_usage):
     # still should remain unsorted ('A - sortable line') stays at the end
     assert res.data.find(b'A - sortable line') > res.data.find(b'Which is across multiple lines')
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)

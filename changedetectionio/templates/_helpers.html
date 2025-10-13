@@ -14,13 +14,31 @@
                 {% if field.errors is mapping and 'form' in field.errors %}
                     {#  and subfield form errors, such as used in RequiredFormField() for TimeBetweenCheckForm sub form #}
                     {% set errors = field.errors['form'] %}
+                    {% for error in errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                {% elif field.type == 'FieldList' %}
+                    {# Handle FieldList of FormFields - errors is a list of dicts, one per entry #}
+                    {% for idx, entry_errors in field.errors|enumerate %}
+                        {% if entry_errors is mapping and entry_errors %}
+                            {# Only show entries that have actual errors #}
+                            <li><strong>Entry {{ idx + 1 }}:</strong>
+                                <ul>
+                                    {% for field_name, messages in entry_errors.items() %}
+                                        {% for message in messages %}
+                                            <li>{{ field_name }}: {{ message }}</li>
+                                        {% endfor %}
+                                    {% endfor %}
+                                </ul>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
                 {% else %}
                     {#  regular list of errors with this field #}
-                    {% set errors = field.errors %}
+                    {% for error in field.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
                 {% endif %}
-                {% for error in errors %}
-                    <li>{{ error }}</li>
-                {% endfor %}
             </ul>
         {% endif %}
     </div>
@@ -91,6 +109,39 @@
 
 {% macro render_button(field) %}
   {{ field(**kwargs)|safe }}
+{% endmacro %}
+
+{% macro render_fieldlist_with_inline_errors(fieldlist) %}
+  {# Specialized macro for FieldList(FormField(...)) that renders errors inline with each field #}
+  <div {% if fieldlist.errors %} class="error" {% endif %}>{{ fieldlist.label }}</div>
+  <div {% if fieldlist.errors %} class="error" {% endif %}>
+    <ul id="{{ fieldlist.id }}">
+      {% for entry in fieldlist %}
+        <li {% if entry.errors %} class="error" {% endif %}>
+          <label for="{{ entry.id }}" {% if entry.errors %} class="error" {% endif %}>{{ fieldlist.label.text }}-{{ loop.index0 }}</label>
+          <table id="{{ entry.id }}" {% if entry.errors %} class="error" {% endif %}>
+            <tbody>
+              {% for subfield in entry %}
+                <tr {% if subfield.errors %} class="error" {% endif %}>
+                  <th {% if subfield.errors %} class="error" {% endif %}><label for="{{ subfield.id }}" {% if subfield.errors %} class="error" {% endif %}>{{ subfield.label.text }}</label></th>
+                  <td {% if subfield.errors %} class="error" {% endif %}>
+                    {{ subfield(**kwargs)|safe }}
+                    {% if subfield.errors %}
+                      <ul class="errors">
+                        {% for error in subfield.errors %}
+                          <li class="error">{{ error }}</li>
+                        {% endfor %}
+                      </ul>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
 {% endmacro %}
 
 {% macro render_conditions_fieldlist_of_formfields_as_table(fieldlist, table_id="rulesTable") %}

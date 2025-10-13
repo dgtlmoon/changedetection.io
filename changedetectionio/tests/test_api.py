@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks
+from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 
 import json
 import uuid
@@ -276,8 +276,7 @@ def test_access_denied(client, live_server, measure_memory_usage):
     assert res.status_code == 200
 
     # Cleanup everything
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
     res = client.post(
         url_for("settings.settings_page"),
@@ -385,8 +384,7 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
     assert b'Additional properties are not allowed' in res.data
 
     # Cleanup everything
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 
 def test_api_import(client, live_server, measure_memory_usage):

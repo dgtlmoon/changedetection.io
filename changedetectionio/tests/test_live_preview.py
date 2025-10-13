@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from flask import url_for
-from changedetectionio.tests.util import live_server_setup, wait_for_all_checks, extract_UUID_from_client
+from changedetectionio.tests.util import live_server_setup, wait_for_all_checks, extract_UUID_from_client, delete_all_watches
 
 
 def set_response():
@@ -75,5 +75,4 @@ def test_content_filter_live_preview(client, live_server, measure_memory_usage):
     assert reply.get('ignore_line_numbers') == [2]  # Ignored - "socks" on line 2
     assert reply.get('trigger_line_numbers') == [1]  # Triggers "Awesome" in line 1
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)

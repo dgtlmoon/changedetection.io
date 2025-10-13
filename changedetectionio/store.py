@@ -976,6 +976,10 @@ class ChangeDetectionStore:
         if self.data['settings']['application'].get('extract_title_as_title'):
             self.data['settings']['application']['ui']['use_page_title_in_list'] = self.data['settings']['application'].get('extract_title_as_title')
 
+    def update_21(self):
+        self.data['settings']['application']['scheduler_timezone_default'] = self.data['settings']['application'].get('timezone')
+        del self.data['settings']['application']['timezone']
+
 
     def add_notification_url(self, notification_url):
         

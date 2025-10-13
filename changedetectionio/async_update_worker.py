@@ -334,6 +334,10 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                             if update_handler.fetcher.content or (not update_handler.fetcher.content and empty_pages_are_a_change):
                                 watch.save_last_fetched_html(contents=update_handler.fetcher.content, timestamp=int(fetch_start_time))
 
+                            # Explicitly delete large content variables to free memory IMMEDIATELY after saving
+                            # These are no longer needed after being saved to history
+                            del contents
+
                             # Send notifications on second+ check
                             if watch.history_n >= 2:
                                 logger.info(f"Change detected in UUID {uuid} - {watch['url']}")
@@ -372,6 +376,12 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                 datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - fetch_start_time, 3),
                                                                'check_count': count})
 
+                # NOW clear fetcher content - after all processing is complete
+                # This is the last point where we need the fetcher data
+                if update_handler and hasattr(update_handler, 'fetcher') and update_handler.fetcher:
+                    update_handler.fetcher.clear_content()
+                    logger.debug(f"Cleared fetcher content for UUID {uuid}")
+
         except Exception as e:
             logger.error(f"Worker {worker_id} unexpected error processing {uuid}: {e}")
             logger.error(f"Worker {worker_id} traceback:", exc_info=True)
@@ -392,7 +402,28 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                         #logger.info(f"Worker {worker_id} sending completion signal for UUID {watch['uuid']}")
                         watch_check_update.send(watch_uuid=watch['uuid'])
 
-                    update_handler = None
+                    # Explicitly clean up update_handler and all its references
+                    if update_handler:
+                        # Clear fetcher content using the proper method
+                        if hasattr(update_handler, 'fetcher') and update_handler.fetcher:
+                            update_handler.fetcher.clear_content()
+
+                        # Clear processor references
+                        if hasattr(update_handler, 'content_processor'):
+                            update_handler.content_processor = None
+
+                        update_handler = None
+
+                    # Clear local contents variable if it still exists
+                    if 'contents' in locals():
+                        del contents
+
+                    # Note: We don't set watch = None here because:
+                    # 1. watch is just a local reference to datastore.data['watching'][uuid]
+                    # 2. Setting it to None doesn't affect the datastore
+                    # 3. GC can't collect the object anyway (still referenced by datastore)
+                    # 4. It would just cause confusion
+
                     logger.debug(f"Worker {worker_id} completed watch {uuid} in {time.time()-fetch_start_time:.2f}s")
                 except Exception as cleanup_error:
                     logger.error(f"Worker {worker_id} error during cleanup: {cleanup_error}")

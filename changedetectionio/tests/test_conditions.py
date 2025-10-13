@@ -3,7 +3,7 @@ import json
 import time
 
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks
+from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 from ..model import CONDITIONS_MATCH_LOGIC_DEFAULT
 
 
@@ -47,11 +47,11 @@ def set_number_out_of_range_response(number="150"):
         f.write(test_return_data)
 
 
-# def test_setup(client, live_server):
+# def test_setup(client, live_server, measure_memory_usage):
     """Test that both text and number conditions work together with AND logic."""
    #  live_server_setup(live_server) # Setup on conftest per function
 
-def test_conditions_with_text_and_number(client, live_server):
+def test_conditions_with_text_and_number(client, live_server, measure_memory_usage):
     """Test that both text and number conditions work together with AND logic."""
     
     set_original_response("50")
@@ -60,12 +60,8 @@ def test_conditions_with_text_and_number(client, live_server):
     test_url = url_for('test_endpoint', _external=True)
 
     # Add our URL to the import page
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Configure the watch with two conditions connected with AND:
@@ -143,23 +139,18 @@ def test_conditions_with_text_and_number(client, live_server):
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' not in res.data
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 # The 'validate' button next to each rule row
-def test_condition_validate_rule_row(client, live_server):
+def test_condition_validate_rule_row(client, live_server, measure_memory_usage):
 
     set_original_response("50")
 
     test_url = url_for('test_endpoint', _external=True)
 
     # Add our URL to the import page
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
@@ -230,12 +221,8 @@ def test_wordcount_conditions_plugin(client, live_server, measure_memory_usage):
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)

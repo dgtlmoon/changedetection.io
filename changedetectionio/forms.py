@@ -487,9 +487,8 @@ class ValidateJinja2Template(object):
     """
     def __call__(self, form, field):
         from changedetectionio import notification
-
+        from changedetectionio.jinja2_custom import create_jinja_env
         from jinja2 import BaseLoader, TemplateSyntaxError, UndefinedError
-        from jinja2.sandbox import ImmutableSandboxedEnvironment
         from jinja2.meta import find_undeclared_variables
         import jinja2.exceptions
 
@@ -497,9 +496,11 @@ class ValidateJinja2Template(object):
         joined_data = ' '.join(map(str, field.data)) if isinstance(field.data, list) else f"{field.data}"
 
         try:
-            jinja2_env = ImmutableSandboxedEnvironment(loader=BaseLoader, extensions=['jinja2_time.TimeExtension'])
+            # Use the shared helper to create a properly configured environment
+            jinja2_env = create_jinja_env(loader=BaseLoader)
+
+            # Add notification tokens for validation
             jinja2_env.globals.update(notification.valid_tokens)
-            # Extra validation tokens provided on the form_class(... extra_tokens={}) setup
             if hasattr(field, 'extra_notification_tokens'):
                 jinja2_env.globals.update(field.extra_notification_tokens)
 
@@ -511,6 +512,7 @@ class ValidateJinja2Template(object):
         except jinja2.exceptions.SecurityError as e:
             raise ValidationError(f"This is not a valid Jinja2 template: {e}") from e
 
+        # Check for undeclared variables
         ast = jinja2_env.parse(joined_data)
         undefined = ", ".join(find_undeclared_variables(ast))
         if undefined:
@@ -678,6 +680,51 @@ class ValidateCSSJSONXPATHInput(object):
                 except:
                     raise ValidationError("A system-error occurred when validating your jq expression")
 
+class ValidateSimpleURL:
+    """Validate that the value can be parsed by urllib.parse.urlparse() and has a scheme/netloc."""
+    def __init__(self, message=None):
+        self.message = message or "Invalid URL."
+
+    def __call__(self, form, field):
+        data = (field.data or "").strip()
+        if not data:
+            return  # empty is OK — pair with validators.Optional()
+        from urllib.parse import urlparse
+
+        parsed = urlparse(data)
+        if not parsed.scheme or not parsed.netloc:
+            raise ValidationError(self.message)
+
+class ValidateStartsWithRegex(object):
+    def __init__(self, regex, *, flags=0, message=None, allow_empty=True, split_lines=True):
+        # compile with given flags (we’ll pass re.IGNORECASE below)
+        self.pattern = re.compile(regex, flags) if isinstance(regex, str) else regex
+        self.message = message
+        self.allow_empty = allow_empty
+        self.split_lines = split_lines
+
+    def __call__(self, form, field):
+        data = field.data
+        if not data:
+            return
+
+        # normalize into list of lines
+        if isinstance(data, str) and self.split_lines:
+            lines = data.splitlines()
+        elif isinstance(data, (list, tuple)):
+            lines = data
+        else:
+            lines = [data]
+
+        for line in lines:
+            stripped = line.strip()
+            if not stripped:
+                if self.allow_empty:
+                    continue
+                raise ValidationError(self.message or "Empty value not allowed.")
+            if not self.pattern.match(stripped):
+                raise ValidationError(self.message or "Invalid value.")
+
 class quickWatchForm(Form):
     from . import processors
 
@@ -705,7 +752,7 @@ class commonSettingsForm(Form):
     notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
     processor = RadioField( label=u"Processor - What do you want to achieve?", choices=processors.available_processors(), default="text_json_diff")
-    timezone = StringField("Timezone for watch schedule", render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
+    scheduler_timezone_default = StringField("Default timezone for watch check scheduler", render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
     webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1, message="Should contain one or more seconds")])
 
 
@@ -795,7 +842,7 @@ class processor_text_json_diff_form(commonSettingsForm):
         if not super().validate():
             return False
 
-        from changedetectionio.safe_jinja import render as jinja_render
+        from changedetectionio.jinja2_custom import render as jinja_render
         result = True
 
         # Fail form validation when a body is set for a GET
@@ -858,23 +905,36 @@ class processor_text_json_diff_form(commonSettingsForm):
     ):
         super().__init__(formdata, obj, prefix, data, meta, **kwargs)
         if kwargs and kwargs.get('default_system_settings'):
-            default_tz = kwargs.get('default_system_settings').get('application', {}).get('timezone')
+            default_tz = kwargs.get('default_system_settings').get('application', {}).get('scheduler_timezone_default')
             if default_tz:
                 self.time_schedule_limit.form.timezone.render_kw['placeholder'] = default_tz
 
 
 
 class SingleExtraProxy(Form):
-
     # maybe better to set some <script>var..
     proxy_name = StringField('Name', [validators.Optional()], render_kw={"placeholder": "Name"})
-    proxy_url = StringField('Proxy URL', [validators.Optional()], render_kw={"placeholder": "socks5:// or regular proxy http://user:pass@...:3128", "size":50})
-    # @todo do the validation here instead
+    proxy_url = StringField('Proxy URL', [
+        validators.Optional(),
+        ValidateStartsWithRegex(
+            regex=r'^(https?|socks5)://',  # ✅ main pattern
+            flags=re.IGNORECASE,  # ✅ makes it case-insensitive
+            message='Proxy URLs must start with http://, https:// or socks5://',
+        ),
+        ValidateSimpleURL()
+    ], render_kw={"placeholder": "socks5:// or regular proxy http://user:pass@...:3128", "size":50})
 
 class SingleExtraBrowser(Form):
     browser_name = StringField('Name', [validators.Optional()], render_kw={"placeholder": "Name"})
-    browser_connection_url = StringField('Browser connection URL', [validators.Optional()], render_kw={"placeholder": "wss://brightdata... wss://oxylabs etc", "size":50})
-    # @todo do the validation here instead
+    browser_connection_url = StringField('Browser connection URL', [
+        validators.Optional(),
+        ValidateStartsWithRegex(
+            regex=r'^(wss?|ws)://',
+            flags=re.IGNORECASE,
+            message='Browser URLs must start with wss:// or ws://'
+        ),
+        ValidateSimpleURL()
+    ], render_kw={"placeholder": "wss://brightdata... wss://oxylabs etc", "size":50})
 
 class DefaultUAInputForm(Form):
     html_requests = StringField('Plaintext requests', validators=[validators.Optional()], render_kw={"placeholder": "<default>"})
@@ -885,7 +945,7 @@ class DefaultUAInputForm(Form):
 class globalSettingsRequestForm(Form):
     time_between_check = RequiredFormField(TimeBetweenCheckForm)
     time_schedule_limit = FormField(ScheduleLimitForm)
-    proxy = RadioField('Proxy')
+    proxy = RadioField('Default proxy')
     jitter_seconds = IntegerField('Random jitter seconds ± check',
                                   render_kw={"style": "width: 5em;"},
                                   validators=[validators.NumberRange(min=0, message="Should contain zero or more seconds")])
@@ -894,7 +954,12 @@ class globalSettingsRequestForm(Form):
                           render_kw={"style": "width: 5em;"},
                           validators=[validators.NumberRange(min=1, max=50,
                                                              message="Should be between 1 and 50")])
-    
+
+    timeout = IntegerField('Requests timeout in seconds',
+                           render_kw={"style": "width: 5em;"},
+                           validators=[validators.NumberRange(min=1, max=999,
+                                                              message="Should be between 1 and 999")])
+
     extra_proxies = FieldList(FormField(SingleExtraProxy), min_entries=5)
     extra_browsers = FieldList(FormField(SingleExtraBrowser), min_entries=5)
 
@@ -940,6 +1005,10 @@ class globalSettingsApplicationForm(commonSettingsForm):
     strip_ignored_lines = BooleanField('Strip ignored lines')
     rss_hide_muted_watches = BooleanField('Hide muted watches from RSS feed', default=True,
                                       validators=[validators.Optional()])
+
+    rss_reader_mode = BooleanField('RSS reader mode ', default=False,
+                                      validators=[validators.Optional()])
+
     filter_failure_notification_threshold_attempts = IntegerField('Number of times the filter can be missing before sending a notification',
                                                                   render_kw={"style": "width: 5em;"},
                                                                   validators=[validators.NumberRange(min=0,

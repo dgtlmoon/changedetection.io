@@ -1,6 +1,5 @@
-from datetime import timedelta, datetime
+import arrow
 from enum import IntEnum
-from zoneinfo import ZoneInfo
 
 
 class Weekday(IntEnum):
@@ -40,54 +39,65 @@ def am_i_inside_time(
 
     # Parse the start time
     try:
-        target_time = datetime.strptime(time_str, '%H:%M').time()
-    except ValueError:
+        hour, minute = map(int, time_str.split(':'))
+        if not (0 <= hour <= 23 and 0 <= minute <= 59):
+            raise ValueError
+    except (ValueError, AttributeError):
         raise ValueError(f"Invalid time_str: '{time_str}'. Must be in 'HH:MM' format.")
 
-    # Define the timezone
-    try:
-        tz = ZoneInfo(timezone_str)
-    except Exception:
-        raise ValueError(f"Invalid timezone_str: '{timezone_str}'. Must be a valid timezone identifier.")
-
     # Get the current time in the specified timezone
-    now_tz = datetime.now(tz)
+    try:
+        now_tz = arrow.now(timezone_str.strip())
+    except Exception as e:
+        raise ValueError(f"Invalid timezone_str: '{timezone_str}'. Must be a valid timezone identifier.")
 
     # Check if the current day matches the target day or overlaps due to duration
     current_weekday = now_tz.weekday()
-    start_datetime_tz = datetime.combine(now_tz.date(), target_time, tzinfo=tz)
+    # Create start datetime for today in target timezone
+    start_datetime_tz = now_tz.replace(hour=hour, minute=minute, second=0, microsecond=0)
 
     # Handle previous day's overlap
     if target_weekday == (current_weekday - 1) % 7:
         # Calculate start and end times for the overlap from the previous day
-        start_datetime_tz -= timedelta(days=1)
-        end_datetime_tz = start_datetime_tz + timedelta(minutes=duration)
+        start_datetime_tz = start_datetime_tz.shift(days=-1)
+        end_datetime_tz = start_datetime_tz.shift(minutes=duration)
         if start_datetime_tz <= now_tz < end_datetime_tz:
             return True
 
     # Handle current day's range
     if target_weekday == current_weekday:
-        end_datetime_tz = start_datetime_tz + timedelta(minutes=duration)
+        end_datetime_tz = start_datetime_tz.shift(minutes=duration)
         if start_datetime_tz <= now_tz < end_datetime_tz:
             return True
 
     # Handle next day's overlap
     if target_weekday == (current_weekday + 1) % 7:
-        end_datetime_tz = start_datetime_tz + timedelta(minutes=duration)
-        if now_tz < start_datetime_tz and now_tz + timedelta(days=1) < end_datetime_tz:
+        end_datetime_tz = start_datetime_tz.shift(minutes=duration)
+        if now_tz < start_datetime_tz and now_tz.shift(days=1) < end_datetime_tz:
             return True
 
     return False
 
 
 def is_within_schedule(time_schedule_limit, default_tz="UTC"):
+    """
+    Check if the current time is within a scheduled time window.
+
+    Parameters:
+        time_schedule_limit (dict): Schedule configuration with timezone, day settings, etc.
+        default_tz (str): Default timezone to use if not specified. Default is 'UTC'.
+
+    Returns:
+        bool: True if current time is within the schedule, False otherwise.
+    """
     if time_schedule_limit and time_schedule_limit.get('enabled'):
         # Get the timezone the time schedule is in, so we know what day it is there
         tz_name = time_schedule_limit.get('timezone')
         if not tz_name:
             tz_name = default_tz
 
-        now_day_name_in_tz = datetime.now(ZoneInfo(tz_name.strip())).strftime('%A')
+        # Get current day name in the target timezone
+        now_day_name_in_tz = arrow.now(tz_name.strip()).format('dddd')
         selected_day_schedule = time_schedule_limit.get(now_day_name_in_tz.lower())
         if not selected_day_schedule.get('enabled'):
             return False

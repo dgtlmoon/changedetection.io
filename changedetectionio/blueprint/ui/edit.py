@@ -187,7 +187,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
             tz_name = time_schedule_limit.get('timezone')
             if not tz_name:
-                tz_name = datastore.data['settings']['application'].get('timezone', 'UTC')
+                tz_name = datastore.data['settings']['application'].get('scheduler_timezone_default', os.getenv('TZ', 'UTC').strip())
 
             if time_schedule_limit and time_schedule_limit.get('enabled'):
                 try:
@@ -257,7 +257,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 'system_has_webdriver_configured': os.getenv('WEBDRIVER_URL'),
                 'ui_edit_stats_extras': collect_ui_edit_stats_extras(watch),
                 'visual_selector_data_ready': datastore.visualselector_data_is_ready(watch_uuid=uuid),
-                'timezone_default_config': datastore.data['settings']['application'].get('timezone'),
+                'timezone_default_config': datastore.data['settings']['application'].get('scheduler_timezone_default'),
                 'using_global_webdriver_wait': not default['webdriver_delay'],
                 'uuid': uuid,
                 'watch': watch,

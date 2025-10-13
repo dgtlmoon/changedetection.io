@@ -5,7 +5,7 @@ import re
 from flask import url_for
 from changedetectionio.tests.util import set_original_response, set_modified_response, set_more_modified_response, live_server_setup, \
     wait_for_all_checks, \
-    set_longer_modified_response
+    set_longer_modified_response, delete_all_watches
 from changedetectionio.tests.util import extract_UUID_from_client
 import logging
 import base64
@@ -85,8 +85,7 @@ def test_check_notification_email_formats_default_HTML(client, live_server, meas
     assert '(added) So let\'s see what happens.\r\n' in msg  # The plaintext part with \r\n
     assert 'Content-Type: text/html' in msg
     assert '(added) So let\'s see what happens.<br>' in msg  # the html part
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 
 def test_check_notification_email_formats_default_Text_override_HTML(client, live_server, measure_memory_usage):
@@ -179,5 +178,4 @@ def test_check_notification_email_formats_default_Text_override_HTML(client, liv
     assert '&lt;' not in msg
     assert 'Content-Type: text/html' in msg
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
