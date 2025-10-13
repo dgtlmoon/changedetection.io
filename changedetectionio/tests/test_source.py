@@ -48,6 +48,7 @@ def test_check_basic_change_detection_functionality_source(client, live_server, 
     # With diff-match-patch, HTML tags are properly tokenized and excluded from diff spans
     # Only "modified" is shown as added, while <head> and <title> tags remain unchanged
     assert b'&lt;head&gt;&lt;title&gt;' in res.data
+
     assert b'title="Added"' in res.data
     assert b'>modified<' in res.data
     assert b'head title&lt;/title&gt;&lt;/head&gt;' in res.data

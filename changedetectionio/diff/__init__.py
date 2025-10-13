@@ -1,7 +1,16 @@
+"""
+Diff rendering module for change detection.
+
+This module provides functions for rendering differences between text content,
+with support for various output formats and tokenization strategies.
+"""
+
 import difflib
 from typing import List, Iterator, Union
 import diff_match_patch as dmp_module
 import re
+
+from .tokenizers import TOKENIZERS, tokenize_words_and_html
 
 # Remember! gmail, outlook etc dont support <style> must be inline.
 # Gmail: strips <ins> and <del> tags entirely.
@@ -23,7 +32,8 @@ DIFF_HTML_LABEL_INSERTED = f'<span style="{ADDED_STYLE}" title="Inserted">{{cont
 # Compiled regex patterns for performance
 WHITESPACE_NORMALIZE_RE = re.compile(r'\s+')
 
-def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool = False, ignore_junk: bool = False, markdown_style: str = None) -> tuple[str, bool]:
+
+def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool = False, ignore_junk: bool = False, markdown_style: str = None, tokenizer: str = 'words_and_html') -> tuple[str, bool]:
     """
     Render word-level differences between two lines inline using diff-match-patch library.
 
@@ -33,6 +43,7 @@ def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool
         html_colour: Use HTML background colors for differences
         ignore_junk: Ignore whitespace-only changes
         markdown_style: Unused (kept for backwards compatibility)
+        tokenizer: Name of tokenizer to use from TOKENIZERS registry (default: 'words_and_html')
 
     Returns:
         tuple[str, bool]: (diff output with inline word-level highlighting, has_changes flag)
@@ -50,42 +61,12 @@ def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool
     # Strategy: Use linesToChars to treat words as atomic units
     dmp = dmp_module.diff_match_patch()
 
-    # Split into words while preserving boundaries
-    def tokenize_with_boundaries(text):
-        """Split text into words and boundaries (spaces, HTML tags)"""
-        tokens = []
-        current = ''
-        in_tag = False
+    # Get the tokenizer function from the registry
+    tokenizer_func = TOKENIZERS.get(tokenizer, tokenize_words_and_html)
 
-        for char in text:
-            if char == '<':
-                # Start of HTML tag
-                if current:
-                    tokens.append(current)
-                    current = ''
-                current = '<'
-                in_tag = True
-            elif char == '>' and in_tag:
-                # End of HTML tag
-                current += '>'
-                tokens.append(current)
-                current = ''
-                in_tag = False
-            elif char.isspace() and not in_tag:
-                # Space outside of tag
-                if current:
-                    tokens.append(current)
-                    current = ''
-                tokens.append(char)
-            else:
-                current += char
-
-        if current:
-            tokens.append(current)
-        return tokens
-
-    before_tokens = tokenize_with_boundaries(before_normalized)
-    after_tokens = tokenize_with_boundaries(after_normalized or ' ')
+    # Tokenize both lines using the selected tokenizer
+    before_tokens = tokenizer_func(before_normalized)
+    after_tokens = tokenizer_func(after_normalized or ' ')
 
     # Create mappings for linesToChars (using it for word-mode)
     # Join tokens with newline so each "line" is a token
@@ -166,7 +147,8 @@ def customSequenceMatcher(
     word_diff: bool = False,
     context_lines: int = 0,
     case_insensitive: bool = False,
-    ignore_junk: bool = False
+    ignore_junk: bool = False,
+    tokenizer: str = 'words_and_html'
 ) -> Iterator[List[str]]:
     """
     Compare two sequences and yield differences based on specified parameters.
@@ -180,10 +162,11 @@ def customSequenceMatcher(
         include_replaced (bool): Include replaced parts
         include_change_type_prefix (bool): Add prefixes to indicate change types
         html_colour (bool): Use HTML background colors for differences
-        word_diff (bool): Use word-level diffing for replaced lines
+        word_diff (bool): Use word-level diffing for replaced lines (controls inline rendering)
         context_lines (int): Number of unchanged lines to show around changes (like grep -C)
         case_insensitive (bool): Perform case-insensitive comparison
         ignore_junk (bool): Ignore whitespace-only changes
+        tokenizer (str): Name of tokenizer to use from TOKENIZERS registry (default: 'words_and_html')
 
     Yields:
         List[str]: Differences between sequences
@@ -250,7 +233,7 @@ def customSequenceMatcher(
 
             # Use word-level diff for single line replacements when enabled
             if word_diff and len(before_lines) == 1 and len(after_lines) == 1:
-                inline_diff, has_changes = render_inline_word_diff(before_lines[0], after_lines[0], html_colour, ignore_junk)
+                inline_diff, has_changes = render_inline_word_diff(before_lines[0], after_lines[0], html_colour, ignore_junk, tokenizer=tokenizer)
                 # Check if there are any actual changes (not just whitespace when ignore_junk is enabled)
                 if ignore_junk and not has_changes:
                     # No real changes, skip this line
@@ -284,7 +267,8 @@ def render_diff(
     word_diff: bool = True,
     context_lines: int = 0,
     case_insensitive: bool = False,
-    ignore_junk: bool = False
+    ignore_junk: bool = False,
+    tokenizer: str = 'words_and_html'
 ) -> str:
     """
     Render the difference between two file contents.
@@ -300,10 +284,11 @@ def render_diff(
         include_change_type_prefix (bool): Add prefixes to indicate change types
         patch_format (bool): Use patch format for output
         html_colour (bool): Use HTML background colors for differences
-        word_diff (bool): Use word-level diffing for replaced lines
+        word_diff (bool): Use word-level diffing for replaced lines (controls inline rendering)
         context_lines (int): Number of unchanged lines to show around changes (like grep -C)
         case_insensitive (bool): Perform case-insensitive comparison, By default the test_json_diff/process.py is case sensitive, so this follows same logic
         ignore_junk (bool): Ignore whitespace-only changes
+        tokenizer (str): Name of tokenizer to use from TOKENIZERS registry (default: 'words_and_html')
 
     Returns:
         str: Rendered difference
@@ -327,7 +312,8 @@ def render_diff(
         word_diff=word_diff,
         context_lines=context_lines,
         case_insensitive=case_insensitive,
-        ignore_junk=ignore_junk
+        ignore_junk=ignore_junk,
+        tokenizer=tokenizer
     )
 
     def flatten(lst: List[Union[str, List[str]]]) -> str:
@@ -340,3 +326,12 @@ def render_diff(
         return line_feed_sep.join(result)
 
     return flatten(rendered_diff)
+
+
+# Export main public API
+__all__ = [
+    'render_diff',
+    'customSequenceMatcher',
+    'render_inline_word_diff',
+    'TOKENIZERS',
+]

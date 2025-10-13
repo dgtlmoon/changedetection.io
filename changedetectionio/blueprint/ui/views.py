@@ -240,6 +240,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         content = diff.render_diff(previous_version_file_contents=from_version_file_contents,
                                    newest_version_file_contents=to_version_file_contents,
+#                                   include_removed=diff_prefs.get('removed'),
+#                                   include_added=diff_prefs.get('added'),
+#                                   include_replaced=diff_prefs.get('replaced'),
                                    html_colour=True,
                                    ignore_junk=diff_prefs.get('ignoreWhitespace'),
                                    include_equal=not diff_prefs.get('changesOnly'),
