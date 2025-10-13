@@ -14,6 +14,7 @@ from .tokenizers import TOKENIZERS, tokenize_words_and_html
 
 # Remember! gmail, outlook etc dont support <style> must be inline.
 # Gmail: strips <ins> and <del> tags entirely.
+# This is for the WHOLE line background style
 REMOVED_STYLE = "background-color: #fadad7; color: #b30000;"
 ADDED_STYLE = "background-color: #eaf2c2; color: #406619;"
 
@@ -402,7 +403,6 @@ def render_diff(
 
     if newest_lines == previous_lines:
         x=1
-
 
     if patch_format:
         patch = difflib.unified_diff(previous_lines, newest_lines)
