@@ -3,6 +3,7 @@ import arrow
 
 from jinja2 import nodes
 from jinja2.ext import Extension
+import os
 
 class TimeExtension(Extension):
     """Jinja2 Extension for dates and times."""
@@ -15,7 +16,7 @@ class TimeExtension(Extension):
 
         environment.extend(
             datetime_format='%a, %d %b %Y %H:%M:%S',
-            default_timezone='UTC'
+            default_timezone=os.getenv('TZ', 'UTC').strip()
         )
 
     def _datetime(self, timezone, operator, offset, datetime_format):

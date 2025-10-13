@@ -487,38 +487,20 @@ class ValidateJinja2Template(object):
     """
     def __call__(self, form, field):
         from changedetectionio import notification
-
+        from changedetectionio.jinja2_custom import create_jinja_env
         from jinja2 import BaseLoader, TemplateSyntaxError, UndefinedError
-        from jinja2.sandbox import ImmutableSandboxedEnvironment
         from jinja2.meta import find_undeclared_variables
-        from changedetectionio.jinja2_custom.safe_jinja import CUSTOM_JINJA2_EXTENSIONS
         import jinja2.exceptions
 
         # Might be a list of text, or might be just text (like from the apprise url list)
         joined_data = ' '.join(map(str, field.data)) if isinstance(field.data, list) else f"{field.data}"
 
         try:
-            jinja2_env = ImmutableSandboxedEnvironment(loader=BaseLoader, extensions=CUSTOM_JINJA2_EXTENSIONS)
+            # Use the shared helper to create a properly configured environment
+            jinja2_env = create_jinja_env(loader=BaseLoader)
 
-            # Try to get the application's default timezone from datastore
-            # Fall back to 'UTC' if not available (e.g., in tests or outside Flask context)
-            default_timezone = 'UTC'
-            try:
-                from flask import current_app
-                if current_app:
-                    datastore = current_app.config.get('DATASTORE')
-                    if datastore:
-                        default_timezone = datastore.data['settings']['application'].get('scheduler_timezone_default', 'UTC')
-            except (RuntimeError, KeyError):
-                # RuntimeError: Working outside of application context
-                # KeyError: DATASTORE not in config
-                pass
-
-            # Override the default timezone in the extension
-            jinja2_env.default_timezone = default_timezone
-
+            # Add notification tokens for validation
             jinja2_env.globals.update(notification.valid_tokens)
-            # Extra validation tokens provided on the form_class(... extra_tokens={}) setup
             if hasattr(field, 'extra_notification_tokens'):
                 jinja2_env.globals.update(field.extra_notification_tokens)
 
@@ -530,6 +512,7 @@ class ValidateJinja2Template(object):
         except jinja2.exceptions.SecurityError as e:
             raise ValidationError(f"This is not a valid Jinja2 template: {e}") from e
 
+        # Check for undeclared variables
         ast = jinja2_env.parse(joined_data)
         undefined = ", ".join(find_undeclared_variables(ast))
         if undefined:
@@ -769,7 +752,7 @@ class commonSettingsForm(Form):
     notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
     processor = RadioField( label=u"Processor - What do you want to achieve?", choices=processors.available_processors(), default="text_json_diff")
-    scheduler_timezone_default = StringField("Default timezone for watch scheduling", render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
+    scheduler_timezone_default = StringField("Default timezone for watch check scheduler", render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
     webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1, message="Should contain one or more seconds")])
 
 

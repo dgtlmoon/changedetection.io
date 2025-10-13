@@ -187,7 +187,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
             tz_name = time_schedule_limit.get('timezone')
             if not tz_name:
-                tz_name = datastore.data['settings']['application'].get('scheduler_timezone_default', 'UTC')
+                tz_name = datastore.data['settings']['application'].get('scheduler_timezone_default', os.getenv('TZ', 'UTC').strip())
 
             if time_schedule_limit and time_schedule_limit.get('enabled'):
                 try:
