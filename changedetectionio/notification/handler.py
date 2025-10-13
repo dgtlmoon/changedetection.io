@@ -5,7 +5,7 @@ from loguru import logger
 from .apprise_plugin.assets import apprise_asset, APPRISE_AVATAR_URL
 
 def process_notification(n_object, datastore):
-    from changedetectionio.safe_jinja import render as jinja_render
+    from changedetectionio.jinja2_custom import render as jinja_render
     from . import default_notification_format_for_watch, default_notification_format, valid_notification_formats
     # be sure its registered
     from .apprise_plugin.custom_handlers import apprise_http_custom_handler

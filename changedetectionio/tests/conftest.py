@@ -37,7 +37,7 @@ def environment(mocker):
     # This is calculated to match the test expectations when offsets are applied
     fixed_datetime = arrow.Arrow(2015, 12, 9, 23, 33, 1, tzinfo='UTC')
     # Patch arrow.now in the jinja_extensions module where it's actually used
-    mocker.patch('changedetectionio.jinja_extensions.arrow.now', return_value=fixed_datetime)
+    mocker.patch('changedetectionio.jinja2_custom.jinja_extensions.arrow.now', return_value=fixed_datetime)
     return fixed_datetime
 
 

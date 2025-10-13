@@ -491,13 +491,14 @@ class ValidateJinja2Template(object):
         from jinja2 import BaseLoader, TemplateSyntaxError, UndefinedError
         from jinja2.sandbox import ImmutableSandboxedEnvironment
         from jinja2.meta import find_undeclared_variables
+        from changedetectionio.jinja2_custom.safe_jinja import CUSTOM_JINJA2_EXTENSIONS
         import jinja2.exceptions
 
         # Might be a list of text, or might be just text (like from the apprise url list)
         joined_data = ' '.join(map(str, field.data)) if isinstance(field.data, list) else f"{field.data}"
 
         try:
-            jinja2_env = ImmutableSandboxedEnvironment(loader=BaseLoader, extensions=['changedetectionio.jinja_extensions.TimeExtension'])
+            jinja2_env = ImmutableSandboxedEnvironment(loader=BaseLoader, extensions=CUSTOM_JINJA2_EXTENSIONS)
 
             # Try to get the application's default timezone from datastore
             # Fall back to 'UTC' if not available (e.g., in tests or outside Flask context)
@@ -858,7 +859,7 @@ class processor_text_json_diff_form(commonSettingsForm):
         if not super().validate():
             return False
 
-        from changedetectionio.safe_jinja import render as jinja_render
+        from changedetectionio.jinja2_custom import render as jinja_render
         result = True
 
         # Fail form validation when a body is set for a GET

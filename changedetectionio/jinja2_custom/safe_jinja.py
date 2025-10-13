@@ -8,12 +8,14 @@ import jinja2.sandbox
 import typing as t
 import os
 
+CUSTOM_JINJA2_EXTENSIONS = ['changedetectionio.jinja2_custom.jinja_extensions.TimeExtension']
 JINJA2_MAX_RETURN_PAYLOAD_SIZE = 1024 * int(os.getenv("JINJA2_MAX_RETURN_PAYLOAD_SIZE_KB", 1024 * 10))
+
 
 # This is used for notifications etc, so actually it's OK to send custom HTML such as <a href> etc, but it should limit what data is available.
 # (Which also limits available functions that could be called)
 def render(template_str, **args: t.Any) -> str:
-    jinja2_env = jinja2.sandbox.ImmutableSandboxedEnvironment(extensions=['changedetectionio.jinja_extensions.TimeExtension'])
+    jinja2_env = jinja2.sandbox.ImmutableSandboxedEnvironment(extensions=CUSTOM_JINJA2_EXTENSIONS)
 
     # Try to get the application's default timezone from datastore
     # Fall back to 'UTC' if not available (e.g., in tests or outside Flask context)

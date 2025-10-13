@@ -1,6 +1,5 @@
 """Jinja2 extensions."""
 import arrow
-from secrets import choice
 
 from jinja2 import nodes
 from jinja2.ext import Extension

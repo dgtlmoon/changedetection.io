@@ -1,14 +1,14 @@
 from blinker import signal
 
 from changedetectionio.strtobool import strtobool
-from changedetectionio.safe_jinja import render as jinja_render
+from changedetectionio.jinja2_custom import render as jinja_render
 from . import watch_base
 import os
 import re
 from pathlib import Path
 from loguru import logger
 
-from .. import safe_jinja
+from .. import jinja2_custom as safe_jinja
 from ..html_tools import TRANSLATE_WHITESPACE_TABLE
 
 # Allowable protocols, protects against javascript: etc

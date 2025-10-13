@@ -4,7 +4,7 @@ import time
 import arrow
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
-from ..safe_jinja import render
+from ..jinja2_custom import render
 
 
 # def test_setup(client, live_server, measure_memory_usage):
@@ -93,7 +93,7 @@ def test_timezone(mocker):
 
     timezone = 'America/Buenos_Aires'
     currentDate = arrow.now(timezone)
-    arrowNowMock = mocker.patch("changedetectionio.jinja_extensions.arrow.now")
+    arrowNowMock = mocker.patch("changedetectionio.jinja2_custom.jinja_extensions.arrow.now")
     arrowNowMock.return_value = currentDate
     finalRender = render(f"{{% now '{timezone}' %}}")
 
@@ -123,7 +123,7 @@ def test_add_weekday(mocker):
 
     timezone = 'utc'
     currentDate = arrow.now(timezone)
-    arrowNowMock = mocker.patch("changedetectionio.jinja_extensions.arrow.now")
+    arrowNowMock = mocker.patch("changedetectionio.jinja2_custom.jinja_extensions.arrow.now")
     arrowNowMock.return_value = currentDate
     finalRender = render(f"{{% now '{timezone}' + 'weekday=1' %}}")
 

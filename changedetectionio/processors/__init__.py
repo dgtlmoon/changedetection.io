@@ -102,7 +102,7 @@ class difference_detection_processor():
             self.fetcher.browser_steps_screenshot_path = os.path.join(self.datastore.datastore_path, self.watch.get('uuid'))
 
         # Tweak the base config with the per-watch ones
-        from changedetectionio.safe_jinja import render as jinja_render
+        from changedetectionio.jinja2_custom import render as jinja_render
         request_headers = CaseInsensitiveDict()
 
         ua = self.datastore.data['settings']['requests'].get('default_ua')
