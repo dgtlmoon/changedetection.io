@@ -73,7 +73,7 @@ werkzeug==3.0.6
 
 # Templating, so far just in the URLs but in the future can be for the notifications also
 jinja2~=3.1
-jinja2-time
+arrow
 openpyxl
 # https://peps.python.org/pep-0508/#environment-markers
 # https://github.com/dgtlmoon/changedetection.io/pull/1009
@@ -89,6 +89,7 @@ pyppeteerstealth>=0.0.4
 # Include pytest, so if theres a support issue we can ask them to run these tests on their setup
 pytest ~=7.2
 pytest-flask ~=1.2
+pytest-mock ~=3.15
 
 # Anything 4.0 and up but not 5.0
 jsonschema ~= 4.0

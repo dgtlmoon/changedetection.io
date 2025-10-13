@@ -141,7 +141,7 @@ class Fetcher():
     async def iterate_browser_steps(self, start_url=None):
         from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
         from playwright._impl._errors import TimeoutError, Error
-        from changedetectionio.safe_jinja import render as jinja_render
+        from changedetectionio.jinja2_custom import render as jinja_render
         step_n = 0
 
         if self.browser_steps is not None and len(self.browser_steps):

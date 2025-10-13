@@ -487,9 +487,8 @@ class ValidateJinja2Template(object):
     """
     def __call__(self, form, field):
         from changedetectionio import notification
-
+        from changedetectionio.jinja2_custom import create_jinja_env
         from jinja2 import BaseLoader, TemplateSyntaxError, UndefinedError
-        from jinja2.sandbox import ImmutableSandboxedEnvironment
         from jinja2.meta import find_undeclared_variables
         import jinja2.exceptions
 
@@ -497,9 +496,11 @@ class ValidateJinja2Template(object):
         joined_data = ' '.join(map(str, field.data)) if isinstance(field.data, list) else f"{field.data}"
 
         try:
-            jinja2_env = ImmutableSandboxedEnvironment(loader=BaseLoader, extensions=['jinja2_time.TimeExtension'])
+            # Use the shared helper to create a properly configured environment
+            jinja2_env = create_jinja_env(loader=BaseLoader)
+
+            # Add notification tokens for validation
             jinja2_env.globals.update(notification.valid_tokens)
-            # Extra validation tokens provided on the form_class(... extra_tokens={}) setup
             if hasattr(field, 'extra_notification_tokens'):
                 jinja2_env.globals.update(field.extra_notification_tokens)
 
@@ -511,6 +512,7 @@ class ValidateJinja2Template(object):
         except jinja2.exceptions.SecurityError as e:
             raise ValidationError(f"This is not a valid Jinja2 template: {e}") from e
 
+        # Check for undeclared variables
         ast = jinja2_env.parse(joined_data)
         undefined = ", ".join(find_undeclared_variables(ast))
         if undefined:
@@ -750,7 +752,7 @@ class commonSettingsForm(Form):
     notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
     processor = RadioField( label=u"Processor - What do you want to achieve?", choices=processors.available_processors(), default="text_json_diff")
-    timezone = StringField("Timezone for watch schedule", render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
+    scheduler_timezone_default = StringField("Default timezone for watch check scheduler", render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
     webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1, message="Should contain one or more seconds")])
 
 
@@ -840,7 +842,7 @@ class processor_text_json_diff_form(commonSettingsForm):
         if not super().validate():
             return False
 
-        from changedetectionio.safe_jinja import render as jinja_render
+        from changedetectionio.jinja2_custom import render as jinja_render
         result = True
 
         # Fail form validation when a body is set for a GET
@@ -903,7 +905,7 @@ class processor_text_json_diff_form(commonSettingsForm):
     ):
         super().__init__(formdata, obj, prefix, data, meta, **kwargs)
         if kwargs and kwargs.get('default_system_settings'):
-            default_tz = kwargs.get('default_system_settings').get('application', {}).get('timezone')
+            default_tz = kwargs.get('default_system_settings').get('application', {}).get('scheduler_timezone_default')
             if default_tz:
                 self.time_schedule_limit.form.timezone.render_kw['placeholder'] = default_tz
 

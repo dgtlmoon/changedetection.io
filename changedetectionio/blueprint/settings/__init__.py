@@ -119,7 +119,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                 hide_remove_pass=os.getenv("SALTED_PASS", False),
                                 min_system_recheck_seconds=int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3)),
                                 settings_application=datastore.data['settings']['application'],
-                                timezone_default_config=datastore.data['settings']['application'].get('timezone'),
+                                timezone_default_config=datastore.data['settings']['application'].get('scheduler_timezone_default'),
                                 utc_time=utc_time,
                                 )
 

@@ -1,5 +1,5 @@
 
-from changedetectionio.safe_jinja import render as jinja_render
+from changedetectionio.jinja2_custom import render as jinja_render
 from changedetectionio.store import ChangeDetectionStore
 from feedgen.feed import FeedGenerator
 from flask import Blueprint, make_response, request, url_for, redirect
