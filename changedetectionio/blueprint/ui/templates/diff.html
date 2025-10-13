@@ -10,6 +10,8 @@
     const highlight_submit_ignore_url="{{url_for('ui.ui_edit.highlight_submit_ignore_url', uuid=uuid)}}";
 
 </script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="{{url_for('static_content', group='js', filename='snippet-to-image.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='diff-overview.js')}}" defer></script>
 
 <div id="settings">
@@ -94,6 +96,14 @@
     </div>
 
      <div class="tab-pane-inner" id="text">
+         <button id="share-as-image-btn" onclick="diffToJpeg()" title="Share diff as image" style="float: right; margin: 10px; padding: 8px 12px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">
+             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
+                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                 <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                 <polyline points="21 15 16 10 5 21"></polyline>
+             </svg>
+             Share as Image
+         </button>
          {% if password_enabled_and_share_is_off %}
            <div class="tip">Pro-tip: You can enable <strong>"share access when password is enabled"</strong> from settings</div>
          {% endif %}
@@ -103,7 +113,7 @@
                 <tbody>
                 <tr>
                     <td id="diff-col" class="highlightable-filter">
-                        <pre style="border-left: 2px solid #ddd;">{{ content| diff_unescape_difference_spans  }}</pre>
+                        <pre id="difference" style="border-left: 2px solid #ddd;">{{ content| diff_unescape_difference_spans  }}</pre>
                     </td>
                 </tr>
                 </tbody>
