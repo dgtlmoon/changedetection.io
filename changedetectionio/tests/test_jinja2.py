@@ -93,7 +93,7 @@ def test_timezone(mocker):
 
     timezone = 'America/Buenos_Aires'
     currentDate = arrow.now(timezone)
-    arrowNowMock = mocker.patch("changedetectionio.jinja2_custom.jinja_extensions.arrow.now")
+    arrowNowMock = mocker.patch("changedetectionio.jinja2_custom.extensions.TimeExtension.arrow.now")
     arrowNowMock.return_value = currentDate
     finalRender = render(f"{{% now '{timezone}' %}}")
 
@@ -123,7 +123,7 @@ def test_add_weekday(mocker):
 
     timezone = 'utc'
     currentDate = arrow.now(timezone)
-    arrowNowMock = mocker.patch("changedetectionio.jinja2_custom.jinja_extensions.arrow.now")
+    arrowNowMock = mocker.patch("changedetectionio.jinja2_custom.extensions.TimeExtension.arrow.now")
     arrowNowMock.return_value = currentDate
     finalRender = render(f"{{% now '{timezone}' + 'weekday=1' %}}")
 

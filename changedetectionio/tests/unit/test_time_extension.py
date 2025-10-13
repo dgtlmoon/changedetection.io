@@ -7,7 +7,7 @@ exactly as intended in the actual application code.
 
 import arrow
 from jinja2.sandbox import ImmutableSandboxedEnvironment
-from changedetectionio.jinja2_custom.jinja_extensions import TimeExtension
+from changedetectionio.jinja2_custom.extensions.TimeExtension import TimeExtension
 
 
 def test_default_timezone_override_like_safe_jinja(mocker):
@@ -23,7 +23,7 @@ def test_default_timezone_override_like_safe_jinja(mocker):
 
     # Mock arrow.now to return a fixed time
     fixed_time = arrow.Arrow(2025, 1, 15, 12, 0, 0, tzinfo='America/New_York')
-    mock = mocker.patch("changedetectionio.jinja2_custom.jinja_extensions.arrow.now", return_value=fixed_time)
+    mock = mocker.patch("changedetectionio.jinja2_custom.extensions.TimeExtension.arrow.now", return_value=fixed_time)
 
     # Use empty string timezone - should use the overridden default
     template_str = "{% now '' %}"
@@ -46,7 +46,7 @@ def test_default_timezone_not_overridden(mocker):
 
     # Mock arrow.now
     fixed_time = arrow.Arrow(2025, 1, 15, 17, 0, 0, tzinfo='UTC')
-    mock = mocker.patch("changedetectionio.jinja2_custom.jinja_extensions.arrow.now", return_value=fixed_time)
+    mock = mocker.patch("changedetectionio.jinja2_custom.extensions.TimeExtension.arrow.now", return_value=fixed_time)
 
     # Use empty string timezone - should use 'UTC' default
     template_str = "{% now '' %}"
@@ -69,7 +69,7 @@ def test_datetime_format_override_like_safe_jinja(mocker):
 
     # Mock arrow.now
     fixed_time = arrow.Arrow(2025, 1, 15, 14, 30, 45, tzinfo='UTC')
-    mocker.patch("changedetectionio.jinja2_custom.jinja_extensions.arrow.now", return_value=fixed_time)
+    mocker.patch("changedetectionio.jinja2_custom.extensions.TimeExtension.arrow.now", return_value=fixed_time)
 
     # Don't specify format - should use overridden default
     template_str = "{% now 'UTC' %}"
@@ -89,7 +89,7 @@ def test_offset_with_overridden_timezone(mocker):
     jinja2_env.default_timezone = 'Europe/London'
 
     fixed_time = arrow.Arrow(2025, 1, 15, 10, 0, 0, tzinfo='Europe/London')
-    mock = mocker.patch("changedetectionio.jinja2_custom.jinja_extensions.arrow.now", return_value=fixed_time)
+    mock = mocker.patch("changedetectionio.jinja2_custom.extensions.TimeExtension.arrow.now", return_value=fixed_time)
 
     # Use offset with empty timezone string
     template_str = "{% now '' + 'hours=2', '%Y-%m-%d %H:%M:%S' %}"
@@ -110,7 +110,7 @@ def test_weekday_parameter_converted_to_int(mocker):
 
     # Wednesday, Jan 15, 2025
     fixed_time = arrow.Arrow(2025, 1, 15, 12, 0, 0, tzinfo='UTC')
-    mocker.patch("changedetectionio.jinja2_custom.jinja_extensions.arrow.now", return_value=fixed_time)
+    mocker.patch("changedetectionio.jinja2_custom.extensions.TimeExtension.arrow.now", return_value=fixed_time)
 
     # Add offset to next Monday (weekday=0)
     template_str = "{% now 'UTC' + 'weekday=0', '%A' %}"
@@ -127,7 +127,7 @@ def test_multiple_offset_parameters(mocker):
     jinja2_env = ImmutableSandboxedEnvironment(extensions=[TimeExtension])
 
     fixed_time = arrow.Arrow(2025, 1, 15, 10, 30, 45, tzinfo='UTC')
-    mocker.patch("changedetectionio.jinja2_custom.jinja_extensions.arrow.now", return_value=fixed_time)
+    mocker.patch("changedetectionio.jinja2_custom.extensions.TimeExtension.arrow.now", return_value=fixed_time)
 
     # Test multiple parameters: days, hours, minutes, seconds
     template_str = "{% now 'UTC' + 'days=1,hours=2,minutes=15,seconds=10', '%Y-%m-%d %H:%M:%S' %}"

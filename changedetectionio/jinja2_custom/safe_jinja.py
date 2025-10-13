@@ -7,23 +7,30 @@ See https://jinja.palletsprojects.com/en/3.1.x/sandbox/#security-considerations
 import jinja2.sandbox
 import typing as t
 import os
+from .extensions.TimeExtension import TimeExtension
 
-CUSTOM_JINJA2_EXTENSIONS = ['changedetectionio.jinja2_custom.jinja_extensions.TimeExtension']
 JINJA2_MAX_RETURN_PAYLOAD_SIZE = 1024 * int(os.getenv("JINJA2_MAX_RETURN_PAYLOAD_SIZE_KB", 1024 * 10))
 
+# Default extensions - can be overridden in create_jinja_env()
+DEFAULT_JINJA2_EXTENSIONS = [TimeExtension]
 
-def create_jinja_env(**kwargs) -> jinja2.sandbox.ImmutableSandboxedEnvironment:
+
+def create_jinja_env(extensions=None, **kwargs) -> jinja2.sandbox.ImmutableSandboxedEnvironment:
     """
     Create a sandboxed Jinja2 environment with our custom extensions and default timezone.
 
     Args:
+        extensions: List of extension classes to use (defaults to DEFAULT_JINJA2_EXTENSIONS)
         **kwargs: Additional arguments to pass to ImmutableSandboxedEnvironment
 
     Returns:
         Configured Jinja2 environment
     """
+    if extensions is None:
+        extensions = DEFAULT_JINJA2_EXTENSIONS
+
     jinja2_env = jinja2.sandbox.ImmutableSandboxedEnvironment(
-        extensions=CUSTOM_JINJA2_EXTENSIONS,
+        extensions=extensions,
         **kwargs
     )
 
