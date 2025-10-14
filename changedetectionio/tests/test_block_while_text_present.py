@@ -5,6 +5,7 @@ from flask import url_for
 from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 from changedetectionio import html_tools
 
+
 def set_original_ignore_response():
     test_return_data = """<html>
        <body>
@@ -61,25 +62,24 @@ def set_modified_response_minus_block_text():
 
 
 def test_check_block_changedetection_text_NOT_present(client, live_server, measure_memory_usage):
-
-   #  live_server_setup(live_server) # Setup on conftest per function
+    #  live_server_setup(live_server) # Setup on conftest per function
     # Use a mix of case in ZzZ to prove it works case-insensitive.
     ignore_text = "out of stoCk\r\nfoobar"
     set_original_ignore_response()
-
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={"text_should_not_be_present": ignore_text,
               "url": test_url,
               'fetch_backend': "html_requests",
@@ -93,7 +93,7 @@ def test_check_block_changedetection_text_NOT_present(client, live_server, measu
     wait_for_all_checks(client)
     # Check it saved
     res = client.get(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
     )
     assert bytes(ignore_text.encode('utf-8')) in res.data
 
@@ -129,7 +129,6 @@ def test_check_block_changedetection_text_NOT_present(client, live_server, measu
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' not in res.data
 
-
     # Now we set a change where the text is gone AND its different content, it should now trigger
     set_modified_response_minus_block_text()
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -137,7 +136,16 @@ def test_check_block_changedetection_text_NOT_present(client, live_server, measu
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' in res.data
 
-
+    # Clearing all history then viewing it should show us what is blocked
+    set_modified_original_ignore_response()
+    client.get(url_for("ui.clear_watch_history", uuid=uuid))
+    wait_for_all_checks(client)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    res = client.get(
+        url_for("ui.ui_views.preview_page", uuid=uuid)
+    )
+    assert b'blocked_line_numbers = [10]' in res.data
 
 
     delete_all_watches(client)
