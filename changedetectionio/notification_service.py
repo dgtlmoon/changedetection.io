@@ -6,9 +6,48 @@ Extracted from update_worker.py to provide standalone notification functionality
 for both sync and async workers
 """
 
-import time
 from loguru import logger
+import time
 
+# What is passed around as notification context, also used as the complete list of valid {{ tokens }}
+class NotificationContextData(dict):
+    def __init__(self, initial_data=None, **kwargs):
+        super().__init__({
+            'current_snapshot': None,
+            'diff': None,
+            'diff_added': None,
+            'diff_full': None,
+            'diff_patch': None,
+            'diff_removed': None,
+            'notification_timestamp': time.time(),
+            'screenshot': None,
+            'triggered_text': None,
+            'uuid': 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX',  # Converted to 'watch_uuid' in create_notification_parameters
+            'watch_url': 'https://WATCH-PLACE-HOLDER/',
+            'base_url': None,
+            'diff_url': None,
+            'preview_url': None,
+            'watch_tag': None,
+            'watch_title': None
+        })
+
+        # Apply any initial data passed in
+        self.update({'watch_uuid': self.get('uuid')})
+        if initial_data:
+            self.update(initial_data)
+
+        # Apply any keyword arguments
+        if kwargs:
+            self.update(kwargs)
+
+    def set_random_for_validation(self):
+        import random, string
+        """Randomly fills all dict keys with random strings (for validation/testing)."""
+        for key in self.keys():
+            if key in ['uuid', 'time', 'watch_uuid']:
+                continue
+            rand_str = 'RANDOM-PLACEHOLDER-'+''.join(random.choices(string.ascii_letters + string.digits, k=12))
+            self[key] = rand_str
 
 class NotificationService:
     """
@@ -20,12 +59,15 @@ class NotificationService:
         self.datastore = datastore
         self.notification_q = notification_q
     
-    def queue_notification_for_watch(self, n_object, watch):
+    def queue_notification_for_watch(self, n_object: NotificationContextData, watch):
         """
         Queue a notification for a watch with full diff rendering and template variables
         """
         from changedetectionio import diff
         from changedetectionio.notification import default_notification_format_for_watch
+
+        if not isinstance(n_object, NotificationContextData):
+            raise TypeError(f"Expected NotificationContextData, got {type(n_object)}")
 
         dates = []
         trigger_text = ''
@@ -85,11 +127,11 @@ class NotificationService:
             'diff_full': diff.render_diff(prev_snapshot, current_snapshot, include_equal=True, line_feed_sep=line_feed_sep, html_colour=html_colour_enable, ignore_junk=ignore_junk),
             'diff_patch': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=line_feed_sep, patch_format=True, ignore_junk=ignore_junk),
             'diff_removed': diff.render_diff(prev_snapshot, current_snapshot, include_added=False, line_feed_sep=line_feed_sep, ignore_junk=ignore_junk),
-            'notification_timestamp': now,
             'screenshot': watch.get_screenshot() if watch and watch.get('notification_screenshot') else None,
             'triggered_text': triggered_text,
             'uuid': watch.get('uuid') if watch else None,
             'watch_url': watch.get('url') if watch else None,
+            'watch_uuid': watch.get('uuid') if watch else None,
         })
 
         if watch:
@@ -142,7 +184,7 @@ class NotificationService:
         """
         Send notification when content changes are detected
         """
-        n_object = {}
+        n_object = NotificationContextData()
         watch = self.datastore.data['watching'].get(watch_uuid)
         if not watch:
             return
@@ -185,11 +227,13 @@ class NotificationService:
         if not watch:
             return
 
-        n_object = {'notification_title': 'Changedetection.io - Alert - CSS/xPath filter was not present in the page',
-                    'notification_body': "Your configured CSS/xPath filters of '{}' for {{{{watch_url}}}} did not appear on the page after {} attempts, did the page change layout?\n\nLink: {{{{base_url}}}}/edit/{{{{watch_uuid}}}}\n\nThanks - Your omniscient changedetection.io installation :)\n".format(
-                        ", ".join(watch['include_filters']),
-                        threshold),
-                    'notification_format': 'text'}
+        n_object = NotificationContextData({
+            'notification_title': 'Changedetection.io - Alert - CSS/xPath filter was not present in the page',
+            'notification_body': "Your configured CSS/xPath filters of '{}' for {{{{watch_url}}}} did not appear on the page after {} attempts, did the page change layout?\n\nLink: {{{{base_url}}}}/edit/{{{{watch_uuid}}}}\n\nThanks - Your omniscient changedetection.io installation :)\n".format(
+                ", ".join(watch['include_filters']),
+                threshold),
+            'notification_format': 'text'
+        })
 
         if len(watch['notification_urls']):
             n_object['notification_urls'] = watch['notification_urls']
@@ -217,12 +261,14 @@ class NotificationService:
         if not watch:
             return
         threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts')
-        n_object = {'notification_title': "Changedetection.io - Alert - Browser step at position {} could not be run".format(step_n+1),
-                    'notification_body': "Your configured browser step at position {} for {{{{watch_url}}}} "
-                                         "did not appear on the page after {} attempts, did the page change layout? "
-                                         "Does it need a delay added?\n\nLink: {{{{base_url}}}}/edit/{{{{watch_uuid}}}}\n\n"
-                                         "Thanks - Your omniscient changedetection.io installation :)\n".format(step_n+1, threshold),
-                    'notification_format': 'text'}
+        n_object = NotificationContextData({
+            'notification_title': "Changedetection.io - Alert - Browser step at position {} could not be run".format(step_n+1),
+            'notification_body': "Your configured browser step at position {} for {{{{watch_url}}}} "
+                                 "did not appear on the page after {} attempts, did the page change layout? "
+                                 "Does it need a delay added?\n\nLink: {{{{base_url}}}}/edit/{{{{watch_uuid}}}}\n\n"
+                                 "Thanks - Your omniscient changedetection.io installation :)\n".format(step_n+1, threshold),
+            'notification_format': 'text'
+        })
 
         if len(watch['notification_urls']):
             n_object['notification_urls'] = watch['notification_urls']

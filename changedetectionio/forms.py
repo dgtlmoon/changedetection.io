@@ -5,6 +5,7 @@ from wtforms.widgets.core import TimeInput
 
 from changedetectionio.blueprint.rss import RSS_FORMAT_TYPES
 from changedetectionio.conditions.form import ConditionFormRow
+from changedetectionio.notification_service import NotificationContextData
 from changedetectionio.strtobool import strtobool
 
 from wtforms import (
@@ -469,11 +470,16 @@ class ValidateAppRiseServers(object):
         import apprise
         from .notification.apprise_plugin.assets import apprise_asset
         from .notification.apprise_plugin.custom_handlers import apprise_http_custom_handler  # noqa: F401
+        from changedetectionio.jinja2_custom import render as jinja_render
 
         apobj = apprise.Apprise(asset=apprise_asset)
 
         for server_url in field.data:
-            url = server_url.strip()
+            generic_notification_context_data = NotificationContextData()
+            # Make sure something is atleast in all those regular token fields
+            generic_notification_context_data.set_random_for_validation()
+
+            url = jinja_render(template_str=server_url.strip(), **generic_notification_context_data).strip()
             if url.startswith("#"):
                 continue
 
@@ -500,7 +506,7 @@ class ValidateJinja2Template(object):
             jinja2_env = create_jinja_env(loader=BaseLoader)
 
             # Add notification tokens for validation
-            jinja2_env.globals.update(notification.valid_tokens)
+            jinja2_env.globals.update(NotificationContextData())
             if hasattr(field, 'extra_notification_tokens'):
                 jinja2_env.globals.update(field.extra_notification_tokens)
 
