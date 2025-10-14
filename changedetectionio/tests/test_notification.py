@@ -284,6 +284,27 @@ def test_notification_validation(client, live_server, measure_memory_usage):
     )
 
 
+def test_notification_urls_jinja2_apprise_integration(client, live_server, measure_memory_usage):
+
+    #
+    # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#header-manipulation
+    test_notification_url = "hassio://127.0.0.1/longaccesstoken?verify=no&nid={{watch_uuid}}"
+
+    res = client.post(
+        url_for("settings.settings_page"),
+        data={
+              "application-fetch_backend": "html_requests",
+              "application-minutes_between_check": 180,
+              "application-notification_body": '{ "url" : "{{ watch_url }}", "secret": 444, "somebug": "网站监测 内容更新了" }',
+              "application-notification_format": default_notification_format,
+              "application-notification_urls": test_notification_url,
+              # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#get-parameter-manipulation
+              "application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }} ",
+              },
+        follow_redirects=True
+    )
+    assert b'Settings updated' in res.data
+
 
 def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_memory_usage):
     
@@ -294,7 +315,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
     # CUSTOM JSON BODY CHECK for POST://
     set_original_response()
     # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#header-manipulation
-    test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')+"?status_code=204&xxx={{ watch_url }}&+custom-header=123&+second=hello+world%20%22space%22"
+    test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')+"?status_code=204&watch_uuid={{ watch_uuid }}&xxx={{ watch_url }}&now={% now 'Europe/London', '%Y-%m-%d' %}&+custom-header=123&+second=hello+world%20%22space%22"
 
     res = client.post(
         url_for("settings.settings_page"),
@@ -320,6 +341,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
     )
 
     assert b"Watch added" in res.data
+    watch_uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
 
     wait_for_all_checks(client)
     set_modified_response()
@@ -349,6 +371,11 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
         assert 'xxx=http' in notification_url
         # apprise style headers should be stripped
         assert 'custom-header' not in notification_url
+        # Check jinja2 custom arrow/jinja2-time replace worked
+        assert 'now=2' in notification_url
+        # Check our watch_uuid appeared
+        assert f'watch_uuid={watch_uuid}' in notification_url
+
 
     with open("test-datastore/notification-headers.txt", 'r') as f:
         notification_headers = f.read()
@@ -415,7 +442,6 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
 
     assert res.status_code != 400
     assert res.status_code != 500
-
 
     with open("test-datastore/notification.txt", 'r') as f:
         x = f.read()
