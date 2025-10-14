@@ -3,16 +3,22 @@ import time
 import apprise
 from loguru import logger
 from .apprise_plugin.assets import apprise_asset, APPRISE_AVATAR_URL
+from ..notification_service import NotificationContextData
 
-def process_notification(n_object, datastore):
+
+def process_notification(n_object: NotificationContextData, datastore):
     from changedetectionio.jinja2_custom import render as jinja_render
     from . import default_notification_format_for_watch, default_notification_format, valid_notification_formats
     # be sure its registered
     from .apprise_plugin.custom_handlers import apprise_http_custom_handler
 
+    if not isinstance(n_object, NotificationContextData):
+        raise TypeError(f"Expected NotificationContextData, got {type(n_object)}")
+
     now = time.time()
     if n_object.get('notification_timestamp'):
         logger.trace(f"Time since queued {now-n_object['notification_timestamp']:.3f}s")
+
     # Insert variables into the notification content
     notification_parameters = create_notification_parameters(n_object, datastore)
 
@@ -141,17 +147,15 @@ def process_notification(n_object, datastore):
 
 # Notification title + body content parameters get created here.
 # ( Where we prepare the tokens in the notification to be replaced with actual values )
-def create_notification_parameters(n_object, datastore):
-    from copy import deepcopy
-    from . import valid_tokens
+def create_notification_parameters(n_object: NotificationContextData, datastore):
+    if not isinstance(n_object, NotificationContextData):
+        raise TypeError(f"Expected NotificationContextData, got {type(n_object)}")
 
-    # in the case we send a test notification from the main settings, there is no UUID.
-    uuid = n_object['uuid'] if 'uuid' in n_object else ''
-
-    if uuid:
-        watch_title = datastore.data['watching'][uuid].label
+    watch = datastore.data['watching'].get(n_object['uuid'])
+    if watch:
+        watch_title = datastore.data['watching'][n_object['uuid']].label
         tag_list = []
-        tags = datastore.get_all_tags_for_watch(uuid)
+        tags = datastore.get_all_tags_for_watch(n_object['uuid'])
         if tags:
             for tag_uuid, tag in tags.items():
                 tag_list.append(tag.get('title'))
@@ -166,14 +170,10 @@ def create_notification_parameters(n_object, datastore):
 
     watch_url = n_object['watch_url']
 
-    diff_url = "{}/diff/{}".format(base_url, uuid)
-    preview_url = "{}/preview/{}".format(base_url, uuid)
+    diff_url = "{}/diff/{}".format(base_url, n_object['uuid'])
+    preview_url = "{}/preview/{}".format(base_url, n_object['uuid'])
 
-    # Not sure deepcopy is needed here, but why not
-    tokens = deepcopy(valid_tokens)
-
-    # Valid_tokens also used as a field validator
-    tokens.update(
+    n_object.update(
         {
             'base_url': base_url,
             'diff_url': diff_url,
@@ -181,13 +181,10 @@ def create_notification_parameters(n_object, datastore):
             'watch_tag': watch_tag if watch_tag is not None else '',
             'watch_title': watch_title if watch_title is not None else '',
             'watch_url': watch_url,
-            'watch_uuid': uuid,
+            'watch_uuid': n_object['uuid'],
         })
 
-    # n_object will contain diff, diff_added etc etc
-    tokens.update(n_object)
+    if watch:
+        n_object.update(datastore.data['watching'].get(n_object['uuid']).extra_notification_token_values())
 
-    if uuid:
-        tokens.update(datastore.data['watching'].get(uuid).extra_notification_token_values())
-
-    return tokens
+    return n_object

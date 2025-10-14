@@ -16,20 +16,3 @@ valid_notification_formats = {
     default_notification_format_for_watch: default_notification_format_for_watch
 }
 
-
-valid_tokens = {
-    'base_url': '',
-    'current_snapshot': '',
-    'diff': '',
-    'diff_added': '',
-    'diff_full': '',
-    'diff_patch': '',
-    'diff_removed': '',
-    'diff_url': '',
-    'preview_url': '',
-    'triggered_text': '',
-    'watch_tag': '',
-    'watch_title': '',
-    'watch_url': '',
-    'watch_uuid': '',
-}

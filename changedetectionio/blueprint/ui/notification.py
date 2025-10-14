@@ -2,6 +2,7 @@ from flask import Blueprint, request, make_response
 import random
 from loguru import logger
 
+from changedetectionio.notification_service import NotificationContextData
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
 
@@ -19,6 +20,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         import apprise
         from changedetectionio.notification.handler import process_notification
         from changedetectionio.notification.apprise_plugin.assets import apprise_asset
+        from changedetectionio.jinja2_custom import render as jinja_render
 
         from changedetectionio.notification.apprise_plugin.custom_handlers import apprise_http_custom_handler
 
@@ -61,16 +63,20 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             return 'Error: No Notification URLs set/found'
 
         for n_url in notification_urls:
+            # We are ONLY validating the apprise:// part here, convert all tags to something so as not to break apprise URLs
+            generic_notification_context_data = NotificationContextData()
+            generic_notification_context_data.set_random_for_validation()
+            n_url = jinja_render(template_str=n_url, **generic_notification_context_data).strip()
             if len(n_url.strip()):
                 if not apobj.add(n_url):
                     return f'Error:  {n_url} is not a valid AppRise URL.'
 
         try:
             # use the same as when it is triggered, but then override it with the form test values
-            n_object = {
+            n_object = NotificationContextData({
                 'watch_url': request.form.get('window_url', "https://changedetection.io"),
                 'notification_urls': notification_urls
-            }
+            })
 
             # Only use if present, if not set in n_object it should use the default system value
             if 'notification_format' in request.form and request.form['notification_format'].strip():
