@@ -315,7 +315,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
     # CUSTOM JSON BODY CHECK for POST://
     set_original_response()
     # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#header-manipulation
-    test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')+"?status_code=204&xxx={{ watch_url }}&+custom-header=123&+second=hello+world%20%22space%22"
+    test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')+"?status_code=204&watch_uuid={{ watch_uuid }}&xxx={{ watch_url }}&now={% now 'Europe/London', '%Y-%m-%d' %}&+custom-header=123&+second=hello+world%20%22space%22"
 
     res = client.post(
         url_for("settings.settings_page"),
@@ -341,6 +341,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
     )
 
     assert b"Watch added" in res.data
+    watch_uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
 
     wait_for_all_checks(client)
     set_modified_response()
@@ -370,6 +371,11 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
         assert 'xxx=http' in notification_url
         # apprise style headers should be stripped
         assert 'custom-header' not in notification_url
+        # Check jinja2 custom arrow/jinja2-time replace worked
+        assert 'now=2' in notification_url
+        # Check our watch_uuid appeared
+        assert f'watch_uuid={watch_uuid}' in notification_url
+
 
     with open("test-datastore/notification-headers.txt", 'r') as f:
         notification_headers = f.read()
@@ -436,7 +442,6 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
 
     assert res.status_code != 400
     assert res.status_code != 500
-
 
     with open("test-datastore/notification.txt", 'r') as f:
         x = f.read()
