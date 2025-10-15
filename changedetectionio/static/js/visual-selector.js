@@ -311,21 +311,26 @@
         // Initialize event handlers
         initializeEventHandlers();
 
-        // Check if we should auto-bootstrap based on URL hash
-        if (window.location.hash && window.location.hash === '#visualselector') {
-            // Auto-bootstrap if on the visualselector tab
-            setTimeout(() => bootstrapVisualSelector(), 100);
-        } else {
-            // Clear the background image if not on the visualselector tab
-            $selectorBackgroundElem.attr('src', '');
-        }
-
         // Return public API
         return {
             bootstrap: function() {
                 currentSelections = [];
                 runInClearMode = false;
                 bootstrapVisualSelector();
+            },
+            shutdown: function() {
+                // Clear the background image and canvas when navigating away
+                $selectorBackgroundElem.attr('src', '');
+                if (c && ctx) {
+                    ctx.clearRect(0, 0, c.width, c.height);
+                }
+                if (c && xctx) {
+                    xctx.clearRect(0, 0, c.width, c.height);
+                }
+                // Unbind mouse events on canvas
+                $selectorCanvasElem.off('mousemove mousedown mouseleave');
+                // Unbind background image events
+                $selectorBackgroundElem.off('load error');
             },
             clear: function() {
                 clearReset();

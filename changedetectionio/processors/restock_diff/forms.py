@@ -27,7 +27,7 @@ class RestockSettingsForm(Form):
         validators.NumberRange(min=0, max=100, message="Should be between 0 and 100"),
     ], render_kw={"placeholder": "0%", "size": "5"})
 
-    price_change_custom_include_filters = StringListField('Override automatic price detection with these selectors', [ValidateCSSJSONXPATHInput()], default='')
+    price_change_custom_include_filters = StringListField('Override automatic price detection with this selector', [ValidateCSSJSONXPATHInput()], default='')
 
     follow_price_changes = BooleanField('Follow price changes', default=True)
 
@@ -78,13 +78,8 @@ class processor_settings_form(processor_text_json_diff_form):
                     <span class="pure-form-message-inline">For example, If the product is $1,000 USD originally, <strong>2%</strong> would mean it has to change more than $20 since the first check.</span><br>
                 </fieldset>
                 <fieldset class="pure-group price-change-minmax">
-                        {% set field = render_field(form.restock_settings.price_change_custom_include_filters,
-                            rows=5,
-                            placeholder="#example
-xpath://body/div/span[contains(@class, 'example-class')]",
-                            class="m-d")
-                        %}
-                        {{ field }}
+                        {{ render_field(form.restock_settings.price_change_custom_include_filters) }}
+                        <span class="pure-form-message-inline">Override the automatic price metadata reader with this custom select from the <a href="#visualselector">Visual Selector</a>, in the case that the automatic detection was incorrect.</span><br>
                 </fieldset>                                  
             </div>
         </fieldset>
