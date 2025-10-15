@@ -180,18 +180,24 @@ def get_price_data_availability(html_content, price_change_custom_include_filter
 
     if filtered_content.strip():
         # Convert HTML to text
-        price_text = html_tools.html_to_text(
-            html_content=filtered_content,
-            render_anchor_tag_content=False,
-            is_rss=False
-        ).strip()
+        import re
+        price_text = re.sub(
+            r'[\r\n\t]+', ' ',
+            html_tools.html_to_text(
+                html_content=filtered_content,
+                render_anchor_tag_content=False,
+                is_rss=False
+            ).strip()
+        )
 
         # Parse the price from text
         try:
-            parsed_price = value.parse_currency(price_text)
-            if parsed_price is not None:
-                value['price'] = parsed_price
-                logger.debug(f"Extracted price from custom selector: {parsed_price} (from text: '{price_text}')")
+            parsed_result = value.parse_currency(price_text)
+            if parsed_result:
+                value['price'] = parsed_result.get('price')
+                if parsed_result.get('currency'):
+                    value['currency'] = parsed_result.get('currency')
+                logger.debug(f"Extracted price from custom selector: {parsed_result.get('price')} {parsed_result.get('currency', '')} (from text: '{price_text}')")
         except Exception as e:
             logger.warning(f"Failed to parse price from '{price_text}': {e}")
 
