@@ -7,7 +7,7 @@ from wtforms.fields.choices import RadioField
 from wtforms.fields.form import FormField
 from wtforms.form import Form
 
-from changedetectionio.forms import processor_text_json_diff_form
+from changedetectionio.forms import processor_text_json_diff_form, ValidateCSSJSONXPATHInput, StringListField
 
 
 class RestockSettingsForm(Form):
@@ -26,6 +26,8 @@ class RestockSettingsForm(Form):
         validators.Optional(),
         validators.NumberRange(min=0, max=100, message="Should be between 0 and 100"),
     ], render_kw={"placeholder": "0%", "size": "5"})
+
+    price_change_custom_include_filters = StringListField('Override automatic price detection with these selectors', [ValidateCSSJSONXPATHInput()], default='')
 
     follow_price_changes = BooleanField('Follow price changes', default=True)
 
@@ -74,7 +76,16 @@ class processor_settings_form(processor_text_json_diff_form):
                     {{ render_field(form.restock_settings.price_change_threshold_percent) }}
                     <span class="pure-form-message-inline">Price must change more than this % to trigger a change since the first check.</span><br>
                     <span class="pure-form-message-inline">For example, If the product is $1,000 USD originally, <strong>2%</strong> would mean it has to change more than $20 since the first check.</span><br>
-                </fieldset>                
+                </fieldset>
+                <fieldset class="pure-group price-change-minmax">
+                        {% set field = render_field(form.restock_settings.price_change_custom_include_filters,
+                            rows=5,
+                            placeholder="#example
+xpath://body/div/span[contains(@class, 'example-class')]",
+                            class="m-d")
+                        %}
+                        {{ field }}
+                </fieldset>                                  
             </div>
         </fieldset>
         """

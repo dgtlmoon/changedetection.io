@@ -125,6 +125,79 @@ def get_itemprop_availability(html_content) -> Restock:
     return value
 
 
+def get_price_data_availability(html_content, price_change_custom_include_filters) -> Restock:
+    """
+    Extract price using custom CSS/XPath selectors.
+    Reuses apply_include_filters logic from text_json_diff processor.
+
+    Args:
+        html_content: The HTML content to parse
+        price_change_custom_include_filters: List of CSS/XPath selectors to extract price
+
+    Returns:
+        Restock dict with 'price' key if found
+    """
+    from changedetectionio import html_tools
+    from changedetectionio.processors.magic import guess_stream_type
+
+    value = Restock()
+
+    if not price_change_custom_include_filters:
+        return value
+
+    # Get content type
+    stream_content_type = guess_stream_type(http_content_header='text/html', content=html_content)
+
+    # Apply filters to extract price element
+    filtered_content = ""
+
+    for filter_rule in price_change_custom_include_filters:
+        # XPath filters
+        if filter_rule[0] == '/' or filter_rule.startswith('xpath:'):
+            filtered_content += html_tools.xpath_filter(
+                xpath_filter=filter_rule.replace('xpath:', ''),
+                html_content=html_content,
+                append_pretty_line_formatting=False,
+                is_rss=stream_content_type.is_rss
+            )
+
+        # XPath1 filters (first match only)
+        elif filter_rule.startswith('xpath1:'):
+            filtered_content += html_tools.xpath1_filter(
+                xpath_filter=filter_rule.replace('xpath1:', ''),
+                html_content=html_content,
+                append_pretty_line_formatting=False,
+                is_rss=stream_content_type.is_rss
+            )
+
+        # CSS selectors, default fallback
+        else:
+            filtered_content += html_tools.include_filters(
+                include_filters=filter_rule,
+                html_content=html_content,
+                append_pretty_line_formatting=False
+            )
+
+    if filtered_content.strip():
+        # Convert HTML to text
+        price_text = html_tools.html_to_text(
+            html_content=filtered_content,
+            render_anchor_tag_content=False,
+            is_rss=False
+        ).strip()
+
+        # Parse the price from text
+        try:
+            parsed_price = value.parse_currency(price_text)
+            if parsed_price is not None:
+                value['price'] = parsed_price
+                logger.debug(f"Extracted price from custom selector: {parsed_price} (from text: '{price_text}')")
+        except Exception as e:
+            logger.warning(f"Failed to parse price from '{price_text}': {e}")
+
+    return value
+
+
 def is_between(number, lower=None, upper=None):
     """
     Check if a number is between two values.
@@ -185,18 +258,23 @@ class perform_site_check(difference_detection_processor):
                 logger.info(f"Watch {watch.get('uuid')} - Tag '{tag.get('title')}' selected for restock settings override")
                 break
 
-
+    #if not has custom selector..
         itemprop_availability = {}
-        try:
-            itemprop_availability = get_itemprop_availability(self.fetcher.content)
-        except MoreThanOnePriceFound as e:
-            # Add the real data
-            raise ProcessorException(message="Cannot run, more than one price detected, this plugin is only for product pages with ONE product, try the content-change detection mode.",
-                                     url=watch.get('url'),
-                                     status_code=self.fetcher.get_last_status_code(),
-                                     screenshot=self.fetcher.screenshot,
-                                     xpath_data=self.fetcher.xpath_data
-                                     )
+        if restock_settings.get('price_change_custom_include_filters'):
+            itemprop_availability = get_price_data_availability(html_content=self.fetcher.content,
+                                                                price_change_custom_include_filters=restock_settings.get('price_change_custom_include_filters')
+                                                                )
+        else:
+            try:
+                itemprop_availability = get_itemprop_availability(self.fetcher.content)
+            except MoreThanOnePriceFound as e:
+                # Add the real data
+                raise ProcessorException(message="Cannot run, more than one price detected, this plugin is only for product pages with ONE product, try the content-change detection mode.",
+                                         url=watch.get('url'),
+                                         status_code=self.fetcher.get_last_status_code(),
+                                         screenshot=self.fetcher.screenshot,
+                                         xpath_data=self.fetcher.xpath_data
+                                         )
 
         # Something valid in get_itemprop_availability() by scraping metadata ?
         if itemprop_availability.get('price') or itemprop_availability.get('availability'):
