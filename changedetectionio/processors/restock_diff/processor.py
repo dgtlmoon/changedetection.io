@@ -6,6 +6,8 @@ from loguru import logger
 import urllib3
 import time
 
+from ..text_json_diff.processor import FilterNotFoundInResponse
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 name = 'Re-stock & Price detection for pages with a SINGLE product'
 description = 'Detects if the product goes back to in-stock'
@@ -264,23 +266,32 @@ class perform_site_check(difference_detection_processor):
                 logger.info(f"Watch {watch.get('uuid')} - Tag '{tag.get('title')}' selected for restock settings override")
                 break
 
-    #if not has custom selector..
+        # if not has custom selector..
         itemprop_availability = {}
         if restock_settings.get('price_change_custom_include_filters'):
             itemprop_availability = get_price_data_availability_from_filters(html_content=self.fetcher.content,
-                                                                price_change_custom_include_filters=restock_settings.get('price_change_custom_include_filters')
-                                                                )
+                                                                             price_change_custom_include_filters=restock_settings.get(
+                                                                                 'price_change_custom_include_filters')
+                                                                             )
+            if not itemprop_availability or not itemprop_availability.get('price'):
+                raise FilterNotFoundInResponse(
+                    msg=restock_settings.get('price_change_custom_include_filters'),
+                    screenshot=self.fetcher.screenshot,
+                    xpath_data=self.fetcher.xpath_data
+                )
+            
         else:
             try:
                 itemprop_availability = get_itemprop_availability(self.fetcher.content)
             except MoreThanOnePriceFound as e:
                 # Add the real data
-                raise ProcessorException(message="Cannot run, more than one price detected, this plugin is only for product pages with ONE product, try the content-change detection mode.",
-                                         url=watch.get('url'),
-                                         status_code=self.fetcher.get_last_status_code(),
-                                         screenshot=self.fetcher.screenshot,
-                                         xpath_data=self.fetcher.xpath_data
-                                         )
+                raise ProcessorException(
+                    message="Cannot run, more than one price detected, this plugin is only for product pages with ONE product, try the content-change detection mode.",
+                    url=watch.get('url'),
+                    status_code=self.fetcher.get_last_status_code(),
+                    screenshot=self.fetcher.screenshot,
+                    xpath_data=self.fetcher.xpath_data
+                    )
 
         # Something valid in get_itemprop_availability() by scraping metadata ?
         if itemprop_availability.get('price') or itemprop_availability.get('availability'):
