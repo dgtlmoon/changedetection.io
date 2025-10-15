@@ -1,7 +1,7 @@
 from wtforms import (
     BooleanField,
     validators,
-    FloatField
+    FloatField, StringField
 )
 from wtforms.fields.choices import RadioField
 from wtforms.fields.form import FormField
@@ -27,7 +27,7 @@ class RestockSettingsForm(Form):
         validators.NumberRange(min=0, max=100, message="Should be between 0 and 100"),
     ], render_kw={"placeholder": "0%", "size": "5"})
 
-    price_change_custom_include_filters = StringListField('Override automatic price detection with this selector', [ValidateCSSJSONXPATHInput()], default='')
+    price_change_custom_include_filters = StringField('Override automatic price detection with this selector', [ValidateCSSJSONXPATHInput()], default='', render_kw={"style": "width: 100%;"})
 
     follow_price_changes = BooleanField('Follow price changes', default=True)
 
