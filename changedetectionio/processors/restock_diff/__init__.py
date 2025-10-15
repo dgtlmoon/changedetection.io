@@ -6,10 +6,13 @@ import re
 
 class Restock(dict):
 
-    def _normalize_currency_code(self, currency: str) -> str:
+    def _normalize_currency_code(self, currency: str, normalize_dollar=False) -> str:
         """
         Normalize currency symbol or code to ISO 4217 code for consistency.
         Uses iso4217parse for accurate conversion.
+
+        Returns empty string for ambiguous symbols like '$' where we can't determine
+        the specific currency (USD, CAD, AUD, etc.).
         """
         if not currency:
             return currency
@@ -18,31 +21,19 @@ class Restock(dict):
         if len(currency) == 3 and currency.isupper():
             return currency
 
+        # Handle ambiguous dollar sign - can't determine which dollar currency
+        if normalize_dollar and currency == '$':
+            return ''
+
         try:
             import iso4217parse
 
             # Parse the currency - returns list of possible matches
+            # This handles: € -> EUR, Kč -> CZK, £ -> GBP, ¥ -> JPY, etc.
             currencies = iso4217parse.parse(currency)
 
             if currencies:
-                # For ambiguous symbols, prefer common currencies
-                if currency == '$':
-                    # Prefer USD for $ symbol
-                    usd = [c for c in currencies if c.alpha3 == 'USD']
-                    if usd:
-                        return 'USD'
-                elif currency == '£':
-                    # Prefer GBP for £ symbol
-                    gbp = [c for c in currencies if c.alpha3 == 'GBP']
-                    if gbp:
-                        return 'GBP'
-                elif currency == '¥':
-                    # Prefer JPY for ¥ symbol
-                    jpy = [c for c in currencies if c.alpha3 == 'JPY']
-                    if jpy:
-                        return 'JPY'
-
-                # Return first match for unambiguous symbols
+                # Return first match (iso4217parse handles the mapping)
                 return currencies[0].alpha3
         except Exception:
             pass
@@ -50,10 +41,12 @@ class Restock(dict):
         # Fallback: return as-is if can't normalize
         return currency
 
-    def parse_currency(self, raw_value: str) -> Union[dict, None]:
+    def parse_currency(self, raw_value: str, normalize_dollar=False) -> Union[dict, None]:
         """
         Parse price and currency from text, handling messy formats with extra text.
         Returns dict with 'price' and 'currency' keys (ISO 4217 code), or None if parsing fails.
+
+        normalize_dollar convert $ to '' on sites that we cant tell what currency the site is in
         """
         try:
             from price_parser import Price
@@ -67,7 +60,7 @@ class Restock(dict):
                 result = {'price': float(price_obj.amount)}
                 if price_obj.currency:
                     # Normalize currency symbol to ISO 4217 code for consistency with metadata
-                    normalized_currency = self._normalize_currency_code(price_obj.currency)
+                    normalized_currency = self._normalize_currency_code(currency=price_obj.currency, normalize_dollar=normalize_dollar)
                     result['currency'] = normalized_currency
                 return result
 

@@ -125,7 +125,7 @@ def get_itemprop_availability(html_content) -> Restock:
     return value
 
 
-def get_price_data_availability(html_content, price_change_custom_include_filters) -> Restock:
+def get_price_data_availability_from_filters(html_content, price_change_custom_include_filters) -> Restock:
     """
     Extract price using custom CSS/XPath selectors.
     Reuses apply_include_filters logic from text_json_diff processor.
@@ -192,7 +192,7 @@ def get_price_data_availability(html_content, price_change_custom_include_filter
 
         # Parse the price from text
         try:
-            parsed_result = value.parse_currency(price_text)
+            parsed_result = value.parse_currency(price_text, normalize_dollar=True)
             if parsed_result:
                 value['price'] = parsed_result.get('price')
                 if parsed_result.get('currency'):
@@ -267,7 +267,7 @@ class perform_site_check(difference_detection_processor):
     #if not has custom selector..
         itemprop_availability = {}
         if restock_settings.get('price_change_custom_include_filters'):
-            itemprop_availability = get_price_data_availability(html_content=self.fetcher.content,
+            itemprop_availability = get_price_data_availability_from_filters(html_content=self.fetcher.content,
                                                                 price_change_custom_include_filters=restock_settings.get('price_change_custom_include_filters')
                                                                 )
         else:
