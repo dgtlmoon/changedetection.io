@@ -53,7 +53,7 @@ def process_notification(n_object: NotificationContextData, datastore):
 
             # Get the notification body from datastore
             n_body = jinja_render(template_str=n_object.get('notification_body', ''), **notification_parameters)
-            if n_object.get('notification_format', '').startswith('HTML'):
+            if n_format.lower().startswith('html'):
                 n_body = n_body.replace("\n", '<br>')
 
             n_title = jinja_render(template_str=n_object.get('notification_title', ''), **notification_parameters)
