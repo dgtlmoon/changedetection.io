@@ -1,10 +1,74 @@
 
 import time
 import apprise
+from apprise import NotifyFormat
 from loguru import logger
 from .apprise_plugin.assets import apprise_asset, APPRISE_AVATAR_URL
 from ..notification_service import NotificationContextData
 
+
+def markup_text_links_to_html(body):
+    """
+    Convert plaintext to HTML with clickable links.
+    Uses Jinja2's escape and Markup for XSS safety.
+    """
+    from linkify_it import LinkifyIt
+    from markupsafe import Markup, escape
+
+    linkify = LinkifyIt()
+
+    # Match URLs in the ORIGINAL text (before escaping)
+    matches = linkify.match(body)
+
+    if not matches:
+        # No URLs, just escape everything
+        return Markup(escape(body))
+
+    result = []
+    last_index = 0
+
+    # Process each URL match
+    for match in matches:
+        # Add escaped text before the URL
+        if match.index > last_index:
+            text_part = body[last_index:match.index]
+            result.append(escape(text_part))
+
+        # Add the link with escaped URL (both in href and display)
+        url = match.url
+        result.append(Markup(f'<a href="{escape(url)}">{escape(url)}</a>'))
+
+        last_index = match.last_index
+
+    # Add remaining escaped text
+    if last_index < len(body):
+        result.append(escape(body[last_index:]))
+
+    # Join all parts
+    return str(Markup(''.join(str(part) for part in result)))
+
+def notification_format_align_with_apprise(n_format : str):
+    """
+    Correctly align changedetection's formats with apprise's formats
+    Probably these are the same - but good to be sure.
+    :param n_format:
+    :return:
+    """
+
+    if n_format.lower().startswith('html'):
+        # Apprise only knows 'html' not 'htmlcolor' etc, which shouldnt matter here
+        n_format = NotifyFormat.HTML
+    elif n_format.lower().startswith('markdown'):
+        # probably the same but just to be safe
+        n_format = NotifyFormat.MARKDOWN
+    elif n_format.lower().startswith('text'):
+        # probably the same but just to be safe
+        n_format = NotifyFormat.TEXT
+    else:
+        n_format = NotifyFormat.TEXT
+
+    # Must be str for apprise notify body_format
+    return str(n_format)
 
 def process_notification(n_object: NotificationContextData, datastore):
     from changedetectionio.jinja2_custom import render as jinja_render
@@ -30,7 +94,9 @@ def process_notification(n_object: NotificationContextData, datastore):
     # If we arrived with 'System default' then look it up
     if n_format == default_notification_format_for_watch and datastore.data['settings']['application'].get('notification_format') != default_notification_format_for_watch:
         # Initially text or whatever
-        n_format = datastore.data['settings']['application'].get('notification_format', valid_notification_formats[default_notification_format])
+        n_format = datastore.data['settings']['application'].get('notification_format', valid_notification_formats[default_notification_format]).lower()
+
+    n_format = notification_format_align_with_apprise(n_format=n_format)
 
     logger.trace(f"Complete notification body including Jinja and placeholders calculated in  {time.time() - now:.2f}s")
 
@@ -53,7 +119,11 @@ def process_notification(n_object: NotificationContextData, datastore):
 
             # Get the notification body from datastore
             n_body = jinja_render(template_str=n_object.get('notification_body', ''), **notification_parameters)
-            if n_format.lower().startswith('html'):
+
+            if n_object.get('markup_text_to_html'):
+                n_body = markup_text_links_to_html(body=n_body)
+
+            if n_format == str(NotifyFormat.HTML):
                 n_body = n_body.replace("\n", '<br>')
 
             n_title = jinja_render(template_str=n_object.get('notification_title', ''), **notification_parameters)

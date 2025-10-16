@@ -9,6 +9,8 @@ for both sync and async workers
 from loguru import logger
 import time
 
+from changedetectionio.notification import default_notification_format
+
 # What is passed around as notification context, also used as the complete list of valid {{ tokens }}
 class NotificationContextData(dict):
     def __init__(self, initial_data=None, **kwargs):
@@ -28,7 +30,8 @@ class NotificationContextData(dict):
             'diff_url': None,
             'preview_url': None,
             'watch_tag': None,
-            'watch_title': None
+            'watch_title': None,
+            'markup_text_to_html': False, # If automatic conversion of plaintext to HTML should happen
         })
 
         # Apply any initial data passed in
@@ -225,12 +228,25 @@ class NotificationService:
         if not watch:
             return
 
+        n_format = self.datastore.data['settings']['application'].get('notification_format', default_notification_format)
+        filter_list = ", ".join(watch['include_filters'])
+        # @todo - This could be a markdown template on the disk, apprise will convert the markdown to HTML+Plaintext parts in the email, and then 'markup_text_to_html' is not needed
+        body = f"""Hello,
+
+Your configured CSS/xPath filters of '{filter_list}' for {{{{watch_url}}}} did not appear on the page after {threshold} attempts.
+
+It's possible the page changed layout and the filter needs updating ( Try the 'Visual Selector' tab )
+
+Edit link: {{{{base_url}}}}/edit/{{{{watch_uuid}}}}
+
+Thanks - Your omniscient changedetection.io installation.
+"""
+
         n_object = NotificationContextData({
             'notification_title': 'Changedetection.io - Alert - CSS/xPath filter was not present in the page',
-            'notification_body': "Your configured CSS/xPath filters of '{}' for {{{{watch_url}}}} did not appear on the page after {} attempts, did the page change layout?\n\nLink: {{{{base_url}}}}/edit/{{{{watch_uuid}}}}\n\nThanks - Your omniscient changedetection.io installation :)\n".format(
-                ", ".join(watch['include_filters']),
-                threshold),
-            'notification_format': 'text'
+            'notification_body': body,
+            'notification_format': n_format,
+            'markup_text_to_html': n_format.lower().startswith('html')
         })
 
         if len(watch['notification_urls']):
@@ -259,13 +275,27 @@ class NotificationService:
         if not watch:
             return
         threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts')
+        n_format = self.datastore.data['settings']['application'].get('notification_format', default_notification_format).lower()
+        step = step_n + 1
+        # @todo - This could be a markdown template on the disk, apprise will convert the markdown to HTML+Plaintext parts in the email, and then 'markup_text_to_html' is not needed
+
+        # {{{{ }}}} because this will be Jinja2 {{ }} tokens
+        body = f"""Hello,
+        
+Your configured browser step at position {step} for the web page watch {{{{watch_url}}}} did not appear on the page after {threshold} attempts, did the page change layout?
+
+The element may have moved and needs editing, or does it need a delay added?
+
+Edit link: {{{{base_url}}}}/edit/{{{{watch_uuid}}}}
+
+Thanks - Your omniscient changedetection.io installation.
+"""
+
         n_object = NotificationContextData({
-            'notification_title': "Changedetection.io - Alert - Browser step at position {} could not be run".format(step_n+1),
-            'notification_body': "Your configured browser step at position {} for {{{{watch_url}}}} "
-                                 "did not appear on the page after {} attempts, did the page change layout? "
-                                 "Does it need a delay added?\n\nLink: {{{{base_url}}}}/edit/{{{{watch_uuid}}}}\n\n"
-                                 "Thanks - Your omniscient changedetection.io installation :)\n".format(step_n+1, threshold),
-            'notification_format': 'text'
+            'notification_title': f"Changedetection.io - Alert - Browser step at position {step} could not be run",
+            'notification_body': body,
+            'notification_format': n_format,
+            'markup_text_to_html': n_format.lower().startswith('html')
         })
 
         if len(watch['notification_urls']):
