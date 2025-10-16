@@ -9,30 +9,42 @@ from ..notification_service import NotificationContextData
 def markup_notification_message(body):
     """
     Convert plaintext to HTML with clickable links.
-    Automatically linkifies URLs and converts newlines to <br>.
+    Uses Jinja2's escape and Markup for XSS safety.
     """
     from linkify_it import LinkifyIt
-    from html import escape
+    from jinja2 import Markup, escape
 
     linkify = LinkifyIt()
 
-    # Escape HTML first
-    safe_body = escape(body)
+    # Match URLs in the ORIGINAL text (before escaping)
+    matches = linkify.match(body)
 
-    # Convert URLs to links
-    matches = linkify.match(safe_body)
-    if matches:
-        # Process matches in reverse order to maintain string positions
-        for match in reversed(matches):
-            url = match.url
-            safe_body = (
-                    safe_body[:match.index] +
-                    f'<a href="{url}">{url}</a>' +
-                    safe_body[match.last_index:]
-            )
+    if not matches:
+        # No URLs, just escape everything
+        return Markup(escape(body))
 
-    # Convert newlines to <br>
-    return safe_body.replace('\n', '<br>')
+    result = []
+    last_index = 0
+
+    # Process each URL match
+    for match in matches:
+        # Add escaped text before the URL
+        if match.index > last_index:
+            text_part = body[last_index:match.index]
+            result.append(escape(text_part))
+
+        # Add the link with escaped URL (both in href and display)
+        url = match.url
+        result.append(Markup(f'<a href="{escape(url)}">{escape(url)}</a>'))
+
+        last_index = match.last_index
+
+    # Add remaining escaped text
+    if last_index < len(body):
+        result.append(escape(body[last_index:]))
+
+    # Join all parts
+    return Markup(''.join(str(part) for part in result))
 
 def process_notification(n_object: NotificationContextData, datastore):
     from changedetectionio.jinja2_custom import render as jinja_render
