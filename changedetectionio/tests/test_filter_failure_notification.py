@@ -1,10 +1,8 @@
 import os
 import time
-from loguru import logger
 from flask import url_for
-from .util import set_original_response, live_server_setup, extract_UUID_from_client, wait_for_all_checks, \
-    wait_for_notification_endpoint_output
-from changedetectionio.model import App
+from .util import set_original_response,  wait_for_all_checks, wait_for_notification_endpoint_output
+from ..notification import valid_notification_formats
 
 
 def set_response_with_filter():
@@ -23,13 +21,14 @@ def set_response_with_filter():
         f.write(test_return_data)
     return None
 
-def run_filter_test(client, live_server, content_filter):
+def run_filter_test(client, live_server, content_filter, app_notification_format):
 
     # Response WITHOUT the filter ID element
     set_original_response()
+    live_server.app.config['DATASTORE'].data['settings']['application']['notification_format'] = app_notification_format
 
     # Goto the edit page, add our ignore text
-    notification_url = url_for('test_notification_endpoint', _external=True).replace('http', 'json')
+    notification_url = url_for('test_notification_endpoint', _external=True).replace('http', 'post')
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -127,8 +126,17 @@ def run_filter_test(client, live_server, content_filter):
     with open("test-datastore/notification.txt", 'r') as f:
         notification = f.read()
 
-    assert 'CSS/xPath filter was not present in the page' in notification
-    assert content_filter.replace('"', '\\"') in notification
+    assert 'Your configured CSS/xPath filters' in notification
+
+
+    # Text (or HTML conversion) markup to make the notifications a little nicer should have worked
+    if app_notification_format.startswith('html'):
+        assert 'a href' in notification
+        arrived_filter = content_filter.replace('"', '\\"')
+        assert arrived_filter in notification
+    else:
+        assert 'a href' not in notification
+        assert content_filter in notification
 
     # Remove it and prove that it doesn't trigger when not expected
     # It should register a change, but no 'filter not found'
@@ -159,14 +167,20 @@ def run_filter_test(client, live_server, content_filter):
     os.unlink("test-datastore/notification.txt")
 
 
-
-
 def test_check_include_filters_failure_notification(client, live_server, measure_memory_usage):
-#   #  live_server_setup(live_server) # Setup on conftest per function
-    run_filter_test(client, live_server,'#nope-doesnt-exist')
+    #   #  live_server_setup(live_server) # Setup on conftest per function
+    run_filter_test(client=client, live_server=live_server, content_filter='#nope-doesnt-exist', app_notification_format=valid_notification_formats.get('HTML Color'))
+    # Check markup send conversion didnt affect plaintext preference
+    run_filter_test(client=client, live_server=live_server, content_filter='#nope-doesnt-exist', app_notification_format=valid_notification_formats.get('Text'))
 
 def test_check_xpath_filter_failure_notification(client, live_server, measure_memory_usage):
-#   #  live_server_setup(live_server) # Setup on conftest per function
-    run_filter_test(client, live_server, '//*[@id="nope-doesnt-exist"]')
+    #   #  live_server_setup(live_server) # Setup on conftest per function
+    run_filter_test(client=client, live_server=live_server, content_filter='//*[@id="nope-doesnt-exist"]', app_notification_format=valid_notification_formats.get('HTML Color'))
 
 # Test that notification is never sent
+
+def test_basic_markup_from_text(client, live_server, measure_memory_usage):
+    # Test the notification error templates convert to HTML if needed (link activate)
+    from ..notification.handler import markup_text_links_to_html
+    x = markup_text_links_to_html("hello https://google.com")
+    assert 'a href' in x
