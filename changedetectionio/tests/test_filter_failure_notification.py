@@ -131,9 +131,15 @@ def run_filter_test(client, live_server, content_filter, app_notification_format
 
     # Text (or HTML conversion) markup to make the notifications a little nicer should have worked
     if app_notification_format.startswith('html'):
-        assert 'a href' in notification
-        arrived_filter = content_filter.replace('"', '\\"')
-        assert arrived_filter in notification
+        # apprise should have used sax-escape (&#39; instead of &quot;, " etc), lets check it worked
+
+        from apprise.conversion import convert_between
+        from apprise.common import NotifyFormat
+        escaped_filter = convert_between(NotifyFormat.TEXT, NotifyFormat.HTML, content_filter)
+
+        assert escaped_filter in notification or escaped_filter.replace('&quot;', '&#34;') in notification
+        assert 'a href="' in notification # Quotes should still be there so the link works
+
     else:
         assert 'a href' not in notification
         assert content_filter in notification

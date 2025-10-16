@@ -230,6 +230,7 @@ class NotificationService:
 
         n_format = self.datastore.data['settings']['application'].get('notification_format', default_notification_format)
         filter_list = ", ".join(watch['include_filters'])
+        # @todo - This could be a markdown template on the disk, apprise will convert the markdown to HTML+Plaintext parts in the email, and then 'markup_text_to_html' is not needed
         body = f"""Hello,
 
 Your configured CSS/xPath filters of '{filter_list}' for {{{{watch_url}}}} did not appear on the page after {threshold} attempts.
@@ -276,6 +277,8 @@ Thanks - Your omniscient changedetection.io installation.
         threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts')
         n_format = self.datastore.data['settings']['application'].get('notification_format', default_notification_format).lower()
         step = step_n + 1
+        # @todo - This could be a markdown template on the disk, apprise will convert the markdown to HTML+Plaintext parts in the email, and then 'markup_text_to_html' is not needed
+
         # {{{{ }}}} because this will be Jinja2 {{ }} tokens
         body = f"""Hello,
         
