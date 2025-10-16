@@ -54,7 +54,10 @@ jobs:
 
       - name: Spin up ancillary SMTP+Echo message test server
         run: |
-          # Debug SMTP server/echo message back server
+          # Debug SMTP server/echo message back server, telnet 11080 to it should immediately bounce back the most recent message that tried to send (then you can see if cdio tried to send, the format, etc)
+          # 11025 is the SMTP port for testing
+          # apprise example would be 'mailto://changedetection@localhost:11025/?to=fff@home.com  (it will also echo to STDOUT)
+          # telnet localhost 11080
           docker run --network changedet-network -d -p 11025:11025 -p 11080:11080  --hostname mailserver test-changedetectionio  bash -c 'pip3 install aiosmtpd && python changedetectionio/tests/smtp/smtp-test-server.py'
           docker ps
 

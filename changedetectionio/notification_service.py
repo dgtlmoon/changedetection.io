@@ -30,7 +30,8 @@ class NotificationContextData(dict):
             'diff_url': None,
             'preview_url': None,
             'watch_tag': None,
-            'watch_title': None
+            'watch_title': None,
+            'markup_text_to_html': False, # If automatic conversion of plaintext to HTML should happen
         })
 
         # Apply any initial data passed in
@@ -218,19 +219,6 @@ class NotificationService:
 
         return queued
 
-
-    def markup_notification_message(self, body):
-        """
-        Convert plaintext or Markdown to HTML.
-        Automatically linkifies URLs (requires markdown >= 3.4).
-        """
-        import markdown
-
-        return markdown.markdown(
-            body,
-            extensions=["linkify", "nl2br", "sane_lists", "extra"]
-        )
-
     def send_filter_failure_notification(self, watch_uuid):
         """
         Send notification when CSS/XPath filters fail consecutively
@@ -245,6 +233,7 @@ class NotificationService:
         body = f"""Hello,
 
 Your configured CSS/xPath filters of '{filter_list}' for {{{{watch_url}}}} did not appear on the page after {threshold} attempts.
+
 It's possible the page changed layout and the filter needs updating ( Try the 'Visual Selector' tab )
 
 Edit link: {{{{base_url}}}}/edit/{{{{watch_uuid}}}}
@@ -252,14 +241,11 @@ Edit link: {{{{base_url}}}}/edit/{{{{watch_uuid}}}}
 Thanks - Your omniscient changedetection.io installation.
 """
 
-
-        if n_format.lower().startswith('html'):
-            body = self.markup_notification_message(body=body)
-
         n_object = NotificationContextData({
             'notification_title': 'Changedetection.io - Alert - CSS/xPath filter was not present in the page',
             'notification_body': body,
-            'notification_format': n_format
+            'notification_format': n_format,
+            'markup_text_to_html': n_format.lower().startswith('html')
         })
 
         if len(watch['notification_urls']):
@@ -294,6 +280,7 @@ Thanks - Your omniscient changedetection.io installation.
         body = f"""Hello,
         
 Your configured browser step at position {step} for the web page watch {{{{watch_url}}}} did not appear on the page after {threshold} attempts, did the page change layout?
+
 The element may have moved and needs editing, or does it need a delay added?
 
 Edit link: {{{{base_url}}}}/edit/{{{{watch_uuid}}}}
@@ -301,13 +288,11 @@ Edit link: {{{{base_url}}}}/edit/{{{{watch_uuid}}}}
 Thanks - Your omniscient changedetection.io installation.
 """
 
-        if n_format.lower().startswith('html'):
-            body = self.markup_notification_message(body=body)
-
         n_object = NotificationContextData({
             'notification_title': f"Changedetection.io - Alert - Browser step at position {step} could not be run",
             'notification_body': body,
-            'notification_format': n_format
+            'notification_format': n_format,
+            'markup_text_to_html': n_format.lower().startswith('html')
         })
 
         if len(watch['notification_urls']):

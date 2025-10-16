@@ -6,6 +6,34 @@ from .apprise_plugin.assets import apprise_asset, APPRISE_AVATAR_URL
 from ..notification_service import NotificationContextData
 
 
+def markup_notification_message(body):
+    """
+    Convert plaintext to HTML with clickable links.
+    Automatically linkifies URLs and converts newlines to <br>.
+    """
+    from linkify_it import LinkifyIt
+    from html import escape
+
+    linkify = LinkifyIt()
+
+    # Escape HTML first
+    safe_body = escape(body)
+
+    # Convert URLs to links
+    matches = linkify.match(safe_body)
+    if matches:
+        # Process matches in reverse order to maintain string positions
+        for match in reversed(matches):
+            url = match.url
+            safe_body = (
+                    safe_body[:match.index] +
+                    f'<a href="{url}">{url}</a>' +
+                    safe_body[match.last_index:]
+            )
+
+    # Convert newlines to <br>
+    return safe_body.replace('\n', '<br>')
+
 def process_notification(n_object: NotificationContextData, datastore):
     from changedetectionio.jinja2_custom import render as jinja_render
     from . import default_notification_format_for_watch, default_notification_format, valid_notification_formats
@@ -53,6 +81,10 @@ def process_notification(n_object: NotificationContextData, datastore):
 
             # Get the notification body from datastore
             n_body = jinja_render(template_str=n_object.get('notification_body', ''), **notification_parameters)
+
+            if n_object.get('markup_text_to_html'):
+                n_body = markup_notification_message(body=n_body)
+
             if n_object.get('notification_format', '').startswith('HTML'):
                 n_body = n_body.replace("\n", '<br>')
 
