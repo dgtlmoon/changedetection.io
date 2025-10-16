@@ -123,7 +123,7 @@ def process_notification(n_object: NotificationContextData, datastore):
             if n_object.get('markup_text_to_html'):
                 n_body = markup_text_links_to_html(body=n_body)
 
-            if n_format == NotifyFormat.HTML:
+            if n_format == str(NotifyFormat.HTML):
                 n_body = n_body.replace("\n", '<br>')
 
             n_title = jinja_render(template_str=n_object.get('notification_title', ''), **notification_parameters)
