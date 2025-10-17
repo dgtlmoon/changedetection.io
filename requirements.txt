@@ -17,7 +17,7 @@ python-engineio~=4.12.3
 inscriptis~=2.2
 pytz
 timeago~=1.0
-validators~=0.21
+validators~=0.35
 
 
 # Set these versions together to avoid a RequestsDependencyWarning
