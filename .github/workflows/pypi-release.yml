@@ -62,7 +62,7 @@ jobs:
         # --- API test ---
         # This also means that the docs/api-spec.yml was shipped and could be read
         test -f /tmp/url-watches.json
-        API_KEY=$(jq -r '.api_access_token' /tmp/url-watches.json)
+        API_KEY=$(jq -r '.. | .api_access_token? // empty' /tmp/url-watches.json)
         echo Test API KEY is $API_KEY
         curl -X POST "http://127.0.0.1:10000/api/v1/watch" \
           -H "x-api-key: ${API_KEY}" \
