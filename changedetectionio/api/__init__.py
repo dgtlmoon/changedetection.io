@@ -36,7 +36,25 @@ def get_openapi_spec():
     import yaml  # Lazy import - only loaded when API validation is actually used
     from openapi_core import OpenAPI  # Lazy import - saves ~10.7 MB on startup
 
+    # Try multiple paths to find the API spec file since the package structure differs
+    # between Docker builds (source tree) and PyPI/pip installations (site-packages)
+    # 1. Relative path for Docker/development environment where docs/ is in the source tree
     spec_path = os.path.join(os.path.dirname(__file__), '../../docs/api-spec.yaml')
+
+    # 2. For PyPI/pip installations, use importlib.resources to find the installed file
+    if not os.path.exists(spec_path):
+        try:
+            from importlib.resources import files
+            spec_path = files('changedetectionio').joinpath('../docs/api-spec.yaml')
+        except Exception:
+            pass
+
+    # 3. Last resort: check if it's in the package root for pip/PyPI installations
+    if not os.path.exists(spec_path):
+        import changedetectionio
+        package_root = os.path.dirname(os.path.dirname(changedetectionio.__file__))
+        spec_path = os.path.join(package_root, 'docs/api-spec.yaml')
+
     with open(spec_path, 'r') as f:
         spec_dict = yaml.safe_load(f)
     _openapi_spec = OpenAPI.from_dict(spec_dict)
