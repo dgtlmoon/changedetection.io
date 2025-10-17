@@ -38,15 +38,8 @@ def get_openapi_spec():
 
     spec_path = os.path.join(os.path.dirname(__file__), '../../docs/api-spec.yaml')
     if not os.path.exists(spec_path):
-        # Possibly for pip3 packages (will be shipped with the package)
+        # Possibly for pip3 packages
         spec_path = os.path.join(os.path.dirname(__file__), '../docs/api-spec.yaml')
-
-
-    # 3. Last resort: check if it's in the package root for pip/PyPI installations
-    if not os.path.exists(spec_path):
-        import changedetectionio
-        package_root = os.path.dirname(os.path.dirname(changedetectionio.__file__))
-        spec_path = os.path.join(package_root, 'docs/api-spec.yaml')
 
     with open(spec_path, 'r') as f:
         spec_dict = yaml.safe_load(f)
