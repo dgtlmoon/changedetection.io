@@ -28,7 +28,7 @@ jobs:
 
 
   test-pypi-package:
-    name: Test the built 📦 package works basically.
+    name: Test the built package works basically.
     runs-on: ubuntu-latest
     needs:
     - build
