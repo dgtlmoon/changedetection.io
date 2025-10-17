@@ -1,5 +1,5 @@
 recursive-include changedetectionio/api *
-recursive-include changedetectionio/docs *
+include docs/api-spec.yaml
 recursive-include changedetectionio/blueprint *
 recursive-include changedetectionio/conditions *
 recursive-include changedetectionio/content_fetchers *
