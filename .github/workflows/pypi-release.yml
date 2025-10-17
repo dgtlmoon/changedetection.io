@@ -42,18 +42,39 @@ jobs:
       uses: actions/setup-python@v6
       with:
         python-version: '3.11'
+
     - name: Test that the basic pip built package runs without error
       run: |
         set -ex
         ls -alR 
         
-        # Find and install the first .whl file
-        find dist -type f -name "*.whl" -exec pip3 install {} \; -quit
+        # Install the first wheel found in dist/
+        WHEEL=$(find dist -type f -name "*.whl" -print -quit)
+        echo Installing $WHEEL
+        python3 -m pip install --upgrade pip
+        python3 -m pip install "$WHEEL"
         changedetection.io -d /tmp -p 10000 &
         
         sleep 3
         curl --retry-connrefused --retry 6 http://127.0.0.1:10000/static/styles/pure-min.css >/dev/null
         curl --retry-connrefused --retry 6 http://127.0.0.1:10000/ >/dev/null
+        
+        # --- API test ---
+        # This also means that the docs/api-spec.yml was shipped and could be read
+        test -f /tmp/url-watches.json
+        API_KEY=$(jq -r '.api_access_token' /tmp/url-watches.json)
+        echo Test API KEY is $API_KEY
+        curl -X POST "http://127.0.0.1:10000/api/v1/watch" \
+          -H "x-api-key: ${API_KEY}" \
+          -H "Content-Type: application/json" \
+          --show-error --fail \
+          --retry 6 --retry-delay 1 --retry-connrefused \
+          -d '{
+            "url": "https://example.com",
+            "title": "Example Site Monitor",
+            "time_between_check": { "hours": 1 }
+          }'
+          
         killall changedetection.io
 
 
