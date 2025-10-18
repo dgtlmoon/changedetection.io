@@ -324,13 +324,13 @@ class ContentProcessor:
                     append_pretty_line_formatting=not self.watch.is_source_type_url
                 )
 
-            # Raise error if filter returned nothing
-            if not filtered_content.strip():
-                raise FilterNotFoundInResponse(
-                    msg=self.filter_config.include_filters,
-                    screenshot=self.fetcher.screenshot,
-                    xpath_data=self.fetcher.xpath_data
-                )
+        # Raise error if filter returned nothing
+        if not filtered_content.strip():
+            raise FilterNotFoundInResponse(
+                msg=self.filter_config.include_filters,
+                screenshot=self.fetcher.screenshot,
+                xpath_data=self.fetcher.xpath_data
+            )
 
         return filtered_content
 
