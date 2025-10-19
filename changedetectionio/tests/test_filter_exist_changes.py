@@ -95,7 +95,7 @@ def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_se
         "headers": "",
         # preprended with extra filter that intentionally doesn't match any entry,
         # notification should still be sent even if first filter does not match (PR#3516)
-        "include_filters": '.non-matching-selector\n.ticket-available',
+        "include_filters": ".non-matching-selector\n.ticket-available",
         "fetch_backend": "html_requests",
         "time_between_check_use_default": "y"})
 
