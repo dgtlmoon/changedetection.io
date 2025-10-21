@@ -228,26 +228,36 @@ class ChangeDetectionStore:
         d['settings']['application']['active_base_url'] = active_base_url.strip('" ')
         return d
 
+    from pathlib import Path
+
+    def delete_path(self, path: Path):
+        import shutil
+        """Delete a file or directory tree, including the path itself."""
+        if not path.exists():
+            return
+        if path.is_file() or path.is_symlink():
+            path.unlink(missing_ok=True)  # deletes a file or symlink
+        else:
+            shutil.rmtree(path, ignore_errors=True)  # deletes dir *and* its contents
+
     # Delete a single watch by UUID
     def delete(self, uuid):
         import pathlib
-        import shutil
 
         with self.lock:
             if uuid == 'all':
                 self.__data['watching'] = {}
                 time.sleep(1) # Mainly used for testing to allow all items to flush before running next test
-
-                # GitHub #30 also delete history records
                 for uuid in self.data['watching']:
                     path = pathlib.Path(os.path.join(self.datastore_path, uuid))
                     if os.path.exists(path):
-                        shutil.rmtree(path)
+                        self.delete(uuid)
 
             else:
                 path = pathlib.Path(os.path.join(self.datastore_path, uuid))
                 if os.path.exists(path):
-                    shutil.rmtree(path)
+                    self.delete_path(path)
+
                 del self.data['watching'][uuid]
 
         self.needs_write_urgent = True

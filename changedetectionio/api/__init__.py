@@ -37,6 +37,10 @@ def get_openapi_spec():
     from openapi_core import OpenAPI  # Lazy import - saves ~10.7 MB on startup
 
     spec_path = os.path.join(os.path.dirname(__file__), '../../docs/api-spec.yaml')
+    if not os.path.exists(spec_path):
+        # Possibly for pip3 packages
+        spec_path = os.path.join(os.path.dirname(__file__), '../docs/api-spec.yaml')
+
     with open(spec_path, 'r') as f:
         spec_dict = yaml.safe_load(f)
     _openapi_spec = OpenAPI.from_dict(spec_dict)

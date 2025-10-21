@@ -5,6 +5,8 @@ import re
 import sys
 
 from setuptools import setup, find_packages
+from setuptools.command.build_py import build_py
+import shutil
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -22,6 +24,20 @@ def find_version(*file_paths):
     raise RuntimeError("Unable to find version string.")
 
 
+class BuildPyCommand(build_py):
+    """Custom build command to copy api-spec.yaml to the package."""
+    def run(self):
+        build_py.run(self)
+        # Ensure the docs directory exists in the build output
+        docs_dir = os.path.join(self.build_lib, 'changedetectionio', 'docs')
+        os.makedirs(docs_dir, exist_ok=True)
+        # Copy api-spec.yaml to the package
+        shutil.copy(
+            os.path.join(here, 'docs', 'api-spec.yaml'),
+            os.path.join(docs_dir, 'api-spec.yaml')
+        )
+
+
 install_requires = open('requirements.txt').readlines()
 
 setup(
@@ -37,9 +53,10 @@ setup(
     scripts=["changedetection.py"],
     author='dgtlmoon',
     url='https://changedetection.io',
-    packages=['changedetectionio'],
+    packages=find_packages(include=['changedetectionio', 'changedetectionio.*']),
     include_package_data=True,
     install_requires=install_requires,
+    cmdclass={'build_py': BuildPyCommand},
     license="Apache License 2.0",
     python_requires=">= 3.10",
     classifiers=['Intended Audience :: Customer Service',

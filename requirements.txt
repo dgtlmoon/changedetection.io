@@ -41,8 +41,10 @@ jsonpath-ng~=1.5.3
 # Notification library
 apprise==1.9.5
 
-
 diff_match_patch
+
+# Lightweight URL linkifier for notifications
+linkify-it-py
 
 # - Needed for apprise/spush, and maybe others? hopefully doesnt trigger a rust compile.
 # - Requires extra wheel for rPi, adds build time for arm/v8 which is not in piwheels
