@@ -178,11 +178,10 @@ def process_notification(n_object: NotificationContextData, datastore):
                 n_title = n_title[0:payload_max_size]
                 n_body = n_body[0:body_limit]
 
-            # Apprise will default to HTML for some services like mailto, so we need to explicitly set the format
-            # However, custom handlers (post://, get://, etc.) created with @notify decorator always expect TEXT
-            # and Apprise will convert HTML->TEXT if we tell it the body is HTML, which strips our HTML tags!
-            # So we only add format= for built-in plugins like mailto, discord, telegram, etc.
+            # Add format parameter to mailto URLs to ensure proper text/html handling
             # https://github.com/caronc/apprise/issues/633#issuecomment-1191449321
+            # Note: Custom handlers (post://, get://, etc.) don't need this as we handle them
+            # differently by passing an invalid body_format to prevent HTML conversion
             if not 'format=' in url and url.startswith(('mailto', 'mailtos')):
                 parsed = urlparse(url)
                 prefix = '?' if not parsed.query else '&'
