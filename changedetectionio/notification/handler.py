@@ -57,18 +57,17 @@ def notification_format_align_with_apprise(n_format : str):
 
     if n_format.lower().startswith('html'):
         # Apprise only knows 'html' not 'htmlcolor' etc, which shouldnt matter here
-        n_format = NotifyFormat.HTML
+        n_format = NotifyFormat.HTML.value
     elif n_format.lower().startswith('markdown'):
         # probably the same but just to be safe
-        n_format = NotifyFormat.MARKDOWN
+        n_format = NotifyFormat.MARKDOWN.value
     elif n_format.lower().startswith('text'):
         # probably the same but just to be safe
-        n_format = NotifyFormat.TEXT
+        n_format = NotifyFormat.TEXT.value
     else:
-        n_format = NotifyFormat.TEXT
+        n_format = NotifyFormat.TEXT.value
 
-    # Must be str for apprise notify body_format
-    return str(n_format)
+    return n_format
 
 def process_notification(n_object: NotificationContextData, datastore):
     from changedetectionio.jinja2_custom import render as jinja_render
@@ -123,7 +122,7 @@ def process_notification(n_object: NotificationContextData, datastore):
             if n_object.get('markup_text_to_html'):
                 n_body = markup_text_links_to_html(body=n_body)
 
-            if n_format == str(NotifyFormat.HTML):
+            if n_format == NotifyFormat.HTML.value:
                 n_body = n_body.replace("\n", '<br>')
 
             n_title = jinja_render(template_str=n_object.get('notification_title', ''), **notification_parameters)
@@ -180,12 +179,10 @@ def process_notification(n_object: NotificationContextData, datastore):
                 # Apprise will default to HTML, so we need to override it
                 # So that whats' generated in n_body is in line with what is going to be sent.
                 # https://github.com/caronc/apprise/issues/633#issuecomment-1191449321
-                if not 'format=' in url and (n_format == 'Text' or n_format == 'Markdown'):
+                if not 'format=' in url:
                     prefix = '?' if not '?' in url else '&'
-                    # Apprise format is lowercase text https://github.com/caronc/apprise/issues/633
-                    n_format = n_format.lower()
+                    # Apprise format is already lowercase from notification_format_align_with_apprise()
                     url = f"{url}{prefix}format={n_format}"
-                # If n_format == HTML, then apprise email should default to text/html and we should be sending HTML only
 
             apobj.add(url)
 
