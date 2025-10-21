@@ -408,6 +408,9 @@ def strip_ignore_text(content, wordlist, mode="content"):
     ignored_lines = []
 
     for k in wordlist:
+        # Skip empty strings to avoid matching everything
+        if not k or not k.strip():
+            continue
         # Is it a regex?
         res = re.search(PERL_STYLE_REGEX, k, re.IGNORECASE)
         if res:
