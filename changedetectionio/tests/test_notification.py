@@ -541,9 +541,7 @@ def _test_color_notifications(client, notification_body_token):
         follow_redirects=True
     )
 
+# Just checks the format of the colour notifications was correct
 def test_html_color_notifications(client, live_server, measure_memory_usage):
-
-    
     _test_color_notifications(client, '{{diff}}')
     _test_color_notifications(client, '{{diff_full}}')
-    

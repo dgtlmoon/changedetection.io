@@ -1,6 +1,5 @@
 from changedetectionio.model import default_notification_format_for_watch
 
-default_notification_format_for_watch = 'System default'
 default_notification_format = 'HTML Color'
 default_notification_body = '{{watch_url}} had a change.\n---\n{{diff}}\n---\n'
 default_notification_title = 'ChangeDetection.io Notification - {{watch_url}}'
