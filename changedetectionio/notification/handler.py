@@ -3,6 +3,7 @@ import time
 import apprise
 from apprise import NotifyFormat
 from loguru import logger
+from urllib.parse import urlparse
 from .apprise_plugin.assets import apprise_asset, APPRISE_AVATAR_URL
 from ..notification_service import NotificationContextData
 
@@ -146,7 +147,8 @@ def process_notification(n_object: NotificationContextData, datastore):
             #     Length of URL - Incase they specify a longer custom avatar_url
 
             # So if no avatar_url is specified, add one so it can be correctly calculated into the total payload
-            k = '?' if not '?' in url else '&'
+            parsed = urlparse(url)
+            k = '?' if not parsed.query else '&'
             if not 'avatar_url' in url \
                     and not url.startswith('mail') \
                     and not url.startswith('post') \
@@ -180,7 +182,8 @@ def process_notification(n_object: NotificationContextData, datastore):
                 # So that whats' generated in n_body is in line with what is going to be sent.
                 # https://github.com/caronc/apprise/issues/633#issuecomment-1191449321
                 if not 'format=' in url:
-                    prefix = '?' if not '?' in url else '&'
+                    parsed = urlparse(url)
+                    prefix = '?' if not parsed.query else '&'
                     # Apprise format is already lowercase from notification_format_align_with_apprise()
                     url = f"{url}{prefix}format={n_format}"
 
@@ -204,7 +207,7 @@ def process_notification(n_object: NotificationContextData, datastore):
         # Returns empty string if nothing found, multi-line string otherwise
         log_value = logs.getvalue()
 
-        if log_value and 'WARNING' in log_value or 'ERROR' in log_value:
+        if log_value and ('WARNING' in log_value or 'ERROR' in log_value):
             logger.critical(log_value)
             raise Exception(log_value)
 
