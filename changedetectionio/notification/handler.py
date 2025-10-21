@@ -3,7 +3,9 @@ import time
 import apprise
 from apprise import NotifyFormat
 from loguru import logger
+from urllib.parse import urlparse
 from .apprise_plugin.assets import apprise_asset, APPRISE_AVATAR_URL
+from .apprise_plugin.custom_handlers import SUPPORTED_HTTP_METHODS
 from ..notification_service import NotificationContextData
 
 
@@ -57,18 +59,17 @@ def notification_format_align_with_apprise(n_format : str):
 
     if n_format.lower().startswith('html'):
         # Apprise only knows 'html' not 'htmlcolor' etc, which shouldnt matter here
-        n_format = NotifyFormat.HTML
+        n_format = NotifyFormat.HTML.value
     elif n_format.lower().startswith('markdown'):
         # probably the same but just to be safe
-        n_format = NotifyFormat.MARKDOWN
+        n_format = NotifyFormat.MARKDOWN.value
     elif n_format.lower().startswith('text'):
         # probably the same but just to be safe
-        n_format = NotifyFormat.TEXT
+        n_format = NotifyFormat.TEXT.value
     else:
-        n_format = NotifyFormat.TEXT
+        n_format = NotifyFormat.TEXT.value
 
-    # Must be str for apprise notify body_format
-    return str(n_format)
+    return n_format
 
 def process_notification(n_object: NotificationContextData, datastore):
     from changedetectionio.jinja2_custom import render as jinja_render
@@ -123,7 +124,7 @@ def process_notification(n_object: NotificationContextData, datastore):
             if n_object.get('markup_text_to_html'):
                 n_body = markup_text_links_to_html(body=n_body)
 
-            if n_format == str(NotifyFormat.HTML):
+            if n_format == NotifyFormat.HTML.value:
                 n_body = n_body.replace("\n", '<br>')
 
             n_title = jinja_render(template_str=n_object.get('notification_title', ''), **notification_parameters)
@@ -147,7 +148,8 @@ def process_notification(n_object: NotificationContextData, datastore):
             #     Length of URL - Incase they specify a longer custom avatar_url
 
             # So if no avatar_url is specified, add one so it can be correctly calculated into the total payload
-            k = '?' if not '?' in url else '&'
+            parsed = urlparse(url)
+            k = '?' if not parsed.query else '&'
             if not 'avatar_url' in url \
                     and not url.startswith('mail') \
                     and not url.startswith('post') \
@@ -176,16 +178,15 @@ def process_notification(n_object: NotificationContextData, datastore):
                 n_title = n_title[0:payload_max_size]
                 n_body = n_body[0:body_limit]
 
-            elif url.startswith('mailto'):
-                # Apprise will default to HTML, so we need to override it
-                # So that whats' generated in n_body is in line with what is going to be sent.
-                # https://github.com/caronc/apprise/issues/633#issuecomment-1191449321
-                if not 'format=' in url and (n_format == 'Text' or n_format == 'Markdown'):
-                    prefix = '?' if not '?' in url else '&'
-                    # Apprise format is lowercase text https://github.com/caronc/apprise/issues/633
-                    n_format = n_format.lower()
-                    url = f"{url}{prefix}format={n_format}"
-                # If n_format == HTML, then apprise email should default to text/html and we should be sending HTML only
+            # Add format parameter to mailto URLs to ensure proper text/html handling
+            # https://github.com/caronc/apprise/issues/633#issuecomment-1191449321
+            # Note: Custom handlers (post://, get://, etc.) don't need this as we handle them
+            # differently by passing an invalid body_format to prevent HTML conversion
+            if not 'format=' in url and url.startswith(('mailto', 'mailtos')):
+                parsed = urlparse(url)
+                prefix = '?' if not parsed.query else '&'
+                # Apprise format is already lowercase from notification_format_align_with_apprise()
+                url = f"{url}{prefix}format={n_format}"
 
             apobj.add(url)
 
@@ -195,10 +196,28 @@ def process_notification(n_object: NotificationContextData, datastore):
                               'body_format': n_format})
 
         # Blast off the notifications tht are set in .add()
+        # Check if we have any custom HTTP handlers (post://, get://, etc.)
+        # These handlers created with @notify decorator don't handle format conversion properly
+        # and will strip HTML if we pass a valid format. So we pass an invalid format string
+        # to prevent Apprise from converting HTML->TEXT
+
+        # Create list of custom handler protocols (both http and https versions)
+        custom_handler_protocols = [f"{method}://" for method in SUPPORTED_HTTP_METHODS]
+        custom_handler_protocols += [f"{method}s://" for method in SUPPORTED_HTTP_METHODS]
+
+        has_custom_handler = any(
+            url.startswith(tuple(custom_handler_protocols))
+            for url in n_object['notification_urls']
+        )
+
+        # If we have custom handlers, use invalid format to prevent conversion
+        # Otherwise use the proper format
+        notify_format = 'raw-no-convert' if has_custom_handler else n_format
+
         apobj.notify(
             title=n_title,
             body=n_body,
-            body_format=n_format,
+            body_format=notify_format,
             # False is not an option for AppRise, must be type None
             attach=n_object.get('screenshot', None)
         )
@@ -207,7 +226,7 @@ def process_notification(n_object: NotificationContextData, datastore):
         # Returns empty string if nothing found, multi-line string otherwise
         log_value = logs.getvalue()
 
-        if log_value and 'WARNING' in log_value or 'ERROR' in log_value:
+        if log_value and ('WARNING' in log_value or 'ERROR' in log_value):
             logger.critical(log_value)
             raise Exception(log_value)
 
