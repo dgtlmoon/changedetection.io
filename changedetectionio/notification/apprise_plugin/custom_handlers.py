@@ -70,6 +70,7 @@ def apprise_http_custom_handler(
     title: str,
     notify_type: str,
     meta: dict,
+    body_format: str = None,
     *args,
     **kwargs,
 ) -> bool:

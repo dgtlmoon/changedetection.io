@@ -5,6 +5,7 @@ from apprise import NotifyFormat
 from loguru import logger
 from urllib.parse import urlparse
 from .apprise_plugin.assets import apprise_asset, APPRISE_AVATAR_URL
+from .apprise_plugin.custom_handlers import SUPPORTED_HTTP_METHODS
 from ..notification_service import NotificationContextData
 
 
@@ -177,15 +178,16 @@ def process_notification(n_object: NotificationContextData, datastore):
                 n_title = n_title[0:payload_max_size]
                 n_body = n_body[0:body_limit]
 
-            elif url.startswith('mailto'):
-                # Apprise will default to HTML, so we need to override it
-                # So that whats' generated in n_body is in line with what is going to be sent.
-                # https://github.com/caronc/apprise/issues/633#issuecomment-1191449321
-                if not 'format=' in url:
-                    parsed = urlparse(url)
-                    prefix = '?' if not parsed.query else '&'
-                    # Apprise format is already lowercase from notification_format_align_with_apprise()
-                    url = f"{url}{prefix}format={n_format}"
+            # Apprise will default to HTML for some services like mailto, so we need to explicitly set the format
+            # However, custom handlers (post://, get://, etc.) created with @notify decorator always expect TEXT
+            # and Apprise will convert HTML->TEXT if we tell it the body is HTML, which strips our HTML tags!
+            # So we only add format= for built-in plugins like mailto, discord, telegram, etc.
+            # https://github.com/caronc/apprise/issues/633#issuecomment-1191449321
+            if not 'format=' in url and url.startswith(('mailto', 'mailtos')):
+                parsed = urlparse(url)
+                prefix = '?' if not parsed.query else '&'
+                # Apprise format is already lowercase from notification_format_align_with_apprise()
+                url = f"{url}{prefix}format={n_format}"
 
             apobj.add(url)
 
@@ -195,10 +197,28 @@ def process_notification(n_object: NotificationContextData, datastore):
                               'body_format': n_format})
 
         # Blast off the notifications tht are set in .add()
+        # Check if we have any custom HTTP handlers (post://, get://, etc.)
+        # These handlers created with @notify decorator don't handle format conversion properly
+        # and will strip HTML if we pass a valid format. So we pass an invalid format string
+        # to prevent Apprise from converting HTML->TEXT
+
+        # Create list of custom handler protocols (both http and https versions)
+        custom_handler_protocols = [f"{method}://" for method in SUPPORTED_HTTP_METHODS]
+        custom_handler_protocols += [f"{method}s://" for method in SUPPORTED_HTTP_METHODS]
+
+        has_custom_handler = any(
+            url.startswith(tuple(custom_handler_protocols))
+            for url in n_object['notification_urls']
+        )
+
+        # If we have custom handlers, use invalid format to prevent conversion
+        # Otherwise use the proper format
+        notify_format = 'raw-no-convert' if has_custom_handler else n_format
+
         apobj.notify(
             title=n_title,
             body=n_body,
-            body_format=n_format,
+            body_format=notify_format,
             # False is not an option for AppRise, must be type None
             attach=n_object.get('screenshot', None)
         )
