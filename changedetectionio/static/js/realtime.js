@@ -2,6 +2,13 @@
 
 $(document).ready(function () {
 
+    function reapplyTableStripes() {
+        $('.watch-table tbody tr').each(function(index) {
+            $(this).removeClass('pure-table-odd pure-table-even');
+            $(this).addClass(index % 2 === 0 ? 'pure-table-odd' : 'pure-table-even');
+        });
+    }
+
     function bindSocketHandlerButtonsEvents(socket) {
         $('.ajax-op').on('click.socketHandlerNamespace', function (e) {
             e.preventDefault();
@@ -101,6 +108,7 @@ $(document).ready(function () {
             socket.on('watch_deleted', function (data) {
                 $('tr[data-watch-uuid="' + data.uuid + '"] td').fadeOut(500, function () {
                     $(this).closest('tr').remove();
+                    reapplyTableStripes();
                 });
             });
 
