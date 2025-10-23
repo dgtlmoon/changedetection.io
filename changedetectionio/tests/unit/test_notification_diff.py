@@ -24,18 +24,18 @@ class TestDiffBuilder(unittest.TestCase):
 
         output = output.split("\n")
 
-
-        self.assertIn('(changed) ok', output)
-        self.assertIn('(into) xok', output)
-        self.assertIn('(into) next-x-ok', output)
-        self.assertIn('(added) and something new', output)
+        # Check that placeholders are present (they get replaced in apply_service_tweaks)
+        self.assertTrue(any(diff.CHANGED_PLACEMARKER_OPEN in line and 'ok' in line for line in output))
+        self.assertTrue(any(diff.CHANGED_INTO_PLACEMARKER_OPEN in line and 'xok' in line for line in output))
+        self.assertTrue(any(diff.CHANGED_INTO_PLACEMARKER_OPEN in line and 'next-x-ok' in line for line in output))
+        self.assertTrue(any(diff.ADDED_PLACEMARKER_OPEN in line and 'and something new' in line for line in output))
 
         with open(base_dir + "/test-content/after-2.txt", 'r') as f:
             newest_version_file_contents = f.read()
         output = diff.render_diff(previous_version_file_contents, newest_version_file_contents)
         output = output.split("\n")
-        self.assertIn('(removed) for having learned computerese,', output)
-        self.assertIn('(removed) I continue to examine bits, bytes and words', output)
+        self.assertTrue(any(diff.REMOVED_PLACEMARKER_OPEN in line and 'for having learned computerese,' in line for line in output))
+        self.assertTrue(any(diff.REMOVED_PLACEMARKER_OPEN in line and 'I continue to examine bits, bytes and words' in line for line in output))
 
         #diff_removed
         with open(base_dir + "/test-content/before.txt", 'r') as f:
@@ -45,18 +45,18 @@ class TestDiffBuilder(unittest.TestCase):
             newest_version_file_contents = f.read()
         output = diff.render_diff(previous_version_file_contents, newest_version_file_contents, include_equal=False, include_removed=True, include_added=False)
         output = output.split("\n")
-        self.assertIn('(changed) ok', output)
-        self.assertIn('(into) xok', output)
-        self.assertIn('(into) next-x-ok', output)
-        self.assertNotIn('(added) and something new', output)
+        self.assertTrue(any(diff.CHANGED_PLACEMARKER_OPEN in line and 'ok' in line for line in output))
+        self.assertTrue(any(diff.CHANGED_INTO_PLACEMARKER_OPEN in line and 'xok' in line for line in output))
+        self.assertTrue(any(diff.CHANGED_INTO_PLACEMARKER_OPEN in line and 'next-x-ok' in line for line in output))
+        self.assertFalse(any(diff.ADDED_PLACEMARKER_OPEN in line and 'and something new' in line for line in output))
 
         #diff_removed
         with open(base_dir + "/test-content/after-2.txt", 'r') as f:
             newest_version_file_contents = f.read()
         output = diff.render_diff(previous_version_file_contents, newest_version_file_contents, include_equal=False, include_removed=True, include_added=False)
         output = output.split("\n")
-        self.assertIn('(removed) for having learned computerese,', output)
-        self.assertIn('(removed) I continue to examine bits, bytes and words', output)
+        self.assertTrue(any(diff.REMOVED_PLACEMARKER_OPEN in line and 'for having learned computerese,' in line for line in output))
+        self.assertTrue(any(diff.REMOVED_PLACEMARKER_OPEN in line and 'I continue to examine bits, bytes and words' in line for line in output))
 
     def test_expected_diff_patch_output(self):
         base_dir = os.path.dirname(__file__)
