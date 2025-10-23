@@ -83,6 +83,9 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
     #     200 bytes for the overhead of the _entire_ json payload, 200 bytes for {tts, wait, content} etc headers
     #     Length of URL - Incase they specify a longer custom avatar_url
 
+    if not n_body or not n_body.strip():
+        return url, n_body, n_title
+
     # So if no avatar_url is specified, add one so it can be correctly calculated into the total payload
     parsed = urlparse(url)
     k = '?' if not parsed.query else '&'
@@ -122,7 +125,7 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
           or url.startswith('https://discord.com/api'))\
             and 'html' in requested_output_format:
         # Discord doesn't support HTML, replace <br> with newlines
-        n_body = n_body.replace('<br>', '\n')
+        n_body = n_body.strip().replace('<br>', '\n')
         n_body = n_body.replace('</br>', '\n')
 
         # Don't replace placeholders or truncate here - let the custom Discord plugin handle it
@@ -161,6 +164,7 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
         n_body = n_body.replace(CHANGED_PLACEMARKER_CLOSED, f'</span>')
         n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN, f'<span style="{HTML_ADDED_STYLE}">')
         n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_CLOSED, f'</span>')
+        n_body = n_body.replace("\n", '<br>')
     elif requested_output_format == 'html':
         n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '(added) ')
         n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, '')
@@ -170,6 +174,7 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
         n_body = n_body.replace(CHANGED_PLACEMARKER_CLOSED, f'')
         n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN, f'(into) ')
         n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_CLOSED, f'')
+        n_body = n_body.replace("\n", '<br>')
 
     else: #plaintext etc default
         n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '(added) ')
@@ -180,9 +185,6 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
         n_body = n_body.replace(CHANGED_PLACEMARKER_CLOSED, f'')
         n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN, f'(into) ')
         n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_CLOSED, f'')
-
-    if 'html' in requested_output_format:
-        n_body = n_body.replace("\n", '<br>')
 
     return url, n_body, n_title
 
