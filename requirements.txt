@@ -10,14 +10,14 @@ flask_restful
 flask_cors # For the Chrome extension to operate
 janus # Thread-safe async/sync queue bridge
 flask_wtf~=1.2
-flask~=2.3
+flask~=3.1
 flask-socketio~=5.5.1
 python-socketio~=5.13.0
 python-engineio~=4.12.3
 inscriptis~=2.2
 pytz
 timeago~=1.0
-validators~=0.21
+validators~=0.35
 
 # Set these versions together to avoid a RequestsDependencyWarning
 # >= 2.26 also adds Brotli support if brotli is installed
@@ -57,7 +57,7 @@ cryptography==44.0.1
 paho-mqtt!=2.0.*
 
 # Used for CSS filtering, JSON extraction from HTML
-beautifulsoup4>=4.0.0,<=4.13.5
+beautifulsoup4>=4.0.0,<=4.14.2
 
 # XPath filtering, lxml is required by bs4 anyway, but put it here to be safe.
 # #2328 - 5.2.0 and 5.2.1 had extra CPU flag CFLAGS set which was not compatible on older hardware
@@ -67,13 +67,9 @@ lxml >=4.8.0,<6,!=5.2.0,!=5.2.1
 
 # XPath 2.0-3.1 support - 4.2.0 had issues, 4.1.5 stable
 # Consider updating to latest stable version periodically
-elementpath==4.1.5
+elementpath==5.0.4
 
 selenium~=4.31.0
-
-# https://github.com/pallets/werkzeug/issues/2985
-# Maybe related to pytest?
-werkzeug==3.0.6
 
 # Templating, so far just in the URLs but in the future can be for the notifications also
 jinja2~=3.1
