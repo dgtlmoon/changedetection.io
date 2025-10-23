@@ -765,8 +765,8 @@ class commonSettingsForm(Form):
         """Validate that HTML Color format is not used with Telegram"""
         if self.notification_format.data == 'HTML Color' and field.data:
             for url in field.data:
-                if url and 'tgram://' in url:
-                    raise ValidationError('HTML Color format is not supported by Telegram. Please choose another Notification Format (Plain Text, HTML, or Markdown to HTML).')
+                if url and ('tgram://' in url or 'discord://' in url or 'discord.com/api/webhooks' in url):
+                    raise ValidationError('HTML Color format is not supported by Telegram and Discord. Please choose another Notification Format (Plain Text, HTML, or Markdown to HTML).')
 
 
 class importForm(Form):
