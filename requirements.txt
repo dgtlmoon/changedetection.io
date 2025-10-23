@@ -10,7 +10,7 @@ flask_restful
 flask_cors # For the Chrome extension to operate
 janus # Thread-safe async/sync queue bridge
 flask_wtf~=1.2
-flask~=2.3
+flask~=3.1
 flask-socketio~=5.5.1
 python-socketio~=5.13.0
 python-engineio~=4.12.3
@@ -69,10 +69,6 @@ lxml >=4.8.0,<6,!=5.2.0,!=5.2.1
 elementpath==5.0.4
 
 selenium~=4.31.0
-
-# https://github.com/pallets/werkzeug/issues/2985
-# Maybe related to pytest?
-werkzeug==3.0.6
 
 # Templating, so far just in the URLs but in the future can be for the notifications also
 jinja2~=3.1

@@ -89,9 +89,8 @@ class model(watch_base):
                 ready_url = jinja_render(template_str=url)
             except Exception as e:
                 logger.critical(f"Invalid URL template for: '{url}' - {str(e)}")
-                from flask import (
-                    flash, Markup, url_for
-                )
+                from flask import flash, url_for
+                from markupsafe import Markup
                 message = Markup('<a href="{}#general">The URL {} is invalid and cannot be used, click to edit</a>'.format(
                     url_for('ui.ui_edit.edit_page', uuid=self.get('uuid')), self.get('url', '')))
                 flash(message, 'error')
