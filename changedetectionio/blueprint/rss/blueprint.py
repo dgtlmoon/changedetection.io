@@ -1,5 +1,6 @@
 
 from changedetectionio.jinja2_custom import render as jinja_render
+from changedetectionio.notification.handler import apply_service_tweaks
 from changedetectionio.store import ChangeDetectionStore
 from feedgen.feed import FeedGenerator
 from flask import Blueprint, make_response, request, url_for, redirect
@@ -120,9 +121,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     html_diff = diff.render_diff(previous_version_file_contents=watch.get_history_snapshot(dates[-2]),
                                                  newest_version_file_contents=watch.get_history_snapshot(dates[-1]),
                                                  include_equal=False,
-                                                 line_feed_sep="<br>",
-                                                 html_colour=html_colour_enable
+                                                 line_feed_sep="<br>"
                                                  )
+
+
+                    requested_output_format = 'htmlcolor' if html_colour_enable else 'html'
+                    html_diff = apply_service_tweaks(url='', n_body=html_diff, n_title=None, requested_output_format=requested_output_format)
+
                 except FileNotFoundError as e:
                     html_diff = f"History snapshot file for watch {watch.get('uuid')}@{watch.last_changed} - '{watch.get('title')} not found."
 

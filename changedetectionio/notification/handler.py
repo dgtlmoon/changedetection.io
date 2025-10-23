@@ -90,7 +90,7 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
     # So if no avatar_url is specified, add one so it can be correctly calculated into the total payload
     parsed = urlparse(url)
     k = '?' if not parsed.query else '&'
-    if not 'avatar_url' in url \
+    if url and not 'avatar_url' in url \
             and not url.startswith('mail') \
             and not url.startswith('post') \
             and not url.startswith('get') \
