@@ -140,7 +140,8 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
         else:
             # We assume plaintext (added)(removed) etc and just roll with that
             n_body = f'{n_body[0:body_limit]}'
-    else:
+
+    elif requested_output_format == 'htmlcolor':
         n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, f'<span style="{HTML_REMOVED_STYLE}">')
         n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, f'</span>')
         n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, f'<span style="{HTML_ADDED_STYLE}">')
