@@ -8,7 +8,7 @@ default_notification_title = 'ChangeDetection.io Notification - {{watch_url}}'
 # But to avoid importing the whole heavy module just use the same strings here.
 valid_notification_formats = {
     'Text': 'text',
-    'Markdown': 'markdown',
+    'Markdown to HTML': 'markdown',
     'HTML': 'html',
     'HTML Color': 'htmlcolor',
     # Used only for editing a watch (not for global)
