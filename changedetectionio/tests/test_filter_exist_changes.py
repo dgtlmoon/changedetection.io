@@ -86,7 +86,7 @@ def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_se
                                                    "Diff Full: {{diff_full}}\n"
                                                    "Diff as Patch: {{diff_patch}}\n"
                                                    ":-)",
-                              "notification_format": "Text"}
+                              "notification_format": 'Plain Text'}
 
     notification_form_data.update({
         "url": test_url,

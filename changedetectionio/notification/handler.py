@@ -53,6 +53,7 @@ def notification_format_align_with_apprise(n_format : str):
     """
     Correctly align changedetection's formats with apprise's formats
     Probably these are the same - but good to be sure.
+    These set the expected OUTPUT format type
     :param n_format:
     :return:
     """
@@ -71,11 +72,62 @@ def notification_format_align_with_apprise(n_format : str):
 
     return n_format
 
+
+def apply_service_tweaks(url, n_body, n_title):
+    # Re 323 - Limit discord length to their 2000 char limit total or it wont send.
+    # Because different notifications may require different pre-processing, run each sequentially :(
+    # 2000 bytes minus -
+    #     200 bytes for the overhead of the _entire_ json payload, 200 bytes for {tts, wait, content} etc headers
+    #     Length of URL - Incase they specify a longer custom avatar_url
+
+    # So if no avatar_url is specified, add one so it can be correctly calculated into the total payload
+    parsed = urlparse(url)
+    k = '?' if not parsed.query else '&'
+    if not 'avatar_url' in url \
+            and not url.startswith('mail') \
+            and not url.startswith('post') \
+            and not url.startswith('get') \
+            and not url.startswith('delete') \
+            and not url.startswith('put'):
+        url += k + f"avatar_url={APPRISE_AVATAR_URL}"
+
+    if url.startswith('tgram://'):
+        # Telegram only supports a limit subset of HTML, remove the '<br>' we place in.
+        # re https://github.com/dgtlmoon/changedetection.io/issues/555
+        # @todo re-use an existing library we have already imported to strip all non-allowed tags
+        n_body = n_body.replace('<br>', '\n')
+        n_body = n_body.replace('</br>', '\n')
+        # real limit is 4096, but minus some for extra metadata
+        payload_max_size = 3600
+        body_limit = max(0, payload_max_size - len(n_title))
+        n_title = n_title[0:payload_max_size]
+        n_body = n_body[0:body_limit]
+
+    elif url.startswith('discord://') or url.startswith('https://discordapp.com/api/webhooks') or url.startswith(
+            'https://discord.com/api'):
+        # real limit is 2000, but minus some for extra metadata
+        payload_max_size = 1700
+        body_limit = max(0, payload_max_size - len(n_title))
+        n_title = n_title[0:payload_max_size]
+        n_body = n_body[0:body_limit]
+
+    return url, n_body, n_title
+
+
 def process_notification(n_object: NotificationContextData, datastore):
     from changedetectionio.jinja2_custom import render as jinja_render
     from . import default_notification_format_for_watch, default_notification_format, valid_notification_formats
     # be sure its registered
     from .apprise_plugin.custom_handlers import apprise_http_custom_handler
+
+    # Create list of custom handler protocols (both http and https versions)
+    custom_handler_protocols = [f"{method}://" for method in SUPPORTED_HTTP_METHODS]
+    custom_handler_protocols += [f"{method}s://" for method in SUPPORTED_HTTP_METHODS]
+
+    has_custom_handler = any(
+        url.startswith(tuple(custom_handler_protocols))
+        for url in n_object['notification_urls']
+    )
 
     if not isinstance(n_object, NotificationContextData):
         raise TypeError(f"Expected NotificationContextData, got {type(n_object)}")
@@ -87,19 +139,24 @@ def process_notification(n_object: NotificationContextData, datastore):
     # Insert variables into the notification content
     notification_parameters = create_notification_parameters(n_object, datastore)
 
-    n_format = valid_notification_formats.get(
+    requested_output_format = valid_notification_formats.get(
         n_object.get('notification_format', default_notification_format),
         valid_notification_formats[default_notification_format],
     )
 
     # If we arrived with 'System default' then look it up
-    if n_format == default_notification_format_for_watch and datastore.data['settings']['application'].get('notification_format') != default_notification_format_for_watch:
+    if requested_output_format == default_notification_format_for_watch and datastore.data['settings']['application'].get('notification_format') != default_notification_format_for_watch:
         # Initially text or whatever
-        n_format = datastore.data['settings']['application'].get('notification_format', valid_notification_formats[default_notification_format]).lower()
+        requested_output_format = datastore.data['settings']['application'].get('notification_format', valid_notification_formats[default_notification_format]).lower()
 
-    n_format = notification_format_align_with_apprise(n_format=n_format)
+    requested_output_format = notification_format_align_with_apprise(n_format=requested_output_format)
 
     logger.trace(f"Complete notification body including Jinja and placeholders calculated in  {time.time() - now:.2f}s")
+
+    # If we have custom handlers, use invalid format to prevent conversion
+    # Otherwise use the proper format
+    if has_custom_handler:
+        input_format = 'raw-no-convert'
 
     # https://github.com/caronc/apprise/wiki/Development_LogCapture
     # Anything higher than or equal to WARNING (which covers things like Connection errors)
@@ -117,6 +174,8 @@ def process_notification(n_object: NotificationContextData, datastore):
 
     with apprise.LogCapture(level=apprise.logging.DEBUG) as logs:
         for url in n_object['notification_urls']:
+            parsed_url = urlparse(url)
+            prefix_add_to_url = '?' if not parsed_url.query else '&'
 
             # Get the notification body from datastore
             n_body = jinja_render(template_str=n_object.get('notification_body', ''), **notification_parameters)
@@ -124,8 +183,32 @@ def process_notification(n_object: NotificationContextData, datastore):
             if n_object.get('markup_text_to_html'):
                 n_body = markup_text_links_to_html(body=n_body)
 
-            if n_format == NotifyFormat.HTML.value:
+            # This actually means we request "Markdown to HTML"
+            if requested_output_format == NotifyFormat.MARKDOWN.value:
+                output_format = NotifyFormat.HTML.value
+                input_format = NotifyFormat.MARKDOWN.value
+                if not 'format=' in url.lower():
+                    url = f"{url}{prefix_add_to_url}format={output_format}"
+
+            # Deviation from apprise.
+            # No conversion, its like they want to send raw HTML but we add linebreaks
+            elif requested_output_format == NotifyFormat.HTML.value:
+                # same in and out means apprise wont try to convert
+                input_format = output_format = NotifyFormat.HTML.value
                 n_body = n_body.replace("\n", '<br>')
+                if not 'format=' in url.lower():
+                    url = f"{url}{prefix_add_to_url}format={output_format}"
+
+            else:
+                # Nothing to be done, leave it as plaintext
+                # `body_format` Tell apprise what format the INPUT is in
+                # &format= in URL Tell apprise what format the OUTPUT should be in (it can convert between)
+                input_format = output_format = NotifyFormat.TEXT.value
+                if not 'format=' in url.lower():
+                    url = f"{url}{prefix_add_to_url}format={output_format}"
+
+            if has_custom_handler:
+                input_format='raw-no-convert'
 
             n_title = jinja_render(template_str=n_object.get('notification_title', ''), **notification_parameters)
 
@@ -141,87 +224,23 @@ def process_notification(n_object: NotificationContextData, datastore):
             logger.info(f">> Process Notification: AppRise notifying {url}")
             url = jinja_render(template_str=url, **notification_parameters)
 
-            # Re 323 - Limit discord length to their 2000 char limit total or it wont send.
-            # Because different notifications may require different pre-processing, run each sequentially :(
-            # 2000 bytes minus -
-            #     200 bytes for the overhead of the _entire_ json payload, 200 bytes for {tts, wait, content} etc headers
-            #     Length of URL - Incase they specify a longer custom avatar_url
-
-            # So if no avatar_url is specified, add one so it can be correctly calculated into the total payload
-            parsed = urlparse(url)
-            k = '?' if not parsed.query else '&'
-            if not 'avatar_url' in url \
-                    and not url.startswith('mail') \
-                    and not url.startswith('post') \
-                    and not url.startswith('get') \
-                    and not url.startswith('delete') \
-                    and not url.startswith('put'):
-                url += k + f"avatar_url={APPRISE_AVATAR_URL}"
-
-            if url.startswith('tgram://'):
-                # Telegram only supports a limit subset of HTML, remove the '<br>' we place in.
-                # re https://github.com/dgtlmoon/changedetection.io/issues/555
-                # @todo re-use an existing library we have already imported to strip all non-allowed tags
-                n_body = n_body.replace('<br>', '\n')
-                n_body = n_body.replace('</br>', '\n')
-                # real limit is 4096, but minus some for extra metadata
-                payload_max_size = 3600
-                body_limit = max(0, payload_max_size - len(n_title))
-                n_title = n_title[0:payload_max_size]
-                n_body = n_body[0:body_limit]
-
-            elif url.startswith('discord://') or url.startswith('https://discordapp.com/api/webhooks') or url.startswith(
-                    'https://discord.com/api'):
-                # real limit is 2000, but minus some for extra metadata
-                payload_max_size = 1700
-                body_limit = max(0, payload_max_size - len(n_title))
-                n_title = n_title[0:payload_max_size]
-                n_body = n_body[0:body_limit]
-
-            # Add format parameter to mailto URLs to ensure proper text/html handling
-            # https://github.com/caronc/apprise/issues/633#issuecomment-1191449321
-            # Note: Custom handlers (post://, get://, etc.) don't need this as we handle them
-            # differently by passing an invalid body_format to prevent HTML conversion
-            if not 'format=' in url and url.startswith(('mailto', 'mailtos')):
-                parsed = urlparse(url)
-                prefix = '?' if not parsed.query else '&'
-                # Apprise format is already lowercase from notification_format_align_with_apprise()
-                url = f"{url}{prefix}format={n_format}"
+            (url, n_body, n_title) = apply_service_tweaks(url=url, n_body=n_body, n_title=n_title)
 
             apobj.add(url)
 
             sent_objs.append({'title': n_title,
                               'body': n_body,
-                              'url': url,
-                              'body_format': n_format})
-
-        # Blast off the notifications tht are set in .add()
-        # Check if we have any custom HTTP handlers (post://, get://, etc.)
-        # These handlers created with @notify decorator don't handle format conversion properly
-        # and will strip HTML if we pass a valid format. So we pass an invalid format string
-        # to prevent Apprise from converting HTML->TEXT
-
-        # Create list of custom handler protocols (both http and https versions)
-        custom_handler_protocols = [f"{method}://" for method in SUPPORTED_HTTP_METHODS]
-        custom_handler_protocols += [f"{method}s://" for method in SUPPORTED_HTTP_METHODS]
-
-        has_custom_handler = any(
-            url.startswith(tuple(custom_handler_protocols))
-            for url in n_object['notification_urls']
-        )
-
-        # If we have custom handlers, use invalid format to prevent conversion
-        # Otherwise use the proper format
-        notify_format = 'raw-no-convert' if has_custom_handler else n_format
+                              'url': url})
 
         apobj.notify(
             title=n_title,
             body=n_body,
-            body_format=notify_format,
+            # `body_format` Tell apprise what format the INPUT is in
+            # &format= in URL Tell apprise what format the OUTPUT should be in (it can convert between)
+            body_format=input_format,
             # False is not an option for AppRise, must be type None
             attach=n_object.get('screenshot', None)
         )
-
 
         # Returns empty string if nothing found, multi-line string otherwise
         log_value = logs.getvalue()
