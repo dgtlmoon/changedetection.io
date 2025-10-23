@@ -123,24 +123,23 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
         n_body = n_body.replace('<br>', '\n')
         n_body = n_body.replace('</br>', '\n')
 
-        if requested_output_format == 'htmlcolor':
-            n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '[0;41;37m')
-            n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, '[0m')
-            n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, '[0;42;37m')
-            n_body = n_body.replace(ADDED_PLACEMARKER_CLOSED, f'[0m')
-            n_body = f'```ansi\n{n_body[0:body_limit]}\n```'
-        elif requested_output_format == 'html':
+# Discord doesnt support color :(
+#            n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '[0;41;37m')
+#            n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, '[0m')
+#            n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, '[0;42;37m')
+#            n_body = n_body.replace(ADDED_PLACEMARKER_CLOSED, f'[0m')
+#            n_body = f'```ansi\n{n_body[0:body_limit]}\n```'
+        if 'html' in requested_output_format:
             #'html' and 'plain text'.. doesnt really work with discord so we'll use its styles
             # Use Discord markdown: strikethrough for removed, bold for added
             n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '~~')
             n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, '~~')
             n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, '**')
             n_body = n_body.replace(ADDED_PLACEMARKER_CLOSED, '**')
-            n_body = f'{n_body[0:body_limit]}'
-        else:
-            # We assume plaintext (added)(removed) etc and just roll with that
-            n_body = f'{n_body[0:body_limit]}'
 
+        n_body = f'{n_body[0:body_limit]}'
+
+    # Is not discord/tgram and they want htmlcolor
     elif requested_output_format == 'htmlcolor':
         n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, f'<span style="{HTML_REMOVED_STYLE}">')
         n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, f'</span>')
