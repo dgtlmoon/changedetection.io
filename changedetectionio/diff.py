@@ -52,12 +52,21 @@ def customSequenceMatcher(
         if include_equal and tag == 'equal':
             yield before[alo:ahi]
         elif include_removed and tag == 'delete':
+            if include_change_type_prefix:
                 yield [f'{REMOVED_PLACEMARKER_OPEN}{line}{REMOVED_PLACEMARKER_CLOSED}' for line in same_slicer(before, alo, ahi)]
+            else:
+                yield same_slicer(before, alo, ahi)
         elif include_replaced and tag == 'replace':
+            if include_change_type_prefix:
                 yield [f'{CHANGED_PLACEMARKER_OPEN}{line}{CHANGED_PLACEMARKER_CLOSED}' for line in same_slicer(before, alo, ahi)] + \
                       [f'{CHANGED_INTO_PLACEMARKER_OPEN}{line}{CHANGED_INTO_PLACEMARKER_CLOSED}' for line in same_slicer(after, blo, bhi)]
+            else:
+                yield same_slicer(before, alo, ahi) + same_slicer(after, blo, bhi)
         elif include_added and tag == 'insert':
+            if include_change_type_prefix:
                 yield [f'{ADDED_PLACEMARKER_OPEN}{line}{ADDED_PLACEMARKER_CLOSED}' for line in same_slicer(after, blo, bhi)]
+            else:
+                yield same_slicer(after, blo, bhi)
 
 
 def render_diff(
@@ -69,8 +78,7 @@ def render_diff(
     include_replaced: bool = True,
     line_feed_sep: str = "\n",
     include_change_type_prefix: bool = True,
-    patch_format: bool = False,
-    html_colour: bool = False
+    patch_format: bool = False
 ) -> str:
     """
     Render the difference between two file contents.
@@ -85,8 +93,6 @@ def render_diff(
         line_feed_sep (str): Separator for lines in output
         include_change_type_prefix (bool): Add prefixes to indicate change types
         patch_format (bool): Use patch format for output
-        html_colour (bool): Use HTML background colors for differences
-
     Returns:
         str: Rendered difference
     """
