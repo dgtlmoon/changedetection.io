@@ -167,9 +167,9 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
         n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_CLOSED, f'</span>')
         n_body = n_body.replace("\n", '<br>')
     elif requested_output_format == 'html':
-        n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '(added) ')
+        n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '(removed) ')
         n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, '')
-        n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, '(removed) ')
+        n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, '(added) ')
         n_body = n_body.replace(ADDED_PLACEMARKER_CLOSED, '')
         n_body = n_body.replace(CHANGED_PLACEMARKER_OPEN, f'(changed) ')
         n_body = n_body.replace(CHANGED_PLACEMARKER_CLOSED, f'')
@@ -178,9 +178,9 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
         n_body = n_body.replace("\n", '<br>')
 
     else: #plaintext etc default
-        n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '(added) ')
+        n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '(removed) ')
         n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, '')
-        n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, '(removed) ')
+        n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, '(added) ')
         n_body = n_body.replace(ADDED_PLACEMARKER_CLOSED, '')
         n_body = n_body.replace(CHANGED_PLACEMARKER_OPEN, f'(changed) ')
         n_body = n_body.replace(CHANGED_PLACEMARKER_CLOSED, f'')
