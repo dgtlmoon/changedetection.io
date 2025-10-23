@@ -6,6 +6,9 @@ from loguru import logger
 from urllib.parse import urlparse
 from .apprise_plugin.assets import apprise_asset, APPRISE_AVATAR_URL
 from .apprise_plugin.custom_handlers import SUPPORTED_HTTP_METHODS
+from ..diff import HTML_REMOVED_STYLE, REMOVED_PLACEMARKER_OPEN, REMOVED_PLACEMARKER_CLOSED, ADDED_PLACEMARKER_OPEN, HTML_ADDED_STYLE, \
+    ADDED_PLACEMARKER_CLOSED, CHANGED_INTO_PLACEMARKER_OPEN, CHANGED_INTO_PLACEMARKER_CLOSED, CHANGED_PLACEMARKER_OPEN, \
+    CHANGED_PLACEMARKER_CLOSED
 from ..notification_service import NotificationContextData
 
 
@@ -73,17 +76,21 @@ def notification_format_align_with_apprise(n_format : str):
     return n_format
 
 
-def apply_service_tweaks(url, n_body, n_title):
+def apply_service_tweaks(url, n_body, n_title, requested_output_format):
+
     # Re 323 - Limit discord length to their 2000 char limit total or it wont send.
     # Because different notifications may require different pre-processing, run each sequentially :(
     # 2000 bytes minus -
     #     200 bytes for the overhead of the _entire_ json payload, 200 bytes for {tts, wait, content} etc headers
     #     Length of URL - Incase they specify a longer custom avatar_url
 
+    if not n_body or not n_body.strip():
+        return url, n_body, n_title
+
     # So if no avatar_url is specified, add one so it can be correctly calculated into the total payload
     parsed = urlparse(url)
     k = '?' if not parsed.query else '&'
-    if not 'avatar_url' in url \
+    if url and not 'avatar_url' in url \
             and not url.startswith('mail') \
             and not url.startswith('post') \
             and not url.startswith('get') \
@@ -97,19 +104,88 @@ def apply_service_tweaks(url, n_body, n_title):
         # @todo re-use an existing library we have already imported to strip all non-allowed tags
         n_body = n_body.replace('<br>', '\n')
         n_body = n_body.replace('</br>', '\n')
+
+        # Use strikethrough for removed content, bold for added content
+        n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '<s>')
+        n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, '</s>')
+        n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, '<b>')
+        n_body = n_body.replace(ADDED_PLACEMARKER_CLOSED, '</b>')
+        # Handle changed/replaced lines (old → new)
+        n_body = n_body.replace(CHANGED_PLACEMARKER_OPEN, '<s>')
+        n_body = n_body.replace(CHANGED_PLACEMARKER_CLOSED, '</s>')
+        n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN, '<b>')
+        n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_CLOSED, '</b>')
+
         # real limit is 4096, but minus some for extra metadata
         payload_max_size = 3600
         body_limit = max(0, payload_max_size - len(n_title))
         n_title = n_title[0:payload_max_size]
         n_body = n_body[0:body_limit]
 
-    elif url.startswith('discord://') or url.startswith('https://discordapp.com/api/webhooks') or url.startswith(
-            'https://discord.com/api'):
-        # real limit is 2000, but minus some for extra metadata
-        payload_max_size = 1700
-        body_limit = max(0, payload_max_size - len(n_title))
-        n_title = n_title[0:payload_max_size]
-        n_body = n_body[0:body_limit]
+    elif (url.startswith('discord://') or url.startswith('https://discordapp.com/api/webhooks')
+          or url.startswith('https://discord.com/api'))\
+            and 'html' in requested_output_format:
+        # Discord doesn't support HTML, replace <br> with newlines
+        n_body = n_body.strip().replace('<br>', '\n')
+        n_body = n_body.replace('</br>', '\n')
+
+        # Don't replace placeholders or truncate here - let the custom Discord plugin handle it
+        # The plugin will use embeds (6000 char limit across all embeds) if placeholders are present,
+        # or plain content (2000 char limit) otherwise
+
+        # Only do placeholder replacement if NOT using htmlcolor (which triggers embeds in custom plugin)
+        if requested_output_format == 'html':
+            # No diff placeholders, use Discord markdown for any other formatting
+            # Use Discord markdown: strikethrough for removed, bold for added
+            n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '~~')
+            n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, '~~')
+            n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, '**')
+            n_body = n_body.replace(ADDED_PLACEMARKER_CLOSED, '**')
+            # Handle changed/replaced lines (old → new)
+            n_body = n_body.replace(CHANGED_PLACEMARKER_OPEN, '~~')
+            n_body = n_body.replace(CHANGED_PLACEMARKER_CLOSED, '~~')
+            n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN, '**')
+            n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_CLOSED, '**')
+
+            # Apply 2000 char limit for plain content
+            payload_max_size = 1700
+            body_limit = max(0, payload_max_size - len(n_title))
+            n_title = n_title[0:payload_max_size]
+            n_body = n_body[0:body_limit]
+        # else: our custom Discord plugin will convert any placeholders left over into embeds with color bars
+
+    # Is not discord/tgram and they want htmlcolor
+    elif requested_output_format == 'htmlcolor':
+        n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, f'<span style="{HTML_REMOVED_STYLE}">')
+        n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, f'</span>')
+        n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, f'<span style="{HTML_ADDED_STYLE}">')
+        n_body = n_body.replace(ADDED_PLACEMARKER_CLOSED, f'</span>')
+        # Handle changed/replaced lines (old → new)
+        n_body = n_body.replace(CHANGED_PLACEMARKER_OPEN, f'<span style="{HTML_REMOVED_STYLE}">')
+        n_body = n_body.replace(CHANGED_PLACEMARKER_CLOSED, f'</span>')
+        n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN, f'<span style="{HTML_ADDED_STYLE}">')
+        n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_CLOSED, f'</span>')
+        n_body = n_body.replace("\n", '<br>')
+    elif requested_output_format == 'html':
+        n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '(removed) ')
+        n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, '')
+        n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, '(added) ')
+        n_body = n_body.replace(ADDED_PLACEMARKER_CLOSED, '')
+        n_body = n_body.replace(CHANGED_PLACEMARKER_OPEN, f'(changed) ')
+        n_body = n_body.replace(CHANGED_PLACEMARKER_CLOSED, f'')
+        n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN, f'(into) ')
+        n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_CLOSED, f'')
+        n_body = n_body.replace("\n", '<br>')
+
+    else: #plaintext etc default
+        n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '(removed) ')
+        n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, '')
+        n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, '(added) ')
+        n_body = n_body.replace(ADDED_PLACEMARKER_CLOSED, '')
+        n_body = n_body.replace(CHANGED_PLACEMARKER_OPEN, f'(changed) ')
+        n_body = n_body.replace(CHANGED_PLACEMARKER_CLOSED, f'')
+        n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN, f'(into) ')
+        n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_CLOSED, f'')
 
     return url, n_body, n_title
 
@@ -119,6 +195,8 @@ def process_notification(n_object: NotificationContextData, datastore):
     from . import default_notification_format_for_watch, default_notification_format, valid_notification_formats
     # be sure its registered
     from .apprise_plugin.custom_handlers import apprise_http_custom_handler
+    # Register custom Discord plugin
+    from .apprise_plugin.discord import NotifyDiscordCustom
 
     # Create list of custom handler protocols (both http and https versions)
     custom_handler_protocols = [f"{method}://" for method in SUPPORTED_HTTP_METHODS]
@@ -149,6 +227,8 @@ def process_notification(n_object: NotificationContextData, datastore):
         # Initially text or whatever
         requested_output_format = datastore.data['settings']['application'].get('notification_format', valid_notification_formats[default_notification_format]).lower()
 
+    requested_output_format_original = requested_output_format
+
     requested_output_format = notification_format_align_with_apprise(n_format=requested_output_format)
 
     logger.trace(f"Complete notification body including Jinja and placeholders calculated in  {time.time() - now:.2f}s")
@@ -168,6 +248,12 @@ def process_notification(n_object: NotificationContextData, datastore):
         apprise_asset.async_mode = n_object.get('as_async')
 
     apobj = apprise.Apprise(debug=True, asset=apprise_asset)
+
+    # Override Apprise's built-in Discord plugin with our custom one
+    # This allows us to use colored embeds for diff content
+    # First remove the built-in discord plugin, then add our custom one
+    apprise.plugins.N_MGR.remove('discord')
+    apprise.plugins.N_MGR.add(NotifyDiscordCustom, schemas='discord')
 
     if not n_object.get('notification_urls'):
         return None
@@ -195,7 +281,6 @@ def process_notification(n_object: NotificationContextData, datastore):
             elif requested_output_format == NotifyFormat.HTML.value:
                 # same in and out means apprise wont try to convert
                 input_format = output_format = NotifyFormat.HTML.value
-                n_body = n_body.replace("\n", '<br>')
                 if not 'format=' in url.lower():
                     url = f"{url}{prefix_add_to_url}format={output_format}"
 
@@ -224,7 +309,7 @@ def process_notification(n_object: NotificationContextData, datastore):
             logger.info(f">> Process Notification: AppRise notifying {url}")
             url = jinja_render(template_str=url, **notification_parameters)
 
-            (url, n_body, n_title) = apply_service_tweaks(url=url, n_body=n_body, n_title=n_title)
+            (url, n_body, n_title) = apply_service_tweaks(url=url, n_body=n_body, n_title=n_title, requested_output_format=requested_output_format_original)
 
             apobj.add(url)
 

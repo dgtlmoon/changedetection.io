@@ -6,6 +6,9 @@ from flask import url_for
 from .util import live_server_setup, wait_for_all_checks, wait_for_notification_endpoint_output, delete_all_watches
 import time
 
+from ..diff import ADDED_PLACEMARKER_OPEN
+
+
 def set_original(excluding=None, add_line=None):
     test_return_data = """<html>
      <body>
@@ -121,6 +124,7 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
               "application-notification_body": 'triggered text was -{{triggered_text}}- ### 网站监测 内容更新了 ####',
               # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#get-parameter-manipulation
               "application-notification_urls": test_notification_url,
+              "application-notification_format": 'Plain Text',
               "application-minutes_between_check": 180,
               "application-fetch_backend": "html_requests"
               },
@@ -174,6 +178,7 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
     assert os.path.isfile("test-datastore/notification.txt"), "Notification fired because I can see the output file"
     with open("test-datastore/notification.txt", 'rb') as f:
         response = f.read()
+        assert ADDED_PLACEMARKER_OPEN.encode('utf-8') not in response #  _apply_diff_filtering shouldnt add something here
         assert b'-Oh yes please' in response
         assert '网站监测 内容更新了'.encode('utf-8') in response
 

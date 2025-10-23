@@ -1,8 +1,21 @@
 import difflib
 from typing import List, Iterator, Union
 
-REMOVED_STYLE = "background-color: #fadad7; color: #b30000;"
-ADDED_STYLE = "background-color: #eaf2c2; color: #406619;"
+HTML_REMOVED_STYLE = "background-color: #fadad7; color: #b30000;"
+HTML_ADDED_STYLE = "background-color: #eaf2c2; color: #406619;"
+
+# These get set to html or telegram type or discord compatible or whatever in handler.py
+REMOVED_PLACEMARKER_OPEN = '<<<removed_PLACEMARKER_OPEN'
+REMOVED_PLACEMARKER_CLOSED = '<<<removed_PLACEMARKER_CLOSED'
+
+ADDED_PLACEMARKER_OPEN = '<<<added_PLACEMARKER_OPEN'
+ADDED_PLACEMARKER_CLOSED = '<<<added_PLACEMARKER_CLOSED'
+
+CHANGED_PLACEMARKER_OPEN = '<<<changed_PLACEMARKER_OPEN'
+CHANGED_PLACEMARKER_CLOSED = '<<<changed_PLACEMARKER_CLOSED'
+
+CHANGED_INTO_PLACEMARKER_OPEN = '<<<changed_into_PLACEMARKER_OPEN'
+CHANGED_INTO_PLACEMARKER_CLOSED = '<<<changed_into_PLACEMARKER_CLOSED'
 
 def same_slicer(lst: List[str], start: int, end: int) -> List[str]:
     """Return a slice of the list, or a single element if start == end."""
@@ -15,8 +28,7 @@ def customSequenceMatcher(
     include_removed: bool = True,
     include_added: bool = True,
     include_replaced: bool = True,
-    include_change_type_prefix: bool = True,
-    html_colour: bool = False
+    include_change_type_prefix: bool = True
 ) -> Iterator[List[str]]:
     """
     Compare two sequences and yield differences based on specified parameters.
@@ -29,8 +41,6 @@ def customSequenceMatcher(
         include_added (bool): Include added parts
         include_replaced (bool): Include replaced parts
         include_change_type_prefix (bool): Add prefixes to indicate change types
-        html_colour (bool): Use HTML background colors for differences
-
     Yields:
         List[str]: Differences between sequences
     """
@@ -42,22 +52,22 @@ def customSequenceMatcher(
         if include_equal and tag == 'equal':
             yield before[alo:ahi]
         elif include_removed and tag == 'delete':
-            if html_colour:
-                yield [f'<span style="{REMOVED_STYLE}">{line}</span>' for line in same_slicer(before, alo, ahi)]
+            if include_change_type_prefix:
+                yield [f'{REMOVED_PLACEMARKER_OPEN}{line}{REMOVED_PLACEMARKER_CLOSED}' for line in same_slicer(before, alo, ahi)]
             else:
-                yield [f"(removed) {line}" for line in same_slicer(before, alo, ahi)] if include_change_type_prefix else same_slicer(before, alo, ahi)
+                yield same_slicer(before, alo, ahi)
         elif include_replaced and tag == 'replace':
-            if html_colour:
-                yield [f'<span style="{REMOVED_STYLE}">{line}</span>' for line in same_slicer(before, alo, ahi)] + \
-                      [f'<span style="{ADDED_STYLE}">{line}</span>' for line in same_slicer(after, blo, bhi)]
+            if include_change_type_prefix:
+                yield [f'{CHANGED_PLACEMARKER_OPEN}{line}{CHANGED_PLACEMARKER_CLOSED}' for line in same_slicer(before, alo, ahi)] + \
+                      [f'{CHANGED_INTO_PLACEMARKER_OPEN}{line}{CHANGED_INTO_PLACEMARKER_CLOSED}' for line in same_slicer(after, blo, bhi)]
             else:
-                yield [f"(changed) {line}" for line in same_slicer(before, alo, ahi)] + \
-                      [f"(into) {line}" for line in same_slicer(after, blo, bhi)] if include_change_type_prefix else same_slicer(before, alo, ahi) + same_slicer(after, blo, bhi)
+                yield same_slicer(before, alo, ahi) + same_slicer(after, blo, bhi)
         elif include_added and tag == 'insert':
-            if html_colour:
-                yield [f'<span style="{ADDED_STYLE}">{line}</span>' for line in same_slicer(after, blo, bhi)]
+            if include_change_type_prefix:
+                yield [f'{ADDED_PLACEMARKER_OPEN}{line}{ADDED_PLACEMARKER_CLOSED}' for line in same_slicer(after, blo, bhi)]
             else:
-                yield [f"(added) {line}" for line in same_slicer(after, blo, bhi)] if include_change_type_prefix else same_slicer(after, blo, bhi)
+                yield same_slicer(after, blo, bhi)
+
 
 def render_diff(
     previous_version_file_contents: str,
@@ -68,8 +78,7 @@ def render_diff(
     include_replaced: bool = True,
     line_feed_sep: str = "\n",
     include_change_type_prefix: bool = True,
-    patch_format: bool = False,
-    html_colour: bool = False
+    patch_format: bool = False
 ) -> str:
     """
     Render the difference between two file contents.
@@ -84,8 +93,6 @@ def render_diff(
         line_feed_sep (str): Separator for lines in output
         include_change_type_prefix (bool): Add prefixes to indicate change types
         patch_format (bool): Use patch format for output
-        html_colour (bool): Use HTML background colors for differences
-
     Returns:
         str: Rendered difference
     """
@@ -103,8 +110,7 @@ def render_diff(
         include_removed=include_removed,
         include_added=include_added,
         include_replaced=include_replaced,
-        include_change_type_prefix=include_change_type_prefix,
-        html_colour=html_colour
+        include_change_type_prefix=include_change_type_prefix
     )
 
     def flatten(lst: List[Union[str, List[str]]]) -> str:
