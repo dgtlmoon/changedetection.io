@@ -6,6 +6,8 @@ from loguru import logger
 from urllib.parse import urlparse
 from .apprise_plugin.assets import apprise_asset, APPRISE_AVATAR_URL
 from .apprise_plugin.custom_handlers import SUPPORTED_HTTP_METHODS
+from ..diff import HTML_REMOVED_STYLE, REMOVED_PLACEMARKER_OPEN, REMOVED_PLACEMARKER_CLOSED, ADDED_PLACEMARKER_OPEN, HTML_ADDED_STYLE, \
+    ADDED_PLACEMARKER_CLOSED
 from ..notification_service import NotificationContextData
 
 
@@ -73,7 +75,7 @@ def notification_format_align_with_apprise(n_format : str):
     return n_format
 
 
-def apply_service_tweaks(url, n_body, n_title):
+def apply_service_tweaks(url, n_body, n_title, requested_output_format):
     # Re 323 - Limit discord length to their 2000 char limit total or it wont send.
     # Because different notifications may require different pre-processing, run each sequentially :(
     # 2000 bytes minus -
@@ -97,6 +99,13 @@ def apply_service_tweaks(url, n_body, n_title):
         # @todo re-use an existing library we have already imported to strip all non-allowed tags
         n_body = n_body.replace('<br>', '\n')
         n_body = n_body.replace('</br>', '\n')
+
+        # Use strikethrough for removed content, bold for added content
+        n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '<s>')
+        n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, '</s>')
+        n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, '<b>')
+        n_body = n_body.replace(ADDED_PLACEMARKER_CLOSED, '</b>')
+
         # real limit is 4096, but minus some for extra metadata
         payload_max_size = 3600
         body_limit = max(0, payload_max_size - len(n_title))
@@ -109,7 +118,33 @@ def apply_service_tweaks(url, n_body, n_title):
         payload_max_size = 1700
         body_limit = max(0, payload_max_size - len(n_title))
         n_title = n_title[0:payload_max_size]
-        n_body = n_body[0:body_limit]
+
+        # Discord doesn't support HTML, replace <br> with newlines
+        n_body = n_body.replace('<br>', '\n')
+        n_body = n_body.replace('</br>', '\n')
+
+        if requested_output_format == 'htmlcolor':
+            n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '[0;41;37m')
+            n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, '[0m')
+            n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, '[0;42;37m')
+            n_body = n_body.replace(ADDED_PLACEMARKER_CLOSED, f'[0m')
+            n_body = f'```ansi\n{n_body[0:body_limit]}\n```'
+        elif requested_output_format == 'html':
+            #'html' and 'plain text'.. doesnt really work with discord so we'll use its styles
+            # Use Discord markdown: strikethrough for removed, bold for added
+            n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '~~')
+            n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, '~~')
+            n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, '**')
+            n_body = n_body.replace(ADDED_PLACEMARKER_CLOSED, '**')
+            n_body = f'{n_body[0:body_limit]}'
+        else:
+            # We assume plaintext (added)(removed) etc and just roll with that
+            n_body = f'{n_body[0:body_limit]}'
+    else:
+        n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, f'<span style="{HTML_REMOVED_STYLE}">')
+        n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, f'</span>')
+        n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, f'<span style="{HTML_ADDED_STYLE}">')
+        n_body = n_body.replace(ADDED_PLACEMARKER_CLOSED, f'</span>')
 
     return url, n_body, n_title
 
@@ -148,6 +183,8 @@ def process_notification(n_object: NotificationContextData, datastore):
     if requested_output_format == default_notification_format_for_watch and datastore.data['settings']['application'].get('notification_format') != default_notification_format_for_watch:
         # Initially text or whatever
         requested_output_format = datastore.data['settings']['application'].get('notification_format', valid_notification_formats[default_notification_format]).lower()
+
+    requested_output_format_original = requested_output_format
 
     requested_output_format = notification_format_align_with_apprise(n_format=requested_output_format)
 
@@ -224,7 +261,7 @@ def process_notification(n_object: NotificationContextData, datastore):
             logger.info(f">> Process Notification: AppRise notifying {url}")
             url = jinja_render(template_str=url, **notification_parameters)
 
-            (url, n_body, n_title) = apply_service_tweaks(url=url, n_body=n_body, n_title=n_title)
+            (url, n_body, n_title) = apply_service_tweaks(url=url, n_body=n_body, n_title=n_title, requested_output_format=requested_output_format_original)
 
             apobj.add(url)
 

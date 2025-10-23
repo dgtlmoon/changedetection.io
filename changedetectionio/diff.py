@@ -1,8 +1,16 @@
 import difflib
 from typing import List, Iterator, Union
 
-REMOVED_STYLE = "background-color: #fadad7; color: #b30000;"
-ADDED_STYLE = "background-color: #eaf2c2; color: #406619;"
+HTML_REMOVED_STYLE = "background-color: #fadad7; color: #b30000;"
+HTML_ADDED_STYLE = "background-color: #eaf2c2; color: #406619;"
+
+# These get set to html or telegram type or discord compatible or whatever in handler.py
+REMOVED_PLACEMARKER_OPEN = '<<<removed_PLACEMARKER_OPEN'
+REMOVED_PLACEMARKER_CLOSED = '<<<removed_PLACEMARKER_CLOSED'
+
+ADDED_PLACEMARKER_OPEN = '<<<added_PLACEMARKER_OPEN'
+ADDED_PLACEMARKER_CLOSED = '<<<added_PLACEMARKER_CLOSED'
+
 
 def same_slicer(lst: List[str], start: int, end: int) -> List[str]:
     """Return a slice of the list, or a single element if start == end."""
@@ -43,19 +51,19 @@ def customSequenceMatcher(
             yield before[alo:ahi]
         elif include_removed and tag == 'delete':
             if html_colour:
-                yield [f'<span style="{REMOVED_STYLE}">{line}</span>' for line in same_slicer(before, alo, ahi)]
+                yield [f'{REMOVED_PLACEMARKER_OPEN}{line}{REMOVED_PLACEMARKER_CLOSED}' for line in same_slicer(before, alo, ahi)]
             else:
                 yield [f"(removed) {line}" for line in same_slicer(before, alo, ahi)] if include_change_type_prefix else same_slicer(before, alo, ahi)
         elif include_replaced and tag == 'replace':
             if html_colour:
-                yield [f'<span style="{REMOVED_STYLE}">{line}</span>' for line in same_slicer(before, alo, ahi)] + \
-                      [f'<span style="{ADDED_STYLE}">{line}</span>' for line in same_slicer(after, blo, bhi)]
+                yield [f'{REMOVED_PLACEMARKER_OPEN}{line}{REMOVED_PLACEMARKER_CLOSED}' for line in same_slicer(before, alo, ahi)] + \
+                      [f'{ADDED_PLACEMARKER_OPEN}{line}{ADDED_PLACEMARKER_CLOSED}' for line in same_slicer(after, blo, bhi)]
             else:
                 yield [f"(changed) {line}" for line in same_slicer(before, alo, ahi)] + \
                       [f"(into) {line}" for line in same_slicer(after, blo, bhi)] if include_change_type_prefix else same_slicer(before, alo, ahi) + same_slicer(after, blo, bhi)
         elif include_added and tag == 'insert':
             if html_colour:
-                yield [f'<span style="{ADDED_STYLE}">{line}</span>' for line in same_slicer(after, blo, bhi)]
+                yield [f'{ADDED_PLACEMARKER_OPEN}{line}{ADDED_PLACEMARKER_CLOSED}' for line in same_slicer(after, blo, bhi)]
             else:
                 yield [f"(added) {line}" for line in same_slicer(after, blo, bhi)] if include_change_type_prefix else same_slicer(after, blo, bhi)
 

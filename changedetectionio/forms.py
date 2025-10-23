@@ -761,12 +761,13 @@ class commonSettingsForm(Form):
     scheduler_timezone_default = StringField("Default timezone for watch check scheduler", render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
     webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1, message="Should contain one or more seconds")])
 
-    def validate_notification_urls(self, field):
-        """Validate that HTML Color format is not used with Telegram"""
-        if self.notification_format.data == 'HTML Color' and field.data:
-            for url in field.data:
-                if url and ('tgram://' in url or 'discord://' in url or 'discord.com/api/webhooks' in url):
-                    raise ValidationError('HTML Color format is not supported by Telegram and Discord. Please choose another Notification Format (Plain Text, HTML, or Markdown to HTML).')
+# Not true anymore but keep the validate_ hook for future use, we convert color tags
+#    def validate_notification_urls(self, field):
+#        """Validate that HTML Color format is not used with Telegram"""
+#        if self.notification_format.data == 'HTML Color' and field.data:
+#            for url in field.data:
+#                if url and ('tgram://' in url or 'discord://' in url or 'discord.com/api/webhooks' in url):
+#                    raise ValidationError('HTML Color format is not supported by Telegram and Discord. Please choose another Notification Format (Plain Text, HTML, or Markdown to HTML).')
 
 
 class importForm(Form):
