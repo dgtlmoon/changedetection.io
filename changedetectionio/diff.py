@@ -11,6 +11,11 @@ REMOVED_PLACEMARKER_CLOSED = '<<<removed_PLACEMARKER_CLOSED'
 ADDED_PLACEMARKER_OPEN = '<<<added_PLACEMARKER_OPEN'
 ADDED_PLACEMARKER_CLOSED = '<<<added_PLACEMARKER_CLOSED'
 
+CHANGED_PLACEMARKER_OPEN = '<<<changed_PLACEMARKER_OPEN'
+CHANGED_PLACEMARKER_CLOSED = '<<<changed_PLACEMARKER_CLOSED'
+
+CHANGED_INTO_PLACEMARKER_OPEN = '<<<changed_into_PLACEMARKER_OPEN'
+CHANGED_INTO_PLACEMARKER_CLOSED = '<<<changed_into_PLACEMARKER_CLOSED'
 
 def same_slicer(lst: List[str], start: int, end: int) -> List[str]:
     """Return a slice of the list, or a single element if start == end."""
@@ -23,8 +28,7 @@ def customSequenceMatcher(
     include_removed: bool = True,
     include_added: bool = True,
     include_replaced: bool = True,
-    include_change_type_prefix: bool = True,
-    html_colour: bool = False
+    include_change_type_prefix: bool = True
 ) -> Iterator[List[str]]:
     """
     Compare two sequences and yield differences based on specified parameters.
@@ -37,8 +41,6 @@ def customSequenceMatcher(
         include_added (bool): Include added parts
         include_replaced (bool): Include replaced parts
         include_change_type_prefix (bool): Add prefixes to indicate change types
-        html_colour (bool): Use HTML background colors for differences
-
     Yields:
         List[str]: Differences between sequences
     """
@@ -50,22 +52,13 @@ def customSequenceMatcher(
         if include_equal and tag == 'equal':
             yield before[alo:ahi]
         elif include_removed and tag == 'delete':
-            if html_colour:
                 yield [f'{REMOVED_PLACEMARKER_OPEN}{line}{REMOVED_PLACEMARKER_CLOSED}' for line in same_slicer(before, alo, ahi)]
-            else:
-                yield [f"(removed) {line}" for line in same_slicer(before, alo, ahi)] if include_change_type_prefix else same_slicer(before, alo, ahi)
         elif include_replaced and tag == 'replace':
-            if html_colour:
-                yield [f'{REMOVED_PLACEMARKER_OPEN}{line}{REMOVED_PLACEMARKER_CLOSED}' for line in same_slicer(before, alo, ahi)] + \
-                      [f'{ADDED_PLACEMARKER_OPEN}{line}{ADDED_PLACEMARKER_CLOSED}' for line in same_slicer(after, blo, bhi)]
-            else:
-                yield [f"(changed) {line}" for line in same_slicer(before, alo, ahi)] + \
-                      [f"(into) {line}" for line in same_slicer(after, blo, bhi)] if include_change_type_prefix else same_slicer(before, alo, ahi) + same_slicer(after, blo, bhi)
+                yield [f'{CHANGED_PLACEMARKER_OPEN}{line}{CHANGED_PLACEMARKER_CLOSED}' for line in same_slicer(before, alo, ahi)] + \
+                      [f'{CHANGED_INTO_PLACEMARKER_OPEN}{line}{CHANGED_INTO_PLACEMARKER_CLOSED}' for line in same_slicer(after, blo, bhi)]
         elif include_added and tag == 'insert':
-            if html_colour:
                 yield [f'{ADDED_PLACEMARKER_OPEN}{line}{ADDED_PLACEMARKER_CLOSED}' for line in same_slicer(after, blo, bhi)]
-            else:
-                yield [f"(added) {line}" for line in same_slicer(after, blo, bhi)] if include_change_type_prefix else same_slicer(after, blo, bhi)
+
 
 def render_diff(
     previous_version_file_contents: str,
@@ -111,8 +104,7 @@ def render_diff(
         include_removed=include_removed,
         include_added=include_added,
         include_replaced=include_replaced,
-        include_change_type_prefix=include_change_type_prefix,
-        html_colour=html_colour
+        include_change_type_prefix=include_change_type_prefix
     )
 
     def flatten(lst: List[Union[str, List[str]]]) -> str:
