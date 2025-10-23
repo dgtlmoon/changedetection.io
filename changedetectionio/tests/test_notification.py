@@ -101,7 +101,7 @@ def test_check_notification(client, live_server, measure_memory_usage):
                                                    "Diff as Patch: {{diff_patch}}\n"
                                                    ":-)",
                               "notification_screenshot": True,
-                              "notification_format": "Text"}
+                              "notification_format": 'Plain Text'}
 
     notification_form_data.update({
         "url": test_url,
@@ -267,7 +267,7 @@ def test_notification_validation(client, live_server, measure_memory_usage):
 #        data={"notification_urls": 'json://localhost/foobar',
 #              "notification_title": "",
 #              "notification_body": "",
-#              "notification_format": "Text",
+#              "notification_format": 'Plain Text',
 #              "url": test_url,
 #              "tag": "my tag",
 #              "title": "my title",
@@ -383,7 +383,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
         assert 'second: hello world "space"' in notification_headers.lower()
 
 
-    # Should always be automatically detected as JSON content type even when we set it as 'Text' (default)
+    # Should always be automatically detected as JSON content type even when we set it as 'Plain Text' (default)
     assert os.path.isfile("test-datastore/notification-content-type.txt")
     with open("test-datastore/notification-content-type.txt", 'r') as f:
         assert 'application/json' in f.read()

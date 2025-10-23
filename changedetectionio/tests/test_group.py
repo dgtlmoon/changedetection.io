@@ -195,7 +195,7 @@ def test_group_tag_notification(client, live_server, measure_memory_usage):
                                                    "Diff as Patch: {{diff_patch}}\n"
                                                    ":-)",
                               "notification_screenshot": True,
-                              "notification_format": "Text",
+                              "notification_format": 'Plain Text',
                               "title": "test-tag"}
 
     res = client.post(

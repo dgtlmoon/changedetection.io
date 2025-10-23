@@ -121,7 +121,7 @@ def test_check_notification_plaintext_format(client, live_server, measure_memory
         data={"application-notification_urls": notification_url,
               "application-notification_title": "fallback-title " + default_notification_title,
               "application-notification_body": "some text\n" + default_notification_body,
-              "application-notification_format": 'Text',
+              "application-notification_format": 'Plain Text',
               "requests-time_between_check-minutes": 180,
               'application-fetch_backend': "html_requests"},
         follow_redirects=True
@@ -301,7 +301,6 @@ def test_check_notification_markdown_format(client, live_server, measure_memory_
 
 
 def test_check_notification_email_formats_default_Text_override_HTML(client, live_server, measure_memory_usage):
-    ##  live_server_setup(live_server) # Setup on conftest per function
 
     # HTML problems? see this
     # https://github.com/caronc/apprise/issues/633
@@ -327,7 +326,7 @@ def test_check_notification_email_formats_default_Text_override_HTML(client, liv
         data={"application-notification_urls": notification_url,
               "application-notification_title": "fallback-title " + default_notification_title,
               "application-notification_body": notification_body,
-              "application-notification_format": 'Text',
+              "application-notification_format": 'Plain Text',
               "requests-time_between_check-minutes": 180,
               'application-fetch_backend': "html_requests"},
         follow_redirects=True

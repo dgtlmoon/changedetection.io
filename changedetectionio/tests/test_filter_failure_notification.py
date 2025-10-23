@@ -63,7 +63,7 @@ def run_filter_test(client, live_server, content_filter, app_notification_format
                                        "Diff Full: {{diff_full}}\n"
                                        "Diff as Patch: {{diff_patch}}\n"
                                        ":-)",
-                  "notification_format": "Text",
+                  "notification_format": 'Plain Text',
                   "fetch_backend": "html_requests",
                   "filter_failure_notification_send": 'y',
                   "time_between_check_use_default": "y",
@@ -177,7 +177,7 @@ def test_check_include_filters_failure_notification(client, live_server, measure
     #   #  live_server_setup(live_server) # Setup on conftest per function
     run_filter_test(client=client, live_server=live_server, content_filter='#nope-doesnt-exist', app_notification_format=valid_notification_formats.get('HTML Color'))
     # Check markup send conversion didnt affect plaintext preference
-    run_filter_test(client=client, live_server=live_server, content_filter='#nope-doesnt-exist', app_notification_format=valid_notification_formats.get('Text'))
+    run_filter_test(client=client, live_server=live_server, content_filter='#nope-doesnt-exist', app_notification_format=valid_notification_formats.get('Plain Text'))
 
 def test_check_xpath_filter_failure_notification(client, live_server, measure_memory_usage):
     #   #  live_server_setup(live_server) # Setup on conftest per function

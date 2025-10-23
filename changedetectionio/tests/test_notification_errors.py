@@ -30,7 +30,7 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
         data={"notification_urls": f"{broken_notification_url}\r\n{working_notification_url}",
               "notification_title": "xxx",
               "notification_body": "xxxxx",
-              "notification_format": "Text",
+              "notification_format": 'Plain Text',
               "url": test_url,
               "tags": "",
               "title": "",
