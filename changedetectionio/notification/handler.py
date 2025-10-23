@@ -77,6 +77,7 @@ def notification_format_align_with_apprise(n_format : str):
 
 
 def apply_service_tweaks(url, n_body, n_title, requested_output_format):
+
     # Re 323 - Limit discord length to their 2000 char limit total or it wont send.
     # Because different notifications may require different pre-processing, run each sequentially :(
     # 2000 bytes minus -
