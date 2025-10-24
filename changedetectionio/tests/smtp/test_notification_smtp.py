@@ -12,7 +12,7 @@ import logging
 
 
 # NOTE - RELIES ON mailserver as hostname running, see github build recipes
-smtp_test_server = 'mailserver'
+smtp_test_server = 'localhost'
 
 from changedetectionio.notification import (
     default_notification_body,
@@ -464,7 +464,10 @@ def test_check_plaintext_document_plaintext_notification_smtp(client, live_serve
     assert not msg.is_multipart()
     assert msg.get_content_type() == 'text/plain'
     body = msg.get_content()
-    assert 'And let\'s talk about <title> tags' in body
+    # nothing is escaped, raw html stuff in text/plain
+    assert 'talk about <title> tags' in body
+    assert '(added)' in body
+    assert '<br' not in body
 
     delete_all_watches(client)
 
@@ -531,6 +534,6 @@ def test_check_plaintext_document_html_notifications(client, live_server, measur
     assert html_part.get_content_type() == 'text/html'
     html_content = html_part.get_content()
     assert 'talk about <title>' not in html_content  # the html part, should have got marked up to &lt; etc
-    assert '<br>(added) And let&#39;s talk about &lt;title&gt; tags<br>' in html_content
+    assert '<br>\r\n(added) And let&#39;s talk about &lt;title&gt; tags<br>' in html_content
 
     delete_all_watches(client)
