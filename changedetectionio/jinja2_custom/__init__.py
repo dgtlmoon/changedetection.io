@@ -9,6 +9,7 @@ from .safe_jinja import (
     JINJA2_MAX_RETURN_PAYLOAD_SIZE,
     DEFAULT_JINJA2_EXTENSIONS,
 )
+from .plugins.regex import regex_replace
 
 __all__ = [
     'TimeExtension',
@@ -17,4 +18,5 @@ __all__ = [
     'create_jinja_env',
     'JINJA2_MAX_RETURN_PAYLOAD_SIZE',
     'DEFAULT_JINJA2_EXTENSIONS',
+    'regex_replace',
 ]
