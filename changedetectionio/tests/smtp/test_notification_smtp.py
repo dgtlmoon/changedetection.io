@@ -12,7 +12,7 @@ import logging
 
 
 # NOTE - RELIES ON mailserver as hostname running, see github build recipes
-smtp_test_server = 'localhost'
+smtp_test_server = 'mailserver'
 
 from changedetectionio.notification import (
     default_notification_body,
@@ -24,16 +24,14 @@ from changedetectionio.notification import (
 
 
 def get_last_message_from_smtp_server():
-    import socket
-    port = 11080  # socket server port number
-
-    client_socket = socket.socket()  # instantiate
-    client_socket.connect((smtp_test_server, port))  # connect to the server
-
-    data = client_socket.recv(50024).decode()  # receive response
+    import requests
+    time.sleep(1) # wait for any smtp connects to die off
+    port = 11080  # HTTP server port number
+    # Make HTTP GET request to Flask server
+    response = requests.get(f'http://{smtp_test_server}:{port}/')
+    data = response.text
     logging.info("get_last_message_from_smtp_server..")
     logging.info(data)
-    client_socket.close()  # close the connection
     return data
 
 
@@ -460,7 +458,6 @@ def test_check_plaintext_document_plaintext_notification_smtp(client, live_serve
     # Parse the email properly using Python's email library
     msg = message_from_string(get_last_message_from_smtp_server(), policy=email_policy)
 
-    # The email should have two bodies (multipart/alternative)
     assert not msg.is_multipart()
     assert msg.get_content_type() == 'text/plain'
     body = msg.get_content()

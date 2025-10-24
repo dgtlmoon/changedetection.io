@@ -11,6 +11,7 @@ from ..diff import HTML_REMOVED_STYLE, REMOVED_PLACEMARKER_OPEN, REMOVED_PLACEMA
     CHANGED_PLACEMARKER_CLOSED, HTML_CHANGED_STYLE
 from ..notification_service import NotificationContextData
 
+CUSTOM_LINEBREAK_PLACEHOLDER='$$BR$$'
 
 def markup_text_links_to_html(body):
     """
@@ -166,6 +167,7 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
         n_body = n_body.replace(CHANGED_PLACEMARKER_CLOSED, f'</span>')
         n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN, f'<span style="{HTML_CHANGED_STYLE}" role="note" aria-label="Changed into" title="Changed into">')
         n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_CLOSED, f'</span>')
+        n_body = n_body.replace('\n', f'{CUSTOM_LINEBREAK_PLACEHOLDER}\n')
     elif requested_output_format == 'html':
         n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '(removed) ')
         n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, '')
@@ -175,6 +177,7 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
         n_body = n_body.replace(CHANGED_PLACEMARKER_CLOSED, f'')
         n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN, f'(into) ')
         n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_CLOSED, f'')
+        n_body = n_body.replace('\n', f'{CUSTOM_LINEBREAK_PLACEHOLDER}\n')
 
     else: #plaintext etc default
         n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '(removed) ')
@@ -254,8 +257,6 @@ def process_notification(n_object: NotificationContextData, datastore):
 
     with (apprise.LogCapture(level=apprise.logging.DEBUG) as logs):
         for url in n_object['notification_urls']:
-            parsed_url = urlparse(url)
-            prefix_add_to_url = '?' if not parsed_url.query else '&'
 
             # Get the notification body from datastore
             n_body = jinja_render(template_str=n_object.get('notification_body', ''), **notification_parameters)
@@ -283,6 +284,9 @@ def process_notification(n_object: NotificationContextData, datastore):
             apprise_input_format = "NO-THANKS-WE-WILL-MANAGE-ALL-OF-THIS"
 
             if not 'format=' in url:
+                parsed_url = urlparse(url)
+                prefix_add_to_url = '?' if not parsed_url.query else '&'
+
                 # THIS IS THE TRICK HOW TO DISABLE APPRISE DOING WEIRD AUTO-CONVERSION WITH BREAKING BR TAGS ETC
                 if 'html' in requested_output_format:
                     url = f"{url}{prefix_add_to_url}format={NotifyFormat.HTML.value}"
@@ -297,17 +301,20 @@ def process_notification(n_object: NotificationContextData, datastore):
                     requested_output_format = NotifyFormat.HTML.value
                     apprise_input_format = NotifyFormat.MARKDOWN.value
 
+                # If it's a plaintext document, and they want HTML type email/alerts, so it needs to be escaped
                 watch_mime_type = n_object.get('watch_mime_type', '').lower()
                 if watch_mime_type and 'text/' in watch_mime_type and not 'html' in watch_mime_type:
                     if 'html' in requested_output_format:
                         from markupsafe import escape
-                        n_body = str(escape(n_body)).replace('\n', '<br>')
+                        n_body = str(escape(n_body))
 
+                # Could have arrived at any stage, so we dont end up running .escape on it
+                if 'html' in requested_output_format:
+                    n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '<br>')
+                else:
+                    # Just incase
+                    n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '')
 
-            if 'html' in requested_output_format:
-                # except for markdown because the markdown converter handles this
-                if requested_output_format_original != NotifyFormat.MARKDOWN.value:
-                    n_body = n_body.replace('\n', '<br>')
 
             apobj.add(url)
 
