@@ -12,7 +12,7 @@ import logging
 
 
 # NOTE - RELIES ON mailserver as hostname running, see github build recipes
-smtp_test_server = 'localhost'
+smtp_test_server = 'mailserver'
 
 from changedetectionio.notification import (
     default_notification_body,
