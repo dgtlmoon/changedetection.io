@@ -3,8 +3,10 @@ import re
 from urllib.parse import unquote_plus
 
 import requests
-from apprise.decorators import notify
-from apprise.utils.parse import parse_url as apprise_parse_url
+from apprise import plugins
+from apprise.decorators.base import CustomNotifyPlugin
+from apprise.utils.parse import parse_url as apprise_parse_url, url_assembly
+from apprise.utils.logic import dict_full_update
 from loguru import logger
 from requests.structures import CaseInsensitiveDict
 
@@ -12,11 +14,64 @@ SUPPORTED_HTTP_METHODS = {"get", "post", "put", "delete", "patch", "head"}
 
 
 def notify_supported_methods(func):
+    """Register custom HTTP method handlers that properly support format= parameter."""
     for method in SUPPORTED_HTTP_METHODS:
-        func = notify(on=method)(func)
-        # Add support for https, for each supported http method
-        func = notify(on=f"{method}s")(func)
+        _register_http_handler(method, func)
+        _register_http_handler(f"{method}s", func)
     return func
+
+
+def _register_http_handler(schema, send_func):
+    """Register a custom HTTP handler that extracts format= from URL query parameters."""
+
+    # Parse base URL
+    base_url = f"{schema}://"
+    base_args = apprise_parse_url(base_url, default_schema=schema, verify_host=False, simple=True)
+
+    class CustomHTTPHandler(CustomNotifyPlugin):
+        secure_protocol = schema
+        service_name = f"Custom HTTP - {schema.upper()}"
+        _base_args = base_args
+
+        def __init__(self, **kwargs):
+            # Extract format from qsd and set it as a top-level kwarg
+            # This allows NotifyBase.__init__ to properly set notify_format
+            if 'qsd' in kwargs and 'format' in kwargs['qsd']:
+                kwargs['format'] = kwargs['qsd']['format']
+
+            # Call NotifyBase.__init__ (skip CustomNotifyPlugin.__init__)
+            super(CustomNotifyPlugin, self).__init__(**kwargs)
+
+            # Set up _default_args like CustomNotifyPlugin does
+            self._default_args = {}
+            kwargs.pop("secure", None)
+            dict_full_update(self._default_args, self._base_args)
+            dict_full_update(self._default_args, kwargs)
+            self._default_args["url"] = url_assembly(**self._default_args)
+
+        __send = staticmethod(send_func)
+
+        def send(self, body, title="", notify_type="info", *args, **kwargs):
+            """Call the custom send function."""
+            try:
+                result = self.__send(
+                    body, title, notify_type,
+                    *args,
+                    meta=self._default_args,
+                    **kwargs
+                )
+                return True if result is None else bool(result)
+            except Exception as e:
+                self.logger.warning(f"Exception in custom HTTP handler: {e}")
+                return False
+
+    # Register the plugin
+    plugins.N_MGR.add(
+        plugin=CustomHTTPHandler,
+        schemas=schema,
+        send_func=send_func,
+        url=base_url,
+    )
 
 
 def _get_auth(parsed_url: dict) -> str | tuple[str, str]:
@@ -74,6 +129,10 @@ def apprise_http_custom_handler(
     *args,
     **kwargs,
 ) -> bool:
+    logger.debug(f"Custom handler received - body_format: {body_format}")
+    logger.debug(f"Custom handler received - body (first 200 chars): {body[:200] if body else 'None'}")
+    logger.debug(f"Custom handler received - meta URL: {meta.get('url')}")
+
     url: str = meta.get("url")
     schema: str = meta.get("schema")
     method: str = re.sub(r"s$", "", schema).upper()

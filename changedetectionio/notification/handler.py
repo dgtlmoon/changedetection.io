@@ -314,6 +314,12 @@ def process_notification(n_object: NotificationContextData, datastore):
                               'body': n_body,
                               'url': url})
 
+
+
+        # Debug: check what notify_format each server has
+        for server in apobj:
+            logger.debug(f"Server {server.secure_protocol} has notify_format: {server.notify_format}")
+
         apobj.notify(
             title=n_title,
             body=n_body,
