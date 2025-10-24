@@ -463,7 +463,8 @@ def test_check_plaintext_document_plaintext_notification_smtp(client, live_serve
     # The email should have two bodies (multipart/alternative)
     assert not msg.is_multipart()
     assert msg.get_content_type() == 'text/plain'
-    assert 'And let\'s talk about <title> tags' in str(msg)
+    body = msg.get_content()
+    assert 'And let\'s talk about <title> tags' in body
 
     delete_all_watches(client)
 

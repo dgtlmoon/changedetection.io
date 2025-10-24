@@ -285,10 +285,10 @@ def process_notification(n_object: NotificationContextData, datastore):
                 # THIS IS THE TRICK HOW TO DISABLE APPRISE DOING WEIRD AUTO-CONVERSION WITH BREAKING BR TAGS ETC
                 if 'html' in requested_output_format:
                     url = f"{url}{prefix_add_to_url}format={NotifyFormat.HTML.value}"
-                    apprise_input_format = NotifyFormat.HTML
+                    apprise_input_format = NotifyFormat.HTML.value
                 elif 'text' in requested_output_format:
                     url = f"{url}{prefix_add_to_url}format={NotifyFormat.TEXT.value}"
-                    apprise_input_format = NotifyFormat.TEXT
+                    apprise_input_format = NotifyFormat.TEXT.value
 
                 elif requested_output_format == NotifyFormat.MARKDOWN.value:
                     # This actually means we request "Markdown to HTML", we want HTML output
