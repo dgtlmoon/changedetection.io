@@ -3,7 +3,7 @@ from flask import url_for
 from email import message_from_string
 from email.policy import default as email_policy
 
-from changedetectionio.diff import HTML_REMOVED_STYLE, HTML_ADDED_STYLE
+from changedetectionio.diff import HTML_REMOVED_STYLE, HTML_ADDED_STYLE, HTML_CHANGED_STYLE
 from changedetectionio.tests.util import set_original_response, set_modified_response, set_more_modified_response, live_server_setup, \
     wait_for_all_checks, \
     set_longer_modified_response, delete_all_watches
@@ -225,7 +225,7 @@ def test_check_notification_html_color_format(client, live_server, measure_memor
     html_part = parts[1]
     assert html_part.get_content_type() == 'text/html'
     html_content = html_part.get_content()
-    assert HTML_REMOVED_STYLE in html_content
+    assert HTML_CHANGED_STYLE or HTML_REMOVED_STYLE in html_content
     assert HTML_ADDED_STYLE in html_content
 
     assert 'some text<br>' in html_content

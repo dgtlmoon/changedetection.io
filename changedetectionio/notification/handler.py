@@ -157,14 +157,14 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
     # Is not discord/tgram and they want htmlcolor
     elif requested_output_format == 'htmlcolor':
         # https://github.com/dgtlmoon/changedetection.io/issues/821#issuecomment-1241837050
-        n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, f'<span style="{HTML_REMOVED_STYLE}">')
+        n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, f'<span style="{HTML_REMOVED_STYLE}" role="deletion" aria-label="Removed text" title="Removed text">')
         n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, f'</span>')
-        n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, f'<span style="{HTML_ADDED_STYLE}">')
+        n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, f'<span style="{HTML_ADDED_STYLE}" role="insertion" aria-label="Added text" title="Added text">')
         n_body = n_body.replace(ADDED_PLACEMARKER_CLOSED, f'</span>')
         # Handle changed/replaced lines (old → new)
-        n_body = n_body.replace(CHANGED_PLACEMARKER_OPEN, f'<span style="{HTML_CHANGED_STYLE}">')
+        n_body = n_body.replace(CHANGED_PLACEMARKER_OPEN, f'<span style="{HTML_CHANGED_STYLE}" role="note" aria-label="Changed text" title="Changed text">')
         n_body = n_body.replace(CHANGED_PLACEMARKER_CLOSED, f'</span>')
-        n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN, f'<span style="{HTML_CHANGED_STYLE}">')
+        n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN, f'<span style="{HTML_CHANGED_STYLE}" role="note" aria-label="Changed into" title="Changed into">')
         n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_CLOSED, f'</span>')
     elif requested_output_format == 'html':
         n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '(removed) ')
