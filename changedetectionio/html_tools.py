@@ -185,8 +185,21 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
     tree = html.fromstring(bytes(html_content, encoding='utf-8'), parser=parser)
     html_block = ""
 
-    r = elementpath.select(tree, xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'}, parser=XPath3Parser)
-    #@note: //title/text() wont work where <title>CDATA..
+    # Build namespace map for XPath queries
+    namespaces = {'re': 'http://exslt.org/regular-expressions'}
+
+    # Handle default namespace in documents (common in RSS/Atom feeds, but can occur in any XML)
+    # XPath spec: unprefixed element names have no namespace, not the default namespace
+    # Solution: Register the default namespace with empty string prefix in elementpath
+    # This is primarily for RSS/Atom feeds but works for any XML with default namespace
+    if hasattr(tree, 'nsmap') and tree.nsmap and None in tree.nsmap:
+        # Register the default namespace with empty string prefix for elementpath
+        # This allows //title to match elements in the default namespace
+        namespaces[''] = tree.nsmap[None]
+
+    r = elementpath.select(tree, xpath_filter.strip(), namespaces=namespaces, parser=XPath3Parser)
+    #@note: //title/text() now works with default namespaces (fixed by registering '' prefix)
+    #@note: //title/text() wont work where <title>CDATA.. (use cdata_in_document_to_text first)
 
     if type(r) != list:
         r = [r]
@@ -221,8 +234,19 @@ def xpath1_filter(xpath_filter, html_content, append_pretty_line_formatting=Fals
     tree = html.fromstring(bytes(html_content, encoding='utf-8'), parser=parser)
     html_block = ""
 
-    r = tree.xpath(xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'})
-    #@note: //title/text() wont work where <title>CDATA..
+    # Build namespace map for XPath queries
+    namespaces = {'re': 'http://exslt.org/regular-expressions'}
+
+    # NOTE: lxml's native xpath() does NOT support empty string prefix for default namespace
+    # For documents with default namespace (RSS/Atom feeds), users must use:
+    #   - local-name(): //*[local-name()='title']/text()
+    #   - Or use xpath_filter (not xpath1_filter) which supports default namespaces
+    # XPath spec: unprefixed element names have no namespace, not the default namespace
+
+    r = tree.xpath(xpath_filter.strip(), namespaces=namespaces)
+    #@note: xpath1 (lxml) does NOT automatically handle default namespaces
+    #@note: Use //*[local-name()='element'] or switch to xpath_filter for default namespace support
+    #@note: //title/text() wont work where <title>CDATA.. (use cdata_in_document_to_text first)
 
     for element in r:
         # When there's more than 1 match, then add the suffix to separate each line
