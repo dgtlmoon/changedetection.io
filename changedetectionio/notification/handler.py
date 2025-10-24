@@ -8,9 +8,10 @@ from .apprise_plugin.assets import apprise_asset, APPRISE_AVATAR_URL
 from .apprise_plugin.custom_handlers import SUPPORTED_HTTP_METHODS
 from ..diff import HTML_REMOVED_STYLE, REMOVED_PLACEMARKER_OPEN, REMOVED_PLACEMARKER_CLOSED, ADDED_PLACEMARKER_OPEN, HTML_ADDED_STYLE, \
     ADDED_PLACEMARKER_CLOSED, CHANGED_INTO_PLACEMARKER_OPEN, CHANGED_INTO_PLACEMARKER_CLOSED, CHANGED_PLACEMARKER_OPEN, \
-    CHANGED_PLACEMARKER_CLOSED
+    CHANGED_PLACEMARKER_CLOSED, HTML_CHANGED_STYLE
 from ..notification_service import NotificationContextData
 
+CUSTOM_LINEBREAK_PLACEHOLDER='$$BR$$'
 
 def markup_text_links_to_html(body):
     """
@@ -156,16 +157,17 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
 
     # Is not discord/tgram and they want htmlcolor
     elif requested_output_format == 'htmlcolor':
-        n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, f'<span style="{HTML_REMOVED_STYLE}">')
+        # https://github.com/dgtlmoon/changedetection.io/issues/821#issuecomment-1241837050
+        n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, f'<span style="{HTML_REMOVED_STYLE}" role="deletion" aria-label="Removed text" title="Removed text">')
         n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, f'</span>')
-        n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, f'<span style="{HTML_ADDED_STYLE}">')
+        n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, f'<span style="{HTML_ADDED_STYLE}" role="insertion" aria-label="Added text" title="Added text">')
         n_body = n_body.replace(ADDED_PLACEMARKER_CLOSED, f'</span>')
         # Handle changed/replaced lines (old → new)
-        n_body = n_body.replace(CHANGED_PLACEMARKER_OPEN, f'<span style="{HTML_REMOVED_STYLE}">')
+        n_body = n_body.replace(CHANGED_PLACEMARKER_OPEN, f'<span style="{HTML_CHANGED_STYLE}" role="note" aria-label="Changed text" title="Changed text">')
         n_body = n_body.replace(CHANGED_PLACEMARKER_CLOSED, f'</span>')
-        n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN, f'<span style="{HTML_ADDED_STYLE}">')
+        n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN, f'<span style="{HTML_CHANGED_STYLE}" role="note" aria-label="Changed into" title="Changed into">')
         n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_CLOSED, f'</span>')
-        n_body = n_body.replace("\n", '<br>')
+        n_body = n_body.replace('\n', f'{CUSTOM_LINEBREAK_PLACEHOLDER}\n')
     elif requested_output_format == 'html':
         n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '(removed) ')
         n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, '')
@@ -175,7 +177,7 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
         n_body = n_body.replace(CHANGED_PLACEMARKER_CLOSED, f'')
         n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN, f'(into) ')
         n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_CLOSED, f'')
-        n_body = n_body.replace("\n", '<br>')
+        n_body = n_body.replace('\n', f'{CUSTOM_LINEBREAK_PLACEHOLDER}\n')
 
     else: #plaintext etc default
         n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '(removed) ')
@@ -233,11 +235,6 @@ def process_notification(n_object: NotificationContextData, datastore):
 
     logger.trace(f"Complete notification body including Jinja and placeholders calculated in  {time.time() - now:.2f}s")
 
-    # If we have custom handlers, use invalid format to prevent conversion
-    # Otherwise use the proper format
-    if has_custom_handler:
-        input_format = 'raw-no-convert'
-
     # https://github.com/caronc/apprise/wiki/Development_LogCapture
     # Anything higher than or equal to WARNING (which covers things like Connection errors)
     # raise it as an exception
@@ -258,42 +255,15 @@ def process_notification(n_object: NotificationContextData, datastore):
     if not n_object.get('notification_urls'):
         return None
 
-    with apprise.LogCapture(level=apprise.logging.DEBUG) as logs:
+    with (apprise.LogCapture(level=apprise.logging.DEBUG) as logs):
         for url in n_object['notification_urls']:
-            parsed_url = urlparse(url)
-            prefix_add_to_url = '?' if not parsed_url.query else '&'
 
             # Get the notification body from datastore
             n_body = jinja_render(template_str=n_object.get('notification_body', ''), **notification_parameters)
 
-            if n_object.get('markup_text_to_html'):
+            if n_object.get('markup_text_links_to_html_links'):
                 n_body = markup_text_links_to_html(body=n_body)
 
-            # This actually means we request "Markdown to HTML"
-            if requested_output_format == NotifyFormat.MARKDOWN.value:
-                output_format = NotifyFormat.HTML.value
-                input_format = NotifyFormat.MARKDOWN.value
-                if not 'format=' in url.lower():
-                    url = f"{url}{prefix_add_to_url}format={output_format}"
-
-            # Deviation from apprise.
-            # No conversion, its like they want to send raw HTML but we add linebreaks
-            elif requested_output_format == NotifyFormat.HTML.value:
-                # same in and out means apprise wont try to convert
-                input_format = output_format = NotifyFormat.HTML.value
-                if not 'format=' in url.lower():
-                    url = f"{url}{prefix_add_to_url}format={output_format}"
-
-            else:
-                # Nothing to be done, leave it as plaintext
-                # `body_format` Tell apprise what format the INPUT is in
-                # &format= in URL Tell apprise what format the OUTPUT should be in (it can convert between)
-                input_format = output_format = NotifyFormat.TEXT.value
-                if not 'format=' in url.lower():
-                    url = f"{url}{prefix_add_to_url}format={output_format}"
-
-            if has_custom_handler:
-                input_format='raw-no-convert'
 
             n_title = jinja_render(template_str=n_object.get('notification_title', ''), **notification_parameters)
 
@@ -311,6 +281,41 @@ def process_notification(n_object: NotificationContextData, datastore):
 
             (url, n_body, n_title) = apply_service_tweaks(url=url, n_body=n_body, n_title=n_title, requested_output_format=requested_output_format_original)
 
+            apprise_input_format = "NO-THANKS-WE-WILL-MANAGE-ALL-OF-THIS"
+
+            if not 'format=' in url:
+                parsed_url = urlparse(url)
+                prefix_add_to_url = '?' if not parsed_url.query else '&'
+
+                # THIS IS THE TRICK HOW TO DISABLE APPRISE DOING WEIRD AUTO-CONVERSION WITH BREAKING BR TAGS ETC
+                if 'html' in requested_output_format:
+                    url = f"{url}{prefix_add_to_url}format={NotifyFormat.HTML.value}"
+                    apprise_input_format = NotifyFormat.HTML.value
+                elif 'text' in requested_output_format:
+                    url = f"{url}{prefix_add_to_url}format={NotifyFormat.TEXT.value}"
+                    apprise_input_format = NotifyFormat.TEXT.value
+
+                elif requested_output_format == NotifyFormat.MARKDOWN.value:
+                    # This actually means we request "Markdown to HTML", we want HTML output
+                    url = f"{url}{prefix_add_to_url}format={NotifyFormat.HTML.value}"
+                    requested_output_format = NotifyFormat.HTML.value
+                    apprise_input_format = NotifyFormat.MARKDOWN.value
+
+                # If it's a plaintext document, and they want HTML type email/alerts, so it needs to be escaped
+                watch_mime_type = n_object.get('watch_mime_type', '').lower()
+                if watch_mime_type and 'text/' in watch_mime_type and not 'html' in watch_mime_type:
+                    if 'html' in requested_output_format:
+                        from markupsafe import escape
+                        n_body = str(escape(n_body))
+
+                # Could have arrived at any stage, so we dont end up running .escape on it
+                if 'html' in requested_output_format:
+                    n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '<br>')
+                else:
+                    # Just incase
+                    n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '')
+
+
             apobj.add(url)
 
             sent_objs.append({'title': n_title,
@@ -320,9 +325,9 @@ def process_notification(n_object: NotificationContextData, datastore):
         apobj.notify(
             title=n_title,
             body=n_body,
-            # `body_format` Tell apprise what format the INPUT is in
+            # `body_format` Tell apprise what format the INPUT is in, specify a wrong/bad type and it will force skip conversion in apprise
             # &format= in URL Tell apprise what format the OUTPUT should be in (it can convert between)
-            body_format=input_format,
+            body_format=apprise_input_format,
             # False is not an option for AppRise, must be type None
             attach=n_object.get('screenshot', None)
         )

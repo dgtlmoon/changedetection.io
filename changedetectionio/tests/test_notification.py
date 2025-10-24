@@ -16,7 +16,7 @@ from changedetectionio.notification import (
     default_notification_title,
     valid_notification_formats,
 )
-
+from ..diff import HTML_CHANGED_STYLE
 
 
 # Hard to just add more live server URLs when one test is already running (I think)
@@ -485,8 +485,6 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
 
 def _test_color_notifications(client, notification_body_token):
 
-    from changedetectionio.diff import HTML_ADDED_STYLE, HTML_REMOVED_STYLE
-
     set_original_response()
 
     if os.path.isfile("test-datastore/notification.txt"):
@@ -533,7 +531,8 @@ def _test_color_notifications(client, notification_body_token):
 
     with open("test-datastore/notification.txt", 'r') as f:
         x = f.read()
-        assert f'<span style="{HTML_REMOVED_STYLE}">Which is across multiple lines' in x
+        s =  f'<span style="{HTML_CHANGED_STYLE}" role="note" aria-label="Changed text" title="Changed text">Which is across multiple lines'
+        assert s in x
 
 
     client.get(

@@ -31,7 +31,7 @@ class NotificationContextData(dict):
             'preview_url': None,
             'watch_tag': None,
             'watch_title': None,
-            'markup_text_to_html': False, # If automatic conversion of plaintext to HTML should happen
+            'markup_text_links_to_html_links': False, # If automatic conversion of plaintext to HTML should happen
         })
 
         # Apply any initial data passed in
@@ -131,6 +131,7 @@ class NotificationService:
             'uuid': watch.get('uuid') if watch else None,
             'watch_url': watch.get('url') if watch else None,
             'watch_uuid': watch.get('uuid') if watch else None,
+            'watch_mime_type': watch.get('content-type')
         })
 
         if watch:
@@ -228,7 +229,7 @@ class NotificationService:
 
         n_format = self.datastore.data['settings']['application'].get('notification_format', default_notification_format)
         filter_list = ", ".join(watch['include_filters'])
-        # @todo - This could be a markdown template on the disk, apprise will convert the markdown to HTML+Plaintext parts in the email, and then 'markup_text_to_html' is not needed
+        # @todo - This could be a markdown template on the disk, apprise will convert the markdown to HTML+Plaintext parts in the email, and then 'markup_text_links_to_html_links' is not needed
         body = f"""Hello,
 
 Your configured CSS/xPath filters of '{filter_list}' for {{{{watch_url}}}} did not appear on the page after {threshold} attempts.
@@ -244,7 +245,7 @@ Thanks - Your omniscient changedetection.io installation.
             'notification_title': 'Changedetection.io - Alert - CSS/xPath filter was not present in the page',
             'notification_body': body,
             'notification_format': n_format,
-            'markup_text_to_html': n_format.lower().startswith('html')
+            'markup_text_links_to_html_links': n_format.lower().startswith('html')
         })
 
         if len(watch['notification_urls']):
@@ -275,7 +276,7 @@ Thanks - Your omniscient changedetection.io installation.
         threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts')
         n_format = self.datastore.data['settings']['application'].get('notification_format', default_notification_format).lower()
         step = step_n + 1
-        # @todo - This could be a markdown template on the disk, apprise will convert the markdown to HTML+Plaintext parts in the email, and then 'markup_text_to_html' is not needed
+        # @todo - This could be a markdown template on the disk, apprise will convert the markdown to HTML+Plaintext parts in the email, and then 'markup_text_links_to_html_links' is not needed
 
         # {{{{ }}}} because this will be Jinja2 {{ }} tokens
         body = f"""Hello,
@@ -293,7 +294,7 @@ Thanks - Your omniscient changedetection.io installation.
             'notification_title': f"Changedetection.io - Alert - Browser step at position {step} could not be run",
             'notification_body': body,
             'notification_format': n_format,
-            'markup_text_to_html': n_format.lower().startswith('html')
+            'markup_text_links_to_html_links': n_format.lower().startswith('html')
         })
 
         if len(watch['notification_urls']):
