@@ -31,9 +31,9 @@ def regex_replace(value: str, pattern: str, replacement: str = '', count: int = 
         {{ diff | regex_replace("<td>([^<]+)</td><td>([^<]+)</td>", "Label1: \\1\\nLabel2: \\2") }}
 
     Security limits:
-        - Maximum input size: 1MB
+        - Maximum input size: 10MB
         - Maximum pattern length: 500 characters
-        - Operation timeout: 2 seconds
+        - Operation timeout: 10 seconds
         - Dangerous nested quantifier patterns are rejected
     """
     # Security limits

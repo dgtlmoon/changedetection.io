@@ -134,6 +134,9 @@
                                     <p>
                                         URL encoding, use <strong>|urlencode</strong>, for example - <code>gets://hook-website.com/test.php?title={{ '{{ watch_title|urlencode }}' }}</code>
                                     </p>
+                                    <p>
+                                        Regular-expression replace, use <strong>|regex_replace</strong>, for example - <code>{{ 'hello world 123' | regex_replace('[0-9]+', 'no-more-numbers') }}</code>
+                                    </p>
                                 </div>
                             </div>
                             <div class="pure-control-group">

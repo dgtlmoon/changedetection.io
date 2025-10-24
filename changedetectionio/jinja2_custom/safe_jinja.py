@@ -7,7 +7,6 @@ See https://jinja.palletsprojects.com/en/3.1.x/sandbox/#security-considerations
 import jinja2.sandbox
 import typing as t
 import os
-import re
 from .extensions.TimeExtension import TimeExtension
 from .plugins import regex_replace
 

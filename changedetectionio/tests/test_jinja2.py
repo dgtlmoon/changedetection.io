@@ -255,8 +255,8 @@ def test_regex_replace_with_notification_context():
 def test_regex_replace_security_large_input():
     """Test regex_replace handles large input safely."""
 
-    # Create a large input string (over 1MB)
-    large_input = "x" * (1024 * 1024 + 1000)
+    # Create a large input string (over 10MB)
+    large_input = "x" * (1024 * 1024 * 10 + 1000)
     template = "{{ large_input | regex_replace('x', 'y') }}"
 
     from changedetectionio.jinja2_custom import create_jinja_env
@@ -266,8 +266,8 @@ def test_regex_replace_security_large_input():
     jinja2_env.globals['large_input'] = large_input
     finalRender = jinja2_env.from_string(template).render()
 
-    # Should be truncated to 1MB
-    assert len(finalRender) == 1024 * 1024
+    # Should be truncated to 10MB
+    assert len(finalRender) == 1024 * 1024 * 10
 
 def test_regex_replace_security_long_pattern():
     """Test regex_replace rejects very long patterns."""
