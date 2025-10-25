@@ -57,7 +57,6 @@ def is_valid_uuid(val):
 
 
 def test_api_simple(client, live_server, measure_memory_usage):
-    
 
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
 
@@ -137,6 +136,7 @@ def test_api_simple(client, live_server, measure_memory_usage):
         url_for("watchhistory", uuid=watch_uuid),
         headers={'x-api-key': api_key},
     )
+    watch_history = res.json
     assert len(res.json) == 2, "Should have two history entries (the original and the changed)"
 
     # Fetch a snapshot by timestamp, check the right one was found
@@ -161,6 +161,21 @@ def test_api_simple(client, live_server, measure_memory_usage):
     )
     assert b'which has this one new line' in res.data
     assert b'<div id' in res.data
+
+
+    # Fetch the difference between two versions
+    res = client.get(
+        url_for("watchhistorydiff", uuid=watch_uuid, from_timestamp='previous', to_timestamp='latest'),
+        headers={'x-api-key': api_key},
+    )
+    assert b'(changed) Which is across' in res.data
+    res = client.get(
+        url_for("watchhistorydiff", uuid=watch_uuid, from_timestamp='previous', to_timestamp='latest')+'?format=htmlcolor',
+        headers={'x-api-key': api_key},
+    )
+    assert b'aria-label="Changed text" title="Changed text">Which is across multiple lines' in res.data
+    assert b'@BR@' not in res.data
+
 
     # Fetch the whole watch
     res = client.get(
@@ -229,6 +244,10 @@ def test_api_simple(client, live_server, measure_memory_usage):
     assert res.json.get('paused') == 0
     assert res.json.get('notification_muted') == 0
     ######################################################
+
+
+
+
 
     # Finally delete the watch
     res = client.delete(

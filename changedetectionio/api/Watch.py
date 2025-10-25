@@ -12,6 +12,7 @@ import copy
 
 # Import schemas from __init__.py
 from . import schema, schema_create_watch, schema_update_watch, validate_openapi_request
+from ..notification_service import CUSTOM_LINEBREAK_PLACEHOLDER
 
 
 def validate_time_between_check_required(json_data):
@@ -176,6 +177,100 @@ class WatchSingleHistory(Resource):
             response.mimetype = "text/plain"
 
         return response
+
+class WatchHistoryDiff(Resource):
+    def __init__(self, **kwargs):
+        # datastore is a black box dependency
+        self.datastore = kwargs['datastore']
+
+    @auth.check_token
+    @validate_openapi_request('getWatchHistoryDiff')
+    def get(self, uuid, from_timestamp, to_timestamp):
+        """Generate diff between two historical snapshots."""
+        from changedetectionio import diff
+        from changedetectionio.notification.handler import apply_service_tweaks
+
+        watch = self.datastore.data['watching'].get(uuid)
+        if not watch:
+            abort(404, message=f"No watch exists with the UUID of {uuid}")
+
+        if not len(watch.history):
+            abort(404, message=f"Watch found but no history exists for the UUID {uuid}")
+
+        history_keys = list(watch.history.keys())
+
+        # Handle 'latest' keyword for to_timestamp
+        if to_timestamp == 'latest':
+            to_timestamp = history_keys[-1]
+
+        # Handle 'previous' keyword for from_timestamp (second-most-recent)
+        if from_timestamp == 'previous':
+            if len(history_keys) < 2:
+                abort(404, message=f"Not enough history entries. Need at least 2 snapshots for 'previous'")
+            from_timestamp = history_keys[-2]
+
+        # Validate timestamps exist
+        if from_timestamp not in watch.history:
+            abort(404, message=f"From timestamp {from_timestamp} not found in watch history")
+        if to_timestamp not in watch.history:
+            abort(404, message=f"To timestamp {to_timestamp} not found in watch history")
+
+        # Get the format parameter (default to 'text')
+        output_format = request.args.get('format', 'text').lower()
+
+        # Validate format
+        valid_formats = ['text', 'html', 'htmlcolor']
+        if output_format not in valid_formats:
+            abort(400, message=f"Invalid format. Must be one of: {', '.join(valid_formats)}")
+
+        # Get the word_diff parameter (default to False - line-level mode)
+        word_diff_param = request.args.get('word_diff', 'false').lower()
+        word_diff = word_diff_param in ['true', '1', 'yes', 'on']
+
+        # Retrieve snapshot contents
+        from_version_file_contents = watch.get_history_snapshot(from_timestamp)
+        to_version_file_contents = watch.get_history_snapshot(to_timestamp)
+
+        # Get diff preferences (using defaults similar to the existing code)
+        diff_prefs = {
+            'diff_ignoreWhitespace': False,
+            'diff_changesOnly': True
+        }
+
+        # Generate the diff
+        content = diff.render_diff(
+            previous_version_file_contents=from_version_file_contents,
+            newest_version_file_contents=to_version_file_contents,
+            ignore_junk=diff_prefs.get('diff_ignoreWhitespace'),
+            include_equal=not diff_prefs.get('diff_changesOnly'),
+            word_diff=word_diff,
+        )
+
+        # Apply formatting based on the requested format
+        if output_format == 'htmlcolor':
+            from changedetectionio.notification.handler import apply_html_color_to_body
+            content = apply_html_color_to_body(n_body=content)
+            mimetype = "text/html"
+        else:
+            # Apply service tweaks for text/html formats
+            # Pass empty URL and title as they're not used for the placeholder replacement we need
+            _, content, _ = apply_service_tweaks(
+                url='',
+                n_body=content,
+                n_title='',
+                requested_output_format=output_format
+            )
+            mimetype = "text/html" if output_format == 'html' else "text/plain"
+
+        if 'html' in output_format:
+            content = content.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '<br>\r\n')
+        else:
+            content = content.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\r\n')
+
+        response = make_response(content, 200)
+        response.mimetype = mimetype
+        return response
+
 
 class WatchFavicon(Resource):
     def __init__(self, **kwargs):
