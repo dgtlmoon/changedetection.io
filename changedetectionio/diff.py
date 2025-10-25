@@ -2,9 +2,10 @@ import difflib
 from typing import List, Iterator, Union
 
 # https://github.com/dgtlmoon/changedetection.io/issues/821#issuecomment-1241837050
-HTML_REMOVED_STYLE = "background-color: #ffebe9; color: #82071e"
-HTML_ADDED_STYLE = "background-color: #dafbe1; color: #116329;"
-HTML_CHANGED_STYLE = "background-color: #ffd8b5; color: #953800;"
+HTML_ADDED_STYLE = "background-color: #d2f7c2; color: #255d00;"
+HTML_CHANGED_INTO_STYLE = "background-color: #dafbe1; color: #116329;"
+HTML_CHANGED_STYLE = "background-color: #ffd6cc; color: #7a2000;"
+HTML_REMOVED_STYLE = "background-color: #ffebe9; color: #82071e;"
 
 # These get set to html or telegram type or discord compatible or whatever in handler.py
 REMOVED_PLACEMARKER_OPEN = '<<<removed_PLACEMARKER_OPEN'

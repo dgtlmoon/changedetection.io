@@ -8,7 +8,7 @@ from .apprise_plugin.assets import apprise_asset, APPRISE_AVATAR_URL
 from .apprise_plugin.custom_handlers import SUPPORTED_HTTP_METHODS
 from ..diff import HTML_REMOVED_STYLE, REMOVED_PLACEMARKER_OPEN, REMOVED_PLACEMARKER_CLOSED, ADDED_PLACEMARKER_OPEN, HTML_ADDED_STYLE, \
     ADDED_PLACEMARKER_CLOSED, CHANGED_INTO_PLACEMARKER_OPEN, CHANGED_INTO_PLACEMARKER_CLOSED, CHANGED_PLACEMARKER_OPEN, \
-    CHANGED_PLACEMARKER_CLOSED, HTML_CHANGED_STYLE
+    CHANGED_PLACEMARKER_CLOSED, HTML_CHANGED_STYLE, HTML_CHANGED_INTO_STYLE
 from ..notification_service import NotificationContextData
 
 CUSTOM_LINEBREAK_PLACEHOLDER='$$BR$$'
@@ -165,7 +165,7 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
         # Handle changed/replaced lines (old → new)
         n_body = n_body.replace(CHANGED_PLACEMARKER_OPEN, f'<span style="{HTML_CHANGED_STYLE}" role="note" aria-label="Changed text" title="Changed text">')
         n_body = n_body.replace(CHANGED_PLACEMARKER_CLOSED, f'</span>')
-        n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN, f'<span style="{HTML_CHANGED_STYLE}" role="note" aria-label="Changed into" title="Changed into">')
+        n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN, f'<span style="{HTML_CHANGED_INTO_STYLE}" role="note" aria-label="Changed into" title="Changed into">')
         n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_CLOSED, f'</span>')
         n_body = n_body.replace('\n', f'{CUSTOM_LINEBREAK_PLACEHOLDER}\n')
     elif requested_output_format == 'html':
