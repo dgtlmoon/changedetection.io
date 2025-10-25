@@ -467,6 +467,18 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
         # Should come from notification.py default handler when there is no notification body to pull from
         assert 'change detection is cool 网站监测 内容更新了' in x
 
+    ## Check that 'test' catches errors
+    test_notification_url = 'post://akjsdfkjasdkfjasdkfjasdkjfas232323/should-error'
+
+    ######### Test global/system settings
+    res = client.post(
+        url_for("ui.ui_notification.ajax_callback_send_notification_test")+"?mode=global-settings",
+        data={"notification_urls": test_notification_url},
+        follow_redirects=True
+    )
+    assert res.status_code == 400
+    assert b'Name or service not known' in res.data
+
     client.get(
         url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
@@ -481,6 +493,7 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
     )
     assert res.status_code == 400
     assert b"Error: You must have atleast one watch configured for 'test notification' to work" in res.data
+
 
 
 def _test_color_notifications(client, notification_body_token):
