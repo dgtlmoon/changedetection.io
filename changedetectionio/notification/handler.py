@@ -77,6 +77,55 @@ def notification_format_align_with_apprise(n_format : str):
 
     return n_format
 
+def apply_discord_markdown_to_body(n_body):
+    """
+    Discord does not support <del> but it supports non-standard ~~strikethrough~~
+    :param n_body:
+    :return:
+    """
+    import re
+    # Define the mapping between your placeholders and markdown markers
+    replacements = [
+        (REMOVED_PLACEMARKER_OPEN, '~~', REMOVED_PLACEMARKER_CLOSED, '~~'),
+        (ADDED_PLACEMARKER_OPEN, '**', ADDED_PLACEMARKER_CLOSED, '**'),
+        (CHANGED_PLACEMARKER_OPEN, '~~', CHANGED_PLACEMARKER_CLOSED, '~~'),
+        (CHANGED_INTO_PLACEMARKER_OPEN, '**', CHANGED_INTO_PLACEMARKER_CLOSED, '**'),
+    ]
+    # So that the markdown gets added without any whitespace following it which would break it
+    for open_tag, open_md, close_tag, close_md in replacements:
+        # Regex: match opening tag, optional whitespace, capture the content, optional whitespace, then closing tag
+        pattern = re.compile(
+            re.escape(open_tag) + r'(\s*)(.*?)?(\s*)' + re.escape(close_tag),
+            flags=re.DOTALL
+        )
+        n_body = pattern.sub(lambda m: f"{m.group(1)}{open_md}{m.group(2)}{close_md}{m.group(3)}", n_body)
+    return n_body
+
+def apply_standard_markdown_to_body(n_body):
+    """
+    Apprise does not support ~~strikethrough~~ but it will convert <del> to HTML strikethrough.
+    :param n_body:
+    :return:
+    """
+    import re
+    # Define the mapping between your placeholders and markdown markers
+    replacements = [
+        (REMOVED_PLACEMARKER_OPEN, '<del>', REMOVED_PLACEMARKER_CLOSED, '</del>'),
+        (ADDED_PLACEMARKER_OPEN, '**', ADDED_PLACEMARKER_CLOSED, '**'),
+        (CHANGED_PLACEMARKER_OPEN, '<del>', CHANGED_PLACEMARKER_CLOSED, '</del>'),
+        (CHANGED_INTO_PLACEMARKER_OPEN, '**', CHANGED_INTO_PLACEMARKER_CLOSED, '**'),
+    ]
+
+    # So that the markdown gets added without any whitespace following it which would break it
+    for open_tag, open_md, close_tag, close_md in replacements:
+        # Regex: match opening tag, optional whitespace, capture the content, optional whitespace, then closing tag
+        pattern = re.compile(
+            re.escape(open_tag) + r'(\s*)(.*?)?(\s*)' + re.escape(close_tag),
+            flags=re.DOTALL
+        )
+        n_body = pattern.sub(lambda m: f"{m.group(1)}{open_md}{m.group(2)}{close_md}{m.group(3)}", n_body)
+    return n_body
+
 
 def apply_service_tweaks(url, n_body, n_title, requested_output_format):
 
@@ -107,7 +156,7 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
         n_body = n_body.replace('<br>', '\n')
         n_body = n_body.replace('</br>', '\n')
         n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
-        
+
         # Use strikethrough for removed content, bold for added content
         n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '<s>')
         n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, '</s>')
@@ -141,15 +190,7 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
         if requested_output_format == 'html':
             # No diff placeholders, use Discord markdown for any other formatting
             # Use Discord markdown: strikethrough for removed, bold for added
-            n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '~~')
-            n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, '~~')
-            n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, '**')
-            n_body = n_body.replace(ADDED_PLACEMARKER_CLOSED, '**')
-            # Handle changed/replaced lines (old → new)
-            n_body = n_body.replace(CHANGED_PLACEMARKER_OPEN, '~~')
-            n_body = n_body.replace(CHANGED_PLACEMARKER_CLOSED, '~~')
-            n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN, '**')
-            n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_CLOSED, '**')
+            n_body = apply_discord_markdown_to_body(n_body=n_body)
 
             # Apply 2000 char limit for plain content
             payload_max_size = 1700
@@ -181,6 +222,9 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
         n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN, f'(into) ')
         n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_CLOSED, f'')
         n_body = n_body.replace('\n', f'{CUSTOM_LINEBREAK_PLACEHOLDER}\n')
+    elif requested_output_format == 'markdown':
+        # Markdown to HTML - Apprise will convert this to HTML
+        n_body = apply_standard_markdown_to_body(n_body=n_body)
 
     else: #plaintext etc default
         n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '(removed) ')
@@ -301,17 +345,20 @@ def process_notification(n_object: NotificationContextData, datastore):
                     apprise_input_format = NotifyFormat.TEXT.value
 
                 elif requested_output_format == NotifyFormat.MARKDOWN.value:
-                    # This actually means we request "Markdown to HTML", we want HTML output
+                    # Convert markdown to HTML ourselves since not all plugins do this
+                    from apprise.conversion import markdown_to_html
+                    # Make sure there are paragraph breaks around horizontal rules
+                    n_body = n_body.replace('---', '\n\n---\n\n')
+                    n_body = markdown_to_html(n_body)
                     url = f"{url}{prefix_add_to_url}format={NotifyFormat.HTML.value}"
                     requested_output_format = NotifyFormat.HTML.value
-                    apprise_input_format = NotifyFormat.MARKDOWN.value
-
+                    apprise_input_format = NotifyFormat.HTML.value  # Changed from MARKDOWN to HTML
 
                 # Could have arrived at any stage, so we dont end up running .escape on it
                 if 'html' in requested_output_format:
                     n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '<br>\r\n')
                 else:
-                    # Markup, text types etc
+                    # texty types
                     n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\r\n')
 
             sent_objs.append({'title': n_title,

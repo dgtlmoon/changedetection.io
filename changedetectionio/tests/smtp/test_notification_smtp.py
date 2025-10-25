@@ -290,7 +290,8 @@ def test_check_notification_markdown_format(client, live_server, measure_memory_
     text_part = parts[0]
     assert text_part.get_content_type() == 'text/plain'
     text_content = text_part.get_content()
-    assert '(added) So let\'s see what happens.\r\n' in text_content  # The plaintext part
+    # We wont see anything in the "FALLBACK" text but that's OK (no added/strikethrough etc)
+    assert 'So let\'s see what happens.\r\n' in text_content  # The plaintext part
 
 
     # Second part should be text/html and roughly converted from markdown to HTML
@@ -298,7 +299,7 @@ def test_check_notification_markdown_format(client, live_server, measure_memory_
     assert html_part.get_content_type() == 'text/html'
     html_content = html_part.get_content()
     assert '<p><em>header</em></p>' in html_content
-    assert '(added) So let\'s see what happens.<br' in html_content
+    assert '<strong>So let\'s see what happens.</strong><br>' in html_content # Additions are <strong> in markdown
     delete_all_watches(client)
 
 # Custom notification body with HTML, that is either sent as HTML or rendered to plaintext and sent
