@@ -762,6 +762,12 @@ paths:
         - Enable word-level granularity with `word_diff=true` for detailed inline comparisons
         - Disable with `word_diff=false` for line-level comparisons only (default false/off, line-level mode by default)
 
+        **Raw Diff Output:**
+        - Use `no_markup=true` to get raw diff content without any formatting applied
+        - Returns content with placeholders for opening/closing tags of changes
+        - Allows you to implement your own custom colorisation or formatting
+        - Skips all HTML color application and service tweaks (added text, html color tags, etc)
+
       x-code-samples:
         - lang: 'curl'
           source: |
