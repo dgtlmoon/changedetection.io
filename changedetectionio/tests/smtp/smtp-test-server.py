@@ -32,6 +32,8 @@ class CustomSMTPHandler:
 
             # Parse the email message
             msg = message_from_bytes(envelope.content, policy=default)
+            with open('/tmp/last.eml', 'wb') as f:
+                f.write(envelope.content)
 
             # Write parts to files based on content type
             if msg.is_multipart():
