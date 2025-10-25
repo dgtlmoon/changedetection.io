@@ -258,7 +258,6 @@ def process_notification(n_object: NotificationContextData, datastore):
             if n_object.get('markup_text_links_to_html_links'):
                 n_body = markup_text_links_to_html(body=n_body)
 
-
             n_title = jinja_render(template_str=n_object.get('notification_title', ''), **notification_parameters)
 
             url = url.strip()
@@ -279,6 +278,11 @@ def process_notification(n_object: NotificationContextData, datastore):
                 if 'html' in requested_output_format:
                     from markupsafe import escape
                     n_body = str(escape(n_body))
+
+            if 'html' in requested_output_format:
+                # Since the n_body is always some kind of text from the 'diff' engine, attempt to preserve whitespaces that get sent to the HTML output
+                # But only where its more than 1 consecutive whitespace, otherwise "and this" becomes "and&nbsp;this" etc which is too much.
+                n_body = n_body.replace('  ', '&nbsp;&nbsp;')
 
             (url, n_body, n_title) = apply_service_tweaks(url=url, n_body=n_body, n_title=n_title, requested_output_format=requested_output_format_original)
 
