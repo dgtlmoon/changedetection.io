@@ -315,14 +315,14 @@ def process_notification(n_object: NotificationContextData, datastore):
                               'url': url})
             apobj.add(url)
 
-        # Enforce monospace output for PLAINTEXT Document going to a HTML style notification
-        watch_mime_type = n_object.get('watch_mime_type')
-        if watch_mime_type and 'text/' in watch_mime_type.lower() and not 'html' in watch_mime_type.lower():
-            if 'html' in requested_output_format:
-                # Since they likely want HTML style notifications but of a Plain-text document, lets wrap the body
-                if not '<pre' in n_body and not '<body' in n_body:
-                    # Wrap in monospace layout so it looks like "plaintext", remove double line-feeds
-                    n_body = as_monospaced_html_email(content=n_body, title=n_title)
+            # Enforce monospace output for PLAINTEXT Document going to a HTML style email notification
+            watch_mime_type = n_object.get('watch_mime_type')
+            if url.startswith('mailto') and watch_mime_type and 'text/' in watch_mime_type.lower() and not 'html' in watch_mime_type.lower():
+                if 'html' in requested_output_format:
+                    # Since they likely want HTML style notifications but of a Plain-text document, lets wrap the body
+                    if not '<pre' in n_body and not '<body' in n_body:
+                        # Wrap in monospace layout so it looks like "plaintext", remove double line-feeds
+                        n_body = as_monospaced_html_email(content=n_body, title=n_title)
 
         apobj.notify(
             title=n_title,
