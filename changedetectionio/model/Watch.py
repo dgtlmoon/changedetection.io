@@ -9,6 +9,7 @@ from pathlib import Path
 from loguru import logger
 
 from .. import jinja2_custom as safe_jinja
+from ..diff import ADDED_PLACEMARKER_OPEN
 from ..html_tools import TRANSLATE_WHITESPACE_TABLE
 
 # Allowable protocols, protects against javascript: etc

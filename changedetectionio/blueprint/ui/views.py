@@ -5,7 +5,7 @@ import re
 from loguru import logger
 from markupsafe import Markup
 
-from changedetectionio.diff import REMOVED_STYLE, ADDED_STYLE, REMOVED_INNER_STYLE, ADDED_INNER_STYLE, DIFF_HTML_LABEL_REMOVED, DIFF_HTML_LABEL_ADDED
+from changedetectionio.diff import REMOVED_STYLE, ADDED_STYLE, REMOVED_INNER_STYLE, ADDED_INNER_STYLE
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
 from changedetectionio import html_tools, diff

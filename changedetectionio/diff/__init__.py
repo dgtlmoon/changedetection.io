@@ -17,22 +17,28 @@ from .tokenizers import TOKENIZERS, tokenize_words_and_html
 # This is for the WHOLE line background style
 REMOVED_STYLE = "background-color: #fadad7; color: #b30000;"
 ADDED_STYLE = "background-color: #eaf2c2; color: #406619;"
+HTML_REMOVED_STYLE = REMOVED_STYLE  # Export alias for handler.py
+HTML_ADDED_STYLE = ADDED_STYLE      # Export alias for handler.py
 
 # Darker backgrounds for nested highlighting (changed parts within lines)
 REMOVED_INNER_STYLE = "background-color: #ff867a; color: #111;"
 ADDED_INNER_STYLE = "background-color: #b2e841; color: #444;"
+HTML_CHANGED_STYLE = REMOVED_STYLE
+HTML_CHANGED_INTO_STYLE = ADDED_STYLE
 
-# Diff label text formats (use {content} as placeholder)
-DIFF_LABEL_TEXT_ADDED = '(added) {content}'
-DIFF_LABEL_TEXT_REMOVED = '(removed) {content}'
-DIFF_LABEL_TEXT_CHANGED = '(changed) {content}'
-DIFF_LABEL_TEXT_INTO = '(into) {content}'
+# Placemarker constants - these get replaced by apply_service_tweaks() in handler.py
+# Something that cant get escaped to HTML by accident
+REMOVED_PLACEMARKER_OPEN = '@removed_PLACEMARKER_OPEN'
+REMOVED_PLACEMARKER_CLOSED = '@removed_PLACEMARKER_CLOSED'
 
-# Diff HTML label formats (use {content} as placeholder)
-DIFF_HTML_LABEL_REMOVED = f'<span style="{REMOVED_STYLE}" title="Removed">{{content}}</span>'
-DIFF_HTML_LABEL_ADDED = f'<span style="{ADDED_STYLE}" title="Added">{{content}}</span>'
-DIFF_HTML_LABEL_REPLACED = f'<span style="{ADDED_STYLE}" title="Replaced">{{content}}</span>'
-DIFF_HTML_LABEL_INSERTED = f'<span style="{ADDED_STYLE}" title="Inserted">{{content}}</span>'
+ADDED_PLACEMARKER_OPEN = '@added_PLACEMARKER_OPEN'
+ADDED_PLACEMARKER_CLOSED = '@added_PLACEMARKER_CLOSED'
+
+CHANGED_PLACEMARKER_OPEN = '@changed_PLACEMARKER_OPEN'
+CHANGED_PLACEMARKER_CLOSED = '@changed_PLACEMARKER_CLOSED'
+
+CHANGED_INTO_PLACEMARKER_OPEN = '@changed_into_PLACEMARKER_OPEN'
+CHANGED_INTO_PLACEMARKER_CLOSED = '@changed_into_PLACEMARKER_CLOSED'
 
 # Compiled regex patterns for performance
 WHITESPACE_NORMALIZE_RE = re.compile(r'\s+')
@@ -104,36 +110,26 @@ def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool
     # Check if the whole line is replaced (no unchanged content)
     whole_line_replaced = not any(op == 0 and text.strip() for op, text in diffs)
 
-    # Build the output
+    # Build the output using placemarkers
     result_parts = []
 
     for op, text in diffs:
         if op == 0:  # Equal
             result_parts.append(text)
         elif op == 1:  # Insertion
-            if html_colour:
-                content = text.rstrip()
-                trailing = text[len(content):] if len(text) > len(content) else ''
-                line_break = '\n' if whole_line_replaced else ''
-                result_parts.append(f'{DIFF_HTML_LABEL_ADDED.format(content=content)}{trailing}{line_break}')
-            else:
-                content = text.rstrip()
-                trailing = text[len(content):] if len(text) > len(content) else ''
-                line_break = '\n' if whole_line_replaced else ''
-                label = DIFF_LABEL_TEXT_INTO if whole_line_replaced else DIFF_LABEL_TEXT_ADDED
-                result_parts.append(f'{label.format(content=content)}{trailing}{line_break}')
+            content = text.rstrip()
+            trailing = text[len(content):] if len(text) > len(content) else ''
+            line_break = '\n' if whole_line_replaced else ''
+            placemarker_open = CHANGED_INTO_PLACEMARKER_OPEN if whole_line_replaced else ADDED_PLACEMARKER_OPEN
+            placemarker_closed = CHANGED_INTO_PLACEMARKER_CLOSED if whole_line_replaced else ADDED_PLACEMARKER_CLOSED
+            result_parts.append(f'{placemarker_open}{content}{placemarker_closed}{trailing}{line_break}')
         elif op == -1:  # Deletion
-            if html_colour:
-                content = text.rstrip()
-                trailing = text[len(content):] if len(text) > len(content) else ''
-                line_break = '\n' if whole_line_replaced else ''
-                result_parts.append(f'{DIFF_HTML_LABEL_REMOVED.format(content=content)}{trailing}{line_break}')
-            else:
-                content = text.rstrip()
-                trailing = text[len(content):] if len(text) > len(content) else ''
-                line_break = '\n' if whole_line_replaced else ''
-                label = DIFF_LABEL_TEXT_CHANGED if whole_line_replaced else DIFF_LABEL_TEXT_REMOVED
-                result_parts.append(f'{label.format(content=content)}{trailing}{line_break}')
+            content = text.rstrip()
+            trailing = text[len(content):] if len(text) > len(content) else ''
+            line_break = '\n' if whole_line_replaced else ''
+            placemarker_open = CHANGED_PLACEMARKER_OPEN if whole_line_replaced else REMOVED_PLACEMARKER_OPEN
+            placemarker_closed = CHANGED_PLACEMARKER_CLOSED if whole_line_replaced else REMOVED_PLACEMARKER_CLOSED
+            result_parts.append(f'{placemarker_open}{content}{placemarker_closed}{trailing}{line_break}')
 
     return ''.join(result_parts), has_changes
 
@@ -222,9 +218,9 @@ def render_nested_line_diff(before_line: str, after_line: str, ignore_junk: bool
 
     after_content = ''.join(after_parts)
 
-    # Wrap in outer spans with light backgrounds
-    before_html = f'<span style="{REMOVED_STYLE}" title="Removed">{before_content}</span>'
-    after_html = f'<span style="{ADDED_STYLE}" title="Replaced">{after_content}</span>'
+    # Wrap content with placemarkers (inner HTML highlighting is preserved)
+    before_html = f'{CHANGED_PLACEMARKER_OPEN}{before_content}{CHANGED_PLACEMARKER_CLOSED}'
+    after_html = f'{CHANGED_INTO_PLACEMARKER_OPEN}{after_content}{CHANGED_INTO_PLACEMARKER_CLOSED}'
 
     return before_html, after_html, has_changes
 
@@ -321,10 +317,10 @@ def customSequenceMatcher(
                 if context_lines_to_include:
                     yield context_lines_to_include
         elif include_removed and tag == 'delete':
-            if html_colour:
-                yield [DIFF_HTML_LABEL_REMOVED.format(content=line) for line in same_slicer(before, alo, ahi)]
+            if include_change_type_prefix:
+                yield [f'{REMOVED_PLACEMARKER_OPEN}{line}{REMOVED_PLACEMARKER_CLOSED}' for line in same_slicer(before, alo, ahi)]
             else:
-                yield [DIFF_LABEL_TEXT_REMOVED.format(content=line) for line in same_slicer(before, alo, ahi)] if include_change_type_prefix else same_slicer(before, alo, ahi)
+                yield same_slicer(before, alo, ahi)
         elif include_replaced and tag == 'replace':
             before_lines = same_slicer(before, alo, ahi)
             after_lines = same_slicer(after, blo, bhi)
@@ -345,18 +341,17 @@ def customSequenceMatcher(
                     continue
                 yield [before_html, after_html]
             else:
-                # Fall back to line-level diff for multi-line changes or text mode
-                if html_colour:
-                    yield [DIFF_HTML_LABEL_REMOVED.format(content=line) for line in before_lines] + \
-                          [DIFF_HTML_LABEL_REPLACED.format(content=line) for line in after_lines]
+                # Fall back to line-level diff for multi-line changes
+                if include_change_type_prefix:
+                    yield [f'{CHANGED_PLACEMARKER_OPEN}{line}{CHANGED_PLACEMARKER_CLOSED}' for line in before_lines] + \
+                          [f'{CHANGED_INTO_PLACEMARKER_OPEN}{line}{CHANGED_INTO_PLACEMARKER_CLOSED}' for line in after_lines]
                 else:
-                    yield [DIFF_LABEL_TEXT_CHANGED.format(content=line) for line in before_lines] + \
-                          [DIFF_LABEL_TEXT_INTO.format(content=line) for line in after_lines] if include_change_type_prefix else before_lines + after_lines
+                    yield before_lines + after_lines
         elif include_added and tag == 'insert':
-            if html_colour:
-                yield [DIFF_HTML_LABEL_INSERTED.format(content=line) for line in same_slicer(after, blo, bhi)]
+            if include_change_type_prefix:
+                yield [f'{ADDED_PLACEMARKER_OPEN}{line}{ADDED_PLACEMARKER_CLOSED}' for line in same_slicer(after, blo, bhi)]
             else:
-                yield [DIFF_LABEL_TEXT_ADDED.format(content=line) for line in same_slicer(after, blo, bhi)] if include_change_type_prefix else same_slicer(after, blo, bhi)
+                yield same_slicer(after, blo, bhi)
 
 def render_diff(
     previous_version_file_contents: str,

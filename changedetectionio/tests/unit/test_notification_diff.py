@@ -8,14 +8,14 @@ import os
 
 from changedetectionio import diff
 from changedetectionio.diff import (
-    DIFF_LABEL_TEXT_ADDED,
-    DIFF_LABEL_TEXT_REMOVED,
-    DIFF_LABEL_TEXT_CHANGED,
-    DIFF_LABEL_TEXT_INTO,
-    DIFF_HTML_LABEL_REMOVED,
-    DIFF_HTML_LABEL_ADDED,
-    DIFF_HTML_LABEL_REPLACED,
-    DIFF_HTML_LABEL_INSERTED
+    REMOVED_PLACEMARKER_OPEN,
+    REMOVED_PLACEMARKER_CLOSED,
+    ADDED_PLACEMARKER_OPEN,
+    ADDED_PLACEMARKER_CLOSED,
+    CHANGED_PLACEMARKER_OPEN,
+    CHANGED_PLACEMARKER_CLOSED,
+    CHANGED_INTO_PLACEMARKER_OPEN,
+    CHANGED_INTO_PLACEMARKER_CLOSED
 )
 
 # mostly
@@ -34,18 +34,18 @@ class TestDiffBuilder(unittest.TestCase):
 
         output = output.split("\n")
 
-
-        self.assertIn(DIFF_LABEL_TEXT_CHANGED.format(content='ok'), output)
-        self.assertIn(DIFF_LABEL_TEXT_INTO.format(content='xok'), output)
-        self.assertIn(DIFF_LABEL_TEXT_INTO.format(content='next-x-ok'), output)
-        self.assertIn(DIFF_LABEL_TEXT_ADDED.format(content='and something new'), output)
+        # Check that placemarkers are present (they get replaced in apply_service_tweaks)
+        self.assertTrue(any(CHANGED_PLACEMARKER_OPEN in line and 'ok' in line for line in output))
+        self.assertTrue(any(CHANGED_INTO_PLACEMARKER_OPEN in line and 'xok' in line for line in output))
+        self.assertTrue(any(CHANGED_INTO_PLACEMARKER_OPEN in line and 'next-x-ok' in line for line in output))
+        self.assertTrue(any(ADDED_PLACEMARKER_OPEN in line and 'and something new' in line for line in output))
 
         with open(base_dir + "/test-content/after-2.txt", 'r') as f:
             newest_version_file_contents = f.read()
         output = diff.render_diff(previous_version_file_contents, newest_version_file_contents)
         output = output.split("\n")
-        self.assertIn(DIFF_LABEL_TEXT_REMOVED.format(content='for having learned computerese,'), output)
-        self.assertIn(DIFF_LABEL_TEXT_REMOVED.format(content='I continue to examine bits, bytes and words'), output)
+        self.assertTrue(any(REMOVED_PLACEMARKER_OPEN in line and 'for having learned computerese,' in line for line in output))
+        self.assertTrue(any(REMOVED_PLACEMARKER_OPEN in line and 'I continue to examine bits, bytes and words' in line for line in output))
 
         #diff_removed
         with open(base_dir + "/test-content/before.txt", 'r') as f:
@@ -55,18 +55,18 @@ class TestDiffBuilder(unittest.TestCase):
             newest_version_file_contents = f.read()
         output = diff.render_diff(previous_version_file_contents, newest_version_file_contents, include_equal=False, include_removed=True, include_added=False)
         output = output.split("\n")
-        self.assertIn(DIFF_LABEL_TEXT_CHANGED.format(content='ok'), output)
-        self.assertIn(DIFF_LABEL_TEXT_INTO.format(content='xok'), output)
-        self.assertIn(DIFF_LABEL_TEXT_INTO.format(content='next-x-ok'), output)
-        self.assertNotIn(DIFF_LABEL_TEXT_ADDED.format(content='and something new'), output)
+        self.assertTrue(any(CHANGED_PLACEMARKER_OPEN in line and 'ok' in line for line in output))
+        self.assertTrue(any(CHANGED_INTO_PLACEMARKER_OPEN in line and 'xok' in line for line in output))
+        self.assertTrue(any(CHANGED_INTO_PLACEMARKER_OPEN in line and 'next-x-ok' in line for line in output))
+        self.assertFalse(any(ADDED_PLACEMARKER_OPEN in line and 'and something new' in line for line in output))
 
         #diff_removed
         with open(base_dir + "/test-content/after-2.txt", 'r') as f:
             newest_version_file_contents = f.read()
         output = diff.render_diff(previous_version_file_contents, newest_version_file_contents, include_equal=False, include_removed=True, include_added=False)
         output = output.split("\n")
-        self.assertIn(DIFF_LABEL_TEXT_REMOVED.format(content='for having learned computerese,'), output)
-        self.assertIn(DIFF_LABEL_TEXT_REMOVED.format(content='I continue to examine bits, bytes and words'), output)
+        self.assertTrue(any(REMOVED_PLACEMARKER_OPEN in line and 'for having learned computerese,' in line for line in output))
+        self.assertTrue(any(REMOVED_PLACEMARKER_OPEN in line and 'I continue to examine bits, bytes and words' in line for line in output))
 
     def test_expected_diff_patch_output(self):
         base_dir = os.path.dirname(__file__)
@@ -95,10 +95,10 @@ class TestDiffBuilder(unittest.TestCase):
         # Test with word_diff enabled
         output = diff.render_diff(before, after, include_equal=False, word_diff=True)
         # Should highlight only changed words, not entire line
-        self.assertIn(DIFF_LABEL_TEXT_REMOVED.format(content='quick'), output)
-        self.assertIn(DIFF_LABEL_TEXT_ADDED.format(content='fast'), output)
-        self.assertIn(DIFF_LABEL_TEXT_REMOVED.format(content='fox'), output)
-        self.assertIn(DIFF_LABEL_TEXT_ADDED.format(content='cat'), output)
+        self.assertIn(f'{REMOVED_PLACEMARKER_OPEN}quick{REMOVED_PLACEMARKER_CLOSED}', output)
+        self.assertIn(f'{ADDED_PLACEMARKER_OPEN}fast{ADDED_PLACEMARKER_CLOSED}', output)
+        self.assertIn(f'{REMOVED_PLACEMARKER_OPEN}fox{REMOVED_PLACEMARKER_CLOSED}', output)
+        self.assertIn(f'{ADDED_PLACEMARKER_OPEN}cat{ADDED_PLACEMARKER_CLOSED}', output)
         # Unchanged words should appear without markers
         self.assertIn('brown', output)
         self.assertIn('jumps', output)
@@ -106,8 +106,8 @@ class TestDiffBuilder(unittest.TestCase):
         # Test with word_diff disabled (line-level)
         output = diff.render_diff(before, after, include_equal=False, word_diff=False)
         # Should show full line changes
-        self.assertIn(DIFF_LABEL_TEXT_CHANGED.format(content='The quick brown fox jumps over the lazy dog'), output)
-        self.assertIn(DIFF_LABEL_TEXT_INTO.format(content='The fast brown cat jumps over the lazy dog'), output)
+        self.assertIn(f'{CHANGED_PLACEMARKER_OPEN}The quick brown fox jumps over the lazy dog{CHANGED_PLACEMARKER_CLOSED}', output)
+        self.assertIn(f'{CHANGED_INTO_PLACEMARKER_OPEN}The fast brown cat jumps over the lazy dog{CHANGED_INTO_PLACEMARKER_CLOSED}', output)
 
     def test_word_level_diff_html(self):
         """Test word-level diff with HTML coloring"""
@@ -116,10 +116,10 @@ class TestDiffBuilder(unittest.TestCase):
 
         output = diff.render_diff(before, after, include_equal=False, word_diff=True, html_colour=True)
 
-        # With diff-match-patch, character-level changes are shown (more precise)
-        # "110" -> "111" shows only the character change: "0" removed, "1" added
-        self.assertIn(DIFF_HTML_LABEL_REMOVED.format(content='0'), output)
-        self.assertIn(DIFF_HTML_LABEL_ADDED.format(content='1'), output)
+        # With html_colour=True and nested highlighting, placemarkers wrap content with inner HTML spans
+        # The inner HTML uses REMOVED_INNER_STYLE and ADDED_INNER_STYLE for character-level highlighting
+        self.assertIn(CHANGED_PLACEMARKER_OPEN, output)
+        self.assertIn(CHANGED_INTO_PLACEMARKER_OPEN, output)
         # Unchanged text should not be wrapped in spans
         self.assertIn('points by user', output)
         self.assertIn('11', output)  # Common prefix is unchanged
@@ -153,8 +153,8 @@ Line 10"""
         lines = output.split("\n")
         # Should only show changed lines
         self.assertEqual(len([l for l in lines if l.strip()]), 2)  # Two changed lines
-        self.assertIn(DIFF_LABEL_TEXT_REMOVED.format(content='Old'), output)
-        self.assertIn(DIFF_LABEL_TEXT_ADDED.format(content='New'), output)
+        self.assertIn(f'{REMOVED_PLACEMARKER_OPEN}Old{REMOVED_PLACEMARKER_CLOSED}', output)
+        self.assertIn(f'{ADDED_PLACEMARKER_OPEN}New{ADDED_PLACEMARKER_CLOSED}', output)
 
         # Test with 1 line of context
         output = diff.render_diff(before, after, include_equal=False, context_lines=1, word_diff=True)
@@ -203,7 +203,7 @@ Line 4"""
 
         # With case-sensitive (default), should detect changes
         output = diff.render_diff(before, after, include_equal=False, case_insensitive=False, word_diff=False)
-        self.assertIn(DIFF_LABEL_TEXT_CHANGED.format(content='The Quick Brown Fox'), output)
+        self.assertIn(f'{CHANGED_PLACEMARKER_OPEN}The Quick Brown Fox{CHANGED_PLACEMARKER_CLOSED}', output)
 
         # With case-insensitive, should detect no changes
         output = diff.render_diff(before, after, include_equal=False, case_insensitive=True)
@@ -224,8 +224,8 @@ Line 4"""
         self.assertNotIn('HELLO', output)
 
         # Second line should show the word change
-        self.assertIn(DIFF_LABEL_TEXT_REMOVED.format(content='WORLD'), output)
-        self.assertIn(DIFF_LABEL_TEXT_ADDED.format(content='Friend'), output)
+        self.assertIn(f'{REMOVED_PLACEMARKER_OPEN}WORLD{REMOVED_PLACEMARKER_CLOSED}', output)
+        self.assertIn(f'{ADDED_PLACEMARKER_OPEN}Friend{ADDED_PLACEMARKER_CLOSED}', output)
 
     def test_case_insensitive_html_output(self):
         """Test case-insensitive comparison with HTML output"""
@@ -235,12 +235,11 @@ Line 4"""
         # Case-insensitive should only highlight the price change
         output = diff.render_diff(before, after, include_equal=False, case_insensitive=True, word_diff=True, html_colour=True)
 
-        # With word-level tokenization, "rice: $1" vs "RICE: $2" are compared
-        # The diff shows case change (Price->PRICE) and number change (1->2)
-        self.assertIn(DIFF_HTML_LABEL_REMOVED.format(content='rice: $1'), output)
-        self.assertIn(DIFF_HTML_LABEL_ADDED.format(content='RICE: $2'), output)
+        # With html_colour=True, nested highlighting is used with placemarkers
+        # Inner spans show the changes within the line
+        self.assertIn(CHANGED_PLACEMARKER_OPEN, output)
+        self.assertIn(CHANGED_INTO_PLACEMARKER_OPEN, output)
         self.assertIn('00', output)  # Common suffix unchanged
-        self.assertIn('background-color', output)
 
     def test_ignore_junk_word_diff_enabled(self):
         """Test ignore_junk with word_diff=True"""
@@ -264,8 +263,8 @@ Line 4"""
 
         # Without ignore_junk, should detect line change
         output = diff.render_diff(before, after, include_equal=False, word_diff=False, ignore_junk=False)
-        self.assertIn(DIFF_LABEL_TEXT_CHANGED.format(content='Hello  World'), output)
-        self.assertIn(DIFF_LABEL_TEXT_INTO.format(content='Hello World'), output)
+        self.assertIn(f'{CHANGED_PLACEMARKER_OPEN}Hello  World{CHANGED_PLACEMARKER_CLOSED}', output)
+        self.assertIn(f'{CHANGED_INTO_PLACEMARKER_OPEN}Hello World{CHANGED_INTO_PLACEMARKER_CLOSED}', output)
 
         # With ignore_junk enabled and word_diff disabled
         # When ignore_junk is enabled, whitespace is normalized at line level so lines match
@@ -282,8 +281,8 @@ Line 4"""
         output = diff.render_diff(before, after, include_equal=False, word_diff=True, ignore_junk=True)
 
         # Should still detect the word change (fox -> cat)
-        self.assertIn(DIFF_LABEL_TEXT_REMOVED.format(content='fox'), output)
-        self.assertIn(DIFF_LABEL_TEXT_ADDED.format(content='cat'), output)
+        self.assertIn(f'{REMOVED_PLACEMARKER_OPEN}fox{REMOVED_PLACEMARKER_CLOSED}', output)
+        self.assertIn(f'{ADDED_PLACEMARKER_OPEN}cat{ADDED_PLACEMARKER_CLOSED}', output)
         # But shouldn't highlight whitespace differences
 
     def test_ignore_junk_tabs_vs_spaces(self):
@@ -338,9 +337,9 @@ Line 4"""
         self.assertIn('Brown', output)
         self.assertIn('brown', output)
         # Should show changes (though may be grouped together)
-        # Check that the labels appear in the output (without the content placeholder)
-        self.assertTrue(DIFF_LABEL_TEXT_REMOVED.split(' {content}')[0] in output, "Should show removed text")
-        self.assertTrue(DIFF_LABEL_TEXT_ADDED.split(' {content}')[0] in output, "Should show added text")
+        # Check that placemarkers appear in the output
+        self.assertTrue(REMOVED_PLACEMARKER_OPEN in output, "Should show removed text")
+        self.assertTrue(ADDED_PLACEMARKER_OPEN in output, "Should show added text")
 
     def test_ignore_junk_multiline(self):
         """Test ignore_junk with multiple lines"""

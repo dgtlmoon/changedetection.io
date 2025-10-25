@@ -11,27 +11,32 @@ import time
 
 from changedetectionio.notification import default_notification_format
 
+# This gets modified on notification time (handler.py) depending on the required notification output
+CUSTOM_LINEBREAK_PLACEHOLDER='@BR@'
+
+
 # What is passed around as notification context, also used as the complete list of valid {{ tokens }}
 class NotificationContextData(dict):
     def __init__(self, initial_data=None, **kwargs):
         super().__init__({
+            'base_url': None,
             'current_snapshot': None,
             'diff': None,
             'diff_added': None,
             'diff_full': None,
             'diff_patch': None,
             'diff_removed': None,
+            'diff_url': None,
+            'markup_text_links_to_html_links': False, # If automatic conversion of plaintext to HTML should happen
             'notification_timestamp': time.time(),
+            'preview_url': None,
             'screenshot': None,
             'triggered_text': None,
             'uuid': 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX',  # Converted to 'watch_uuid' in create_notification_parameters
-            'watch_url': 'https://WATCH-PLACE-HOLDER/',
-            'base_url': None,
-            'diff_url': None,
-            'preview_url': None,
+            'watch_mime_type': None,
             'watch_tag': None,
             'watch_title': None,
-            'markup_text_to_html': False, # If automatic conversion of plaintext to HTML should happen
+            'watch_url': 'https://WATCH-PLACE-HOLDER/',
         })
 
         # Apply any initial data passed in
@@ -92,26 +97,13 @@ class NotificationService:
         if n_object.get('notification_format') == default_notification_format_for_watch:
             n_object['notification_format'] = self.datastore.data['settings']['application'].get('notification_format')
 
-        html_colour_enable = False
-        # HTML needs linebreak, but MarkDown and Text can use a linefeed
-        if n_object.get('notification_format') == 'HTML':
-            line_feed_sep = "<br>"
-            # Snapshot will be plaintext on the disk, convert to some kind of HTML
-            snapshot_contents = snapshot_contents.replace('\n', line_feed_sep)
-        elif n_object.get('notification_format') == 'HTML Color':
-            line_feed_sep = "<br>"
-            # Snapshot will be plaintext on the disk, convert to some kind of HTML
-            snapshot_contents = snapshot_contents.replace('\n', line_feed_sep)
-            html_colour_enable = True
-        else:
-            line_feed_sep = "\n"
 
         triggered_text = ''
         if len(trigger_text):
             from . import html_tools
             triggered_text = html_tools.get_triggered_text(content=snapshot_contents, trigger_text=trigger_text)
             if triggered_text:
-                triggered_text = line_feed_sep.join(triggered_text)
+                triggered_text = CUSTOM_LINEBREAK_PLACEHOLDER.join(triggered_text)
 
         # Could be called as a 'test notification' with only 1 snapshot available
         prev_snapshot = "Example text: example test\nExample text: change detection is cool\nExample text: some more examples\n"
@@ -125,16 +117,17 @@ class NotificationService:
 
         n_object.update({
             'current_snapshot': snapshot_contents,
-            'diff': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=line_feed_sep, html_colour=html_colour_enable, ignore_junk=ignore_junk),
-            'diff_added': diff.render_diff(prev_snapshot, current_snapshot, include_removed=False, line_feed_sep=line_feed_sep, html_colour=html_colour_enable, ignore_junk=ignore_junk),
-            'diff_full': diff.render_diff(prev_snapshot, current_snapshot, include_equal=True, line_feed_sep=line_feed_sep, html_colour=html_colour_enable, ignore_junk=ignore_junk),
-            'diff_patch': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=line_feed_sep, patch_format=True, ignore_junk=ignore_junk),
-            'diff_removed': diff.render_diff(prev_snapshot, current_snapshot, include_added=False, line_feed_sep=line_feed_sep, html_colour=html_colour_enable, ignore_junk=ignore_junk),
+            'diff': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=CUSTOM_LINEBREAK_PLACEHOLDER, ignore_junk=ignore_junk),
+            'diff_added': diff.render_diff(prev_snapshot, current_snapshot, include_removed=False, line_feed_sep=CUSTOM_LINEBREAK_PLACEHOLDER, ignore_junk=ignore_junk),
+            'diff_full': diff.render_diff(prev_snapshot, current_snapshot, include_equal=True, line_feed_sep=CUSTOM_LINEBREAK_PLACEHOLDER, ignore_junk=ignore_junk),
+            'diff_patch': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=CUSTOM_LINEBREAK_PLACEHOLDER, patch_format=True, ignore_junk=ignore_junk),
+            'diff_removed': diff.render_diff(prev_snapshot, current_snapshot, include_added=False, line_feed_sep=CUSTOM_LINEBREAK_PLACEHOLDER, ignore_junk=ignore_junk),
             'screenshot': watch.get_screenshot() if watch and watch.get('notification_screenshot') else None,
             'triggered_text': triggered_text,
             'uuid': watch.get('uuid') if watch else None,
             'watch_url': watch.get('url') if watch else None,
             'watch_uuid': watch.get('uuid') if watch else None,
+            'watch_mime_type': watch.get('content-type')
         })
 
         if watch:
@@ -232,7 +225,7 @@ class NotificationService:
 
         n_format = self.datastore.data['settings']['application'].get('notification_format', default_notification_format)
         filter_list = ", ".join(watch['include_filters'])
-        # @todo - This could be a markdown template on the disk, apprise will convert the markdown to HTML+Plaintext parts in the email, and then 'markup_text_to_html' is not needed
+        # @todo - This could be a markdown template on the disk, apprise will convert the markdown to HTML+Plaintext parts in the email, and then 'markup_text_links_to_html_links' is not needed
         body = f"""Hello,
 
 Your configured CSS/xPath filters of '{filter_list}' for {{{{watch_url}}}} did not appear on the page after {threshold} attempts.
@@ -248,7 +241,7 @@ Thanks - Your omniscient changedetection.io installation.
             'notification_title': 'Changedetection.io - Alert - CSS/xPath filter was not present in the page',
             'notification_body': body,
             'notification_format': n_format,
-            'markup_text_to_html': n_format.lower().startswith('html')
+            'markup_text_links_to_html_links': n_format.lower().startswith('html')
         })
 
         if len(watch['notification_urls']):
@@ -279,7 +272,7 @@ Thanks - Your omniscient changedetection.io installation.
         threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts')
         n_format = self.datastore.data['settings']['application'].get('notification_format', default_notification_format).lower()
         step = step_n + 1
-        # @todo - This could be a markdown template on the disk, apprise will convert the markdown to HTML+Plaintext parts in the email, and then 'markup_text_to_html' is not needed
+        # @todo - This could be a markdown template on the disk, apprise will convert the markdown to HTML+Plaintext parts in the email, and then 'markup_text_links_to_html_links' is not needed
 
         # {{{{ }}}} because this will be Jinja2 {{ }} tokens
         body = f"""Hello,
@@ -297,7 +290,7 @@ Thanks - Your omniscient changedetection.io installation.
             'notification_title': f"Changedetection.io - Alert - Browser step at position {step} could not be run",
             'notification_body': body,
             'notification_format': n_format,
-            'markup_text_to_html': n_format.lower().startswith('html')
+            'markup_text_links_to_html_links': n_format.lower().startswith('html')
         })
 
         if len(watch['notification_urls']):
