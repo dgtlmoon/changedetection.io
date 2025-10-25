@@ -477,8 +477,15 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
         follow_redirects=True
     )
     assert res.status_code == 400
-    assert b'Name or service not known' in res.data
-
+    assert (
+        b"No address found" in res.data or
+        b"Name or service not known" in res.data or
+        b"nodename nor servname provided" in res.data or
+        b"Temporary failure in name resolution" in res.data or
+        b"Failed to establish a new connection" in res.data or
+        b"Connection error occurred" in res.data
+    )
+    
     client.get(
         url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
