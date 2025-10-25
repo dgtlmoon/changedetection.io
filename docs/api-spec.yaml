@@ -67,6 +67,7 @@ tags:
     description: |
       Access historical snapshots and change data for your watches. View the complete timeline of detected changes 
       and retrieve specific versions of monitored content for comparison and analysis.
+      View differences between snapshot versions (timestamps).
       
   - name: Snapshots
     description: |
@@ -739,7 +740,7 @@ paths:
   /watch/{uuid}/difference/{from_timestamp}/{to_timestamp}:
     get:
       operationId: getWatchHistoryDiff
-      tags: [Snapshots]
+      tags: [Watch History]
       summary: Get diff between two snapshots
       description: |
         Generate a formatted diff (comparison) between two historical snapshots of a web page change monitor (watch).
