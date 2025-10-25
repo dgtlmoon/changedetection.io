@@ -470,7 +470,7 @@ def test_check_plaintext_document_plaintext_notification_smtp(client, live_serve
     assert '(added)' in body
     assert '<br' not in body
     assert '&lt;' not in body
-
+    assert '<pre' not in body
     delete_all_watches(client)
 
 def test_check_plaintext_document_html_notifications(client, live_server, measure_memory_usage):
@@ -541,9 +541,9 @@ def test_check_plaintext_document_html_notifications(client, live_server, measur
     assert 'talk about &lt;title&gt;' in html_content
     # Should be the HTML, but not HTML Color
     assert 'background-color' not in html_content
-    assert '<br>\r\n(added) And let&#39;s talk about &lt;title&gt; tags<br>' in html_content
+    assert '<br>(added) And let&#39;s talk about &lt;title&gt; tags<br>' in html_content
     assert '&lt;br' not in html_content
-
+    assert '<pre role="article"' in html_content # Should have got wrapped nicely in email_helpers.py
     delete_all_watches(client)
 
 
@@ -616,7 +616,7 @@ def test_check_plaintext_document_html_color_notifications(client, live_server, 
     assert '(added) And let' not in html_content
     assert '&lt;br' not in html_content
     assert '<br>' in html_content
-
+    assert '<pre role="article"' in html_content # Should have got wrapped nicely in email_helpers.py
     delete_all_watches(client)
 
 def test_check_html_document_plaintext_notification(client, live_server, measure_memory_usage):
