@@ -262,10 +262,20 @@ class WatchHistoryDiff(Resource):
             )
             mimetype = "text/html" if output_format == 'html' else "text/plain"
 
+        import re
         if 'html' in output_format:
-            content = content.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '<br>\r\n')
+            content = re.sub(
+                re.escape(CUSTOM_LINEBREAK_PLACEHOLDER) + r'\r?\n?',
+                '<br>\\r\\n',
+                content
+            )
         else:
-            content = content.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\r\n')
+            # texty types
+            content = re.sub(
+                re.escape(CUSTOM_LINEBREAK_PLACEHOLDER) + r'\r?\n?',
+                '\\r\\n',
+                content
+            )
 
         response = make_response(content, 200)
         response.mimetype = mimetype

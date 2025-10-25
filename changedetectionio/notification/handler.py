@@ -1,5 +1,6 @@
 
 import time
+import re
 import apprise
 from apprise import NotifyFormat
 from loguru import logger
@@ -365,11 +366,21 @@ def process_notification(n_object: NotificationContextData, datastore):
                     apprise_input_format = NotifyFormat.HTML.value  # Changed from MARKDOWN to HTML
 
                 # Could have arrived at any stage, so we dont end up running .escape on it
+                # Replace CUSTOM_LINEBREAK_PLACEHOLDER followed by optional \r and/or \n
                 if 'html' in requested_output_format:
-                    n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '<br>\r\n')
+                    # could be @BR@ with optional \r\n, so we dont add more \n's
+                    n_body = re.sub(
+                        re.escape(CUSTOM_LINEBREAK_PLACEHOLDER) + r'\r?\n?',
+                        '<br>\\r\\n',
+                        n_body
+                    )
                 else:
                     # texty types
-                    n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\r\n')
+                    n_body = re.sub(
+                        re.escape(CUSTOM_LINEBREAK_PLACEHOLDER) + r'\r?\n?',
+                        '\\r\\n',
+                        n_body
+                    )
 
             sent_objs.append({'title': n_title,
                               'body': n_body,

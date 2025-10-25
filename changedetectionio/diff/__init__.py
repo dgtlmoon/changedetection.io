@@ -110,27 +110,61 @@ def render_inline_word_diff(before_line: str, after_line: str, ignore_junk: bool
     whole_line_replaced = not any(op == 0 and text.strip() for op, text in diffs)
 
     # Build the output using placemarkers
-    result_parts = []
+    # When whole line is replaced, wrap entire removed content once and entire added content once
+    if whole_line_replaced:
+        removed_tokens = []
+        added_tokens = []
 
-    for op, text in diffs:
-        if op == 0:  # Equal
-            result_parts.append(text)
-        elif op == 1:  # Insertion
-            content = text.rstrip()
-            trailing = text[len(content):] if len(text) > len(content) else ''
-            line_break = '\n' if whole_line_replaced else ''
-            placemarker_open = CHANGED_INTO_PLACEMARKER_OPEN if whole_line_replaced else ADDED_PLACEMARKER_OPEN
-            placemarker_closed = CHANGED_INTO_PLACEMARKER_CLOSED if whole_line_replaced else ADDED_PLACEMARKER_CLOSED
-            result_parts.append(f'{placemarker_open}{content}{placemarker_closed}{trailing}{line_break}')
-        elif op == -1:  # Deletion
-            content = text.rstrip()
-            trailing = text[len(content):] if len(text) > len(content) else ''
-            line_break = '\n' if whole_line_replaced else ''
-            placemarker_open = CHANGED_PLACEMARKER_OPEN if whole_line_replaced else REMOVED_PLACEMARKER_OPEN
-            placemarker_closed = CHANGED_PLACEMARKER_CLOSED if whole_line_replaced else REMOVED_PLACEMARKER_CLOSED
-            result_parts.append(f'{placemarker_open}{content}{placemarker_closed}{trailing}{line_break}')
+        for op, text in diffs:
+            if op == 0:  # Equal (e.g., whitespace tokens in common positions)
+                # Include in both removed and added to preserve spacing
+                removed_tokens.append(text)
+                added_tokens.append(text)
+            elif op == -1:  # Deletion
+                removed_tokens.append(text)
+            elif op == 1:  # Insertion
+                added_tokens.append(text)
 
-    return ''.join(result_parts), has_changes
+        # Join all tokens and wrap the entire string once for removed, once for added
+        result_parts = []
+
+        if removed_tokens:
+            removed_full = ''.join(removed_tokens).rstrip()
+            trailing_removed = ''.join(removed_tokens)[len(removed_full):] if len(''.join(removed_tokens)) > len(removed_full) else ''
+            result_parts.append(f'{CHANGED_PLACEMARKER_OPEN}{removed_full}{CHANGED_PLACEMARKER_CLOSED}{trailing_removed}')
+
+        if added_tokens:
+            if result_parts:  # Add newline between removed and added
+                result_parts.append('\n')
+            added_full = ''.join(added_tokens).rstrip()
+            trailing_added = ''.join(added_tokens)[len(added_full):] if len(''.join(added_tokens)) > len(added_full) else ''
+            result_parts.append(f'{CHANGED_INTO_PLACEMARKER_OPEN}{added_full}{CHANGED_INTO_PLACEMARKER_CLOSED}{trailing_added}')
+
+        return ''.join(result_parts), has_changes
+    else:
+        # Inline changes within the line
+        result_parts = []
+        for op, text in diffs:
+            if op == 0:  # Equal
+                result_parts.append(text)
+            elif op == 1:  # Insertion
+                # Don't wrap empty content (e.g., whitespace-only tokens after rstrip)
+                content = text.rstrip()
+                trailing = text[len(content):] if len(text) > len(content) else ''
+                if content:
+                    result_parts.append(f'{ADDED_PLACEMARKER_OPEN}{content}{ADDED_PLACEMARKER_CLOSED}{trailing}')
+                else:
+                    result_parts.append(trailing)
+            elif op == -1:  # Deletion
+                # Don't wrap empty content (e.g., whitespace-only tokens after rstrip)
+                content = text.rstrip()
+                trailing = text[len(content):] if len(text) > len(content) else ''
+                if content:
+                    result_parts.append(f'{REMOVED_PLACEMARKER_OPEN}{content}{REMOVED_PLACEMARKER_CLOSED}{trailing}')
+                else:
+                    result_parts.append(trailing)
+
+        return ''.join(result_parts), has_changes
 
 
 def render_nested_line_diff(before_line: str, after_line: str, ignore_junk: bool = False, tokenizer: str = 'words_and_html') -> tuple[str, str, bool]:
