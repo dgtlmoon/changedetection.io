@@ -850,6 +850,18 @@ paths:
             type: string
             enum: ["true", "false", "1", "0", "yes", "no", "on", "off"]
             default: "false"
+        - name: no_markup
+          in: query
+          description: |
+            When set to true, returns the raw diff content without any markup formatting.
+            The content will include placeholders for opening/closing tags of the changes,
+            allowing you to implement your own custom colorisation or formatting.
+            This skips all HTML color application and service tweaks.
+            Accepts: true, false, 1, 0, yes, no, on, off
+          schema:
+            type: string
+            enum: ["true", "false", "1", "0", "yes", "no", "on", "off"]
+            default: "false"
       responses:
         '200':
           description: Formatted diff between the two snapshots

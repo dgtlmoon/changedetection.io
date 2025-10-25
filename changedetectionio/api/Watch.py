@@ -224,8 +224,10 @@ class WatchHistoryDiff(Resource):
             abort(400, message=f"Invalid format. Must be one of: {', '.join(valid_formats)}")
 
         # Get the word_diff parameter (default to False - line-level mode)
-        word_diff_param = request.args.get('word_diff', 'false').lower()
-        word_diff = word_diff_param in ['true', '1', 'yes', 'on']
+        word_diff = strtobool(request.args.get('word_diff', 'false'))
+
+        # Get the no_markup parameter (default to False)
+        no_markup = strtobool(request.args.get('no_markup', 'false'))
 
         # Retrieve snapshot contents
         from_version_file_contents = watch.get_history_snapshot(from_timestamp)
@@ -246,36 +248,40 @@ class WatchHistoryDiff(Resource):
             word_diff=word_diff,
         )
 
-        # Apply formatting based on the requested format
-        if output_format == 'htmlcolor':
-            from changedetectionio.notification.handler import apply_html_color_to_body
-            content = apply_html_color_to_body(n_body=content)
-            mimetype = "text/html"
+        # Skip formatting if no_markup is set
+        if no_markup:
+            mimetype = "text/plain"
         else:
-            # Apply service tweaks for text/html formats
-            # Pass empty URL and title as they're not used for the placeholder replacement we need
-            _, content, _ = apply_service_tweaks(
-                url='',
-                n_body=content,
-                n_title='',
-                requested_output_format=output_format
-            )
-            mimetype = "text/html" if output_format == 'html' else "text/plain"
+            # Apply formatting based on the requested format
+            if output_format == 'htmlcolor':
+                from changedetectionio.notification.handler import apply_html_color_to_body
+                content = apply_html_color_to_body(n_body=content)
+                mimetype = "text/html"
+            else:
+                # Apply service tweaks for text/html formats
+                # Pass empty URL and title as they're not used for the placeholder replacement we need
+                _, content, _ = apply_service_tweaks(
+                    url='',
+                    n_body=content,
+                    n_title='',
+                    requested_output_format=output_format
+                )
+                mimetype = "text/html" if output_format == 'html' else "text/plain"
 
-        import re
-        if 'html' in output_format:
-            content = re.sub(
-                re.escape(CUSTOM_LINEBREAK_PLACEHOLDER) + r'\r?\n?',
-                '<br>\\r\\n',
-                content
-            )
-        else:
-            # texty types
-            content = re.sub(
-                re.escape(CUSTOM_LINEBREAK_PLACEHOLDER) + r'\r?\n?',
-                '\\r\\n',
-                content
-            )
+            import re
+            if 'html' in output_format:
+                content = re.sub(
+                    re.escape(CUSTOM_LINEBREAK_PLACEHOLDER) + r'\r?\n?',
+                    '<br>\\r\\n',
+                    content
+                )
+            else:
+                # texty types
+                content = re.sub(
+                    re.escape(CUSTOM_LINEBREAK_PLACEHOLDER) + r'\r?\n?',
+                    '\\r\\n',
+                    content
+                )
 
         response = make_response(content, 200)
         response.mimetype = mimetype
