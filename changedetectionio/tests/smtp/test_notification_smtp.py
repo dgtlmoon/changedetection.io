@@ -477,7 +477,7 @@ def test_check_plaintext_document_html_notifications(client, live_server, measur
     """When following a plaintext document, notification in Plain Text format is sent correctly"""
 
     with open("test-datastore/endpoint-content.txt", "w") as f:
-        f.write("Some nice plain text\nwhich we add some extra data\nover here\n")
+        f.write("    Some nice plain text\nwhich we add some extra data\nover here\n")
 
     notification_url = f'mailto://changedetection@{smtp_test_server}:11025/?to=fff@home.com'
     notification_body = f"""{default_notification_body}"""
@@ -504,7 +504,7 @@ def test_check_plaintext_document_html_notifications(client, live_server, measur
 
     # Change the content
     with open("test-datastore/endpoint-content.txt", "w") as f:
-        f.write("Some nice plain text\nwhich we add some extra data\nAnd let's talk about <title> tags\nover here\n")
+        f.write("    Some nice plain text\nwhich we add some extra data\nAnd let's talk about <title> tags\nover here\n")
 
 
     time.sleep(2)
@@ -543,6 +543,10 @@ def test_check_plaintext_document_html_notifications(client, live_server, measur
     assert 'background-color' not in html_content
     assert '<br>\r\n(added) And let&#39;s talk about &lt;title&gt; tags<br>' in html_content
     assert '&lt;br' not in html_content
+
+    # And now for the whitespace retention
+    assert '&nbsp;&nbsp;&nbsp;&nbsp;Some nice plain text' in html_content
+    assert '(added) And let' in html_content # just to show a single whitespace didnt get touched
 
     delete_all_watches(client)
 
@@ -669,6 +673,7 @@ def test_check_html_document_plaintext_notification(client, live_server, measure
     assert '(into) sxome stuff\r\n' in body
     assert '(added) lets slip this in\r\n' in body
     assert '(added) and this in\r\n' in body
+    assert '&nbsp;' not in body
 
 
     delete_all_watches(client)
