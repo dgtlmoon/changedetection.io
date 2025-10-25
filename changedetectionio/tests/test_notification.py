@@ -16,7 +16,7 @@ from changedetectionio.notification import (
     default_notification_title,
     valid_notification_formats,
 )
-from ..diff import HTML_CHANGED_STYLE
+from ..diff import HTML_CHANGED_STYLE, DIFF_HTML_LABEL_REMOVED
 
 
 # Hard to just add more live server URLs when one test is already running (I think)
@@ -551,9 +551,9 @@ def _test_color_notifications(client, notification_body_token):
 
     with open("test-datastore/notification.txt", 'r') as f:
         x = f.read()
+        assert DIFF_HTML_LABEL_REMOVED.format(content='Which is across multiple lines') in x
         s =  f'<span style="{HTML_CHANGED_STYLE}" role="note" aria-label="Changed text" title="Changed text">Which is across multiple lines'
         assert s in x
-
 
     client.get(
         url_for("ui.form_delete", uuid="all"),

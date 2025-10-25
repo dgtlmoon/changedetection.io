@@ -19,7 +19,6 @@ pytz
 timeago~=1.0
 validators~=0.35
 
-
 # Set these versions together to avoid a RequestsDependencyWarning
 # >= 2.26 also adds Brotli support if brotli is installed
 brotli~=1.0
@@ -41,6 +40,8 @@ jsonpath-ng~=1.5.3
 
 # Notification library
 apprise==1.9.5
+
+diff_match_patch
 
 # Lightweight URL linkifier for notifications
 linkify-it-py
@@ -144,3 +145,5 @@ pre_commit >= 4.2.0
 
 # For events between checking and socketio updates
 blinker
+
+

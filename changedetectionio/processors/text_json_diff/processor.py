@@ -468,6 +468,7 @@ class perform_site_check(difference_detection_processor):
                 c = ChecksumCalculator.calculate(text_content_before_ignored_filter, ignore_whitespace=True)
                 return False, {'previous_md5': c}, text_content_before_ignored_filter.encode('utf-8')
 
+
         # === EMPTY PAGE CHECK ===
         empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
         if not stream_content_type.is_json and not empty_pages_are_a_change and len(stripped_text.strip()) == 0:
