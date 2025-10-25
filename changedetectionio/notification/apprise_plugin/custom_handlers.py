@@ -195,25 +195,16 @@ def apprise_http_custom_handler(
 
     url = re.sub(rf"^{schema}", "https" if schema.endswith("s") else "http", parsed_url.get("url"))
 
-    try:
-        response = requests.request(
-            method=method,
-            url=url,
-            auth=auth,
-            headers=headers,
-            params=params,
-            data=body.encode("utf-8") if isinstance(body, str) else body,
-        )
+    response = requests.request(
+        method=method,
+        url=url,
+        auth=auth,
+        headers=headers,
+        params=params,
+        data=body.encode("utf-8") if isinstance(body, str) else body,
+    )
 
-        response.raise_for_status()
+    response.raise_for_status()
 
-        logger.info(f"Successfully sent custom notification to {url}")
-        return True
-
-    except requests.RequestException as e:
-        logger.error(f"Remote host error while sending custom notification to {url}: {e}")
-        return False
-
-    except Exception as e:
-        logger.error(f"Unexpected error occurred while sending custom notification to {url}: {e}")
-        return False
+    logger.info(f"Successfully sent custom notification to {url}")
+    return True
