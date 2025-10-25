@@ -220,8 +220,8 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
 
     # Is not discord/tgram and they want htmlcolor
     elif requested_output_format == 'htmlcolor':
-        n_body = apply_html_color_to_body(nbody=n_body
-                                          )
+        n_body = apply_html_color_to_body(n_body=n_body)
+
     elif requested_output_format == 'html':
         n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '(removed) ')
         n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, '')
