@@ -6,6 +6,7 @@ from loguru import logger
 from urllib.parse import urlparse
 from .apprise_plugin.assets import apprise_asset, APPRISE_AVATAR_URL
 from .apprise_plugin.custom_handlers import SUPPORTED_HTTP_METHODS
+from .email_helpers import as_monospaced_html_email
 from ..diff import HTML_REMOVED_STYLE, REMOVED_PLACEMARKER_OPEN, REMOVED_PLACEMARKER_CLOSED, ADDED_PLACEMARKER_OPEN, HTML_ADDED_STYLE, \
     ADDED_PLACEMARKER_CLOSED, CHANGED_INTO_PLACEMARKER_OPEN, CHANGED_INTO_PLACEMARKER_CLOSED, CHANGED_PLACEMARKER_OPEN, \
     CHANGED_PLACEMARKER_CLOSED, HTML_CHANGED_STYLE, HTML_CHANGED_INTO_STYLE
@@ -304,7 +305,7 @@ def process_notification(n_object: NotificationContextData, datastore):
 
                 # Could have arrived at any stage, so we dont end up running .escape on it
                 if 'html' in requested_output_format:
-                    n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '<br>\n')
+                    n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '<br>\r\n')
                 else:
                     # Markup, text types etc
                     n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\r\n')
@@ -313,6 +314,15 @@ def process_notification(n_object: NotificationContextData, datastore):
                               'body': n_body,
                               'url': url})
             apobj.add(url)
+
+        # Enforce monospace output for PLAINTEXT Document going to a HTML style notification
+        watch_mime_type = n_object.get('watch_mime_type')
+        if watch_mime_type and 'text/' in watch_mime_type.lower() and not 'html' in watch_mime_type.lower():
+            if 'html' in requested_output_format:
+                # Since they likely want HTML style notifications but of a Plain-text document, lets wrap the body
+                if not '<pre' in n_body and not '<body' in n_body:
+                    # Wrap in monospace layout so it looks like "plaintext", remove double line-feeds
+                    n_body = as_monospaced_html_email(content=n_body, title=n_title)
 
         apobj.notify(
             title=n_title,
