@@ -3,6 +3,8 @@ import threading
 import time
 from aiosmtpd.controller import Controller
 from flask import Flask, Response
+from email import message_from_bytes
+from email.policy import default
 
 # Accept a SMTP message and offer a way to retrieve the last message via HTTP
 
@@ -27,6 +29,36 @@ class CustomSMTPHandler:
             print('*******************************')
             print(envelope.content.decode('utf8'))
             print('*******************************')
+
+            # Parse the email message
+            msg = message_from_bytes(envelope.content, policy=default)
+
+            # Write parts to files based on content type
+            if msg.is_multipart():
+                for part in msg.walk():
+                    content_type = part.get_content_type()
+                    payload = part.get_payload(decode=True)
+
+                    if payload:
+                        if content_type == 'text/plain':
+                            with open('/tmp/last.txt', 'wb') as f:
+                                f.write(payload)
+                            print(f'Written text/plain part to /tmp/last.txt')
+                        elif content_type == 'text/html':
+                            with open('/tmp/last.html', 'wb') as f:
+                                f.write(payload)
+                            print(f'Written text/html part to /tmp/last.html')
+            else:
+                # Single part message
+                content_type = msg.get_content_type()
+                payload = msg.get_payload(decode=True)
+
+                if payload:
+                    if content_type == 'text/plain' or content_type.startswith('text/'):
+                        with open('/tmp/last.txt', 'wb') as f:
+                            f.write(payload)
+                        print(f'Written single part message to /tmp/last.txt')
+
             return '250 Message accepted for delivery'
         finally:
             with smtp_lock:
