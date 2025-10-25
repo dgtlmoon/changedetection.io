@@ -7,17 +7,18 @@ HTML_ADDED_STYLE = "background-color: #dafbe1; color: #116329;"
 HTML_CHANGED_STYLE = "background-color: #ffd8b5; color: #953800;"
 
 # These get set to html or telegram type or discord compatible or whatever in handler.py
-REMOVED_PLACEMARKER_OPEN = '<<<removed_PLACEMARKER_OPEN'
-REMOVED_PLACEMARKER_CLOSED = '<<<removed_PLACEMARKER_CLOSED'
+# Something that cant get escaped to HTML by accident
+REMOVED_PLACEMARKER_OPEN = '@removed_PLACEMARKER_OPEN'
+REMOVED_PLACEMARKER_CLOSED = '@removed_PLACEMARKER_CLOSED'
 
-ADDED_PLACEMARKER_OPEN = '<<<added_PLACEMARKER_OPEN'
-ADDED_PLACEMARKER_CLOSED = '<<<added_PLACEMARKER_CLOSED'
+ADDED_PLACEMARKER_OPEN = '@added_PLACEMARKER_OPEN'
+ADDED_PLACEMARKER_CLOSED = '@added_PLACEMARKER_CLOSED'
 
-CHANGED_PLACEMARKER_OPEN = '<<<changed_PLACEMARKER_OPEN'
-CHANGED_PLACEMARKER_CLOSED = '<<<changed_PLACEMARKER_CLOSED'
+CHANGED_PLACEMARKER_OPEN = '@changed_PLACEMARKER_OPEN'
+CHANGED_PLACEMARKER_CLOSED = '@changed_PLACEMARKER_CLOSED'
 
-CHANGED_INTO_PLACEMARKER_OPEN = '<<<changed_into_PLACEMARKER_OPEN'
-CHANGED_INTO_PLACEMARKER_CLOSED = '<<<changed_into_PLACEMARKER_CLOSED'
+CHANGED_INTO_PLACEMARKER_OPEN = '@changed_into_PLACEMARKER_OPEN'
+CHANGED_INTO_PLACEMARKER_CLOSED = '@changed_into_PLACEMARKER_CLOSED'
 
 def same_slicer(lst: List[str], start: int, end: int) -> List[str]:
     """Return a slice of the list, or a single element if start == end."""
