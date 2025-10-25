@@ -290,7 +290,8 @@ def test_check_notification_markdown_format(client, live_server, measure_memory_
     text_part = parts[0]
     assert text_part.get_content_type() == 'text/plain'
     text_content = text_part.get_content()
-    assert '(added) So let\'s see what happens.\r\n' in text_content  # The plaintext part
+    # We wont see anything in the "FALLBACK" text but that's OK (no added/strikethrough etc)
+    assert 'So let\'s see what happens.\r\n' in text_content  # The plaintext part
 
 
     # Second part should be text/html and roughly converted from markdown to HTML
@@ -298,7 +299,7 @@ def test_check_notification_markdown_format(client, live_server, measure_memory_
     assert html_part.get_content_type() == 'text/html'
     html_content = html_part.get_content()
     assert '<p><em>header</em></p>' in html_content
-    assert '(added) So let\'s see what happens.<br' in html_content
+    assert '<strong>So let\'s see what happens.</strong><br>' in html_content # Additions are <strong> in markdown
     delete_all_watches(client)
 
 # Custom notification body with HTML, that is either sent as HTML or rendered to plaintext and sent
@@ -470,7 +471,7 @@ def test_check_plaintext_document_plaintext_notification_smtp(client, live_serve
     assert '(added)' in body
     assert '<br' not in body
     assert '&lt;' not in body
-
+    assert '<pre' not in body
     delete_all_watches(client)
 
 def test_check_plaintext_document_html_notifications(client, live_server, measure_memory_usage):
@@ -541,13 +542,13 @@ def test_check_plaintext_document_html_notifications(client, live_server, measur
     assert 'talk about &lt;title&gt;' in html_content
     # Should be the HTML, but not HTML Color
     assert 'background-color' not in html_content
-    assert '<br>\r\n(added) And let&#39;s talk about &lt;title&gt; tags<br>' in html_content
+    assert '<br>(added) And let&#39;s talk about &lt;title&gt; tags<br>' in html_content
     assert '&lt;br' not in html_content
+    assert '<pre role="article"' in html_content # Should have got wrapped nicely in email_helpers.py
 
     # And now for the whitespace retention
     assert '&nbsp;&nbsp;&nbsp;&nbsp;Some nice plain text' in html_content
     assert '(added) And let' in html_content # just to show a single whitespace didnt get touched
-
     delete_all_watches(client)
 
 
@@ -620,7 +621,7 @@ def test_check_plaintext_document_html_color_notifications(client, live_server, 
     assert '(added) And let' not in html_content
     assert '&lt;br' not in html_content
     assert '<br>' in html_content
-
+    assert '<pre role="article"' in html_content # Should have got wrapped nicely in email_helpers.py
     delete_all_watches(client)
 
 def test_check_html_document_plaintext_notification(client, live_server, measure_memory_usage):
