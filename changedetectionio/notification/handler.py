@@ -306,8 +306,8 @@ def process_notification(n_object: NotificationContextData, datastore):
                 if 'html' in requested_output_format:
                     n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '<br>\n')
                 else:
-                    # Just incase
-                    n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '')
+                    # Markup, text types etc
+                    n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\r\n')
 
             sent_objs.append({'title': n_title,
                               'body': n_body,

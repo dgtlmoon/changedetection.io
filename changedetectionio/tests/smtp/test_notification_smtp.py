@@ -618,3 +618,59 @@ def test_check_plaintext_document_html_color_notifications(client, live_server, 
     assert '<br>' in html_content
 
     delete_all_watches(client)
+
+def test_check_html_document_plaintext_notification(client, live_server, measure_memory_usage):
+    """When following a HTML document, notification in Plain Text format is sent correctly"""
+
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write("<html><body>some stuff<br>and more stuff<br>and even more stuff<br></body></html>")
+
+    notification_url = f'mailto://changedetection@{smtp_test_server}:11025/?to=fff@home.com'
+    notification_body = f"""{default_notification_body}"""
+
+    #####################
+    # Set this up for when we remove the notification from the watch, it should fallback with these details
+    res = client.post(
+        url_for("settings.settings_page"),
+        data={"application-notification_urls": notification_url,
+              "application-notification_title": "fallback-title " + default_notification_title,
+              "application-notification_body": f"{notification_body}\nMore output test\n{ALL_MARKUP_TOKENS}",
+              "application-notification_format": 'Plain Text',
+              "requests-time_between_check-minutes": 180,
+              'application-fetch_backend': "html_requests"},
+        follow_redirects=True
+    )
+
+    assert b"Settings updated." in res.data
+
+    # Add our URL to the import page
+    test_url = url_for('test_endpoint', content_type="text/html", _external=True)
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write("<html><body>sxome stuff<br>and more stuff<br>lets slip this in<br>and this in<br>and even more stuff<br>&lt;tag&gt;</body></html>")
+
+    time.sleep(0.1)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+
+    # Parse the email properly using Python's email library
+    msg = message_from_string(get_last_message_from_smtp_server(), policy=email_policy)
+
+    assert not msg.is_multipart()
+    assert msg.get_content_type() == 'text/plain'
+    body = msg.get_content()
+
+    assert '<tag>' in body # Should have got converted from original HTML to plaintext
+    assert '(changed) some stuff\r\n' in body
+    assert '(into) sxome stuff\r\n' in body
+    assert '(added) lets slip this in\r\n' in body
+    assert '(added) and this in\r\n' in body
+
+
+    delete_all_watches(client)
+
+
