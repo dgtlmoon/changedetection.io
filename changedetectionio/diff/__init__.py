@@ -327,19 +327,12 @@ def customSequenceMatcher(
 
             # Use inline word-level diff for single line replacements when word_diff is enabled
             if word_diff and len(before_lines) == 1 and len(after_lines) == 1:
-                inline_diff, has_changes = render_inline_word_diff(before_lines[0], after_lines[0], html_colour, ignore_junk, tokenizer=tokenizer)
+                inline_diff, has_changes = render_inline_word_diff(before_lines[0], after_lines[0], False, ignore_junk, tokenizer=tokenizer)
                 # Check if there are any actual changes (not just whitespace when ignore_junk is enabled)
                 if ignore_junk and not has_changes:
                     # No real changes, skip this line
                     continue
                 yield [inline_diff]
-            # Use nested highlighting for line mode with HTML (shows both lines with inner highlights)
-            elif html_colour and len(before_lines) == 1 and len(after_lines) == 1:
-                before_html, after_html, has_changes = render_nested_line_diff(before_lines[0], after_lines[0], ignore_junk, tokenizer=tokenizer)
-                if ignore_junk and not has_changes:
-                    # No real changes, skip this line
-                    continue
-                yield [before_html, after_html]
             else:
                 # Fall back to line-level diff for multi-line changes
                 if include_change_type_prefix:

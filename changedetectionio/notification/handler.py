@@ -77,6 +77,25 @@ def notification_format_align_with_apprise(n_format : str):
 
     return n_format
 
+
+def apply_html_color_to_body(n_body: str):
+    # https://github.com/dgtlmoon/changedetection.io/issues/821#issuecomment-1241837050
+    n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN,
+                            f'<span style="{HTML_REMOVED_STYLE}" role="deletion" aria-label="Removed text" title="Removed text">')
+    n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, f'</span>')
+    n_body = n_body.replace(ADDED_PLACEMARKER_OPEN,
+                            f'<span style="{HTML_ADDED_STYLE}" role="insertion" aria-label="Added text" title="Added text">')
+    n_body = n_body.replace(ADDED_PLACEMARKER_CLOSED, f'</span>')
+    # Handle changed/replaced lines (old → new)
+    n_body = n_body.replace(CHANGED_PLACEMARKER_OPEN,
+                            f'<span style="{HTML_CHANGED_STYLE}" role="note" aria-label="Changed text" title="Changed text">')
+    n_body = n_body.replace(CHANGED_PLACEMARKER_CLOSED, f'</span>')
+    n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN,
+                            f'<span style="{HTML_CHANGED_INTO_STYLE}" role="note" aria-label="Changed into" title="Changed into">')
+    n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_CLOSED, f'</span>')
+    n_body = n_body.replace('\n', f'{CUSTOM_LINEBREAK_PLACEHOLDER}\n')
+    return n_body
+
 def apply_discord_markdown_to_body(n_body):
     """
     Discord does not support <del> but it supports non-standard ~~strikethrough~~
@@ -201,17 +220,8 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
 
     # Is not discord/tgram and they want htmlcolor
     elif requested_output_format == 'htmlcolor':
-        # https://github.com/dgtlmoon/changedetection.io/issues/821#issuecomment-1241837050
-        n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, f'<span style="{HTML_REMOVED_STYLE}" role="deletion" aria-label="Removed text" title="Removed text">')
-        n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, f'</span>')
-        n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, f'<span style="{HTML_ADDED_STYLE}" role="insertion" aria-label="Added text" title="Added text">')
-        n_body = n_body.replace(ADDED_PLACEMARKER_CLOSED, f'</span>')
-        # Handle changed/replaced lines (old → new)
-        n_body = n_body.replace(CHANGED_PLACEMARKER_OPEN, f'<span style="{HTML_CHANGED_STYLE}" role="note" aria-label="Changed text" title="Changed text">')
-        n_body = n_body.replace(CHANGED_PLACEMARKER_CLOSED, f'</span>')
-        n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN, f'<span style="{HTML_CHANGED_INTO_STYLE}" role="note" aria-label="Changed into" title="Changed into">')
-        n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_CLOSED, f'</span>')
-        n_body = n_body.replace('\n', f'{CUSTOM_LINEBREAK_PLACEHOLDER}\n')
+        n_body = apply_html_color_to_body(nbody=n_body
+                                          )
     elif requested_output_format == 'html':
         n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '(removed) ')
         n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, '')

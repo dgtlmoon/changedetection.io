@@ -6,6 +6,8 @@ from loguru import logger
 from markupsafe import Markup
 
 from changedetectionio.diff import REMOVED_STYLE, ADDED_STYLE, REMOVED_INNER_STYLE, ADDED_INNER_STYLE
+from changedetectionio.notification.handler import apply_html_color_to_body
+from changedetectionio.notification_service import CUSTOM_LINEBREAK_PLACEHOLDER
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
 from changedetectionio import html_tools, diff
@@ -258,6 +260,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                    word_diff=diff_prefs.get('diff_type') == 'diffWords',
                                    context_lines=5
                                    )
+        content = content.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '<br>')
+        content = apply_html_color_to_body(n_body=content)
 
         output = render_template("diff.html",
                                  content=content,
