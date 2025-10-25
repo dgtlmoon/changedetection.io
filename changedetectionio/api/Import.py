@@ -3,7 +3,21 @@ from changedetectionio.strtobool import strtobool
 from flask_restful import abort, Resource
 from flask import request
 import validators
+from functools import wraps
 from . import auth, validate_openapi_request
+
+
+def default_content_type(content_type='text/plain'):
+    """Decorator to set a default Content-Type header if none is provided."""
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            if not request.content_type:
+                # Set default content type in the request environment
+                request.environ['CONTENT_TYPE'] = content_type
+            return f(*args, **kwargs)
+        return wrapper
+    return decorator
 
 
 class Import(Resource):
@@ -12,6 +26,7 @@ class Import(Resource):
         self.datastore = kwargs['datastore']
 
     @auth.check_token
+    @default_content_type('text/plain') #3547 #3542
     @validate_openapi_request('importWatches')
     def post(self):
         """Import a list of watched URLs."""
