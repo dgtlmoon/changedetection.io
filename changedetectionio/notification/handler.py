@@ -104,7 +104,8 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
         # @todo re-use an existing library we have already imported to strip all non-allowed tags
         n_body = n_body.replace('<br>', '\n')
         n_body = n_body.replace('</br>', '\n')
-
+        n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
+        
         # Use strikethrough for removed content, bold for added content
         n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '<s>')
         n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, '</s>')
@@ -128,6 +129,7 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
         # Discord doesn't support HTML, replace <br> with newlines
         n_body = n_body.strip().replace('<br>', '\n')
         n_body = n_body.replace('</br>', '\n')
+        n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
 
         # Don't replace placeholders or truncate here - let the custom Discord plugin handle it
         # The plugin will use embeds (6000 char limit across all embeds) if placeholders are present,
