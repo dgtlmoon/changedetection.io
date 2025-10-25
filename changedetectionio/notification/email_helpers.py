@@ -35,8 +35,7 @@ def as_monospaced_html_email(content: str, title: str) -> str:
 </head>
 <body style="-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
   <pre role="article" aria-roledescription="email" lang="en"
-       style="line-height:1.4;
-              font-family: monospace, 'Courier New', Courier;
+       style="font-family: monospace, 'Courier New', Courier; font-size: 0.8em;
               white-space: pre-wrap; word-break: break-word;">{content}</pre>
 </body>
 </html>"""
