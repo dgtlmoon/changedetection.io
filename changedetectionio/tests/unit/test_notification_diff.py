@@ -114,15 +114,16 @@ class TestDiffBuilder(unittest.TestCase):
         before = "110 points by user"
         after = "111 points by user"
 
-        output = diff.render_diff(before, after, include_equal=False, word_diff=True, html_colour=True)
-
-        # With html_colour=True and nested highlighting, placemarkers wrap content with inner HTML spans
-        # The inner HTML uses REMOVED_INNER_STYLE and ADDED_INNER_STYLE for character-level highlighting
-        self.assertIn(CHANGED_PLACEMARKER_OPEN, output)
-        self.assertIn(CHANGED_INTO_PLACEMARKER_OPEN, output)
+        output = diff.render_diff(before, after, include_equal=False, word_diff=True)
         # Unchanged text should not be wrapped in spans
         self.assertIn('points by user', output)
         self.assertIn('11', output)  # Common prefix is unchanged
+
+        # The inner HTML uses REMOVED_INNER_STYLE and ADDED_INNER_STYLE for character-level highlighting
+        expected = f'{REMOVED_PLACEMARKER_OPEN}110{REMOVED_PLACEMARKER_CLOSED}{ADDED_PLACEMARKER_OPEN}111{ADDED_PLACEMARKER_CLOSED} points by user'
+        self.assertEqual(output, expected)
+
+
 
     def test_context_lines(self):
         """Test context_lines parameter"""
@@ -233,9 +234,8 @@ Line 4"""
         after = "PRICE: $200"
 
         # Case-insensitive should only highlight the price change
-        output = diff.render_diff(before, after, include_equal=False, case_insensitive=True, word_diff=True, html_colour=True)
+        output = diff.render_diff(before, after, include_equal=False, case_insensitive=True, word_diff=True)
 
-        # With html_colour=True, nested highlighting is used with placemarkers
         # Inner spans show the changes within the line
         self.assertIn(CHANGED_PLACEMARKER_OPEN, output)
         self.assertIn(CHANGED_INTO_PLACEMARKER_OPEN, output)
@@ -300,16 +300,15 @@ Line 4"""
         self.assertEqual(len(lines), 0, "Should ignore tab vs space differences when ignore_junk=True")
 
     def test_ignore_junk_html_output(self):
-        """Test ignore_junk with HTML coloring"""
+        """Test ignore_junk with placemarkers for value changes"""
         before = "Value:  100  points"
         after = "Value: 200 points"
 
-        output = diff.render_diff(before, after, include_equal=False, word_diff=True, html_colour=True, ignore_junk=True)
+        output = diff.render_diff(before, after, include_equal=False, word_diff=True, ignore_junk=True)
 
         # Should only highlight the actual value change
-        self.assertIn('100', output)
-        self.assertIn('200', output)
-        self.assertIn('background-color', output)
+        self.assertIn(f'{REMOVED_PLACEMARKER_OPEN}100{REMOVED_PLACEMARKER_CLOSED}', output)
+        self.assertIn(f'{ADDED_PLACEMARKER_OPEN}200{ADDED_PLACEMARKER_CLOSED}', output)
         # Should not create separate spans for whitespace changes
 
     def test_ignore_junk_case_insensitive_combination(self):

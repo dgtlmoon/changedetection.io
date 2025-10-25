@@ -44,14 +44,13 @@ CHANGED_INTO_PLACEMARKER_CLOSED = '@changed_into_PLACEMARKER_CLOSED'
 WHITESPACE_NORMALIZE_RE = re.compile(r'\s+')
 
 
-def render_inline_word_diff(before_line: str, after_line: str, html_colour: bool = False, ignore_junk: bool = False, markdown_style: str = None, tokenizer: str = 'words_and_html') -> tuple[str, bool]:
+def render_inline_word_diff(before_line: str, after_line: str, ignore_junk: bool = False, markdown_style: str = None, tokenizer: str = 'words_and_html') -> tuple[str, bool]:
     """
     Render word-level differences between two lines inline using diff-match-patch library.
 
     Args:
         before_line: Original line text
         after_line: Modified line text
-        html_colour: Use HTML background colors for differences
         ignore_junk: Ignore whitespace-only changes
         markdown_style: Unused (kept for backwards compatibility)
         tokenizer: Name of tokenizer to use from TOKENIZERS registry (default: 'words_and_html')
@@ -237,7 +236,6 @@ def customSequenceMatcher(
     include_added: bool = True,
     include_replaced: bool = True,
     include_change_type_prefix: bool = True,
-    html_colour: bool = False,
     word_diff: bool = False,
     context_lines: int = 0,
     case_insensitive: bool = False,
@@ -255,7 +253,6 @@ def customSequenceMatcher(
         include_added (bool): Include added parts
         include_replaced (bool): Include replaced parts
         include_change_type_prefix (bool): Add prefixes to indicate change types
-        html_colour (bool): Use HTML background colors for differences
         word_diff (bool): Use word-level diffing for replaced lines (controls inline rendering)
         context_lines (int): Number of unchanged lines to show around changes (like grep -C)
         case_insensitive (bool): Perform case-insensitive comparison
@@ -327,7 +324,7 @@ def customSequenceMatcher(
 
             # Use inline word-level diff for single line replacements when word_diff is enabled
             if word_diff and len(before_lines) == 1 and len(after_lines) == 1:
-                inline_diff, has_changes = render_inline_word_diff(before_lines[0], after_lines[0], False, ignore_junk, tokenizer=tokenizer)
+                inline_diff, has_changes = render_inline_word_diff(before_lines[0], after_lines[0], ignore_junk=ignore_junk, tokenizer=tokenizer)
                 # Check if there are any actual changes (not just whitespace when ignore_junk is enabled)
                 if ignore_junk and not has_changes:
                     # No real changes, skip this line
@@ -356,7 +353,6 @@ def render_diff(
     line_feed_sep: str = "\n",
     include_change_type_prefix: bool = True,
     patch_format: bool = False,
-    html_colour: bool = False,
     word_diff: bool = True,
     context_lines: int = 0,
     case_insensitive: bool = False,
@@ -376,7 +372,6 @@ def render_diff(
         line_feed_sep (str): Separator for lines in output
         include_change_type_prefix (bool): Add prefixes to indicate change types
         patch_format (bool): Use patch format for output
-        html_colour (bool): Use HTML background colors for differences
         word_diff (bool): Use word-level diffing for replaced lines (controls inline rendering)
         context_lines (int): Number of unchanged lines to show around changes (like grep -C)
         case_insensitive (bool): Perform case-insensitive comparison, By default the test_json_diff/process.py is case sensitive, so this follows same logic
@@ -404,7 +399,6 @@ def render_diff(
         include_added=include_added,
         include_replaced=include_replaced,
         include_change_type_prefix=include_change_type_prefix,
-        html_colour=html_colour,
         word_diff=word_diff,
         context_lines=context_lines,
         case_insensitive=case_insensitive,
