@@ -9,9 +9,8 @@ from .apprise_plugin.custom_handlers import SUPPORTED_HTTP_METHODS
 from ..diff import HTML_REMOVED_STYLE, REMOVED_PLACEMARKER_OPEN, REMOVED_PLACEMARKER_CLOSED, ADDED_PLACEMARKER_OPEN, HTML_ADDED_STYLE, \
     ADDED_PLACEMARKER_CLOSED, CHANGED_INTO_PLACEMARKER_OPEN, CHANGED_INTO_PLACEMARKER_CLOSED, CHANGED_PLACEMARKER_OPEN, \
     CHANGED_PLACEMARKER_CLOSED, HTML_CHANGED_STYLE
-from ..notification_service import NotificationContextData
+from ..notification_service import NotificationContextData, CUSTOM_LINEBREAK_PLACEHOLDER
 
-CUSTOM_LINEBREAK_PLACEHOLDER='$$BR$$'
 
 def markup_text_links_to_html(body):
     """
@@ -200,15 +199,6 @@ def process_notification(n_object: NotificationContextData, datastore):
     # Register custom Discord plugin
     from .apprise_plugin.discord import NotifyDiscordCustom
 
-    # Create list of custom handler protocols (both http and https versions)
-    custom_handler_protocols = [f"{method}://" for method in SUPPORTED_HTTP_METHODS]
-    custom_handler_protocols += [f"{method}s://" for method in SUPPORTED_HTTP_METHODS]
-
-    has_custom_handler = any(
-        url.startswith(tuple(custom_handler_protocols))
-        for url in n_object['notification_urls']
-    )
-
     if not isinstance(n_object, NotificationContextData):
         raise TypeError(f"Expected NotificationContextData, got {type(n_object)}")
 
@@ -279,6 +269,13 @@ def process_notification(n_object: NotificationContextData, datastore):
             logger.info(f">> Process Notification: AppRise notifying {url}")
             url = jinja_render(template_str=url, **notification_parameters)
 
+            # If it's a plaintext document, and they want HTML type email/alerts, so it needs to be escaped
+            watch_mime_type = n_object.get('watch_mime_type')
+            if watch_mime_type and 'text/' in watch_mime_type.lower() and not 'html' in watch_mime_type.lower():
+                if 'html' in requested_output_format:
+                    from markupsafe import escape
+                    n_body = str(escape(n_body))
+
             (url, n_body, n_title) = apply_service_tweaks(url=url, n_body=n_body, n_title=n_title, requested_output_format=requested_output_format_original)
 
             apprise_input_format = "NO-THANKS-WE-WILL-MANAGE-ALL-OF-THIS"
@@ -301,26 +298,18 @@ def process_notification(n_object: NotificationContextData, datastore):
                     requested_output_format = NotifyFormat.HTML.value
                     apprise_input_format = NotifyFormat.MARKDOWN.value
 
-                # If it's a plaintext document, and they want HTML type email/alerts, so it needs to be escaped
-                watch_mime_type = n_object.get('watch_mime_type', '').lower()
-                if watch_mime_type and 'text/' in watch_mime_type and not 'html' in watch_mime_type:
-                    if 'html' in requested_output_format:
-                        from markupsafe import escape
-                        n_body = str(escape(n_body))
 
                 # Could have arrived at any stage, so we dont end up running .escape on it
                 if 'html' in requested_output_format:
-                    n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '<br>')
+                    n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '<br>\n')
                 else:
                     # Just incase
                     n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '')
 
-
-            apobj.add(url)
-
             sent_objs.append({'title': n_title,
                               'body': n_body,
                               'url': url})
+            apobj.add(url)
 
         apobj.notify(
             title=n_title,
