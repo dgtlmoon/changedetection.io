@@ -5,8 +5,7 @@ def as_monospaced_html_email(content: str, title: str) -> str:
 
     Args:
         content: The body text (plain text or HTML-like).
-        convert_newlines: If True, replaces '\n' with '<br>' for display.
-
+        title: The title plaintext
     Returns:
         A complete HTML document string suitable for sending as an email body.
     """
