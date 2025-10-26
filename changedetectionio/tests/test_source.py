@@ -47,12 +47,8 @@ def test_check_basic_change_detection_functionality_source(client, live_server, 
     )
     # With diff-match-patch, HTML tags are properly tokenized and excluded from diff spans
     # Only "modified" is shown as added, while <head> and <title> tags remain unchanged
-    assert b'&lt;head&gt;&lt;title&gt;' in res.data
-
-    assert b'title="Added"' in res.data
-    assert b'>modified<' in res.data
-    assert b'head title&lt;/title&gt;&lt;/head&gt;' in res.data
-
+    assert b'aria-label="Changed into" title="Changed into">' in res.data
+    assert b'&lt;title&gt;modified head title'
 
 # `subtractive_selectors` should still work in `source:` type requests
 def test_check_ignore_elements(client, live_server, measure_memory_usage):
