@@ -114,14 +114,25 @@ class NotificationService:
             current_snapshot = watch.get_history_snapshot(dates[-1])
 
         ignore_junk = self.datastore.data['settings']['application'].get('ignore_whitespace', False)
+# plaintext should never use word_mode
 
+        word_mode = True
+
+        base_kwargs = dict(
+            previous_version_file_contents=prev_snapshot,
+            newest_version_file_contents=current_snapshot,
+            line_feed_sep=CUSTOM_LINEBREAK_PLACEHOLDER,
+            ignore_junk=ignore_junk,
+            word_diff=not (word_mode and 'text' in n_object.get('notification_format', '')),
+        )
+        
         n_object.update({
             'current_snapshot': snapshot_contents,
-            'diff': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=CUSTOM_LINEBREAK_PLACEHOLDER, ignore_junk=ignore_junk),
-            'diff_added': diff.render_diff(prev_snapshot, current_snapshot, include_removed=False, line_feed_sep=CUSTOM_LINEBREAK_PLACEHOLDER, ignore_junk=ignore_junk),
-            'diff_full': diff.render_diff(prev_snapshot, current_snapshot, include_equal=True, line_feed_sep=CUSTOM_LINEBREAK_PLACEHOLDER, ignore_junk=ignore_junk),
-            'diff_patch': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=CUSTOM_LINEBREAK_PLACEHOLDER, patch_format=True, ignore_junk=ignore_junk),
-            'diff_removed': diff.render_diff(prev_snapshot, current_snapshot, include_added=False, line_feed_sep=CUSTOM_LINEBREAK_PLACEHOLDER, ignore_junk=ignore_junk),
+            'diff': diff.render_diff(**base_kwargs),
+            'diff_added': diff.render_diff(include_removed=False, **base_kwargs),
+            'diff_full': diff.render_diff(include_equal=True, **base_kwargs),
+            'diff_patch': diff.render_diff(patch_format=True, **base_kwargs),
+            'diff_removed': diff.render_diff(include_added=False, **base_kwargs),
             'screenshot': watch.get_screenshot() if watch and watch.get('notification_screenshot') else None,
             'triggered_text': triggered_text,
             'uuid': watch.get('uuid') if watch else None,
