@@ -11,6 +11,7 @@ import diff_match_patch as dmp_module
 import re
 
 from .tokenizers import TOKENIZERS, tokenize_words_and_html
+from ..notification_service import CUSTOM_LINEBREAK_PLACEHOLDER
 
 # Remember! gmail, outlook etc dont support <style> must be inline.
 # Gmail: strips <ins> and <del> tags entirely.
@@ -384,7 +385,6 @@ def render_diff(
     include_removed: bool = True,
     include_added: bool = True,
     include_replaced: bool = True,
-    line_feed_sep: str = "\n",
     include_change_type_prefix: bool = True,
     patch_format: bool = False,
     word_diff: bool = True,
@@ -403,7 +403,6 @@ def render_diff(
         include_removed (bool): Include removed parts
         include_added (bool): Include added parts
         include_replaced (bool): Include replaced parts
-        line_feed_sep (str): Separator for lines in output
         include_change_type_prefix (bool): Add prefixes to indicate change types
         patch_format (bool): Use patch format for output
         word_diff (bool): Use word-level diffing for replaced lines (controls inline rendering)
@@ -418,12 +417,9 @@ def render_diff(
     newest_lines = [line.rstrip() for line in newest_version_file_contents.splitlines()]
     previous_lines = [line.rstrip() for line in previous_version_file_contents.splitlines()] if previous_version_file_contents else []
 
-    if newest_lines == previous_lines:
-        x=1
-
     if patch_format:
         patch = difflib.unified_diff(previous_lines, newest_lines)
-        return line_feed_sep.join(patch)
+        return CUSTOM_LINEBREAK_PLACEHOLDER.join(patch)
 
     rendered_diff = customSequenceMatcher(
         before=previous_lines,
@@ -447,7 +443,7 @@ def render_diff(
                 result.extend(x)
             else:
                 result.append(x)
-        return line_feed_sep.join(result)
+        return CUSTOM_LINEBREAK_PLACEHOLDER.join(result)
 
     return flatten(rendered_diff)
 

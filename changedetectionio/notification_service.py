@@ -121,11 +121,10 @@ class NotificationService:
         base_kwargs = dict(
             previous_version_file_contents=prev_snapshot,
             newest_version_file_contents=current_snapshot,
-            line_feed_sep=CUSTOM_LINEBREAK_PLACEHOLDER,
             ignore_junk=ignore_junk,
             word_diff=not (word_mode and 'text' in n_object.get('notification_format', '')),
         )
-        
+
         n_object.update({
             'current_snapshot': snapshot_contents,
             'diff': diff.render_diff(**base_kwargs),

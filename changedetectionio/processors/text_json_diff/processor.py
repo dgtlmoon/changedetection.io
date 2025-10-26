@@ -585,7 +585,6 @@ class perform_site_check(difference_detection_processor):
             include_added=watch.get('filter_text_added', True),
             include_removed=watch.get('filter_text_removed', True),
             include_replaced=watch.get('filter_text_replaced', True),
-            line_feed_sep="\n",
             include_change_type_prefix=False
         )
 
