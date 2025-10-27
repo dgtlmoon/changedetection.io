@@ -22,7 +22,7 @@ validators~=0.35
 
 # Set these versions together to avoid a RequestsDependencyWarning
 # >= 2.26 also adds Brotli support if brotli is installed
-brotli~=1.0
+brotli~=1.1
 requests[socks]
 requests-file
 
