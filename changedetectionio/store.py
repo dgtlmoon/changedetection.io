@@ -998,21 +998,21 @@ class ChangeDetectionStore:
         sys_n_format = self.data['settings']['application'].get('notification_format')
         key_exists_as_value = next((k for k, v in valid_notification_formats.items() if v == sys_n_format), None)
         if key_exists_as_value: # key of "Plain text"
-            logger.success(f"['settings']['application']['notification_format'] {sys_n_format} -> {key_exists_as_value}")
+            logger.success(f"['settings']['application']['notification_format'] '{sys_n_format}' -> '{key_exists_as_value}'")
             self.data['settings']['application']['notification_format'] = key_exists_as_value
 
         for uuid, watch in self.data['watching'].items():
             n_format = self.data['watching'][uuid].get('notification_format')
             key_exists_as_value = next((k for k, v in valid_notification_formats.items() if v == n_format), None)
             if key_exists_as_value and key_exists_as_value != USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH:  # key of "Plain text"
-                logger.success(f"['watching'][{uuid}]['notification_format'] {n_format} -> {key_exists_as_value}")
+                logger.success(f"['watching'][{uuid}]['notification_format'] '{n_format}' -> '{key_exists_as_value}'")
                 self.data['watching'][uuid]['notification_format'] = key_exists_as_value # should be 'text' or whatever
 
         for uuid, tag in self.data['settings']['application']['tags'].items():
             n_format = self.data['settings']['application']['tags'][uuid].get('notification_format')
             key_exists_as_value = next((k for k, v in valid_notification_formats.items() if v == n_format), None)
             if key_exists_as_value and key_exists_as_value != USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH:  # key of "Plain text"
-                logger.success(f"['settings']['application']['tags'][{uuid}]['notification_format'] {n_format} -> {key_exists_as_value}")
+                logger.success(f"['settings']['application']['tags'][{uuid}]['notification_format'] '{n_format}' -> '{key_exists_as_value}'")
                 self.data['settings']['application']['tags'][uuid]['notification_format'] = key_exists_as_value # should be 'text' or whatever
 
     def add_notification_url(self, notification_url):
