@@ -18,17 +18,9 @@ def test_inscriptus():
 
 def test_check_basic_change_detection_functionality(client, live_server, measure_memory_usage):
     set_original_response()
-   #  live_server_setup(live_server) # Setup on conftest per function
 
-    # Add our URL to the import page
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": url_for('test_endpoint', _external=True)},
-        follow_redirects=True
-    )
-
-    assert b"1 Imported" in res.data
-
+    uuid = client.application.config.get('DATASTORE').add_watch(url=url_for('test_endpoint', _external=True))
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Do this a few times.. ensures we dont accidently set the status
@@ -93,6 +85,10 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     # Following the 'diff' link, it should no longer display as 'has-unread-changes' even after we recheck it a few times
     res = client.get(url_for("ui.ui_views.diff_history_page", uuid=uuid))
     assert b'selected=""' in res.data, "Confirm diff history page loaded"
+
+    assert b'Which is across multiple lines' in res.data
+    # The linefeed should have been added ( @BR@ was replaced with a linefeed because this is htmlcolor kinda display )
+    assert b'Which is across multiple lines</span>\n' in res.data
 
     # Check the [preview] pulls the right one
     res = client.get(

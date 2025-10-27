@@ -265,9 +265,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                    ignore_junk=diff_prefs.get('diff_ignoreWhitespace'),
                                    include_equal=not diff_prefs.get('diff_changesOnly'),
                                    word_diff=diff_prefs.get('diff_type') == 'diffWords',
-                                   context_lines=5
                                    )
         content = apply_html_color_to_body(n_body=content)
+        content = content.replace(CUSTOM_LINEBREAK_PLACEHOLDER, "\n")
 
         output = render_template("diff.html",
                                  content=content,
