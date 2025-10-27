@@ -49,6 +49,9 @@ class NotificationContextData(dict):
         if kwargs:
             self.update(kwargs)
 
+        if self.get('notification_format') and not valid_notification_formats.get(self.get('notification_format')):
+            raise ValueError(f'Invalid notification format: "{self.get('notification_format')}"')
+
     def set_random_for_validation(self):
         import random, string
         """Randomly fills all dict keys with random strings (for validation/testing). 
