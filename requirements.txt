@@ -12,7 +12,7 @@ janus # Thread-safe async/sync queue bridge
 flask_wtf~=1.2
 flask~=3.1
 flask-socketio~=5.5.1
-python-socketio~=5.13.0
+python-socketio~=5.14.2
 python-engineio~=4.12.3
 inscriptis~=2.2
 pytz
