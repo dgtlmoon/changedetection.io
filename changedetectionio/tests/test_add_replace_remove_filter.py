@@ -231,7 +231,6 @@ def test_consistent_md5_with_diff_filtering(client, live_server, measure_memory_
 
     # Mark as viewed to start fresh
     client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
-    time.sleep(0.2)
 
     # CHECK 2: Remove a line (should NOT trigger - removed lines are filtered out)
     set_original(excluding='Something irrelevant')
@@ -249,7 +248,6 @@ def test_consistent_md5_with_diff_filtering(client, live_server, measure_memory_
 
     # Mark as viewed
     client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
-    time.sleep(0.2)
 
     # CHECK 4: Same content as CHECK 3 (THE CRITICAL TEST - should NOT trigger)
     # This is where the bug would manifest: false positive change detection
