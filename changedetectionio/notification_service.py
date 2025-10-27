@@ -62,10 +62,6 @@ class NotificationContextData(dict):
 
     def __setitem__(self, key, value):
         if key == 'notification_format' and isinstance(value, str) and not value.startswith('RANDOM-PLACEHOLDER-'):
-            # Be sure if we set it by value ("Plain text") we save by key "text"
-            key_exists_as_value = next((k for k, v in valid_notification_formats.items() if v == value), None)
-            if key_exists_as_value:
-                value = key_exists_as_value
             if not valid_notification_formats.get(value):
                 raise ValueError(f'Invalid notification format: "{value}"')
 
