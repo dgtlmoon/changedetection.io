@@ -51,7 +51,9 @@ class NotificationContextData(dict):
 
     def set_random_for_validation(self):
         import random, string
-        """Randomly fills all dict keys with random strings (for validation/testing)."""
+        """Randomly fills all dict keys with random strings (for validation/testing). 
+        So we can test the output in the notification body
+        """
         for key in self.keys():
             if key in ['uuid', 'time', 'watch_uuid']:
                 continue
@@ -59,7 +61,7 @@ class NotificationContextData(dict):
             self[key] = rand_str
 
     def __setitem__(self, key, value):
-        if key == 'notification_format' and isinstance(value, str):
+        if key == 'notification_format' and isinstance(value, str) and not value.startswith('RANDOM-PLACEHOLDER-'):
             # Be sure if we set it by value ("Plain text") we save by key "text"
             key_exists_as_value = next((k for k, v in valid_notification_formats.items() if v == value), None)
             if key_exists_as_value:
