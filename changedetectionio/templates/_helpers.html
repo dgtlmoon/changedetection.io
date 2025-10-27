@@ -266,9 +266,7 @@
             <li id="timezone-info">
                 {{ render_field(form.time_schedule_limit.timezone, placeholder=timezone_default_config) }} <span id="local-time-in-tz"></span>
                 <datalist id="timezones" style="display: none;">
-                    {% for timezone in available_timezones %}
-                        <option value="{{ timezone }}">{{ timezone }}</option>
-                    {% endfor %}
+                    {%- for timezone in available_timezones -%}<option value="{{ timezone }}">{{ timezone }}</option>{%- endfor -%}
                 </datalist>
             </li>
         </ul>

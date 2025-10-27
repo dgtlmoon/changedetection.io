@@ -240,9 +240,7 @@ nav
                     <p>
                        {{ render_field(form.application.form.scheduler_timezone_default) }}
                         <datalist id="timezones" style="display: none;">
-                            {% for tz_name in available_timezones %}
-                                <option value="{{ tz_name }}">{{ tz_name }}</option>
-                            {% endfor %}
+                            {%- for timezone in available_timezones -%}<option value="{{ timezone }}">{{ timezone }}</option>{%- endfor -%}
                         </datalist>
                     </p>
                 </div>
