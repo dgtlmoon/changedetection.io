@@ -1,5 +1,5 @@
 # eventlet>=0.38.0  # Removed - replaced with threading mode for better Python 3.12+ compatibility
-feedgen~=0.9
+feedgen~=1.0
 feedparser~=6.0  # For parsing RSS/Atom feeds
 flask-compress
 # 0.6.3 included compatibility fix for werkzeug 3.x (2.x had deprecation of url handlers)
