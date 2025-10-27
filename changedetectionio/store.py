@@ -991,6 +991,23 @@ class ChangeDetectionStore:
         del self.data['settings']['application']['timezone']
 
 
+    # Some notification formats got the wrong name type
+    def update_22(self):
+        from .notification import valid_notification_formats
+
+        sys_n_format = self.data['settings']['application'].get('notification_format')
+        exists_as_key = valid_notification_formats.get(sys_n_format)
+        if exists_as_key: # key of "Plain text"
+            self.data['settings']['application']['notification_format'] = exists_as_key
+
+
+        for uuid, watch in self.data['watching'].items():
+            n_format = self.data['watching'][uuid].get('notification_format')
+            exists_as_key = valid_notification_formats.get(n_format)
+            if exists_as_key and exists_as_key != 'System default':  # key of "Plain text"
+                self.data['watching'][uuid]['notification_format'] = exists_as_key # should be 'text' or whatever
+
+
     def add_notification_url(self, notification_url):
         
         logger.debug(f">>> Adding new notification_url - '{notification_url}'")
