@@ -282,7 +282,7 @@ jobs:
 
       - name: Store everything including test-datastore
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: test-cdio-basic-tests-output-py${{ env.PYTHON_VERSION }}
           path: .
