@@ -63,7 +63,7 @@ def run_filter_test(client, live_server, content_filter, app_notification_format
                                        "Diff Full: {{diff_full}}\n"
                                        "Diff as Patch: {{diff_patch}}\n"
                                        ":-)",
-                  "notification_format": 'Plain Text',
+                  "notification_format": 'text',
                   "fetch_backend": "html_requests",
                   "filter_failure_notification_send": 'y',
                   "time_between_check_use_default": "y",
