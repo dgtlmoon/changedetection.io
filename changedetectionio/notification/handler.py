@@ -63,13 +63,13 @@ def notification_format_align_with_apprise(n_format : str):
     :return:
     """
 
-    if n_format.lower().startswith('html'):
+    if n_format.startswith('html'):
         # Apprise only knows 'html' not 'htmlcolor' etc, which shouldnt matter here
         n_format = NotifyFormat.HTML.value
-    elif n_format.lower().startswith('markdown'):
+    elif n_format.startswith('markdown'):
         # probably the same but just to be safe
         n_format = NotifyFormat.MARKDOWN.value
-    elif n_format.lower().startswith('text'):
+    elif n_format.startswith('text'):
         # probably the same but just to be safe
         n_format = NotifyFormat.TEXT.value
     else:
@@ -241,7 +241,7 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
 
 def process_notification(n_object: NotificationContextData, datastore):
     from changedetectionio.jinja2_custom import render as jinja_render
-    from . import default_notification_format_for_watch, default_notification_format, valid_notification_formats
+    from . import USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH, default_notification_format, valid_notification_formats
     # be sure its registered
     from .apprise_plugin.custom_handlers import apprise_http_custom_handler
     # Register custom Discord plugin
@@ -257,18 +257,17 @@ def process_notification(n_object: NotificationContextData, datastore):
     # Insert variables into the notification content
     notification_parameters = create_notification_parameters(n_object, datastore)
 
-    requested_output_format = valid_notification_formats.get(
-        n_object.get('notification_format', default_notification_format),
-        valid_notification_formats[default_notification_format],
-    )
+    requested_output_format = n_object.get('notification_format', default_notification_format)
+    logger.debug(f"Requested notification output format: '{requested_output_format}'")
 
     # If we arrived with 'System default' then look it up
-    if requested_output_format == default_notification_format_for_watch and datastore.data['settings']['application'].get('notification_format') != default_notification_format_for_watch:
+    if requested_output_format == USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH:
         # Initially text or whatever
-        requested_output_format = datastore.data['settings']['application'].get('notification_format', valid_notification_formats[default_notification_format]).lower()
+        requested_output_format = datastore.data['settings']['application'].get('notification_format', default_notification_format)
 
     requested_output_format_original = requested_output_format
 
+    # Now clean it up so it fits perfectly with apprise
     requested_output_format = notification_format_align_with_apprise(n_format=requested_output_format)
 
     logger.trace(f"Complete notification body including Jinja and placeholders calculated in  {time.time() - now:.2f}s")

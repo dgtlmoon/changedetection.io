@@ -9,7 +9,7 @@ for both sync and async workers
 from loguru import logger
 import time
 
-from changedetectionio.notification import default_notification_format
+from changedetectionio.notification import default_notification_format, valid_notification_formats
 
 # This gets modified on notification time (handler.py) depending on the required notification output
 CUSTOM_LINEBREAK_PLACEHOLDER='@BR@'
@@ -29,6 +29,7 @@ class NotificationContextData(dict):
             'diff_url': None,
             'markup_text_links_to_html_links': False, # If automatic conversion of plaintext to HTML should happen
             'notification_timestamp': time.time(),
+            'notification_format': None,
             'preview_url': None,
             'screenshot': None,
             'triggered_text': None,
@@ -57,6 +58,17 @@ class NotificationContextData(dict):
             rand_str = 'RANDOM-PLACEHOLDER-'+''.join(random.choices(string.ascii_letters + string.digits, k=12))
             self[key] = rand_str
 
+    def __setitem__(self, key, value):
+        if key == 'notification_format' and isinstance(value, str):
+            # Be sure if we set it by value ("Plain text") we save by key "text"
+            key_exists_as_value = next((k for k, v in valid_notification_formats.items() if v == value), None)
+            if key_exists_as_value:
+                value = key_exists_as_value
+            if not valid_notification_formats.get(value):
+                raise ValueError(f'Invalid notification format: "{value}"')
+
+        super().__setitem__(key, value)
+
 class NotificationService:
     """
     Standalone notification service that handles all notification functionality
@@ -72,7 +84,7 @@ class NotificationService:
         Queue a notification for a watch with full diff rendering and template variables
         """
         from changedetectionio import diff
-        from changedetectionio.notification import default_notification_format_for_watch
+        from changedetectionio.notification import USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
 
         if not isinstance(n_object, NotificationContextData):
             raise TypeError(f"Expected NotificationContextData, got {type(n_object)}")
@@ -94,7 +106,7 @@ class NotificationService:
             snapshot_contents = "No snapshot/history available, the watch should fetch atleast once."
 
         # If we ended up here with "System default"
-        if n_object.get('notification_format') == default_notification_format_for_watch:
+        if n_object.get('notification_format') == USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH:
             n_object['notification_format'] = self.datastore.data['settings']['application'].get('notification_format')
 
 
@@ -141,7 +153,7 @@ class NotificationService:
         Individual watch settings > Tag settings > Global settings
         """
         from changedetectionio.notification import (
-            default_notification_format_for_watch,
+            USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH,
             default_notification_body,
             default_notification_title
         )
@@ -149,7 +161,7 @@ class NotificationService:
         # Would be better if this was some kind of Object where Watch can reference the parent datastore etc
         v = watch.get(var_name)
         if v and not watch.get('notification_muted'):
-            if var_name == 'notification_format' and v == default_notification_format_for_watch:
+            if var_name == 'notification_format' and v == USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH:
                 return self.datastore.data['settings']['application'].get('notification_format')
 
             return v
@@ -166,7 +178,7 @@ class NotificationService:
 
         # Otherwise could be defaults
         if var_name == 'notification_format':
-            return default_notification_format_for_watch
+            return USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
         if var_name == 'notification_body':
             return default_notification_body
         if var_name == 'notification_title':

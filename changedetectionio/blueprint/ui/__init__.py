@@ -76,14 +76,14 @@ def _handle_operations(op, uuids, datastore, worker_handler, update_q, queuedWat
 
     elif (op == 'notification-default'):
         from changedetectionio.notification import (
-            default_notification_format_for_watch
+            USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
         )
         for uuid in uuids:
             if datastore.data['watching'].get(uuid):
                 datastore.data['watching'][uuid]['notification_title'] = None
                 datastore.data['watching'][uuid]['notification_body'] = None
                 datastore.data['watching'][uuid]['notification_urls'] = []
-                datastore.data['watching'][uuid]['notification_format'] = default_notification_format_for_watch
+                datastore.data['watching'][uuid]['notification_format'] = USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
         if emit_flash:
             flash(f"{len(uuids)} watches set to use default notification settings")
 
