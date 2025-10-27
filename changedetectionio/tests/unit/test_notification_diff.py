@@ -17,6 +17,8 @@ from changedetectionio.diff import (
     CHANGED_INTO_PLACEMARKER_OPEN,
     CHANGED_INTO_PLACEMARKER_CLOSED
 )
+from changedetectionio.notification_service import CUSTOM_LINEBREAK_PLACEHOLDER
+
 
 # mostly
 class TestDiffBuilder(unittest.TestCase):
@@ -78,6 +80,9 @@ class TestDiffBuilder(unittest.TestCase):
         output = diff.render_diff(previous_version_file_contents=before,
                                   newest_version_file_contents=after,
                                   patch_format=True)
+
+        output = output.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
+
         output = output.split("\n")
 
         self.assertIn('-ok', output)
