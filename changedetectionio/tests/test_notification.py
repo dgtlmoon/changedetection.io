@@ -13,10 +13,10 @@ import base64
 from changedetectionio.notification import (
     default_notification_body,
     default_notification_format,
-    default_notification_title,
-    valid_notification_formats,
+    default_notification_title, valid_notification_formats
 )
 from ..diff import HTML_CHANGED_STYLE
+from ..model import USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
 
 
 # Hard to just add more live server URLs when one test is already running (I think)
@@ -46,6 +46,14 @@ def test_check_notification(client, live_server, measure_memory_usage):
     )
 
     assert b"Settings updated." in res.data
+
+    res = client.get(url_for("settings.settings_page"))
+    for k,v in valid_notification_formats.items():
+        if k == USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH:
+            continue
+        assert f'value="{k}"'.encode() in res.data # Should be by key NOT value
+        assert f'value="{v}"'.encode() not in res.data # Should be by key NOT value
+
 
     # When test mode is in BASE_URL env mode, we should see this already configured
     env_base_url = os.getenv('BASE_URL', '').strip()
@@ -101,7 +109,7 @@ def test_check_notification(client, live_server, measure_memory_usage):
                                                    "Diff as Patch: {{diff_patch}}\n"
                                                    ":-)",
                               "notification_screenshot": True,
-                              "notification_format": 'Plain Text'}
+                              "notification_format": 'text'}
 
     notification_form_data.update({
         "url": test_url,
@@ -267,7 +275,7 @@ def test_notification_validation(client, live_server, measure_memory_usage):
 #        data={"notification_urls": 'json://localhost/foobar',
 #              "notification_title": "",
 #              "notification_body": "",
-#              "notification_format": 'Plain Text',
+#              "notification_format": 'text',
 #              "url": test_url,
 #              "tag": "my tag",
 #              "title": "my title",
@@ -521,7 +529,7 @@ def _test_color_notifications(client, notification_body_token):
             "application-fetch_backend": "html_requests",
             "application-minutes_between_check": 180,
             "application-notification_body": notification_body_token,
-            "application-notification_format": "HTML Color",
+            "application-notification_format": "htmlcolor",
             "application-notification_urls": test_notification_url,
             "application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
         },

@@ -9,7 +9,8 @@ for both sync and async workers
 from loguru import logger
 import time
 
-from changedetectionio.notification import default_notification_format
+from changedetectionio.model import USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
+from changedetectionio.notification import default_notification_format, valid_notification_formats
 
 # This gets modified on notification time (handler.py) depending on the required notification output
 CUSTOM_LINEBREAK_PLACEHOLDER='@BR@'
@@ -48,14 +49,27 @@ class NotificationContextData(dict):
         if kwargs:
             self.update(kwargs)
 
+        n_format = self.get('notification_format')
+        if n_format and not valid_notification_formats.get(n_format):
+            raise ValueError(f'Invalid notification format: "{n_format}"')
+
     def set_random_for_validation(self):
         import random, string
-        """Randomly fills all dict keys with random strings (for validation/testing)."""
+        """Randomly fills all dict keys with random strings (for validation/testing). 
+        So we can test the output in the notification body
+        """
         for key in self.keys():
             if key in ['uuid', 'time', 'watch_uuid']:
                 continue
             rand_str = 'RANDOM-PLACEHOLDER-'+''.join(random.choices(string.ascii_letters + string.digits, k=12))
             self[key] = rand_str
+
+    def __setitem__(self, key, value):
+        if key == 'notification_format' and isinstance(value, str) and not value.startswith('RANDOM-PLACEHOLDER-'):
+            if not valid_notification_formats.get(value):
+                raise ValueError(f'Invalid notification format: "{value}"')
+
+        super().__setitem__(key, value)
 
 class NotificationService:
     """
@@ -72,7 +86,7 @@ class NotificationService:
         Queue a notification for a watch with full diff rendering and template variables
         """
         from changedetectionio import diff
-        from changedetectionio.notification import default_notification_format_for_watch
+        from changedetectionio.notification import USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
 
         if not isinstance(n_object, NotificationContextData):
             raise TypeError(f"Expected NotificationContextData, got {type(n_object)}")
@@ -94,7 +108,7 @@ class NotificationService:
             snapshot_contents = "No snapshot/history available, the watch should fetch atleast once."
 
         # If we ended up here with "System default"
-        if n_object.get('notification_format') == default_notification_format_for_watch:
+        if n_object.get('notification_format') == USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH:
             n_object['notification_format'] = self.datastore.data['settings']['application'].get('notification_format')
 
 
@@ -153,7 +167,7 @@ class NotificationService:
         Individual watch settings > Tag settings > Global settings
         """
         from changedetectionio.notification import (
-            default_notification_format_for_watch,
+            USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH,
             default_notification_body,
             default_notification_title
         )
@@ -161,7 +175,7 @@ class NotificationService:
         # Would be better if this was some kind of Object where Watch can reference the parent datastore etc
         v = watch.get(var_name)
         if v and not watch.get('notification_muted'):
-            if var_name == 'notification_format' and v == default_notification_format_for_watch:
+            if var_name == 'notification_format' and v == USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH:
                 return self.datastore.data['settings']['application'].get('notification_format')
 
             return v
@@ -178,7 +192,7 @@ class NotificationService:
 
         # Otherwise could be defaults
         if var_name == 'notification_format':
-            return default_notification_format_for_watch
+            return USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
         if var_name == 'notification_body':
             return default_notification_body
         if var_name == 'notification_title':
@@ -233,7 +247,6 @@ class NotificationService:
         if not watch:
             return
 
-        n_format = self.datastore.data['settings']['application'].get('notification_format', default_notification_format)
         filter_list = ", ".join(watch['include_filters'])
         # @todo - This could be a markdown template on the disk, apprise will convert the markdown to HTML+Plaintext parts in the email, and then 'markup_text_links_to_html_links' is not needed
         body = f"""Hello,
@@ -250,9 +263,9 @@ Thanks - Your omniscient changedetection.io installation.
         n_object = NotificationContextData({
             'notification_title': 'Changedetection.io - Alert - CSS/xPath filter was not present in the page',
             'notification_body': body,
-            'notification_format': n_format,
-            'markup_text_links_to_html_links': n_format.lower().startswith('html')
+            'notification_format': self._check_cascading_vars('notification_format', watch),
         })
+        n_object['markup_text_links_to_html_links'] = n_object.get('notification_format').startswith('html')
 
         if len(watch['notification_urls']):
             n_object['notification_urls'] = watch['notification_urls']
@@ -280,7 +293,7 @@ Thanks - Your omniscient changedetection.io installation.
         if not watch:
             return
         threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts')
-        n_format = self.datastore.data['settings']['application'].get('notification_format', default_notification_format).lower()
+
         step = step_n + 1
         # @todo - This could be a markdown template on the disk, apprise will convert the markdown to HTML+Plaintext parts in the email, and then 'markup_text_links_to_html_links' is not needed
 
@@ -299,9 +312,9 @@ Thanks - Your omniscient changedetection.io installation.
         n_object = NotificationContextData({
             'notification_title': f"Changedetection.io - Alert - Browser step at position {step} could not be run",
             'notification_body': body,
-            'notification_format': n_format,
-            'markup_text_links_to_html_links': n_format.lower().startswith('html')
+            'notification_format': self._check_cascading_vars('notification_format', watch),
         })
+        n_object['markup_text_links_to_html_links'] = n_object.get('notification_format').startswith('html')
 
         if len(watch['notification_urls']):
             n_object['notification_urls'] = watch['notification_urls']

@@ -5,7 +5,7 @@ from flask import (
 )
 
 from .html_tools import TRANSLATE_WHITESPACE_TABLE
-from . model import App, Watch
+from .model import App, Watch, USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
 from copy import deepcopy, copy
 from os import path, unlink
 from threading import Lock
@@ -987,9 +987,34 @@ class ChangeDetectionStore:
             self.data['settings']['application']['ui']['use_page_title_in_list'] = self.data['settings']['application'].get('extract_title_as_title')
 
     def update_21(self):
-        self.data['settings']['application']['scheduler_timezone_default'] = self.data['settings']['application'].get('timezone')
-        del self.data['settings']['application']['timezone']
+        if self.data['settings']['application'].get('timezone'):
+            self.data['settings']['application']['scheduler_timezone_default'] = self.data['settings']['application'].get('timezone')
+            del self.data['settings']['application']['timezone']
 
+
+    # Some notification formats got the wrong name type
+    def update_22(self):
+        from .notification import valid_notification_formats
+
+        sys_n_format = self.data['settings']['application'].get('notification_format')
+        key_exists_as_value = next((k for k, v in valid_notification_formats.items() if v == sys_n_format), None)
+        if key_exists_as_value: # key of "Plain text"
+            logger.success(f"['settings']['application']['notification_format'] '{sys_n_format}' -> '{key_exists_as_value}'")
+            self.data['settings']['application']['notification_format'] = key_exists_as_value
+
+        for uuid, watch in self.data['watching'].items():
+            n_format = self.data['watching'][uuid].get('notification_format')
+            key_exists_as_value = next((k for k, v in valid_notification_formats.items() if v == n_format), None)
+            if key_exists_as_value and key_exists_as_value != USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH:  # key of "Plain text"
+                logger.success(f"['watching'][{uuid}]['notification_format'] '{n_format}' -> '{key_exists_as_value}'")
+                self.data['watching'][uuid]['notification_format'] = key_exists_as_value # should be 'text' or whatever
+
+        for uuid, tag in self.data['settings']['application']['tags'].items():
+            n_format = self.data['settings']['application']['tags'][uuid].get('notification_format')
+            key_exists_as_value = next((k for k, v in valid_notification_formats.items() if v == n_format), None)
+            if key_exists_as_value and key_exists_as_value != USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH:  # key of "Plain text"
+                logger.success(f"['settings']['application']['tags'][{uuid}]['notification_format'] '{n_format}' -> '{key_exists_as_value}'")
+                self.data['settings']['application']['tags'][uuid]['notification_format'] = key_exists_as_value # should be 'text' or whatever
 
     def add_notification_url(self, notification_url):
         

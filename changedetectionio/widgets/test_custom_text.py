@@ -2,6 +2,9 @@
 
 import sys
 import os
+
+from changedetectionio.model import USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
 from changedetectionio.widgets import TernaryNoneBooleanField
@@ -93,7 +96,7 @@ def test_custom_text():
     print(f"Does NOT contain 'System default': {'System default' not in boolean_html}")
     print(f"Does NOT contain 'Default': {'Default' not in boolean_html}")
     assert 'Enabled' in boolean_html and 'Disabled' in boolean_html
-    assert 'System default' not in boolean_html and 'Default' not in boolean_html
+    assert USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH not in boolean_html and 'Default' not in boolean_html
     
     # Test FontAwesome field
     print("\n--- FontAwesome Icons Field ---")
