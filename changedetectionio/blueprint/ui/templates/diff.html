@@ -16,10 +16,11 @@
 <script src="{{url_for('static_content', group='js', filename='diff-overview.js')}}" defer></script>
 
 <div id="settings">
+    <form class="pure-form " action="{{ url_for("ui.ui_views.diff_history_page", uuid=uuid) }}" method="POST" id="diff-form">
         <fieldset class="diff-fieldset">
             {% if versions|length >= 1 %}
-                <form class="pure-form " action="" method="GET" id="diff-form">
                 <strong>Compare</strong>
+                from {{from_version}} to {{to_version}}<br>
                 <del class="change"><span>from</span></del>
                 <select id="diff-version" name="from_version" class="needs-localtime">
                     {% for version in versions|reverse %}
@@ -37,12 +38,9 @@
                     {% endfor %}
                 </select>
                 <button type="submit" class="pure-button pure-button-primary reset-margin">Go</button>
-                </form>
             {% endif %}
         </fieldset>
         <fieldset>
-
-            <form class="pure-form" action="{{ url_for("ui.ui_views.diff_history_page_set_preferences", uuid=uuid) }}" method="POST" id="diff-text-options">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <strong>Style</strong>
 
@@ -64,8 +62,8 @@
                 <label for="changesOnly" class="pure-checkbox" id="label-diff-replaced">
                     <input type="checkbox"  name="diff_replaced" {% if diff_prefs.diff_replaced %}checked=""{% endif %}> Replaced</label>
                 <input type="submit">
-            </form>
         </fieldset>
+    </form>
 </div>
 
 <div id="diff-jump">
