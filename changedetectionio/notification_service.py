@@ -277,7 +277,7 @@ Thanks - Your omniscient changedetection.io installation.
         if not watch:
             return
         threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts')
-        n_format = self.datastore.data['settings']['application'].get('notification_format', default_notification_format).lower()
+
         step = step_n + 1
         # @todo - This could be a markdown template on the disk, apprise will convert the markdown to HTML+Plaintext parts in the email, and then 'markup_text_links_to_html_links' is not needed
 
