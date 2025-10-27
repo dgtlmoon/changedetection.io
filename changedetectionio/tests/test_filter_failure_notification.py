@@ -63,7 +63,7 @@ def run_filter_test(client, live_server, content_filter, app_notification_format
                                        "Diff Full: {{diff_full}}\n"
                                        "Diff as Patch: {{diff_patch}}\n"
                                        ":-)",
-                  "notification_format": 'Plain Text',
+                  "notification_format": 'text',
                   "fetch_backend": "html_requests",
                   "filter_failure_notification_send": 'y',
                   "time_between_check_use_default": "y",
@@ -175,13 +175,13 @@ def run_filter_test(client, live_server, content_filter, app_notification_format
 
 def test_check_include_filters_failure_notification(client, live_server, measure_memory_usage):
     #   #  live_server_setup(live_server) # Setup on conftest per function
-    run_filter_test(client=client, live_server=live_server, content_filter='#nope-doesnt-exist', app_notification_format=valid_notification_formats.get('HTML Color'))
+    run_filter_test(client=client, live_server=live_server, content_filter='#nope-doesnt-exist', app_notification_format=valid_notification_formats.get('htmlcolor'))
     # Check markup send conversion didnt affect plaintext preference
-    run_filter_test(client=client, live_server=live_server, content_filter='#nope-doesnt-exist', app_notification_format=valid_notification_formats.get('Plain Text'))
+    run_filter_test(client=client, live_server=live_server, content_filter='#nope-doesnt-exist', app_notification_format=valid_notification_formats.get('text'))
 
 def test_check_xpath_filter_failure_notification(client, live_server, measure_memory_usage):
     #   #  live_server_setup(live_server) # Setup on conftest per function
-    run_filter_test(client=client, live_server=live_server, content_filter='//*[@id="nope-doesnt-exist"]', app_notification_format=valid_notification_formats.get('HTML Color'))
+    run_filter_test(client=client, live_server=live_server, content_filter='//*[@id="nope-doesnt-exist"]', app_notification_format=valid_notification_formats.get('htmlcolor'))
 
 # Test that notification is never sent
 

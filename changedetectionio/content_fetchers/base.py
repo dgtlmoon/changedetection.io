@@ -75,7 +75,6 @@ class Fetcher():
         self.screenshot = None
         self.xpath_data = None
         # Keep headers and status_code as they're small
-        logger.trace("Fetcher content cleared from memory")
 
     @abstractmethod
     def get_error(self):

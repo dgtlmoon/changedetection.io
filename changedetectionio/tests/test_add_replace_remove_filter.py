@@ -124,7 +124,7 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
               "application-notification_body": 'triggered text was -{{triggered_text}}- ### 网站监测 内容更新了 ####',
               # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#get-parameter-manipulation
               "application-notification_urls": test_notification_url,
-              "application-notification_format": 'Plain Text',
+              "application-notification_format": 'text',
               "application-minutes_between_check": 180,
               "application-fetch_backend": "html_requests"
               },

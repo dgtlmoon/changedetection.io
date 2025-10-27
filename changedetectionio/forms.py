@@ -741,7 +741,6 @@ class quickWatchForm(Form):
     edit_and_watch_submit_button = SubmitField('Edit > Watch', render_kw={"class": "pure-button pure-button-primary"})
 
 
-
 # Common to a single watch and the global settings
 class commonSettingsForm(Form):
     from . import processors
@@ -754,7 +753,7 @@ class commonSettingsForm(Form):
 
     fetch_backend = RadioField(u'Fetch Method', choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     notification_body = TextAreaField('Notification Body', default='{{ watch_url }} had a change.', validators=[validators.Optional(), ValidateJinja2Template()])
-    notification_format = SelectField('Notification format', choices=valid_notification_formats.keys())
+    notification_format = SelectField('Notification format', choices=list(valid_notification_formats.items()))
     notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
     processor = RadioField( label=u"Processor - What do you want to achieve?", choices=processors.available_processors(), default="text_json_diff")
