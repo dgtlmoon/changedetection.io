@@ -459,14 +459,26 @@ class perform_site_check(difference_detection_processor):
         # Save text before ignore filters (for diff calculation)
         text_content_before_ignored_filter = stripped_text
 
+        # Save full content before diff filtering for consistent MD5 calculation
+        full_content_for_md5 = None
+
         # === DIFF FILTERING ===
         # If user wants specific diff types (added/removed/replaced only)
         if watch.has_special_diff_filter_options_set() and len(watch.history.keys()):
-            stripped_text = self._apply_diff_filtering(watch, stripped_text, text_content_before_ignored_filter)
-            if stripped_text is None:
-                # No differences found, but content exists
+            # Save full content BEFORE applying diff filtering
+            # This ensures MD5 is always calculated from full content, not the filtered diff
+            full_content_for_md5 = stripped_text
+
+            filtered_diff = self._apply_diff_filtering(watch, stripped_text, text_content_before_ignored_filter)
+            if filtered_diff is None:
+                # No matching differences found (e.g., only removed lines when user wants added/replaced)
+                # Calculate MD5 of full content and return early
                 c = ChecksumCalculator.calculate(text_content_before_ignored_filter, ignore_whitespace=True)
                 return False, {'previous_md5': c}, text_content_before_ignored_filter.encode('utf-8')
+
+            # Has matching changes - use filtered diff for trigger_text evaluation and display,
+            # but full_content_for_md5 will be used later for MD5 calculation
+            stripped_text = filtered_diff
 
         # === EMPTY PAGE CHECK ===
         empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
@@ -495,17 +507,23 @@ class perform_site_check(difference_detection_processor):
             stripped_text = transformer.sort_alphabetically(stripped_text)
 
         # === CHECKSUM CALCULATION ===
-        text_for_checksuming = stripped_text
+        # When diff filtering is active, use full content for MD5, not the filtered diff
+        # This ensures consistent MD5 calculation regardless of what changes occurred
+        if full_content_for_md5 is not None:
+            text_for_checksuming = full_content_for_md5
+        else:
+            text_for_checksuming = stripped_text
 
         # Apply ignore_text for checksum calculation
         if filter_config.ignore_text:
-            text_for_checksuming = html_tools.strip_ignore_text(stripped_text, filter_config.ignore_text)
+            text_for_checksuming = html_tools.strip_ignore_text(text_for_checksuming, filter_config.ignore_text)
 
             # Optionally remove ignored lines from output
+            # Note: Only apply to stripped_text if we're not using full_content_for_md5
             strip_ignored_lines = watch.get('strip_ignored_lines')
             if strip_ignored_lines is None:
                 strip_ignored_lines = self.datastore.data['settings']['application'].get('strip_ignored_lines')
-            if strip_ignored_lines:
+            if strip_ignored_lines and full_content_for_md5 is None:
                 stripped_text = text_for_checksuming
 
         # Calculate checksum
