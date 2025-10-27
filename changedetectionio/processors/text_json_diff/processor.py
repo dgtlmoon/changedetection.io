@@ -589,7 +589,12 @@ class perform_site_check(difference_detection_processor):
         if 'text_for_checksuming' in locals() and text_for_checksuming is not stripped_text:
             del text_for_checksuming
 
-        return changed_detected, update_obj, stripped_text
+        # When diff filtering is active, return full content for history snapshots
+        # stripped_text contains only the filtered diff, which would create confusing/broken snapshots
+        if full_content_for_md5 is not None:
+            return changed_detected, update_obj, full_content_for_md5
+        else:
+            return changed_detected, update_obj, stripped_text
 
     def _apply_diff_filtering(self, watch, stripped_text, text_before_filter):
         """Apply user's diff filtering preferences (show only added/removed/replaced lines)."""
