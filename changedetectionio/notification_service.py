@@ -9,6 +9,7 @@ for both sync and async workers
 from loguru import logger
 import time
 
+from changedetectionio.model import USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
 from changedetectionio.notification import default_notification_format, valid_notification_formats
 
 # This gets modified on notification time (handler.py) depending on the required notification output
@@ -29,7 +30,6 @@ class NotificationContextData(dict):
             'diff_url': None,
             'markup_text_links_to_html_links': False, # If automatic conversion of plaintext to HTML should happen
             'notification_timestamp': time.time(),
-            'notification_format': None,
             'preview_url': None,
             'screenshot': None,
             'triggered_text': None,
@@ -235,7 +235,6 @@ class NotificationService:
         if not watch:
             return
 
-        n_format = self.datastore.data['settings']['application'].get('notification_format', default_notification_format)
         filter_list = ", ".join(watch['include_filters'])
         # @todo - This could be a markdown template on the disk, apprise will convert the markdown to HTML+Plaintext parts in the email, and then 'markup_text_links_to_html_links' is not needed
         body = f"""Hello,
@@ -252,9 +251,9 @@ Thanks - Your omniscient changedetection.io installation.
         n_object = NotificationContextData({
             'notification_title': 'Changedetection.io - Alert - CSS/xPath filter was not present in the page',
             'notification_body': body,
-            'notification_format': n_format,
-            'markup_text_links_to_html_links': n_format.lower().startswith('html')
+            'notification_format': self._check_cascading_vars('notification_format', watch),
         })
+        n_object['markup_text_links_to_html_links'] = n_object.get('notification_format').startswith('html')
 
         if len(watch['notification_urls']):
             n_object['notification_urls'] = watch['notification_urls']
@@ -301,9 +300,9 @@ Thanks - Your omniscient changedetection.io installation.
         n_object = NotificationContextData({
             'notification_title': f"Changedetection.io - Alert - Browser step at position {step} could not be run",
             'notification_body': body,
-            'notification_format': n_format,
-            'markup_text_links_to_html_links': n_format.lower().startswith('html')
+            'notification_format': self._check_cascading_vars('notification_format', watch),
         })
+        n_object['markup_text_links_to_html_links'] = n_object.get('notification_format').startswith('html')
 
         if len(watch['notification_urls']):
             n_object['notification_urls'] = watch['notification_urls']
