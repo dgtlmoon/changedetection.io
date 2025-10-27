@@ -987,8 +987,9 @@ class ChangeDetectionStore:
             self.data['settings']['application']['ui']['use_page_title_in_list'] = self.data['settings']['application'].get('extract_title_as_title')
 
     def update_21(self):
-        self.data['settings']['application']['scheduler_timezone_default'] = self.data['settings']['application'].get('timezone')
-        del self.data['settings']['application']['timezone']
+        if self.data['settings']['application'].get('timezone'):
+            self.data['settings']['application']['scheduler_timezone_default'] = self.data['settings']['application'].get('timezone')
+            del self.data['settings']['application']['timezone']
 
 
     # Some notification formats got the wrong name type

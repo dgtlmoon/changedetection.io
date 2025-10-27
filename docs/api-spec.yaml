@@ -143,7 +143,7 @@ components:
         paused:
           type: boolean
           description: Whether the web page change monitor (watch) is paused
-        muted:
+        notification_muted:
           type: boolean
           description: Whether notifications are muted
         method:
@@ -207,7 +207,7 @@ components:
           maxLength: 5000
         notification_format:
           type: string
-          enum: [Text, HTML, Markdown]
+          enum: ['Plain Text', 'HTML', 'HTML Color', 'Markdown to HTML', 'System default']
           description: Format for notifications
         track_ldjson_price_data:
           type: boolean
@@ -406,7 +406,7 @@ paths:
                   page_title: "The HTML <title> from the page"
                   tags: ["550e8400-e29b-41d4-a716-446655440000"]
                   paused: false
-                  muted: false
+                  notification_muted: false
                   method: "GET"
                   fetch_backend: "html_requests"
                   last_checked: 1640995200
@@ -419,7 +419,7 @@ paths:
                   page_title: "The HTML <title> from the page"
                   tags: ["330e8400-e29b-41d4-a716-446655440001"]
                   paused: false
-                  muted: true
+                  notification_muted: true
                   method: "GET"
                   fetch_backend: "html_webdriver"
                   last_checked: 1640998800
@@ -1224,7 +1224,7 @@ paths:
                     title: "Example Website Monitor"
                     tags: ["550e8400-e29b-41d4-a716-446655440000"]
                     paused: false
-                    muted: false
+                    notification_muted: false
 
   /import:
     post:
