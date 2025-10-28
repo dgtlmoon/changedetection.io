@@ -6,6 +6,7 @@
 
 # enable debug
 set -x
+docker network inspect changedet-network >/dev/null 2>&1 || docker network create changedet-network
 
 # A extra browser is configured, but we never chose to use it, so it should NOT show in the logs
 docker run --rm -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest tests/custom_browser_url/test_custom_browser_url.py::test_request_not_via_custom_browser_url'

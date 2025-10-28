@@ -96,7 +96,7 @@ jobs:
 
       - name: Test built container with Pytest
         run: |
-          docker run --name test-cdio-basic-tests test-changedetectionio bash -c 'cd changedetectionio && ./run_basic_tests.sh'
+          docker run --name test-cdio-basic-tests --network changedet-network test-changedetectionio bash -c 'cd changedetectionio && ./run_basic_tests.sh'
 
       - name: Extract memory report and logs
         if: always()
@@ -215,14 +215,17 @@ jobs:
         run: |
           docker network create changedet-network
           docker run --network changedet-network -d --hostname selenium -p 4444:4444 --rm --shm-size="2g" selenium/standalone-chrome:4
+          sleep 3
+
+      - name: Specific tests for headers and requests checks with Selenium
+        run: |
+
+          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "WEBDRIVER_URL=http://selenium:4444/wd/hub" --network changedet-network test-changedetectionio bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_request.py'
 
       - name: Specific tests in built container for Selenium
         run: |
           docker run --rm -e "WEBDRIVER_URL=http://selenium:4444/wd/hub" --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py'
 
-      - name: Specific tests for headers and requests checks with Selenium
-        run: |
-          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "WEBDRIVER_URL=http://selenium:4444/wd/hub" --network changedet-network test-changedetectionio bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_request.py'
 
   # SMTP tests
   smtp-tests:
