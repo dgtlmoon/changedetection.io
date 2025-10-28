@@ -51,11 +51,6 @@ class NotificationContextData(dict):
 
         n_format = self.get('notification_format')
         if n_format and not valid_notification_formats.get(n_format):
-            import os
-            current_test = os.environ.get('PYTEST_CURRENT_TEST', 'unknown')
-            if current_test:
-                with open('/tmp/failure.txt', 'w') as f:
-                    f.write(current_test)
             raise ValueError(f'Invalid notification format: "{n_format}"')
 
     def set_random_for_validation(self):
@@ -72,11 +67,6 @@ class NotificationContextData(dict):
     def __setitem__(self, key, value):
         if key == 'notification_format' and isinstance(value, str) and not value.startswith('RANDOM-PLACEHOLDER-'):
             if not valid_notification_formats.get(value):
-                import os
-                current_test = os.environ.get('PYTEST_CURRENT_TEST', 'unknown')
-                if current_test:
-                    with open('/tmp/failure.txt', 'w') as f:
-                        f.write(current_test)
                 raise ValueError(f'Invalid notification format: "{value}"')
 
         super().__setitem__(key, value)
