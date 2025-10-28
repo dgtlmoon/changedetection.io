@@ -152,7 +152,10 @@ class ChangeDetectionStore:
         self.needs_write = True
 
         # Finally start the thread that will manage periodic data saves to JSON
-        self.save_data_thread = threading.Thread(target=self.save_datastore).start()
+        # Only start if thread is not already running (reload_state might be called multiple times)
+        if not self.save_data_thread or not self.save_data_thread.is_alive():
+            self.save_data_thread = threading.Thread(target=self.save_datastore)
+            self.save_data_thread.start()
 
     def rehydrate_entity(self, uuid, entity, processor_override=None):
         """Set the dict back to the dict Watch object"""

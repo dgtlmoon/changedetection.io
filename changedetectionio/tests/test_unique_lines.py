@@ -110,7 +110,7 @@ def test_unique_lines_functionality(client, live_server, measure_memory_usage, d
     assert b'has-unread-changes' not in res.data
 
     # Now set the content which contains the new text and re-ordered existing text
-    set_modified_with_trigger_text_response()
+    set_modified_with_trigger_text_response(datastore_path=datastore_path)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
