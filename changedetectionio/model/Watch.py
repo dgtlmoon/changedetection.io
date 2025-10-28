@@ -1,5 +1,5 @@
 from blinker import signal
-from changedetectionio.html_tools import is_safe_valid_url
+from changedetectionio.validate_url import is_safe_valid_url
 
 from changedetectionio.strtobool import strtobool
 from changedetectionio.jinja2_custom import render as jinja_render

@@ -538,7 +538,7 @@ class validateURL(object):
 
 
 def validate_url(test_url):
-    from changedetectionio.html_tools import is_safe_valid_url
+    from changedetectionio.validate_url import is_safe_valid_url
     if not is_safe_valid_url(test_url):
         # This should be wtforms.validators.
         raise ValidationError('Watch protocol is not permitted or invalid URL format')

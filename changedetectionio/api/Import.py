@@ -3,7 +3,7 @@ from flask_restful import abort, Resource
 from flask import request
 from functools import wraps
 from . import auth, validate_openapi_request
-from ..html_tools import is_safe_valid_url
+from ..validate_url import is_safe_valid_url
 
 
 def default_content_type(content_type='text/plain'):

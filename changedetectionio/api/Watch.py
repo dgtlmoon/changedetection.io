@@ -1,6 +1,6 @@
 import os
 
-from changedetectionio.html_tools import is_safe_valid_url
+from changedetectionio.validate_url import is_safe_valid_url
 
 from flask_expects_json import expects_json
 from changedetectionio import queuedWatchMetaData

@@ -135,7 +135,7 @@ def get_socketio_path():
 
 @app.template_global('is_safe_valid_url')
 def _is_safe_valid_url(test_url):
-    from .html_tools import is_safe_valid_url
+    from .validate_url import is_safe_valid_url
     return is_safe_valid_url(test_url)
 
 

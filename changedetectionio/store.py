@@ -1,6 +1,6 @@
 from changedetectionio.strtobool import strtobool
 
-from changedetectionio.html_tools import is_safe_valid_url
+from changedetectionio.validate_url import is_safe_valid_url
 
 from flask import (
     flash
