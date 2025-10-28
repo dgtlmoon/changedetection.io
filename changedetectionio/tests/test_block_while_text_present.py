@@ -136,8 +136,7 @@ def test_check_block_changedetection_text_NOT_present(client, live_server, measu
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
-    with open('/tmp/fuck.html', 'wb') as f:
-       f.write(res.data)
+
     assert b'has-unread-changes' in res.data
 
 

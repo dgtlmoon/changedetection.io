@@ -65,6 +65,7 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
               "time_between_check_use_default": "y"},
         follow_redirects=True
     )
+
     assert b"Updated watch." in res.data
     wait_for_all_checks(client)
     set_original(excluding='Something irrelevant', datastore_path=datastore_path)

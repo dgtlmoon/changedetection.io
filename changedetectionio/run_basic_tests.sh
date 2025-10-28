@@ -10,8 +10,9 @@
 set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
 # REMOVE_REQUESTS_OLD_SCREENSHOTS disabled so that we can write a screenshot and send it in test_notifications.py without a real browser
-REMOVE_REQUESTS_OLD_SCREENSHOTS=false time pytest -n 16 --dist load --tb=long tests/test_*.py
+REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest -n 30 --dist load  tests/test_*.py
 
 #time pytest -n auto --dist loadfile -vv --tb=long tests/test_*.py
 echo "RUNNING WITH BASE_URL SET"

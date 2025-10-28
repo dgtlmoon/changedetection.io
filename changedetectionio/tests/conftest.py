@@ -11,6 +11,7 @@ import os
 import sys
 from loguru import logger
 
+from changedetectionio.flask_app import init_app_secret
 from changedetectionio.tests.util import live_server_setup, new_live_server_setup
 
 # https://github.com/pallets/flask/blob/1.1.2/examples/tutorial/tests/test_auth.py
@@ -131,6 +132,13 @@ def prepare_test_function(live_server, datastore_path):
     # CRITICAL: Point app to THIS test's unique datastore directory
     live_server.app.config['TEST_DATASTORE_PATH'] = datastore_path
 
+    # CRITICAL: Get datastore and stop it from writing stale data
+    datastore = live_server.app.config.get('DATASTORE')
+
+    # Prevent background thread from writing during cleanup/reload
+    datastore.needs_write = False
+    datastore.needs_write_urgent = False
+
     # CRITICAL: Clean up any files from previous tests
     # This ensures a completely clean directory
     cleanup(datastore_path)
@@ -138,7 +146,6 @@ def prepare_test_function(live_server, datastore_path):
     # CRITICAL: Reload the EXISTING datastore instead of creating a new one
     # This keeps blueprint references valid (they capture datastore at construction)
     # reload_state() completely resets the datastore to a clean state
-    datastore = live_server.app.config.get('DATASTORE')
 
     # Reload state with clean data (no default watches)
     datastore.reload_state(
@@ -146,7 +153,7 @@ def prepare_test_function(live_server, datastore_path):
         include_default_watches=False,
         version_tag=datastore.data.get('version_tag', '0.0.0')
     )
-
+    live_server.app.secret_key = init_app_secret(datastore_path)
     logger.debug(f"prepare_test_function: Reloaded datastore at {hex(id(datastore))}")
     logger.debug(f"prepare_test_function: Path {datastore.datastore_path}")
 

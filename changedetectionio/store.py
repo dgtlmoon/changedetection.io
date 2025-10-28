@@ -421,7 +421,6 @@ class ChangeDetectionStore:
             self.sync_to_json()
             return
         else:
-
             try:
                 # Re #286  - First write to a temp file, then confirm it looks OK and rename it
                 # This is a fairly basic strategy to deal with the case that the file is corrupted,

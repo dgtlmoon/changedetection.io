@@ -44,8 +44,7 @@ def run_filter_test(client, live_server, content_filter, app_notification_format
 
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
     res = client.get(url_for("watchlist.index"))
-    with open('/tmp/fuck.html', 'wb') as f:
-        f.write(res.data)
+
     assert b'No website watches configured' not in res.data
 
 

@@ -21,7 +21,7 @@ something to trigger<br>
 
 def test_content_filter_live_preview(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
-    set_response(datastore_path)
+    set_response(datastore_path=datastore_path)
 
     test_url = url_for('test_endpoint', _external=True)
 

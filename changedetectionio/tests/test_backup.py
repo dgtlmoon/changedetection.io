@@ -14,9 +14,6 @@ def test_backup(client, live_server, measure_memory_usage, datastore_path):
     set_original_response(datastore_path=datastore_path)
 
 
-    # Give the endpoint time to spin up
-    time.sleep(1)
-
     # Add our URL to the import page
     res = client.post(
         url_for("imports.import_page"),
@@ -32,7 +29,7 @@ def test_backup(client, live_server, measure_memory_usage, datastore_path):
         url_for("backups.request_backup"),
         follow_redirects=True
     )
-    time.sleep(2)
+    time.sleep(4)
 
     res = client.get(
         url_for("backups.index"),
