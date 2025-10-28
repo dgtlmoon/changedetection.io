@@ -294,10 +294,9 @@ jobs:
       - name: Spin up services
         run: |
           docker network create changedet-network
-
-#          docker run --network changedet-network -d --hostname selenium -p 4444:4444 --rm --shm-size="2g" selenium/standalone-chrome:4
-#          docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --cap-add=SYS_ADMIN --name sockpuppetbrowser --hostname sockpuppetbrowser --rm -p 3000:3000 dgtlmoon/sockpuppetbrowser:latest
-#          docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --cap-add=SYS_ADMIN --name sockpuppetbrowser-custom-url --hostname sockpuppetbrowser-custom-url -p 3001:3000 --rm dgtlmoon/sockpuppetbrowser:latest
+          docker run --network changedet-network -d --hostname selenium -p 4444:4444 --rm --shm-size="2g" selenium/standalone-chrome:4
+          docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --cap-add=SYS_ADMIN --name sockpuppetbrowser --hostname sockpuppetbrowser --rm -p 3000:3000 dgtlmoon/sockpuppetbrowser:latest
+          docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --cap-add=SYS_ADMIN --name sockpuppetbrowser-custom-url --hostname sockpuppetbrowser-custom-url -p 3001:3000 --rm dgtlmoon/sockpuppetbrowser:latest
 
       - name: Test proxy Squid style interaction
         run: |
