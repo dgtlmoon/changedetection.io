@@ -64,29 +64,21 @@ def test_jinja2_time_offset_in_url_query(client, live_server, measure_memory_usa
     # Should not have template error
     assert b'Invalid template' not in res.data
 
+
 # https://techtonics.medium.com/secure-templating-with-jinja2-understanding-ssti-and-jinja2-sandbox-environment-b956edd60456
 def test_jinja2_security_url_query(client, live_server, measure_memory_usage):
-    
-
     # Add our URL to the import page
     test_url = url_for('test_return_query', _external=True)
 
-    # because url_for() will URL-encode the var, but we dont here
-    full_url = "{}?{}".format(test_url,
-                              "date={{ ''.__class__.__mro__[1].__subclasses__()}}", )
+    full_url = test_url + "?date={{ ''.__class__.__mro__[1].__subclasses__()}}"
+
     res = client.post(
         url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": full_url, "tags": "test"},
         follow_redirects=True
     )
-    assert b"Watch added" in res.data
-    wait_for_all_checks(client)
+    assert b"Watch added" not in res.data
 
-    # It should report nothing found (no new 'has-unread-changes' class)
-    res = client.get(url_for("watchlist.index"))
-    assert b'is invalid and cannot be used' in res.data
-    # Some of the spewed output from the subclasses
-    assert b'dict_values' not in res.data
 
 def test_timezone(mocker):
     """Verify that timezone is parsed."""

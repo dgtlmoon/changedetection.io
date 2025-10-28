@@ -60,7 +60,6 @@ def normalize_url_encoding(url):
 def is_safe_valid_url(test_url):
     from changedetectionio import strtobool
     from changedetectionio.jinja2_custom import render as jinja_render
-    from urllib.parse import urlparse, parse_qs
     import os
     import re
     import validators
