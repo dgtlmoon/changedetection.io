@@ -48,7 +48,7 @@ def test_bad_access(client, live_server, measure_memory_usage):
         follow_redirects=True
     )
 
-    assert b'Watch protocol is not permitted by SAFE_PROTOCOL_REGEX' in res.data
+    assert b'Watch protocol is not permitted or invalid URL format' in res.data
 
     res = client.post(
         url_for("ui.ui_views.form_quick_watch_add"),
@@ -56,7 +56,7 @@ def test_bad_access(client, live_server, measure_memory_usage):
         follow_redirects=True
     )
 
-    assert b'Watch protocol is not permitted by SAFE_PROTOCOL_REGEX' in res.data
+    assert b'Watch protocol is not permitted or invalid URL format' in res.data
 
     res = client.post(
         url_for("ui.ui_views.form_quick_watch_add"),
@@ -64,7 +64,7 @@ def test_bad_access(client, live_server, measure_memory_usage):
         follow_redirects=True
     )
 
-    assert b'Watch protocol is not permitted by SAFE_PROTOCOL_REGEX' in res.data
+    assert b'Watch protocol is not permitted or invalid URL format' in res.data
 
 
     res = client.post(
@@ -73,7 +73,7 @@ def test_bad_access(client, live_server, measure_memory_usage):
         follow_redirects=True
     )
 
-    assert b'Watch protocol is not permitted by SAFE_PROTOCOL_REGEX' in res.data
+    assert b'Watch protocol is not permitted or invalid URL format' in res.data
 
 
 def _runner_test_various_file_slash(client, file_uri):

@@ -1,3 +1,4 @@
+from functools import lru_cache
 from loguru import logger
 from typing import List
 import html
@@ -13,8 +14,6 @@ TITLE_RE = re.compile(r"<title[^>]*>(.*?)</title>", re.I | re.S)
 META_CS  = re.compile(r'<meta[^>]+charset=["\']?\s*([a-z0-9_\-:+.]+)', re.I)
 META_CT  = re.compile(r'<meta[^>]+http-equiv=["\']?content-type["\']?[^>]*content=["\'][^>]*charset=([a-z0-9_\-:+.]+)', re.I)
 
-SAFE_PROTOCOL_REGEX='^(http|https|ftp|file):'
-
 # 'price' , 'lowPrice', 'highPrice' are usually under here
 # All of those may or may not appear on different websites - I didnt find a way todo case-insensitive searching here
 LD_JSON_PRODUCT_OFFER_SELECTORS = ["json:$..offers", "json:$..Offers"]
@@ -23,20 +22,45 @@ class JSONNotFound(ValueError):
     def __init__(self, msg):
         ValueError.__init__(self, msg)
 
-def is_safe_url(test_url):
+@lru_cache(maxsize=10000)
+def is_safe_valid_url(test_url):
     import os
+    import validators
+    from changedetectionio.jinja2_custom import render as jinja_render
+    from changedetectionio import strtobool
+    allow_file_access = strtobool(os.getenv('ALLOW_FILE_URI', 'false'))
+    safe_protocol_regex = '^(http|https|ftp|file):' if allow_file_access else '^(http|https|ftp):'
+
     # See https://github.com/dgtlmoon/changedetection.io/issues/1358
 
     # Remove 'source:' prefix so we dont get 'source:javascript:' etc
     # 'source:' is a valid way to tell us to return the source
 
-    r = re.compile(re.escape('source:'), re.IGNORECASE)
+    r = re.compile('^source:', re.IGNORECASE)
     test_url = r.sub('', test_url)
 
-    pattern = re.compile(os.getenv('SAFE_PROTOCOL_REGEX', SAFE_PROTOCOL_REGEX), re.IGNORECASE)
-    if not pattern.match(test_url.strip()):
+    # Check the actual rendered URL in case of any Jinja markup
+    try:
+        test_url = jinja_render(test_url)
+    except Exception as e:
+        logger.error(f'URL "{test_url}" is not correct Jinja2? {str(e)}')
         return False
 
+    # Be sure the protocol is safe (no file, etcetc)
+    pattern = re.compile(os.getenv('SAFE_PROTOCOL_REGEX', safe_protocol_regex), re.IGNORECASE)
+    if not pattern.match(test_url.strip()):
+        logger.warning(f'URL "{test_url}" is not safe, aborting.')
+        return False
+
+    # If hosts that only contain alphanumerics are allowed ("localhost" for example)
+    allow_simplehost = not strtobool(os.getenv('BLOCK_SIMPLEHOSTS', 'False'))
+    try:
+        if not validators.url(test_url, simple_host=allow_simplehost):
+            logger.warning(f'URLf "{test_url}" failed validation, aborting.')
+            return False
+    except validators.ValidationError:
+        logger.warning(f'URL f"{test_url}" failed validation, aborting.')
+        return False
     return True
 
 # Doesn't look like python supports forward slash auto enclosure in re.findall

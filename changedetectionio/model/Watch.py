@@ -1,5 +1,5 @@
 from blinker import signal
-from changedetectionio.html_tools import is_safe_url
+from changedetectionio.html_tools import is_safe_valid_url
 from changedetectionio.strtobool import strtobool
 from changedetectionio.jinja2_custom import render as jinja_render
 from . import watch_base
@@ -12,9 +12,6 @@ from .. import jinja2_custom as safe_jinja
 from ..diff import ADDED_PLACEMARKER_OPEN
 from ..html_tools import TRANSLATE_WHITESPACE_TABLE
 
-# Allowable protocols, protects against javascript: etc
-# file:// is further checked by ALLOW_FILE_URI
-SAFE_PROTOCOL_REGEX='^(http|https|ftp|file):'
 FAVICON_RESAVE_THRESHOLD_SECONDS=86400
 
 
@@ -63,7 +60,7 @@ class model(watch_base):
     def link(self):
 
         url = self.get('url', '')
-        if not is_safe_url(url):
+        if not is_safe_valid_url(url):
             return 'DISABLED'
 
         ready_url = url
@@ -84,7 +81,7 @@ class model(watch_base):
             ready_url=ready_url.replace('source:', '')
 
         # Also double check it after any Jinja2 formatting just incase
-        if not is_safe_url(ready_url):
+        if not is_safe_valid_url(ready_url):
             return 'DISABLED'
         return ready_url
 

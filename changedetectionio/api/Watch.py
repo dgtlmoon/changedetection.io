@@ -1,7 +1,7 @@
 import os
 
 from changedetectionio.strtobool import strtobool
-from changedetectionio.html_tools import is_safe_url
+from changedetectionio.html_tools import is_safe_valid_url
 
 from flask_expects_json import expects_json
 from changedetectionio import queuedWatchMetaData
@@ -124,7 +124,7 @@ class Watch(Resource):
             return validation_error, 400
 
         # XSS etc protection
-        if request.json.get('url') and not is_safe_url(request.json.get('url')):
+        if request.json.get('url') and not is_safe_valid_url(request.json.get('url')):
             return "Invalid URL", 400
 
         watch.update(request.json)
@@ -232,9 +232,7 @@ class CreateWatch(Resource):
         json_data = request.get_json()
         url = json_data['url'].strip()
 
-        # If hosts that only contain alphanumerics are allowed ("localhost" for example)
-        allow_simplehost = not strtobool(os.getenv('BLOCK_SIMPLEHOSTS', 'False'))
-        if not validators.url(url, simple_host=allow_simplehost):
+        if not is_safe_valid_url(url):
             return "Invalid or unsupported URL", 400
 
         if json_data.get('proxy'):

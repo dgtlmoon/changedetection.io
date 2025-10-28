@@ -1,10 +1,9 @@
-import os
 from changedetectionio.strtobool import strtobool
 from flask_restful import abort, Resource
 from flask import request
-import validators
 from functools import wraps
 from . import auth, validate_openapi_request
+from ..html_tools import is_safe_valid_url
 
 
 def default_content_type(content_type='text/plain'):
@@ -50,14 +49,13 @@ class Import(Resource):
 
         urls = request.get_data().decode('utf8').splitlines()
         added = []
-        allow_simplehost = not strtobool(os.getenv('BLOCK_SIMPLEHOSTS', 'False'))
         for url in urls:
             url = url.strip()
             if not len(url):
                 continue
 
             # If hosts that only contain alphanumerics are allowed ("localhost" for example)
-            if not validators.url(url, simple_host=allow_simplehost):
+            if not is_safe_valid_url(url):
                 return f"Invalid or unsupported URL - {url}", 400
 
             if dedupe and self.datastore.url_exists(url):

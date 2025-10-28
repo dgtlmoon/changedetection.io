@@ -28,10 +28,7 @@ from wtforms.utils import unset_value
 
 from wtforms.validators import ValidationError
 
-from validators.url import url as url_validator
-
 from changedetectionio.widgets import TernaryNoneBooleanField
-
 
 # default
 # each select <option data-enabled="enabled-0-0"
@@ -541,19 +538,10 @@ class validateURL(object):
 
 
 def validate_url(test_url):
-    # If hosts that only contain alphanumerics are allowed ("localhost" for example)
-    try:
-        url_validator(test_url, simple_host=allow_simplehost)
-    except validators.ValidationError:
-        #@todo check for xss
-        message = f"'{test_url}' is not a valid URL."
+    from changedetectionio.html_tools import is_safe_valid_url
+    if not is_safe_valid_url(test_url):
         # This should be wtforms.validators.
-        raise ValidationError(message)
-
-    from changedetectionio.html_tools import is_safe_url
-    if not is_safe_url(test_url):
-        # This should be wtforms.validators.
-        raise ValidationError('Watch protocol is not permitted by SAFE_PROTOCOL_REGEX or incorrect URL format')
+        raise ValidationError('Watch protocol is not permitted or invalid URL format')
 
 
 class ValidateSinglePythonRegexString(object):
