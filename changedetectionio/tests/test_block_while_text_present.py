@@ -139,7 +139,7 @@ def test_check_block_changedetection_text_NOT_present(client, live_server, measu
     assert b'has-unread-changes' in res.data
 
     # Clearing all history then viewing it should show us what is blocked
-    set_modified_original_ignore_response()
+    set_modified_original_ignore_response(datastore_path=datastore_path)
     client.get(url_for("ui.clear_watch_history", uuid=uuid))
     wait_for_all_checks(client)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
