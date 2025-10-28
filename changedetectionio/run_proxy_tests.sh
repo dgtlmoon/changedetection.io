@@ -28,6 +28,9 @@ docker run --network changedet-network \
   test-changedetectionio \
   bash -c 'cd changedetectionio && pytest tests/proxy_list/test_multiple_proxy.py'
 
+# Give squid proxies a moment to flush their logs
+sleep 2
+
 set +e
 echo "- Looking for chosen.changedetection.io request in squid-one - it should NOT be here"
 docker logs squid-one 2>/dev/null|grep chosen.changedetection.io
@@ -52,6 +55,8 @@ docker run --network changedet-network \
   test-changedetectionio \
   bash -c 'cd changedetectionio && pytest tests/proxy_list/test_select_custom_proxy.py'
 
+# Give squid proxies a moment to flush their logs
+sleep 2
 
 # Should see a request for one.changedetection.io in there
 echo "- Looking for .changedetection.io request in squid-custom"
@@ -66,6 +71,9 @@ fi
 docker run --network changedet-network \
   test-changedetectionio \
   bash -c 'cd changedetectionio && pytest tests/proxy_list/test_noproxy.py'
+
+# Give squid proxies a moment to flush their logs
+sleep 2
 
 # We need to handle grep returning 1
 set +e
