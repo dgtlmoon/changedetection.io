@@ -39,7 +39,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
 
         try:
             # Use native janus async interface - no threads needed!
-            queued_item_data = await asyncio.wait_for(q.async_get(), timeout=1.0)
+            queued_item_data = await asyncio.wait_for(q.async_get(), timeout=0.3)
             
         except asyncio.TimeoutError:
             # No jobs available, continue loop
