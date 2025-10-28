@@ -36,6 +36,7 @@ ENV OPENSSL_INCLUDE_DIR="/usr/include/openssl"
 ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
 RUN --mount=type=cache,target=/tmp/pip-cache \
     pip install \
+    --prefer-binary \
     --extra-index-url https://www.piwheels.org/simple \
     --extra-index-url https://pypi.anaconda.org/ARM-software/simple \
     --cache-dir=/tmp/pip-cache \
@@ -47,6 +48,7 @@ RUN --mount=type=cache,target=/tmp/pip-cache \
 # https://github.com/dgtlmoon/changedetection.io/pull/1067 also musl/alpine (not supported)
 RUN --mount=type=cache,target=/tmp/pip-cache \
     pip install \
+    --prefer-binary \
     --cache-dir=/tmp/pip-cache \
     --target=/dependencies \
     playwright~=1.48.0 \

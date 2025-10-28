@@ -3,9 +3,10 @@
 import time
 from flask import url_for
 from .util import live_server_setup
+import os
 
 
-def set_original_ignore_response():
+def set_original_ignore_response(datastore_path):
     test_return_data = """<html>
        <body>
      <span>The price is</span><span>$<!-- -->90<!-- -->.<!-- -->74</span>
@@ -14,12 +15,12 @@ def set_original_ignore_response():
 
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
-def test_obfuscations(client, live_server, measure_memory_usage):
-    set_original_ignore_response()
+def test_obfuscations(client, live_server, measure_memory_usage, datastore_path):
+    set_original_ignore_response(datastore_path)
    #  live_server_setup(live_server) # Setup on conftest per function
     time.sleep(1)
     # Add our URL to the import page

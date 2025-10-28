@@ -5,7 +5,7 @@ from .util import set_original_response, set_modified_response, live_server_setu
 from ..forms import REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT, REQUIRE_ATLEAST_ONE_TIME_PART_MESSAGE_DEFAULT
 
 
-def test_recheck_time_field_validation_global_settings(client, live_server, measure_memory_usage):
+def test_recheck_time_field_validation_global_settings(client, live_server, measure_memory_usage, datastore_path):
     """
     Tests that the global settings time field has atleast one value for week/day/hours/minute/seconds etc entered
     class globalSettingsRequestForm(Form):
@@ -27,7 +27,7 @@ def test_recheck_time_field_validation_global_settings(client, live_server, meas
     assert REQUIRE_ATLEAST_ONE_TIME_PART_MESSAGE_DEFAULT.encode('utf-8') in res.data
 
 
-def test_recheck_time_field_validation_single_watch(client, live_server, measure_memory_usage):
+def test_recheck_time_field_validation_single_watch(client, live_server, measure_memory_usage, datastore_path):
     """
     Tests that the global settings time field has atleast one value for week/day/hours/minute/seconds etc entered
     class globalSettingsRequestForm(Form):
@@ -95,9 +95,10 @@ def test_recheck_time_field_validation_single_watch(client, live_server, measure
     assert b"Updated watch." in res.data
     assert REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT.encode('utf-8') not in res.data
 
-def test_checkbox_open_diff_in_new_tab(client, live_server, measure_memory_usage):
+def test_checkbox_open_diff_in_new_tab(client, live_server, measure_memory_usage, datastore_path):
     
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
+
     # Add our URL to the import page
     res = client.post(
         url_for("imports.import_page"),
@@ -109,7 +110,7 @@ def test_checkbox_open_diff_in_new_tab(client, live_server, measure_memory_usage
     wait_for_all_checks(client)
 
     # Make a change
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
 
     # Test case 1 - checkbox is enabled in settings
     res = client.post(
@@ -168,9 +169,9 @@ def test_checkbox_open_diff_in_new_tab(client, live_server, measure_memory_usage
     # Cleanup everything
     delete_all_watches(client)
 
-def test_page_title_listing_behaviour(client, live_server, measure_memory_usage):
+def test_page_title_listing_behaviour(client, live_server, measure_memory_usage, datastore_path):
 
-    set_original_response(extra_title="custom html")
+    set_original_response(extra_title="custom html", datastore_path=datastore_path)
 
     # either the manually entered title/description or the page link should be visible
     res = client.post(
@@ -243,11 +244,11 @@ def test_page_title_listing_behaviour(client, live_server, measure_memory_usage)
     assert b"head titlecustom html" in res.data
 
 
-def test_ui_viewed_unread_flag(client, live_server, measure_memory_usage):
+def test_ui_viewed_unread_flag(client, live_server, measure_memory_usage, datastore_path):
 
     import time
 
-    set_original_response(extra_title="custom html")
+    set_original_response(datastore_path=datastore_path, extra_title="custom html")
 
     # Add our URL to the import page
     res = client.post(
@@ -259,7 +260,7 @@ def test_ui_viewed_unread_flag(client, live_server, measure_memory_usage):
     assert b"2 Imported" in res.data
     wait_for_all_checks(client)
 
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
     res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 2 watches for rechecking.' in res.data
     wait_for_all_checks(client)

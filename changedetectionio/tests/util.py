@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 from operator import truediv
 
-from flask import make_response, request
+from flask import make_response, request, current_app
 from flask import url_for
 import logging
 import time
+import os
 
-def set_original_response(extra_title=''):
+def set_original_response(datastore_path, extra_title=''):
     test_return_data = f"""<html>
     <head><title>head title{extra_title}</title></head>
     <body>
@@ -19,11 +20,11 @@ def set_original_response(extra_title=''):
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
     return None
 
-def set_modified_response():
+def set_modified_response(datastore_path):
     test_return_data = """<html>
     <head><title>modified head title</title></head>
     <body>
@@ -35,11 +36,11 @@ def set_modified_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
     return None
-def set_longer_modified_response():
+def set_longer_modified_response(datastore_path):
     test_return_data = """<html>
     <head><title>modified head title</title></head>
     <body>
@@ -49,16 +50,17 @@ def set_longer_modified_response():
      So let's see what happens.  <br>
      So let's see what happens.  <br>
       So let's see what happens.  <br>
-     So let's see what happens.  <br>           
+     So let's see what happens.  <br>
      </body>
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
     return None
-def set_more_modified_response():
+
+def set_more_modified_response(datastore_path):
     test_return_data = """<html>
     <head><title>modified head title</title></head>
     <body>
@@ -71,27 +73,28 @@ def set_more_modified_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
     return None
 
 
-def set_empty_text_response():
+def set_empty_text_response(datastore_path):
     test_return_data = """<html><body></body></html>"""
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
     return None
 
-def wait_for_notification_endpoint_output():
+def wait_for_notification_endpoint_output(datastore_path):
     '''Apprise can take a few seconds to fire'''
     #@todo - could check the apprise object directly instead of looking for this file
     from os.path import isfile
+    notification_file = os.path.join(datastore_path, "notification.txt")
     for i in range(1, 20):
         time.sleep(1)
-        if isfile("test-datastore/notification.txt"):
+        if isfile(notification_file):
             return True
 
     return False
@@ -207,7 +210,8 @@ def new_live_server_setup(live_server):
                 return resp
 
             # Tried using a global var here but didn't seem to work, so reading from a file instead.
-            with open("test-datastore/endpoint-content.txt", "rb") as f:
+            datastore_path = current_app.config.get('TEST_DATASTORE_PATH', 'test-datastore')
+            with open(os.path.join(datastore_path, "endpoint-content.txt"), "rb") as f:
                 resp = make_response(f.read(), status_code)
                 if uppercase_headers:
                     resp.headers['CONTENT-TYPE'] = ctype if ctype else 'text/html'
@@ -246,21 +250,22 @@ def new_live_server_setup(live_server):
     # Where we POST to as a notification, also use a space here to test URL escaping is OK across all tests that use this. ( #2868 )
     @live_server.app.route('/test_notification_endpoint', methods=['POST', 'GET'])
     def test_notification_endpoint():
+        datastore_path = current_app.config.get('TEST_DATASTORE_PATH', 'test-datastore')
 
-        with open("test-datastore/notification.txt", "wb") as f:
+        with open(os.path.join(datastore_path, "notification.txt"), "wb") as f:
             # Debug method, dump all POST to file also, used to prove #65
             data = request.stream.read()
             if data != None:
                 f.write(data)
 
-        with open("test-datastore/notification-url.txt", "w") as f:
+        with open(os.path.join(datastore_path, "notification-url.txt"), "w") as f:
             f.write(request.url)
 
-        with open("test-datastore/notification-headers.txt", "w") as f:
+        with open(os.path.join(datastore_path, "notification-headers.txt"), "w") as f:
             f.write(str(request.headers))
 
         if request.content_type:
-            with open("test-datastore/notification-content-type.txt", "w") as f:
+            with open(os.path.join(datastore_path, "notification-content-type.txt"), "w") as f:
                 f.write(request.content_type)
 
         print("\n>> Test notification endpoint was hit.\n", data)
@@ -285,9 +290,10 @@ def new_live_server_setup(live_server):
 
     @live_server.app.route('/endpoint-test.pdf')
     def test_pdf_endpoint():
+        datastore_path = current_app.config.get('TEST_DATASTORE_PATH', 'test-datastore')
 
         # Tried using a global var here but didn't seem to work, so reading from a file instead.
-        with open("test-datastore/endpoint-test.pdf", "rb") as f:
+        with open(os.path.join(datastore_path, "endpoint-test.pdf"), "rb") as f:
             resp = make_response(f.read(), 200)
             resp.headers['Content-Type'] = 'application/pdf'
             return resp

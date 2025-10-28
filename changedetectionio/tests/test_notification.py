@@ -21,9 +21,9 @@ from ..model import USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
 
 # Hard to just add more live server URLs when one test is already running (I think)
 # So we add our test here (was in a different file)
-def test_check_notification(client, live_server, measure_memory_usage):
+def test_check_notification(client, live_server, measure_memory_usage, datastore_path):
     
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
 
     # Re 360 - new install should have defaults set
     res = client.get(url_for("settings.settings_page"))
@@ -83,8 +83,7 @@ def test_check_notification(client, live_server, measure_memory_usage):
 
 
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
-    datastore = 'test-datastore'
-    with open(os.path.join(datastore, str(uuid), 'last-screenshot.png'), 'wb') as f:
+    with open(os.path.join(datastore_path, str(uuid), 'last-screenshot.png'), 'wb') as f:
         f.write(base64.b64decode(testimage_png))
 
     # Goto the edit page, add our ignore text
@@ -138,7 +137,7 @@ def test_check_notification(client, live_server, measure_memory_usage):
 
     ## Now recheck, and it should have sent the notification
     wait_for_all_checks(client)
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
 
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -151,9 +150,9 @@ def test_check_notification(client, live_server, measure_memory_usage):
 
 
     # Verify what was sent as a notification, this file should exist
-    with open("test-datastore/notification.txt", "r") as f:
+    with open(os.path.join(datastore_path, "notification.txt"), "r") as f:
         notification_submission = f.read()
-    os.unlink("test-datastore/notification.txt")
+    os.unlink(os.path.join(datastore_path, "notification.txt"))
 
     # Did we see the URL that had a change, in the notification?
     # Diff was correctly executed
@@ -197,18 +196,18 @@ def test_check_notification(client, live_server, measure_memory_usage):
 
 
     # This should insert the {current_snapshot}
-    set_more_modified_response()
+    set_more_modified_response(datastore_path=datastore_path)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     time.sleep(3)
     # Verify what was sent as a notification, this file should exist
-    with open("test-datastore/notification.txt", "r") as f:
+    with open(os.path.join(datastore_path, "notification.txt"), "r") as f:
         notification_submission = f.read()
     assert "Ohh yeah awesome" in notification_submission
 
 
     # Prove that "content constantly being marked as Changed with no Updating causes notification" is not a thing
     # https://github.com/dgtlmoon/changedetection.io/discussions/192
-    os.unlink("test-datastore/notification.txt")
+    os.unlink(os.path.join(datastore_path, "notification.txt"))
 
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -217,13 +216,13 @@ def test_check_notification(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-    assert os.path.exists("test-datastore/notification.txt") == False
+    assert os.path.exists(os.path.join(datastore_path, "notification.txt")) == False
 
     res = client.get(url_for("settings.notification_logs"))
     # be sure we see it in the output log
     assert b'New ChangeDetection.io Notification - ' + test_url.encode('utf-8') in res.data
 
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
@@ -243,7 +242,7 @@ def test_check_notification(client, live_server, measure_memory_usage):
     time.sleep(2)
 
     # Verify what was sent as a notification, this file should exist
-    with open("test-datastore/notification.txt", "r") as f:
+    with open(os.path.join(datastore_path, "notification.txt"), "r") as f:
         notification_submission = f.read()
     assert "fallback-title" in notification_submission
     assert "fallback-body" in notification_submission
@@ -254,7 +253,7 @@ def test_check_notification(client, live_server, measure_memory_usage):
         follow_redirects=True
     )
 
-def test_notification_validation(client, live_server, measure_memory_usage):
+def test_notification_validation(client, live_server, measure_memory_usage, datastore_path):
 
     time.sleep(1)
 
@@ -292,7 +291,7 @@ def test_notification_validation(client, live_server, measure_memory_usage):
     )
 
 
-def test_notification_urls_jinja2_apprise_integration(client, live_server, measure_memory_usage):
+def test_notification_urls_jinja2_apprise_integration(client, live_server, measure_memory_usage, datastore_path):
 
     #
     # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#header-manipulation
@@ -314,14 +313,14 @@ def test_notification_urls_jinja2_apprise_integration(client, live_server, measu
     assert b'Settings updated' in res.data
 
 
-def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_memory_usage):
+def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_memory_usage, datastore_path):
     
 
     # test_endpoint - that sends the contents of a file
     # test_notification_endpoint - that takes a POST and writes it to file (test-datastore/notification.txt)
 
     # CUSTOM JSON BODY CHECK for POST://
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
     # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#header-manipulation
     test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')+"?status_code=204&watch_uuid={{ watch_uuid }}&xxx={{ watch_url }}&now={% now 'Europe/London', '%Y-%m-%d' %}&+custom-header=123&+second=hello+world%20%22space%22"
 
@@ -352,7 +351,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
     watch_uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
 
     wait_for_all_checks(client)
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
 
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
@@ -364,7 +363,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
     res = client.get(url_for("watchlist.index"))
     assert b'notification-error' not in res.data
 
-    with open("test-datastore/notification.txt", 'r') as f:
+    with open(os.path.join(datastore_path, "notification.txt"), 'r') as f:
         x = f.read()
         j = json.loads(x)
         assert j['url'].startswith('http://localhost')
@@ -373,8 +372,8 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
 
 
     # URL check, this will always be converted to lowercase
-    assert os.path.isfile("test-datastore/notification-url.txt")
-    with open("test-datastore/notification-url.txt", 'r') as f:
+    assert os.path.isfile(os.path.join(datastore_path, "notification-url.txt"))
+    with open(os.path.join(datastore_path, "notification-url.txt"), 'r') as f:
         notification_url = f.read()
         assert 'xxx=http' in notification_url
         # apprise style headers should be stripped
@@ -385,18 +384,18 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
         assert f'watch_uuid={watch_uuid}' in notification_url
 
 
-    with open("test-datastore/notification-headers.txt", 'r') as f:
+    with open(os.path.join(datastore_path, "notification-headers.txt"), 'r') as f:
         notification_headers = f.read()
         assert 'custom-header: 123' in notification_headers.lower()
         assert 'second: hello world "space"' in notification_headers.lower()
 
 
     # Should always be automatically detected as JSON content type even when we set it as 'Plain Text' (default)
-    assert os.path.isfile("test-datastore/notification-content-type.txt")
-    with open("test-datastore/notification-content-type.txt", 'r') as f:
+    assert os.path.isfile(os.path.join(datastore_path, "notification-content-type.txt"))
+    with open(os.path.join(datastore_path, "notification-content-type.txt"), 'r') as f:
         assert 'application/json' in f.read()
 
-    os.unlink("test-datastore/notification-url.txt")
+    os.unlink(os.path.join(datastore_path, "notification-url.txt"))
 
     client.get(
         url_for("ui.form_delete", uuid="all"),
@@ -405,12 +404,12 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
 
 
 #2510
-def test_global_send_test_notification(client, live_server, measure_memory_usage):
+def test_global_send_test_notification(client, live_server, measure_memory_usage, datastore_path):
 
     
-    set_original_response()
-    if os.path.isfile("test-datastore/notification.txt"):
-        os.unlink("test-datastore/notification.txt") \
+    set_original_response(datastore_path=datastore_path)
+    if os.path.isfile(os.path.join(datastore_path, "notification.txt")):
+        os.unlink(os.path.join(datastore_path, "notification.txt")) \
 
     # 1995 UTF-8 content should be encoded
     test_body = 'change detection is cool 网站监测 内容更新了'
@@ -451,11 +450,11 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
     assert res.status_code != 400
     assert res.status_code != 500
 
-    with open("test-datastore/notification.txt", 'r') as f:
+    with open(os.path.join(datastore_path, "notification.txt"), 'r') as f:
         x = f.read()
         assert test_body in x
 
-    os.unlink("test-datastore/notification.txt")
+    os.unlink(os.path.join(datastore_path, "notification.txt"))
 
     ######### Test group/tag settings
     res = client.post(
@@ -470,7 +469,7 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
     # Give apprise time to fire
     time.sleep(4)
 
-    with open("test-datastore/notification.txt", 'r') as f:
+    with open(os.path.join(datastore_path, "notification.txt"), 'r') as f:
         x = f.read()
         # Should come from notification.py default handler when there is no notification body to pull from
         assert 'change detection is cool 网站监测 内容更新了' in x
@@ -511,12 +510,12 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
 
 
 
-def _test_color_notifications(client, notification_body_token):
+def _test_color_notifications(client, notification_body_token, datastore_path):
 
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
 
-    if os.path.isfile("test-datastore/notification.txt"):
-        os.unlink("test-datastore/notification.txt")
+    if os.path.isfile(os.path.join(datastore_path, "notification.txt")):
+        os.unlink(os.path.join(datastore_path, "notification.txt"))
 
 
     test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')+"?xxx={{ watch_url }}&+custom-header=123"
@@ -548,7 +547,7 @@ def _test_color_notifications(client, notification_body_token):
 
     wait_for_all_checks(client)
 
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
 
 
     res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -557,7 +556,7 @@ def _test_color_notifications(client, notification_body_token):
     wait_for_all_checks(client)
     time.sleep(3)
 
-    with open("test-datastore/notification.txt", 'r') as f:
+    with open(os.path.join(datastore_path, "notification.txt"), 'r') as f:
         x = f.read()
         s =  f'<span style="{HTML_CHANGED_STYLE}" role="note" aria-label="Changed text" title="Changed text">Which is across multiple lines'
         assert s in x
@@ -569,6 +568,7 @@ def _test_color_notifications(client, notification_body_token):
     )
 
 # Just checks the format of the colour notifications was correct
-def test_html_color_notifications(client, live_server, measure_memory_usage):
-    _test_color_notifications(client, '{{diff}}')
-    _test_color_notifications(client, '{{diff_full}}')
+def test_html_color_notifications(client, live_server, measure_memory_usage, datastore_path):
+    _test_color_notifications(client, '{{diff}}',datastore_path=datastore_path)
+    _test_color_notifications(client, '{{diff_full}}',datastore_path=datastore_path)
+

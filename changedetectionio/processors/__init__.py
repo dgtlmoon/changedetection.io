@@ -91,6 +91,8 @@ class difference_detection_processor():
             else:
                 logger.debug("Skipping adding proxy data when custom Browser endpoint is specified. ")
 
+        logger.debug(f"Using proxy '{proxy_url}' for {self.watch['uuid']}")
+
         # Now call the fetcher (playwright/requests/etc) with arguments that only a fetcher would need.
         # When browser_connection_url is None, it method should default to working out whats the best defaults (os env vars etc)
         self.fetcher = fetcher_obj(proxy_override=proxy_url,

@@ -8,7 +8,7 @@ import logging
 
 
 # Requires playwright to be installed
-def test_fetch_webdriver_content(client, live_server, measure_memory_usage):
+def test_fetch_webdriver_content(client, live_server, measure_memory_usage, datastore_path):
     #  live_server_setup(live_server) # Setup on conftest per function
 
     #####################

@@ -5,8 +5,6 @@ set -e
 # enable debug
 set -x
 
-docker network inspect changedet-network >/dev/null 2>&1 || docker network create changedet-network
-
 # Test proxy list handling, starting two squids on different ports
 # Each squid adds a different header to the response, which is the main thing we test for.
 docker run --network changedet-network -d --name squid-one --hostname squid-one --rm -v `pwd`/tests/proxy_list/squid.conf:/etc/squid/conf.d/debian.conf ubuntu/squid:4.13-21.10_edge
@@ -21,12 +19,13 @@ docker run --network changedet-network -d \
   -v `pwd`/tests/proxy_list/squid-passwords.txt:/etc/squid3/passwords \
   ubuntu/squid:4.13-21.10_edge
 
-
+sleep 5
 ## 2nd test actually choose the preferred proxy from proxies.json
+# This will force a request via "proxy-two"
 docker run --network changedet-network \
-  -v `pwd`/tests/proxy_list/proxies.json-example:/app/changedetectionio/test-datastore/proxies.json \
+  -v `pwd`/tests/proxy_list/proxies.json-example:/tmp/proxies.json \
   test-changedetectionio \
-  bash -c 'cd changedetectionio && pytest tests/proxy_list/test_multiple_proxy.py'
+  bash -c 'cd changedetectionio && pytest -s tests/proxy_list/test_multiple_proxy.py --datastore-path /tmp'
 
 set +e
 echo "- Looking for chosen.changedetection.io request in squid-one - it should NOT be here"
@@ -50,8 +49,10 @@ fi
 # Test the UI configurable proxies
 docker run --network changedet-network \
   test-changedetectionio \
-  bash -c 'cd changedetectionio && pytest tests/proxy_list/test_select_custom_proxy.py'
+  bash -c 'cd changedetectionio && pytest tests/proxy_list/test_select_custom_proxy.py --datastore-path /tmp'
 
+# Give squid proxies a moment to flush their logs
+sleep 2
 
 # Should see a request for one.changedetection.io in there
 echo "- Looking for .changedetection.io request in squid-custom"
@@ -65,7 +66,10 @@ fi
 # Test "no-proxy" option
 docker run --network changedet-network \
   test-changedetectionio \
-  bash -c 'cd changedetectionio && pytest tests/proxy_list/test_noproxy.py'
+  bash -c 'cd changedetectionio && pytest tests/proxy_list/test_noproxy.py --datastore-path /tmp'
+
+# Give squid proxies a moment to flush their logs
+sleep 2
 
 # We need to handle grep returning 1
 set +e
@@ -82,6 +86,8 @@ for c in $(echo "squid-one squid-two squid-custom"); do
   fi
 done
 
+echo "docker ps output"
+docker ps
 
 docker kill squid-one squid-two squid-custom
 
@@ -90,19 +96,19 @@ docker kill squid-one squid-two squid-custom
 # Requests
 docker run --network changedet-network \
   test-changedetectionio \
-  bash -c 'cd changedetectionio && pytest tests/proxy_list/test_proxy_noconnect.py'
+  bash -c 'cd changedetectionio && pytest tests/proxy_list/test_proxy_noconnect.py --datastore-path /tmp'
 
 # Playwright
 docker run --network changedet-network \
   test-changedetectionio \
-  bash -c 'cd changedetectionio && PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000 pytest tests/proxy_list/test_proxy_noconnect.py'
+  bash -c 'cd changedetectionio && PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000 pytest tests/proxy_list/test_proxy_noconnect.py --datastore-path /tmp'
 
 # Puppeteer fast
 docker run --network changedet-network \
   test-changedetectionio \
-  bash -c 'cd changedetectionio && FAST_PUPPETEER_CHROME_FETCHER=1 PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000 pytest tests/proxy_list/test_proxy_noconnect.py'
+  bash -c 'cd changedetectionio && FAST_PUPPETEER_CHROME_FETCHER=1 PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000 pytest tests/proxy_list/test_proxy_noconnect.py --datastore-path /tmp'
 
 # Selenium
 docker run --network changedet-network \
   test-changedetectionio \
-  bash -c 'cd changedetectionio && WEBDRIVER_URL=http://selenium:4444/wd/hub pytest tests/proxy_list/test_proxy_noconnect.py'
+  bash -c 'cd changedetectionio && WEBDRIVER_URL=http://selenium:4444/wd/hub pytest tests/proxy_list/test_proxy_noconnect.py --datastore-path /tmp'

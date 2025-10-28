@@ -3,11 +3,12 @@
 import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks, delete_all_watches
+import os
 
 from ..html_tools import *
 
 
-def set_original_response():
+def set_original_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -20,12 +21,12 @@ def set_original_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
     return None
 
 
-def set_modified_response():
+def set_modified_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -39,13 +40,13 @@ def set_modified_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
     return None
 
 
-def set_multiline_response():
+def set_multiline_response(datastore_path):
     test_return_data = """<html>
        <body>
      
@@ -61,18 +62,18 @@ def set_multiline_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
     return None
 
 
-# def test_setup(client, live_server, measure_memory_usage):
+# def test_setup(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
 
-def test_check_filter_multiline(client, live_server, measure_memory_usage):
+def test_check_filter_multiline(client, live_server, measure_memory_usage, datastore_path):
    ##  live_server_setup(live_server) # Setup on conftest per function
-    set_multiline_response()
+    set_multiline_response(datastore_path=datastore_path)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -119,11 +120,11 @@ def test_check_filter_multiline(client, live_server, measure_memory_usage):
     # but the last one, which also says 'lines' shouldnt be here (non-greedy match checking)
     assert b'aaand something lines' not in res.data
 
-def test_check_filter_and_regex_extract(client, live_server, measure_memory_usage):
+def test_check_filter_and_regex_extract(client, live_server, measure_memory_usage, datastore_path):
     
     include_filters = ".changetext"
 
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -159,7 +160,7 @@ def test_check_filter_and_regex_extract(client, live_server, measure_memory_usag
     assert b'not at the start of the expression' not in res.data
 
     #  Make a change
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
 
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -198,7 +199,7 @@ def test_check_filter_and_regex_extract(client, live_server, measure_memory_usag
 
 
 
-def test_regex_error_handling(client, live_server, measure_memory_usage):
+def test_regex_error_handling(client, live_server, measure_memory_usage, datastore_path):
 
     
 

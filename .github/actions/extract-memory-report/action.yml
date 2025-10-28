@@ -23,26 +23,29 @@ runs:
     - name: Dump container log
       shell: bash
       run: |
-        docker logs ${{ inputs.container-name }} > ${{ inputs.output-dir }}/${{ inputs.container-name }}-stdout-${{ inputs.python-version }}.txt 2>&1 || echo "Could not get stdout"
-        docker logs ${{ inputs.container-name }} 2> ${{ inputs.output-dir }}/${{ inputs.container-name }}-stderr-${{ inputs.python-version }}.txt || echo "Could not get stderr"
+        echo "Disabled for now"
+#        return
+#        docker logs ${{ inputs.container-name }} > ${{ inputs.output-dir }}/${{ inputs.container-name }}-stdout-${{ inputs.python-version }}.txt 2>&1 || echo "Could not get stdout"
+#        docker logs ${{ inputs.container-name }} 2> ${{ inputs.output-dir }}/${{ inputs.container-name }}-stderr-${{ inputs.python-version }}.txt || echo "Could not get stderr"
 
     - name: Extract and display memory test report
       shell: bash
       run: |
-        echo "Extracting test-memory.log from container..."
-        docker cp ${{ inputs.container-name }}:/app/changedetectionio/test-memory.log ${{ inputs.output-dir }}/test-memory-${{ inputs.python-version }}.log || echo "test-memory.log not found in container"
-
-        echo "=== Top 10 Highest Peak Memory Tests ==="
-        if [ -f ${{ inputs.output-dir }}/test-memory-${{ inputs.python-version }}.log ]; then
-          grep "Peak memory:" ${{ inputs.output-dir }}/test-memory-${{ inputs.python-version }}.log | \
-            sed 's/.*Peak memory: //' | \
-            paste -d'|' - <(grep "Peak memory:" ${{ inputs.output-dir }}/test-memory-${{ inputs.python-version }}.log) | \
-            sort -t'|' -k1 -nr | \
-            cut -d'|' -f2 | \
-            head -10
-          echo ""
-          echo "=== Full Memory Test Report ==="
-          cat ${{ inputs.output-dir }}/test-memory-${{ inputs.python-version }}.log
-        else
-          echo "No memory log available"
-        fi
+        echo "Disabled for now"
+#        echo "Extracting test-memory.log from container..."
+#        docker cp ${{ inputs.container-name }}:/app/changedetectionio/test-memory.log ${{ inputs.output-dir }}/test-memory-${{ inputs.python-version }}.log || echo "test-memory.log not found in container"
+#
+#        echo "=== Top 10 Highest Peak Memory Tests ==="
+#        if [ -f ${{ inputs.output-dir }}/test-memory-${{ inputs.python-version }}.log ]; then
+#          grep "Peak memory:" ${{ inputs.output-dir }}/test-memory-${{ inputs.python-version }}.log | \
+#            sed 's/.*Peak memory: //' | \
+#            paste -d'|' - <(grep "Peak memory:" ${{ inputs.output-dir }}/test-memory-${{ inputs.python-version }}.log) | \
+#            sort -t'|' -k1 -nr | \
+#            cut -d'|' -f2 | \
+#            head -10
+#          echo ""
+#          echo "=== Full Memory Test Report ==="
+#          cat ${{ inputs.output-dir }}/test-memory-${{ inputs.python-version }}.log
+#        else
+#          echo "No memory log available"
+#        fi

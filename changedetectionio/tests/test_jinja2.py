@@ -7,11 +7,11 @@ from .util import live_server_setup, wait_for_all_checks
 from ..jinja2_custom import render
 
 
-# def test_setup(client, live_server, measure_memory_usage):
+# def test_setup(client, live_server, measure_memory_usage, datastore_path):
    # #  live_server_setup(live_server) # Setup on conftest per function
 
 # If there was only a change in the whitespacing, then we shouldnt have a change detected
-def test_jinja2_in_url_query(client, live_server, measure_memory_usage):
+def test_jinja2_in_url_query(client, live_server, measure_memory_usage, datastore_path):
     
 
     # Add our URL to the import page
@@ -36,7 +36,7 @@ def test_jinja2_in_url_query(client, live_server, measure_memory_usage):
     assert b'date=2' in res.data
 
 # Test for issue #1493 - jinja2-time offset functionality
-def test_jinja2_time_offset_in_url_query(client, live_server, measure_memory_usage):
+def test_jinja2_time_offset_in_url_query(client, live_server, measure_memory_usage, datastore_path):
     """Test that jinja2 time offset expressions work in watch URLs (issue #1493)."""
 
     # Add our URL to the import page with time offset expression
@@ -66,7 +66,7 @@ def test_jinja2_time_offset_in_url_query(client, live_server, measure_memory_usa
 
 
 # https://techtonics.medium.com/secure-templating-with-jinja2-understanding-ssti-and-jinja2-sandbox-environment-b956edd60456
-def test_jinja2_security_url_query(client, live_server, measure_memory_usage):
+def test_jinja2_security_url_query(client, live_server, measure_memory_usage, datastore_path):
     # Add our URL to the import page
     test_url = url_for('test_return_query', _external=True)
 

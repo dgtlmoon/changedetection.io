@@ -3,12 +3,13 @@
 import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks, delete_all_watches
+import os
 
 import json
 import uuid
 
 
-def set_original_response():
+def set_original_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -21,12 +22,12 @@ def set_original_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
     return None
 
 
-def set_modified_response():
+def set_modified_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -39,7 +40,7 @@ def set_modified_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
     return None
@@ -52,17 +53,17 @@ def is_valid_uuid(val):
         return False
 
 
-# def test_setup(client, live_server, measure_memory_usage):
+# def test_setup(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
 
 
-def test_api_simple(client, live_server, measure_memory_usage):
+def test_api_simple(client, live_server, measure_memory_usage, datastore_path):
     
 
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
 
     # Create a watch
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
 
     # Validate bad URL
     test_url = url_for('test_endpoint', _external=True )
@@ -111,7 +112,7 @@ def test_api_simple(client, live_server, measure_memory_usage):
     time.sleep(1)
     wait_for_all_checks(client)
 
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
     # Trigger recheck of all ?recheck_all=1
     client.get(
         url_for("createwatch", recheck_all='1'),
@@ -244,7 +245,7 @@ def test_api_simple(client, live_server, measure_memory_usage):
     )
     assert len(res.json) == 0, "Watch list should be empty"
 
-def test_access_denied(client, live_server, measure_memory_usage):
+def test_access_denied(client, live_server, measure_memory_usage, datastore_path):
     # `config_api_token_enabled` Should be On by default
     res = client.get(
         url_for("createwatch")
@@ -289,11 +290,11 @@ def test_access_denied(client, live_server, measure_memory_usage):
     )
     assert b"Settings updated." in res.data
 
-def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
+def test_api_watch_PUT_update(client, live_server, measure_memory_usage, datastore_path):
 
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
     # Create a watch
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
     test_url = url_for('test_endpoint', _external=True)
 
     # Create new
@@ -398,7 +399,7 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
     delete_all_watches(client)
 
 
-def test_api_import(client, live_server, measure_memory_usage):
+def test_api_import(client, live_server, measure_memory_usage, datastore_path):
 
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
 
@@ -420,7 +421,7 @@ def test_api_import(client, live_server, measure_memory_usage):
     res = client.get(url_for('tags.tags_overview_page'))
     assert b'import-test' in res.data
 
-def test_api_conflict_UI_password(client, live_server, measure_memory_usage):
+def test_api_conflict_UI_password(client, live_server, measure_memory_usage, datastore_path):
 
     
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
@@ -438,7 +439,7 @@ def test_api_conflict_UI_password(client, live_server, measure_memory_usage):
     assert b"Password protection enabled." in res.data
 
     # Create a watch
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
     test_url = url_for('test_endpoint', _external=True)
 
     # Create new

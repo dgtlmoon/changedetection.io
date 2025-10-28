@@ -28,6 +28,15 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-py${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-py${{ env.PYTHON_VERSION }}-
+            ${{ runner.os }}-pip-
+
       - name: Build changedetection.io container for testing under Python ${{ env.PYTHON_VERSION }}
         run: |
           echo "---- Building for Python ${{ env.PYTHON_VERSION }} -----"
@@ -289,15 +298,18 @@ jobs:
           docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --cap-add=SYS_ADMIN --name sockpuppetbrowser --hostname sockpuppetbrowser --rm -p 3000:3000 dgtlmoon/sockpuppetbrowser:latest
           docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --cap-add=SYS_ADMIN --name sockpuppetbrowser-custom-url --hostname sockpuppetbrowser-custom-url -p 3001:3000 --rm dgtlmoon/sockpuppetbrowser:latest
 
-      - name: Test proxy squid style interaction
+      - name: Test proxy Squid style interaction
         run: |
           cd changedetectionio
           ./run_proxy_tests.sh
+          docker ps
+          cd ..
 
       - name: Test proxy SOCKS5 style interaction
         run: |
           cd changedetectionio
           ./run_socks_proxy_tests.sh
+          cd ..
 
   # Custom browser URL tests
   custom-browser-tests:

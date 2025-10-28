@@ -8,7 +8,7 @@ from . util import set_original_response, set_modified_response, live_server_set
 
 # Hard to just add more live server URLs when one test is already running (I think)
 # So we add our test here (was in a different file)
-def test_headers_in_request(client, live_server, measure_memory_usage):
+def test_headers_in_request(client, live_server, measure_memory_usage, datastore_path):
     #ve_server_setup(live_server)
     # Add our URL to the import page
     test_url = url_for('test_headers', _external=True)
@@ -76,7 +76,8 @@ def test_headers_in_request(client, live_server, measure_memory_usage):
 
     delete_all_watches(client)
 
-def test_body_in_request(client, live_server, measure_memory_usage):
+def test_body_in_request(client, live_server, measure_memory_usage, datastore_path):
+    import os
 
     # Add our URL to the import page
     test_url = url_for('test_body', _external=True)
@@ -141,7 +142,7 @@ def test_body_in_request(client, live_server, measure_memory_usage):
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     watches_with_body = 0
-    with open('test-datastore/url-watches.json') as f:
+    with open(os.path.join(datastore_path, 'url-watches.json')) as f:
         app_struct = json.load(f)
         for uuid in app_struct['watching']:
             if app_struct['watching'][uuid]['body']==body_value:
@@ -165,7 +166,8 @@ def test_body_in_request(client, live_server, measure_memory_usage):
     assert b"Body must be empty when Request Method is set to GET" in res.data
     delete_all_watches(client)
 
-def test_method_in_request(client, live_server, measure_memory_usage):
+def test_method_in_request(client, live_server, measure_memory_usage, datastore_path):
+    import os
     # Add our URL to the import page
     test_url = url_for('test_method', _external=True)
     if os.getenv('PLAYWRIGHT_DRIVER_URL'):
@@ -223,7 +225,7 @@ def test_method_in_request(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     watches_with_method = 0
-    with open('test-datastore/url-watches.json') as f:
+    with open(os.path.join(datastore_path, 'url-watches.json')) as f:
         app_struct = json.load(f)
         for uuid in app_struct['watching']:
             if app_struct['watching'][uuid]['method'] == 'PATCH':
@@ -235,7 +237,7 @@ def test_method_in_request(client, live_server, measure_memory_usage):
     delete_all_watches(client)
 
 # Re #2408 - user-agent override test, also should handle case-insensitive header deduplication
-def test_ua_global_override(client, live_server, measure_memory_usage):
+def test_ua_global_override(client, live_server, measure_memory_usage, datastore_path):
     ##  live_server_setup(live_server) # Setup on conftest per function
     test_url = url_for('test_headers', _external=True)
 
@@ -286,8 +288,9 @@ def test_ua_global_override(client, live_server, measure_memory_usage):
     assert b"html-requests-user-agent" not in res.data
     delete_all_watches(client)
 
-def test_headers_textfile_in_request(client, live_server, measure_memory_usage):
-    
+def test_headers_textfile_in_request(client, live_server, measure_memory_usage, datastore_path):
+    import os
+
     # Add our URL to the import page
 
     webdriver_ua = "Hello fancy webdriver UA 1.0"
@@ -343,14 +346,14 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage):
     assert b"Updated watch." in res.data
     wait_for_all_checks(client)
 
-    with open('test-datastore/headers-testtag.txt', 'w') as f:
+    with open(os.path.join(datastore_path, 'headers-testtag.txt'), 'w') as f:
         f.write("tag-header: test\r\nurl-header: http://example.com")
 
-    with open('test-datastore/headers.txt', 'w') as f:
+    with open(os.path.join(datastore_path, 'headers.txt'), 'w') as f:
         f.write("global-header: nice\r\nnext-global-header: nice\r\nurl-header-global: http://example.com/global")
 
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
-    with open(f'test-datastore/{uuid}/headers.txt', 'w') as f:
+    with open(os.path.join(datastore_path, uuid, 'headers.txt'), 'w') as f:
         f.write("watch-header: nice\r\nurl-header-watch: http://example.com/watch")
 
     wait_for_all_checks(client)
@@ -368,8 +371,8 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage):
     assert b"Extra headers file found and will be added to this watch" in res.data
 
     # Not needed anymore
-    os.unlink('test-datastore/headers.txt')
-    os.unlink('test-datastore/headers-testtag.txt')
+    os.unlink(os.path.join(datastore_path, 'headers.txt'))
+    os.unlink(os.path.join(datastore_path, 'headers-testtag.txt'))
 
     # The service should echo back the request verb
     res = client.get(
@@ -395,7 +398,7 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage):
     # unlink headers.txt on start/stop
     delete_all_watches(client)
 
-def test_headers_validation(client, live_server, measure_memory_usage):
+def test_headers_validation(client, live_server, measure_memory_usage, datastore_path):
     
 
     test_url = url_for('test_headers', _external=True)

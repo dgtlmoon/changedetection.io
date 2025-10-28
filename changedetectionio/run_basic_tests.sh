@@ -11,19 +11,16 @@ set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-find tests/test_*py -type f|while read test_name
-do
-  echo "TEST RUNNING $test_name"
-  # REMOVE_REQUESTS_OLD_SCREENSHOTS disabled so that we can write a screenshot and send it in test_notifications.py without a real browser
-  REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest -vv -s --maxfail=1 --tb=long $test_name
-done
+# REMOVE_REQUESTS_OLD_SCREENSHOTS disabled so that we can write a screenshot and send it in test_notifications.py without a real browser
+REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest -n 30 --dist load  tests/test_*.py
 
+#time pytest -n auto --dist loadfile -vv --tb=long tests/test_*.py
 echo "RUNNING WITH BASE_URL SET"
 
 # Now re-run some tests with BASE_URL enabled
 # Re #65 - Ability to include a link back to the installation, in the notification.
 export BASE_URL="https://really-unique-domain.io"
-REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest -vv -s --maxfail=1 tests/test_notification.py
+REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest -vv --maxfail=1 tests/test_notification.py
 
 
 # Re-run with HIDE_REFERER set - could affect login

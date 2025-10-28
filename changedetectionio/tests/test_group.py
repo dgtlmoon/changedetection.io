@@ -6,10 +6,10 @@ from .util import live_server_setup, wait_for_all_checks, extract_rss_token_from
 import os
 
 
-# def test_setup(client, live_server, measure_memory_usage):
+# def test_setup(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
 
-def set_original_response():
+def set_original_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -20,11 +20,11 @@ def set_original_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
     return None
 
-def set_modified_response():
+def set_modified_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -35,13 +35,13 @@ def set_modified_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
     return None
 
-def test_setup_group_tag(client, live_server, measure_memory_usage):
+def test_setup_group_tag(client, live_server, measure_memory_usage, datastore_path):
     
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
 
     # Add a tag with some config, import a tag and it should roughly work
     res = client.post(
@@ -116,7 +116,7 @@ def test_setup_group_tag(client, live_server, measure_memory_usage):
     )
     assert b"1 Imported" in res.data
     wait_for_all_checks(client)
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
     res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     rss_token = extract_rss_token_from_UI(client)
@@ -129,7 +129,7 @@ def test_setup_group_tag(client, live_server, measure_memory_usage):
     assert b"first-imported=1" in res.data
     delete_all_watches(client)
 
-def test_tag_import_singular(client, live_server, measure_memory_usage):
+def test_tag_import_singular(client, live_server, measure_memory_usage, datastore_path):
     
 
     test_url = url_for('test_endpoint', _external=True)
@@ -148,7 +148,7 @@ def test_tag_import_singular(client, live_server, measure_memory_usage):
     assert res.data.count(b'test-tag') == 1
     delete_all_watches(client)
 
-def test_tag_add_in_ui(client, live_server, measure_memory_usage):
+def test_tag_add_in_ui(client, live_server, measure_memory_usage, datastore_path):
     
 #
     res = client.post(
@@ -164,9 +164,9 @@ def test_tag_add_in_ui(client, live_server, measure_memory_usage):
 
     delete_all_watches(client)
 
-def test_group_tag_notification(client, live_server, measure_memory_usage):
+def test_group_tag_notification(client, live_server, measure_memory_usage, datastore_path):
     
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
 
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
@@ -207,16 +207,16 @@ def test_group_tag_notification(client, live_server, measure_memory_usage):
 
     wait_for_all_checks(client)
 
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     time.sleep(3)
 
-    assert os.path.isfile("test-datastore/notification.txt")
+    assert os.path.isfile(os.path.join(datastore_path, "notification.txt"))
 
     # Verify what was sent as a notification, this file should exist
-    with open("test-datastore/notification.txt", "r") as f:
+    with open(os.path.join(datastore_path, "notification.txt"), "r") as f:
         notification_submission = f.read()
-    os.unlink("test-datastore/notification.txt")
+    os.unlink(os.path.join(datastore_path, "notification.txt"))
 
     # Did we see the URL that had a change, in the notification?
     # Diff was correctly executed
@@ -231,7 +231,7 @@ def test_group_tag_notification(client, live_server, measure_memory_usage):
     #@todo Test that each of multiple notifications with different settings
     delete_all_watches(client)
 
-def test_limit_tag_ui(client, live_server, measure_memory_usage):
+def test_limit_tag_ui(client, live_server, measure_memory_usage, datastore_path):
 
     test_url = url_for('test_random_content_endpoint', _external=True)
 
@@ -269,7 +269,7 @@ def test_limit_tag_ui(client, live_server, measure_memory_usage):
     res = client.get(url_for("tags.delete_all"), follow_redirects=True)
     assert b'All tags deleted' in res.data
 
-def test_clone_tag_on_import(client, live_server, measure_memory_usage):
+def test_clone_tag_on_import(client, live_server, measure_memory_usage, datastore_path):
     
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
@@ -294,7 +294,7 @@ def test_clone_tag_on_import(client, live_server, measure_memory_usage):
     assert res.data.count(b'another-tag') == 3
     delete_all_watches(client)
 
-def test_clone_tag_on_quickwatchform_add(client, live_server, measure_memory_usage):
+def test_clone_tag_on_quickwatchform_add(client, live_server, measure_memory_usage, datastore_path):
     
 
     test_url = url_for('test_endpoint', _external=True)
@@ -324,7 +324,7 @@ def test_clone_tag_on_quickwatchform_add(client, live_server, measure_memory_usa
     res = client.get(url_for("tags.delete_all"), follow_redirects=True)
     assert b'All tags deleted' in res.data
 
-def test_order_of_filters_tag_filter_and_watch_filter(client, live_server, measure_memory_usage):
+def test_order_of_filters_tag_filter_and_watch_filter(client, live_server, measure_memory_usage, datastore_path):
 
     # Add a tag with some config, import a tag and it should roughly work
     res = client.post(
@@ -378,7 +378,7 @@ def test_order_of_filters_tag_filter_and_watch_filter(client, live_server, measu
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(d)
 
     test_url = url_for('test_endpoint', _external=True)

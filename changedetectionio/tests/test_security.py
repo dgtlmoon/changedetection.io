@@ -7,7 +7,7 @@ from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 from .. import strtobool
 
 
-def set_original_response():
+def set_original_response(datastore_path):
     test_return_data = """<html>
     <head><title>head title</title></head>
     <body>
@@ -20,11 +20,11 @@ def set_original_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
     return None
 
-def test_bad_access(client, live_server, measure_memory_usage):
+def test_bad_access(client, live_server, measure_memory_usage, datastore_path):
 
     res = client.post(
         url_for("imports.import_page"),
@@ -111,7 +111,7 @@ def _runner_test_various_file_slash(client, file_uri):
 
     delete_all_watches(client)
 
-def test_file_slash_access(client, live_server, measure_memory_usage):
+def test_file_slash_access(client, live_server, measure_memory_usage, datastore_path):
     
 
     # file: is NOT permitted by default, so it will be caught by ALLOW_FILE_URI check
@@ -121,7 +121,7 @@ def test_file_slash_access(client, live_server, measure_memory_usage):
 #    _runner_test_various_file_slash(client, file_uri=f"file:/{test_file_path}")
 #    _runner_test_various_file_slash(client, file_uri=f"file:{test_file_path}") # CVE-2024-56509
 
-def test_xss(client, live_server, measure_memory_usage):
+def test_xss(client, live_server, measure_memory_usage, datastore_path):
     
     from changedetectionio.notification import (
         default_notification_format
@@ -142,12 +142,12 @@ def test_xss(client, live_server, measure_memory_usage):
     assert b"&lt;img" in res.data
 
     # Check that even forcing an update directly still doesnt get to the frontend
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
     XSS_HACK = 'javascript:alert(document.domain)'
     uuid = client.application.config.get('DATASTORE').add_watch(url=url_for('test_endpoint', _external=True))
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
@@ -162,8 +162,8 @@ def test_xss(client, live_server, measure_memory_usage):
     assert XSS_HACK.encode('utf-8') not in res.data and res.status_code == 200
 
 
-def test_xss_watch_last_error(client, live_server, measure_memory_usage):
-    set_original_response()
+def test_xss_watch_last_error(client, live_server, measure_memory_usage, datastore_path):
+    set_original_response(datastore_path=datastore_path)
     # Add our URL to the import page
     res = client.post(
         url_for("imports.import_page"),

@@ -3,9 +3,10 @@
 from flask import url_for
 from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks, delete_all_watches
 import time
+import os
 
 
-def set_nonrenderable_response():
+def set_nonrenderable_response(datastore_path):
     test_return_data = """<html>
     <head><title>modified head title</title></head>
     <!-- like when some angular app was broken and doesnt render or whatever -->
@@ -13,20 +14,20 @@ def set_nonrenderable_response():
      </body>
      </html>
     """
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
     time.sleep(1)
 
     return None
 
-def set_zero_byte_response():
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+def set_zero_byte_response(datastore_path):
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("")
     time.sleep(1)
     return None
 
-def test_check_basic_change_detection_functionality(client, live_server, measure_memory_usage):
-    set_original_response()
+def test_check_basic_change_detection_functionality(client, live_server, measure_memory_usage, datastore_path):
+    set_original_response(datastore_path=datastore_path)
    #  live_server_setup(live_server) # Setup on conftest per function
 
     # Add our URL to the import page
@@ -55,7 +56,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     )
 
     # this should not trigger a change, because no good text could be converted from the HTML
-    set_nonrenderable_response()
+    set_nonrenderable_response(datastore_path)
 
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
@@ -84,7 +85,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
               'application-fetch_backend': "html_requests"},
         follow_redirects=True
     )
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
 
 
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -100,7 +101,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
 
     # A totally zero byte (#2528) response should also not trigger an error
-    set_zero_byte_response()
+    set_zero_byte_response(datastore_path=datastore_path)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     # 2877
