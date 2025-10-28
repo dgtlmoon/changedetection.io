@@ -28,8 +28,11 @@ docker run --network changedet-network \
   test-changedetectionio \
   bash -c 'cd changedetectionio && pytest tests/proxy_list/test_multiple_proxy.py'
 
-# Give squid proxies a moment to flush their logs
-sleep 2
+echo "-----------------   SQUID PROXY ONE LOGS -------------"
+docker logs squid-one
+echo "-----------------   SQUID PROXY TWO LOGS -------------"
+docker logs squid-two
+echo "------------------------------------------------------"
 
 set +e
 echo "- Looking for chosen.changedetection.io request in squid-one - it should NOT be here"
