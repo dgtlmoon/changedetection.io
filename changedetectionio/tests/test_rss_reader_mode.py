@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 
 import time
+import os
+
 from flask import url_for
 from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, \
     extract_UUID_from_client, delete_all_watches
 
 
-def set_original_cdata_xml():
+def set_original_cdata_xml(datastore_path):
     test_return_data = """<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
 <channel>
 <title>Security Bulletins on wetscale</title>
@@ -40,13 +42,13 @@ def set_original_cdata_xml():
     </rss>
             """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
 
-def test_rss_reader_mode(client, live_server, measure_memory_usage):
-    set_original_cdata_xml()
+def test_rss_reader_mode(client, live_server, measure_memory_usage, datastore_path):
+    set_original_cdata_xml(datastore_path=datastore_path)
 
     # Rarely do endpoints give the right header, usually just text/xml, so we check also for <rss
     # This also triggers the automatic CDATA text parser so the RSS goes back a nice content list
@@ -71,8 +73,8 @@ def test_rss_reader_mode(client, live_server, measure_memory_usage):
     assert 'PubDate: Thu, 07 Aug 2025 00:00:00 GMT' in snapshot_contents
     delete_all_watches(client)
 
-def test_rss_reader_mode_with_css_filters(client, live_server, measure_memory_usage):
-    set_original_cdata_xml()
+def test_rss_reader_mode_with_css_filters(client, live_server, measure_memory_usage, datastore_path):
+    set_original_cdata_xml(datastore_path=datastore_path)
 
     # Rarely do endpoints give the right header, usually just text/xml, so we check also for <rss
     # This also triggers the automatic CDATA text parser so the RSS goes back a nice content list

@@ -53,7 +53,7 @@
           <a class="pure-menu-heading" href="{{url_for('watchlist.index')}}">
             <strong>Change</strong>Detection.io</a>
         {% endif %}
-        {% if current_diff_url %}
+        {% if current_diff_url and is_safe_valid_url(current_diff_url) %}
           <a class="current-diff-url" href="{{ current_diff_url }}">
             <span style="max-width: 30%; overflow: hidden">{{ current_diff_url }}</span></a>
         {% else %}

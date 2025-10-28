@@ -3,12 +3,13 @@
 import time
 from flask import url_for
 from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
+import os
 
 
 # `subtractive_selectors` should still work in `source:` type requests
-def test_fetch_pdf(client, live_server, measure_memory_usage):
+def test_fetch_pdf(client, live_server, measure_memory_usage, datastore_path):
     import shutil
-    shutil.copy("tests/test.pdf", "test-datastore/endpoint-test.pdf")
+    shutil.copy("tests/test.pdf", os.path.join(datastore_path, "endpoint-test.pdf"))
 
    #  live_server_setup(live_server) # Setup on conftest per function
     test_url = url_for('test_pdf_endpoint', _external=True)
@@ -29,14 +30,14 @@ def test_fetch_pdf(client, live_server, measure_memory_usage):
 
     # So we know if the file changes in other ways
     import hashlib
-    original_md5 = hashlib.md5(open("test-datastore/endpoint-test.pdf", 'rb').read()).hexdigest().upper()
+    original_md5 = hashlib.md5(open(os.path.join(datastore_path, "endpoint-test.pdf"), 'rb').read()).hexdigest().upper()
     # We should have one
     assert len(original_md5) > 0
     # And it's going to be in the document
     assert b'Document checksum - ' + bytes(str(original_md5).encode('utf-8')) in res.data
 
-    shutil.copy("tests/test2.pdf", "test-datastore/endpoint-test.pdf")
-    changed_md5 = hashlib.md5(open("test-datastore/endpoint-test.pdf", 'rb').read()).hexdigest().upper()
+    shutil.copy("tests/test2.pdf", os.path.join(datastore_path, "endpoint-test.pdf"))
+    changed_md5 = hashlib.md5(open(os.path.join(datastore_path, "endpoint-test.pdf"), 'rb').read()).hexdigest().upper()
     res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
 

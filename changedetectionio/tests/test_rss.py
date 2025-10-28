@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-
+import os
 import time
 from flask import url_for
 from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, \
     extract_UUID_from_client, delete_all_watches
 
 
-def set_original_cdata_xml():
+def set_original_cdata_xml(datastore_path):
     test_return_data = """<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:media="http://search.yahoo.com/mrss/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
     <channel>
     <title>Gizi</title>
@@ -45,12 +45,12 @@ def set_original_cdata_xml():
     </rss>
             """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
 
-def set_html_content(content):
+def set_html_content(datastore_path, content):
     test_return_data = f"""<html>
        <body>
      Some initial text<br>
@@ -62,16 +62,16 @@ def set_html_content(content):
     """
 
     # Write as UTF-8 encoded bytes
-    with open("test-datastore/endpoint-content.txt", "wb") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "wb") as f:
         f.write(test_return_data.encode('utf-8'))
 
-# def test_setup(client, live_server, measure_memory_usage):
+# def test_setup(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
 
-def test_rss_and_token(client, live_server, measure_memory_usage):
+def test_rss_and_token(client, live_server, measure_memory_usage, datastore_path):
     #   #  live_server_setup(live_server) # Setup on conftest per function
 
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
     rss_token = extract_rss_token_from_UI(client)
 
     # Add our URL to the import page
@@ -84,7 +84,7 @@ def test_rss_and_token(client, live_server, measure_memory_usage):
     assert b"1 Imported" in res.data
 
     wait_for_all_checks(client)
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
     time.sleep(1)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
@@ -106,10 +106,10 @@ def test_rss_and_token(client, live_server, measure_memory_usage):
 
     client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
-def test_basic_cdata_rss_markup(client, live_server, measure_memory_usage):
+def test_basic_cdata_rss_markup(client, live_server, measure_memory_usage, datastore_path):
     
 
-    set_original_cdata_xml()
+    set_original_cdata_xml(datastore_path)
     # Rarely do endpoints give the right header, usually just text/xml, so we check also for <rss
     # This also triggers the automatic CDATA text parser so the RSS goes back a nice content list
     test_url = url_for('test_endpoint', content_type="text/xml; charset=UTF-8", _external=True)
@@ -130,10 +130,10 @@ def test_basic_cdata_rss_markup(client, live_server, measure_memory_usage):
     assert b'The days of Terminator' in res.data
     delete_all_watches(client)
 
-def test_rss_xpath_filtering(client, live_server, measure_memory_usage):
+def test_rss_xpath_filtering(client, live_server, measure_memory_usage, datastore_path):
     
 
-    set_original_cdata_xml()
+    set_original_cdata_xml(datastore_path)
 
     test_url = url_for('test_endpoint', content_type="application/atom+xml; charset=UTF-8", _external=True)
 
@@ -179,7 +179,7 @@ def test_rss_xpath_filtering(client, live_server, measure_memory_usage):
     delete_all_watches(client)
 
 
-def test_rss_bad_chars_breaking(client, live_server, measure_memory_usage):
+def test_rss_bad_chars_breaking(client, live_server, measure_memory_usage, datastore_path):
     """This should absolutely trigger the RSS builder to go into worst state mode
 
     - source: prefix means no html conversion (which kinda filters out the bad stuff)
@@ -190,7 +190,7 @@ def test_rss_bad_chars_breaking(client, live_server, measure_memory_usage):
     """
     
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         ten_kb_string = "A" * 10_000
         f.write(ten_kb_string)
 
@@ -204,7 +204,7 @@ def test_rss_bad_chars_breaking(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     # Set the bad content
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         jpeg_bytes = "\xff\xd8\xff\xe0\x00\x10XXXXXXXX\x00\x01\x02\x00\x00\x01\x00\x01\x00\x00"  # JPEG header
         jpeg_bytes += "A" * 10_000
 

@@ -4,9 +4,10 @@ import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 from changedetectionio import html_tools
+import os
 
+def set_original_ignore_response(datastore_path):
 
-def set_original_ignore_response():
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -18,11 +19,11 @@ def set_original_ignore_response():
 
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
-def set_modified_original_ignore_response():
+def set_modified_original_ignore_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some NEW nice initial text<br>
@@ -37,12 +38,12 @@ def set_modified_original_ignore_response():
 
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
 # Is the same but includes ZZZZZ, 'ZZZZZ' is the last line in ignore_text
-def set_modified_response_minus_block_text():
+def set_modified_response_minus_block_text(datastore_path):
     test_return_data = """<html>
        <body>
      Some NEW nice initial text<br>
@@ -57,15 +58,15 @@ def set_modified_response_minus_block_text():
 
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
-def test_check_block_changedetection_text_NOT_present(client, live_server, measure_memory_usage):
-    #  live_server_setup(live_server) # Setup on conftest per function
+def test_check_block_changedetection_text_NOT_present(client, live_server, measure_memory_usage, datastore_path):
+
     # Use a mix of case in ZzZ to prove it works case-insensitive.
     ignore_text = "out of stoCk\r\nfoobar"
-    set_original_ignore_response()
+    set_original_ignore_response(datastore_path=datastore_path)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -109,7 +110,7 @@ def test_check_block_changedetection_text_NOT_present(client, live_server, measu
     assert b'/test-endpoint' in res.data
 
     # The page changed, BUT the text is still there, just the rest of it changes, we should not see a change
-    set_modified_original_ignore_response()
+    set_modified_original_ignore_response(datastore_path=datastore_path)
 
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -123,17 +124,18 @@ def test_check_block_changedetection_text_NOT_present(client, live_server, measu
 
     # 2548
     # Going back to the ORIGINAL should NOT trigger a change
-    set_original_ignore_response()
+    set_original_ignore_response(datastore_path=datastore_path)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' not in res.data
 
     # Now we set a change where the text is gone AND its different content, it should now trigger
-    set_modified_response_minus_block_text()
+    set_modified_response_minus_block_text(datastore_path=datastore_path)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
+
     assert b'has-unread-changes' in res.data
 
     # Clearing all history then viewing it should show us what is blocked

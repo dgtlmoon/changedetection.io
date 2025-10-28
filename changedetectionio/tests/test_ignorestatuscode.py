@@ -3,12 +3,13 @@
 import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
+import os
 
 
 
 
 
-def set_original_response():
+def set_original_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -19,11 +20,11 @@ def set_original_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
-def set_some_changed_response():
+def set_some_changed_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -34,17 +35,17 @@ def set_some_changed_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
-def test_normal_page_check_works_with_ignore_status_code(client, live_server, measure_memory_usage):
+def test_normal_page_check_works_with_ignore_status_code(client, live_server, measure_memory_usage, datastore_path):
 
 
     # Give the endpoint time to spin up
     time.sleep(1)
 
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
 
     # Goto the settings page, add our ignore text
     res = client.post(
@@ -65,7 +66,7 @@ def test_normal_page_check_works_with_ignore_status_code(client, live_server, me
 
     wait_for_all_checks(client)
 
-    set_some_changed_response()
+    set_some_changed_response(datastore_path=datastore_path)
     wait_for_all_checks(client)
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -80,10 +81,10 @@ def test_normal_page_check_works_with_ignore_status_code(client, live_server, me
 
 
 # Tests the whole stack works with staus codes ignored
-def test_403_page_check_works_with_ignore_status_code(client, live_server, measure_memory_usage):
+def test_403_page_check_works_with_ignore_status_code(client, live_server, measure_memory_usage, datastore_path):
     sleep_time_for_fetch_thread = 3
 
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
 
     # Give the endpoint time to spin up
     time.sleep(1)
@@ -109,7 +110,7 @@ def test_403_page_check_works_with_ignore_status_code(client, live_server, measu
     wait_for_all_checks(client)
 
     #  Make a change
-    set_some_changed_response()
+    set_some_changed_response(datastore_path=datastore_path)
 
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)

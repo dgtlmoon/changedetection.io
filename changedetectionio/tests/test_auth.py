@@ -5,7 +5,7 @@ from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
 
 # test pages with http://username@password:foobar.com/ work
-def test_basic_auth(client, live_server, measure_memory_usage):
+def test_basic_auth(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
 
 

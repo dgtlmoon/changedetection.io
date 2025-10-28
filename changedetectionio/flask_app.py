@@ -133,6 +133,11 @@ def get_socketio_path():
     # Socket.IO will be available at {prefix}/socket.io/
     return prefix
 
+@app.template_global('is_safe_valid_url')
+def _is_safe_valid_url(test_url):
+    from .validate_url import is_safe_valid_url
+    return is_safe_valid_url(test_url)
+
 
 @app.template_filter('format_number_locale')
 def _jinja2_filter_format_number_locale(value: float) -> str:
@@ -385,7 +390,7 @@ def changedetection_app(config=None, datastore_o=None):
             # We would sometimes get login loop errors on sites hosted in sub-paths
 
             # note for the future:
-            #            if not is_safe_url(next):
+            #            if not is_safe_valid_url(next):
             #                return flask.abort(400)
             return redirect(url_for('watchlist.index'))
 

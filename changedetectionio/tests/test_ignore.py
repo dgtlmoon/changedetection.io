@@ -5,8 +5,9 @@ from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
 from changedetectionio import html_tools
 from . util import  extract_UUID_from_client
+import os
 
-def set_original_ignore_response():
+def set_original_ignore_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -19,13 +20,13 @@ def set_original_ignore_response():
 
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
-def test_ignore(client, live_server, measure_memory_usage):
+def test_ignore(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
-    set_original_ignore_response()
+    set_original_ignore_response(datastore_path)
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -55,9 +56,9 @@ def test_ignore(client, live_server, measure_memory_usage):
     assert b'csrftoken' in res.data
 
 
-def test_strip_ignore_lines(client, live_server, measure_memory_usage):
+def test_strip_ignore_lines(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
-    set_original_ignore_response()
+    set_original_ignore_response(datastore_path)
 
 
     # Goto the settings page, add our ignore text

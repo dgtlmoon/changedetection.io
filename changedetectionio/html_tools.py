@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from loguru import logger
 from typing import List
 import html
@@ -13,7 +15,6 @@ TITLE_RE = re.compile(r"<title[^>]*>(.*?)</title>", re.I | re.S)
 META_CS  = re.compile(r'<meta[^>]+charset=["\']?\s*([a-z0-9_\-:+.]+)', re.I)
 META_CT  = re.compile(r'<meta[^>]+http-equiv=["\']?content-type["\']?[^>]*content=["\'][^>]*charset=([a-z0-9_\-:+.]+)', re.I)
 
-
 # 'price' , 'lowPrice', 'highPrice' are usually under here
 # All of those may or may not appear on different websites - I didnt find a way todo case-insensitive searching here
 LD_JSON_PRODUCT_OFFER_SELECTORS = ["json:$..offers", "json:$..Offers"]
@@ -22,9 +23,9 @@ class JSONNotFound(ValueError):
     def __init__(self, msg):
         ValueError.__init__(self, msg)
 
-
 # Doesn't look like python supports forward slash auto enclosure in re.findall
 # So convert it to inline flag "(?i)foobar" type configuration
+@lru_cache(maxsize=100)
 def perl_style_slash_enclosed_regex_to_options(regex):
 
     res = re.search(PERL_STYLE_REGEX, regex, re.IGNORECASE)

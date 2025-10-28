@@ -5,26 +5,27 @@ import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks, extract_UUID_from_client
 import pytest
+import os
 
 
 
 
 
-def set_html_response():
+def set_html_response(datastore_path):
     test_return_data = """
 <html><body><span class="nav_second_img_text">
                   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;铸大国重器，挺制造脊梁，致力能源未来，赋能美好生活。
                                   </span>
 </body></html>
     """
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
     return None
 
 
 # In the case the server does not issue a charset= or doesnt have content_type header set
-def test_check_encoding_detection(client, live_server, measure_memory_usage):
-    set_html_response()
+def test_check_encoding_detection(client, live_server, measure_memory_usage, datastore_path):
+    set_html_response(datastore_path=datastore_path)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="text/html", _external=True)
@@ -51,8 +52,8 @@ def test_check_encoding_detection(client, live_server, measure_memory_usage):
 
 
 # In the case the server does not issue a charset= or doesnt have content_type header set
-def test_check_encoding_detection_missing_content_type_header(client, live_server, measure_memory_usage):
-    set_html_response()
+def test_check_encoding_detection_missing_content_type_header(client, live_server, measure_memory_usage, datastore_path):
+    set_html_response(datastore_path=datastore_path)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)

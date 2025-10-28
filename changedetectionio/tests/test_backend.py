@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 
 import time
 from flask import url_for
@@ -16,8 +17,9 @@ def test_inscriptus():
     assert stripped_text_from_html == 'test!\nok man'
 
 
-def test_check_basic_change_detection_functionality(client, live_server, measure_memory_usage):
-    set_original_response()
+
+def test_check_basic_change_detection_functionality(client, live_server, measure_memory_usage, datastore_path):
+    set_original_response(datastore_path=datastore_path)
 
     uuid = client.application.config.get('DATASTORE').add_watch(url=url_for('test_endpoint', _external=True))
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -52,7 +54,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     assert b'foobar-detection' not in res.data
 
     # Make a change
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
 
     # Force recheck
     res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -117,7 +119,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
         assert b'test-endpoint' in res.data
 
     # Recheck it but only with a title change, content wasnt changed
-    set_original_response(extra_title=" and more")
+    set_original_response(datastore_path=datastore_path, extra_title=" and more")
 
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
@@ -163,7 +165,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
 
 # Server says its plaintext, we should always treat it as plaintext, and then if they have a filter, try to apply that
-def test_requests_timeout(client, live_server, measure_memory_usage):
+def test_requests_timeout(client, live_server, measure_memory_usage, datastore_path):
     delay = 2
     test_url = url_for('test_endpoint', delay=delay, _external=True)
 
@@ -201,7 +203,7 @@ def test_requests_timeout(client, live_server, measure_memory_usage):
     res = client.get(url_for("watchlist.index"))
     assert b'Read timed out' not in res.data
 
-def test_non_text_mime_or_downloads(client, live_server, measure_memory_usage):
+def test_non_text_mime_or_downloads(client, live_server, measure_memory_usage, datastore_path):
     """
 
     https://github.com/dgtlmoon/changedetection.io/issues/3434
@@ -216,7 +218,7 @@ def test_non_text_mime_or_downloads(client, live_server, measure_memory_usage):
     :param measure_memory_usage:
     :return:
     """
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("""some random text that should be split by line
 and not parsed with html_to_text
 this way we know that it correctly parsed as plain text
@@ -260,7 +262,7 @@ got it\r\n
     delete_all_watches(client)
 
 
-def test_standard_text_plain(client, live_server, measure_memory_usage):
+def test_standard_text_plain(client, live_server, measure_memory_usage, datastore_path):
     """
 
     https://github.com/dgtlmoon/changedetection.io/issues/3434
@@ -275,7 +277,7 @@ def test_standard_text_plain(client, live_server, measure_memory_usage):
     :param measure_memory_usage:
     :return:
     """
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("""some random text that should be split by line
 and not parsed with html_to_text
 <title>Even this title should stay because we are just plain text</title>
@@ -321,9 +323,9 @@ got it\r\n
     delete_all_watches(client)
 
 # Server says its plaintext, we should always treat it as plaintext
-def test_plaintext_even_if_xml_content(client, live_server, measure_memory_usage):
+def test_plaintext_even_if_xml_content(client, live_server, measure_memory_usage, datastore_path):
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("""<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!--Activity and fragment titles-->
@@ -349,10 +351,10 @@ def test_plaintext_even_if_xml_content(client, live_server, measure_memory_usage
     delete_all_watches(client)
 
 # Server says its plaintext, we should always treat it as plaintext, and then if they have a filter, try to apply that
-def test_plaintext_even_if_xml_content_and_can_apply_filters(client, live_server, measure_memory_usage):
+def test_plaintext_even_if_xml_content_and_can_apply_filters(client, live_server, measure_memory_usage, datastore_path):
 
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("""<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!--Activity and fragment titles-->

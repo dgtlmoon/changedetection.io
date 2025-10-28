@@ -32,7 +32,7 @@ def prepare_filter_prevew(datastore, watch_uuid, form_data):
     '''Used by @app.route("/edit/<string:uuid>/preview-rendered", methods=['POST'])'''
     from changedetectionio import forms, html_tools
     from changedetectionio.model.Watch import model as watch_model
-    from concurrent.futures import ProcessPoolExecutor
+    from concurrent.futures import ThreadPoolExecutor
     from copy import deepcopy
     from flask import request
     import brotli
@@ -77,13 +77,16 @@ def prepare_filter_prevew(datastore, watch_uuid, form_data):
             update_handler.fetcher.headers['content-type'] = tmp_watch.get('content-type')
 
             # Process our watch with filters and the HTML from disk, and also a blank watch with no filters but also with the same HTML from disk
-            # Do this as a parallel process because it could take some time
-            with ProcessPoolExecutor(max_workers=2) as executor:
-                future1 = executor.submit(_task, tmp_watch, update_handler)
-                future2 = executor.submit(_task, blank_watch_no_filters, update_handler)
+            # Do this as parallel threads (not processes) to avoid pickle issues with Lock objects
+            try:
+                with ThreadPoolExecutor(max_workers=2) as executor:
+                    future1 = executor.submit(_task, tmp_watch, update_handler)
+                    future2 = executor.submit(_task, blank_watch_no_filters, update_handler)
 
-                text_after_filter = future1.result()
-                text_before_filter = future2.result()
+                    text_after_filter = future1.result()
+                    text_before_filter = future2.result()
+            except Exception as e:
+                x=1
 
     try:
         trigger_line_numbers = html_tools.strip_ignore_text(content=text_after_filter,

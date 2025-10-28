@@ -1,4 +1,5 @@
 from os import getenv
+from copy import deepcopy
 
 from changedetectionio.blueprint.rss import RSS_FORMAT_TYPES
 
@@ -74,7 +75,8 @@ class model(dict):
 
     def __init__(self, *arg, **kw):
         super(model, self).__init__(*arg, **kw)
-        self.update(self.base_config)
+        # CRITICAL: deepcopy to avoid sharing mutable objects between instances
+        self.update(deepcopy(self.base_config))
 
 
 def parse_headers_from_text_file(filepath):

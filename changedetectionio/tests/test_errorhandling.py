@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import time
+import os
 
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks, delete_all_watches
@@ -8,9 +9,9 @@ from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 
 
 
-def _runner_test_http_errors(client, live_server, http_code, expected_text):
+def _runner_test_http_errors(client, live_server, http_code, expected_text, datastore_path):
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("Now you going to get a {} error code\n".format(http_code))
 
 
@@ -46,17 +47,15 @@ def _runner_test_http_errors(client, live_server, http_code, expected_text):
     delete_all_watches(client)
 
 
-def test_http_error_handler(client, live_server, measure_memory_usage):
-    _runner_test_http_errors(client, live_server, 403, 'Access denied')
-    _runner_test_http_errors(client, live_server, 404, 'Page not found')
-    _runner_test_http_errors(client, live_server, 500, '(Internal server error) received')
-    _runner_test_http_errors(client, live_server, 400, 'Error - Request returned a HTTP error code 400')
+def test_http_error_handler(client, live_server, measure_memory_usage, datastore_path):
+    _runner_test_http_errors(client, live_server, 403, 'Access denied', datastore_path=datastore_path)
+    _runner_test_http_errors(client, live_server, 404, 'Page not found', datastore_path=datastore_path)
+    _runner_test_http_errors(client, live_server, 500, '(Internal server error) received', datastore_path=datastore_path)
+    _runner_test_http_errors(client, live_server, 400, 'Error - Request returned a HTTP error code 400', datastore_path=datastore_path)
     delete_all_watches(client)
 
 # Just to be sure error text is properly handled
-def test_DNS_errors(client, live_server, measure_memory_usage):
-    # Give the endpoint time to spin up
-    time.sleep(1)
+def test_DNS_errors(client, live_server, measure_memory_usage, datastore_path):
 
     # Add our URL to the import page
     res = client.post(
@@ -84,12 +83,9 @@ def test_DNS_errors(client, live_server, measure_memory_usage):
     delete_all_watches(client)
 
 # Re 1513
-def test_low_level_errors_clear_correctly(client, live_server, measure_memory_usage):
-    
-    # Give the endpoint time to spin up
-    time.sleep(1)
+def test_low_level_errors_clear_correctly(client, live_server, measure_memory_usage, datastore_path):
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("<html><body><div id=here>Hello world</div></body></html>")
 
     # Add our URL to the import page

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import time
+import os
 
 from flask import url_for
 
@@ -10,7 +11,7 @@ from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 
 
 
-def set_response_with_multiple_index():
+def set_response_with_multiple_index(datastore_path):
     data= """<!DOCTYPE html>
 <html>
 <body>
@@ -36,11 +37,11 @@ def set_response_with_multiple_index():
 </body>
 </html>
 """
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(data)
 
 
-def set_original_response():
+def set_original_response(datastore_path):
     test_return_data = """<html>
     <header>
     <h2>Header</h2>
@@ -65,11 +66,11 @@ def set_original_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
-def set_modified_response():
+def set_modified_response(datastore_path):
     test_return_data = """<html>
     <header>
     <h2>Header changed</h2>
@@ -94,7 +95,7 @@ def set_modified_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
@@ -146,10 +147,10 @@ across multiple lines
     )
 
 
-def test_element_removal_full(client, live_server, measure_memory_usage):
+def test_element_removal_full(client, live_server, measure_memory_usage, datastore_path):
     
 
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
 
 
     # Add our URL to the import page
@@ -194,7 +195,7 @@ def test_element_removal_full(client, live_server, measure_memory_usage):
     client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
 
     #  Make a change to header/footer/nav
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
 
     # Trigger a check
     res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -208,9 +209,9 @@ def test_element_removal_full(client, live_server, measure_memory_usage):
     assert b"unviewed" not in res.data
 
 # Re #2752
-def test_element_removal_nth_offset_no_shift(client, live_server, measure_memory_usage):
+def test_element_removal_nth_offset_no_shift(client, live_server, measure_memory_usage, datastore_path):
 
-    set_response_with_multiple_index()
+    set_response_with_multiple_index(datastore_path=datastore_path)
     subtractive_selectors_data = [
 ### css style ###
 """body > table > tr:nth-child(1) > th:nth-child(2)

@@ -39,11 +39,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             return make_response("Error: You must have atleast one watch configured for 'test notification' to work", 400)
 
         watch = datastore.data['watching'].get(watch_uuid)
-
-        notification_urls = None
-
-        if request.form.get('notification_urls'):
-            notification_urls = request.form['notification_urls'].strip().splitlines()
+        notification_urls = request.form.get('notification_urls','').strip().splitlines()
 
         if not notification_urls:
             logger.debug("Test notification - Trying by group/tag in the edit form if available")
@@ -81,6 +77,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             # Only use if present, if not set in n_object it should use the default system value
             if 'notification_format' in request.form and request.form['notification_format'].strip():
                 n_object['notification_format'] = request.form.get('notification_format', '').strip()
+            else:
+                n_object['notification_format'] = datastore.data['settings']['application'].get('notification_format')
 
             if 'notification_title' in request.form and request.form['notification_title'].strip():
                 n_object['notification_title'] = request.form.get('notification_title', '').strip()

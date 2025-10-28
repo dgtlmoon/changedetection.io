@@ -1,4 +1,5 @@
 from blinker import signal
+from changedetectionio.validate_url import is_safe_valid_url
 
 from changedetectionio.strtobool import strtobool
 from changedetectionio.jinja2_custom import render as jinja_render
@@ -12,31 +13,11 @@ from .. import jinja2_custom as safe_jinja
 from ..diff import ADDED_PLACEMARKER_OPEN
 from ..html_tools import TRANSLATE_WHITESPACE_TABLE
 
-# Allowable protocols, protects against javascript: etc
-# file:// is further checked by ALLOW_FILE_URI
-SAFE_PROTOCOL_REGEX='^(http|https|ftp|file):'
 FAVICON_RESAVE_THRESHOLD_SECONDS=86400
 
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
-
-
-def is_safe_url(test_url):
-    # See https://github.com/dgtlmoon/changedetection.io/issues/1358
-
-    # Remove 'source:' prefix so we dont get 'source:javascript:' etc
-    # 'source:' is a valid way to tell us to return the source
-
-    r = re.compile(re.escape('source:'), re.IGNORECASE)
-    test_url = r.sub('', test_url)
-
-    pattern = re.compile(os.getenv('SAFE_PROTOCOL_REGEX', SAFE_PROTOCOL_REGEX), re.IGNORECASE)
-    if not pattern.match(test_url.strip()):
-        return False
-
-    return True
-
 
 class model(watch_base):
     __newest_history_key = None
@@ -80,7 +61,7 @@ class model(watch_base):
     def link(self):
 
         url = self.get('url', '')
-        if not is_safe_url(url):
+        if not is_safe_valid_url(url):
             return 'DISABLED'
 
         ready_url = url
@@ -101,7 +82,7 @@ class model(watch_base):
             ready_url=ready_url.replace('source:', '')
 
         # Also double check it after any Jinja2 formatting just incase
-        if not is_safe_url(ready_url):
+        if not is_safe_valid_url(ready_url):
             return 'DISABLED'
         return ready_url
 

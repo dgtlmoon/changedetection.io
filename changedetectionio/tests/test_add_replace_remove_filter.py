@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os.path
+import os
 
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks, wait_for_notification_endpoint_output, delete_all_watches
@@ -9,7 +10,7 @@ import time
 from ..diff import ADDED_PLACEMARKER_OPEN
 
 
-def set_original(excluding=None, add_line=None):
+def set_original(datastore_path, excluding=None, add_line=None):
     test_return_data = """<html>
      <body>
      <p>Some initial text</p>
@@ -35,16 +36,16 @@ def set_original(excluding=None, add_line=None):
 
         test_return_data = output
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
-# def test_setup(client, live_server, measure_memory_usage):
+# def test_setup(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
 
-def test_check_removed_line_contains_trigger(client, live_server, measure_memory_usage):
+def test_check_removed_line_contains_trigger(client, live_server, measure_memory_usage, datastore_path):
 
     # Give the endpoint time to spin up
-    set_original()
+    set_original(datastore_path=datastore_path)
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
@@ -64,9 +65,10 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
               "time_between_check_use_default": "y"},
         follow_redirects=True
     )
+
     assert b"Updated watch." in res.data
     wait_for_all_checks(client)
-    set_original(excluding='Something irrelevant')
+    set_original(excluding='Something irrelevant', datastore_path=datastore_path)
 
     # A line thats not the trigger should not trigger anything
     res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -77,7 +79,7 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
     assert b'has-unread-changes' not in res.data
 
     # The trigger line is REMOVED,  this should trigger
-    set_original(excluding='The golden line')
+    set_original(excluding='The golden line', datastore_path=datastore_path)
 
     # Check in the processor here what's going on, its triggering empty-reply and no change.
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -92,7 +94,7 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
     time.sleep(0.2)
 
     time.sleep(1)
-    set_original(excluding=None)
+    set_original(excluding=None, datastore_path=datastore_path)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     time.sleep(1)
@@ -100,7 +102,7 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
     assert b'has-unread-changes' not in res.data
 
     # Remove it again, and we should get a trigger
-    set_original(excluding='The golden line')
+    set_original(excluding='The golden line', datastore_path=datastore_path)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
@@ -109,7 +111,7 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
     delete_all_watches(client)
 
 
-def test_check_add_line_contains_trigger(client, live_server, measure_memory_usage):
+def test_check_add_line_contains_trigger(client, live_server, measure_memory_usage, datastore_path):
     
     delete_all_watches(client)
     time.sleep(1)
@@ -132,7 +134,7 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
     )
     assert b'Settings updated' in res.data
 
-    set_original()
+    set_original(datastore_path=datastore_path)
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
@@ -155,7 +157,7 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
     )
     assert b"Updated watch." in res.data
     wait_for_all_checks(client)
-    set_original(excluding='Something irrelevant')
+    set_original(excluding='Something irrelevant', datastore_path=datastore_path)
 
     # A line thats not the trigger should not trigger anything
     res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -166,7 +168,7 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
     assert b'has-unread-changes' not in res.data
 
     # The trigger line is ADDED,  this should trigger
-    set_original(add_line='<p>Oh yes please</p>')
+    set_original(add_line='<p>Oh yes please</p>', datastore_path=datastore_path)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
@@ -174,9 +176,9 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
     assert b'has-unread-changes' in res.data
 
     # Takes a moment for apprise to fire
-    wait_for_notification_endpoint_output()
-    assert os.path.isfile("test-datastore/notification.txt"), "Notification fired because I can see the output file"
-    with open("test-datastore/notification.txt", 'rb') as f:
+    wait_for_notification_endpoint_output(datastore_path=datastore_path)
+    assert os.path.isfile(os.path.join(datastore_path, "notification.txt")), "Notification fired because I can see the output file"
+    with open(os.path.join(datastore_path, "notification.txt"), 'rb') as f:
         response = f.read()
         assert ADDED_PLACEMARKER_OPEN.encode('utf-8') not in response #  _apply_diff_filtering shouldnt add something here
         assert b'-Oh yes please' in response

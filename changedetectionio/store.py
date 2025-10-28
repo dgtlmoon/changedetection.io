@@ -1,5 +1,7 @@
 from changedetectionio.strtobool import strtobool
 
+from changedetectionio.validate_url import is_safe_valid_url
+
 from flask import (
     flash
 )
@@ -40,17 +42,24 @@ class ChangeDetectionStore:
     needs_write_urgent = False
 
     __version_check = True
+    save_data_thread = None
 
     def __init__(self, datastore_path="/datastore", include_default_watches=True, version_tag="0.0.0"):
         # Should only be active for docker
         # logging.basicConfig(filename='/dev/stdout', level=logging.INFO)
-        self.__data = App.model()
-        self.datastore_path = datastore_path
-        self.json_store_path = os.path.join(self.datastore_path, "url-watches.json")
-        logger.info(f"Datastore path is '{self.json_store_path}'")
+
         self.needs_write = False
         self.start_time = time.time()
         self.stop_thread = False
+        self.reload_state(datastore_path=datastore_path, include_default_watches=include_default_watches, version_tag=version_tag)
+
+
+    def reload_state(self, datastore_path, include_default_watches, version_tag):
+        logger.info(f"Datastore path is '{datastore_path}'")
+
+        self.__data = App.model()
+        self.datastore_path = datastore_path
+        self.json_store_path = os.path.join(self.datastore_path, "url-watches.json")
         # Base definition for all watchers
         # deepcopy part of #569 - not sure why its needed exactly
         self.generic_definition = deepcopy(Watch.model(datastore_path = datastore_path, default={}))
@@ -143,7 +152,10 @@ class ChangeDetectionStore:
         self.needs_write = True
 
         # Finally start the thread that will manage periodic data saves to JSON
-        save_data_thread = threading.Thread(target=self.save_datastore).start()
+        # Only start if thread is not already running (reload_state might be called multiple times)
+        if not self.save_data_thread or not self.save_data_thread.is_alive():
+            self.save_data_thread = threading.Thread(target=self.save_datastore)
+            self.save_data_thread.start()
 
     def rehydrate_entity(self, uuid, entity, processor_override=None):
         """Set the dict back to the dict Watch object"""
@@ -340,9 +352,10 @@ class ChangeDetectionStore:
                 logger.error(f"Error fetching metadata for shared watch link {url} {str(e)}")
                 flash("Error fetching metadata for {}".format(url), 'error')
                 return False
-        from .model.Watch import is_safe_url
-        if not is_safe_url(url):
-            flash('Watch protocol is not permitted by SAFE_PROTOCOL_REGEX', 'error')
+
+        if not is_safe_valid_url(url):
+            flash('Watch protocol is not permitted or invalid URL format', 'error')
+
             return None
 
         if tag and type(tag) == str:
@@ -408,7 +421,6 @@ class ChangeDetectionStore:
             self.sync_to_json()
             return
         else:
-
             try:
                 # Re #286  - First write to a temp file, then confirm it looks OK and rename it
                 # This is a fairly basic strategy to deal with the case that the file is corrupted,
@@ -438,7 +450,7 @@ class ChangeDetectionStore:
                 logger.remove()
                 logger.add(sys.stderr)
 
-                logger.critical("Shutting down datastore thread")
+                logger.info(f"Shutting down datastore '{self.datastore_path}' thread")
                 return
 
             if self.needs_write or self.needs_write_urgent:

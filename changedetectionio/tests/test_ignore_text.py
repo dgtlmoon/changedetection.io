@@ -4,6 +4,7 @@ import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 from changedetectionio import html_tools
+import os
 
 
 
@@ -31,7 +32,7 @@ def test_strip_text_func():
     stripped_content = html_tools.strip_ignore_text(test_content, ignore)
     assert stripped_content == "Some initial text\n\nWhich is across multiple lines\n\n\n\nSo let's see what happens."
 
-def set_original_ignore_response(ver_stamp="123"):
+def set_original_ignore_response(datastore_path, ver_stamp="123"):
     test_return_data = f"""<html>
        <body>
      Some initial text<br>
@@ -44,11 +45,11 @@ def set_original_ignore_response(ver_stamp="123"):
 
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
-def set_modified_original_ignore_response(ver_stamp="123"):
+def set_modified_original_ignore_response(datastore_path, ver_stamp="123"):
     test_return_data = f"""<html>
        <body>
      Some NEW nice initial text<br>
@@ -63,12 +64,12 @@ def set_modified_original_ignore_response(ver_stamp="123"):
 
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
 # Is the same but includes ZZZZZ, 'ZZZZZ' is the last line in ignore_text
-def set_modified_ignore_response(ver_stamp="123"):
+def set_modified_ignore_response(datastore_path, ver_stamp="123"):
     test_return_data = f"""<html>
        <body>
      Some initial text<br>
@@ -82,17 +83,17 @@ def set_modified_ignore_response(ver_stamp="123"):
 
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
 # Ignore text now just removes it entirely, is a LOT more simpler code this way
 
-def test_check_ignore_text_functionality(client, live_server, measure_memory_usage):
+def test_check_ignore_text_functionality(client, live_server, measure_memory_usage, datastore_path):
 
     # Use a mix of case in ZzZ to prove it works case-insensitive.
     ignore_text = "XXXXX\r\nYYYYY\r\nzZzZZ\r\nnew ignore stuff"
-    set_original_ignore_response()
+    set_original_ignore_response(datastore_path=datastore_path)
 
 
     # Add our URL to the import page
@@ -135,7 +136,7 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
     assert b'ignored_line_numbers = []' in res.data
 
     #  Make a change
-    set_modified_ignore_response()
+    set_modified_ignore_response(datastore_path=datastore_path)
 
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -150,7 +151,7 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
 
 
     # Just to be sure.. set a regular modified change..
-    set_modified_original_ignore_response()
+    set_modified_original_ignore_response(datastore_path=datastore_path)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
@@ -169,10 +170,10 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
     delete_all_watches(client)
 
 # When adding some ignore text, it should not trigger a change, even if something else on that line changes
-def _run_test_global_ignore(client, as_source=False, extra_ignore=""):
+def _run_test_global_ignore(client, datastore_path, as_source=False, extra_ignore=""):
     ignore_text = "XXXXX\r\nYYYYY\r\nZZZZZ\r\n"+extra_ignore
 
-    set_original_ignore_response()
+    set_original_ignore_response(datastore_path=datastore_path)
 
     # Goto the settings page, add our ignore text
     res = client.post(
@@ -229,7 +230,7 @@ def _run_test_global_ignore(client, as_source=False, extra_ignore=""):
     # Make a change which includes the ignore text, it should be ignored and no 'change' triggered
     # It adds text with "ZZZZzzzz" and "ZZZZ" is in the ignore list
     # And tweaks the ver_stamp which should be picked up by global regex ignore
-    set_modified_ignore_response(ver_stamp=time.time())
+    set_modified_ignore_response(ver_stamp=time.time(), datastore_path=datastore_path)
 
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -243,7 +244,7 @@ def _run_test_global_ignore(client, as_source=False, extra_ignore=""):
     assert b'/test-endpoint' in res.data
 
     # Just to be sure.. set a regular modified change that will trigger it
-    set_modified_original_ignore_response()
+    set_modified_original_ignore_response(datastore_path=datastore_path)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
@@ -251,10 +252,10 @@ def _run_test_global_ignore(client, as_source=False, extra_ignore=""):
 
     delete_all_watches(client)
 
-def test_check_global_ignore_text_functionality(client, live_server, measure_memory_usage):
+def test_check_global_ignore_text_functionality(client, live_server, measure_memory_usage, datastore_path):
     
-    _run_test_global_ignore(client, as_source=False)
+    _run_test_global_ignore(client, as_source=False, datastore_path=datastore_path)
 
-def test_check_global_ignore_text_functionality_as_source(client, live_server, measure_memory_usage):
+def test_check_global_ignore_text_functionality_as_source(client, live_server, measure_memory_usage, datastore_path):
     
-    _run_test_global_ignore(client, as_source=True, extra_ignore='/\?v=\d/')
+    _run_test_global_ignore(client, as_source=True, extra_ignore='/\?v=\d/', datastore_path=datastore_path)

@@ -6,7 +6,7 @@ from ..util import live_server_setup, wait_for_all_checks
 import os
 
 # just make a request, we will grep in the docker logs to see it actually got called
-def test_select_custom(client, live_server, measure_memory_usage):
+def test_select_custom(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
 
     # Goto settings, add our custom one
@@ -50,7 +50,7 @@ def test_select_custom(client, live_server, measure_memory_usage):
     # Now we should see the request in the container logs for "squid-squid-custom" because it will be the only default
 
 
-def test_custom_proxy_validation(client, live_server, measure_memory_usage):
+def test_custom_proxy_validation(client, live_server, measure_memory_usage, datastore_path):
     #  live_server_setup(live_server) # Setup on conftest per function
 
     # Goto settings, add our custom one
