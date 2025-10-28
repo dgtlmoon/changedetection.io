@@ -302,11 +302,13 @@ jobs:
         run: |
           cd changedetectionio
           ./run_proxy_tests.sh
+          cd ..
 
       - name: Test proxy SOCKS5 style interaction
         run: |
           cd changedetectionio
           ./run_socks_proxy_tests.sh
+          cd ..
 
   # Custom browser URL tests
   custom-browser-tests:

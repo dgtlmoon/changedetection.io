@@ -25,15 +25,14 @@ sleep 5
 docker run --network changedet-network \
   -v `pwd`/tests/proxy_list/proxies.json-example:/app/changedetectionio/test-datastore/proxies.json \
   test-changedetectionio \
-  bash -c 'echo here is the proxy list; cat /app/changedetectionio/test-datastore/proxies.json; cd changedetectionio && pytest tests/proxy_list/test_multiple_proxy.py'
+  bash -c 'echo here is the proxy list; cat /app/changedetectionio/test-datastore/proxies.json; cd changedetectionio && pytest -s tests/proxy_list/test_multiple_proxy.py'
 
 echo "-----------------   SQUID PROXY ONE LOGS -------------"
 docker logs squid-one
 echo "-----------------   SQUID PROXY TWO LOGS -------------"
 docker logs squid-two
-echo "----- squid-two cat /var/log/squid/access.log --------"
-docker exec squid-two cat /var/log/squid/access.log
-docker exec squid-two ls -al /var/log/squid
+echo "----- DNS debug output --------"
+docker run --network changedet-network test-changedetectionio getent hosts squid-one squid-two
 echo "------------------------------------------------------"
 
 set +e
