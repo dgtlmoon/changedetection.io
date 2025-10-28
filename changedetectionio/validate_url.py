@@ -82,6 +82,11 @@ def is_safe_valid_url(test_url):
         logger.error(f'URL "{test_url}" is not correct Jinja2? {str(e)}')
         return False
 
+    # Check query parameters and fragment
+    if re.search(r'[<>]', test_url):
+        logger.warning(f'URL "{test_url}" contains suspicious characters')
+        return False
+
     # Normalize URL encoding - handle both encoded and unencoded query parameters
     test_url = normalize_url_encoding(test_url)
 
@@ -89,11 +94,6 @@ def is_safe_valid_url(test_url):
     pattern = re.compile(os.getenv('SAFE_PROTOCOL_REGEX', safe_protocol_regex), re.IGNORECASE)
     if not pattern.match(test_url.strip()):
         logger.warning(f'URL "{test_url}" is not safe, aborting.')
-        return False
-
-    # Check query parameters and fragment
-    if re.search(r'[<>]', test_url):
-        logger.warning(f'URL "{test_url}" contains suspicious characters')
         return False
 
     # If hosts that only contain alphanumerics are allowed ("localhost" for example)

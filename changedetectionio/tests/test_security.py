@@ -25,7 +25,7 @@ def set_original_response():
     return None
 
 def test_bad_access(client, live_server, measure_memory_usage):
-    
+
     res = client.post(
         url_for("imports.import_page"),
         data={"urls": 'https://localhost'},
@@ -74,7 +74,7 @@ def test_bad_access(client, live_server, measure_memory_usage):
     )
 
     assert b'Watch protocol is not permitted or invalid URL format' in res.data
-    
+
     res = client.post(
         url_for("ui.ui_views.form_quick_watch_add"),
         data={"url": 'https://i-wanna-xss-you.com?hereis=<script>alert(1)</script>', "tags": ''},
