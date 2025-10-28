@@ -96,6 +96,7 @@ jobs:
 
       - name: Test built container with Pytest
         run: |
+          docker network inspect changedet-network >/dev/null 2>&1 || docker network create changedet-network
           docker run --name test-cdio-basic-tests --network changedet-network test-changedetectionio bash -c 'cd changedetectionio && ./run_basic_tests.sh'
 
       - name: Extract memory report and logs
@@ -302,6 +303,12 @@ jobs:
       - name: Load Docker image
         run: |
           docker load -i /tmp/test-changedetectionio.tar
+
+      - name: Spin up ancillary services
+        run: |
+          docker network create changedet-network
+          docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --cap-add=SYS_ADMIN --name sockpuppetbrowser --hostname sockpuppetbrowser --rm -p 3000:3000 dgtlmoon/sockpuppetbrowser:latest
+          docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --cap-add=SYS_ADMIN --name sockpuppetbrowser-custom-url --hostname sockpuppetbrowser-custom-url -p 3001:3000 --rm dgtlmoon/sockpuppetbrowser:latest
 
       - name: Test custom browser URL
         run: |
