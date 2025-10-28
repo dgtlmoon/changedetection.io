@@ -3,9 +3,10 @@
 import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks, delete_all_watches
+import os
 
 
-def set_original_ignore_response():
+def set_original_ignore_response(datastore_path):
     test_return_data = """<html>
      <body>
      <p>Some initial text</p>
@@ -17,12 +18,12 @@ def set_original_ignore_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
 # The same but just re-ordered the text
-def set_modified_swapped_lines():
+def set_modified_swapped_lines(datastore_path):
     # Re-ordered and with some whitespacing, should get stripped() too.
     test_return_data = """<html>
      <body>
@@ -33,10 +34,10 @@ def set_modified_swapped_lines():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
-def set_modified_swapped_lines_with_extra_text_for_sorting():
+def set_modified_swapped_lines_with_extra_text_for_sorting(datastore_path):
     test_return_data = """<html>
      <body>
      <p>&nbsp;Which is across multiple lines</p>     
@@ -50,11 +51,11 @@ def set_modified_swapped_lines_with_extra_text_for_sorting():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
-def set_modified_with_trigger_text_response():
+def set_modified_with_trigger_text_response(datastore_path):
     test_return_data = """<html>
      <body>
      <p>Some initial text</p>
@@ -65,17 +66,17 @@ def set_modified_with_trigger_text_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
-# def test_setup(client, live_server, measure_memory_usage):
+# def test_setup(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
 
-def test_unique_lines_functionality(client, live_server, measure_memory_usage):
+def test_unique_lines_functionality(client, live_server, measure_memory_usage, datastore_path):
     
 
 
-    set_original_ignore_response()
+    set_original_ignore_response(datastore_path=datastore_path)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -96,7 +97,7 @@ def test_unique_lines_functionality(client, live_server, measure_memory_usage):
     assert b'has-unread-changes' not in res.data
 
     #  Make a change
-    set_modified_swapped_lines()
+    set_modified_swapped_lines(datastore_path)
 
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -116,10 +117,10 @@ def test_unique_lines_functionality(client, live_server, measure_memory_usage):
     assert b'has-unread-changes' in res.data
     delete_all_watches(client)
 
-def test_sort_lines_functionality(client, live_server, measure_memory_usage):
+def test_sort_lines_functionality(client, live_server, measure_memory_usage, datastore_path):
     
 
-    set_modified_swapped_lines_with_extra_text_for_sorting()
+    set_modified_swapped_lines_with_extra_text_for_sorting(datastore_path=datastore_path)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -162,10 +163,10 @@ def test_sort_lines_functionality(client, live_server, measure_memory_usage):
     delete_all_watches(client)
 
 
-def test_extra_filters(client, live_server, measure_memory_usage):
+def test_extra_filters(client, live_server, measure_memory_usage, datastore_path):
     
 
-    set_original_ignore_response()
+    set_original_ignore_response(datastore_path=datastore_path)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)

@@ -9,8 +9,9 @@ import re
 sleep_time_for_fetch_thread = 3
 
 
-def test_share_watch(client, live_server, measure_memory_usage):
-    set_original_response()
+def test_share_watch(client, live_server, measure_memory_usage, datastore_path):
+    set_original_response(datastore_path=datastore_path)
+
    #  live_server_setup(live_server) # Setup on conftest per function
 
     test_url = url_for('test_endpoint', _external=True)

@@ -8,10 +8,10 @@ from flask import url_for
 from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 
 
-# def test_setup(client, live_server, measure_memory_usage):
+# def test_setup(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
 
-def test_import(client, live_server, measure_memory_usage):
+def test_import(client, live_server, measure_memory_usage, datastore_path):
     # Give the endpoint time to spin up
     wait_for_all_checks(client)
 
@@ -34,7 +34,7 @@ https://example.com tag1, other tag"""
     res = client.get( url_for("watchlist.index"))
     res = client.get( url_for("watchlist.index"))
 
-def xtest_import_skip_url(client, live_server, measure_memory_usage):
+def xtest_import_skip_url(client, live_server, measure_memory_usage, datastore_path):
 
 
     # Give the endpoint time to spin up
@@ -57,7 +57,7 @@ def xtest_import_skip_url(client, live_server, measure_memory_usage):
     # Clear flask alerts
     res = client.get( url_for("watchlist.index"))
 
-def test_import_distillio(client, live_server, measure_memory_usage):
+def test_import_distillio(client, live_server, measure_memory_usage, datastore_path):
 
     distill_data='''
 {
@@ -123,7 +123,7 @@ def test_import_distillio(client, live_server, measure_memory_usage):
     # Clear flask alerts
     res = client.get(url_for("watchlist.index"))
 
-def test_import_custom_xlsx(client, live_server, measure_memory_usage):
+def test_import_custom_xlsx(client, live_server, measure_memory_usage, datastore_path):
     """Test can upload a excel spreadsheet and the watches are created correctly"""
 
     
@@ -171,7 +171,7 @@ def test_import_custom_xlsx(client, live_server, measure_memory_usage):
 
     delete_all_watches(client)
 
-def test_import_watchete_xlsx(client, live_server, measure_memory_usage):
+def test_import_watchete_xlsx(client, live_server, measure_memory_usage, datastore_path):
     """Test can upload a excel spreadsheet and the watches are created correctly"""
 
     

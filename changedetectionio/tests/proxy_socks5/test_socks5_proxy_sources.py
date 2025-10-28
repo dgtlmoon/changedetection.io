@@ -4,7 +4,7 @@ from flask import url_for
 from changedetectionio.tests.util import live_server_setup, wait_for_all_checks
 
 
-def set_response():
+def set_response(datastore_path):
     import time
     data = """<html>
        <body>
@@ -14,15 +14,15 @@ def set_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(data)
     time.sleep(1)
 
 # should be proxies.json mounted from run_proxy_tests.sh already
 # -v `pwd`/tests/proxy_socks5/proxies.json-example:/app/changedetectionio/test-datastore/proxies.json
-def test_socks5_from_proxiesjson_file(client, live_server, measure_memory_usage):
+def test_socks5_from_proxiesjson_file(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
-    set_response()
+    set_response(datastore_path)
     # Because the socks server should connect back to us
     test_url = url_for('test_endpoint', _external=True) + f"?socks-test-tag={os.getenv('SOCKSTEST', '')}"
     test_url = test_url.replace('localhost.localdomain', 'cdio')

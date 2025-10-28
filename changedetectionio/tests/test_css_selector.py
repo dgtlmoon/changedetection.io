@@ -3,12 +3,13 @@
 import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
+import os
 
 from ..html_tools import *
 
 
 
-def set_original_response():
+def set_original_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -21,11 +22,11 @@ def set_original_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
     return None
 
-def set_modified_response():
+def set_modified_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -38,7 +39,7 @@ def set_modified_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
     return None
@@ -69,12 +70,12 @@ def test_include_filters_output():
 
 
 # Tests the whole stack works with the CSS Filter
-def test_check_markup_include_filters_restriction(client, live_server, measure_memory_usage):
+def test_check_markup_include_filters_restriction(client, live_server, measure_memory_usage, datastore_path):
     sleep_time_for_fetch_thread = 3
 
     include_filters = "#sametext"
 
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
 
     # Give the endpoint time to spin up
     time.sleep(1)
@@ -105,7 +106,7 @@ def test_check_markup_include_filters_restriction(client, live_server, measure_m
     # Give the thread time to pick it up
     time.sleep(sleep_time_for_fetch_thread)
     #  Make a change
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
 
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -119,11 +120,11 @@ def test_check_markup_include_filters_restriction(client, live_server, measure_m
 
 
 # Tests the whole stack works with the CSS Filter
-def test_check_multiple_filters(client, live_server, measure_memory_usage):
+def test_check_multiple_filters(client, live_server, measure_memory_usage, datastore_path):
     
     include_filters = "#blob-a\r\nxpath://*[contains(@id,'blob-b')]"
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("""<html><body>
      <div id="blob-a">Blob A</div>
      <div id="blob-b">Blob B</div>
@@ -168,12 +169,12 @@ def test_check_multiple_filters(client, live_server, measure_memory_usage):
 # The filter exists, but did not contain anything useful
 # Mainly used when the filter contains just an IMG, this can happen when someone selects an image in the visual-selector
 # Tests fetcher can throw a "ReplyWithContentButNoText" exception after applying filter and extracting text
-def test_filter_is_empty_help_suggestion(client, live_server, measure_memory_usage):
+def test_filter_is_empty_help_suggestion(client, live_server, measure_memory_usage, datastore_path):
     
 
     include_filters = "#blob-a"
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("""<html><body>
          <div id="blob-a">
            <img src="something.jpg">
@@ -216,7 +217,7 @@ def test_filter_is_empty_help_suggestion(client, live_server, measure_memory_usa
 
     ### Just an empty selector, no image
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("""<html><body>
          <div id="blob-a">
            <!-- doo doo -->

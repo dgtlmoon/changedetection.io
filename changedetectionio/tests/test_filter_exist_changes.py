@@ -8,7 +8,7 @@ from .util import set_original_response, live_server_setup, wait_for_notificatio
 from changedetectionio.model import App
 
 
-def set_response_without_filter():
+def set_response_without_filter(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -20,12 +20,12 @@ def set_response_without_filter():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
     return None
 
 
-def set_response_with_filter():
+def set_response_with_filter(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -37,11 +37,11 @@ def set_response_with_filter():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
     return None
 
-def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_server, measure_memory_usage):
+def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_server, measure_memory_usage, datastore_path):
 #  Filter knowingly doesn't exist, like someone setting up a known filter to see if some cinema tickets are on sale again
 #  And the page has that filter available
 #  Then I should get a notification
@@ -50,7 +50,7 @@ def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_se
 
     # Give the endpoint time to spin up
     time.sleep(1)
-    set_response_without_filter()
+    set_response_without_filter(datastore_path=datastore_path)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -105,20 +105,20 @@ def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_se
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
-    wait_for_notification_endpoint_output()
+    wait_for_notification_endpoint_output(datastore_path=datastore_path)
 
     # Shouldn't exist, shouldn't have fired
-    assert not os.path.isfile("test-datastore/notification.txt")
+    assert not os.path.isfile(os.path.join(datastore_path, "notification.txt"))
     # Now the filter should exist
-    set_response_with_filter()
+    set_response_with_filter(datastore_path=datastore_path)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
-    wait_for_notification_endpoint_output()
+    wait_for_notification_endpoint_output(datastore_path=datastore_path)
 
-    assert os.path.isfile("test-datastore/notification.txt")
+    assert os.path.isfile(os.path.join(datastore_path, "notification.txt"))
 
-    with open("test-datastore/notification.txt", 'r') as f:
+    with open(os.path.join(datastore_path, "notification.txt"), 'r') as f:
         notification = f.read()
 
     assert 'Ticket now on sale' in notification
-    os.unlink("test-datastore/notification.txt")
+    os.unlink(os.path.join(datastore_path, "notification.txt"))

@@ -3,9 +3,10 @@
 import time
 from flask import url_for
 from . util import live_server_setup, delete_all_watches
+import os
 
 
-def set_original_ignore_response():
+def set_original_ignore_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -17,17 +18,17 @@ def set_original_ignore_response():
 
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
 
-def test_trigger_regex_functionality_with_filter(client, live_server, measure_memory_usage):
+def test_trigger_regex_functionality_with_filter(client, live_server, measure_memory_usage, datastore_path):
 
    #  live_server_setup(live_server) # Setup on conftest per function
     sleep_time_for_fetch_thread = 3
 
-    set_original_ignore_response()
+    set_original_ignore_response(datastore_path=datastore_path)
 
     # Give the endpoint time to spin up
     time.sleep(1)
@@ -57,7 +58,7 @@ def test_trigger_regex_functionality_with_filter(client, live_server, measure_me
     client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
 
     # Check that we have the expected text.. but it's not in the css filter we want
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("<html>some new noise with cool stuff2 ok</html>")
 
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -68,7 +69,7 @@ def test_trigger_regex_functionality_with_filter(client, live_server, measure_me
     assert b'has-unread-changes' not in res.data
 
     # now this should trigger something
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("<html>some new noise with <span id=in-here>cool stuff6</span> ok</html>")
 
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)

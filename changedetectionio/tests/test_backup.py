@@ -8,10 +8,11 @@ import re
 import time
 
 
-def test_backup(client, live_server, measure_memory_usage):
+def test_backup(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
 
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
+
 
     # Give the endpoint time to spin up
     time.sleep(1)

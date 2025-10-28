@@ -9,10 +9,10 @@ from .util import  live_server_setup, wait_for_all_checks, extract_UUID_from_cli
 from ..forms import REQUIRE_ATLEAST_ONE_TIME_PART_MESSAGE_DEFAULT, REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT
 
 
-# def test_setup(client, live_server, measure_memory_usage):
+# def test_setup(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
 
-def test_check_basic_scheduler_functionality(client, live_server, measure_memory_usage):
+def test_check_basic_scheduler_functionality(client, live_server, measure_memory_usage, datastore_path):
     
     days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
     test_url = url_for('test_random_content_endpoint', _external=True)
@@ -90,7 +90,7 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
     delete_all_watches(client)
 
 
-def test_check_basic_global_scheduler_functionality(client, live_server, measure_memory_usage):
+def test_check_basic_global_scheduler_functionality(client, live_server, measure_memory_usage, datastore_path):
     
     days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
     test_url = url_for('test_random_content_endpoint', _external=True)
@@ -172,7 +172,7 @@ def test_check_basic_global_scheduler_functionality(client, live_server, measure
     delete_all_watches(client)
 
 
-def test_validation_time_interval_field(client, live_server, measure_memory_usage):
+def test_validation_time_interval_field(client, live_server, measure_memory_usage, datastore_path):
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)

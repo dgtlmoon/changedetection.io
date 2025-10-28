@@ -4,9 +4,10 @@
 from flask import url_for
 from .util import  wait_for_all_checks, delete_all_watches
 from ..processors.magic import RSS_XML_CONTENT_TYPES
+import os
 
 
-def set_rss_atom_feed_response(header=''):
+def set_rss_atom_feed_response(datastore_path, header='', ):
     test_return_data = f"""{header}<!-- Generated on Wed, 08 Oct 2025 08:42:33 -0700, really really honestly  -->
 <rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
 <channel>
@@ -33,14 +34,14 @@ def set_rss_atom_feed_response(header=''):
 </channel>
 </rss>"""
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
     return None
 
 
 
-def set_original_response():
+def set_original_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -53,12 +54,12 @@ def set_original_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
     return None
 
 
-def set_modified_response():
+def set_modified_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -71,14 +72,14 @@ def set_modified_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
     return None
 
 
 # Handle utf-8 charset replies https://github.com/dgtlmoon/changedetection.io/pull/613
-def test_check_xpath_filter_utf8(client, live_server, measure_memory_usage):
+def test_check_xpath_filter_utf8(client, live_server, measure_memory_usage, datastore_path):
     filter = '//item/*[self::description]'
 
     d = '''<?xml version="1.0" encoding="UTF-8"?>
@@ -108,7 +109,7 @@ def test_check_xpath_filter_utf8(client, live_server, measure_memory_usage):
 	</channel>
 </rss>'''
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(d)
 
     # Add our URL to the import page
@@ -129,7 +130,7 @@ def test_check_xpath_filter_utf8(client, live_server, measure_memory_usage):
 
 
 # Handle utf-8 charset replies https://github.com/dgtlmoon/changedetection.io/pull/613
-def test_check_xpath_text_function_utf8(client, live_server, measure_memory_usage):
+def test_check_xpath_text_function_utf8(client, live_server, measure_memory_usage, datastore_path):
     filter = '//item/title/text()'
 
     d = '''<?xml version="1.0" encoding="UTF-8"?>
@@ -157,7 +158,7 @@ def test_check_xpath_text_function_utf8(client, live_server, measure_memory_usag
 	</channel>
 </rss>'''
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(d)
 
     # Add our URL to the import page
@@ -187,10 +188,10 @@ def test_check_xpath_text_function_utf8(client, live_server, measure_memory_usag
     delete_all_watches(client)
 
 
-def test_check_markup_xpath_filter_restriction(client, live_server, measure_memory_usage):
+def test_check_markup_xpath_filter_restriction(client, live_server, measure_memory_usage, datastore_path):
     xpath_filter = "//*[contains(@class, 'sametext')]"
 
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -216,7 +217,7 @@ def test_check_markup_xpath_filter_restriction(client, live_server, measure_memo
     client.get(url_for("ui.ui_views.diff_history_page", uuid="first"), follow_redirects=True)
 
     #  Make a change
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
 
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -228,7 +229,7 @@ def test_check_markup_xpath_filter_restriction(client, live_server, measure_memo
     delete_all_watches(client)
 
 
-def test_xpath_validation(client, live_server, measure_memory_usage):
+def test_xpath_validation(client, live_server, measure_memory_usage, datastore_path):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
@@ -244,7 +245,7 @@ def test_xpath_validation(client, live_server, measure_memory_usage):
     delete_all_watches(client)
 
 
-def test_xpath23_prefix_validation(client, live_server, measure_memory_usage):
+def test_xpath23_prefix_validation(client, live_server, measure_memory_usage, datastore_path):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
@@ -259,7 +260,7 @@ def test_xpath23_prefix_validation(client, live_server, measure_memory_usage):
     assert b"is not a valid XPath expression" in res.data
     delete_all_watches(client)
 
-def test_xpath1_lxml(client, live_server, measure_memory_usage):
+def test_xpath1_lxml(client, live_server, measure_memory_usage, datastore_path):
     
 
     d = '''<?xml version="1.0" encoding="UTF-8"?>
@@ -287,7 +288,7 @@ def test_xpath1_lxml(client, live_server, measure_memory_usage):
     	</channel>
     </rss>'''.encode('utf-8')
 
-    with open("test-datastore/endpoint-content.txt", "wb") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "wb") as f:
         f.write(d)
 
 
@@ -319,7 +320,7 @@ def test_xpath1_lxml(client, live_server, measure_memory_usage):
     #####
 
 
-def test_xpath1_validation(client, live_server, measure_memory_usage):
+def test_xpath1_validation(client, live_server, measure_memory_usage, datastore_path):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
@@ -336,10 +337,10 @@ def test_xpath1_validation(client, live_server, measure_memory_usage):
 
 
 # actually only really used by the distll.io importer, but could be handy too
-def test_check_with_prefix_include_filters(client, live_server, measure_memory_usage):
+def test_check_with_prefix_include_filters(client, live_server, measure_memory_usage, datastore_path):
     delete_all_watches(client)
 
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
     wait_for_all_checks(client)
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -368,10 +369,10 @@ def test_check_with_prefix_include_filters(client, live_server, measure_memory_u
     client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
 
-def test_various_rules(client, live_server, measure_memory_usage):
+def test_various_rules(client, live_server, measure_memory_usage, datastore_path):
     # Just check these don't error
     ##  live_server_setup(live_server) # Setup on conftest per function
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("""<html>
        <body>
      Some initial text<br>
@@ -412,13 +413,13 @@ def test_various_rules(client, live_server, measure_memory_usage):
     delete_all_watches(client)
 
 
-def test_xpath_20(client, live_server, measure_memory_usage):
+def test_xpath_20(client, live_server, measure_memory_usage, datastore_path):
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
 
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
@@ -446,8 +447,8 @@ def test_xpath_20(client, live_server, measure_memory_usage):
     client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
 
-def test_xpath_20_function_count(client, live_server, measure_memory_usage):
-    set_original_response()
+def test_xpath_20_function_count(client, live_server, measure_memory_usage, datastore_path):
+    set_original_response(datastore_path=datastore_path)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -479,8 +480,8 @@ def test_xpath_20_function_count(client, live_server, measure_memory_usage):
     client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
 
-def test_xpath_20_function_count2(client, live_server, measure_memory_usage):
-    set_original_response()
+def test_xpath_20_function_count2(client, live_server, measure_memory_usage, datastore_path):
+    set_original_response(datastore_path=datastore_path)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -512,8 +513,8 @@ def test_xpath_20_function_count2(client, live_server, measure_memory_usage):
     client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
 
-def test_xpath_20_function_string_join_matches(client, live_server, measure_memory_usage):
-    set_original_response()
+def test_xpath_20_function_string_join_matches(client, live_server, measure_memory_usage, datastore_path):
+    set_original_response(datastore_path=datastore_path)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -546,7 +547,7 @@ def test_xpath_20_function_string_join_matches(client, live_server, measure_memo
     client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
 
-def _subtest_xpath_rss(client, content_type='text/html'):
+def _subtest_xpath_rss(client, datastore_path, content_type='text/html'):
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type=content_type, _external=True)
@@ -584,8 +585,8 @@ def _subtest_xpath_rss(client, content_type='text/html'):
     client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
 # Be sure all-in-the-wild types of RSS feeds work with xpath
-def test_rss_xpath(client, live_server, measure_memory_usage):
+def test_rss_xpath(client, live_server, measure_memory_usage, datastore_path):
     for feed_header in ['', '<?xml version="1.0" encoding="utf-8"?>']:
-        set_rss_atom_feed_response(header=feed_header)
+        set_rss_atom_feed_response(header=feed_header, datastore_path=datastore_path)
         for content_type in RSS_XML_CONTENT_TYPES:
-            _subtest_xpath_rss(client, content_type=content_type)
+            _subtest_xpath_rss(client, content_type=content_type, datastore_path=datastore_path)

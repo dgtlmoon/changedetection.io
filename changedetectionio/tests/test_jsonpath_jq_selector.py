@@ -6,6 +6,7 @@ from flask import url_for
 from markupsafe import escape
 from . util import live_server_setup, wait_for_all_checks, delete_all_watches
 import pytest
+import os
 jq_support = True
 
 try:
@@ -92,7 +93,7 @@ def test_unittest_inline_extract_body():
     text = html_tools.extract_json_as_string(content, "json:$.testKey")
     assert text == '42'
 
-def set_original_ext_response():
+def set_original_ext_response(datastore_path):
     data = """
         [
         {
@@ -109,11 +110,11 @@ def set_original_ext_response():
     ]
         """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(data)
     return None
 
-def set_modified_ext_response():
+def set_modified_ext_response(datastore_path):
     # This should get reformatted
     data = """ [ { "isPriceLowered": false,  "status": "Sold",  "statusOrig": "sold" }, {
         "_id": "5e7b3e1fb3262d306323ff1e",
@@ -124,11 +125,11 @@ def set_modified_ext_response():
 ]
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(data)
     return None
 
-def set_original_response():
+def set_original_response(datastore_path):
     test_return_data = """
     {
       "employees": [
@@ -149,12 +150,12 @@ def set_original_response():
       "available": true
     }
     """
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
     return None
 
 
-def set_json_response_with_html():
+def set_json_response_with_html(datastore_path):
     test_return_data = """
     {
       "test": [
@@ -164,11 +165,11 @@ def set_json_response_with_html():
       ]
     }
     """
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
     return None
 
-def set_modified_response():
+def set_modified_response(datastore_path):
     test_return_data = """
     {
       "employees": [
@@ -190,15 +191,15 @@ def set_modified_response():
     }
         """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
     return None
 
-def test_check_json_without_filter(client, live_server, measure_memory_usage):
+def test_check_json_without_filter(client, live_server, measure_memory_usage, datastore_path):
     # Request a JSON document from a application/json source containing HTML
     # and be sure it doesn't get chewed up by instriptis
-    set_json_response_with_html()
+    set_json_response_with_html(datastore_path=datastore_path)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
@@ -219,8 +220,8 @@ def test_check_json_without_filter(client, live_server, measure_memory_usage):
 
     delete_all_watches(client)
 
-def check_json_filter(json_filter, client, live_server):
-    set_original_response()
+def check_json_filter(json_filter, client, live_server, datastore_path):
+    set_original_response(datastore_path=datastore_path)
 
 
     # Add our URL to the import page
@@ -240,7 +241,7 @@ def check_json_filter(json_filter, client, live_server):
     # Give the thread time to pick it up
     wait_for_all_checks(client)
     #  Make a change
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
 
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -260,19 +261,19 @@ def check_json_filter(json_filter, client, live_server):
 
     delete_all_watches(client)
 
-def test_check_jsonpath_filter(client, live_server, measure_memory_usage):
-    check_json_filter('json:boss.name', client, live_server)
+def test_check_jsonpath_filter(client, live_server, measure_memory_usage, datastore_path):
+    check_json_filter('json:boss.name', client, live_server, datastore_path=datastore_path)
 
-def test_check_jq_filter(client, live_server, measure_memory_usage):
+def test_check_jq_filter(client, live_server, measure_memory_usage, datastore_path):
     if jq_support:
-        check_json_filter('jq:.boss.name', client, live_server)
+        check_json_filter('jq:.boss.name', client, live_server, datastore_path=datastore_path)
 
-def test_check_jqraw_filter(client, live_server, measure_memory_usage):
+def test_check_jqraw_filter(client, live_server, measure_memory_usage, datastore_path):
     if jq_support:
-        check_json_filter('jqraw:.boss.name', client, live_server)
+        check_json_filter('jqraw:.boss.name', client, live_server, datastore_path=datastore_path)
 
-def check_json_filter_bool_val(json_filter, client, live_server):
-    set_original_response()
+def check_json_filter_bool_val(json_filter, client, live_server, datastore_path):
+    set_original_response(datastore_path=datastore_path)
 
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
 
@@ -281,7 +282,7 @@ def check_json_filter_bool_val(json_filter, client, live_server):
     wait_for_all_checks(client)
 
     #  Make a change
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
 
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -294,24 +295,24 @@ def check_json_filter_bool_val(json_filter, client, live_server):
 
     delete_all_watches(client)
 
-def test_check_jsonpath_filter_bool_val(client, live_server, measure_memory_usage):
-    check_json_filter_bool_val("json:$['available']", client, live_server)
+def test_check_jsonpath_filter_bool_val(client, live_server, measure_memory_usage, datastore_path):
+    check_json_filter_bool_val("json:$['available']", client, live_server, datastore_path=datastore_path)
 
-def test_check_jq_filter_bool_val(client, live_server, measure_memory_usage):
+def test_check_jq_filter_bool_val(client, live_server, measure_memory_usage, datastore_path):
     if jq_support:
-        check_json_filter_bool_val("jq:.available", client, live_server)
+        check_json_filter_bool_val("jq:.available", client, live_server, datastore_path=datastore_path)
 
-def test_check_jqraw_filter_bool_val(client, live_server, measure_memory_usage):
+def test_check_jqraw_filter_bool_val(client, live_server, measure_memory_usage, datastore_path):
     if jq_support:
-        check_json_filter_bool_val("jq:.available", client, live_server)
+        check_json_filter_bool_val("jq:.available", client, live_server, datastore_path=datastore_path)
 
 # Re #265 - Extended JSON selector test
 # Stuff to consider here
 # - Selector should be allowed to return empty when it doesnt match (people might wait for some condition)
 # - The 'diff' tab could show the old and new content
 # - Form should let us enter a selector that doesnt (yet) match anything
-def check_json_ext_filter(json_filter, client, live_server):
-    set_original_ext_response()
+def check_json_ext_filter(json_filter, client, live_server, datastore_path):
+    set_original_ext_response(datastore_path=datastore_path)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
@@ -343,7 +344,7 @@ def check_json_ext_filter(json_filter, client, live_server):
     # Give the thread time to pick it up
     wait_for_all_checks(client)
     #  Make a change
-    set_modified_ext_response()
+    set_modified_ext_response(datastore_path=datastore_path)
 
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -376,10 +377,10 @@ def check_json_ext_filter(json_filter, client, live_server):
 
     delete_all_watches(client)
 
-def test_ignore_json_order(client, live_server, measure_memory_usage):
+def test_ignore_json_order(client, live_server, measure_memory_usage, datastore_path):
     # A change in order shouldn't trigger a notification
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write('{"hello" : 123, "world": 123}')
 
 
@@ -390,7 +391,7 @@ def test_ignore_json_order(client, live_server, measure_memory_usage):
 
     wait_for_all_checks(client)
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write('{"world" : 123, "hello": 123}')
 
     # Trigger a check
@@ -401,7 +402,7 @@ def test_ignore_json_order(client, live_server, measure_memory_usage):
     assert b'has-unread-changes' not in res.data
 
     # Just to be sure it still works
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write('{"world" : 123, "hello": 124}')
 
     # Trigger a check
@@ -413,10 +414,10 @@ def test_ignore_json_order(client, live_server, measure_memory_usage):
 
     delete_all_watches(client)
 
-def test_correct_header_detect(client, live_server, measure_memory_usage):
+def test_correct_header_detect(client, live_server, measure_memory_usage, datastore_path):
     # Like in https://github.com/dgtlmoon/changedetection.io/pull/1593
     # Specify extra html that JSON is sometimes wrapped in - when using SockpuppetBrowser / Puppeteer / Playwrightetc
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write('<html><body>{ "world": 123, "hello" : 123}')
 
     # Add our URL to the import page
@@ -450,18 +451,18 @@ def test_correct_header_detect(client, live_server, measure_memory_usage):
 
     delete_all_watches(client)
 
-def test_check_jsonpath_ext_filter(client, live_server, measure_memory_usage):
-    check_json_ext_filter('json:$[?(@.status==Sold)]', client, live_server)
+def test_check_jsonpath_ext_filter(client, live_server, measure_memory_usage, datastore_path):
+    check_json_ext_filter('json:$[?(@.status==Sold)]', client, live_server, datastore_path=datastore_path)
 
-def test_check_jq_ext_filter(client, live_server, measure_memory_usage):
+def test_check_jq_ext_filter(client, live_server, measure_memory_usage, datastore_path):
     if jq_support:
-        check_json_ext_filter('jq:.[] | select(.status | contains("Sold"))', client, live_server)
+        check_json_ext_filter('jq:.[] | select(.status | contains("Sold"))', client, live_server, datastore_path=datastore_path)
 
-def test_check_jqraw_ext_filter(client, live_server, measure_memory_usage):
+def test_check_jqraw_ext_filter(client, live_server, measure_memory_usage, datastore_path):
     if jq_support:
-        check_json_ext_filter('jq:.[] | select(.status | contains("Sold"))', client, live_server)
+        check_json_ext_filter('jq:.[] | select(.status | contains("Sold"))', client, live_server, datastore_path=datastore_path)
 
-def test_jsonpath_BOM_utf8(client, live_server, measure_memory_usage):
+def test_jsonpath_BOM_utf8(client, live_server, measure_memory_usage, datastore_path):
     from .. import html_tools
 
     # JSON string with BOM and correct double-quoted keys

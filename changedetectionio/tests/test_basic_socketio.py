@@ -10,11 +10,12 @@ from .util import (
 )
 from loguru import logger
 
-def run_socketio_watch_update_test(client, live_server, password_mode=""):
+def run_socketio_watch_update_test(client, live_server, password_mode="", datastore_path=""):
     """Test that the socketio emits a watch update event when content changes"""
 
     # Set up the test server
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
+
 
     # Get the SocketIO instance from the app
     from changedetectionio.flask_app import app
@@ -47,7 +48,7 @@ def run_socketio_watch_update_test(client, live_server, password_mode=""):
     socketio_test_client.get_received()
 
     # Make a change to trigger an update
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
 
     # Force recheck
     res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -105,11 +106,11 @@ def run_socketio_watch_update_test(client, live_server, password_mode=""):
     # Clean up
     client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
-def test_everything(live_server, client):
+def test_everything(live_server, client, measure_memory_usage, datastore_path):
 
    #  live_server_setup(live_server) # Setup on conftest per function
 
-    run_socketio_watch_update_test(password_mode="", live_server=live_server, client=client)
+    run_socketio_watch_update_test(password_mode="", live_server=live_server, client=client, datastore_path=datastore_path)
 
     ############################ Password required auth check ##############################
 
@@ -124,7 +125,7 @@ def test_everything(live_server, client):
 
     assert b"Password protection enabled." in res.data
 
-    run_socketio_watch_update_test(password_mode="not logged in, should exit on connect", live_server=live_server, client=client)
+    run_socketio_watch_update_test(password_mode="not logged in, should exit on connect", live_server=live_server, client=client, datastore_path=datastore_path)
     res = client.post(
         url_for("login"),
         data={"password": "foobar"},
@@ -133,4 +134,4 @@ def test_everything(live_server, client):
 
     # Yes we are correctly logged in
     assert b"LOG OUT" in res.data
-    run_socketio_watch_update_test(password_mode="should be like normal", live_server=live_server, client=client)
+    run_socketio_watch_update_test(password_mode="should be like normal", live_server=live_server, client=client, datastore_path=datastore_path)

@@ -7,7 +7,7 @@ from flask import url_for
 from .util import wait_for_all_checks, delete_all_watches
 from urllib.parse import urlparse, parse_qs
 
-def test_consistent_history(client, live_server, measure_memory_usage):
+def test_consistent_history(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
     workers = int(os.getenv("FETCH_WORKERS", 10))
     r = range(1, 10+workers)
@@ -80,9 +80,9 @@ def test_consistent_history(client, live_server, measure_memory_usage):
         assert '"default"' not in f.read(), "'default' probably shouldnt be here, it came from when the 'default' Watch vars were accidently being saved"
 
 
-def test_check_text_history_view(client, live_server, measure_memory_usage):
+def test_check_text_history_view(client, live_server, measure_memory_usage, datastore_path):
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("<html>test-one</html>")
 
     # Add our URL to the import page
@@ -94,7 +94,7 @@ def test_check_text_history_view(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     # Set second version, Make a change
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("<html>test-two</html>")
 
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -105,7 +105,7 @@ def test_check_text_history_view(client, live_server, measure_memory_usage):
     assert b'test-two' in res.data
 
     # Set third version, Make a change
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("<html>test-three</html>")
 
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)

@@ -3,12 +3,13 @@
 import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
+import os
 
 
-def test_clone_functionality(client, live_server, measure_memory_usage):
+def test_clone_functionality(client, live_server, measure_memory_usage, datastore_path):
 
    #  live_server_setup(live_server) # Setup on conftest per function
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("<html><body>Some content</body></html>")
 
     test_url = url_for('test_endpoint', _external=True)

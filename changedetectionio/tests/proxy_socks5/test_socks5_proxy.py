@@ -5,7 +5,7 @@ from flask import url_for
 from changedetectionio.tests.util import live_server_setup, wait_for_all_checks, extract_UUID_from_client, delete_all_watches
 
 
-def set_response():
+def set_response(datastore_path):
     import time
     data = """<html>
        <body>
@@ -15,13 +15,13 @@ def set_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(data)
     time.sleep(1)
 
-def test_socks5(client, live_server, measure_memory_usage):
+def test_socks5(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
-    set_response()
+    set_response(datastore_path)
 
     # Setup a proxy
     res = client.post(

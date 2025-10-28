@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 import json
 import time
+import os
 
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 from ..model import CONDITIONS_MATCH_LOGIC_DEFAULT
 
 
-def set_original_response(number="50"):
+def set_original_response(datastore_path, number="50"):
     test_return_data = f"""<html>
        <body>
      <h1>Test Page for Conditions</h1>
@@ -17,10 +18,10 @@ def set_original_response(number="50"):
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
-def set_number_in_range_response(number="75"):
+def set_number_in_range_response(datastore_path, number="75"):
     test_return_data = f"""<html>
        <body>
      <h1>Test Page for Conditions</h1>
@@ -30,10 +31,10 @@ def set_number_in_range_response(number="75"):
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
-def set_number_out_of_range_response(number="150"):
+def set_number_out_of_range_response(datastore_path, number="150"):
     test_return_data = f"""<html>
        <body>
      <h1>Test Page for Conditions</h1>
@@ -43,18 +44,18 @@ def set_number_out_of_range_response(number="150"):
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
-# def test_setup(client, live_server, measure_memory_usage):
+# def test_setup(client, live_server, measure_memory_usage, datastore_path):
     """Test that both text and number conditions work together with AND logic."""
    #  live_server_setup(live_server) # Setup on conftest per function
 
-def test_conditions_with_text_and_number(client, live_server, measure_memory_usage):
+def test_conditions_with_text_and_number(client, live_server, measure_memory_usage, datastore_path):
     """Test that both text and number conditions work together with AND logic."""
     
-    set_original_response("50")
+    set_original_response(datastore_path=datastore_path, number="50")
     
 
     test_url = url_for('test_endpoint', _external=True)
@@ -114,7 +115,7 @@ def test_conditions_with_text_and_number(client, live_server, measure_memory_usa
     wait_for_all_checks(client)
 
     # Case 1
-    set_number_in_range_response("70.5")
+    set_number_in_range_response(datastore_path=datastore_path, number="70.5")
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
@@ -129,7 +130,7 @@ def test_conditions_with_text_and_number(client, live_server, measure_memory_usa
     client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
     time.sleep(0.2)
 
-    set_number_out_of_range_response("150.5")
+    set_number_out_of_range_response(datastore_path=datastore_path, number="150.5")
 
 
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -142,9 +143,9 @@ def test_conditions_with_text_and_number(client, live_server, measure_memory_usa
     delete_all_watches(client)
 
 # The 'validate' button next to each rule row
-def test_condition_validate_rule_row(client, live_server, measure_memory_usage):
+def test_condition_validate_rule_row(client, live_server, measure_memory_usage, datastore_path):
 
-    set_original_response("50")
+    set_original_response(datastore_path=datastore_path, number="50")
 
     test_url = url_for('test_endpoint', _external=True)
 
@@ -203,7 +204,7 @@ def test_condition_validate_rule_row(client, live_server, measure_memory_usage):
 
 
 # If there was only a change in the whitespacing, then we shouldnt have a change detected
-def test_wordcount_conditions_plugin(client, live_server, measure_memory_usage):
+def test_wordcount_conditions_plugin(client, live_server, measure_memory_usage, datastore_path):
     
 
     test_return_data = """<html>
@@ -216,7 +217,7 @@ def test_wordcount_conditions_plugin(client, live_server, measure_memory_usage):
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
     # Add our URL to the import page
@@ -242,10 +243,10 @@ def test_wordcount_conditions_plugin(client, live_server, measure_memory_usage):
     )
 
 # If there was only a change in the whitespacing, then we shouldnt have a change detected
-def test_lev_conditions_plugin(client, live_server, measure_memory_usage):
+def test_lev_conditions_plugin(client, live_server, measure_memory_usage, datastore_path):
     
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("""<html>
        <body>
      Some initial text<br>
@@ -297,7 +298,7 @@ def test_lev_conditions_plugin(client, live_server, measure_memory_usage):
 
 
     ############### Now change it a LITTLE bit...
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("""<html>
        <body>
      Some initial text<br>
@@ -326,7 +327,7 @@ def test_lev_conditions_plugin(client, live_server, measure_memory_usage):
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
     res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data

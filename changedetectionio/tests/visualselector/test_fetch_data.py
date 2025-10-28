@@ -4,12 +4,12 @@ import os
 from flask import url_for
 from ..util import live_server_setup, wait_for_all_checks
 
-# def test_setup(client, live_server, measure_memory_usage):
+# def test_setup(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
 
 
 # Add a site in paused mode, add an invalid filter, we should still have visual selector data ready
-def test_visual_selector_content_ready(client, live_server, measure_memory_usage):
+def test_visual_selector_content_ready(client, live_server, measure_memory_usage, datastore_path):
 
     import os
     import json
@@ -54,11 +54,11 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
     assert b"user-agent: mycustomagent" in res.data
 
 
-    assert os.path.isfile(os.path.join('test-datastore', uuid, 'last-screenshot.png')), "last-screenshot.png should exist"
-    assert os.path.isfile(os.path.join('test-datastore', uuid, 'elements.deflate')), "xpath elements.deflate data should exist"
+    assert os.path.isfile(os.path.join(datastore_path, uuid, 'last-screenshot.png')), "last-screenshot.png should exist"
+    assert os.path.isfile(os.path.join(datastore_path, uuid, 'elements.deflate')), "xpath elements.deflate data should exist"
 
     # Open it and see if it roughly looks correct
-    with open(os.path.join('test-datastore', uuid, 'elements.deflate'), 'rb') as f:
+    with open(os.path.join(datastore_path, uuid, 'elements.deflate'), 'rb') as f:
         import zlib
         compressed_data = f.read()
         decompressed_data = zlib.decompress(compressed_data)
@@ -86,7 +86,7 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
         follow_redirects=True
     )
 
-def test_basic_browserstep(client, live_server, measure_memory_usage):
+def test_basic_browserstep(client, live_server, measure_memory_usage, datastore_path):
 
     assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
 
@@ -142,7 +142,7 @@ def test_basic_browserstep(client, live_server, measure_memory_usage):
     assert b"testheader: yes" in res.data
     assert b"user-agent: mycustomagent" in res.data
 
-def test_non_200_errors_report_browsersteps(client, live_server, measure_memory_usage):
+def test_non_200_errors_report_browsersteps(client, live_server, measure_memory_usage, datastore_path):
 
 
     four_o_four_url =  url_for('test_endpoint', status_code=404, _external=True)

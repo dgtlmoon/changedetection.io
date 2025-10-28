@@ -87,7 +87,6 @@ def measure_memory_usage(request):
 def cleanup(datastore_path):
     import glob
     # Unlink test output files
-
     for g in ["*.txt", "*.json", "*.pdf"]:
         files = glob.glob(os.path.join(datastore_path, g))
         for f in files:
@@ -97,34 +96,91 @@ def cleanup(datastore_path):
             if os.path.isfile(f):
                 os.unlink(f)
 
-@pytest.fixture(scope='function', autouse=True)
-def prepare_test_function(live_server):
+@pytest.fixture(scope='session')
+def datastore_path(tmp_path_factory, request):
+    """Provide datastore path unique to this worker.
 
+    CRITICAL for xdist isolation:
+    - Each WORKER gets its own directory
+    - Tests on same worker run SEQUENTIALLY and cleanup between tests
+    - No subdirectories needed since tests don't overlap on same worker
+    - Example: /tmp/test-datastore-gw0/ for worker gw0
+    """
+    worker_id = getattr(request.config, 'workerinput', {}).get('workerid', 'master')
+    if worker_id == 'master':
+        path = tmp_path_factory.mktemp("test-datastore")
+    else:
+        path = tmp_path_factory.mktemp(f"test-datastore-{worker_id}")
+    return str(path)
+
+
+@pytest.fixture(scope='function', autouse=True)
+def prepare_test_function(live_server, datastore_path):
+    """Prepare each test with complete isolation.
+
+    CRITICAL for xdist per-test isolation:
+    - Reuses the SAME datastore instance (so blueprint references stay valid)
+    - Clears all watches and state for a clean slate
+    - First watch will get uuid="first"
+    """
     routes = [rule.rule for rule in live_server.app.url_map.iter_rules()]
     if '/test-random-content-endpoint' not in routes:
         logger.debug("Setting up test URL routes")
         new_live_server_setup(live_server)
 
+    # CRITICAL: Point app to THIS test's unique datastore directory
+    live_server.app.config['TEST_DATASTORE_PATH'] = datastore_path
+
+    # CRITICAL: Clean up any files from previous tests
+    # This ensures a completely clean directory
+    cleanup(datastore_path)
+
+    # CRITICAL: Reload the EXISTING datastore instead of creating a new one
+    # This keeps blueprint references valid (they capture datastore at construction)
+    # reload_state() completely resets the datastore to a clean state
+    datastore = live_server.app.config.get('DATASTORE')
+
+    # Reload state with clean data (no default watches)
+    datastore.reload_state(
+        datastore_path=datastore_path,
+        include_default_watches=False,
+        version_tag=datastore.data.get('version_tag', '0.0.0')
+    )
+
+    logger.debug(f"prepare_test_function: Reloaded datastore at {hex(id(datastore))}")
+    logger.debug(f"prepare_test_function: Path {datastore.datastore_path}")
 
     yield
-    # Then cleanup/shutdown
-    live_server.app.config['DATASTORE'].data['watching']={}
-    time.sleep(0.3)
-    live_server.app.config['DATASTORE'].data['watching']={}
+
+    # Cleanup: Clear watches again after test
+    try:
+        datastore.data['watching'] = {}
+        datastore.needs_write = True
+    except Exception as e:
+        logger.warning(f"Error during datastore cleanup: {e}")
+
+
+# So the app can also know which test name it was
+@pytest.fixture(autouse=True)
+def set_test_name(request):
+  """Automatically set TEST_NAME env var for every test"""
+  test_name = request.node.name
+  os.environ['PYTEST_CURRENT_TEST'] = test_name
+  yield
+  # Cleanup if needed
 
 
 @pytest.fixture(scope='session')
-def app(request):
-    """Create application for the tests."""
-    datastore_path = "./test-datastore"
+def app(request, datastore_path):
+    """Create application once per worker (session).
 
+    Note: Actual per-test isolation is handled by:
+    - prepare_test_function() recreates datastore and cleans directory
+    - All tests on same worker use same directory (cleaned between tests)
+    """
     # So they don't delay in fetching
     os.environ["MINIMUM_SECONDS_RECHECK_TIME"] = "0"
-    try:
-        os.mkdir(datastore_path)
-    except FileExistsError:
-        pass
-
+    logger.debug(f"Testing with datastore_path={datastore_path}")
     cleanup(datastore_path)
 
     app_config = {'datastore_path': datastore_path, 'disable_checkver' : True}
@@ -147,6 +203,8 @@ def app(request):
     # Disable CSRF while running tests
     app.config['WTF_CSRF_ENABLED'] = False
     app.config['STOP_THREADS'] = True
+    # Store datastore_path so Flask routes can access it
+    app.config['TEST_DATASTORE_PATH'] = datastore_path
 
     def teardown():
         # Stop all threads and services

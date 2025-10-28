@@ -3,9 +3,10 @@
 import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks, delete_all_watches
+import os
 
 
-def set_original_ignore_response():
+def set_original_ignore_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -17,16 +18,16 @@ def set_original_ignore_response():
 
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
 
-def test_trigger_regex_functionality(client, live_server, measure_memory_usage):
+def test_trigger_regex_functionality(client, live_server, measure_memory_usage, datastore_path):
 
    #  live_server_setup(live_server) # Setup on conftest per function
 
-    set_original_ignore_response()
+    set_original_ignore_response(datastore_path=datastore_path)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -53,7 +54,7 @@ def test_trigger_regex_functionality(client, live_server, measure_memory_usage):
     # so that we set the state to 'has-unread-changes' after all the edits
     client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("some new noise")
 
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -63,7 +64,7 @@ def test_trigger_regex_functionality(client, live_server, measure_memory_usage):
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' not in res.data
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("regex test123<br>\nsomething 123")
 
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)

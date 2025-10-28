@@ -3,9 +3,10 @@
 import time
 from flask import url_for
 from .util import live_server_setup, extract_UUID_from_client, wait_for_all_checks
+import os
 
 
-def set_response_with_ldjson():
+def set_response_with_ldjson(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -55,11 +56,11 @@ def set_response_with_ldjson():
      </html>
 """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
     return None
 
-def set_response_without_ldjson():
+def set_response_without_ldjson(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -72,17 +73,17 @@ def set_response_without_ldjson():
      </html>
 """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
     return None
 
-# def test_setup(client, live_server, measure_memory_usage):
+# def test_setup(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
 
 # actually only really used by the distll.io importer, but could be handy too
-def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage):
+def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage, datastore_path):
     
-    set_response_with_ldjson()
+    set_response_with_ldjson(datastore_path=datastore_path)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -121,7 +122,7 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
 
     ##########################################################################################
     # And we shouldnt see the offer
-    set_response_without_ldjson()
+    set_response_without_ldjson(datastore_path=datastore_path)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -151,7 +152,7 @@ def _test_runner_check_bad_format_ignored(live_server, client, has_ldjson_price_
     client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
 
-def test_bad_ldjson_is_correctly_ignored(client, live_server, measure_memory_usage):
+def test_bad_ldjson_is_correctly_ignored(client, live_server, measure_memory_usage, datastore_path):
     
     test_return_data = """
             <html>
@@ -181,7 +182,7 @@ def test_bad_ldjson_is_correctly_ignored(client, live_server, measure_memory_usa
             <div class="yes">Some extra stuff</div>
             </body></html>
      """
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
     _test_runner_check_bad_format_ignored(live_server=live_server, client=client, has_ldjson_price_data=True)
@@ -215,7 +216,7 @@ def test_bad_ldjson_is_correctly_ignored(client, live_server, measure_memory_usa
     #         <div class="yes">Some extra stuff</div>
     #         </body></html>
     #  """
-    # with open("test-datastore/endpoint-content.txt", "w") as f:
+    # with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
     #     f.write(test_return_data)
     #
     # _test_runner_check_bad_format_ignored(live_server=live_server, client=client, has_ldjson_price_data=False)

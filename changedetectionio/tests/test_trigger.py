@@ -3,9 +3,10 @@
 import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
+import os
 
 
-def set_original_ignore_response():
+def set_original_ignore_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -17,11 +18,11 @@ def set_original_ignore_response():
 
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
-def set_modified_original_ignore_response():
+def set_modified_original_ignore_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some NEW nice initial text<br>
@@ -33,11 +34,11 @@ def set_modified_original_ignore_response():
 
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
-def set_modified_with_trigger_text_response():
+def set_modified_with_trigger_text_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some NEW nice initial text<br>
@@ -51,16 +52,16 @@ def set_modified_with_trigger_text_response():
 
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
-def test_trigger_functionality(client, live_server, measure_memory_usage):
+def test_trigger_functionality(client, live_server, measure_memory_usage, datastore_path):
 
    #  live_server_setup(live_server) # Setup on conftest per function
 
     trigger_text = "Add to cart"
-    set_original_ignore_response()
+    set_original_ignore_response(datastore_path=datastore_path)
 
 
     # Add our URL to the import page
@@ -106,7 +107,7 @@ def test_trigger_functionality(client, live_server, measure_memory_usage):
     assert b'/test-endpoint' in res.data
 
     #  Make a change
-    set_modified_original_ignore_response()
+    set_modified_original_ignore_response(datastore_path=datastore_path)
 
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)

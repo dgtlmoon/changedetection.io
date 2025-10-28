@@ -2,9 +2,10 @@
 
 from flask import url_for
 from changedetectionio.tests.util import live_server_setup, wait_for_all_checks, extract_UUID_from_client, delete_all_watches
+import os
 
 
-def set_response():
+def set_response(datastore_path):
 
     data = """<html>
        <body>Awesome, you made it<br>
@@ -15,12 +16,12 @@ something to trigger<br>
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(data)
 
-def test_content_filter_live_preview(client, live_server, measure_memory_usage):
+def test_content_filter_live_preview(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
-    set_response()
+    set_response(datastore_path)
 
     test_url = url_for('test_endpoint', _external=True)
 

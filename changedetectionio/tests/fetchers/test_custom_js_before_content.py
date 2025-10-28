@@ -3,7 +3,7 @@ from flask import url_for
 from ..util import live_server_setup, wait_for_all_checks, extract_UUID_from_client
 
 
-def test_execute_custom_js(client, live_server, measure_memory_usage):
+def test_execute_custom_js(client, live_server, measure_memory_usage, datastore_path):
 
    #  live_server_setup(live_server) # Setup on conftest per function
     assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
