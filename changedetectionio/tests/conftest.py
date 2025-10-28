@@ -97,9 +97,23 @@ def cleanup(datastore_path):
             if os.path.isfile(f):
                 os.unlink(f)
 
+def pytest_addoption(parser):
+    """Add custom command-line options for pytest.
+
+    Mirrors main app's -d flag with --datastore-path for consistency.
+    """
+    parser.addoption(
+        "-d", "--datastore-path",
+        action="store",
+        default=None,
+        help="Custom datastore path for tests (mirrors main app's -d flag)"
+    )
+
 @pytest.fixture(scope='session')
 def datastore_path(tmp_path_factory, request):
     """Provide datastore path unique to this worker.
+
+    Supports custom path via --datastore-path/-d flag (mirrors main app).
 
     CRITICAL for xdist isolation:
     - Each WORKER gets its own directory
@@ -107,6 +121,15 @@ def datastore_path(tmp_path_factory, request):
     - No subdirectories needed since tests don't overlap on same worker
     - Example: /tmp/test-datastore-gw0/ for worker gw0
     """
+    # Check for custom path first (mirrors main app's -d flag)
+    custom_path = request.config.getoption("--datastore-path")
+    if custom_path:
+        # Ensure the directory exists
+        os.makedirs(custom_path, exist_ok=True)
+        logger.info(f"Using custom datastore path: {custom_path}")
+        return custom_path
+
+    # Otherwise use default tmp_path_factory logic
     worker_id = getattr(request.config, 'workerinput', {}).get('workerid', 'master')
     if worker_id == 'master':
         path = tmp_path_factory.mktemp("test-datastore")

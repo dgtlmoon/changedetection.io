@@ -23,20 +23,9 @@ sleep 5
 ## 2nd test actually choose the preferred proxy from proxies.json
 # This will force a request via "proxy-two"
 docker run --network changedet-network \
-  -v `pwd`/tests/proxy_list/proxies.json-example:/app/changedetectionio/test-datastore/proxies.json \
+  -v `pwd`/tests/proxy_list/proxies.json-example:/tmp/proxies.json \
   test-changedetectionio \
-  bash -c 'echo here is the proxy list; cat /app/changedetectionio/test-datastore/proxies.json; cd changedetectionio && pytest -s tests/proxy_list/test_multiple_proxy.py'
-
-echo "-----------------   SQUID PROXY ONE LOGS -------------"
-docker logs squid-one
-echo "-----------------   SQUID PROXY TWO LOGS -------------"
-docker logs squid-two
-echo "----- DNS debug output --------"
-docker run --network changedet-network test-changedetectionio getent hosts squid-one squid-two
-echo "------------------------------------------------------"
-
-echo "docker ps output"
-docker ps
+  bash -c 'cd changedetectionio && pytest -s tests/proxy_list/test_multiple_proxy.py -d /tmp'
 
 set +e
 echo "- Looking for chosen.changedetection.io request in squid-one - it should NOT be here"
