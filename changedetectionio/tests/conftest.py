@@ -100,13 +100,14 @@ def cleanup(datastore_path):
 def pytest_addoption(parser):
     """Add custom command-line options for pytest.
 
-    Mirrors main app's -d flag with --datastore-path for consistency.
+    Provides --datastore-path option for specifying custom datastore location.
+    Note: Cannot use -d short option as it's reserved by pytest for debug mode.
     """
     parser.addoption(
-        "-d", "--datastore-path",
+        "--datastore-path",
         action="store",
         default=None,
-        help="Custom datastore path for tests (mirrors main app's -d flag)"
+        help="Custom datastore path for tests"
     )
 
 @pytest.fixture(scope='session')

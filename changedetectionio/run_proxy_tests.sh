@@ -25,7 +25,7 @@ sleep 5
 docker run --network changedet-network \
   -v `pwd`/tests/proxy_list/proxies.json-example:/tmp/proxies.json \
   test-changedetectionio \
-  bash -c 'cd changedetectionio && pytest -s tests/proxy_list/test_multiple_proxy.py -d /tmp'
+  bash -c 'cd changedetectionio && pytest -s tests/proxy_list/test_multiple_proxy.py --datastore-path /tmp'
 
 set +e
 echo "- Looking for chosen.changedetection.io request in squid-one - it should NOT be here"
@@ -49,7 +49,7 @@ fi
 # Test the UI configurable proxies
 docker run --network changedet-network \
   test-changedetectionio \
-  bash -c 'cd changedetectionio && pytest tests/proxy_list/test_select_custom_proxy.py'
+  bash -c 'cd changedetectionio && pytest tests/proxy_list/test_select_custom_proxy.py --datastore-path /tmp'
 
 # Give squid proxies a moment to flush their logs
 sleep 2
@@ -66,7 +66,7 @@ fi
 # Test "no-proxy" option
 docker run --network changedet-network \
   test-changedetectionio \
-  bash -c 'cd changedetectionio && pytest tests/proxy_list/test_noproxy.py'
+  bash -c 'cd changedetectionio && pytest tests/proxy_list/test_noproxy.py --datastore-path /tmp'
 
 # Give squid proxies a moment to flush their logs
 sleep 2
@@ -96,19 +96,19 @@ docker kill squid-one squid-two squid-custom
 # Requests
 docker run --network changedet-network \
   test-changedetectionio \
-  bash -c 'cd changedetectionio && pytest tests/proxy_list/test_proxy_noconnect.py'
+  bash -c 'cd changedetectionio && pytest tests/proxy_list/test_proxy_noconnect.py --datastore-path /tmp'
 
 # Playwright
 docker run --network changedet-network \
   test-changedetectionio \
-  bash -c 'cd changedetectionio && PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000 pytest tests/proxy_list/test_proxy_noconnect.py'
+  bash -c 'cd changedetectionio && PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000 pytest tests/proxy_list/test_proxy_noconnect.py --datastore-path /tmp'
 
 # Puppeteer fast
 docker run --network changedet-network \
   test-changedetectionio \
-  bash -c 'cd changedetectionio && FAST_PUPPETEER_CHROME_FETCHER=1 PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000 pytest tests/proxy_list/test_proxy_noconnect.py'
+  bash -c 'cd changedetectionio && FAST_PUPPETEER_CHROME_FETCHER=1 PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000 pytest tests/proxy_list/test_proxy_noconnect.py --datastore-path /tmp'
 
 # Selenium
 docker run --network changedet-network \
   test-changedetectionio \
-  bash -c 'cd changedetectionio && WEBDRIVER_URL=http://selenium:4444/wd/hub pytest tests/proxy_list/test_proxy_noconnect.py'
+  bash -c 'cd changedetectionio && WEBDRIVER_URL=http://selenium:4444/wd/hub pytest tests/proxy_list/test_proxy_noconnect.py --datastore-path /tmp'
