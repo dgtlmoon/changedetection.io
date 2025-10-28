@@ -275,6 +275,11 @@ jobs:
         run: |
           docker load -i /tmp/test-changedetectionio.tar
 
+      - name: Spin up services
+        run: |
+          docker network create changedet-network
+          docker run --network changedet-network -d --hostname selenium -p 4444:4444 --rm --shm-size="2g" selenium/standalone-chrome:4
+
       - name: Test proxy squid style interaction
         run: |
           cd changedetectionio
