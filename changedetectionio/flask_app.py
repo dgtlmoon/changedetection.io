@@ -133,6 +133,11 @@ def get_socketio_path():
     # Socket.IO will be available at {prefix}/socket.io/
     return prefix
 
+@app.template_global('is_safe_url')
+def _is_safe_url(test_url):
+    from .html_tools import is_safe_url
+    return is_safe_url(test_url)
+
 
 @app.template_filter('format_number_locale')
 def _jinja2_filter_format_number_locale(value: float) -> str:

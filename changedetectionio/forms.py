@@ -550,7 +550,7 @@ def validate_url(test_url):
         # This should be wtforms.validators.
         raise ValidationError(message)
 
-    from .model.Watch import is_safe_url
+    from changedetectionio.html_tools import is_safe_url
     if not is_safe_url(test_url):
         # This should be wtforms.validators.
         raise ValidationError('Watch protocol is not permitted by SAFE_PROTOCOL_REGEX or incorrect URL format')

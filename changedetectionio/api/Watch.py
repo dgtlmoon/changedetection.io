@@ -1,5 +1,7 @@
 import os
+
 from changedetectionio.strtobool import strtobool
+from changedetectionio.html_tools import is_safe_url
 
 from flask_expects_json import expects_json
 from changedetectionio import queuedWatchMetaData
@@ -120,6 +122,10 @@ class Watch(Resource):
         validation_error = validate_time_between_check_required(request.json)
         if validation_error:
             return validation_error, 400
+
+        # XSS etc protection
+        if request.json.get('url') and not is_safe_url(request.json.get('url')):
+            return "Invalid URL", 400
 
         watch.update(request.json)
 

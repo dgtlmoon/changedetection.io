@@ -1,6 +1,8 @@
 import os
 
 from flask import url_for
+
+from changedetectionio.tests.util import set_modified_response
 from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 from .. import strtobool
 
@@ -131,6 +133,26 @@ def test_xss(client, live_server, measure_memory_usage):
 
     assert b"<img src=x onerror=alert(" not in res.data
     assert b"&lt;img" in res.data
+
+    # Check that even forcing an update directly still doesnt get to the frontend
+    set_original_response()
+    XSS_HACK = 'javascript:alert(document.domain)'
+    uuid = client.application.config.get('DATASTORE').add_watch(url=url_for('test_endpoint', _external=True))
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    set_modified_response()
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    live_server.app.config['DATASTORE'].data['watching'][uuid]['url']=XSS_HACK
+
+
+    res = client.get(url_for("ui.ui_views.preview_page", uuid=uuid))
+    assert XSS_HACK.encode('utf-8') not in res.data and res.status_code == 200
+    client.get(url_for("ui.ui_views.diff_history_page", uuid=uuid))
+    assert XSS_HACK.encode('utf-8') not in res.data and res.status_code == 200
+    res = client.get(url_for("watchlist.index"))
+    assert XSS_HACK.encode('utf-8') not in res.data and res.status_code == 200
 
 
 def test_xss_watch_last_error(client, live_server, measure_memory_usage):
