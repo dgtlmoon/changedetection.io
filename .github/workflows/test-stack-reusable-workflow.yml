@@ -96,7 +96,7 @@ jobs:
 
       - name: Test built container with Pytest
         run: |
-          docker run --name test-cdio-basic-tests --network changedet-network test-changedetectionio bash -c 'cd changedetectionio && ./run_basic_tests.sh'
+          docker run --name test-cdio-basic-tests test-changedetectionio bash -c 'cd changedetectionio && ./run_basic_tests.sh'
 
       - name: Extract memory report and logs
         if: always()
