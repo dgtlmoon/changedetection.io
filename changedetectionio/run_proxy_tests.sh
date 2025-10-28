@@ -31,6 +31,9 @@ echo "-----------------   SQUID PROXY ONE LOGS -------------"
 docker logs squid-one
 echo "-----------------   SQUID PROXY TWO LOGS -------------"
 docker logs squid-two
+echo "----- squid-two cat /var/log/squid/access.log --------"
+docker exec squid-two cat /var/log/squid/access.log
+docker exec squid-two ls -al /var/log/squid
 echo "------------------------------------------------------"
 
 set +e

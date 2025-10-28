@@ -50,6 +50,14 @@ jobs:
           with:
             python-version: 3.11
 
+        - name: Cache pip packages
+          uses: actions/cache@v4
+          with:
+            path: ~/.cache/pip
+            key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+            restore-keys: |
+              ${{ runner.os }}-pip-
+
         # Just test that the build works, some libraries won't compile on ARM/rPi etc
         - name: Set up QEMU
           uses: docker/setup-qemu-action@v3
