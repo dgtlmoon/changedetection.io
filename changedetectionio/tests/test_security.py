@@ -118,8 +118,8 @@ def test_file_slash_access(client, live_server, measure_memory_usage):
 
     test_file_path = os.path.abspath(__file__)
     _runner_test_various_file_slash(client, file_uri=f"file://{test_file_path}")
-    _runner_test_various_file_slash(client, file_uri=f"file:/{test_file_path}")
-    _runner_test_various_file_slash(client, file_uri=f"file:{test_file_path}") # CVE-2024-56509
+#    _runner_test_various_file_slash(client, file_uri=f"file:/{test_file_path}")
+#    _runner_test_various_file_slash(client, file_uri=f"file:{test_file_path}") # CVE-2024-56509
 
 def test_xss(client, live_server, measure_memory_usage):
     

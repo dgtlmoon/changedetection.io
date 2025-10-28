@@ -99,7 +99,7 @@ def is_safe_valid_url(test_url):
     # If hosts that only contain alphanumerics are allowed ("localhost" for example)
     allow_simplehost = not strtobool(os.getenv('BLOCK_SIMPLEHOSTS', 'False'))
     try:
-        if not validators.url(test_url, simple_host=allow_simplehost):
+        if not test_url.lower().startswith('file:') and not validators.url(test_url, simple_host=allow_simplehost):
             logger.warning(f'URL "{test_url}" failed validation, aborting.')
             return False
     except validators.ValidationError:
