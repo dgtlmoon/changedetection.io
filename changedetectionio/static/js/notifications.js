@@ -14,10 +14,10 @@ $(document).ready(function () {
         e.preventDefault();
 
         data = {
-            notification_body: $('#notification_body').val(),
-            notification_format: $('#notification_format').val(),
-            notification_title: $('#notification_title').val(),
-            notification_urls: $('.notification-urls').val(),
+            notification_urls: $('textarea.notification-urls').val(),
+            notification_title: $('input.notification-title').val(),
+            notification_body: $('textarea.notification-body').val(),
+            notification_format: $('select.notification-format').val(),
             tags: $('#tags').val(),
             window_url: window.location.href,
         }
