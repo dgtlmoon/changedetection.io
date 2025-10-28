@@ -21,6 +21,8 @@ jobs:
           python3 -c "from openapi_spec_validator import validate_spec; import yaml; validate_spec(yaml.safe_load(open('docs/api-spec.yaml')))"
 
   test-application-3-10:
+    # Only run on push to master (including PR merges)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     needs: lint-code
     uses: ./.github/workflows/test-stack-reusable-workflow.yml
     with:
@@ -28,12 +30,15 @@ jobs:
 
 
   test-application-3-11:
+    # Always run
     needs: lint-code
     uses: ./.github/workflows/test-stack-reusable-workflow.yml
     with:
       python-version: '3.11'
 
   test-application-3-12:
+    # Only run on push to master (including PR merges)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     needs: lint-code
     uses: ./.github/workflows/test-stack-reusable-workflow.yml
     with:
@@ -41,6 +46,8 @@ jobs:
       skip-pypuppeteer: true
 
   test-application-3-13:
+    # Only run on push to master (including PR merges)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     needs: lint-code
     uses: ./.github/workflows/test-stack-reusable-workflow.yml
     with:
