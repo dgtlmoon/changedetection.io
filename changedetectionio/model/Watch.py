@@ -1,5 +1,5 @@
 from blinker import signal
-
+from changedetectionio.html_tools import is_safe_url
 from changedetectionio.strtobool import strtobool
 from changedetectionio.jinja2_custom import render as jinja_render
 from . import watch_base
@@ -20,23 +20,6 @@ FAVICON_RESAVE_THRESHOLD_SECONDS=86400
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
-
-
-def is_safe_url(test_url):
-    # See https://github.com/dgtlmoon/changedetection.io/issues/1358
-
-    # Remove 'source:' prefix so we dont get 'source:javascript:' etc
-    # 'source:' is a valid way to tell us to return the source
-
-    r = re.compile(re.escape('source:'), re.IGNORECASE)
-    test_url = r.sub('', test_url)
-
-    pattern = re.compile(os.getenv('SAFE_PROTOCOL_REGEX', SAFE_PROTOCOL_REGEX), re.IGNORECASE)
-    if not pattern.match(test_url.strip()):
-        return False
-
-    return True
-
 
 class model(watch_base):
     __newest_history_key = None

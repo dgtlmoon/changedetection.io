@@ -370,7 +370,7 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
 
     ######################################################
 
-    # HTTP PUT try a field that doenst exist
+    # HTTP PUT try a field that doesn't exist
 
     # HTTP PUT an update
     res = client.put(
@@ -382,6 +382,17 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage):
     assert res.status_code == 400, "Should get error 400 when we give a field that doesnt exist"
     # Message will come from `flask_expects_json`
     assert b'Additional properties are not allowed' in res.data
+
+
+    # Try a XSS URL
+    res = client.put(
+        url_for("watch", uuid=watch_uuid),
+        headers={'x-api-key': api_key, 'content-type': 'application/json'},
+        data=json.dumps({
+            'url': 'javascript:alert(document.domain)'
+        }),
+    )
+    assert res.status_code == 400
 
     # Cleanup everything
     delete_all_watches(client)
