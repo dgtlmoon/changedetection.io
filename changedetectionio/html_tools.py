@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from loguru import logger
 from typing import List
 import html
@@ -41,6 +43,7 @@ def is_safe_url(test_url):
 
 # Doesn't look like python supports forward slash auto enclosure in re.findall
 # So convert it to inline flag "(?i)foobar" type configuration
+@lru_cache(maxsize=100)
 def perl_style_slash_enclosed_regex_to_options(regex):
 
     res = re.search(PERL_STYLE_REGEX, regex, re.IGNORECASE)
