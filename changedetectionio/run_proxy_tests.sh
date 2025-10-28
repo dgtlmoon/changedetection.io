@@ -35,6 +35,9 @@ echo "----- DNS debug output --------"
 docker run --network changedet-network test-changedetectionio getent hosts squid-one squid-two
 echo "------------------------------------------------------"
 
+echo "docker ps output"
+docker ps
+
 set +e
 echo "- Looking for chosen.changedetection.io request in squid-one - it should NOT be here"
 docker logs squid-one 2>/dev/null|grep chosen.changedetection.io
