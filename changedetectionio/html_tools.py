@@ -24,10 +24,13 @@ class JSONNotFound(ValueError):
 
 @lru_cache(maxsize=10000)
 def is_safe_valid_url(test_url):
-    import os
-    import validators
-    from changedetectionio.jinja2_custom import render as jinja_render
     from changedetectionio import strtobool
+    from changedetectionio.jinja2_custom import render as jinja_render
+    from urllib.parse import urlparse, parse_qs
+    import os
+    import re
+    import validators
+
     allow_file_access = strtobool(os.getenv('ALLOW_FILE_URI', 'false'))
     safe_protocol_regex = '^(http|https|ftp|file):' if allow_file_access else '^(http|https|ftp):'
 
@@ -50,6 +53,11 @@ def is_safe_valid_url(test_url):
     pattern = re.compile(os.getenv('SAFE_PROTOCOL_REGEX', safe_protocol_regex), re.IGNORECASE)
     if not pattern.match(test_url.strip()):
         logger.warning(f'URL "{test_url}" is not safe, aborting.')
+        return False
+
+    # Check query parameters and fragment
+    if re.search(r'[<>]', test_url):
+        logger.warning(f'URL "{test_url}" contains suspicious characters')
         return False
 
     # If hosts that only contain alphanumerics are allowed ("localhost" for example)
