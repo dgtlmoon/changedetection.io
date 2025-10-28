@@ -53,6 +53,7 @@ jobs:
   unit-tests:
     runs-on: ubuntu-latest
     needs: build
+    timeout-minutes: 10
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
@@ -79,6 +80,7 @@ jobs:
   basic-tests:
     runs-on: ubuntu-latest
     needs: build
+    timeout-minutes: 25
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
@@ -117,6 +119,7 @@ jobs:
   playwright-tests:
     runs-on: ubuntu-latest
     needs: build
+    timeout-minutes: 10
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
@@ -158,6 +161,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     if: ${{ inputs.skip-pypuppeteer == false }}
+    timeout-minutes: 10
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
@@ -197,6 +201,7 @@ jobs:
   selenium-tests:
     runs-on: ubuntu-latest
     needs: build
+    timeout-minutes: 10
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
@@ -232,6 +237,7 @@ jobs:
   smtp-tests:
     runs-on: ubuntu-latest
     needs: build
+    timeout-minutes: 10
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
@@ -260,6 +266,7 @@ jobs:
   proxy-tests:
     runs-on: ubuntu-latest
     needs: build
+    timeout-minutes: 10
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
@@ -296,6 +303,7 @@ jobs:
   custom-browser-tests:
     runs-on: ubuntu-latest
     needs: build
+    timeout-minutes: 10
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
@@ -326,6 +334,7 @@ jobs:
   container-tests:
     runs-on: ubuntu-latest
     needs: build
+    timeout-minutes: 10
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
@@ -370,6 +379,7 @@ jobs:
   signal-tests:
     runs-on: ubuntu-latest
     needs: build
+    timeout-minutes: 10
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
