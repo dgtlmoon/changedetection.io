@@ -4,7 +4,7 @@ from email import message_from_string
 from email.policy import default as email_policy
 
 from changedetectionio.diff import HTML_REMOVED_STYLE, HTML_ADDED_STYLE, HTML_CHANGED_STYLE
-from changedetectionio.notification_service import NotificationContextData
+from changedetectionio.notification_service import NotificationContextData, CUSTOM_LINEBREAK_PLACEHOLDER
 from changedetectionio.tests.util import set_original_response, set_modified_response, set_more_modified_response, live_server_setup, \
     wait_for_all_checks, \
     set_longer_modified_response, delete_all_watches
@@ -99,6 +99,7 @@ def test_check_notification_email_formats_default_HTML(client, live_server, meas
     text_content = text_part.get_content()
     assert '(added) So let\'s see what happens.\r\n' in text_content  # The plaintext part
     assert 'fallback-body\r\n' in text_content  # The plaintext part
+    assert CUSTOM_LINEBREAK_PLACEHOLDER not in text_content
 
     # Second part should be text/html
     html_part = parts[1]
@@ -107,6 +108,7 @@ def test_check_notification_email_formats_default_HTML(client, live_server, meas
     assert 'some text<br>' in html_content  # We converted \n from the notification body
     assert 'fallback-body<br>' in html_content  # kept the original <br>
     assert '(added) So let\'s see what happens.<br>' in html_content  # the html part
+    assert CUSTOM_LINEBREAK_PLACEHOLDER not in html_content
     delete_all_watches(client)
 
 
@@ -680,3 +682,73 @@ def test_check_html_document_plaintext_notification(client, live_server, measure
     delete_all_watches(client)
 
 
+def test_check_html_notification_with_apprise_format_is_html(client, live_server, measure_memory_usage):
+    ##  live_server_setup(live_server) # Setup on conftest per function
+    set_original_response()
+
+    notification_url = f'mailto://changedetection@{smtp_test_server}:11025/?to=fff@home.com&format=html'
+
+    #####################
+    # Set this up for when we remove the notification from the watch, it should fallback with these details
+    res = client.post(
+        url_for("settings.settings_page"),
+        data={"application-notification_urls": notification_url,
+              "application-notification_title": "fallback-title " + default_notification_title,
+              "application-notification_body": "some text\nfallback-body<br> " + default_notification_body,
+              "application-notification_format": 'html',
+              "requests-time_between_check-minutes": 180,
+              'application-fetch_backend': "html_requests"},
+        follow_redirects=True
+    )
+    assert b"Settings updated." in res.data
+
+    # Add a watch and trigger a HTTP POST
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": 'nice one'},
+        follow_redirects=True
+    )
+
+    assert b"Watch added" in res.data
+
+    wait_for_all_checks(client)
+    set_longer_modified_response()
+    time.sleep(2)
+
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    time.sleep(3)
+
+    msg_raw = get_last_message_from_smtp_server()
+    assert len(msg_raw) >= 1
+
+    # Parse the email properly using Python's email library
+    msg = message_from_string(msg_raw, policy=email_policy)
+
+    # The email should have two bodies (multipart/alternative with text/plain and text/html)
+    assert msg.is_multipart()
+    assert msg.get_content_type() == 'multipart/alternative'
+
+    # Get the parts
+    parts = list(msg.iter_parts())
+    assert len(parts) == 2
+
+    # First part should be text/plain (the auto-generated plaintext version)
+    text_part = parts[0]
+    assert text_part.get_content_type() == 'text/plain'
+    text_content = text_part.get_content()
+    assert '(added) So let\'s see what happens.\r\n' in text_content  # The plaintext part
+    assert 'fallback-body\r\n' in text_content  # The plaintext part
+    assert CUSTOM_LINEBREAK_PLACEHOLDER not in text_content
+
+    # Second part should be text/html
+    html_part = parts[1]
+    assert html_part.get_content_type() == 'text/html'
+    html_content = html_part.get_content()
+    assert 'some text<br>' in html_content  # We converted \n from the notification body
+    assert 'fallback-body<br>' in html_content  # kept the original <br>
+    assert '(added) So let\'s see what happens.<br>' in html_content  # the html part
+    assert CUSTOM_LINEBREAK_PLACEHOLDER not in html_content
+    delete_all_watches(client)

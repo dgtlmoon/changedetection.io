@@ -360,6 +360,18 @@ def process_notification(n_object: NotificationContextData, datastore):
                     # texty types
                     n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\r\n')
 
+            else:
+                # ?format was IN the apprise URL, they are kind of on their own here, we will try our best
+                if 'format=html' in url:
+                    n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '<br>\r\n')
+                    # This will also prevent apprise from doing conversion
+                    apprise_input_format = NotifyFormat.HTML.value
+                    requested_output_format = NotifyFormat.HTML.value
+                elif 'format=text' in url:
+                    n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\r\n')
+                    apprise_input_format = NotifyFormat.TEXT.value
+                    requested_output_format = NotifyFormat.TEXT.value
+
             sent_objs.append({'title': n_title,
                               'body': n_body,
                               'url': url})
