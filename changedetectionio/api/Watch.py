@@ -1,6 +1,5 @@
 import os
 
-from changedetectionio.strtobool import strtobool
 from changedetectionio.html_tools import is_safe_valid_url
 
 from flask_expects_json import expects_json
@@ -8,7 +7,6 @@ from changedetectionio import queuedWatchMetaData
 from changedetectionio import worker_handler
 from flask_restful import abort, Resource
 from flask import request, make_response, send_from_directory
-import validators
 from . import auth
 import copy
 

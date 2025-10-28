@@ -61,6 +61,7 @@ def is_safe_valid_url(test_url):
     except validators.ValidationError:
         logger.warning(f'URL f"{test_url}" failed validation, aborting.')
         return False
+
     return True
 
 # Doesn't look like python supports forward slash auto enclosure in re.findall
