@@ -5,6 +5,8 @@ set -e
 # enable debug
 set -x
 
+docker network inspect changedet-network >/dev/null 2>&1 || docker network create changedet-network
+
 # Test proxy list handling, starting two squids on different ports
 # Each squid adds a different header to the response, which is the main thing we test for.
 docker run --network changedet-network -d --name squid-one --hostname squid-one --rm -v `pwd`/tests/proxy_list/squid.conf:/etc/squid/conf.d/debian.conf ubuntu/squid:4.13-21.10_edge

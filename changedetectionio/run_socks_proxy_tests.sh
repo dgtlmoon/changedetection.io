@@ -5,6 +5,7 @@ set -e
 # enable debug
 set -x
 
+docker network inspect changedet-network >/dev/null 2>&1 || docker network create changedet-network
 
 # SOCKS5 related - start simple Socks5 proxy server
 # SOCKSTEST=xyz should show in the logs of this service to confirm it fetched
