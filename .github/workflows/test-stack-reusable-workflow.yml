@@ -94,13 +94,6 @@ jobs:
         run: |
           docker load -i /tmp/test-changedetectionio.tar
 
-      - name: Spin up ancillary testable services
-        run: |
-          docker network create changedet-network
-          docker run --network changedet-network -d --hostname selenium -p 4444:4444 --rm --shm-size="2g" selenium/standalone-chrome:4
-          docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --cap-add=SYS_ADMIN --name sockpuppetbrowser --hostname sockpuppetbrowser --rm -p 3000:3000 dgtlmoon/sockpuppetbrowser:latest
-          docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --cap-add=SYS_ADMIN --name sockpuppetbrowser-custom-url --hostname sockpuppetbrowser-custom-url -p 3001:3000 --rm dgtlmoon/sockpuppetbrowser:latest
-
       - name: Test built container with Pytest
         run: |
           docker run --name test-cdio-basic-tests --network changedet-network test-changedetectionio bash -c 'cd changedetectionio && ./run_basic_tests.sh'
@@ -163,6 +156,7 @@ jobs:
         run: |
           docker network create changedet-network
           docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --cap-add=SYS_ADMIN --name sockpuppetbrowser --hostname sockpuppetbrowser --rm -p 3000:3000 dgtlmoon/sockpuppetbrowser:latest
+          docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --cap-add=SYS_ADMIN --name sockpuppetbrowser-custom-url --hostname sockpuppetbrowser-custom-url -p 3001:3000 --rm dgtlmoon/sockpuppetbrowser:latest
 
       - name: Playwright - Specific tests in built container
         run: |
