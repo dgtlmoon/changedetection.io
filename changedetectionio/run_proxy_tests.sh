@@ -19,7 +19,7 @@ docker run --network changedet-network -d \
   -v `pwd`/tests/proxy_list/squid-passwords.txt:/etc/squid3/passwords \
   ubuntu/squid:4.13-21.10_edge
 
-
+sleep 5
 ## 2nd test actually choose the preferred proxy from proxies.json
 # This will force a request via "proxy-two"
 docker run --network changedet-network \
