@@ -94,6 +94,8 @@ for c in $(echo "squid-one squid-two squid-custom"); do
   fi
 done
 
+echo "docker ps output"
+docker ps
 
 docker kill squid-one squid-two squid-custom
 
