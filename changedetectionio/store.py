@@ -261,7 +261,8 @@ class ChangeDetectionStore:
                 self.__data['watching'] = {}
                 time.sleep(1) # Mainly used for testing to allow all items to flush before running next test
                 for uuid in self.data['watching']:
-                    path = pathlib.Path(os.path.join(self.datastore_path, uuid))
+                    path = pathlib.Path(
+                        os.path.join(self.datastore_path, uuid))
                     if os.path.exists(path):
                         self.delete(uuid)
 
@@ -1005,28 +1006,38 @@ class ChangeDetectionStore:
 
 
     # Some notification formats got the wrong name type
-    def update_22(self):
+    def update_23(self):
+
+        def re_run(formats):
+            sys_n_format = self.data['settings']['application'].get('notification_format')
+            key_exists_as_value = next((k for k, v in formats.items() if v == sys_n_format), None)
+            if key_exists_as_value:  # key of "Plain text"
+                logger.success(f"['settings']['application']['notification_format'] '{sys_n_format}' -> '{key_exists_as_value}'")
+                self.data['settings']['application']['notification_format'] = key_exists_as_value
+
+            for uuid, watch in self.data['watching'].items():
+                n_format = self.data['watching'][uuid].get('notification_format')
+                key_exists_as_value = next((k for k, v in formats.items() if v == n_format), None)
+                if key_exists_as_value and key_exists_as_value != USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH:  # key of "Plain text"
+                    logger.success(f"['watching'][{uuid}]['notification_format'] '{n_format}' -> '{key_exists_as_value}'")
+                    self.data['watching'][uuid]['notification_format'] = key_exists_as_value  # should be 'text' or whatever
+
+            for uuid, tag in self.data['settings']['application']['tags'].items():
+                n_format = self.data['settings']['application']['tags'][uuid].get('notification_format')
+                key_exists_as_value = next((k for k, v in formats.items() if v == n_format), None)
+                if key_exists_as_value and key_exists_as_value != USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH:  # key of "Plain text"
+                    logger.success(
+                        f"['settings']['application']['tags'][{uuid}]['notification_format'] '{n_format}' -> '{key_exists_as_value}'")
+                    self.data['settings']['application']['tags'][uuid][
+                        'notification_format'] = key_exists_as_value  # should be 'text' or whatever
+
         from .notification import valid_notification_formats
-
-        sys_n_format = self.data['settings']['application'].get('notification_format')
-        key_exists_as_value = next((k for k, v in valid_notification_formats.items() if v == sys_n_format), None)
-        if key_exists_as_value: # key of "Plain text"
-            logger.success(f"['settings']['application']['notification_format'] '{sys_n_format}' -> '{key_exists_as_value}'")
-            self.data['settings']['application']['notification_format'] = key_exists_as_value
-
-        for uuid, watch in self.data['watching'].items():
-            n_format = self.data['watching'][uuid].get('notification_format')
-            key_exists_as_value = next((k for k, v in valid_notification_formats.items() if v == n_format), None)
-            if key_exists_as_value and key_exists_as_value != USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH:  # key of "Plain text"
-                logger.success(f"['watching'][{uuid}]['notification_format'] '{n_format}' -> '{key_exists_as_value}'")
-                self.data['watching'][uuid]['notification_format'] = key_exists_as_value # should be 'text' or whatever
-
-        for uuid, tag in self.data['settings']['application']['tags'].items():
-            n_format = self.data['settings']['application']['tags'][uuid].get('notification_format')
-            key_exists_as_value = next((k for k, v in valid_notification_formats.items() if v == n_format), None)
-            if key_exists_as_value and key_exists_as_value != USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH:  # key of "Plain text"
-                logger.success(f"['settings']['application']['tags'][{uuid}]['notification_format'] '{n_format}' -> '{key_exists_as_value}'")
-                self.data['settings']['application']['tags'][uuid]['notification_format'] = key_exists_as_value # should be 'text' or whatever
+        formats = deepcopy(valid_notification_formats)
+        re_run(formats)
+        # And in previous versions, it was "text" instead of Plain text, Markdown instead of "Markdown to HTML"
+        formats['text'] = 'Text'
+        formats['markdown'] = 'Markdown'
+        re_run(formats)
 
     def add_notification_url(self, notification_url):
         
