@@ -1142,4 +1142,9 @@ ul {
 
   // When JavaScript removes display:none, ensure it scrolls into view
   scroll-margin-bottom: 10px;
+
+  // Center contents horizontally
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }

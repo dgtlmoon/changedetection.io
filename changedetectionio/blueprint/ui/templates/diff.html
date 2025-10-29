@@ -11,16 +11,17 @@
     const watch_url= {{watch_a.link|tojson}};
 </script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="{{url_for('static_content', group='js', filename='plugins.js')}}"></script>
 <script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.min.js"></script>
 <script src="{{url_for('static_content', group='js', filename='snippet-to-image.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='diff-overview.js')}}" defer></script>
+
 
 <div id="settings">
     <form class="pure-form " action="{{ url_for("ui.ui_views.diff_history_page", uuid=uuid) }}" method="POST" id="diff-form">
         <fieldset class="diff-fieldset">
             {% if versions|length >= 1 %}
                 <strong>Compare</strong>
-                from {{from_version}} to {{to_version}}<br>
                 <del class="change"><span>from</span></del>
                 <select id="diff-version" name="from_version" class="needs-localtime">
                     {% for version in versions|reverse %}
@@ -94,25 +95,17 @@
         <img id="error-screenshot-img"  style="max-width: 80%" alt="Current error-ing screenshot from most recent request" >
     </div>
 
-     <div class="tab-pane-inner" id="text">
+    <div class="tab-pane-inner" id="text">
         {% if password_enabled_and_share_is_off %}
-           <div class="tip">Pro-tip: You can enable <strong>"share access when password is enabled"</strong> from settings</div>
-         {% endif %}
+            <div class="tip">Pro-tip: You can enable <strong>"share access when password is enabled"</strong> from settings.
+            </div>
+        {% endif %}
+        <div id="cell-diff-jump-visualiser"></div>
+        <div class="snapshot-age">{{ watch_a.snapshot_text_ctime|format_timestamp_timeago }}</div>
+        <pre id="difference" style="border-left: 2px solid #ddd;">{{ content| diff_unescape_difference_spans }}</pre>
+    </div>
 
-
-         <div class="snapshot-age">{{watch_a.snapshot_text_ctime|format_timestamp_timeago}}</div>
-            <table>
-                <tbody>
-                <tr>
-                    <td id="diff-col" class="highlightable-filter">
-                        <pre id="difference" style="border-left: 2px solid #ddd;">{{ content| diff_unescape_difference_spans  }}</pre>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-     </div>
-
-     <div class="tab-pane-inner" id="screenshot">
+    <div class="tab-pane-inner" id="screenshot">
          <div class="tip">
              For now, Differences are performed on text, not graphically, only the latest screenshot is available.
          </div>

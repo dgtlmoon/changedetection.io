@@ -43,7 +43,7 @@
 
   <body class="{{extra_classes}}">
     <div class="header">
-    <div class="pure-menu-fixed" style="width: 100%;">
+    <div {% if pure_menu_fixed != False %}class="pure-menu-fixed"{% endif %} style="width: 100%;">
       <div class="home-menu pure-menu pure-menu-horizontal" id="nav-menu">
 
         {% if has_password and not current_user.is_authenticated %}
@@ -152,8 +152,6 @@
     {% endif %}
     {% if left_sticky %}
       <div class="sticky-tab" id="left-sticky">
-        <a href="{{url_for('ui.ui_views.preview_page', uuid=uuid)}}">Show current snapshot</a><br>
-          Visualise <strong>triggers</strong> and <strong>ignored text</strong>
       </div>
     {% endif %}
     {% if right_sticky %}

@@ -53,17 +53,16 @@ $(document).ready(function () {
                 }
             }
         }).done(function (data) {
-            $("#highlightSnippet").html(data)
+            // @todo some feedback
+            $("#highlightSnippet").html(data);
+            clean();
         }).fail(function (data) {
             console.log(data);
             alert('There was an error communicating with the server.');
-        }).finally(function () {
-            clean();
-        });
+        })
     });
 
     function clean(event) {
-        $("#highlightSnippet").remove();
         $('#bottom-horizontal-offscreen').hide();
     }
 
