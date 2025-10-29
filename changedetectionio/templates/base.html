@@ -238,6 +238,11 @@
 
     <div id="checking-now-fixed-tab" style="display: none;"><span class="spinner"></span><span>&nbsp;Checking now</span></div>
     <div id="realtime-conn-error" style="display:none">Real-time updates offline</div>
+    {% if bottom_horizontal_offscreen_contents %}
+        <div id="bottom-horizontal-offscreen" style="display:none">
+            {{ bottom_horizontal_offscreen_contents|safe }}
+        </div>
+    {% endif %}
   </body>
 
 </html>

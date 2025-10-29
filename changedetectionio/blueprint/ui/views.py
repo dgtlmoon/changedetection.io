@@ -268,8 +268,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                    )
         content = apply_html_color_to_body(n_body=content)
         content = content.replace(CUSTOM_LINEBREAK_PLACEHOLDER, "\n")
+        offscreen_content = render_template("diff-offscreen-options.html")
 
         output = render_template("diff.html",
+                                 bottom_horizontal_offscreen_contents=offscreen_content,
                                  content=content,
                                  current_diff_url=watch['url'],
                                  diff_prefs=diff_prefs,
@@ -288,8 +290,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                  screenshot=screenshot_url,
                                  to_version=str(to_version),
                                  uuid=uuid,
-                                 versions=dates, # All except current/last
-                                 watch_a=watch
+                                 versions=dates,  # All except current/last
+                                 watch_a=watch,
                                  )
         return output
 
