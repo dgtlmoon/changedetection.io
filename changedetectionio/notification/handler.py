@@ -5,13 +5,15 @@ from apprise import NotifyFormat
 from loguru import logger
 from urllib.parse import urlparse
 from .apprise_plugin.assets import apprise_asset, APPRISE_AVATAR_URL
-from .apprise_plugin.custom_handlers import SUPPORTED_HTTP_METHODS
 from .email_helpers import as_monospaced_html_email
 from ..diff import HTML_REMOVED_STYLE, REMOVED_PLACEMARKER_OPEN, REMOVED_PLACEMARKER_CLOSED, ADDED_PLACEMARKER_OPEN, HTML_ADDED_STYLE, \
     ADDED_PLACEMARKER_CLOSED, CHANGED_INTO_PLACEMARKER_OPEN, CHANGED_INTO_PLACEMARKER_CLOSED, CHANGED_PLACEMARKER_OPEN, \
     CHANGED_PLACEMARKER_CLOSED, HTML_CHANGED_STYLE, HTML_CHANGED_INTO_STYLE
-from ..notification_service import NotificationContextData, CUSTOM_LINEBREAK_PLACEHOLDER
+import re
 
+from ..notification_service import NotificationContextData
+
+newline_re = re.compile(r'\r\n|\r|\n')
 
 
 def markup_text_links_to_html(body):
@@ -223,7 +225,7 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
         # @todo re-use an existing library we have already imported to strip all non-allowed tags
         n_body = n_body.replace('<br>', '\n')
         n_body = n_body.replace('</br>', '\n')
-        n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
+        n_body = newline_re.sub('\n', n_body)
 
         # Replace placemarkers for body
         n_body = replace_placemarkers_in_text(n_body, url, requested_output_format)
@@ -240,7 +242,7 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
         # Discord doesn't support HTML, replace <br> with newlines
         n_body = n_body.strip().replace('<br>', '\n')
         n_body = n_body.replace('</br>', '\n')
-        n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
+        n_body = newline_re.sub('\n', n_body)
 
         # Don't replace placeholders or truncate here - let the custom Discord plugin handle it
         # The plugin will use embeds (6000 char limit across all embeds) if placeholders are present,
@@ -262,10 +264,10 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
     # Is not discord/tgram and they want htmlcolor
     elif requested_output_format == 'htmlcolor':
         n_body = replace_placemarkers_in_text(n_body, url, requested_output_format)
-        n_body = n_body.replace('\n', f'{CUSTOM_LINEBREAK_PLACEHOLDER}\n')
+        n_body = newline_re.sub('<br>\n', n_body)
     elif requested_output_format == 'html':
         n_body = replace_placemarkers_in_text(n_body, url, requested_output_format)
-        n_body = n_body.replace('\n', f'{CUSTOM_LINEBREAK_PLACEHOLDER}\n')
+        n_body = newline_re.sub('<br>\n', n_body)
     elif requested_output_format == 'markdown':
         # Markdown to HTML - Apprise will convert this to HTML
         n_body = replace_placemarkers_in_text(n_body, url, requested_output_format)
@@ -332,13 +334,11 @@ def process_notification(n_object: NotificationContextData, datastore):
     with (apprise.LogCapture(level=apprise.logging.DEBUG) as logs):
         for url in n_object['notification_urls']:
 
-            # Get the notification body from datastore
             n_body = jinja_render(template_str=n_object.get('notification_body', ''), **notification_parameters)
+            n_title = jinja_render(template_str=n_object.get('notification_title', ''), **notification_parameters)
 
             if n_object.get('markup_text_links_to_html_links'):
                 n_body = markup_text_links_to_html(body=n_body)
-
-            n_title = jinja_render(template_str=n_object.get('notification_title', ''), **notification_parameters)
 
             url = url.strip()
             if not url or url.startswith('#'):
@@ -386,27 +386,17 @@ def process_notification(n_object: NotificationContextData, datastore):
                     requested_output_format = NotifyFormat.HTML.value
                     apprise_input_format = NotifyFormat.HTML.value  # Changed from MARKDOWN to HTML
 
-                # Could have arrived at any stage, so we dont end up running .escape on it
-                if 'html' in requested_output_format:
-                    n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '<br>\r\n')
-                else:
-                    # texty types
-                    n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\r\n')
-
             else:
                 # ?format was IN the apprise URL, they are kind of on their own here, we will try our best
                 if 'format=html' in url:
-                    n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '<br>\r\n')
+                    n_body = newline_re.sub('<br>\r\n', n_body)
                     # This will also prevent apprise from doing conversion
                     apprise_input_format = NotifyFormat.HTML.value
                     requested_output_format = NotifyFormat.HTML.value
                 elif 'format=text' in url:
-                    n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\r\n')
                     apprise_input_format = NotifyFormat.TEXT.value
                     requested_output_format = NotifyFormat.TEXT.value
 
-            # Looking over apprise library it seems that all plugins only expect plain-text.
-            n_title = n_title.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\r\n')
 
             sent_objs.append({'title': n_title,
                               'body': n_body,

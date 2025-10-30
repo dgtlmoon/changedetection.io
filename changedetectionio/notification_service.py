@@ -129,11 +129,11 @@ class NotificationService:
 
         n_object.update({
             'current_snapshot': snapshot_contents,
-            'diff': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=CUSTOM_LINEBREAK_PLACEHOLDER),
-            'diff_added': diff.render_diff(prev_snapshot, current_snapshot, include_removed=False, line_feed_sep=CUSTOM_LINEBREAK_PLACEHOLDER),
-            'diff_full': diff.render_diff(prev_snapshot, current_snapshot, include_equal=True, line_feed_sep=CUSTOM_LINEBREAK_PLACEHOLDER),
-            'diff_patch': diff.render_diff(prev_snapshot, current_snapshot, line_feed_sep=CUSTOM_LINEBREAK_PLACEHOLDER, patch_format=True),
-            'diff_removed': diff.render_diff(prev_snapshot, current_snapshot, include_added=False, line_feed_sep=CUSTOM_LINEBREAK_PLACEHOLDER),
+            'diff': diff.render_diff(prev_snapshot, current_snapshot),
+            'diff_added': diff.render_diff(prev_snapshot, current_snapshot, include_removed=False),
+            'diff_full': diff.render_diff(prev_snapshot, current_snapshot, include_equal=True),
+            'diff_patch': diff.render_diff(prev_snapshot, current_snapshot, patch_format=True),
+            'diff_removed': diff.render_diff(prev_snapshot, current_snapshot, include_added=False),
             'screenshot': watch.get_screenshot() if watch and watch.get('notification_screenshot') else None,
             'triggered_text': triggered_text,
             'uuid': watch.get('uuid') if watch else None,
@@ -141,6 +141,7 @@ class NotificationService:
             'watch_uuid': watch.get('uuid') if watch else None,
             'watch_mime_type': watch.get('content-type')
         })
+        # The \n's in the content from the above will get converted to <br> etc depending on the notification format
 
         if watch:
             n_object.update(watch.extra_notification_token_values())
