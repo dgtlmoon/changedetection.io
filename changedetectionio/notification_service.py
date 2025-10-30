@@ -9,11 +9,8 @@ for both sync and async workers
 from loguru import logger
 import time
 
-from changedetectionio.model import USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
 from changedetectionio.notification import default_notification_format, valid_notification_formats
 
-# This gets modified on notification time (handler.py) depending on the required notification output
-CUSTOM_LINEBREAK_PLACEHOLDER='@BR@'
 
 
 # What is passed around as notification context, also used as the complete list of valid {{ tokens }}
@@ -71,6 +68,34 @@ class NotificationContextData(dict):
 
         super().__setitem__(key, value)
 
+
+def set_basic_notification_vars(snapshot_contents, current_snapshot, prev_snapshot, watch, triggered_text):
+    now = time.time()
+    from changedetectionio import diff
+
+    n_object = {
+        'current_snapshot': snapshot_contents,
+        'diff': diff.render_diff(prev_snapshot, current_snapshot),
+        'diff_added': diff.render_diff(prev_snapshot, current_snapshot, include_removed=False),
+        'diff_full': diff.render_diff(prev_snapshot, current_snapshot, include_equal=True),
+        'diff_patch': diff.render_diff(prev_snapshot, current_snapshot, patch_format=True),
+        'diff_removed': diff.render_diff(prev_snapshot, current_snapshot, include_added=False),
+        'screenshot': watch.get_screenshot() if watch and watch.get('notification_screenshot') else None,
+        'triggered_text': triggered_text,
+        'uuid': watch.get('uuid') if watch else None,
+        'watch_url': watch.get('url') if watch else None,
+        'watch_uuid': watch.get('uuid') if watch else None,
+        'watch_mime_type': watch.get('content-type')
+    }
+
+    # The \n's in the content from the above will get converted to <br> etc depending on the notification format
+
+    if watch:
+        n_object.update(watch.extra_notification_token_values())
+
+    logger.trace(f"Main rendered notification placeholders (diff_added etc) calculated in {time.time() - now:.3f}s")
+    return n_object
+
 class NotificationService:
     """
     Standalone notification service that handles all notification functionality
@@ -85,7 +110,6 @@ class NotificationService:
         """
         Queue a notification for a watch with full diff rendering and template variables
         """
-        from changedetectionio import diff
         from changedetectionio.notification import USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
 
         if not isinstance(n_object, NotificationContextData):
@@ -93,8 +117,6 @@ class NotificationService:
 
         dates = []
         trigger_text = ''
-
-        now = time.time()
 
         if watch:
             watch_history = watch.history
@@ -117,7 +139,7 @@ class NotificationService:
             from . import html_tools
             triggered_text = html_tools.get_triggered_text(content=snapshot_contents, trigger_text=trigger_text)
             if triggered_text:
-                triggered_text = CUSTOM_LINEBREAK_PLACEHOLDER.join(triggered_text)
+                triggered_text = '\n'.join(triggered_text)
 
         # Could be called as a 'test notification' with only 1 snapshot available
         prev_snapshot = "Example text: example test\nExample text: change detection is cool\nExample text: some more examples\n"
@@ -127,26 +149,13 @@ class NotificationService:
             prev_snapshot = watch.get_history_snapshot(dates[-2])
             current_snapshot = watch.get_history_snapshot(dates[-1])
 
-        n_object.update({
-            'current_snapshot': snapshot_contents,
-            'diff': diff.render_diff(prev_snapshot, current_snapshot),
-            'diff_added': diff.render_diff(prev_snapshot, current_snapshot, include_removed=False),
-            'diff_full': diff.render_diff(prev_snapshot, current_snapshot, include_equal=True),
-            'diff_patch': diff.render_diff(prev_snapshot, current_snapshot, patch_format=True),
-            'diff_removed': diff.render_diff(prev_snapshot, current_snapshot, include_added=False),
-            'screenshot': watch.get_screenshot() if watch and watch.get('notification_screenshot') else None,
-            'triggered_text': triggered_text,
-            'uuid': watch.get('uuid') if watch else None,
-            'watch_url': watch.get('url') if watch else None,
-            'watch_uuid': watch.get('uuid') if watch else None,
-            'watch_mime_type': watch.get('content-type')
-        })
-        # The \n's in the content from the above will get converted to <br> etc depending on the notification format
 
-        if watch:
-            n_object.update(watch.extra_notification_token_values())
+        n_object.update(set_basic_notification_vars(snapshot_contents=snapshot_contents,
+                                                    current_snapshot=current_snapshot,
+                                                    prev_snapshot=prev_snapshot,
+                                                    watch=watch,
+                                                    triggered_text=triggered_text))
 
-        logger.trace(f"Main rendered notification placeholders (diff_added etc) calculated in {time.time()-now:.3f}s")
         logger.debug("Queued notification for sending")
         self.notification_q.put(n_object)
 

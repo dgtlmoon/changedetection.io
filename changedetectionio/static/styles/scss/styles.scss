@@ -329,12 +329,18 @@ a.pure-button-selected {
 .notifications-wrapper {
   padding-top: 0.5rem;
   #notification-test-log {
-    padding-top: 1rem;
+    margin-top: 1rem;
+    padding: 1rem;
     white-space: pre-wrap;
     word-break: break-word;
     overflow-wrap: break-word;
     max-width: 100%;
     box-sizing: border-box;
+    max-height: 12rem;
+    overflow-y: scroll;
+    border: 1px solid var(--color-border-notification);
+    border-radius: 5px;
+
   }
 }
 
