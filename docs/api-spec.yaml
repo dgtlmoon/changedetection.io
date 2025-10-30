@@ -28,7 +28,7 @@ info:
     
     For example: `x-api-key: YOUR_API_KEY`
     
-  version: 0.1.2
+  version: 0.1.3
   contact:
     name: ChangeDetection.io
     url: https://github.com/dgtlmoon/changedetection.io
@@ -65,13 +65,17 @@ tags:
       
   - name: Watch History
     description: |
-      Access historical snapshots and change data for your watches. View the complete timeline of detected changes 
-      and retrieve specific versions of monitored content for comparison and analysis.
+      Get a list of timestamps of all changes detected for a watch.
       
   - name: Snapshots
     description: |
-      Retrieve individual snapshots of monitored content. Access both the processed change detection data and 
-      the raw HTML content that was captured during monitoring checks.
+      Retrieve individual text snapshot of monitored content according to the `timestamp`. The text snapshot is the HTML
+      to Text at page check time. 
+      
+      Set the query argument `html` to any value to retrieve the last HTML fetched, the system only keeps the last two 
+      (2) HTML files fetched.
+      
+      Use the Watch History API endpoint to get a list of timestamps to pass to this query.
       
   - name: Favicon
     description: |
@@ -661,7 +665,9 @@ paths:
       operationId: getWatchHistory
       tags: [Watch History]
       summary: Get watch history
-      description: Get a list of all historical snapshots available for a web page change monitor (watch)
+      description: | 
+        Get a list of all historical snapshots available for a web page change monitor (watch), use the key `timestamp`
+        as the query argument for fetching a single watch history snapshot.
       x-code-samples:
         - lang: 'curl'
           source: |
@@ -701,7 +707,9 @@ paths:
       operationId: getWatchSnapshot
       tags: [Snapshots]
       summary: Get single snapshot
-      description: Get single snapshot from web page change monitor (watch). Use 'latest' for the most recent snapshot.
+      description: | 
+        Get single snapshot from web page change monitor (watch). Use 'latest' for the most recent snapshot.
+        Use the Watch History API to get a list of timestamps to pass.
       x-code-samples:
         - lang: 'curl'
           source: |
