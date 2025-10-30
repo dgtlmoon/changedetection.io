@@ -433,7 +433,15 @@ paths:
       operationId: createWatch
       tags: [Watch Management]
       summary: Create a new watch
-      description: Create a single web page change monitor (watch). Requires at least 'url' to be set, Optionally use `"processor"` field to set the `restock_diff` mode or `text_json_diff` (default)
+      description: |
+        Create a single web page change monitor (watch). Requires at least `url` to be set.
+
+        Every watch can be configured with:
+        - **Processor mode**: `processor` field (`restock_diff` or `text_json_diff` - default)
+        - **Notification settings**: `notification_urls` (array), `notification_title`, `notification_body`, `notification_format`, `notification_muted`
+        - **Tags/Groups**: `tag` (UUID string) or `tags` (array of UUIDs)
+        - **Check settings**: `time_between_check`, `paused`, `method`, `fetch_backend`
+        - **Advanced options**: `headers`, `body`, `proxy`, `browser_steps`, and more
       x-code-samples:
         - lang: 'curl'
           source: |
