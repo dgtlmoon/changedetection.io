@@ -214,6 +214,7 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
     # Replace placemarkers in title first (this was the missing piece causing the bug)
     # Titles are ALWAYS plain text across all notification services (Discord embeds, Slack attachments,
     # email Subject headers, etc.), so we always use 'text' format for title placemarker replacement
+    # Looking over apprise library it seems that all plugins only expect plain-text.
     n_title = replace_placemarkers_in_text(n_title, url, 'text')
 
     if url.startswith('tgram://'):
@@ -340,15 +341,11 @@ def process_notification(n_object: NotificationContextData, datastore):
             n_title = jinja_render(template_str=n_object.get('notification_title', ''), **notification_parameters)
 
             url = url.strip()
-            if url.startswith('#'):
-                logger.trace(f"Skipping commented out notification URL - {url}")
+            if not url or url.startswith('#'):
+                logger.debug(f"Skipping commented out or empty notification URL - '{url}'")
                 continue
 
-            if not url:
-                logger.warning(f"Process Notification: skipping empty notification URL.")
-                continue
-
-            logger.info(f">> Process Notification: AppRise notifying {url}")
+            logger.info(f">> Process Notification: AppRise start notifying '{url}'")
             url = jinja_render(template_str=url, **notification_parameters)
 
             # If it's a plaintext document, and they want HTML type email/alerts, so it needs to be escaped
@@ -407,6 +404,9 @@ def process_notification(n_object: NotificationContextData, datastore):
                     n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\r\n')
                     apprise_input_format = NotifyFormat.TEXT.value
                     requested_output_format = NotifyFormat.TEXT.value
+
+            # Looking over apprise library it seems that all plugins only expect plain-text.
+            n_title = n_title.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\r\n')
 
             sent_objs.append({'title': n_title,
                               'body': n_body,

@@ -125,7 +125,7 @@ def test_check_notification_plaintext_format(client, live_server, measure_memory
     res = client.post(
         url_for("settings.settings_page"),
         data={"application-notification_urls": notification_url,
-              "application-notification_title": "fallback-title " + default_notification_title,
+              "application-notification_title": "fallback-title {{watch_title}}  {{ diff_added if diff_added else 'diff added didnt split' }}  " + default_notification_title,
               "application-notification_body": "some text\n" + default_notification_body,
               "application-notification_format": 'text',
               "requests-time_between_check-minutes": 180,
@@ -152,6 +152,15 @@ def test_check_notification_plaintext_format(client, live_server, measure_memory
 
     # Parse the email properly using Python's email library
     msg = message_from_string(msg_raw, policy=email_policy)
+    # Subject/title got marked up
+    subject = msg['subject']
+    # Subject should always be plaintext and never marked up to anything else
+    assert REMOVED_PLACEMARKER_OPEN not in subject
+    assert CHANGED_PLACEMARKER_OPEN not in subject
+    assert ADDED_PLACEMARKER_OPEN not in subject
+    assert CUSTOM_LINEBREAK_PLACEHOLDER not in subject
+    assert 'diff added didnt split' not in subject
+    assert '(changed) Which is across' in subject
 
     # The email should be plain text only (not multipart)
     assert not msg.is_multipart()
@@ -178,7 +187,7 @@ def test_check_notification_html_color_format(client, live_server, measure_memor
     res = client.post(
         url_for("settings.settings_page"),
         data={"application-notification_urls": notification_url,
-              "application-notification_title": "fallback-title {{watch_title}} " + default_notification_title,
+              "application-notification_title": "fallback-title {{watch_title}}  {{ diff_added if diff_added else 'diff added didnt split' }} " + default_notification_title,
               "application-notification_body": f"some text\n{default_notification_body}\nMore output test\n{ALL_MARKUP_TOKENS}",
               "application-notification_format": 'htmlcolor',
               "requests-time_between_check-minutes": 180,
@@ -218,6 +227,9 @@ def test_check_notification_html_color_format(client, live_server, measure_memor
     assert REMOVED_PLACEMARKER_OPEN not in subject
     assert CHANGED_PLACEMARKER_OPEN not in subject
     assert ADDED_PLACEMARKER_OPEN not in subject
+    assert CUSTOM_LINEBREAK_PLACEHOLDER not in subject
+    assert 'diff added didnt split' not in subject
+    assert '(changed) Which is across' in subject
     assert 'head title' in subject
     assert "span" not in subject
     assert 'background-color' not in subject
