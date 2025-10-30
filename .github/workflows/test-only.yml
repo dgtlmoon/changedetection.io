@@ -28,7 +28,6 @@ jobs:
     with:
       python-version: '3.10'
 
-
   test-application-3-11:
     # Always run
     needs: lint-code
