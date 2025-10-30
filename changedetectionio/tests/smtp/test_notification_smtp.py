@@ -3,8 +3,9 @@ from flask import url_for
 from email import message_from_string
 from email.policy import default as email_policy
 
-from changedetectionio.diff import HTML_REMOVED_STYLE, HTML_ADDED_STYLE, HTML_CHANGED_STYLE
-from changedetectionio.notification_service import NotificationContextData, CUSTOM_LINEBREAK_PLACEHOLDER
+from changedetectionio.diff import HTML_REMOVED_STYLE, HTML_ADDED_STYLE, HTML_CHANGED_STYLE, REMOVED_PLACEMARKER_OPEN, \
+    CHANGED_PLACEMARKER_OPEN, ADDED_PLACEMARKER_OPEN
+from changedetectionio.notification_service import NotificationContextData
 from changedetectionio.tests.util import set_original_response, set_modified_response, set_more_modified_response, live_server_setup, \
     wait_for_all_checks, \
     set_longer_modified_response, delete_all_watches
@@ -100,7 +101,6 @@ def test_check_notification_email_formats_default_HTML(client, live_server, meas
     text_content = text_part.get_content()
     assert '(added) So let\'s see what happens.\r\n' in text_content  # The plaintext part
     assert 'fallback-body\r\n' in text_content  # The plaintext part
-    assert CUSTOM_LINEBREAK_PLACEHOLDER not in text_content
 
     # Second part should be text/html
     html_part = parts[1]
@@ -109,7 +109,6 @@ def test_check_notification_email_formats_default_HTML(client, live_server, meas
     assert 'some text<br>' in html_content  # We converted \n from the notification body
     assert 'fallback-body<br>' in html_content  # kept the original <br>
     assert '(added) So let\'s see what happens.<br>' in html_content  # the html part
-    assert CUSTOM_LINEBREAK_PLACEHOLDER not in html_content
     delete_all_watches(client)
 
 
@@ -124,8 +123,8 @@ def test_check_notification_plaintext_format(client, live_server, measure_memory
     res = client.post(
         url_for("settings.settings_page"),
         data={"application-notification_urls": notification_url,
-              "application-notification_title": "fallback-title " + default_notification_title,
-              "application-notification_body": "some text\n" + default_notification_body,
+              "application-notification_title": "fallback-title {{watch_title}}  {{ diff_added.splitlines()[0] if diff_added else 'diff added didnt split' }}  " + default_notification_title,
+              "application-notification_body": f"some text\n" + default_notification_body + f"\nMore output test\n{ALL_MARKUP_TOKENS}",
               "application-notification_format": 'text',
               "requests-time_between_check-minutes": 180,
               'application-fetch_backend': "html_requests"},
@@ -148,9 +147,17 @@ def test_check_notification_plaintext_format(client, live_server, measure_memory
 
     msg_raw = get_last_message_from_smtp_server()
     assert len(msg_raw) >= 1
-
+    #time.sleep(60)
     # Parse the email properly using Python's email library
     msg = message_from_string(msg_raw, policy=email_policy)
+    # Subject/title got marked up
+    subject = msg['subject']
+    # Subject should always be plaintext and never marked up to anything else
+    assert REMOVED_PLACEMARKER_OPEN not in subject
+    assert CHANGED_PLACEMARKER_OPEN not in subject
+    assert ADDED_PLACEMARKER_OPEN not in subject
+    assert 'diff added didnt split' not in subject
+    assert '(changed) Which is across' in subject
 
     # The email should be plain text only (not multipart)
     assert not msg.is_multipart()
@@ -177,7 +184,7 @@ def test_check_notification_html_color_format(client, live_server, measure_memor
     res = client.post(
         url_for("settings.settings_page"),
         data={"application-notification_urls": notification_url,
-              "application-notification_title": "fallback-title " + default_notification_title,
+              "application-notification_title": "fallback-title {{watch_title}} - diff_added_lines_test : '{{ diff_added.splitlines()[0] if diff_added else 'diff added didnt split' }}' " + default_notification_title,
               "application-notification_body": f"some text\n{default_notification_body}\nMore output test\n{ALL_MARKUP_TOKENS}",
               "application-notification_format": 'htmlcolor',
               "requests-time_between_check-minutes": 180,
@@ -211,6 +218,18 @@ def test_check_notification_html_color_format(client, live_server, measure_memor
 
     # Parse the email properly using Python's email library
     msg = message_from_string(msg_raw, policy=email_policy)
+    # Subject/title got marked up
+    subject = msg['subject']
+    # Subject should always be plaintext and never marked up to anything else
+    assert REMOVED_PLACEMARKER_OPEN not in subject
+    assert CHANGED_PLACEMARKER_OPEN not in subject
+    assert ADDED_PLACEMARKER_OPEN not in subject
+    assert 'diff added didnt split' not in subject
+    assert '(changed) Which is across' in subject
+    assert 'head title' in subject
+    assert "span" not in subject
+    assert 'background-color' not in subject
+
 
     # The email should have two bodies (multipart/alternative with text/plain and text/html)
     assert msg.is_multipart()
@@ -249,7 +268,7 @@ def test_check_notification_markdown_format(client, live_server, measure_memory_
     res = client.post(
         url_for("settings.settings_page"),
         data={"application-notification_urls": notification_url,
-              "application-notification_title": "fallback-title " + default_notification_title,
+              "application-notification_title": "fallback-title  diff_added_lines_test : '{{ diff_added.splitlines()[0] if diff_added else 'diff added didnt split' }}' " + default_notification_title,
               "application-notification_body": "*header*\n\nsome text\n" + default_notification_body,
               "application-notification_format": 'markdown',
               "requests-time_between_check-minutes": 180,
@@ -287,6 +306,14 @@ def test_check_notification_markdown_format(client, live_server, measure_memory_
     # The email should have two bodies (multipart/alternative with text/plain and text/html)
     assert msg.is_multipart()
     assert msg.get_content_type() == 'multipart/alternative'
+    subject = msg['subject']
+    # Subject should always be plaintext and never marked up to anything else
+    assert REMOVED_PLACEMARKER_OPEN not in subject
+    assert CHANGED_PLACEMARKER_OPEN not in subject
+    assert ADDED_PLACEMARKER_OPEN not in subject
+    assert 'diff added didnt split' not in subject
+    assert '(changed) Which is across' in subject
+
 
     # Get the parts
     parts = list(msg.iter_parts())
@@ -305,7 +332,10 @@ def test_check_notification_markdown_format(client, live_server, measure_memory_
     assert html_part.get_content_type() == 'text/html'
     html_content = html_part.get_content()
     assert '<p><em>header</em></p>' in html_content
-    assert '<strong>So let\'s see what happens.</strong><br>' in html_content # Additions are <strong> in markdown
+    assert '<strong>So let\'s see what happens.</strong><br />' in html_content # Additions are <strong> in markdown
+    # the '<br />' will come from apprises conversion, not from our code, we would rather use '<br>' correctly
+    # the '<br />' is actually a nice way to know if apprise done the conversion.
+
     delete_all_watches(client)
 
 # Custom notification body with HTML, that is either sent as HTML or rendered to plaintext and sent
@@ -752,7 +782,6 @@ def test_check_html_notification_with_apprise_format_is_html(client, live_server
     text_content = text_part.get_content()
     assert '(added) So let\'s see what happens.\r\n' in text_content  # The plaintext part
     assert 'fallback-body\r\n' in text_content  # The plaintext part
-    assert CUSTOM_LINEBREAK_PLACEHOLDER not in text_content
 
     # Second part should be text/html
     html_part = parts[1]
@@ -761,5 +790,4 @@ def test_check_html_notification_with_apprise_format_is_html(client, live_server
     assert 'some text<br>' in html_content  # We converted \n from the notification body
     assert 'fallback-body<br>' in html_content  # kept the original <br>
     assert '(added) So let\'s see what happens.<br>' in html_content  # the html part
-    assert CUSTOM_LINEBREAK_PLACEHOLDER not in html_content
     delete_all_watches(client)
