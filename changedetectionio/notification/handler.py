@@ -194,6 +194,12 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
     if not n_body or not n_body.strip():
         return url, n_body, n_title
 
+    # Normalize URL scheme to lowercase to prevent case-sensitivity issues
+    # e.g., "Discord://webhook" -> "discord://webhook", "TGRAM://bot123" -> "tgram://bot123"
+    scheme_separator_pos = url.find('://')
+    if scheme_separator_pos > 0:
+        url = url[:scheme_separator_pos].lower() + url[scheme_separator_pos:]
+
     # So if no avatar_url is specified, add one so it can be correctly calculated into the total payload
     parsed = urlparse(url)
     k = '?' if not parsed.query else '&'
