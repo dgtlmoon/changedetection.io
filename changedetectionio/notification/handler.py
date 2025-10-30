@@ -127,6 +127,62 @@ def apply_standard_markdown_to_body(n_body):
     return n_body
 
 
+def replace_placemarkers_in_text(text, url, requested_output_format):
+    """
+    Replace diff placemarkers in text based on the URL service type and requested output format.
+    Used for both notification title and body to ensure consistent placeholder replacement.
+
+    :param text: The text to process
+    :param url: The notification URL (to detect service type)
+    :param requested_output_format: The output format (html, htmlcolor, markdown, text, etc.)
+    :return: Processed text with placemarkers replaced
+    """
+    if not text:
+        return text
+
+    if url.startswith('tgram://'):
+        # Telegram only supports a limited subset of HTML
+        # Use strikethrough for removed content, bold for added content
+        text = text.replace(REMOVED_PLACEMARKER_OPEN, '<s>')
+        text = text.replace(REMOVED_PLACEMARKER_CLOSED, '</s>')
+        text = text.replace(ADDED_PLACEMARKER_OPEN, '<b>')
+        text = text.replace(ADDED_PLACEMARKER_CLOSED, '</b>')
+        # Handle changed/replaced lines (old → new)
+        text = text.replace(CHANGED_PLACEMARKER_OPEN, '<s>')
+        text = text.replace(CHANGED_PLACEMARKER_CLOSED, '</s>')
+        text = text.replace(CHANGED_INTO_PLACEMARKER_OPEN, '<b>')
+        text = text.replace(CHANGED_INTO_PLACEMARKER_CLOSED, '</b>')
+    elif (url.startswith('discord://') or url.startswith('https://discordapp.com/api/webhooks')
+          or url.startswith('https://discord.com/api')) and requested_output_format == 'html':
+        # Discord doesn't support HTML, use Discord markdown
+        text = apply_discord_markdown_to_body(n_body=text)
+    elif requested_output_format == 'htmlcolor':
+        # https://github.com/dgtlmoon/changedetection.io/issues/821#issuecomment-1241837050
+        text = text.replace(REMOVED_PLACEMARKER_OPEN, f'<span style="{HTML_REMOVED_STYLE}" role="deletion" aria-label="Removed text" title="Removed text">')
+        text = text.replace(REMOVED_PLACEMARKER_CLOSED, f'</span>')
+        text = text.replace(ADDED_PLACEMARKER_OPEN, f'<span style="{HTML_ADDED_STYLE}" role="insertion" aria-label="Added text" title="Added text">')
+        text = text.replace(ADDED_PLACEMARKER_CLOSED, f'</span>')
+        # Handle changed/replaced lines (old → new)
+        text = text.replace(CHANGED_PLACEMARKER_OPEN, f'<span style="{HTML_CHANGED_STYLE}" role="note" aria-label="Changed text" title="Changed text">')
+        text = text.replace(CHANGED_PLACEMARKER_CLOSED, f'</span>')
+        text = text.replace(CHANGED_INTO_PLACEMARKER_OPEN, f'<span style="{HTML_CHANGED_INTO_STYLE}" role="note" aria-label="Changed into" title="Changed into">')
+        text = text.replace(CHANGED_INTO_PLACEMARKER_CLOSED, f'</span>')
+    elif requested_output_format == 'markdown':
+        # Markdown to HTML - Apprise will convert this to HTML
+        text = apply_standard_markdown_to_body(n_body=text)
+    else:
+        # plaintext, html, and default - use simple text markers
+        text = text.replace(REMOVED_PLACEMARKER_OPEN, '(removed) ')
+        text = text.replace(REMOVED_PLACEMARKER_CLOSED, '')
+        text = text.replace(ADDED_PLACEMARKER_OPEN, '(added) ')
+        text = text.replace(ADDED_PLACEMARKER_CLOSED, '')
+        text = text.replace(CHANGED_PLACEMARKER_OPEN, f'(changed) ')
+        text = text.replace(CHANGED_PLACEMARKER_CLOSED, f'')
+        text = text.replace(CHANGED_INTO_PLACEMARKER_OPEN, f'(into) ')
+        text = text.replace(CHANGED_INTO_PLACEMARKER_CLOSED, f'')
+
+    return text
+
 def apply_service_tweaks(url, n_body, n_title, requested_output_format):
 
     # Re 323 - Limit discord length to their 2000 char limit total or it wont send.
@@ -149,6 +205,11 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
             and not url.startswith('put'):
         url += k + f"avatar_url={APPRISE_AVATAR_URL}"
 
+    # Replace placemarkers in title first (this was the missing piece causing the bug)
+    # Titles are ALWAYS plain text across all notification services (Discord embeds, Slack attachments,
+    # email Subject headers, etc.), so we always use 'text' format for title placemarker replacement
+    n_title = replace_placemarkers_in_text(n_title, url, 'text')
+
     if url.startswith('tgram://'):
         # Telegram only supports a limit subset of HTML, remove the '<br>' we place in.
         # re https://github.com/dgtlmoon/changedetection.io/issues/555
@@ -157,16 +218,8 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
         n_body = n_body.replace('</br>', '\n')
         n_body = n_body.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
 
-        # Use strikethrough for removed content, bold for added content
-        n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '<s>')
-        n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, '</s>')
-        n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, '<b>')
-        n_body = n_body.replace(ADDED_PLACEMARKER_CLOSED, '</b>')
-        # Handle changed/replaced lines (old → new)
-        n_body = n_body.replace(CHANGED_PLACEMARKER_OPEN, '<s>')
-        n_body = n_body.replace(CHANGED_PLACEMARKER_CLOSED, '</s>')
-        n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN, '<b>')
-        n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_CLOSED, '</b>')
+        # Replace placemarkers for body
+        n_body = replace_placemarkers_in_text(n_body, url, requested_output_format)
 
         # real limit is 4096, but minus some for extra metadata
         payload_max_size = 3600
@@ -190,7 +243,7 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
         if requested_output_format == 'html':
             # No diff placeholders, use Discord markdown for any other formatting
             # Use Discord markdown: strikethrough for removed, bold for added
-            n_body = apply_discord_markdown_to_body(n_body=n_body)
+            n_body = replace_placemarkers_in_text(n_body, url, requested_output_format)
 
             # Apply 2000 char limit for plain content
             payload_max_size = 1700
@@ -201,40 +254,17 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
 
     # Is not discord/tgram and they want htmlcolor
     elif requested_output_format == 'htmlcolor':
-        # https://github.com/dgtlmoon/changedetection.io/issues/821#issuecomment-1241837050
-        n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, f'<span style="{HTML_REMOVED_STYLE}" role="deletion" aria-label="Removed text" title="Removed text">')
-        n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, f'</span>')
-        n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, f'<span style="{HTML_ADDED_STYLE}" role="insertion" aria-label="Added text" title="Added text">')
-        n_body = n_body.replace(ADDED_PLACEMARKER_CLOSED, f'</span>')
-        # Handle changed/replaced lines (old → new)
-        n_body = n_body.replace(CHANGED_PLACEMARKER_OPEN, f'<span style="{HTML_CHANGED_STYLE}" role="note" aria-label="Changed text" title="Changed text">')
-        n_body = n_body.replace(CHANGED_PLACEMARKER_CLOSED, f'</span>')
-        n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN, f'<span style="{HTML_CHANGED_INTO_STYLE}" role="note" aria-label="Changed into" title="Changed into">')
-        n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_CLOSED, f'</span>')
+        n_body = replace_placemarkers_in_text(n_body, url, requested_output_format)
         n_body = n_body.replace('\n', f'{CUSTOM_LINEBREAK_PLACEHOLDER}\n')
     elif requested_output_format == 'html':
-        n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '(removed) ')
-        n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, '')
-        n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, '(added) ')
-        n_body = n_body.replace(ADDED_PLACEMARKER_CLOSED, '')
-        n_body = n_body.replace(CHANGED_PLACEMARKER_OPEN, f'(changed) ')
-        n_body = n_body.replace(CHANGED_PLACEMARKER_CLOSED, f'')
-        n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN, f'(into) ')
-        n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_CLOSED, f'')
+        n_body = replace_placemarkers_in_text(n_body, url, requested_output_format)
         n_body = n_body.replace('\n', f'{CUSTOM_LINEBREAK_PLACEHOLDER}\n')
     elif requested_output_format == 'markdown':
         # Markdown to HTML - Apprise will convert this to HTML
-        n_body = apply_standard_markdown_to_body(n_body=n_body)
+        n_body = replace_placemarkers_in_text(n_body, url, requested_output_format)
 
     else: #plaintext etc default
-        n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN, '(removed) ')
-        n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, '')
-        n_body = n_body.replace(ADDED_PLACEMARKER_OPEN, '(added) ')
-        n_body = n_body.replace(ADDED_PLACEMARKER_CLOSED, '')
-        n_body = n_body.replace(CHANGED_PLACEMARKER_OPEN, f'(changed) ')
-        n_body = n_body.replace(CHANGED_PLACEMARKER_CLOSED, f'')
-        n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN, f'(into) ')
-        n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_CLOSED, f'')
+        n_body = replace_placemarkers_in_text(n_body, url, requested_output_format)
 
     return url, n_body, n_title
 

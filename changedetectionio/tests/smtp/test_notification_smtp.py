@@ -3,7 +3,8 @@ from flask import url_for
 from email import message_from_string
 from email.policy import default as email_policy
 
-from changedetectionio.diff import HTML_REMOVED_STYLE, HTML_ADDED_STYLE, HTML_CHANGED_STYLE
+from changedetectionio.diff import HTML_REMOVED_STYLE, HTML_ADDED_STYLE, HTML_CHANGED_STYLE, REMOVED_PLACEMARKER_OPEN, \
+    CHANGED_PLACEMARKER_OPEN, ADDED_PLACEMARKER_OPEN
 from changedetectionio.notification_service import NotificationContextData, CUSTOM_LINEBREAK_PLACEHOLDER
 from changedetectionio.tests.util import set_original_response, set_modified_response, set_more_modified_response, live_server_setup, \
     wait_for_all_checks, \
@@ -13,7 +14,7 @@ import logging
 
 
 # NOTE - RELIES ON mailserver as hostname running, see github build recipes
-smtp_test_server = 'mailserver'
+smtp_test_server = 'localhost'
 
 ALL_MARKUP_TOKENS = ''.join(f"TOKEN: '{t}'\n{{{{{t}}}}}\n" for t in NotificationContextData().keys())
 
@@ -177,7 +178,7 @@ def test_check_notification_html_color_format(client, live_server, measure_memor
     res = client.post(
         url_for("settings.settings_page"),
         data={"application-notification_urls": notification_url,
-              "application-notification_title": "fallback-title " + default_notification_title,
+              "application-notification_title": "fallback-title {{watch_title}} " + default_notification_title,
               "application-notification_body": f"some text\n{default_notification_body}\nMore output test\n{ALL_MARKUP_TOKENS}",
               "application-notification_format": 'htmlcolor',
               "requests-time_between_check-minutes": 180,
@@ -211,6 +212,16 @@ def test_check_notification_html_color_format(client, live_server, measure_memor
 
     # Parse the email properly using Python's email library
     msg = message_from_string(msg_raw, policy=email_policy)
+    # Subject/title got marked up
+    subject = msg['subject']
+    # Subject should always be plaintext and never marked up to anything else
+    assert REMOVED_PLACEMARKER_OPEN not in subject
+    assert CHANGED_PLACEMARKER_OPEN not in subject
+    assert ADDED_PLACEMARKER_OPEN not in subject
+    assert 'head title' in subject
+    assert "span" not in subject
+    assert 'background-color' not in subject
+
 
     # The email should have two bodies (multipart/alternative with text/plain and text/html)
     assert msg.is_multipart()
