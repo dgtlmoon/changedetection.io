@@ -27,13 +27,15 @@ $(document).ready(function () {
         }
     }
 
-    const article = $('.highlightable-filter')[0];
+    const article = $('#difference')[0];
 
     // We could also add the  'touchend' event for touch devices, but since
     // most iOS/Android browsers already show a dialog when you select
     // text (often with a Share option) we'll skip that
-    article.addEventListener('mouseup', dragTextHandler, false);
-    article.addEventListener('mousedown', clean, false);
+    if (article) {
+        article.addEventListener('mouseup', dragTextHandler, false);
+        article.addEventListener('mousedown', clean, false);
+    }
 
 
     $('#highlightSnippetActions button').bind('click', function (e) {
