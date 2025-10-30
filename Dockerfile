@@ -4,6 +4,10 @@ ARG PYTHON_VERSION=3.11
 
 FROM python:${PYTHON_VERSION}-slim-bookworm AS builder
 
+# Declare platform variables for cache mount IDs
+ARG TARGETARCH
+ARG TARGETVARIANT
+
 # See `cryptography` pin comment in requirements.txt
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
