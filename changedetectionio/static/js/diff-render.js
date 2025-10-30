@@ -4,91 +4,67 @@ $(document).ready(function () {
     var inputs = $('#difference span').toArray();
     inputs.current = 0;
 
-    // Build visual minimap of difference locations
+    // Setup visual minimap of difference locations (cells are pre-built in Python)
     var $visualizer = $('#cell-diff-jump-visualiser');
     var $difference = $('#difference');
-    var visualizerResolutionCells = 100; // Fixed resolution to prevent high CPU usage with many changes
+    var $cells = $visualizer.find('> div');
+    var visualizerResolutionCells = $cells.length;
     var cellHeight;
-    var cellData = {}; // Map cell index to change type
 
-    if ($difference.length && inputs.length) {
+    if ($difference.length && visualizerResolutionCells > 0) {
         var docHeight = $difference[0].scrollHeight;
         cellHeight = docHeight / visualizerResolutionCells;
 
-        // Map each span to a cell with its type based on color
-        var differenceTop = $difference.offset().top;
-        $(inputs).each(function() {
-            var spanTop = $(this).offset().top - differenceTop;
-            var cellIndex = Math.min(Math.floor(spanTop / cellHeight), visualizerResolutionCells - 1);
-            var bgColor = $(this).css('background-color');
-            var changeType;
-
-            // Determine type by background color
-            if (bgColor === 'rgb(250, 218, 215)' || bgColor === '#fadad7') {
-                changeType = 'deletion'; // Red background
-            } else if (bgColor === 'rgb(234, 242, 194)' || bgColor === '#eaf2c2') {
-                changeType = 'insertion'; // Green background
-            } else {
-                changeType = $(this).attr('role'); // Fallback to role attribute
-            }
-
-            // Track the type of change in each cell (prioritize mixed changes)
-            if (!cellData[cellIndex]) {
-                cellData[cellIndex] = changeType;
-            } else if (cellData[cellIndex] !== changeType) {
-                cellData[cellIndex] = 'mixed'; // Both deletion and insertion in same cell
-            }
-        });
-
-        // Create cell strip
-        for (var i = 0; i < visualizerResolutionCells; i++) {
-            var $cell = $('<div>');
-            var changeType = cellData[i];
-
-            if (changeType === 'deletion') {
-                $cell.addClass('deletion');
-            } else if (changeType === 'insertion') {
-                $cell.addClass('insertion');
-            } else if (changeType === 'note') {
-                $cell.addClass('note');
-            } else if (changeType === 'mixed') {
-                $cell.addClass('mixed');
-            }
-
-            // Add click handler to scroll to that position in the document
-            $cell.data('cellIndex', i);
-            $cell.on('click', function() {
+        // Add click handlers to pre-built cells
+        $cells.each(function(i) {
+            $(this).data('cellIndex', i);
+            $(this).on('click', function() {
                 var cellIndex = $(this).data('cellIndex');
                 var targetPositionInDifference = cellIndex * cellHeight;
-                var viewportOffset = 150; // Keep change visible with 150px offset
+                var viewportHeight = $(window).height();
 
+                // Scroll so target is at viewport center (where eyes expect it)
                 window.scrollTo({
-                    top: $difference.offset().top + targetPositionInDifference - viewportOffset,
+                    top: $difference.offset().top + targetPositionInDifference - (viewportHeight / 2),
                     behavior: "smooth"
                 });
             });
-
-            $visualizer.append($cell);
-        }
+        });
     }
 
     $('#jump-next-diff').click(function () {
         if (!inputs || inputs.length === 0) return;
 
-        var element = inputs[inputs.current];
-        var headerOffset = 80;
-        var elementPosition = element.getBoundingClientRect().top;
-        var offsetPosition = elementPosition - headerOffset + window.scrollY;
+        // Find the next change after current scroll position
+        var currentScrollPos = $(window).scrollTop();
+        var viewportHeight = $(window).height();
+        var currentCenter = currentScrollPos + (viewportHeight / 2);
+
+        // Add small buffer (50px) to jump past changes already near center
+        var searchFromPosition = currentCenter + 50;
+
+        var nextElement = null;
+        for (var i = 0; i < inputs.length; i++) {
+            var elementTop = $(inputs[i]).offset().top;
+            if (elementTop > searchFromPosition) {
+                nextElement = inputs[i];
+                break;
+            }
+        }
+
+        // If no element found ahead, wrap to first element
+        if (!nextElement) {
+            nextElement = inputs[0];
+        }
+
+        // Scroll to position the element at viewport center
+        var elementTop = $(nextElement).offset().top;
+        var targetScrollPos = elementTop - (viewportHeight / 2);
 
         window.scrollTo({
-            top: offsetPosition,
+            top: targetScrollPos,
             behavior: "smooth",
         });
-
-        inputs.current++;
-        if (inputs.current >= inputs.length) {
-            inputs.current = 0;
-        }
     });
 
     // Track current scroll position in visualizer
@@ -96,20 +72,72 @@ $(document).ready(function () {
         if (!$difference.length || visualizerResolutionCells === 0) return;
 
         var scrollTop = $(window).scrollTop();
+        var viewportHeight = $(window).height();
+        var viewportCenter = scrollTop + (viewportHeight / 2);
         var differenceTop = $difference.offset().top;
-        var positionInDifference = scrollTop - differenceTop;
+        var differenceHeight = $difference[0].scrollHeight;
+        var positionInDifference = viewportCenter - differenceTop;
+
+        // Handle edge case: if we're at max scroll, show last cell
+        // This prevents shorter documents from never reaching 100%
+        var maxScrollTop = $(document).height() - viewportHeight;
+        var isAtBottom = scrollTop >= maxScrollTop - 10; // 10px tolerance
 
         // Calculate which cell we're currently viewing
-        var currentCell = Math.floor(positionInDifference / cellHeight);
-        currentCell = Math.max(0, Math.min(currentCell, visualizerResolutionCells - 1));
+        var currentCell;
+        if (isAtBottom) {
+            currentCell = visualizerResolutionCells - 1;
+        } else {
+            currentCell = Math.floor(positionInDifference / cellHeight);
+            currentCell = Math.max(0, Math.min(currentCell, visualizerResolutionCells - 1));
+        }
 
         // Remove previous active marker and add to current cell
         $visualizer.find('> div').removeClass('current-position');
         $visualizer.find('> div').eq(currentCell).addClass('current-position');
     }
 
-    // Debounce scroll event to reduce CPU usage
+    // Recalculate cellHeight on window resize
+    function handleResize() {
+        if ($difference.length) {
+            var docHeight = $difference[0].scrollHeight;
+            cellHeight = docHeight / visualizerResolutionCells;
+            updateVisualizerPosition();
+        }
+    }
+
+    // Debounce scroll and resize events to reduce CPU usage
     $(window).on('scroll', updateVisualizerPosition.debounce(5));
+    $(window).on('resize', handleResize.debounce(100));
+
+    // Initial scroll to specific line if requested
+    if (typeof initialScrollToLineNumber !== 'undefined' && initialScrollToLineNumber !== null && $difference.length) {
+        // Convert line number to text position and scroll to it
+        var diffText = $difference.text();
+        var lines = diffText.split('\n');
+
+        if (initialScrollToLineNumber > 0 && initialScrollToLineNumber <= lines.length) {
+            // Calculate character position of the target line
+            var charPosition = 0;
+            for (var i = 0; i < initialScrollToLineNumber - 1; i++) {
+                charPosition += lines[i].length + 1; // +1 for newline
+            }
+
+            // Estimate vertical position based on average line height
+            var totalChars = diffText.length;
+            var totalHeight = $difference[0].scrollHeight;
+            var estimatedTop = (charPosition / totalChars) * totalHeight;
+
+            // Scroll to position with line at viewport center
+            var viewportHeight = $(window).height();
+            setTimeout(function() {
+                window.scrollTo({
+                    top: $difference.offset().top + estimatedTop - (viewportHeight / 2),
+                    behavior: "smooth"
+                });
+            }, 100); // Small delay to ensure page is fully loaded
+        }
+    }
 
     // Initial position update
     if ($difference.length && cellHeight) {

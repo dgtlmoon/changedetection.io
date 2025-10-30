@@ -184,9 +184,11 @@ ul#highlightSnippetActions {
   z-index: 10;
   padding-top: 1rem;
   padding-bottom: 1rem;
+  justify-content: center;
   > div {
     flex: 1;
     min-width: 1px;
+    max-width: 10px;
     height: 10px;
     background: var(--color-background-button-cancel);
     opacity: 0.3;
