@@ -2,7 +2,7 @@ from flask import Blueprint, request, make_response
 import random
 from loguru import logger
 
-from changedetectionio.notification_service import NotificationContextData
+from changedetectionio.notification_service import NotificationContextData, set_basic_notification_vars
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
 
@@ -95,7 +95,44 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 n_object['notification_body'] = "Test body"
 
             n_object['as_async'] = False
-            n_object.update(watch.extra_notification_token_values())
+
+            #  Same like in notification service, should be refactored
+            dates = []
+            trigger_text = ''
+            snapshot_contents = ''
+            if watch:
+                watch_history = watch.history
+                dates = list(watch_history.keys())
+                trigger_text = watch.get('trigger_text', [])
+                # Add text that was triggered
+                if len(dates):
+                    snapshot_contents = watch.get_history_snapshot(dates[-1])
+                else:
+                    snapshot_contents = "No snapshot/history available, the watch should fetch atleast once."
+
+                if len(trigger_text):
+                    from . import html_tools
+                    triggered_text = html_tools.get_triggered_text(content=snapshot_contents, trigger_text=trigger_text)
+                    if triggered_text:
+                        triggered_text = '\n'.join(triggered_text)
+
+            # Could be called as a 'test notification' with only 1 snapshot available
+            prev_snapshot = "Example text: example test\nExample text: change detection is cool\nExample text: some more examples\n"
+            current_snapshot = "Example text: example test\nExample text: change detection is fantastic\nExample text: even more examples\nExample text: a lot more examples"
+
+
+
+            if len(dates) > 1:
+                prev_snapshot = watch.get_history_snapshot(dates[-2])
+                current_snapshot = watch.get_history_snapshot(dates[-1])
+
+            n_object.update(set_basic_notification_vars(snapshot_contents=snapshot_contents,
+                                                        current_snapshot=current_snapshot,
+                                                        prev_snapshot=prev_snapshot,
+                                                        watch=watch,
+                                                        triggered_text=trigger_text))
+
+
             sent_obj = process_notification(n_object, datastore)
 
         except Exception as e:

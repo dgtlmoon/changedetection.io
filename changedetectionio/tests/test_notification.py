@@ -404,15 +404,15 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
 
 
 #2510
+#@todo run it again as text, html, htmlcolor
 def test_global_send_test_notification(client, live_server, measure_memory_usage, datastore_path):
 
-    
     set_original_response(datastore_path=datastore_path)
     if os.path.isfile(os.path.join(datastore_path, "notification.txt")):
         os.unlink(os.path.join(datastore_path, "notification.txt")) \
 
     # 1995 UTF-8 content should be encoded
-    test_body = 'change detection is cool 网站监测 内容更新了'
+    test_body = 'change detection is cool 网站监测 内容更新了 - {{diff_full}}'
 
     # otherwise other settings would have already existed from previous tests in this file
     res = client.post(
@@ -452,7 +452,14 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
 
     with open(os.path.join(datastore_path, "notification.txt"), 'r') as f:
         x = f.read()
-        assert test_body in x
+        assert 'change detection is cool 网站监测 内容更新了' in x
+        if 'html' in default_notification_format:
+            # this should come from default text when in global/system mode here changedetectionio/notification_service.py
+            assert 'title="Changed into">Example text:' in x
+        else:
+            assert 'title="Changed into">Example text:' not in x
+            assert 'span' not in x
+            assert 'Example text:' in x
 
     os.unlink(os.path.join(datastore_path, "notification.txt"))
 
@@ -509,6 +516,47 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
     assert b"Error: You must have atleast one watch configured for 'test notification' to work" in res.data
 
 
+#2510
+def test_single_send_test_notification_on_watch(client, live_server, measure_memory_usage, datastore_path):
+
+    set_original_response(datastore_path=datastore_path)
+    if os.path.isfile(os.path.join(datastore_path, "notification.txt")):
+        os.unlink(os.path.join(datastore_path, "notification.txt")) \
+
+
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+
+    test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')+"?xxx={{ watch_url }}&+custom-header=123"
+    # 1995 UTF-8 content should be encoded
+    test_body = 'change detection is cool 网站监测 内容更新了 - {{diff_full}}'
+    ######### Test global/system settings
+    res = client.post(
+        url_for("ui.ui_notification.ajax_callback_send_notification_test")+f"/{uuid}",
+        data={"notification_urls": test_notification_url,
+              "notification_body": test_body,
+              "notification_format": default_notification_format,
+              "notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
+              },
+        follow_redirects=True
+    )
+
+    assert res.status_code != 400
+    assert res.status_code != 500
+
+    with open(os.path.join(datastore_path, "notification.txt"), 'r') as f:
+        x = f.read()
+        assert 'change detection is cool 网站监测 内容更新了' in x
+        if 'html' in default_notification_format:
+            # this should come from default text when in global/system mode here changedetectionio/notification_service.py
+            assert 'title="Changed into">Example text:' in x
+        else:
+            assert 'title="Changed into">Example text:' not in x
+            assert 'span' not in x
+            assert 'Example text:' in x
+
+    os.unlink(os.path.join(datastore_path, "notification.txt"))
 
 def _test_color_notifications(client, notification_body_token, datastore_path):
 
