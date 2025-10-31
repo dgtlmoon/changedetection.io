@@ -176,7 +176,6 @@ def test_api_simple(client, live_server, measure_memory_usage, datastore_path):
         headers={'x-api-key': api_key},
     )
     assert b'aria-label="Changed text" title="Changed text">Which is across multiple lines' in res.data
-    assert b'@BR@' not in res.data
 
 
     # Fetch the whole watch

@@ -12,6 +12,9 @@ import copy
 
 # Import schemas from __init__.py
 from . import schema, schema_create_watch, schema_update_watch, validate_openapi_request
+from ..notification import valid_notification_formats
+from ..notification.handler import newline_re
+
 
 def validate_time_between_check_required(json_data):
     """
@@ -221,9 +224,8 @@ class WatchHistoryDiff(Resource):
         output_format = request.args.get('format', 'text').lower()
 
         # Validate format
-        valid_formats = ['text', 'html', 'htmlcolor']
-        if output_format not in valid_formats:
-            abort(400, message=f"Invalid format. Must be one of: {', '.join(valid_formats)}")
+        if output_format not in valid_notification_formats.keys():
+            abort(400, message=f"Invalid format. Must be one of: {', '.join(valid_notification_formats.keys())}")
 
         # Get the word_diff parameter (default to False - line-level mode)
         word_diff = strtobool(request.args.get('word_diff', 'false'))
@@ -270,21 +272,9 @@ class WatchHistoryDiff(Resource):
                 )
                 mimetype = "text/html" if output_format == 'html' else "text/plain"
 
-            import re
             if 'html' in output_format:
-                content = re.sub(
-                    r'\r?\n?',
-                    '<br>\\r\\n',
-                    content
-                )
-            else:
-                # texty types
-                content = re.sub(
-                    r'\r?\n?',
-                    '\\r\\n',
-                    content
-                )
-
+                content = newline_re.sub('<br>\r\n', content)
+                
         response = make_response(content, 200)
         response.mimetype = mimetype
         return response
