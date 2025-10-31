@@ -13,7 +13,6 @@ from changedetectionio.diff import (
     CHANGED_INTO_PLACEMARKER_OPEN, CHANGED_INTO_PLACEMARKER_CLOSED
 )
 from changedetectionio.notification.handler import apply_html_color_to_body
-from changedetectionio.notification_service import CUSTOM_LINEBREAK_PLACEHOLDER
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
 from changedetectionio import html_tools, diff
@@ -148,8 +147,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         for _ in range(min(open_count, close_count)):
             result = result.replace('&lt;/span&gt;', '</span>', 1)
 
-        # Not necessary because the CSS/HTML will lay it out by linefeed
-        result = result.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '')
         return Markup(result)
 
     @views_blueprint.route("/preview/<string:uuid>", methods=['GET'])
@@ -348,7 +345,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         diff_cell_grid = build_diff_cell_visualizer(content)
 
         content = apply_html_color_to_body(n_body=content)
-        content = content.replace(CUSTOM_LINEBREAK_PLACEHOLDER, "\n")
         offscreen_content = render_template("diff-offscreen-options.html")
 
         output = render_template("diff.html",

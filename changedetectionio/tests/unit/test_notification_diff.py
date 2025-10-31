@@ -17,7 +17,6 @@ from changedetectionio.diff import (
     CHANGED_INTO_PLACEMARKER_OPEN,
     CHANGED_INTO_PLACEMARKER_CLOSED
 )
-from changedetectionio.notification_service import CUSTOM_LINEBREAK_PLACEHOLDER
 
 
 # mostly
@@ -81,7 +80,7 @@ class TestDiffBuilder(unittest.TestCase):
                                   newest_version_file_contents=after,
                                   patch_format=True)
 
-        output = output.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
+        
 
         output = output.split("\n")
 
@@ -156,7 +155,7 @@ Line 10"""
 
         # Test with no context
         output = diff.render_diff(before, after, include_equal=False, context_lines=0, word_diff=True)
-        output = output.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
+        
         lines = output.split("\n")
         # Should only show changed lines
         self.assertEqual(len([l for l in lines if l.strip()]), 2)  # Two changed lines
@@ -165,7 +164,7 @@ Line 10"""
 
         # Test with 1 line of context
         output = diff.render_diff(before, after, include_equal=False, context_lines=1, word_diff=True)
-        output = output.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
+        
         lines = [l for l in output.split("\n") if l.strip()]
         # Should show changed lines + 1 line before and after each
         self.assertIn('Line 3', output)  # 1 line before first change
@@ -176,7 +175,7 @@ Line 10"""
 
         # Test with 2 lines of context
         output = diff.render_diff(before, after, include_equal=False, context_lines=2, word_diff=True)
-        output = output.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
+        
         lines = [l for l in output.split("\n") if l.strip()]
         # Should show changed lines + 2 lines before and after each
         self.assertIn('Line 2', output)  # 2 lines before first change
@@ -197,9 +196,7 @@ Line 4"""
 
         # With include_equal=True, context_lines should be ignored
         output_with_context = diff.render_diff(before, after, include_equal=True, context_lines=1)
-        output_with_context = output_with_context.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
         output_without_context = diff.render_diff(before, after, include_equal=True, context_lines=0)
-        output_without_context = output_without_context.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
 
         # Both should show all lines
         self.assertIn('Line 1', output_with_context)
@@ -218,7 +215,7 @@ Line 4"""
 
         # With case-insensitive, should detect no changes
         output = diff.render_diff(before, after, include_equal=False, case_insensitive=True)
-        output = output.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
+        
 
         # Should be empty or minimal since texts are equal when ignoring case
         lines = [l for l in output.split("\n") if l.strip()]
@@ -231,7 +228,7 @@ Line 4"""
 
         # Case-insensitive should only detect the second line change
         output = diff.render_diff(before, after, include_equal=False, case_insensitive=True, word_diff=True)
-        output = output.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
+        
 
         # First line should not appear (same when ignoring case)
         self.assertNotIn('Hello', output)
@@ -248,7 +245,7 @@ Line 4"""
 
         # Case-insensitive should only highlight the price change
         output = diff.render_diff(before, after, include_equal=False, case_insensitive=True, word_diff=True)
-        output = output.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
+        
 
         # Inner spans show the changes within the line
         self.assertIn(CHANGED_PLACEMARKER_OPEN, output)
@@ -262,13 +259,13 @@ Line 4"""
 
         # Without ignore_junk, should detect whitespace changes
         output = diff.render_diff(before, after, include_equal=False, word_diff=True, ignore_junk=False)
-        output = output.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
+        
         # Should show some difference (whitespace changes)
         self.assertTrue(len(output.strip()) > 0, "Should detect whitespace changes when ignore_junk=False")
 
         # With ignore_junk, should ignore whitespace-only changes
         output = diff.render_diff(before, after, include_equal=False, word_diff=True, ignore_junk=True)
-        output = output.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
+        
         lines = [l for l in output.split("\n") if l.strip()]
         self.assertEqual(len(lines), 0, "Should ignore whitespace-only changes when ignore_junk=True")
 
@@ -279,14 +276,14 @@ Line 4"""
 
         # Without ignore_junk, should detect line change
         output = diff.render_diff(before, after, include_equal=False, word_diff=False, ignore_junk=False)
-        output = output.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
+        
         self.assertIn(f'{CHANGED_PLACEMARKER_OPEN}Hello  World{CHANGED_PLACEMARKER_CLOSED}', output)
         self.assertIn(f'{CHANGED_INTO_PLACEMARKER_OPEN}Hello World{CHANGED_INTO_PLACEMARKER_CLOSED}', output)
 
         # With ignore_junk enabled and word_diff disabled
         # When ignore_junk is enabled, whitespace is normalized at line level so lines match
         output = diff.render_diff(before, after, include_equal=False, word_diff=False, ignore_junk=True)
-        output = output.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
+        
         # Lines should be treated as equal
         lines = [l for l in output.split("\n") if l.strip()]
         self.assertEqual(len(lines), 0, "Should ignore whitespace differences at line level")
@@ -297,7 +294,7 @@ Line 4"""
         after = "The quick brown cat"
 
         output = diff.render_diff(before, after, include_equal=False, word_diff=True, ignore_junk=True)
-        output = output.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
+        
         # Should still detect the word change (fox -> cat)
         self.assertIn(f'{REMOVED_PLACEMARKER_OPEN}fox{REMOVED_PLACEMARKER_CLOSED}', output)
         self.assertIn(f'{ADDED_PLACEMARKER_OPEN}cat{ADDED_PLACEMARKER_CLOSED}', output)
@@ -310,12 +307,12 @@ Line 4"""
 
         # Without ignore_junk, should detect difference
         output = diff.render_diff(before, after, include_equal=False, word_diff=True, ignore_junk=False)
-        output = output.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
+        
         self.assertTrue(len(output.strip()) > 0, "Should detect tab vs space differences")
 
         # With ignore_junk, should ignore tab/space differences
         output = diff.render_diff(before, after, include_equal=False, word_diff=True, ignore_junk=True)
-        output = output.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
+        
         lines = [l for l in output.split("\n") if l.strip()]
         self.assertEqual(len(lines), 0, "Should ignore tab vs space differences when ignore_junk=True")
 
@@ -325,7 +322,7 @@ Line 4"""
         after = "Value: 200 points"
 
         output = diff.render_diff(before, after, include_equal=False, word_diff=True, ignore_junk=True)
-        output = output.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
+        
         # Should only highlight the actual value change
         self.assertIn(f'{REMOVED_PLACEMARKER_OPEN}100{REMOVED_PLACEMARKER_CLOSED}', output)
         self.assertIn(f'{ADDED_PLACEMARKER_OPEN}200{ADDED_PLACEMARKER_CLOSED}', output)
@@ -339,20 +336,20 @@ Line 4"""
         # Both enabled: should ignore case and whitespace
         output = diff.render_diff(before, after, include_equal=False, word_diff=True,
                                  case_insensitive=True, ignore_junk=True)
-        output = output.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
+        
         lines = [l for l in output.split("\n") if l.strip()]
         self.assertEqual(len(lines), 0, "Should ignore both case and whitespace differences")
 
         # Only case_insensitive: should detect whitespace changes
         output = diff.render_diff(before, after, include_equal=False, word_diff=True,
                                  case_insensitive=True, ignore_junk=False)
-        output = output.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
+        
         self.assertTrue(len(output.strip()) > 0, "Should detect whitespace changes")
 
         # Only ignore_junk: should detect case changes
         output = diff.render_diff(before, after, include_equal=False, word_diff=True,
                                  case_insensitive=False, ignore_junk=True)
-        output = output.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
+        
         # Should detect case differences
         self.assertIn('QUICK', output)
         self.assertIn('quick', output)
@@ -375,7 +372,7 @@ Line 3 with tabs and spaces"""
 
         # With ignore_junk, should only show unchanged line when include_equal=True
         output = diff.render_diff(before, after, include_equal=False, word_diff=True, ignore_junk=True)
-        output = output.replace(CUSTOM_LINEBREAK_PLACEHOLDER, '\n')
+        
         lines = [l for l in output.split("\n") if l.strip()]
         # Should be empty since only whitespace changed
         self.assertEqual(len(lines), 0, "Should ignore whitespace changes across multiple lines")

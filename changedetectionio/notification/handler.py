@@ -96,7 +96,6 @@ def apply_html_color_to_body(n_body: str):
     n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN,
                             f'<span style="{HTML_CHANGED_INTO_STYLE}" role="note" aria-label="Changed into" title="Changed into">')
     n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_CLOSED, f'</span>')
-    n_body = n_body.replace('\n', f'{CUSTOM_LINEBREAK_PLACEHOLDER}\n')
     return n_body
 
 def apply_discord_markdown_to_body(n_body):

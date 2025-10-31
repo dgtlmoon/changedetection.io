@@ -12,8 +12,6 @@ import copy
 
 # Import schemas from __init__.py
 from . import schema, schema_create_watch, schema_update_watch, validate_openapi_request
-from ..notification_service import CUSTOM_LINEBREAK_PLACEHOLDER
-
 
 def validate_time_between_check_required(json_data):
     """
@@ -275,14 +273,14 @@ class WatchHistoryDiff(Resource):
             import re
             if 'html' in output_format:
                 content = re.sub(
-                    re.escape(CUSTOM_LINEBREAK_PLACEHOLDER) + r'\r?\n?',
+                    r'\r?\n?',
                     '<br>\\r\\n',
                     content
                 )
             else:
                 # texty types
                 content = re.sub(
-                    re.escape(CUSTOM_LINEBREAK_PLACEHOLDER) + r'\r?\n?',
+                    r'\r?\n?',
                     '\\r\\n',
                     content
                 )

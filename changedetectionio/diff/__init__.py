@@ -11,7 +11,6 @@ import diff_match_patch as dmp_module
 import re
 
 from .tokenizers import TOKENIZERS, tokenize_words_and_html
-from ..notification_service import CUSTOM_LINEBREAK_PLACEHOLDER
 
 # Remember! gmail, outlook etc dont support <style> must be inline.
 # Gmail: strips <ins> and <del> tags entirely.
@@ -419,7 +418,7 @@ def render_diff(
 
     if patch_format:
         patch = difflib.unified_diff(previous_lines, newest_lines)
-        return CUSTOM_LINEBREAK_PLACEHOLDER.join(patch)
+        return "\n".join(patch)
 
     rendered_diff = customSequenceMatcher(
         before=previous_lines,
@@ -443,7 +442,7 @@ def render_diff(
                 result.extend(x)
             else:
                 result.append(x)
-        return CUSTOM_LINEBREAK_PLACEHOLDER.join(result)
+        return "\n".join(result)
 
     return flatten(rendered_diff)
 
