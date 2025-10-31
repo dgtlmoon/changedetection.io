@@ -34,25 +34,27 @@ ENV OPENSSL_LIB_DIR="/usr/lib/arm-linux-gnueabihf"
 ENV OPENSSL_INCLUDE_DIR="/usr/include/openssl"
 # Additional environment variables for cryptography Rust build
 ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
-RUN --mount=type=cache,target=/tmp/pip-cache \
-    pip install \
-    --prefer-binary \
-    --extra-index-url https://www.piwheels.org/simple \
-    --extra-index-url https://pypi.anaconda.org/ARM-software/simple \
-    --cache-dir=/tmp/pip-cache \
-    --target=/dependencies \
-    -r /requirements.txt
+RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
+  pip install \
+  --prefer-binary \
+  --extra-index-url https://www.piwheels.org/simple \
+  --extra-index-url https://pypi.anaconda.org/ARM-software/simple \
+  --cache-dir=/tmp/pip-cache \
+  --target=/dependencies \
+  -r /requirements.txt
+
 
 # Playwright is an alternative to Selenium
 # Excluded this package from requirements.txt to prevent arm/v6 and arm/v7 builds from failing
 # https://github.com/dgtlmoon/changedetection.io/pull/1067 also musl/alpine (not supported)
-RUN --mount=type=cache,target=/tmp/pip-cache \
-    pip install \
-    --prefer-binary \
-    --cache-dir=/tmp/pip-cache \
-    --target=/dependencies \
-    playwright~=1.48.0 \
-    || echo "WARN: Failed to install Playwright. The application can still run, but the Playwright option will be disabled."
+RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
+  pip install \
+  --prefer-binary \
+  --cache-dir=/tmp/pip-cache \
+  --target=/dependencies \
+  playwright~=1.48.0 \
+  || echo "WARN: Failed to install Playwright. The application can still run, but the Playwright option will be disabled."
+
 
 # Final image stage
 FROM python:${PYTHON_VERSION}-slim-bookworm

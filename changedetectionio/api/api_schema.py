@@ -96,7 +96,10 @@ def build_watch_json_schema(d):
                                                            "enum": ["html_requests", "html_webdriver"]
                                                            })
 
-
+    schema['properties']['processor'] = {"anyOf": [
+        {"type": "string", "enum": ["restock_diff", "text_json_diff"]},
+        {"type": "null"}
+    ]}
 
     # All headers must be key/value type dict
     schema['properties']['headers'] = {
