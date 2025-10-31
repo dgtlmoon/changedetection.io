@@ -62,15 +62,12 @@
             const textContent = $pre.text();
             const lines = textContent.split(/\r?\n/); // Handles both \n and \r\n line endings
 
-            // Build a map of line numbers to styles
-            const lineStyles = {};
+            // Build a map of line numbers to their configuration index
+            const lineConfigIndex = {};
 
-            configurations.forEach(config => {
-                const {color, lines: lineNumbers} = config;
-                lineNumbers.forEach(lineNumber => {
-                    lineStyles[lineNumber] = color;
-                });
-            });
+            configurations.forEach((config, index) =>
+                config.lines.forEach(lineNumber => lineConfigIndex[lineNumber] = index)
+            );
 
             // Function to escape HTML characters
             function escapeHtml(text) {
@@ -83,11 +80,12 @@
             const processedLines = lines.map((line, index) => {
                 const lineNumber = index + 1; // Line numbers start at 1
                 const escapedLine = escapeHtml(line);
-                const color = lineStyles[lineNumber];
+                const configIndex = lineConfigIndex[lineNumber];
 
-                if (color) {
+                if (configIndex !== undefined) {
+                    const config = configurations[configIndex];
                     // Wrap the line in a span with inline style
-                    return `<span style="background-color: ${color}">${escapedLine}</span>`;
+                    return `<span title="${config.title}" style="background-color: ${config.color}">${escapedLine}</span>`;
                 } else {
                     return escapedLine;
                 }
@@ -100,6 +98,7 @@
             $pre.html(newContent);
         });
     };
+
     $.fn.miniTabs = function (tabsConfig, options) {
         const settings = {
             tabClass: 'minitab',

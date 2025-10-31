@@ -8,12 +8,20 @@
     {% endif %}
 
     const highlight_submit_ignore_url="{{url_for('ui.ui_edit.highlight_submit_ignore_url', uuid=uuid)}}";
+    const watch_url= {{watch_a.link|tojson}};
 
+    // Initial scroll position: if set, scroll to this line number in #difference on page load
+    const initialScrollToLineNumber = {{ initial_scroll_line_number|default('null') }};
 </script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="{{url_for('static_content', group='js', filename='plugins.js')}}"></script>
+<script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.min.js"></script>
+<script src="{{url_for('static_content', group='js', filename='snippet-to-image.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='diff-overview.js')}}" defer></script>
 
+
 <div id="settings">
-    <form class="pure-form " action="" method="GET" id="diff-form">
+    <form class="pure-form " action="{{ url_for("ui.ui_views.diff_history_page", uuid=uuid) }}" method="POST" id="diff-form">
         <fieldset class="diff-fieldset">
             {% if versions|length >= 1 %}
                 <strong>Compare</strong>
@@ -37,26 +45,29 @@
             {% endif %}
         </fieldset>
         <fieldset>
-            <strong>Style</strong>
-            <label for="diffWords" class="pure-checkbox">
-                <input type="radio" name="diff_type" id="diffWords" value="diffWords"> Words</label>
-            <label for="diffLines" class="pure-checkbox">
-                <input type="radio" name="diff_type" id="diffLines" value="diffLines" checked=""> Lines</label>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <strong>Style</strong>
 
-            <label for="diffChars" class="pure-checkbox">
-                <input type="radio" name="diff_type" id="diffChars" value="diffChars"> Chars</label>
-            <!-- @todo - when mimetype is JSON, select this by default? -->
-            <label for="diffJson" class="pure-checkbox">
-                <input type="radio" name="diff_type" id="diffJson" value="diffJson"> JSON</label>
+                <label for="diffWords" class="pure-checkbox">
+                    <input type="radio" name="diff_type" id="diffWords" value="diffWords" {% if diff_prefs.diff_type == 'diffWords' %}checked=""{% endif %}> Words</label>
+                <label for="diffLines" class="pure-checkbox">
+                    <input type="radio" name="diff_type" id="diffLines" value="diffLines" {% if diff_prefs.diff_type == 'diffLines' %}checked=""{% endif %}> Lines</label>
 
-            <span>
-        <!-- https://github.com/kpdecker/jsdiff/issues/389 ? -->
-        <label for="ignoreWhitespace" class="pure-checkbox" id="label-diff-ignorewhitespace">
-            <input type="checkbox" id="ignoreWhitespace" name="ignoreWhitespace"> Ignore Whitespace</label>
-    </span>
+                <label for="ignoreWhitespace" class="pure-checkbox" id="label-diff-ignorewhitespace">
+                    <input type="checkbox" name="ignoreWhitespace" {% if diff_prefs.ignoreWhitespace %}checked=""{% endif %}> Ignore Whitespace</label>
+
+                <label for="changesOnly" class="pure-checkbox" id="label-diff-changes">
+                    <input type="checkbox" name="diff_changesOnly" {% if diff_prefs.diff_changesOnly %}checked=""{% endif %}> Changes only</label>
+
+                <label for="changesOnly" class="pure-checkbox" id="label-diff-removed">
+                    <input type="checkbox"  name="diff_removed" {% if diff_prefs.diff_removed %}checked=""{% endif %}> Removed</label>
+                <label for="changesOnly" class="pure-checkbox" id="label-diff-added">
+                    <input type="checkbox"  name="diff_added" {% if diff_prefs.diff_added %}checked=""{% endif %}> Added</label>
+                <label for="changesOnly" class="pure-checkbox" id="label-diff-replaced">
+                    <input type="checkbox"  name="diff_replaced" {% if diff_prefs.diff_replaced %}checked=""{% endif %}> Replaced</label>
+                <input type="submit">
         </fieldset>
     </form>
-
 </div>
 
 <div id="diff-jump">
@@ -87,28 +98,21 @@
         <img id="error-screenshot-img"  style="max-width: 80%" alt="Current error-ing screenshot from most recent request" >
     </div>
 
-     <div class="tab-pane-inner" id="text">
-         {% if password_enabled_and_share_is_off %}
-           <div class="tip">Pro-tip: You can enable <strong>"share access when password is enabled"</strong> from settings</div>
-         {% endif %}
+    <div class="tab-pane-inner" id="text">
+        {% if password_enabled_and_share_is_off %}
+            <div class="tip">Pro-tip: You can enable <strong>"share access when password is enabled"</strong> from settings.
+            </div>
+        {% endif %}
+        <div id="cell-diff-jump-visualiser">
+            {%- for cell in diff_cell_grid -%}
+            <div{% if cell.class %} class="{{ cell.class }}"{% endif %}></div>
+            {%- endfor -%}
+        </div>
+        <div class="snapshot-age">{{ watch_a.snapshot_text_ctime|format_timestamp_timeago }}</div>
+        <pre id="difference" style="border-left: 2px solid #ddd;">{{ content| diff_unescape_difference_spans }}</pre>
+    </div>
 
-         <div class="snapshot-age">{{watch_a.snapshot_text_ctime|format_timestamp_timeago}}</div>
-
-         <table>
-             <tbody>
-             <tr>
-                 <!-- just proof of concept copied straight from github.com/kpdecker/jsdiff -->
-                 <td id="a" style="display: none;">{{from_version_file_contents}}</td>
-                 <td id="b" style="display: none;">{{to_version_file_contents}}</td>
-                 <td id="diff-col">
-                     <span id="result" class="highlightable-filter"></span>
-                 </td>
-             </tr>
-             </tbody>
-         </table>
-         Diff algorithm from the amazing <a href="https://github.com/kpdecker/jsdiff">github.com/kpdecker/jsdiff</a>
-     </div>
-     <div class="tab-pane-inner" id="screenshot">
+    <div class="tab-pane-inner" id="screenshot">
          <div class="tip">
              For now, Differences are performed on text, not graphically, only the latest screenshot is available.
          </div>
@@ -159,8 +163,6 @@
 <script>
     const newest_version_timestamp = {{newest_version_timestamp}};
 </script>
-<script src="{{url_for('static_content', group='js', filename='diff.min.js')}}"></script>
-
 <script src="{{url_for('static_content', group='js', filename='diff-render.js')}}"></script>
 
 

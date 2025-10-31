@@ -51,6 +51,7 @@ def validate_openapi_request(operation_id):
     def decorator(f):
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
+            from werkzeug.exceptions import BadRequest
             try:
                 # Skip OpenAPI validation for GET requests since they don't have request bodies
                 if request.method.upper() != 'GET':
@@ -61,7 +62,6 @@ def validate_openapi_request(operation_id):
                     openapi_request = FlaskOpenAPIRequest(request)
                     result = spec.unmarshal_request(openapi_request)
                     if result.errors:
-                        from werkzeug.exceptions import BadRequest
                         error_details = []
                         for error in result.errors:
                             error_details.append(str(error))
@@ -78,7 +78,7 @@ def validate_openapi_request(operation_id):
     return decorator
 
 # Import all API resources
-from .Watch import Watch, WatchHistory, WatchSingleHistory, CreateWatch, WatchFavicon
+from .Watch import Watch, WatchHistory, WatchSingleHistory, WatchHistoryDiff, CreateWatch, WatchFavicon
 from .Tags import Tags, Tag
 from .Import import Import
 from .SystemInfo import SystemInfo

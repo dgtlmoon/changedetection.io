@@ -7,11 +7,10 @@ import re
 import urllib3
 
 from changedetectionio.conditions import execute_ruleset_against_all_plugins
-from changedetectionio.diff import ADDED_PLACEMARKER_OPEN
 from changedetectionio.processors import difference_detection_processor
 from changedetectionio.html_tools import PERL_STYLE_REGEX, cdata_in_document_to_text, TRANSLATE_WHITESPACE_TABLE
 from changedetectionio import html_tools, content_fetchers
-from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT, PRICE_DATA_TRACK_REJECT
+from changedetectionio.blueprint.price_data_follower import PRICE_DATA_TRACK_ACCEPT
 from loguru import logger
 
 from changedetectionio.processors.magic import guess_stream_type
@@ -468,6 +467,7 @@ class perform_site_check(difference_detection_processor):
                 c = ChecksumCalculator.calculate(text_content_before_ignored_filter, ignore_whitespace=True)
                 return False, {'previous_md5': c}, text_content_before_ignored_filter.encode('utf-8')
 
+
         # === EMPTY PAGE CHECK ===
         empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
         if not stream_content_type.is_json and not empty_pages_are_a_change and len(stripped_text.strip()) == 0:
@@ -584,7 +584,6 @@ class perform_site_check(difference_detection_processor):
             include_added=watch.get('filter_text_added', True),
             include_removed=watch.get('filter_text_removed', True),
             include_replaced=watch.get('filter_text_replaced', True),
-            line_feed_sep="\n",
             include_change_type_prefix=False
         )
 

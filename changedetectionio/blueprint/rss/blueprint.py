@@ -120,8 +120,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
                     html_diff = diff.render_diff(previous_version_file_contents=watch.get_history_snapshot(dates[-2]),
                                                  newest_version_file_contents=watch.get_history_snapshot(dates[-1]),
-                                                 include_equal=False,
-                                                 line_feed_sep="<br>"
+                                                 include_equal=False
                                                  )
 
 
