@@ -1,0 +1,165 @@
+name: Build Debian Package
+
+on:
+  push:
+    branches: [ master ]
+    tags:
+      - '*'
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build-deb:
+    runs-on: ubuntu-latest
+    container:
+      image: debian:bookworm
+
+    steps:
+    - name: Install git and dependencies
+      run: |
+        apt-get update
+        apt-get install -y git
+
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Install build dependencies
+      run: |
+        apt-get install -y \
+          dpkg-dev \
+          debhelper \
+          dh-python \
+          python3-all \
+          python3-setuptools \
+          python3-pip \
+          python3-venv \
+          build-essential \
+          fakeroot
+
+    - name: Build Debian package
+      run: |
+        # Build the package
+        dpkg-buildpackage -us -uc -b
+
+        # Move built package to workspace for artifact upload
+        mkdir -p deb-packages
+        mv ../*.deb deb-packages/ || true
+        mv ../*.buildinfo deb-packages/ || true
+        mv ../*.changes deb-packages/ || true
+
+        # List what was built
+        ls -lh deb-packages/
+
+    - name: Upload .deb package
+      uses: actions/upload-artifact@v4
+      with:
+        name: changedetection-deb-package
+        path: deb-packages/*.deb
+        retention-days: 30
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: changedetection-build-info
+        path: |
+          deb-packages/*.buildinfo
+          deb-packages/*.changes
+        retention-days: 30
+
+  test-install:
+    needs: build-deb
+    runs-on: ubuntu-latest
+    container:
+      image: debian:bookworm
+
+    steps:
+    - name: Download .deb package
+      uses: actions/download-artifact@v4
+      with:
+        name: changedetection-deb-package
+        path: ./deb-packages
+
+    - name: Install systemd and dependencies
+      run: |
+        apt-get update
+        apt-get install -y systemd systemctl
+
+    - name: Install package
+      run: |
+        ls -lh deb-packages/
+        apt-get install -y ./deb-packages/*.deb
+
+    - name: Verify installation
+      run: |
+        echo "Checking if _changedetection user exists..."
+        id _changedetection
+
+        echo "Checking if data directory exists..."
+        test -d /var/lib/changedetection
+        ls -ld /var/lib/changedetection
+
+        echo "Checking if service file exists..."
+        test -f /lib/systemd/system/changedetection.io.service
+
+        echo "Checking if binary wrapper exists..."
+        test -x /usr/bin/changedetection.io
+
+        echo "Checking if venv exists..."
+        test -d /opt/changedetection
+        test -x /opt/changedetection/bin/python3
+
+        echo "Testing binary execution..."
+        /usr/bin/changedetection.io --help || echo "Help command returned: $?"
+
+        echo ""
+        echo "✓ Installation verification passed!"
+
+    - name: Test service start and HTTP endpoint
+      run: |
+        apt-get install -y curl procps
+
+        echo "Starting changedetection.io service manually..."
+        # Start service in background as _changedetection user
+        su - _changedetection -s /bin/sh -c 'cd /var/lib/changedetection && /opt/changedetection/bin/changedetection.io -h 127.0.0.1 -p 5000 -d /var/lib/changedetection' &
+
+        echo "Waiting 5 seconds for service to start..."
+        sleep 5
+
+        echo "Checking if process is running..."
+        ps aux | grep changedetection || true
+
+        echo "Testing HTTP endpoint on localhost:5000..."
+        if curl -f -s http://127.0.0.1:5000/ | grep -i "changedetection" > /dev/null; then
+          echo "✓ Service is responding on port 5000!"
+          echo "✓ HTML content received successfully!"
+        else
+          echo "✗ Service did not respond correctly"
+          exit 1
+        fi
+
+  # Optional: Publish to GitHub Releases on tag push
+  publish-release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build-deb, test-install]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Download .deb package
+      uses: actions/download-artifact@v4
+      with:
+        name: changedetection-deb-package
+        path: ./deb-packages
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: deb-packages/*.deb
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

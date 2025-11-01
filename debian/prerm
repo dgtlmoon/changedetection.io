@@ -1,8 +1,23 @@
 #!/bin/sh
 set -e
 
-# Stop and disable the service
-systemctl stop changedetection.io.service
-systemctl disable changedetection.io.service
+case "$1" in
+    remove|deconfigure)
+        # Stop service before removal
+        if [ -d /run/systemd/system ]; then
+            deb-systemd-invoke stop changedetection.io.service >/dev/null || true
+        fi
+        ;;
+
+    upgrade|failed-upgrade)
+        ;;
+
+    *)
+        echo "prerm called with unknown argument \`$1'" >&2
+        exit 1
+        ;;
+esac
+
+#DEBHELPER#
 
 exit 0

@@ -1,1 +1,2 @@
-debian/changedetection.io.service lib/systemd/system/
+# Install wrapper script
+debian/changedetection-wrapper usr/bin/changedetection.io

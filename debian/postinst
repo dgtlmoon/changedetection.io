@@ -1,23 +1,51 @@
 #!/bin/sh
 set -e
 
-# Determine Python version
-PYTHON_VERSION=$(ls /usr/bin/python3.1[0-2] | head -n1 | xargs basename)
+case "$1" in
+    configure)
+        # Create system user if it doesn't exist
+        if ! getent passwd _changedetection >/dev/null; then
+            adduser --system --group --home /var/lib/changedetection \
+                    --gecos "changedetection.io service" \
+                    --shell /usr/sbin/nologin \
+                    _changedetection
+        fi
 
-# Create 'changedetio' user if it doesn't exist
-if ! id "changedetio" >/dev/null 2>&1; then
-    adduser --system --group --no-create-home changedetio
-fi
+        # Create data directory with proper permissions
+        if [ ! -d /var/lib/changedetection ]; then
+            mkdir -p /var/lib/changedetection
+        fi
+        chown _changedetection:_changedetection /var/lib/changedetection
+        chmod 755 /var/lib/changedetection
 
-# Set ownership of the installation directory
-chown -R changedetio:changedetio /opt/changedetection.io
+        # Reload systemd and enable service
+        if [ -d /run/systemd/system ]; then
+            systemctl daemon-reload >/dev/null || true
+            deb-systemd-helper enable changedetection.io.service >/dev/null || true
 
-# Update the systemd service file if necessary
-sed -i "s|ExecStart=.*|ExecStart=/opt/changedetection.io/bin/$PYTHON_VERSION -m changedetectionio|" /lib/systemd/system/changedetection.io.service
+            # Start service if this is a fresh install
+            if [ -z "$2" ]; then
+                echo "Starting changedetection.io service..."
+                systemctl start changedetection.io.service || true
+                echo ""
+                echo "changedetection.io has been installed and started."
+                echo "Access it at: http://127.0.0.1:5000"
+                echo ""
+                echo "To check status: systemctl status changedetection.io"
+                echo "To view logs: journalctl -u changedetection.io -f"
+            fi
+        fi
+        ;;
 
-# Enable and start the service
-systemctl daemon-reload
-systemctl enable changedetection.io.service
-systemctl start changedetection.io.service
+    abort-upgrade|abort-remove|abort-deconfigure)
+        ;;
+
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 1
+        ;;
+esac
+
+#DEBHELPER#
 
 exit 0

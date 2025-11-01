@@ -1,5 +1,7 @@
-changedetection.io (0.48.5) unstable; urgency=medium
+changedetection.io (0.50.38) stable; urgency=medium
 
-  * Initial release.
+  * Initial Debian package release
+  * Service runs as _changedetection user on localhost:5000
+  * Systemd integration with security hardening
 
- -- Your Name <your.email@example.com>  Wed, 01 Nov 2023 12:00:00 +0000
+ -- dgtlmoon <dgtlmoon@changedetection.io>  Sat, 02 Nov 2024 00:00:00 +0000

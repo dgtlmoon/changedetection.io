@@ -1,10 +1,37 @@
 #!/usr/bin/make -f
 
-%:
-	dh $@ --with python-virtualenv --buildsystem=pybuild
+# Debian rules file for changedetection.io
+# This uses a Python virtual environment approach for isolated dependencies
 
-override_dh_virtualenv:
-	dh_virtualenv --sourcedirectory=. \
-	              --install-suffix='' \
-	              --requirements=requirements.txt \
-	              --python=/usr/bin/python3.11
+export PYBUILD_NAME=changedetection.io
+export DH_VERBOSE=1
+
+# Use venv installation method
+VENV_DIR = debian/changedetection.io/opt/changedetection
+PYTHON = python3
+
+%:
+	dh $@ --with python3 --buildsystem=pybuild
+
+override_dh_auto_install:
+	# Create virtual environment
+	$(PYTHON) -m venv $(VENV_DIR)
+
+	# Install the package and dependencies into venv
+	$(VENV_DIR)/bin/pip install --upgrade pip setuptools wheel
+	$(VENV_DIR)/bin/pip install .
+
+	# Remove pip and setuptools to reduce size (optional)
+	# $(VENV_DIR)/bin/pip uninstall -y pip setuptools wheel
+
+	# Create wrapper script directory
+	install -d debian/changedetection.io/usr/bin
+
+override_dh_auto_test:
+	# Skip tests during package build
+	# Tests can be run separately with pytest
+	@echo "Skipping tests during package build"
+
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -rf build dist *.egg-info

@@ -1,14 +1,38 @@
 Source: changedetection.io
 Section: web
 Priority: optional
-Maintainer: Your Name <your.email@example.com>
-Build-Depends: debhelper-compat (= 13), dh-virtualenv, dh-python, python3-all (>= 3.10), python3-all (<< 3.13), python3.10, python3.10-venv
-Standards-Version: 4.6.0
+Maintainer: dgtlmoon <dgtlmoon@changedetection.io>
+Build-Depends: debhelper-compat (= 13),
+               dh-python,
+               python3-all (>= 3.10),
+               python3-setuptools,
+               python3-pip,
+               python3-venv
+Standards-Version: 4.6.2
+Homepage: https://changedetection.io
+Vcs-Browser: https://github.com/dgtlmoon/changedetection.io
+Vcs-Git: https://github.com/dgtlmoon/changedetection.io.git
 Rules-Requires-Root: no
-Homepage: https://github.com/dgtlmoon/changedetection.io
 
-Package: python-changedetection.io
+Package: changedetection.io
 Architecture: all
-Depends: ${misc:Depends}, python3 (>= 3.10), python3 (<< 3.13)
-Description: Web page change detection - Python application
- A web-based application for monitoring web pages for changes.
+Depends: ${misc:Depends},
+         ${python3:Depends},
+         python3 (>= 3.10),
+         python3-pip,
+         python3-venv,
+         adduser
+Description: Website change detection and monitoring service
+ changedetection.io is a self-hosted open source application for monitoring
+ websites for changes. It detects changes to web pages and sends alerts or
+ notifications when changes are detected.
+ .
+ Features include:
+  * Monitor websites for visual and text changes
+  * XPath, CSS, and JSON filtering
+  * Notifications via multiple services (Apprise)
+  * API for automation
+  * Headless browser support
+ .
+ This package installs changedetection.io as a systemd service running on
+ localhost (127.0.0.1:5000) as the unprivileged _changedetection user.
