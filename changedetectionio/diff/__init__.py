@@ -7,6 +7,7 @@ with support for various output formats and tokenization strategies.
 
 import difflib
 from typing import List, Iterator, Union
+from loguru import logger
 import diff_match_patch as dmp_module
 import re
 
@@ -415,7 +416,20 @@ def render_diff(
     """
     newest_lines = [line.rstrip() for line in newest_version_file_contents.splitlines()]
     previous_lines = [line.rstrip() for line in previous_version_file_contents.splitlines()] if previous_version_file_contents else []
-
+    logger.debug(
+        f"diff options: "
+        f"include_equal={include_equal}, "
+        f"include_removed={include_removed}, "
+        f"include_added={include_added}, "
+        f"include_replaced={include_replaced}, "
+        f"include_change_type_prefix={include_change_type_prefix}, "
+        f"patch_format={patch_format}, "
+        f"word_diff={word_diff}, "
+        f"context_lines={context_lines}, "
+        f"case_insensitive={case_insensitive}, "
+        f"ignore_junk={ignore_junk}, "
+        f"tokenizer={tokenizer}"
+    )
     if patch_format:
         patch = difflib.unified_diff(previous_lines, newest_lines)
         return "\n".join(patch)

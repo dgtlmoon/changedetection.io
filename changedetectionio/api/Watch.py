@@ -274,7 +274,7 @@ class WatchHistoryDiff(Resource):
 
             if 'html' in output_format:
                 content = newline_re.sub('<br>\r\n', content)
-                
+
         response = make_response(content, 200)
         response.mimetype = mimetype
         return response

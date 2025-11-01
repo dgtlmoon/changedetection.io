@@ -16,7 +16,6 @@ from ..notification_service import NotificationContextData
 
 newline_re = re.compile(r'\r\n|\r|\n')
 
-
 def markup_text_links_to_html(body):
     """
     Convert plaintext to HTML with clickable links.

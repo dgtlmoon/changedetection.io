@@ -21,7 +21,7 @@
 
 
 <div id="settings">
-    <form class="pure-form " action="{{ url_for("ui.ui_views.diff_history_page", uuid=uuid) }}" method="POST" id="diff-form">
+    <form class="pure-form " action="{{ url_for("ui.ui_views.diff_history_page", uuid=uuid) }}" method="GET" id="diff-form">
         <fieldset class="diff-fieldset">
             {% if versions|length >= 1 %}
                 <strong>Compare</strong>
@@ -45,7 +45,6 @@
             {% endif %}
         </fieldset>
         <fieldset>
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <strong>Style</strong>
 
                 <label for="diffWords" class="pure-checkbox">
@@ -57,7 +56,7 @@
                     <input type="checkbox" name="ignoreWhitespace" {% if diff_prefs.ignoreWhitespace %}checked=""{% endif %}> Ignore Whitespace</label>
 
                 <label for="changesOnly" class="pure-checkbox" id="label-diff-changes">
-                    <input type="checkbox" name="diff_changesOnly" {% if diff_prefs.diff_changesOnly %}checked=""{% endif %}> Changes only</label>
+                    <input type="checkbox" name="diff_changesOnly" {% if diff_prefs.diff_changesOnly %}checked=""{% endif %}> Same/non-changed</label>
 
                 <label for="changesOnly" class="pure-checkbox" id="label-diff-removed">
                     <input type="checkbox"  name="diff_removed" {% if diff_prefs.diff_removed %}checked=""{% endif %}> Removed</label>
@@ -65,7 +64,6 @@
                     <input type="checkbox"  name="diff_added" {% if diff_prefs.diff_added %}checked=""{% endif %}> Added</label>
                 <label for="changesOnly" class="pure-checkbox" id="label-diff-replaced">
                     <input type="checkbox"  name="diff_replaced" {% if diff_prefs.diff_replaced %}checked=""{% endif %}> Replaced</label>
-                <input type="submit">
         </fieldset>
     </form>
 </div>
