@@ -326,6 +326,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         d_removed_opt =  strtobool(request.args.get('diff_removed', 'off'))
         d_added_opt = strtobool(request.args.get('diff_added', 'off'))
         d_replaced_opt = strtobool(request.args.get('diff_replaced', 'off'))
+        d_unchanged = strtobool(request.args.get('diff_changesOnly', 'on'))
 
         any_special_opts = d_removed_opt or d_added_opt or d_replaced_opt
         content = diff.render_diff(previous_version_file_contents=from_version_file_contents,
@@ -334,7 +335,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                    include_replaced=d_replaced_opt or not any_special_opts,
                                    include_added=d_added_opt or not any_special_opts,
                                    include_removed=d_removed_opt or not any_special_opts,
-                                   include_equal=True,
+                                   include_equal=d_unchanged,
 
                                    ignore_junk=request.args.get('ignoreWhitespace'),
 
