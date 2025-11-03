@@ -14,7 +14,6 @@ class Weekday(IntEnum):
     Saturday = 5
     Sunday = 6
 
-@lru_cache(maxsize=100)
 def am_i_inside_time(
         day_of_week: str,
         time_str: str,
