@@ -158,6 +158,7 @@ def test_check_notification_plaintext_format(client, live_server, measure_memory
     assert ADDED_PLACEMARKER_OPEN not in subject
     assert 'diff added didnt split' not in subject
     assert '(changed) Which is across' in subject
+    assert 'PLACEMARKER' not in subject
 
     # The email should be plain text only (not multipart)
     assert not msg.is_multipart()
@@ -226,6 +227,7 @@ def test_check_notification_html_color_format(client, live_server, measure_memor
     assert ADDED_PLACEMARKER_OPEN not in subject
     assert 'diff added didnt split' not in subject
     assert '(changed) Which is across' in subject
+    assert 'PLACEMARKER' not in subject
     assert 'head title' in subject
     assert "span" not in subject
     assert 'background-color' not in subject
@@ -583,6 +585,7 @@ def test_check_plaintext_document_html_notifications(client, live_server, measur
     # Should be the HTML, but not HTML Color
     assert 'background-color' not in html_content
     assert '<br>(added) And let&#39;s talk about &lt;title&gt; tags<br>' in html_content
+    assert 'PLACEMARKER' not in html_content
     assert '&lt;br' not in html_content
     assert '<pre role="article"' in html_content # Should have got wrapped nicely in email_helpers.py
 
@@ -713,6 +716,7 @@ def test_check_html_document_plaintext_notification(client, live_server, measure
 
     assert '<tag>' in body # Should have got converted from original HTML to plaintext
     assert '(changed) some stuff\r\n' in body
+    assert 'PLACEMARKER' not in body
     assert '(into) sxome stuff\r\n' in body
     assert '(added) lets slip this in\r\n' in body
     assert '(added) and this in\r\n' in body
