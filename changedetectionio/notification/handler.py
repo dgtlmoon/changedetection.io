@@ -12,7 +12,7 @@ from ..diff import HTML_REMOVED_STYLE, REMOVED_PLACEMARKER_OPEN, REMOVED_PLACEMA
     CHANGED_PLACEMARKER_CLOSED, HTML_CHANGED_STYLE, HTML_CHANGED_INTO_STYLE
 import re
 
-from ..notification_service import NotificationContextData
+from ..notification_service import NotificationContextData, add_rendered_diff_to_notification_vars
 
 newline_re = re.compile(r'\r\n|\r|\n')
 
@@ -348,6 +348,15 @@ def process_notification(n_object: NotificationContextData, datastore):
 
     if not n_object.get('notification_urls'):
         return None
+
+    n_object.update(add_rendered_diff_to_notification_vars(
+        current_snapshot=n_object.get('current_snapshot'),
+        prev_snapshot=n_object.get('prev_snapshot'),
+        # Should always be false for 'text' mode or its too hard to read
+        # But otherwise, this could be some setting
+        word_diff=False if requested_output_format_original == 'text' else True,
+        )
+    )
 
     with (apprise.LogCapture(level=apprise.logging.DEBUG) as logs):
         for url in n_object['notification_urls']:

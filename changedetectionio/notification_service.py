@@ -72,14 +72,12 @@ class NotificationContextData(dict):
 
         super().__setitem__(key, value)
 
-
-def set_basic_notification_vars(snapshot_contents, current_snapshot, prev_snapshot, watch, triggered_text):
-    now = time.time()
+def add_rendered_diff_to_notification_vars(prev_snapshot, current_snapshot, word_diff):
     from changedetectionio import diff
+    now = time.time()
 
-    n_object = {
-        'current_snapshot': snapshot_contents,
-        'diff': diff.render_diff(prev_snapshot, current_snapshot),
+    ret = {
+        'diff': diff.render_diff(prev_snapshot, current_snapshot, word_diff=word_diff),  # For plaintext its always FALSE
         'diff_clean': diff.render_diff(prev_snapshot, current_snapshot, include_change_type_prefix=False),
         'diff_added': diff.render_diff(prev_snapshot, current_snapshot, include_removed=False),
         'diff_added_clean': diff.render_diff(prev_snapshot, current_snapshot, include_removed=False, include_change_type_prefix=False),
@@ -88,6 +86,16 @@ def set_basic_notification_vars(snapshot_contents, current_snapshot, prev_snapsh
         'diff_patch': diff.render_diff(prev_snapshot, current_snapshot, patch_format=True),
         'diff_removed': diff.render_diff(prev_snapshot, current_snapshot, include_added=False),
         'diff_removed_clean': diff.render_diff(prev_snapshot, current_snapshot, include_added=False, include_change_type_prefix=False),
+    }
+    logger.trace(f"Main rendered notification placeholders (diff_added etc) calculated in {time.time() - now:.1f}s")
+
+    return ret
+
+def set_basic_notification_vars(current_snapshot, prev_snapshot, watch, triggered_text):
+
+    n_object = {
+        'current_snapshot': current_snapshot,
+        'prev_snapshot': prev_snapshot,
         'screenshot': watch.get_screenshot() if watch and watch.get('notification_screenshot') else None,
         'triggered_text': triggered_text,
         'uuid': watch.get('uuid') if watch else None,
@@ -101,7 +109,6 @@ def set_basic_notification_vars(snapshot_contents, current_snapshot, prev_snapsh
     if watch:
         n_object.update(watch.extra_notification_token_values())
 
-    logger.trace(f"Main rendered notification placeholders (diff_added etc) calculated in {time.time() - now:.3f}s")
     return n_object
 
 class NotificationService:
@@ -158,8 +165,7 @@ class NotificationService:
             current_snapshot = watch.get_history_snapshot(dates[-1])
 
 
-        n_object.update(set_basic_notification_vars(snapshot_contents=snapshot_contents,
-                                                    current_snapshot=current_snapshot,
+        n_object.update(set_basic_notification_vars(current_snapshot=current_snapshot,
                                                     prev_snapshot=prev_snapshot,
                                                     watch=watch,
                                                     triggered_text=triggered_text))
