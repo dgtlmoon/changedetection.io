@@ -350,6 +350,7 @@ def process_notification(n_object: NotificationContextData, datastore):
         return None
 
     n_object.update(add_rendered_diff_to_notification_vars(
+        notification_scan_text=n_object.get('notification_body', '')+n_object.get('notification_title', ''),
         current_snapshot=n_object.get('current_snapshot'),
         prev_snapshot=n_object.get('prev_snapshot'),
         # Should always be false for 'text' mode or its too hard to read

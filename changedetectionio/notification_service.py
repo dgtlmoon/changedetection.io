@@ -72,22 +72,62 @@ class NotificationContextData(dict):
 
         super().__setitem__(key, value)
 
-def add_rendered_diff_to_notification_vars(prev_snapshot, current_snapshot, word_diff):
+def add_rendered_diff_to_notification_vars(notification_scan_text:str, prev_snapshot:str, current_snapshot:str, word_diff:bool):
+    """
+    Efficiently renders only the diff placeholders that are actually used in the notification text.
+
+    Scans the notification template for diff placeholder usage (diff, diff_added, diff_clean, etc.)
+    and only renders those specific variants, avoiding expensive render_diff() calls for unused placeholders.
+    Uses LRU caching to avoid duplicate renders when multiple placeholders share the same arguments.
+
+    Args:
+        notification_scan_text: The notification template text to scan for placeholders
+        prev_snapshot: Previous version of content for diff comparison
+        current_snapshot: Current version of content for diff comparison
+        word_diff: Whether to use word-level (True) or line-level (False) diffing
+
+    Returns:
+        dict: Only the diff placeholders that were found in notification_scan_text, with rendered content
+    """
     from changedetectionio import diff
+    import re
+    from functools import lru_cache
+
     now = time.time()
 
-    ret = {
-        'diff': diff.render_diff(prev_snapshot, current_snapshot, word_diff=word_diff),  # For plaintext its always FALSE
-        'diff_clean': diff.render_diff(prev_snapshot, current_snapshot, include_change_type_prefix=False),
-        'diff_added': diff.render_diff(prev_snapshot, current_snapshot, include_removed=False),
-        'diff_added_clean': diff.render_diff(prev_snapshot, current_snapshot, include_removed=False, include_change_type_prefix=False),
-        'diff_full': diff.render_diff(prev_snapshot, current_snapshot, include_equal=True),
-        'diff_full_clean': diff.render_diff(prev_snapshot, current_snapshot, include_equal=True, include_change_type_prefix=False),
-        'diff_patch': diff.render_diff(prev_snapshot, current_snapshot, patch_format=True),
-        'diff_removed': diff.render_diff(prev_snapshot, current_snapshot, include_added=False),
-        'diff_removed_clean': diff.render_diff(prev_snapshot, current_snapshot, include_added=False, include_change_type_prefix=False),
+    # Define specifications for each diff variant
+    diff_specs = {
+        'diff': {'word_diff': word_diff},
+        'diff_clean': {'word_diff': word_diff, 'include_change_type_prefix': False},
+        'diff_added': {'word_diff': word_diff, 'include_removed': False},
+        'diff_added_clean': {'word_diff': word_diff, 'include_removed': False, 'include_change_type_prefix': False},
+        'diff_full': {'word_diff': word_diff, 'include_equal': True},
+        'diff_full_clean': {'word_diff': word_diff, 'include_equal': True, 'include_change_type_prefix': False},
+        'diff_patch': {'word_diff': word_diff, 'patch_format': True},
+        'diff_removed': {'word_diff': word_diff, 'include_added': False},
+        'diff_removed_clean': {'word_diff': word_diff, 'include_added': False, 'include_change_type_prefix': False},
     }
-    logger.trace(f"Main rendered notification placeholders (diff_added etc) calculated in {time.time() - now:.1f}s")
+
+    # Memoize render_diff to avoid duplicate renders with same kwargs
+    @lru_cache(maxsize=4)
+    def cached_render(kwargs_tuple):
+        return diff.render_diff(prev_snapshot, current_snapshot, **dict(kwargs_tuple))
+
+    ret = {}
+    rendered_count = 0
+    # Only check and render diff keys that exist in NotificationContextData
+    for key in NotificationContextData().keys():
+        if key.startswith('diff') and key in diff_specs:
+            # Check if this placeholder is actually used in the notification text
+            pattern = rf"(?<![A-Za-z0-9_]){re.escape(key)}(?![A-Za-z0-9_])"
+            if re.search(pattern, notification_scan_text, re.IGNORECASE):
+                kwargs = diff_specs[key]
+                # Convert dict to sorted tuple for cache key (handles duplicate kwarg combinations)
+                ret[key] = cached_render(tuple(sorted(kwargs.items())))
+                rendered_count += 1
+
+    if rendered_count:
+        logger.trace(f"Rendered {rendered_count} diff placeholder(s) {sorted(ret.keys())} in {time.time() - now:.3f}s")
 
     return ret
 
