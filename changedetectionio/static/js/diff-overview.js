@@ -1,6 +1,6 @@
 function setupDiffNavigation() {
-    var $fromSelect = $('#diff-version');
-    var $toSelect = $('#current-version');
+    var $fromSelect = $('#diff-from-version');
+    var $toSelect = $('#diff-to-version');
     var $fromSelected = $fromSelect.find('option:selected');
     var $toSelected = $toSelect.find('option:selected');
 
@@ -36,7 +36,12 @@ function setupDiffNavigation() {
     }
 
     // Keyboard navigation
-    $(document).on('keydown', function (event) {
+    window.addEventListener('keydown', function (event) {
+        // Don't trigger if user is typing in an input field
+        if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.tagName === 'SELECT') {
+            return;
+        }
+
         var $fromSelected = $fromSelect.find('option:selected');
         var $toSelected = $toSelect.find('option:selected');
 
@@ -45,19 +50,25 @@ function setupDiffNavigation() {
                 var $prevFrom = $fromSelected.prev();
                 var $prevTo = $toSelected.prev();
                 if ($prevFrom.length && $prevTo.length) {
-                    event.preventDefault();
-                    window.location.href = $('#btn-previous').attr('href');
+                    var prevHref = $('#btn-previous').attr('href');
+                    if (prevHref) {
+                        event.preventDefault();
+                        window.location.href = prevHref;
+                    }
                 }
             } else if (event.key === 'ArrowRight') {
                 var $nextFrom = $fromSelected.next();
                 var $nextTo = $toSelected.next();
                 if ($nextFrom.length && $nextTo.length) {
-                    event.preventDefault();
-                    window.location.href = $('#btn-next').attr('href');
+                    var nextHref = $('#btn-next').attr('href');
+                    if (nextHref) {
+                        event.preventDefault();
+                        window.location.href = nextHref;
+                    }
                 }
             }
         }
-    });
+    }, false);
 }
 
 $(document).ready(function () {
@@ -72,7 +83,7 @@ $(document).ready(function () {
     });
 
     // Setup keyboard navigation for diff versions
-    if ($('#diff-version').length && $('#current-version').length) {
+    if ($('#diff-from-version').length && $('#diff-to-version').length) {
         setupDiffNavigation();
     }
 

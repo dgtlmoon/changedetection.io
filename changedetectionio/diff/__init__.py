@@ -10,6 +10,7 @@ from typing import List, Iterator, Union
 from loguru import logger
 import diff_match_patch as dmp_module
 import re
+import time
 
 from .tokenizers import TOKENIZERS, tokenize_words_and_html
 
@@ -416,6 +417,7 @@ def render_diff(
     """
     newest_lines = [line.rstrip() for line in newest_version_file_contents.splitlines()]
     previous_lines = [line.rstrip() for line in previous_version_file_contents.splitlines()] if previous_version_file_contents else []
+    now = time.time()
     logger.debug(
         f"diff options: "
         f"include_equal={include_equal}, "
@@ -457,6 +459,8 @@ def render_diff(
             else:
                 result.append(x)
         return "\n".join(result)
+
+    logger.debug(f"Diff generated in {time.time() - now:.2f}s")
 
     return flatten(rendered_diff)
 

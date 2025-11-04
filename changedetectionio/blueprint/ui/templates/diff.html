@@ -24,55 +24,66 @@
     <form class="pure-form " action="{{ url_for("ui.ui_views.diff_history_page", uuid=uuid) }}" method="GET" id="diff-form">
         <fieldset class="diff-fieldset">
             {% if versions|length >= 1 %}
-                <strong>Compare</strong>
-                <del class="change"><span>from</span></del>
-                <select id="diff-version" name="from_version" class="needs-localtime">
-                    {% for version in versions|reverse %}
+                <span style="white-space: nowrap;">
+                <label id="change-from" for="diff-from-version" class="from-to-label">From</label>
+                <select id="diff-from-version" name="from_version" class="needs-localtime">
+                    {%- for version in versions|reverse -%}
                         <option value="{{ version }}" {% if version== from_version %} selected="" {% endif %}>
                             {{ version }}{#{% if loop.index == 2 %} (Previous){% endif %}#}
                         </option>
-                    {% endfor %}
+                    {%- endfor -%}
                 </select>
-                <ins class="change"><span>to</span></ins>
-                <select id="current-version" name="to_version" class="needs-localtime">
-                    {% for version in versions|reverse %}
+                </span>
+                <span style="white-space: nowrap;">
+                <label id="change-to" for="diff-to-version" class="from-to-label">To</label>
+                <select id="diff-to-version" name="to_version" class="needs-localtime">
+                    {%- for version in versions|reverse -%}
                         <option value="{{ version }}" {% if version== to_version %} selected="" {% endif %}>
                             {{ version }}{#{% if loop.first %} (Current){% endif %}#}
                         </option>
-                    {% endfor %}
+                    {%- endfor -%}
                 </select>
-                <button type="submit" class="pure-button pure-button-primary reset-margin">Go</button>
+                </span>
+                {#<button type="submit" class="pure-button pure-button-primary reset-margin">Go</button>#}
             {% endif %}
-            {%- if versions|length >= 2 -%}
-                <div id="keyboard-nav">
-                    <strong>Keyboard: </strong><a href="" class="pure-button pure-button-primary" id="btn-previous">
-                    &larr; Previous</a> &nbsp; <a class="pure-button pure-button-primary" id="btn-next" href="">
-                    &rarr; Next</a>
-                </div>
-            {%- endif -%}
         </fieldset>
-        <fieldset>
-                <strong>Style</strong>
-
+        <fieldset id="diff-style">
+            <span>
                 <label for="diffWords" class="pure-checkbox">
-                    <input type="radio" name="type" id="diffWords" value="diffWords" {% if diff_prefs.type == 'diffWords' %}checked=""{% endif %}> Words</label>
+                <input type="radio" name="type" id="diffWords" value="diffWords" {% if diff_prefs.type == 'diffWords' %}checked=""{% endif %}> Words</label>
+            </span>
+            <span>
                 <label for="diffLines" class="pure-checkbox">
-                    <input type="radio" name="type" id="diffLines" value="diffLines" {% if diff_prefs.type == 'diffLines' %}checked=""{% endif %}> Lines</label>
-
+                <input type="radio" name="type" id="diffLines" value="diffLines" {% if diff_prefs.type == 'diffLines' %}checked=""{% endif %}> Lines</label>
+            </span>
+            <span>
                 <label for="ignoreWhitespace" class="pure-checkbox" id="label-diff-ignorewhitespace">
-                    <input type="checkbox" id="ignoreWhitespace" name="ignoreWhitespace" {% if diff_prefs.ignoreWhitespace %}checked=""{% endif %}> Ignore Whitespace</label>
-
+                <input type="checkbox" id="ignoreWhitespace" name="ignoreWhitespace" {% if diff_prefs.ignoreWhitespace %}checked=""{% endif %}> Ignore Whitespace</label>
+            </span>
+            <span>
                 <label for="changesOnly" class="pure-checkbox" id="label-diff-changes">
-                    <input type="checkbox" id="changesOnly" name="changesOnly" {% if diff_prefs.changesOnly %}checked=""{% endif %}> Same/non-changed</label>
-
+                <input type="checkbox" id="changesOnly" name="changesOnly" {% if diff_prefs.changesOnly %}checked=""{% endif %}> Same/non-changed</label>
+            </span>
+            <span>
                 <label for="removed" class="pure-checkbox" id="label-diff-removed">
-                    <input type="checkbox" id="removed" name="removed" {% if diff_prefs.removed %}checked=""{% endif %}> Removed</label>
+                <input type="checkbox" id="removed" name="removed" {% if diff_prefs.removed %}checked=""{% endif %}> Removed</label>
+            </span>
+            <span>
                 <label for="added" class="pure-checkbox" id="label-diff-added">
-                    <input type="checkbox" id="added" name="added" {% if diff_prefs.added %}checked=""{% endif %}> Added</label>
+                <input type="checkbox" id="added" name="added" {% if diff_prefs.added %}checked=""{% endif %}> Added</label>
+            </span>
+            <span>
                 <label for="replaced" class="pure-checkbox" id="label-diff-replaced">
-                    <input type="checkbox" id="replaced"  name="replaced" {% if diff_prefs.replaced %}checked=""{% endif %}> Replaced</label>
+                <input type="checkbox" id="replaced"  name="replaced" {% if diff_prefs.replaced %}checked=""{% endif %}> Replaced</label>
+            </span>
         </fieldset>
-        {%- if note -%}<span class="note"><strong>{{ note }}</strong></span>{%- endif -%}
+        {%- if versions|length >= 2 -%}
+            <div id="keyboard-nav">
+                <strong>Keyboard: </strong><a href="" class="pure-button pure-button-primary" id="btn-previous">
+                &larr; Previous</a> &nbsp; <a class="pure-button pure-button-primary" id="btn-next" href="">
+                &rarr; Next</a>
+            </div>
+        {%- endif -%}
     </form>
 </div>
 
@@ -114,7 +125,7 @@
             <div{% if cell.class %} class="{{ cell.class }}"{% endif %}></div>
             {%- endfor -%}
         </div>
-        <div class="snapshot-age">{{ watch_a.snapshot_text_ctime|format_timestamp_timeago }} <a href="{{ url_for("ui.ui_views.preview_page", uuid=uuid) }}">Goto single snapshot</a></div>
+        <div class="snapshot-age">{{ from_version|format_timestamp_timeago }} {%- if note -%}<span class="note"><strong>{{ note }}</strong></span>{%- endif -%} <a href="{{ url_for("ui.ui_views.preview_page", uuid=uuid) }}">Goto single snapshot</a></div>
         <pre id="difference" style="border-left: 2px solid #ddd;">{{ content| diff_unescape_difference_spans }}</pre>
     </div>
 

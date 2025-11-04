@@ -356,7 +356,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         offscreen_content = render_template("diff-offscreen-options.html")
 
         note = ''
-        if str(from_version) != str(dates[1]) or str(to_version) != str(dates[-1]):
+        if str(from_version) != str(dates[-2]) or str(to_version) != str(dates[-1]):
             note = 'Note: You are not viewing the latest changes.'
 
         output = render_template("diff.html",
