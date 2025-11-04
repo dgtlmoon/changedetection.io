@@ -43,6 +43,13 @@
                 </select>
                 <button type="submit" class="pure-button pure-button-primary reset-margin">Go</button>
             {% endif %}
+            {%- if versions|length >= 2 -%}
+                <div id="keyboard-nav">
+                    <strong>Keyboard: </strong><a href="" class="pure-button pure-button-primary" id="btn-previous">
+                    &larr; Previous</a> &nbsp; <a class="pure-button pure-button-primary" id="btn-next" href="">
+                    &rarr; Next</a>
+                </div>
+            {%- endif -%}
         </fieldset>
         <fieldset>
                 <strong>Style</strong>
@@ -86,7 +93,7 @@
 
 <div id="diff-ui">
     <div class="tab-pane-inner" id="error-text">
-        <div class="snapshot-age error">{{watch_a.error_text_ctime|format_seconds_ago}} seconds ago</div>
+        <div class="snapshot-age error">{{watch_a.error_text_ctime|format_seconds_ago}} seconds ago.</div>
         <pre>
             {{ last_error_text }}
         </pre>
@@ -107,7 +114,7 @@
             <div{% if cell.class %} class="{{ cell.class }}"{% endif %}></div>
             {%- endfor -%}
         </div>
-        <div class="snapshot-age">{{ watch_a.snapshot_text_ctime|format_timestamp_timeago }}</div>
+        <div class="snapshot-age">{{ watch_a.snapshot_text_ctime|format_timestamp_timeago }} <a href="{{ url_for("ui.ui_views.preview_page", uuid=uuid) }}">Goto single snapshot</a></div>
         <pre id="difference" style="border-left: 2px solid #ddd;">{{ content| diff_unescape_difference_spans }}</pre>
     </div>
 
