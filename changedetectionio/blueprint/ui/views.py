@@ -93,12 +93,12 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
     # Diff display preferences configuration - single source of truth
     DIFF_PREFERENCES_CONFIG = {
-        'diff_changesOnly': {'default': True, 'type': 'bool'},
+        'changesOnly': {'default': True, 'type': 'bool'},
         'ignoreWhitespace': {'default': False, 'type': 'bool'},
-        'diff_removed': {'default': True, 'type': 'bool'},
-        'diff_added': {'default': True, 'type': 'bool'},
-        'diff_replaced': {'default': True, 'type': 'bool'},
-        'diff_type': {'default': 'diffLines', 'type': 'value'},
+        'removed': {'default': True, 'type': 'bool'},
+        'added': {'default': True, 'type': 'bool'},
+        'replaced': {'default': True, 'type': 'bool'},
+        'type': {'default': 'diffLines', 'type': 'value'},
     }
 
     @views_blueprint.app_template_filter('diff_unescape_difference_spans')
@@ -341,12 +341,12 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         content = diff.render_diff(previous_version_file_contents=from_version_file_contents,
                                    newest_version_file_contents=to_version_file_contents,
-                                   include_replaced=diff_prefs['diff_replaced'],
-                                   include_added=diff_prefs['diff_added'],
-                                   include_removed=diff_prefs['diff_removed'],
-                                   include_equal=diff_prefs['diff_changesOnly'],
+                                   include_replaced=diff_prefs['replaced'],
+                                   include_added=diff_prefs['added'],
+                                   include_removed=diff_prefs['removed'],
+                                   include_equal=diff_prefs['changesOnly'],
                                    ignore_junk=diff_prefs['ignoreWhitespace'],
-                                   word_diff=diff_prefs['diff_type'] == 'diffWords',
+                                   word_diff=diff_prefs['type'] == 'diffWords',
                                    )
 
         # Build cell grid visualizer before applying HTML color (so we can detect placemarkers)
