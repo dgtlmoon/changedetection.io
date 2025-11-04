@@ -355,23 +355,29 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         content = apply_html_color_to_body(n_body=content)
         offscreen_content = render_template("diff-offscreen-options.html")
 
+        note = ''
+        if str(from_version) != str(dates[1]) or str(to_version) != str(dates[-1]):
+            note = 'Note: You are not viewing the latest changes.'
+
         output = render_template("diff.html",
+                                 #initial_scroll_line_number=100,
                                  bottom_horizontal_offscreen_contents=offscreen_content,
                                  content=content,
                                  current_diff_url=watch['url'],
                                  diff_cell_grid=diff_cell_grid,
                                  diff_prefs=diff_prefs,
+                                 extra_classes='difference-page',
                                  extra_stylesheets=extra_stylesheets,
                                  extra_title=f" - {watch.label} - History",
                                  extract_form=extract_form,
                                  from_version=str(from_version),
-                                 #initial_scroll_line_number=100,
                                  is_html_webdriver=is_html_webdriver,
                                  last_error=watch['last_error'],
                                  last_error_screenshot=watch.get_error_snapshot(),
                                  last_error_text=watch.get_error_text(),
                                  newest=to_version_file_contents,
                                  newest_version_timestamp=dates[-1],
+                                 note=note,
                                  password_enabled_and_share_is_off=password_enabled_and_share_is_off,
                                  pure_menu_fixed=False,
                                  screenshot=screenshot_url,

@@ -29,7 +29,7 @@
                 <select id="diff-version" name="from_version" class="needs-localtime">
                     {% for version in versions|reverse %}
                         <option value="{{ version }}" {% if version== from_version %} selected="" {% endif %}>
-                            {{ version }}
+                            {{ version }}{#{% if loop.index == 2 %} (Previous){% endif %}#}
                         </option>
                     {% endfor %}
                 </select>
@@ -37,7 +37,7 @@
                 <select id="current-version" name="to_version" class="needs-localtime">
                     {% for version in versions|reverse %}
                         <option value="{{ version }}" {% if version== to_version %} selected="" {% endif %}>
-                            {{ version }}
+                            {{ version }}{#{% if loop.first %} (Current){% endif %}#}
                         </option>
                     {% endfor %}
                 </select>
@@ -65,6 +65,7 @@
                 <label for="diff_replaced" class="pure-checkbox" id="label-diff-replaced">
                     <input type="checkbox" id="diff_replaced"  name="diff_replaced" {% if diff_prefs.diff_replaced %}checked=""{% endif %}> Replaced</label>
         </fieldset>
+        {%- if note -%}<span class="note"><strong>{{ note }}</strong></span>{%- endif -%}
     </form>
 </div>
 

@@ -2,7 +2,10 @@ $(document).ready(function () {
     $('.needs-localtime').each(function () {
         for (var option of this.options) {
             var dateObject = new Date(option.value * 1000);
-            option.label = dateObject.toLocaleString(undefined, {dateStyle: "full", timeStyle: "medium"});
+            var formattedDate = dateObject.toLocaleString(undefined, {dateStyle: "full", timeStyle: "medium"});
+            // Preserve any existing text in the label (like "(Previous)" or "(Current)")
+            var existingText = option.text.replace(option.value, '').trim();
+            option.label = existingText ? formattedDate + ' ' + existingText : formattedDate;
         }
     });
 
