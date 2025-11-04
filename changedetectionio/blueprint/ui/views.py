@@ -91,10 +91,10 @@ def build_diff_cell_visualizer(content, resolution=100):
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData, watch_check_update):
     views_blueprint = Blueprint('ui_views', __name__, template_folder="../ui/templates")
 
-    # Diff display preferences configuration
+    # Diff display preferences configuration - single source of truth
     DIFF_PREFERENCES_CONFIG = {
-        'diff_changesOnly': {'default': False, 'type': 'bool'},
-        'diff_ignoreWhitespace': {'default': False, 'type': 'bool'},
+        'diff_changesOnly': {'default': True, 'type': 'bool'},
+        'ignoreWhitespace': {'default': False, 'type': 'bool'},
         'diff_removed': {'default': True, 'type': 'bool'},
         'diff_added': {'default': True, 'type': 'bool'},
         'diff_replaced': {'default': True, 'type': 'bool'},
@@ -323,23 +323,30 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         datastore.set_last_viewed(uuid, time.time())
 
-        d_removed_opt =  strtobool(request.args.get('diff_removed', 'off'))
-        d_added_opt = strtobool(request.args.get('diff_added', 'off'))
-        d_replaced_opt = strtobool(request.args.get('diff_replaced', 'off'))
-        d_unchanged = strtobool(request.args.get('diff_changesOnly', 'on'))
+        # Parse diff preferences from request using config as single source of truth
+        # Check if this is a user submission (any diff pref param exists in query string)
+        user_submitted = any(key in request.args for key in DIFF_PREFERENCES_CONFIG.keys())
 
-        any_special_opts = d_removed_opt or d_added_opt or d_replaced_opt
+        diff_prefs = {}
+        for key, config in DIFF_PREFERENCES_CONFIG.items():
+            if user_submitted:
+                # User submitted form - missing checkboxes are explicitly OFF
+                if config['type'] == 'bool':
+                    diff_prefs[key] = strtobool(request.args.get(key, 'off'))
+                else:
+                    diff_prefs[key] = request.args.get(key, config['default'])
+            else:
+                # Initial load - use defaults from config
+                diff_prefs[key] = config['default']
+
         content = diff.render_diff(previous_version_file_contents=from_version_file_contents,
                                    newest_version_file_contents=to_version_file_contents,
-
-                                   include_replaced=d_replaced_opt or not any_special_opts,
-                                   include_added=d_added_opt or not any_special_opts,
-                                   include_removed=d_removed_opt or not any_special_opts,
-                                   include_equal=d_unchanged,
-
-                                   ignore_junk=request.args.get('ignoreWhitespace'),
-
-                                   word_diff=request.args.get('diff_type') == 'diffWords',
+                                   include_replaced=diff_prefs['diff_replaced'],
+                                   include_added=diff_prefs['diff_added'],
+                                   include_removed=diff_prefs['diff_removed'],
+                                   include_equal=diff_prefs['diff_changesOnly'],
+                                   ignore_junk=diff_prefs['ignoreWhitespace'],
+                                   word_diff=diff_prefs['diff_type'] == 'diffWords',
                                    )
 
         # Build cell grid visualizer before applying HTML color (so we can detect placemarkers)
@@ -353,7 +360,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                  content=content,
                                  current_diff_url=watch['url'],
                                  diff_cell_grid=diff_cell_grid,
-                                 diff_prefs=request.args,
+                                 diff_prefs=diff_prefs,
                                  extra_stylesheets=extra_stylesheets,
                                  extra_title=f" - {watch.label} - History",
                                  extract_form=extract_form,

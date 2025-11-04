@@ -92,4 +92,12 @@ $(document).ready(function () {
             alert('Error - You are trying to compare the same version.');
         }
     });
+
+    // Auto-submit form on change of any input elements (checkboxes, radio buttons, dropdowns)
+    $('#diff-form').on('change', 'input[type="checkbox"], input[type="radio"], select', function (e) {
+        // Check if we're trying to compare the same version before submitting
+        if ($('select[name=from_version]').val() !== $('select[name=to_version]').val()) {
+            $('#diff-form').submit();
+        }
+    });
 });
