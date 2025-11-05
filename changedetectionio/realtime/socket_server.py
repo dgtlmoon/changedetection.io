@@ -37,18 +37,6 @@ class SignalHandler:
         notification_event_signal.connect(self.handle_notification_event, weak=False)
         logger.info("SignalHandler: Connected to notification_event signal")
 
-        # Create and start the queue update thread using standard threading
-        import threading
-        self.polling_emitter_thread = threading.Thread(
-            target=self.polling_emit_running_or_queued_watches_threaded,
-            daemon=True
-        )
-        self.polling_emitter_thread.start()
-        logger.info("Started polling thread using threading (eventlet-free)")
-
-        # Store the thread reference in socketio for clean shutdown
-        self.socketio_instance.polling_emitter_thread = self.polling_emitter_thread
-
     def handle_signal(self, *args, **kwargs):
         logger.trace(f"SignalHandler: Signal received with {len(args)} args and {len(kwargs)} kwargs")
         # Safely extract the watch UUID from kwargs
@@ -124,74 +112,6 @@ class SignalHandler:
         except Exception as e:
             logger.error(f"Socket.IO error in handle_notification_event: {str(e)}")
 
-    def polling_emit_running_or_queued_watches_threaded(self):
-        """Threading version of polling for Windows compatibility"""
-        import time
-        import threading
-        logger.info("Queue update thread started (threading mode)")
-
-        # Import here to avoid circular imports
-        from changedetectionio.flask_app import app
-        from changedetectionio import worker_handler
-        watch_check_update = signal('watch_check_update')
-
-        # Track previous state to avoid unnecessary emissions
-        previous_running_uuids = set()
-
-        # Run until app shutdown - check exit flag more frequently for fast shutdown
-        exit_event = getattr(app.config, 'exit', threading.Event())
-
-        while not exit_event.is_set():
-            try:
-                # Get current running UUIDs from async workers
-                running_uuids = set(worker_handler.get_running_uuids())
-
-                # Only send updates for UUIDs that changed state
-                newly_running = running_uuids - previous_running_uuids
-                no_longer_running = previous_running_uuids - running_uuids
-
-                # Send updates for newly running UUIDs (but exit fast if shutdown requested)
-                for uuid in newly_running:
-                    if exit_event.is_set():
-                        break
-                    logger.trace(f"Threading polling: UUID {uuid} started processing")
-                    with app.app_context():
-                        watch_check_update.send(app_context=app, watch_uuid=uuid)
-                    time.sleep(0.01)  # Small yield
-
-                # Send updates for UUIDs that finished processing (but exit fast if shutdown requested)
-                if not exit_event.is_set():
-                    for uuid in no_longer_running:
-                        if exit_event.is_set():
-                            break
-                        logger.trace(f"Threading polling: UUID {uuid} finished processing")
-                        with app.app_context():
-                            watch_check_update.send(app_context=app, watch_uuid=uuid)
-                        time.sleep(0.01)  # Small yield
-
-                # Update tracking for next iteration
-                previous_running_uuids = running_uuids
-
-                # Sleep between polling cycles, but check exit flag every 0.5 seconds for fast shutdown
-                for _ in range(20):  # 20 * 0.5 = 10 seconds total
-                    if exit_event.is_set():
-                        break
-                    time.sleep(0.5)
-
-            except Exception as e:
-                logger.error(f"Error in threading polling: {str(e)}")
-                # Even during error recovery, check for exit quickly
-                for _ in range(1):  # 1 * 0.5 = 0.5 seconds
-                    if exit_event.is_set():
-                        break
-                    time.sleep(0.5)
-
-        # Check if we're in pytest environment - if so, be more gentle with logging
-        import sys
-        in_pytest = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
-
-        if not in_pytest:
-            logger.info("Queue update thread stopped (threading mode)")
 
 
 def handle_watch_update(socketio, **kwargs):
@@ -383,19 +303,6 @@ def init_socketio(app, datastore):
         """Shutdown the SocketIO server fast and aggressively"""
         try:
             logger.info("Socket.IO: Fast shutdown initiated...")
-
-            # For threading mode, give the thread a very short time to exit gracefully
-            if hasattr(socketio, 'polling_emitter_thread'):
-                if socketio.polling_emitter_thread.is_alive():
-                    logger.info("Socket.IO: Waiting 1 second for polling thread to stop...")
-                    socketio.polling_emitter_thread.join(timeout=1.0)  # Only 1 second timeout
-                    if socketio.polling_emitter_thread.is_alive():
-                        logger.info("Socket.IO: Polling thread still running after timeout - continuing with shutdown")
-                    else:
-                        logger.info("Socket.IO: Polling thread stopped quickly")
-                else:
-                    logger.info("Socket.IO: Polling thread already stopped")
-
             logger.info("Socket.IO: Fast shutdown complete")
         except Exception as e:
             logger.error(f"Socket.IO error during shutdown: {str(e)}")
