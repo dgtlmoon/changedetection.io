@@ -55,8 +55,8 @@ class TestTriggerConditions(unittest.TestCase):
         self.assertEqual(len(history), 2)
 
         # Retrieve and check snapshots
-        #snapshot1 = watch.get_history_snapshot(str(timestamp1))
-        #snapshot2 = watch.get_history_snapshot(str(timestamp2))
+        #snapshot1 = watch.get_history_snapshot(timestamp=str(timestamp1))
+        #snapshot2 = watch.get_history_snapshot(timestamp=str(timestamp2))
 
         self.store.data['watching'][self.watch_uuid].update(
             {

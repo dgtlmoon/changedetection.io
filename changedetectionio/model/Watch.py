@@ -276,9 +276,17 @@ class model(watch_base):
         # When the 'last viewed' timestamp is less than the oldest snapshot, return oldest
         return sorted_keys[-1]
 
-    def get_history_snapshot(self, timestamp):
+    def get_history_snapshot(self, timestamp=None, filepath=None):
+        """
+        Accepts either timestamp or filepath
+        :param timestamp:
+        :param filepath:
+        :return:
+        """
         import brotli
-        filepath = self.history[timestamp]
+
+        if not filepath:
+            filepath = self.history[timestamp]
 
         # See if a brotli versions exists and switch to that
         if not filepath.endswith('.br') and os.path.isfile(f"{filepath}.br"):
@@ -382,7 +390,7 @@ class model(watch_base):
         # Compare each lines (set) against each history text file (set) looking for something new..
         existing_history = set({})
         for k, v in self.history.items():
-            content = self.get_history_snapshot(k)
+            content = self.get_history_snapshot(filepath=v)
 
             if ignore_whitespace:
                 alist = set([line.translate(TRANSLATE_WHITESPACE_TABLE).lower() for line in content.splitlines()])
@@ -639,7 +647,7 @@ class model(watch_base):
         for k, fname in self.history.items():
             if os.path.isfile(fname):
                 if True:
-                    contents = self.get_history_snapshot(k)
+                    contents = self.get_history_snapshot(timestamp=k)
                     res = re.findall(regex, contents, re.MULTILINE)
                     if res:
                         if not csv_writer:
@@ -732,7 +740,7 @@ class model(watch_base):
             # If a previous attempt doesnt yet exist, just snarf the previous snapshot instead
             dates = list(self.history.keys())
             if len(dates):
-                return self.get_history_snapshot(dates[-1])
+                return self.get_history_snapshot(timestamp=dates[-1])
             else:
                 return ''
 

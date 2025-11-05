@@ -22,7 +22,7 @@ def test_fetch_pdf(client, live_server, measure_memory_usage, datastore_path):
 
     watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
     dates = list(watch.history.keys())
-    snapshot_contents = watch.get_history_snapshot(dates[0])
+    snapshot_contents = watch.get_history_snapshot(timestamp=dates[0])
 
     # PDF header should not be there (it was converted to text)
     assert 'PDF' not in snapshot_contents
@@ -75,7 +75,7 @@ def test_fetch_pdf(client, live_server, measure_memory_usage, datastore_path):
 
     dates = list(watch.history.keys())
     # new snapshot was also OK, no HTML
-    snapshot_contents = watch.get_history_snapshot(dates[1])
+    snapshot_contents = watch.get_history_snapshot(timestamp=dates[1])
     assert 'html' not in snapshot_contents.lower()
     assert f'Original file size - {os.path.getsize(os.path.join(datastore_path, "endpoint-test.pdf"))}' in snapshot_contents
     assert f'here is a change' in snapshot_contents
