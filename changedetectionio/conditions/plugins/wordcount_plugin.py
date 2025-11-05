@@ -14,7 +14,7 @@ def count_words_in_history(watch, incoming_text=None):
         elif watch.history.keys():
             # When called from UI extras to count latest snapshot
             latest_key = list(watch.history.keys())[-1]
-            latest_content = watch.get_history_snapshot(latest_key)
+            latest_content = watch.get_history_snapshot(timestamp=latest_key)
             return len(latest_content.split())
         return 0
     except Exception as e:

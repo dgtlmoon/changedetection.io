@@ -133,7 +133,7 @@ class NotificationService:
 
         # Add text that was triggered
         if len(dates):
-            snapshot_contents = watch.get_history_snapshot(dates[-1])
+            snapshot_contents = watch.get_history_snapshot(timestamp=dates[-1])
         else:
             snapshot_contents = "No snapshot/history available, the watch should fetch atleast once."
 
@@ -154,8 +154,8 @@ class NotificationService:
         current_snapshot = "Example text: example test\nExample text: change detection is fantastic\nExample text: even more examples\nExample text: a lot more examples"
 
         if len(dates) > 1:
-            prev_snapshot = watch.get_history_snapshot(dates[-2])
-            current_snapshot = watch.get_history_snapshot(dates[-1])
+            prev_snapshot = watch.get_history_snapshot(timestamp=dates[-2])
+            current_snapshot = watch.get_history_snapshot(timestamp=dates[-1])
 
 
         n_object.update(set_basic_notification_vars(snapshot_contents=snapshot_contents,
