@@ -302,7 +302,7 @@ def test_notification_urls_jinja2_apprise_integration(client, live_server, measu
         data={
               "application-fetch_backend": "html_requests",
               "application-minutes_between_check": 180,
-              "application-notification_body": '{ "url" : "{{ watch_url }}", "secret": 444, "somebug": "网站监测 内容更新了" }',
+              "application-notification_body": '{ "url" : "{{ watch_url }}", "secret": 444, "somebug": "网站监测 内容更新了", "another": "{{diff|truncate(1500)}}" }',
               "application-notification_format": default_notification_format,
               "application-notification_urls": test_notification_url,
               # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#get-parameter-manipulation
@@ -311,6 +311,10 @@ def test_notification_urls_jinja2_apprise_integration(client, live_server, measu
         follow_redirects=True
     )
     assert b'Settings updated' in res.data
+    assert '网站监测'.encode() in res.data
+    assert b'{{diff|truncate(1500)}}' in res.data
+
+
 
 
 def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_memory_usage, datastore_path):
