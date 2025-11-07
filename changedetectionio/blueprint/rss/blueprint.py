@@ -81,7 +81,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         fg.description('Feed description')
         fg.link(href='https://changedetection.io')
 
-        html_colour_enable = False
         for watch in sorted_watches:
 
             dates = list(watch.history.keys())
