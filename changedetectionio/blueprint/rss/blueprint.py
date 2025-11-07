@@ -82,9 +82,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         fg.link(href='https://changedetection.io')
 
         html_colour_enable = False
-        if datastore.data['settings']['application'].get('rss_content_format') == 'html':
-            html_colour_enable = True
-
         for watch in sorted_watches:
 
             dates = list(watch.history.keys())
@@ -117,16 +114,14 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
                 fe.title(title=watch_label)
                 try:
-
                     html_diff = diff.render_diff(previous_version_file_contents=watch.get_history_snapshot(timestamp=dates[-2]),
                                                  newest_version_file_contents=watch.get_history_snapshot(timestamp=dates[-1]),
                                                  include_equal=False,
                                                  line_feed_sep="<br>"
                                                  )
 
-
-                    requested_output_format = 'htmlcolor' if html_colour_enable else 'html'
-                    html_diff = apply_service_tweaks(url='', n_body=html_diff, n_title=None, requested_output_format=requested_output_format)
+                    requested_output_format = datastore.data['settings']['application'].get('rss_content_format')
+                    url, html_diff, n_title = apply_service_tweaks(url='', n_body=html_diff, n_title=None, requested_output_format=requested_output_format)
 
                 except FileNotFoundError as e:
                     html_diff = f"History snapshot file for watch {watch.get('uuid')}@{watch.last_changed} - '{watch.get('title')} not found."

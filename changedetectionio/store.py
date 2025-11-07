@@ -6,6 +6,7 @@ from flask import (
     flash
 )
 
+from .blueprint.rss import RSS_CONTENT_FORMAT_DEFAULT
 from .html_tools import TRANSLATE_WHITESPACE_TABLE
 from .model import App, Watch, USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
 from copy import deepcopy, copy
@@ -748,6 +749,28 @@ class ChangeDetectionStore:
 
         return updates_available
 
+    def add_notification_url(self, notification_url):
+
+        logger.debug(f">>> Adding new notification_url - '{notification_url}'")
+
+        notification_urls = self.data['settings']['application'].get('notification_urls', [])
+
+        if notification_url in notification_urls:
+            return notification_url
+
+        with self.lock:
+            notification_urls = self.__data['settings']['application'].get('notification_urls', [])
+
+            if notification_url in notification_urls:
+                return notification_url
+
+            # Append and update the datastore
+            notification_urls.append(notification_url)
+            self.__data['settings']['application']['notification_urls'] = notification_urls
+            self.needs_write = True
+
+        return notification_url
+
     # Run all updates
     # IMPORTANT - Each update could be run even when they have a new install and the schema is correct
     #             So therefor - each `update_n` should be very careful about checking if it needs to actually run
@@ -1051,25 +1074,15 @@ class ChangeDetectionStore:
         formats['markdown'] = 'Markdown'
         re_run(formats)
 
-    def add_notification_url(self, notification_url):
-        
-        logger.debug(f">>> Adding new notification_url - '{notification_url}'")
 
-        notification_urls = self.data['settings']['application'].get('notification_urls', [])
-
-        if notification_url in notification_urls:
-            return notification_url
-
-        with self.lock:
-            notification_urls = self.__data['settings']['application'].get('notification_urls', [])
-
-            if notification_url in notification_urls:
-                return notification_url
-
-            # Append and update the datastore
-            notification_urls.append(notification_url)
-            self.__data['settings']['application']['notification_urls'] = notification_urls
-            self.needs_write = True
-
-        return notification_url
-
+    # RSS types should be inline with the same names as notification types
+    def update_24(self):
+        rss_format = self.data['settings']['application'].get('rss_content_format')
+        if not rss_format or 'text' in rss_format:
+            # might have been 'plaintext, 'plain text' or something
+            self.data['settings']['application']['rss_content_format'] = RSS_CONTENT_FORMAT_DEFAULT
+        elif 'html' in rss_format:
+            self.data['settings']['application']['rss_content_format'] = 'html'
+        else:
+            # safe fallback to text
+            self.data['settings']['application']['rss_content_format'] = RSS_CONTENT_FORMAT_DEFAULT

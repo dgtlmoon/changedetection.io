@@ -1000,7 +1000,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
                               validators=[validators.NumberRange(min=0,
                                                                  message="Should be atleast zero (disabled)")])
 
-    rss_content_format = SelectField('RSS Content format', choices=RSS_FORMAT_TYPES)
+    rss_content_format = SelectField('RSS Content format', choices=list(RSS_FORMAT_TYPES.items()))
 
     removepassword_button = SubmitField('Remove password', render_kw={"class": "pure-button pure-button-primary"})
     render_anchor_tag_content = BooleanField('Render anchor tag content', default=False)
