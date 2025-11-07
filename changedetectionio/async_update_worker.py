@@ -353,12 +353,15 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                 count = watch.get('check_count', 0) + 1
 
                 # Always record page title (used in notifications, and can change even when the content is the same)
-                try:
-                    page_title = html_tools.extract_title(data=update_handler.fetcher.content)
-                    logger.debug(f"UUID: {uuid} Page <title> is '{page_title}'")
-                    datastore.update_watch(uuid=uuid, update_obj={'page_title': page_title})
-                except Exception as e:
-                    logger.warning(f"UUID: {uuid} Exception when extracting <title> - {str(e)}")
+                if update_obj.get('content-type') and 'html' in update_obj.get('content-type'):
+                    try:
+                        page_title = html_tools.extract_title(data=update_handler.fetcher.content)
+                        if page_title:
+                            page_title = page_title.strip()[:2000]
+                            logger.debug(f"UUID: {uuid} Page <title> is '{page_title}'")
+                            datastore.update_watch(uuid=uuid, update_obj={'page_title': page_title})
+                    except Exception as e:
+                        logger.warning(f"UUID: {uuid} Exception when extracting <title> - {str(e)}")
 
                 # Record server header
                 try:
