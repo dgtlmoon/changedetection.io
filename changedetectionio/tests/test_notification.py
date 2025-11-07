@@ -306,13 +306,14 @@ def test_notification_urls_jinja2_apprise_integration(client, live_server, measu
               "application-notification_format": default_notification_format,
               "application-notification_urls": test_notification_url,
               # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#get-parameter-manipulation
-              "application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }} ",
+              "application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }}  {{diff|truncate(200)}} ",
               },
         follow_redirects=True
     )
     assert b'Settings updated' in res.data
     assert '网站监测'.encode() in res.data
     assert b'{{diff|truncate(1500)}}' in res.data
+    assert b'{{diff|truncate(200)}}' in res.data
 
 
 
