@@ -353,7 +353,7 @@ def check_json_ext_filter(json_filter, client, live_server, datastore_path):
 
     watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
     dates = list(watch.history.keys())
-    snapshot_contents = watch.get_history_snapshot(dates[0])
+    snapshot_contents = watch.get_history_snapshot(timestamp=dates[0])
 
     assert snapshot_contents[0] == '['
 
@@ -439,7 +439,7 @@ def test_correct_header_detect(client, live_server, measure_memory_usage, datast
 
     watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
     dates = list(watch.history.keys())
-    snapshot_contents = watch.get_history_snapshot(dates[0])
+    snapshot_contents = watch.get_history_snapshot(timestamp=dates[0])
 
     assert b'&#34;hello&#34;: 123,' in res.data # properly html escaped in the front end
 

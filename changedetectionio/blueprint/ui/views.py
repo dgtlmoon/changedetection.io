@@ -187,7 +187,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
             try:
                 versions = list(watch.history.keys())
-                content = watch.get_history_snapshot(timestamp)
+                content = watch.get_history_snapshot(timestamp=timestamp)
 
                 triggered_line_numbers = html_tools.strip_ignore_text(content=content,
                                                                       wordlist=watch.get('trigger_text'),

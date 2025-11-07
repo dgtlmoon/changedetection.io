@@ -503,7 +503,9 @@ class ValidateJinja2Template(object):
             jinja2_env = create_jinja_env(loader=BaseLoader)
 
             # Add notification tokens for validation
-            jinja2_env.globals.update(NotificationContextData())
+            static_token_placeholders = NotificationContextData()
+            static_token_placeholders.set_random_for_validation()
+            jinja2_env.globals.update(static_token_placeholders)
             if hasattr(field, 'extra_notification_tokens'):
                 jinja2_env.globals.update(field.extra_notification_tokens)
 

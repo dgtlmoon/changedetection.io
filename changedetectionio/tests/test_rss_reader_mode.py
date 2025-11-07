@@ -65,7 +65,7 @@ def test_rss_reader_mode(client, live_server, measure_memory_usage, datastore_pa
 
     watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
     dates = list(watch.history.keys())
-    snapshot_contents = watch.get_history_snapshot(dates[0])
+    snapshot_contents = watch.get_history_snapshot(timestamp=dates[0])
     assert 'Wet noodles escape' in snapshot_contents
     assert '<br>' not in snapshot_contents
     assert '&lt;' not in snapshot_contents
@@ -91,7 +91,7 @@ def test_rss_reader_mode_with_css_filters(client, live_server, measure_memory_us
 
     watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
     dates = list(watch.history.keys())
-    snapshot_contents = watch.get_history_snapshot(dates[0])
+    snapshot_contents = watch.get_history_snapshot(timestamp=dates[0])
     assert 'Wet noodles escape' not in snapshot_contents
     assert '<br>' not in snapshot_contents
     assert '&lt;' not in snapshot_contents

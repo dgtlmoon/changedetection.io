@@ -22,6 +22,13 @@ import uuid as uuid_builder
 from loguru import logger
 from blinker import signal
 
+# Try to import orjson for faster JSON serialization
+try:
+    import orjson
+    HAS_ORJSON = True
+except ImportError:
+    HAS_ORJSON = False
+
 from .processors import get_custom_watch_obj_for_processor
 from .processors.restock_diff import Restock
 
@@ -426,9 +433,14 @@ class ChangeDetectionStore:
                 # Re #286  - First write to a temp file, then confirm it looks OK and rename it
                 # This is a fairly basic strategy to deal with the case that the file is corrupted,
                 # system was out of memory, out of RAM etc
-                with open(self.json_store_path+".tmp", 'w') as json_file:
-                    # Use compact JSON in production for better performance
-                    json.dump(data, json_file, indent=2)
+                if HAS_ORJSON:
+                    # Use orjson for faster serialization
+                    with open(self.json_store_path+".tmp", 'wb') as json_file:
+                        json_file.write(orjson.dumps(data, option=orjson.OPT_INDENT_2))
+                else:
+                    # Fallback to standard json module
+                    with open(self.json_store_path+".tmp", 'w') as json_file:
+                        json.dump(data, json_file, indent=2)
                 os.replace(self.json_store_path+".tmp", self.json_store_path)
             except Exception as e:
                 logger.error(f"Error writing JSON!! (Main JSON file save was skipped) : {str(e)}")

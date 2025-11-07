@@ -177,7 +177,7 @@ class WatchSingleHistory(Resource):
                 response = make_response("No content found", 404)
                 response.mimetype = "text/plain"
         else:
-            content = watch.get_history_snapshot(timestamp)
+            content = watch.get_history_snapshot(timestamp=timestamp)
             response = make_response(content, 200)
             response.mimetype = "text/plain"
 

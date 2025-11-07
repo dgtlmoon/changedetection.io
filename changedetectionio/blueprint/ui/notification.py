@@ -106,7 +106,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 trigger_text = watch.get('trigger_text', [])
                 # Add text that was triggered
                 if len(dates):
-                    snapshot_contents = watch.get_history_snapshot(dates[-1])
+                    snapshot_contents = watch.get_history_snapshot(timestamp=dates[-1])
                 else:
                     snapshot_contents = "No snapshot/history available, the watch should fetch atleast once."
 
@@ -123,8 +123,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
 
             if len(dates) > 1:
-                prev_snapshot = watch.get_history_snapshot(dates[-2])
-                current_snapshot = watch.get_history_snapshot(dates[-1])
+                prev_snapshot = watch.get_history_snapshot(timestamp=dates[-2])
+                current_snapshot = watch.get_history_snapshot(timestamp=dates[-1])
 
             n_object.update(set_basic_notification_vars(current_snapshot=current_snapshot,
                                                         prev_snapshot=prev_snapshot,
