@@ -78,9 +78,12 @@ class ChangeDetectionStore:
                 self.__data['build_sha'] = f.read()
 
         try:
-            # @todo retest with ", encoding='utf-8'"
-            with open(self.json_store_path) as json_file:
-                from_disk = json.load(json_file)
+            if HAS_ORJSON:
+                with open(self.json_store_path, 'rb') as json_file:
+                    from_disk = orjson.loads(json_file.read())
+            else:
+                with open(self.json_store_path, encoding='utf-8') as json_file:
+                    from_disk = json.load(json_file)
 
                 # @todo isnt there a way todo this dict.update recursively?
                 # Problem here is if the one on the disk is missing a sub-struct, it wont be present anymore.
@@ -439,8 +442,8 @@ class ChangeDetectionStore:
                         json_file.write(orjson.dumps(data, option=orjson.OPT_INDENT_2))
                 else:
                     # Fallback to standard json module
-                    with open(self.json_store_path+".tmp", 'w') as json_file:
-                        json.dump(data, json_file, indent=2)
+                    with open(self.json_store_path+".tmp", 'w', encoding='utf-8') as json_file:
+                        json.dump(data, json_file, indent=2, ensure_ascii=False)
                 os.replace(self.json_store_path+".tmp", self.json_store_path)
             except Exception as e:
                 logger.error(f"Error writing JSON!! (Main JSON file save was skipped) : {str(e)}")
@@ -502,8 +505,12 @@ class ChangeDetectionStore:
 
         # Load from external config file
         if path.isfile(proxy_list_file):
-            with open(os.path.join(self.datastore_path, "proxies.json")) as f:
-                proxy_list = json.load(f)
+            if HAS_ORJSON:
+                with open(os.path.join(self.datastore_path, "proxies.json"), 'rb') as f:
+                    proxy_list = orjson.loads(f.read())
+            else:
+                with open(os.path.join(self.datastore_path, "proxies.json"), encoding='utf-8') as f:
+                    proxy_list = json.load(f)
 
         # Mapping from UI config if available
         extras = self.data['settings']['requests'].get('extra_proxies')

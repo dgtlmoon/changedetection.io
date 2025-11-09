@@ -40,7 +40,7 @@ def test_consistent_history(client, live_server, measure_memory_usage, datastore
     json_db_file = os.path.join(live_server.app.config['DATASTORE'].datastore_path, 'url-watches.json')
 
     json_obj = None
-    with open(json_db_file, 'r') as f:
+    with open(json_db_file, 'r', encoding='utf-8') as f:
         json_obj = json.load(f)
 
     # assert the right amount of watches was found in the JSON

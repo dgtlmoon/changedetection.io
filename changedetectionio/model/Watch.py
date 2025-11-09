@@ -188,7 +188,7 @@ class model(watch_base):
         fname = os.path.join(self.watch_data_dir, "history.txt")
         if os.path.isfile(fname):
             logger.debug(f"Reading watch history index for {self.get('uuid')}")
-            with open(fname, "r") as f:
+            with open(fname, "r", encoding='utf-8') as f:
                 for i in f.readlines():
                     if ',' in i:
                         k, v = i.strip().split(',', 2)
@@ -594,7 +594,7 @@ class model(watch_base):
         """Return the text saved from a previous request that resulted in a non-200 error"""
         fname = os.path.join(self.watch_data_dir, "last-error.txt")
         if os.path.isfile(fname):
-            with open(fname, 'r') as f:
+            with open(fname, 'r', encoding='utf-8') as f:
                 return f.read()
         return False
 
