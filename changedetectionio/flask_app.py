@@ -101,12 +101,12 @@ def init_app_secret(datastore_path):
     path = os.path.join(datastore_path, "secret.txt")
 
     try:
-        with open(path, "r", encoding='utf-8') as f:
+        with open(path, "r") as f:
             secret = f.read()
 
     except FileNotFoundError:
         import secrets
-        with open(path, "w", encoding='utf-8') as f:
+        with open(path, "w") as f:
             secret = secrets.token_hex(32)
             f.write(secret)
 

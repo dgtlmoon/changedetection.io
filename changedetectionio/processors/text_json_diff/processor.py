@@ -280,7 +280,7 @@ class ContentProcessor:
 
         # Sort JSON to avoid false alerts from reordering
         try:
-            content = json.dumps(json.loads(content), sort_keys=True, indent=2, ensure_ascii=False)
+            content = json.dumps(json.loads(content), sort_keys=True, indent=4)
         except Exception:
             # Might be malformed JSON, continue anyway
             pass

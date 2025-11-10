@@ -139,7 +139,7 @@ class fetcher(Fetcher):
         content = await self.page.content()
         destination = os.path.join(self.browser_steps_screenshot_path, 'step_{}.html'.format(step_n))
         logger.debug(f"Saving step HTML to {destination}")
-        with open(destination, 'w', encoding='utf-8') as f:
+        with open(destination, 'w') as f:
             f.write(content)
 
     async def run(self,

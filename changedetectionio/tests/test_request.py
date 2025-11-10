@@ -142,7 +142,7 @@ def test_body_in_request(client, live_server, measure_memory_usage, datastore_pa
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     watches_with_body = 0
-    with open(os.path.join(datastore_path, 'url-watches.json'), encoding='utf-8') as f:
+    with open(os.path.join(datastore_path, 'url-watches.json')) as f:
         app_struct = json.load(f)
         for uuid in app_struct['watching']:
             if app_struct['watching'][uuid]['body']==body_value:
@@ -225,7 +225,7 @@ def test_method_in_request(client, live_server, measure_memory_usage, datastore_
     wait_for_all_checks(client)
 
     watches_with_method = 0
-    with open(os.path.join(datastore_path, 'url-watches.json'), encoding='utf-8') as f:
+    with open(os.path.join(datastore_path, 'url-watches.json')) as f:
         app_struct = json.load(f)
         for uuid in app_struct['watching']:
             if app_struct['watching'][uuid]['method'] == 'PATCH':
