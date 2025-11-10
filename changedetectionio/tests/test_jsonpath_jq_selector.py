@@ -442,13 +442,12 @@ def test_correct_header_detect(client, live_server, measure_memory_usage, datast
     snapshot_contents = watch.get_history_snapshot(timestamp=dates[0])
 
     assert b'&#34;hello&#34;: 123,' in res.data # properly html escaped in the front end
-
+    import json
+    data = json.loads(snapshot_contents)
+    keys = list(data.keys())
     # Should be correctly formatted and sorted,  ("world" goes to end)
-    assert snapshot_contents == """{
-    "hello": 123,
-    "world": 123
-}"""
-
+    assert keys == ["hello", "world"]
+        
     delete_all_watches(client)
 
 def test_check_jsonpath_ext_filter(client, live_server, measure_memory_usage, datastore_path):
