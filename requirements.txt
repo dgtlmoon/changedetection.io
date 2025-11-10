@@ -137,7 +137,7 @@ tzdata
 
 #typing_extensions ==4.8.0
 
-pluggy ~= 1.5
+pluggy ~= 1.6
 
 # Needed for testing, cross-platform for process and system monitoring
 psutil==7.1.0
