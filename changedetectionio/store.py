@@ -79,6 +79,7 @@ class ChangeDetectionStore:
 
         try:
             if HAS_ORJSON:
+                # orjson.loads() expects UTF-8 encoded bytes #3611
                 with open(self.json_store_path, 'rb') as json_file:
                     from_disk = orjson.loads(json_file.read())
             else:
@@ -438,6 +439,7 @@ class ChangeDetectionStore:
                 # system was out of memory, out of RAM etc
                 if HAS_ORJSON:
                     # Use orjson for faster serialization
+                    # orjson.dumps() always returns UTF-8 encoded bytes #3611
                     with open(self.json_store_path+".tmp", 'wb') as json_file:
                         json_file.write(orjson.dumps(data, option=orjson.OPT_INDENT_2))
                 else:
@@ -506,6 +508,7 @@ class ChangeDetectionStore:
         # Load from external config file
         if path.isfile(proxy_list_file):
             if HAS_ORJSON:
+                # orjson.loads() expects UTF-8 encoded bytes #3611
                 with open(os.path.join(self.datastore_path, "proxies.json"), 'rb') as f:
                     proxy_list = orjson.loads(f.read())
             else:

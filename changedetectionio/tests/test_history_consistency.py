@@ -76,7 +76,7 @@ def test_consistent_history(client, live_server, measure_memory_usage, datastore
         assert len(files_in_watch_dir) == 3, "Should be just three files in the dir, html.br snapshot, history.txt and the extracted text snapshot"
 
     json_db_file = os.path.join(live_server.app.config['DATASTORE'].datastore_path, 'url-watches.json')
-    with open(json_db_file, 'r') as f:
+    with open(json_db_file, 'r', encoding='utf-8') as f:
         assert '"default"' not in f.read(), "'default' probably shouldnt be here, it came from when the 'default' Watch vars were accidently being saved"
 
 
