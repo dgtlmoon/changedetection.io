@@ -86,33 +86,33 @@ class ChangeDetectionStore:
                 with open(self.json_store_path, encoding='utf-8') as json_file:
                     from_disk = json.load(json_file)
 
-                # @todo isnt there a way todo this dict.update recursively?
-                # Problem here is if the one on the disk is missing a sub-struct, it wont be present anymore.
-                if 'watching' in from_disk:
-                    self.__data['watching'].update(from_disk['watching'])
+            # @todo isnt there a way todo this dict.update recursively?
+            # Problem here is if the one on the disk is missing a sub-struct, it wont be present anymore.
+            if 'watching' in from_disk:
+                self.__data['watching'].update(from_disk['watching'])
 
-                if 'app_guid' in from_disk:
-                    self.__data['app_guid'] = from_disk['app_guid']
+            if 'app_guid' in from_disk:
+                self.__data['app_guid'] = from_disk['app_guid']
 
-                if 'settings' in from_disk:
-                    if 'headers' in from_disk['settings']:
-                        self.__data['settings']['headers'].update(from_disk['settings']['headers'])
+            if 'settings' in from_disk:
+                if 'headers' in from_disk['settings']:
+                    self.__data['settings']['headers'].update(from_disk['settings']['headers'])
 
-                    if 'requests' in from_disk['settings']:
-                        self.__data['settings']['requests'].update(from_disk['settings']['requests'])
+                if 'requests' in from_disk['settings']:
+                    self.__data['settings']['requests'].update(from_disk['settings']['requests'])
 
-                    if 'application' in from_disk['settings']:
-                        self.__data['settings']['application'].update(from_disk['settings']['application'])
+                if 'application' in from_disk['settings']:
+                    self.__data['settings']['application'].update(from_disk['settings']['application'])
 
-                # Convert each existing watch back to the Watch.model object
-                for uuid, watch in self.__data['watching'].items():
-                    self.__data['watching'][uuid] = self.rehydrate_entity(uuid, watch)
-                    logger.info(f"Watching: {uuid} {watch['url']}")
+            # Convert each existing watch back to the Watch.model object
+            for uuid, watch in self.__data['watching'].items():
+                self.__data['watching'][uuid] = self.rehydrate_entity(uuid, watch)
+                logger.info(f"Watching: {uuid} {watch['url']}")
 
-                # And for Tags also, should be Restock type because it has extra settings
-                for uuid, tag in self.__data['settings']['application']['tags'].items():
-                    self.__data['settings']['application']['tags'][uuid] = self.rehydrate_entity(uuid, tag, processor_override='restock_diff')
-                    logger.info(f"Tag: {uuid} {tag['title']}")
+            # And for Tags also, should be Restock type because it has extra settings
+            for uuid, tag in self.__data['settings']['application']['tags'].items():
+                self.__data['settings']['application']['tags'][uuid] = self.rehydrate_entity(uuid, tag, processor_override='restock_diff')
+                logger.info(f"Tag: {uuid} {tag['title']}")
 
         # First time ran, Create the datastore.
         except (FileNotFoundError):
