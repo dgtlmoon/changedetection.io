@@ -351,7 +351,7 @@ def changedetection_app(config=None, datastore_o=None):
     @login_manager.unauthorized_handler
     def unauthorized_handler():
         flash("You must be logged in, please log in.", 'error')
-        return redirect(url_for('login', next=url_for('watchlist.index')))
+        return redirect(url_for('login', redirect=request.path))
 
     @app.route('/logout')
     def logout():
@@ -362,13 +362,14 @@ def changedetection_app(config=None, datastore_o=None):
     # You can divide up the stuff like this
     @app.route('/login', methods=['GET', 'POST'])
     def login():
-
+        redirect_arg = request.args.get('redirect') or request.form.get('redirect')
+        redirect_url = redirect_arg or url_for('watchlist.index')
         if request.method == 'GET':
             if flask_login.current_user.is_authenticated:
                 flash("Already logged in")
                 return redirect(url_for("watchlist.index"))
 
-            output = render_template("login.html")
+            output = render_template("login.html", redirect_url=redirect_url)
             return output
 
         user = User()
@@ -389,12 +390,11 @@ def changedetection_app(config=None, datastore_o=None):
             # note for the future:
             #            if not is_safe_valid_url(next):
             #                return flask.abort(400)
-            return redirect(url_for('watchlist.index'))
-
+            return redirect(redirect_url)
         else:
             flash('Incorrect password', 'error')
 
-        return redirect(url_for('login'))
+        return redirect(url_for('login', redirect=redirect_url))
 
     @app.before_request
     def before_request_handle_cookie_x_settings():
