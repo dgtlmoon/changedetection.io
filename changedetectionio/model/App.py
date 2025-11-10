@@ -81,7 +81,7 @@ class model(dict):
 
 def parse_headers_from_text_file(filepath):
     headers = {}
-    with open(filepath, 'r') as f:
+    with open(filepath, 'r', encoding='utf-8') as f:
         for l in f.readlines():
             l = l.strip()
             if not l.startswith('#') and ':' in l:
