@@ -770,7 +770,14 @@ class ChangeDetectionStore:
                 logger.critical(f"Applying update_{update_n}")
                 # Wont exist on fresh installs
                 if os.path.exists(self.json_store_path):
-                    shutil.copyfile(self.json_store_path, os.path.join(self.datastore_path, f"url-watches-before-{update_n}.json"))
+                    i = 0
+                    while True:
+                        i+=1
+                        dest = os.path.join(self.datastore_path, f"url-watches-before-{update_n}-{i}.json")
+                        if not os.path.exists(dest):
+                            logger.debug(f"Copying url-watches.json DB to '{dest}' backup.")
+                            shutil.copyfile(self.json_store_path, dest)
+                            break
 
                 try:
                     update_method = getattr(self, f"update_{update_n}")()
