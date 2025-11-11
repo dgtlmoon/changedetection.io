@@ -1,0 +1,2 @@
+# Install wrapper script
+debian/changedetection-wrapper usr/bin/changedetection.io
