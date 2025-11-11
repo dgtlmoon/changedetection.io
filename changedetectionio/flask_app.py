@@ -29,6 +29,7 @@ from flask_compress import Compress as FlaskCompress
 from flask_login import current_user
 from flask_restful import abort, Api
 from flask_cors import CORS
+from urllib.parse import urlparse, urljoin
 
 # Create specific signals for application events
 # Make this a global singleton to avoid multiple signal objects
@@ -137,7 +138,6 @@ def get_socketio_path():
 def _is_safe_valid_url(test_url):
     from .validate_url import is_safe_valid_url
     return is_safe_valid_url(test_url)
-
 
 @app.template_filter('format_number_locale')
 def _jinja2_filter_format_number_locale(value: float) -> str:
@@ -363,6 +363,8 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route('/login', methods=['GET', 'POST'])
     def login():
         redirect_arg = request.args.get('redirect') or request.form.get('redirect')
+        if not is_safe_url(redirect_arg):
+            redirect_arg = None
         redirect_url = redirect_arg or url_for('watchlist.index')
         if request.method == 'GET':
             if flask_login.current_user.is_authenticated:
@@ -387,14 +389,16 @@ def changedetection_app(config=None, datastore_o=None):
             # return redirect(next or url_for('watchlist.index'))
             # We would sometimes get login loop errors on sites hosted in sub-paths
 
-            # note for the future:
-            #            if not is_safe_valid_url(next):
-            #                return flask.abort(400)
             return redirect(redirect_url)
         else:
             flash('Incorrect password', 'error')
 
         return redirect(url_for('login', redirect=redirect_url))
+
+    def is_safe_url(path):
+        ref_url = urlparse(request.host_url)
+        test_url = urlparse(urljoin(request.host_url, path))
+        return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
 
     @app.before_request
     def before_request_handle_cookie_x_settings():
