@@ -4,6 +4,7 @@ import time
 from flask import url_for
 from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, \
     extract_UUID_from_client, delete_all_watches
+from loguru import logger
 from ..blueprint.rss import RSS_FORMAT_TYPES
 
 
@@ -272,26 +273,28 @@ def test_rss_single_watch_feed(client, live_server, measure_memory_usage, datast
     import xml.etree.ElementTree as ET
     root = ET.fromstring(res.data)
 
-
-    def check_formatting(expected_type, content):
-
+    def check_formatting(expected_type, content, url):
+        logger.debug(f"Checking formatting type {expected_type}")
         if expected_type == 'text':
             assert '<p>' not in content
             assert 'body' not in content
             assert '(changed) Which is across multiple lines\n'
+            assert 'modified head title had a change.' # Because it picked it up <title> as watch_title in default template
         elif expected_type == 'html':
             assert '<p>' in content
             assert '<body>' in content
             assert '<p>(changed) Which is across multiple lines<br>' in content
+            assert f'href="{url}">modified head title had a change.</a>'
         elif expected_type == 'htmlcolor':
             assert '<body>' in content
             assert ' role="note" aria-label="Changed text" title="Changed text">Which is across multiple lines</span>' in content
+            assert f'href="{url}">modified head title had a change.</a>'
         else:
             raise Exception(f"Unknown type {expected_type}")
 
 
     item = root.findall('.//item')[0].findtext('description')
-    check_formatting(expected_type=rss_content_format, content=item)
+    check_formatting(expected_type=rss_content_format, content=item, url=test_url)
 
     # Now the default one is over, lets try all the others
     for k in list(RSS_FORMAT_TYPES.keys()):
@@ -309,5 +312,5 @@ def test_rss_single_watch_feed(client, live_server, measure_memory_usage, datast
         assert res.status_code == 200
         root = ET.fromstring(res.data)
         item = root.findall('.//item')[0].findtext('description')
-        check_formatting(expected_type=k, content=item)
+        check_formatting(expected_type=k, content=item, url=test_url)
 

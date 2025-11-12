@@ -70,11 +70,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             html_diff = f"History snapshot file for watch {watch.get('uuid')}@{watch.last_changed} - '{watch.get('title')} not found."
 
         # @note: We use <pre> because nearly all RSS readers render only HTML (Thunderbird for example cant do just plaintext)
-        rss_template = "<pre>{{watch_title}} had a change.\n\n{{html_diff}}\n</pre>"
+        rss_template = "<pre>{{watch_label}} had a change.\n\n{{html_diff}}\n</pre>"
         if 'html' in rss_content_format:
-            rss_template = "<html><body>\n<h4><a href=\"{{watch_url}}\">{{watch_title}}</a></h4>\n<p>{{html_diff}}</p>\n</body></html>\n"
+            rss_template = "<html><body>\n<h4><a href=\"{{watch_url}}\">{{watch_label}}</a></h4>\n<p>{{html_diff}}</p>\n</body></html>\n"
 
-        content = jinja_render(template_str=rss_template, watch_title=watch_label, html_diff=html_diff, watch_url=watch.link)
+        content = jinja_render(template_str=rss_template, watch_label=watch_label, html_diff=html_diff, watch_url=watch.link)
 
         # Out of range chars could also break feedgen
         if scan_invalid_chars_in_rss(content):
