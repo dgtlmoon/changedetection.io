@@ -783,6 +783,8 @@ class ChangeDetectionStore:
                             logger.debug(f"Copying url-watches.json DB to '{dest}' backup.")
                             shutil.copyfile(self.json_store_path, dest)
                             break
+                        else:
+                            logger.warning(f"Backup of url-watches.json '{dest}', DB already exists, trying {i+1}.. ")
 
                 try:
                     update_method = getattr(self, f"update_{update_n}")()
