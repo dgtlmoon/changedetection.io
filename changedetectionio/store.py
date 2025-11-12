@@ -79,37 +79,46 @@ class ChangeDetectionStore:
                 self.__data['build_sha'] = f.read()
 
         try:
-            # @todo retest with ", encoding='utf-8'"
-            with open(self.json_store_path) as json_file:
-                from_disk = json.load(json_file)
+            if HAS_ORJSON:
+                # orjson.loads() expects UTF-8 encoded bytes #3611
+                with open(self.json_store_path, 'rb') as json_file:
+                    from_disk = orjson.loads(json_file.read())
+            else:
+                with open(self.json_store_path, encoding='utf-8') as json_file:
+                    from_disk = json.load(json_file)
 
-                # @todo isnt there a way todo this dict.update recursively?
-                # Problem here is if the one on the disk is missing a sub-struct, it wont be present anymore.
-                if 'watching' in from_disk:
-                    self.__data['watching'].update(from_disk['watching'])
+            if not from_disk:
+                # No FileNotFound exception was thrown but somehow the JSON was empty - abort for safety.
+                logger.critical(f"JSON DB existed but was empty on load - empty JSON file? '{self.json_store_path}' Aborting")
+                raise Exception('JSON DB existed but was empty on load - Aborting')
 
-                if 'app_guid' in from_disk:
-                    self.__data['app_guid'] = from_disk['app_guid']
+            # @todo isnt there a way todo this dict.update recursively?
+            # Problem here is if the one on the disk is missing a sub-struct, it wont be present anymore.
+            if 'watching' in from_disk:
+                self.__data['watching'].update(from_disk['watching'])
 
-                if 'settings' in from_disk:
-                    if 'headers' in from_disk['settings']:
-                        self.__data['settings']['headers'].update(from_disk['settings']['headers'])
+            if 'app_guid' in from_disk:
+                self.__data['app_guid'] = from_disk['app_guid']
 
-                    if 'requests' in from_disk['settings']:
-                        self.__data['settings']['requests'].update(from_disk['settings']['requests'])
+            if 'settings' in from_disk:
+                if 'headers' in from_disk['settings']:
+                    self.__data['settings']['headers'].update(from_disk['settings']['headers'])
 
-                    if 'application' in from_disk['settings']:
-                        self.__data['settings']['application'].update(from_disk['settings']['application'])
+                if 'requests' in from_disk['settings']:
+                    self.__data['settings']['requests'].update(from_disk['settings']['requests'])
 
-                # Convert each existing watch back to the Watch.model object
-                for uuid, watch in self.__data['watching'].items():
-                    self.__data['watching'][uuid] = self.rehydrate_entity(uuid, watch)
-                    logger.info(f"Watching: {uuid} {watch['url']}")
+                if 'application' in from_disk['settings']:
+                    self.__data['settings']['application'].update(from_disk['settings']['application'])
 
-                # And for Tags also, should be Restock type because it has extra settings
-                for uuid, tag in self.__data['settings']['application']['tags'].items():
-                    self.__data['settings']['application']['tags'][uuid] = self.rehydrate_entity(uuid, tag, processor_override='restock_diff')
-                    logger.info(f"Tag: {uuid} {tag['title']}")
+            # Convert each existing watch back to the Watch.model object
+            for uuid, watch in self.__data['watching'].items():
+                self.__data['watching'][uuid] = self.rehydrate_entity(uuid, watch)
+                logger.info(f"Watching: {uuid} {watch['url']}")
+
+            # And for Tags also, should be Restock type because it has extra settings
+            for uuid, tag in self.__data['settings']['application']['tags'].items():
+                self.__data['settings']['application']['tags'][uuid] = self.rehydrate_entity(uuid, tag, processor_override='restock_diff')
+                logger.info(f"Tag: {uuid} {tag['title']}")
 
         # First time ran, Create the datastore.
         except (FileNotFoundError):
@@ -436,12 +445,13 @@ class ChangeDetectionStore:
                 # system was out of memory, out of RAM etc
                 if HAS_ORJSON:
                     # Use orjson for faster serialization
+                    # orjson.dumps() always returns UTF-8 encoded bytes #3611
                     with open(self.json_store_path+".tmp", 'wb') as json_file:
                         json_file.write(orjson.dumps(data, option=orjson.OPT_INDENT_2))
                 else:
                     # Fallback to standard json module
-                    with open(self.json_store_path+".tmp", 'w') as json_file:
-                        json.dump(data, json_file, indent=2)
+                    with open(self.json_store_path+".tmp", 'w', encoding='utf-8') as json_file:
+                        json.dump(data, json_file, indent=2, ensure_ascii=False)
                 os.replace(self.json_store_path+".tmp", self.json_store_path)
             except Exception as e:
                 logger.error(f"Error writing JSON!! (Main JSON file save was skipped) : {str(e)}")
@@ -503,8 +513,13 @@ class ChangeDetectionStore:
 
         # Load from external config file
         if path.isfile(proxy_list_file):
-            with open(os.path.join(self.datastore_path, "proxies.json")) as f:
-                proxy_list = json.load(f)
+            if HAS_ORJSON:
+                # orjson.loads() expects UTF-8 encoded bytes #3611
+                with open(os.path.join(self.datastore_path, "proxies.json"), 'rb') as f:
+                    proxy_list = orjson.loads(f.read())
+            else:
+                with open(os.path.join(self.datastore_path, "proxies.json"), encoding='utf-8') as f:
+                    proxy_list = json.load(f)
 
         # Mapping from UI config if available
         extras = self.data['settings']['requests'].get('extra_proxies')
@@ -783,7 +798,16 @@ class ChangeDetectionStore:
                 logger.critical(f"Applying update_{update_n}")
                 # Wont exist on fresh installs
                 if os.path.exists(self.json_store_path):
-                    shutil.copyfile(self.json_store_path, os.path.join(self.datastore_path, f"url-watches-before-{update_n}.json"))
+                    i = 0
+                    while True:
+                        i+=1
+                        dest = os.path.join(self.datastore_path, f"url-watches-before-{update_n}-{i}.json")
+                        if not os.path.exists(dest):
+                            logger.debug(f"Copying url-watches.json DB to '{dest}' backup.")
+                            shutil.copyfile(self.json_store_path, dest)
+                            break
+                        else:
+                            logger.warning(f"Backup of url-watches.json '{dest}', DB already exists, trying {i+1}.. ")
 
                 try:
                     update_method = getattr(self, f"update_{update_n}")()
