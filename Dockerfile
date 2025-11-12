@@ -33,15 +33,18 @@ ENV OPENSSL_DIR="/usr"
 ENV OPENSSL_LIB_DIR="/usr/lib/arm-linux-gnueabihf"
 ENV OPENSSL_INCLUDE_DIR="/usr/include/openssl"
 # Additional environment variables for cryptography Rust build
-ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
-RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
-  pip install \
-  --prefer-binary \
-  --extra-index-url https://www.piwheels.org/simple \
-  --extra-index-url https://pypi.anaconda.org/ARM-software/simple \
-  --cache-dir=/tmp/pip-cache \
-  --target=/dependencies \
-  -r /requirements.txt
+# This will REPLACE the default pypi.org index.
+# For security reasons (to prevent dependency confusion attacks), --extra-index-url is not used.
+# Your custom index must contain all required packages and their dependencies.
+# Using a private repository manager that proxies pypi.org is recommended.
+ARG PIP_INDEX_URL
+# hadolint ignore=DL3013
+RUN if [ -n "$PIP_INDEX_URL" ] ; then \
+    echo "Using custom python package index: $PIP_INDEX_URL" ; \
+    pip3 install --no-cache-dir --upgrade --index-url $PIP_INDEX_URL -r requirements.txt ; \
+else \
+    pip3 install --no-cache-dir --upgrade -r requirements.txt ; \
+fi
 
 
 # Playwright is an alternative to Selenium
