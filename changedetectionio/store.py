@@ -44,7 +44,7 @@ class ChangeDetectionStore:
     lock = Lock()
     # For general updates/writes that can wait a few seconds
     needs_write = False
-
+    datastore_path = None
     # For when we edit, we should write to disk
     needs_write_urgent = False
 
@@ -54,18 +54,30 @@ class ChangeDetectionStore:
     def __init__(self, datastore_path="/datastore", include_default_watches=True, version_tag="0.0.0"):
         # Should only be active for docker
         # logging.basicConfig(filename='/dev/stdout', level=logging.INFO)
-
+        self.datastore_path = datastore_path
         self.needs_write = False
         self.start_time = time.time()
         self.stop_thread = False
+        self.save_version_copy_json_db(version_tag)
         self.reload_state(datastore_path=datastore_path, include_default_watches=include_default_watches, version_tag=version_tag)
+
+    def save_version_copy_json_db(self, version_tag):
+        import re
+
+        version_text = re.sub(r'\D+', '-', version_tag)
+        db_path = os.path.join(self.datastore_path, "url-watches.json")
+        db_path_version_backup = os.path.join(self.datastore_path, f"url-watches-{version_text}.json")
+
+        if not os.path.isfile(db_path_version_backup) and os.path.isfile(db_path):
+            from shutil import copyfile
+            logger.info(f"Backing up JSON DB due to new version to '{db_path_version_backup}'.")
+            copyfile(db_path, db_path_version_backup)
 
 
     def reload_state(self, datastore_path, include_default_watches, version_tag):
         logger.info(f"Datastore path is '{datastore_path}'")
 
         self.__data = App.model()
-        self.datastore_path = datastore_path
         self.json_store_path = os.path.join(self.datastore_path, "url-watches.json")
         # Base definition for all watchers
         # deepcopy part of #569 - not sure why its needed exactly
