@@ -476,6 +476,7 @@ Math: {{ 1 + 1 }}") }}
                        class="pure-button button-error">Clear History</a>{% endif %}
                     <a href="{{url_for('ui.form_clone', uuid=uuid)}}"
                        class="pure-button">Clone &amp; Edit</a>
+                 <a href="{{ url_for('rss.rss_single_watch', uuid=uuid, token=app_rss_token)}}"><img alt="RSS Feed for this watch" style="padding: .5em 1em;" src="{{url_for('static_content', group='images', filename='generic_feed-icon.svg')}}" height="15"></a>
                 </div>
             </div>
         </form>

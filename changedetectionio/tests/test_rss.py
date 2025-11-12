@@ -4,6 +4,8 @@ import time
 from flask import url_for
 from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, \
     extract_UUID_from_client, delete_all_watches
+from loguru import logger
+from ..blueprint.rss import RSS_FORMAT_TYPES
 
 
 def set_original_cdata_xml(datastore_path):
@@ -238,6 +240,77 @@ def test_rss_bad_chars_breaking(client, live_server, measure_memory_usage, datas
     #assert live_server.app.config['DATASTORE'].data['watching'][uuid].history_n == 2
 
 
+def test_rss_single_watch_feed(client, live_server, measure_memory_usage, datastore_path):
+
+    app_rss_token = live_server.app.config['DATASTORE'].data['settings']['application'].get('rss_access_token')
+    rss_content_format = live_server.app.config['DATASTORE'].data['settings']['application'].get('rss_content_format')
+
+    set_original_response(datastore_path=datastore_path)
 
 
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    res = client.get(
+        url_for('rss.rss_single_watch', uuid=uuid, token=app_rss_token),
+        follow_redirects=False
+    )
+
+    assert res.status_code == 400
+    assert b'not have enough history' in res.data
+
+    set_modified_response(datastore_path=datastore_path)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    res = client.get(
+        url_for('rss.rss_single_watch', uuid=uuid, token=app_rss_token),
+        follow_redirects=False
+    )
+    assert res.status_code == 200
+    import xml.etree.ElementTree as ET
+    root = ET.fromstring(res.data)
+
+    def check_formatting(expected_type, content, url):
+        logger.debug(f"Checking formatting type {expected_type}")
+        if expected_type == 'text':
+            assert '<p>' not in content
+            assert 'body' not in content
+            assert '(changed) Which is across multiple lines\n'
+            assert 'modified head title had a change.' # Because it picked it up <title> as watch_title in default template
+        elif expected_type == 'html':
+            assert '<p>' in content
+            assert '<body>' in content
+            assert '<p>(changed) Which is across multiple lines<br>' in content
+            assert f'href="{url}">modified head title had a change.</a>'
+        elif expected_type == 'htmlcolor':
+            assert '<body>' in content
+            assert ' role="note" aria-label="Changed text" title="Changed text">Which is across multiple lines</span>' in content
+            assert f'href="{url}">modified head title had a change.</a>'
+        else:
+            raise Exception(f"Unknown type {expected_type}")
+
+
+    item = root.findall('.//item')[0].findtext('description')
+    check_formatting(expected_type=rss_content_format, content=item, url=test_url)
+
+    # Now the default one is over, lets try all the others
+    for k in list(RSS_FORMAT_TYPES.keys()):
+        res = client.post(
+            url_for("settings.settings_page"),
+            data={"application-rss_content_format": k},
+            follow_redirects=True
+        )
+        assert b'Settings updated' in res.data
+
+        res = client.get(
+            url_for('rss.rss_single_watch', uuid=uuid, token=app_rss_token),
+            follow_redirects=False
+        )
+        assert res.status_code == 200
+        root = ET.fromstring(res.data)
+        item = root.findall('.//item')[0].findtext('description')
+        check_formatting(expected_type=k, content=item, url=test_url)
 

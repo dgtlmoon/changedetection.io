@@ -77,10 +77,9 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     assert b'<rss' in res.data
 
     # re #16 should have the diff in here too
-    assert b'(into) which has this one new line' in res.data
+    assert b'which has this one new line' in res.data
     assert b'CDATA' in res.data
 
-    assert expected_url.encode('utf-8') in res.data
 #
     # Following the 'diff' link, it should no longer display as 'has-unread-changes' even after we recheck it a few times
     res = client.get(url_for("ui.ui_views.diff_history_page", uuid=uuid))

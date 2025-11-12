@@ -236,7 +236,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
             # Import the global plugin system
             from changedetectionio.pluggy_interface import collect_ui_edit_stats_extras
-            
+            app_rss_token = datastore.data['settings']['application'].get('rss_access_token'),
             template_args = {
                 'available_processors': processors.available_processors(),
                 'available_timezones': sorted(available_timezones()),
@@ -252,6 +252,11 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 'has_special_tag_options': _watch_has_tag_options_set(watch=watch),
                 'jq_support': jq_support,
                 'playwright_enabled': os.getenv('PLAYWRIGHT_DRIVER_URL', False),
+                'app_rss_token': app_rss_token,
+                'rss_uuid_feed' : {
+                    'label': watch.label,
+                    'url': url_for('rss.rss_single_watch', uuid=watch['uuid'], token=app_rss_token)
+                },
                 'settings_application': datastore.data['settings']['application'],
                 'system_has_playwright_configured': os.getenv('PLAYWRIGHT_DRIVER_URL'),
                 'system_has_webdriver_configured': os.getenv('WEBDRIVER_URL'),
