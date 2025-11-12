@@ -187,6 +187,8 @@ def replace_placemarkers_in_text(text, url, requested_output_format):
 
 def apply_service_tweaks(url, n_body, n_title, requested_output_format):
 
+    logger.debug(f"Applying markup in '{requested_output_format}' mode")
+
     # Re 323 - Limit discord length to their 2000 char limit total or it wont send.
     # Because different notifications may require different pre-processing, run each sequentially :(
     # 2000 bytes minus -

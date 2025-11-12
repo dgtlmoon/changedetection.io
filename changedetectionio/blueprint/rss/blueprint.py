@@ -43,7 +43,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         return f"{watch['uuid']}/{watch.last_changed}"
 
     # Helper function to generate diff content for a watch
-    def generate_watch_diff_content(watch, dates):
+    def generate_watch_diff_content(watch, dates, rss_content_format):
         """
         Generate HTML diff content for a watch given its history dates.
         Returns the rendered HTML content ready for RSS/display.
@@ -69,7 +69,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         except FileNotFoundError as e:
             html_diff = f"History snapshot file for watch {watch.get('uuid')}@{watch.last_changed} - '{watch.get('title')} not found."
 
-        rss_template = "<html><body>\n<h4><a href=\"{{watch_url}}\">{{watch_title}}</a></h4>\n<p>{{html_diff}}</p>\n</body></html>\n"
+        rss_template = "{{watch_title}} had a change.\n\n{{html_diff}}\n"
+        if 'html' in rss_content_format:
+            rss_template = "<html><body>\n<h4><a href=\"{{watch_url}}\">{{watch_title}}</a></h4>\n<p>{{html_diff}}</p>\n</body></html>\n"
+
         content = jinja_render(template_str=rss_template, watch_title=watch_label, html_diff=html_diff, watch_url=watch.link)
 
         # Out of range chars could also break feedgen
@@ -92,6 +95,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Always requires token set
         app_rss_token = datastore.data['settings']['application'].get('rss_access_token')
         rss_url_token = request.args.get('token')
+        rss_content_format = datastore.data['settings']['application'].get('rss_content_format')
+
         if rss_url_token != app_rss_token:
             return "Access denied, bad token", 403
 
@@ -146,7 +151,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
                 fe.link(link=diff_link)
 
-                content, watch_label = generate_watch_diff_content(watch, dates)
+                content, watch_label = generate_watch_diff_content(watch, dates, rss_content_format)
 
                 fe.title(title=watch_label)
                 fe.content(content=content, type='CDATA')
@@ -169,6 +174,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Always requires token set
         app_rss_token = datastore.data['settings']['application'].get('rss_access_token')
         rss_url_token = request.args.get('token')
+        rss_content_format = datastore.data['settings']['application'].get('rss_content_format')
+
         if rss_url_token != app_rss_token:
             return "Access denied, bad token", 403
 
@@ -186,7 +193,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         watch['uuid'] = uuid
 
         # Generate the diff content using the shared helper function
-        content, watch_label = generate_watch_diff_content(watch, dates)
+        content, watch_label = generate_watch_diff_content(watch, dates, rss_content_format)
 
         # Create RSS feed with single entry
         fg = FeedGenerator()
