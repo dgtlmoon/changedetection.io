@@ -1106,7 +1106,7 @@ class ChangeDetectionStore:
             # might have been 'plaintext, 'plain text' or something
             self.data['settings']['application']['rss_content_format'] = RSS_CONTENT_FORMAT_DEFAULT
         elif 'html' in rss_format:
-            self.data['settings']['application']['rss_content_format'] = 'html'
+            self.data['settings']['application']['rss_content_format'] = 'htmlcolor'
         else:
             # safe fallback to text
             self.data['settings']['application']['rss_content_format'] = RSS_CONTENT_FORMAT_DEFAULT

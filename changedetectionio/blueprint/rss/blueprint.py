@@ -69,7 +69,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         except FileNotFoundError as e:
             html_diff = f"History snapshot file for watch {watch.get('uuid')}@{watch.last_changed} - '{watch.get('title')} not found."
 
-        rss_template = "{{watch_title}} had a change.\n\n{{html_diff}}\n"
+        # @note: We use <pre> because nearly all RSS readers render only HTML (Thunderbird for example cant do just plaintext)
+        rss_template = "<pre>{{watch_title}} had a change.\n\n{{html_diff}}\n</pre>"
         if 'html' in rss_content_format:
             rss_template = "<html><body>\n<h4><a href=\"{{watch_url}}\">{{watch_title}}</a></h4>\n<p>{{html_diff}}</p>\n</body></html>\n"
 
