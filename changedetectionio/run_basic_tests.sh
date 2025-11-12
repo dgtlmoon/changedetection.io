@@ -11,7 +11,32 @@ set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
+# Since theres no curl installed lets roll with python3
+check_sanity() {
+  local port="$1"
+  if [ -z "$port" ]; then
+    echo "Usage: check_sanity <port>" >&2
+    return 1
+  fi
 
+  python3 - "$port" <<'PYCODE'
+import sys, time, urllib.request, socket
+
+port = sys.argv[1]
+url = f'http://localhost:{port}'
+ok = False
+
+for _ in range(6):  # --retry 6
+    try:
+        r = urllib.request.urlopen(url, timeout=3).read().decode()
+        if 'est-url-is-sanity' in r:
+            ok = True
+            break
+    except (urllib.error.URLError, ConnectionRefusedError, socket.error):
+        time.sleep(1)
+sys.exit(0 if ok else 1)
+PYCODE
+}
 
 # Restart data sanity test
 cd ..
@@ -26,7 +51,7 @@ sleep 2
 PID=$!
 sleep 5
 # On a restart the URL should still be there
-curl --retry-connrefused --retry 6 -s -g "http://localhost:$PORT_N"|grep -q "est-url-is-sanity" || exit 1
+check_sanity 8080 || exit 1
 kill $PID
 cd $OLDPWD
 
