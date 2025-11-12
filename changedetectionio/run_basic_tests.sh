@@ -11,6 +11,28 @@ set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
+
+
+# Restart data sanity test
+cd ..
+TMPDIR=$(mktemp -d)
+PORT_N=$((5000 + RANDOM % (6501 - 5000)))
+./changedetection.py -p $PORT_N -d $TMPDIR -u "https://localhost?test-url-is-sanity=1" &
+PID=$!
+sleep 5
+kill $PID
+sleep 2
+./changedetection.py -p $PORT_N -d $TMPDIR &
+PID=$!
+sleep 5
+# On a restart the URL should still be there
+curl --retry-connrefused --retry 6 -s -g "http://localhost:$PORT_N"|grep -q "est-url-is-sanity" || exit 1
+kill $PID
+cd $OLDPWD
+
+# datastore looks alright, continue
+
+
 # REMOVE_REQUESTS_OLD_SCREENSHOTS disabled so that we can write a screenshot and send it in test_notifications.py without a real browser
 REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest -n 30 --dist load  tests/test_*.py
 
@@ -41,3 +63,6 @@ FETCH_WORKERS=130 pytest  tests/test_history_consistency.py -v -l
 # Check file:// will pickup a file when enabled
 echo "Hello world" > /tmp/test-file.txt
 ALLOW_FILE_URI=yes pytest tests/test_security.py
+
+
+
