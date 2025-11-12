@@ -21,6 +21,7 @@ venv/
 # IDEs
 .idea
 .vscode/settings.json
+*~
 
 # Datastore files
 datastore/
