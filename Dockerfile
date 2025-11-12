@@ -4,6 +4,10 @@ ARG PYTHON_VERSION=3.11
 
 FROM python:${PYTHON_VERSION}-slim-bookworm AS builder
 
+# Declare platform variables for cache mount IDs
+ARG TARGETARCH
+ARG TARGETVARIANT
+
 # See `cryptography` pin comment in requirements.txt
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -34,7 +38,7 @@ ENV OPENSSL_LIB_DIR="/usr/lib/arm-linux-gnueabihf"
 ENV OPENSSL_INCLUDE_DIR="/usr/include/openssl"
 # Additional environment variables for cryptography Rust build
 ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
-RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
+RUN --mount=type=cache,id=pip-$TARGETARCH$TARGETVARIANT,sharing=locked,target=/tmp/pip-cache \
   pip install \
   --prefer-binary \
   --extra-index-url https://www.piwheels.org/simple \
@@ -47,7 +51,7 @@ RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
 # Playwright is an alternative to Selenium
 # Excluded this package from requirements.txt to prevent arm/v6 and arm/v7 builds from failing
 # https://github.com/dgtlmoon/changedetection.io/pull/1067 also musl/alpine (not supported)
-RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
+RUN --mount=type=cache,id=pip-$TARGETARCH$TARGETVARIANT,sharing=locked,target=/tmp/pip-cache \
   pip install \
   --prefer-binary \
   --cache-dir=/tmp/pip-cache \

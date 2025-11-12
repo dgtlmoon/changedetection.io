@@ -28,19 +28,23 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Cache pip packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-py${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-py${{ env.PYTHON_VERSION }}-
-            ${{ runner.os }}-pip-
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Build changedetection.io container for testing under Python ${{ env.PYTHON_VERSION }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          build-args: |
+            PYTHON_VERSION=${{ env.PYTHON_VERSION }}
+            LOGGER_LEVEL=TRACE
+          tags: test-changedetectionio
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Verify pip packages installed
         run: |
-          echo "---- Building for Python ${{ env.PYTHON_VERSION }} -----"
-          docker build --build-arg PYTHON_VERSION=${{ env.PYTHON_VERSION }} --build-arg LOGGER_LEVEL=TRACE -t test-changedetectionio .
           docker run test-changedetectionio bash -c 'pip list'
 
       - name: We should be Python ${{ env.PYTHON_VERSION }} ...
