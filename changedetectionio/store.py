@@ -86,6 +86,11 @@ class ChangeDetectionStore:
                 with open(self.json_store_path, encoding='utf-8') as json_file:
                     from_disk = json.load(json_file)
 
+            if not from_disk:
+                # No FileNotFound exception was thrown but somehow the JSON was empty - abort for safety.
+                logger.critical(f"JSON DB existed but was empty on load - empty JSON file? '{self.json_store_path}' Aborting")
+                raise Exception('JSON DB existed but was empty on load - Aborting')
+
             # @todo isnt there a way todo this dict.update recursively?
             # Problem here is if the one on the disk is missing a sub-struct, it wont be present anymore.
             if 'watching' in from_disk:
