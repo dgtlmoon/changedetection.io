@@ -8,8 +8,13 @@
     <meta name="robots" content="noindex">
     <title>Change Detection{{extra_title}}</title>
     {% if app_rss_token %}
-      <link rel="alternate" type="application/rss+xml" title="Changedetection.io » Feed{% if active_tag_uuid %}- {{active_tag.title}}{% endif %}" href="{{ url_for('rss.feed', tag=active_tag_uuid , token=app_rss_token)}}" >
-    {% endif %}
+        <link rel="alternate" type="application/rss+xml" title="Changedetection.io » Feed{% if active_tag_uuid %}- {{active_tag.title}}{% endif %}" href="{{ url_for('rss.feed', tag=active_tag_uuid, token=app_rss_token, _external=True )}}" >
+
+        {% if rss_uuid_feed %}
+        <link rel="alternate" type="application/rss+xml" title="Feed » {{ rss_uuid_feed['label'] }}" href="{{ rss_uuid_feed['url'] }}" >
+
+        {%- endif -%}
+    {%- endif -%}
     <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='pure-min.css')}}" >
     <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='styles.css')}}?v={{ get_css_version() }}" >
     {% if extra_stylesheets %}

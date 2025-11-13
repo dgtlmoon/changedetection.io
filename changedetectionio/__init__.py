@@ -2,7 +2,7 @@
 
 # Read more https://github.com/dgtlmoon/changedetection.io/wiki
 
-__version__ = '0.50.40'
+__version__ = '0.50.43'
 
 from changedetectionio.strtobool import strtobool
 from json.decoder import JSONDecodeError
@@ -74,6 +74,12 @@ def main():
 
     datastore_path = None
     do_cleanup = False
+    # Optional URL to watch since start
+    default_url = None
+    # Set a default logger level
+    logger_level = 'DEBUG'
+    include_default_watches = True
+
     host = os.environ.get("LISTEN_HOST", "0.0.0.0").strip()
     port = int(os.environ.get('PORT', 5000))
     ssl_mode = False
@@ -87,15 +93,13 @@ def main():
         datastore_path = os.path.join(os.getcwd(), "../datastore")
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "6Ccsd:h:p:l:", "port")
+        opts, args = getopt.getopt(sys.argv[1:], "6Ccsd:h:p:l:u:", "port")
     except getopt.GetoptError:
-        print('backend.py -s SSL enable -h [host] -p [port] -d [datastore path] -l [debug level - TRACE, DEBUG(default), INFO, SUCCESS, WARNING, ERROR, CRITICAL]')
+        print('backend.py -s SSL enable -h [host] -p [port] -d [datastore path] -u [default URL to watch] -l [debug level - TRACE, DEBUG(default), INFO, SUCCESS, WARNING, ERROR, CRITICAL]')
         sys.exit(2)
 
     create_datastore_dir = False
 
-    # Set a default logger level
-    logger_level = 'DEBUG'
     # Set a logger level via shell env variable
     # Used: Dockerfile for CICD
     # To set logger level for pytest, see the app function in tests/conftest.py
@@ -115,6 +119,10 @@ def main():
 
         if opt == '-d':
             datastore_path = arg
+
+        if opt == '-u':
+            default_url = arg
+            include_default_watches = False
 
         # Cleanup (remove text files that arent in the index)
         if opt == '-c':
@@ -172,12 +180,15 @@ def main():
             sys.exit(2)
 
     try:
-        datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], version_tag=__version__)
+        datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], version_tag=__version__, include_default_watches=include_default_watches)
     except JSONDecodeError as e:
         # Dont' start if the JSON DB looks corrupt
         logger.critical(f"ERROR: JSON DB or Proxy List JSON at '{app_config['datastore_path']}' appears to be corrupt, aborting.")
         logger.critical(str(e))
         return
+
+    if default_url:
+        datastore.add_watch(url = default_url)
 
     app = changedetection_app(app_config, datastore)
 

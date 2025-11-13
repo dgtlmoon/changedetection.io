@@ -6,6 +6,7 @@ from flask import (
     flash
 )
 
+from .blueprint.rss import RSS_CONTENT_FORMAT_DEFAULT
 from .html_tools import TRANSLATE_WHITESPACE_TABLE
 from .model import App, Watch, USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
 from copy import deepcopy, copy
@@ -44,7 +45,7 @@ class ChangeDetectionStore:
     lock = Lock()
     # For general updates/writes that can wait a few seconds
     needs_write = False
-
+    datastore_path = None
     # For when we edit, we should write to disk
     needs_write_urgent = False
 
@@ -54,18 +55,30 @@ class ChangeDetectionStore:
     def __init__(self, datastore_path="/datastore", include_default_watches=True, version_tag="0.0.0"):
         # Should only be active for docker
         # logging.basicConfig(filename='/dev/stdout', level=logging.INFO)
-
+        self.datastore_path = datastore_path
         self.needs_write = False
         self.start_time = time.time()
         self.stop_thread = False
+        self.save_version_copy_json_db(version_tag)
         self.reload_state(datastore_path=datastore_path, include_default_watches=include_default_watches, version_tag=version_tag)
+
+    def save_version_copy_json_db(self, version_tag):
+        import re
+
+        version_text = re.sub(r'\D+', '-', version_tag)
+        db_path = os.path.join(self.datastore_path, "url-watches.json")
+        db_path_version_backup = os.path.join(self.datastore_path, f"url-watches-{version_text}.json")
+
+        if not os.path.isfile(db_path_version_backup) and os.path.isfile(db_path):
+            from shutil import copyfile
+            logger.info(f"Backing up JSON DB due to new version to '{db_path_version_backup}'.")
+            copyfile(db_path, db_path_version_backup)
 
 
     def reload_state(self, datastore_path, include_default_watches, version_tag):
         logger.info(f"Datastore path is '{datastore_path}'")
 
         self.__data = App.model()
-        self.datastore_path = datastore_path
         self.json_store_path = os.path.join(self.datastore_path, "url-watches.json")
         # Base definition for all watchers
         # deepcopy part of #569 - not sure why its needed exactly
@@ -78,37 +91,46 @@ class ChangeDetectionStore:
                 self.__data['build_sha'] = f.read()
 
         try:
-            # @todo retest with ", encoding='utf-8'"
-            with open(self.json_store_path) as json_file:
-                from_disk = json.load(json_file)
+            if HAS_ORJSON:
+                # orjson.loads() expects UTF-8 encoded bytes #3611
+                with open(self.json_store_path, 'rb') as json_file:
+                    from_disk = orjson.loads(json_file.read())
+            else:
+                with open(self.json_store_path, encoding='utf-8') as json_file:
+                    from_disk = json.load(json_file)
 
-                # @todo isnt there a way todo this dict.update recursively?
-                # Problem here is if the one on the disk is missing a sub-struct, it wont be present anymore.
-                if 'watching' in from_disk:
-                    self.__data['watching'].update(from_disk['watching'])
+            if not from_disk:
+                # No FileNotFound exception was thrown but somehow the JSON was empty - abort for safety.
+                logger.critical(f"JSON DB existed but was empty on load - empty JSON file? '{self.json_store_path}' Aborting")
+                raise Exception('JSON DB existed but was empty on load - Aborting')
 
-                if 'app_guid' in from_disk:
-                    self.__data['app_guid'] = from_disk['app_guid']
+            # @todo isnt there a way todo this dict.update recursively?
+            # Problem here is if the one on the disk is missing a sub-struct, it wont be present anymore.
+            if 'watching' in from_disk:
+                self.__data['watching'].update(from_disk['watching'])
 
-                if 'settings' in from_disk:
-                    if 'headers' in from_disk['settings']:
-                        self.__data['settings']['headers'].update(from_disk['settings']['headers'])
+            if 'app_guid' in from_disk:
+                self.__data['app_guid'] = from_disk['app_guid']
 
-                    if 'requests' in from_disk['settings']:
-                        self.__data['settings']['requests'].update(from_disk['settings']['requests'])
+            if 'settings' in from_disk:
+                if 'headers' in from_disk['settings']:
+                    self.__data['settings']['headers'].update(from_disk['settings']['headers'])
 
-                    if 'application' in from_disk['settings']:
-                        self.__data['settings']['application'].update(from_disk['settings']['application'])
+                if 'requests' in from_disk['settings']:
+                    self.__data['settings']['requests'].update(from_disk['settings']['requests'])
 
-                # Convert each existing watch back to the Watch.model object
-                for uuid, watch in self.__data['watching'].items():
-                    self.__data['watching'][uuid] = self.rehydrate_entity(uuid, watch)
-                    logger.info(f"Watching: {uuid} {watch['url']}")
+                if 'application' in from_disk['settings']:
+                    self.__data['settings']['application'].update(from_disk['settings']['application'])
 
-                # And for Tags also, should be Restock type because it has extra settings
-                for uuid, tag in self.__data['settings']['application']['tags'].items():
-                    self.__data['settings']['application']['tags'][uuid] = self.rehydrate_entity(uuid, tag, processor_override='restock_diff')
-                    logger.info(f"Tag: {uuid} {tag['title']}")
+            # Convert each existing watch back to the Watch.model object
+            for uuid, watch in self.__data['watching'].items():
+                self.__data['watching'][uuid] = self.rehydrate_entity(uuid, watch)
+                logger.info(f"Watching: {uuid} {watch['url']}")
+
+            # And for Tags also, should be Restock type because it has extra settings
+            for uuid, tag in self.__data['settings']['application']['tags'].items():
+                self.__data['settings']['application']['tags'][uuid] = self.rehydrate_entity(uuid, tag, processor_override='restock_diff')
+                logger.info(f"Tag: {uuid} {tag['title']}")
 
         # First time ran, Create the datastore.
         except (FileNotFoundError):
@@ -435,12 +457,13 @@ class ChangeDetectionStore:
                 # system was out of memory, out of RAM etc
                 if HAS_ORJSON:
                     # Use orjson for faster serialization
+                    # orjson.dumps() always returns UTF-8 encoded bytes #3611
                     with open(self.json_store_path+".tmp", 'wb') as json_file:
                         json_file.write(orjson.dumps(data, option=orjson.OPT_INDENT_2))
                 else:
                     # Fallback to standard json module
-                    with open(self.json_store_path+".tmp", 'w') as json_file:
-                        json.dump(data, json_file, indent=2)
+                    with open(self.json_store_path+".tmp", 'w', encoding='utf-8') as json_file:
+                        json.dump(data, json_file, indent=2, ensure_ascii=False)
                 os.replace(self.json_store_path+".tmp", self.json_store_path)
             except Exception as e:
                 logger.error(f"Error writing JSON!! (Main JSON file save was skipped) : {str(e)}")
@@ -502,8 +525,13 @@ class ChangeDetectionStore:
 
         # Load from external config file
         if path.isfile(proxy_list_file):
-            with open(os.path.join(self.datastore_path, "proxies.json")) as f:
-                proxy_list = json.load(f)
+            if HAS_ORJSON:
+                # orjson.loads() expects UTF-8 encoded bytes #3611
+                with open(os.path.join(self.datastore_path, "proxies.json"), 'rb') as f:
+                    proxy_list = orjson.loads(f.read())
+            else:
+                with open(os.path.join(self.datastore_path, "proxies.json"), encoding='utf-8') as f:
+                    proxy_list = json.load(f)
 
         # Mapping from UI config if available
         extras = self.data['settings']['requests'].get('extra_proxies')
@@ -748,6 +776,28 @@ class ChangeDetectionStore:
 
         return updates_available
 
+    def add_notification_url(self, notification_url):
+
+        logger.debug(f">>> Adding new notification_url - '{notification_url}'")
+
+        notification_urls = self.data['settings']['application'].get('notification_urls', [])
+
+        if notification_url in notification_urls:
+            return notification_url
+
+        with self.lock:
+            notification_urls = self.__data['settings']['application'].get('notification_urls', [])
+
+            if notification_url in notification_urls:
+                return notification_url
+
+            # Append and update the datastore
+            notification_urls.append(notification_url)
+            self.__data['settings']['application']['notification_urls'] = notification_urls
+            self.needs_write = True
+
+        return notification_url
+
     # Run all updates
     # IMPORTANT - Each update could be run even when they have a new install and the schema is correct
     #             So therefor - each `update_n` should be very careful about checking if it needs to actually run
@@ -760,7 +810,16 @@ class ChangeDetectionStore:
                 logger.critical(f"Applying update_{update_n}")
                 # Wont exist on fresh installs
                 if os.path.exists(self.json_store_path):
-                    shutil.copyfile(self.json_store_path, os.path.join(self.datastore_path, f"url-watches-before-{update_n}.json"))
+                    i = 0
+                    while True:
+                        i+=1
+                        dest = os.path.join(self.datastore_path, f"url-watches-before-{update_n}-{i}.json")
+                        if not os.path.exists(dest):
+                            logger.debug(f"Copying url-watches.json DB to '{dest}' backup.")
+                            shutil.copyfile(self.json_store_path, dest)
+                            break
+                        else:
+                            logger.warning(f"Backup of url-watches.json '{dest}', DB already exists, trying {i+1}.. ")
 
                 try:
                     update_method = getattr(self, f"update_{update_n}")()
@@ -1051,25 +1110,15 @@ class ChangeDetectionStore:
         formats['markdown'] = 'Markdown'
         re_run(formats)
 
-    def add_notification_url(self, notification_url):
-        
-        logger.debug(f">>> Adding new notification_url - '{notification_url}'")
 
-        notification_urls = self.data['settings']['application'].get('notification_urls', [])
-
-        if notification_url in notification_urls:
-            return notification_url
-
-        with self.lock:
-            notification_urls = self.__data['settings']['application'].get('notification_urls', [])
-
-            if notification_url in notification_urls:
-                return notification_url
-
-            # Append and update the datastore
-            notification_urls.append(notification_url)
-            self.__data['settings']['application']['notification_urls'] = notification_urls
-            self.needs_write = True
-
-        return notification_url
-
+    # RSS types should be inline with the same names as notification types
+    def update_24(self):
+        rss_format = self.data['settings']['application'].get('rss_content_format')
+        if not rss_format or 'text' in rss_format:
+            # might have been 'plaintext, 'plain text' or something
+            self.data['settings']['application']['rss_content_format'] = RSS_CONTENT_FORMAT_DEFAULT
+        elif 'html' in rss_format:
+            self.data['settings']['application']['rss_content_format'] = 'htmlcolor'
+        else:
+            # safe fallback to text
+            self.data['settings']['application']['rss_content_format'] = RSS_CONTENT_FORMAT_DEFAULT
