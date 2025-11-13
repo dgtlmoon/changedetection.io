@@ -21,9 +21,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         tag_count = Counter(tag for watch in datastore.data['watching'].values() if watch.get('tags') for tag in watch['tags'])
 
         output = render_template("groups-overview.html",
+                                 app_rss_token=datastore.data['settings']['application'].get('rss_access_token'),
                                  available_tags=sorted_tags,
                                  form=add_form,
-                                 tag_count=tag_count
+                                 tag_count=tag_count,
                                  )
 
         return output
@@ -149,9 +150,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             included_content = template.render(**template_args)
 
         output = render_template("edit-tag.html",
-                                 settings_application=datastore.data['settings']['application'],
-                                 extra_tab_content=form.extra_tab_content() if form.extra_tab_content() else None,
                                  extra_form_content=included_content,
+                                 extra_tab_content=form.extra_tab_content() if form.extra_tab_content() else None,
+                                 settings_application=datastore.data['settings']['application'],
                                  **template_args
                                  )
 
