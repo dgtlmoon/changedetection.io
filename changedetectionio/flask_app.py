@@ -29,7 +29,6 @@ from flask_compress import Compress as FlaskCompress
 from flask_login import current_user
 from flask_restful import abort, Api
 from flask_cors import CORS
-from urllib.parse import urlparse, urljoin
 
 # Create specific signals for application events
 # Make this a global singleton to avoid multiple signal objects
