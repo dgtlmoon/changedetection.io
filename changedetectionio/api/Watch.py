@@ -184,6 +184,17 @@ class WatchSingleHistory(Resource):
         return response
 
 class WatchHistoryDiff(Resource):
+    """
+    Generate diff between two historical snapshots.
+
+    Note: This API endpoint currently returns text-based diffs and works best
+    with the text_json_diff processor. Future processor types (like image_diff,
+    restock_diff) may want to implement their own specialized API endpoints
+    for returning processor-specific data (e.g., price charts, image comparisons).
+
+    The web UI diff page (/diff/<uuid>) is processor-aware and delegates rendering
+    to processors/{type}/difference.py::render() for processor-specific visualizations.
+    """
     def __init__(self, **kwargs):
         # datastore is a black box dependency
         self.datastore = kwargs['datastore']

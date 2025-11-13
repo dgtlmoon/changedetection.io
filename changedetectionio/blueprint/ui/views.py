@@ -229,6 +229,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
     @views_blueprint.route("/diff/<string:uuid>", methods=['POST'])
     @login_optionally_required
     def diff_history_page_build_report(uuid):
+        import importlib
         from changedetectionio import forms
 
         # More for testing, possible to return the first/only
@@ -247,7 +248,35 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                              )
         if not extract_form.validate():
             flash("An error occurred, please see below.", "error")
-            return _render_diff_template(uuid, extract_form)
+            # Use processor-specific render with the error form
+            processor_name = watch.get('processor', 'text_json_diff')
+            try:
+                processor_module = importlib.import_module(f'changedetectionio.processors.{processor_name}.difference')
+                if hasattr(processor_module, 'render'):
+                    return processor_module.render(
+                        watch=watch,
+                        datastore=datastore,
+                        request=request,
+                        url_for=url_for,
+                        render_template=render_template,
+                        flash=flash,
+                        redirect=redirect,
+                        extract_form=extract_form
+                    )
+            except (ImportError, ModuleNotFoundError):
+                pass
+            # Fallback to text_json_diff
+            from changedetectionio.processors.text_json_diff.difference import render as default_render
+            return default_render(
+                watch=watch,
+                datastore=datastore,
+                request=request,
+                url_for=url_for,
+                render_template=render_template,
+                flash=flash,
+                redirect=redirect,
+                extract_form=extract_form
+            )
 
         else:
             extract_regex = request.form.get('extract_regex', '').strip()
@@ -391,7 +420,63 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
     @views_blueprint.route("/diff/<string:uuid>", methods=['GET'])
     @login_optionally_required
     def diff_history_page(uuid):
-        return _render_diff_template(uuid)
+        """
+        Render the history/diff page for a watch.
+
+        This route is processor-aware: it delegates rendering to the processor's
+        difference.py module, allowing different processor types to provide
+        custom visualizations:
+        - text_json_diff: Text/HTML diff with syntax highlighting
+        - restock_diff: Could show price charts and stock history
+        - image_diff: Could show image comparison slider/overlay
+
+        Each processor implements processors/{type}/difference.py::render()
+        If a processor doesn't have a difference module, falls back to text_json_diff.
+        """
+        import importlib
+
+        # More for testing, possible to return the first/only
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
+
+        try:
+            watch = datastore.data['watching'][uuid]
+        except KeyError:
+            flash("No history found for the specified link, bad link?", "error")
+            return redirect(url_for('watchlist.index'))
+
+        # Get the processor type for this watch
+        processor_name = watch.get('processor', 'text_json_diff')
+
+        try:
+            # Try to import the processor's difference module
+            processor_module = importlib.import_module(f'changedetectionio.processors.{processor_name}.difference')
+
+            # Call the processor's render() function
+            if hasattr(processor_module, 'render'):
+                return processor_module.render(
+                    watch=watch,
+                    datastore=datastore,
+                    request=request,
+                    url_for=url_for,
+                    render_template=render_template,
+                    flash=flash,
+                    redirect=redirect
+                )
+        except (ImportError, ModuleNotFoundError) as e:
+            logger.warning(f"Processor {processor_name} does not have a difference module, falling back to text_json_diff: {e}")
+
+        # Fallback: if processor doesn't have difference module, use text_json_diff as default
+        from changedetectionio.processors.text_json_diff.difference import render as default_render
+        return default_render(
+            watch=watch,
+            datastore=datastore,
+            request=request,
+            url_for=url_for,
+            render_template=render_template,
+            flash=flash,
+            redirect=redirect
+        )
 
 
     @views_blueprint.route("/form/add/quickwatch", methods=['POST'])
