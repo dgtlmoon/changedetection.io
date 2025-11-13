@@ -55,6 +55,7 @@ class model(dict):
                     'render_anchor_tag_content': False,
                     'rss_access_token': None,
                     'rss_content_format': RSS_CONTENT_FORMAT_DEFAULT,
+                    'rss_diff_length': 5,
                     'rss_hide_muted_watches': True,
                     'rss_reader_mode': False,
                     'scheduler_timezone_default': None,  # Default IANA timezone name
