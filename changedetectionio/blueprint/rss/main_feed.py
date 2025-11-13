@@ -95,6 +95,14 @@ def construct_main_feed_routes(rss_blueprint, datastore):
                 dt = dt.replace(tzinfo=pytz.UTC)
                 fe.pubDate(dt)
 
+                # Add categories based on watch tags
+                for tag_uuid in watch.get('tags', []):
+                    tag = datastore.data['settings']['application'].get('tags', {}).get(tag_uuid)
+                    if tag:
+                        tag_title = tag.get('title', '')
+                        if tag_title:
+                            fe.category(term=tag_title)
+
         response = make_response(fg.rss_str())
         response.headers.set('Content-Type', 'application/rss+xml;charset=utf-8')
         logger.trace(f"RSS generated in {time.time() - now:.3f}s")

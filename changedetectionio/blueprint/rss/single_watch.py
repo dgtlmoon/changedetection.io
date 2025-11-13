@@ -142,6 +142,14 @@ def construct_single_watch_routes(rss_blueprint, datastore):
                 # Use the timestamp of the "to" snapshot for pubDate
                 fe.pubDate(dt)
 
+                # Add categories based on watch tags
+                for tag_uuid in watch.get('tags', []):
+                    tag = datastore.data['settings']['application'].get('tags', {}).get(tag_uuid)
+                    if tag:
+                        tag_title = tag.get('title', '')
+                        if tag_title:
+                            fe.category(term=tag_title)
+
             except (IndexError, FileNotFoundError) as e:
                 # Skip this diff if we can't generate it
                 continue
