@@ -314,3 +314,40 @@ def test_rss_single_watch_feed(client, live_server, measure_memory_usage, datast
         item = root.findall('.//item')[0].findtext('description')
         check_formatting(expected_type=k, content=item, url=test_url)
 
+    # Test RSS entry order: Create multiple versions and verify newest appears first
+    for version in range(3, 6):  # Create versions 3, 4, 5
+        set_html_content(datastore_path, f"Version {version} content")
+        client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        wait_for_all_checks(client)
+        time.sleep(0.5)  # Small delay to ensure different timestamps
+
+    # Fetch RSS feed again to verify order
+    res = client.get(
+        url_for('rss.rss_single_watch', uuid=uuid, token=app_rss_token),
+        follow_redirects=False
+    )
+    assert res.status_code == 200
+
+    # Parse RSS and check order (newest first)
+    root = ET.fromstring(res.data)
+    items = root.findall('.//item')
+    assert len(items) >= 3, f"Expected at least 3 items, got {len(items)}"
+
+    # Get descriptions from first 3 items
+    descriptions = []
+    for item in items[:3]:
+        desc = item.findtext('description')
+        descriptions.append(desc if desc else "")
+
+    # First item should contain newest change (Version 5)
+    assert b"Version 5" in descriptions[0].encode() or "Version 5" in descriptions[0], \
+        f"First item should show newest change (Version 5), but got: {descriptions[0][:200]}"
+
+    # Second item should contain Version 4
+    assert b"Version 4" in descriptions[1].encode() or "Version 4" in descriptions[1], \
+        f"Second item should show Version 4, but got: {descriptions[1][:200]}"
+
+    # Third item should contain Version 3
+    assert b"Version 3" in descriptions[2].encode() or "Version 3" in descriptions[2], \
+        f"Third item should show Version 3, but got: {descriptions[2][:200]}"
+
