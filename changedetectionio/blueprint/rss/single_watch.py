@@ -18,8 +18,9 @@ def construct_single_watch_routes(rss_blueprint, datastore):
     @rss_blueprint.route("/watch/<string:uuid>", methods=['GET'])
     def rss_single_watch(uuid):
         """
-        Display the most recent change for a single watch as RSS feed.
-        Returns RSS XML with a single entry showing the diff between the last two snapshots.
+        Display the most recent changes for a single watch as RSS feed.
+        Returns RSS XML with multiple entries showing diffs between consecutive snapshots.
+        The number of entries is controlled by the rss_diff_length setting.
         """
         # Always requires token set
         app_rss_token = datastore.data['settings']['application'].get('rss_access_token')
@@ -42,29 +43,65 @@ def construct_single_watch_routes(rss_blueprint, datastore):
         # Add uuid to watch for proper functioning
         watch['uuid'] = uuid
 
-        # Generate the diff content using the shared helper function
-        content, watch_label = generate_watch_diff_content(watch, dates, rss_content_format, datastore)
+        # Get the number of diffs to include (default: 5)
+        rss_diff_length = datastore.data['settings']['application'].get('rss_diff_length', 5)
 
-        # Create RSS feed with single entry
+        # Calculate how many diffs we can actually show (limited by available history)
+        # We need at least 2 snapshots to create 1 diff
+        max_possible_diffs = len(dates) - 1
+        num_diffs = min(rss_diff_length, max_possible_diffs) if rss_diff_length > 0 else max_possible_diffs
+
+        # Create RSS feed
         fg = FeedGenerator()
         fg.title(f'changedetection.io - {watch.label}')
         fg.description('Changes')
         fg.link(href='https://changedetection.io')
 
-        # Add single entry for this watch
-        guid = generate_watch_guid(watch)
-        fe = fg.add_entry()
+        # Loop through history and create RSS entries for each diff
+        for i in range(num_diffs):
+            # Calculate indices for this diff (working backwards from newest)
+            # i=0: compare dates[-2] to dates[-1] (most recent change)
+            # i=1: compare dates[-3] to dates[-2] (previous change)
+            # etc.
+            date_index_to = -(i + 1)
+            date_index_from = -(i + 2)
 
-        # Include a link to the diff page
-        diff_link = {'href': url_for('ui.ui_views.diff_history_page', uuid=watch['uuid'], _external=True)}
-        fe.link(link=diff_link)
+            try:
+                # Generate the diff content for this pair of snapshots
+                content, watch_label = generate_watch_diff_content(
+                    watch, dates, rss_content_format, datastore,
+                    date_index_from=date_index_from,
+                    date_index_to=date_index_to
+                )
 
-        fe.title(title=watch_label)
-        fe.content(content=content, type='CDATA')
-        fe.guid(guid, permalink=False)
-        dt = datetime.datetime.fromtimestamp(int(watch.newest_history_key))
-        dt = dt.replace(tzinfo=pytz.UTC)
-        fe.pubDate(dt)
+                # Create a unique GUID for this specific diff
+                timestamp_to = dates[date_index_to]
+                timestamp_from = dates[date_index_from]
+                guid = f"{watch['uuid']}/{timestamp_to}"
+
+                fe = fg.add_entry()
+
+                # Include a link to the diff page with specific versions
+                diff_link = {'href': url_for('ui.ui_views.diff_history_page',
+                                            uuid=watch['uuid'],
+                                            from_version=timestamp_from,
+                                            to_version=timestamp_to,
+                                            _external=True)}
+                fe.link(link=diff_link)
+
+                # Add timestamp info to title to distinguish different diffs
+                fe.title(title=f"{watch_label} - Change {i+1}")
+                fe.content(content=content, type='CDATA')
+                fe.guid(guid, permalink=False)
+
+                # Use the timestamp of the "to" snapshot for pubDate
+                dt = datetime.datetime.fromtimestamp(int(timestamp_to))
+                dt = dt.replace(tzinfo=pytz.UTC)
+                fe.pubDate(dt)
+
+            except (IndexError, FileNotFoundError) as e:
+                # Skip this diff if we can't generate it
+                continue
 
         response = make_response(fg.rss_str())
         response.headers.set('Content-Type', 'application/rss+xml;charset=utf-8')

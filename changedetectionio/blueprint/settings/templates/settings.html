@@ -24,6 +24,7 @@
             <li class="tab"><a href="#filters">Global Filters</a></li>
             <li class="tab"><a href="#ui-options">UI Options</a></li>
             <li class="tab"><a href="#api">API</a></li>
+            <li class="tab"><a href="#rss">RSS</a></li>
             <li class="tab"><a href="#timedate">Time &amp Date</a></li>
             <li class="tab"><a href="#proxies">CAPTCHA &amp; Proxies</a></li>
         </ul>
@@ -71,19 +72,6 @@
                     <div class="pure-control-group">
                         {{ render_checkbox_field(form.application.form.empty_pages_are_a_change) }}
                         <span class="pure-form-message-inline">When a request returns no content, or the HTML does not contain any text, is this considered a change?</span>
-                    </div>
-                    <div class="grey-form-border">
-                        <div class="pure-control-group">
-                            {{ render_checkbox_field(form.application.form.rss_hide_muted_watches) }}
-                        </div>
-                        <div class="pure-control-group">
-                            {{ render_field(form.application.form.rss_content_format) }}
-                            <span class="pure-form-message-inline">Love RSS? Does your reader support HTML? Set it here</span>
-                        </div>
-                        <div class="pure-control-group">
-                            {{ render_checkbox_field(form.application.form.rss_reader_mode) }}
-                            <span class="pure-form-message-inline">When watching RSS/Atom feeds, convert them into clean text for better change detection.</span>
-                        </div>
                     </div>
                 </fieldset>
             </div>
@@ -230,6 +218,24 @@ nav
                     </p>
                 </div>
             </div>
+            <div class="tab-pane-inner" id="rss">
+                <div class="pure-control-group">
+                    {{ render_checkbox_field(form.application.form.rss_hide_muted_watches) }}
+                </div>
+                <div class="pure-control-group">
+                    {{ render_field(form.application.form.rss_content_format) }}
+                    <span class="pure-form-message-inline">Love RSS? Does your reader support HTML? Set it here</span>
+                </div>
+              <div class="pure-control-group">
+                    {{ render_field(form.application.form.rss_diff_length) }}
+                    <span class="pure-form-message-inline">Maximum number of history snapshots to include in the watch specific RSS feed.</span>
+                </div>
+                <div class="pure-control-group">
+                    {{ render_checkbox_field(form.application.form.rss_reader_mode) }}
+                    <span class="pure-form-message-inline">For watching other RSS feeds - When watching RSS/Atom feeds, convert them into clean text for better change detection.</span>
+                </div>
+            </div>
+
             <div class="tab-pane-inner" id="timedate">
                 <div class="pure-control-group">
                     Ensure the settings below are correct, they are used to manage the time schedule for checking your web page watches.

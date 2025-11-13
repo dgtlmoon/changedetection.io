@@ -46,7 +46,7 @@ def generate_watch_guid(watch):
     return f"{watch['uuid']}/{watch.last_changed}"
 
 
-def generate_watch_diff_content(watch, dates, rss_content_format, datastore):
+def generate_watch_diff_content(watch, dates, rss_content_format, datastore, date_index_from=-2, date_index_to=-1):
     """
     Generate HTML diff content for a watch given its history dates.
     Returns tuple of (content, watch_label).
@@ -56,6 +56,8 @@ def generate_watch_diff_content(watch, dates, rss_content_format, datastore):
         dates: List of history snapshot dates
         rss_content_format: Format for RSS content (html or text)
         datastore: The ChangeDetectionStore instance
+        date_index_from: Index of the "from" date in the dates list (default: -2)
+        date_index_to: Index of the "to" date in the dates list (default: -1)
 
     Returns:
         Tuple of (content, watch_label) - the rendered HTML content and watch label
@@ -70,8 +72,8 @@ def generate_watch_diff_content(watch, dates, rss_content_format, datastore):
 
     try:
         html_diff = diff.render_diff(
-            previous_version_file_contents=watch.get_history_snapshot(timestamp=dates[-2]),
-            newest_version_file_contents=watch.get_history_snapshot(timestamp=dates[-1]),
+            previous_version_file_contents=watch.get_history_snapshot(timestamp=dates[date_index_from]),
+            newest_version_file_contents=watch.get_history_snapshot(timestamp=dates[date_index_to]),
             include_equal=False
         )
 
