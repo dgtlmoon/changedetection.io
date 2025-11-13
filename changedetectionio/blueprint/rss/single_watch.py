@@ -58,7 +58,9 @@ def construct_single_watch_routes(rss_blueprint, datastore):
         fg.link(href='https://changedetection.io')
 
         # Loop through history and create RSS entries for each diff
-        for i in range(num_diffs):
+        # Add entries in reverse order because feedgen reverses them
+        # This way, the newest change appears first in the final RSS
+        for i in range(num_diffs - 1, -1, -1):
             # Calculate indices for this diff (working backwards from newest)
             # i=0: compare dates[-2] to dates[-1] (most recent change)
             # i=1: compare dates[-3] to dates[-2] (previous change)
