@@ -202,6 +202,9 @@ def test_external_url_redirect(client, live_server, measure_memory_usage, datast
 def test_double_slash_redirect(client, live_server, measure_memory_usage, datastore_path):
     _test_redirect_url(client, '//some-domain.tld')
 
+def test_four_slashes_redirect(client, live_server, measure_memory_usage, datastore_path):
+    _test_redirect_url(client, '////some-domain.tld')
+
 def test_url_with_at_symbol_redirect(client, live_server, measure_memory_usage, datastore_path):
     _test_redirect_url(client, '//@evil.com')
 
