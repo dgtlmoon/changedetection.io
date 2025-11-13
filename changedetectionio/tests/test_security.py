@@ -193,47 +193,22 @@ def test_xss_watch_last_error(client, live_server, measure_memory_usage, datasto
     assert b"https://foobar" in res.data # this text should be there
 
 def test_valid_redirect(client, live_server, measure_memory_usage, datastore_path):
-    # Enable password check
-    res = client.post(
-        url_for("settings.settings_page"),
-        data={"application-password": "foobar"},
-        follow_redirects=True
-    )
-    assert b"Password protection enabled." in res.data
+    import_url = url_for('imports.import_page')
+    _test_redirect_url(client, redirect_url=import_url, expected_url=import_url)
 
-    # Test redirect to local page
-    res = client.post(
-        url_for("login"),
-        data={
-            "password": "foobar",
-            "redirect": url_for('imports.import_page')
-        },
-        follow_redirects=True
-    )
-    assert b"Enter one URL per line," in res.data
+def test_external_url_redirect(client, live_server, measure_memory_usage, datastore_path):
+    _test_redirect_url(client, 'https://some-domain.tld')
 
-def test_external_redirect(client, live_server, measure_memory_usage, datastore_path):
-    # Enable password check
-    res = client.post(
-        url_for("settings.settings_page"),
-        data={"application-password": "foobar"},
-        follow_redirects=True
-    )
-    assert b"Password protection enabled." in res.data
+def test_double_slash_redirect(client, live_server, measure_memory_usage, datastore_path):
+    _test_redirect_url(client, '//some-domain.tld')
 
-    # Test redirect external url
-    res = client.post(
-        url_for("login"),
-        data={
-            "password": "foobar",
-            "redirect": 'https://www.google.com'
-        },
-        follow_redirects=True
-    )
-    assert not b"Google" in res.data
-    assert b"Add a new web page change detection watch" in res.data
+def test_url_with_at_symbol_redirect(client, live_server, measure_memory_usage, datastore_path):
+    _test_redirect_url(client, '//@evil.com')
 
 def test_different_protocol_redirect(client, live_server, measure_memory_usage, datastore_path):
+    _test_redirect_url(client, 'ms-teams://backups')
+
+def _test_redirect_url(client, redirect_url, expected_url = None):
     # Enable password check
     res = client.post(
         url_for("settings.settings_page"),
@@ -242,13 +217,14 @@ def test_different_protocol_redirect(client, live_server, measure_memory_usage, 
     )
     assert b"Password protection enabled." in res.data
 
-    # Test redirect to local application
     res = client.post(
         url_for("login"),
         data={
             "password": "foobar",
-            "redirect": 'ms-teams://backups'
+            "redirect": redirect_url
         },
-        follow_redirects=True
+        follow_redirects=False
     )
-    assert b"Add a new web page change detection watch" in res.data
+
+    assert res.status_code == 302
+    assert res.location == (expected_url or url_for('watchlist.index'))
