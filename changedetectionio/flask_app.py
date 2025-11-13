@@ -395,10 +395,14 @@ def changedetection_app(config=None, datastore_o=None):
 
         return redirect(url_for('login', redirect=redirect_url))
 
-    def is_safe_url(path):
-        ref_url = urlparse(request.host_url)
-        test_url = urlparse(urljoin(request.host_url, path))
-        return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
+    def is_safe_url(target):
+        """Validate redirect URLs are internal relative paths only."""
+        if not target or not isinstance(target, str):
+            return False
+        target = target.strip()
+        # Only allow relative paths starting with /
+        # Allow fragments (#) and query params (?)
+        return target.startswith('/') and not target.startswith('//')
 
     @app.before_request
     def before_request_handle_cookie_x_settings():

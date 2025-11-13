@@ -205,6 +205,9 @@ def test_double_slash_redirect(client, live_server, measure_memory_usage, datast
 def test_url_with_at_symbol_redirect(client, live_server, measure_memory_usage, datastore_path):
     _test_redirect_url(client, '//@evil.com')
 
+def test_section_url_redirect(client, live_server, measure_memory_usage, datastore_path):
+    _test_redirect_url(client, '#fake')
+
 def test_different_protocol_redirect(client, live_server, measure_memory_usage, datastore_path):
     _test_redirect_url(client, 'ms-teams://backups')
 
