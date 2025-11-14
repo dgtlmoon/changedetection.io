@@ -55,6 +55,7 @@ class watch_base(dict):
             'previous_md5_before_filters': False,  # Used for skipping changedetection entirely
             'processor': 'text_json_diff',  # could be restock_diff or others from .processors
             'price_change_threshold_percent': None,
+            'price_change_custom_include_filters': None, # Like 'include_filter' but for price changes only
             'proxy': None,  # Preferred proxy connection
             'remote_server_reply': None,  # From 'server' reply header
             'sort_text_alphabetically': False,
