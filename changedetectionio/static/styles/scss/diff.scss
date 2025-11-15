@@ -39,13 +39,23 @@
 
 }
 
+body.difference-page {
+  section.content {
+    padding-top: 40px;
+  }
+}
+
 #diff-ui {
 
   background: var(--color-background);
-  padding: 2em;
-  margin-left: 1em;
-  margin-right: 1em;
+  padding: 1rem;
+  margin-left: 0.8rem;
+  margin-right: 0.8rem;
   border-radius: 5px;
+
+  @media (min-width: 767px) {
+    min-width: 50%;
+  }
 
   // The first tab 'text' diff
   #text {
@@ -159,7 +169,7 @@
     gap: 1px;
     background: var(--color-background);
     border-radius: 3px;
-    overflow-x: auto;
+    overflow-x: hidden;
     position: sticky;
     top: 0;
     z-index: 10;
