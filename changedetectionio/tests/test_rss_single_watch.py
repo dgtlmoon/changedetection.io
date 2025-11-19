@@ -343,5 +343,5 @@ def test_rss_single_watch_follow_notification_body(client, live_server, measure_
         follow_redirects=True
     )
     item_description = ET.fromstring(res.data).findall('.//item')[0].findtext('description')
-    assert 'RSS body description set from watch level at notification body - http://' in item_description
+    assert 'RSS body description set from watch level at notification body - modified head title' in item_description
     delete_all_watches(client)
