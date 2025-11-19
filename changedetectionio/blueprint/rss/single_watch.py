@@ -11,33 +11,31 @@ def construct_single_watch_routes(rss_blueprint, datastore):
 
     @rss_blueprint.route("/watch/<string:uuid>", methods=['GET'])
     def rss_single_watch(uuid):
-        import datetime
         import time
 
-        import pytz
         from flask import make_response, request
         from feedgen.feed import FeedGenerator
         from loguru import logger
 
         from . import RSS_TEMPLATE_HTML_DEFAULT, RSS_TEMPLATE_PLAINTEXT_DEFAULT
-        from ._util import scan_invalid_chars_in_rss, clean_entry_content
-        from ...notification.handler import process_notification
-        from ...notification_service import NotificationContextData, NotificationService, _check_cascading_vars
-
+        from ._util import (validate_rss_token, get_rss_template, get_watch_label,
+                           build_notification_context, render_notification,
+                           populate_feed_entry, add_watch_categories)
+        from ...notification_service import NotificationService
 
         """
         Display the most recent changes for a single watch as RSS feed.
         Returns RSS XML with multiple entries showing diffs between consecutive snapshots.
         The number of entries is controlled by the rss_diff_length setting.
         """
-        # Always requires token set
         now = time.time()
-        app_rss_token = datastore.data['settings']['application'].get('rss_access_token')
-        rss_url_token = request.args.get('token')
-        rss_content_format = datastore.data['settings']['application'].get('rss_content_format')
 
-        if rss_url_token != app_rss_token:
-            return "Access denied, bad token", 403
+        # Validate token
+        is_valid, error = validate_rss_token(datastore, request)
+        if not is_valid:
+            return error
+
+        rss_content_format = datastore.data['settings']['application'].get('rss_content_format')
 
         # Get the watch by UUID
         watch = datastore.data['watching'].get(uuid)
@@ -65,11 +63,7 @@ def construct_single_watch_routes(rss_blueprint, datastore):
 
         # Set title: use "label (url)" if label differs from url, otherwise just url
         watch_url = watch.get('url', '')
-        # Same logic as watch-overview.html
-        if datastore.data['settings']['application']['ui'].get('use_page_title_in_list') or watch.get('use_page_title_in_list'):
-            watch_label = watch.label
-        else:
-            watch_label = watch.get('url')
+        watch_label = get_watch_label(datastore, watch)
 
         if watch_label != watch_url:
             feed_title = f'changedetection.io - {watch_label} ({watch_url})'
@@ -95,60 +89,24 @@ def construct_single_watch_routes(rss_blueprint, datastore):
             timestamp_to = dates[date_index_to]
             timestamp_from = dates[date_index_from]
 
+            # Get template and build notification context
+            n_body_template = get_rss_template(datastore, watch, rss_content_format,
+                                               RSS_TEMPLATE_HTML_DEFAULT, RSS_TEMPLATE_PLAINTEXT_DEFAULT)
 
-            if datastore.data['settings']['application'].get('rss_template_type') == 'notification_body':
-                n_body_template = _check_cascading_vars(datastore=datastore, var_name='notification_body', watch=watch)
-            else:
-                override = datastore.data['settings']['application'].get('rss_template_override')
-                if override and override.strip():
-                    n_body_template = override
-                elif 'text' in rss_content_format:
-                    n_body_template = RSS_TEMPLATE_PLAINTEXT_DEFAULT
-                else:
-                    n_body_template = RSS_TEMPLATE_HTML_DEFAULT
+            n_object = build_notification_context(watch, timestamp_from, timestamp_to,
+                                                 watch_label, n_body_template, rss_content_format)
 
-            n_object = NotificationContextData(initial_data={
-                'notification_urls': ['null://just-sending-a-null-test-for-the-render-in-RSS'],
-                'notification_body': n_body_template,
-                'timestamp_to': timestamp_to,
-                'timestamp_from': timestamp_from,
-                'watch_label': watch_label,
-                'notification_format': rss_content_format  # Sets the highlighting style etc
-            })
+            # Render notification with date indices
+            res = render_notification(n_object, notification_service, watch, datastore,
+                                     date_index_from, date_index_to)
 
-            n_object = notification_service.queue_notification_for_watch(n_object=n_object,
-                                                                         watch=watch,
-                                                                         date_index_from=date_index_from,
-                                                                         date_index_to=date_index_to)
-
-            n_object['watch_mime_type'] = None  # Because we will always manage it as HTML more or less
-            res = process_notification(n_object=n_object, datastore=datastore)
+            # Create and populate feed entry
             guid = f"{watch['uuid']}/{timestamp_to}"
-
             fe = fg.add_entry()
-            fe.link(link={'href': watch.get('url')})
-            # Use formatted date in title instead of "Change 1, 2, 3"
-            fe.title(title=f"{watch_label} - Change @ {res[0]['original_context']['change_datetime']}")
-            # Out of range chars could also break feedgen
-            content = res[0].get('body', '')
-            if scan_invalid_chars_in_rss(content):
-              content = clean_entry_content(content)
-
-            fe.content(content=content, type='CDATA')
-            fe.guid(guid, permalink=False)
-
-            # Use the timestamp of the "to" snapshot for pubDate
-            dt = datetime.datetime.fromtimestamp(int(watch.newest_history_key))
-            dt = dt.replace(tzinfo=pytz.UTC)
-            fe.pubDate(dt)
-
-            # Add categories based on watch tags
-            for tag_uuid in watch.get('tags', []):
-                tag = datastore.data['settings']['application'].get('tags', {}).get(tag_uuid)
-                if tag:
-                    tag_title = tag.get('title', '')
-                    if tag_title:
-                        fe.category(term=tag_title)
+            title_suffix = f"Change @ {res['original_context']['change_datetime']}"
+            populate_feed_entry(fe, watch, res.get('body', ''), guid, timestamp_to,
+                              link={'href': watch.get('url')}, title_suffix=title_suffix)
+            add_watch_categories(fe, watch, datastore)
 
         response = make_response(fg.rss_str())
         response.headers.set('Content-Type', 'application/rss+xml;charset=utf-8')
