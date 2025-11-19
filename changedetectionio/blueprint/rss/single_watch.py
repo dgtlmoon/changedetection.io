@@ -1,6 +1,5 @@
 
 
-
 def construct_single_watch_routes(rss_blueprint, datastore):
     """
     Construct RSS feed routes for single watches.
@@ -24,7 +23,8 @@ def construct_single_watch_routes(rss_blueprint, datastore):
         from . import RSS_TEMPLATE_HTML_DEFAULT, RSS_TEMPLATE_PLAINTEXT_DEFAULT
         from ._util import scan_invalid_chars_in_rss
         from ...notification.handler import process_notification
-        from ...notification_service import NotificationContextData, NotificationService
+        from ...notification_service import NotificationContextData, NotificationService, _check_cascading_vars
+
 
         """
         Display the most recent changes for a single watch as RSS feed.

@@ -19,8 +19,7 @@ def construct_tag_routes(rss_blueprint, datastore):
         from . import RSS_TEMPLATE_HTML_DEFAULT, RSS_TEMPLATE_PLAINTEXT_DEFAULT
         from ._util import scan_invalid_chars_in_rss,generate_watch_guid,clean_entry_content
         from ...notification.handler import process_notification
-        from ...notification_service import NotificationContextData, NotificationService
-
+        from ...notification_service import NotificationContextData, NotificationService, _check_cascading_vars
 
         """
         Display an RSS feed for all unviewed watches that belong to a specific tag.

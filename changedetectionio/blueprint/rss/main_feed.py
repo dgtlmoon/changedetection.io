@@ -30,7 +30,7 @@ def construct_main_feed_routes(rss_blueprint, datastore):
         from . import RSS_TEMPLATE_HTML_DEFAULT, RSS_TEMPLATE_PLAINTEXT_DEFAULT
         from ._util import generate_watch_guid, scan_invalid_chars_in_rss, clean_entry_content
         from ...notification.handler import process_notification
-        from ...notification_service import NotificationContextData, NotificationService
+        from ...notification_service import NotificationContextData, NotificationService, _check_cascading_vars
 
         now = time.time()
         # Always requires token set
