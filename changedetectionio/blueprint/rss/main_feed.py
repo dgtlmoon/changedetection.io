@@ -89,7 +89,7 @@ def construct_main_feed_routes(rss_blueprint, datastore):
                 diff_link = {'href': url_for('ui.ui_views.diff_history_page', uuid=watch['uuid'], _external=True)}
 
                 fe.link(link=diff_link)
-                if False:
+                if datastore.data['settings']['application'].get('rss_template_type') == 'notification_body':
                     n_body_template = _check_cascading_vars(datastore=datastore, var_name='notification_body', watch=watch)
                 else:
                     if 'text' in rss_content_format:

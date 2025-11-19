@@ -223,10 +223,6 @@ nav
                     {{ render_checkbox_field(form.application.form.rss_hide_muted_watches) }}
                 </div>
                 <div class="pure-control-group">
-                    {{ render_field(form.application.form.rss_content_format) }}
-                    <span class="pure-form-message-inline">Love RSS? Does your reader support HTML? Set it here</span>
-                </div>
-              <div class="pure-control-group">
                     {{ render_field(form.application.form.rss_diff_length) }}
                     <span class="pure-form-message-inline">Maximum number of history snapshots to include in the watch specific RSS feed.</span>
                 </div>
@@ -234,9 +230,23 @@ nav
                     {{ render_checkbox_field(form.application.form.rss_reader_mode) }}
                     <span class="pure-form-message-inline">For watching other RSS feeds - When watching RSS/Atom feeds, convert them into clean text for better change detection.</span>
                 </div>
-            </div>
+                <div class="pure-control-group grey-form-border">
+                    <div class="pure-control-group">
+                        {{ render_field(form.application.form.rss_content_format) }}
+                        <span class="pure-form-message-inline">Does your reader support HTML? Set it here</span>
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.application.form.rss_template_type) }}
+                        <span class="pure-form-message-inline">'System default' for the same template for all items, or re-use your "Notification Body" as the template.</span>
+                    </div>
+                    <div class="pure-control-group">
+                       {{ render_field(form.application.form.rss_template_override) }}
+                    </div>
+                </div>
 
-            <div class="tab-pane-inner" id="timedate">
+
+            </div>
+                <div class="tab-pane-inner" id="timedate">
                 <div class="pure-control-group">
                     Ensure the settings below are correct, they are used to manage the time schedule for checking your web page watches.
                 </div>

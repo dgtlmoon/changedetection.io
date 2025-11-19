@@ -84,7 +84,7 @@ def construct_tag_routes(rss_blueprint, datastore):
                     watch_label = watch.get('url')
 
 
-                if False:
+                if datastore.data['settings']['application'].get('rss_template_type') == 'notification_body':
                     n_body_template = _check_cascading_vars(datastore=datastore, var_name='notification_body', watch=watch)
                 else:
                     if 'text' in rss_content_format:

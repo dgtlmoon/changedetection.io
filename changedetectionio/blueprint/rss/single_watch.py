@@ -96,7 +96,7 @@ def construct_single_watch_routes(rss_blueprint, datastore):
             timestamp_from = dates[date_index_from]
 
 
-            if False:
+            if datastore.data['settings']['application'].get('rss_template_type') == 'notification_body':
                 n_body_template = _check_cascading_vars(datastore=datastore, var_name='notification_body', watch=watch)
             else:
                 if 'text' in rss_content_format:
