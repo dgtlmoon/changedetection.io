@@ -32,8 +32,8 @@ def cdata_in_document_to_text(html_content: str, render_anchor_tag_content=False
 # Jinja2 template for formatting RSS/Atom feed entries
 # Covers all common feedparser entry fields including namespaced elements
 # Outputs HTML that will be converted to text via html_to_text
-RSS_ENTRY_TEMPLATE = """
-{%- if entry.title -%}Title: {{ entry.title }}<br>{%- endif -%}
+# @todo - This could be a UI setting in the future
+RSS_ENTRY_TEMPLATE = """<article class="rss-item" id="{{ entry.id|replace('"', '')|replace(' ', '-') }}">{%- if entry.title -%}Title: {{ entry.title }}<br>{%- endif -%}
 {%- if entry.link -%}<strong>Link:</strong> <a href="{{ entry.link }}">{{ entry.link }}</a><br>
 {%- endif -%}
 {%- if entry.id -%}
@@ -143,8 +143,7 @@ RSS_ENTRY_TEMPLATE = """
 <strong>Content:</strong> {{ entry.content[0].value | safe }}
 {%- elif entry.summary -%}
 <strong>Summary:</strong> {{ entry.summary | safe }}
-{%- endif -%}
-
+{%- endif -%}</article>
 """
 
 
@@ -197,7 +196,7 @@ def format_rss_items(rss_content: str, render_anchor_tag_content=False) -> str:
             class_str = ' '.join(classes)
             items_html.append(f'<div class="{class_str}">{item}</div>')
 
-        return '<html><body>\n' + "\n<br><br>".join(items_html) + '\n</body></html>'
+        return '<html><body>\n' + "\n<br>".join(items_html) + '\n</body></html>'
 
     except Exception as e:
         logger.warning(f"Error formatting RSS items: {str(e)}")
