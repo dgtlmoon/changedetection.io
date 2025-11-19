@@ -96,7 +96,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             n_object['as_async'] = False
 
             #  Same like in notification service, should be refactored
-            dates = []
+            dates = list(watch.history.keys())
             trigger_text = ''
             snapshot_contents = ''
 
@@ -113,7 +113,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                                         prev_snapshot=prev_snapshot,
                                                         watch=watch,
                                                         triggered_text=trigger_text,
-                                                        timestamp_changed=dates[-1]))
+                                                        timestamp_changed=dates[-1] if dates else None))
 
 
             sent_obj = process_notification(n_object, datastore)

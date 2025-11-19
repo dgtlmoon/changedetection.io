@@ -253,43 +253,6 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
         follow_redirects=True
     )
 
-def test_notification_validation(client, live_server, measure_memory_usage, datastore_path):
-
-    time.sleep(1)
-
-    # re #242 - when you edited an existing new entry, it would not correctly show the notification settings
-    # Add our URL to the import page
-    test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("ui.ui_views.form_quick_watch_add"),
-        data={"url": test_url, "tags": 'nice one'},
-        follow_redirects=True
-    )
-
-    assert b"Watch added" in res.data
-
-    # Re #360 some validation
-#    res = client.post(
-#        url_for("ui.ui_edit.edit_page", uuid="first"),
-#        data={"notification_urls": 'json://localhost/foobar',
-#              "notification_title": "",
-#              "notification_body": "",
-#              "notification_format": 'text',
-#              "url": test_url,
-#              "tag": "my tag",
-#              "title": "my title",
-#              "headers": "",
-#              "fetch_backend": "html_requests"},
-#        follow_redirects=True
-#    )
-#    assert b"Notification Body and Title is required when a Notification URL is used" in res.data
-
-    # cleanup for the next
-    client.get(
-        url_for("ui.form_delete", uuid="all"),
-        follow_redirects=True
-    )
-
 
 def test_notification_urls_jinja2_apprise_integration(client, live_server, measure_memory_usage, datastore_path):
 
