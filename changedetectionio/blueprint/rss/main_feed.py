@@ -76,10 +76,10 @@ def construct_main_feed_routes(rss_blueprint, datastore):
             if not watch.viewed:
                 # Re #239 - GUID needs to be individual for each event
                 # @todo In the future make this a configurable link back (see work on BASE_URL https://github.com/dgtlmoon/changedetection.io/pull/228)
-                guid = generate_watch_guid(watch)
                 watch_label = get_watch_label(datastore, watch)
                 timestamp_to = dates[-1]
                 timestamp_from = dates[-2]
+                guid = generate_watch_guid(watch, timestamp_to)
                 # Because we are called via whatever web server, flask should figure out the right path
                 diff_link = {'href': url_for('ui.ui_views.diff_history_page', uuid=watch['uuid'], _external=True)}
 

@@ -66,9 +66,6 @@ def construct_tag_routes(rss_blueprint, datastore):
                 # Add uuid to watch for proper functioning
                 watch['uuid'] = uuid
 
-                # Generate GUID for this entry
-                guid = generate_watch_guid(watch)
-
                 # Include a link to the diff page
                 diff_link = {'href': url_for('ui.ui_views.diff_history_page', uuid=watch['uuid'], _external=True)}
 
@@ -78,6 +75,9 @@ def construct_tag_routes(rss_blueprint, datastore):
                 # Get template and build notification context
                 timestamp_to = dates[-1]
                 timestamp_from = dates[-2]
+
+                # Generate GUID for this entry
+                guid = generate_watch_guid(watch, timestamp_to)
                 n_body_template = get_rss_template(datastore, watch, rss_content_format,
                                                    RSS_TEMPLATE_HTML_DEFAULT, RSS_TEMPLATE_PLAINTEXT_DEFAULT)
 

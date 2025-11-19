@@ -41,11 +41,15 @@ def clean_entry_content(content):
     return cleaned
 
 
-def generate_watch_guid(watch):
+def generate_watch_guid(watch, timestamp):
     """
     Generate a unique GUID for a watch RSS entry.
+
+    Args:
+        watch: The watch object
+        timestamp: The timestamp of the specific change this entry represents
     """
-    return f"{watch['uuid']}/{watch.last_changed}"
+    return f"{watch['uuid']}/{timestamp}"
 
 
 def validate_rss_token(datastore, request):
