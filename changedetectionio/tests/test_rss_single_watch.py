@@ -309,7 +309,7 @@ def test_rss_single_watch_follow_notification_body(client, live_server, measure_
     # Check it took the notification body from main settings ####
     item_description = ET.fromstring(res.data).findall('.//item')[0].findtext('description')
     assert "Boo yeah hello from main settings notification body" in item_description
-    assert "Title: http://" in item_description
+    assert "Title: modified head" in item_description
 
 
     ## Edit the tag notification_body, it should cascade up and become the RSS output
