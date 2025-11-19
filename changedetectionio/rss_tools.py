@@ -146,8 +146,6 @@ RSS_ENTRY_TEMPLATE = """
 <strong>Summary:</strong><br>
 {%- endif -%}
 {{ entry.summary | safe }}
-{%- else -%}
-&lt;none&gt;
 {%- endif -%}
 
 """
