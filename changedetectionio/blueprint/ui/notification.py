@@ -99,27 +99,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             dates = []
             trigger_text = ''
             snapshot_contents = ''
-            if watch:
-                watch_history = watch.history
-                dates = list(watch_history.keys())
-                trigger_text = watch.get('trigger_text', [])
-                # Add text that was triggered
-                if len(dates):
-                    snapshot_contents = watch.get_history_snapshot(timestamp=dates[-1])
-                else:
-                    snapshot_contents = "No snapshot/history available, the watch should fetch atleast once."
-
-                if len(trigger_text):
-                    from . import html_tools
-                    triggered_text = html_tools.get_triggered_text(content=snapshot_contents, trigger_text=trigger_text)
-                    if triggered_text:
-                        triggered_text = '\n'.join(triggered_text)
 
             # Could be called as a 'test notification' with only 1 snapshot available
             prev_snapshot = "Example text: example test\nExample text: change detection is cool\nExample text: some more examples\n"
             current_snapshot = "Example text: example test\nExample text: change detection is fantastic\nExample text: even more examples\nExample text: a lot more examples"
-
-
 
             if len(dates) > 1:
                 prev_snapshot = watch.get_history_snapshot(timestamp=dates[-2])
