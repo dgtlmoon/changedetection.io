@@ -1,7 +1,7 @@
 
 {% from '_helpers.html' import render_field %}
 
-{% macro show_token_placeholders(suffix="") %}
+{% macro show_token_placeholders(extra_notification_token_placeholder_info, suffix="") %}
 
 
     <div class="pure-controls">
@@ -152,7 +152,7 @@
                             </div>
                             <div class="pure-control-group">
                                 {{ render_field(form.notification_body , rows=5, class="notification-body", placeholder=settings_application['notification_body']) }}
-                                {{ show_token_placeholders() }}
+                                {{ show_token_placeholders(extra_notification_token_placeholder_info=extra_notification_token_placeholder_info) }}
                                 <div class="pure-form-message-inline">
                                     <ul>
                                     <li><span class="pure-form-message-inline">

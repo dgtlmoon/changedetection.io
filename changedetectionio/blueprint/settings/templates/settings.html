@@ -241,7 +241,7 @@ nav
                     </div>
                     <div>
                        {{ render_field(form.application.form.rss_template_override) }}
-                        {{ show_token_placeholders(suffix="-rss") }}
+                        {{ show_token_placeholders(extra_notification_token_placeholder_info=extra_notification_token_placeholder_info, suffix="-rss") }}
                     </div>
                 </div>
                 <br>
