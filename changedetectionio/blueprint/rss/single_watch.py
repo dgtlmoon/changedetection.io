@@ -99,7 +99,10 @@ def construct_single_watch_routes(rss_blueprint, datastore):
             if datastore.data['settings']['application'].get('rss_template_type') == 'notification_body':
                 n_body_template = _check_cascading_vars(datastore=datastore, var_name='notification_body', watch=watch)
             else:
-                if 'text' in rss_content_format:
+                override = datastore.data['settings']['application'].get('rss_template_override')
+                if override and override.strip():
+                    n_body_template = override
+                elif 'text' in rss_content_format:
                     n_body_template = RSS_TEMPLATE_PLAINTEXT_DEFAULT
                 else:
                     n_body_template = RSS_TEMPLATE_HTML_DEFAULT
