@@ -138,9 +138,9 @@ RSS_ENTRY_TEMPLATE = """
 <br>
 {%- endif -%}
 {%- if entry.dc_content -%}
-{{ entry.dc_content | safe }}
+Content: {{ entry.dc_content | safe }}
 {%- elif entry.content and entry.content[0].value -%}
-{{ entry.content[0].value | safe }}
+Content: {{ entry.content[0].value | safe }}
 {%- elif entry.summary -%}
 {%- if is_atom -%}
 <strong>Summary:</strong><br>
