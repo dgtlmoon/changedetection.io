@@ -2,7 +2,6 @@ from flask import Blueprint, request, make_response
 import random
 from loguru import logger
 
-from changedetectionio.notification_service import NotificationContextData, set_basic_notification_vars
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
 
@@ -15,7 +14,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @notification_blueprint.route("/notification/send-test/", methods=['POST'])
     @login_optionally_required
     def ajax_callback_send_notification_test(watch_uuid=None):
-
+        from changedetectionio.notification_service import NotificationContextData, set_basic_notification_vars
         # Watch_uuid could be unset in the case it`s used in tag editor, global settings
         import apprise
         from changedetectionio.notification.handler import process_notification
