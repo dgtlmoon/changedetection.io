@@ -130,7 +130,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                                         current_snapshot=current_snapshot,
                                                         prev_snapshot=prev_snapshot,
                                                         watch=watch,
-                                                        triggered_text=trigger_text))
+                                                        triggered_text=trigger_text,
+                                                        timestamp_changed=dates[-1]))
 
 
             sent_obj = process_notification(n_object, datastore)

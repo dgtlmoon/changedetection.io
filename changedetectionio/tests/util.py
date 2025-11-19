@@ -110,13 +110,14 @@ def get_UUID_for_tag_name(client, name):
 
 # kinda funky, but works for now
 def extract_rss_token_from_UI(client):
-    import re
-    res = client.get(
-        url_for("watchlist.index"),
-    )
-    m = re.search('token=(.+?)"', str(res.data))
-    token_key = m.group(1)
-    return token_key.strip()
+    return client.application.config.get('DATASTORE').data['settings']['application'].get('rss_access_token')
+#    import re
+#    res = client.get(
+#        url_for("watchlist.index"),
+#    )
+#    m = re.search('token=(.+?)"', str(res.data))
+#    token_key = m.group(1)
+#    return token_key.strip()
 
 # kinda funky, but works for now
 def extract_UUID_from_client(client):

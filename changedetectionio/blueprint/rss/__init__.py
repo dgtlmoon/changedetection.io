@@ -15,3 +15,10 @@ if RSS_FORMAT_TYPES.get(USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH):
 
 if not RSS_FORMAT_TYPES.get(RSS_CONTENT_FORMAT_DEFAULT):
     logger.critical(f"RSS_CONTENT_FORMAT_DEFAULT not in the acceptable list {RSS_CONTENT_FORMAT_DEFAULT}")
+
+# @note: We use <pre> because nearly all RSS readers render only HTML (Thunderbird for example cant do just plaintext)
+RSS_TEMPLATE_PLAINTEXT_DEFAULT = "<pre>{{watch_label}} had a change.\n\n{{diff}}\n</pre>"
+
+# @todo add some [edit]/[history]/[goto] etc links
+# @todo need {{watch_edit_link}} + delete + history link token
+RSS_TEMPLATE_HTML_DEFAULT = "<html><body>\n<h4><a href=\"{{watch_url}}\">{{watch_label}}</a></h4>\n<p>{{diff}}</p>\n</body></html>\n"
