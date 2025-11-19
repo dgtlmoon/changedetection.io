@@ -2,7 +2,7 @@
 
 {% block content %}
 {% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, render_ternary_field, render_fieldlist_with_inline_errors %}
-{% from '_common_fields.html' import render_common_settings_form %}
+{% from '_common_fields.html' import render_common_settings_form, show_token_placeholders %}
 <script>
     const notification_base_url="{{url_for('ui.ui_notification.ajax_callback_send_notification_test', mode="global-settings")}}";
 {% if emailprefix %}
@@ -239,10 +239,12 @@ nav
                         {{ render_field(form.application.form.rss_template_type) }}
                         <span class="pure-form-message-inline">'System default' for the same template for all items, or re-use your "Notification Body" as the template.</span>
                     </div>
-                    <div class="pure-control-group">
+                    <div>
                        {{ render_field(form.application.form.rss_template_override) }}
+                        {{ show_token_placeholders(suffix="-rss") }}
                     </div>
                 </div>
+                <br>
 
 
             </div>

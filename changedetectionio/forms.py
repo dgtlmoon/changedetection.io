@@ -1002,7 +1002,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
 
     rss_content_format = SelectField('RSS Content format', choices=list(RSS_FORMAT_TYPES.items()))
     rss_template_type = SelectField('RSS <description> body built from', choices=list(RSS_TEMPLATE_TYPE_OPTIONS.items()))
-    rss_template_override = TextAreaField('RSS system default template override', render_kw={"rows": "5", "placeholder": RSS_TEMPLATE_HTML_DEFAULT}, validators=[validators.Optional()])
+    rss_template_override = TextAreaField('RSS "System default" template override', render_kw={"rows": "5", "placeholder": RSS_TEMPLATE_HTML_DEFAULT}, validators=[validators.Optional(), ValidateJinja2Template()])
 
     removepassword_button = SubmitField('Remove password', render_kw={"class": "pure-button pure-button-primary"})
     render_anchor_tag_content = BooleanField('Render anchor tag content', default=False)
