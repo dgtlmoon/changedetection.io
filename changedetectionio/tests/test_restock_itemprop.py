@@ -329,6 +329,7 @@ def test_change_with_notification_values(client, live_server, measure_memory_usa
 
     # Should see new tokens register
     res = client.get(url_for("settings.settings_page"))
+    
     assert b'{{restock.original_price}}' in res.data
     assert b'Original price at first check' in res.data
 

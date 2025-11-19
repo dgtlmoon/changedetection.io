@@ -70,7 +70,7 @@ echo "RUNNING WITH BASE_URL SET"
 # Now re-run some tests with BASE_URL enabled
 # Re #65 - Ability to include a link back to the installation, in the notification.
 export BASE_URL="https://really-unique-domain.io"
-REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest -vv --maxfail=1 tests/test_notification.py
+REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest -vv -s --maxfail=1 tests/test_notification.py
 
 
 # Re-run with HIDE_REFERER set - could affect login
@@ -90,7 +90,7 @@ FETCH_WORKERS=130 pytest  tests/test_history_consistency.py -v -l
 
 # Check file:// will pickup a file when enabled
 echo "Hello world" > /tmp/test-file.txt
-ALLOW_FILE_URI=yes pytest tests/test_security.py
+ALLOW_FILE_URI=yes pytest -vv -s  tests/test_security.py
 
 
 

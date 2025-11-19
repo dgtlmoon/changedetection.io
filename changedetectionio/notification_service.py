@@ -5,12 +5,53 @@ Notification Service Module
 Extracted from update_worker.py to provide standalone notification functionality
 for both sync and async workers
 """
+import datetime
 
+import pytz
 from loguru import logger
 import time
 
 from changedetectionio.notification import default_notification_format, valid_notification_formats
 
+
+def _check_cascading_vars(datastore, var_name, watch):
+    """
+    Check notification variables in cascading priority:
+    Individual watch settings > Tag settings > Global settings
+    """
+    from changedetectionio.notification import (
+        USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH,
+        default_notification_body,
+        default_notification_title
+    )
+
+    # Would be better if this was some kind of Object where Watch can reference the parent datastore etc
+    v = watch.get(var_name)
+    if v and not watch.get('notification_muted'):
+        if var_name == 'notification_format' and v == USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH:
+            return datastore.data['settings']['application'].get('notification_format')
+
+        return v
+
+    tags = datastore.get_all_tags_for_watch(uuid=watch.get('uuid'))
+    if tags:
+        for tag_uuid, tag in tags.items():
+            v = tag.get(var_name)
+            if v and not tag.get('notification_muted'):
+                return v
+
+    if datastore.data['settings']['application'].get(var_name):
+        return datastore.data['settings']['application'].get(var_name)
+
+    # Otherwise could be defaults
+    if var_name == 'notification_format':
+        return USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
+    if var_name == 'notification_body':
+        return default_notification_body
+    if var_name == 'notification_title':
+        return default_notification_title
+
+    return None
 
 
 # What is passed around as notification context, also used as the complete list of valid {{ tokens }}
@@ -34,6 +75,8 @@ class NotificationContextData(dict):
             'preview_url': None,
             'screenshot': None,
             'triggered_text': None,
+            'timestamp_from': None,
+            'timestamp_to': None,
             'uuid': 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX',  # Converted to 'watch_uuid' in create_notification_parameters
             'watch_mime_type': None,
             'watch_tag': None,
@@ -73,7 +116,25 @@ class NotificationContextData(dict):
         super().__setitem__(key, value)
 
 
-def set_basic_notification_vars(snapshot_contents, current_snapshot, prev_snapshot, watch, triggered_text):
+def timestamp_to_localtime(timestamp):
+    # Format the date using locale-aware formatting with timezone
+    dt = datetime.datetime.fromtimestamp(int(timestamp))
+    dt = dt.replace(tzinfo=pytz.UTC)
+
+    # Get local timezone-aware datetime
+    local_tz = datetime.datetime.now().astimezone().tzinfo
+    local_dt = dt.astimezone(local_tz)
+
+    # Format date with timezone - using strftime for locale awareness
+    try:
+        formatted_date = local_dt.strftime('%Y-%m-%d %H:%M:%S %Z')
+    except:
+        # Fallback if locale issues
+        formatted_date = local_dt.isoformat()
+
+    return formatted_date
+
+def set_basic_notification_vars(snapshot_contents, current_snapshot, prev_snapshot, watch, triggered_text, timestamp_changed=None):
     now = time.time()
     from changedetectionio import diff
 
@@ -89,6 +150,7 @@ def set_basic_notification_vars(snapshot_contents, current_snapshot, prev_snapsh
         'diff_removed': diff.render_diff(prev_snapshot, current_snapshot, include_added=False),
         'diff_removed_clean': diff.render_diff(prev_snapshot, current_snapshot, include_added=False, include_change_type_prefix=False),
         'screenshot': watch.get_screenshot() if watch and watch.get('notification_screenshot') else None,
+        'change_datetime': timestamp_to_localtime(timestamp_changed) if timestamp_changed else None,
         'triggered_text': triggered_text,
         'uuid': watch.get('uuid') if watch else None,
         'watch_url': watch.get('url') if watch else None,
@@ -114,7 +176,7 @@ class NotificationService:
         self.datastore = datastore
         self.notification_q = notification_q
     
-    def queue_notification_for_watch(self, n_object: NotificationContextData, watch):
+    def queue_notification_for_watch(self, n_object: NotificationContextData, watch, date_index_from=-2, date_index_to=-1):
         """
         Queue a notification for a watch with full diff rendering and template variables
         """
@@ -154,57 +216,23 @@ class NotificationService:
         current_snapshot = "Example text: example test\nExample text: change detection is fantastic\nExample text: even more examples\nExample text: a lot more examples"
 
         if len(dates) > 1:
-            prev_snapshot = watch.get_history_snapshot(timestamp=dates[-2])
-            current_snapshot = watch.get_history_snapshot(timestamp=dates[-1])
+            prev_snapshot = watch.get_history_snapshot(timestamp=dates[date_index_from])
+            current_snapshot = watch.get_history_snapshot(timestamp=dates[date_index_to])
 
 
         n_object.update(set_basic_notification_vars(snapshot_contents=snapshot_contents,
                                                     current_snapshot=current_snapshot,
                                                     prev_snapshot=prev_snapshot,
                                                     watch=watch,
-                                                    triggered_text=triggered_text))
+                                                    triggered_text=triggered_text,
+                                                    timestamp_changed=dates[date_index_to]))
 
-        logger.debug("Queued notification for sending")
-        self.notification_q.put(n_object)
-
-    def _check_cascading_vars(self, var_name, watch):
-        """
-        Check notification variables in cascading priority:
-        Individual watch settings > Tag settings > Global settings
-        """
-        from changedetectionio.notification import (
-            USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH,
-            default_notification_body,
-            default_notification_title
-        )
-
-        # Would be better if this was some kind of Object where Watch can reference the parent datastore etc
-        v = watch.get(var_name)
-        if v and not watch.get('notification_muted'):
-            if var_name == 'notification_format' and v == USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH:
-                return self.datastore.data['settings']['application'].get('notification_format')
-
-            return v
-
-        tags = self.datastore.get_all_tags_for_watch(uuid=watch.get('uuid'))
-        if tags:
-            for tag_uuid, tag in tags.items():
-                v = tag.get(var_name)
-                if v and not tag.get('notification_muted'):
-                    return v
-
-        if self.datastore.data['settings']['application'].get(var_name):
-            return self.datastore.data['settings']['application'].get(var_name)
-
-        # Otherwise could be defaults
-        if var_name == 'notification_format':
-            return USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
-        if var_name == 'notification_body':
-            return default_notification_body
-        if var_name == 'notification_title':
-            return default_notification_title
-
-        return None
+        if self.notification_q:
+            logger.debug("Queued notification for sending")
+            self.notification_q.put(n_object)
+        else:
+            logger.debug("Not queued, no queue defined. Just returning processed data")
+            return n_object
 
     def send_content_changed_notification(self, watch_uuid):
         """
@@ -227,10 +255,11 @@ class NotificationService:
         # Should be a better parent getter in the model object
 
         # Prefer - Individual watch settings > Tag settings >  Global settings (in that order)
-        n_object['notification_urls'] = self._check_cascading_vars('notification_urls', watch)
-        n_object['notification_title'] = self._check_cascading_vars('notification_title', watch)
-        n_object['notification_body'] = self._check_cascading_vars('notification_body', watch)
-        n_object['notification_format'] = self._check_cascading_vars('notification_format', watch)
+        # this change probably not needed?
+        n_object['notification_urls'] = _check_cascading_vars(self.datastore, 'notification_urls', watch)
+        n_object['notification_title'] = _check_cascading_vars(self.datastore,'notification_title', watch)
+        n_object['notification_body'] = _check_cascading_vars(self.datastore,'notification_body', watch)
+        n_object['notification_format'] = _check_cascading_vars(self.datastore,'notification_format', watch)
 
         # (Individual watch) Only prepare to notify if the rules above matched
         queued = False
@@ -269,7 +298,7 @@ Thanks - Your omniscient changedetection.io installation.
         n_object = NotificationContextData({
             'notification_title': 'Changedetection.io - Alert - CSS/xPath filter was not present in the page',
             'notification_body': body,
-            'notification_format': self._check_cascading_vars('notification_format', watch),
+            'notification_format': _check_cascading_vars(self.datastore, 'notification_format', watch),
         })
         n_object['markup_text_links_to_html_links'] = n_object.get('notification_format').startswith('html')
 

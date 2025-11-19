@@ -4,8 +4,25 @@ import time
 import os
 import xml.etree.ElementTree as ET
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, extract_UUID_from_client, delete_all_watches
 
+from .restock.test_restock import set_original_response
+from .util import live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, extract_UUID_from_client, delete_all_watches, set_modified_response
+from ..notification import default_notification_format
+
+
+# Watch with no change should not break the output
+def test_rss_feed_empty(client, live_server, measure_memory_usage, datastore_path):
+    set_original_response(datastore_path=datastore_path)
+    rss_token = extract_rss_token_from_UI(client)
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    # Request RSS feed for the single watch
+    res = client.get(
+        url_for("rss.rss_single_watch", uuid=uuid, token=rss_token, _external=True),
+        follow_redirects=True
+    )
+    assert res.status_code == 400
+    assert b'does not have enough history snapshots to show' in res.data
 
 def test_rss_single_watch_order(client, live_server, measure_memory_usage, datastore_path):
     """
@@ -242,4 +259,89 @@ def test_rss_categories_from_tags(client, live_server, measure_memory_usage, dat
             assert "Tech News" in categories, f"Expected 'Tech News' category in tag feed, got: {categories}"
 
     # Clean up
+    delete_all_watches(client)
+
+
+# RSS <description> should follow Main Settings -> Tag/Group -> Watch in that order of priority if set.
+def test_rss_single_watch_follow_notification_body(client, live_server, measure_memory_usage, datastore_path):
+    rss_token = extract_rss_token_from_UI(client)
+
+
+    res = client.post(
+        url_for("settings.settings_page"),
+        data={
+              "application-fetch_backend": "html_requests",
+              "application-minutes_between_check": 180,
+              "application-notification_body": 'Boo yeah hello from main settings notification body<br>\nTitle: {{ watch_title }} changed',
+              "application-notification_format": default_notification_format,
+              "application-rss_template_type" : 'notification_body',
+              "application-notification_urls": "",
+
+              },
+        follow_redirects=True
+    )
+    assert b'Settings updated' in res.data
+
+
+    set_original_response(datastore_path=datastore_path)
+
+    # Add our URL to the import page
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, tag="RSS-Custom")
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    set_modified_response(datastore_path=datastore_path)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+
+    # Request RSS feed for the single watch
+    res = client.get(
+        url_for("rss.rss_single_watch", uuid=uuid, token=rss_token, _external=True),
+        follow_redirects=True
+    )
+
+    # Should return valid RSS
+    assert res.status_code == 200
+    assert b"<?xml" in res.data or b"<rss" in res.data
+
+    # Check it took the notification body from main settings ####
+    item_description = ET.fromstring(res.data).findall('.//item')[0].findtext('description')
+    assert "Boo yeah hello from main settings notification body" in item_description
+    assert "Title: modified head" in item_description
+
+
+    ## Edit the tag notification_body, it should cascade up and become the RSS output
+    res = client.post(
+        url_for("tags.form_tag_edit_submit", uuid="first"),
+        data={"name": "rss-custom",
+              "notification_body": 'Hello from the group/tag level'},
+        follow_redirects=True
+    )
+    assert b"Updated" in res.data
+    res = client.get(
+        url_for("rss.rss_single_watch", uuid=uuid, token=rss_token, _external=True),
+        follow_redirects=True
+    )
+    item_description = ET.fromstring(res.data).findall('.//item')[0].findtext('description')
+    assert 'Hello from the group/tag level' in item_description
+
+    # Override notification body at watch level and check ####
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        data={"notification_body": "RSS body description set from watch level at notification body - {{ watch_title }}",
+              "url": test_url,
+              'fetch_backend': "html_requests",
+              "time_between_check_use_default": "y"
+              },
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+    res = client.get(
+        url_for("rss.rss_single_watch", uuid=uuid, token=rss_token, _external=True),
+        follow_redirects=True
+    )
+    item_description = ET.fromstring(res.data).findall('.//item')[0].findtext('description')
+    assert 'RSS body description set from watch level at notification body - modified head title' in item_description
     delete_all_watches(client)

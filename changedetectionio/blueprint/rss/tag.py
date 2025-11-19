@@ -1,12 +1,3 @@
-from flask import make_response, request, url_for
-from feedgen.feed import FeedGenerator
-import datetime
-import pytz
-
-
-from ._util import generate_watch_guid, generate_watch_diff_content
-
-
 def construct_tag_routes(rss_blueprint, datastore):
     """
     Construct RSS feed routes for tags.
@@ -18,17 +9,26 @@ def construct_tag_routes(rss_blueprint, datastore):
 
     @rss_blueprint.route("/tag/<string:tag_uuid>", methods=['GET'])
     def rss_tag_feed(tag_uuid):
+
+        from flask import make_response, request, url_for
+        from feedgen.feed import FeedGenerator
+
+        from . import RSS_TEMPLATE_HTML_DEFAULT, RSS_TEMPLATE_PLAINTEXT_DEFAULT
+        from ._util import (validate_rss_token, generate_watch_guid, get_rss_template,
+                           get_watch_label, build_notification_context, render_notification,
+                           populate_feed_entry, add_watch_categories)
+        from ...notification_service import NotificationService
+
         """
         Display an RSS feed for all unviewed watches that belong to a specific tag.
         Returns RSS XML with entries for each unviewed watch with sufficient history.
         """
-        # Always requires token set
-        app_rss_token = datastore.data['settings']['application'].get('rss_access_token')
-        rss_url_token = request.args.get('token')
-        rss_content_format = datastore.data['settings']['application'].get('rss_content_format')
+        # Validate token
+        is_valid, error = validate_rss_token(datastore, request)
+        if not is_valid:
+            return error
 
-        if rss_url_token != app_rss_token:
-            return "Access denied, bad token", 403
+        rss_content_format = datastore.data['settings']['application'].get('rss_content_format')
 
         # Verify tag exists
         tag = datastore.data['settings']['application'].get('tags', {}).get(tag_uuid)
@@ -42,9 +42,12 @@ def construct_tag_routes(rss_blueprint, datastore):
         fg.title(f'changedetection.io - {tag_title}')
         fg.description(f'Changes for watches tagged with {tag_title}')
         fg.link(href='https://changedetection.io')
-
+        notification_service = NotificationService(datastore=datastore, notification_q=False)
         # Find all watches with this tag
         for uuid, watch in datastore.data['watching'].items():
+            #@todo  This is wrong, it needs to sort by most recently changed and then limit it  datastore.data['watching'].items().sorted(?)
+            # So get all watches in this tag then sort
+
             # Skip if watch doesn't have this tag
             if tag_uuid not in watch.get('tags', []):
                 continue
@@ -63,31 +66,32 @@ def construct_tag_routes(rss_blueprint, datastore):
                 # Add uuid to watch for proper functioning
                 watch['uuid'] = uuid
 
-                # Generate GUID for this entry
-                guid = generate_watch_guid(watch)
-                fe = fg.add_entry()
-
                 # Include a link to the diff page
                 diff_link = {'href': url_for('ui.ui_views.diff_history_page', uuid=watch['uuid'], _external=True)}
-                fe.link(link=diff_link)
 
-                # Generate diff content
-                content, watch_label = generate_watch_diff_content(watch, dates, rss_content_format, datastore)
+                # Get watch label
+                watch_label = get_watch_label(datastore, watch)
 
-                fe.title(title=watch_label)
-                fe.content(content=content, type='CDATA')
-                fe.guid(guid, permalink=False)
-                dt = datetime.datetime.fromtimestamp(int(watch.newest_history_key))
-                dt = dt.replace(tzinfo=pytz.UTC)
-                fe.pubDate(dt)
+                # Get template and build notification context
+                timestamp_to = dates[-1]
+                timestamp_from = dates[-2]
 
-                # Add categories based on watch tags
-                for tag_uuid in watch.get('tags', []):
-                    tag = datastore.data['settings']['application'].get('tags', {}).get(tag_uuid)
-                    if tag:
-                        tag_title = tag.get('title', '')
-                        if tag_title:
-                            fe.category(term=tag_title)
+                # Generate GUID for this entry
+                guid = generate_watch_guid(watch, timestamp_to)
+                n_body_template = get_rss_template(datastore, watch, rss_content_format,
+                                                   RSS_TEMPLATE_HTML_DEFAULT, RSS_TEMPLATE_PLAINTEXT_DEFAULT)
+
+                n_object = build_notification_context(watch, timestamp_from, timestamp_to,
+                                                     watch_label, n_body_template, rss_content_format)
+
+                # Render notification
+                res = render_notification(n_object, notification_service, watch, datastore)
+
+                # Create and populate feed entry
+                fe = fg.add_entry()
+                title_suffix = f"Change @ {res['original_context']['change_datetime']}"
+                populate_feed_entry(fe, watch, res['body'], guid, timestamp_to, link=diff_link, title_suffix=title_suffix)
+                add_watch_categories(fe, watch, datastore)
 
         response = make_response(fg.rss_str())
         response.headers.set('Content-Type', 'application/rss+xml;charset=utf-8')
