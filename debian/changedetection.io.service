@@ -1,0 +1,31 @@
+[Unit]
+Description=changedetection.io - Website change detection and monitoring
+After=network.target
+Documentation=https://changedetection.io
+
+[Service]
+Type=simple
+User=_changedetection
+Group=_changedetection
+WorkingDirectory=/var/lib/changedetection
+Environment="DATASTORE_PATH=/var/lib/changedetection"
+Environment="HOST=127.0.0.1"
+Environment="PORT=5000"
+ExecStart=/opt/changedetection/bin/changedetection.io -h 127.0.0.1 -p 5000 -d /var/lib/changedetection
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/changedetection
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+
+# Restart policy
+Restart=on-failure
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target
