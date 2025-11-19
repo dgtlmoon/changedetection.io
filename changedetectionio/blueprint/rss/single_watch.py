@@ -15,13 +15,12 @@ def construct_single_watch_routes(rss_blueprint, datastore):
         import time
 
         import pytz
-        from flask import make_response, request, url_for
+        from flask import make_response, request
         from feedgen.feed import FeedGenerator
         from loguru import logger
 
-        from build.lib.changedetectionio.blueprint.rss.blueprint import clean_entry_content
         from . import RSS_TEMPLATE_HTML_DEFAULT, RSS_TEMPLATE_PLAINTEXT_DEFAULT
-        from ._util import scan_invalid_chars_in_rss
+        from ._util import scan_invalid_chars_in_rss, clean_entry_content
         from ...notification.handler import process_notification
         from ...notification_service import NotificationContextData, NotificationService, _check_cascading_vars
 

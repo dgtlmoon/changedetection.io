@@ -2,7 +2,6 @@
 import time
 import apprise
 from apprise import NotifyFormat
-from flask import url_for
 from loguru import logger
 from urllib.parse import urlparse
 from .apprise_plugin.assets import apprise_asset, APPRISE_AVATAR_URL

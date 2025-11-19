@@ -50,7 +50,6 @@ def construct_main_feed_routes(rss_blueprint, datastore):
         # Sort by last_changed and add the uuid which is usually the key..
         sorted_watches = []
 
-        # @todo doesnt actually sort anything
         # @todo needs a .itemsWithTag() or something - then we can use that in Jinaj2 and throw this away
         for uuid, watch in datastore.data['watching'].items():
             # @todo tag notification_muted skip also (improve Watch model)
