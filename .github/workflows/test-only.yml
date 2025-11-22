@@ -36,6 +36,39 @@ jobs:
     with:
       python-version: '3.11'
 
+  test-application-3-11-windows:
+    # Always run - Windows native tests (no Docker)
+    needs: lint-code
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\pip\Cache
+          key: ${{ runner.os }}-pip-py3.11-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-py3.11-
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-xdist pytest-flask pytest-mock
+
+      - name: Run basic tests on Windows
+        shell: bash
+        run: |
+          cd changedetectionio
+          ./run_basic_tests.sh
+
   test-application-3-12:
     # Only run on push to master (including PR merges)
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
