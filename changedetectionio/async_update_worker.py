@@ -9,8 +9,13 @@ import importlib
 import os
 import queue
 import time
+import threading
 
 from loguru import logger
+
+# Global rate limiting state
+_last_request_time = 0.0
+_last_request_lock = threading.Lock()
 
 # Async version of update_worker
 # Processes jobs from AsyncSignalPriorityQueue instead of threaded queue
@@ -96,6 +101,30 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
 
                     update_handler = processor_module.perform_site_check(datastore=datastore,
                                                                          watch_uuid=uuid)
+
+                    # Enforce global rate limiting
+                    rate_limit_seconds = datastore.data['settings']['requests'].get('rate_limit_seconds', 0)
+                    if rate_limit_seconds > 0:
+                        global _last_request_time, _last_request_lock
+                        
+                        # Calculate sleep time while holding the lock
+                        with _last_request_lock:
+                            current_time = time.time()
+                            time_since_last_request = current_time - _last_request_time
+                            
+                            if time_since_last_request < rate_limit_seconds:
+                                sleep_time = rate_limit_seconds - time_since_last_request
+                            else:
+                                sleep_time = 0
+                        
+                        # Sleep outside the lock if needed
+                        if sleep_time > 0:
+                            logger.info(f"Worker {worker_id} rate limiting: sleeping {sleep_time:.2f}s before fetching {watch['url']}")
+                            await asyncio.sleep(sleep_time)
+                        
+                        # Update last request time BEFORE making the request (while holding lock)
+                        with _last_request_lock:
+                            _last_request_time = time.time()
 
                     # All fetchers are now async, so call directly
                     await update_handler.call_browser()

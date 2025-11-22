@@ -953,6 +953,10 @@ class globalSettingsRequestForm(Form):
                                   render_kw={"style": "width: 5em;"},
                                   validators=[validators.NumberRange(min=0, message="Should contain zero or more seconds")])
     
+    rate_limit_seconds = IntegerField('Minimum seconds between any two requests (global rate limit)',
+                                     render_kw={"style": "width: 5em;"},
+                                     validators=[validators.Optional(), validators.NumberRange(min=0, max=3600, message="Must be between 0 and 3600 seconds")])
+    
     workers = IntegerField('Number of fetch workers',
                           render_kw={"style": "width: 5em;"},
                           validators=[validators.NumberRange(min=1, max=50,

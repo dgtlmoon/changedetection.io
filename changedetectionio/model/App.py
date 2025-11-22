@@ -27,6 +27,7 @@ class model(dict):
                     'extra_browsers': [],  # Configurable extra proxies via the UI
                     'jitter_seconds': 0,
                     'proxy': None, # Preferred proxy connection
+                    'rate_limit_seconds': 0,  # Minimum seconds between any two requests (0 = disabled)
                     'time_between_check': {'weeks': None, 'days': None, 'hours': 3, 'minutes': None, 'seconds': None},
                     'timeout': int(getenv("DEFAULT_SETTINGS_REQUESTS_TIMEOUT", "45")),  # Default 45 seconds
                     'workers': int(getenv("DEFAULT_SETTINGS_REQUESTS_WORKERS", "10")),  # Number of threads, lower is better for slow connections

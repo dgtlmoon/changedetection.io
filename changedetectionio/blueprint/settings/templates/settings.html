@@ -120,6 +120,11 @@
                     <span class="pure-form-message-inline">Example - 3 seconds random jitter could trigger up to 3 seconds earlier or up to 3 seconds later</span>
                 </div>
                 <div class="pure-control-group">
+                    {{ render_field(form.requests.form.rate_limit_seconds, class="rate_limit_seconds") }}
+                    <span class="pure-form-message-inline">Global rate limit - Minimum seconds between any two requests across all watches (0 = disabled).<br>
+                    This helps prevent overwhelming a domain when monitoring multiple pages from the same site.</span>
+                </div>
+                <div class="pure-control-group">
                     {{ render_field(form.requests.form.timeout) }}
                     <span class="pure-form-message-inline">For regular plain requests (not chrome based), maximum number of seconds until timeout, 1-999.<br>
                 </div>
