@@ -121,7 +121,6 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
 
                 # Clear last errors
                 datastore.data['watching'][uuid]['browser_steps_last_error_step'] = None
-                datastore.data['watching'][uuid]['last_checked'] = fetch_start_time
 
                 watch = datastore.data['watching'].get(uuid)
 
@@ -147,6 +146,9 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                     # Enforce global rate limiting
                     rate_limit_seconds = datastore.data['settings']['requests'].get('rate_limit_seconds', 0)
                     await enforce_rate_limit(rate_limit_seconds, worker_id=worker_id, url=watch['url'])
+
+                    # Set last_checked AFTER rate limiting so it reflects actual fetch time
+                    datastore.data['watching'][uuid]['last_checked'] = int(time.time())
 
                     # All fetchers are now async, so call directly
                     await update_handler.call_browser()
