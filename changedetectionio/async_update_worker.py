@@ -17,6 +17,48 @@ from loguru import logger
 _last_request_time = 0.0
 _last_request_lock = threading.Lock()
 
+
+async def enforce_rate_limit(rate_limit_seconds: int, worker_id: int = 0, url: str = "") -> None:
+    """Enforce global rate limiting between requests.
+    
+    This function ensures that requests are spaced at least `rate_limit_seconds` apart.
+    It uses a global lock to coordinate between multiple async workers.
+    
+    Args:
+        rate_limit_seconds: Minimum seconds between any two requests (0 = disabled)
+        worker_id: ID of the worker making the request (for logging)
+        url: URL being fetched (for logging)
+    
+    Returns:
+        None
+    
+    Note:
+        This function modifies the global _last_request_time variable.
+    """
+    if rate_limit_seconds == 0:
+        return  # Rate limiting disabled
+    
+    global _last_request_time, _last_request_lock
+    
+    # Calculate sleep time while holding the lock
+    with _last_request_lock:
+        current_time = time.time()
+        time_since_last_request = current_time - _last_request_time
+        
+        if time_since_last_request < rate_limit_seconds:
+            sleep_time = rate_limit_seconds - time_since_last_request
+        else:
+            sleep_time = 0
+    
+    # Sleep outside the lock if needed
+    if sleep_time > 0:
+        logger.info(f"Worker {worker_id} rate limiting: sleeping {sleep_time:.2f}s before fetching {url}")
+        await asyncio.sleep(sleep_time)
+    
+    # Update last request time BEFORE making the request (while holding lock)
+    with _last_request_lock:
+        _last_request_time = time.time()
+
 # Async version of update_worker
 # Processes jobs from AsyncSignalPriorityQueue instead of threaded queue
 
@@ -104,27 +146,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
 
                     # Enforce global rate limiting
                     rate_limit_seconds = datastore.data['settings']['requests'].get('rate_limit_seconds', 0)
-                    if rate_limit_seconds > 0:
-                        global _last_request_time, _last_request_lock
-                        
-                        # Calculate sleep time while holding the lock
-                        with _last_request_lock:
-                            current_time = time.time()
-                            time_since_last_request = current_time - _last_request_time
-                            
-                            if time_since_last_request < rate_limit_seconds:
-                                sleep_time = rate_limit_seconds - time_since_last_request
-                            else:
-                                sleep_time = 0
-                        
-                        # Sleep outside the lock if needed
-                        if sleep_time > 0:
-                            logger.info(f"Worker {worker_id} rate limiting: sleeping {sleep_time:.2f}s before fetching {watch['url']}")
-                            await asyncio.sleep(sleep_time)
-                        
-                        # Update last request time BEFORE making the request (while holding lock)
-                        with _last_request_lock:
-                            _last_request_time = time.time()
+                    await enforce_rate_limit(rate_limit_seconds, worker_id=worker_id, url=watch['url'])
 
                     # All fetchers are now async, so call directly
                     await update_handler.call_browser()
