@@ -439,7 +439,7 @@ class browsersteps_live_ui(steppable_browser_interface):
             logger.warning("Attempted to get current state after cleanup")
             return (None, None)
 
-        xpath_element_js = importlib.resources.files("changedetectionio.content_fetchers.res").joinpath('xpath_element_scraper.js').read_text()
+        xpath_element_js = importlib.resources.files("changedetectionio.content_fetchers.res").joinpath('xpath_element_scraper.js').read_text(encoding="utf-8")
 
         now = time.time()
         await self.page.wait_for_timeout(1 * 1000)
