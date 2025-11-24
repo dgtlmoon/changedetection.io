@@ -1,0 +1,7 @@
+changedetection.io (0.50.38) stable; urgency=medium
+
+  * Initial Debian package release
+  * Service runs as _changedetection user on localhost:5000
+  * Systemd integration with security hardening
+
+ -- dgtlmoon <dgtlmoon@changedetection.io>  Sat, 02 Nov 2024 00:00:00 +0000

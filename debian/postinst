@@ -1,0 +1,51 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    configure)
+        # Create system user if it doesn't exist
+        if ! getent passwd _changedetection >/dev/null; then
+            adduser --system --group --home /var/lib/changedetection \
+                    --gecos "changedetection.io service" \
+                    --shell /usr/sbin/nologin \
+                    _changedetection
+        fi
+
+        # Create data directory with proper permissions
+        if [ ! -d /var/lib/changedetection ]; then
+            mkdir -p /var/lib/changedetection
+        fi
+        chown _changedetection:_changedetection /var/lib/changedetection
+        chmod 755 /var/lib/changedetection
+
+        # Reload systemd and enable service
+        if [ -d /run/systemd/system ]; then
+            systemctl daemon-reload >/dev/null || true
+            deb-systemd-helper enable changedetection.io.service >/dev/null || true
+
+            # Start service if this is a fresh install
+            if [ -z "$2" ]; then
+                echo "Starting changedetection.io service..."
+                systemctl start changedetection.io.service || true
+                echo ""
+                echo "changedetection.io has been installed and started."
+                echo "Access it at: http://127.0.0.1:5000"
+                echo ""
+                echo "To check status: systemctl status changedetection.io"
+                echo "To view logs: journalctl -u changedetection.io -f"
+            fi
+        fi
+        ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+        ;;
+
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 1
+        ;;
+esac
+
+#DEBHELPER#
+
+exit 0
