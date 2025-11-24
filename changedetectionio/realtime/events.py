@@ -5,7 +5,7 @@ from blinker import signal
 
 def register_watch_operation_handlers(socketio, datastore):
     """Register Socket.IO event handlers for watch operations"""
-    
+
     @socketio.on('watch_operation')
     def handle_watch_operation(data):
         """Handle watch operations like pause, mute, recheck via Socket.IO"""

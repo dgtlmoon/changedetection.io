@@ -1,3 +1,5 @@
+from blinker import signal
+
 from .processors.exceptions import ProcessorException
 import changedetectionio.content_fetchers.exceptions as content_fetchers_exceptions
 from changedetectionio.processors.text_json_diff.processor import FilterNotFoundInResponse
@@ -96,6 +98,9 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
 
                     update_handler = processor_module.perform_site_check(datastore=datastore,
                                                                          watch_uuid=uuid)
+
+                    update_signal = signal('watch_small_status_comment')
+                    update_signal.send(watch_uuid=uuid, status="Fetching page..")
 
                     # All fetchers are now async, so call directly
                     await update_handler.call_browser()

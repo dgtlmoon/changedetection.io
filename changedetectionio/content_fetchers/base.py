@@ -116,6 +116,7 @@ class Fetcher():
                   request_method=None,
                   timeout=None,
                   url=None,
+                  watch_uuid=None,
                   ):
         # Should set self.error, self.status_code and self.content
         pass

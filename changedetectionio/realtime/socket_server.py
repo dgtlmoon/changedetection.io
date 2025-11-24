@@ -32,10 +32,30 @@ class SignalHandler:
         watch_favicon_bumped_signal = signal('watch_favicon_bump')
         watch_favicon_bumped_signal.connect(self.handle_watch_bumped_favicon_signal, weak=False)
 
+        watch_small_status_comment_signal = signal('watch_small_status_comment')
+        watch_small_status_comment_signal.connect(self.handle_watch_small_status_update, weak=False)
+
         # Connect to the notification_event signal
         notification_event_signal = signal('notification_event')
         notification_event_signal.connect(self.handle_notification_event, weak=False)
         logger.info("SignalHandler: Connected to notification_event signal")
+
+
+    def handle_watch_small_status_update(self, *args, **kwargs):
+        """Small simple status update, for example 'Connecting...'"""
+        watch_uuid = kwargs.get('watch_uuid')
+        status = kwargs.get('status')
+
+        if watch_uuid and status:
+            logger.debug(f"Socket.IO: Received watch small status update '{status}' for UUID {watch_uuid}")
+            # Emit the status update to all connected clients
+            self.socketio_instance.emit("watch_small_status_comment", {
+                "uuid": watch_uuid,
+                "status": status,
+                "event_timestamp": time.time()
+            })
+
+
 
     def handle_signal(self, *args, **kwargs):
         logger.trace(f"SignalHandler: Signal received with {len(args)} args and {len(kwargs)} kwargs")
