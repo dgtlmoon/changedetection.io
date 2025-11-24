@@ -10,6 +10,8 @@ import os
 import getopt
 import platform
 import signal
+import socket
+from urllib.parse import urlparse
 
 import sys
 
@@ -135,6 +137,28 @@ def main():
         if opt == '-l':
             logger_level = int(arg) if arg.isdigit() else arg.upper()
 
+    driver_url = os.getenv('PLAYWRIGHT_DRIVER_URL', '').strip('"')
+    if driver_url:
+        parsed_url = urlparse(driver_url)
+        if not parsed_url.hostname:
+            logger.critical(f"PLAYWRIGHT_DRIVER_URL is missing a valid hostname.")
+            os._exit(2)
+
+        addrinfos = socket.getaddrinfo(parsed_url.hostname, parsed_url.port)
+        if not len(addrinfos) > 0:
+            logger.critical(f"Could not parse '{parsed_url.hostname}' to an IP.")
+            os._exit(2)
+
+        (_, _, _, _, sockaddr) = addrinfos[0]
+        resolved_ip: str = sockaddr[0]
+        if resolved_ip != parsed_url.hostname:
+            # Can't replace hostname straight away so gotta go for an ugly workaround.
+            if parsed_url.port:
+                new_driver_url = parsed_url._replace(netloc=f"{resolved_ip}:{parsed_url.port}").geturl()
+            else:
+                new_driver_url = parsed_url._replace(netloc=resolved_ip).geturl()
+            os.environ["PLAYWRIGHT_DRIVER_URL"] = new_driver_url
+            logger.info(f"Replaced old value '{driver_url}' for PLAYWRIGHT_DRIVER_URL with new value '{new_driver_url}' for compatibility with CDP.")
 
     logger.success(f"changedetection.io version {get_version()} starting.")
     # Launch using SocketIO run method for proper integration (if enabled)
