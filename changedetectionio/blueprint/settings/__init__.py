@@ -110,8 +110,16 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Convert to ISO 8601 format, all date/time relative events stored as UTC time
         utc_time = datetime.now(ZoneInfo("UTC")).isoformat()
 
+        # Get active plugins
+        from changedetectionio.pluggy_interface import get_active_plugins
+        import sys
+        active_plugins = get_active_plugins()
+        python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+
         output = render_template("settings.html",
+                                active_plugins=active_plugins,
                                 api_key=datastore.data['settings']['application'].get('api_access_token'),
+                                python_version=python_version,
                                 available_timezones=sorted(available_timezones()),
                                 emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
                                 extra_notification_token_placeholder_info=datastore.get_unique_notification_token_placeholders_available(),

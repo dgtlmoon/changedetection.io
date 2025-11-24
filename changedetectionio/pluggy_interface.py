@@ -232,6 +232,44 @@ def get_itemprop_availability_from_plugin(content, fetcher_name, fetcher_instanc
     return None
 
 
+def get_active_plugins():
+    """Get a list of active plugins with their descriptions.
+
+    Returns:
+        list: List of dictionaries with plugin information:
+            [
+                {'name': 'plugin_name', 'description': 'Plugin description'},
+                ...
+            ]
+    """
+    active_plugins = []
+
+    # Get all registered plugins
+    for plugin_name, plugin_obj in plugin_manager.list_name_plugin():
+        # Skip built-in plugins (they start with 'builtin_')
+        if plugin_name.startswith('builtin_'):
+            continue
+
+        # Get plugin description if available
+        description = None
+        if hasattr(plugin_obj, '__doc__') and plugin_obj.__doc__:
+            description = plugin_obj.__doc__.strip().split('\n')[0]  # First line only
+        elif hasattr(plugin_obj, 'description'):
+            description = plugin_obj.description
+
+        # Try to get a friendly name from the plugin
+        friendly_name = plugin_name
+        if hasattr(plugin_obj, 'name'):
+            friendly_name = plugin_obj.name
+
+        active_plugins.append({
+            'name': friendly_name,
+            'description': description or 'No description available'
+        })
+
+    return active_plugins
+
+
 def get_fetcher_capabilities(watch, datastore):
     """Get capability flags for a watch's fetcher.
 

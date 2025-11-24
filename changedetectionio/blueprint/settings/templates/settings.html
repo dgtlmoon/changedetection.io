@@ -27,6 +27,7 @@
             <li class="tab"><a href="#rss">RSS</a></li>
             <li class="tab"><a href="#timedate">Time &amp Date</a></li>
             <li class="tab"><a href="#proxies">CAPTCHA &amp; Proxies</a></li>
+            <li class="tab"><a href="#info">Info</a></li>
         </ul>
     </div>
     <div class="box-wrap inner">
@@ -352,7 +353,19 @@ nav
                     </p>
                     {{ render_fieldlist_with_inline_errors(form.requests.form.extra_browsers) }}
                 </div>
-            
+            </div>
+            <div class="tab-pane-inner" id="info">
+                <p><strong>Python version:</strong> {{ python_version }}</p>
+                <p><strong>Plugins active:</strong></p>
+                {% if active_plugins %}
+                <ul>
+                    {% for plugin in active_plugins %}
+                    <li><strong>{{ plugin.name }}</strong> - {{ plugin.description }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p>No plugins active</p>
+                {% endif %}
             </div>
             <div id="actions">
                 <div class="pure-control-group">
