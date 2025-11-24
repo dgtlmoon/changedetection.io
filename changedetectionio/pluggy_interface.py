@@ -267,14 +267,17 @@ def get_fetcher_capabilities(watch, datastore):
         }
 
     # Try to get from plugin-provided fetchers
-    fetchers = collect_content_fetchers()
-    for name, fetcher_class in fetchers:
-        if name == fetcher_name:
-            return {
-                'supports_browser_steps': getattr(fetcher_class, 'supports_browser_steps', False),
-                'supports_screenshots': getattr(fetcher_class, 'supports_screenshots', False),
-                'supports_xpath_element_data': getattr(fetcher_class, 'supports_xpath_element_data', False)
-            }
+    # Query all plugins for registered fetchers
+    plugin_fetchers = plugin_manager.hook.register_content_fetcher()
+    for fetcher_registration in plugin_fetchers:
+        if fetcher_registration:
+            name, fetcher_class = fetcher_registration
+            if name == fetcher_name:
+                return {
+                    'supports_browser_steps': getattr(fetcher_class, 'supports_browser_steps', False),
+                    'supports_screenshots': getattr(fetcher_class, 'supports_screenshots', False),
+                    'supports_xpath_element_data': getattr(fetcher_class, 'supports_xpath_element_data', False)
+                }
 
     # Default: no capabilities
     return {
