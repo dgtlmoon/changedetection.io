@@ -12,6 +12,27 @@ from changedetectionio.content_fetchers.base import Fetcher
 class fetcher(Fetcher):
     fetcher_description = "Basic fast Plaintext/HTTP Client"
 
+    def get_total_bytes_received(self, response):
+        # Calculate the size of the response content
+        content_size = len(response.content)
+        # Calculate the size of the response headers
+        headers_size = sum(len(k) + len(v) for k, v in response.headers.items()) + len(response.headers) * 4  # adding 4 for ': ' and '\r\n'
+
+        # Total bytes received
+        total_received = content_size + headers_size
+        return total_received
+
+    def get_total_bytes_transferred(self, request):
+        # Calculate the size of the request headers
+        headers_size = sum(len(k) + len(v) for k, v in request.headers.items()) + len(request.headers) * 4  # adding 4 for ': ' and '\r\n'
+
+        # Calculate the size of the request body, if any
+        body_size = len(request.body or '')
+
+        # Total bytes transferred (request + response)
+        total_transferred = headers_size + body_size
+        return total_transferred
+
     def __init__(self, proxy_override=None, custom_browser_connection_url=None):
         super().__init__()
         self.proxy_override = proxy_override
@@ -69,6 +90,10 @@ class fetcher(Fetcher):
             if proxies and 'SOCKSHTTPSConnectionPool' in msg:
                 msg = f"Proxy connection failed? {msg}"
             raise Exception(msg) from e
+
+        total_received = self.get_total_bytes_received(response=r)
+        request_prepared = r.request
+        self.total_bytes = self.get_total_bytes_transferred(request_prepared) + total_received
 
         # If the response did not tell us what encoding format to expect, Then use chardet to override what `requests` thinks.
         # For example - some sites don't tell us it's utf-8, but return utf-8 content
