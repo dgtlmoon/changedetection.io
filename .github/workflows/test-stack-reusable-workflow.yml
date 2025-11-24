@@ -21,7 +21,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v6
@@ -66,7 +66,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v6
@@ -93,7 +93,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v6
@@ -132,7 +132,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v6
@@ -174,7 +174,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v6
@@ -214,7 +214,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v6
@@ -250,7 +250,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v6
@@ -279,7 +279,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v6
@@ -319,7 +319,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v6
@@ -350,7 +350,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v6
@@ -395,7 +395,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v6
