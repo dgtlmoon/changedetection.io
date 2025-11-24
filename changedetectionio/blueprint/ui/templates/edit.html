@@ -206,9 +206,8 @@ Math: {{ 1 + 1 }}") }}
             </div>
 
             <div class="tab-pane-inner" id="browser-steps">
-            {% if watch_needs_selenium_or_playwright %}
-                {# Only works with playwright #}
-                {% if system_has_playwright_configured %}
+            {% if capabilities.supports_browser_steps %}
+               {% if visual_selector_data_ready %}
                 <img class="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}" alt="New beta functionality">
                 <fieldset>
                     <div class="pure-control-group">
@@ -248,11 +247,7 @@ Math: {{ 1 + 1 }}") }}
                     </div>
                 </fieldset>
                 {% else %}
-                    {# it's configured to use selenium or chrome but system says its not configured #}
-                    {{ playwright_warning() }}
-                    {% if system_has_webdriver_configured %}
-                        <strong>Selenium/Webdriver cant be used here because it wont fetch screenshots reliably.</strong>
-                    {% endif %}
+                    <strong>Visual Selector data is not ready, watch needs to be checked atleast once.</strong>
                 {% endif %}
             {% else %}
                 {# "This functionality needs chrome.." #}
@@ -383,32 +378,28 @@ Math: {{ 1 + 1 }}") }}
 
                 <fieldset>
                     <div class="pure-control-group">
-                        {% if watch_needs_selenium_or_playwright %}
-                            {% if system_has_playwright_configured %}
-                            <span class="pure-form-message-inline" id="visual-selector-heading">
-                                The Visual Selector tool lets you select the <i>text</i> elements that will be used for the change detection. It automatically fills-in the filters in the "CSS/JSONPath/JQ/XPath Filters" box of the <a href="#filters-and-triggers">Filters & Triggers</a> tab. Use <strong>Shift+Click</strong> to select multiple items.
-                            </span>
+                        {% if capabilities.supports_screenshots and capabilities.supports_xpath_element_data %}
+                            {% if visual_selector_data_ready %}
+                                <span class="pure-form-message-inline" id="visual-selector-heading">
+                                    The Visual Selector tool lets you select the <i>text</i> elements that will be used for the change detection. It automatically fills-in the filters in the "CSS/JSONPath/JQ/XPath Filters" box of the <a href="#filters-and-triggers">Filters & Triggers</a> tab. Use <strong>Shift+Click</strong> to select multiple items.
+                                </span>
 
-                            <div id="selector-header">
-                                <a id="clear-selector" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Clear selection</a>
-                                <!-- visual selector IMG will try to load, it will either replace this or on error replace it with some handy text -->
-                                <i class="fetching-update-notice" style="font-size: 80%;">One moment, fetching screenshot and element information..</i>
-                            </div>
-                            <div id="selector-wrapper" style="display: none">
-                                <!-- request the screenshot and get the element offset info ready -->
-                                <!-- use img src ready load to know everything is ready to map out -->
-                                <!-- @todo: maybe something interesting like a field to select 'elements that contain text... and their parents n' -->
-                                <img id="selector-background" >
-                                <canvas id="selector-canvas"></canvas>
-                            </div>
-                            <div id="selector-current-xpath" style="overflow-x: hidden"><strong>Currently:</strong>&nbsp;<span class="text">Loading...</span></div>
-                        {% else %}
-                            {# The watch needed chrome but system says that playwright is not ready #}
-                            {{ playwright_warning() }}
-                        {% endif %}
-                            {% if system_has_webdriver_configured %}
-                                <strong>Selenium/Webdriver cant be used here because it wont fetch screenshots reliably.</strong>
-                            {% endif %}
+                                <div id="selector-header">
+                                    <a id="clear-selector" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Clear selection</a>
+                                    <!-- visual selector IMG will try to load, it will either replace this or on error replace it with some handy text -->
+                                    <i class="fetching-update-notice" style="font-size: 80%;">One moment, fetching screenshot and element information..</i>
+                                </div>
+                                <div id="selector-wrapper" style="display: none">
+                                    <!-- request the screenshot and get the element offset info ready -->
+                                    <!-- use img src ready load to know everything is ready to map out -->
+                                    <!-- @todo: maybe something interesting like a field to select 'elements that contain text... and their parents n' -->
+                                    <img id="selector-background" >
+                                    <canvas id="selector-canvas"></canvas>
+                                </div>
+                                <div id="selector-current-xpath" style="overflow-x: hidden"><strong>Currently:</strong>&nbsp;<span class="text">Loading...</span></div>
+                            {%  else %}
+                                <strong>Visual Selector data is not ready, watch needs to be checked atleast once.</strong>
+                            {%  endif %}
                     {% else %}
                         {# "This functionality needs chrome.." #}
                         {{ only_playwright_type_watches_warning() }}

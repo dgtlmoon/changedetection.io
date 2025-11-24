@@ -230,3 +230,55 @@ def get_itemprop_availability_from_plugin(content, fetcher_name, fetcher_instanc
                     return result
 
     return None
+
+
+def get_fetcher_capabilities(watch, datastore):
+    """Get capability flags for a watch's fetcher.
+
+    Args:
+        watch: The watch object/dict
+        datastore: The datastore to resolve 'system' fetcher
+
+    Returns:
+        dict: Dictionary with capability flags:
+            {
+                'supports_browser_steps': bool,
+                'supports_screenshots': bool,
+                'supports_xpath_element_data': bool
+            }
+    """
+    # Get the fetcher name from watch
+    fetcher_name = watch.get('fetch_backend', 'system')
+
+    # Resolve 'system' to actual fetcher
+    if fetcher_name == 'system':
+        fetcher_name = datastore.data['settings']['application'].get('fetch_backend', 'html_requests')
+
+    # Get the fetcher class
+    from changedetectionio import content_fetchers
+
+    # Try to get from built-in fetchers first
+    if hasattr(content_fetchers, fetcher_name):
+        fetcher_class = getattr(content_fetchers, fetcher_name)
+        return {
+            'supports_browser_steps': getattr(fetcher_class, 'supports_browser_steps', False),
+            'supports_screenshots': getattr(fetcher_class, 'supports_screenshots', False),
+            'supports_xpath_element_data': getattr(fetcher_class, 'supports_xpath_element_data', False)
+        }
+
+    # Try to get from plugin-provided fetchers
+    fetchers = collect_content_fetchers()
+    for name, fetcher_class in fetchers:
+        if name == fetcher_name:
+            return {
+                'supports_browser_steps': getattr(fetcher_class, 'supports_browser_steps', False),
+                'supports_screenshots': getattr(fetcher_class, 'supports_screenshots', False),
+                'supports_xpath_element_data': getattr(fetcher_class, 'supports_xpath_element_data', False)
+            }
+
+    # Default: no capabilities
+    return {
+        'supports_browser_steps': False,
+        'supports_screenshots': False,
+        'supports_xpath_element_data': False
+    }

@@ -64,6 +64,12 @@ class Fetcher():
     # Time ONTOP of the system defined env minimum time
     render_extract_delay = 0
 
+    # Fetcher capability flags - subclasses should override these
+    # These indicate what features the fetcher supports
+    supports_browser_steps = False      # Can execute browser automation steps
+    supports_screenshots = False        # Can capture page screenshots
+    supports_xpath_element_data = False # Can extract xpath element positions/data for visual selector
+
     @classmethod
     def get_status_icon_data(cls):
         """Return data for status icon to display in the watch overview.

@@ -14,6 +14,11 @@ class fetcher(Fetcher):
     proxy = None
     proxy_url = None
 
+    # Capability flags
+    supports_browser_steps = True
+    supports_screenshots = True
+    supports_xpath_element_data = True
+
     @classmethod
     def get_status_icon_data(cls):
         """Return Chrome browser icon data for WebDriver fetcher."""
