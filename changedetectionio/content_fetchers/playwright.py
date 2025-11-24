@@ -89,6 +89,15 @@ class fetcher(Fetcher):
 
     proxy = None
 
+    @classmethod
+    def get_status_icon_data(cls):
+        """Return Chrome browser icon data for Playwright fetcher."""
+        return {
+            'filename': 'google-chrome-icon.png',
+            'alt': 'Using a Chrome browser',
+            'title': 'Using a Chrome browser'
+        }
+
     def __init__(self, proxy_override=None, custom_browser_connection_url=None):
         super().__init__()
 
@@ -328,6 +337,19 @@ class fetcher(Fetcher):
                 except:
                     pass
                 browser = None
+
+
+# Plugin registration for built-in fetcher
+class PlaywrightFetcherPlugin:
+    """Plugin class that registers the Playwright fetcher as a built-in plugin."""
+
+    def register_content_fetcher(self):
+        """Register the Playwright fetcher"""
+        return ('html_webdriver', fetcher)
+
+
+# Create module-level instance for plugin registration
+playwright_plugin = PlaywrightFetcherPlugin()
 
 
 

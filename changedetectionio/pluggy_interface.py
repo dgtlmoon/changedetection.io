@@ -16,12 +16,46 @@ class ChangeDetectionSpec:
     @hookspec
     def ui_edit_stats_extras(watch):
         """Return HTML content to add to the stats tab in the edit view.
-        
+
         Args:
             watch: The watch object being edited
-            
+
         Returns:
             str: HTML content to be inserted in the stats tab
+        """
+        pass
+
+    @hookspec
+    def register_content_fetcher(self):
+        """Return a tuple of (fetcher_name, fetcher_class) for content fetcher plugins.
+
+        The fetcher_name should start with 'html_' and the fetcher_class
+        should inherit from changedetectionio.content_fetchers.base.Fetcher
+
+        Returns:
+            tuple: (str: fetcher_name, class: fetcher_class)
+        """
+        pass
+
+    @hookspec
+    def fetcher_status_icon(fetcher_name):
+        """Return status icon HTML attributes for a content fetcher.
+
+        Args:
+            fetcher_name: The name of the fetcher (e.g., 'html_webdriver', 'html_js_zyte')
+
+        Returns:
+            str: HTML string containing <img> tags or other status icon elements
+                 Empty string if no custom status icon is needed
+        """
+        pass
+
+    @hookspec
+    def plugin_static_path(self):
+        """Return the path to the plugin's static files directory.
+
+        Returns:
+            str: Absolute path to the plugin's static directory, or None if no static files
         """
         pass
 
@@ -65,18 +99,60 @@ load_plugins_from_directories()
 # Discover installed plugins from external packages (if any)
 plugin_manager.load_setuptools_entrypoints(PLUGIN_NAMESPACE)
 
+# Function to register built-in fetchers - called later from content_fetchers/__init__.py
+def register_builtin_fetchers():
+    """Register built-in content fetchers as internal plugins
+
+    This is called from content_fetchers/__init__.py after all fetchers are imported
+    to avoid circular import issues.
+    """
+    from changedetectionio.content_fetchers import requests, playwright, puppeteer, webdriver_selenium
+
+    # Register each built-in fetcher plugin
+    if hasattr(requests, 'requests_plugin'):
+        plugin_manager.register(requests.requests_plugin, 'builtin_requests')
+
+    if hasattr(playwright, 'playwright_plugin'):
+        plugin_manager.register(playwright.playwright_plugin, 'builtin_playwright')
+
+    if hasattr(puppeteer, 'puppeteer_plugin'):
+        plugin_manager.register(puppeteer.puppeteer_plugin, 'builtin_puppeteer')
+
+    if hasattr(webdriver_selenium, 'webdriver_selenium_plugin'):
+        plugin_manager.register(webdriver_selenium.webdriver_selenium_plugin, 'builtin_webdriver_selenium')
+
 # Helper function to collect UI stats extras from all plugins
 def collect_ui_edit_stats_extras(watch):
     """Collect and combine HTML content from all plugins that implement ui_edit_stats_extras"""
     extras_content = []
-    
+
     # Get all plugins that implement the ui_edit_stats_extras hook
     results = plugin_manager.hook.ui_edit_stats_extras(watch=watch)
-    
+
     # If we have results, add them to our content
     if results:
         for result in results:
             if result:  # Skip empty results
                 extras_content.append(result)
-            
+
     return "\n".join(extras_content) if extras_content else ""
+
+def collect_fetcher_status_icons(fetcher_name):
+    """Collect status icon data from all plugins
+
+    Args:
+        fetcher_name: The name of the fetcher (e.g., 'html_webdriver', 'html_js_zyte')
+
+    Returns:
+        dict or None: Icon data dictionary from first matching plugin, or None
+    """
+    # Get status icon data from plugins
+    results = plugin_manager.hook.fetcher_status_icon(fetcher_name=fetcher_name)
+
+    # Return first non-None result
+    if results:
+        for result in results:
+            if result and isinstance(result, dict):
+                return result
+
+    return None

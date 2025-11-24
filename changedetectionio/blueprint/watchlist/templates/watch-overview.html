@@ -182,11 +182,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     <div class="status-icons">
                             <a class="link-spread" href="{{url_for('ui.form_share_put_watch', uuid=watch.uuid)}}"><img src="{{url_for('static_content', group='images', filename='spread.svg')}}" class="status-icon icon icon-spread" title="Create a link to share watch config with others" ></a>
-                            {%- if watch.get_fetch_backend == "html_webdriver"
-                                 or ( watch.get_fetch_backend == "system" and system_default_fetcher == 'html_webdriver'  )
-                                 or "extra_browser_" in watch.get_fetch_backend
-                            -%}
-                            <img class="status-icon" src="{{url_for('static_content', group='images', filename='google-chrome-icon.png')}}" alt="Using a Chrome browser" title="Using a Chrome browser" >
+                            {%- set effective_fetcher = watch.get_fetch_backend if watch.get_fetch_backend != "system" else system_default_fetcher -%}
+                            {%- if effective_fetcher and ("html_webdriver" in effective_fetcher or "html_" in effective_fetcher or "extra_browser_" in effective_fetcher) -%}
+                                {{ effective_fetcher|fetcher_status_icons }}
                             {%- endif -%}
                             {%- if watch.is_pdf  -%}<img class="status-icon" src="{{url_for('static_content', group='images', filename='pdf-icon.svg')}}" alt="Converting PDF to text" >{%- endif -%}
                             {%- if watch.has_browser_steps -%}<img class="status-icon status-browsersteps" src="{{url_for('static_content', group='images', filename='steps.svg')}}" alt="Browser Steps is enabled" >{%- endif -%}

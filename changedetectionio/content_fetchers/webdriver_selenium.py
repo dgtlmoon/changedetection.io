@@ -14,6 +14,15 @@ class fetcher(Fetcher):
     proxy = None
     proxy_url = None
 
+    @classmethod
+    def get_status_icon_data(cls):
+        """Return Chrome browser icon data for WebDriver fetcher."""
+        return {
+            'filename': 'google-chrome-icon.png',
+            'alt': 'Using a Chrome browser',
+            'title': 'Using a Chrome browser'
+        }
+
     def __init__(self, proxy_override=None, custom_browser_connection_url=None):
         super().__init__()
         from urllib.parse import urlparse
@@ -141,3 +150,16 @@ class fetcher(Fetcher):
         # Run the selenium operations in a thread pool to avoid blocking the event loop
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, _run_sync)
+
+
+# Plugin registration for built-in fetcher
+class WebDriverSeleniumFetcherPlugin:
+    """Plugin class that registers the WebDriver Selenium fetcher as a built-in plugin."""
+
+    def register_content_fetcher(self):
+        """Register the WebDriver Selenium fetcher"""
+        return ('html_webdriver', fetcher)
+
+
+# Create module-level instance for plugin registration
+webdriver_selenium_plugin = WebDriverSeleniumFetcherPlugin()
