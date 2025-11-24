@@ -2,6 +2,7 @@ import pluggy
 import os
 import importlib
 import sys
+from loguru import logger
 
 # Global plugin namespace for changedetection.io
 PLUGIN_NAMESPACE = "changedetectionio"
@@ -59,6 +60,31 @@ class ChangeDetectionSpec:
         """
         pass
 
+    @hookspec
+    def get_itemprop_availability_override(self, content, fetcher_name, fetcher_instance, url):
+        """Provide custom implementation of get_itemprop_availability for a specific fetcher.
+
+        This hook allows plugins to provide their own product availability detection
+        when their fetcher is being used. This is called as a fallback when the built-in
+        method doesn't find good data.
+
+        Args:
+            content: The HTML/text content to parse
+            fetcher_name: The name of the fetcher being used (e.g., 'html_js_zyte')
+            fetcher_instance: The fetcher instance that generated the content
+            url: The URL being watched/checked
+
+        Returns:
+            dict or None: Dictionary with availability data:
+                {
+                    'price': float or None,
+                    'availability': str or None,  # e.g., 'in stock', 'out of stock'
+                    'currency': str or None,      # e.g., 'USD', 'EUR'
+                }
+                Or None if this plugin doesn't handle this fetcher or couldn't extract data
+        """
+        pass
+
 
 # Set up Plugin Manager
 plugin_manager = pluggy.PluginManager(PLUGIN_NAMESPACE)
@@ -98,6 +124,22 @@ load_plugins_from_directories()
 
 # Discover installed plugins from external packages (if any)
 plugin_manager.load_setuptools_entrypoints(PLUGIN_NAMESPACE)
+
+# Function to inject datastore into plugins that need it
+def inject_datastore_into_plugins(datastore):
+    """Inject the global datastore into plugins that need access to settings.
+
+    This should be called after plugins are loaded and datastore is initialized.
+
+    Args:
+        datastore: The global ChangeDetectionStore instance
+    """
+    for plugin_name, plugin_obj in plugin_manager.list_name_plugin():
+        # Check if plugin has datastore attribute and it's not set
+        if hasattr(plugin_obj, 'datastore'):
+            if plugin_obj.datastore is None:
+                plugin_obj.datastore = datastore
+                logger.debug(f"Injected datastore into plugin: {plugin_name}")
 
 # Function to register built-in fetchers - called later from content_fetchers/__init__.py
 def register_builtin_fetchers():
@@ -154,5 +196,37 @@ def collect_fetcher_status_icons(fetcher_name):
         for result in results:
             if result and isinstance(result, dict):
                 return result
+
+    return None
+
+def get_itemprop_availability_from_plugin(content, fetcher_name, fetcher_instance, url):
+    """Get itemprop availability data from plugins as a fallback.
+
+    This is called when the built-in get_itemprop_availability doesn't find good data.
+
+    Args:
+        content: The HTML/text content to parse
+        fetcher_name: The name of the fetcher being used (e.g., 'html_js_zyte')
+        fetcher_instance: The fetcher instance that generated the content
+        url: The URL being watched (watch.link - includes Jinja2 evaluation)
+
+    Returns:
+        dict or None: Availability data dictionary from first matching plugin, or None
+    """
+    # Get availability data from plugins
+    results = plugin_manager.hook.get_itemprop_availability_override(
+        content=content,
+        fetcher_name=fetcher_name,
+        fetcher_instance=fetcher_instance,
+        url=url
+    )
+
+    # Return first non-None result with actual data
+    if results:
+        for result in results:
+            if result and isinstance(result, dict):
+                # Check if the result has any meaningful data
+                if result.get('price') is not None or result.get('availability'):
+                    return result
 
     return None
