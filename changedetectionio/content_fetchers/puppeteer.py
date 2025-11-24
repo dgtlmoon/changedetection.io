@@ -376,6 +376,7 @@ class fetcher(Fetcher):
                   request_method=None,
                   timeout=None,
                   url=None,
+                  watch_uuid=None,
                   ):
 
         #@todo make update_worker async which could run any of these content_fetchers within memory and time constraints
@@ -394,6 +395,7 @@ class fetcher(Fetcher):
                 request_method=request_method,
                 timeout=timeout,
                 url=url,
+                watch_uuid=watch_uuid,
             ), timeout=max_time
             )
         except asyncio.TimeoutError:

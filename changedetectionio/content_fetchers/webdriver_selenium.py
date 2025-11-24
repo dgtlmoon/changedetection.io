@@ -71,6 +71,7 @@ class fetcher(Fetcher):
                   request_method=None,
                   timeout=None,
                   url=None,
+                  watch_uuid=None,
                   ):
 
         import asyncio

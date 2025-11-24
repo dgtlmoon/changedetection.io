@@ -26,7 +26,9 @@ class fetcher(Fetcher):
             ignore_status_codes=False,
             current_include_filters=None,
             is_binary=False,
-            empty_pages_are_a_change=False):
+            empty_pages_are_a_change=False,
+            watch_uuid=None,
+            ):
         """Synchronous version of run - the original requests implementation"""
 
         import chardet
@@ -129,6 +131,7 @@ class fetcher(Fetcher):
                   request_method=None,
                   timeout=None,
                   url=None,
+                  watch_uuid=None,
                   ):
         """Async wrapper that runs the synchronous requests code in a thread pool"""
         
@@ -146,7 +149,8 @@ class fetcher(Fetcher):
                 ignore_status_codes=ignore_status_codes,
                 current_include_filters=current_include_filters,
                 is_binary=is_binary,
-                empty_pages_are_a_change=empty_pages_are_a_change
+                empty_pages_are_a_change=empty_pages_are_a_change,
+                watch_uuid=watch_uuid,
             )
         )
 
