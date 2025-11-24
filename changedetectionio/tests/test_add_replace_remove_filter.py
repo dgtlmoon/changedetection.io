@@ -185,3 +185,104 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
         assert '网站监测 内容更新了'.encode('utf-8') in response
 
     delete_all_watches(client)
+
+
+def test_consistent_md5_with_diff_filtering(client, live_server, measure_memory_usage):
+    """
+    Test that MD5 checksums are calculated consistently when diff filtering is active.
+
+    This test ensures that after a change is detected with diff filtering enabled,
+    subsequent checks with identical content don't trigger false positives.
+
+    Bug: Previously, MD5 was calculated from the filtered diff (partial content)
+    when changes were found, but from full content when no changes were found.
+    This caused false positives on the next check with identical content.
+
+    Fix: Always calculate MD5 from full content, regardless of diff filtering.
+    """
+
+    delete_all_watches(client)
+    time.sleep(1)
+
+    # Setup initial content
+    set_original()
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+
+    # Configure: Only track ADDED and REPLACED lines, ignore REMOVED lines
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid="first"),
+        data={
+            "url": test_url,
+            'processor': 'text_json_diff',
+            'fetch_backend': "html_requests",
+            'filter_text_added': 'y',       # Track added lines
+            'filter_text_replaced': 'y',    # Track replaced lines
+            'filter_text_removed': '',      # Don't track removed lines
+            "time_between_check_use_default": "y"
+        },
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+
+    # CHECK 1: Initial baseline
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    res = client.get(url_for("watchlist.index"))
+    assert b'has-unread-changes' not in res.data  # First check, no change
+
+    # Mark as viewed to start fresh
+    client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
+
+    # CHECK 2: Remove a line (should NOT trigger - removed lines are filtered out)
+    set_original(excluding='Something irrelevant')
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    res = client.get(url_for("watchlist.index"))
+    assert b'has-unread-changes' not in res.data  # No change (removed line filtered)
+
+    # CHECK 3: Add a line (should trigger - added lines are tracked)
+    set_original(excluding='Something irrelevant', add_line='<p>New exciting feature!</p>')
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    res = client.get(url_for("watchlist.index"))
+    assert b'has-unread-changes' in res.data  # Change detected (added line)
+
+    # Mark as viewed
+    client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
+
+    # CHECK 4: Same content as CHECK 3 (THE CRITICAL TEST - should NOT trigger)
+    # This is where the bug would manifest: false positive change detection
+    # because previous MD5 was from filtered diff, current MD5 is from full content
+    set_original(excluding='Something irrelevant', add_line='<p>New exciting feature!</p>')
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    res = client.get(url_for("watchlist.index"))
+
+    # CRITICAL ASSERTION: Should NOT detect change (content is identical to CHECK 3)
+    assert b'has-unread-changes' not in res.data, \
+        "False positive! Content identical to previous check but change was detected. " \
+        "MD5 calculation is inconsistent with diff filtering."
+
+    # CHECK 5: Verify system still detects real changes (replace a line)
+    # Change "Some initial text" to "Some modified text"
+    modified_content = """<html>
+     <body>
+     <p>Some modified text</p>
+     <p>So let's see what happens.</p>
+     <p>and a new line!</p>
+     <p>The golden line</p>
+     <p>New exciting feature!</p>
+     <p>A BREAK TO MAKE THE TOP LINE STAY AS "REMOVED" OR IT WILL GET COUNTED AS "CHANGED INTO"</p>
+     </body>
+     </html>
+    """
+    with open("test-datastore/endpoint-content.txt", "w") as f:
+        f.write(modified_content)
+
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    res = client.get(url_for("watchlist.index"))
+    assert b'has-unread-changes' in res.data  # Change detected (replaced line)
+
+    delete_all_watches(client)
