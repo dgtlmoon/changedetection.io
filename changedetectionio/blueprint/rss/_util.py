@@ -2,9 +2,11 @@
 Utility functions for RSS feed generation.
 """
 
-from changedetectionio.jinja2_custom import render as jinja_render
-from changedetectionio.notification.handler import apply_service_tweaks
+from changedetectionio.notification.handler import process_notification
+from changedetectionio.notification_service import NotificationContextData, _check_cascading_vars
 from loguru import logger
+import datetime
+import pytz
 import re
 
 
@@ -39,59 +41,116 @@ def clean_entry_content(content):
     return cleaned
 
 
-def generate_watch_guid(watch):
+def generate_watch_guid(watch, timestamp):
     """
     Generate a unique GUID for a watch RSS entry.
-    """
-    return f"{watch['uuid']}/{watch.last_changed}"
-
-
-def generate_watch_diff_content(watch, dates, rss_content_format, datastore, date_index_from=-2, date_index_to=-1):
-    """
-    Generate HTML diff content for a watch given its history dates.
-    Returns tuple of (content, watch_label).
 
     Args:
         watch: The watch object
-        dates: List of history snapshot dates
-        rss_content_format: Format for RSS content (html or text)
-        datastore: The ChangeDetectionStore instance
-        date_index_from: Index of the "from" date in the dates list (default: -2)
-        date_index_to: Index of the "to" date in the dates list (default: -1)
+        timestamp: The timestamp of the specific change this entry represents
+    """
+    return f"{watch['uuid']}/{timestamp}"
+
+
+def validate_rss_token(datastore, request):
+    """
+    Validate the RSS access token from the request.
 
     Returns:
-        Tuple of (content, watch_label) - the rendered HTML content and watch label
+        tuple: (is_valid, error_response) where error_response is None if valid
     """
-    from changedetectionio import diff
+    app_rss_token = datastore.data['settings']['application'].get('rss_access_token')
+    rss_url_token = request.args.get('token')
 
-    # Same logic as watch-overview.html
-    if datastore.data['settings']['application']['ui'].get('use_page_title_in_list') or watch.get('use_page_title_in_list'):
-        watch_label = watch.label
+    if rss_url_token != app_rss_token:
+        return False, ("Access denied, bad token", 403)
+
+    return True, None
+
+
+def get_rss_template(datastore, watch, rss_content_format, default_html, default_plaintext):
+    """Get the appropriate template for RSS content."""
+    if datastore.data['settings']['application'].get('rss_template_type') == 'notification_body':
+        return _check_cascading_vars(datastore=datastore, var_name='notification_body', watch=watch)
+
+    override = datastore.data['settings']['application'].get('rss_template_override')
+    if override and override.strip():
+        return override
+    elif 'text' in rss_content_format:
+        return default_plaintext
     else:
-        watch_label = watch.get('url')
+        return default_html
 
-    try:
-        html_diff = diff.render_diff(
-            previous_version_file_contents=watch.get_history_snapshot(timestamp=dates[date_index_from]),
-            newest_version_file_contents=watch.get_history_snapshot(timestamp=dates[date_index_to]),
-            include_equal=False
-        )
 
-        requested_output_format = datastore.data['settings']['application'].get('rss_content_format')
-        url, html_diff, n_title = apply_service_tweaks(url='', n_body=html_diff, n_title=None, requested_output_format=requested_output_format)
+def get_watch_label(datastore, watch):
+    """Get the label for a watch based on settings."""
+    if datastore.data['settings']['application']['ui'].get('use_page_title_in_list') or watch.get('use_page_title_in_list'):
+        return watch.label
+    else:
+        return watch.get('url')
 
-    except FileNotFoundError as e:
-        html_diff = f"History snapshot file for watch {watch.get('uuid')}@{watch.last_changed} - '{watch.get('title')} not found."
 
-    # @note: We use <pre> because nearly all RSS readers render only HTML (Thunderbird for example cant do just plaintext)
-    rss_template = "<pre>{{watch_label}} had a change.\n\n{{html_diff}}\n</pre>"
-    if 'html' in rss_content_format:
-        rss_template = "<html><body>\n<h4><a href=\"{{watch_url}}\">{{watch_label}}</a></h4>\n<p>{{html_diff}}</p>\n</body></html>\n"
+def add_watch_categories(fe, watch, datastore):
+    """Add category tags to a feed entry based on watch tags."""
+    for tag_uuid in watch.get('tags', []):
+        tag = datastore.data['settings']['application'].get('tags', {}).get(tag_uuid)
+        if tag and tag.get('title'):
+            fe.category(term=tag.get('title'))
 
-    content = jinja_render(template_str=rss_template, watch_label=watch_label, html_diff=html_diff, watch_url=watch.link)
 
-    # Out of range chars could also break feedgen
+def build_notification_context(watch, timestamp_from, timestamp_to, watch_label,
+                               n_body_template, rss_content_format):
+    """Build the notification context object."""
+    return NotificationContextData(initial_data={
+        'notification_urls': ['null://just-sending-a-null-test-for-the-render-in-RSS'],
+        'notification_body': n_body_template,
+        'timestamp_to': timestamp_to,
+        'timestamp_from': timestamp_from,
+        'watch_label': watch_label,
+        'notification_format': rss_content_format
+    })
+
+
+def render_notification(n_object, notification_service, watch, datastore,
+                       date_index_from=None, date_index_to=None):
+    """Process and render the notification content."""
+    kwargs = {'n_object': n_object, 'watch': watch}
+
+    if date_index_from is not None and date_index_to is not None:
+        kwargs['date_index_from'] = date_index_from
+        kwargs['date_index_to'] = date_index_to
+
+    n_object = notification_service.queue_notification_for_watch(**kwargs)
+    n_object['watch_mime_type'] = None
+
+    res = process_notification(n_object=n_object, datastore=datastore)
+    return res[0]
+
+
+def populate_feed_entry(fe, watch, content, guid, timestamp, link=None, title_suffix=None):
+    """Populate a feed entry with content and metadata."""
+    watch_label = watch.get('url')  # Already determined by caller
+
+    # Set link
+    if link:
+        fe.link(link=link)
+
+    # Set title
+    if title_suffix:
+        fe.title(title=f"{watch_label} - {title_suffix}")
+    else:
+        fe.title(title=watch_label)
+
+    # Clean and set content
     if scan_invalid_chars_in_rss(content):
         content = clean_entry_content(content)
+    fe.content(content=content, type='CDATA')
 
-    return content, watch_label
+    # Set GUID
+    fe.guid(guid, permalink=False)
+
+    # Set pubDate using the timestamp of this specific change
+    dt = datetime.datetime.fromtimestamp(int(timestamp))
+    dt = dt.replace(tzinfo=pytz.UTC)
+    fe.pubDate(dt)
+

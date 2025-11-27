@@ -1,11 +1,5 @@
 from flask import make_response, request, url_for, redirect
-from feedgen.feed import FeedGenerator
-from loguru import logger
-import datetime
-import pytz
-import time
 
-from ._util import generate_watch_guid, generate_watch_diff_content
 
 
 def construct_main_feed_routes(rss_blueprint, datastore):
@@ -27,14 +21,24 @@ def construct_main_feed_routes(rss_blueprint, datastore):
     # from changedetectionio.auth_decorator import login_optionally_required
     @rss_blueprint.route("", methods=['GET'])
     def feed():
-        now = time.time()
-        # Always requires token set
-        app_rss_token = datastore.data['settings']['application'].get('rss_access_token')
-        rss_url_token = request.args.get('token')
-        rss_content_format = datastore.data['settings']['application'].get('rss_content_format')
+        from feedgen.feed import FeedGenerator
+        from loguru import logger
+        import time
 
-        if rss_url_token != app_rss_token:
-            return "Access denied, bad token", 403
+        from . import RSS_TEMPLATE_HTML_DEFAULT, RSS_TEMPLATE_PLAINTEXT_DEFAULT
+        from ._util import (validate_rss_token, generate_watch_guid, get_rss_template,
+                           get_watch_label, build_notification_context, render_notification,
+                           populate_feed_entry, add_watch_categories)
+        from ...notification_service import NotificationService
+
+        now = time.time()
+
+        # Validate token
+        is_valid, error = validate_rss_token(datastore, request)
+        if not is_valid:
+            return error
+
+        rss_content_format = datastore.data['settings']['application'].get('rss_content_format')
 
         limit_tag = request.args.get('tag', '').lower().strip()
         # Be sure limit_tag is a uuid
@@ -52,7 +56,6 @@ def construct_main_feed_routes(rss_blueprint, datastore):
                 continue
             if limit_tag and not limit_tag in watch['tags']:
                 continue
-            watch['uuid'] = uuid
             sorted_watches.append(watch)
 
         sorted_watches.sort(key=lambda x: x.last_changed, reverse=False)
@@ -61,6 +64,7 @@ def construct_main_feed_routes(rss_blueprint, datastore):
         fg.title('changedetection.io')
         fg.description('Feed description')
         fg.link(href='https://changedetection.io')
+        notification_service = NotificationService(datastore=datastore, notification_q=False)
 
         for watch in sorted_watches:
 
@@ -72,36 +76,28 @@ def construct_main_feed_routes(rss_blueprint, datastore):
             if not watch.viewed:
                 # Re #239 - GUID needs to be individual for each event
                 # @todo In the future make this a configurable link back (see work on BASE_URL https://github.com/dgtlmoon/changedetection.io/pull/228)
-                guid = generate_watch_guid(watch)
-                fe = fg.add_entry()
-
-                # Include a link to the diff page, they will have to login here to see if password protection is enabled.
-                # Description is the page you watch, link takes you to the diff JS UI page
-                # Dict val base_url will get overriden with the env var if it is set.
-                ext_base_url = datastore.data['settings']['application'].get('active_base_url')
-                # @todo fix
-
-                # Because we are called via whatever web server, flask should figure out the right path (
+                watch_label = get_watch_label(datastore, watch)
+                timestamp_to = dates[-1]
+                timestamp_from = dates[-2]
+                guid = generate_watch_guid(watch, timestamp_to)
+                # Because we are called via whatever web server, flask should figure out the right path
                 diff_link = {'href': url_for('ui.ui_views.diff_history_page', uuid=watch['uuid'], _external=True)}
 
-                fe.link(link=diff_link)
+                # Get template and build notification context
+                n_body_template = get_rss_template(datastore, watch, rss_content_format,
+                                                   RSS_TEMPLATE_HTML_DEFAULT, RSS_TEMPLATE_PLAINTEXT_DEFAULT)
 
-                content, watch_label = generate_watch_diff_content(watch, dates, rss_content_format, datastore)
+                n_object = build_notification_context(watch, timestamp_from, timestamp_to,
+                                                     watch_label, n_body_template, rss_content_format)
 
-                fe.title(title=watch_label)
-                fe.content(content=content, type='CDATA')
-                fe.guid(guid, permalink=False)
-                dt = datetime.datetime.fromtimestamp(int(watch.newest_history_key))
-                dt = dt.replace(tzinfo=pytz.UTC)
-                fe.pubDate(dt)
+                # Render notification
+                res = render_notification(n_object, notification_service, watch, datastore)
 
-                # Add categories based on watch tags
-                for tag_uuid in watch.get('tags', []):
-                    tag = datastore.data['settings']['application'].get('tags', {}).get(tag_uuid)
-                    if tag:
-                        tag_title = tag.get('title', '')
-                        if tag_title:
-                            fe.category(term=tag_title)
+                # Create and populate feed entry
+                fe = fg.add_entry()
+                populate_feed_entry(fe, watch, res['body'], guid, timestamp_to, link=diff_link)
+                fe.title(title=watch_label)  # Override title to not include suffix
+                add_watch_categories(fe, watch, datastore)
 
         response = make_response(fg.rss_str())
         response.headers.set('Content-Type', 'application/rss+xml;charset=utf-8')

@@ -2,7 +2,6 @@ from flask import Blueprint, request, make_response
 import random
 from loguru import logger
 
-from changedetectionio.notification_service import NotificationContextData, set_basic_notification_vars
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
 
@@ -15,7 +14,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @notification_blueprint.route("/notification/send-test/", methods=['POST'])
     @login_optionally_required
     def ajax_callback_send_notification_test(watch_uuid=None):
-
+        from changedetectionio.notification_service import NotificationContextData, set_basic_notification_vars
         # Watch_uuid could be unset in the case it`s used in tag editor, global settings
         import apprise
         from changedetectionio.notification.handler import process_notification
@@ -97,30 +96,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             n_object['as_async'] = False
 
             #  Same like in notification service, should be refactored
-            dates = []
+            dates = list(watch.history.keys())
             trigger_text = ''
             snapshot_contents = ''
-            if watch:
-                watch_history = watch.history
-                dates = list(watch_history.keys())
-                trigger_text = watch.get('trigger_text', [])
-                # Add text that was triggered
-                if len(dates):
-                    snapshot_contents = watch.get_history_snapshot(timestamp=dates[-1])
-                else:
-                    snapshot_contents = "No snapshot/history available, the watch should fetch atleast once."
-
-                if len(trigger_text):
-                    from . import html_tools
-                    triggered_text = html_tools.get_triggered_text(content=snapshot_contents, trigger_text=trigger_text)
-                    if triggered_text:
-                        triggered_text = '\n'.join(triggered_text)
 
             # Could be called as a 'test notification' with only 1 snapshot available
             prev_snapshot = "Example text: example test\nExample text: change detection is cool\nExample text: some more examples\n"
             current_snapshot = "Example text: example test\nExample text: change detection is fantastic\nExample text: even more examples\nExample text: a lot more examples"
-
-
 
             if len(dates) > 1:
                 prev_snapshot = watch.get_history_snapshot(timestamp=dates[-2])
@@ -129,7 +111,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             n_object.update(set_basic_notification_vars(current_snapshot=current_snapshot,
                                                         prev_snapshot=prev_snapshot,
                                                         watch=watch,
-                                                        triggered_text=trigger_text))
+                                                        triggered_text=trigger_text,
+                                                        timestamp_changed=dates[-1] if dates else None))
 
 
             sent_obj = process_notification(n_object, datastore)

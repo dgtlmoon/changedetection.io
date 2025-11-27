@@ -67,8 +67,17 @@ def set_html_content(datastore_path, content):
     with open(os.path.join(datastore_path, "endpoint-content.txt"), "wb") as f:
         f.write(test_return_data.encode('utf-8'))
 
-# def test_setup(client, live_server, measure_memory_usage, datastore_path):
-   #  live_server_setup(live_server) # Setup on conftest per function
+
+def test_rss_feed_empty(client, live_server, measure_memory_usage, datastore_path):
+
+    rss_token = extract_rss_token_from_UI(client)
+
+    res = client.get(
+        url_for("rss.feed", token=rss_token, _external=True),
+        follow_redirects=True
+    )
+    assert res.status_code == 200
+    assert b'xml' in res.data
 
 def test_rss_and_token(client, live_server, measure_memory_usage, datastore_path):
     #   #  live_server_setup(live_server) # Setup on conftest per function
@@ -76,18 +85,10 @@ def test_rss_and_token(client, live_server, measure_memory_usage, datastore_path
     set_original_response(datastore_path=datastore_path)
     rss_token = extract_rss_token_from_UI(client)
 
-    # Add our URL to the import page
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": url_for('test_random_content_endpoint', _external=True)},
-        follow_redirects=True
-    )
-
-    assert b"1 Imported" in res.data
-
+    uuid = client.application.config.get('DATASTORE').add_watch(url=url_for('test_random_content_endpoint', _external=True))
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     set_modified_response(datastore_path=datastore_path)
-    time.sleep(1)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 

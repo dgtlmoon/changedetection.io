@@ -1,10 +1,3 @@
-from flask import make_response, request, url_for
-from feedgen.feed import FeedGenerator
-import datetime
-import pytz
-import locale
-
-from ._util import generate_watch_guid, generate_watch_diff_content
 
 
 def construct_single_watch_routes(rss_blueprint, datastore):
@@ -18,18 +11,31 @@ def construct_single_watch_routes(rss_blueprint, datastore):
 
     @rss_blueprint.route("/watch/<string:uuid>", methods=['GET'])
     def rss_single_watch(uuid):
+        import time
+
+        from flask import make_response, request
+        from feedgen.feed import FeedGenerator
+        from loguru import logger
+
+        from . import RSS_TEMPLATE_HTML_DEFAULT, RSS_TEMPLATE_PLAINTEXT_DEFAULT
+        from ._util import (validate_rss_token, get_rss_template, get_watch_label,
+                           build_notification_context, render_notification,
+                           populate_feed_entry, add_watch_categories)
+        from ...notification_service import NotificationService
+
         """
         Display the most recent changes for a single watch as RSS feed.
         Returns RSS XML with multiple entries showing diffs between consecutive snapshots.
         The number of entries is controlled by the rss_diff_length setting.
         """
-        # Always requires token set
-        app_rss_token = datastore.data['settings']['application'].get('rss_access_token')
-        rss_url_token = request.args.get('token')
-        rss_content_format = datastore.data['settings']['application'].get('rss_content_format')
+        now = time.time()
 
-        if rss_url_token != app_rss_token:
-            return "Access denied, bad token", 403
+        # Validate token
+        is_valid, error = validate_rss_token(datastore, request)
+        if not is_valid:
+            return error
+
+        rss_content_format = datastore.data['settings']['application'].get('rss_content_format')
 
         # Get the watch by UUID
         watch = datastore.data['watching'].get(uuid)
@@ -57,8 +63,9 @@ def construct_single_watch_routes(rss_blueprint, datastore):
 
         # Set title: use "label (url)" if label differs from url, otherwise just url
         watch_url = watch.get('url', '')
-        watch_label = watch.label
-        if watch_label and watch_label != watch_url:
+        watch_label = get_watch_label(datastore, watch)
+
+        if watch_label != watch_url:
             feed_title = f'changedetection.io - {watch_label} ({watch_url})'
         else:
             feed_title = f'changedetection.io - {watch_url}'
@@ -70,6 +77,8 @@ def construct_single_watch_routes(rss_blueprint, datastore):
         # Loop through history and create RSS entries for each diff
         # Add entries in reverse order because feedgen reverses them
         # This way, the newest change appears first in the final RSS
+
+        notification_service = NotificationService(datastore=datastore, notification_q=False)
         for i in range(num_diffs - 1, -1, -1):
             # Calculate indices for this diff (working backwards from newest)
             # i=0: compare dates[-2] to dates[-1] (most recent change)
@@ -77,83 +86,30 @@ def construct_single_watch_routes(rss_blueprint, datastore):
             # etc.
             date_index_to = -(i + 1)
             date_index_from = -(i + 2)
+            timestamp_to = dates[date_index_to]
+            timestamp_from = dates[date_index_from]
 
-            try:
-                # Generate the diff content for this pair of snapshots
-                timestamp_to = dates[date_index_to]
-                timestamp_from = dates[date_index_from]
+            # Get template and build notification context
+            n_body_template = get_rss_template(datastore, watch, rss_content_format,
+                                               RSS_TEMPLATE_HTML_DEFAULT, RSS_TEMPLATE_PLAINTEXT_DEFAULT)
 
-                content, watch_label = generate_watch_diff_content(
-                    watch, dates, rss_content_format, datastore,
-                    date_index_from=date_index_from,
-                    date_index_to=date_index_to
-                )
+            n_object = build_notification_context(watch, timestamp_from, timestamp_to,
+                                                 watch_label, n_body_template, rss_content_format)
 
-                # Generate edit watch link and add to content
-                edit_watch_url = url_for('ui.ui_edit.edit_page',
-                                        uuid=watch['uuid'],
-                                        _external=True)
+            # Render notification with date indices
+            res = render_notification(n_object, notification_service, watch, datastore,
+                                     date_index_from, date_index_to)
 
-                # Add edit watch links at top and bottom of content
-                if 'html' in rss_content_format:
-                    edit_link_html = f'<p><a href="{edit_watch_url}">[edit watch]</a></p>'
-                    # Insert after <body> and before </body>
-                    content = content.replace('<body>', f'<body>\n{edit_link_html}', 1)
-                    content = content.replace('</body>', f'{edit_link_html}\n</body>', 1)
-                else:
-                    # For plain text format, add plain text links in separate <pre> blocks
-                    edit_link_top = f'<pre>[edit watch] {edit_watch_url}</pre>\n'
-                    edit_link_bottom = f'\n<pre>[edit watch] {edit_watch_url}</pre>'
-                    content = edit_link_top + content + edit_link_bottom
-
-                # Create a unique GUID for this specific diff
-                guid = f"{watch['uuid']}/{timestamp_to}"
-
-                fe = fg.add_entry()
-
-                # Include a link to the diff page with specific versions
-                diff_link = {'href': url_for('ui.ui_views.diff_history_page',
-                                            uuid=watch['uuid'],
-                                            from_version=timestamp_from,
-                                            to_version=timestamp_to,
-                                            _external=True)}
-                fe.link(link=diff_link)
-
-                # Format the date using locale-aware formatting with timezone
-                dt = datetime.datetime.fromtimestamp(int(timestamp_to))
-                dt = dt.replace(tzinfo=pytz.UTC)
-
-                # Get local timezone-aware datetime
-                local_tz = datetime.datetime.now().astimezone().tzinfo
-                local_dt = dt.astimezone(local_tz)
-
-                # Format date with timezone - using strftime for locale awareness
-                try:
-                    formatted_date = local_dt.strftime('%Y-%m-%d %H:%M:%S %Z')
-                except:
-                    # Fallback if locale issues
-                    formatted_date = local_dt.isoformat()
-
-                # Use formatted date in title instead of "Change 1, 2, 3"
-                fe.title(title=f"{watch_label} - Change @ {formatted_date}")
-                fe.content(content=content, type='CDATA')
-                fe.guid(guid, permalink=False)
-
-                # Use the timestamp of the "to" snapshot for pubDate
-                fe.pubDate(dt)
-
-                # Add categories based on watch tags
-                for tag_uuid in watch.get('tags', []):
-                    tag = datastore.data['settings']['application'].get('tags', {}).get(tag_uuid)
-                    if tag:
-                        tag_title = tag.get('title', '')
-                        if tag_title:
-                            fe.category(term=tag_title)
-
-            except (IndexError, FileNotFoundError) as e:
-                # Skip this diff if we can't generate it
-                continue
+            # Create and populate feed entry
+            guid = f"{watch['uuid']}/{timestamp_to}"
+            fe = fg.add_entry()
+            title_suffix = f"Change @ {res['original_context']['change_datetime']}"
+            populate_feed_entry(fe, watch, res.get('body', ''), guid, timestamp_to,
+                              link={'href': watch.get('url')}, title_suffix=title_suffix)
+            add_watch_categories(fe, watch, datastore)
 
         response = make_response(fg.rss_str())
         response.headers.set('Content-Type', 'application/rss+xml;charset=utf-8')
+        logger.debug(f"RSS Single watch built in {time.time()-now:.2f}s")
+
         return response

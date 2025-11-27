@@ -55,6 +55,8 @@ class model(dict):
                     'render_anchor_tag_content': False,
                     'rss_access_token': None,
                     'rss_content_format': RSS_CONTENT_FORMAT_DEFAULT,
+                    'rss_template_type': 'system_default',
+                    'rss_template_override': None,
                     'rss_diff_length': 5,
                     'rss_hide_muted_watches': True,
                     'rss_reader_mode': False,

@@ -427,11 +427,15 @@ def process_notification(n_object: NotificationContextData, datastore):
                     apprise_input_format = NotifyFormat.TEXT.value
                     requested_output_format = NotifyFormat.TEXT.value
 
-
+#@todo on null:// (only if its a 1 url with null) probably doesnt need to actually .add/setup/etc
             sent_objs.append({'title': n_title,
                               'body': n_body,
-                              'url': url})
-            apobj.add(url)
+                              'url': url,
+                              # So that we can do a null:// call and get back exactly what would have been sent
+                              'original_context': n_object })
+
+            if not url.startswith('null://'):
+                apobj.add(url)
 
             # Since the output is always based on the plaintext of the 'diff' engine, wrap it nicely.
             # It should always be similar to the 'history' part of the UI.
@@ -439,15 +443,16 @@ def process_notification(n_object: NotificationContextData, datastore):
                 if not '<pre' in n_body and not '<body' in n_body: # No custom HTML-ish body was setup already
                     n_body = as_monospaced_html_email(content=n_body, title=n_title)
 
-        apobj.notify(
-            title=n_title,
-            body=n_body,
-            # `body_format` Tell apprise what format the INPUT is in, specify a wrong/bad type and it will force skip conversion in apprise
-            # &format= in URL Tell apprise what format the OUTPUT should be in (it can convert between)
-            body_format=apprise_input_format,
-            # False is not an option for AppRise, must be type None
-            attach=n_object.get('screenshot', None)
-        )
+        if not url.startswith('null://'):
+            apobj.notify(
+                title=n_title,
+                body=n_body,
+                # `body_format` Tell apprise what format the INPUT is in, specify a wrong/bad type and it will force skip conversion in apprise
+                # &format= in URL Tell apprise what format the OUTPUT should be in (it can convert between)
+                body_format=apprise_input_format,
+                # False is not an option for AppRise, must be type None
+                attach=n_object.get('screenshot', None)
+            )
 
         # Returns empty string if nothing found, multi-line string otherwise
         log_value = logs.getvalue()
@@ -466,6 +471,8 @@ def create_notification_parameters(n_object: NotificationContextData, datastore)
     if not isinstance(n_object, NotificationContextData):
         raise TypeError(f"Expected NotificationContextData, got {type(n_object)}")
 
+    ext_base_url = datastore.data['settings']['application'].get('active_base_url').strip('/')+'/'
+
     watch = datastore.data['watching'].get(n_object['uuid'])
     if watch:
         watch_title = datastore.data['watching'][n_object['uuid']].label
@@ -479,20 +486,29 @@ def create_notification_parameters(n_object: NotificationContextData, datastore)
         watch_title = 'Change Detection'
         watch_tag = ''
 
-    # Create URLs to customise the notification with
-    # active_base_url - set in store.py data property
-    base_url = datastore.data['settings']['application'].get('active_base_url')
-
     watch_url = n_object['watch_url']
 
-    diff_url = "{}/diff/{}".format(base_url, n_object['uuid'])
-    preview_url = "{}/preview/{}".format(base_url, n_object['uuid'])
+    # Build URLs manually instead of using url_for() to avoid requiring a request context
+    # This allows notifications to be processed in background threads
+    uuid = n_object['uuid']
 
+    if n_object.get('timestamp_from') and n_object.get('timestamp_to'):
+        # Include a link to the diff page with specific versions
+        diff_url = f"{ext_base_url}diff/{uuid}?from_version={n_object['timestamp_from']}&to_version={n_object['timestamp_to']}"
+    else:
+        diff_url = f"{ext_base_url}diff/{uuid}"
+
+    preview_url = f"{ext_base_url}preview/{uuid}"
+    edit_url = f"{ext_base_url}edit/{uuid}"
+
+    # @todo test that preview_url is correct when running in not-null mode?
+    # if not, first time app loads i think it can set a flask context
     n_object.update(
         {
-            'base_url': base_url,
+            'base_url': ext_base_url,
             'diff_url': diff_url,
-            'preview_url': preview_url,
+            'preview_url': preview_url, #@todo include 'version='
+            'edit_url': edit_url, #@todo also pause, also mute link
             'watch_tag': watch_tag if watch_tag is not None else '',
             'watch_title': watch_title if watch_title is not None else '',
             'watch_url': watch_url,
