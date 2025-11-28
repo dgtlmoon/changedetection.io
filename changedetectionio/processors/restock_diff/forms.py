@@ -1,13 +1,13 @@
 from wtforms import (
     BooleanField,
     validators,
-    FloatField
+    FloatField, StringField
 )
 from wtforms.fields.choices import RadioField
 from wtforms.fields.form import FormField
 from wtforms.form import Form
 
-from changedetectionio.forms import processor_text_json_diff_form
+from changedetectionio.forms import processor_text_json_diff_form, ValidateCSSJSONXPATHInput, StringListField
 
 
 class RestockSettingsForm(Form):
@@ -26,6 +26,8 @@ class RestockSettingsForm(Form):
         validators.Optional(),
         validators.NumberRange(min=0, max=100, message="Should be between 0 and 100"),
     ], render_kw={"placeholder": "0%", "size": "5"})
+
+    price_change_custom_include_filters = StringField('Override automatic price detection with this selector', [ValidateCSSJSONXPATHInput()], default='', render_kw={"style": "width: 100%;"})
 
     follow_price_changes = BooleanField('Follow price changes', default=True)
 
@@ -74,7 +76,11 @@ class processor_settings_form(processor_text_json_diff_form):
                     {{ render_field(form.restock_settings.price_change_threshold_percent) }}
                     <span class="pure-form-message-inline">Price must change more than this % to trigger a change since the first check.</span><br>
                     <span class="pure-form-message-inline">For example, If the product is $1,000 USD originally, <strong>2%</strong> would mean it has to change more than $20 since the first check.</span><br>
-                </fieldset>                
+                </fieldset>
+                <fieldset class="pure-group price-change-minmax">
+                        {{ render_field(form.restock_settings.price_change_custom_include_filters) }}
+                        <span class="pure-form-message-inline">Override the automatic price metadata reader with this custom select from the <a href="#visualselector">Visual Selector</a>, in the case that the automatic detection was incorrect.</span><br>
+                </fieldset>                                  
             </div>
         </fieldset>
         """
