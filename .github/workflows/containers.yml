@@ -95,7 +95,7 @@ jobs:
       # master branch -> :dev container tag
       - name: Build and push :dev
         id: docker_build
-        if: ${{ github.ref }} == "refs/heads/master"
+        if: ${{ github.ref }} == "refs/heads/dev"
         uses: docker/build-push-action@v6
         with:
           context: ./
