@@ -172,7 +172,15 @@ def elementpath_tostring(obj):
     return str(obj)
 
 # Return str Utf-8 of matched rules
-def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False, is_rss=False):
+def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False, is_xml=False):
+    """
+
+    :param xpath_filter:
+    :param html_content:
+    :param append_pretty_line_formatting:
+    :param is_xml: set to true if is XML or is RSS (RSS is XML)
+    :return:
+    """
     from lxml import etree, html
     import elementpath
     # xpath 2.0-3.1
@@ -181,7 +189,7 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
     parser = etree.HTMLParser()
     tree = None
     try:
-        if is_rss:
+        if is_xml:
             # So that we can keep CDATA for cdata_in_document_to_text() to process
             parser = etree.XMLParser(strip_cdata=False)
             # For XML/RSS content, use etree.fromstring to properly handle XML declarations
@@ -222,7 +230,7 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
             elif issubclass(type(element), etree._Element) or issubclass(type(element), etree._ElementTree):
                 # Use 'xml' method for RSS/XML content, 'html' for HTML content
                 # parser will be XMLParser if we detected XML content
-                method = 'xml' if (is_rss or isinstance(parser, etree.XMLParser)) else 'html'
+                method = 'xml' if (is_xml or isinstance(parser, etree.XMLParser)) else 'html'
                 html_block += etree.tostring(element, pretty_print=True, method=method, encoding='unicode')
             else:
                 html_block += elementpath_tostring(element)
@@ -240,13 +248,13 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
 
 # Return str Utf-8 of matched rules
 # 'xpath1:'
-def xpath1_filter(xpath_filter, html_content, append_pretty_line_formatting=False, is_rss=False):
+def xpath1_filter(xpath_filter, html_content, append_pretty_line_formatting=False, is_xml=False):
     from lxml import etree, html
 
     parser = None
     tree = None
     try:
-        if is_rss:
+        if is_xml:
             # So that we can keep CDATA for cdata_in_document_to_text() to process
             parser = etree.XMLParser(strip_cdata=False)
             # For XML/RSS content, use etree.fromstring to properly handle XML declarations
@@ -284,7 +292,7 @@ def xpath1_filter(xpath_filter, html_content, append_pretty_line_formatting=Fals
                 # Return the HTML/XML which will get parsed as text
                 # Use 'xml' method for RSS/XML content, 'html' for HTML content
                 # parser will be XMLParser if we detected XML content
-                method = 'xml' if (is_rss or isinstance(parser, etree.XMLParser)) else 'html'
+                method = 'xml' if (is_xml or isinstance(parser, etree.XMLParser)) else 'html'
                 html_block += etree.tostring(element, pretty_print=True, method=method, encoding='unicode')
 
         return html_block
