@@ -179,101 +179,124 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
     from elementpath.xpath3 import XPath3Parser
 
     parser = etree.HTMLParser()
-    if is_rss:
-        # So that we can keep CDATA for cdata_in_document_to_text() to process
-        parser = etree.XMLParser(strip_cdata=False)
-        # For XML/RSS content, use etree.fromstring to properly handle XML declarations
-        tree = etree.fromstring(html_content.encode('utf-8') if isinstance(html_content, str) else html_content, parser=parser)
-    else:
-        tree = html.fromstring(html_content, parser=parser)
-    html_block = ""
-
-    # Build namespace map for XPath queries
-    namespaces = {'re': 'http://exslt.org/regular-expressions'}
-
-    # Handle default namespace in documents (common in RSS/Atom feeds, but can occur in any XML)
-    # XPath spec: unprefixed element names have no namespace, not the default namespace
-    # Solution: Register the default namespace with empty string prefix in elementpath
-    # This is primarily for RSS/Atom feeds but works for any XML with default namespace
-    if hasattr(tree, 'nsmap') and tree.nsmap and None in tree.nsmap:
-        # Register the default namespace with empty string prefix for elementpath
-        # This allows //title to match elements in the default namespace
-        namespaces[''] = tree.nsmap[None]
-
-    r = elementpath.select(tree, xpath_filter.strip(), namespaces=namespaces, parser=XPath3Parser)
-    #@note: //title/text() now works with default namespaces (fixed by registering '' prefix)
-    #@note: //title/text() wont work where <title>CDATA.. (use cdata_in_document_to_text first)
-
-    if type(r) != list:
-        r = [r]
-
-    for element in r:
-        # When there's more than 1 match, then add the suffix to separate each line
-        # And where the matched result doesn't include something that will cause Inscriptis to add a newline
-        # (This way each 'match' reliably has a new-line in the diff)
-        # Divs are converted to 4 whitespaces by inscriptis
-        if append_pretty_line_formatting and len(html_block) and (not hasattr( element, 'tag' ) or not element.tag in (['br', 'hr', 'div', 'p'])):
-            html_block += TEXT_FILTER_LIST_LINE_SUFFIX
-
-        if type(element) == str:
-            html_block += element
-        elif issubclass(type(element), etree._Element) or issubclass(type(element), etree._ElementTree):
-            # Use 'xml' method for RSS/XML content, 'html' for HTML content
-            # parser will be XMLParser if we detected XML content
-            method = 'xml' if (is_rss or isinstance(parser, etree.XMLParser)) else 'html'
-            html_block += etree.tostring(element, pretty_print=True, method=method, encoding='unicode')
+    tree = None
+    try:
+        if is_rss:
+            # So that we can keep CDATA for cdata_in_document_to_text() to process
+            parser = etree.XMLParser(strip_cdata=False)
+            # For XML/RSS content, use etree.fromstring to properly handle XML declarations
+            tree = etree.fromstring(html_content.encode('utf-8') if isinstance(html_content, str) else html_content, parser=parser)
         else:
-            html_block += elementpath_tostring(element)
+            tree = html.fromstring(html_content, parser=parser)
+        html_block = ""
 
-    return html_block
+        # Build namespace map for XPath queries
+        namespaces = {'re': 'http://exslt.org/regular-expressions'}
+
+        # Handle default namespace in documents (common in RSS/Atom feeds, but can occur in any XML)
+        # XPath spec: unprefixed element names have no namespace, not the default namespace
+        # Solution: Register the default namespace with empty string prefix in elementpath
+        # This is primarily for RSS/Atom feeds but works for any XML with default namespace
+        if hasattr(tree, 'nsmap') and tree.nsmap and None in tree.nsmap:
+            # Register the default namespace with empty string prefix for elementpath
+            # This allows //title to match elements in the default namespace
+            namespaces[''] = tree.nsmap[None]
+
+        r = elementpath.select(tree, xpath_filter.strip(), namespaces=namespaces, parser=XPath3Parser)
+        #@note: //title/text() now works with default namespaces (fixed by registering '' prefix)
+        #@note: //title/text() wont work where <title>CDATA.. (use cdata_in_document_to_text first)
+
+        if type(r) != list:
+            r = [r]
+
+        for element in r:
+            # When there's more than 1 match, then add the suffix to separate each line
+            # And where the matched result doesn't include something that will cause Inscriptis to add a newline
+            # (This way each 'match' reliably has a new-line in the diff)
+            # Divs are converted to 4 whitespaces by inscriptis
+            if append_pretty_line_formatting and len(html_block) and (not hasattr( element, 'tag' ) or not element.tag in (['br', 'hr', 'div', 'p'])):
+                html_block += TEXT_FILTER_LIST_LINE_SUFFIX
+
+            if type(element) == str:
+                html_block += element
+            elif issubclass(type(element), etree._Element) or issubclass(type(element), etree._ElementTree):
+                # Use 'xml' method for RSS/XML content, 'html' for HTML content
+                # parser will be XMLParser if we detected XML content
+                method = 'xml' if (is_rss or isinstance(parser, etree.XMLParser)) else 'html'
+                html_block += etree.tostring(element, pretty_print=True, method=method, encoding='unicode')
+            else:
+                html_block += elementpath_tostring(element)
+
+        return html_block
+    finally:
+        # Explicitly clear the tree to free memory
+        # lxml trees can hold significant memory, especially with large documents
+        if tree is not None:
+            tree.clear()
+            # Also clear any siblings to help garbage collection
+            while tree.getprevious() is not None:
+                del tree.getparent()[0]
+        del tree
 
 # Return str Utf-8 of matched rules
 # 'xpath1:'
 def xpath1_filter(xpath_filter, html_content, append_pretty_line_formatting=False, is_rss=False):
     from lxml import etree, html
+
     parser = None
-    if is_rss:
-        # So that we can keep CDATA for cdata_in_document_to_text() to process
-        parser = etree.XMLParser(strip_cdata=False)
-        # For XML/RSS content, use etree.fromstring to properly handle XML declarations
-        tree = etree.fromstring(html_content.encode('utf-8') if isinstance(html_content, str) else html_content, parser=parser)
-    else:
-        tree = html.fromstring(html_content, parser=parser)
-    html_block = ""
-
-    # Build namespace map for XPath queries
-    namespaces = {'re': 'http://exslt.org/regular-expressions'}
-
-    # NOTE: lxml's native xpath() does NOT support empty string prefix for default namespace
-    # For documents with default namespace (RSS/Atom feeds), users must use:
-    #   - local-name(): //*[local-name()='title']/text()
-    #   - Or use xpath_filter (not xpath1_filter) which supports default namespaces
-    # XPath spec: unprefixed element names have no namespace, not the default namespace
-
-    r = tree.xpath(xpath_filter.strip(), namespaces=namespaces)
-    #@note: xpath1 (lxml) does NOT automatically handle default namespaces
-    #@note: Use //*[local-name()='element'] or switch to xpath_filter for default namespace support
-    #@note: //title/text() wont work where <title>CDATA.. (use cdata_in_document_to_text first)
-
-    for element in r:
-        # When there's more than 1 match, then add the suffix to separate each line
-        # And where the matched result doesn't include something that will cause Inscriptis to add a newline
-        # (This way each 'match' reliably has a new-line in the diff)
-        # Divs are converted to 4 whitespaces by inscriptis
-        if append_pretty_line_formatting and len(html_block) and (not hasattr(element, 'tag') or not element.tag in (['br', 'hr', 'div', 'p'])):
-            html_block += TEXT_FILTER_LIST_LINE_SUFFIX
-
-        # Some kind of text, UTF-8 or other
-        if isinstance(element, (str, bytes)):
-            html_block += element
+    tree = None
+    try:
+        if is_rss:
+            # So that we can keep CDATA for cdata_in_document_to_text() to process
+            parser = etree.XMLParser(strip_cdata=False)
+            # For XML/RSS content, use etree.fromstring to properly handle XML declarations
+            tree = etree.fromstring(html_content.encode('utf-8') if isinstance(html_content, str) else html_content, parser=parser)
         else:
-            # Return the HTML/XML which will get parsed as text
-            # Use 'xml' method for RSS/XML content, 'html' for HTML content
-            # parser will be XMLParser if we detected XML content
-            method = 'xml' if (is_rss or isinstance(parser, etree.XMLParser)) else 'html'
-            html_block += etree.tostring(element, pretty_print=True, method=method, encoding='unicode')
+            tree = html.fromstring(html_content, parser=parser)
+        html_block = ""
 
-    return html_block
+        # Build namespace map for XPath queries
+        namespaces = {'re': 'http://exslt.org/regular-expressions'}
+
+        # NOTE: lxml's native xpath() does NOT support empty string prefix for default namespace
+        # For documents with default namespace (RSS/Atom feeds), users must use:
+        #   - local-name(): //*[local-name()='title']/text()
+        #   - Or use xpath_filter (not xpath1_filter) which supports default namespaces
+        # XPath spec: unprefixed element names have no namespace, not the default namespace
+
+        r = tree.xpath(xpath_filter.strip(), namespaces=namespaces)
+        #@note: xpath1 (lxml) does NOT automatically handle default namespaces
+        #@note: Use //*[local-name()='element'] or switch to xpath_filter for default namespace support
+        #@note: //title/text() wont work where <title>CDATA.. (use cdata_in_document_to_text first)
+
+        for element in r:
+            # When there's more than 1 match, then add the suffix to separate each line
+            # And where the matched result doesn't include something that will cause Inscriptis to add a newline
+            # (This way each 'match' reliably has a new-line in the diff)
+            # Divs are converted to 4 whitespaces by inscriptis
+            if append_pretty_line_formatting and len(html_block) and (not hasattr(element, 'tag') or not element.tag in (['br', 'hr', 'div', 'p'])):
+                html_block += TEXT_FILTER_LIST_LINE_SUFFIX
+
+            # Some kind of text, UTF-8 or other
+            if isinstance(element, (str, bytes)):
+                html_block += element
+            else:
+                # Return the HTML/XML which will get parsed as text
+                # Use 'xml' method for RSS/XML content, 'html' for HTML content
+                # parser will be XMLParser if we detected XML content
+                method = 'xml' if (is_rss or isinstance(parser, etree.XMLParser)) else 'html'
+                html_block += etree.tostring(element, pretty_print=True, method=method, encoding='unicode')
+
+        return html_block
+    finally:
+        # Explicitly clear the tree to free memory
+        # lxml trees can hold significant memory, especially with large documents
+        if tree is not None:
+            tree.clear()
+            # Also clear any siblings to help garbage collection
+            while tree.getprevious() is not None:
+                del tree.getparent()[0]
+        del tree
 
 # Extract/find element
 def extract_element(find='title', html_content=''):
