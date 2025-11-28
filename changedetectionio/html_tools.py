@@ -241,10 +241,6 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
         # lxml trees can hold significant memory, especially with large documents
         if tree is not None:
             tree.clear()
-            # Also clear any siblings to help garbage collection
-            while tree.getprevious() is not None:
-                del tree.getparent()[0]
-        del tree
 
 # Return str Utf-8 of matched rules
 # 'xpath1:'
@@ -301,10 +297,6 @@ def xpath1_filter(xpath_filter, html_content, append_pretty_line_formatting=Fals
         # lxml trees can hold significant memory, especially with large documents
         if tree is not None:
             tree.clear()
-            # Also clear any siblings to help garbage collection
-            while tree.getprevious() is not None:
-                del tree.getparent()[0]
-        del tree
 
 # Extract/find element
 def extract_element(find='title', html_content=''):
