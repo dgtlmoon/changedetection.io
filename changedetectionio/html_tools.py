@@ -182,8 +182,10 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
     if is_rss:
         # So that we can keep CDATA for cdata_in_document_to_text() to process
         parser = etree.XMLParser(strip_cdata=False)
-
-    tree = html.fromstring(bytes(html_content, encoding='utf-8'), parser=parser)
+        # For XML/RSS content, use etree.fromstring to properly handle XML declarations
+        tree = etree.fromstring(html_content.encode('utf-8') if isinstance(html_content, str) else html_content, parser=parser)
+    else:
+        tree = html.fromstring(html_content, parser=parser)
     html_block = ""
 
     # Build namespace map for XPath queries
@@ -216,7 +218,10 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
         if type(element) == str:
             html_block += element
         elif issubclass(type(element), etree._Element) or issubclass(type(element), etree._ElementTree):
-            html_block += etree.tostring(element, pretty_print=True).decode('utf-8')
+            # Use 'xml' method for RSS/XML content, 'html' for HTML content
+            # parser will be XMLParser if we detected XML content
+            method = 'xml' if (is_rss or isinstance(parser, etree.XMLParser)) else 'html'
+            html_block += etree.tostring(element, pretty_print=True, method=method, encoding='unicode')
         else:
             html_block += elementpath_tostring(element)
 
@@ -226,13 +231,14 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
 # 'xpath1:'
 def xpath1_filter(xpath_filter, html_content, append_pretty_line_formatting=False, is_rss=False):
     from lxml import etree, html
-
     parser = None
     if is_rss:
         # So that we can keep CDATA for cdata_in_document_to_text() to process
         parser = etree.XMLParser(strip_cdata=False)
-
-    tree = html.fromstring(bytes(html_content, encoding='utf-8'), parser=parser)
+        # For XML/RSS content, use etree.fromstring to properly handle XML declarations
+        tree = etree.fromstring(html_content.encode('utf-8') if isinstance(html_content, str) else html_content, parser=parser)
+    else:
+        tree = html.fromstring(html_content, parser=parser)
     html_block = ""
 
     # Build namespace map for XPath queries
@@ -261,8 +267,11 @@ def xpath1_filter(xpath_filter, html_content, append_pretty_line_formatting=Fals
         if isinstance(element, (str, bytes)):
             html_block += element
         else:
-            # Return the HTML which will get parsed as text
-            html_block += etree.tostring(element, pretty_print=True).decode('utf-8')
+            # Return the HTML/XML which will get parsed as text
+            # Use 'xml' method for RSS/XML content, 'html' for HTML content
+            # parser will be XMLParser if we detected XML content
+            method = 'xml' if (is_rss or isinstance(parser, etree.XMLParser)) else 'html'
+            html_block += etree.tostring(element, pretty_print=True, method=method, encoding='unicode')
 
     return html_block
 
