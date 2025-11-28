@@ -101,22 +101,24 @@ def test_rss_single_watch_order(client, live_server, measure_memory_usage, datas
                 desc = content_elem.text
         descriptions.append(desc if desc else "")
 
-    print(f"First item content: {descriptions[0][:100] if descriptions[0] else 'None'}")
-    print(f"Second item content: {descriptions[1][:100] if descriptions[1] else 'None'}")
-    print(f"Third item content: {descriptions[2][:100] if descriptions[2] else 'None'}")
+    print(f"First item content (first 200 chars): {descriptions[0][:200] if descriptions[0] else 'None'}")
+    print(f"Second item content (first 200 chars): {descriptions[1][:200] if descriptions[1] else 'None'}")
+    print(f"Third item content (first 200 chars): {descriptions[2][:200] if descriptions[2] else 'None'}")
 
     # The FIRST item should contain the NEWEST change (Version 5)
     # The SECOND item should contain Version 4
     # The THIRD item should contain Version 3
-    assert b"Version 5" in descriptions[0].encode() or "Version 5" in descriptions[0], \
-        f"First item should show newest change (Version 5), but got: {descriptions[0][:200]}"
+    # Note: Content may include [edit watch] links and diff markup like "(added) 5"
+    # So we check for "5 content" which appears in "Version 5 content"
+    assert "5 content" in descriptions[0], \
+        f"First item should show newest change (with '5 content'), but got: {descriptions[0][:500]}"
 
     # Verify the order is correct
-    assert b"Version 4" in descriptions[1].encode() or "Version 4" in descriptions[1], \
-        f"Second item should show Version 4, but got: {descriptions[1][:200]}"
+    assert "4 content" in descriptions[1], \
+        f"Second item should show Version 4 (with '4 content'), but got: {descriptions[1][:500]}"
 
-    assert b"Version 3" in descriptions[2].encode() or "Version 3" in descriptions[2], \
-        f"Third item should show Version 3, but got: {descriptions[2][:200]}"
+    assert "3 content" in descriptions[2], \
+        f"Third item should show Version 3 (with '3 content'), but got: {descriptions[2][:500]}"
 
     # Clean up
     delete_all_watches(client)

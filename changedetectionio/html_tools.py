@@ -464,6 +464,9 @@ def strip_ignore_text(content, wordlist, mode="content"):
     ignore_regex_multiline = []
     ignored_lines = []
 
+    if not content:
+        return ''
+
     for k in wordlist:
         # Skip empty strings to avoid matching everything
         if not k or not k.strip():

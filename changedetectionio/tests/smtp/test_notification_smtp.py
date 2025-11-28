@@ -713,7 +713,6 @@ def test_check_html_document_plaintext_notification(client, live_server, measure
     assert not msg.is_multipart()
     assert msg.get_content_type() == 'text/plain'
     body = msg.get_content()
-
     assert '<tag>' in body # Should have got converted from original HTML to plaintext
     assert '(changed) some stuff\r\n' in body
     assert 'PLACEMARKER' not in body

@@ -108,8 +108,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 prev_snapshot = watch.get_history_snapshot(timestamp=dates[-2])
                 current_snapshot = watch.get_history_snapshot(timestamp=dates[-1])
 
-            n_object.update(set_basic_notification_vars(snapshot_contents=snapshot_contents,
-                                                        current_snapshot=current_snapshot,
+            n_object.update(set_basic_notification_vars(current_snapshot=current_snapshot,
                                                         prev_snapshot=prev_snapshot,
                                                         watch=watch,
                                                         triggered_text=trigger_text,
