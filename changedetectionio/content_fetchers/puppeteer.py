@@ -169,6 +169,7 @@ class fetcher(Fetcher):
                          request_method,
                          timeout,
                          url,
+                         watch_uuid
                          ):
         import re
         self.delete_browser_steps_screenshots()
