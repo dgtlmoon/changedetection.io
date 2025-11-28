@@ -187,6 +187,10 @@ def main():
         logger.critical(str(e))
         return
 
+    # Inject datastore into plugins that need access to settings
+    from changedetectionio.pluggy_interface import inject_datastore_into_plugins
+    inject_datastore_into_plugins(datastore)
+
     if default_url:
         datastore.add_watch(url = default_url)
 

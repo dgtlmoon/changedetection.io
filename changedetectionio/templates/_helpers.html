@@ -186,10 +186,6 @@
     <br>
 {% endmacro %}
 
-{% macro only_playwright_type_watches_warning() %}
-    <p><strong>Sorry, this functionality only works with Playwright/Chrome enabled watches.<br>You need to <a href="#request">Set the fetch method to Playwright/Chrome mode and resave</a> and have the SockpuppetBrowser/Playwright or Selenium enabled.</strong></p><br>
-{% endmacro %}
-
 {% macro render_time_schedule_form(form, available_timezones, timezone_default_config) %}
     <style>
     .day-schedule *, .day-schedule select {

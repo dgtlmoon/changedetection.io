@@ -98,6 +98,20 @@ class fetcher(Fetcher):
 
     proxy = None
 
+    # Capability flags
+    supports_browser_steps = True
+    supports_screenshots = True
+    supports_xpath_element_data = True
+
+    @classmethod
+    def get_status_icon_data(cls):
+        """Return Chrome browser icon data for Puppeteer fetcher."""
+        return {
+            'filename': 'google-chrome-icon.png',
+            'alt': 'Using a Chrome browser',
+            'title': 'Using a Chrome browser'
+        }
+
     def __init__(self, proxy_override=None, custom_browser_connection_url=None):
         super().__init__()
 
@@ -155,6 +169,7 @@ class fetcher(Fetcher):
                          request_method,
                          timeout,
                          url,
+                         watch_uuid
                          ):
         import re
         self.delete_browser_steps_screenshots()
@@ -362,6 +377,7 @@ class fetcher(Fetcher):
                   request_method=None,
                   timeout=None,
                   url=None,
+                  watch_uuid=None,
                   ):
 
         #@todo make update_worker async which could run any of these content_fetchers within memory and time constraints
@@ -380,7 +396,21 @@ class fetcher(Fetcher):
                 request_method=request_method,
                 timeout=timeout,
                 url=url,
+                watch_uuid=watch_uuid,
             ), timeout=max_time
             )
         except asyncio.TimeoutError:
             raise (BrowserFetchTimedOut(msg=f"Browser connected but was unable to process the page in {max_time} seconds."))
+
+
+# Plugin registration for built-in fetcher
+class PuppeteerFetcherPlugin:
+    """Plugin class that registers the Puppeteer fetcher as a built-in plugin."""
+
+    def register_content_fetcher(self):
+        """Register the Puppeteer fetcher"""
+        return ('html_webdriver', fetcher)
+
+
+# Create module-level instance for plugin registration
+puppeteer_plugin = PuppeteerFetcherPlugin()

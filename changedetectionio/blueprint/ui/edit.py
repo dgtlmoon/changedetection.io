@@ -223,19 +223,13 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
             watch = datastore.data['watching'].get(uuid)
 
-            # if system or watch is configured to need a chrome type browser
-            system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
-            watch_needs_selenium_or_playwright = False
-            if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver' or watch.get('fetch_backend', '').startswith('extra_browser_'):
-                watch_needs_selenium_or_playwright = True
-
-
             from zoneinfo import available_timezones
 
-            # Only works reliably with Playwright
-
             # Import the global plugin system
-            from changedetectionio.pluggy_interface import collect_ui_edit_stats_extras
+            from changedetectionio.pluggy_interface import collect_ui_edit_stats_extras, get_fetcher_capabilities
+
+            # Get fetcher capabilities instead of hardcoded logic
+            capabilities = get_fetcher_capabilities(watch, datastore)
             app_rss_token = datastore.data['settings']['application'].get('rss_access_token'),
             template_args = {
                 'available_processors': processors.available_processors(),
@@ -266,7 +260,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 'using_global_webdriver_wait': not default['webdriver_delay'],
                 'uuid': uuid,
                 'watch': watch,
-                'watch_needs_selenium_or_playwright': watch_needs_selenium_or_playwright,
+                'capabilities': capabilities
             }
 
             included_content = None

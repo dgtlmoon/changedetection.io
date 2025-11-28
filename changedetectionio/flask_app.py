@@ -81,6 +81,28 @@ if os.getenv('FLASK_SERVER_NAME'):
 # Disables caching of the templates
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.jinja_env.add_extension('jinja2.ext.loopcontrols')
+
+# Configure Jinja2 to search for templates in plugin directories
+def _configure_plugin_templates():
+    """Configure Jinja2 loader to include plugin template directories."""
+    from jinja2 import ChoiceLoader, FileSystemLoader
+    from changedetectionio.pluggy_interface import get_plugin_template_paths
+
+    # Get plugin template paths
+    plugin_template_paths = get_plugin_template_paths()
+
+    if plugin_template_paths:
+        # Create a ChoiceLoader that searches app templates first, then plugin templates
+        loaders = [app.jinja_loader]  # Keep the default app loader first
+        for path in plugin_template_paths:
+            loaders.append(FileSystemLoader(path))
+
+        app.jinja_loader = ChoiceLoader(loaders)
+        logger.info(f"Configured Jinja2 to search {len(plugin_template_paths)} plugin template directories")
+
+# Configure plugin templates (called after plugins are loaded)
+_configure_plugin_templates()
+
 csrf = CSRFProtect()
 csrf.init_app(app)
 notification_debug_log=[]
@@ -209,6 +231,55 @@ def _jinja2_filter_seconds_precise(timestamp):
         return 'Not yet'
 
     return format(int(time.time()-timestamp), ',d')
+
+@app.template_filter('fetcher_status_icons')
+def _jinja2_filter_fetcher_status_icons(fetcher_name):
+    """Get status icon HTML for a given fetcher.
+
+    This filter checks both built-in fetchers and plugin fetchers for status icons.
+
+    Args:
+        fetcher_name: The fetcher name (e.g., 'html_webdriver', 'html_js_zyte')
+
+    Returns:
+        str: HTML string containing status icon elements
+    """
+    from changedetectionio import content_fetchers
+    from changedetectionio.pluggy_interface import collect_fetcher_status_icons
+    from markupsafe import Markup
+    from flask import url_for
+
+    icon_data = None
+
+    # First check if it's a plugin fetcher (plugins have priority)
+    plugin_icon_data = collect_fetcher_status_icons(fetcher_name)
+    if plugin_icon_data:
+        icon_data = plugin_icon_data
+    # Check if it's a built-in fetcher
+    elif hasattr(content_fetchers, fetcher_name):
+        fetcher_class = getattr(content_fetchers, fetcher_name)
+        if hasattr(fetcher_class, 'get_status_icon_data'):
+            icon_data = fetcher_class.get_status_icon_data()
+
+    # Build HTML from icon data
+    if icon_data and isinstance(icon_data, dict):
+        # Use 'group' from icon_data if specified, otherwise default to 'images'
+        group = icon_data.get('group', 'images')
+
+        # Try to use url_for, but fall back to manual URL building if endpoint not registered yet
+        try:
+            icon_url = url_for('static_content', group=group, filename=icon_data['filename'])
+        except:
+            # Fallback: build URL manually respecting APPLICATION_ROOT
+            from flask import request
+            app_root = request.script_root if hasattr(request, 'script_root') else ''
+            icon_url = f"{app_root}/static/{group}/{icon_data['filename']}"
+
+        style_attr = f' style="{icon_data["style"]}"' if icon_data.get('style') else ''
+        html = f'<img class="status-icon" src="{icon_url}" alt="{icon_data["alt"]}" title="{icon_data["title"]}"{style_attr}>'
+        return Markup(html)
+
+    return ''
 
 # Import login_optionally_required from auth_decorator
 from changedetectionio.auth_decorator import login_optionally_required
@@ -487,6 +558,31 @@ def changedetection_app(config=None, datastore_o=None):
 
             except FileNotFoundError:
                 abort(404)
+
+        # Handle plugin group specially
+        if group == 'plugin':
+            # Serve files from plugin static directories
+            from changedetectionio.pluggy_interface import plugin_manager
+            import os as os_check
+
+            for plugin_name, plugin_obj in plugin_manager.list_name_plugin():
+                if hasattr(plugin_obj, 'plugin_static_path'):
+                    try:
+                        static_path = plugin_obj.plugin_static_path()
+                        if static_path and os_check.path.isdir(static_path):
+                            # Check if file exists in plugin's static directory
+                            plugin_file_path = os_check.path.join(static_path, filename)
+                            if os_check.path.isfile(plugin_file_path):
+                                # Found the file in a plugin
+                                response = make_response(send_from_directory(static_path, filename))
+                                response.headers['Cache-Control'] = 'max-age=3600, public'  # Cache for 1 hour
+                                return response
+                    except Exception as e:
+                        logger.debug(f"Error checking plugin {plugin_name} for static file: {e}")
+                        pass
+
+            # File not found in any plugin
+            abort(404)
 
         # These files should be in our subdirectory
         try:

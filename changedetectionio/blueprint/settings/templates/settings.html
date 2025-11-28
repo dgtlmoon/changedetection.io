@@ -27,6 +27,12 @@
             <li class="tab"><a href="#rss">RSS</a></li>
             <li class="tab"><a href="#timedate">Time &amp Date</a></li>
             <li class="tab"><a href="#proxies">CAPTCHA &amp; Proxies</a></li>
+            {% if plugin_tabs %}
+                {% for tab in plugin_tabs %}
+            <li class="tab"><a href="#plugin-{{ tab.plugin_id }}">{{ tab.tab_label }}</a></li>
+                {% endfor %}
+            {% endif %}
+            <li class="tab"><a href="#info">Info</a></li>
         </ul>
     </div>
     <div class="box-wrap inner">
@@ -352,7 +358,45 @@ nav
                     </p>
                     {{ render_fieldlist_with_inline_errors(form.requests.form.extra_browsers) }}
                 </div>
-            
+            </div>
+            {% if plugin_tabs %}
+                {% for tab in plugin_tabs %}
+            <div class="tab-pane-inner" id="plugin-{{ tab.plugin_id }}">
+                {% set plugin_form = plugin_forms[tab.plugin_id] %}
+                {% if tab.template_path %}
+                    {# Plugin provides custom template - include it directly (no separate form) #}
+                    {% include tab.template_path with context %}
+                {% else %}
+                    {# Default form rendering - fields only, no submit button #}
+                    <fieldset>
+                        {% for field in plugin_form %}
+                            {% if field.type != 'CSRFToken' and field.type != 'SubmitField' %}
+                        <div class="pure-control-group">
+                                {% if field.type == 'BooleanField' %}
+                            {{ render_checkbox_field(field) }}
+                                {% else %}
+                            {{ render_field(field) }}
+                                {% endif %}
+                        </div>
+                            {% endif %}
+                        {% endfor %}
+                    </fieldset>
+                {% endif %}
+            </div>
+                {% endfor %}
+            {% endif %}
+            <div class="tab-pane-inner" id="info">
+                <p><strong>Python version:</strong> {{ python_version }}</p>
+                <p><strong>Plugins active:</strong></p>
+                {% if active_plugins %}
+                <ul>
+                    {% for plugin in active_plugins %}
+                    <li><strong>{{ plugin.name }}</strong> - {{ plugin.description }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p>No plugins active</p>
+                {% endif %}
             </div>
             <div id="actions">
                 <div class="pure-control-group">

@@ -89,7 +89,7 @@
                 For now, Differences are performed on text, not graphically, only the latest screenshot is available.
             </div>
             <br>
-            {% if is_html_webdriver %}
+            {% if capabilities.supports_screenshots %}
                 {% if screenshot %}
                     <div class="snapshot-age">{{ watch.snapshot_screenshot_ctime|format_timestamp_timeago }}</div>
                     <img style="max-width: 80%" id="screenshot-img" alt="Current screenshot from most recent request">
@@ -97,7 +97,7 @@
                     No screenshot available just yet! Try rechecking the page.
                 {% endif %}
             {% else %}
-                <strong>Screenshot requires Playwright/WebDriver enabled</strong>
+                <strong>Screenshot requires a Content Fetcher ( Chrome, Zyte etc ) that supports screenshots.</strong>
             {% endif %}
         </div>
     </div>
