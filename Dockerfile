@@ -52,7 +52,7 @@ RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
   --prefer-binary \
   --cache-dir=/tmp/pip-cache \
   --target=/dependencies \
-  playwright~=1.48.0 \
+  playwright~=1.56.0 \
   || echo "WARN: Failed to install Playwright. The application can still run, but the Playwright option will be disabled."
 
 
