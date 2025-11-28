@@ -250,8 +250,10 @@ Math: {{ 1 + 1 }}") }}
                     <strong>Visual Selector data is not ready, watch needs to be checked atleast once.</strong>
                 {% endif %}
             {% else %}
-                {# "This functionality needs chrome.." #}
-                {{ only_playwright_type_watches_warning() }}
+                <p>
+                    <strong>Sorry, this functionality only works with fetchers that support interactive Javascript (so far only Playwright based fetchers)<br>
+                    You need to <a href="#request">Set the fetch method</a> to one that supports interactive Javascript.</strong>
+                </p>
             {% endif %}
             </div>
 
@@ -401,8 +403,10 @@ Math: {{ 1 + 1 }}") }}
                                 <strong>Visual Selector data is not ready, watch needs to be checked atleast once.</strong>
                             {%  endif %}
                     {% else %}
-                        {# "This functionality needs chrome.." #}
-                        {{ only_playwright_type_watches_warning() }}
+                        <p>
+                            <strong>Sorry, this functionality only works with fetchers that support Javascript and screenshots (such as playwright etc).<br>
+                            You need to <a href="#request">Set the fetch method</a> to one that supports Javascript and screenshots.</strong>
+                        </p>
                     {% endif %}
                     </div>
                 </fieldset>
