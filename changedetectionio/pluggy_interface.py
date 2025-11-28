@@ -85,6 +85,26 @@ class ChangeDetectionSpec:
         """
         pass
 
+    @hookspec
+    def plugin_settings_tab(self):
+        """Return settings tab information for this plugin.
+
+        This hook allows plugins to add their own settings tab to the settings page.
+        Settings will be saved to a separate JSON file in the datastore directory.
+
+        Returns:
+            dict or None: Dictionary with settings tab information:
+                {
+                    'plugin_id': str,           # Unique identifier (e.g., 'zyte_fetcher')
+                    'tab_label': str,           # Display name for tab (e.g., 'Zyte Fetcher')
+                    'form_class': Form,         # WTForms Form class for the settings
+                    'template_path': str,       # Optional: path to Jinja2 template (relative to plugin)
+                                                # If not provided, a default form renderer will be used
+                }
+                Or None if this plugin doesn't provide settings
+        """
+        pass
+
 
 # Set up Plugin Manager
 plugin_manager = pluggy.PluginManager(PLUGIN_NAMESPACE)
@@ -323,3 +343,113 @@ def get_fetcher_capabilities(watch, datastore):
         'supports_screenshots': False,
         'supports_xpath_element_data': False
     }
+
+
+def get_plugin_settings_tabs():
+    """Get all plugin settings tabs.
+
+    Returns:
+        list: List of dictionaries with plugin settings tab information:
+            [
+                {
+                    'plugin_id': str,
+                    'tab_label': str,
+                    'form_class': Form,
+                    'description': str
+                },
+                ...
+            ]
+    """
+    tabs = []
+    results = plugin_manager.hook.plugin_settings_tab()
+
+    for result in results:
+        if result and isinstance(result, dict):
+            # Validate required fields
+            if 'plugin_id' in result and 'tab_label' in result and 'form_class' in result:
+                tabs.append(result)
+            else:
+                logger.warning(f"Invalid plugin settings tab spec: {result}")
+
+    return tabs
+
+
+def load_plugin_settings(datastore_path, plugin_id):
+    """Load settings for a specific plugin from JSON file.
+
+    Args:
+        datastore_path: Path to the datastore directory
+        plugin_id: Unique identifier for the plugin (e.g., 'zyte_fetcher')
+
+    Returns:
+        dict: Plugin settings, or empty dict if file doesn't exist
+    """
+    import json
+    settings_file = os.path.join(datastore_path, f"{plugin_id}.json")
+
+    if not os.path.exists(settings_file):
+        return {}
+
+    try:
+        with open(settings_file, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        logger.error(f"Failed to load settings for plugin '{plugin_id}': {e}")
+        return {}
+
+
+def save_plugin_settings(datastore_path, plugin_id, settings):
+    """Save settings for a specific plugin to JSON file.
+
+    Args:
+        datastore_path: Path to the datastore directory
+        plugin_id: Unique identifier for the plugin (e.g., 'zyte_fetcher')
+        settings: Dictionary of settings to save
+
+    Returns:
+        bool: True if save was successful, False otherwise
+    """
+    import json
+    settings_file = os.path.join(datastore_path, f"{plugin_id}.json")
+
+    try:
+        with open(settings_file, 'w', encoding='utf-8') as f:
+            json.dump(settings, f, indent=2, ensure_ascii=False)
+        logger.info(f"Saved settings for plugin '{plugin_id}' to {settings_file}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to save settings for plugin '{plugin_id}': {e}")
+        return False
+
+
+def get_plugin_template_paths():
+    """Get list of plugin template directories for Jinja2 loader.
+
+    Returns:
+        list: List of absolute paths to plugin template directories
+    """
+    template_paths = []
+
+    # Get all registered plugins
+    for plugin_name, plugin_obj in plugin_manager.list_name_plugin():
+        # Check if plugin has a templates directory
+        if hasattr(plugin_obj, '__file__'):
+            plugin_file = plugin_obj.__file__
+        elif hasattr(plugin_obj, '__module__'):
+            # Get the module file
+            module = sys.modules.get(plugin_obj.__module__)
+            if module and hasattr(module, '__file__'):
+                plugin_file = module.__file__
+            else:
+                continue
+        else:
+            continue
+
+        if plugin_file:
+            plugin_dir = os.path.dirname(os.path.abspath(plugin_file))
+            templates_dir = os.path.join(plugin_dir, 'templates')
+            if os.path.isdir(templates_dir):
+                template_paths.append(templates_dir)
+                logger.debug(f"Added plugin template path: {templates_dir}")
+
+    return template_paths

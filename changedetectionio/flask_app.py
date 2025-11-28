@@ -81,6 +81,28 @@ if os.getenv('FLASK_SERVER_NAME'):
 # Disables caching of the templates
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.jinja_env.add_extension('jinja2.ext.loopcontrols')
+
+# Configure Jinja2 to search for templates in plugin directories
+def _configure_plugin_templates():
+    """Configure Jinja2 loader to include plugin template directories."""
+    from jinja2 import ChoiceLoader, FileSystemLoader
+    from changedetectionio.pluggy_interface import get_plugin_template_paths
+
+    # Get plugin template paths
+    plugin_template_paths = get_plugin_template_paths()
+
+    if plugin_template_paths:
+        # Create a ChoiceLoader that searches app templates first, then plugin templates
+        loaders = [app.jinja_loader]  # Keep the default app loader first
+        for path in plugin_template_paths:
+            loaders.append(FileSystemLoader(path))
+
+        app.jinja_loader = ChoiceLoader(loaders)
+        logger.info(f"Configured Jinja2 to search {len(plugin_template_paths)} plugin template directories")
+
+# Configure plugin templates (called after plugins are loaded)
+_configure_plugin_templates()
+
 csrf = CSRFProtect()
 csrf.init_app(app)
 notification_debug_log=[]
