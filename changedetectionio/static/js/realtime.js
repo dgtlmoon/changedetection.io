@@ -101,6 +101,11 @@ $(document).ready(function () {
                 }
             });
 
+            socket.on('watch_small_status_comment', function (data) {
+                console.log(`Socket.IO: Operation  watch_small_status_comment'${data.uuid}' status ${data.status}`);
+                $('tr[data-watch-uuid="' + data.uuid + '"] td.last-checked .status-text').html("&nbsp;").text(data.status);
+            });
+
             socket.on('notification_event', function (data) {
                 console.log(`Stub handler for notification_event ${data.watch_uuid}`)
             });

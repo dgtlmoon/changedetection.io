@@ -23,6 +23,7 @@ class difference_detection_processor():
     def __init__(self, *args, datastore, watch_uuid, **kwargs):
         super().__init__(*args, **kwargs)
         self.datastore = datastore
+        self.watch_uuid = watch_uuid
         self.watch = deepcopy(self.datastore.data['watching'].get(watch_uuid))
         # Generic fetcher that should be extended (requests, playwright etc)
         self.fetcher = Fetcher()
@@ -160,6 +161,7 @@ class difference_detection_processor():
             request_method=request_method,
             timeout=timeout,
             url=url,
+            watch_uuid=self.watch_uuid,
        )
 
         #@todo .quit here could go on close object, so we can run JS if change-detected

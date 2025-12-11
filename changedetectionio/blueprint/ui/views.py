@@ -57,22 +57,26 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             except Exception as e:
                 content.append({'line': f"File doesnt exist or unable to read timestamp {timestamp}", 'classes': ''})
 
+        from changedetectionio.pluggy_interface import  get_fetcher_capabilities
+        capabilities = get_fetcher_capabilities(watch, datastore)
+
         output = render_template("preview.html",
+                                 capabilities=capabilities,
                                  content=content,
+                                 current_diff_url=watch['url'],
                                  current_version=timestamp,
-                                 history_n=watch.history_n,
                                  extra_stylesheets=extra_stylesheets,
                                  extra_title=f" - Diff - {watch.label} @ {timestamp}",
-                                 triggered_line_numbers=triggered_line_numbers,
-                                 current_diff_url=watch['url'],
-                                 screenshot=watch.get_screenshot(),
-                                 watch=watch,
-                                 uuid=uuid,
+                                 history_n=watch.history_n,
                                  is_html_webdriver=is_html_webdriver,
                                  last_error=watch['last_error'],
-                                 last_error_text=watch.get_error_text(),
                                  last_error_screenshot=watch.get_error_snapshot(),
-                                 versions=versions
+                                 last_error_text=watch.get_error_text(),
+                                 screenshot=watch.get_screenshot(),
+                                 triggered_line_numbers=triggered_line_numbers,
+                                 uuid=uuid,
+                                 versions=versions,
+                                 watch=watch,
                                 )
 
         return output
@@ -174,29 +178,31 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             password_enabled_and_share_is_off = not datastore.data['settings']['application'].get('shared_diff_access')
 
         datastore.set_last_viewed(uuid, time.time())
-
+        from changedetectionio.pluggy_interface import get_fetcher_capabilities
+        capabilities = get_fetcher_capabilities(watch, datastore)
         return render_template("diff.html",
-                                 current_diff_url=watch['url'],
-                                 from_version=str(from_version),
-                                 to_version=str(to_version),
-                                 extra_stylesheets=extra_stylesheets,
-                                 extra_title=f" - Diff - {watch.label}",
-                                 extract_form=extract_form,
-                                 is_html_webdriver=is_html_webdriver,
-                                 last_error=watch['last_error'],
-                                 last_error_screenshot=watch.get_error_snapshot(),
-                                 last_error_text=watch.get_error_text(),
-                                 left_sticky=True,
-                                 newest=to_version_file_contents,
-                                 newest_version_timestamp=dates[-1],
-                                 password_enabled_and_share_is_off=password_enabled_and_share_is_off,
-                                 from_version_file_contents=from_version_file_contents,
-                                 to_version_file_contents=to_version_file_contents,
-                                 screenshot=screenshot_url,
-                                 uuid=uuid,
-                                 versions=dates, # All except current/last
-                                 watch_a=watch
-                                 )
+                               capabilities=capabilities,
+                               current_diff_url=watch['url'],
+                               extra_stylesheets=extra_stylesheets,
+                               extra_title=f" - Diff - {watch.label}",
+                               extract_form=extract_form,
+                               from_version=str(from_version),
+                               from_version_file_contents=from_version_file_contents,
+                               is_html_webdriver=is_html_webdriver,
+                               last_error=watch['last_error'],
+                               last_error_screenshot=watch.get_error_snapshot(),
+                               last_error_text=watch.get_error_text(),
+                               left_sticky=True,
+                               newest=to_version_file_contents,
+                               newest_version_timestamp=dates[-1],
+                               password_enabled_and_share_is_off=password_enabled_and_share_is_off,
+                               screenshot=screenshot_url,
+                               to_version=str(to_version),
+                               to_version_file_contents=to_version_file_contents,
+                               uuid=uuid,
+                               versions=dates,  # All except current/last
+                               watch_a=watch
+                               )
 
     @views_blueprint.route("/diff/<string:uuid>", methods=['GET'])
     @login_optionally_required
