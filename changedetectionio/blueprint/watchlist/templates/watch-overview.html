@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             {% endif %}
                            <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">&nbsp;</a>
                         </span>
-                            <div class="error-text" style="display:none;">{{ watch.compile_error_texts(has_proxies=datastore.proxy_list) }}</div>
+                            <div class="error-text" style="display:none;">{{ watch.compile_error_texts(has_proxies=datastore.proxy_list)|safe }}</div>
                             {%- if watch['processor'] == 'text_json_diff'  -%}
                                 {%- if watch['has_ldjson_price_data'] and not watch['track_ldjson_price_data']  -%}
                                 <div class="ldjson-price-track-offer">Switch to Restock & Price watch mode? <a href="{{url_for('price_data_follower.accept', uuid=watch.uuid)}}" class="pure-button button-xsmall">Yes</a> <a href="{{url_for('price_data_follower.reject', uuid=watch.uuid)}}" class="">No</a></div>
