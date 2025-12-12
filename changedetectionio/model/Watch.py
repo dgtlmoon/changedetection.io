@@ -826,6 +826,7 @@ class model(watch_base):
         # has app+request context, we can use url_for()
         if has_app_context:
             if last_error:
+                last_error = safe_jinja.render_fully_escaped(last_error)
                 if '403' in last_error:
                     if has_proxies:
                         output.append(str(Markup(f"{last_error} - <a href=\"{url_for('settings.settings_page', uuid=self.get('uuid'))}\">Try other proxies/location</a>&nbsp;'")))
@@ -835,7 +836,9 @@ class model(watch_base):
                     output.append(str(Markup(last_error)))
 
             if self.get('last_notification_error'):
-                output.append(str(Markup(f"<div class=\"notification-error\"><a href=\"{url_for('settings.notification_logs')}\">{ self.get('last_notification_error') }</a></div>")))
+                txt = safe_jinja.render_fully_escaped(self.get('last_notification_error'))
+                result = f'<div class="notification-error"><a href="{url_for("settings.notification_logs")}">{txt}</a></div>'
+                output.append(result)
 
         else:
             # Lo_Fi version - no app context, cant rely on Jinja2 Markup
