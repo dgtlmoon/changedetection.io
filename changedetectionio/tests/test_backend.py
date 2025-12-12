@@ -45,7 +45,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
     # Check HTML conversion detected and workd
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
     # Check this class does not appear (that we didnt see the actual source)
@@ -82,7 +82,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
 #
     # Following the 'diff' link, it should no longer display as 'has-unread-changes' even after we recheck it a few times
-    res = client.get(url_for("ui.ui_views.diff_history_page", uuid=uuid))
+    res = client.get(url_for("ui.ui_diff.diff_history_page", uuid=uuid))
     assert b'selected=""' in res.data, "Confirm diff history page loaded"
 
     assert b'Which is across multiple lines' in res.data
@@ -91,7 +91,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
     # Check the [preview] pulls the right one
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
     assert b'which has this one new line' in res.data
@@ -273,7 +273,7 @@ got it\r\n
 
     ### check the front end
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
     assert b"some random text that should be split by line\n" in res.data
@@ -333,7 +333,7 @@ got it\r\n
 
     ### check the front end
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -378,7 +378,7 @@ def test_plaintext_even_if_xml_content(client, live_server, measure_memory_usage
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -405,7 +405,7 @@ def test_plaintext_even_if_xml_content_and_can_apply_filters(client, live_server
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 

@@ -131,7 +131,7 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
     assert b'/test-endpoint' in res.data
 
 
-    res = client.get(url_for("ui.ui_views.preview_page", uuid="first"))
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid="first"))
     # nothing ignored because none of the text matched
     assert b'ignored_line_numbers = []' in res.data
 
@@ -158,7 +158,7 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' in res.data
 
-    res = client.get(url_for("ui.ui_views.preview_page", uuid="first"))
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid="first"))
 
     # SHOULD BE be in the preview, it was added in set_modified_original_ignore_response()
     # and we have "new ignore stuff" in ignore_text

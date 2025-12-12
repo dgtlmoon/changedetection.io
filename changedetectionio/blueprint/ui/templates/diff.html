@@ -21,7 +21,7 @@
 
 
 <div id="settings">
-    <form class="pure-form " action="{{ url_for("ui.ui_views.diff_history_page", uuid=uuid) }}" method="GET" id="diff-form">
+    <form class="pure-form " action="{{ url_for("ui.ui_diff.diff_history_page", uuid=uuid) }}" method="GET" id="diff-form">
         <fieldset class="diff-fieldset">
             {% if versions|length >= 1 %}
                 <span style="white-space: nowrap;">
@@ -125,7 +125,7 @@
             <div{% if cell.class %} class="{{ cell.class }}"{% endif %}></div>
             {%- endfor -%}
         </div>
-        <div class="snapshot-age">{{ from_version|format_timestamp_timeago }} {%- if note -%}<span class="note"><strong>{{ note }}</strong></span>{%- endif -%} <a href="{{ url_for("ui.ui_views.preview_page", uuid=uuid) }}">Goto single snapshot</a></div>
+        <div class="snapshot-age">{{ from_version|format_timestamp_timeago }} {%- if note -%}<span class="note"><strong>{{ note }}</strong></span>{%- endif -%} <a href="{{ url_for("ui.ui_preview.preview_page", uuid=uuid) }}">Goto single snapshot</a></div>
         <pre id="difference" style="border-left: 2px solid #ddd;">{{ content| diff_unescape_difference_spans }}</pre>
     </div>
 
@@ -146,7 +146,7 @@
      </div>
     <div class="tab-pane-inner" id="extract">
         <form id="extract-data-form" class="pure-form pure-form-stacked edit-form"
-              action="{{ url_for('ui.ui_views.diff_history_page', uuid=uuid) }}#extract"
+              action="{{ url_for('ui.ui_diff.diff_history_page', uuid=uuid) }}#extract"
               method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 

@@ -6,6 +6,7 @@ from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.blueprint.ui.edit import construct_blueprint as construct_edit_blueprint
 from changedetectionio.blueprint.ui.notification import construct_blueprint as construct_notification_blueprint
 from changedetectionio.blueprint.ui.views import construct_blueprint as construct_views_blueprint
+from changedetectionio.blueprint.ui import diff, preview
 
 def _handle_operations(op, uuids, datastore, worker_handler, update_q, queuedWatchMetaData, watch_check_update, extra_data=None, emit_flash=True):
     from flask import request, flash
@@ -120,6 +121,13 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
     # Register the views blueprint
     views_blueprint = construct_views_blueprint(datastore, update_q, queuedWatchMetaData, watch_check_update)
     ui_blueprint.register_blueprint(views_blueprint)
+
+    # Register diff and preview blueprints
+    diff_blueprint = diff.construct_blueprint(datastore)
+    ui_blueprint.register_blueprint(diff_blueprint)
+
+    preview_blueprint = preview.construct_blueprint(datastore)
+    ui_blueprint.register_blueprint(preview_blueprint)
 
     # Import the login decorator
     from changedetectionio.auth_decorator import login_optionally_required

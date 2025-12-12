@@ -49,7 +49,7 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         assert b"Login" in res.data
 
         # The diff page should return something valid when logged out
-        res = c.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
+        res = c.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
         assert b'Random content' in res.data
 
         # access to assets should work (check_authentication)
@@ -186,5 +186,5 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         assert res.status_code == 403
 
         # The diff page should return something valid when logged out
-        res = c.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
+        res = c.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
         assert b'Random content' not in res.data

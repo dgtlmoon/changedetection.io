@@ -145,7 +145,7 @@ def test_check_block_changedetection_text_NOT_present(client, live_server, measu
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid=uuid)
+        url_for("ui.ui_preview.preview_page", uuid=uuid)
     )
     assert b'blocked_line_numbers = [10]' in res.data
 

@@ -101,7 +101,7 @@ def _runner_test_various_file_slash(client, file_uri):
         if file_uri.startswith('file:///'):
             # This one should be the full qualified path to the file and should get the contents of this file
             res = client.get(
-                url_for("ui.ui_views.preview_page", uuid="first"),
+                url_for("ui.ui_preview.preview_page", uuid="first"),
                 follow_redirects=True
             )
             assert b'_runner_test_various_file_slash' in res.data
@@ -154,9 +154,9 @@ def test_xss(client, live_server, measure_memory_usage, datastore_path):
     live_server.app.config['DATASTORE'].data['watching'][uuid]['url']=XSS_HACK
 
 
-    res = client.get(url_for("ui.ui_views.preview_page", uuid=uuid))
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid=uuid))
     assert XSS_HACK.encode('utf-8') not in res.data and res.status_code == 200
-    client.get(url_for("ui.ui_views.diff_history_page", uuid=uuid))
+    client.get(url_for("ui.ui_diff.diff_history_page", uuid=uuid))
     assert XSS_HACK.encode('utf-8') not in res.data and res.status_code == 200
     res = client.get(url_for("watchlist.index"))
     assert XSS_HACK.encode('utf-8') not in res.data and res.status_code == 200
