@@ -114,12 +114,17 @@ $(document).ready(function () {
     // most iOS/Android browsers already show a dialog when you select
     // text (often with a Share option) we'll skip that
     if (article) {
-        article.addEventListener('mouseup', dragTextHandler, false);
         article.addEventListener('mousedown', clean, false);
     }
 
+    // Because they might 'mouse up' outside the article but on the page
+    const d_page = $(".difference-page")[0]
+    if (d_page ) {
+        d_page.addEventListener('mouseup', dragTextHandler, false);
+    }
 
-    $('#highlightSnippetActions button').bind('click', function (e) {
+
+    $('#highlightSnippetActions a').bind('click', function (e) {
         if (!window.getSelection().toString().trim().length) {
             alert('Oops no text selected!');
             return;
@@ -137,8 +142,9 @@ $(document).ready(function () {
             }
         }).done(function (data) {
             // @todo some feedback
-            $("#highlightSnippet").html(data);
+            alert("'Ignore' Filters for this watch were updated.")
             clean();
+
         }).fail(function (data) {
             console.log(data);
             alert('There was an error communicating with the server.');
