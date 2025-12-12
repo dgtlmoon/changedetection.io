@@ -8,7 +8,6 @@ a side-by-side or unified diff view with syntax highlighting and change markers.
 import os
 import time
 from loguru import logger
-from markupsafe import Markup
 
 from changedetectionio import diff, strtobool
 from changedetectionio.diff import (
@@ -19,17 +18,6 @@ from changedetectionio.diff import (
     CHANGED_INTO_PLACEMARKER_OPEN, CHANGED_INTO_PLACEMARKER_CLOSED
 )
 from changedetectionio.notification.handler import apply_html_color_to_body
-
-
-# Diff display preferences configuration - single source of truth
-DIFF_PREFERENCES_CONFIG = {
-    'changesOnly': {'default': True, 'type': 'bool'},
-    'ignoreWhitespace': {'default': False, 'type': 'bool'},
-    'removed': {'default': True, 'type': 'bool'},
-    'added': {'default': True, 'type': 'bool'},
-    'replaced': {'default': True, 'type': 'bool'},
-    'type': {'default': 'diffLines', 'type': 'value'},
-}
 
 
 def build_diff_cell_visualizer(content, resolution=100):
@@ -101,6 +89,15 @@ def build_diff_cell_visualizer(content, resolution=100):
 
     return cells
 
+# Diff display preferences configuration - single source of truth
+DIFF_PREFERENCES_CONFIG = {
+    'changesOnly': {'default': True, 'type': 'bool'},
+    'ignoreWhitespace': {'default': False, 'type': 'bool'},
+    'removed': {'default': True, 'type': 'bool'},
+    'added': {'default': True, 'type': 'bool'},
+    'replaced': {'default': True, 'type': 'bool'},
+    'type': {'default': 'diffLines', 'type': 'value'},
+}
 
 def render(watch, datastore, request, url_for, render_template, flash, redirect, extract_form=None):
     """
