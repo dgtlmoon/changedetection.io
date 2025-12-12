@@ -297,7 +297,7 @@ class ContentProcessor:
                     xpath_filter=filter_rule.replace('xpath:', ''),
                     html_content=content,
                     append_pretty_line_formatting=not self.watch.is_source_type_url,
-                    is_rss=stream_content_type.is_rss
+                    is_xml=stream_content_type.is_rss or stream_content_type.is_xml
                 )
 
             # XPath1 filters (first match only)
@@ -306,7 +306,7 @@ class ContentProcessor:
                     xpath_filter=filter_rule.replace('xpath1:', ''),
                     html_content=content,
                     append_pretty_line_formatting=not self.watch.is_source_type_url,
-                    is_rss=stream_content_type.is_rss
+                    is_xml=stream_content_type.is_rss or stream_content_type.is_xml
                 )
 
             # JSON filters
