@@ -102,12 +102,14 @@ def process_extraction(watch, datastore, request, url_for, make_response, send_f
 
     if not extract_form.validate():
         flash("An error occurred, please see below.", "error")
+        # render_template needs to be imported from Flask for this to work
+        from flask import render_template as flask_render_template
         return render_form(
             watch=watch,
             datastore=datastore,
             request=request,
             url_for=url_for,
-            render_template=lambda *args, **kwargs: render_template(*args, **kwargs),
+            render_template=flask_render_template,
             flash=flash,
             redirect=redirect,
             extract_form=extract_form
