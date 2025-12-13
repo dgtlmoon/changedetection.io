@@ -66,74 +66,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         return Markup(result)
 
-    @diff_blueprint.route("/diff/<string:uuid>", methods=['POST'])
-    @login_optionally_required
-    def diff_history_page_build_report(uuid):
-        from changedetectionio import forms
-
-        # More for testing, possible to return the first/only
-        if uuid == 'first':
-            uuid = list(datastore.data['watching'].keys()).pop()
-
-        try:
-            watch = datastore.data['watching'][uuid]
-        except KeyError:
-            flash("No history found for the specified link, bad link?", "error")
-            return redirect(url_for('watchlist.index'))
-
-        # For submission of requesting an extract
-        extract_form = forms.extractDataForm(formdata=request.form,
-                                             data={'extract_regex': request.form.get('extract_regex', '')}
-                                             )
-        if not extract_form.validate():
-            flash("An error occurred, please see below.", "error")
-            # Use processor-specific render with the error form
-            processor_name = watch.get('processor', 'text_json_diff')
-            try:
-                processor_module = importlib.import_module(f'changedetectionio.processors.{processor_name}.difference')
-                if hasattr(processor_module, 'render'):
-                    return processor_module.render(
-                        watch=watch,
-                        datastore=datastore,
-                        request=request,
-                        url_for=url_for,
-                        render_template=render_template,
-                        flash=flash,
-                        redirect=redirect,
-                        extract_form=extract_form
-                    )
-            except (ImportError, ModuleNotFoundError):
-                pass
-            # Fallback to text_json_diff
-            from changedetectionio.processors.text_json_diff.difference import render as default_render
-            return default_render(
-                watch=watch,
-                datastore=datastore,
-                request=request,
-                url_for=url_for,
-                render_template=render_template,
-                flash=flash,
-                redirect=redirect,
-                extract_form=extract_form
-            )
-
-        else:
-            extract_regex = request.form.get('extract_regex', '').strip()
-            output = watch.extract_regex_from_all_history(extract_regex)
-            if output:
-                watch_dir = os.path.join(datastore.datastore_path, uuid)
-                response = make_response(send_from_directory(directory=watch_dir, path=output, as_attachment=True))
-                response.headers['Content-type'] = 'text/csv'
-                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-                response.headers['Pragma'] = 'no-cache'
-                response.headers['Expires'] = "0"
-                return response
-
-            flash('No matches found while scanning all of the watch history for that RegEx.', 'error')
-        return redirect(url_for('ui.ui_diff.diff_history_page', uuid=uuid) + '#extract')
-
     @diff_blueprint.route("/diff/<string:uuid>", methods=['GET'])
-    @diff_blueprint.route("/diff/<string:uuid>/default", methods=['GET'])
     @login_optionally_required
     def diff_history_page(uuid):
         """
@@ -189,6 +122,120 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             request=request,
             url_for=url_for,
             render_template=render_template,
+            flash=flash,
+            redirect=redirect
+        )
+
+    @diff_blueprint.route("/diff/<string:uuid>/extract", methods=['GET'])
+    @login_optionally_required
+    def diff_history_page_extract_GET(uuid):
+        """
+        Render the data extraction form for a watch.
+
+        This route is processor-aware: it delegates to the processor's
+        extract.py module, allowing different processor types to provide
+        custom extraction interfaces.
+
+        Each processor implements processors/{type}/extract.py::render_form()
+        If a processor doesn't have an extract module, falls back to text_json_diff.
+        """
+        # More for testing, possible to return the first/only
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
+
+        try:
+            watch = datastore.data['watching'][uuid]
+        except KeyError:
+            flash("No history found for the specified link, bad link?", "error")
+            return redirect(url_for('watchlist.index'))
+
+        # Get the processor type for this watch
+        processor_name = watch.get('processor', 'text_json_diff')
+
+        try:
+            # Try to import the processor's extract module
+            processor_module = importlib.import_module(f'changedetectionio.processors.{processor_name}.extract')
+
+            # Call the processor's render_form() function
+            if hasattr(processor_module, 'render_form'):
+                return processor_module.render_form(
+                    watch=watch,
+                    datastore=datastore,
+                    request=request,
+                    url_for=url_for,
+                    render_template=render_template,
+                    flash=flash,
+                    redirect=redirect
+                )
+        except (ImportError, ModuleNotFoundError) as e:
+            logger.warning(f"Processor {processor_name} does not have an extract module, falling back to base extractor: {e}")
+
+        # Fallback: if processor doesn't have extract module, use base processors.extract as default
+        from changedetectionio.processors.extract import render_form as default_render_form
+        return default_render_form(
+            watch=watch,
+            datastore=datastore,
+            request=request,
+            url_for=url_for,
+            render_template=render_template,
+            flash=flash,
+            redirect=redirect
+        )
+
+    @diff_blueprint.route("/diff/<string:uuid>/extract", methods=['POST'])
+    @login_optionally_required
+    def diff_history_page_extract_POST(uuid):
+        """
+        Process the data extraction request.
+
+        This route is processor-aware: it delegates to the processor's
+        extract.py module, allowing different processor types to provide
+        custom extraction logic.
+
+        Each processor implements processors/{type}/extract.py::process_extraction()
+        If a processor doesn't have an extract module, falls back to text_json_diff.
+        """
+        # More for testing, possible to return the first/only
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
+
+        try:
+            watch = datastore.data['watching'][uuid]
+        except KeyError:
+            flash("No history found for the specified link, bad link?", "error")
+            return redirect(url_for('watchlist.index'))
+
+        # Get the processor type for this watch
+        processor_name = watch.get('processor', 'text_json_diff')
+
+        try:
+            # Try to import the processor's extract module
+            processor_module = importlib.import_module(f'changedetectionio.processors.{processor_name}.extract')
+
+            # Call the processor's process_extraction() function
+            if hasattr(processor_module, 'process_extraction'):
+                return processor_module.process_extraction(
+                    watch=watch,
+                    datastore=datastore,
+                    request=request,
+                    url_for=url_for,
+                    make_response=make_response,
+                    send_from_directory=send_from_directory,
+                    flash=flash,
+                    redirect=redirect
+                )
+        except (ImportError, ModuleNotFoundError) as e:
+            logger.warning(f"Processor {processor_name} does not have an extract module, falling back to base extractor: {e}")
+
+        # Fallback: if processor doesn't have extract module, use base processors.extract as default
+        from changedetectionio.processors.extract import process_extraction as default_process_extraction
+        return default_process_extraction(
+            watch=watch,
+            datastore=datastore,
+            request=request,
+            url_for=url_for,
+            make_response=make_response,
+            send_from_directory=send_from_directory,
             flash=flash,
             redirect=redirect
         )

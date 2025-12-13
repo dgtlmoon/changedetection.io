@@ -41,7 +41,7 @@ def test_check_extract_text_from_diff(client, live_server, measure_memory_usage,
         wait_for_all_checks(client)
 
     res = client.post(
-        url_for("ui.ui_diff.diff_history_page", uuid="first"),
+        url_for("ui.ui_diff.diff_history_page_extract_POST", uuid="first"),
         data={"extract_regex": "Now it's ([0-9\.]+)",
               "extract_submit_button": "Extract as CSV"},
         follow_redirects=False

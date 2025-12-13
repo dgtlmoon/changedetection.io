@@ -81,6 +81,13 @@ if os.getenv('FLASK_SERVER_NAME'):
 # Disables caching of the templates
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.jinja_env.add_extension('jinja2.ext.loopcontrols')
+
+# Add processors/templates to the template search path for processor-specific templates
+from jinja2 import ChoiceLoader, FileSystemLoader
+app.jinja_loader = ChoiceLoader([
+    app.jinja_loader,  # Keep the default loader (templates/)
+    FileSystemLoader(os.path.join(os.path.dirname(__file__), 'processors', 'templates'))
+])
 csrf = CSRFProtect()
 csrf.init_app(app)
 notification_debug_log=[]
