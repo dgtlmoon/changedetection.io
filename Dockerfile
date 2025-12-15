@@ -35,17 +35,17 @@ ENV OPENSSL_INCLUDE_DIR="/usr/include/openssl"
 # Additional environment variables for cryptography Rust build
 ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
-# Install numpy first - required for building scikit-image on ARM
+# Install numpy to system Python first - required for building scikit-image on ARM
+# (scikit-image build process needs numpy headers from system Python, not from /dependencies)
 RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
   pip install \
   --prefer-binary \
   --extra-index-url https://www.piwheels.org/simple \
   --extra-index-url https://pypi.anaconda.org/ARM-software/simple \
   --cache-dir=/tmp/pip-cache \
-  --target=/dependencies \
   numpy
 
-# Now install remaining requirements (scikit-image needs numpy headers)
+# Now install all requirements to /dependencies (numpy will be installed again, which is fine)
 RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
   pip install \
   --prefer-binary \
