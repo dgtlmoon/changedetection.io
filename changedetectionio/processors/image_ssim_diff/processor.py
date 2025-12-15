@@ -148,18 +148,13 @@ class perform_site_check(difference_detection_processor):
 
         except Exception as e:
             logger.error(f"Failed to calculate SSIM: {e}")
-            # Ensure cleanup even on error
-            try:
-                if 'current_img' in locals():
-                    current_img.close()
-                if 'previous_img' in locals():
-                    previous_img.close()
-                if 'current_array' in locals():
-                    del current_array
-                if 'previous_array' in locals():
-                    del previous_array
-            except:
-                pass
+            # Ensure cleanup even on error - try to clean up any objects that were created
+            # (silently ignore if they don't exist)
+            for obj in ['current_img', 'previous_img']:
+                try:
+                    locals()[obj].close()
+                except (KeyError, NameError, AttributeError):
+                    pass
             raise ProcessorException(
                 message=f"SSIM calculation failed: {e}",
                 url=watch.get('url')

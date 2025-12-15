@@ -93,7 +93,7 @@
 </style>
 
 <div id="settings">
-    <a href="{{ url_for('ui.ui_edit.form_watch_edit', uuid=uuid, next='diff') }}" class="pure-button button-small edit-link">
+    <a href="{{ url_for('ui.ui_edit.edit_page', uuid=uuid, next='diff') }}" class="pure-button button-small edit-link">
         <img style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread_the_word.svg')}}" alt="Edit" />
         Edit Watch
     </a>

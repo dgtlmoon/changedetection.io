@@ -12,10 +12,19 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @preview_blueprint.route("/preview/<string:uuid>", methods=['GET'])
     @login_optionally_required
     def preview_page(uuid):
-        content = []
-        versions = []
-        timestamp = None
+        """
+        Render the preview page for a watch.
 
+        This route is processor-aware: it delegates rendering to the processor's
+        preview.py module, allowing different processor types to provide
+        custom visualizations:
+        - text_json_diff: Text preview with syntax highlighting
+        - image_ssim_diff: Image preview with proper rendering
+        - restock_diff: Could show latest price/stock data
+
+        Each processor implements processors/{type}/preview.py::render()
+        If a processor doesn't have a preview module, falls back to default text preview.
+        """
         # More for testing, possible to return the first/only
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
@@ -25,6 +34,33 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         except KeyError:
             flash("No history found for the specified link, bad link?", "error")
             return redirect(url_for('watchlist.index'))
+
+        # Get the processor type for this watch
+        processor_name = watch.get('processor', 'text_json_diff')
+
+        try:
+            # Try to import the processor's preview module
+            import importlib
+            processor_module = importlib.import_module(f'changedetectionio.processors.{processor_name}.preview')
+
+            # Call the processor's render() function
+            if hasattr(processor_module, 'render'):
+                return processor_module.render(
+                    watch=watch,
+                    datastore=datastore,
+                    request=request,
+                    url_for=url_for,
+                    render_template=render_template,
+                    flash=flash,
+                    redirect=redirect
+                )
+        except (ImportError, ModuleNotFoundError) as e:
+            logger.debug(f"Processor {processor_name} does not have a preview module, using default preview: {e}")
+
+        # Fallback: if processor doesn't have preview module, use default text preview
+        content = []
+        versions = []
+        timestamp = None
 
         system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
         extra_stylesheets = [url_for('static_content', group='styles', filename='diff.css')]

@@ -218,8 +218,9 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
     del diff_image_bytes
 
     # Render custom template
+    # Template path is namespaced to avoid conflicts with other processors
     return render_template(
-        'processors/image_ssim_diff/templates/diff.html',
+        'image_ssim_diff/diff.html',
         watch=watch,
         uuid=watch.get('uuid'),
         img_from_b64=img_from_b64,
