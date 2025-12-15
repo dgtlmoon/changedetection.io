@@ -45,8 +45,11 @@ RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
   --cache-dir=/tmp/pip-cache \
   numpy
 
-# Now install all requirements to /dependencies (numpy will be installed again, which is fine)
+# Now install all requirements to /dependencies
+# Set PYTHONPATH so scikit-image build process can import system numpy
+ARG PYTHON_VERSION
 RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
+  PYTHONPATH=/usr/local/lib/python${PYTHON_VERSION}/site-packages:$PYTHONPATH \
   pip install \
   --prefer-binary \
   --extra-index-url https://www.piwheels.org/simple \

@@ -33,6 +33,7 @@ class perform_site_check(difference_detection_processor):
                 url=watch.get('url')
             )
         self.screenshot = self.fetcher.screenshot
+        self.xpath_data = self.fetcher.xpath_data
 
         # Quick MD5 check - skip expensive SSIM if images are identical
         from changedetectionio.content_fetchers.exceptions import checksumFromPreviousCheckWasTheSame
@@ -68,6 +69,59 @@ class perform_site_check(difference_detection_processor):
                 url=watch.get('url')
             )
 
+        # Check if visual selector (include_filters) is set for region-based comparison
+        include_filters = watch.get('include_filters', [])
+        crop_region = None
+
+        if include_filters and len(include_filters) > 0:
+            # Get the first filter to use for cropping
+            first_filter = include_filters[0].strip()
+
+            if first_filter and self.xpath_data:
+                try:
+                    import json
+                    # xpath_data is JSON string from browser
+                    xpath_data_obj = json.loads(self.xpath_data) if isinstance(self.xpath_data, str) else self.xpath_data
+
+                    # Find the bounding box for the first filter
+                    for element in xpath_data_obj.get('size_pos', []):
+                        # Match the filter with the element's xpath
+                        if element.get('xpath') == first_filter and element.get('highlight_as_custom_filter'):
+                            # Found the element - extract crop coordinates
+                            left = element.get('left', 0)
+                            top = element.get('top', 0)
+                            width = element.get('width', 0)
+                            height = element.get('height', 0)
+
+                            # PIL crop uses (left, top, right, bottom)
+                            crop_region = (
+                                max(0, left),
+                                max(0, top),
+                                min(current_img.width, left + width),
+                                min(current_img.height, top + height)
+                            )
+
+                            logger.info(f"Visual selector enabled: cropping to region {crop_region} for filter: {first_filter}")
+                            break
+
+                except Exception as e:
+                    logger.warning(f"Failed to parse xpath_data for visual selector: {e}")
+
+        # Crop the current image if region was found
+        if crop_region:
+            try:
+                current_img = current_img.crop(crop_region)
+
+                # Update self.screenshot to the cropped version for history storage
+                crop_buffer = io.BytesIO()
+                current_img.save(crop_buffer, format='PNG')
+                self.screenshot = crop_buffer.getvalue()
+
+                logger.debug(f"Cropped screenshot to {current_img.size} (region: {crop_region})")
+            except Exception as e:
+                logger.error(f"Failed to crop screenshot: {e}")
+                crop_region = None  # Disable cropping on error
+
         # Check if this is the first check (no previous history)
         history_keys = list(watch.history.keys())
         if len(history_keys) == 0:
@@ -96,6 +150,15 @@ class perform_site_check(difference_detection_processor):
                 previous_screenshot_bytes = previous_screenshot_bytes.encode('utf-8')
 
             previous_img = Image.open(io.BytesIO(previous_screenshot_bytes))
+
+            # Crop previous image to the same region if visual selector is enabled
+            if crop_region:
+                try:
+                    previous_img = previous_img.crop(crop_region)
+                    logger.debug(f"Cropped previous screenshot to {previous_img.size}")
+                except Exception as e:
+                    logger.warning(f"Failed to crop previous screenshot: {e}")
+
         except Exception as e:
             logger.warning(f"Failed to load previous screenshot for comparison: {e}")
             # Clean up current image before returning
