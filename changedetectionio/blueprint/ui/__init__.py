@@ -257,7 +257,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
         if i == 0:
             flash("No watches available to recheck.")
 
-        return redirect(url_for('watchlist.index'))
+        return redirect(url_for('watchlist.index', **({'tag': tag} if tag else {})))
 
     @ui_blueprint.route("/form/checkbox-operations", methods=['POST'])
     @login_optionally_required

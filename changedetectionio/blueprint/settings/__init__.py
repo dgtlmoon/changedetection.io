@@ -17,6 +17,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @login_optionally_required
     def settings_page():
         from changedetectionio import forms
+        from changedetectionio.pluggy_interface import (
+            get_plugin_settings_tabs,
+            load_plugin_settings,
+            save_plugin_settings
+        )
+
 
         default = deepcopy(datastore.data['settings'])
         if datastore.proxy_list is not None:
@@ -102,6 +108,20 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     return redirect(url_for('watchlist.index'))
 
                 datastore.needs_write_urgent = True
+
+                # Also save plugin settings from the same form submission
+                plugin_tabs_list = get_plugin_settings_tabs()
+                for tab in plugin_tabs_list:
+                    plugin_id = tab['plugin_id']
+                    form_class = tab['form_class']
+
+                    # Instantiate plugin form with POST data
+                    plugin_form = form_class(formdata=request.form)
+
+                    # Save plugin settings (validation is optional for plugins)
+                    if plugin_form.data:
+                        save_plugin_settings(datastore.datastore_path, plugin_id, plugin_form.data)
+
                 flash("Settings updated.")
 
             else:
@@ -110,8 +130,30 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Convert to ISO 8601 format, all date/time relative events stored as UTC time
         utc_time = datetime.now(ZoneInfo("UTC")).isoformat()
 
+        # Get active plugins
+        from changedetectionio.pluggy_interface import get_active_plugins
+        import sys
+        active_plugins = get_active_plugins()
+        python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+
+        # Get plugin settings tabs and instantiate forms
+        plugin_tabs = get_plugin_settings_tabs()
+        plugin_forms = {}
+
+        for tab in plugin_tabs:
+            plugin_id = tab['plugin_id']
+            form_class = tab['form_class']
+
+            # Load existing settings
+            settings = load_plugin_settings(datastore.datastore_path, plugin_id)
+
+            # Instantiate the form with existing settings
+            plugin_forms[plugin_id] = form_class(data=settings)
+
         output = render_template("settings.html",
+                                active_plugins=active_plugins,
                                 api_key=datastore.data['settings']['application'].get('api_access_token'),
+                                python_version=python_version,
                                 available_timezones=sorted(available_timezones()),
                                 emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
                                 extra_notification_token_placeholder_info=datastore.get_unique_notification_token_placeholders_available(),
@@ -121,6 +163,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                 settings_application=datastore.data['settings']['application'],
                                 timezone_default_config=datastore.data['settings']['application'].get('scheduler_timezone_default'),
                                 utc_time=utc_time,
+                                plugin_tabs=plugin_tabs,
+                                plugin_forms=plugin_forms,
                                 )
 
         return output

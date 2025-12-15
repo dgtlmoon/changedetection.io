@@ -66,7 +66,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             except Exception as e:
                 content.append({'line': f"File doesnt exist or unable to read timestamp {timestamp}", 'classes': ''})
 
+        from changedetectionio.pluggy_interface import get_fetcher_capabilities
+        capabilities = get_fetcher_capabilities(watch, datastore)
+
         output = render_template("preview.html",
+                                 capabilities=capabilities,
                                  content=content,
                                  current_diff_url=watch['url'],
                                  current_version=timestamp,
