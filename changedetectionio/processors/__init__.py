@@ -169,6 +169,66 @@ class difference_detection_processor():
 
         # After init, call run_changedetection() which will do the actual change-detection
 
+    def get_extra_watch_config(self, filename):
+        """
+        Read processor-specific JSON config file from watch data directory.
+
+        Args:
+            filename: Name of JSON file (e.g., "visual_ssim_score.json")
+
+        Returns:
+            dict: Parsed JSON data, or empty dict if file doesn't exist
+        """
+        import json
+        import os
+
+        watch = self.datastore.data['watching'].get(self.watch_uuid)
+        watch_data_dir = watch.watch_data_dir
+
+        if not watch_data_dir:
+            return {}
+
+        filepath = os.path.join(watch_data_dir, filename)
+
+        if not os.path.isfile(filepath):
+            return {}
+
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError) as e:
+            logger.warning(f"Failed to read extra watch config {filename}: {e}")
+            return {}
+
+    def update_extra_watch_config(self, filename, data):
+        """
+        Write processor-specific JSON config file to watch data directory.
+
+        Args:
+            filename: Name of JSON file (e.g., "visual_ssim_score.json")
+            data: Dictionary to serialize as JSON
+        """
+        import json
+        import os
+
+        watch = self.datastore.data['watching'].get(self.watch_uuid)
+        watch_data_dir = watch.watch_data_dir
+
+        if not watch_data_dir:
+            logger.warning(f"Cannot save extra watch config {filename}: no watch_data_dir")
+            return
+
+        # Ensure directory exists
+        watch.ensure_data_dir_exists()
+
+        filepath = os.path.join(watch_data_dir, filename)
+
+        try:
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2)
+        except IOError as e:
+            logger.error(f"Failed to write extra watch config {filename}: {e}")
+
     @abstractmethod
     def run_changedetection(self, watch):
         update_obj = {'last_notification_error': False, 'last_error': False}
@@ -253,8 +313,20 @@ def available_processors():
     processor_classes = find_processors()
 
     available = []
-    for package, processor_class in processor_classes:
-        available.append((processor_class, package.name))
+    for module, sub_package_name in processor_classes:
+        # Try to get the 'name' attribute from the processor module first
+        if hasattr(module, 'name'):
+            description = module.name
+        else:
+            # Fall back to processor_description from parent module's __init__.py
+            parent_module = get_parent_module(module)
+            if parent_module and hasattr(parent_module, 'processor_description'):
+                description = parent_module.processor_description
+            else:
+                # Final fallback to a readable name
+                description = sub_package_name.replace('_', ' ').title()
+
+        available.append((sub_package_name, description))
 
     return available
 

@@ -994,6 +994,16 @@ class globalSettingsApplicationForm(commonSettingsForm):
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_json=False)])
     ignore_whitespace = BooleanField('Ignore whitespace')
+    ssim_threshold = SelectField(
+        'Default Screenshot Comparison Sensitivity',
+        choices=[
+            ('0.75', 'Low sensitivity (only major changes)'),
+            ('0.85', 'Medium sensitivity (moderate changes)'),
+            ('0.96', 'High sensitivity (small changes)'),
+            ('0.999', 'Very high sensitivity (any change)')
+        ],
+        default='0.96'
+    )
     password = SaltyPasswordField()
     pager_size = IntegerField('Pager size',
                               render_kw={"style": "width: 5em;"},

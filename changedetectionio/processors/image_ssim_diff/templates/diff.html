@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_button %}
+{% block content %}
+
+<style>
+.ssim-score {
+    padding: 1em;
+    background: #f5f5f5;
+    border-radius: 4px;
+    margin: 1em 0;
+    border: 1px solid #ddd;
+}
+
+.change-detected {
+    color: #d32f2f;
+    font-weight: bold;
+}
+
+.no-change {
+    color: #388e3c;
+    font-weight: bold;
+}
+
+.comparison-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.5em;
+    margin: 2em 0;
+}
+
+.screenshot-panel {
+    text-align: center;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 1em;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.screenshot-panel h3 {
+    margin: 0 0 1em 0;
+    font-size: 1.1em;
+    color: #333;
+    border-bottom: 2px solid #0078e7;
+    padding-bottom: 0.5em;
+}
+
+.screenshot-panel.diff h3 {
+    border-bottom-color: #d32f2f;
+}
+
+.screenshot-panel img {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.version-selector {
+    display: inline-block;
+    margin: 0 0.5em;
+}
+
+.version-selector label {
+    font-weight: bold;
+    margin-right: 0.5em;
+}
+
+@media (max-width: 1200px) {
+    .comparison-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+#settings {
+    background: #fff;
+    padding: 1.5em;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 2em;
+}
+
+.diff-fieldset {
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+.edit-link {
+    float: right;
+    margin-top: -0.5em;
+}
+</style>
+
+<div id="settings">
+    <a href="{{ url_for('ui.ui_edit.form_watch_edit', uuid=uuid, next='diff') }}" class="pure-button button-small edit-link">
+        <img style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread_the_word.svg')}}" alt="Edit" />
+        Edit Watch
+    </a>
+
+    <form class="pure-form" action="{{ url_for('ui.ui_diff.diff_history_page', uuid=uuid) }}" method="GET" id="diff-form">
+        <fieldset class="diff-fieldset">
+            <h2 style="margin-top: 0;">Screenshot Comparison (SSIM)</h2>
+
+            {% if versions|length >= 2 %}
+                <div class="version-selector">
+                    <label for="diff-from-version">From:</label>
+                    <select id="diff-from-version" name="from_version" class="needs-localtime" onchange="this.form.submit()">
+                        {%- for version in versions|reverse -%}
+                            <option value="{{ version }}" {% if version== from_version %} selected="" {% endif %}>
+                                {{ version }}
+                            </option>
+                        {%- endfor -%}
+                    </select>
+                </div>
+
+                <div class="version-selector">
+                    <label for="diff-to-version">To:</label>
+                    <select id="diff-to-version" name="to_version" class="needs-localtime" onchange="this.form.submit()">
+                        {%- for version in versions|reverse -%}
+                            <option value="{{ version }}" {% if version== to_version %} selected="" {% endif %}>
+                                {{ version }}
+                            </option>
+                        {%- endfor -%}
+                    </select>
+                </div>
+            {% endif %}
+
+            <!-- SSIM score display -->
+            <div class="ssim-score">
+                <strong>SSIM Score:</strong> {{ "%.4f"|format(ssim_score) }}
+                ({{ "%.2f"|format(percentage_different) }}% different)
+                <br>
+                <strong>Threshold:</strong> {{ "%.4f"|format(threshold) }}
+                <br>
+                {% if ssim_score < threshold %}
+                    <span class="change-detected">⚠ Change Detected</span>
+                {% else %}
+                    <span class="no-change">✓ No Significant Change</span>
+                {% endif %}
+                <br><br>
+                <small style="color: #666;">
+                    <strong>About SSIM:</strong> Structural Similarity Index measures visual similarity between images.
+                    A score of 1.0 means identical, lower scores indicate more differences.
+                    This method is robust to antialiasing and minor rendering variations.
+                </small>
+            </div>
+        </fieldset>
+    </form>
+</div>
+
+<div id="screenshot-comparison">
+    <!-- Three-panel layout -->
+    <div class="comparison-grid">
+        <!-- Panel 1: From (Previous) -->
+        <div class="screenshot-panel">
+            <h3>Previous Snapshot</h3>
+            <div style="color: #666; font-size: 0.9em; margin-bottom: 1em;">
+                {{ from_version|format_timestamp_timeago }}
+            </div>
+            <img src="data:image/png;base64,{{ img_from_b64 }}" alt="Previous screenshot">
+        </div>
+
+        <!-- Panel 2: To (Current) -->
+        <div class="screenshot-panel">
+            <h3>Current Snapshot</h3>
+            <div style="color: #666; font-size: 0.9em; margin-bottom: 1em;">
+                {{ to_version|format_timestamp_timeago }}
+            </div>
+            <img src="data:image/png;base64,{{ img_to_b64 }}" alt="Current screenshot">
+        </div>
+
+        <!-- Panel 3: Difference (with red highlights) -->
+        <div class="screenshot-panel diff">
+            <h3>Difference Visualization</h3>
+            <div style="color: #d32f2f; font-size: 0.9em; margin-bottom: 1em; font-weight: bold;">
+                Red = Changed Pixels
+            </div>
+            <img src="data:image/png;base64,{{ diff_image_b64 }}" alt="Difference visualization with red highlights">
+        </div>
+    </div>
+
+    {% if ssim_data and ssim_data.get('history') and ssim_data.history|length > 1 %}
+    <div style="margin-top: 3em; padding: 1em; background: #fff; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <h3>SSIM Score History</h3>
+        <p style="color: #666; font-size: 0.9em;">Recent SSIM scores over time (last {{ ssim_data.history|length }} checks)</p>
+        <div style="overflow-x: auto;">
+            <table class="pure-table pure-table-striped" style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>SSIM Score</th>
+                        <th>Threshold</th>
+                        <th>Changed?</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in ssim_data.history|reverse %}
+                    <tr>
+                        <td>{{ entry.timestamp|format_timestamp_timeago }}</td>
+                        <td>{{ "%.4f"|format(entry.ssim_score) }}</td>
+                        <td>{{ "%.4f"|format(entry.threshold) }}</td>
+                        <td>
+                            {% if entry.changed %}
+                                <span style="color: #d32f2f; font-weight: bold;">Yes</span>
+                            {% else %}
+                                <span style="color: #388e3c;">No</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

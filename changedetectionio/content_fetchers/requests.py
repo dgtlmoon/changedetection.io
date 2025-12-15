@@ -120,6 +120,12 @@ class fetcher(Fetcher):
 
         self.raw_content = r.content
 
+        # If the content is an image, set it as screenshot for SSIM/visual comparison
+        content_type = r.headers.get('content-type', '').lower()
+        if 'image/' in content_type:
+            self.screenshot = r.content
+            logger.debug(f"Image content detected ({content_type}), set as screenshot for comparison")
+
     async def run(self,
                   fetch_favicon=True,
                   current_include_filters=None,

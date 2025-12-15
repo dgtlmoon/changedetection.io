@@ -303,6 +303,14 @@ class model(watch_base):
             with open(filepath, 'rb') as f:
                 return(brotli.decompress(f.read()).decode('utf-8'))
 
+        # Check if binary file (image, PDF, etc.) vs text
+        binary_extensions = ('.png', '.jpg', '.jpeg', '.gif', '.webp', '.pdf', '.bin')
+        if any(filepath.endswith(ext) for ext in binary_extensions):
+            # Binary file - return raw bytes
+            with open(filepath, 'rb') as f:
+                return f.read()
+
+        # Text file - decode to string
         with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
             return f.read()
 
@@ -318,13 +326,34 @@ class model(watch_base):
         threshold = int(os.getenv('SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD', 1024))
         skip_brotli = strtobool(os.getenv('DISABLE_BROTLI_TEXT_SNAPSHOT', 'False'))
 
-        # Decide on snapshot filename and destination path
-        if not skip_brotli and len(contents) > threshold:
-            snapshot_fname = f"{snapshot_id}.txt.br"
-            encoded_data = brotli.compress(contents.encode('utf-8'), mode=brotli.MODE_TEXT)
+        # Auto-detect binary vs text data
+        if isinstance(contents, bytes):
+            # Binary data (screenshots, images, PDFs, etc.)
+            # Detect image format from magic bytes for proper extension
+            if contents[:8] == b'\x89PNG\r\n\x1a\n':
+                ext = 'png'
+            elif contents[:3] == b'\xff\xd8\xff':
+                ext = 'jpg'
+            elif contents[:6] in (b'GIF87a', b'GIF89a'):
+                ext = 'gif'
+            elif contents[:4] == b'RIFF' and contents[8:12] == b'WEBP':
+                ext = 'webp'
+            elif contents[:4] == b'%PDF':
+                ext = 'pdf'
+            else:
+                ext = 'bin'  # Generic binary
+
+            snapshot_fname = f"{snapshot_id}.{ext}"
+            encoded_data = contents  # Already bytes, no encoding needed
+            logger.trace(f"Saving binary snapshot as {snapshot_fname} ({len(contents)} bytes)")
         else:
-            snapshot_fname = f"{snapshot_id}.txt"
-            encoded_data = contents.encode('utf-8')
+            # Text data (HTML, JSON, etc.) - apply brotli compression
+            if not skip_brotli and len(contents) > threshold:
+                snapshot_fname = f"{snapshot_id}.txt.br"
+                encoded_data = brotli.compress(contents.encode('utf-8'), mode=brotli.MODE_TEXT)
+            else:
+                snapshot_fname = f"{snapshot_id}.txt"
+                encoded_data = contents.encode('utf-8')
 
         dest = os.path.join(self.watch_data_dir, snapshot_fname)
 
