@@ -72,6 +72,10 @@ lxml >=4.8.0,!=5.2.0,!=5.2.1,<7
 # Consider updating to latest stable version periodically
 elementpath==5.0.4
 
+# For SSIM image comparison in screenshot change detection
+# Requires >=0.22.0 for NumPy 2.0 compatibility (np.float_ removed)
+scikit-image>=0.22.0
+
 selenium~=4.31.0
 
 # Templating, so far just in the URLs but in the future can be for the notifications also
