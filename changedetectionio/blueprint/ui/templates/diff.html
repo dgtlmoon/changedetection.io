@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_button %}
+{% block content %}
+<script>
+    const screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid)}}";
+    {% if last_error_screenshot %}
+    const error_screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid, error_screenshot=1) }}";
+    {% endif %}
+
+    const highlight_submit_ignore_url="{{url_for('ui.ui_edit.highlight_submit_ignore_url', uuid=uuid)}}";
+    const watch_url= {{watch_a.link|tojson}};
+
+    // Initial scroll position: if set, scroll to this line number in #difference on page load
+    const initialScrollToLineNumber = {{ initial_scroll_line_number|default('null') }};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="{{url_for('static_content', group='js', filename='plugins.js')}}"></script>
+<script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.min.js"></script>
+<script src="{{url_for('static_content', group='js', filename='snippet-to-image.js')}}"></script>
+<script src="{{url_for('static_content', group='js', filename='diff-overview.js')}}" defer></script>
+
+
+<div id="settings">
+    <form class="pure-form " action="{{ url_for("ui.ui_diff.diff_history_page", uuid=uuid) }}" method="GET" id="diff-form">
+        <fieldset class="diff-fieldset">
+            {% if versions|length >= 1 %}
+                <span style="white-space: nowrap;">
+                <label id="change-from" for="diff-from-version" class="from-to-label">From</label>
+                <select id="diff-from-version" name="from_version" class="needs-localtime">
+                    {%- for version in versions|reverse -%}
+                        <option value="{{ version }}" {% if version== from_version %} selected="" {% endif %}>
+                            {{ version }}{#{% if loop.index == 2 %} (Previous){% endif %}#}
+                        </option>
+                    {%- endfor -%}
+                </select>
+                </span>
+                <span style="white-space: nowrap;">
+                <label id="change-to" for="diff-to-version" class="from-to-label">To</label>
+                <select id="diff-to-version" name="to_version" class="needs-localtime">
+                    {%- for version in versions|reverse -%}
+                        <option value="{{ version }}" {% if version== to_version %} selected="" {% endif %}>
+                            {{ version }}{#{% if loop.first %} (Current){% endif %}#}
+                        </option>
+                    {%- endfor -%}
+                </select>
+                </span>
+                {#<button type="submit" class="pure-button pure-button-primary reset-margin">Go</button>#}
+            {% endif %}
+        </fieldset>
+        <fieldset id="diff-style">
+            <span>
+                <label for="diffWords" class="pure-checkbox">
+                <input type="radio" name="type" id="diffWords" value="diffWords" {% if diff_prefs.type == 'diffWords' %}checked=""{% endif %}> Words</label>
+            </span>
+            <span>
+                <label for="diffLines" class="pure-checkbox">
+                <input type="radio" name="type" id="diffLines" value="diffLines" {% if diff_prefs.type == 'diffLines' %}checked=""{% endif %}> Lines</label>
+            </span>
+            <span>
+                <label for="ignoreWhitespace" class="pure-checkbox" id="label-diff-ignorewhitespace">
+                <input type="checkbox" id="ignoreWhitespace" name="ignoreWhitespace" {% if diff_prefs.ignoreWhitespace %}checked=""{% endif %}> Ignore Whitespace</label>
+            </span>
+            <span>
+                <label for="changesOnly" class="pure-checkbox" id="label-diff-changes">
+                <input type="checkbox" id="changesOnly" name="changesOnly" {% if diff_prefs.changesOnly %}checked=""{% endif %}> Same/non-changed</label>
+            </span>
+            <span>
+                <label for="removed" class="pure-checkbox" id="label-diff-removed">
+                <input type="checkbox" id="removed" name="removed" {% if diff_prefs.removed %}checked=""{% endif %}> Removed</label>
+            </span>
+            <span>
+                <label for="added" class="pure-checkbox" id="label-diff-added">
+                <input type="checkbox" id="added" name="added" {% if diff_prefs.added %}checked=""{% endif %}> Added</label>
+            </span>
+            <span>
+                <label for="replaced" class="pure-checkbox" id="label-diff-replaced">
+                <input type="checkbox" id="replaced"  name="replaced" {% if diff_prefs.replaced %}checked=""{% endif %}> Replaced</label>
+            </span>
+        </fieldset>
+        {%- if versions|length >= 2 -%}
+            <div id="keyboard-nav">
+                <strong>Keyboard: </strong>
+                <a href="" class="pure-button pure-button-primary" id="btn-previous"> &larr; Previous</a>
+                &nbsp; <a class="pure-button pure-button-primary" id="btn-next" href=""> &rarr; Next</a>
+            </div>
+        {%- endif -%}
+    </form>
+</div>
+
+<div id="diff-jump">
+    <a id="jump-next-diff" title="Jump to next difference">Jump</a>
+</div>
+
+<script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
+<div class="tabs">
+    <ul>
+        {% if last_error_text %}<li class="tab" id="error-text-tab"><a href="#error-text">Error Text</a></li> {% endif %}
+        {% if last_error_screenshot %}<li class="tab" id="error-screenshot-tab"><a href="#error-screenshot">Error Screenshot</a></li> {% endif %}
+        <li class="tab" id=""><a href="#text">Text</a></li>
+        <li class="tab" id="screenshot-tab"><a href="#screenshot">Screenshot</a></li>
+        <li class="tab" id="extract-tab"><a href="{{ url_for('ui.ui_diff.diff_history_page_extract_GET', uuid=uuid)}}">Extract Data</a></li>
+    </ul>
+</div>
+
+<div id="diff-ui">
+    <div class="tab-pane-inner" id="error-text">
+        <div class="snapshot-age error">{{watch_a.error_text_ctime|format_seconds_ago}} seconds ago.</div>
+        <pre>
+            {{ last_error_text }}
+        </pre>
+    </div>
+
+    <div class="tab-pane-inner" id="error-screenshot">
+        <div class="snapshot-age error">{{watch_a.snapshot_error_screenshot_ctime|format_seconds_ago}} seconds ago</div>
+        <img id="error-screenshot-img"  style="max-width: 80%" alt="Current error-ing screenshot from most recent request" >
+    </div>
+
+    <div class="tab-pane-inner" id="text">
+    {%- if (content | default('')).split('\n') | length > 100 -%}
+        <div id="cell-diff-jump-visualiser"  style="user-select: none;">
+            {%- for cell in diff_cell_grid -%}
+            <div{% if cell.class %} class="{{ cell.class }}"{% endif %}></div>
+            {%- endfor -%}
+        </div>
+    {%- endif -%}
+        {%- if password_enabled_and_share_is_off -%}
+            <div class="tip">Pro-tip: You can enable <strong>"share access when password is enabled"</strong> from settings.
+            </div>
+        {%- endif -%}
+        <div id="text-diff-heading-area"  style="user-select: none;">
+            <div class="snapshot-age"><span>{{ from_version|format_timestamp_timeago }}</span>
+                {%- if note -%}<span class="note"><strong>{{ note }}</strong></span>{%- endif -%}
+                <a href="{{ url_for("ui.ui_preview.preview_page", uuid=uuid) }}">Goto single snapshot</a>
+            </div>
+        </div>
+        <pre id="difference" style="border-left: 2px solid #ddd;">{{ content| diff_unescape_difference_spans }}</pre>
+    <div id="diff-visualiser-area-after" style="user-select: none;">
+        <strong>Tip:</strong> Highlight text to share or add to ignore lists.
+    </div>
+    </div>
+
+    <div class="tab-pane-inner" id="screenshot">
+         <div class="tip">
+             For now, Differences are performed on text, not graphically, only the latest screenshot is available.
+         </div>
+         {% if is_html_webdriver %}
+           {% if screenshot %}
+            <div class="snapshot-age">{{watch_a.snapshot_screenshot_ctime|format_timestamp_timeago}}</div>
+            <img style="max-width: 80%" id="screenshot-img" alt="Current screenshot from most recent request" >
+           {% else %}
+              No screenshot available just yet! Try rechecking the page.
+           {% endif %}
+         {% else %}
+           <strong>Screenshot requires Playwright/WebDriver enabled</strong>
+         {% endif %}
+     </div>
+
+</div>
+
+<script>
+    const newest_version_timestamp = {{newest_version_timestamp}};
+</script>
+<script src="{{url_for('static_content', group='js', filename='diff-render.js')}}"></script>
+
+
+{% endblock %}

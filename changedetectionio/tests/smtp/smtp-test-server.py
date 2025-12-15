@@ -8,7 +8,7 @@ from email.policy import default
 
 # Accept a SMTP message and offer a way to retrieve the last message via HTTP
 
-last_received_message = b"Nothing received yet."
+last_received_message = b"SMTP Test Server - Nothing received yet."
 active_smtp_connections = 0
 smtp_lock = threading.Lock()
 

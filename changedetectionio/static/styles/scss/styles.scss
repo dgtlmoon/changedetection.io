@@ -982,19 +982,6 @@ ul {
     supported by Chrome, Edge, Opera and Firefox */
 }
 
-.snapshot-age {
-  padding: 4px;
-  margin: 0.5rem 0;
-  background-color: var(--color-background-snapshot-age);
-  border-radius: 3px;
-  font-weight: bold;
-  margin-bottom: 4px;
-
-  &.error {
-    background-color: var(--color-error-background-snapshot-age);
-    color: var(--color-error-text-snapshot-age);
-  }
-}
 
 #checkbox-operations {
   background: var(--color-background-checkbox-operations);
@@ -1127,3 +1114,38 @@ ul {
   color: #fff;
   opacity: 0.8;
 }
+
+#bottom-horizontal-offscreen {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  min-height: 50px;
+  max-height: 50vh; // Don't take more than 50% of viewport height
+  background: #ffffffb8;
+  border-top: 1px solid var(--color-border-table-cell);
+  padding: 10px;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  overflow-y: auto; // Allow scrolling if content exceeds max-height
+
+  // Smooth transition when shown/hidden
+  transition: opacity 0.3s ease-in-out;
+
+  // When JavaScript removes display:none, ensure it scrolls into view
+  scroll-margin-bottom: 10px;
+
+  // Center contents horizontally
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+ul#highlightSnippetActions {
+  list-style: none;
+  li {
+    display: inline-block;
+  }
+}
+

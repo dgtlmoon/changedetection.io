@@ -38,7 +38,7 @@ from loguru import logger
 
 from changedetectionio import __version__
 from changedetectionio import queuedWatchMetaData
-from changedetectionio.api import Watch, WatchHistory, WatchSingleHistory, CreateWatch, Import, SystemInfo, Tag, Tags, Notifications, WatchFavicon
+from changedetectionio.api import Watch, WatchHistory, WatchSingleHistory, WatchHistoryDiff, CreateWatch, Import, SystemInfo, Tag, Tags, Notifications, WatchFavicon
 from changedetectionio.api.Search import Search
 from .time_handler import is_within_schedule
 
@@ -102,7 +102,6 @@ def _configure_plugin_templates():
 
 # Configure plugin templates (called after plugins are loaded)
 _configure_plugin_templates()
-
 csrf = CSRFProtect()
 csrf.init_app(app)
 notification_debug_log=[]
@@ -378,6 +377,9 @@ def changedetection_app(config=None, datastore_o=None):
                 return login_manager.unauthorized()
 
 
+    watch_api.add_resource(WatchHistoryDiff,
+                           '/api/v1/watch/<string:uuid>/difference/<string:from_timestamp>/<string:to_timestamp>',
+                           resource_class_kwargs={'datastore': datastore})
     watch_api.add_resource(WatchSingleHistory,
                            '/api/v1/watch/<string:uuid>/history/<string:timestamp>',
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})

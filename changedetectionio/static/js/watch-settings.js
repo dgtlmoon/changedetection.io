@@ -26,12 +26,19 @@ function request_textpreview_update() {
             .text(data['after_filter'])
             .highlightLines([
                 {
-                    'color': '#ee0000',
-                    'lines': data['trigger_line_numbers']
+                    'color': 'var(--highlight-trigger-text-bg-color)',
+                    'lines': data['trigger_line_numbers'],
+                    'title': "Triggers a change if this text appears, AND something changed in the document."
                 },
                 {
-                    'color': '#757575',
-                    'lines': data['ignore_line_numbers']
+                    'color': 'var(--highlight-ignored-text-bg-color)',
+                    'lines': data['ignore_line_numbers'],
+                    'title': "Ignored for calculating changes, but still shown."
+                },
+                {
+                    'color': 'var(--highlight-blocked-text-bg-color)',
+                    'lines': data['blocked_line_numbers'],
+                    'title': "No change-detection will occur because this text exists."
                 }
             ])
     }).fail(function (error) {

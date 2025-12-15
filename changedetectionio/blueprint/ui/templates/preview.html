@@ -1,9 +1,11 @@
 {% extends 'base.html' %}
-
+{% from '_helpers.html' import highlight_trigger_ignored_explainer %}
 {% block content %}
     <script>
         const screenshot_url = "{{url_for('static_content', group='screenshot', filename=uuid)}}";
-        const triggered_line_numbers = {{ triggered_line_numbers|tojson }};
+        const triggered_line_numbers = {{ highlight_triggered_line_numbers|tojson }};
+        const ignored_line_numbers = {{ highlight_ignored_line_numbers|tojson }};
+        const blocked_line_numbers = {{ highlight_blocked_line_numbers|tojson }};
         {% if last_error_screenshot %}
             const error_screenshot_url = "{{url_for('static_content', group='screenshot', filename=uuid, error_screenshot=1) }}";
         {% endif %}
@@ -14,7 +16,7 @@
     <script src="{{ url_for('static_content', group='js', filename='preview.js') }}" defer></script>
     <script src="{{ url_for('static_content', group='js', filename='tabs.js') }}" defer></script>
     {% if versions|length >= 2 %}
-        <div id="settings" style="text-align: center;">
+        <div id="diff-form" style="text-align: center;">
             <form class="pure-form " action="" method="POST">
                 <fieldset>
                     <label for="preview-version">Select timestamp</label> <select id="preview-version"
@@ -68,21 +70,12 @@
         </div>
 
         <div class="tab-pane-inner" id="text">
+            {{ highlight_trigger_ignored_explainer() }}
             <div class="snapshot-age">{{ current_version|format_timestamp_timeago }}</div>
             <span class="tip"><strong>Pro-tip</strong>: Highlight text to add to ignore filters</span>
-
-            <table>
-                <tbody>
-                <tr>
-                    <td id="diff-col" class="highlightable-filter">
-                        <pre style="border-left: 2px solid #ddd;">
-{{ content }}
-                        </pre>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+            <pre id="difference" style="border-left: 2px solid #ddd;">{{ content| diff_unescape_difference_spans }}</pre>
         </div>
+    </div>
 
         <div class="tab-pane-inner" id="screenshot">
             <div class="tip">

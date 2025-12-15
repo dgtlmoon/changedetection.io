@@ -56,5 +56,6 @@ class TestJinja2SSTI(unittest.TestCase):
         self.assertEqual(x, "woo &lt;a href=&#34;https://google.com&#34;&gt;dfdfd&lt;/a&gt;")
 
 
+
 if __name__ == '__main__':
     unittest.main()

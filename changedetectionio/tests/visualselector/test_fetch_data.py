@@ -47,7 +47,7 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
     assert live_server.app.config['DATASTORE'].data['watching'][uuid].history_n >= 1, "Watch history had atleast 1 (everything fetched OK)"
 
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid=uuid),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
     assert b"testheader: yes" in res.data
@@ -131,7 +131,7 @@ def test_basic_browserstep(client, live_server, measure_memory_usage, datastore_
 
     # Check HTML conversion detected and workd
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid=uuid),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
     assert b"This text should be removed" not in res.data

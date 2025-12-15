@@ -97,7 +97,7 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
 
     # Accept it
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
-    #time.sleep(1)
+    time.sleep(3)
     client.get(url_for('price_data_follower.accept', uuid=uuid, follow_redirects=True))
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
