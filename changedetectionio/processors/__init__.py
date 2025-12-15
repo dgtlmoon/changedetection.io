@@ -306,14 +306,28 @@ def get_custom_watch_obj_for_processor(processor_name):
 
 def available_processors():
     """
-    Get a list of processors by name and description for the UI elements
+    Get a list of processors by name and description for the UI elements.
+    Can be filtered via ALLOWED_PROCESSORS environment variable (comma-separated list).
     :return: A list :)
     """
 
     processor_classes = find_processors()
 
+    # Check if ALLOWED_PROCESSORS env var is set
+    allowed_processors_env = os.getenv('ALLOWED_PROCESSORS', '').strip()
+    allowed_processors = None
+    if allowed_processors_env:
+        # Parse comma-separated list and strip whitespace
+        allowed_processors = [p.strip() for p in allowed_processors_env.split(',') if p.strip()]
+        logger.info(f"ALLOWED_PROCESSORS set, filtering to: {allowed_processors}")
+
     available = []
     for module, sub_package_name in processor_classes:
+        # Filter by allowed processors if set
+        if allowed_processors and sub_package_name not in allowed_processors:
+            logger.debug(f"Skipping processor '{sub_package_name}' (not in ALLOWED_PROCESSORS)")
+            continue
+
         # Try to get the 'name' attribute from the processor module first
         if hasattr(module, 'name'):
             description = module.name
