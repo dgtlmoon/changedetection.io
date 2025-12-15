@@ -116,7 +116,7 @@
     </div>
 
     <div class="tab-pane-inner" id="text">
-        <div id="cell-diff-jump-visualiser">
+        <div id="cell-diff-jump-visualiser"  style="user-select: none;">
             {%- for cell in diff_cell_grid -%}
             <div{% if cell.class %} class="{{ cell.class }}"{% endif %}></div>
             {%- endfor -%}
@@ -125,8 +125,16 @@
             <div class="tip">Pro-tip: You can enable <strong>"share access when password is enabled"</strong> from settings.
             </div>
         {%- endif -%}
-        <div class="snapshot-age">{{ from_version|format_timestamp_timeago }} {%- if note -%}<span class="note"><strong>{{ note }}</strong></span>{%- endif -%} <a href="{{ url_for("ui.ui_preview.preview_page", uuid=uuid) }}">Goto single snapshot</a></div>
+        <div id="text-diff-heading-area"  style="user-select: none;">
+            <div class="snapshot-age"><span>{{ from_version|format_timestamp_timeago }}</span>
+                {%- if note -%}<span class="note"><strong>{{ note }}</strong></span>{%- endif -%}
+                <a href="{{ url_for("ui.ui_preview.preview_page", uuid=uuid) }}">Goto single snapshot</a>
+            </div>
+        </div>
         <pre id="difference" style="border-left: 2px solid #ddd;">{{ content| diff_unescape_difference_spans }}</pre>
+    <div id="diff-visualiser-area-after" style="user-select: none;">
+        <strong>Tip:</strong> Highlight text to share or add to ignore lists.
+    </div>
     </div>
 
     <div class="tab-pane-inner" id="screenshot">

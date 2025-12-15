@@ -982,19 +982,6 @@ ul {
     supported by Chrome, Edge, Opera and Firefox */
 }
 
-.snapshot-age {
-  padding: 4px;
-  margin: 0.5rem 0;
-  background-color: var(--color-background-snapshot-age);
-  border-radius: 3px;
-  font-weight: bold;
-  margin-bottom: 4px;
-
-  &.error {
-    background-color: var(--color-error-background-snapshot-age);
-    color: var(--color-error-text-snapshot-age);
-  }
-}
 
 #checkbox-operations {
   background: var(--color-background-checkbox-operations);

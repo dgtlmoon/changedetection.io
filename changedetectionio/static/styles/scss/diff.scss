@@ -49,8 +49,6 @@ body.difference-page {
 
   background: var(--color-background);
   padding: 1rem;
-  margin-left: 0.8rem;
-  margin-right: 0.8rem;
   border-radius: 5px;
 
   @media (min-width: 767px) {
@@ -225,6 +223,25 @@ body.difference-page {
         opacity: 0.8;
         cursor: pointer;
       }
+    }
+  }
+}
+
+#text-diff-heading-area {
+  .snapshot-age {
+    padding: 4px;
+    margin: 0.5rem 0;
+    background-color: var(--color-background-snapshot-age);
+    border-radius: 3px;
+    font-weight: bold;
+    margin-bottom: 4px;
+
+    &.error {
+      background-color: var(--color-error-background-snapshot-age);
+      color: var(--color-error-text-snapshot-age);
+    }
+    > * {
+      padding-right: 1rem;
     }
   }
 }
