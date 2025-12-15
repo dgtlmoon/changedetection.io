@@ -46,10 +46,9 @@ RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
   numpy
 
 # Now install all requirements to /dependencies
-# Set PYTHONPATH so scikit-image build process can import system numpy
-ARG PYTHON_VERSION
+# Disable build isolation so scikit-image can use system numpy during compilation
 RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
-  PYTHONPATH=/usr/local/lib/python${PYTHON_VERSION}/site-packages:$PYTHONPATH \
+  PIP_NO_BUILD_ISOLATION=1 \
   pip install \
   --prefer-binary \
   --extra-index-url https://www.piwheels.org/simple \
