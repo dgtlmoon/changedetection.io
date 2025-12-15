@@ -35,8 +35,8 @@ function getFormattedDate() {
  * Utility: Get version comparison info from the diff selectors
  */
 function getVersionInfo() {
-    const fromSelect = document.getElementById('diff-version');
-    const toSelect = document.getElementById('current-version');
+    const fromSelect = document.getElementById('diff-from-version');
+    const toSelect = document.getElementById('diff-to-version');
 
     if (!fromSelect || !toSelect) {
         return '';
@@ -47,7 +47,7 @@ function getVersionInfo() {
     const fromLabel = fromOption ? (fromOption.getAttribute('label') || fromOption.text) : 'Unknown';
     const toLabel = toOption ? (toOption.getAttribute('label') || toOption.text) : 'Unknown';
 
-    return `<br>Change comparison from <strong>${fromLabel}</strong> to <strong>${toLabel}</strong><br>Monitored via automated content change detection on public webpages. Data reflects observed text updates, not editorial verification.<br>`;
+    return `Change comparison from <strong>${fromLabel}</strong> to <strong>${toLabel}</strong>`;
 }
 
 /**
@@ -246,11 +246,10 @@ function countLines(content) {
 }
 
 /**
- * Create footer with metadata (URL, date, version info, line count)
+ * Create footer with metadata (URL, version info, line count)
  */
 function createFooter(selectedLines, totalLines) {
     const url = getTargetUrl();
-    const date = getFormattedDate();
     const versionInfo = getVersionInfo();
     const lineInfo = (selectedLines && totalLines) ? ` - ${selectedLines} of ${totalLines} lines selected` : '';
 
@@ -269,8 +268,8 @@ function createFooter(selectedLines, totalLines) {
             border-top: 1px solid #ccc;
         ">
             Watched URL: <strong>${url}</strong><br>
-            Generated at ${date}${lineInfo}
-            ${versionInfo}
+            ${versionInfo}${lineInfo}<br>
+            Monitored via automated content change detection on public webpages. Data reflects observed text updates, not editorial verification.
         </div>
     `;
 
