@@ -36,35 +36,48 @@ async def capture_full_page_async(page):
 
     # Capture screenshots in chunks up to the max total height
     while y < min(page_height, SCREENSHOT_MAX_TOTAL_HEIGHT):
+        # Only scroll if not at the top (y > 0)
+        if y > 0:
+            await page.evaluate(f"window.scrollTo(0, {y})")
+
+        # Request GC only before screenshot (not 3x per chunk)
         await page.request_gc()
-        await page.evaluate(f"window.scrollTo(0, {y})")
-        await page.request_gc()
+
         screenshot_chunks.append(await page.screenshot(
             type="jpeg",
             full_page=False,
             quality=int(os.getenv("SCREENSHOT_QUALITY", 72))
         ))
         y += step_size
-        await page.request_gc()
 
     # Restore original viewport size
     await page.set_viewport_size({'width': original_viewport['width'], 'height': original_viewport['height']})
 
     # If we have multiple chunks, stitch them together
     if len(screenshot_chunks) > 1:
-        from changedetectionio.content_fetchers.screenshot_handler import stitch_images_worker
         logger.debug(f"Screenshot stitching {len(screenshot_chunks)} chunks together")
-        parent_conn, child_conn = Pipe()
-        p = Process(target=stitch_images_worker, args=(child_conn, screenshot_chunks, page_height, SCREENSHOT_MAX_TOTAL_HEIGHT))
-        p.start()
-        screenshot = parent_conn.recv_bytes()
-        p.join()
+
+        # For small number of chunks (2-3), stitch inline to avoid multiprocessing overhead
+        # Only use separate process for many chunks (4+) to avoid blocking the event loop
+        if len(screenshot_chunks) <= 3:
+            from changedetectionio.content_fetchers.screenshot_handler import stitch_images_inline
+            screenshot = stitch_images_inline(screenshot_chunks, page_height, SCREENSHOT_MAX_TOTAL_HEIGHT)
+        else:
+            # Use separate process for many chunks to avoid blocking
+            from changedetectionio.content_fetchers.screenshot_handler import stitch_images_worker
+            parent_conn, child_conn = Pipe()
+            p = Process(target=stitch_images_worker, args=(child_conn, screenshot_chunks, page_height, SCREENSHOT_MAX_TOTAL_HEIGHT))
+            p.start()
+            screenshot = parent_conn.recv_bytes()
+            p.join()
+            # Explicit cleanup
+            del p
+            del parent_conn, child_conn
+
         logger.debug(
             f"Screenshot (chunked/stitched) - Page height: {page_height} Capture height: {SCREENSHOT_MAX_TOTAL_HEIGHT} - Stitched together in {time.time() - start:.2f}s")
         # Explicit cleanup
         del screenshot_chunks
-        del p
-        del parent_conn, child_conn
         screenshot_chunks = None
         return screenshot
 
