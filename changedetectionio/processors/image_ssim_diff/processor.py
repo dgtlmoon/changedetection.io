@@ -25,12 +25,8 @@ class perform_site_check(difference_detection_processor):
         Returns:
             tuple: (changed_detected, update_obj, screenshot_bytes)
         """
-        from PIL import Image
-        import io
-        import numpy as np
-        from skimage.metrics import structural_similarity as ssim
-
-        # Get the current screenshot
+        now = time.time()
+       # Get the current screenshot
         if not self.fetcher.screenshot:
             raise ProcessorException(
                 message="No screenshot available. Ensure the watch is configured to use a real browser.",
@@ -45,6 +41,11 @@ class perform_site_check(difference_detection_processor):
         if previous_md5 and current_md5 == previous_md5:
             logger.debug(f"Screenshot MD5 unchanged ({current_md5}), skipping SSIM calculation")
             raise checksumFromPreviousCheckWasTheSame()
+
+        from PIL import Image
+        import io
+        import numpy as np
+        from skimage.metrics import structural_similarity as ssim
 
         # Get threshold (per-watch or global)
         threshold = watch.get('ssim_threshold')
@@ -81,7 +82,7 @@ class perform_site_check(difference_detection_processor):
                 'previous_md5': hashlib.md5(self.screenshot).hexdigest(),
                 'last_error': False
             }
-
+            logger.trace(f"Processed in {time.time() - now:.3f}s")
             return False, update_obj, self.screenshot
 
         # Get previous screenshot from history
@@ -108,6 +109,7 @@ class perform_site_check(difference_detection_processor):
                 'last_error': False
             }
 
+            logger.trace(f"Processed in {time.time() - now:.3f}s")
             return False, update_obj, self.screenshot
 
         # Convert images to numpy arrays for SSIM calculation
@@ -155,6 +157,8 @@ class perform_site_check(difference_detection_processor):
                     locals()[obj].close()
                 except (KeyError, NameError, AttributeError):
                     pass
+            logger.trace(f"Processed in {time.time() - now:.3f}s")
+
             raise ProcessorException(
                 message=f"SSIM calculation failed: {e}",
                 url=watch.get('url')
@@ -173,5 +177,6 @@ class perform_site_check(difference_detection_processor):
             logger.info(f"Change detected! SSIM score {ssim_score:.4f} < threshold {threshold}")
         else:
             logger.debug(f"No significant change. SSIM score {ssim_score:.4f} >= threshold {threshold}")
+        logger.trace(f"Processed in {time.time() - now:.3f}s")
 
         return changed_detected, update_obj, self.screenshot
