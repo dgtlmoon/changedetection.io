@@ -31,10 +31,12 @@ RUN \
     glib \
     libsm \
     libxext \
-    libxrender && \
+    libxrender \
+    py3-opencv && \
   echo "**** pip3 install test of changedetection.io ****" && \
   python3 -m venv /lsiopy  && \
   pip install -U pip wheel setuptools && \
-  pip install -U --no-cache-dir --find-links https://wheel-index.linuxserver.io/alpine-3.22/ -r /requirements.txt && \
+  grep -v "opencv-python-headless" /requirements.txt > /requirements-alpine.txt && \
+  pip install -U --no-cache-dir --find-links https://wheel-index.linuxserver.io/alpine-3.22/ -r /requirements-alpine.txt && \
   apk del --purge \
     build-dependencies
