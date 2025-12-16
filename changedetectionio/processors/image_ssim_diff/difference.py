@@ -317,12 +317,8 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
     if to_version not in versions:
         to_version = versions[-1]
 
-    # Get comparison method (per-watch > global > env default)
-    comparison_method = (
-        watch.get('comparison_method') or
-        datastore.data['settings']['application'].get('comparison_method') or
-        DEFAULT_COMPARISON_METHOD
-    )
+    # Use hardcoded comparison method (can be overridden via COMPARISON_METHOD env var)
+    comparison_method = DEFAULT_COMPARISON_METHOD
 
     logger.debug(f"Using comparison_method {comparison_method}")
 

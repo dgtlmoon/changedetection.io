@@ -50,12 +50,8 @@ class perform_site_check(difference_detection_processor):
         import io
         import numpy as np
 
-        # Get comparison method (per-watch > global > env default)
-        comparison_method = (
-            watch.get('comparison_method') or
-            self.datastore.data['settings']['application'].get('comparison_method') or
-            DEFAULT_COMPARISON_METHOD
-        )
+        # Use hardcoded comparison method (can be overridden via COMPARISON_METHOD env var)
+        comparison_method = DEFAULT_COMPARISON_METHOD
 
         # Get threshold (per-watch > global > env default)
         threshold = watch.get('comparison_threshold')

@@ -1,356 +1,210 @@
-# SSIM Image Comparison Processor
+# Fast Screenshot Comparison Processor
 
-Visual/screenshot change detection using Structural Similarity Index (SSIM) algorithm.
+Visual/screenshot change detection using ultra-fast image comparison algorithms.
+
+## Overview
+
+This processor uses **OpenCV** by default for screenshot comparison, providing **50-100x faster** performance compared to the previous SSIM implementation while still detecting meaningful visual changes.
 
 ## Current Features
 
-- **SSIM-based comparison**: Robust to antialiasing and minor rendering differences
-- **MD5 pre-check**: Fast identical image detection before expensive SSIM calculation
-- **Configurable sensitivity**: Low/Medium/High/Very High threshold levels
+- **Ultra-fast OpenCV comparison**: cv2.absdiff with Gaussian blur for noise reduction
+- **MD5 pre-check**: Fast identical image detection before expensive comparison
+- **Configurable sensitivity**: Threshold-based change detection
 - **Three-panel diff view**: Previous | Current | Difference (with red highlights)
-- **Direct image support**: Works with browser screenshots AND direct image URLs (JPEG, PNG, etc.)
+- **Direct image support**: Works with browser screenshots AND direct image URLs
+- **Visual selector support**: Compare specific page regions using CSS/XPath selectors
+- **Download images**: Download any of the three comparison images directly from the diff view
 
-## Architecture
+## Performance
 
-The processor uses:
-- `scikit-image` for SSIM calculation and image analysis
-- `Pillow (PIL)` for image loading and manipulation
-- `numpy` for array operations
+- **OpenCV (default)**: 50-100x faster than SSIM
+- **Large screenshots**: Automatic downscaling for diff visualization (configurable via `MAX_DIFF_HEIGHT`/`MAX_DIFF_WIDTH`)
+- **Memory efficient**: Explicit cleanup of large objects for long-running processes
+- **JPEG diff images**: Smaller file sizes, faster rendering
 
 ## How It Works
 
 1. **Fetch**: Screenshot captured via browser OR direct image URL fetched
-2. **MD5 Check**: Quick hash comparison - if identical, skip SSIM (raises `checksumFromPreviousCheckWasTheSame`)
-3. **SSIM Calculation**: Structural similarity between previous and current image
-4. **Change Detection**: Score below threshold = change detected
-5. **Visualization**: Generate diff image with red-highlighted changed regions
+2. **MD5 Check**: Quick hash comparison - if identical, skip comparison
+3. **Region Selection** (optional): Crop to specific page region if visual selector is configured
+4. **OpenCV Comparison**: Fast pixel-level difference detection with Gaussian blur
+5. **Change Detection**: Percentage of changed pixels above threshold = change detected
+6. **Visualization**: Generate diff image with red-highlighted changed regions
 
-## SSIM Score Interpretation
+## Architecture
 
-- **1.0** = Identical images
-- **0.95-1.0** = Very similar (minor differences, antialiasing)
-- **0.90-0.95** = Noticeable differences
-- **0.85-0.90** = Significant differences
-- **<0.85** = Major differences
+### Default Method: OpenCV
 
-## Available Libraries & Capabilities
-
-We have access to powerful image analysis capabilities through scikit-image and other libraries. Below are high-value features that could add real user value:
-
-### 1. 🚀 Perceptual Hashing (pHash)
-
-**What**: Ultra-fast similarity check based on overall image perception
-**Speed**: Microseconds vs SSIM milliseconds
-**Use Case**: Pre-screening filter before expensive SSIM
-**Value**: "Probably unchanged" quick check for high-frequency monitoring
-
-**⚠️ IMPORTANT LIMITATIONS:**
-- **Will MISS small text changes** (e.g., "Sale ends Monday" → "Sale ends Tuesday")
-- Only detects major visual changes (layout, large regions, color shifts)
-- Works by reducing image to ~8x8 pixels and comparing overall structure
-- Small changes (<5% of image) are invisible to pHash
-
-**Good for detecting:**
-- Layout/design changes
-- Major content additions/removals
-- Color scheme changes
-- Page structure changes
-
-**Bad for detecting:**
-- Text edits (few letters changed)
-- Price changes in small text
-- Date/timestamp updates
-- Small icon changes
+The processor uses OpenCV's `cv2.absdiff()` for ultra-fast pixel-level comparison:
 
 ```python
-from skimage.feature import perceptual_hash
-# Generate hash of image (reduces to 8x8 structure)
-hash1 = perceptual_hash(image1)
-hash2 = perceptual_hash(image2)
-# Compare hashes (Hamming distance)
-similarity = (hash1 == hash2).sum() / hash1.size
+# Convert to grayscale
+gray_from = cv2.cvtColor(image_from, cv2.COLOR_RGB2GRAY)
+gray_to = cv2.cvtColor(image_to, cv2.COLOR_RGB2GRAY)
+
+# Apply Gaussian blur (reduces noise, controlled by OPENCV_BLUR_SIGMA env var)
+gray_from = cv2.GaussianBlur(gray_from, (0, 0), sigma=0.8)
+gray_to = cv2.GaussianBlur(gray_to, (0, 0), sigma=0.8)
+
+# Calculate absolute difference
+diff = cv2.absdiff(gray_from, gray_to)
+
+# Apply threshold (default: 30)
+_, thresh = cv2.threshold(diff, threshold, 255, cv2.THRESH_BINARY)
+
+# Count changed pixels
+change_percentage = (changed_pixels / total_pixels) * 100
 ```
 
-**Implementation Idea**: Use pHash only as negative filter:
-- pHash identical → Definitely unchanged, skip SSIM ✓
-- pHash different → Run SSIM (might be false positive, need accurate check)
-- **Never** skip SSIM based on "pHash similar" - could miss important changes!
+### Optional: Pixelmatch
 
-**Alternative: MD5 is better for our use case**
-- Current MD5 check: Detects ANY change (including 1 pixel)
-- pHash advantage: Would handle JPEG recompression, minor rendering differences
-- But we care about those differences! So MD5 is actually more appropriate.
+For users who need better anti-aliasing detection (especially for text-heavy screenshots), **pixelmatch** can be optionally installed:
 
----
-
-### 2. 📍 Change Region Detection
-
-**What**: Identify WHICH regions changed, not just "something changed"
-**Use Case**: Show users exactly what changed on the page
-**Value**: Actionable insights - "Price changed in top-right" vs "Something changed somewhere"
-
-```python
-from skimage import segmentation, measure
-from skimage.filters import threshold_otsu
-
-# Get binary mask of changed regions from SSIM map
-threshold = threshold_otsu(diff_map)
-changed_regions = diff_map < threshold
-
-# Find connected regions
-labels = measure.label(changed_regions)
-regions = measure.regionprops(labels)
-
-# For each changed region, get bounding box
-for region in regions:
-    minr, minc, maxr, maxc = region.bbox
-    # Draw rectangle on diff image
+```bash
+pip install pybind11-pixelmatch>=0.1.3
 ```
 
-**Implementation Idea**: Add bounding boxes to diff visualization showing changed regions with size metrics
+**Note**: Pixelmatch uses a C++17 implementation via pybind11 and may have build issues on some platforms (particularly Alpine/musl systems with symbolic link security restrictions). The application will automatically fall back to OpenCV if pixelmatch is not available.
 
----
-
-### 3. 🔥 Structural Similarity Heatmap
-
-**What**: Per-pixel similarity map showing WHERE differences are
-**Use Case**: Visual heatmap overlay - blue=same, red=different
-**Value**: Intuitive visualization of change distribution
-
-```python
-from skimage.metrics import structural_similarity as ssim
-import matplotlib.pyplot as plt
-
-# Calculate SSIM with full output (we already do this!)
-ssim_score, diff_map = ssim(img1, img2, full=True, ...)
-
-# Convert to heatmap
-heatmap = plt.cm.RdYlBu(diff_map)  # Red=different, Blue=same
+To use pixelmatch instead of OpenCV, set the environment variable:
+```bash
+COMPARISON_METHOD=pixelmatch
 ```
 
-**Implementation Idea**: Add heatmap view as alternative to red-highlight diff
+#### When to use pixelmatch:
+- Screenshots with lots of text and anti-aliasing
+- Need to ignore minor font rendering differences between browser versions
+- 10-20x faster than SSIM (but slower than OpenCV)
 
----
+#### When to stick with OpenCV (default):
+- General webpage monitoring
+- Maximum performance (50-100x faster than SSIM)
+- Simple pixel-level change detection
+- Avoid build dependencies (Alpine/musl systems)
 
-### 4. 🏗️ Edge/Structure Detection
+## Configuration
 
-**What**: Compare page structure/layout vs content changes
-**Use Case**: Detect layout changes separately from text updates
-**Value**: "Alert on redesigns" vs "Ignore content updates"
+### Environment Variables
 
-```python
-from skimage import filters, feature
+```bash
+# Comparison method (opencv or pixelmatch)
+COMPARISON_METHOD=opencv  # Default
 
-# Extract edges/structure from both images
-edges1 = filters.sobel(img1)
-edges2 = filters.sobel(img2)
+# OpenCV threshold (0-255, lower = more sensitive)
+COMPARISON_THRESHOLD_OPENCV=30  # Default
 
-# Compare structural similarity of edges only
-structure_ssim = ssim(edges1, edges2, ...)
-content_ssim = ssim(img1, img2, ...)
+# Pixelmatch threshold (0-100, mapped to 0-1 scale)
+COMPARISON_THRESHOLD_PIXELMATCH=10  # Default
 
-# Separate alerts for structure vs content changes
+# Gaussian blur sigma for OpenCV (0 = no blur, higher = more blur)
+OPENCV_BLUR_SIGMA=0.8  # Default
+
+# Minimum change percentage to trigger detection
+OPENCV_MIN_CHANGE_PERCENT=0.1  # Default (0.1%)
+PIXELMATCH_MIN_CHANGE_PERCENT=0.1  # Default
+
+# Diff visualization image size limits (pixels)
+MAX_DIFF_HEIGHT=8000  # Default
+MAX_DIFF_WIDTH=900  # Default
 ```
 
-**Implementation Idea**: Add "Structure-only" mode that compares layouts, ignoring text/content changes
+### Per-Watch Configuration
 
----
+- **Comparison Threshold**: Can be configured per-watch in the edit form
+  - Very low sensitivity (10) - Only major changes
+  - Low sensitivity (20) - Significant changes
+  - Medium sensitivity (30) - Moderate changes (default)
+  - High sensitivity (50) - Small changes
+  - Very high sensitivity (75) - Any visible change
 
-### 5. 🎨 Color Histogram Comparison
+### Visual Selector (Region Comparison)
 
-**What**: Fast color distribution analysis
-**Use Case**: Detect theme/branding changes, site redesigns
-**Value**: "Color scheme changed" alert
+Use the "Include filters" field with CSS selectors or XPath to compare only specific page regions:
 
-```python
-from skimage import exposure
-
-# Compare color histograms
-hist1 = exposure.histogram(img1)
-hist2 = exposure.histogram(img2)
-
-# Calculate histogram similarity
-histogram_diff = np.sum(np.abs(hist1 - hist2))
+```
+.content-area
+//div[@id='main']
 ```
 
-**Implementation Idea**: Add "Color similarity" metric alongside SSIM score
+The processor will automatically crop both screenshots to the bounding box of the first matched element.
 
----
+## Dependencies
 
-### 6. 🎯 Feature Matching
+### Required
+- `opencv-python-headless>=4.8.0.76` - Fast image comparison
+- `Pillow (PIL)` - Image loading and manipulation
+- `numpy` - Array operations
 
-**What**: Detect specific visual elements (logos, buttons, icons)
-**Use Case**: "Alert if logo disappears" or "Track button position"
-**Value**: Semantic change detection
+### Optional
+- `pybind11-pixelmatch>=0.1.3` - Alternative comparison method with anti-aliasing detection
 
-```python
-from skimage.feature import ORB, match_descriptors
+## Change Detection Interpretation
 
-# Detect features (corners, blobs, etc.)
-detector = ORB()
-keypoints1 = detector.detect_and_extract(img1)
-keypoints2 = detector.detect_and_extract(img2)
-
-# Match features between images
-matches = match_descriptors(keypoints1, keypoints2)
-
-# Check if specific features disappeared
-```
-
-**Implementation Idea**: Let users define "watch zones" for specific elements
-
----
-
-### 7. 📐 Region Properties & Metrics
-
-**What**: Measure changed region sizes, positions, shapes
-**Use Case**: Quantify "how much changed"
-**Value**: "Alert only if >10% of page changed" rules
-
-```python
-from skimage import measure
-
-# Get properties of changed regions
-regions = measure.regionprops(labeled_changes)
-
-for region in regions:
-    area = region.area
-    centroid = region.centroid
-    bbox = region.bbox
-
-    # Calculate percentage of image changed
-    percent_changed = (area / total_pixels) * 100
-```
-
-**Implementation Idea**: Add threshold options:
-- "Alert if >X% of image changed"
-- "Ignore changes smaller than X pixels"
-
----
-
-### 8. 🔲 Region Masking / Exclusion Zones
-
-**What**: Exclude specific regions from comparison
-**Use Case**: Ignore ads, timestamps, dynamic content
-**Value**: Reduce false positives from expected changes
-
-```python
-# User defines mask regions (top banner, sidebar ads, etc.)
-mask = np.ones_like(img1)
-mask[0:100, :] = 0  # Ignore top 100 pixels (ads)
-mask[:, -200:] = 0  # Ignore right 200 pixels (sidebar)
-
-# Apply mask to SSIM calculation
-masked_ssim = ssim(img1, img2, mask=mask, ...)
-```
-
-**Implementation Idea**: Add UI for drawing exclusion zones on reference screenshot
-
----
-
-### 9. 🔄 Image Alignment
-
-**What**: Handle slight position shifts, scrolling, zoom changes
-**Use Case**: Compare screenshots that aren't pixel-perfect aligned
-**Value**: Robust to viewport changes, scrolling
-
-```python
-from skimage.registration import phase_cross_correlation
-
-# Detect shift between images
-shift, error, diffphase = phase_cross_correlation(img1, img2)
-
-# Align images before comparison
-from scipy.ndimage import shift as nd_shift
-img2_aligned = nd_shift(img2, shift)
-
-# Now compare aligned images
-```
-
-**Implementation Idea**: Auto-align screenshots before SSIM to handle scroll/zoom
-
----
-
-### 10. 🔍 Local Binary Patterns (Texture Analysis)
-
-**What**: Texture-based comparison
-**Use Case**: Focus on content regions, ignore ad texture changes
-**Value**: Distinguish between content and decorative elements
-
-```python
-from skimage.feature import local_binary_pattern
-
-# Extract texture features
-lbp1 = local_binary_pattern(img1, P=8, R=1)
-lbp2 = local_binary_pattern(img2, P=8, R=1)
-
-# Compare texture patterns
-texture_diff = ssim(lbp1, lbp2, ...)
-```
-
-**Implementation Idea**: "Content-aware" mode that focuses on text/content areas
-
----
-
-## Priority Features for Implementation
-
-Based on user value and implementation complexity:
-
-### High Priority
-1. **Change Region Detection** - Show WHERE changes occurred with bounding boxes
-2. **Region Masking** - Let users exclude zones (ads, timestamps, dynamic content)
-3. **Region Size Thresholds** - "Alert only if >X% changed"
-
-### Medium Priority
-4. **Heatmap Visualization** - Alternative diff view (better than red highlights)
-5. **Color Histogram** - Quick color scheme change detection
-6. **Image Alignment** - Handle scroll/zoom differences
-
-### Low Priority (Advanced)
-7. **Structure-only Mode** - Layout change detection vs content
-8. **Feature Matching** - Semantic element tracking ("did logo disappear?")
-9. **Texture Analysis** - Content-aware comparison
-10. **Perceptual Hash** - Fast pre-check (but MD5 is already fast and more accurate)
-
-### Not Recommended
-- **Perceptual Hash as primary check** - Will miss small text changes that users care about
-- Current MD5 + SSIM approach is better for monitoring use cases
-
-## Implementation Considerations
-
-- **Performance**: Some features (pHash) are faster, others (feature matching) slower than SSIM
-- **Memory**: Keep cleanup patterns for GC (close PIL images, del arrays)
-- **UI Complexity**: Balance power features with ease of use
-- **False Positives**: More sensitivity = more alerts, need good defaults
-
-## Future Ideas
-
-- **OCR Integration**: Extract and compare text from screenshots
-- **Object Detection**: Detect when specific objects appear/disappear
-- **Machine Learning**: Learn what changes matter to the user
-- **Anomaly Detection**: Detect unusual changes vs typical patterns
-
----
+- **0%** = Identical images (or below minimum change threshold)
+- **0.1-1%** = Minor differences (anti-aliasing, slight rendering differences)
+- **1-5%** = Noticeable changes (text updates, small content changes)
+- **5-20%** = Significant changes (layout shifts, content additions)
+- **>20%** = Major differences (page redesign, large content changes)
 
 ## Technical Notes
 
-### Current Memory Management
-- Explicit `.close()` on PIL Images
-- `del` on numpy arrays after use
-- BytesIO `.close()` after encoding
-- Critical for long-running processes
-
-### SSIM Parameters
+### Memory Management
 ```python
-ssim_score = ssim(
-    img1, img2,
-    channel_axis=-1,  # RGB images (last dimension is color)
-    data_range=255,   # 8-bit images
-    full=True         # Return diff map for visualization
-)
+# Explicit cleanup for long-running processes
+img.close()  # Close PIL Images
+buffer.close()  # Close BytesIO buffers
+del large_array  # Mark numpy arrays for GC
 ```
 
 ### Diff Image Generation
-- Currently: JPEG quality=75 for smaller file sizes
-- Red highlight: 50% blend with original image
-- Could add configurable highlight colors or intensity
+- Format: JPEG (quality=85, optimized)
+- Highlight: Red overlay (50% blend with original)
+- Auto-downscaling: Large screenshots downscaled for faster rendering
+- Base64 embedded: For direct template rendering
+
+### OpenCV Blur Parameters
+The Gaussian blur reduces sensitivity to:
+- Font rendering differences
+- Anti-aliasing variations
+- JPEG compression artifacts
+- Minor pixel shifts (1-2 pixels)
+
+Increase `OPENCV_BLUR_SIGMA` to make comparison more tolerant of these differences.
+
+## Comparison: OpenCV vs Pixelmatch vs SSIM
+
+| Feature | OpenCV | Pixelmatch | SSIM (old) |
+|---------|--------|------------|------------|
+| **Speed** | 50-100x faster | 10-20x faster | Baseline |
+| **Anti-aliasing** | Via blur | Built-in detection | Built-in |
+| **Text sensitivity** | High | Medium (AA-aware) | Medium |
+| **Dependencies** | opencv-python-headless | pybind11-pixelmatch + C++ compiler | scikit-image |
+| **Alpine/musl support** | ✅ Yes | ⚠️ Build issues | ✅ Yes |
+| **Memory usage** | Low | Low | High |
+| **Best for** | General use, max speed | Text-heavy screenshots | Deprecated |
+
+## Migration from SSIM
+
+If you're upgrading from the old SSIM-based processor:
+
+1. **Thresholds are different**: SSIM used 0-1 scale (higher = more similar), OpenCV uses 0-255 pixel difference (lower = more similar)
+2. **Default threshold**: Start with 30 for OpenCV, adjust based on your needs
+3. **Performance**: Expect dramatically faster comparisons, especially for large screenshots
+4. **Accuracy**: OpenCV is more sensitive to pixel-level changes; increase `OPENCV_BLUR_SIGMA` if you're getting false positives
+
+## Future Enhancements
+
+Potential features for future consideration:
+
+- **Change region detection**: Highlight specific areas that changed with bounding boxes
+- **Perceptual hashing**: Pre-screening filter for even faster checks
+- **Ignore regions**: Exclude specific page areas (ads, timestamps) from comparison
+- **Text extraction**: OCR-based text comparison for semantic changes
+- **Adaptive thresholds**: Different sensitivity for different page regions
+
+## Resources
+
+- [OpenCV Documentation](https://docs.opencv.org/)
+- [pybind11-pixelmatch GitHub](https://github.com/whtsky/pybind11-pixelmatch)
+- [Pixelmatch (original JS library)](https://github.com/mapbox/pixelmatch)

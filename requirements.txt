@@ -76,8 +76,6 @@ elementpath==5.0.4
 # opencv-python-headless provides cv2 without GUI dependencies (smaller, faster)
 # Note: OpenCV uses 4-part versioning (e.g., 4.8.0.76)
 opencv-python-headless>=4.8.0.76
-# pybind11-pixelmatch is a C++17 port of pixelmatch for fast screenshot comparison with anti-aliasing detection
-pybind11-pixelmatch>=0.1.3
 
 selenium~=4.31.0
 

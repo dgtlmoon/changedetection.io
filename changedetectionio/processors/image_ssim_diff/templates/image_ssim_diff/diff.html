@@ -130,19 +130,11 @@
             <div class="comparison-score">
                 <strong>Change Detection:</strong> {{ "%.2f"|format(change_percentage) }}% of pixels changed
                 <br>
-                <strong>Method:</strong> {{ comparison_method }}
-                <br>
                 {% if change_percentage > 0.1 %}
                     <span class="change-detected">⚠ Change Detected</span>
                 {% else %}
                     <span class="no-change">✓ No Significant Change</span>
                 {% endif %}
-                <br><br>
-                <small style="color: #666;">
-                    <strong>About the comparison methods:</strong><br>
-                    <strong>OpenCV:</strong> Ultra-fast pixel-level comparison (50-100x faster than SSIM). Best for general use.<br>
-                    <strong>Pixelmatch:</strong> Fast perceptual comparison (10-20x faster than SSIM) with anti-aliasing detection. Best for screenshots with text.
-                </small>
             </div>
         </fieldset>
     </form>

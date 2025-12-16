@@ -231,12 +231,17 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             # Get fetcher capabilities instead of hardcoded logic
             capabilities = get_fetcher_capabilities(watch, datastore)
             app_rss_token = datastore.data['settings']['application'].get('rss_access_token'),
+
+            c = [watch.get('processor')]
+            if worker_handler.is_watch_running(uuid):
+                c.append('checking-now')
+
             template_args = {
                 'available_processors': processors.available_processors(),
                 'available_timezones': sorted(available_timezones()),
                 'browser_steps_config': browser_step_ui_config,
                 'emailprefix': os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
-                'extra_classes': 'checking-now' if worker_handler.is_watch_running(uuid) else '',
+                'extra_classes': ' '.join(c),
                 'extra_notification_token_placeholder_info': datastore.get_unique_notification_token_placeholders_available(),
                 'extra_processor_config': form.extra_tab_content(),
                 'extra_title': f" - Edit - {watch.label}",
