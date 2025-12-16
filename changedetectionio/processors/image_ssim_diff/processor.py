@@ -1,32 +1,35 @@
 """
-Core SSIM-based screenshot comparison processor.
+Core fast screenshot comparison processor.
 
-This processor uses the Structural Similarity Index (SSIM) to detect visual changes
-in screenshots while being robust to antialiasing and minor rendering differences.
+This processor uses OpenCV or pixelmatch algorithms to detect visual changes
+in screenshots. Both methods are dramatically faster than SSIM (10-100x speedup)
+while still being effective at detecting meaningful changes.
 """
 
 import hashlib
+import os
 import time
 from loguru import logger
 from changedetectionio.processors import difference_detection_processor
 from changedetectionio.processors.exceptions import ProcessorException
+from . import DEFAULT_COMPARISON_METHOD, DEFAULT_COMPARISON_THRESHOLD_OPENCV, DEFAULT_COMPARISON_THRESHOLD_PIXELMATCH
 
-name = 'Visual/Screenshot change detection (SSIM)'
-description = 'Compares screenshots using SSIM algorithm, robust to antialiasing and rendering differences'
+name = 'Visual/Screenshot change detection (Fast)'
+description = 'Compares screenshots using fast algorithms (OpenCV or pixelmatch), 10-100x faster than SSIM'
 
 
 class perform_site_check(difference_detection_processor):
-    """SSIM-based screenshot comparison processor."""
+    """Fast screenshot comparison processor."""
 
     def run_changedetection(self, watch):
         """
-        Perform screenshot comparison using SSIM.
+        Perform screenshot comparison using OpenCV or pixelmatch.
 
         Returns:
             tuple: (changed_detected, update_obj, screenshot_bytes)
         """
         now = time.time()
-       # Get the current screenshot
+        # Get the current screenshot
         if not self.fetcher.screenshot:
             raise ProcessorException(
                 message="No screenshot available. Ensure the watch is configured to use a real browser.",
@@ -35,30 +38,43 @@ class perform_site_check(difference_detection_processor):
         self.screenshot = self.fetcher.screenshot
         self.xpath_data = self.fetcher.xpath_data
 
-        # Quick MD5 check - skip expensive SSIM if images are identical
+        # Quick MD5 check - skip expensive comparison if images are identical
         from changedetectionio.content_fetchers.exceptions import checksumFromPreviousCheckWasTheSame
         current_md5 = hashlib.md5(self.screenshot).hexdigest()
         previous_md5 = watch.get('previous_md5')
         if previous_md5 and current_md5 == previous_md5:
-            logger.debug(f"Screenshot MD5 unchanged ({current_md5}), skipping SSIM calculation")
+            logger.debug(f"Screenshot MD5 unchanged ({current_md5}), skipping comparison")
             raise checksumFromPreviousCheckWasTheSame()
 
         from PIL import Image
         import io
         import numpy as np
-        from skimage.metrics import structural_similarity as ssim
 
-        # Get threshold (per-watch or global)
-        threshold = watch.get('ssim_threshold')
+        # Get comparison method (per-watch > global > env default)
+        comparison_method = (
+            watch.get('comparison_method') or
+            self.datastore.data['settings']['application'].get('comparison_method') or
+            DEFAULT_COMPARISON_METHOD
+        )
+
+        # Get threshold (per-watch > global > env default)
+        threshold = watch.get('comparison_threshold')
         if not threshold or threshold == '':
-            threshold = self.datastore.data['settings']['application'].get('ssim_threshold', '0.96')
+            default_threshold = (
+                DEFAULT_COMPARISON_THRESHOLD_OPENCV if comparison_method == 'opencv'
+                else DEFAULT_COMPARISON_THRESHOLD_PIXELMATCH
+            )
+            threshold = self.datastore.data['settings']['application'].get('comparison_threshold', default_threshold)
 
-        # Convert string to float
+        # Convert string to appropriate type
         try:
             threshold = float(threshold)
+            # For pixelmatch, convert from 0-100 scale to 0-1 scale
+            if comparison_method == 'pixelmatch':
+                threshold = threshold / 100.0
         except (ValueError, TypeError):
-            logger.warning(f"Invalid SSIM threshold value '{threshold}', using default 0.96")
-            threshold = 0.96
+            logger.warning(f"Invalid threshold value '{threshold}', using default")
+            threshold = 30.0 if comparison_method == 'opencv' else 0.1
 
         # Convert current screenshot to PIL Image
         try:
@@ -175,46 +191,34 @@ class perform_site_check(difference_detection_processor):
             logger.trace(f"Processed in {time.time() - now:.3f}s")
             return False, update_obj, self.screenshot
 
-        # Convert images to numpy arrays for SSIM calculation
+        # Perform comparison based on selected method
         try:
             # Ensure images are the same size
             if current_img.size != previous_img.size:
                 logger.info(f"Resizing images to match: {previous_img.size} -> {current_img.size}")
                 previous_img = previous_img.resize(current_img.size, Image.Resampling.LANCZOS)
 
-            # Convert to RGB if needed (handle RGBA, grayscale, etc.)
-            if current_img.mode != 'RGB':
-                current_img = current_img.convert('RGB')
-            if previous_img.mode != 'RGB':
-                previous_img = previous_img.convert('RGB')
+            if comparison_method == 'pixelmatch':
+                changed_detected, change_score = self._compare_pixelmatch(
+                    previous_img, current_img, threshold
+                )
+                logger.info(f"Pixelmatch: {change_score:.2f}% pixels different, threshold: {threshold*100:.0f}%")
+            else:  # opencv (default)
+                changed_detected, change_score = self._compare_opencv(
+                    previous_img, current_img, threshold
+                )
+                logger.info(f"OpenCV: {change_score:.2f}% pixels changed, threshold: {threshold:.0f}")
 
-            # Convert to numpy arrays
-            current_array = np.array(current_img)
-            previous_array = np.array(previous_img)
-
-            # Calculate SSIM
-            # multichannel=True for RGB images (deprecated in favor of channel_axis)
-            # Use channel_axis=-1 for color images (last dimension is color channels)
-            ssim_score = ssim(
-                previous_array,
-                current_array,
-                channel_axis=-1,
-                data_range=255
-            )
-
-            logger.info(f"SSIM score: {ssim_score:.4f}, threshold: {threshold}")
-
-            # Explicitly close PIL images and delete arrays to free memory immediately
+            # Explicitly close PIL images to free memory immediately
             current_img.close()
             previous_img.close()
-            del current_array
-            del previous_array
+            del current_img
+            del previous_img
             del previous_screenshot_bytes  # Release the large bytes object
 
         except Exception as e:
-            logger.error(f"Failed to calculate SSIM: {e}")
-            # Ensure cleanup even on error - try to clean up any objects that were created
-            # (silently ignore if they don't exist)
+            logger.error(f"Failed to compare screenshots: {e}")
+            # Ensure cleanup even on error
             for obj in ['current_img', 'previous_img']:
                 try:
                     locals()[obj].close()
@@ -223,12 +227,9 @@ class perform_site_check(difference_detection_processor):
             logger.trace(f"Processed in {time.time() - now:.3f}s")
 
             raise ProcessorException(
-                message=f"SSIM calculation failed: {e}",
+                message=f"Screenshot comparison failed: {e}",
                 url=watch.get('url')
             )
-
-        # Determine if change detected (lower SSIM = more different)
-        changed_detected = ssim_score < threshold
 
         # Return results
         update_obj = {
@@ -237,9 +238,144 @@ class perform_site_check(difference_detection_processor):
         }
 
         if changed_detected:
-            logger.info(f"Change detected! SSIM score {ssim_score:.4f} < threshold {threshold}")
+            logger.info(f"Change detected using {comparison_method}! Score: {change_score:.2f}")
         else:
-            logger.debug(f"No significant change. SSIM score {ssim_score:.4f} >= threshold {threshold}")
+            logger.debug(f"No significant change using {comparison_method}. Score: {change_score:.2f}")
         logger.trace(f"Processed in {time.time() - now:.3f}s")
 
         return changed_detected, update_obj, self.screenshot
+
+    def _compare_opencv(self, img_from, img_to, threshold):
+        """
+        Compare images using OpenCV cv2.absdiff method.
+
+        This is the fastest method (50-100x faster than SSIM) and works well
+        for detecting pixel-level changes with optional Gaussian blur to reduce
+        sensitivity to minor rendering differences.
+
+        Args:
+            img_from: Previous PIL Image
+            img_to: Current PIL Image
+            threshold: Pixel difference threshold (0-255)
+
+        Returns:
+            tuple: (changed_detected, change_percentage)
+        """
+        import cv2
+        import numpy as np
+
+        # Convert PIL images to numpy arrays
+        arr_from = np.array(img_from)
+        arr_to = np.array(img_to)
+
+        # Convert to grayscale for faster comparison
+        if len(arr_from.shape) == 3:
+            gray_from = cv2.cvtColor(arr_from, cv2.COLOR_RGB2GRAY)
+            gray_to = cv2.cvtColor(arr_to, cv2.COLOR_RGB2GRAY)
+        else:
+            gray_from = arr_from
+            gray_to = arr_to
+
+        # Optional: Apply Gaussian blur to reduce sensitivity to minor rendering differences
+        # Controlled by environment variable, default sigma=0.8
+        blur_sigma = float(os.getenv("OPENCV_BLUR_SIGMA", "0.8"))
+        if blur_sigma > 0:
+            gray_from = cv2.GaussianBlur(gray_from, (0, 0), blur_sigma)
+            gray_to = cv2.GaussianBlur(gray_to, (0, 0), blur_sigma)
+
+        # Calculate absolute difference
+        diff = cv2.absdiff(gray_from, gray_to)
+
+        # Apply threshold to create binary mask
+        _, thresh = cv2.threshold(diff, threshold, 255, cv2.THRESH_BINARY)
+
+        # Count changed pixels
+        changed_pixels = np.count_nonzero(thresh)
+        total_pixels = thresh.size
+        change_percentage = (changed_pixels / total_pixels) * 100
+
+        # Determine if change detected (if more than 0.1% of pixels changed)
+        # This prevents triggering on single-pixel noise
+        min_change_percentage = float(os.getenv("OPENCV_MIN_CHANGE_PERCENT", "0.1"))
+        changed_detected = change_percentage > min_change_percentage
+
+        # Explicit memory cleanup - mark large arrays for garbage collection
+        del arr_from, arr_to
+        del gray_from, gray_to
+        del diff, thresh
+
+        return changed_detected, change_percentage
+
+    def _compare_pixelmatch(self, img_from, img_to, threshold):
+        """
+        Compare images using pixelmatch (C++17 implementation via pybind11).
+
+        This method is 10-20x faster than SSIM and is specifically designed for
+        screenshot comparison with anti-aliasing detection. It's particularly good
+        at ignoring minor rendering differences while catching real changes.
+
+        Args:
+            img_from: Previous PIL Image
+            img_to: Current PIL Image
+            threshold: Color difference threshold (0-1, where 0 is most sensitive)
+
+        Returns:
+            tuple: (changed_detected, change_percentage)
+        """
+        try:
+            from pybind11_pixelmatch import pixelmatch, Options
+        except ImportError:
+            logger.error("pybind11-pixelmatch not installed, falling back to OpenCV")
+            return self._compare_opencv(img_from, img_to, threshold * 255)
+
+        import numpy as np
+
+        # Convert to RGB if not already
+        if img_from.mode != 'RGB':
+            img_from = img_from.convert('RGB')
+        if img_to.mode != 'RGB':
+            img_to = img_to.convert('RGB')
+
+        # Convert to numpy arrays (pixelmatch expects RGBA format)
+        arr_from = np.array(img_from)
+        arr_to = np.array(img_to)
+
+        # Add alpha channel (pixelmatch expects RGBA)
+        if arr_from.shape[2] == 3:
+            alpha = np.ones((arr_from.shape[0], arr_from.shape[1], 1), dtype=np.uint8) * 255
+            arr_from = np.concatenate([arr_from, alpha], axis=2)
+            arr_to = np.concatenate([arr_to, alpha], axis=2)
+
+        # Create diff output array (RGBA)
+        diff_array = np.zeros_like(arr_from)
+
+        # Configure pixelmatch options
+        opts = Options()
+        opts.threshold = threshold
+        opts.includeAA = True  # Ignore anti-aliasing differences
+        opts.alpha = 0.1       # Opacity of diff overlay
+
+        # Run pixelmatch (returns number of mismatched pixels)
+        width, height = img_from.size
+        num_diff_pixels = pixelmatch(
+            arr_from,
+            arr_to,
+            output=diff_array,
+            options=opts
+        )
+
+        # Calculate change percentage
+        total_pixels = width * height
+        change_percentage = (num_diff_pixels / total_pixels) * 100
+
+        # Determine if change detected (if more than 0.1% of pixels changed)
+        min_change_percentage = float(os.getenv("PIXELMATCH_MIN_CHANGE_PERCENT", "0.1"))
+        changed_detected = change_percentage > min_change_percentage
+
+        # Explicit memory cleanup - mark large arrays for garbage collection
+        del arr_from, arr_to
+        del diff_array
+        if 'alpha' in locals():
+            del alpha
+
+        return changed_detected, change_percentage

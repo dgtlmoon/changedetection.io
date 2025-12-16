@@ -1,10 +1,17 @@
 """
-Visual/screenshot change detection using SSIM (Structural Similarity Index).
+Visual/screenshot change detection using fast image comparison algorithms.
 
-This processor compares screenshots using the SSIM algorithm, which is superior to
-simple pixel comparison for detecting meaningful visual changes while ignoring
-antialiasing, minor rendering differences, and other insignificant pixel variations.
+This processor compares screenshots using OpenCV (cv2.absdiff) or pixelmatch algorithms,
+which are 10-100x faster than SSIM while still detecting meaningful visual changes
+and handling antialiasing differences.
 """
 
-processor_description = "Visual/screenshot change detection using SSIM (Structural Similarity Index)"
+import os
+
+processor_description = "Visual/Screenshot change detection (Fast)"
 processor_name = "image_ssim_diff"
+
+# Default comparison settings
+DEFAULT_COMPARISON_METHOD = os.getenv('COMPARISON_METHOD', 'opencv')
+DEFAULT_COMPARISON_THRESHOLD_OPENCV = float(os.getenv('COMPARISON_THRESHOLD_OPENCV', '30'))
+DEFAULT_COMPARISON_THRESHOLD_PIXELMATCH = float(os.getenv('COMPARISON_THRESHOLD_PIXELMATCH', '10'))

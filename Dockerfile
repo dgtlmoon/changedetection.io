@@ -35,26 +35,12 @@ ENV OPENSSL_INCLUDE_DIR="/usr/include/openssl"
 # Additional environment variables for cryptography Rust build
 ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
-# Install numpy to system Python first - required for building scikit-image on ARM
-# (scikit-image build process needs numpy headers from system Python, not from /dependencies)
 RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
   pip install \
   --prefer-binary \
   --extra-index-url https://www.piwheels.org/simple \
   --extra-index-url https://pypi.anaconda.org/ARM-software/simple \
   --cache-dir=/tmp/pip-cache \
-  numpy
-
-# Now install all requirements to /dependencies
-# Disable build isolation so scikit-image can use system numpy during compilation
-RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
-  PIP_NO_BUILD_ISOLATION=1 \
-  pip install \
-  --prefer-binary \
-  --extra-index-url https://www.piwheels.org/simple \
-  --extra-index-url https://pypi.anaconda.org/ARM-software/simple \
-  --cache-dir=/tmp/pip-cache \
-  --target=/dependencies \
   -r /requirements.txt
 
 
@@ -83,6 +69,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # favicon type detection and other uses
     file \
     zlib1g \
+    # OpenCV dependencies for image processing
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 

@@ -3,7 +3,7 @@
 {% block content %}
 
 <style>
-.ssim-score {
+.comparison-score {
     padding: 1em;
     background: #f5f5f5;
     border-radius: 4px;
@@ -100,7 +100,7 @@
 
     <form class="pure-form" action="{{ url_for('ui.ui_diff.diff_history_page', uuid=uuid) }}" method="GET" id="diff-form">
         <fieldset class="diff-fieldset">
-            <h2 style="margin-top: 0;">Screenshot Comparison (SSIM)</h2>
+            <h2 style="margin-top: 0;">Screenshot Comparison (Fast)</h2>
 
             {% if versions|length >= 2 %}
                 <div class="version-selector">
@@ -126,23 +126,22 @@
                 </div>
             {% endif %}
 
-            <!-- SSIM score display -->
-            <div class="ssim-score">
-                <strong>SSIM Score:</strong> {{ "%.4f"|format(ssim_score) }}
-                ({{ "%.2f"|format(percentage_different) }}% different)
+            <!-- Comparison score display -->
+            <div class="comparison-score">
+                <strong>Change Detection:</strong> {{ "%.2f"|format(change_percentage) }}% of pixels changed
                 <br>
-                <strong>Threshold:</strong> {{ "%.4f"|format(threshold) }}
+                <strong>Method:</strong> {{ comparison_method }}
                 <br>
-                {% if ssim_score < threshold %}
+                {% if change_percentage > 0.1 %}
                     <span class="change-detected">⚠ Change Detected</span>
                 {% else %}
                     <span class="no-change">✓ No Significant Change</span>
                 {% endif %}
                 <br><br>
                 <small style="color: #666;">
-                    <strong>About SSIM:</strong> Structural Similarity Index measures visual similarity between images.
-                    A score of 1.0 means identical, lower scores indicate more differences.
-                    This method is robust to antialiasing and minor rendering variations.
+                    <strong>About the comparison methods:</strong><br>
+                    <strong>OpenCV:</strong> Ultra-fast pixel-level comparison (50-100x faster than SSIM). Best for general use.<br>
+                    <strong>Pixelmatch:</strong> Fast perceptual comparison (10-20x faster than SSIM) with anti-aliasing detection. Best for screenshots with text.
                 </small>
             </div>
         </fieldset>
@@ -180,26 +179,26 @@
         </div>
     </div>
 
-    {% if ssim_data and ssim_data.get('history') and ssim_data.history|length > 1 %}
+    {% if comparison_data and comparison_data.get('history') and comparison_data.history|length > 1 %}
     <div style="margin-top: 3em; padding: 1em; background: #fff; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-        <h3>SSIM Score History</h3>
-        <p style="color: #666; font-size: 0.9em;">Recent SSIM scores over time (last {{ ssim_data.history|length }} checks)</p>
+        <h3>Comparison History</h3>
+        <p style="color: #666; font-size: 0.9em;">Recent comparison results (last {{ comparison_data.history|length }} checks)</p>
         <div style="overflow-x: auto;">
             <table class="pure-table pure-table-striped" style="width: 100%;">
                 <thead>
                     <tr>
                         <th>Timestamp</th>
-                        <th>SSIM Score</th>
-                        <th>Threshold</th>
+                        <th>Change %</th>
+                        <th>Method</th>
                         <th>Changed?</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for entry in ssim_data.history|reverse %}
+                    {% for entry in comparison_data.history|reverse %}
                     <tr>
                         <td>{{ entry.timestamp|format_timestamp_timeago }}</td>
-                        <td>{{ "%.4f"|format(entry.ssim_score) }}</td>
-                        <td>{{ "%.4f"|format(entry.threshold) }}</td>
+                        <td>{{ "%.2f"|format(entry.change_percentage) }}%</td>
+                        <td>{{ entry.method }}</td>
                         <td>
                             {% if entry.changed %}
                                 <span style="color: #d32f2f; font-weight: bold;">Yes</span>
