@@ -28,7 +28,6 @@ RUN \
     nodejs \
     poppler-utils \
     python3 \
-    # OpenCV dependencies for image processing
     glib \
     libsm \
     libxext \
