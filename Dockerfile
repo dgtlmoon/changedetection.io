@@ -43,6 +43,11 @@ RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
   --cache-dir=/tmp/pip-cache \
   -r /requirements.txt
 
+# Copy installed packages from system Python to /dependencies for final image
+ARG PYTHON_VERSION
+RUN mkdir -p /dependencies && \
+    cp -r /usr/local/lib/python${PYTHON_VERSION}/site-packages/* /dependencies/
+
 
 # Playwright is an alternative to Selenium
 # Excluded this package from requirements.txt to prevent arm/v6 and arm/v7 builds from failing

@@ -241,9 +241,9 @@ def generate_diff_image_opencv(img_bytes_to, diff_mask):
     # Convert back to PIL Image
     diff_img = Image.fromarray(result_array.astype(np.uint8))
 
-    # Save to bytes as PNG (faster rendering than JPEG for diff images)
+    # Save to bytes as JPEG (smaller and faster than PNG for diff visualization)
     buf = io.BytesIO()
-    diff_img.save(buf, format='PNG', optimize=True)
+    diff_img.save(buf, format='JPEG', quality=85, optimize=True)
     diff_bytes = buf.getvalue()
 
     # Explicit memory cleanup - close files and buffers, delete large objects
@@ -264,14 +264,17 @@ def generate_diff_image_pixelmatch(diff_array):
         diff_array: RGBA diff array from pixelmatch (4D numpy array)
 
     Returns:
-        bytes: PNG image with highlighted differences
+        bytes: JPEG image with highlighted differences
     """
-    # Convert diff array to PIL Image
+    # Convert diff array to PIL Image (RGBA)
     diff_img = Image.fromarray(diff_array.astype(np.uint8), mode='RGBA')
 
-    # Save to bytes as PNG
+    # Convert RGBA to RGB for JPEG (JPEG doesn't support transparency)
+    diff_img = diff_img.convert('RGB')
+
+    # Save to bytes as JPEG (smaller and faster than PNG)
     buf = io.BytesIO()
-    diff_img.save(buf, format='PNG', optimize=True)
+    diff_img.save(buf, format='JPEG', quality=85, optimize=True)
     diff_bytes = buf.getvalue()
 
     # Explicit memory cleanup - close files first, then delete

@@ -157,7 +157,16 @@
             <div style="color: #666; font-size: 0.9em; margin-bottom: 1em;">
                 {{ from_version|format_timestamp_timeago }}
             </div>
-            <img src="data:image/png;base64,{{ img_from_b64 }}" alt="Previous screenshot">
+            <div style="text-align: center; margin-bottom: 0.5em;">
+                <a href="#" onclick="downloadImage('img-from', '{{ from_version }}'); return false;" style="color: #0078e7; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3em; font-size: 0.85em;" title="Download previous snapshot">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="display: inline-block;">
+                        <path d="M8 12L3 7h3V1h4v6h3z"/>
+                        <path d="M1 14h14v2H1z"/>
+                    </svg>
+                    Download
+                </a>
+            </div>
+            <img id="img-from" src="data:image/png;base64,{{ img_from_b64 }}" alt="Previous screenshot">
         </div>
 
         <!-- Panel 2: To (Current) -->
@@ -166,16 +175,32 @@
             <div style="color: #666; font-size: 0.9em; margin-bottom: 1em;">
                 {{ to_version|format_timestamp_timeago }}
             </div>
-            <img src="data:image/png;base64,{{ img_to_b64 }}" alt="Current screenshot">
+            <div style="text-align: center; margin-bottom: 0.5em;">
+                <a href="#" onclick="downloadImage('img-to', '{{ to_version }}'); return false;" style="color: #0078e7; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3em; font-size: 0.85em;" title="Download current snapshot">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="display: inline-block;">
+                        <path d="M8 12L3 7h3V1h4v6h3z"/>
+                        <path d="M1 14h14v2H1z"/>
+                    </svg>
+                    Download
+                </a>
+            </div>
+            <img id="img-to" src="data:image/png;base64,{{ img_to_b64 }}" alt="Current screenshot">
         </div>
 
         <!-- Panel 3: Difference (with red highlights) -->
         <div class="screenshot-panel diff">
             <h3>Difference Visualization</h3>
-            <div style="color: #d32f2f; font-size: 0.9em; margin-bottom: 1em; font-weight: bold;">
-                Red = Changed Pixels
+            <div style="color: #d32f2f; font-size: 0.9em; margin-bottom: 1em; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 1em;">
+                <a href="#" onclick="downloadImage('diff-image', '{{ to_version }}_diff'); return false;" style="color: #0078e7; text-decoration: none; display: flex; align-items: center; gap: 0.3em;" title="Download difference image">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="display: inline-block;">
+                        <path d="M8 12L3 7h3V1h4v6h3z"/>
+                        <path d="M1 14h14v2H1z"/>
+                    </svg>
+                    Download
+                </a>
+                <span>Red = Changed Pixels</span>
             </div>
-            <img src="data:image/png;base64,{{ diff_image_b64 }}" alt="Difference visualization with red highlights">
+            <img id="diff-image" src="data:image/jpeg;base64,{{ diff_image_b64 }}" alt="Difference visualization with red highlights">
         </div>
     </div>
 
@@ -214,5 +239,42 @@
     </div>
     {% endif %}
 </div>
+
+<script>
+function downloadImage(imageId, filename) {
+    // Get the image element
+    const img = document.getElementById(imageId);
+    const base64Data = img.src;
+
+    // Convert base64 to blob
+    const byteString = atob(base64Data.split(',')[1]);
+    const mimeString = base64Data.split(',')[0].split(':')[1].split(';')[0];
+
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+
+    const blob = new Blob([ab], { type: mimeString });
+
+    // Determine file extension from MIME type
+    const extension = mimeString.includes('jpeg') ? '.jpeg' : '.png';
+
+    // Create download link
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename + extension;
+    document.body.appendChild(a);
+    a.click();
+
+    // Cleanup
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 100);
+}
+</script>
 
 {% endblock %}

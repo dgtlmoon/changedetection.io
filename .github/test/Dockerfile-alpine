@@ -27,7 +27,12 @@ RUN \
     file \
     nodejs \
     poppler-utils \
-    python3 && \
+    python3 \
+    # OpenCV dependencies for image processing
+    glib \
+    libsm \
+    libxext \
+    libxrender && \
   echo "**** pip3 install test of changedetection.io ****" && \
   python3 -m venv /lsiopy  && \
   pip install -U pip wheel setuptools && \
