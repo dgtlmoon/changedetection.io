@@ -6,6 +6,7 @@ from flask_login import current_user
 from flask_paginate import Pagination, get_page_parameter
 
 from changedetectionio import forms
+from changedetectionio import processors
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
 
@@ -90,6 +91,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             hosted_sticky=os.getenv("SALTED_PASS", False) == False,
             now_time_server=round(time.time()),
             pagination=pagination,
+            processor_badge_texts=processors.get_processor_badge_texts(),
+            processor_descriptions=processors.get_processor_descriptions(),
             queued_uuids=[q_uuid.item['uuid'] for q_uuid in update_q.queue],
             search_q=request.args.get('q', '').strip(),
             sort_attribute=request.args.get('sort') if request.args.get('sort') else request.cookies.get('sort'),

@@ -387,6 +387,22 @@ Math: {{ 1 + 1 }}") }}
                                     The Visual Selector tool lets you select the <i>text</i> elements that will be used for the change detection. It automatically fills-in the filters in the "CSS/JSONPath/JQ/XPath Filters" box of the <a href="#filters-and-triggers">Filters & Triggers</a> tab. Use <strong>Shift+Click</strong> to select multiple items.
                                 </span>
 
+                                {% if watch['processor'] == 'image_ssim_diff' %}
+                                <div id="selection-mode-controls" style="margin: 10px 0; padding: 10px; background: var(--color-background-tab); border-radius: 5px;">
+                                    <label style="font-weight: 600; margin-right: 15px;">Selection Mode:</label>
+                                    <label style="margin-right: 15px;">
+                                        <input type="radio" name="selector-mode" value="element" style="margin-right: 5px;">
+                                        Select by element
+                                    </label>
+                                    <label>
+                                        <input type="radio" name="selector-mode" value="draw" checked style="margin-right: 5px;">
+                                        Draw area
+                                    </label>
+                                    {{ render_field(form.processor_config_bounding_box) }}
+                                    {{ render_field(form.processor_config_selection_mode) }}
+                                </div>
+                                {% endif %}
+
                                 <div id="selector-header">
                                     <a id="clear-selector" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Clear selection</a>
                                     <!-- visual selector IMG will try to load, it will either replace this or on error replace it with some handy text -->

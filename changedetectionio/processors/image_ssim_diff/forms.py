@@ -2,8 +2,39 @@
 Configuration forms for fast screenshot comparison processor.
 """
 
-from wtforms import SelectField, validators
+from wtforms import SelectField, StringField, validators, ValidationError
 from changedetectionio.forms import processor_text_json_diff_form
+import re
+
+
+def validate_bounding_box(form, field):
+    """Validate bounding box format: x,y,width,height with integers."""
+    if not field.data:
+        return  # Optional field
+
+    if len(field.data) > 100:
+        raise ValidationError('Bounding box value is too long')
+
+    # Should be comma-separated integers
+    if not re.match(r'^\d+,\d+,\d+,\d+$', field.data):
+        raise ValidationError('Bounding box must be in format: x,y,width,height (integers only)')
+
+    # Validate values are reasonable (not negative, not ridiculously large)
+    parts = [int(p) for p in field.data.split(',')]
+    for part in parts:
+        if part < 0:
+            raise ValidationError('Bounding box values must be non-negative')
+        if part > 10000:  # Reasonable max screen dimension
+            raise ValidationError('Bounding box values are too large')
+
+
+def validate_selection_mode(form, field):
+    """Validate selection mode value."""
+    if not field.data:
+        return  # Optional field
+
+    if field.data not in ['element', 'draw']:
+        raise ValidationError('Selection mode must be either "element" or "draw"')
 
 
 class processor_settings_form(processor_text_json_diff_form):
@@ -21,6 +52,27 @@ class processor_settings_form(processor_text_json_diff_form):
         ],
         validators=[validators.Optional()],
         default=''
+    )
+
+    # Processor-specific config fields (stored in separate JSON file)
+    processor_config_bounding_box = StringField(
+        'Bounding Box',
+        validators=[
+            validators.Optional(),
+            validators.Length(max=100, message='Bounding box value is too long'),
+            validate_bounding_box
+        ],
+        render_kw={"style": "display: none;", "id": "bounding_box"}
+    )
+
+    processor_config_selection_mode = StringField(
+        'Selection Mode',
+        validators=[
+            validators.Optional(),
+            validators.Length(max=20, message='Selection mode value is too long'),
+            validate_selection_mode
+        ],
+        render_kw={"style": "display: none;", "id": "selection_mode"}
     )
 
     def extra_tab_content(self):

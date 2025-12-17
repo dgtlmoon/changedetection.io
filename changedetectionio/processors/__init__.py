@@ -2,6 +2,7 @@ from abc import abstractmethod
 from changedetectionio.content_fetchers.base import Fetcher
 from changedetectionio.strtobool import strtobool
 from copy import deepcopy
+from functools import lru_cache
 from loguru import logger
 import hashlib
 import importlib
@@ -205,13 +206,14 @@ class difference_detection_processor():
             logger.warning(f"Failed to read extra watch config {filename}: {e}")
             return {}
 
-    def update_extra_watch_config(self, filename, data):
+    def update_extra_watch_config(self, filename, data, merge=True):
         """
         Write processor-specific JSON config file to watch data directory.
 
         Args:
             filename: Name of JSON file (e.g., "visual_ssim_score.json")
             data: Dictionary to serialize as JSON
+            merge: If True, merge with existing data; if False, overwrite completely
         """
         import json
         import os
@@ -229,8 +231,25 @@ class difference_detection_processor():
         filepath = os.path.join(watch_data_dir, filename)
 
         try:
+            # If merge is enabled, read existing data first
+            existing_data = {}
+            if merge and os.path.isfile(filepath):
+                try:
+                    with open(filepath, 'r', encoding='utf-8') as f:
+                        existing_data = json.load(f)
+                except (json.JSONDecodeError, IOError) as e:
+                    logger.warning(f"Failed to read existing config for merge: {e}")
+
+            # Merge new data with existing
+            if merge:
+                existing_data.update(data)
+                data_to_save = existing_data
+            else:
+                data_to_save = data
+
+            # Write the data
             with open(filepath, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=2)
+                json.dump(data_to_save, f, indent=2)
         except IOError as e:
             logger.error(f"Failed to write extra watch config {filename}: {e}")
 
@@ -364,4 +383,59 @@ def available_processors():
 
     # Return as tuples without weight (for backwards compatibility)
     return [(name, desc) for name, desc, weight in available]
+
+
+@lru_cache(maxsize=1)
+def get_processor_badge_texts():
+    """
+    Get a dictionary mapping processor names to their list_badge_text values.
+    Cached to avoid repeated lookups.
+
+    :return: A dict mapping processor name to badge text (e.g., {'text_json_diff': 'Text', 'restock_diff': 'Restock'})
+    """
+    processor_classes = find_processors()
+    badge_texts = {}
+
+    for module, sub_package_name in processor_classes:
+        # Try to get the 'list_badge_text' attribute from the processor module
+        if hasattr(module, 'list_badge_text'):
+            badge_texts[sub_package_name] = module.list_badge_text
+        else:
+            # Fall back to parent module's __init__.py
+            parent_module = get_parent_module(module)
+            if parent_module and hasattr(parent_module, 'list_badge_text'):
+                badge_texts[sub_package_name] = parent_module.list_badge_text
+
+    return badge_texts
+
+
+@lru_cache(maxsize=1)
+def get_processor_descriptions():
+    """
+    Get a dictionary mapping processor names to their description/name values.
+    Cached to avoid repeated lookups.
+
+    :return: A dict mapping processor name to description (e.g., {'text_json_diff': 'Webpage Text/HTML, JSON and PDF changes'})
+    """
+    processor_classes = find_processors()
+    descriptions = {}
+
+    for module, sub_package_name in processor_classes:
+        # Try to get the 'name' or 'description' attribute from the processor module first
+        if hasattr(module, 'name'):
+            descriptions[sub_package_name] = module.name
+        elif hasattr(module, 'description'):
+            descriptions[sub_package_name] = module.description
+        else:
+            # Fall back to parent module's __init__.py
+            parent_module = get_parent_module(module)
+            if parent_module and hasattr(parent_module, 'processor_description'):
+                descriptions[sub_package_name] = parent_module.processor_description
+            elif parent_module and hasattr(parent_module, 'name'):
+                descriptions[sub_package_name] = parent_module.name
+            else:
+                # Final fallback to a readable name
+                descriptions[sub_package_name] = sub_package_name.replace('_', ' ').title()
+
+    return descriptions
 

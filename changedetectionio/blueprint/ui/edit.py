@@ -96,6 +96,25 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         form.datastore = datastore
         form.watch = default
 
+        # Load processor-specific config from JSON file for GET requests
+        if request.method == 'GET' and processor_name:
+            try:
+                # Create a processor instance to access config methods
+                processor_instance = processors.difference_detection_processor(datastore, uuid)
+                # Use processor name as filename so each processor keeps its own config
+                config_filename = f'{processor_name}.json'
+                processor_config = processor_instance.get_extra_watch_config(config_filename)
+
+                if processor_config:
+                    # Populate processor-config-* fields from JSON
+                    for config_key, config_value in processor_config.items():
+                        field_name = f'processor_config_{config_key}'
+                        if hasattr(form, field_name):
+                            getattr(form, field_name).data = config_value
+                            logger.debug(f"Loaded processor config from {config_filename}: {field_name} = {config_value}")
+            except Exception as e:
+                logger.warning(f"Failed to load processor config: {e}")
+
         for p in datastore.extra_browsers:
             form.fetch_backend.choices.append(p)
 
@@ -129,7 +148,34 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
             extra_update_obj['time_between_check'] = form.time_between_check.data
 
-             # Ignore text
+             # Handle processor-config-* fields separately (save to JSON, not datastore)
+            processor_config_data = {}
+            fields_to_remove = []
+            for field_name, field_value in form.data.items():
+                if field_name.startswith('processor_config_'):
+                    config_key = field_name.replace('processor_config_', '')
+                    if field_value:  # Only save non-empty values
+                        processor_config_data[config_key] = field_value
+                    fields_to_remove.append(field_name)
+
+            # Save processor config to JSON file if any config data exists
+            if processor_config_data:
+                try:
+                    processor_name = form.data.get('processor')
+                    # Create a processor instance to access config methods
+                    processor_instance = processors.difference_detection_processor(datastore, uuid)
+                    # Use processor name as filename so each processor keeps its own config
+                    config_filename = f'{processor_name}.json'
+                    processor_instance.update_extra_watch_config(config_filename, processor_config_data)
+                    logger.debug(f"Saved processor config to {config_filename}: {processor_config_data}")
+                except Exception as e:
+                    logger.error(f"Failed to save processor config: {e}")
+
+            # Remove processor-config-* fields from form.data before updating datastore
+            for field_name in fields_to_remove:
+                form.data.pop(field_name, None)
+
+            # Ignore text
             form_ignore_text = form.ignore_text.data
             datastore.data['watching'][uuid]['ignore_text'] = form_ignore_text
 

@@ -14,10 +14,10 @@ from changedetectionio.processors import difference_detection_processor, SCREENS
 from changedetectionio.processors.exceptions import ProcessorException
 from . import DEFAULT_COMPARISON_METHOD, DEFAULT_COMPARISON_THRESHOLD_OPENCV, DEFAULT_COMPARISON_THRESHOLD_PIXELMATCH
 
-name = 'Visual/Screenshot change detection (Fast)'
+name = 'Visual/Image screenshot change detection'
 description = 'Compares screenshots using fast algorithms (OpenCV or pixelmatch), 10-100x faster than SSIM'
 processor_weight = 2
-
+list_badge_text = "Visual"
 
 class perform_site_check(difference_detection_processor):
     """Fast screenshot comparison processor."""
@@ -84,43 +84,73 @@ class perform_site_check(difference_detection_processor):
                 url=watch.get('url')
             )
 
-        # Check if visual selector (include_filters) is set for region-based comparison
-        include_filters = watch.get('include_filters', [])
+        # Check if bounding box is set (for drawn area mode)
+        # Read from processor-specific config JSON file (named after processor)
         crop_region = None
+        # Automatically use the processor name from watch config as filename
+        processor_name = watch.get('processor', 'default')
+        config_filename = f'{processor_name}.json'
+        processor_config = self.get_extra_watch_config(config_filename)
+        bounding_box = processor_config.get('bounding_box') if processor_config else None
 
-        if include_filters and len(include_filters) > 0:
-            # Get the first filter to use for cropping
-            first_filter = include_filters[0].strip()
+        if bounding_box:
+            try:
+                # Parse bounding box: "x,y,width,height"
+                parts = [int(p.strip()) for p in bounding_box.split(',')]
+                if len(parts) == 4:
+                    x, y, width, height = parts
 
-            if first_filter and self.xpath_data:
-                try:
-                    import json
-                    # xpath_data is JSON string from browser
-                    xpath_data_obj = json.loads(self.xpath_data) if isinstance(self.xpath_data, str) else self.xpath_data
+                    # PIL crop uses (left, top, right, bottom)
+                    crop_region = (
+                        max(0, x),
+                        max(0, y),
+                        min(current_img.width, x + width),
+                        min(current_img.height, y + height)
+                    )
 
-                    # Find the bounding box for the first filter
-                    for element in xpath_data_obj.get('size_pos', []):
-                        # Match the filter with the element's xpath
-                        if element.get('xpath') == first_filter and element.get('highlight_as_custom_filter'):
-                            # Found the element - extract crop coordinates
-                            left = element.get('left', 0)
-                            top = element.get('top', 0)
-                            width = element.get('width', 0)
-                            height = element.get('height', 0)
+                    logger.info(f"Bounding box enabled: cropping to region {crop_region} (x={x}, y={y}, w={width}, h={height})")
+                else:
+                    logger.warning(f"Invalid bounding box format: {bounding_box} (expected 4 values)")
+            except Exception as e:
+                logger.warning(f"Failed to parse bounding box '{bounding_box}': {e}")
 
-                            # PIL crop uses (left, top, right, bottom)
-                            crop_region = (
-                                max(0, left),
-                                max(0, top),
-                                min(current_img.width, left + width),
-                                min(current_img.height, top + height)
-                            )
+        # If no bounding box, check if visual selector (include_filters) is set for region-based comparison
+        if not crop_region:
+            include_filters = watch.get('include_filters', [])
 
-                            logger.info(f"Visual selector enabled: cropping to region {crop_region} for filter: {first_filter}")
-                            break
+            if include_filters and len(include_filters) > 0:
+                # Get the first filter to use for cropping
+                first_filter = include_filters[0].strip()
 
-                except Exception as e:
-                    logger.warning(f"Failed to parse xpath_data for visual selector: {e}")
+                if first_filter and self.xpath_data:
+                    try:
+                        import json
+                        # xpath_data is JSON string from browser
+                        xpath_data_obj = json.loads(self.xpath_data) if isinstance(self.xpath_data, str) else self.xpath_data
+
+                        # Find the bounding box for the first filter
+                        for element in xpath_data_obj.get('size_pos', []):
+                            # Match the filter with the element's xpath
+                            if element.get('xpath') == first_filter and element.get('highlight_as_custom_filter'):
+                                # Found the element - extract crop coordinates
+                                left = element.get('left', 0)
+                                top = element.get('top', 0)
+                                width = element.get('width', 0)
+                                height = element.get('height', 0)
+
+                                # PIL crop uses (left, top, right, bottom)
+                                crop_region = (
+                                    max(0, left),
+                                    max(0, top),
+                                    min(current_img.width, left + width),
+                                    min(current_img.height, top + height)
+                                )
+
+                                logger.info(f"Visual selector enabled: cropping to region {crop_region} for filter: {first_filter}")
+                                break
+
+                    except Exception as e:
+                        logger.warning(f"Failed to parse xpath_data for visual selector: {e}")
 
         # Crop the current image if region was found
         if crop_region:
@@ -130,7 +160,7 @@ class perform_site_check(difference_detection_processor):
                 # Update self.screenshot to the cropped version for history storage
                 crop_buffer = io.BytesIO()
                 current_img.save(crop_buffer, format='PNG')
-                self.screenshot = crop_buffer.getvalue()
+                self.screenshot = self.fetcher.screenshot = crop_buffer.getvalue()
 
                 logger.debug(f"Cropped screenshot to {current_img.size} (region: {crop_region})")
             except Exception as e:
