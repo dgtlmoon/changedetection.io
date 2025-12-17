@@ -278,7 +278,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             capabilities = get_fetcher_capabilities(watch, datastore)
             app_rss_token = datastore.data['settings']['application'].get('rss_access_token'),
 
-            c = [watch.get('processor')]
+            c = [f"processor-{watch.get('processor')}"]
             if worker_handler.is_watch_running(uuid):
                 c.append('checking-now')
 
