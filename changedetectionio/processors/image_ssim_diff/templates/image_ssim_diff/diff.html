@@ -1,182 +1,8 @@
 {% extends 'base.html' %}
 {% from '_helpers.html' import render_field, render_checkbox_field, render_button %}
+
 {% block content %}
-
-<style>
-.comparison-score {
-    padding: 1em;
-    background: #f5f5f5;
-    border-radius: 4px;
-    margin: 1em 0;
-    border: 1px solid #ddd;
-}
-
-.change-detected {
-    color: #d32f2f;
-    font-weight: bold;
-}
-
-.no-change {
-    color: #388e3c;
-    font-weight: bold;
-}
-
-.comparison-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5em;
-    margin: 2em 0;
-}
-
-/* Interactive Image Comparison Slider */
-.image-comparison {
-    position: relative;
-    width: 100%;
-    overflow: hidden;
-    border: 1px solid #ddd;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    user-select: none;
-}
-
-.image-comparison img {
-    display: block;
-    width: 100%;
-    height: auto;
-    max-width: 100%;
-    border: none;
-    box-shadow: none;
-}
-
-.comparison-after {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    clip-path: inset(0 0 0 50%);
-}
-
-.comparison-slider {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    width: 4px;
-    height: 100%;
-    background: #0078e7;
-    cursor: ew-resize;
-    transform: translateX(-2px);
-    z-index: 10;
-}
-
-.comparison-handle {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 48px;
-    height: 48px;
-    background: #0078e7;
-    border: 3px solid white;
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: ew-resize;
-    transition: top 0.1s ease-out;
-}
-
-.comparison-handle::after {
-    content: '⇄';
-    color: white;
-    font-size: 24px;
-    font-weight: bold;
-    pointer-events: none;
-}
-
-.comparison-labels {
-    position: absolute;
-    top: 10px;
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    padding: 0 0px;
-    z-index: 5;
-    pointer-events: none;
-}
-
-.comparison-label {
-    background: rgba(0,0,0,0.7);
-    color: white;
-    padding: 0.5em 1em;
-    border-radius: 4px;
-    font-size: 0.9em;
-    font-weight: bold;
-}
-
-.screenshot-panel {
-    text-align: center;
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 1em;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.screenshot-panel h3 {
-    margin: 0 0 1em 0;
-    font-size: 1.1em;
-    color: #333;
-    border-bottom: 2px solid #0078e7;
-    padding-bottom: 0.5em;
-}
-
-.screenshot-panel.diff h3 {
-    border-bottom-color: #d32f2f;
-}
-
-.screenshot-panel img {
-    max-width: 100%;
-    height: auto;
-    border: 1px solid #ddd;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.version-selector {
-    display: inline-block;
-    margin: 0 0.5em;
-}
-
-.version-selector label {
-    font-weight: bold;
-    margin-right: 0.5em;
-}
-
-@media (max-width: 1200px) {
-    .comparison-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-#settings {
-    background: #fff;
-    padding: 1.5em;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    margin-bottom: 2em;
-}
-
-.diff-fieldset {
-    border: none;
-    padding: 0;
-    margin: 0;
-}
-
-.edit-link {
-    float: right;
-    margin-top: -0.5em;
-}
-</style>
+<link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='diff-image.css')}}?v={{ get_css_version() }}">
 
 <div id="settings">
     <a href="{{ url_for('ui.ui_edit.edit_page', uuid=uuid, next='diff') }}" class="pure-button button-small edit-link">
@@ -186,7 +12,7 @@
 
     <form class="pure-form" action="{{ url_for('ui.ui_diff.diff_history_page', uuid=uuid) }}" method="GET" id="diff-form">
         <fieldset class="diff-fieldset">
-            <h2 style="margin-top: 0;">Screenshot Comparison (Fast)</h2>
+            <h2>Screenshot Comparison (Fast)</h2>
 
             {% if versions|length >= 2 %}
                 <div class="version-selector">
@@ -232,19 +58,19 @@
         <!-- Panel 1: Interactive Comparison Slider (Previous ↔ Current) -->
         <div class="screenshot-panel">
             <h3>Interactive Comparison</h3>
-            <div style="color: #666; font-size: 0.9em; margin-bottom: 1em;">
+            <div class="comparison-description">
                 Drag slider to compare Previous ({{ from_version|format_timestamp_timeago }})
                 vs Current ({{ to_version|format_timestamp_timeago }})
             </div>
             <div style="text-align: center; margin-bottom: 0.5em; display: flex; justify-content: center; gap: 1em;">
-                <a href="#" onclick="downloadImage('img-before', '{{ from_version }}'); return false;" style="color: #0078e7; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3em; font-size: 0.85em;" title="Download previous snapshot">
+                <a href="#" onclick="downloadImage('img-before', '{{ from_version }}'); return false;" class="download-link" title="Download previous snapshot">
                     <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="display: inline-block;">
                         <path d="M8 12L3 7h3V1h4v6h3z"/>
                         <path d="M1 14h14v2H1z"/>
                     </svg>
                     Previous
                 </a>
-                <a href="#" onclick="downloadImage('img-after', '{{ to_version }}'); return false;" style="color: #0078e7; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3em; font-size: 0.85em;" title="Download current snapshot">
+                <a href="#" onclick="downloadImage('img-after', '{{ to_version }}'); return false;" class="download-link" title="Download current snapshot">
                     <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="display: inline-block;">
                         <path d="M8 12L3 7h3V1h4v6h3z"/>
                         <path d="M1 14h14v2H1z"/>
@@ -254,11 +80,15 @@
             </div>
 
             <div class="image-comparison" id="comparison-container">
-                <!-- Before image (Previous snapshot) -->
-                <img id="img-before" src="data:image/png;base64,{{ img_from_b64 }}" alt="Previous screenshot">
+                <!-- Before image wrapper (Previous snapshot) -->
+                <div class="comparison-image-wrapper">
+                    <img id="img-before" src="data:image/png;base64,{{ img_from_b64 }}" alt="Previous screenshot">
+                </div>
 
-                <!-- After image (Current snapshot) -->
-                <img class="comparison-after" id="img-after" src="data:image/png;base64,{{ img_to_b64 }}" alt="Current screenshot">
+                <!-- After image wrapper (Current snapshot) -->
+                <div class="comparison-image-wrapper comparison-after">
+                    <img id="img-after" src="data:image/png;base64,{{ img_to_b64 }}" alt="Current screenshot">
+                </div>
 
                 <!-- Labels -->
                 <div class="comparison-labels">
@@ -276,11 +106,11 @@
         <!-- Panel 2: Difference Visualization (Static) -->
         <div class="screenshot-panel diff">
             <h3>Difference Visualization</h3>
-            <div style="color: #d32f2f; font-size: 0.9em; margin-bottom: 1em; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 1em;">
+            <div class="diff-section-header">
                 <span>Red = Changed Pixels</span>
             </div>
             <div style="text-align: center; margin-bottom: 0.5em;">
-                <a href="#" onclick="downloadImage('diff-image', '{{ to_version }}_diff'); return false;" style="color: #0078e7; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3em; font-size: 0.85em;" title="Download difference image">
+                <a href="#" onclick="downloadImage('diff-image', '{{ to_version }}_diff'); return false;" class="download-link" title="Download difference image">
                     <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="display: inline-block;">
                         <path d="M8 12L3 7h3V1h4v6h3z"/>
                         <path d="M1 14h14v2H1z"/>
@@ -293,9 +123,9 @@
     </div>
 
     {% if comparison_data and comparison_data.get('history') and comparison_data.history|length > 1 %}
-    <div style="margin-top: 3em; padding: 1em; background: #fff; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+    <div class="comparison-history-section">
         <h3>Comparison History</h3>
-        <p style="color: #666; font-size: 0.9em;">Recent comparison results (last {{ comparison_data.history|length }} checks)</p>
+        <p>Recent comparison results (last {{ comparison_data.history|length }} checks)</p>
         <div style="overflow-x: auto;">
             <table class="pure-table pure-table-striped" style="width: 100%;">
                 <thead>
@@ -314,9 +144,9 @@
                         <td>{{ entry.method }}</td>
                         <td>
                             {% if entry.changed %}
-                                <span style="color: #d32f2f; font-weight: bold;">Yes</span>
+                                <span class="history-changed-yes">Yes</span>
                             {% else %}
-                                <span style="color: #388e3c;">No</span>
+                                <span class="history-changed-no">No</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -363,6 +193,42 @@ function downloadImage(imageId, filename) {
         URL.revokeObjectURL(url);
     }, 100);
 }
+
+/**
+ * Synchronize comparison slider width with diff image width
+ * This ensures both panels display images at the same max-width
+ */
+function syncComparisonWidth() {
+    const diffImage = document.getElementById('diff-image');
+    const comparisonContainer = document.getElementById('comparison-container');
+
+    if (!diffImage || !comparisonContainer) return;
+
+    // Wait for diff image to load to get its actual rendered width
+    if (diffImage.complete) {
+        applyWidth();
+    } else {
+        diffImage.addEventListener('load', applyWidth);
+    }
+
+    function applyWidth() {
+        const diffImageWidth = diffImage.offsetWidth;
+        if (diffImageWidth > 0) {
+            comparisonContainer.style.maxWidth = diffImageWidth + 'px';
+            comparisonContainer.style.margin = '0 auto';
+        }
+    }
+}
+
+// Run on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', syncComparisonWidth);
+} else {
+    syncComparisonWidth();
+}
+
+// Re-sync on window resize
+window.addEventListener('resize', syncComparisonWidth);
 </script>
 
 <script src="{{ url_for('static_content', group='js', filename='comparison-slider.js') }}" defer></script>
