@@ -152,17 +152,12 @@ class perform_site_check(difference_detection_processor):
                     except Exception as e:
                         logger.warning(f"Failed to parse xpath_data for visual selector: {e}")
 
-        # Crop the current image if region was found
+        # Crop the current image if region was found (for comparison only, keep full screenshot for history)
+        cropped_current_img = None
         if crop_region:
             try:
-                current_img = current_img.crop(crop_region)
-
-                # Update self.screenshot to the cropped version for history storage
-                crop_buffer = io.BytesIO()
-                current_img.save(crop_buffer, format='PNG')
-                self.screenshot = self.fetcher.screenshot = crop_buffer.getvalue()
-
-                logger.debug(f"Cropped screenshot to {current_img.size} (region: {crop_region})")
+                cropped_current_img = current_img.crop(crop_region)
+                logger.debug(f"Cropped screenshot to {cropped_current_img.size} (region: {crop_region}) for comparison")
             except Exception as e:
                 logger.error(f"Failed to crop screenshot: {e}")
                 crop_region = None  # Disable cropping on error
@@ -173,9 +168,12 @@ class perform_site_check(difference_detection_processor):
             # First check - save baseline, no comparison
             logger.info(f"First check for watch {watch.get('uuid')} - saving baseline screenshot")
 
-            # Close the PIL image before returning
+            # Close the PIL images before returning
             current_img.close()
             del current_img
+            if cropped_current_img:
+                cropped_current_img.close()
+                del cropped_current_img
 
             update_obj = {
                 'previous_md5': hashlib.md5(self.screenshot).hexdigest(),
@@ -196,20 +194,24 @@ class perform_site_check(difference_detection_processor):
 
             previous_img = Image.open(io.BytesIO(previous_screenshot_bytes))
 
-            # Crop previous image to the same region if visual selector is enabled
+            # Crop previous image to the same region if cropping is enabled
+            cropped_previous_img = None
             if crop_region:
                 try:
-                    previous_img = previous_img.crop(crop_region)
-                    logger.debug(f"Cropped previous screenshot to {previous_img.size}")
+                    cropped_previous_img = previous_img.crop(crop_region)
+                    logger.debug(f"Cropped previous screenshot to {cropped_previous_img.size}")
                 except Exception as e:
                     logger.warning(f"Failed to crop previous screenshot: {e}")
 
         except Exception as e:
             logger.warning(f"Failed to load previous screenshot for comparison: {e}")
-            # Clean up current image before returning
+            # Clean up current images before returning
             if 'current_img' in locals():
                 current_img.close()
                 del current_img
+            if 'cropped_current_img' in locals() and cropped_current_img:
+                cropped_current_img.close()
+                del cropped_current_img
 
             # If we can't load previous, treat as first check
             update_obj = {
@@ -222,19 +224,26 @@ class perform_site_check(difference_detection_processor):
 
         # Perform comparison based on selected method
         try:
+            # Use cropped versions if available, otherwise use full images
+            img_for_comparison_prev = cropped_previous_img if cropped_previous_img else previous_img
+            img_for_comparison_curr = cropped_current_img if cropped_current_img else current_img
+
             # Ensure images are the same size
-            if current_img.size != previous_img.size:
-                logger.info(f"Resizing images to match: {previous_img.size} -> {current_img.size}")
-                previous_img = previous_img.resize(current_img.size, Image.Resampling.LANCZOS)
+            if img_for_comparison_curr.size != img_for_comparison_prev.size:
+                logger.info(f"Resizing images to match: {img_for_comparison_prev.size} -> {img_for_comparison_curr.size}")
+                img_for_comparison_prev = img_for_comparison_prev.resize(img_for_comparison_curr.size, Image.Resampling.LANCZOS)
+                # If we resized a cropped version, update the reference
+                if cropped_previous_img:
+                    cropped_previous_img = img_for_comparison_prev
 
             if comparison_method == 'pixelmatch':
                 changed_detected, change_score = self._compare_pixelmatch(
-                    previous_img, current_img, threshold
+                    img_for_comparison_prev, img_for_comparison_curr, threshold
                 )
                 logger.info(f"Pixelmatch: {change_score:.2f}% pixels different, threshold: {threshold*100:.0f}%")
             else:  # opencv (default)
                 changed_detected, change_score = self._compare_opencv(
-                    previous_img, current_img, threshold
+                    img_for_comparison_prev, img_for_comparison_curr, threshold
                 )
                 logger.info(f"OpenCV: {change_score:.2f}% pixels changed, threshold: {threshold:.0f}")
 
@@ -243,12 +252,18 @@ class perform_site_check(difference_detection_processor):
             previous_img.close()
             del current_img
             del previous_img
+            if cropped_current_img:
+                cropped_current_img.close()
+                del cropped_current_img
+            if cropped_previous_img:
+                cropped_previous_img.close()
+                del cropped_previous_img
             del previous_screenshot_bytes  # Release the large bytes object
 
         except Exception as e:
             logger.error(f"Failed to compare screenshots: {e}")
             # Ensure cleanup even on error
-            for obj in ['current_img', 'previous_img']:
+            for obj in ['current_img', 'previous_img', 'cropped_current_img', 'cropped_previous_img']:
                 try:
                     locals()[obj].close()
                 except (KeyError, NameError, AttributeError):

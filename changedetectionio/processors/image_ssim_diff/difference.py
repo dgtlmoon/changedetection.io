@@ -390,6 +390,82 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
     finally:
         logger.debug(f"Done '{comparison_method}' in {time.time() - now:.2f}s")
 
+    # Check if bounding box is set and draw blue border if present
+    bounding_box = None
+    try:
+        from changedetectionio import processors
+        processor_instance = processors.difference_detection_processor(datastore, watch.get('uuid'))
+        processor_name = watch.get('processor', 'default')
+        config_filename = f'{processor_name}.json'
+        processor_config = processor_instance.get_extra_watch_config(config_filename)
+        bounding_box = processor_config.get('bounding_box') if processor_config else None
+
+        if bounding_box:
+            logger.debug(f"Drawing blue bounding box on diff images: {bounding_box}")
+            # Parse bounding box: "x,y,width,height"
+            parts = [int(p.strip()) for p in bounding_box.split(',')]
+            if len(parts) == 4:
+                from PIL import Image, ImageDraw
+
+                # Draw on "from" image
+                img_from_pil = Image.open(io.BytesIO(img_bytes_from))
+                draw_from = ImageDraw.Draw(img_from_pil)
+                x, y, width, height = parts
+                # Draw blue rectangle (3px border)
+                for offset in range(3):
+                    draw_from.rectangle(
+                        [x + offset, y + offset, x + width - offset, y + height - offset],
+                        outline='blue'
+                    )
+                buf_from = io.BytesIO()
+                img_from_pil.save(buf_from, format='PNG')
+                img_bytes_from = buf_from.getvalue()
+                img_from_pil.close()
+                buf_from.close()
+
+                # Draw on "to" image
+                img_to_pil = Image.open(io.BytesIO(img_bytes_to))
+                original_width = img_to_pil.width
+                original_height = img_to_pil.height
+                draw_to = ImageDraw.Draw(img_to_pil)
+                for offset in range(3):
+                    draw_to.rectangle(
+                        [x + offset, y + offset, x + width - offset, y + height - offset],
+                        outline='blue'
+                    )
+                buf_to = io.BytesIO()
+                img_to_pil.save(buf_to, format='PNG')
+                img_bytes_to = buf_to.getvalue()
+                img_to_pil.close()
+                buf_to.close()
+
+                # Draw on diff image
+                img_diff_pil = Image.open(io.BytesIO(diff_image_bytes))
+                # Need to scale the bounding box if image was resized for diff
+                scale_x = img_diff_pil.width / original_width if original_width > 0 else 1
+                scale_y = img_diff_pil.height / original_height if original_height > 0 else 1
+                draw_diff = ImageDraw.Draw(img_diff_pil)
+                x_scaled = int(x * scale_x)
+                y_scaled = int(y * scale_y)
+                width_scaled = int(width * scale_x)
+                height_scaled = int(height * scale_y)
+                logger.debug(f"Diff image size: {img_diff_pil.size}, original: {original_width}x{original_height}, scale: {scale_x:.2f}x{scale_y:.2f}")
+                logger.debug(f"Drawing blue box on diff: ({x_scaled},{y_scaled}) {width_scaled}x{height_scaled}")
+                for offset in range(3):
+                    draw_diff.rectangle(
+                        [x_scaled + offset, y_scaled + offset,
+                         x_scaled + width_scaled - offset, y_scaled + height_scaled - offset],
+                        outline='blue'
+                    )
+                buf_diff = io.BytesIO()
+                img_diff_pil.save(buf_diff, format='JPEG', quality=85)
+                diff_image_bytes = buf_diff.getvalue()
+                img_diff_pil.close()
+                buf_diff.close()
+                logger.debug(f"Successfully drew blue bounding box on all three images")
+    except Exception as e:
+        logger.warning(f"Failed to draw bounding box on diff images: {e}")
+
     # Convert images to base64 for embedding in template
     img_from_b64 = base64.b64encode(img_bytes_from).decode('utf-8')
     img_to_b64 = base64.b64encode(img_bytes_to).decode('utf-8')
