@@ -73,9 +73,10 @@ lxml >=4.8.0,!=5.2.0,!=5.2.1,<7
 elementpath==5.0.4
 
 # For fast image comparison in screenshot change detection
-# opencv-python-headless provides cv2 without GUI dependencies (smaller, faster)
-# Note: OpenCV uses 4-part versioning (e.g., 4.8.0.76)
-opencv-python-headless>=4.8.0.76
+# opencv-python-headless is OPTIONAL (excluded from requirements.txt)
+# - Installed conditionally via Dockerfile (skipped on arm/v7 and arm/v8 due to long build times)
+# - Pixelmatch is used as fallback when OpenCV is unavailable
+# - To install manually: pip install opencv-python-headless>=4.8.0.76
 
 selenium~=4.31.0
 

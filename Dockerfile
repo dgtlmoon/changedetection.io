@@ -55,6 +55,25 @@ RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
   playwright~=1.56.0 \
   || echo "WARN: Failed to install Playwright. The application can still run, but the Playwright option will be disabled."
 
+# OpenCV is optional for fast image comparison (pixelmatch is the fallback)
+# Skip on arm/v7 and arm/v8 where builds take weeks - excluded from requirements.txt
+ARG TARGETPLATFORM
+RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
+  case "$TARGETPLATFORM" in \
+    linux/arm/v7|linux/arm/v8) \
+      echo "INFO: Skipping OpenCV on $TARGETPLATFORM (build takes too long), using pixelmatch fallback" \
+      ;; \
+    *) \
+      pip install \
+        --prefer-binary \
+        --extra-index-url https://www.piwheels.org/simple \
+        --cache-dir=/tmp/pip-cache \
+        --target=/dependencies \
+        opencv-python-headless>=4.8.0.76 \
+        || echo "WARN: OpenCV install failed, will use pixelmatch fallback" \
+      ;; \
+  esac
+
 
 # Final image stage
 FROM python:${PYTHON_VERSION}-slim-bookworm
