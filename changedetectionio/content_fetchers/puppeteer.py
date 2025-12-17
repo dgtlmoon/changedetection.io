@@ -20,7 +20,7 @@ from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200
 # Screenshots also travel via the ws:// (websocket) meaning that the binary data is base64 encoded
 # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
 # acceptable screenshot quality here
-async def capture_full_page(page):
+async def capture_full_page(page, screenshot_format='JPEG'):
     import os
     import time
     from multiprocessing import Process, Pipe
@@ -41,6 +41,10 @@ async def capture_full_page(page):
     # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
     # acceptable screenshot quality here
 
+    # Use PNG for better quality (no compression artifacts), JPEG for smaller size
+    screenshot_type = screenshot_format.lower() if screenshot_format else 'jpeg'
+    # PNG should use quality 100, JPEG uses configurable quality
+    screenshot_quality = 100 if screenshot_type == 'png' else int(os.getenv("SCREENSHOT_QUALITY", 72))
 
     step_size = SCREENSHOT_SIZE_STITCH_THRESHOLD # Something that will not cause the GPU to overflow when taking the screenshot
     screenshot_chunks = []
@@ -60,9 +64,15 @@ async def capture_full_page(page):
             y
         )
 
-        screenshot_chunks.append(await page.screenshot(type_='jpeg',
-                                                       fullPage=False,
-                                                       quality=int(os.getenv("SCREENSHOT_QUALITY", 72))))
+        screenshot_kwargs = {
+            'type_': screenshot_type,
+            'fullPage': False
+        }
+        # PNG doesn't support quality parameter in Puppeteer
+        if screenshot_type == 'jpeg':
+            screenshot_kwargs['quality'] = screenshot_quality
+
+        screenshot_chunks.append(await page.screenshot(**screenshot_kwargs))
         y += step_size
 
     await page.setViewport({'width': original_viewport['width'], 'height': original_viewport['height']})
@@ -112,8 +122,8 @@ class fetcher(Fetcher):
             'title': 'Using a Chrome browser'
         }
 
-    def __init__(self, proxy_override=None, custom_browser_connection_url=None):
-        super().__init__()
+    def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
+        super().__init__(**kwargs)
 
         if custom_browser_connection_url:
             self.browser_connection_is_custom = True
@@ -167,6 +177,7 @@ class fetcher(Fetcher):
                          request_body,
                          request_headers,
                          request_method,
+                         screenshot_format,
                          timeout,
                          url,
                          watch_uuid
@@ -316,7 +327,7 @@ class fetcher(Fetcher):
                 logger.error(f"Error fetching FavIcon info {str(e)}, continuing.")
 
         if self.status_code != 200 and not ignore_status_codes:
-            screenshot = await capture_full_page(page=self.page)
+            screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format)
 
             raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=screenshot)
 
@@ -354,7 +365,7 @@ class fetcher(Fetcher):
 
         self.content = await self.page.content
 
-        self.screenshot = await capture_full_page(page=self.page)
+        self.screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format)
 
         # It's good to log here in the case that the browser crashes on shutting down but we still get the data we need
         logger.success(f"Fetching '{url}' complete, closing page")
@@ -375,6 +386,7 @@ class fetcher(Fetcher):
                   request_body=None,
                   request_headers=None,
                   request_method=None,
+                  screenshot_format=None,
                   timeout=None,
                   url=None,
                   watch_uuid=None,
@@ -394,6 +406,7 @@ class fetcher(Fetcher):
                 request_body=request_body,
                 request_headers=request_headers,
                 request_method=request_method,
+                screenshot_format=None,
                 timeout=timeout,
                 url=url,
                 watch_uuid=watch_uuid,

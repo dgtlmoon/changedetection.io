@@ -12,8 +12,8 @@ from changedetectionio.content_fetchers.base import Fetcher
 class fetcher(Fetcher):
     fetcher_description = "Basic fast Plaintext/HTTP Client"
 
-    def __init__(self, proxy_override=None, custom_browser_connection_url=None):
-        super().__init__()
+    def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
+        super().__init__(**kwargs)
         self.proxy_override = proxy_override
         # browser_connection_url is none because its always 'launched locally'
 
@@ -135,6 +135,7 @@ class fetcher(Fetcher):
                   request_body=None,
                   request_headers=None,
                   request_method=None,
+                  screenshot_format=None,
                   timeout=None,
                   url=None,
                   watch_uuid=None,

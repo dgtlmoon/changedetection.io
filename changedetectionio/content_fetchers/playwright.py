@@ -9,7 +9,7 @@ from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, vi
 from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable
 
-async def capture_full_page_async(page):
+async def capture_full_page_async(page, screenshot_format='JPEG'):
     import os
     import time
     from multiprocessing import Process, Pipe
@@ -35,6 +35,11 @@ async def capture_full_page_async(page):
         await page.set_viewport_size({'width': page.viewport_size['width'], 'height': step_size})
 
     # Capture screenshots in chunks up to the max total height
+    # Use PNG for better quality (no compression artifacts), JPEG for smaller size
+    screenshot_type = screenshot_format.lower() if screenshot_format else 'jpeg'
+    # PNG should use quality 100, JPEG uses configurable quality
+    screenshot_quality = 100 if screenshot_type == 'png' else int(os.getenv("SCREENSHOT_QUALITY", 72))
+
     while y < min(page_height, SCREENSHOT_MAX_TOTAL_HEIGHT):
         # Only scroll if not at the top (y > 0)
         if y > 0:
@@ -43,11 +48,15 @@ async def capture_full_page_async(page):
         # Request GC only before screenshot (not 3x per chunk)
         await page.request_gc()
 
-        screenshot_chunks.append(await page.screenshot(
-            type="jpeg",
-            full_page=False,
-            quality=int(os.getenv("SCREENSHOT_QUALITY", 72))
-        ))
+        screenshot_kwargs = {
+            'type': screenshot_type,
+            'full_page': False
+        }
+        # Only pass quality parameter for jpeg (PNG doesn't support it in Playwright)
+        if screenshot_type == 'jpeg':
+            screenshot_kwargs['quality'] = screenshot_quality
+
+        screenshot_chunks.append(await page.screenshot(**screenshot_kwargs))
         y += step_size
 
     # Restore original viewport size
@@ -116,8 +125,8 @@ class fetcher(Fetcher):
             'title': 'Using a Chrome browser'
         }
 
-    def __init__(self, proxy_override=None, custom_browser_connection_url=None):
-        super().__init__()
+    def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
+        super().__init__(**kwargs)
 
         self.browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
 
@@ -152,7 +161,7 @@ class fetcher(Fetcher):
 
     async def screenshot_step(self, step_n=''):
         super().screenshot_step(step_n=step_n)
-        screenshot = await capture_full_page_async(page=self.page)
+        screenshot = await capture_full_page_async(page=self.page, screenshot_format=self.screenshot_format)
 
 
         if self.browser_steps_screenshot_path is not None:
@@ -178,6 +187,7 @@ class fetcher(Fetcher):
                   request_body=None,
                   request_headers=None,
                   request_method=None,
+                  screenshot_format=None,
                   timeout=None,
                   url=None,
                   watch_uuid=None,
@@ -272,7 +282,7 @@ class fetcher(Fetcher):
                     logger.error(f"Error fetching FavIcon info {str(e)}, continuing.")
 
             if self.status_code != 200 and not ignore_status_codes:
-                screenshot = await capture_full_page_async(self.page)
+                screenshot = await capture_full_page_async(self.page, screenshot_format=self.screenshot_format)
                 raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=screenshot)
 
             if not empty_pages_are_a_change and len((await self.page.content()).strip()) == 0:
@@ -321,7 +331,7 @@ class fetcher(Fetcher):
             # acceptable screenshot quality here
             try:
                 # The actual screenshot - this always base64 and needs decoding! horrible! huge CPU usage
-                self.screenshot = await capture_full_page_async(page=self.page)
+                self.screenshot = await capture_full_page_async(page=self.page, screenshot_format=self.screenshot_format)
 
             except Exception as e:
                 # It's likely the screenshot was too long/big and something crashed

@@ -10,6 +10,9 @@ import os
 import pkgutil
 import re
 
+SCREENSHOT_FORMAT_JPEG = 'JPEG'
+SCREENSHOT_FORMAT_PNG = 'PNG'
+
 class difference_detection_processor():
 
     browser_steps = None
@@ -19,9 +22,9 @@ class difference_detection_processor():
     watch = None
     xpath_data = None
     preferred_proxy = None
+    screenshot_format = SCREENSHOT_FORMAT_JPEG
 
-    def __init__(self, *args, datastore, watch_uuid, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, datastore, watch_uuid):
         self.datastore = datastore
         self.watch_uuid = watch_uuid
         self.watch = deepcopy(self.datastore.data['watching'].get(watch_uuid))
@@ -97,7 +100,8 @@ class difference_detection_processor():
         # Now call the fetcher (playwright/requests/etc) with arguments that only a fetcher would need.
         # When browser_connection_url is None, it method should default to working out whats the best defaults (os env vars etc)
         self.fetcher = fetcher_obj(proxy_override=proxy_url,
-                                   custom_browser_connection_url=custom_browser_connection_url
+                                   custom_browser_connection_url=custom_browser_connection_url,
+                                   screenshot_format=self.screenshot_format
                                    )
 
         if self.watch.has_browser_steps:
@@ -159,6 +163,7 @@ class difference_detection_processor():
             request_body=request_body,
             request_headers=request_headers,
             request_method=request_method,
+            screenshot_format = self.screenshot_format,
             timeout=timeout,
             url=url,
             watch_uuid=self.watch_uuid,

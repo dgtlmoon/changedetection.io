@@ -10,7 +10,7 @@ import hashlib
 import os
 import time
 from loguru import logger
-from changedetectionio.processors import difference_detection_processor
+from changedetectionio.processors import difference_detection_processor, SCREENSHOT_FORMAT_PNG
 from changedetectionio.processors.exceptions import ProcessorException
 from . import DEFAULT_COMPARISON_METHOD, DEFAULT_COMPARISON_THRESHOLD_OPENCV, DEFAULT_COMPARISON_THRESHOLD_PIXELMATCH
 
@@ -20,6 +20,9 @@ description = 'Compares screenshots using fast algorithms (OpenCV or pixelmatch)
 
 class perform_site_check(difference_detection_processor):
     """Fast screenshot comparison processor."""
+
+    # Override to use PNG format for better image comparison (JPEG compression creates noise)
+    screenshot_format = SCREENSHOT_FORMAT_PNG
 
     def run_changedetection(self, watch):
         """

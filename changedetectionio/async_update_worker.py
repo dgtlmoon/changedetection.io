@@ -89,9 +89,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                     processor = watch.get('processor', 'text_json_diff')
 
                     # Init a new 'difference_detection_processor'
-                    processor_module_name = f"changedetectionio.processors.{processor}.processor"
                     try:
-                        processor_module = importlib.import_module(processor_module_name)
+                        processor_module = importlib.import_module(f"changedetectionio.processors.{processor}.processor")
                     except ModuleNotFoundError as e:
                         print(f"Processor module '{processor}' not found.")
                         raise e
