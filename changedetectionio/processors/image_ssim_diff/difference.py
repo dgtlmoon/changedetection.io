@@ -11,9 +11,6 @@ import base64
 import io
 import time
 from loguru import logger
-from PIL import Image
-import numpy as np
-import cv2
 from . import DEFAULT_COMPARISON_METHOD, DEFAULT_COMPARISON_THRESHOLD_OPENCV, DEFAULT_COMPARISON_THRESHOLD_PIXELMATCH
 
 # Maximum dimensions for diff visualization (can be overridden via environment variable)
@@ -23,6 +20,8 @@ MAX_DIFF_WIDTH = int(os.getenv('MAX_DIFF_WIDTH', '900'))
 
 
 def _resize_for_diff(img, max_height=MAX_DIFF_HEIGHT, max_width=MAX_DIFF_WIDTH):
+    from PIL import Image
+
     """
     Downscale image if too large for faster diff visualization.
 
@@ -65,6 +64,10 @@ def calculate_diff_opencv(img_bytes_from, img_bytes_to, threshold=30):
         tuple: (change_percentage, diff_mask) where diff_mask is a 2D numpy binary mask
     """
     # Load images from BytesIO buffers
+    from PIL import Image
+    import numpy as np
+    import cv2
+
     buf_from = io.BytesIO(img_bytes_from)
     buf_to = io.BytesIO(img_bytes_to)
     img_from = Image.open(buf_from)
@@ -135,6 +138,8 @@ def calculate_diff_pixelmatch(img_bytes_from, img_bytes_to, threshold=0.1):
     except ImportError:
         logger.warning("pybind11-pixelmatch not installed, falling back to OpenCV")
         return calculate_diff_opencv(img_bytes_from, img_bytes_to, threshold * 255)
+    import numpy as np
+    from PIL import Image
 
     # Load images from BytesIO buffers
     buf_from = io.BytesIO(img_bytes_from)
@@ -214,6 +219,10 @@ def generate_diff_image_opencv(img_bytes_to, diff_mask):
         bytes: PNG image with red highlights on changed pixels
     """
     # Load current image as base from BytesIO buffer
+    import numpy as np
+    from PIL import Image
+    import cv2
+
     buf_to = io.BytesIO(img_bytes_to)
     img_to = Image.open(buf_to)
 
@@ -266,6 +275,9 @@ def generate_diff_image_pixelmatch(diff_array):
     Returns:
         bytes: JPEG image with highlighted differences
     """
+    import numpy as np
+    from PIL import Image
+
     # Convert diff array to PIL Image (RGBA)
     diff_img = Image.fromarray(diff_array.astype(np.uint8), mode='RGBA')
 

@@ -10,6 +10,7 @@ import os
 
 processor_description = "Visual/Screenshot change detection (Fast)"
 processor_name = "image_ssim_diff"
+processor_weight = 2  # Lower weight = appears at top, heavier weight = appears lower (bottom)
 
 # Default comparison settings
 DEFAULT_COMPARISON_METHOD = os.getenv('COMPARISON_METHOD', 'opencv')

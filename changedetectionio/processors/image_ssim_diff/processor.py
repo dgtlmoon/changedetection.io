@@ -16,6 +16,7 @@ from . import DEFAULT_COMPARISON_METHOD, DEFAULT_COMPARISON_THRESHOLD_OPENCV, DE
 
 name = 'Visual/Screenshot change detection (Fast)'
 description = 'Compares screenshots using fast algorithms (OpenCV or pixelmatch), 10-100x faster than SSIM'
+processor_weight = 2
 
 
 class perform_site_check(difference_detection_processor):
@@ -51,7 +52,6 @@ class perform_site_check(difference_detection_processor):
 
         from PIL import Image
         import io
-        import numpy as np
 
         # Use hardcoded comparison method (can be overridden via COMPARISON_METHOD env var)
         comparison_method = DEFAULT_COMPARISON_METHOD

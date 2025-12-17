@@ -345,7 +345,23 @@ def available_processors():
                 # Final fallback to a readable name
                 description = sub_package_name.replace('_', ' ').title()
 
-        available.append((sub_package_name, description))
+        # Get weight for sorting (lower weight = higher in list)
+        weight = 0  # Default weight for processors without explicit weight
 
-    return available
+        # Check processor module itself first
+        if hasattr(module, 'processor_weight'):
+            weight = module.processor_weight
+        else:
+            # Fall back to parent module (package __init__.py)
+            parent_module = get_parent_module(module)
+            if parent_module and hasattr(parent_module, 'processor_weight'):
+                weight = parent_module.processor_weight
+
+        available.append((sub_package_name, description, weight))
+
+    # Sort by weight (lower weight = appears first)
+    available.sort(key=lambda x: x[2])
+
+    # Return as tuples without weight (for backwards compatibility)
+    return [(name, desc) for name, desc, weight in available]
 
