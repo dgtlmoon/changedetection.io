@@ -2,12 +2,13 @@ import os
 
 from changedetectionio.validate_url import is_safe_valid_url
 
-from flask_expects_json import expects_json
+from . import auth
 from changedetectionio import queuedWatchMetaData, strtobool
 from changedetectionio import worker_handler
-from flask_restful import abort, Resource
 from flask import request, make_response, send_from_directory
-from . import auth
+from flask_expects_json import expects_json
+from flask_restful import abort, Resource
+from loguru import logger
 import copy
 
 # Import schemas from __init__.py
