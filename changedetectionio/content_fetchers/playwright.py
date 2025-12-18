@@ -26,6 +26,7 @@ async def capture_full_page_async(page, screenshot_format='JPEG'):
     step_size = SCREENSHOT_SIZE_STITCH_THRESHOLD # Size that won't cause GPU to overflow
     screenshot_chunks = []
     y = 0
+    elements_locked = False
 
     if page_height > page.viewport_size['height']:
 
@@ -35,6 +36,7 @@ async def capture_full_page_async(page, screenshot_format='JPEG'):
         with open(lock_elements_js_path, 'r') as f:
             lock_elements_js = f.read()
         await page.evaluate(lock_elements_js)
+        elements_locked = True
 
         logger.debug("Element dimensions locked before screenshot capture")
 
@@ -71,6 +73,14 @@ async def capture_full_page_async(page, screenshot_format='JPEG'):
 
     # Restore original viewport size
     await page.set_viewport_size({'width': original_viewport['width'], 'height': original_viewport['height']})
+
+    # Unlock element dimensions if they were locked
+    if elements_locked:
+        unlock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'unlock-elements-sizing.js')
+        with open(unlock_elements_js_path, 'r') as f:
+            unlock_elements_js = f.read()
+        await page.evaluate(unlock_elements_js)
+        logger.debug("Element dimensions unlocked after screenshot capture")
 
     # If we have multiple chunks, stitch them together
     if len(screenshot_chunks) > 1:

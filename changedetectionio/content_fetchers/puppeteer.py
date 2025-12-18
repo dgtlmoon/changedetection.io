@@ -49,6 +49,7 @@ async def capture_full_page(page, screenshot_format='JPEG'):
     step_size = SCREENSHOT_SIZE_STITCH_THRESHOLD # Something that will not cause the GPU to overflow when taking the screenshot
     screenshot_chunks = []
     y = 0
+    elements_locked = False
     if page_height > page.viewport['height']:
         # Lock all element dimensions BEFORE screenshot to prevent CSS media queries from resizing
         # capture_full_page() changes viewport height which triggers @media (min-height) rules
@@ -56,6 +57,7 @@ async def capture_full_page(page, screenshot_format='JPEG'):
         with open(lock_elements_js_path, 'r') as f:
             lock_elements_js = f.read()
         await page.evaluate(lock_elements_js)
+        elements_locked = True
         logger.debug("Element dimensions locked before screenshot capture")
 
         if page_height < step_size:
@@ -84,6 +86,14 @@ async def capture_full_page(page, screenshot_format='JPEG'):
         y += step_size
 
     await page.setViewport({'width': original_viewport['width'], 'height': original_viewport['height']})
+
+    # Unlock element dimensions if they were locked
+    if elements_locked:
+        unlock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'unlock-elements-sizing.js')
+        with open(unlock_elements_js_path, 'r') as f:
+            unlock_elements_js = f.read()
+        await page.evaluate(unlock_elements_js)
+        logger.debug("Element dimensions unlocked after screenshot capture")
 
     if len(screenshot_chunks) > 1:
         from changedetectionio.content_fetchers.screenshot_handler import stitch_images_worker

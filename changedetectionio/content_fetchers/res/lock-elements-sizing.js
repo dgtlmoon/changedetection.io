@@ -49,10 +49,24 @@
  */
 
 (() => {
+    // Store original styles in a global WeakMap for later restoration
+    window.__elementSizingRestore = new WeakMap();
+
     // Lock ALL element dimensions to prevent media query layout changes
     document.querySelectorAll('*').forEach(el => {
         const computed = window.getComputedStyle(el);
         const rect = el.getBoundingClientRect();
+
+        // Save original inline style values BEFORE locking
+        const properties = ['height', 'min-height', 'max-height', 'width', 'min-width', 'max-width'];
+        const originalStyles = {};
+        properties.forEach(prop => {
+            originalStyles[prop] = {
+                value: el.style.getPropertyValue(prop),
+                priority: el.style.getPropertyPriority(prop)
+            };
+        });
+        window.__elementSizingRestore.set(el, originalStyles);
 
         // Lock dimensions with !important to override media queries
         if (rect.height > 0) {
