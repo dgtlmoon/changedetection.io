@@ -42,13 +42,13 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
         try:
             # Use native janus async interface - no threads needed!
             queued_item_data = await asyncio.wait_for(q.async_get(), timeout=1.0)
-            
+
         except asyncio.TimeoutError:
             # No jobs available, continue loop
             continue
         except Exception as e:
             logger.critical(f"CRITICAL: Worker {worker_id} failed to get queue item: {type(e).__name__}: {e}")
-            
+
             # Log queue health for debugging
             try:
                 queue_size = q.qsize()
@@ -56,15 +56,24 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                 logger.critical(f"CRITICAL: Worker {worker_id} queue health - size: {queue_size}, empty: {is_empty}")
             except Exception as health_e:
                 logger.critical(f"CRITICAL: Worker {worker_id} queue health check failed: {health_e}")
-            
+
             await asyncio.sleep(0.1)
             continue
-        
+
         uuid = queued_item_data.item.get('uuid')
-        fetch_start_time = round(time.time())
-        
-        # Mark this UUID as being processed
+
+        # RACE CONDITION FIX: Check if this UUID is already being processed by another worker
         from changedetectionio import worker_handler
+        if worker_handler.is_watch_running(uuid):
+            logger.debug(f"Worker {worker_id} skipping UUID {uuid} - already being processed, re-queuing for later")
+            # Put it back in the queue to be processed after the current run finishes
+            worker_handler.queue_item_async_safe(q, queued_item_data)
+            await asyncio.sleep(0.1)  # Brief pause to avoid tight loop
+            continue
+
+        fetch_start_time = round(time.time())
+
+        # Mark this UUID as being processed
         worker_handler.set_uuid_processing(uuid, processing=True)
         
         try:
