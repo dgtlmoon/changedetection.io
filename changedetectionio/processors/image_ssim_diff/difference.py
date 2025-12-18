@@ -312,6 +312,8 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
     Returns:
         Rendered template or redirect
     """
+    import gc
+    from flask import after_this_request
     # Get version parameters (from_version, to_version)
     versions = list(watch.history.keys())
 
@@ -486,9 +488,22 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
         except Exception as e:
             logger.warning(f"Failed to load comparison history data: {e}")
 
+    # Register cleanup callback to release memory after response is sent
+    @after_this_request
+    def cleanup_memory(response):
+        """Force garbage collection after response sent to release large image data."""
+        try:
+            # Force garbage collection to immediately release memory
+            # This helps ensure base64 image strings (which can be 5-10MB+) are freed
+            collected = gc.collect()
+            logger.debug(f"Memory cleanup: Forced GC after diff render (collected {collected} objects)")
+        except Exception as e:
+            logger.warning(f"Memory cleanup GC failed: {e}")
+        return response
+
     # Render custom template
     # Template path is namespaced to avoid conflicts with other processors
-    return render_template(
+    response = render_template(
         'image_ssim_diff/diff.html',
         watch=watch,
         uuid=watch.get('uuid'),
@@ -504,3 +519,9 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
         to_version=to_version,
         percentage_different=change_percentage
     )
+
+    # Explicitly delete large base64 strings now that they're in the response
+    # This helps free memory before the function returns
+    del img_from_b64, img_to_b64, diff_image_b64, comparison_data
+
+    return response

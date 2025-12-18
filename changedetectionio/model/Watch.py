@@ -13,6 +13,83 @@ from .. import jinja2_custom as safe_jinja
 from ..diff import ADDED_PLACEMARKER_OPEN
 from ..html_tools import TRANSLATE_WHITESPACE_TABLE
 
+
+def _brotli_compress_worker(contents, filepath, mode=None):
+    """
+    Worker function to compress data with brotli in a separate process.
+    This isolates memory - when process exits, OS reclaims all memory.
+
+    Args:
+        contents: bytes to compress
+        filepath: destination file path
+        mode: brotli compression mode (e.g., brotli.MODE_TEXT)
+    """
+    import brotli
+
+    try:
+        if mode is not None:
+            compressed_data = brotli.compress(contents, mode=mode)
+        else:
+            compressed_data = brotli.compress(contents)
+
+        with open(filepath, 'wb') as f:
+            f.write(compressed_data)
+
+        # No need for explicit cleanup - process exit frees all memory
+        return True
+    except Exception as e:
+        logger.error(f"Brotli compression worker failed: {e}")
+        return False
+
+
+def _brotli_subprocess_save(contents, filepath, mode=None, timeout=30, fallback_uncompressed=False):
+    """
+    Save compressed data using subprocess to isolate memory.
+
+    Args:
+        contents: data to compress (str or bytes)
+        filepath: destination file path
+        mode: brotli compression mode (e.g., brotli.MODE_TEXT)
+        timeout: subprocess timeout in seconds
+        fallback_uncompressed: if True, save uncompressed on failure; if False, raise exception
+
+    Returns:
+        str: actual filepath saved (may differ from input if fallback used)
+
+    Raises:
+        Exception: if compression fails and fallback_uncompressed is False
+    """
+    import brotli
+    from multiprocessing import Process
+
+    # Ensure contents are bytes
+    if isinstance(contents, str):
+        contents = contents.encode('utf-8')
+
+    # Run compression in subprocess
+    proc = Process(target=_brotli_compress_worker, args=(contents, filepath, mode))
+    proc.start()
+    proc.join(timeout=timeout)
+
+    if proc.is_alive():
+        logger.warning(f"Brotli compression subprocess timed out after {timeout}s")
+        proc.terminate()
+        proc.join()
+
+    # Check if file was created successfully
+    if os.path.exists(filepath):
+        return filepath
+
+    # Compression failed
+    if fallback_uncompressed:
+        logger.warning(f"Brotli compression failed for {filepath}, saving uncompressed")
+        fallback_path = filepath.replace('.br', '')
+        with open(fallback_path, 'wb') as f:
+            f.write(contents)
+        return fallback_path
+    else:
+        raise Exception(f"Brotli compression subprocess failed for {filepath}")
+
 FAVICON_RESAVE_THRESHOLD_SECONDS=86400
 
 
@@ -359,7 +436,8 @@ class model(watch_base):
             # Text data (HTML, JSON, etc.) - apply brotli compression
             if not skip_brotli and len(contents) > threshold:
                 snapshot_fname = f"{snapshot_id}.txt.br"
-                encoded_data = brotli.compress(contents.encode('utf-8'), mode=brotli.MODE_TEXT)
+                # Use subprocess for brotli compression to isolate memory
+                encoded_data = None  # Will be compressed in subprocess
             else:
                 snapshot_fname = f"{snapshot_id}.txt"
                 encoded_data = contents.encode('utf-8')
@@ -368,12 +446,29 @@ class model(watch_base):
 
         # Write snapshot file atomically if it doesn't exist
         if not os.path.exists(dest):
-            with tempfile.NamedTemporaryFile('wb', delete=False, dir=self.watch_data_dir) as tmp:
-                tmp.write(encoded_data)
-                tmp.flush()
-                os.fsync(tmp.fileno())
-                tmp_path = tmp.name
-            os.rename(tmp_path, dest)
+            if encoded_data is None:
+                # Brotli compression in subprocess
+                try:
+                    actual_dest = _brotli_subprocess_save(contents, dest, mode=brotli.MODE_TEXT, fallback_uncompressed=True)
+                    # Update snapshot_fname if fallback was used
+                    if actual_dest != dest:
+                        snapshot_fname = os.path.basename(actual_dest)
+                except Exception as e:
+                    logger.error(f"{self.get('uuid')} - Brotli compression failed: {e}")
+                    # Last resort fallback
+                    snapshot_fname = f"{snapshot_id}.txt"
+                    dest = os.path.join(self.watch_data_dir, snapshot_fname)
+                    with open(dest, 'wb') as f:
+                        f.write(contents.encode('utf-8'))
+            else:
+                # Binary or small text - write directly
+                with tempfile.NamedTemporaryFile('wb', delete=False, dir=self.watch_data_dir) as tmp:
+                    tmp.write(encoded_data)
+                    tmp.flush()
+                    os.fsync(tmp.fileno())
+                    tmp_path = tmp.name
+                os.rename(tmp_path, dest)
+                del encoded_data
 
         # Append to history.txt atomically
         index_fname = os.path.join(self.watch_data_dir, "history.txt")
@@ -788,25 +883,13 @@ class model(watch_base):
     def save_last_text_fetched_before_filters(self, contents):
         import brotli
         filepath = os.path.join(self.watch_data_dir, 'last-fetched.br')
-        with open(filepath, 'wb') as f:
-            f.write(brotli.compress(contents, mode=brotli.MODE_TEXT))
+        _brotli_subprocess_save(contents, filepath, mode=brotli.MODE_TEXT, fallback_uncompressed=False)
 
     def save_last_fetched_html(self, timestamp, contents):
-        import brotli
-
         self.ensure_data_dir_exists()
         snapshot_fname = f"{timestamp}.html.br"
         filepath = os.path.join(self.watch_data_dir, snapshot_fname)
-
-        with open(filepath, 'wb') as f:
-            contents = contents.encode('utf-8') if isinstance(contents, str) else contents
-            try:
-                f.write(brotli.compress(contents))
-            except Exception as e:
-                logger.warning(f"{self.get('uuid')} - Unable to compress snapshot, saving as raw data to {filepath}")
-                logger.warning(e)
-                f.write(contents)
-
+        _brotli_subprocess_save(contents, filepath, mode=None, fallback_uncompressed=True)
         self._prune_last_fetched_html_snapshots()
 
     def get_fetched_html(self, timestamp):

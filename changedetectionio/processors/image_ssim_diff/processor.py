@@ -24,7 +24,7 @@ class perform_site_check(difference_detection_processor):
     """Fast screenshot comparison processor."""
 
     # Override to use PNG format for better image comparison (JPEG compression creates noise)
-    screenshot_format = SCREENSHOT_FORMAT_PNG
+    #screenshot_format = SCREENSHOT_FORMAT_PNG
 
     def run_changedetection(self, watch):
         """
@@ -175,11 +175,13 @@ class perform_site_check(difference_detection_processor):
             logger.info(f"First check for watch {watch.get('uuid')} - saving baseline screenshot")
 
             # Close the PIL images before returning
+            import gc
             current_img.close()
             del current_img
             if cropped_current_img:
                 cropped_current_img.close()
                 del cropped_current_img
+            gc.collect()
 
             update_obj = {
                 'previous_md5': hashlib.md5(self.screenshot).hexdigest(),
@@ -248,12 +250,14 @@ class perform_site_check(difference_detection_processor):
         except Exception as e:
             logger.warning(f"Failed to load previous screenshot for comparison: {e}")
             # Clean up current images before returning
+            import gc
             if 'current_img' in locals():
                 current_img.close()
                 del current_img
             if 'cropped_current_img' in locals() and cropped_current_img:
                 cropped_current_img.close()
                 del cropped_current_img
+            gc.collect()
 
             # If we can't load previous, treat as first check
             update_obj = {
@@ -273,10 +277,12 @@ class perform_site_check(difference_detection_processor):
             # Ensure images are the same size
             if img_for_comparison_curr.size != img_for_comparison_prev.size:
                 logger.info(f"Resizing images to match: {img_for_comparison_prev.size} -> {img_for_comparison_curr.size}")
-                img_for_comparison_prev = img_for_comparison_prev.resize(img_for_comparison_curr.size, Image.Resampling.LANCZOS)
-                # If we resized a cropped version, update the reference
-                if cropped_previous_img:
-                    cropped_previous_img = img_for_comparison_prev
+                resized_img = img_for_comparison_prev.resize(img_for_comparison_curr.size, Image.Resampling.LANCZOS)
+                # If we resized a cropped version, close the old cropped image before replacing
+                if cropped_previous_img and img_for_comparison_prev is cropped_previous_img:
+                    cropped_previous_img.close()
+                    cropped_previous_img = resized_img
+                img_for_comparison_prev = resized_img
 
             if comparison_method == 'pixelmatch':
                 changed_detected, change_score = self._compare_pixelmatch(
@@ -290,6 +296,7 @@ class perform_site_check(difference_detection_processor):
                 logger.info(f"OpenCV: {change_score:.2f}% pixels changed, threshold: {threshold:.0f}")
 
             # Explicitly close PIL images to free memory immediately
+            import gc
             current_img.close()
             previous_img.close()
             del current_img
@@ -301,6 +308,9 @@ class perform_site_check(difference_detection_processor):
                 cropped_previous_img.close()
                 del cropped_previous_img
             del previous_screenshot_bytes  # Release the large bytes object
+
+            # Force garbage collection to immediately release memory
+            gc.collect()
 
         except Exception as e:
             logger.error(f"Failed to compare screenshots: {e}")
@@ -349,6 +359,7 @@ class perform_site_check(difference_detection_processor):
         """
         import cv2
         import numpy as np
+        import gc
 
         # Convert PIL images to numpy arrays
         arr_from = np.array(img_from)
@@ -361,6 +372,14 @@ class perform_site_check(difference_detection_processor):
         else:
             gray_from = arr_from
             gray_to = arr_to
+
+        # Release original arrays if we converted them
+        if gray_from is not arr_from:
+            del arr_from
+            arr_from = None
+        if gray_to is not arr_to:
+            del arr_to
+            arr_to = None
 
         # Optional: Apply Gaussian blur to reduce sensitivity to minor rendering differences
         # Controlled by environment variable, default sigma=0.8
@@ -386,9 +405,13 @@ class perform_site_check(difference_detection_processor):
         changed_detected = change_percentage > min_change_percentage
 
         # Explicit memory cleanup - mark large arrays for garbage collection
-        del arr_from, arr_to
+        if arr_from is not None:
+            del arr_from
+        if arr_to is not None:
+            del arr_to
         del gray_from, gray_to
         del diff, thresh
+        gc.collect()
 
         return changed_detected, change_percentage
 
@@ -415,18 +438,26 @@ class perform_site_check(difference_detection_processor):
             return self._compare_opencv(img_from, img_to, threshold * 255)
 
         import numpy as np
+        import gc
+
+        # Track converted images so we can close them
+        converted_img_from = None
+        converted_img_to = None
 
         # Convert to RGB if not already
         if img_from.mode != 'RGB':
-            img_from = img_from.convert('RGB')
+            converted_img_from = img_from.convert('RGB')
+            img_from = converted_img_from
         if img_to.mode != 'RGB':
-            img_to = img_to.convert('RGB')
+            converted_img_to = img_to.convert('RGB')
+            img_to = converted_img_to
 
         # Convert to numpy arrays (pixelmatch expects RGBA format)
         arr_from = np.array(img_from)
         arr_to = np.array(img_to)
 
         # Add alpha channel (pixelmatch expects RGBA)
+        alpha = None
         if arr_from.shape[2] == 3:
             alpha = np.ones((arr_from.shape[0], arr_from.shape[1], 1), dtype=np.uint8) * 255
             arr_from = np.concatenate([arr_from, alpha], axis=2)
@@ -458,11 +489,16 @@ class perform_site_check(difference_detection_processor):
         min_change_percentage = float(os.getenv("PIXELMATCH_MIN_CHANGE_PERCENT", "0.1"))
         changed_detected = change_percentage > min_change_percentage
 
-        # Explicit memory cleanup - mark large arrays for garbage collection
+        # Explicit memory cleanup - close converted images and delete arrays
+        if converted_img_from is not None:
+            converted_img_from.close()
+        if converted_img_to is not None:
+            converted_img_to.close()
         del arr_from, arr_to
         del diff_array
-        if 'alpha' in locals():
+        if alpha is not None:
             del alpha
+        gc.collect()
 
         return changed_detected, change_percentage
 
@@ -518,6 +554,15 @@ class perform_site_check(difference_detection_processor):
         """
         import cv2
         import numpy as np
+        import gc
+
+        template_img = None
+        current_array = None
+        template_array = None
+        current_gray = None
+        template_gray = None
+        search_region = None
+        result = None
 
         try:
             # Load template from watch data directory
@@ -529,23 +574,9 @@ class perform_site_check(difference_detection_processor):
             from PIL import Image
 
             template_img = Image.open(template_path)
+            template_img.load()  # Force load image data into memory
 
-            # Convert images to numpy arrays for OpenCV
-            current_array = np.array(current_img)
-            template_array = np.array(template_img)
-
-            # Convert to grayscale for matching
-            if len(current_array.shape) == 3:
-                current_gray = cv2.cvtColor(current_array, cv2.COLOR_RGB2GRAY)
-            else:
-                current_gray = current_array
-
-            if len(template_array.shape) == 3:
-                template_gray = cv2.cvtColor(template_array, cv2.COLOR_RGB2GRAY)
-            else:
-                template_gray = template_array
-
-            # Calculate search region
+            # Calculate search region dimensions first
             left, top, right, bottom = original_bbox
             width = right - left
             height = bottom - top
@@ -559,14 +590,55 @@ class perform_site_check(difference_detection_processor):
             search_right = min(current_img.width, right + margin_x)
             search_bottom = min(current_img.height, bottom + margin_y)
 
-            # Extract search region
-            search_region = current_gray[search_top:search_bottom, search_left:search_right]
+            # Convert only the search region of current image to numpy array (not the whole image!)
+            current_img_cropped = current_img.crop((search_left, search_top, search_right, search_bottom))
+            current_array = np.array(current_img_cropped)
+            current_img_cropped.close()  # Close immediately after conversion
+            del current_img_cropped
+
+            # Convert template to numpy array
+            template_array = np.array(template_img)
+
+            # Close template image immediately after conversion
+            template_img.close()
+            template_img = None
+
+            # Convert to grayscale for matching
+            if len(current_array.shape) == 3:
+                current_gray = cv2.cvtColor(current_array, cv2.COLOR_RGB2GRAY)
+                del current_array  # Delete immediately
+                current_array = None
+            else:
+                current_gray = current_array
+                current_array = None  # Just transfer reference
+
+            if len(template_array.shape) == 3:
+                template_gray = cv2.cvtColor(template_array, cv2.COLOR_RGB2GRAY)
+                del template_array  # Delete immediately
+                template_array = None
+            else:
+                template_gray = template_array
+                template_array = None  # Just transfer reference
 
             logger.debug(f"Searching for template in region: ({search_left}, {search_top}) to ({search_right}, {search_bottom})")
 
-            # Perform template matching
-            result = cv2.matchTemplate(search_region, template_gray, cv2.TM_CCOEFF_NORMED)
+            # Perform template matching (search_region is now just current_gray since we pre-cropped)
+            result = cv2.matchTemplate(current_gray, template_gray, cv2.TM_CCOEFF_NORMED)
+
+            # Delete arrays immediately after matchTemplate
+            del current_gray
+            current_gray = None
+            del template_gray
+            template_gray = None
+
             min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+
+            # Delete result array immediately after getting values
+            del result
+            result = None
+
+            # Force garbage collection now that large arrays are freed
+            gc.collect()
 
             logger.debug(f"Template matching confidence: {max_val:.2%}")
 
@@ -586,15 +658,34 @@ class perform_site_check(difference_detection_processor):
                            f"moved {move_x}px horizontally, {move_y}px vertically, "
                            f"confidence: {max_val:.2%}")
 
-                # Close template image
-                template_img.close()
-
                 return new_bbox
             else:
                 logger.warning(f"Template match confidence too low: {max_val:.2%} (need 80%)")
-                template_img.close()
                 return None
 
         except Exception as e:
             logger.error(f"Template matching error: {e}")
             return None
+
+        finally:
+            # Cleanup any remaining objects (in case of early return or exception)
+            if template_img is not None:
+                try:
+                    template_img.close()
+                except:
+                    pass
+            if result is not None:
+                del result
+            if search_region is not None:
+                del search_region
+            if template_gray is not None:
+                del template_gray
+            if template_array is not None:
+                del template_array
+            if current_gray is not None:
+                del current_gray
+            if current_array is not None:
+                del current_array
+
+            # Force garbage collection to immediately release memory
+            gc.collect()
