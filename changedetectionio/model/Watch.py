@@ -14,19 +14,22 @@ from ..diff import ADDED_PLACEMARKER_OPEN
 from ..html_tools import TRANSLATE_WHITESPACE_TABLE
 
 
-def _brotli_compress_worker(contents, filepath, mode=None):
+def _brotli_compress_worker(conn, filepath, mode=None):
     """
     Worker function to compress data with brotli in a separate process.
     This isolates memory - when process exits, OS reclaims all memory.
 
     Args:
-        contents: bytes to compress
+        conn: multiprocessing.Pipe connection to receive data
         filepath: destination file path
         mode: brotli compression mode (e.g., brotli.MODE_TEXT)
     """
     import brotli
 
     try:
+        # Receive data from parent process via pipe (avoids pickle overhead)
+        contents = conn.recv()
+
         if mode is not None:
             compressed_data = brotli.compress(contents, mode=mode)
         else:
@@ -35,16 +38,20 @@ def _brotli_compress_worker(contents, filepath, mode=None):
         with open(filepath, 'wb') as f:
             f.write(compressed_data)
 
+        # Send success status back
+        conn.send(True)
         # No need for explicit cleanup - process exit frees all memory
-        return True
     except Exception as e:
         logger.error(f"Brotli compression worker failed: {e}")
-        return False
+        conn.send(False)
+    finally:
+        conn.close()
 
 
 def _brotli_subprocess_save(contents, filepath, mode=None, timeout=30, fallback_uncompressed=False):
     """
     Save compressed data using subprocess to isolate memory.
+    Uses Pipe to avoid pickle overhead for large data.
 
     Args:
         contents: data to compress (str or bytes)
@@ -60,25 +67,47 @@ def _brotli_subprocess_save(contents, filepath, mode=None, timeout=30, fallback_
         Exception: if compression fails and fallback_uncompressed is False
     """
     import brotli
-    from multiprocessing import Process
+    from multiprocessing import Process, Pipe
 
     # Ensure contents are bytes
     if isinstance(contents, str):
         contents = contents.encode('utf-8')
 
-    # Run compression in subprocess
-    proc = Process(target=_brotli_compress_worker, args=(contents, filepath, mode))
-    proc.start()
-    proc.join(timeout=timeout)
+    # Create pipe for communication
+    parent_conn, child_conn = Pipe()
 
-    if proc.is_alive():
-        logger.warning(f"Brotli compression subprocess timed out after {timeout}s")
+    # Run compression in subprocess
+    proc = Process(target=_brotli_compress_worker, args=(child_conn, filepath, mode))
+    proc.start()
+
+    try:
+        # Send data to subprocess via pipe (avoids pickle)
+        parent_conn.send(contents)
+
+        # Wait for result with timeout
+        if parent_conn.poll(timeout):
+            success = parent_conn.recv()
+        else:
+            success = False
+            logger.warning(f"Brotli compression subprocess timed out after {timeout}s")
+            proc.terminate()
+
+        parent_conn.close()
+        proc.join(timeout=5)
+
+        if proc.is_alive():
+            proc.terminate()
+            proc.join()
+
+        # Check if file was created successfully
+        if success and os.path.exists(filepath):
+            return filepath
+
+    except Exception as e:
+        logger.error(f"Brotli compression error: {e}")
+        parent_conn.close()
         proc.terminate()
         proc.join()
-
-    # Check if file was created successfully
-    if os.path.exists(filepath):
-        return filepath
 
     # Compression failed
     if fallback_uncompressed:
