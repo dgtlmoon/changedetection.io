@@ -15,7 +15,7 @@ from changedetectionio.processors import difference_detection_processor, SCREENS
 from changedetectionio.processors.exceptions import ProcessorException
 from . import DEFAULT_COMPARISON_METHOD, DEFAULT_COMPARISON_THRESHOLD_OPENCV, DEFAULT_COMPARISON_THRESHOLD_PIXELMATCH, CROPPED_IMAGE_TEMPLATE_FILENAME
 
-name = 'Visual/Image screenshot change detection'
+name = 'Visual / Image screenshot change detection'
 description = 'Compares screenshots using fast algorithms (OpenCV or pixelmatch), 10-100x faster than SSIM'
 processor_weight = 2
 list_badge_text = "Visual"
