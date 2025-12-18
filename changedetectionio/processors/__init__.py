@@ -328,6 +328,26 @@ def get_custom_watch_obj_for_processor(processor_name):
     return watch_class
 
 
+def find_processor_module(processor_name):
+    """
+    Find the processor module by name.
+
+    Args:
+        processor_name: Processor machine name (e.g., 'image_ssim_diff')
+
+    Returns:
+        module: The processor's parent module, or None if not found
+    """
+    processor_classes = find_processors()
+    processor_tuple = next((tpl for tpl in processor_classes if tpl[1] == processor_name), None)
+
+    if processor_tuple:
+        # Return the parent module (the package containing processor.py)
+        return get_parent_module(processor_tuple[0])
+
+    return None
+
+
 def available_processors():
     """
     Get a list of processors by name and description for the UI elements.

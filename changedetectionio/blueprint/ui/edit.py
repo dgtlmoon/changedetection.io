@@ -168,6 +168,32 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                     config_filename = f'{processor_name}.json'
                     processor_instance.update_extra_watch_config(config_filename, processor_config_data)
                     logger.debug(f"Saved processor config to {config_filename}: {processor_config_data}")
+
+                    # Call optional edit_hook if processor has one
+                    try:
+                        # Try to import the edit_hook module from the processor package
+                        import importlib
+                        edit_hook_module_name = f'changedetectionio.processors.{processor_name}.edit_hook'
+
+                        try:
+                            edit_hook = importlib.import_module(edit_hook_module_name)
+                            logger.debug(f"Found edit_hook module for {processor_name}")
+
+                            if hasattr(edit_hook, 'on_config_save'):
+                                logger.info(f"Calling edit_hook.on_config_save for {processor_name}")
+                                watch_obj = datastore.data['watching'][uuid]
+                                # Call hook and get updated config
+                                updated_config = edit_hook.on_config_save(watch_obj, processor_config_data, datastore)
+                                # Save updated config back to file
+                                processor_instance.update_extra_watch_config(config_filename, updated_config)
+                                logger.info(f"Edit hook updated config: {updated_config}")
+                            else:
+                                logger.debug(f"Edit hook module found but no on_config_save function")
+                        except ModuleNotFoundError:
+                            logger.debug(f"No edit_hook module for processor {processor_name} (this is normal)")
+                    except Exception as hook_error:
+                        logger.error(f"Edit hook error (non-fatal): {hook_error}", exc_info=True)
+
                 except Exception as e:
                     logger.error(f"Failed to save processor config: {e}")
 

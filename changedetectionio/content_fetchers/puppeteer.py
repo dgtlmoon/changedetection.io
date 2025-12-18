@@ -50,6 +50,14 @@ async def capture_full_page(page, screenshot_format='JPEG'):
     screenshot_chunks = []
     y = 0
     if page_height > page.viewport['height']:
+        # Lock all element dimensions BEFORE screenshot to prevent CSS media queries from resizing
+        # capture_full_page() changes viewport height which triggers @media (min-height) rules
+        lock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'lock-elements-sizing.js')
+        with open(lock_elements_js_path, 'r') as f:
+            lock_elements_js = f.read()
+        await page.evaluate(lock_elements_js)
+        logger.debug("Element dimensions locked before screenshot capture")
+
         if page_height < step_size:
             step_size = page_height # Incase page is bigger than default viewport but smaller than proposed step size
         await page.setViewport({'width': page.viewport['width'], 'height': step_size})
@@ -222,7 +230,6 @@ class fetcher(Fetcher):
                     "height": int(match.group(2))
                 })
                 logger.debug(f"Puppeteer viewport size {self.page.viewport}")
-
         try:
             from pyppeteerstealth import inject_evasions_into_page
         except ImportError:
@@ -354,6 +361,11 @@ class fetcher(Fetcher):
             await self.page.evaluate(f"var include_filters=''")
 
         MAX_TOTAL_HEIGHT = int(os.getenv("SCREENSHOT_MAX_HEIGHT", SCREENSHOT_MAX_HEIGHT_DEFAULT))
+
+        self.content = await self.page.content
+
+        # Now take screenshot (scrolling may trigger layout changes, but measurements are already captured)
+        self.screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format)
         self.xpath_data = await self.page.evaluate(XPATH_ELEMENT_JS, {
             "visualselector_xpath_selectors": visualselector_xpath_selectors,
             "max_height": MAX_TOTAL_HEIGHT
@@ -361,11 +373,8 @@ class fetcher(Fetcher):
         if not self.xpath_data:
             raise Exception(f"Content Fetcher > xPath scraper failed. Please report this URL so we can fix it :)")
 
+
         self.instock_data = await self.page.evaluate(INSTOCK_DATA_JS)
-
-        self.content = await self.page.content
-
-        self.screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format)
 
         # It's good to log here in the case that the browser crashes on shutting down but we still get the data we need
         logger.success(f"Fetching '{url}' complete, closing page")

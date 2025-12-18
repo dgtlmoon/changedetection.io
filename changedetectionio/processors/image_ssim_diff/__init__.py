@@ -16,3 +16,6 @@ processor_weight = 2  # Lower weight = appears at top, heavier weight = appears 
 DEFAULT_COMPARISON_METHOD = os.getenv('COMPARISON_METHOD', 'opencv')
 DEFAULT_COMPARISON_THRESHOLD_OPENCV = float(os.getenv('COMPARISON_THRESHOLD_OPENCV', '30'))
 DEFAULT_COMPARISON_THRESHOLD_PIXELMATCH = float(os.getenv('COMPARISON_THRESHOLD_PIXELMATCH', '10'))
+
+# Template tracking filename
+CROPPED_IMAGE_TEMPLATE_FILENAME = 'cropped_image_template.png'

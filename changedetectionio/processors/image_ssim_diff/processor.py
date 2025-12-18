@@ -10,9 +10,10 @@ import hashlib
 import os
 import time
 from loguru import logger
+from changedetectionio import strtobool
 from changedetectionio.processors import difference_detection_processor, SCREENSHOT_FORMAT_PNG
 from changedetectionio.processors.exceptions import ProcessorException
-from . import DEFAULT_COMPARISON_METHOD, DEFAULT_COMPARISON_THRESHOLD_OPENCV, DEFAULT_COMPARISON_THRESHOLD_PIXELMATCH
+from . import DEFAULT_COMPARISON_METHOD, DEFAULT_COMPARISON_THRESHOLD_OPENCV, DEFAULT_COMPARISON_THRESHOLD_PIXELMATCH, CROPPED_IMAGE_TEMPLATE_FILENAME
 
 name = 'Visual/Image screenshot change detection'
 description = 'Compares screenshots using fast algorithms (OpenCV or pixelmatch), 10-100x faster than SSIM'
@@ -90,8 +91,11 @@ class perform_site_check(difference_detection_processor):
         # Automatically use the processor name from watch config as filename
         processor_name = watch.get('processor', 'default')
         config_filename = f'{processor_name}.json'
-        processor_config = self.get_extra_watch_config(config_filename)
+        processor_config = self.get_extra_watch_config(config_filename) if self.get_extra_watch_config(config_filename) else {}
         bounding_box = processor_config.get('bounding_box') if processor_config else None
+
+        # Template matching for tracking content movement
+        template_matching_enabled = processor_config.get('auto_track_region', False)
 
         if bounding_box:
             try:
@@ -154,6 +158,8 @@ class perform_site_check(difference_detection_processor):
 
         # Crop the current image if region was found (for comparison only, keep full screenshot for history)
         cropped_current_img = None
+        original_crop_region = crop_region  # Store original for template matching
+
         if crop_region:
             try:
                 cropped_current_img = current_img.crop(crop_region)
@@ -193,6 +199,42 @@ class perform_site_check(difference_detection_processor):
                 previous_screenshot_bytes = previous_screenshot_bytes.encode('utf-8')
 
             previous_img = Image.open(io.BytesIO(previous_screenshot_bytes))
+
+            # Template matching: If enabled, search for content that may have moved
+            # Check if feature is globally enabled via ENV var
+            feature_enabled = strtobool(os.getenv('ENABLE_TEMPLATE_TRACKING', 'True'))
+            # Check if auto-tracking is enabled for this specific watch (determined by feature analysis)
+            auto_track_enabled = template_matching_enabled
+
+            if feature_enabled and auto_track_enabled and original_crop_region:
+                try:
+                    # Check if template exists, if not regenerate from previous snapshot
+                    template_path = os.path.join(watch.watch_data_dir, CROPPED_IMAGE_TEMPLATE_FILENAME)
+                    if not os.path.isfile(template_path):
+                        logger.info("Template file missing, regenerating from previous snapshot")
+                        self._regenerate_template_from_snapshot(
+                            previous_img, watch, original_crop_region
+                        )
+
+                    logger.debug("Template matching enabled - searching for region movement")
+                    new_crop_region = self._find_region_with_template_matching(
+                        current_img, watch, original_crop_region, search_tolerance=0.2
+                    )
+
+                    if new_crop_region:
+                        old_region = original_crop_region
+                        crop_region = new_crop_region
+                        logger.info(f"Template matching: Region moved from {old_region} to {new_crop_region}")
+
+                        # Update cropped image with new region
+                        if cropped_current_img:
+                            cropped_current_img.close()
+                        cropped_current_img = current_img.crop(crop_region)
+                    else:
+                        logger.warning("Template matching: Could not find region, using original position")
+
+                except Exception as e:
+                    logger.warning(f"Template matching error (continuing with original position): {e}")
 
             # Crop previous image to the same region if cropping is enabled
             cropped_previous_img = None
@@ -423,3 +465,136 @@ class perform_site_check(difference_detection_processor):
             del alpha
 
         return changed_detected, change_percentage
+
+    def _regenerate_template_from_snapshot(self, snapshot_img, watch, bbox):
+        """
+        Regenerate template file from a snapshot (typically after 'clear data').
+
+        When user clears watch data, the template file is deleted but config remains.
+        This extracts the region from the previous/baseline snapshot and saves it
+        as the template so tracking can continue.
+
+        Args:
+            snapshot_img: PIL Image to extract template from (usually previous_img)
+            watch: Watch object (to access data directory)
+            bbox: (left, top, right, bottom) bounding box coordinates
+        """
+        try:
+            left, top, right, bottom = bbox
+            width = right - left
+            height = bottom - top
+
+            # Ensure watch data directory exists
+            watch.ensure_data_dir_exists()
+
+            # Crop the template region
+            template = snapshot_img.crop(bbox)
+
+            # Save as PNG (lossless, no compression artifacts)
+            template_path = os.path.join(watch.watch_data_dir, CROPPED_IMAGE_TEMPLATE_FILENAME)
+            template.save(template_path, format='PNG', optimize=True)
+
+            logger.info(f"Regenerated template: {template_path} ({width}x{height}px)")
+            template.close()
+
+        except Exception as e:
+            logger.error(f"Failed to regenerate template: {e}")
+
+    def _find_region_with_template_matching(self, current_img, watch, original_bbox, search_tolerance=0.2):
+        """
+        Use OpenCV template matching to find where content moved on the page.
+
+        This handles cases where page layout shifts push content to different
+        pixel coordinates, but the visual content remains the same.
+
+        Args:
+            current_img: PIL Image of current screenshot
+            watch: Watch object (to access template file)
+            original_bbox: (left, top, right, bottom) tuple of original region
+            search_tolerance: How far to search (0.2 = ±20% of region size)
+
+        Returns:
+            tuple: New (left, top, right, bottom) region, or None if not found
+        """
+        import cv2
+        import numpy as np
+
+        try:
+            # Load template from watch data directory
+            template_path = os.path.join(watch.watch_data_dir, CROPPED_IMAGE_TEMPLATE_FILENAME)
+
+            if not os.path.isfile(template_path):
+                logger.warning(f"Template file not found: {template_path}")
+                return None
+            from PIL import Image
+
+            template_img = Image.open(template_path)
+
+            # Convert images to numpy arrays for OpenCV
+            current_array = np.array(current_img)
+            template_array = np.array(template_img)
+
+            # Convert to grayscale for matching
+            if len(current_array.shape) == 3:
+                current_gray = cv2.cvtColor(current_array, cv2.COLOR_RGB2GRAY)
+            else:
+                current_gray = current_array
+
+            if len(template_array.shape) == 3:
+                template_gray = cv2.cvtColor(template_array, cv2.COLOR_RGB2GRAY)
+            else:
+                template_gray = template_array
+
+            # Calculate search region
+            left, top, right, bottom = original_bbox
+            width = right - left
+            height = bottom - top
+
+            margin_x = int(width * search_tolerance)
+            margin_y = int(height * search_tolerance)
+
+            # Expand search area
+            search_left = max(0, left - margin_x)
+            search_top = max(0, top - margin_y)
+            search_right = min(current_img.width, right + margin_x)
+            search_bottom = min(current_img.height, bottom + margin_y)
+
+            # Extract search region
+            search_region = current_gray[search_top:search_bottom, search_left:search_right]
+
+            logger.debug(f"Searching for template in region: ({search_left}, {search_top}) to ({search_right}, {search_bottom})")
+
+            # Perform template matching
+            result = cv2.matchTemplate(search_region, template_gray, cv2.TM_CCOEFF_NORMED)
+            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+
+            logger.debug(f"Template matching confidence: {max_val:.2%}")
+
+            # Check if match is good enough (80% confidence threshold)
+            if max_val >= 0.8:
+                # Calculate new bounding box in original image coordinates
+                match_x = search_left + max_loc[0]
+                match_y = search_top + max_loc[1]
+
+                new_bbox = (match_x, match_y, match_x + width, match_y + height)
+
+                # Calculate movement distance
+                move_x = abs(match_x - left)
+                move_y = abs(match_y - top)
+
+                logger.info(f"Template found at ({match_x}, {match_y}), "
+                           f"moved {move_x}px horizontally, {move_y}px vertically, "
+                           f"confidence: {max_val:.2%}")
+
+                # Close template image
+                template_img.close()
+
+                return new_bbox
+            else:
+                logger.warning(f"Template match confidence too low: {max_val:.2%} (need 80%)")
+                template_img.close()
+                return None
+
+        except Exception as e:
+            logger.error(f"Template matching error: {e}")
+            return None

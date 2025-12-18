@@ -96,8 +96,17 @@ class model(watch_base):
     def clear_watch(self):
         import pathlib
 
+        # Get list of processor config files to preserve
+        from changedetectionio.processors import find_processors
+        processor_names = [name for cls, name in find_processors()]
+        processor_config_files = {f"{name}.json" for name in processor_names}
+
         # JSON Data, Screenshots, Textfiles (history index and snapshots), HTML in the future etc
+        # But preserve processor config files (they're configuration, not history data)
         for item in pathlib.Path(str(self.watch_data_dir)).rglob("*.*"):
+            # Skip processor config files
+            if item.name in processor_config_files:
+                continue
             os.unlink(item)
 
         # Force the attr to recalculate

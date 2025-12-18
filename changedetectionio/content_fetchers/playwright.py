@@ -28,6 +28,16 @@ async def capture_full_page_async(page, screenshot_format='JPEG'):
     y = 0
 
     if page_height > page.viewport_size['height']:
+
+        # Lock all element dimensions BEFORE screenshot to prevent CSS media queries from resizing
+        # capture_full_page_async() changes viewport height which triggers @media (min-height) rules
+        lock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'lock-elements-sizing.js')
+        with open(lock_elements_js_path, 'r') as f:
+            lock_elements_js = f.read()
+        await page.evaluate(lock_elements_js)
+
+        logger.debug("Element dimensions locked before screenshot capture")
+
         if page_height < step_size:
             step_size = page_height # Incase page is bigger than default viewport but smaller than proposed step size
         logger.debug(f"Setting bigger viewport to step through large page width W{page.viewport_size['width']}xH{step_size} because page_height > viewport_size")
