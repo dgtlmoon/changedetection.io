@@ -212,3 +212,31 @@ class ImageDiffHandler(ABC):
             True if successful, False otherwise
         """
         pass
+
+    @abstractmethod
+    def draw_bounding_box(
+        self,
+        img_bytes: bytes,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        color: Tuple[int, int, int] = (255, 0, 0),
+        thickness: int = 3
+    ) -> bytes:
+        """
+        Draw a bounding box rectangle on image.
+
+        Args:
+            img_bytes: Image data as bytes
+            x: Left coordinate
+            y: Top coordinate
+            width: Box width
+            height: Box height
+            color: BGR color tuple (default: blue)
+            thickness: Line thickness in pixels
+
+        Returns:
+            Image bytes with bounding box drawn
+        """
+        pass

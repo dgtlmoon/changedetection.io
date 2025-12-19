@@ -308,6 +308,119 @@ def generate_diff_isolated(img_bytes_from, img_bytes_to, threshold, blur_sigma, 
     return result
 
 
+def _worker_draw_bounding_box(conn, img_bytes, x, y, width, height, color, thickness):
+    """
+    Worker function for drawing bounding box on image.
+    """
+    import time
+    try:
+        import cv2
+
+        cv2.setNumThreads(1)
+        print(f"[{time.time():.3f}] [Worker] Draw bounding box worker starting", flush=True)
+
+        # Decode image
+        img = cv2.imdecode(np.frombuffer(img_bytes, np.uint8), cv2.IMREAD_COLOR)
+        if img is None:
+            print(f"[{time.time():.3f}] [Worker] Failed to decode image", flush=True)
+            conn.send(None)
+            return
+
+        # Draw rectangle (BGR format)
+        cv2.rectangle(img, (x, y), (x + width, y + height), color, thickness)
+
+        # Encode back to PNG
+        _, encoded = cv2.imencode('.png', img)
+        result_bytes = encoded.tobytes()
+
+        print(f"[{time.time():.3f}] [Worker] Bounding box drawn ({len(result_bytes)} bytes)", flush=True)
+        conn.send(result_bytes)
+
+    except Exception as e:
+        print(f"[{time.time():.3f}] [Worker] Draw bounding box error: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
+        conn.send(None)
+    finally:
+        conn.close()
+
+
+def draw_bounding_box_isolated(img_bytes, x, y, width, height, color=(255, 0, 0), thickness=3):
+    """
+    Draw bounding box on image in isolated subprocess.
+
+    Args:
+        img_bytes: Image data as bytes
+        x: Left coordinate
+        y: Top coordinate
+        width: Box width
+        height: Box height
+        color: BGR color tuple (default: blue)
+        thickness: Line thickness in pixels
+
+    Returns:
+        bytes: PNG image with bounding box or None on failure
+    """
+    import time
+    print(f"[{time.time():.3f}] [Parent] Starting draw_bounding_box subprocess", flush=True)
+
+    ctx = multiprocessing.get_context('spawn')
+    parent_conn, child_conn = ctx.Pipe()
+
+    p = ctx.Process(
+        target=_worker_draw_bounding_box,
+        args=(child_conn, img_bytes, x, y, width, height, color, thickness)
+    )
+
+    print(f"[{time.time():.3f}] [Parent] Starting subprocess", flush=True)
+    p.start()
+    print(f"[{time.time():.3f}] [Parent] Subprocess started (pid={p.pid}), waiting for result (10s timeout)", flush=True)
+
+    result = None
+    try:
+        if parent_conn.poll(10):
+            print(f"[{time.time():.3f}] [Parent] Result available, receiving", flush=True)
+            result = parent_conn.recv()
+            print(f"[{time.time():.3f}] [Parent] Result received ({len(result) if result else 0} bytes)", flush=True)
+        else:
+            print(f"[{time.time():.3f}] [Parent] Timeout waiting for result after 10s", flush=True)
+    except Exception as e:
+        print(f"[{time.time():.3f}] [Parent] Error receiving result: {e}", flush=True)
+    finally:
+        # Always close pipe first
+        try:
+            parent_conn.close()
+        except:
+            pass
+
+        # Try graceful shutdown
+        print(f"[{time.time():.3f}] [Parent] Waiting for subprocess to exit (3s timeout)", flush=True)
+        join_start = time.time()
+        p.join(timeout=3)
+        join_elapsed = time.time() - join_start
+        print(f"[{time.time():.3f}] [Parent] First join took {join_elapsed:.2f}s", flush=True)
+
+        if p.is_alive():
+            print(f"[{time.time():.3f}] [Parent] Process didn't exit gracefully, terminating", flush=True)
+            term_start = time.time()
+            p.terminate()
+            p.join(timeout=2)
+            term_elapsed = time.time() - term_start
+            print(f"[{time.time():.3f}] [Parent] Terminate+join took {term_elapsed:.2f}s", flush=True)
+
+        if p.is_alive():
+            print(f"[{time.time():.3f}] [Parent] Process didn't terminate, killing", flush=True)
+            kill_start = time.time()
+            p.kill()
+            p.join(timeout=1)
+            kill_elapsed = time.time() - kill_start
+            print(f"[{time.time():.3f}] [Parent] Kill+join took {kill_elapsed:.2f}s", flush=True)
+
+        print(f"[{time.time():.3f}] [Parent] Subprocess cleanup complete, returning result", flush=True)
+
+    return result
+
+
 def _worker_calculate_percentage(conn, img_bytes_from, img_bytes_to, threshold, blur_sigma, max_width, max_height):
     """
     Worker function for calculating change percentage.

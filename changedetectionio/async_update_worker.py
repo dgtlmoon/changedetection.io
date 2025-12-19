@@ -445,6 +445,10 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                     # 3. GC can't collect the object anyway (still referenced by datastore)
                     # 4. It would just cause confusion
 
+                    # Force garbage collection after cleanup
+                    import gc
+                    gc.collect()
+
                     logger.debug(f"Worker {worker_id} completed watch {uuid} in {time.time()-fetch_start_time:.2f}s")
                 except Exception as cleanup_error:
                     logger.error(f"Worker {worker_id} error during cleanup: {cleanup_error}")

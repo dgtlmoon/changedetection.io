@@ -122,6 +122,7 @@ def get_asset(asset_name, watch, datastore, request):
 def _draw_bounding_box_if_configured(img_bytes, watch, datastore):
     """
     Draw blue bounding box on image if configured in processor settings.
+    Uses isolated subprocess to prevent memory leaks from large images.
 
     Args:
         img_bytes: Image bytes (PNG)
@@ -151,23 +152,16 @@ def _draw_bounding_box_if_configured(img_bytes, watch, datastore):
 
         x, y, width, height = parts
 
-        # Use OpenCV to draw rectangle (no subprocess needed for simple drawing)
-        import cv2
-        import numpy as np
+        # Use isolated subprocess to prevent memory leaks from large images
+        from .image_handler import isolated_opencv
+        result = isolated_opencv.draw_bounding_box_isolated(
+            img_bytes, x, y, width, height,
+            color=(255, 0, 0),  # Blue in BGR format
+            thickness=3
+        )
 
-        # Decode image
-        img_array = cv2.imdecode(np.frombuffer(img_bytes, np.uint8), cv2.IMREAD_COLOR)
-        if img_array is None:
-            logger.warning("Failed to decode image for bounding box drawing")
-            return img_bytes
-
-        # Draw blue rectangle (BGR format: blue=255, green=0, red=0)
-        # Use thickness=3 for visibility
-        cv2.rectangle(img_array, (x, y), (x + width, y + height), (255, 0, 0), 3)
-
-        # Encode back to PNG
-        _, encoded = cv2.imencode('.png', img_array)
-        return encoded.tobytes()
+        # Return result or original if subprocess failed
+        return result if result else img_bytes
 
     except Exception as e:
         logger.warning(f"Failed to draw bounding box: {e}")
