@@ -1,16 +1,32 @@
 """
 Screenshot diff visualization for fast image comparison processor.
 
-Generates side-by-side comparison with red-highlighted differences using
-OpenCV for fast rendering (10-100x faster than SSIM).
+All image operations now use ImageDiffHandler abstraction for clean separation
+of concerns and easy backend swapping (LibVIPS, OpenCV, PIL, etc.).
 """
 
 import os
 import json
-import io
 import time
 from loguru import logger
 from . import DEFAULT_COMPARISON_THRESHOLD_OPENCV
+
+# Check if pyvips is available
+try:
+    from .libvips_handler import LibvipsImageDiffHandler
+    import pyvips
+
+    # CRITICAL: Set aggressive memory limits for LibVIPS to prevent memory leaks
+    pyvips.cache_set_max(0)  # Disable operation cache
+    pyvips.cache_set_max_mem(0)  # Disable memory cache
+    pyvips.cache_set_max_files(0)  # Disable file cache
+    logger.info("LibVIPS cache disabled for memory leak prevention")
+
+    HANDLER_AVAILABLE = True
+except ImportError as e:
+    HANDLER_AVAILABLE = False
+    IMPORT_ERROR = str(e)
+    logger.error(f"Failed to import LibvipsImageDiffHandler: {e}")
 
 # Maximum dimensions for diff visualization (can be overridden via environment variable)
 # Large screenshots don't need full resolution for visual inspection
@@ -19,258 +35,12 @@ MAX_DIFF_HEIGHT = int(os.getenv('MAX_DIFF_HEIGHT', '8000'))
 MAX_DIFF_WIDTH = int(os.getenv('MAX_DIFF_WIDTH', '900'))
 
 
-def _resize_for_diff(img, max_height=MAX_DIFF_HEIGHT, max_width=MAX_DIFF_WIDTH):
-    from PIL import Image
-
-    """
-    Downscale image if too large for faster diff visualization.
-
-    Users don't need pixel-perfect diffs at 20000px resolution.
-    Downscaling to 2000px is 100x faster and still shows all visible changes.
-
-    Args:
-        img: PIL Image
-        max_height: Maximum height in pixels
-        max_width: Maximum width in pixels
-
-    Returns:
-        PIL Image (resized if needed)
-    """
-    if img.height > max_height or img.width > max_width:
-        # Calculate scaling factor to fit within max dimensions
-        height_ratio = max_height / img.height if img.height > max_height else 1.0
-        width_ratio = max_width / img.width if img.width > max_width else 1.0
-        ratio = min(height_ratio, width_ratio)
-
-        new_size = (int(img.width * ratio), int(img.height * ratio))
-        logger.debug(f"Downscaling diff visualization: {img.size} -> {new_size} ({ratio*100:.1f}% scale)")
-        return img.resize(new_size, Image.Resampling.LANCZOS)
-
-    return img
-
-
-def calculate_change_percentage_opencv(img_bytes_from, img_bytes_to, threshold=30):
-    """
-    Calculate only the change percentage using OpenCV (lightweight version).
-
-    This is optimized to calculate only the percentage without keeping the diff mask,
-    reducing memory usage when we only need the percentage for display.
-
-    Decodes directly to grayscale with OpenCV to avoid PIL overhead.
-
-    Args:
-        img_bytes_from: Previous screenshot (bytes)
-        img_bytes_to: Current screenshot (bytes)
-        threshold: Pixel difference threshold (0-255)
-
-    Returns:
-        float: change_percentage
-    """
-    import numpy as np
-    import cv2
-
-    # Decode directly to grayscale with OpenCV (no PIL overhead)
-    nparr_from = np.frombuffer(img_bytes_from, np.uint8)
-    nparr_to = np.frombuffer(img_bytes_to, np.uint8)
-    gray_from = cv2.imdecode(nparr_from, cv2.IMREAD_GRAYSCALE)
-    gray_to = cv2.imdecode(nparr_to, cv2.IMREAD_GRAYSCALE)
-
-    if gray_from is None or gray_to is None:
-        raise ValueError("Failed to decode images")
-
-    # Free decode buffers
-    del nparr_from, nparr_to
-
-    # Ensure images are the same size
-    if gray_from.shape != gray_to.shape:
-        gray_from = cv2.resize(gray_from, (gray_to.shape[1], gray_to.shape[0]), interpolation=cv2.INTER_AREA)
-
-    # Downscale for faster calculation using OpenCV (INTER_AREA is best for downscaling)
-    h, w = gray_from.shape
-    if h > MAX_DIFF_HEIGHT or w > MAX_DIFF_WIDTH:
-        height_ratio = MAX_DIFF_HEIGHT / h if h > MAX_DIFF_HEIGHT else 1.0
-        width_ratio = MAX_DIFF_WIDTH / w if w > MAX_DIFF_WIDTH else 1.0
-        ratio = min(height_ratio, width_ratio)
-        new_size = (int(w * ratio), int(h * ratio))
-
-        logger.debug(f"Downscaling for diff calculation: {(w, h)} -> {new_size}")
-        gray_from = cv2.resize(gray_from, new_size, interpolation=cv2.INTER_AREA)
-        gray_to = cv2.resize(gray_to, new_size, interpolation=cv2.INTER_AREA)
-
-    # Optional Gaussian blur to reduce noise
-    blur_sigma = float(os.getenv("OPENCV_BLUR_SIGMA", "0.8"))
-    if blur_sigma > 0:
-        gray_from = cv2.GaussianBlur(gray_from, (0, 0), blur_sigma)
-        gray_to = cv2.GaussianBlur(gray_to, (0, 0), blur_sigma)
-
-    # Calculate absolute difference
-    diff = cv2.absdiff(gray_from, gray_to)
-
-    # Delete grayscale arrays - no longer needed
-    del gray_from, gray_to
-
-    # Apply threshold to create binary mask
-    _, diff_mask = cv2.threshold(diff, threshold, 255, cv2.THRESH_BINARY)
-
-    # Delete diff array - no longer needed
-    del diff
-
-    # Calculate change percentage
-    changed_pixels = np.count_nonzero(diff_mask)
-    total_pixels = diff_mask.size
-    change_percentage = (changed_pixels / total_pixels) * 100
-
-    # Delete diff_mask before returning
-    del diff_mask
-
-    return float(change_percentage)
-
-
-def calculate_diff_opencv(img_bytes_from, img_bytes_to, threshold=30):
-    """
-    Calculate image difference using OpenCV cv2.absdiff.
-
-    This is the fastest method for diff visualization.
-    Decodes directly to grayscale with OpenCV to avoid PIL overhead.
-
-    Args:
-        img_bytes_from: Previous screenshot (bytes)
-        img_bytes_to: Current screenshot (bytes)
-        threshold: Pixel difference threshold (0-255)
-
-    Returns:
-        tuple: (change_percentage, diff_mask) where diff_mask is a 2D numpy binary mask
-    """
-    import numpy as np
-    import cv2
-    import gc
-
-    # Decode directly to grayscale with OpenCV (no PIL overhead)
-    nparr_from = np.frombuffer(img_bytes_from, np.uint8)
-    nparr_to = np.frombuffer(img_bytes_to, np.uint8)
-    gray_from = cv2.imdecode(nparr_from, cv2.IMREAD_GRAYSCALE)
-    gray_to = cv2.imdecode(nparr_to, cv2.IMREAD_GRAYSCALE)
-
-    if gray_from is None or gray_to is None:
-        raise ValueError("Failed to decode images")
-
-    # Free decode buffers
-    del nparr_from, nparr_to
-
-    # Ensure images are the same size
-    if gray_from.shape != gray_to.shape:
-        gray_from = cv2.resize(gray_from, (gray_to.shape[1], gray_to.shape[0]), interpolation=cv2.INTER_AREA)
-
-    # Downscale large images for faster diff visualization using OpenCV
-    # INTER_AREA is best for downscaling (reduces aliasing)
-    h, w = gray_from.shape
-    if h > MAX_DIFF_HEIGHT or w > MAX_DIFF_WIDTH:
-        height_ratio = MAX_DIFF_HEIGHT / h if h > MAX_DIFF_HEIGHT else 1.0
-        width_ratio = MAX_DIFF_WIDTH / w if w > MAX_DIFF_WIDTH else 1.0
-        ratio = min(height_ratio, width_ratio)
-        new_size = (int(w * ratio), int(h * ratio))
-
-        logger.debug(f"Downscaling for diff visualization: {(w, h)} -> {new_size}")
-        gray_from = cv2.resize(gray_from, new_size, interpolation=cv2.INTER_AREA)
-        gray_to = cv2.resize(gray_to, new_size, interpolation=cv2.INTER_AREA)
-
-    # Optional Gaussian blur to reduce noise
-    blur_sigma = float(os.getenv("OPENCV_BLUR_SIGMA", "0.8"))
-    if blur_sigma > 0:
-        gray_from = cv2.GaussianBlur(gray_from, (0, 0), blur_sigma)
-        gray_to = cv2.GaussianBlur(gray_to, (0, 0), blur_sigma)
-
-    # Calculate absolute difference
-    diff = cv2.absdiff(gray_from, gray_to)
-
-    # Delete grayscale arrays - no longer needed
-    del gray_from, gray_to
-
-    # Apply threshold to create binary mask
-    _, diff_mask = cv2.threshold(diff, threshold, 255, cv2.THRESH_BINARY)
-
-    # Delete diff array - no longer needed
-    del diff
-
-    # Calculate change percentage
-    changed_pixels = np.count_nonzero(diff_mask)
-    total_pixels = diff_mask.size
-    change_percentage = (changed_pixels / total_pixels) * 100
-
-    # Force garbage collection to try to return memory to OS
-    gc.collect()
-
-    return float(change_percentage), diff_mask
-
-
-def generate_diff_image_opencv(img_bytes_to, diff_mask):
-    """
-    Generate a difference image with red highlights using OpenCV.
-
-    This is the fastest method for generating diff visualization.
-    Uses OpenCV for decode/encode to avoid PIL overhead.
-
-    Args:
-        img_bytes_to: Current screenshot (bytes)
-        diff_mask: Binary mask of changed pixels (2D numpy array)
-
-    Returns:
-        bytes: JPEG image with red highlights on changed pixels
-    """
-    import numpy as np
-    import cv2
-
-    # Decode to BGR (color) with OpenCV (no PIL overhead)
-    nparr_to = np.frombuffer(img_bytes_to, np.uint8)
-    img_bgr = cv2.imdecode(nparr_to, cv2.IMREAD_COLOR)
-
-    if img_bgr is None:
-        raise ValueError("Failed to decode image")
-
-    # Free decode buffer
-    del nparr_to
-
-    # Downscale for faster diff visualization using OpenCV
-    h, w = img_bgr.shape[:2]
-    if h > MAX_DIFF_HEIGHT or w > MAX_DIFF_WIDTH:
-        height_ratio = MAX_DIFF_HEIGHT / h if h > MAX_DIFF_HEIGHT else 1.0
-        width_ratio = MAX_DIFF_WIDTH / w if w > MAX_DIFF_WIDTH else 1.0
-        ratio = min(height_ratio, width_ratio)
-        new_size = (int(w * ratio), int(h * ratio))
-
-        logger.debug(f"Downscaling diff image: {(w, h)} -> {new_size}")
-        img_bgr = cv2.resize(img_bgr, new_size, interpolation=cv2.INTER_AREA)
-
-    # Ensure mask is same size as image; keep it binary with INTER_NEAREST
-    if diff_mask.shape != img_bgr.shape[:2]:
-        diff_mask = cv2.resize(
-            diff_mask,
-            (img_bgr.shape[1], img_bgr.shape[0]),
-            interpolation=cv2.INTER_NEAREST
-        )
-
-    # Create boolean mask
-    changed_mask = diff_mask > 0
-
-    # Apply red highlight where mask is True (50% blend)
-    # OpenCV uses BGR order, so: B=0, G=1, R=2
-    img_bgr[changed_mask, 2] = (img_bgr[changed_mask, 2] * 0.5 + 127.5).astype(np.uint8)  # R channel (index 2 in BGR)
-    img_bgr[changed_mask, 1] = (img_bgr[changed_mask, 1] * 0.5).astype(np.uint8)         # G channel
-    img_bgr[changed_mask, 0] = (img_bgr[changed_mask, 0] * 0.5).astype(np.uint8)         # B channel
-
-    # Encode to JPEG with OpenCV (no PIL)
-    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 85]
-    _, encoded = cv2.imencode('.jpg', img_bgr, encode_param)
-
-    # Free arrays
-    del img_bgr, diff_mask, changed_mask
-
-    return encoded.tobytes()
-
-
 def get_asset(asset_name, watch, datastore, request):
     """
     Get processor-specific binary assets for streaming.
+
+    Uses ImageDiffHandler for all image operations - no more multiprocessing needed
+    as LibVIPS handles threading/memory internally.
 
     Supported assets:
     - 'before': The previous/from screenshot
@@ -286,7 +56,13 @@ def get_asset(asset_name, watch, datastore, request):
     Returns:
         tuple: (binary_data, content_type, cache_control_header) or None if not found
     """
-    import gc
+    # Check if handler is available
+    if not HANDLER_AVAILABLE:
+        logger.error(f"Cannot get asset '{asset_name}': {IMPORT_ERROR}")
+        return None
+
+    # Initialize handler
+    handler = LibvipsImageDiffHandler()
 
     # Get version parameters from query string
     versions = list(watch.history.keys())
@@ -309,7 +85,7 @@ def get_asset(asset_name, watch, datastore, request):
             img_bytes = watch.get_history_snapshot(timestamp=from_version)
 
             # Optionally draw bounding box if configured
-            img_bytes = _apply_bounding_box_if_configured(img_bytes, watch, datastore)
+            img_bytes = _apply_bounding_box_if_configured(img_bytes, watch, datastore, handler)
 
             return (img_bytes, 'image/png', 'public, max-age=3600')
 
@@ -318,12 +94,12 @@ def get_asset(asset_name, watch, datastore, request):
             img_bytes = watch.get_history_snapshot(timestamp=to_version)
 
             # Optionally draw bounding box if configured
-            img_bytes = _apply_bounding_box_if_configured(img_bytes, watch, datastore)
+            img_bytes = _apply_bounding_box_if_configured(img_bytes, watch, datastore, handler)
 
             return (img_bytes, 'image/png', 'public, max-age=3600')
 
         elif asset_name == 'rendered_diff':
-            # Generate the diff visualization on-demand using OpenCV
+            # Generate the diff visualization on-demand
             img_bytes_from = watch.get_history_snapshot(timestamp=from_version)
             img_bytes_to = watch.get_history_snapshot(timestamp=to_version)
 
@@ -337,18 +113,64 @@ def get_asset(asset_name, watch, datastore, request):
             except (ValueError, TypeError):
                 threshold = 30.0
 
-            # Generate diff using OpenCV
-            _, diff_mask = calculate_diff_opencv(img_bytes_from, img_bytes_to, threshold)
-            diff_image_bytes = generate_diff_image_opencv(img_bytes_to, diff_mask)
+            # Get blur sigma
+            blur_sigma = float(os.getenv("OPENCV_BLUR_SIGMA", "0.8"))
 
-            # Aggressive memory cleanup
-            del diff_mask, img_bytes_from, img_bytes_to
-            gc.collect()
+            try:
+                # Load images
+                img_from = handler.load_from_bytes(img_bytes_from)
+                img_to = handler.load_from_bytes(img_bytes_to)
 
-            # Optionally draw bounding box on diff image if configured
-            diff_image_bytes = _apply_bounding_box_to_diff(diff_image_bytes, watch, datastore)
+                # Ensure same size
+                w1, h1 = handler.get_dimensions(img_from)
+                w2, h2 = handler.get_dimensions(img_to)
+                if (w1, h1) != (w2, h2):
+                    img_from = handler.resize(img_from, w2, h2)
 
-            return (diff_image_bytes, 'image/jpeg', 'public, max-age=300')
+                # Downscale for faster diff visualization
+                img_from = handler.resize(img_from, MAX_DIFF_WIDTH, MAX_DIFF_HEIGHT)
+                img_to = handler.resize(img_to, MAX_DIFF_WIDTH, MAX_DIFF_HEIGHT)
+
+                # Convert to grayscale
+                gray_from = handler.to_grayscale(img_from)
+                gray_to = handler.to_grayscale(img_to)
+
+                # Release original color images
+                del img_from
+
+                # Optional blur
+                gray_from = handler.gaussian_blur(gray_from, blur_sigma)
+                gray_to = handler.gaussian_blur(gray_to, blur_sigma)
+
+                # Calculate difference
+                diff = handler.absolute_difference(gray_from, gray_to)
+
+                # Release grayscale images
+                del gray_from, gray_to
+
+                # Threshold to get mask
+                _, diff_mask = handler.threshold(diff, int(threshold))
+
+                # Release diff image
+                del diff
+
+                # Generate diff image with red overlay
+                diff_image_bytes = handler.apply_red_overlay(img_to, diff_mask)
+
+                # Release mask and original img_to
+                del diff_mask, img_to
+
+                # Optionally draw bounding box on diff image if configured
+                diff_image_bytes = _apply_bounding_box_to_diff(diff_image_bytes, watch, datastore, handler)
+
+                return (diff_image_bytes, 'image/jpeg', 'public, max-age=300')
+
+            finally:
+                # Force Python garbage collection
+                import gc
+                gc.collect()
+
+                logger.debug(f"Memory cleanup: gc collected")
 
         else:
             # Unknown asset
@@ -356,10 +178,12 @@ def get_asset(asset_name, watch, datastore, request):
 
     except Exception as e:
         logger.error(f"Failed to get asset '{asset_name}': {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         return None
 
 
-def _apply_bounding_box_if_configured(img_bytes, watch, datastore):
+def _apply_bounding_box_if_configured(img_bytes, watch, datastore, handler):
     """
     Apply blue bounding box to image if configured in processor settings.
 
@@ -367,6 +191,7 @@ def _apply_bounding_box_if_configured(img_bytes, watch, datastore):
         img_bytes: Image bytes (PNG)
         watch: Watch object
         datastore: Datastore object
+        handler: ImageDiffHandler instance
 
     Returns:
         Image bytes (possibly with bounding box drawn)
@@ -382,31 +207,22 @@ def _apply_bounding_box_if_configured(img_bytes, watch, datastore):
         if bounding_box:
             parts = [int(p.strip()) for p in bounding_box.split(',')]
             if len(parts) == 4:
-                from PIL import Image, ImageDraw
+                # Load image
+                img = handler.load_from_bytes(img_bytes)
 
-                img_pil = Image.open(io.BytesIO(img_bytes))
-                draw = ImageDraw.Draw(img_pil)
-                x, y, width, height = parts
+                # TODO: Add draw_rectangle method to handler
+                # For now, return original bytes
+                # This functionality can be added to the handler interface later
+                logger.debug("Bounding box drawing not yet implemented in handler")
+                return img_bytes
 
-                # Draw blue rectangle (3px border)
-                for offset in range(3):
-                    draw.rectangle(
-                        [x + offset, y + offset, x + width - offset, y + height - offset],
-                        outline='blue'
-                    )
-
-                buf = io.BytesIO()
-                img_pil.save(buf, format='PNG')
-                img_bytes = buf.getvalue()
-                img_pil.close()
-                buf.close()
     except Exception as e:
         logger.warning(f"Failed to draw bounding box: {e}")
 
     return img_bytes
 
 
-def _apply_bounding_box_to_diff(diff_bytes, watch, datastore):
+def _apply_bounding_box_to_diff(diff_bytes, watch, datastore, handler):
     """
     Apply blue bounding box to diff image if configured, accounting for scaling.
 
@@ -414,6 +230,7 @@ def _apply_bounding_box_to_diff(diff_bytes, watch, datastore):
         diff_bytes: Diff image bytes (JPEG)
         watch: Watch object
         datastore: Datastore object
+        handler: ImageDiffHandler instance
 
     Returns:
         Image bytes (possibly with bounding box drawn)
@@ -427,46 +244,10 @@ def _apply_bounding_box_to_diff(diff_bytes, watch, datastore):
         bounding_box = processor_config.get('bounding_box') if processor_config else None
 
         if bounding_box:
-            parts = [int(p.strip()) for p in bounding_box.split(',')]
-            if len(parts) == 4:
-                from PIL import Image, ImageDraw
+            # TODO: Implement scaled bounding box drawing in handler
+            logger.debug("Bounding box drawing on diff not yet implemented in handler")
+            return diff_bytes
 
-                # Load original "to" image to get original dimensions
-                versions = list(watch.history.keys())
-                to_version = versions[-1]
-                img_to_bytes = watch.get_history_snapshot(timestamp=to_version)
-                img_to_pil = Image.open(io.BytesIO(img_to_bytes))
-                original_width = img_to_pil.width
-                original_height = img_to_pil.height
-                img_to_pil.close()
-
-                # Load diff image
-                img_diff_pil = Image.open(io.BytesIO(diff_bytes))
-
-                # Calculate scaling factor (diff images are resized)
-                scale_x = img_diff_pil.width / original_width if original_width > 0 else 1
-                scale_y = img_diff_pil.height / original_height if original_height > 0 else 1
-
-                draw = ImageDraw.Draw(img_diff_pil)
-                x, y, width, height = parts
-                x_scaled = int(x * scale_x)
-                y_scaled = int(y * scale_y)
-                width_scaled = int(width * scale_x)
-                height_scaled = int(height * scale_y)
-
-                # Draw blue rectangle (3px border)
-                for offset in range(3):
-                    draw.rectangle(
-                        [x_scaled + offset, y_scaled + offset,
-                         x_scaled + width_scaled - offset, y_scaled + height_scaled - offset],
-                        outline='blue'
-                    )
-
-                buf = io.BytesIO()
-                img_diff_pil.save(buf, format='JPEG', quality=85)
-                diff_bytes = buf.getvalue()
-                img_diff_pil.close()
-                buf.close()
     except Exception as e:
         logger.warning(f"Failed to draw bounding box on diff: {e}")
 
@@ -476,6 +257,8 @@ def _apply_bounding_box_to_diff(diff_bytes, watch, datastore):
 def render(watch, datastore, request, url_for, render_template, flash, redirect):
     """
     Render the screenshot comparison diff page.
+
+    Uses ImageDiffHandler for all image operations.
 
     Args:
         watch: Watch object
@@ -489,6 +272,14 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
     Returns:
         Rendered template or redirect
     """
+    # Check if handler is available
+    if not HANDLER_AVAILABLE:
+        flash(f"Screenshot comparison is not available: {IMPORT_ERROR}", "error")
+        return redirect(url_for('watchlist.index'))
+
+    # Initialize handler
+    handler = LibvipsImageDiffHandler()
+
     # Get version parameters (from_version, to_version)
     versions = list(watch.history.keys())
 
@@ -518,41 +309,72 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
         logger.warning(f"Invalid threshold value '{threshold}', using default")
         threshold = 30.0
 
+    # Get blur sigma
+    blur_sigma = float(os.getenv("OPENCV_BLUR_SIGMA", "0.8"))
+
     # Load screenshots from history
     try:
         img_bytes_from = watch.get_history_snapshot(timestamp=from_version)
         img_bytes_to = watch.get_history_snapshot(timestamp=to_version)
-
-        # Convert to bytes if needed (should already be bytes for screenshots)
-        if isinstance(img_bytes_from, str):
-            img_bytes_from = img_bytes_from.encode('utf-8')
-        if isinstance(img_bytes_to, str):
-            img_bytes_to = img_bytes_to.encode('utf-8')
 
     except Exception as e:
         logger.error(f"Failed to load screenshots: {e}")
         flash(f"Failed to load screenshots: {e}", "error")
         return redirect(url_for('watchlist.index'))
 
-    # Calculate only change_percentage for display (lightweight version using OpenCV)
-    # Full diff image generation happens on-demand in get_asset() when browser requests it
-    # This significantly reduces memory usage by avoiding large intermediate arrays
+    # Calculate change percentage using handler
     now = time.time()
     try:
-        change_percentage = calculate_change_percentage_opencv(img_bytes_from, img_bytes_to, threshold)
-        method_display = f"OpenCV (threshold: {threshold:.0f})"
+        # Load images
+        img_from = handler.load_from_bytes(img_bytes_from)
+        img_to = handler.load_from_bytes(img_bytes_to)
+
+        # Ensure same size
+        w1, h1 = handler.get_dimensions(img_from)
+        w2, h2 = handler.get_dimensions(img_to)
+        if (w1, h1) != (w2, h2):
+            img_from = handler.resize(img_from, w2, h2)
+
+        # Downscale for faster calculation
+        img_from = handler.resize(img_from, MAX_DIFF_WIDTH, MAX_DIFF_HEIGHT)
+        img_to = handler.resize(img_to, MAX_DIFF_WIDTH, MAX_DIFF_HEIGHT)
+
+        # Convert to grayscale
+        gray_from = handler.to_grayscale(img_from)
+        gray_to = handler.to_grayscale(img_to)
+
+        # Release color images
+        del img_from, img_to
+
+        # Optional blur
+        gray_from = handler.gaussian_blur(gray_from, blur_sigma)
+        gray_to = handler.gaussian_blur(gray_to, blur_sigma)
+
+        # Calculate difference
+        diff = handler.absolute_difference(gray_from, gray_to)
+
+        # Release grayscale images
+        del gray_from, gray_to
+
+        # Apply threshold and get change percentage
+        change_percentage, _ = handler.threshold(diff, int(threshold))
+
+        # Release diff image
+        del diff
+
+        method_display = f"LibVIPS (threshold: {threshold:.0f})"
 
     except Exception as e:
         logger.error(f"Failed to calculate change percentage: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         flash(f"Failed to calculate diff: {e}", "error")
         return redirect(url_for('watchlist.index'))
     finally:
-        logger.debug(f"Done OpenCV percentage calculation in {time.time() - now:.2f}s")
-
-    # Clean up image byte objects - no longer needed since we serve via get_asset()
-    # This significantly reduces memory usage by not keeping large images in memory
-    del img_bytes_from
-    del img_bytes_to
+        # Force Python garbage collection
+        import gc
+        gc.collect()
+        logger.debug(f"Done change percentage calculation in {time.time() - now:.2f}s")
 
     # Load historical data if available (for charts/visualization)
     comparison_data = {}

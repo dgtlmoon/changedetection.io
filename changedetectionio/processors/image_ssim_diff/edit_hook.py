@@ -3,6 +3,8 @@ Optional hook called when processor settings are saved in edit page.
 
 This hook analyzes the selected region to determine if template matching
 should be enabled for tracking content movement.
+
+Now uses LibVIPS handler for all image operations.
 """
 
 import io
@@ -10,6 +12,15 @@ import os
 from loguru import logger
 from changedetectionio import strtobool
 from . import CROPPED_IMAGE_TEMPLATE_FILENAME
+
+# Check if pyvips is available
+try:
+    from .libvips_handler import LibvipsImageDiffHandler
+    HANDLER_AVAILABLE = True
+except ImportError as e:
+    HANDLER_AVAILABLE = False
+    IMPORT_ERROR = str(e)
+    logger.warning(f"LibvipsImageDiffHandler not available: {e}")
 
 
 def on_config_save(watch, processor_config, datastore):
@@ -112,19 +123,30 @@ def analyze_region_features(screenshot_bytes, x, y, width, height):
     Returns:
         bool: True if region has enough features, False otherwise
     """
+    if not HANDLER_AVAILABLE:
+        logger.warning(f"Cannot analyze region features: {IMPORT_ERROR}")
+        return False
+
     try:
         import cv2
         import numpy as np
-        from PIL import Image
 
-        # Load screenshot
-        img = Image.open(io.BytesIO(screenshot_bytes))
+        # Use handler to load and crop image
+        handler = LibvipsImageDiffHandler()
+        img = handler.load_from_bytes(screenshot_bytes)
 
         # Crop to region
-        region = img.crop((x, y, x + width, y + height))
+        left, top = x, y
+        right, bottom = x + width, y + height
+        region = handler.crop(img, left, top, right, bottom)
 
-        # Convert to numpy array for OpenCV
-        region_array = np.array(region)
+        # Convert to numpy array for OpenCV feature detection
+        # LibVIPS can write to memory buffer which we convert to numpy
+        region_array = np.ndarray(
+            buffer=region.write_to_memory(),
+            dtype=np.uint8,
+            shape=[region.height, region.width, region.bands]
+        )
 
         # Convert to grayscale
         if len(region_array.shape) == 3:
@@ -175,31 +197,31 @@ def save_template_to_file(watch, screenshot_bytes, x, y, width, height):
     """
     Extract the template region and save as cropped_image_template.png in watch data directory.
 
+    This is a convenience wrapper around handler.save_template() that handles
+    watch directory setup and path construction.
+
     Args:
         watch: Watch object
         screenshot_bytes: Full screenshot as bytes
         x, y, width, height: Bounding box coordinates
     """
-    try:
-        import os
-        from PIL import Image
+    if not HANDLER_AVAILABLE:
+        logger.warning(f"Cannot save template: {IMPORT_ERROR}")
+        return
 
+    try:
         # Ensure watch data directory exists
         watch.ensure_data_dir_exists()
 
-        # Load and crop
-        img = Image.open(io.BytesIO(screenshot_bytes))
-        template = img.crop((x, y, x + width, y + height))
-
-        # Save as PNG (lossless, no compression artifacts that could affect template matching)
+        # Construct paths
         template_path = os.path.join(watch.watch_data_dir, CROPPED_IMAGE_TEMPLATE_FILENAME)
-        template.save(template_path, format='PNG', optimize=True)
+        bbox = (x, y, x + width, y + height)
 
-        logger.info(f"Saved template to {template_path}: {width}x{height}px")
-
-        # Close images
-        template.close()
-        img.close()
+        # Use handler to load image and save template (handler does crop + save)
+        handler = LibvipsImageDiffHandler()
+        img = handler.load_from_bytes(screenshot_bytes)
+        handler.save_template(img, bbox, template_path)
+        # Note: handler.save_template() already logs success/failure
 
     except Exception as e:
         logger.error(f"Error saving template: {e}")

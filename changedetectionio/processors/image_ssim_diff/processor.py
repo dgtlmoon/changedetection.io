@@ -1,9 +1,9 @@
 """
 Core fast screenshot comparison processor.
 
-This processor uses OpenCV to detect visual changes in screenshots.
-This method is dramatically faster than SSIM (10-100x speedup) while still
-being effective at detecting meaningful changes.
+Fully refactored to use LibVIPS via ImageDiffHandler abstraction for
+high-performance, low-memory image processing with automatic threading.
+All PIL and multiprocessing code has been removed.
 """
 
 import hashlib
@@ -14,7 +14,23 @@ from changedetectionio import strtobool
 from changedetectionio.processors import difference_detection_processor, SCREENSHOT_FORMAT_PNG
 from changedetectionio.processors.exceptions import ProcessorException
 from . import DEFAULT_COMPARISON_THRESHOLD_OPENCV, CROPPED_IMAGE_TEMPLATE_FILENAME
-from .util import find_region_with_template_matching_isolated, regenerate_template_isolated, crop_image_isolated
+
+# Check if pyvips is available
+try:
+    from .libvips_handler import LibvipsImageDiffHandler
+    import pyvips
+
+    # CRITICAL: Set aggressive memory limits for LibVIPS to prevent memory leaks
+    pyvips.cache_set_max(0)  # Disable operation cache
+    pyvips.cache_set_max_mem(0)  # Disable memory cache
+    pyvips.cache_set_max_files(0)  # Disable file cache
+    logger.info("LibVIPS cache disabled for memory leak prevention")
+
+    HANDLER_AVAILABLE = True
+except ImportError as e:
+    HANDLER_AVAILABLE = False
+    IMPORT_ERROR = str(e)
+    logger.error(f"Failed to import LibvipsImageDiffHandler: {e}")
 
 name = 'Visual / Image screenshot change detection'
 description = 'Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM'
@@ -29,11 +45,18 @@ class perform_site_check(difference_detection_processor):
 
     def run_changedetection(self, watch):
         """
-        Perform screenshot comparison using OpenCV.
+        Perform screenshot comparison using LibVIPS handler.
 
         Returns:
             tuple: (changed_detected, update_obj, screenshot_bytes)
         """
+        # Check if handler is available
+        if not HANDLER_AVAILABLE:
+            raise ProcessorException(
+                message=f"Screenshot comparison is not available: {IMPORT_ERROR}",
+                url=watch.get('url')
+            )
+
         now = time.time()
         # Get the current screenshot
         if not self.fetcher.screenshot:
@@ -52,8 +75,8 @@ class perform_site_check(difference_detection_processor):
             logger.debug(f"Screenshot MD5 unchanged ({current_md5}), skipping comparison")
             raise checksumFromPreviousCheckWasTheSame()
 
-        from PIL import Image
-        import io
+        # Initialize image handler
+        handler = LibvipsImageDiffHandler()
 
         # Get threshold (per-watch > global > env default)
         threshold = watch.get('comparison_threshold')
@@ -67,9 +90,9 @@ class perform_site_check(difference_detection_processor):
             logger.warning(f"Invalid threshold value '{threshold}', using default")
             threshold = 30.0
 
-        # Convert current screenshot to PIL Image
+        # Load current screenshot using handler
         try:
-            current_img = Image.open(io.BytesIO(self.screenshot))
+            current_img = handler.load_from_bytes(self.screenshot)
         except Exception as e:
             raise ProcessorException(
                 message=f"Failed to load current screenshot: {e}",
@@ -95,12 +118,15 @@ class perform_site_check(difference_detection_processor):
                 if len(parts) == 4:
                     x, y, width, height = parts
 
-                    # PIL crop uses (left, top, right, bottom)
+                    # Get image dimensions via handler
+                    img_width, img_height = handler.get_dimensions(current_img)
+
+                    # Crop uses (left, top, right, bottom)
                     crop_region = (
                         max(0, x),
                         max(0, y),
-                        min(current_img.width, x + width),
-                        min(current_img.height, y + height)
+                        min(img_width, x + width),
+                        min(img_height, y + height)
                     )
 
                     logger.info(f"Bounding box enabled: cropping to region {crop_region} (x={x}, y={y}, w={width}, h={height})")
@@ -133,12 +159,15 @@ class perform_site_check(difference_detection_processor):
                                 width = element.get('width', 0)
                                 height = element.get('height', 0)
 
-                                # PIL crop uses (left, top, right, bottom)
+                                # Get image dimensions via handler
+                                img_width, img_height = handler.get_dimensions(current_img)
+
+                                # Crop uses (left, top, right, bottom)
                                 crop_region = (
                                     max(0, left),
                                     max(0, top),
-                                    min(current_img.width, left + width),
-                                    min(current_img.height, top + height)
+                                    min(img_width, left + width),
+                                    min(img_height, top + height)
                                 )
 
                                 logger.info(f"Visual selector enabled: cropping to region {crop_region} for filter: {first_filter}")
@@ -153,20 +182,11 @@ class perform_site_check(difference_detection_processor):
 
         if crop_region:
             try:
-                # Use subprocess isolation to crop image - ensures complete memory independence
-                import io
-                current_img_bytes = io.BytesIO()
-                current_img.save(current_img_bytes, format='PNG')
-                current_img_bytes_data = current_img_bytes.getvalue()
-
-                cropped_bytes = crop_image_isolated(current_img_bytes_data, crop_region)
-                if cropped_bytes:
-                    cropped_current_img = Image.open(io.BytesIO(cropped_bytes))
-                    cropped_current_img.load()
-                    logger.debug(f"Cropped screenshot to {cropped_current_img.size} (region: {crop_region}) via subprocess")
-                else:
-                    logger.error("Subprocess crop failed")
-                    crop_region = None
+                # Crop using handler
+                left, top, right, bottom = crop_region
+                cropped_current_img = handler.crop(current_img, left, top, right, bottom)
+                w, h = handler.get_dimensions(cropped_current_img)
+                logger.debug(f"Cropped screenshot to {w}x{h} (region: {crop_region})")
             except Exception as e:
                 logger.error(f"Failed to crop screenshot: {e}")
                 crop_region = None  # Disable cropping on error
@@ -177,15 +197,7 @@ class perform_site_check(difference_detection_processor):
             # First check - save baseline, no comparison
             logger.info(f"First check for watch {watch.get('uuid')} - saving baseline screenshot")
 
-            # Close the PIL images before returning
-            import gc
-            current_img.close()
-            del current_img
-            if cropped_current_img:
-                cropped_current_img.close()
-                del cropped_current_img
-            gc.collect()
-
+            # LibVIPS uses automatic reference counting - no explicit cleanup needed
             update_obj = {
                 'previous_md5': hashlib.md5(self.screenshot).hexdigest(),
                 'last_error': False
@@ -203,7 +215,8 @@ class perform_site_check(difference_detection_processor):
                 # If it's a string (shouldn't be for screenshots, but handle it)
                 previous_screenshot_bytes = previous_screenshot_bytes.encode('utf-8')
 
-            previous_img = Image.open(io.BytesIO(previous_screenshot_bytes))
+            # Load previous image using handler
+            previous_img = handler.load_from_bytes(previous_screenshot_bytes)
 
             # Template matching: If enabled, search for content that may have moved
             # Check if feature is globally enabled via ENV var
@@ -217,23 +230,14 @@ class perform_site_check(difference_detection_processor):
                     template_path = os.path.join(watch.watch_data_dir, CROPPED_IMAGE_TEMPLATE_FILENAME)
                     if not os.path.isfile(template_path):
                         logger.info("Template file missing, regenerating from previous snapshot")
-                        # Use subprocess isolation for template regeneration
-                        import io
-                        prev_img_bytes = io.BytesIO()
-                        previous_img.save(prev_img_bytes, format='PNG')
-                        regenerate_template_isolated(
-                            prev_img_bytes.getvalue(), original_crop_region, template_path
-                        )
+                        # Use handler to save template
+                        handler.save_template(previous_img, original_crop_region, template_path)
 
                     logger.debug("Template matching enabled - searching for region movement")
-                    # Use subprocess isolation for template matching (most memory-intensive operation)
-                    import io
-                    curr_img_bytes = io.BytesIO()
-                    current_img.save(curr_img_bytes, format='PNG')
-                    with open(template_path, 'rb') as f:
-                        template_bytes = f.read()
-                    new_crop_region = find_region_with_template_matching_isolated(
-                        curr_img_bytes.getvalue(), template_bytes, original_crop_region, search_tolerance=0.2
+                    # Load template and perform matching using handler
+                    template_img = handler.load_from_bytes(open(template_path, 'rb').read())
+                    new_crop_region = handler.find_template(
+                        current_img, template_img, original_crop_region, search_tolerance=0.2
                     )
 
                     if new_crop_region:
@@ -241,17 +245,9 @@ class perform_site_check(difference_detection_processor):
                         crop_region = new_crop_region
                         logger.info(f"Template matching: Region moved from {old_region} to {new_crop_region}")
 
-                        # Update cropped image with new region using subprocess isolation
-                        if cropped_current_img:
-                            cropped_current_img.close()
-                            del cropped_current_img
-                        # Already have curr_img_bytes from template matching above
-                        cropped_bytes = crop_image_isolated(curr_img_bytes.getvalue(), crop_region)
-                        if cropped_bytes:
-                            cropped_current_img = Image.open(io.BytesIO(cropped_bytes))
-                            cropped_current_img.load()
-                        else:
-                            logger.error("Subprocess crop failed after template matching")
+                        # Update cropped image with new region
+                        left, top, right, bottom = crop_region
+                        cropped_current_img = handler.crop(current_img, left, top, right, bottom)
                     else:
                         logger.warning("Template matching: Could not find region, using original position")
 
@@ -262,29 +258,18 @@ class perform_site_check(difference_detection_processor):
             cropped_previous_img = None
             if crop_region:
                 try:
-                    # Crop and force independent buffer to break reference to parent image
-                    cropped_previous_img = previous_img.crop(crop_region).copy()
-                    cropped_previous_img.load()  # Force load into memory
-                    logger.debug(f"Cropped previous screenshot to {cropped_previous_img.size}")
+                    # Crop using handler
+                    left, top, right, bottom = crop_region
+                    cropped_previous_img = handler.crop(previous_img, left, top, right, bottom)
+                    w, h = handler.get_dimensions(cropped_previous_img)
+                    logger.debug(f"Cropped previous screenshot to {w}x{h}")
                 except Exception as e:
                     logger.warning(f"Failed to crop previous screenshot: {e}")
 
-            # Force garbage collection after cropping to free old image buffers
-            import gc
-            gc.collect()
-
         except Exception as e:
             logger.warning(f"Failed to load previous screenshot for comparison: {e}")
-            # Clean up current images before returning
-            import gc
-            if 'current_img' in locals():
-                current_img.close()
-                del current_img
-            if 'cropped_current_img' in locals() and cropped_current_img:
-                cropped_current_img.close()
-                del cropped_current_img
-            gc.collect()
 
+            # LibVIPS uses automatic reference counting - no explicit cleanup needed
             # If we can't load previous, treat as first check
             update_obj = {
                 'previous_md5': hashlib.md5(self.screenshot).hexdigest(),
@@ -301,46 +286,26 @@ class perform_site_check(difference_detection_processor):
             img_for_comparison_curr = cropped_current_img if cropped_current_img else current_img
 
             # Ensure images are the same size
-            if img_for_comparison_curr.size != img_for_comparison_prev.size:
-                logger.info(f"Resizing images to match: {img_for_comparison_prev.size} -> {img_for_comparison_curr.size}")
-                resized_img = img_for_comparison_prev.resize(img_for_comparison_curr.size, Image.Resampling.LANCZOS)
-                # If we resized a cropped version, close the old cropped image before replacing
+            w_curr, h_curr = handler.get_dimensions(img_for_comparison_curr)
+            w_prev, h_prev = handler.get_dimensions(img_for_comparison_prev)
+
+            if (w_curr, h_curr) != (w_prev, h_prev):
+                logger.info(f"Resizing images to match: {w_prev}x{h_prev} -> {w_curr}x{h_curr}")
+                img_for_comparison_prev = handler.resize(img_for_comparison_prev, w_curr, h_curr)
+                # Update reference if we resized the cropped version
                 if cropped_previous_img and img_for_comparison_prev is cropped_previous_img:
-                    cropped_previous_img.close()
-                    cropped_previous_img = resized_img
-                img_for_comparison_prev = resized_img
+                    cropped_previous_img = img_for_comparison_prev
 
-            # Use OpenCV for fast screenshot comparison
-            changed_detected, change_score = self._compare_opencv(
-                img_for_comparison_prev, img_for_comparison_curr, threshold
+            # Use handler for fast screenshot comparison
+            changed_detected, change_score = self._compare_handler(
+                handler, img_for_comparison_prev, img_for_comparison_curr, threshold
             )
-            logger.info(f"OpenCV: {change_score:.2f}% pixels changed, threshold: {threshold:.0f}")
+            logger.info(f"LibVIPS: {change_score:.2f}% pixels changed, threshold: {threshold:.0f}")
 
-            # Explicitly close PIL images to free memory immediately
-            import gc
-            current_img.close()
-            previous_img.close()
-            del current_img
-            del previous_img
-            if cropped_current_img:
-                cropped_current_img.close()
-                del cropped_current_img
-            if cropped_previous_img:
-                cropped_previous_img.close()
-                del cropped_previous_img
-            del previous_screenshot_bytes  # Release the large bytes object
-
-            # Force garbage collection to immediately release memory
-            gc.collect()
+            # LibVIPS uses automatic reference counting - no explicit cleanup needed
 
         except Exception as e:
             logger.error(f"Failed to compare screenshots: {e}")
-            # Ensure cleanup even on error
-            for obj in ['current_img', 'previous_img', 'cropped_current_img', 'cropped_previous_img']:
-                try:
-                    locals()[obj].close()
-                except (KeyError, NameError, AttributeError):
-                    pass
             logger.trace(f"Processed in {time.time() - now:.3f}s")
 
             raise ProcessorException(
@@ -362,77 +327,58 @@ class perform_site_check(difference_detection_processor):
 
         return changed_detected, update_obj, self.screenshot
 
-    def _compare_opencv(self, img_from, img_to, threshold):
+    def _compare_handler(self, handler, img_from, img_to, threshold):
         """
-        Compare images using OpenCV cv2.absdiff method.
+        Compare images using ImageDiffHandler (LibVIPS).
 
-        This is the fastest method (50-100x faster than SSIM) and works well
-        for detecting pixel-level changes with optional Gaussian blur to reduce
-        sensitivity to minor rendering differences.
+        Uses LibVIPS streaming architecture for high-performance, low-memory
+        comparison with automatic threading.
 
         Args:
-            img_from: Previous PIL Image
-            img_to: Current PIL Image
+            handler: ImageDiffHandler instance
+            img_from: Previous handler image
+            img_to: Current handler image
             threshold: Pixel difference threshold (0-255)
 
         Returns:
             tuple: (changed_detected, change_percentage)
         """
-        import cv2
-        import numpy as np
-        import gc
+        try:
+            # Convert to grayscale for faster comparison
+            gray_from = handler.to_grayscale(img_from)
+            gray_to = handler.to_grayscale(img_to)
 
-        # Convert PIL images to numpy arrays
-        arr_from = np.array(img_from)
-        arr_to = np.array(img_to)
+            # Optional: Apply Gaussian blur to reduce sensitivity to minor rendering differences
+            # Controlled by environment variable, default sigma=0.8
+            blur_sigma = float(os.getenv("OPENCV_BLUR_SIGMA", "0.8"))
+            if blur_sigma > 0:
+                gray_from = handler.gaussian_blur(gray_from, blur_sigma)
+                gray_to = handler.gaussian_blur(gray_to, blur_sigma)
 
-        # Convert to grayscale for faster comparison
-        if len(arr_from.shape) == 3:
-            gray_from = cv2.cvtColor(arr_from, cv2.COLOR_RGB2GRAY)
-            gray_to = cv2.cvtColor(arr_to, cv2.COLOR_RGB2GRAY)
-        else:
-            gray_from = arr_from
-            gray_to = arr_to
+            # Calculate absolute difference
+            diff = handler.absolute_difference(gray_from, gray_to)
 
-        # Release original arrays if we converted them
-        if gray_from is not arr_from:
-            del arr_from
-            arr_from = None
-        if gray_to is not arr_to:
-            del arr_to
-            arr_to = None
+            # Release grayscale images
+            del gray_from, gray_to
 
-        # Optional: Apply Gaussian blur to reduce sensitivity to minor rendering differences
-        # Controlled by environment variable, default sigma=0.8
-        blur_sigma = float(os.getenv("OPENCV_BLUR_SIGMA", "0.8"))
-        if blur_sigma > 0:
-            gray_from = cv2.GaussianBlur(gray_from, (0, 0), blur_sigma)
-            gray_to = cv2.GaussianBlur(gray_to, (0, 0), blur_sigma)
+            # Apply threshold and get change percentage
+            change_percentage, _ = handler.threshold(diff, int(threshold))
 
-        # Calculate absolute difference
-        diff = cv2.absdiff(gray_from, gray_to)
+            # Release diff image
+            del diff
 
-        # Apply threshold to create binary mask
-        _, thresh = cv2.threshold(diff, threshold, 255, cv2.THRESH_BINARY)
+            # Determine if change detected (if more than 0.1% of pixels changed)
+            # This prevents triggering on single-pixel noise
+            min_change_percentage = float(os.getenv("OPENCV_MIN_CHANGE_PERCENT", "0.1"))
+            changed_detected = change_percentage > min_change_percentage
 
-        # Count changed pixels
-        changed_pixels = np.count_nonzero(thresh)
-        total_pixels = thresh.size
-        change_percentage = (changed_pixels / total_pixels) * 100
+            return changed_detected, change_percentage
 
-        # Determine if change detected (if more than 0.1% of pixels changed)
-        # This prevents triggering on single-pixel noise
-        min_change_percentage = float(os.getenv("OPENCV_MIN_CHANGE_PERCENT", "0.1"))
-        changed_detected = change_percentage > min_change_percentage
-
-        # Explicit memory cleanup - mark large arrays for garbage collection
-        if arr_from is not None:
-            del arr_from
-        if arr_to is not None:
-            del arr_to
-        del gray_from, gray_to
-        del diff, thresh
-        gc.collect()
-
-        return changed_detected, change_percentage
+        finally:
+            # Force Python garbage collection
+            try:
+                import gc
+                gc.collect()
+            except:
+                pass
 
