@@ -6,6 +6,7 @@ __version__ = '0.51.4'
 
 from changedetectionio.strtobool import strtobool
 from json.decoder import JSONDecodeError
+import logging
 import os
 import getopt
 import platform
@@ -164,6 +165,11 @@ def main():
         print("Available log level names: TRACE, DEBUG(default), INFO, SUCCESS,"
               " WARNING, ERROR, CRITICAL")
         sys.exit(2)
+
+    # Disable verbose pyppeteer logging to prevent memory leaks from large CDP messages
+    # Set both parent and child loggers since pyppeteer hardcodes DEBUG level
+    logging.getLogger('pyppeteer.connection').setLevel(logging.WARNING)
+    logging.getLogger('pyppeteer.connection.Connection').setLevel(logging.WARNING)
 
     # isnt there some @thingy to attach to each route to tell it, that this route needs a datastore
     app_config = {'datastore_path': datastore_path}
