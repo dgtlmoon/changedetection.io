@@ -64,10 +64,14 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
 
         # RACE CONDITION FIX: Check if this UUID is already being processed by another worker
         from changedetectionio import worker_handler
+        from changedetectionio.queuedWatchMetaData import PrioritizedItem
         if worker_handler.is_watch_running(uuid):
-            logger.debug(f"Worker {worker_id} skipping UUID {uuid} - already being processed, re-queuing for later")
-            # Put it back in the queue to be processed after the current run finishes
-            worker_handler.queue_item_async_safe(q, queued_item_data)
+            logger.trace(f"Worker {worker_id} skipping UUID {uuid} - already being processed, re-queuing for later")
+            # Re-queue with MUCH lower priority (higher number = processed later)
+            # This prevents tight loop where high-priority item keeps getting picked immediately
+            deferred_priority = max(1000, queued_item_data.priority * 10)
+            deferred_item = PrioritizedItem(priority=deferred_priority, item=queued_item_data.item)
+            worker_handler.queue_item_async_safe(q, deferred_item, silent=True)
             await asyncio.sleep(0.1)  # Brief pause to avoid tight loop
             continue
 

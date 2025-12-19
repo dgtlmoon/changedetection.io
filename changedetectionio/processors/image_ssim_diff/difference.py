@@ -11,22 +11,8 @@ import time
 from loguru import logger
 from . import DEFAULT_COMPARISON_THRESHOLD_OPENCV
 
-# Check if pyvips is available
-try:
-    from .libvips_handler import LibvipsImageDiffHandler
-    import pyvips
-
-    # CRITICAL: Set aggressive memory limits for LibVIPS to prevent memory leaks
-    pyvips.cache_set_max(0)  # Disable operation cache
-    pyvips.cache_set_max_mem(0)  # Disable memory cache
-    pyvips.cache_set_max_files(0)  # Disable file cache
-    logger.info("LibVIPS cache disabled for memory leak prevention")
-
-    HANDLER_AVAILABLE = True
-except ImportError as e:
-    HANDLER_AVAILABLE = False
-    IMPORT_ERROR = str(e)
-    logger.error(f"Failed to import LibvipsImageDiffHandler: {e}")
+# All image operations now use OpenCV via isolated_opencv subprocess handler
+# No direct handler imports needed - subprocess isolation handles everything
 
 # Maximum dimensions for diff visualization (can be overridden via environment variable)
 # Large screenshots don't need full resolution for visual inspection
@@ -56,14 +42,6 @@ def get_asset(asset_name, watch, datastore, request):
     Returns:
         tuple: (binary_data, content_type, cache_control_header) or None if not found
     """
-    # Check if handler is available
-    if not HANDLER_AVAILABLE:
-        logger.error(f"Cannot get asset '{asset_name}': {IMPORT_ERROR}")
-        return None
-
-    # Initialize handler
-    handler = LibvipsImageDiffHandler()
-
     # Get version parameters from query string
     versions = list(watch.history.keys())
 
@@ -81,25 +59,22 @@ def get_asset(asset_name, watch, datastore, request):
 
     try:
         if asset_name == 'before':
-            # Return the 'from' screenshot
+            # Return the 'from' screenshot with bounding box if configured
             img_bytes = watch.get_history_snapshot(timestamp=from_version)
-
-            # Optionally draw bounding box if configured
-            img_bytes = _apply_bounding_box_if_configured(img_bytes, watch, datastore, handler)
-
+            img_bytes = _draw_bounding_box_if_configured(img_bytes, watch, datastore)
             return (img_bytes, 'image/png', 'public, max-age=3600')
 
         elif asset_name == 'after':
-            # Return the 'to' screenshot
+            # Return the 'to' screenshot with bounding box if configured
             img_bytes = watch.get_history_snapshot(timestamp=to_version)
-
-            # Optionally draw bounding box if configured
-            img_bytes = _apply_bounding_box_if_configured(img_bytes, watch, datastore, handler)
-
+            img_bytes = _draw_bounding_box_if_configured(img_bytes, watch, datastore)
             return (img_bytes, 'image/png', 'public, max-age=3600')
 
         elif asset_name == 'rendered_diff':
-            # Generate the diff visualization on-demand
+            # Generate diff in isolated subprocess to prevent memory leaks
+            # Subprocess provides complete memory isolation
+            from .image_handler import isolated_opencv as process_screenshot_handler
+
             img_bytes_from = watch.get_history_snapshot(timestamp=from_version)
             img_bytes_to = watch.get_history_snapshot(timestamp=to_version)
 
@@ -116,61 +91,22 @@ def get_asset(asset_name, watch, datastore, request):
             # Get blur sigma
             blur_sigma = float(os.getenv("OPENCV_BLUR_SIGMA", "0.8"))
 
-            try:
-                # Load images
-                img_from = handler.load_from_bytes(img_bytes_from)
-                img_to = handler.load_from_bytes(img_bytes_to)
+            # Generate diff in isolated subprocess
+            diff_image_bytes = process_screenshot_handler.generate_diff_isolated(
+                img_bytes_from,
+                img_bytes_to,
+                int(threshold),
+                blur_sigma,
+                MAX_DIFF_WIDTH,
+                MAX_DIFF_HEIGHT
+            )
 
-                # Ensure same size
-                w1, h1 = handler.get_dimensions(img_from)
-                w2, h2 = handler.get_dimensions(img_to)
-                if (w1, h1) != (w2, h2):
-                    img_from = handler.resize(img_from, w2, h2)
-
-                # Downscale for faster diff visualization
-                img_from = handler.resize(img_from, MAX_DIFF_WIDTH, MAX_DIFF_HEIGHT)
-                img_to = handler.resize(img_to, MAX_DIFF_WIDTH, MAX_DIFF_HEIGHT)
-
-                # Convert to grayscale
-                gray_from = handler.to_grayscale(img_from)
-                gray_to = handler.to_grayscale(img_to)
-
-                # Release original color images
-                del img_from
-
-                # Optional blur
-                gray_from = handler.gaussian_blur(gray_from, blur_sigma)
-                gray_to = handler.gaussian_blur(gray_to, blur_sigma)
-
-                # Calculate difference
-                diff = handler.absolute_difference(gray_from, gray_to)
-
-                # Release grayscale images
-                del gray_from, gray_to
-
-                # Threshold to get mask
-                _, diff_mask = handler.threshold(diff, int(threshold))
-
-                # Release diff image
-                del diff
-
-                # Generate diff image with red overlay
-                diff_image_bytes = handler.apply_red_overlay(img_to, diff_mask)
-
-                # Release mask and original img_to
-                del diff_mask, img_to
-
-                # Optionally draw bounding box on diff image if configured
-                diff_image_bytes = _apply_bounding_box_to_diff(diff_image_bytes, watch, datastore, handler)
-
+            if diff_image_bytes:
+                # Note: Bounding box drawing on diff not yet implemented
                 return (diff_image_bytes, 'image/jpeg', 'public, max-age=300')
-
-            finally:
-                # Force Python garbage collection
-                import gc
-                gc.collect()
-
-                logger.debug(f"Memory cleanup: gc collected")
+            else:
+                logger.error("Failed to generate diff in subprocess")
+                return None
 
         else:
             # Unknown asset
@@ -183,20 +119,20 @@ def get_asset(asset_name, watch, datastore, request):
         return None
 
 
-def _apply_bounding_box_if_configured(img_bytes, watch, datastore, handler):
+def _draw_bounding_box_if_configured(img_bytes, watch, datastore):
     """
-    Apply blue bounding box to image if configured in processor settings.
+    Draw blue bounding box on image if configured in processor settings.
 
     Args:
         img_bytes: Image bytes (PNG)
         watch: Watch object
         datastore: Datastore object
-        handler: ImageDiffHandler instance
 
     Returns:
         Image bytes (possibly with bounding box drawn)
     """
     try:
+        # Get bounding box configuration from processor JSON
         from changedetectionio import processors
         processor_instance = processors.difference_detection_processor(datastore, watch.get('uuid'))
         processor_name = watch.get('processor', 'default')
@@ -204,54 +140,40 @@ def _apply_bounding_box_if_configured(img_bytes, watch, datastore, handler):
         processor_config = processor_instance.get_extra_watch_config(config_filename)
         bounding_box = processor_config.get('bounding_box') if processor_config else None
 
-        if bounding_box:
-            parts = [int(p.strip()) for p in bounding_box.split(',')]
-            if len(parts) == 4:
-                # Load image
-                img = handler.load_from_bytes(img_bytes)
+        if not bounding_box:
+            return img_bytes
 
-                # TODO: Add draw_rectangle method to handler
-                # For now, return original bytes
-                # This functionality can be added to the handler interface later
-                logger.debug("Bounding box drawing not yet implemented in handler")
-                return img_bytes
+        # Parse bounding box: "x,y,width,height"
+        parts = [int(p.strip()) for p in bounding_box.split(',')]
+        if len(parts) != 4:
+            logger.warning(f"Invalid bounding box format: {bounding_box}")
+            return img_bytes
+
+        x, y, width, height = parts
+
+        # Use OpenCV to draw rectangle (no subprocess needed for simple drawing)
+        import cv2
+        import numpy as np
+
+        # Decode image
+        img_array = cv2.imdecode(np.frombuffer(img_bytes, np.uint8), cv2.IMREAD_COLOR)
+        if img_array is None:
+            logger.warning("Failed to decode image for bounding box drawing")
+            return img_bytes
+
+        # Draw blue rectangle (BGR format: blue=255, green=0, red=0)
+        # Use thickness=3 for visibility
+        cv2.rectangle(img_array, (x, y), (x + width, y + height), (255, 0, 0), 3)
+
+        # Encode back to PNG
+        _, encoded = cv2.imencode('.png', img_array)
+        return encoded.tobytes()
 
     except Exception as e:
         logger.warning(f"Failed to draw bounding box: {e}")
-
-    return img_bytes
-
-
-def _apply_bounding_box_to_diff(diff_bytes, watch, datastore, handler):
-    """
-    Apply blue bounding box to diff image if configured, accounting for scaling.
-
-    Args:
-        diff_bytes: Diff image bytes (JPEG)
-        watch: Watch object
-        datastore: Datastore object
-        handler: ImageDiffHandler instance
-
-    Returns:
-        Image bytes (possibly with bounding box drawn)
-    """
-    try:
-        from changedetectionio import processors
-        processor_instance = processors.difference_detection_processor(datastore, watch.get('uuid'))
-        processor_name = watch.get('processor', 'default')
-        config_filename = f'{processor_name}.json'
-        processor_config = processor_instance.get_extra_watch_config(config_filename)
-        bounding_box = processor_config.get('bounding_box') if processor_config else None
-
-        if bounding_box:
-            # TODO: Implement scaled bounding box drawing in handler
-            logger.debug("Bounding box drawing on diff not yet implemented in handler")
-            return diff_bytes
-
-    except Exception as e:
-        logger.warning(f"Failed to draw bounding box on diff: {e}")
-
-    return diff_bytes
+        import traceback
+        logger.debug(traceback.format_exc())
+        return img_bytes
 
 
 def render(watch, datastore, request, url_for, render_template, flash, redirect):
@@ -272,14 +194,6 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
     Returns:
         Rendered template or redirect
     """
-    # Check if handler is available
-    if not HANDLER_AVAILABLE:
-        flash(f"Screenshot comparison is not available: {IMPORT_ERROR}", "error")
-        return redirect(url_for('watchlist.index'))
-
-    # Initialize handler
-    handler = LibvipsImageDiffHandler()
-
     # Get version parameters (from_version, to_version)
     versions = list(watch.history.keys())
 
@@ -322,47 +236,22 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
         flash(f"Failed to load screenshots: {e}", "error")
         return redirect(url_for('watchlist.index'))
 
-    # Calculate change percentage using handler
+    # Calculate change percentage using isolated subprocess to prevent memory leaks
     now = time.time()
     try:
-        # Load images
-        img_from = handler.load_from_bytes(img_bytes_from)
-        img_to = handler.load_from_bytes(img_bytes_to)
+        from .image_handler import isolated_opencv as process_screenshot_handler
 
-        # Ensure same size
-        w1, h1 = handler.get_dimensions(img_from)
-        w2, h2 = handler.get_dimensions(img_to)
-        if (w1, h1) != (w2, h2):
-            img_from = handler.resize(img_from, w2, h2)
+        change_percentage = process_screenshot_handler.calculate_change_percentage_isolated(
+            img_bytes_from,
+            img_bytes_to,
+            int(threshold),
+            blur_sigma,
+            MAX_DIFF_WIDTH,
+            MAX_DIFF_HEIGHT
+        )
 
-        # Downscale for faster calculation
-        img_from = handler.resize(img_from, MAX_DIFF_WIDTH, MAX_DIFF_HEIGHT)
-        img_to = handler.resize(img_to, MAX_DIFF_WIDTH, MAX_DIFF_HEIGHT)
-
-        # Convert to grayscale
-        gray_from = handler.to_grayscale(img_from)
-        gray_to = handler.to_grayscale(img_to)
-
-        # Release color images
-        del img_from, img_to
-
-        # Optional blur
-        gray_from = handler.gaussian_blur(gray_from, blur_sigma)
-        gray_to = handler.gaussian_blur(gray_to, blur_sigma)
-
-        # Calculate difference
-        diff = handler.absolute_difference(gray_from, gray_to)
-
-        # Release grayscale images
-        del gray_from, gray_to
-
-        # Apply threshold and get change percentage
-        change_percentage, _ = handler.threshold(diff, int(threshold))
-
-        # Release diff image
-        del diff
-
-        method_display = f"LibVIPS (threshold: {threshold:.0f})"
+        method_display = f"{process_screenshot_handler.IMPLEMENTATION_NAME} (threshold: {threshold:.0f})"
+        logger.debug(f"Done change percentage calculation in {time.time() - now:.2f}s")
 
     except Exception as e:
         logger.error(f"Failed to calculate change percentage: {e}")
@@ -370,11 +259,6 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
         logger.error(traceback.format_exc())
         flash(f"Failed to calculate diff: {e}", "error")
         return redirect(url_for('watchlist.index'))
-    finally:
-        # Force Python garbage collection
-        import gc
-        gc.collect()
-        logger.debug(f"Done change percentage calculation in {time.time() - now:.2f}s")
 
     # Load historical data if available (for charts/visualization)
     comparison_data = {}
