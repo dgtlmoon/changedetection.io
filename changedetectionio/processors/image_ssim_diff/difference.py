@@ -2,7 +2,7 @@
 Screenshot diff visualization for fast image comparison processor.
 
 Generates side-by-side comparison with red-highlighted differences using
-OpenCV or pixelmatch for fast rendering (10-100x faster than SSIM).
+OpenCV for fast rendering (10-100x faster than SSIM).
 """
 
 import os
@@ -10,7 +10,7 @@ import json
 import io
 import time
 from loguru import logger
-from . import DEFAULT_COMPARISON_METHOD, DEFAULT_COMPARISON_THRESHOLD_OPENCV, DEFAULT_COMPARISON_THRESHOLD_PIXELMATCH
+from . import DEFAULT_COMPARISON_THRESHOLD_OPENCV
 
 # Maximum dimensions for diff visualization (can be overridden via environment variable)
 # Large screenshots don't need full resolution for visual inspection
@@ -46,6 +46,77 @@ def _resize_for_diff(img, max_height=MAX_DIFF_HEIGHT, max_width=MAX_DIFF_WIDTH):
         return img.resize(new_size, Image.Resampling.LANCZOS)
 
     return img
+
+
+def calculate_change_percentage_opencv(img_bytes_from, img_bytes_to, threshold=30):
+    """
+    Calculate only the change percentage using OpenCV (lightweight version).
+
+    This is optimized to calculate only the percentage without keeping the diff mask,
+    reducing memory usage when we only need the percentage for display.
+
+    Args:
+        img_bytes_from: Previous screenshot (bytes)
+        img_bytes_to: Current screenshot (bytes)
+        threshold: Pixel difference threshold (0-255)
+
+    Returns:
+        float: change_percentage
+    """
+    from PIL import Image
+    import numpy as np
+    import cv2
+
+    buf_from = io.BytesIO(img_bytes_from)
+    buf_to = io.BytesIO(img_bytes_to)
+    img_from = Image.open(buf_from)
+    img_to = Image.open(buf_to)
+
+    # Ensure images are the same size
+    if img_from.size != img_to.size:
+        img_from = img_from.resize(img_to.size, Image.Resampling.LANCZOS)
+
+    # Downscale for faster calculation
+    img_from = _resize_for_diff(img_from)
+    img_to = _resize_for_diff(img_to)
+
+    # Convert to numpy arrays
+    arr_from = np.array(img_from)
+    arr_to = np.array(img_to)
+
+    # Convert to grayscale
+    if len(arr_from.shape) == 3:
+        gray_from = cv2.cvtColor(arr_from, cv2.COLOR_RGB2GRAY)
+        gray_to = cv2.cvtColor(arr_to, cv2.COLOR_RGB2GRAY)
+    else:
+        gray_from = arr_from
+        gray_to = arr_to
+
+    # Optional Gaussian blur to reduce noise
+    blur_sigma = float(os.getenv("OPENCV_BLUR_SIGMA", "0.8"))
+    if blur_sigma > 0:
+        gray_from = cv2.GaussianBlur(gray_from, (0, 0), blur_sigma)
+        gray_to = cv2.GaussianBlur(gray_to, (0, 0), blur_sigma)
+
+    # Calculate absolute difference
+    diff = cv2.absdiff(gray_from, gray_to)
+
+    # Apply threshold to create binary mask
+    _, diff_mask = cv2.threshold(diff, threshold, 255, cv2.THRESH_BINARY)
+
+    # Calculate change percentage
+    changed_pixels = np.count_nonzero(diff_mask)
+    total_pixels = diff_mask.size
+    change_percentage = (changed_pixels / total_pixels) * 100
+
+    # Aggressive memory cleanup - delete everything before returning
+    img_from.close()
+    img_to.close()
+    buf_from.close()
+    buf_to.close()
+    del arr_from, arr_to, gray_from, gray_to, diff, diff_mask
+
+    return float(change_percentage)
 
 
 def calculate_diff_opencv(img_bytes_from, img_bytes_to, threshold=30):
@@ -120,90 +191,6 @@ def calculate_diff_opencv(img_bytes_from, img_bytes_to, threshold=30):
     return float(change_percentage), diff_mask
 
 
-def calculate_diff_pixelmatch(img_bytes_from, img_bytes_to, threshold=0.1):
-    """
-    Calculate image difference using pixelmatch.
-
-    Args:
-        img_bytes_from: Previous screenshot (bytes)
-        img_bytes_to: Current screenshot (bytes)
-        threshold: Color difference threshold (0-1)
-
-    Returns:
-        tuple: (change_percentage, diff_array) where diff_array is RGBA numpy array
-    """
-    try:
-        from pybind11_pixelmatch import pixelmatch, Options
-    except ImportError:
-        logger.warning("pybind11-pixelmatch not installed, falling back to OpenCV")
-        return calculate_diff_opencv(img_bytes_from, img_bytes_to, threshold * 255)
-    import numpy as np
-    from PIL import Image
-
-    # Load images from BytesIO buffers
-    buf_from = io.BytesIO(img_bytes_from)
-    buf_to = io.BytesIO(img_bytes_to)
-    img_from = Image.open(buf_from)
-    img_to = Image.open(buf_to)
-
-    # Ensure images are the same size
-    if img_from.size != img_to.size:
-        img_from = img_from.resize(img_to.size, Image.Resampling.LANCZOS)
-
-    # Downscale large images for faster diff visualization
-    img_from = _resize_for_diff(img_from)
-    img_to = _resize_for_diff(img_to)
-
-    # Convert to RGB
-    if img_from.mode != 'RGB':
-        img_from = img_from.convert('RGB')
-    if img_to.mode != 'RGB':
-        img_to = img_to.convert('RGB')
-
-    # Convert to numpy arrays
-    arr_from = np.array(img_from)
-    arr_to = np.array(img_to)
-
-    # Add alpha channel (pixelmatch expects RGBA)
-    if arr_from.shape[2] == 3:
-        alpha = np.ones((arr_from.shape[0], arr_from.shape[1], 1), dtype=np.uint8) * 255
-        arr_from = np.concatenate([arr_from, alpha], axis=2)
-        arr_to = np.concatenate([arr_to, alpha], axis=2)
-
-    # Create diff output array
-    diff_array = np.zeros_like(arr_from)
-
-    # Configure pixelmatch options
-    opts = Options()
-    opts.threshold = threshold
-    opts.includeAA = True  # Detect anti-aliasing
-    opts.alpha = 0.1       # Opacity of diff overlay
-
-    # Run pixelmatch
-    width, height = img_from.size
-    num_diff_pixels = pixelmatch(
-        arr_from,
-        arr_to,
-        output=diff_array,
-        options=opts
-    )
-
-    # Calculate change percentage
-    total_pixels = width * height
-    change_percentage = (num_diff_pixels / total_pixels) * 100
-
-    # Explicit memory cleanup - close images and buffers, delete large arrays
-    img_from.close()
-    img_to.close()
-    buf_from.close()
-    buf_to.close()
-    del arr_from, arr_to
-    if 'alpha' in locals():
-        del alpha
-
-    return float(change_percentage), diff_array
-
-
 def generate_diff_image_opencv(img_bytes_to, diff_mask):
     """
     Generate a difference image with red highlights using OpenCV.
@@ -260,37 +247,6 @@ def generate_diff_image_opencv(img_bytes_to, diff_mask):
     diff_img.close()
     img_to.close()
     del result_array, changed_mask, diff_mask
-
-    return diff_bytes
-
-
-def generate_diff_image_pixelmatch(diff_array):
-    """
-    Generate a difference image from pixelmatch diff array.
-
-    Args:
-        diff_array: RGBA diff array from pixelmatch (4D numpy array)
-
-    Returns:
-        bytes: JPEG image with highlighted differences
-    """
-    import numpy as np
-    from PIL import Image
-
-    # Convert diff array to PIL Image (RGBA)
-    diff_img = Image.fromarray(diff_array.astype(np.uint8), mode='RGBA')
-
-    # Convert RGBA to RGB for JPEG (JPEG doesn't support transparency)
-    diff_img = diff_img.convert('RGB')
-
-    # Save to bytes as JPEG (smaller and faster than PNG)
-    buf = io.BytesIO()
-    diff_img.save(buf, format='JPEG', quality=85, optimize=True)
-    diff_bytes = buf.getvalue()
-
-    # Explicit memory cleanup - close files first, then delete
-    buf.close()
-    diff_img.close()
 
     return diff_bytes
 
@@ -352,36 +308,24 @@ def get_asset(asset_name, watch, datastore, request):
             return (img_bytes, 'image/png', 'public, max-age=3600')
 
         elif asset_name == 'rendered_diff':
-            # Generate the diff visualization on-demand
+            # Generate the diff visualization on-demand using OpenCV
             img_bytes_from = watch.get_history_snapshot(timestamp=from_version)
             img_bytes_to = watch.get_history_snapshot(timestamp=to_version)
 
-            # Get comparison method and threshold
-            comparison_method = DEFAULT_COMPARISON_METHOD
+            # Get threshold
             threshold = watch.get('comparison_threshold')
             if not threshold or threshold == '':
-                default_threshold = (
-                    DEFAULT_COMPARISON_THRESHOLD_OPENCV if comparison_method == 'opencv'
-                    else DEFAULT_COMPARISON_THRESHOLD_PIXELMATCH
-                )
-                threshold = datastore.data['settings']['application'].get('comparison_threshold', default_threshold)
+                threshold = datastore.data['settings']['application'].get('comparison_threshold', DEFAULT_COMPARISON_THRESHOLD_OPENCV)
 
             try:
                 threshold = float(threshold)
-                if comparison_method == 'pixelmatch':
-                    threshold = threshold / 100.0
             except (ValueError, TypeError):
-                threshold = 30.0 if comparison_method == 'opencv' else 0.1
+                threshold = 30.0
 
-            # Generate diff based on method
-            if comparison_method == 'pixelmatch':
-                _, diff_data = calculate_diff_pixelmatch(img_bytes_from, img_bytes_to, threshold)
-                diff_image_bytes = generate_diff_image_pixelmatch(diff_data)
-                del diff_data
-            else:  # opencv
-                _, diff_mask = calculate_diff_opencv(img_bytes_from, img_bytes_to, threshold)
-                diff_image_bytes = generate_diff_image_opencv(img_bytes_to, diff_mask)
-                del diff_mask
+            # Generate diff using OpenCV
+            _, diff_mask = calculate_diff_opencv(img_bytes_from, img_bytes_to, threshold)
+            diff_image_bytes = generate_diff_image_opencv(img_bytes_to, diff_mask)
+            del diff_mask
 
             # Clean up source images
             del img_bytes_from, img_bytes_to
@@ -547,29 +491,17 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
     if to_version not in versions:
         to_version = versions[-1]
 
-    # Use hardcoded comparison method (can be overridden via COMPARISON_METHOD env var)
-    comparison_method = DEFAULT_COMPARISON_METHOD
-
-    logger.debug(f"Using comparison_method {comparison_method}")
-
     # Get threshold (per-watch > global > env default)
     threshold = watch.get('comparison_threshold')
     if not threshold or threshold == '':
-        default_threshold = (
-            DEFAULT_COMPARISON_THRESHOLD_OPENCV if comparison_method == 'opencv'
-            else DEFAULT_COMPARISON_THRESHOLD_PIXELMATCH
-        )
-        threshold = datastore.data['settings']['application'].get('comparison_threshold', default_threshold)
+        threshold = datastore.data['settings']['application'].get('comparison_threshold', DEFAULT_COMPARISON_THRESHOLD_OPENCV)
 
     # Convert threshold to appropriate type
     try:
         threshold = float(threshold)
-        # For pixelmatch, convert from 0-100 scale to 0-1 scale
-        if comparison_method == 'pixelmatch':
-            threshold = threshold / 100.0
     except (ValueError, TypeError):
         logger.warning(f"Invalid threshold value '{threshold}', using default")
-        threshold = 30.0 if comparison_method == 'opencv' else 0.1
+        threshold = 30.0
 
     # Load screenshots from history
     try:
@@ -587,26 +519,20 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
         flash(f"Failed to load screenshots: {e}", "error")
         return redirect(url_for('watchlist.index'))
 
-    # Calculate diff to get change_percentage for display
-    # Note: We don't generate the full diff image here anymore - it's served via get_asset()
-    # This significantly reduces memory usage by not embedding large base64 images in HTML
+    # Calculate only change_percentage for display (lightweight version using OpenCV)
+    # Full diff image generation happens on-demand in get_asset() when browser requests it
+    # This significantly reduces memory usage by avoiding large intermediate arrays
     now = time.time()
     try:
-        if comparison_method == 'pixelmatch':
-            change_percentage, diff_data = calculate_diff_pixelmatch(img_bytes_from, img_bytes_to, threshold)
-            method_display = f"Pixelmatch (threshold: {threshold*100:.0f}%)"
-            del diff_data  # Clean up diff array immediately
-        else:  # opencv
-            change_percentage, diff_mask = calculate_diff_opencv(img_bytes_from, img_bytes_to, threshold)
-            method_display = f"OpenCV (threshold: {threshold:.0f})"
-            del diff_mask  # Clean up diff mask immediately
+        change_percentage = calculate_change_percentage_opencv(img_bytes_from, img_bytes_to, threshold)
+        method_display = f"OpenCV (threshold: {threshold:.0f})"
 
     except Exception as e:
-        logger.error(f"Failed to calculate diff: {e}")
+        logger.error(f"Failed to calculate change percentage: {e}")
         flash(f"Failed to calculate diff: {e}", "error")
         return redirect(url_for('watchlist.index'))
     finally:
-        logger.debug(f"Done '{comparison_method}' in {time.time() - now:.2f}s")
+        logger.debug(f"Done OpenCV percentage calculation in {time.time() - now:.2f}s")
 
     # Clean up image byte objects - no longer needed since we serve via get_asset()
     # This significantly reduces memory usage by not keeping large images in memory

@@ -1,9 +1,9 @@
 """
 Core fast screenshot comparison processor.
 
-This processor uses OpenCV or pixelmatch algorithms to detect visual changes
-in screenshots. Both methods are dramatically faster than SSIM (10-100x speedup)
-while still being effective at detecting meaningful changes.
+This processor uses OpenCV to detect visual changes in screenshots.
+This method is dramatically faster than SSIM (10-100x speedup) while still
+being effective at detecting meaningful changes.
 """
 
 import hashlib
@@ -13,23 +13,23 @@ from loguru import logger
 from changedetectionio import strtobool
 from changedetectionio.processors import difference_detection_processor, SCREENSHOT_FORMAT_PNG
 from changedetectionio.processors.exceptions import ProcessorException
-from . import DEFAULT_COMPARISON_METHOD, DEFAULT_COMPARISON_THRESHOLD_OPENCV, DEFAULT_COMPARISON_THRESHOLD_PIXELMATCH, CROPPED_IMAGE_TEMPLATE_FILENAME
+from . import DEFAULT_COMPARISON_THRESHOLD_OPENCV, CROPPED_IMAGE_TEMPLATE_FILENAME
 from .util import find_region_with_template_matching_isolated, regenerate_template_isolated, crop_image_isolated
 
 name = 'Visual / Image screenshot change detection'
-description = 'Compares screenshots using fast algorithms (OpenCV or pixelmatch), 10-100x faster than SSIM'
+description = 'Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM'
 processor_weight = 2
 list_badge_text = "Visual"
 
 class perform_site_check(difference_detection_processor):
-    """Fast screenshot comparison processor."""
+    """Fast screenshot comparison processor using OpenCV."""
 
     # Override to use PNG format for better image comparison (JPEG compression creates noise)
     #screenshot_format = SCREENSHOT_FORMAT_PNG
 
     def run_changedetection(self, watch):
         """
-        Perform screenshot comparison using OpenCV or pixelmatch.
+        Perform screenshot comparison using OpenCV.
 
         Returns:
             tuple: (changed_detected, update_obj, screenshot_bytes)
@@ -55,27 +55,17 @@ class perform_site_check(difference_detection_processor):
         from PIL import Image
         import io
 
-        # Use hardcoded comparison method (can be overridden via COMPARISON_METHOD env var)
-        comparison_method = DEFAULT_COMPARISON_METHOD
-
         # Get threshold (per-watch > global > env default)
         threshold = watch.get('comparison_threshold')
         if not threshold or threshold == '':
-            default_threshold = (
-                DEFAULT_COMPARISON_THRESHOLD_OPENCV if comparison_method == 'opencv'
-                else DEFAULT_COMPARISON_THRESHOLD_PIXELMATCH
-            )
-            threshold = self.datastore.data['settings']['application'].get('comparison_threshold', default_threshold)
+            threshold = self.datastore.data['settings']['application'].get('comparison_threshold', DEFAULT_COMPARISON_THRESHOLD_OPENCV)
 
         # Convert string to appropriate type
         try:
             threshold = float(threshold)
-            # For pixelmatch, convert from 0-100 scale to 0-1 scale
-            if comparison_method == 'pixelmatch':
-                threshold = threshold / 100.0
         except (ValueError, TypeError):
             logger.warning(f"Invalid threshold value '{threshold}', using default")
-            threshold = 30.0 if comparison_method == 'opencv' else 0.1
+            threshold = 30.0
 
         # Convert current screenshot to PIL Image
         try:
@@ -320,16 +310,11 @@ class perform_site_check(difference_detection_processor):
                     cropped_previous_img = resized_img
                 img_for_comparison_prev = resized_img
 
-            if comparison_method == 'pixelmatch':
-                changed_detected, change_score = self._compare_pixelmatch(
-                    img_for_comparison_prev, img_for_comparison_curr, threshold
-                )
-                logger.info(f"Pixelmatch: {change_score:.2f}% pixels different, threshold: {threshold*100:.0f}%")
-            else:  # opencv (default)
-                changed_detected, change_score = self._compare_opencv(
-                    img_for_comparison_prev, img_for_comparison_curr, threshold
-                )
-                logger.info(f"OpenCV: {change_score:.2f}% pixels changed, threshold: {threshold:.0f}")
+            # Use OpenCV for fast screenshot comparison
+            changed_detected, change_score = self._compare_opencv(
+                img_for_comparison_prev, img_for_comparison_curr, threshold
+            )
+            logger.info(f"OpenCV: {change_score:.2f}% pixels changed, threshold: {threshold:.0f}")
 
             # Explicitly close PIL images to free memory immediately
             import gc
@@ -370,9 +355,9 @@ class perform_site_check(difference_detection_processor):
         }
 
         if changed_detected:
-            logger.info(f"Change detected using {comparison_method}! Score: {change_score:.2f}")
+            logger.info(f"Change detected using OpenCV! Score: {change_score:.2f}")
         else:
-            logger.debug(f"No significant change using {comparison_method}. Score: {change_score:.2f}")
+            logger.debug(f"No significant change using OpenCV. Score: {change_score:.2f}")
         logger.trace(f"Processed in {time.time() - now:.3f}s")
 
         return changed_detected, update_obj, self.screenshot
@@ -451,89 +436,3 @@ class perform_site_check(difference_detection_processor):
 
         return changed_detected, change_percentage
 
-    def _compare_pixelmatch(self, img_from, img_to, threshold):
-        """
-        Compare images using pixelmatch (C++17 implementation via pybind11).
-
-        This method is 10-20x faster than SSIM and is specifically designed for
-        screenshot comparison with anti-aliasing detection. It's particularly good
-        at ignoring minor rendering differences while catching real changes.
-
-        Args:
-            img_from: Previous PIL Image
-            img_to: Current PIL Image
-            threshold: Color difference threshold (0-1, where 0 is most sensitive)
-
-        Returns:
-            tuple: (changed_detected, change_percentage)
-        """
-        try:
-            from pybind11_pixelmatch import pixelmatch, Options
-        except ImportError:
-            logger.error("pybind11-pixelmatch not installed, falling back to OpenCV")
-            return self._compare_opencv(img_from, img_to, threshold * 255)
-
-        import numpy as np
-        import gc
-
-        # Track converted images so we can close them
-        converted_img_from = None
-        converted_img_to = None
-
-        # Convert to RGB if not already
-        if img_from.mode != 'RGB':
-            converted_img_from = img_from.convert('RGB')
-            img_from = converted_img_from
-        if img_to.mode != 'RGB':
-            converted_img_to = img_to.convert('RGB')
-            img_to = converted_img_to
-
-        # Convert to numpy arrays (pixelmatch expects RGBA format)
-        arr_from = np.array(img_from)
-        arr_to = np.array(img_to)
-
-        # Add alpha channel (pixelmatch expects RGBA)
-        alpha = None
-        if arr_from.shape[2] == 3:
-            alpha = np.ones((arr_from.shape[0], arr_from.shape[1], 1), dtype=np.uint8) * 255
-            arr_from = np.concatenate([arr_from, alpha], axis=2)
-            arr_to = np.concatenate([arr_to, alpha], axis=2)
-
-        # Create diff output array (RGBA)
-        diff_array = np.zeros_like(arr_from)
-
-        # Configure pixelmatch options
-        opts = Options()
-        opts.threshold = threshold
-        opts.includeAA = True  # Ignore anti-aliasing differences
-        opts.alpha = 0.1       # Opacity of diff overlay
-
-        # Run pixelmatch (returns number of mismatched pixels)
-        width, height = img_from.size
-        num_diff_pixels = pixelmatch(
-            arr_from,
-            arr_to,
-            output=diff_array,
-            options=opts
-        )
-
-        # Calculate change percentage
-        total_pixels = width * height
-        change_percentage = (num_diff_pixels / total_pixels) * 100
-
-        # Determine if change detected (if more than 0.1% of pixels changed)
-        min_change_percentage = float(os.getenv("PIXELMATCH_MIN_CHANGE_PERCENT", "0.1"))
-        changed_detected = change_percentage > min_change_percentage
-
-        # Explicit memory cleanup - close converted images and delete arrays
-        if converted_img_from is not None:
-            converted_img_from.close()
-        if converted_img_to is not None:
-            converted_img_to.close()
-        del arr_from, arr_to
-        del diff_array
-        if alpha is not None:
-            del alpha
-        gc.collect()
-
-        return changed_detected, change_percentage
