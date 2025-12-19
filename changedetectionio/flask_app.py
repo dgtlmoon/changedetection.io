@@ -66,6 +66,10 @@ CORS(app)
 
 # Super handy for compressing large BrowserSteps responses and others
 FlaskCompress(app)
+app.config['COMPRESS_MIN_SIZE'] = 4096
+app.config['COMPRESS_MIMETYPES'] = ['text/html', 'text/css', 'text/javascript', 'application/json', 'application/javascript', 'image/svg+xml']
+app.config['TEMPLATES_AUTO_RELOAD'] = False
+
 
 # Stop browser caching of assets
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
@@ -78,8 +82,7 @@ if os.getenv('FLASK_SERVER_NAME'):
 
 #app.config["EXPLAIN_TEMPLATE_LOADING"] = True
 
-# Disables caching of the templates
-app.config['TEMPLATES_AUTO_RELOAD'] = True
+
 app.jinja_env.add_extension('jinja2.ext.loopcontrols')
 
 # Configure Jinja2 to search for templates in plugin directories
