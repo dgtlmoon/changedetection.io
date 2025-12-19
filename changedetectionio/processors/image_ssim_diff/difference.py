@@ -7,7 +7,6 @@ OpenCV or pixelmatch for fast rendering (10-100x faster than SSIM).
 
 import os
 import json
-import base64
 import io
 import time
 from loguru import logger
@@ -296,6 +295,225 @@ def generate_diff_image_pixelmatch(diff_array):
     return diff_bytes
 
 
+def get_asset(asset_name, watch, datastore, request):
+    """
+    Get processor-specific binary assets for streaming.
+
+    This function supports serving images as separate HTTP responses instead
+    of embedding them as base64 in the HTML template, solving memory issues
+    with large screenshots.
+
+    Supported assets:
+    - 'before': The previous/from screenshot
+    - 'after': The current/to screenshot
+    - 'rendered_diff': The generated diff visualization with red highlights
+
+    Args:
+        asset_name: Name of the asset to retrieve ('before', 'after', 'rendered_diff')
+        watch: Watch object
+        datastore: Datastore object
+        request: Flask request (for from_version/to_version query params)
+
+    Returns:
+        tuple: (binary_data, content_type, cache_control_header) or None if not found
+    """
+    # Get version parameters from query string (same as render() does)
+    versions = list(watch.history.keys())
+
+    if len(versions) < 2:
+        return None
+
+    from_version = request.args.get('from_version', versions[-2] if len(versions) >= 2 else versions[0])
+    to_version = request.args.get('to_version', versions[-1])
+
+    # Validate versions exist
+    if from_version not in versions:
+        from_version = versions[-2] if len(versions) >= 2 else versions[0]
+    if to_version not in versions:
+        to_version = versions[-1]
+
+    try:
+        if asset_name == 'before':
+            # Return the 'from' screenshot
+            img_bytes = watch.get_history_snapshot(timestamp=from_version)
+
+            # Optionally draw bounding box if configured
+            img_bytes = _apply_bounding_box_if_configured(img_bytes, watch, datastore)
+
+            return (img_bytes, 'image/png', 'public, max-age=3600')
+
+        elif asset_name == 'after':
+            # Return the 'to' screenshot
+            img_bytes = watch.get_history_snapshot(timestamp=to_version)
+
+            # Optionally draw bounding box if configured
+            img_bytes = _apply_bounding_box_if_configured(img_bytes, watch, datastore)
+
+            return (img_bytes, 'image/png', 'public, max-age=3600')
+
+        elif asset_name == 'rendered_diff':
+            # Generate the diff visualization on-demand
+            img_bytes_from = watch.get_history_snapshot(timestamp=from_version)
+            img_bytes_to = watch.get_history_snapshot(timestamp=to_version)
+
+            # Get comparison method and threshold
+            comparison_method = DEFAULT_COMPARISON_METHOD
+            threshold = watch.get('comparison_threshold')
+            if not threshold or threshold == '':
+                default_threshold = (
+                    DEFAULT_COMPARISON_THRESHOLD_OPENCV if comparison_method == 'opencv'
+                    else DEFAULT_COMPARISON_THRESHOLD_PIXELMATCH
+                )
+                threshold = datastore.data['settings']['application'].get('comparison_threshold', default_threshold)
+
+            try:
+                threshold = float(threshold)
+                if comparison_method == 'pixelmatch':
+                    threshold = threshold / 100.0
+            except (ValueError, TypeError):
+                threshold = 30.0 if comparison_method == 'opencv' else 0.1
+
+            # Generate diff based on method
+            if comparison_method == 'pixelmatch':
+                _, diff_data = calculate_diff_pixelmatch(img_bytes_from, img_bytes_to, threshold)
+                diff_image_bytes = generate_diff_image_pixelmatch(diff_data)
+                del diff_data
+            else:  # opencv
+                _, diff_mask = calculate_diff_opencv(img_bytes_from, img_bytes_to, threshold)
+                diff_image_bytes = generate_diff_image_opencv(img_bytes_to, diff_mask)
+                del diff_mask
+
+            # Clean up source images
+            del img_bytes_from, img_bytes_to
+
+            # Optionally draw bounding box on diff image if configured
+            diff_image_bytes = _apply_bounding_box_to_diff(diff_image_bytes, watch, datastore)
+
+            return (diff_image_bytes, 'image/jpeg', 'public, max-age=300')
+
+        else:
+            # Unknown asset
+            return None
+
+    except Exception as e:
+        logger.error(f"Failed to get asset '{asset_name}': {e}")
+        return None
+
+
+def _apply_bounding_box_if_configured(img_bytes, watch, datastore):
+    """
+    Apply blue bounding box to image if configured in processor settings.
+
+    Args:
+        img_bytes: Image bytes (PNG)
+        watch: Watch object
+        datastore: Datastore object
+
+    Returns:
+        Image bytes (possibly with bounding box drawn)
+    """
+    try:
+        from changedetectionio import processors
+        processor_instance = processors.difference_detection_processor(datastore, watch.get('uuid'))
+        processor_name = watch.get('processor', 'default')
+        config_filename = f'{processor_name}.json'
+        processor_config = processor_instance.get_extra_watch_config(config_filename)
+        bounding_box = processor_config.get('bounding_box') if processor_config else None
+
+        if bounding_box:
+            parts = [int(p.strip()) for p in bounding_box.split(',')]
+            if len(parts) == 4:
+                from PIL import Image, ImageDraw
+
+                img_pil = Image.open(io.BytesIO(img_bytes))
+                draw = ImageDraw.Draw(img_pil)
+                x, y, width, height = parts
+
+                # Draw blue rectangle (3px border)
+                for offset in range(3):
+                    draw.rectangle(
+                        [x + offset, y + offset, x + width - offset, y + height - offset],
+                        outline='blue'
+                    )
+
+                buf = io.BytesIO()
+                img_pil.save(buf, format='PNG')
+                img_bytes = buf.getvalue()
+                img_pil.close()
+                buf.close()
+    except Exception as e:
+        logger.warning(f"Failed to draw bounding box: {e}")
+
+    return img_bytes
+
+
+def _apply_bounding_box_to_diff(diff_bytes, watch, datastore):
+    """
+    Apply blue bounding box to diff image if configured, accounting for scaling.
+
+    Args:
+        diff_bytes: Diff image bytes (JPEG)
+        watch: Watch object
+        datastore: Datastore object
+
+    Returns:
+        Image bytes (possibly with bounding box drawn)
+    """
+    try:
+        from changedetectionio import processors
+        processor_instance = processors.difference_detection_processor(datastore, watch.get('uuid'))
+        processor_name = watch.get('processor', 'default')
+        config_filename = f'{processor_name}.json'
+        processor_config = processor_instance.get_extra_watch_config(config_filename)
+        bounding_box = processor_config.get('bounding_box') if processor_config else None
+
+        if bounding_box:
+            parts = [int(p.strip()) for p in bounding_box.split(',')]
+            if len(parts) == 4:
+                from PIL import Image, ImageDraw
+
+                # Load original "to" image to get original dimensions
+                versions = list(watch.history.keys())
+                to_version = versions[-1]
+                img_to_bytes = watch.get_history_snapshot(timestamp=to_version)
+                img_to_pil = Image.open(io.BytesIO(img_to_bytes))
+                original_width = img_to_pil.width
+                original_height = img_to_pil.height
+                img_to_pil.close()
+
+                # Load diff image
+                img_diff_pil = Image.open(io.BytesIO(diff_bytes))
+
+                # Calculate scaling factor (diff images are resized)
+                scale_x = img_diff_pil.width / original_width if original_width > 0 else 1
+                scale_y = img_diff_pil.height / original_height if original_height > 0 else 1
+
+                draw = ImageDraw.Draw(img_diff_pil)
+                x, y, width, height = parts
+                x_scaled = int(x * scale_x)
+                y_scaled = int(y * scale_y)
+                width_scaled = int(width * scale_x)
+                height_scaled = int(height * scale_y)
+
+                # Draw blue rectangle (3px border)
+                for offset in range(3):
+                    draw.rectangle(
+                        [x_scaled + offset, y_scaled + offset,
+                         x_scaled + width_scaled - offset, y_scaled + height_scaled - offset],
+                        outline='blue'
+                    )
+
+                buf = io.BytesIO()
+                img_diff_pil.save(buf, format='JPEG', quality=85)
+                diff_bytes = buf.getvalue()
+                img_diff_pil.close()
+                buf.close()
+    except Exception as e:
+        logger.warning(f"Failed to draw bounding box on diff: {e}")
+
+    return diff_bytes
+
+
 def render(watch, datastore, request, url_for, render_template, flash, redirect):
     """
     Render the screenshot comparison diff page.
@@ -312,8 +530,6 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
     Returns:
         Rendered template or redirect
     """
-    import gc
-    from flask import after_this_request
     # Get version parameters (from_version, to_version)
     versions = list(watch.history.keys())
 
@@ -371,112 +587,31 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
         flash(f"Failed to load screenshots: {e}", "error")
         return redirect(url_for('watchlist.index'))
 
-    # Calculate diff and generate difference image based on method
+    # Calculate diff to get change_percentage for display
+    # Note: We don't generate the full diff image here anymore - it's served via get_asset()
+    # This significantly reduces memory usage by not embedding large base64 images in HTML
     now = time.time()
     try:
         if comparison_method == 'pixelmatch':
             change_percentage, diff_data = calculate_diff_pixelmatch(img_bytes_from, img_bytes_to, threshold)
-            diff_image_bytes = generate_diff_image_pixelmatch(diff_data)
             method_display = f"Pixelmatch (threshold: {threshold*100:.0f}%)"
-            del diff_data  # Clean up diff array
+            del diff_data  # Clean up diff array immediately
         else:  # opencv
             change_percentage, diff_mask = calculate_diff_opencv(img_bytes_from, img_bytes_to, threshold)
-            diff_image_bytes = generate_diff_image_opencv(img_bytes_to, diff_mask)
             method_display = f"OpenCV (threshold: {threshold:.0f})"
-            del diff_mask  # Clean up diff mask
+            del diff_mask  # Clean up diff mask immediately
 
     except Exception as e:
-        logger.error(f"Failed to generate diff: {e}")
-        flash(f"Failed to generate diff: {e}", "error")
+        logger.error(f"Failed to calculate diff: {e}")
+        flash(f"Failed to calculate diff: {e}", "error")
         return redirect(url_for('watchlist.index'))
     finally:
         logger.debug(f"Done '{comparison_method}' in {time.time() - now:.2f}s")
 
-    # Check if bounding box is set and draw blue border if present
-    bounding_box = None
-    try:
-        from changedetectionio import processors
-        processor_instance = processors.difference_detection_processor(datastore, watch.get('uuid'))
-        processor_name = watch.get('processor', 'default')
-        config_filename = f'{processor_name}.json'
-        processor_config = processor_instance.get_extra_watch_config(config_filename)
-        bounding_box = processor_config.get('bounding_box') if processor_config else None
-
-        if bounding_box:
-            logger.debug(f"Drawing blue bounding box on diff images: {bounding_box}")
-            # Parse bounding box: "x,y,width,height"
-            parts = [int(p.strip()) for p in bounding_box.split(',')]
-            if len(parts) == 4:
-                from PIL import Image, ImageDraw
-
-                # Draw on "from" image
-                img_from_pil = Image.open(io.BytesIO(img_bytes_from))
-                draw_from = ImageDraw.Draw(img_from_pil)
-                x, y, width, height = parts
-                # Draw blue rectangle (3px border)
-                for offset in range(3):
-                    draw_from.rectangle(
-                        [x + offset, y + offset, x + width - offset, y + height - offset],
-                        outline='blue'
-                    )
-                buf_from = io.BytesIO()
-                img_from_pil.save(buf_from, format='PNG')
-                img_bytes_from = buf_from.getvalue()
-                img_from_pil.close()
-                buf_from.close()
-
-                # Draw on "to" image
-                img_to_pil = Image.open(io.BytesIO(img_bytes_to))
-                original_width = img_to_pil.width
-                original_height = img_to_pil.height
-                draw_to = ImageDraw.Draw(img_to_pil)
-                for offset in range(3):
-                    draw_to.rectangle(
-                        [x + offset, y + offset, x + width - offset, y + height - offset],
-                        outline='blue'
-                    )
-                buf_to = io.BytesIO()
-                img_to_pil.save(buf_to, format='PNG')
-                img_bytes_to = buf_to.getvalue()
-                img_to_pil.close()
-                buf_to.close()
-
-                # Draw on diff image
-                img_diff_pil = Image.open(io.BytesIO(diff_image_bytes))
-                # Need to scale the bounding box if image was resized for diff
-                scale_x = img_diff_pil.width / original_width if original_width > 0 else 1
-                scale_y = img_diff_pil.height / original_height if original_height > 0 else 1
-                draw_diff = ImageDraw.Draw(img_diff_pil)
-                x_scaled = int(x * scale_x)
-                y_scaled = int(y * scale_y)
-                width_scaled = int(width * scale_x)
-                height_scaled = int(height * scale_y)
-                logger.debug(f"Diff image size: {img_diff_pil.size}, original: {original_width}x{original_height}, scale: {scale_x:.2f}x{scale_y:.2f}")
-                logger.debug(f"Drawing blue box on diff: ({x_scaled},{y_scaled}) {width_scaled}x{height_scaled}")
-                for offset in range(3):
-                    draw_diff.rectangle(
-                        [x_scaled + offset, y_scaled + offset,
-                         x_scaled + width_scaled - offset, y_scaled + height_scaled - offset],
-                        outline='blue'
-                    )
-                buf_diff = io.BytesIO()
-                img_diff_pil.save(buf_diff, format='JPEG', quality=85)
-                diff_image_bytes = buf_diff.getvalue()
-                img_diff_pil.close()
-                buf_diff.close()
-                logger.debug(f"Successfully drew blue bounding box on all three images")
-    except Exception as e:
-        logger.warning(f"Failed to draw bounding box on diff images: {e}")
-
-    # Convert images to base64 for embedding in template
-    img_from_b64 = base64.b64encode(img_bytes_from).decode('utf-8')
-    img_to_b64 = base64.b64encode(img_bytes_to).decode('utf-8')
-    diff_image_b64 = base64.b64encode(diff_image_bytes).decode('utf-8')
-
-    # Clean up large byte objects after base64 encoding
+    # Clean up image byte objects - no longer needed since we serve via get_asset()
+    # This significantly reduces memory usage by not keeping large images in memory
     del img_bytes_from
     del img_bytes_to
-    del diff_image_bytes
 
     # Load historical data if available (for charts/visualization)
     comparison_data = {}
@@ -488,28 +623,13 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
         except Exception as e:
             logger.warning(f"Failed to load comparison history data: {e}")
 
-    # Register cleanup callback to release memory after response is sent
-    @after_this_request
-    def cleanup_memory(response):
-        """Force garbage collection after response sent to release large image data."""
-        try:
-            # Force garbage collection to immediately release memory
-            # This helps ensure base64 image strings (which can be 5-10MB+) are freed
-            collected = gc.collect()
-            logger.debug(f"Memory cleanup: Forced GC after diff render (collected {collected} objects)")
-        except Exception as e:
-            logger.warning(f"Memory cleanup GC failed: {e}")
-        return response
-
     # Render custom template
     # Template path is namespaced to avoid conflicts with other processors
-    response = render_template(
+    # Images are now served via separate /processor-asset/ endpoints instead of base64
+    return render_template(
         'image_ssim_diff/diff.html',
         watch=watch,
         uuid=watch.get('uuid'),
-        img_from_b64=img_from_b64,
-        img_to_b64=img_to_b64,
-        diff_image_b64=diff_image_b64,
         change_percentage=change_percentage,
         comparison_data=comparison_data,  # Full history for charts/visualization
         threshold=threshold,
@@ -519,9 +639,3 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
         to_version=to_version,
         percentage_different=change_percentage
     )
-
-    # Explicitly delete large base64 strings now that they're in the response
-    # This helps free memory before the function returns
-    del img_from_b64, img_to_b64, diff_image_b64, comparison_data
-
-    return response

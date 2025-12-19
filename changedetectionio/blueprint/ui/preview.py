@@ -128,4 +128,73 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         return output
 
+    @preview_blueprint.route("/preview/<string:uuid>/processor-asset/<string:asset_name>", methods=['GET'])
+    @login_optionally_required
+    def processor_asset(uuid, asset_name):
+        """
+        Serve processor-specific binary assets for preview (images, files, etc.).
+
+        This route is processor-aware: it delegates to the processor's
+        preview.py module, allowing different processor types to serve
+        custom assets without embedding them as base64 in templates.
+
+        This solves memory issues with large binary data by streaming them
+        as separate HTTP responses instead of embedding in the HTML template.
+
+        Each processor implements processors/{type}/preview.py::get_asset()
+        which returns (binary_data, content_type, cache_control_header).
+
+        Example URLs:
+        - /preview/{uuid}/processor-asset/screenshot?version=123456789
+        """
+        from flask import make_response
+
+        # More for testing, possible to return the first/only
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
+
+        try:
+            watch = datastore.data['watching'][uuid]
+        except KeyError:
+            flash("No history found for the specified link, bad link?", "error")
+            return redirect(url_for('watchlist.index'))
+
+        # Get the processor type for this watch
+        processor_name = watch.get('processor', 'text_json_diff')
+
+        try:
+            # Try to import the processor's preview module
+            import importlib
+            processor_module = importlib.import_module(f'changedetectionio.processors.{processor_name}.preview')
+
+            # Call the processor's get_asset() function
+            if hasattr(processor_module, 'get_asset'):
+                result = processor_module.get_asset(
+                    asset_name=asset_name,
+                    watch=watch,
+                    datastore=datastore,
+                    request=request
+                )
+
+                if result is None:
+                    from flask import abort
+                    abort(404, description=f"Asset '{asset_name}' not found")
+
+                binary_data, content_type, cache_control = result
+
+                response = make_response(binary_data)
+                response.headers['Content-Type'] = content_type
+                if cache_control:
+                    response.headers['Cache-Control'] = cache_control
+                return response
+            else:
+                logger.warning(f"Processor {processor_name} does not implement get_asset()")
+                from flask import abort
+                abort(404, description=f"Processor '{processor_name}' does not support assets")
+
+        except (ImportError, ModuleNotFoundError) as e:
+            logger.warning(f"Processor {processor_name} does not have a preview module: {e}")
+            from flask import abort
+            abort(404, description=f"Processor '{processor_name}' not found")
+
     return preview_blueprint

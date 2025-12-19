@@ -82,12 +82,12 @@
             <div class="image-comparison" id="comparison-container">
                 <!-- Before image wrapper (Previous snapshot) -->
                 <div class="comparison-image-wrapper">
-                    <img id="img-before" src="data:image/png;base64,{{ img_from_b64 }}" alt="Previous screenshot">
+                    <img id="img-before" src="{{ url_for('ui.ui_diff.processor_asset', uuid=uuid, asset_name='before', from_version=from_version, to_version=to_version) }}" alt="Previous screenshot">
                 </div>
 
                 <!-- After image wrapper (Current snapshot) -->
                 <div class="comparison-image-wrapper comparison-after">
-                    <img id="img-after" src="data:image/png;base64,{{ img_to_b64 }}" alt="Current screenshot">
+                    <img id="img-after" src="{{ url_for('ui.ui_diff.processor_asset', uuid=uuid, asset_name='after', from_version=from_version, to_version=to_version) }}" alt="Current screenshot">
                 </div>
 
                 <!-- Labels -->
@@ -118,7 +118,7 @@
                     Download
                 </a>
             </div>
-            <img id="diff-image" src="data:image/jpeg;base64,{{ diff_image_b64 }}" alt="Difference visualization with red highlights">
+            <img id="diff-image" src="{{ url_for('ui.ui_diff.processor_asset', uuid=uuid, asset_name='rendered_diff', from_version=from_version, to_version=to_version) }}" alt="Difference visualization with red highlights">
         </div>
     </div>
 

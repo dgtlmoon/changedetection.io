@@ -35,7 +35,7 @@
 
     <div id="screenshot-container" style="text-align: center; border: 1px solid #ddd; padding: 2em; background: #fafafa; border-radius: 4px;">
         <h3 style="margin-top: 0;">Screenshot from {{ timestamp|format_timestamp_timeago }}</h3>
-        <img src="data:{{ mime_type }};base64,{{ img_b64 }}"
+        <img src="{{ url_for('ui.ui_preview.processor_asset', uuid=uuid, asset_name='screenshot', version=timestamp) }}"
              alt="Screenshot preview"
              style="max-width: 100%; height: auto; border: 1px solid #ccc; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 2px;">
     </div>
