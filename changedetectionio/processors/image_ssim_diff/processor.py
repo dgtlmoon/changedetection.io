@@ -164,16 +164,43 @@ class perform_site_check(difference_detection_processor):
 
             logger.debug(f"Starting isolated subprocess comparison (crop_region={crop_region})")
 
-            # Compare using isolated subprocess with OpenCV
+            # Compare using isolated subprocess with OpenCV (async-safe to avoid blocking event loop)
             # Pass raw bytes and crop region - subprocess handles all image operations
-            changed_detected, change_score = process_screenshot_handler.compare_images_isolated(
-                previous_screenshot_bytes,
-                self.screenshot,
-                threshold,
-                blur_sigma,
-                min_change_percentage,
-                crop_region  # Pass crop region for isolated cropping
-            )
+            import asyncio
+            import threading
+
+            # Async-safe wrapper: runs coroutine in new thread with its own event loop
+            # This prevents blocking the async update worker's event loop
+            def run_async_in_thread():
+                return asyncio.run(
+                    process_screenshot_handler.compare_images_isolated(
+                        previous_screenshot_bytes,
+                        self.screenshot,
+                        threshold,
+                        blur_sigma,
+                        min_change_percentage,
+                        crop_region  # Pass crop region for isolated cropping
+                    )
+                )
+
+            # Run in thread to avoid blocking event loop when called from async update worker
+            result_container = [None]
+            exception_container = [None]
+
+            def thread_target():
+                try:
+                    result_container[0] = run_async_in_thread()
+                except Exception as e:
+                    exception_container[0] = e
+
+            thread = threading.Thread(target=thread_target)
+            thread.start()
+            thread.join(timeout=60)
+
+            if exception_container[0]:
+                raise exception_container[0]
+
+            changed_detected, change_score = result_container[0]
 
             logger.debug(f"Isolated subprocess comparison completed: changed={changed_detected}, score={change_score:.2f}")
             logger.info(f"{process_screenshot_handler.IMPLEMENTATION_NAME}: {change_score:.2f}% pixels changed, threshold: {threshold:.0f}")

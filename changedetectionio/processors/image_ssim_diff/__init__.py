@@ -14,5 +14,9 @@ processor_weight = 2  # Lower weight = appears at top, heavier weight = appears 
 # Default comparison settings
 DEFAULT_COMPARISON_THRESHOLD_OPENCV = float(os.getenv('COMPARISON_THRESHOLD_OPENCV', '30'))
 
+# Subprocess timeout settings
+# Maximum time to wait for subprocess operations (seconds)
+POLL_TIMEOUT_ABSOLUTE = int(os.getenv('OPENCV_SUBPROCESS_TIMEOUT', '20'))
+
 # Template tracking filename
 CROPPED_IMAGE_TEMPLATE_FILENAME = 'cropped_image_template.png'

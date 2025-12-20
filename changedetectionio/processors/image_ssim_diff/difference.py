@@ -91,15 +91,41 @@ def get_asset(asset_name, watch, datastore, request):
             # Get blur sigma
             blur_sigma = float(os.getenv("OPENCV_BLUR_SIGMA", "0.8"))
 
-            # Generate diff in isolated subprocess
-            diff_image_bytes = process_screenshot_handler.generate_diff_isolated(
-                img_bytes_from,
-                img_bytes_to,
-                int(threshold),
-                blur_sigma,
-                MAX_DIFF_WIDTH,
-                MAX_DIFF_HEIGHT
-            )
+            # Generate diff in isolated subprocess (async-safe)
+            import asyncio
+            import threading
+
+            # Async-safe wrapper: runs coroutine in new thread with its own event loop
+            def run_async_in_thread():
+                return asyncio.run(
+                    process_screenshot_handler.generate_diff_isolated(
+                        img_bytes_from,
+                        img_bytes_to,
+                        int(threshold),
+                        blur_sigma,
+                        MAX_DIFF_WIDTH,
+                        MAX_DIFF_HEIGHT
+                    )
+                )
+
+            # Run in thread to avoid blocking event loop if called from async context
+            result_container = [None]
+            exception_container = [None]
+
+            def thread_target():
+                try:
+                    result_container[0] = run_async_in_thread()
+                except Exception as e:
+                    exception_container[0] = e
+
+            thread = threading.Thread(target=thread_target)
+            thread.start()
+            thread.join(timeout=60)
+
+            if exception_container[0]:
+                raise exception_container[0]
+
+            diff_image_bytes = result_container[0]
 
             if diff_image_bytes:
                 # Note: Bounding box drawing on diff not yet implemented
@@ -124,6 +150,10 @@ def _draw_bounding_box_if_configured(img_bytes, watch, datastore):
     Draw blue bounding box on image if configured in processor settings.
     Uses isolated subprocess to prevent memory leaks from large images.
 
+    Supports two modes:
+    - "Select by element": Use include_filter to find xpath element bbox
+    - "Draw area": Use manually drawn bounding_box from config
+
     Args:
         img_bytes: Image bytes (PNG)
         watch: Watch object
@@ -133,32 +163,98 @@ def _draw_bounding_box_if_configured(img_bytes, watch, datastore):
         Image bytes (possibly with bounding box drawn)
     """
     try:
-        # Get bounding box configuration from processor JSON
+        # Get processor configuration
         from changedetectionio import processors
         processor_instance = processors.difference_detection_processor(datastore, watch.get('uuid'))
         processor_name = watch.get('processor', 'default')
         config_filename = f'{processor_name}.json'
         processor_config = processor_instance.get_extra_watch_config(config_filename)
-        bounding_box = processor_config.get('bounding_box') if processor_config else None
 
-        if not bounding_box:
+        if not processor_config:
             return img_bytes
 
-        # Parse bounding box: "x,y,width,height"
-        parts = [int(p.strip()) for p in bounding_box.split(',')]
-        if len(parts) != 4:
-            logger.warning(f"Invalid bounding box format: {bounding_box}")
-            return img_bytes
+        selection_mode = processor_config.get('selection_mode', 'draw')
+        x, y, width, height = None, None, None, None
 
-        x, y, width, height = parts
+        # Mode 1: Select by element (use include_filter + xpath_data)
+        if selection_mode == 'element':
+            include_filters = watch.get('include_filters', [])
+
+            if include_filters and len(include_filters) > 0:
+                first_filter = include_filters[0].strip()
+
+                # Get xpath_data from watch history
+                history_keys = list(watch.history.keys())
+                if history_keys:
+                    latest_snapshot = watch.get_history_snapshot(timestamp=history_keys[-1])
+                    xpath_data_path = watch.get_xpath_data_filepath(timestamp=history_keys[-1])
+
+                    try:
+                        import gzip
+                        with gzip.open(xpath_data_path, 'rt') as f:
+                            xpath_data = json.load(f)
+
+                        # Find matching element
+                        for element in xpath_data.get('size_pos', []):
+                            if element.get('xpath') == first_filter and element.get('highlight_as_custom_filter'):
+                                x = element.get('left', 0)
+                                y = element.get('top', 0)
+                                width = element.get('width', 0)
+                                height = element.get('height', 0)
+                                logger.debug(f"Found element bbox for filter '{first_filter}': x={x}, y={y}, w={width}, h={height}")
+                                break
+                    except Exception as e:
+                        logger.warning(f"Failed to load xpath_data for element selection: {e}")
+
+        # Mode 2: Draw area (use manually configured bbox)
+        else:
+            bounding_box = processor_config.get('bounding_box')
+            if bounding_box:
+                # Parse bounding box: "x,y,width,height"
+                parts = [int(p.strip()) for p in bounding_box.split(',')]
+                if len(parts) == 4:
+                    x, y, width, height = parts
+                else:
+                    logger.warning(f"Invalid bounding box format: {bounding_box}")
+
+        # If no bbox found, return original image
+        if x is None or y is None or width is None or height is None:
+            return img_bytes
 
         # Use isolated subprocess to prevent memory leaks from large images
         from .image_handler import isolated_opencv
-        result = isolated_opencv.draw_bounding_box_isolated(
-            img_bytes, x, y, width, height,
-            color=(255, 0, 0),  # Blue in BGR format
-            thickness=3
-        )
+        import asyncio
+        import threading
+
+        # Async-safe wrapper: runs coroutine in new thread with its own event loop
+        # This prevents blocking when called from async context (update worker)
+        def run_async_in_thread():
+            return asyncio.run(
+                isolated_opencv.draw_bounding_box_isolated(
+                    img_bytes, x, y, width, height,
+                    color=(255, 0, 0),  # Blue in BGR format
+                    thickness=3
+                )
+            )
+
+        # Always run in thread to avoid blocking event loop if called from async context
+        result_container = [None]
+        exception_container = [None]
+
+        def thread_target():
+            try:
+                result_container[0] = run_async_in_thread()
+            except Exception as e:
+                exception_container[0] = e
+
+        thread = threading.Thread(target=thread_target)
+        thread.start()
+        thread.join(timeout=15)
+
+        if exception_container[0]:
+            raise exception_container[0]
+
+        result = result_container[0]
 
         # Return result or original if subprocess failed
         return result if result else img_bytes
@@ -230,19 +326,44 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
         flash(f"Failed to load screenshots: {e}", "error")
         return redirect(url_for('watchlist.index'))
 
-    # Calculate change percentage using isolated subprocess to prevent memory leaks
+    # Calculate change percentage using isolated subprocess to prevent memory leaks (async-safe)
     now = time.time()
     try:
         from .image_handler import isolated_opencv as process_screenshot_handler
+        import asyncio
+        import threading
 
-        change_percentage = process_screenshot_handler.calculate_change_percentage_isolated(
-            img_bytes_from,
-            img_bytes_to,
-            int(threshold),
-            blur_sigma,
-            MAX_DIFF_WIDTH,
-            MAX_DIFF_HEIGHT
-        )
+        # Async-safe wrapper: runs coroutine in new thread with its own event loop
+        def run_async_in_thread():
+            return asyncio.run(
+                process_screenshot_handler.calculate_change_percentage_isolated(
+                    img_bytes_from,
+                    img_bytes_to,
+                    int(threshold),
+                    blur_sigma,
+                    MAX_DIFF_WIDTH,
+                    MAX_DIFF_HEIGHT
+                )
+            )
+
+        # Run in thread to avoid blocking event loop if called from async context
+        result_container = [None]
+        exception_container = [None]
+
+        def thread_target():
+            try:
+                result_container[0] = run_async_in_thread()
+            except Exception as e:
+                exception_container[0] = e
+
+        thread = threading.Thread(target=thread_target)
+        thread.start()
+        thread.join(timeout=60)
+
+        if exception_container[0]:
+            raise exception_container[0]
+
+        change_percentage = result_container[0]
 
         method_display = f"{process_screenshot_handler.IMPLEMENTATION_NAME} (threshold: {threshold:.0f})"
         logger.debug(f"Done change percentage calculation in {time.time() - now:.2f}s")

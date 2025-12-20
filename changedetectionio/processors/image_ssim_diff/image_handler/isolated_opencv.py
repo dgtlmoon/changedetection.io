@@ -7,6 +7,7 @@ No threading issues, no fork problems, picklable functions.
 
 import multiprocessing
 import numpy as np
+from .. import POLL_TIMEOUT_ABSOLUTE
 
 # Public implementation name for logging
 IMPLEMENTATION_NAME = "OpenCV"
@@ -100,14 +101,15 @@ def _worker_compare(conn, img_bytes_from, img_bytes_to, threshold, blur_sigma, m
         conn.close()
 
 
-def compare_images_isolated(img_bytes_from, img_bytes_to, threshold, blur_sigma, min_change_percentage, crop_region=None):
+async def compare_images_isolated(img_bytes_from, img_bytes_to, threshold, blur_sigma, min_change_percentage, crop_region=None):
     """
-    Compare images in isolated subprocess using OpenCV.
+    Compare images in isolated subprocess using OpenCV (async-safe).
 
     Returns:
         tuple: (changed_detected, change_percentage)
     """
     import time
+    import asyncio
     print(f"[{time.time():.3f}] [Parent] Starting OpenCV comparison subprocess", flush=True)
 
     # Use spawn method for clean process (no fork issues)
@@ -121,16 +123,25 @@ def compare_images_isolated(img_bytes_from, img_bytes_to, threshold, blur_sigma,
 
     print(f"[{time.time():.3f}] [Parent] Starting subprocess", flush=True)
     p.start()
-    print(f"[{time.time():.3f}] [Parent] Subprocess started (pid={p.pid}), waiting for result (30s timeout)", flush=True)
+    print(f"[{time.time():.3f}] [Parent] Subprocess started (pid={p.pid}), waiting for result ({POLL_TIMEOUT_ABSOLUTE}s timeout)", flush=True)
 
     result = (False, 0.0)
     try:
-        if parent_conn.poll(30):
-            print(f"[{time.time():.3f}] [Parent] Result available, receiving", flush=True)
-            result = parent_conn.recv()
-            print(f"[{time.time():.3f}] [Parent] Result received: {result}", flush=True)
+        # Async-friendly polling: check in small intervals without blocking event loop
+        deadline = time.time() + POLL_TIMEOUT_ABSOLUTE
+        while time.time() < deadline:
+            # Run poll() in thread to avoid blocking event loop
+            has_data = await asyncio.to_thread(parent_conn.poll, 0.1)
+            if has_data:
+                print(f"[{time.time():.3f}] [Parent] Result available, receiving", flush=True)
+                result = await asyncio.to_thread(parent_conn.recv)
+                print(f"[{time.time():.3f}] [Parent] Result received: {result}", flush=True)
+                break
+            await asyncio.sleep(0)  # Yield control to event loop
         else:
-            print(f"[{time.time():.3f}] [Parent] Timeout waiting for result after 30s", flush=True)
+            from loguru import logger
+            logger.critical(f"[OpenCV subprocess] Timeout waiting for compare_images result after {POLL_TIMEOUT_ABSOLUTE}s (subprocess may be hung)")
+            print(f"[{time.time():.3f}] [Parent] Timeout waiting for result after {POLL_TIMEOUT_ABSOLUTE}s", flush=True)
     except Exception as e:
         print(f"[{time.time():.3f}] [Parent] Error receiving result: {e}", flush=True)
     finally:
@@ -140,10 +151,10 @@ def compare_images_isolated(img_bytes_from, img_bytes_to, threshold, blur_sigma,
         except:
             pass
 
-        # Try graceful shutdown
+        # Try graceful shutdown (async-safe)
         print(f"[{time.time():.3f}] [Parent] Waiting for subprocess to exit (5s timeout)", flush=True)
         join_start = time.time()
-        p.join(timeout=5)
+        await asyncio.to_thread(p.join, 5)
         join_elapsed = time.time() - join_start
         print(f"[{time.time():.3f}] [Parent] First join took {join_elapsed:.2f}s", flush=True)
 
@@ -151,7 +162,7 @@ def compare_images_isolated(img_bytes_from, img_bytes_to, threshold, blur_sigma,
             print(f"[{time.time():.3f}] [Parent] Process didn't exit gracefully, terminating", flush=True)
             term_start = time.time()
             p.terminate()
-            p.join(timeout=3)
+            await asyncio.to_thread(p.join, 3)
             term_elapsed = time.time() - term_start
             print(f"[{time.time():.3f}] [Parent] Terminate+join took {term_elapsed:.2f}s", flush=True)
 
@@ -160,7 +171,7 @@ def compare_images_isolated(img_bytes_from, img_bytes_to, threshold, blur_sigma,
             print(f"[{time.time():.3f}] [Parent] Process didn't terminate, killing", flush=True)
             kill_start = time.time()
             p.kill()
-            p.join(timeout=1)
+            await asyncio.to_thread(p.join, 1)
             kill_elapsed = time.time() - kill_start
             print(f"[{time.time():.3f}] [Parent] Kill+join took {kill_elapsed:.2f}s", flush=True)
 
@@ -241,14 +252,15 @@ def _worker_generate_diff(conn, img_bytes_from, img_bytes_to, threshold, blur_si
         conn.close()
 
 
-def generate_diff_isolated(img_bytes_from, img_bytes_to, threshold, blur_sigma, max_width, max_height):
+async def generate_diff_isolated(img_bytes_from, img_bytes_to, threshold, blur_sigma, max_width, max_height):
     """
-    Generate visual diff with red overlay in isolated subprocess.
+    Generate visual diff with red overlay in isolated subprocess (async-safe).
 
     Returns:
         bytes: JPEG diff image or None on failure
     """
     import time
+    import asyncio
     print(f"[{time.time():.3f}] [Parent] Starting generate_diff subprocess", flush=True)
 
     ctx = multiprocessing.get_context('spawn')
@@ -261,16 +273,25 @@ def generate_diff_isolated(img_bytes_from, img_bytes_to, threshold, blur_sigma, 
 
     print(f"[{time.time():.3f}] [Parent] Starting subprocess", flush=True)
     p.start()
-    print(f"[{time.time():.3f}] [Parent] Subprocess started (pid={p.pid}), waiting for result (30s timeout)", flush=True)
+    print(f"[{time.time():.3f}] [Parent] Subprocess started (pid={p.pid}), waiting for result ({POLL_TIMEOUT_ABSOLUTE}s timeout)", flush=True)
 
     result = None
     try:
-        if parent_conn.poll(30):
-            print(f"[{time.time():.3f}] [Parent] Result available, receiving", flush=True)
-            result = parent_conn.recv()
-            print(f"[{time.time():.3f}] [Parent] Result received ({len(result) if result else 0} bytes)", flush=True)
+        # Async-friendly polling: check in small intervals without blocking event loop
+        deadline = time.time() + POLL_TIMEOUT_ABSOLUTE
+        while time.time() < deadline:
+            # Run poll() in thread to avoid blocking event loop
+            has_data = await asyncio.to_thread(parent_conn.poll, 0.1)
+            if has_data:
+                print(f"[{time.time():.3f}] [Parent] Result available, receiving", flush=True)
+                result = await asyncio.to_thread(parent_conn.recv)
+                print(f"[{time.time():.3f}] [Parent] Result received ({len(result) if result else 0} bytes)", flush=True)
+                break
+            await asyncio.sleep(0)  # Yield control to event loop
         else:
-            print(f"[{time.time():.3f}] [Parent] Timeout waiting for result after 30s", flush=True)
+            from loguru import logger
+            logger.critical(f"[OpenCV subprocess] Timeout waiting for generate_diff result after {POLL_TIMEOUT_ABSOLUTE}s (subprocess may be hung)")
+            print(f"[{time.time():.3f}] [Parent] Timeout waiting for result after {POLL_TIMEOUT_ABSOLUTE}s", flush=True)
     except Exception as e:
         print(f"[{time.time():.3f}] [Parent] Error receiving diff: {e}", flush=True)
     finally:
@@ -280,10 +301,10 @@ def generate_diff_isolated(img_bytes_from, img_bytes_to, threshold, blur_sigma, 
         except:
             pass
 
-        # Try graceful shutdown
+        # Try graceful shutdown (async-safe)
         print(f"[{time.time():.3f}] [Parent] Waiting for subprocess to exit (5s timeout)", flush=True)
         join_start = time.time()
-        p.join(timeout=5)
+        await asyncio.to_thread(p.join, 5)
         join_elapsed = time.time() - join_start
         print(f"[{time.time():.3f}] [Parent] First join took {join_elapsed:.2f}s", flush=True)
 
@@ -291,7 +312,7 @@ def generate_diff_isolated(img_bytes_from, img_bytes_to, threshold, blur_sigma, 
             print(f"[{time.time():.3f}] [Parent] Process didn't exit gracefully, terminating", flush=True)
             term_start = time.time()
             p.terminate()
-            p.join(timeout=3)
+            await asyncio.to_thread(p.join, 3)
             term_elapsed = time.time() - term_start
             print(f"[{time.time():.3f}] [Parent] Terminate+join took {term_elapsed:.2f}s", flush=True)
 
@@ -299,7 +320,7 @@ def generate_diff_isolated(img_bytes_from, img_bytes_to, threshold, blur_sigma, 
             print(f"[{time.time():.3f}] [Parent] Process didn't terminate, killing", flush=True)
             kill_start = time.time()
             p.kill()
-            p.join(timeout=1)
+            await asyncio.to_thread(p.join, 1)
             kill_elapsed = time.time() - kill_start
             print(f"[{time.time():.3f}] [Parent] Kill+join took {kill_elapsed:.2f}s", flush=True)
 
@@ -345,9 +366,9 @@ def _worker_draw_bounding_box(conn, img_bytes, x, y, width, height, color, thick
         conn.close()
 
 
-def draw_bounding_box_isolated(img_bytes, x, y, width, height, color=(255, 0, 0), thickness=3):
+async def draw_bounding_box_isolated(img_bytes, x, y, width, height, color=(255, 0, 0), thickness=3):
     """
-    Draw bounding box on image in isolated subprocess.
+    Draw bounding box on image in isolated subprocess (async-safe).
 
     Args:
         img_bytes: Image data as bytes
@@ -362,6 +383,7 @@ def draw_bounding_box_isolated(img_bytes, x, y, width, height, color=(255, 0, 0)
         bytes: PNG image with bounding box or None on failure
     """
     import time
+    import asyncio
     print(f"[{time.time():.3f}] [Parent] Starting draw_bounding_box subprocess", flush=True)
 
     ctx = multiprocessing.get_context('spawn')
@@ -374,16 +396,27 @@ def draw_bounding_box_isolated(img_bytes, x, y, width, height, color=(255, 0, 0)
 
     print(f"[{time.time():.3f}] [Parent] Starting subprocess", flush=True)
     p.start()
-    print(f"[{time.time():.3f}] [Parent] Subprocess started (pid={p.pid}), waiting for result (10s timeout)", flush=True)
+    print(f"[{time.time():.3f}] [Parent] Subprocess started (pid={p.pid}), waiting for result ({POLL_TIMEOUT_ABSOLUTE}s timeout)", flush=True)
 
     result = None
     try:
-        if parent_conn.poll(10):
-            print(f"[{time.time():.3f}] [Parent] Result available, receiving", flush=True)
-            result = parent_conn.recv()
-            print(f"[{time.time():.3f}] [Parent] Result received ({len(result) if result else 0} bytes)", flush=True)
+        # Async-friendly polling: check in small intervals without blocking event loop
+        deadline = time.time() + POLL_TIMEOUT_ABSOLUTE
+        while time.time() < deadline:
+            # Run poll() in thread to avoid blocking event loop
+            has_data = await asyncio.to_thread(parent_conn.poll, 0.1)
+            if has_data:
+                print(f"[{time.time():.3f}] [Parent] Result available, receiving", flush=True)
+                # Run recv() in thread too
+                result = await asyncio.to_thread(parent_conn.recv)
+                print(f"[{time.time():.3f}] [Parent] Result received ({len(result) if result else 0} bytes)", flush=True)
+                break
+            # Yield control to event loop
+            await asyncio.sleep(0)
         else:
-            print(f"[{time.time():.3f}] [Parent] Timeout waiting for result after 10s", flush=True)
+            from loguru import logger
+            logger.critical(f"[OpenCV subprocess] Timeout waiting for draw_bounding_box result after {POLL_TIMEOUT_ABSOLUTE}s (subprocess may be hung)")
+            print(f"[{time.time():.3f}] [Parent] Timeout waiting for result after {POLL_TIMEOUT_ABSOLUTE}s", flush=True)
     except Exception as e:
         print(f"[{time.time():.3f}] [Parent] Error receiving result: {e}", flush=True)
     finally:
@@ -393,10 +426,10 @@ def draw_bounding_box_isolated(img_bytes, x, y, width, height, color=(255, 0, 0)
         except:
             pass
 
-        # Try graceful shutdown
+        # Try graceful shutdown (run join in thread to avoid blocking)
         print(f"[{time.time():.3f}] [Parent] Waiting for subprocess to exit (3s timeout)", flush=True)
         join_start = time.time()
-        p.join(timeout=3)
+        await asyncio.to_thread(p.join, 3)
         join_elapsed = time.time() - join_start
         print(f"[{time.time():.3f}] [Parent] First join took {join_elapsed:.2f}s", flush=True)
 
@@ -404,7 +437,7 @@ def draw_bounding_box_isolated(img_bytes, x, y, width, height, color=(255, 0, 0)
             print(f"[{time.time():.3f}] [Parent] Process didn't exit gracefully, terminating", flush=True)
             term_start = time.time()
             p.terminate()
-            p.join(timeout=2)
+            await asyncio.to_thread(p.join, 2)
             term_elapsed = time.time() - term_start
             print(f"[{time.time():.3f}] [Parent] Terminate+join took {term_elapsed:.2f}s", flush=True)
 
@@ -412,7 +445,7 @@ def draw_bounding_box_isolated(img_bytes, x, y, width, height, color=(255, 0, 0)
             print(f"[{time.time():.3f}] [Parent] Process didn't terminate, killing", flush=True)
             kill_start = time.time()
             p.kill()
-            p.join(timeout=1)
+            await asyncio.to_thread(p.join, 1)
             kill_elapsed = time.time() - kill_start
             print(f"[{time.time():.3f}] [Parent] Kill+join took {kill_elapsed:.2f}s", flush=True)
 
@@ -480,14 +513,15 @@ def _worker_calculate_percentage(conn, img_bytes_from, img_bytes_to, threshold, 
         conn.close()
 
 
-def calculate_change_percentage_isolated(img_bytes_from, img_bytes_to, threshold, blur_sigma, max_width, max_height):
+async def calculate_change_percentage_isolated(img_bytes_from, img_bytes_to, threshold, blur_sigma, max_width, max_height):
     """
-    Calculate change percentage in isolated subprocess.
+    Calculate change percentage in isolated subprocess (async-safe).
 
     Returns:
         float: Change percentage
     """
     import time
+    import asyncio
     print(f"[{time.time():.3f}] [Parent] Starting calculate_percentage subprocess", flush=True)
 
     ctx = multiprocessing.get_context('spawn')
@@ -500,16 +534,25 @@ def calculate_change_percentage_isolated(img_bytes_from, img_bytes_to, threshold
 
     print(f"[{time.time():.3f}] [Parent] Starting subprocess", flush=True)
     p.start()
-    print(f"[{time.time():.3f}] [Parent] Subprocess started (pid={p.pid}), waiting for result (30s timeout)", flush=True)
+    print(f"[{time.time():.3f}] [Parent] Subprocess started (pid={p.pid}), waiting for result ({POLL_TIMEOUT_ABSOLUTE}s timeout)", flush=True)
 
     result = 0.0
     try:
-        if parent_conn.poll(30):
-            print(f"[{time.time():.3f}] [Parent] Result available, receiving", flush=True)
-            result = parent_conn.recv()
-            print(f"[{time.time():.3f}] [Parent] Result received: {result:.2f}%", flush=True)
+        # Async-friendly polling: check in small intervals without blocking event loop
+        deadline = time.time() + POLL_TIMEOUT_ABSOLUTE
+        while time.time() < deadline:
+            # Run poll() in thread to avoid blocking event loop
+            has_data = await asyncio.to_thread(parent_conn.poll, 0.1)
+            if has_data:
+                print(f"[{time.time():.3f}] [Parent] Result available, receiving", flush=True)
+                result = await asyncio.to_thread(parent_conn.recv)
+                print(f"[{time.time():.3f}] [Parent] Result received: {result:.2f}%", flush=True)
+                break
+            await asyncio.sleep(0)  # Yield control to event loop
         else:
-            print(f"[{time.time():.3f}] [Parent] Timeout waiting for result after 30s", flush=True)
+            from loguru import logger
+            logger.critical(f"[OpenCV subprocess] Timeout waiting for calculate_change_percentage result after {POLL_TIMEOUT_ABSOLUTE}s (subprocess may be hung)")
+            print(f"[{time.time():.3f}] [Parent] Timeout waiting for result after {POLL_TIMEOUT_ABSOLUTE}s", flush=True)
     except Exception as e:
         print(f"[{time.time():.3f}] [Parent] Error receiving percentage: {e}", flush=True)
     finally:
@@ -519,10 +562,10 @@ def calculate_change_percentage_isolated(img_bytes_from, img_bytes_to, threshold
         except:
             pass
 
-        # Try graceful shutdown
+        # Try graceful shutdown (async-safe)
         print(f"[{time.time():.3f}] [Parent] Waiting for subprocess to exit (5s timeout)", flush=True)
         join_start = time.time()
-        p.join(timeout=5)
+        await asyncio.to_thread(p.join, 5)
         join_elapsed = time.time() - join_start
         print(f"[{time.time():.3f}] [Parent] First join took {join_elapsed:.2f}s", flush=True)
 
@@ -530,7 +573,7 @@ def calculate_change_percentage_isolated(img_bytes_from, img_bytes_to, threshold
             print(f"[{time.time():.3f}] [Parent] Process didn't exit gracefully, terminating", flush=True)
             term_start = time.time()
             p.terminate()
-            p.join(timeout=3)
+            await asyncio.to_thread(p.join, 3)
             term_elapsed = time.time() - term_start
             print(f"[{time.time():.3f}] [Parent] Terminate+join took {term_elapsed:.2f}s", flush=True)
 
@@ -538,7 +581,7 @@ def calculate_change_percentage_isolated(img_bytes_from, img_bytes_to, threshold
             print(f"[{time.time():.3f}] [Parent] Process didn't terminate, killing", flush=True)
             kill_start = time.time()
             p.kill()
-            p.join(timeout=1)
+            await asyncio.to_thread(p.join, 1)
             kill_elapsed = time.time() - kill_start
             print(f"[{time.time():.3f}] [Parent] Kill+join took {kill_elapsed:.2f}s", flush=True)
 
