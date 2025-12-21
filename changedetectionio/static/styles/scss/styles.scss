@@ -184,6 +184,13 @@ code {
   margin-right: 4px;
 }
 
+/* Processor type badges - colors auto-generated from processor names */
+.processor-badge {
+  @extend .inline-tag;
+  font-size: 0.85em;
+  font-weight: 500;
+}
+
 .watch-tag-list {
   color: var(--color-white);
   background: var(--color-text-watch-tag-list);
@@ -1023,46 +1030,6 @@ ul {
   padding: 0.5rem;
   border-radius: 5px;
   color: var(--color-warning);
-}
-
-/* processor type badges */
-.processor-badge {
-  @extend .inline-tag;
-  font-size: 0.85em;
-  font-weight: 500;
-}
-
-.processor-badge-text_json_diff {
-  background-color: rgba(100, 149, 237, 0.4);
-  color: #3a5a8a;
-}
-
-.processor-badge-restock_diff {
-  background-color: rgba(45, 134, 89, 0.4);
-  color: #1a5c3a;
-}
-
-.processor-badge-image_ssim_diff {
-  background-color: rgba(139, 92, 246, 0.4);
-  color: #6b4bbd;
-}
-
-// Dark mode: solid colors for better contrast
-html[data-darkmode="true"] {
-  .processor-badge-text_json_diff {
-    background-color: #4682b4;
-    color: #fff;
-  }
-
-  .processor-badge-restock_diff {
-    background-color: #2d8659;
-    color: #fff;
-  }
-
-  .processor-badge-image_ssim_diff {
-    background-color: #8b5cf6;
-    color: #fff;
-  }
 }
 
 /* automatic price following helpers */

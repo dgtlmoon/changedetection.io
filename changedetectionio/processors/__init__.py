@@ -459,3 +459,75 @@ def get_processor_descriptions():
 
     return descriptions
 
+
+def generate_processor_badge_colors(processor_name):
+    """
+    Generate consistent colors for a processor badge based on its name.
+    Uses a hash of the processor name to generate pleasing, accessible colors
+    for both light and dark modes.
+
+    :param processor_name: The processor name (e.g., 'text_json_diff')
+    :return: A dict with 'light' and 'dark' color schemes, each containing 'bg' and 'color'
+    """
+    import hashlib
+
+    # Generate a consistent hash from the processor name
+    hash_obj = hashlib.md5(processor_name.encode('utf-8'))
+    hash_int = int(hash_obj.hexdigest()[:8], 16)
+
+    # Generate hue from hash (0-360)
+    hue = hash_int % 360
+
+    # Light mode: pastel background with darker text
+    light_saturation = 60 + (hash_int % 25)  # 60-85%
+    light_lightness = 85 + (hash_int % 10)   # 85-95% - very light
+    text_lightness = 25 + (hash_int % 15)    # 25-40% - dark
+
+    # Dark mode: solid, vibrant colors with white text
+    dark_saturation = 55 + (hash_int % 20)   # 55-75%
+    dark_lightness = 45 + (hash_int % 15)    # 45-60%
+
+    return {
+        'light': {
+            'bg': f'hsl({hue}, {light_saturation}%, {light_lightness}%)',
+            'color': f'hsl({hue}, 50%, {text_lightness}%)'
+        },
+        'dark': {
+            'bg': f'hsl({hue}, {dark_saturation}%, {dark_lightness}%)',
+            'color': '#fff'
+        }
+    }
+
+
+@lru_cache(maxsize=1)
+def get_processor_badge_css():
+    """
+    Generate CSS for all processor badges with auto-generated colors.
+    This creates CSS rules for both light and dark modes for each processor.
+
+    :return: A string containing CSS rules for all processor badges
+    """
+    processor_classes = find_processors()
+    css_rules = []
+
+    for module, sub_package_name in processor_classes:
+        colors = generate_processor_badge_colors(sub_package_name)
+
+        # Light mode rule
+        css_rules.append(
+            f".processor-badge-{sub_package_name} {{\n"
+            f"  background-color: {colors['light']['bg']};\n"
+            f"  color: {colors['light']['color']};\n"
+            f"}}"
+        )
+
+        # Dark mode rule
+        css_rules.append(
+            f"html[data-darkmode=\"true\"] .processor-badge-{sub_package_name} {{\n"
+            f"  background-color: {colors['dark']['bg']};\n"
+            f"  color: {colors['dark']['color']};\n"
+            f"}}"
+        )
+
+    return '\n\n'.join(css_rules)
+
