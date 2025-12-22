@@ -6,6 +6,8 @@ from wtforms.widgets.core import TimeInput
 from changedetectionio.blueprint.rss import RSS_FORMAT_TYPES, RSS_TEMPLATE_TYPE_OPTIONS, RSS_TEMPLATE_HTML_DEFAULT
 from changedetectionio.conditions.form import ConditionFormRow
 from changedetectionio.notification_service import NotificationContextData
+from changedetectionio.processors.image_ssim_diff import SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS, \
+    SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT
 from changedetectionio.strtobool import strtobool
 
 from wtforms import (
@@ -996,13 +998,8 @@ class globalSettingsApplicationForm(commonSettingsForm):
     ignore_whitespace = BooleanField('Ignore whitespace')
     ssim_threshold = SelectField(
         'Default Screenshot Comparison Sensitivity',
-        choices=[
-            ('0.75', 'Low sensitivity (only major changes)'),
-            ('0.85', 'Medium sensitivity (moderate changes)'),
-            ('0.96', 'High sensitivity (small changes)'),
-            ('0.999', 'Very high sensitivity (any change)')
-        ],
-        default='0.96'
+        choices=SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS,
+        default=SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT
     )
     password = SaltyPasswordField()
     pager_size = IntegerField('Pager size',

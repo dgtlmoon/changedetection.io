@@ -3,52 +3,51 @@
 
 {% block content %}
 <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='diff-image.css')}}?v={{ get_css_version() }}">
+<script src="{{url_for('static_content', group='js', filename='diff-overview.js')}}" defer></script>
 
 <div id="settings">
-    <a href="{{ url_for('ui.ui_edit.edit_page', uuid=uuid, next='diff') }}" class="pure-button button-small edit-link">
-        <img style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread_the_word.svg')}}" alt="Edit" />
-        Edit Watch
-    </a>
-
-    <form class="pure-form" action="{{ url_for('ui.ui_diff.diff_history_page', uuid=uuid) }}" method="GET" id="diff-form">
+    <form class="pure-form " action="{{ url_for('ui.ui_diff.diff_history_page', uuid=uuid) }}" method="GET" id="diff-form">
         <fieldset class="diff-fieldset">
-            <h2>Screenshot Comparison (Fast)</h2>
-
-            {% if versions|length >= 2 %}
-                <div class="version-selector">
-                    <label for="diff-from-version">From:</label>
-                    <select id="diff-from-version" name="from_version" class="needs-localtime" onchange="this.form.submit()">
-                        {%- for version in versions|reverse -%}
-                            <option value="{{ version }}" {% if version== from_version %} selected="" {% endif %}>
-                                {{ version }}
-                            </option>
-                        {%- endfor -%}
-                    </select>
-                </div>
-
-                <div class="version-selector">
-                    <label for="diff-to-version">To:</label>
-                    <select id="diff-to-version" name="to_version" class="needs-localtime" onchange="this.form.submit()">
-                        {%- for version in versions|reverse -%}
-                            <option value="{{ version }}" {% if version== to_version %} selected="" {% endif %}>
-                                {{ version }}
-                            </option>
-                        {%- endfor -%}
-                    </select>
-                </div>
+            {% if versions|length >= 1 %}
+                <span style="white-space: nowrap;">
+                <label id="change-from" for="diff-from-version" class="from-to-label">From</label>
+                <select id="diff-from-version" name="from_version" class="needs-localtime">
+                    {%- for version in versions|reverse -%}
+                        <option value="{{ version }}" {% if version== from_version %} selected="" {% endif %}>
+                            {{ version }}
+                        </option>
+                    {%- endfor -%}
+                </select>
+                </span>
+                <span style="white-space: nowrap;">
+                <label id="change-to" for="diff-to-version" class="from-to-label">To</label>
+                <select id="diff-to-version" name="to_version" class="needs-localtime">
+                    {%- for version in versions|reverse -%}
+                        <option value="{{ version }}" {% if version== to_version %} selected="" {% endif %}>
+                            {{ version }}
+                        </option>
+                    {%- endfor -%}
+                </select>
+                </span>
             {% endif %}
-
-            <!-- Comparison score display -->
-            <div class="comparison-score">
+        </fieldset>
+        <fieldset id="diff-style">
+            <span>
                 <strong>Change Detection:</strong> {{ "%.2f"|format(change_percentage) }}% of pixels changed
-                <br>
                 {% if change_percentage > 0.1 %}
                     <span class="change-detected">⚠ Change Detected</span>
                 {% else %}
                     <span class="no-change">✓ No Significant Change</span>
                 {% endif %}
-            </div>
+            </span>
         </fieldset>
+        {%- if versions|length >= 2 -%}
+            <div id="keyboard-nav">
+                <strong>Keyboard: </strong>
+                <a href="" class="pure-button pure-button-primary" id="btn-previous"> &larr; Previous</a>
+                &nbsp; <a class="pure-button pure-button-primary" id="btn-next" href=""> &rarr; Next</a>
+            </div>
+        {%- endif -%}
     </form>
 </div>
 

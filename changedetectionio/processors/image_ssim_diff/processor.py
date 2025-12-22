@@ -10,10 +10,9 @@ import hashlib
 import os
 import time
 from loguru import logger
-from changedetectionio import strtobool
-from changedetectionio.processors import difference_detection_processor, SCREENSHOT_FORMAT_PNG
+from changedetectionio.processors import difference_detection_processor
 from changedetectionio.processors.exceptions import ProcessorException
-from . import DEFAULT_COMPARISON_THRESHOLD_OPENCV, CROPPED_IMAGE_TEMPLATE_FILENAME
+from . import SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT
 
 # All image operations now use OpenCV via isolated_opencv subprocess handler
 # Template matching temporarily disabled pending OpenCV implementation
@@ -51,20 +50,22 @@ class perform_site_check(difference_detection_processor):
         current_md5 = hashlib.md5(self.screenshot).hexdigest()
         previous_md5 = watch.get('previous_md5')
         if previous_md5 and current_md5 == previous_md5:
-            logger.debug(f"Screenshot MD5 unchanged ({current_md5}), skipping comparison")
+            logger.debug(f"UUID: {watch.get('uuid')} - Screenshot MD5 unchanged ({current_md5}), skipping comparison")
             raise checksumFromPreviousCheckWasTheSame()
+        else:
+            logger.debug(f"UUID: {watch.get('uuid')} - Screenshot MD5 changed")
 
-        # Get threshold (per-watch > global > env default)
+        # Get threshold (per-watch > global)
         threshold = watch.get('comparison_threshold')
-        if not threshold or threshold == '':
-            threshold = self.datastore.data['settings']['application'].get('comparison_threshold', DEFAULT_COMPARISON_THRESHOLD_OPENCV)
+        if not threshold:
+            threshold = self.datastore.data['settings']['application'].get('comparison_threshold', SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT)
 
         # Convert string to appropriate type
         try:
             threshold = float(threshold)
         except (ValueError, TypeError):
             logger.warning(f"Invalid threshold value '{threshold}', using default")
-            threshold = 30.0
+            threshold = SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT
 
         # Check if bounding box is set (for drawn area mode)
         # Read from processor-specific config JSON file (named after processor)
@@ -76,7 +77,7 @@ class perform_site_check(difference_detection_processor):
         bounding_box = processor_config.get('bounding_box') if processor_config else None
 
         # Template matching for tracking content movement
-        template_matching_enabled = processor_config.get('auto_track_region', False)
+        template_matching_enabled = processor_config.get('auto_track_region', False) #@@todo disabled for now
 
         if bounding_box:
             try:
@@ -86,11 +87,11 @@ class perform_site_check(difference_detection_processor):
                     x, y, width, height = parts
                     # Crop uses (left, top, right, bottom)
                     crop_region = (max(0, x), max(0, y), x + width, y + height)
-                    logger.info(f"Bounding box enabled: cropping to region {crop_region} (x={x}, y={y}, w={width}, h={height})")
+                    logger.info(f"UUID: {watch.get('uuid')} - Bounding box enabled: cropping to region {crop_region} (x={x}, y={y}, w={width}, h={height})")
                 else:
-                    logger.warning(f"Invalid bounding box format: {bounding_box} (expected 4 values)")
+                    logger.warning(f"UUID: {watch.get('uuid')} - Invalid bounding box format: {bounding_box} (expected 4 values)")
             except Exception as e:
-                logger.warning(f"Failed to parse bounding box '{bounding_box}': {e}")
+                logger.warning(f"UUID: {watch.get('uuid')} - Failed to parse bounding box '{bounding_box}': {e}")
 
         # If no bounding box, check if visual selector (include_filters) is set for region-based comparison
         if not crop_region:
@@ -119,11 +120,11 @@ class perform_site_check(difference_detection_processor):
                                 # Crop uses (left, top, right, bottom)
                                 crop_region = (max(0, left), max(0, top), left + width, top + height)
 
-                                logger.info(f"Visual selector enabled: cropping to region {crop_region} for filter: {first_filter}")
+                                logger.info(f"UUID: {watch.get('uuid')} - Visual selector enabled: cropping to region {crop_region} for filter: {first_filter}")
                                 break
 
                     except Exception as e:
-                        logger.warning(f"Failed to parse xpath_data for visual selector: {e}")
+                        logger.warning(f"UUID: {watch.get('uuid')} - Failed to parse xpath_data for visual selector: {e}")
 
         # Store original crop region for template matching
         original_crop_region = crop_region
@@ -132,7 +133,7 @@ class perform_site_check(difference_detection_processor):
         history_keys = list(watch.history.keys())
         if len(history_keys) == 0:
             # First check - save baseline, no comparison
-            logger.info(f"First check for watch {watch.get('uuid')} - saving baseline screenshot")
+            logger.info(f"UUID: {watch.get('uuid')} - First check for watch {watch.get('uuid')} - saving baseline screenshot")
 
             # LibVIPS uses automatic reference counting - no explicit cleanup needed
             update_obj = {
@@ -162,7 +163,7 @@ class perform_site_check(difference_detection_processor):
             blur_sigma = float(os.getenv("OPENCV_BLUR_SIGMA", "0.8"))
             min_change_percentage = float(os.getenv("OPENCV_MIN_CHANGE_PERCENT", "0.1"))
 
-            logger.debug(f"Starting isolated subprocess comparison (crop_region={crop_region})")
+            logger.debug(f"UUID: {watch.get('uuid')} - Starting isolated subprocess comparison (crop_region={crop_region})")
 
             # Compare using isolated subprocess with OpenCV (async-safe to avoid blocking event loop)
             # Pass raw bytes and crop region - subprocess handles all image operations
@@ -202,15 +203,15 @@ class perform_site_check(difference_detection_processor):
 
             changed_detected, change_score = result_container[0]
 
-            logger.debug(f"Isolated subprocess comparison completed: changed={changed_detected}, score={change_score:.2f}")
+            logger.debug(f"UUID: {watch.get('uuid')} - Isolated subprocess comparison completed: changed={changed_detected}, score={change_score:.2f}")
             logger.info(f"{process_screenshot_handler.IMPLEMENTATION_NAME}: {change_score:.2f}% pixels changed, threshold: {threshold:.0f}")
 
         except Exception as e:
-            logger.error(f"Failed to compare screenshots: {e}")
-            logger.trace(f"Processed in {time.time() - now:.3f}s")
+            logger.error(f"UUID: {watch.get('uuid')} - Failed to compare screenshots: {e}")
+            logger.trace(f"UUID: {watch.get('uuid')} - Processed in {time.time() - now:.3f}s")
 
             raise ProcessorException(
-                message=f"Screenshot comparison failed: {e}",
+                message=f"UUID: {watch.get('uuid')} - Screenshot comparison failed: {e}",
                 url=watch.get('url')
             )
 
@@ -221,10 +222,10 @@ class perform_site_check(difference_detection_processor):
         }
 
         if changed_detected:
-            logger.info(f"Change detected using OpenCV! Score: {change_score:.2f}")
+            logger.info(f"UUID: {watch.get('uuid')} - Change detected using OpenCV! Score: {change_score:.2f}")
         else:
-            logger.debug(f"No significant change using OpenCV. Score: {change_score:.2f}")
-        logger.trace(f"Processed in {time.time() - now:.3f}s")
+            logger.debug(f"UUID: {watch.get('uuid')} - No significant change using OpenCV. Score: {change_score:.2f}")
+        logger.trace(f"UUID: {watch.get('uuid')} - Processed in {time.time() - now:.3f}s")
 
         return changed_detected, update_obj, self.screenshot
 

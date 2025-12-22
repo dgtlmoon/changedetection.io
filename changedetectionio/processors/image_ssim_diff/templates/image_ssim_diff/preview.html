@@ -1,37 +1,30 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="box">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1em;">
-        <div style="flex: 1;">
-            <h2>Screenshot Preview - {{ watch.label or watch.url }}</h2>
-            <a href="{{ url_for('ui.form_watch_checknow', uuid=uuid) }}" class="pure-button button-small button-primary">Recheck</a>
-            <a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=uuid) }}" class="pure-button button-small">View Diff History</a>
-            <a href="{{ url_for('ui.ui_edit.edit_page', uuid=uuid) }}" class="pure-button button-small">Edit</a>
-        </div>
-    </div>
-
-    <div id="settings" style="margin-bottom: 1.5em; padding: 1em; background: #f5f5f5; border-radius: 4px;">
-        <form action="{{ url_for('ui.ui_preview.preview_page', uuid=uuid) }}">
-            <fieldset>
-                <legend>Preview Options</legend>
-                <div class="pure-control-group">
-                    <label for="version">Version:</label>
-                    <select name="version" id="version" onchange="this.form.submit()" class="pure-input-1-3">
-                        {% for version_timestamp in versions|reverse %}
-                        <option value="{{ version_timestamp }}" {% if version_timestamp == timestamp %}selected{% endif %}>
-                            {{ version_timestamp|format_timestamp_timeago }}
+<script src="{{ url_for('static_content', group='js', filename='preview.js') }}" defer></script>
+    {% if versions|length >= 2 %}
+        <div id="diff-form" style="text-align: center;">
+            <form class="pure-form " action="" method="GET">
+                <fieldset>
+                    <label for="preview-version">Select timestamp</label> <select id="preview-version"
+                                                                                 name="version"
+                                                                                 class="needs-localtime">
+                    {% for version in versions|reverse %}
+                        <option value="{{ version }}" {% if version == timestamp %} selected="" {% endif %}>
+                            {{ version }}
                         </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="pure-control-group">
-                    <label for="url">Watching:</label>
-                    <a href="{{ current_diff_url }}" target="_blank" rel="noopener" style="word-break: break-all;">{{ current_diff_url }}</a>
-                </div>
-            </fieldset>
-        </form>
-    </div>
+                    {% endfor %}
+                </select>
+                    <button type="submit" class="pure-button pure-button-primary">Go</button>
+
+                </fieldset>
+            </form>
+                <br>
+                <strong>Keyboard: </strong><a href="" class="pure-button pure-button-primary" id="btn-previous">
+                &larr; Previous</a> &nbsp; <a class="pure-button pure-button-primary" id="btn-next" href="">
+                &rarr; Next</a>
+        </div>
+    {% endif %}
 
     <div id="screenshot-container" style="text-align: center; border: 1px solid #ddd; padding: 2em; background: #fafafa; border-radius: 4px;">
         <h3 style="margin-top: 0;">Screenshot from {{ timestamp|format_timestamp_timeago }}</h3>
@@ -54,5 +47,4 @@
             to see what changed between versions.
         </p>
     </div>
-</div>
 {% endblock %}

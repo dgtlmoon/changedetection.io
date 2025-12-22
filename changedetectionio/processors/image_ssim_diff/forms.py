@@ -6,6 +6,8 @@ from wtforms import SelectField, StringField, validators, ValidationError
 from changedetectionio.forms import processor_text_json_diff_form
 import re
 
+from changedetectionio.processors.image_ssim_diff import SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS
+
 
 def validate_bounding_box(form, field):
     """Validate bounding box format: x,y,width,height with integers."""
@@ -43,13 +45,8 @@ class processor_settings_form(processor_text_json_diff_form):
     comparison_threshold = SelectField(
         'Screenshot Comparison Sensitivity',
         choices=[
-            ('', 'Use global default'),
-            ('10', 'Very low sensitivity (only major changes)'),
-            ('20', 'Low sensitivity (significant changes)'),
-            ('30', 'Medium sensitivity (moderate changes)'),
-            ('50', 'High sensitivity (small changes)'),
-            ('75', 'Very high sensitivity (any visible change)')
-        ],
+                    ('', 'Use global default')
+                ] + SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS,
         validators=[validators.Optional()],
         default=''
     )

@@ -42,6 +42,13 @@ def _worker_compare(conn, img_bytes_from, img_bytes_to, threshold, blur_sigma, m
         print(f"[{time.time():.3f}] [Worker] Loading images (from={len(img_bytes_from)} bytes, to={len(img_bytes_to)} bytes)", flush=True)
         img_from = cv2.imdecode(np.frombuffer(img_bytes_from, np.uint8), cv2.IMREAD_COLOR)
         img_to = cv2.imdecode(np.frombuffer(img_bytes_to, np.uint8), cv2.IMREAD_COLOR)
+
+        # Check if decoding succeeded
+        if img_from is None:
+            raise ValueError("Failed to decode 'from' image - may be corrupt or unsupported format")
+        if img_to is None:
+            raise ValueError("Failed to decode 'to' image - may be corrupt or unsupported format")
+
         print(f"[{time.time():.3f}] [Worker] Images loaded: from={img_from.shape}, to={img_to.shape}", flush=True)
 
         # Crop if region specified

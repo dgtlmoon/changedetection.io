@@ -9,7 +9,8 @@ import os
 import json
 import time
 from loguru import logger
-from . import DEFAULT_COMPARISON_THRESHOLD_OPENCV
+
+from changedetectionio.processors.image_ssim_diff import SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT
 
 # All image operations now use OpenCV via isolated_opencv subprocess handler
 # No direct handler imports needed - subprocess isolation handles everything
@@ -81,7 +82,7 @@ def get_asset(asset_name, watch, datastore, request):
             # Get threshold
             threshold = watch.get('comparison_threshold')
             if not threshold or threshold == '':
-                threshold = datastore.data['settings']['application'].get('comparison_threshold', DEFAULT_COMPARISON_THRESHOLD_OPENCV)
+                threshold = datastore.data['settings']['application'].get('comparison_threshold', SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT)
 
             try:
                 threshold = float(threshold)
@@ -304,7 +305,7 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
     # Get threshold (per-watch > global > env default)
     threshold = watch.get('comparison_threshold')
     if not threshold or threshold == '':
-        threshold = datastore.data['settings']['application'].get('comparison_threshold', DEFAULT_COMPARISON_THRESHOLD_OPENCV)
+        threshold = datastore.data['settings']['application'].get('comparison_threshold', SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT)
 
     # Convert threshold to appropriate type
     try:

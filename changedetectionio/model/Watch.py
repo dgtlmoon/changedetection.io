@@ -459,7 +459,6 @@ class model(watch_base):
    # Save some text file to the appropriate path and bump the history
     # result_obj from fetch_site_status.run()
     def save_history_text(self, contents, timestamp, snapshot_id):
-        import brotli
         import tempfile
         logger.trace(f"{self.get('uuid')} - Updating history.txt with timestamp {timestamp}")
 
@@ -471,19 +470,20 @@ class model(watch_base):
         # Auto-detect binary vs text data
         if isinstance(contents, bytes):
             # Binary data (screenshots, images, PDFs, etc.)
-            # Detect image format from magic bytes for proper extension
-            if contents[:8] == b'\x89PNG\r\n\x1a\n':
-                ext = 'png'
-            elif contents[:3] == b'\xff\xd8\xff':
-                ext = 'jpg'
-            elif contents[:6] in (b'GIF87a', b'GIF89a'):
-                ext = 'gif'
-            elif contents[:4] == b'RIFF' and contents[8:12] == b'WEBP':
-                ext = 'webp'
-            elif contents[:4] == b'%PDF':
-                ext = 'pdf'
-            else:
-                ext = 'bin'  # Generic binary
+            # Use puremagic for file type detection (already a project dependency)
+            try:
+                import puremagic
+                # Check first 2KB for magic bytes - enough for all common formats
+                detections = puremagic.magic_string(contents[:2048])
+                if detections:
+                    # Get highest confidence match
+                    ext = detections[0].extension
+                    logger.trace(f"Detected file type: {detections[0].mime_type} -> extension: {ext}")
+                else:
+                    ext = 'bin'  # Fallback for unknown binary types
+            except Exception as e:
+                logger.warning(f"puremagic detection failed: {e}, using 'bin' extension")
+                ext = 'bin'
 
             snapshot_fname = f"{snapshot_id}.{ext}"
             encoded_data = contents  # Already bytes, no encoding needed
@@ -503,6 +503,7 @@ class model(watch_base):
         # Write snapshot file atomically if it doesn't exist
         if not os.path.exists(dest):
             if encoded_data is None:
+                import brotli
                 # Brotli compression in subprocess
                 try:
                     actual_dest = _brotli_subprocess_save(contents, dest, mode=brotli.MODE_TEXT, fallback_uncompressed=True)
