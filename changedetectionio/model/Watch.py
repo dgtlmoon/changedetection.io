@@ -68,6 +68,7 @@ def _brotli_subprocess_save(contents, filepath, mode=None, timeout=30, fallback_
     """
     import brotli
     from multiprocessing import Process, Pipe
+    import sys
 
     # Ensure contents are bytes
     if isinstance(contents, str):
@@ -77,7 +78,11 @@ def _brotli_subprocess_save(contents, filepath, mode=None, timeout=30, fallback_
     parent_conn, child_conn = Pipe()
 
     # Run compression in subprocess
+    # On Windows, spawn method is default and safe; on Unix, fork is used
     proc = Process(target=_brotli_compress_worker, args=(child_conn, filepath, mode))
+
+    # Windows-safe: Set daemon=False explicitly to avoid issues with process cleanup
+    proc.daemon = False
     proc.start()
 
     try:
@@ -90,14 +95,27 @@ def _brotli_subprocess_save(contents, filepath, mode=None, timeout=30, fallback_
         else:
             success = False
             logger.warning(f"Brotli compression subprocess timed out after {timeout}s")
-            proc.terminate()
+            # Graceful termination with platform-aware cleanup
+            try:
+                proc.terminate()
+            except Exception as term_error:
+                logger.debug(f"Process termination issue (may be normal on Windows): {term_error}")
 
         parent_conn.close()
         proc.join(timeout=5)
 
+        # Force kill if still alive after graceful termination
         if proc.is_alive():
-            proc.terminate()
-            proc.join()
+            try:
+                if sys.platform == 'win32':
+                    # Windows: use kill() which is more forceful
+                    proc.kill()
+                else:
+                    # Unix: terminate() already sent SIGTERM, now try SIGKILL
+                    proc.kill()
+                proc.join(timeout=2)
+            except Exception as kill_error:
+                logger.warning(f"Failed to kill brotli compression process: {kill_error}")
 
         # Check if file was created successfully
         if success and os.path.exists(filepath):
@@ -105,9 +123,15 @@ def _brotli_subprocess_save(contents, filepath, mode=None, timeout=30, fallback_
 
     except Exception as e:
         logger.error(f"Brotli compression error: {e}")
-        parent_conn.close()
-        proc.terminate()
-        proc.join()
+        try:
+            parent_conn.close()
+        except:
+            pass
+        try:
+            proc.terminate()
+            proc.join(timeout=2)
+        except:
+            pass
 
     # Compression failed
     if fallback_uncompressed:
@@ -310,12 +334,15 @@ class model(watch_base):
 
                         # The index history could contain a relative path, so we need to make the fullpath
                         # so that python can read it
-                        if not '/' in v and not '\'' in v:
+                        # Cross-platform: check for any path separator (works on Windows and Unix)
+                        if os.sep not in v and '/' not in v and '\\' not in v:
+                            # Relative filename only, no path separators
                             v = os.path.join(self.watch_data_dir, v)
                         else:
                             # It's possible that they moved the datadir on older versions
                             # So the snapshot exists but is in a different path
-                            snapshot_fname = v.split('/')[-1]
+                            # Cross-platform: use os.path.basename instead of split('/')
+                            snapshot_fname = os.path.basename(v)
                             proposed_new_path = os.path.join(self.watch_data_dir, snapshot_fname)
                             if not os.path.exists(v) and os.path.exists(proposed_new_path):
                                 v = proposed_new_path
@@ -496,7 +523,9 @@ class model(watch_base):
                     tmp.flush()
                     os.fsync(tmp.fileno())
                     tmp_path = tmp.name
-                os.rename(tmp_path, dest)
+                # Cross-platform: os.replace() atomically replaces on all platforms (Python 3.3+)
+                # Unlike os.rename(), this works on Windows even if dest exists
+                os.replace(tmp_path, dest)
                 del encoded_data
 
         # Append to history.txt atomically
