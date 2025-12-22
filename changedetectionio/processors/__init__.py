@@ -292,8 +292,12 @@ def find_processors():
 
             # Iterate through all classes in the module
             for name, obj in inspect.getmembers(module, inspect.isclass):
-                if issubclass(obj, difference_detection_processor) and obj is not difference_detection_processor:
+                # Only register classes that are actually defined in this module (not imported)
+                if (issubclass(obj, difference_detection_processor) and
+                    obj is not difference_detection_processor and
+                    obj.__module__ == module.__name__):
                     processors.append((module, sub_package))
+                    break  # Only need one processor per module
         except (ModuleNotFoundError, ImportError) as e:
             logger.warning(f"Failed to import module {module_name}: {e} (find_processors())")
 
