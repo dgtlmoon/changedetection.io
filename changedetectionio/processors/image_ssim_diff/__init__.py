@@ -20,9 +20,9 @@ POLL_TIMEOUT_ABSOLUTE = int(os.getenv('OPENCV_SUBPROCESS_TIMEOUT', '20'))
 CROPPED_IMAGE_TEMPLATE_FILENAME = 'cropped_image_template.png'
 
 SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS = [
-    ('0.75', 'Low sensitivity (only major changes)'),
-    ('0.85', 'Medium sensitivity (moderate changes)'),
-    ('0.96', 'High sensitivity (small changes)'),
-    ('0.999', 'Very high sensitivity (any change)')
+    ('75', 'Low sensitivity (only major changes)'),
+    ('30', 'Medium sensitivity (moderate changes)'),
+    ('20', 'High sensitivity (small changes)'),
+    ('0', 'Very high sensitivity (any change)')
 ]
 SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT=0.999

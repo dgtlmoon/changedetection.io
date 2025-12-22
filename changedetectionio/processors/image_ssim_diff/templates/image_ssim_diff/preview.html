@@ -32,19 +32,4 @@
              alt="Screenshot preview"
              style="max-width: 100%; height: auto; border: 1px solid #ccc; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 2px;">
     </div>
-
-    <div style="margin-top: 2em; padding: 1em; background: #f9f9f9; border-left: 4px solid #4CAF50;">
-        <h3 style="margin-top: 0;">About SSIM Screenshot Monitoring</h3>
-        <p>This watch uses <strong>Structural Similarity Index (SSIM)</strong> to detect visual changes in screenshots.</p>
-        <ul style="margin-left: 2em;">
-            <li><strong>Robust to antialiasing</strong> - Ignores minor rendering differences between browser runs</li>
-            <li><strong>Configurable sensitivity</strong> - Adjust threshold to catch major or minor changes</li>
-            <li><strong>Visual diff</strong> - Changed regions highlighted in red in diff view</li>
-            <li><strong>Works with direct images</strong> - Can monitor JPEG/PNG URLs without browser rendering</li>
-        </ul>
-        <p>
-            <a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=uuid) }}" class="pure-button button-small">View Diff History</a>
-            to see what changed between versions.
-        </p>
-    </div>
 {% endblock %}

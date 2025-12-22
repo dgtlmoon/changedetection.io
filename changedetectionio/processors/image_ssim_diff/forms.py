@@ -2,7 +2,7 @@
 Configuration forms for fast screenshot comparison processor.
 """
 
-from wtforms import SelectField, StringField, validators, ValidationError
+from wtforms import SelectField, StringField, FloatField, validators, ValidationError
 from changedetectionio.forms import processor_text_json_diff_form
 import re
 
@@ -42,8 +42,17 @@ def validate_selection_mode(form, field):
 class processor_settings_form(processor_text_json_diff_form):
     """Form for fast image comparison processor settings."""
 
+    min_change_percentage = FloatField(
+        'Minimum Change Percentage',
+        validators=[
+            validators.Optional(),
+            validators.NumberRange(min=0.0, max=100.0, message='Must be between 0 and 100')
+        ],
+        render_kw={"placeholder": "Use global default (0.1)"}
+    )
+
     comparison_threshold = SelectField(
-        'Screenshot Comparison Sensitivity',
+        'Pixel Difference Sensitivity',
         choices=[
                     ('', 'Use global default')
                 ] + SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS,
@@ -82,11 +91,25 @@ class processor_settings_form(processor_text_json_diff_form):
         {% from '_helpers.html' import render_field %}
         <fieldset>
             <legend>Screenshot Comparison Settings</legend>
+
+            <div class="pure-control-group">
+                {{ render_field(form.min_change_percentage) }}
+                <span class="pure-form-message-inline">
+                    <strong>What percentage of pixels must change to trigger a detection?</strong><br>
+                    For example, <strong>0.1%</strong> means if 0.1% or more of the pixels change, it counts as a change.<br>
+                    Lower values = more sensitive (detect smaller changes).<br>
+                    Higher values = less sensitive (only detect larger changes).<br>
+                    Leave blank to use global default (0.1%).
+                </span>
+            </div>
+
             <div class="pure-control-group">
                 {{ render_field(form.comparison_threshold) }}
                 <span class="pure-form-message-inline">
-                    Controls how sensitive the screenshot comparison is to visual changes.<br>
-                    <strong>Higher sensitivity</strong> = detects smaller changes but may trigger on minor rendering differences.<br>
+                    <strong>How different must an individual pixel be to count as "changed"?</strong><br>
+                    <strong>Low sensitivity (75)</strong> = Only count pixels that changed significantly (0-255 scale).<br>
+                    <strong>High sensitivity (20)</strong> = Count pixels with small changes as different.<br>
+                    <strong>Very high (0)</strong> = Any pixel change counts.<br>
                     Select "Use global default" to inherit the system-wide setting.
                 </span>
             </div>

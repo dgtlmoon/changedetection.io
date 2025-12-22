@@ -430,25 +430,32 @@ class model(watch_base):
         if not filepath:
             filepath = self.history[timestamp]
 
-        # See if a brotli versions exists and switch to that
-        if not filepath.endswith('.br') and os.path.isfile(f"{filepath}.br"):
-            filepath = f"{filepath}.br"
+        # Check if binary file (image, PDF, etc.)
+        # Binary files are NEVER saved with .br compression, only text files are
+        binary_extensions = ('.png', '.jpg', '.jpeg', '.gif', '.webp', '.pdf', '.bin', '.jfif')
+        is_binary = any(filepath.endswith(ext) for ext in binary_extensions)
 
-        # OR in the backup case that the .br does not exist, but the plain one does
-        if filepath.endswith('.br') and not os.path.isfile(filepath):
-            if os.path.isfile(filepath.replace('.br', '')):
-                filepath = filepath.replace('.br', '')
+        # Only look for .br versions for text files
+        if not is_binary:
+            # See if a brotli version exists and switch to that (text files only)
+            if not filepath.endswith('.br') and os.path.isfile(f"{filepath}.br"):
+                filepath = f"{filepath}.br"
 
+            # OR in the backup case that the .br does not exist, but the plain one does
+            if filepath.endswith('.br') and not os.path.isfile(filepath):
+                if os.path.isfile(filepath.replace('.br', '')):
+                    filepath = filepath.replace('.br', '')
+
+        # Handle .br compressed text files
         if filepath.endswith('.br'):
             # Brotli doesnt have a fileheader to detect it, so we rely on filename
             # https://www.rfc-editor.org/rfc/rfc7932
+            # Note: .br should ONLY exist for text files, never binary
             with open(filepath, 'rb') as f:
-                return(brotli.decompress(f.read()).decode('utf-8'))
+                return brotli.decompress(f.read()).decode('utf-8')
 
-        # Check if binary file (image, PDF, etc.) vs text
-        binary_extensions = ('.png', '.jpg', '.jpeg', '.gif', '.webp', '.pdf', '.bin')
-        if any(filepath.endswith(ext) for ext in binary_extensions):
-            # Binary file - return raw bytes
+        # Binary file - return raw bytes
+        if is_binary:
             with open(filepath, 'rb') as f:
                 return f.read()
 
@@ -456,10 +463,21 @@ class model(watch_base):
         with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
             return f.read()
 
-   # Save some text file to the appropriate path and bump the history
+    def _write_atomic(self, dest, data):
+        """Write data atomically to dest using a temp file"""
+        if not os.path.exists(dest):
+            import tempfile
+            with tempfile.NamedTemporaryFile('wb', delete=False, dir=self.watch_data_dir) as tmp:
+                tmp.write(data)
+                tmp.flush()
+                os.fsync(tmp.fileno())
+                tmp_path = tmp.name
+            os.replace(tmp_path, dest)
+
+    # Save some text file to the appropriate path and bump the history
     # result_obj from fetch_site_status.run()
     def save_history_text(self, contents, timestamp, snapshot_id):
-        import tempfile
+
         logger.trace(f"{self.get('uuid')} - Updating history.txt with timestamp {timestamp}")
 
         self.ensure_data_dir_exists()
@@ -467,74 +485,54 @@ class model(watch_base):
         threshold = int(os.getenv('SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD', 1024))
         skip_brotli = strtobool(os.getenv('DISABLE_BROTLI_TEXT_SNAPSHOT', 'False'))
 
-        # Auto-detect binary vs text data
+        # Binary data - detect file type and save without compression
         if isinstance(contents, bytes):
-            # Binary data (screenshots, images, PDFs, etc.)
-            # Use puremagic for file type detection (already a project dependency)
             try:
                 import puremagic
-                # Check first 2KB for magic bytes - enough for all common formats
                 detections = puremagic.magic_string(contents[:2048])
+                ext = detections[0].extension if detections else 'bin'
+                # Strip leading dot if present (puremagic returns extensions like '.jfif')
+                ext = ext.lstrip('.')
                 if detections:
-                    # Get highest confidence match
-                    ext = detections[0].extension
                     logger.trace(f"Detected file type: {detections[0].mime_type} -> extension: {ext}")
-                else:
-                    ext = 'bin'  # Fallback for unknown binary types
             except Exception as e:
                 logger.warning(f"puremagic detection failed: {e}, using 'bin' extension")
                 ext = 'bin'
 
             snapshot_fname = f"{snapshot_id}.{ext}"
-            encoded_data = contents  # Already bytes, no encoding needed
-            logger.trace(f"Saving binary snapshot as {snapshot_fname} ({len(contents)} bytes)")
+            dest = os.path.join(self.watch_data_dir, snapshot_fname)
+            self._write_atomic(dest, contents)
+            logger.trace(f"Saved binary snapshot as {snapshot_fname} ({len(contents)} bytes)")
+
+        # Text data - use brotli compression if enabled and above threshold
         else:
-            # Text data (HTML, JSON, etc.) - apply brotli compression
             if not skip_brotli and len(contents) > threshold:
-                snapshot_fname = f"{snapshot_id}.txt.br"
-                # Use subprocess for brotli compression to isolate memory
-                encoded_data = None  # Will be compressed in subprocess
-            else:
-                snapshot_fname = f"{snapshot_id}.txt"
-                encoded_data = contents.encode('utf-8')
-
-        dest = os.path.join(self.watch_data_dir, snapshot_fname)
-
-        # Write snapshot file atomically if it doesn't exist
-        if not os.path.exists(dest):
-            if encoded_data is None:
+                # Compressed text
                 import brotli
-                # Brotli compression in subprocess
-                try:
-                    actual_dest = _brotli_subprocess_save(contents, dest, mode=brotli.MODE_TEXT, fallback_uncompressed=True)
-                    # Update snapshot_fname if fallback was used
-                    if actual_dest != dest:
-                        snapshot_fname = os.path.basename(actual_dest)
-                except Exception as e:
-                    logger.error(f"{self.get('uuid')} - Brotli compression failed: {e}")
-                    # Last resort fallback
-                    snapshot_fname = f"{snapshot_id}.txt"
-                    dest = os.path.join(self.watch_data_dir, snapshot_fname)
-                    with open(dest, 'wb') as f:
-                        f.write(contents.encode('utf-8'))
+                snapshot_fname = f"{snapshot_id}.txt.br"
+                dest = os.path.join(self.watch_data_dir, snapshot_fname)
+
+                if not os.path.exists(dest):
+                    try:
+                        actual_dest = _brotli_subprocess_save(contents, dest, mode=brotli.MODE_TEXT, fallback_uncompressed=True)
+                        if actual_dest != dest:
+                            snapshot_fname = os.path.basename(actual_dest)
+                    except Exception as e:
+                        logger.error(f"{self.get('uuid')} - Brotli compression failed: {e}")
+                        # Fallback to uncompressed
+                        snapshot_fname = f"{snapshot_id}.txt"
+                        dest = os.path.join(self.watch_data_dir, snapshot_fname)
+                        self._write_atomic(dest, contents.encode('utf-8'))
             else:
-                # Binary or small text - write directly
-                with tempfile.NamedTemporaryFile('wb', delete=False, dir=self.watch_data_dir) as tmp:
-                    tmp.write(encoded_data)
-                    tmp.flush()
-                    os.fsync(tmp.fileno())
-                    tmp_path = tmp.name
-                # Cross-platform: os.replace() atomically replaces on all platforms (Python 3.3+)
-                # Unlike os.rename(), this works on Windows even if dest exists
-                os.replace(tmp_path, dest)
-                del encoded_data
+                # Plain text
+                snapshot_fname = f"{snapshot_id}.txt"
+                dest = os.path.join(self.watch_data_dir, snapshot_fname)
+                self._write_atomic(dest, contents.encode('utf-8'))
 
         # Append to history.txt atomically
         index_fname = os.path.join(self.watch_data_dir, "history.txt")
         index_line = f"{timestamp},{snapshot_fname}\n"
 
-        # Lets try force flush here since it's usually a very small file
-        # If this still fails in the future then try reading all to memory first, re-writing etc
         with open(index_fname, 'a', encoding='utf-8') as f:
             f.write(index_line)
             f.flush()

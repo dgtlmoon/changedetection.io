@@ -43,23 +43,25 @@ def get_asset(asset_name, watch, datastore, request):
     try:
         screenshot_bytes = watch.get_history_snapshot(timestamp=timestamp)
 
-        # Convert to bytes if needed
-        if isinstance(screenshot_bytes, str):
-            screenshot_bytes = screenshot_bytes.encode('utf-8')
+        # Verify we got bytes (should always be bytes for image files)
+        if not isinstance(screenshot_bytes, bytes):
+            logger.error(f"Expected bytes but got {type(screenshot_bytes)} for screenshot at {timestamp}")
+            return None
 
-        # Detect image format
-        if screenshot_bytes[:8] == b'\x89PNG\r\n\x1a\n':
+        # Detect image format using puremagic (same as Watch.py)
+        try:
+            import puremagic
+            detections = puremagic.magic_string(screenshot_bytes[:2048])
+            if detections:
+                mime_type = detections[0].mime_type
+                logger.trace(f"Detected MIME type: {mime_type}")
+            else:
+                mime_type = 'image/png'  # Default fallback
+        except Exception as e:
+            logger.warning(f"puremagic detection failed: {e}, using 'image/png' fallback")
             mime_type = 'image/png'
-        elif screenshot_bytes[:3] == b'\xff\xd8\xff':
-            mime_type = 'image/jpeg'
-        elif screenshot_bytes[:6] in (b'GIF87a', b'GIF89a'):
-            mime_type = 'image/gif'
-        elif screenshot_bytes[:4] == b'RIFF' and screenshot_bytes[8:12] == b'WEBP':
-            mime_type = 'image/webp'
-        else:
-            mime_type = 'image/png'  # Default fallback
 
-        return (screenshot_bytes, mime_type, 'public, max-age=3600')
+        return (screenshot_bytes, mime_type, 'public, max-age=10')
 
     except Exception as e:
         logger.error(f"Failed to load screenshot for preview asset: {e}")

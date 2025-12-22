@@ -375,6 +375,7 @@ class fetcher(Fetcher):
         self.content = await self.page.content
 
         # Now take screenshot (scrolling may trigger layout changes, but measurements are already captured)
+        logger.debug(f"Screenshot format {self.screenshot_format}")
         self.screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format)
         self.xpath_data = await self.page.evaluate(XPATH_ELEMENT_JS, {
             "visualselector_xpath_selectors": visualselector_xpath_selectors,

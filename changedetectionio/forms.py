@@ -14,6 +14,7 @@ from wtforms import (
     BooleanField,
     Form,
     Field,
+    FloatField,
     IntegerField,
     RadioField,
     SelectField,
@@ -996,11 +997,24 @@ class globalSettingsApplicationForm(commonSettingsForm):
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_json=False)])
     ignore_whitespace = BooleanField('Ignore whitespace')
-    ssim_threshold = SelectField(
-        'Default Screenshot Comparison Sensitivity',
+
+    # Screenshot comparison settings
+    min_change_percentage = FloatField(
+        'Screenshot: Minimum Change Percentage',
+        validators=[
+            validators.Optional(),
+            validators.NumberRange(min=0.0, max=100.0, message='Must be between 0 and 100')
+        ],
+        default=0.1,
+        render_kw={"placeholder": "0.1", "style": "width: 8em;"}
+    )
+
+    comparison_threshold = SelectField(
+        'Screenshot: Pixel Difference Sensitivity',
         choices=SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS,
         default=SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT
     )
+
     password = SaltyPasswordField()
     pager_size = IntegerField('Pager size',
                               render_kw={"style": "width: 5em;"},

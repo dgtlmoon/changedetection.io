@@ -63,13 +63,15 @@ def get_asset(asset_name, watch, datastore, request):
             # Return the 'from' screenshot with bounding box if configured
             img_bytes = watch.get_history_snapshot(timestamp=from_version)
             img_bytes = _draw_bounding_box_if_configured(img_bytes, watch, datastore)
-            return (img_bytes, 'image/png', 'public, max-age=3600')
+            mime_type = _detect_mime_type(img_bytes)
+            return (img_bytes, mime_type, 'public, max-age=3600')
 
         elif asset_name == 'after':
             # Return the 'to' screenshot with bounding box if configured
             img_bytes = watch.get_history_snapshot(timestamp=to_version)
             img_bytes = _draw_bounding_box_if_configured(img_bytes, watch, datastore)
-            return (img_bytes, 'image/png', 'public, max-age=3600')
+            mime_type = _detect_mime_type(img_bytes)
+            return (img_bytes, mime_type, 'public, max-age=3600')
 
         elif asset_name == 'rendered_diff':
             # Generate diff in isolated subprocess to prevent memory leaks
@@ -79,15 +81,15 @@ def get_asset(asset_name, watch, datastore, request):
             img_bytes_from = watch.get_history_snapshot(timestamp=from_version)
             img_bytes_to = watch.get_history_snapshot(timestamp=to_version)
 
-            # Get threshold
-            threshold = watch.get('comparison_threshold')
-            if not threshold or threshold == '':
-                threshold = datastore.data['settings']['application'].get('comparison_threshold', SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT)
+            # Get pixel difference threshold sensitivity
+            pixel_difference_threshold_sensitivity = watch.get('comparison_threshold')
+            if not pixel_difference_threshold_sensitivity or pixel_difference_threshold_sensitivity == '':
+                pixel_difference_threshold_sensitivity = datastore.data['settings']['application'].get('comparison_threshold', SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT)
 
             try:
-                threshold = float(threshold)
+                pixel_difference_threshold_sensitivity = float(pixel_difference_threshold_sensitivity)
             except (ValueError, TypeError):
-                threshold = 30.0
+                pixel_difference_threshold_sensitivity = 30.0
 
             # Get blur sigma
             blur_sigma = float(os.getenv("OPENCV_BLUR_SIGMA", "0.8"))
@@ -102,10 +104,10 @@ def get_asset(asset_name, watch, datastore, request):
                     process_screenshot_handler.generate_diff_isolated(
                         img_bytes_from,
                         img_bytes_to,
-                        int(threshold),
-                        blur_sigma,
-                        MAX_DIFF_WIDTH,
-                        MAX_DIFF_HEIGHT
+                        pixel_difference_threshold=int(pixel_difference_threshold_sensitivity),
+                        blur_sigma=blur_sigma,
+                        max_width=MAX_DIFF_WIDTH,
+                        max_height=MAX_DIFF_HEIGHT
                     )
                 )
 
@@ -144,6 +146,31 @@ def get_asset(asset_name, watch, datastore, request):
         import traceback
         logger.error(traceback.format_exc())
         return None
+
+
+def _detect_mime_type(img_bytes):
+    """
+    Detect MIME type using puremagic (same as Watch.py).
+
+    Args:
+        img_bytes: Image bytes
+
+    Returns:
+        str: MIME type (e.g., 'image/png', 'image/jpeg')
+    """
+    try:
+        import puremagic
+        detections = puremagic.magic_string(img_bytes[:2048])
+        if detections:
+            mime_type = detections[0].mime_type
+            logger.trace(f"Detected MIME type: {mime_type}")
+            return mime_type
+        else:
+            logger.trace("No MIME type detected, using 'image/png' fallback")
+            return 'image/png'
+    except Exception as e:
+        logger.warning(f"puremagic detection failed: {e}, using 'image/png' fallback")
+        return 'image/png'
 
 
 def _draw_bounding_box_if_configured(img_bytes, watch, datastore):
@@ -302,17 +329,17 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
     if to_version not in versions:
         to_version = versions[-1]
 
-    # Get threshold (per-watch > global > env default)
-    threshold = watch.get('comparison_threshold')
-    if not threshold or threshold == '':
-        threshold = datastore.data['settings']['application'].get('comparison_threshold', SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT)
+    # Get pixel difference threshold sensitivity (per-watch > global > env default)
+    pixel_difference_threshold_sensitivity = watch.get('comparison_threshold')
+    if not pixel_difference_threshold_sensitivity or pixel_difference_threshold_sensitivity == '':
+        pixel_difference_threshold_sensitivity = datastore.data['settings']['application'].get('comparison_threshold', SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT)
 
-    # Convert threshold to appropriate type
+    # Convert to appropriate type
     try:
-        threshold = float(threshold)
+        pixel_difference_threshold_sensitivity = float(pixel_difference_threshold_sensitivity)
     except (ValueError, TypeError):
-        logger.warning(f"Invalid threshold value '{threshold}', using default")
-        threshold = 30.0
+        logger.warning(f"Invalid pixel_difference_threshold_sensitivity value '{pixel_difference_threshold_sensitivity}', using default")
+        pixel_difference_threshold_sensitivity = 30.0
 
     # Get blur sigma
     blur_sigma = float(os.getenv("OPENCV_BLUR_SIGMA", "0.8"))
@@ -340,10 +367,10 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
                 process_screenshot_handler.calculate_change_percentage_isolated(
                     img_bytes_from,
                     img_bytes_to,
-                    int(threshold),
-                    blur_sigma,
-                    MAX_DIFF_WIDTH,
-                    MAX_DIFF_HEIGHT
+                    pixel_difference_threshold=int(pixel_difference_threshold_sensitivity),
+                    blur_sigma=blur_sigma,
+                    max_width=MAX_DIFF_WIDTH,
+                    max_height=MAX_DIFF_HEIGHT
                 )
             )
 
@@ -366,7 +393,7 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
 
         change_percentage = result_container[0]
 
-        method_display = f"{process_screenshot_handler.IMPLEMENTATION_NAME} (threshold: {threshold:.0f})"
+        method_display = f"{process_screenshot_handler.IMPLEMENTATION_NAME} (pixel_diff_threshold: {pixel_difference_threshold_sensitivity:.0f})"
         logger.debug(f"Done change percentage calculation in {time.time() - now:.2f}s")
 
     except Exception as e:
@@ -395,7 +422,7 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
         uuid=watch.get('uuid'),
         change_percentage=change_percentage,
         comparison_data=comparison_data,  # Full history for charts/visualization
-        threshold=threshold,
+        threshold=pixel_difference_threshold_sensitivity,
         comparison_method=method_display,
         versions=versions,
         from_version=from_version,

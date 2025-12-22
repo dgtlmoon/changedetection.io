@@ -13,7 +13,7 @@ from .. import POLL_TIMEOUT_ABSOLUTE
 IMPLEMENTATION_NAME = "OpenCV"
 
 
-def _worker_compare(conn, img_bytes_from, img_bytes_to, threshold, blur_sigma, min_change_percentage, crop_region):
+def _worker_compare(conn, img_bytes_from, img_bytes_to, pixel_difference_threshold, blur_sigma, crop_region):
     """
     Worker function for image comparison (must be top-level for pickling with spawn).
 
@@ -21,9 +21,8 @@ def _worker_compare(conn, img_bytes_from, img_bytes_to, threshold, blur_sigma, m
         conn: Pipe connection for sending results
         img_bytes_from: Previous screenshot bytes
         img_bytes_to: Current screenshot bytes
-        threshold: Pixel difference threshold
+        pixel_difference_threshold: Pixel-level sensitivity (0-255) - how different must a pixel be to count as changed
         blur_sigma: Gaussian blur sigma
-        min_change_percentage: Minimum percentage to trigger change
         crop_region: Optional (left, top, right, bottom) crop coordinates
     """
     import time
@@ -85,35 +84,41 @@ def _worker_compare(conn, img_bytes_from, img_bytes_to, threshold, blur_sigma, m
         diff = cv2.absdiff(gray_from, gray_to)
 
         # Apply threshold
-        print(f"[{time.time():.3f}] [Worker] Applying threshold ({threshold})", flush=True)
-        _, thresholded = cv2.threshold(diff, int(threshold), 255, cv2.THRESH_BINARY)
+        print(f"[{time.time():.3f}] [Worker] Applying pixel difference threshold ({pixel_difference_threshold})", flush=True)
+        _, thresholded = cv2.threshold(diff, int(pixel_difference_threshold), 255, cv2.THRESH_BINARY)
 
         # Calculate change percentage
         total_pixels = thresholded.size
         changed_pixels = np.count_nonzero(thresholded)
         change_percentage = (changed_pixels / total_pixels) * 100.0
 
-        # Determine if change detected
-        changed_detected = change_percentage > min_change_percentage
-
-        print(f"[{time.time():.3f}] [Worker] Comparison complete: changed={changed_detected}, percentage={change_percentage:.2f}%", flush=True)
-        conn.send((changed_detected, float(change_percentage)))
+        print(f"[{time.time():.3f}] [Worker] Comparison complete: percentage={change_percentage:.2f}%", flush=True)
+        # Return only the score - let the caller decide if it's a "change"
+        conn.send(float(change_percentage))
 
     except Exception as e:
         print(f"[{time.time():.3f}] [Worker] Error: {e}", flush=True)
         import traceback
         traceback.print_exc()
-        conn.send((False, 0.0))
+        # Send error info as dict so parent can re-raise
+        conn.send({'error': str(e), 'traceback': traceback.format_exc()})
     finally:
         conn.close()
 
 
-async def compare_images_isolated(img_bytes_from, img_bytes_to, threshold, blur_sigma, min_change_percentage, crop_region=None):
+async def compare_images_isolated(img_bytes_from, img_bytes_to, pixel_difference_threshold, blur_sigma, crop_region=None):
     """
     Compare images in isolated subprocess using OpenCV (async-safe).
 
+    Args:
+        img_bytes_from: Previous screenshot bytes
+        img_bytes_to: Current screenshot bytes
+        pixel_difference_threshold: Pixel-level sensitivity (0-255) - how different must a pixel be to count as changed
+        blur_sigma: Gaussian blur sigma
+        crop_region: Optional (left, top, right, bottom) crop coordinates
+
     Returns:
-        tuple: (changed_detected, change_percentage)
+        float: Change percentage (0-100)
     """
     import time
     import asyncio
@@ -125,14 +130,14 @@ async def compare_images_isolated(img_bytes_from, img_bytes_to, threshold, blur_
 
     p = ctx.Process(
         target=_worker_compare,
-        args=(child_conn, img_bytes_from, img_bytes_to, threshold, blur_sigma, min_change_percentage, crop_region)
+        args=(child_conn, img_bytes_from, img_bytes_to, pixel_difference_threshold, blur_sigma, crop_region)
     )
 
     print(f"[{time.time():.3f}] [Parent] Starting subprocess", flush=True)
     p.start()
     print(f"[{time.time():.3f}] [Parent] Subprocess started (pid={p.pid}), waiting for result ({POLL_TIMEOUT_ABSOLUTE}s timeout)", flush=True)
 
-    result = (False, 0.0)
+    result = 0.0
     try:
         # Async-friendly polling: check in small intervals without blocking event loop
         deadline = time.time() + POLL_TIMEOUT_ABSOLUTE
@@ -142,15 +147,20 @@ async def compare_images_isolated(img_bytes_from, img_bytes_to, threshold, blur_
             if has_data:
                 print(f"[{time.time():.3f}] [Parent] Result available, receiving", flush=True)
                 result = await asyncio.to_thread(parent_conn.recv)
-                print(f"[{time.time():.3f}] [Parent] Result received: {result}", flush=True)
+                # Check if result is an error dict
+                if isinstance(result, dict) and 'error' in result:
+                    raise RuntimeError(f"Image comparison failed: {result['error']}")
+                print(f"[{time.time():.3f}] [Parent] Result received: {result:.2f}%", flush=True)
                 break
             await asyncio.sleep(0)  # Yield control to event loop
         else:
             from loguru import logger
             logger.critical(f"[OpenCV subprocess] Timeout waiting for compare_images result after {POLL_TIMEOUT_ABSOLUTE}s (subprocess may be hung)")
             print(f"[{time.time():.3f}] [Parent] Timeout waiting for result after {POLL_TIMEOUT_ABSOLUTE}s", flush=True)
+            raise TimeoutError(f"Image comparison subprocess timeout after {POLL_TIMEOUT_ABSOLUTE}s")
     except Exception as e:
         print(f"[{time.time():.3f}] [Parent] Error receiving result: {e}", flush=True)
+        raise
     finally:
         # Always close pipe first
         try:
@@ -187,7 +197,7 @@ async def compare_images_isolated(img_bytes_from, img_bytes_to, threshold, blur_
     return result
 
 
-def _worker_generate_diff(conn, img_bytes_from, img_bytes_to, threshold, blur_sigma, max_width, max_height):
+def _worker_generate_diff(conn, img_bytes_from, img_bytes_to, pixel_difference_threshold, blur_sigma, max_width, max_height):
     """
     Worker function for generating visual diff with red overlay.
     """
@@ -231,7 +241,7 @@ def _worker_generate_diff(conn, img_bytes_from, img_bytes_to, threshold, blur_si
         diff = cv2.absdiff(gray_from, gray_to)
 
         # Apply threshold to get mask
-        _, mask = cv2.threshold(diff, int(threshold), 255, cv2.THRESH_BINARY)
+        _, mask = cv2.threshold(diff, int(pixel_difference_threshold), 255, cv2.THRESH_BINARY)
 
         # Create red overlay on original 'to' image
         # Where mask is 255 (changed), blend 50% red
@@ -254,12 +264,13 @@ def _worker_generate_diff(conn, img_bytes_from, img_bytes_to, threshold, blur_si
         print(f"[{time.time():.3f}] [Worker] Generate diff error: {e}", flush=True)
         import traceback
         traceback.print_exc()
-        conn.send(None)
+        # Send error info as dict so parent can re-raise
+        conn.send({'error': str(e), 'traceback': traceback.format_exc()})
     finally:
         conn.close()
 
 
-async def generate_diff_isolated(img_bytes_from, img_bytes_to, threshold, blur_sigma, max_width, max_height):
+async def generate_diff_isolated(img_bytes_from, img_bytes_to, pixel_difference_threshold, blur_sigma, max_width, max_height):
     """
     Generate visual diff with red overlay in isolated subprocess (async-safe).
 
@@ -275,7 +286,7 @@ async def generate_diff_isolated(img_bytes_from, img_bytes_to, threshold, blur_s
 
     p = ctx.Process(
         target=_worker_generate_diff,
-        args=(child_conn, img_bytes_from, img_bytes_to, threshold, blur_sigma, max_width, max_height)
+        args=(child_conn, img_bytes_from, img_bytes_to, pixel_difference_threshold, blur_sigma, max_width, max_height)
     )
 
     print(f"[{time.time():.3f}] [Parent] Starting subprocess", flush=True)
@@ -292,6 +303,9 @@ async def generate_diff_isolated(img_bytes_from, img_bytes_to, threshold, blur_s
             if has_data:
                 print(f"[{time.time():.3f}] [Parent] Result available, receiving", flush=True)
                 result = await asyncio.to_thread(parent_conn.recv)
+                # Check if result is an error dict
+                if isinstance(result, dict) and 'error' in result:
+                    raise RuntimeError(f"Generate diff failed: {result['error']}")
                 print(f"[{time.time():.3f}] [Parent] Result received ({len(result) if result else 0} bytes)", flush=True)
                 break
             await asyncio.sleep(0)  # Yield control to event loop
@@ -299,8 +313,10 @@ async def generate_diff_isolated(img_bytes_from, img_bytes_to, threshold, blur_s
             from loguru import logger
             logger.critical(f"[OpenCV subprocess] Timeout waiting for generate_diff result after {POLL_TIMEOUT_ABSOLUTE}s (subprocess may be hung)")
             print(f"[{time.time():.3f}] [Parent] Timeout waiting for result after {POLL_TIMEOUT_ABSOLUTE}s", flush=True)
+            raise TimeoutError(f"Generate diff subprocess timeout after {POLL_TIMEOUT_ABSOLUTE}s")
     except Exception as e:
         print(f"[{time.time():.3f}] [Parent] Error receiving diff: {e}", flush=True)
+        raise
     finally:
         # Always close pipe first
         try:
@@ -368,7 +384,8 @@ def _worker_draw_bounding_box(conn, img_bytes, x, y, width, height, color, thick
         print(f"[{time.time():.3f}] [Worker] Draw bounding box error: {e}", flush=True)
         import traceback
         traceback.print_exc()
-        conn.send(None)
+        # Send error info as dict so parent can re-raise
+        conn.send({'error': str(e), 'traceback': traceback.format_exc()})
     finally:
         conn.close()
 
@@ -416,6 +433,9 @@ async def draw_bounding_box_isolated(img_bytes, x, y, width, height, color=(255,
                 print(f"[{time.time():.3f}] [Parent] Result available, receiving", flush=True)
                 # Run recv() in thread too
                 result = await asyncio.to_thread(parent_conn.recv)
+                # Check if result is an error dict
+                if isinstance(result, dict) and 'error' in result:
+                    raise RuntimeError(f"Draw bounding box failed: {result['error']}")
                 print(f"[{time.time():.3f}] [Parent] Result received ({len(result) if result else 0} bytes)", flush=True)
                 break
             # Yield control to event loop
@@ -424,8 +444,10 @@ async def draw_bounding_box_isolated(img_bytes, x, y, width, height, color=(255,
             from loguru import logger
             logger.critical(f"[OpenCV subprocess] Timeout waiting for draw_bounding_box result after {POLL_TIMEOUT_ABSOLUTE}s (subprocess may be hung)")
             print(f"[{time.time():.3f}] [Parent] Timeout waiting for result after {POLL_TIMEOUT_ABSOLUTE}s", flush=True)
+            raise TimeoutError(f"Draw bounding box subprocess timeout after {POLL_TIMEOUT_ABSOLUTE}s")
     except Exception as e:
         print(f"[{time.time():.3f}] [Parent] Error receiving result: {e}", flush=True)
+        raise
     finally:
         # Always close pipe first
         try:
@@ -461,7 +483,7 @@ async def draw_bounding_box_isolated(img_bytes, x, y, width, height, color=(255,
     return result
 
 
-def _worker_calculate_percentage(conn, img_bytes_from, img_bytes_to, threshold, blur_sigma, max_width, max_height):
+def _worker_calculate_percentage(conn, img_bytes_from, img_bytes_to, pixel_difference_threshold, blur_sigma, max_width, max_height):
     """
     Worker function for calculating change percentage.
     """
@@ -504,7 +526,7 @@ def _worker_calculate_percentage(conn, img_bytes_from, img_bytes_to, threshold, 
         diff = cv2.absdiff(gray_from, gray_to)
 
         # Apply threshold
-        _, thresholded = cv2.threshold(diff, int(threshold), 255, cv2.THRESH_BINARY)
+        _, thresholded = cv2.threshold(diff, int(pixel_difference_threshold), 255, cv2.THRESH_BINARY)
 
         # Calculate percentage
         total_pixels = thresholded.size
@@ -515,12 +537,15 @@ def _worker_calculate_percentage(conn, img_bytes_from, img_bytes_to, threshold, 
 
     except Exception as e:
         print(f"[{time.time():.3f}] [Worker] Calculate percentage error: {e}", flush=True)
-        conn.send(0.0)
+        import traceback
+        traceback.print_exc()
+        # Send error info as dict so parent can re-raise
+        conn.send({'error': str(e), 'traceback': traceback.format_exc()})
     finally:
         conn.close()
 
 
-async def calculate_change_percentage_isolated(img_bytes_from, img_bytes_to, threshold, blur_sigma, max_width, max_height):
+async def calculate_change_percentage_isolated(img_bytes_from, img_bytes_to, pixel_difference_threshold, blur_sigma, max_width, max_height):
     """
     Calculate change percentage in isolated subprocess (async-safe).
 
@@ -536,7 +561,7 @@ async def calculate_change_percentage_isolated(img_bytes_from, img_bytes_to, thr
 
     p = ctx.Process(
         target=_worker_calculate_percentage,
-        args=(child_conn, img_bytes_from, img_bytes_to, threshold, blur_sigma, max_width, max_height)
+        args=(child_conn, img_bytes_from, img_bytes_to, pixel_difference_threshold, blur_sigma, max_width, max_height)
     )
 
     print(f"[{time.time():.3f}] [Parent] Starting subprocess", flush=True)
@@ -553,6 +578,9 @@ async def calculate_change_percentage_isolated(img_bytes_from, img_bytes_to, thr
             if has_data:
                 print(f"[{time.time():.3f}] [Parent] Result available, receiving", flush=True)
                 result = await asyncio.to_thread(parent_conn.recv)
+                # Check if result is an error dict
+                if isinstance(result, dict) and 'error' in result:
+                    raise RuntimeError(f"Calculate change percentage failed: {result['error']}")
                 print(f"[{time.time():.3f}] [Parent] Result received: {result:.2f}%", flush=True)
                 break
             await asyncio.sleep(0)  # Yield control to event loop
@@ -560,8 +588,10 @@ async def calculate_change_percentage_isolated(img_bytes_from, img_bytes_to, thr
             from loguru import logger
             logger.critical(f"[OpenCV subprocess] Timeout waiting for calculate_change_percentage result after {POLL_TIMEOUT_ABSOLUTE}s (subprocess may be hung)")
             print(f"[{time.time():.3f}] [Parent] Timeout waiting for result after {POLL_TIMEOUT_ABSOLUTE}s", flush=True)
+            raise TimeoutError(f"Calculate change percentage subprocess timeout after {POLL_TIMEOUT_ABSOLUTE}s")
     except Exception as e:
         print(f"[{time.time():.3f}] [Parent] Error receiving percentage: {e}", flush=True)
+        raise
     finally:
         # Always close pipe first
         try:
