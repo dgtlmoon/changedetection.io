@@ -3,6 +3,7 @@ import hashlib
 import os
 import re
 import asyncio
+from functools import partial
 from changedetectionio import strtobool
 from changedetectionio.content_fetchers.exceptions import BrowserStepsInUnsupportedFetcher, EmptyReply, Non200ErrorCodeReceived
 from changedetectionio.content_fetchers.base import Fetcher
@@ -161,7 +162,7 @@ class fetcher(Fetcher):
             )
         )
 
-    def quit(self, watch=None):
+    async def quit(self, watch=None):
 
         # In case they switched to `requests` fetcher from something else
         # Then the screenshot could be old, in any case, it's not used here.
