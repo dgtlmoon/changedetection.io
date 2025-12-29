@@ -10,7 +10,8 @@ import json
 import time
 from loguru import logger
 
-from changedetectionio.processors.image_ssim_diff import SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT
+from changedetectionio.processors.image_ssim_diff import SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT, PROCESSOR_CONFIG_NAME, \
+    OPENCV_BLUR_SIGMA
 
 # All image operations now use OpenCV via isolated_opencv subprocess handler
 # No direct handler imports needed - subprocess isolation handles everything
@@ -81,18 +82,25 @@ def get_asset(asset_name, watch, datastore, request):
             img_bytes_from = watch.get_history_snapshot(timestamp=from_version)
             img_bytes_to = watch.get_history_snapshot(timestamp=to_version)
 
-            # Get pixel difference threshold sensitivity
-            pixel_difference_threshold_sensitivity = watch.get('comparison_threshold')
-            if not pixel_difference_threshold_sensitivity or pixel_difference_threshold_sensitivity == '':
-                pixel_difference_threshold_sensitivity = datastore.data['settings']['application'].get('comparison_threshold', SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT)
+            # Get pixel difference threshold sensitivity (per-watch > global)
+            # This controls how different a pixel must be (0-255 scale) to count as "changed"
+            from changedetectionio import processors
+            processor_instance = processors.difference_detection_processor(datastore, watch.get('uuid'))
+            processor_config = processor_instance.get_extra_watch_config(PROCESSOR_CONFIG_NAME)
 
+            pixel_difference_threshold_sensitivity = processor_config.get('pixel_difference_threshold_sensitivity')
+            if not pixel_difference_threshold_sensitivity:
+                pixel_difference_threshold_sensitivity = datastore.data['settings']['application'].get(
+                    'pixel_difference_threshold_sensitivity', SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT)
             try:
-                pixel_difference_threshold_sensitivity = float(pixel_difference_threshold_sensitivity)
+                pixel_difference_threshold_sensitivity = int(pixel_difference_threshold_sensitivity)
             except (ValueError, TypeError):
-                pixel_difference_threshold_sensitivity = 30.0
+                logger.warning(
+                    f"Invalid pixel_difference_threshold_sensitivity value '{pixel_difference_threshold_sensitivity}', using default")
+                pixel_difference_threshold_sensitivity = SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT
 
-            # Get blur sigma
-            blur_sigma = float(os.getenv("OPENCV_BLUR_SIGMA", "0.8"))
+            logger.debug(f"Pixel difference threshold sensitivity is {pixel_difference_threshold_sensitivity}")
+
 
             # Generate diff in isolated subprocess (async-safe)
             import asyncio
@@ -105,7 +113,7 @@ def get_asset(asset_name, watch, datastore, request):
                         img_bytes_from,
                         img_bytes_to,
                         pixel_difference_threshold=int(pixel_difference_threshold_sensitivity),
-                        blur_sigma=blur_sigma,
+                        blur_sigma=OPENCV_BLUR_SIGMA,
                         max_width=MAX_DIFF_WIDTH,
                         max_height=MAX_DIFF_HEIGHT
                     )
@@ -330,9 +338,9 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
         to_version = versions[-1]
 
     # Get pixel difference threshold sensitivity (per-watch > global > env default)
-    pixel_difference_threshold_sensitivity = watch.get('comparison_threshold')
+    pixel_difference_threshold_sensitivity = watch.get('pixel_difference_threshold_sensitivity')
     if not pixel_difference_threshold_sensitivity or pixel_difference_threshold_sensitivity == '':
-        pixel_difference_threshold_sensitivity = datastore.data['settings']['application'].get('comparison_threshold', SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT)
+        pixel_difference_threshold_sensitivity = datastore.data['settings']['application'].get('pixel_difference_threshold_sensitivity', SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT)
 
     # Convert to appropriate type
     try:
@@ -342,7 +350,7 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
         pixel_difference_threshold_sensitivity = 30.0
 
     # Get blur sigma
-    blur_sigma = float(os.getenv("OPENCV_BLUR_SIGMA", "0.8"))
+    blur_sigma = OPENCV_BLUR_SIGMA
 
     # Load screenshots from history
     try:

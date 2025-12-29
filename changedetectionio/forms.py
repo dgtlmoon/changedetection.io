@@ -1009,12 +1009,6 @@ class globalSettingsApplicationForm(commonSettingsForm):
         render_kw={"placeholder": "0.1", "style": "width: 8em;"}
     )
 
-    comparison_threshold = SelectField(
-        'Screenshot: Pixel Difference Sensitivity',
-        choices=SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS,
-        default=SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT
-    )
-
     password = SaltyPasswordField()
     pager_size = IntegerField('Pager size',
                               render_kw={"style": "width: 5em;"},

@@ -42,11 +42,12 @@
                 <fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.requests.form.time_between_check, class="time-check-widget") }}
+
                         <span class="pure-form-message-inline">Default recheck time for all watches, current system minimum is <i>{{min_system_recheck_seconds}}</i> seconds (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Misc-system-settings#enviroment-variables">more info</a>).</span>
                             <div id="time-between-check-schedule">
-                                <!-- Start Time and End Time -->
+                                <!-- Start Time and End Time {{ timezone_default_config }} -->
                                 <div id="limit-between-time">
-                                    {{ render_time_schedule_form(form.requests, available_timezones, timezone_default_config) }}
+                                   {{ render_time_schedule_form(form.requests, available_timezones, timezone_default_config) }}
                                 </div>
                         </div>
                     </div>

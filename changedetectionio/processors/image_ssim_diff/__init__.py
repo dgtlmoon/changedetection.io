@@ -6,11 +6,13 @@ which is 10-100x faster than SSIM while still detecting meaningful visual change
 """
 
 import os
+from pathlib import Path
 
 processor_description = "Visual/Screenshot change detection (Fast)"
 processor_name = "image_ssim_diff"
 processor_weight = 2  # Lower weight = appears at top, heavier weight = appears lower (bottom)
 
+PROCESSOR_CONFIG_NAME = f"{Path(__file__).parent.name}.json"
 
 # Subprocess timeout settings
 # Maximum time to wait for subprocess operations (seconds)
@@ -20,9 +22,11 @@ POLL_TIMEOUT_ABSOLUTE = int(os.getenv('OPENCV_SUBPROCESS_TIMEOUT', '20'))
 CROPPED_IMAGE_TEMPLATE_FILENAME = 'cropped_image_template.png'
 
 SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS = [
-    ('75', 'Low sensitivity (only major changes)'),
-    ('30', 'Medium sensitivity (moderate changes)'),
+    ('200', 'Low sensitivity (only major changes)'),
+    ('80', 'Medium sensitivity (moderate changes - recommended)'),
     ('20', 'High sensitivity (small changes)'),
     ('0', 'Very high sensitivity (any change)')
 ]
+
 SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT=0.999
+OPENCV_BLUR_SIGMA=float(os.getenv("OPENCV_BLUR_SIGMA", "3.0"))

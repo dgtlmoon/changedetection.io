@@ -12,7 +12,7 @@ import time
 from loguru import logger
 from changedetectionio.processors import difference_detection_processor, SCREENSHOT_FORMAT_PNG
 from changedetectionio.processors.exceptions import ProcessorException
-from . import SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT
+from . import SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT, PROCESSOR_CONFIG_NAME, OPENCV_BLUR_SIGMA
 
 # All image operations now use OpenCV via isolated_opencv subprocess handler
 # Template matching temporarily disabled pending OpenCV implementation
@@ -55,25 +55,38 @@ class perform_site_check(difference_detection_processor):
         else:
             logger.debug(f"UUID: {watch.get('uuid')} - Screenshot MD5 changed")
 
+
+
+        # Check if bounding box is set (for drawn area mode)
+        # Read from processor-specific config JSON file (named after processor)
+        crop_region = None
+
+        processor_config = self.get_extra_watch_config(PROCESSOR_CONFIG_NAME)
+        bounding_box = processor_config.get('bounding_box') if processor_config else None
+
+
         # Get pixel difference threshold sensitivity (per-watch > global)
         # This controls how different a pixel must be (0-255 scale) to count as "changed"
-        pixel_difference_threshold_sensitivity = watch.get('comparison_threshold')
+        pixel_difference_threshold_sensitivity = processor_config.get('pixel_difference_threshold_sensitivity')
         if not pixel_difference_threshold_sensitivity:
-            pixel_difference_threshold_sensitivity = self.datastore.data['settings']['application'].get('comparison_threshold', SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT)
+            pixel_difference_threshold_sensitivity = self.datastore.data['settings']['application'].get('pixel_difference_threshold_sensitivity', SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT)
         try:
             pixel_difference_threshold_sensitivity = int(pixel_difference_threshold_sensitivity)
         except (ValueError, TypeError):
             logger.warning(f"Invalid pixel_difference_threshold_sensitivity value '{pixel_difference_threshold_sensitivity}', using default")
             pixel_difference_threshold_sensitivity = SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT
 
-        # Check if bounding box is set (for drawn area mode)
-        # Read from processor-specific config JSON file (named after processor)
-        crop_region = None
-        # Automatically use the processor name from watch config as filename
-        processor_name = watch.get('processor', 'default')
-        config_filename = f'{processor_name}.json'
-        processor_config = self.get_extra_watch_config(config_filename) if self.get_extra_watch_config(config_filename) else {}
-        bounding_box = processor_config.get('bounding_box') if processor_config else None
+
+        # Get minimum change percentage (per-watch > global > env var default)
+        # This controls what percentage of pixels must change to trigger a detection
+        min_change_percentage = processor_config.get('min_change_percentage')
+        if not min_change_percentage:
+            min_change_percentage = self.datastore.data['settings']['application'].get('min_change_percentage', 1)
+        try:
+            min_change_percentage = int(min_change_percentage)
+        except (ValueError, TypeError):
+            logger.warning(f"Invalid min_change_percentage value '{min_change_percentage}', using default 0.1")
+            min_change_percentage = 1
 
         # Template matching for tracking content movement
         template_matching_enabled = processor_config.get('auto_track_region', False) #@@todo disabled for now
@@ -158,20 +171,7 @@ class perform_site_check(difference_detection_processor):
         try:
             from .image_handler import isolated_opencv as process_screenshot_handler
 
-            # Get blur sigma
-            blur_sigma = float(os.getenv("OPENCV_BLUR_SIGMA", "0.8"))
-
-            # Get minimum change percentage (per-watch > global > env var default)
-            # This controls what percentage of pixels must change to trigger a detection
-            min_change_percentage = watch.get('min_change_percentage')
-            if min_change_percentage is None or min_change_percentage == '':
-                min_change_percentage = self.datastore.data['settings']['application'].get('min_change_percentage', float(os.getenv("OPENCV_MIN_CHANGE_PERCENT", "0.1")))
-            try:
-                min_change_percentage = float(min_change_percentage)
-            except (ValueError, TypeError):
-                logger.warning(f"Invalid min_change_percentage value '{min_change_percentage}', using default 0.1")
-                min_change_percentage = 0.1
-
+# stuff in watch doesnt need to be there
             logger.debug(f"UUID: {watch.get('uuid')} - Starting isolated subprocess comparison (crop_region={crop_region})")
 
             # Compare using isolated subprocess with OpenCV (async-safe to avoid blocking event loop)
@@ -184,10 +184,10 @@ class perform_site_check(difference_detection_processor):
             def run_async_in_thread():
                 return asyncio.run(
                     process_screenshot_handler.compare_images_isolated(
-                        previous_screenshot_bytes,
-                        self.screenshot,
+                        img_bytes_from=previous_screenshot_bytes,
+                        img_bytes_to=self.screenshot,
                         pixel_difference_threshold=pixel_difference_threshold_sensitivity,
-                        blur_sigma=blur_sigma,
+                        blur_sigma=OPENCV_BLUR_SIGMA,
                         crop_region=crop_region  # Pass crop region for isolated cropping
                     )
                 )
@@ -215,9 +215,7 @@ class perform_site_check(difference_detection_processor):
                 raise RuntimeError("Image comparison subprocess returned no result")
 
             changed_detected = change_score > min_change_percentage
-
-            logger.debug(f"UUID: {watch.get('uuid')} - Isolated subprocess comparison completed: score={change_score:.2f}%, min_change_threshold={min_change_percentage}%")
-            logger.info(f"{process_screenshot_handler.IMPLEMENTATION_NAME}: {change_score:.2f}% pixels changed, pixel_diff_threshold_sensitivity: {pixel_difference_threshold_sensitivity:.0f}")
+            logger.info(f"UUID: {watch.get('uuid')} -  {process_screenshot_handler.IMPLEMENTATION_NAME}: {change_score:.2f}% pixels changed, pixel_diff_threshold_sensitivity: {pixel_difference_threshold_sensitivity:.0f} score={change_score:.2f}%, min_change_threshold={min_change_percentage}%")
 
         except Exception as e:
             logger.error(f"UUID: {watch.get('uuid')} - Failed to compare screenshots: {e}")
