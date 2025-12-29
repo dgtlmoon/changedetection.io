@@ -246,7 +246,7 @@ class fetcher(Fetcher):
         async def setup_frame_handlers_on_first_response(event):
             # Only trigger for the main document response
             if event.get('type') == 'Document':
-                logger.debug("First response received, setting up frame handlers")
+                logger.debug("First response received, setting up frame handlers for forced page stop load.")
 
                 # De-register this listener - we only need it once
                 self.page._client.remove_listener('Network.responseReceived', setup_frame_handlers_on_first_response)
@@ -273,7 +273,7 @@ class fetcher(Fetcher):
         attempt=0
         while not response:
             logger.debug(f"Attempting page fetch {url} attempt {attempt}")
-            response = await self.page.goto(url)
+            response = await self.page.goto(url, timeout=0)
             await asyncio.sleep(1 + extra_wait)
             if response:
                 break
