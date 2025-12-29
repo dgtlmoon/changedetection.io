@@ -97,7 +97,7 @@ class Fetcher():
         pass
 
     @abstractmethod
-    def quit(self, watch=None):
+    async def quit(self, watch=None):
         return
 
     @abstractmethod

@@ -394,6 +394,12 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                 datastore.update_watch(uuid=uuid, update_obj={'last_error': f"Worker error: {str(e)}"})
         
         finally:
+
+            try:
+                await update_handler.fetcher.quit(watch=watch)
+            except Exception as e:
+                logger.error(f"Exception while cleaning/quit after calling browser: {e}")
+
             # Always cleanup - this runs whether there was an exception or not
             if uuid:
                 try:
