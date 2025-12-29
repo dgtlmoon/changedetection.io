@@ -226,10 +226,11 @@ class model(watch_base):
     @property
     def history_index_filename(self):
         # So that you dont try to view different histories in different 'diff' setups, can confuse cdio.
-        if self.get('processor') in ['text_json_diff']:
+        processor = self.get('processor')
+        if not processor or self.get('processor') == 'text_json_diff':
             return 'history.txt'
         else:
-            return f'history-{self.get('processor')}.txt'
+            return f'history-{processor}.txt'
 
     def clear_watch(self):
         import pathlib
