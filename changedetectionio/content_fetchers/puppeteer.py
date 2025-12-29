@@ -131,11 +131,16 @@ class fetcher(Fetcher):
     async def quit(self, watch=None):
         try:
             await self.page.close()
-            await self.browser.close()
             del self.page
+        except Exception as e:
+            pass
+
+        try:
+            await self.browser.close()
             del self.browser
         except Exception as e:
-            logger.error(f"Exception while cleaning/quit after calling browser: {e}")
+            pass
+
         logger.info("Cleanup puppeteer complete.")
 
     async def fetch_page(self,
@@ -235,18 +240,34 @@ class fetcher(Fetcher):
         #            browsersteps_interface = steppable_browser_interface()
         #            browsersteps_interface.page = self.page
 
-        async def handle_frame_navigation(event):
-            logger.debug(f"Frame navigated: {event}")
-            w = extra_wait - 2 if extra_wait > 4 else 2
-            logger.debug(f"Waiting {w} seconds before calling Page.stopLoading...")
-            await asyncio.sleep(w)
-            logger.debug("Issuing stopLoading command...")
-            await self.page._client.send('Page.stopLoading')
-            logger.debug("stopLoading command sent!")
+        # Enable Network domain to detect when first bytes arrive
+        await self.page._client.send('Network.enable')
 
-        self.page._client.on('Page.frameStartedNavigating', lambda event: asyncio.create_task(handle_frame_navigation(event)))
-        self.page._client.on('Page.frameStartedLoading', lambda event: asyncio.create_task(handle_frame_navigation(event)))
-        self.page._client.on('Page.frameStoppedLoading', lambda event: logger.debug(f"Frame stopped loading: {event}"))
+        async def setup_frame_handlers_on_first_response(event):
+            # Only trigger for the main document response
+            if event.get('type') == 'Document':
+                logger.debug("First response received, setting up frame handlers")
+
+                # De-register this listener - we only need it once
+                self.page._client.remove_listener('Network.responseReceived', setup_frame_handlers_on_first_response)
+
+                # Now set up the frame navigation handlers
+                async def handle_frame_navigation(event):
+                    # Wait n seconds after the frameStartedLoading, not from any frameStartedLoading/frameStartedNavigating
+                    logger.debug(f"Frame navigated: {event}")
+                    w = extra_wait - 2 if extra_wait > 4 else 2
+                    logger.debug(f"Waiting {w} seconds before calling Page.stopLoading...")
+                    await asyncio.sleep(w)
+                    logger.debug("Issuing stopLoading command...")
+                    await self.page._client.send('Page.stopLoading')
+                    logger.debug("stopLoading command sent!")
+
+                self.page._client.on('Page.frameStartedNavigating', lambda e: asyncio.create_task(handle_frame_navigation(e)))
+                self.page._client.on('Page.frameStartedLoading', lambda e: asyncio.create_task(handle_frame_navigation(e)))
+                self.page._client.on('Page.frameStoppedLoading', lambda e: logger.debug(f"Frame stopped loading: {e}"))
+
+        # Listen for first response to trigger frame handler setup
+        self.page._client.on('Network.responseReceived', setup_frame_handlers_on_first_response)
 
         response = None
         attempt=0
