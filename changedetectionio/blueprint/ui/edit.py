@@ -133,11 +133,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         if request.method == 'POST' and form.validate():
 
-            # If they changed processor, it makes sense to reset it.
-            if datastore.data['watching'][uuid].get('processor') != form.data.get('processor'):
-                datastore.data['watching'][uuid].clear_watch()
-                flash("Reset watch history due to change of processor")
-
             extra_update_obj = {
                 'consecutive_filter_failures': 0,
                 'last_error' : False

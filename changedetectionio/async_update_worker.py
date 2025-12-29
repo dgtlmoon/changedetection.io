@@ -344,7 +344,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                                 fetch_start_time += 1
                                 await asyncio.sleep(1)
 
-                            watch.save_history_text(contents=contents,
+                            watch.save_history_blob(contents=contents,
                                                     timestamp=int(fetch_start_time),
                                                     snapshot_id=update_obj.get('previous_md5', 'none'))
 

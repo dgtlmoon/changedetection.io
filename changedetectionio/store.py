@@ -1,3 +1,5 @@
+import shutil
+
 from changedetectionio.strtobool import strtobool
 
 from changedetectionio.validate_url import is_safe_valid_url
@@ -1122,3 +1124,15 @@ class ChangeDetectionStore:
         else:
             # safe fallback to text
             self.data['settings']['application']['rss_content_format'] = RSS_CONTENT_FORMAT_DEFAULT
+
+    # Different processors now hold their own history.txt
+    def update_25(self):
+        for uuid, watch in self.data['watching'].items():
+            processor = self.data['watching'][uuid].get('processor')
+            if processor != 'text_json_diff':
+                old_history_txt = os.path.join(self.datastore_path, "history.txt")
+                target_history_name =  f"history-{processor}.txt"
+                if os.path.isfile(old_history_txt) and not os.path.isfile(target_history_name):
+                    new_history_txt = os.path.join(self.datastore_path, target_history_name)
+                    logger.debug(f"Renaming history index {old_history_txt} to {new_history_txt}...")
+                    shutil.move(old_history_txt, new_history_txt)

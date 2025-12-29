@@ -223,6 +223,14 @@ class model(watch_base):
         domain = parsed.hostname
         return domain
 
+    @property
+    def history_index_filename(self):
+        # So that you dont try to view different histories in different 'diff' setups, can confuse cdio.
+        if self.get('processor') in ['text_json_diff']:
+            return 'history.txt'
+        else:
+            return f'history-{self.get('processor')}.txt'
+
     def clear_watch(self):
         import pathlib
 
@@ -324,7 +332,7 @@ class model(watch_base):
             return []
 
         # Read the history file as a dict
-        fname = os.path.join(self.watch_data_dir, "history.txt")
+        fname = os.path.join(self.watch_data_dir, self.history_index_filename)
         if os.path.isfile(fname):
             logger.debug(f"Reading watch history index for {self.get('uuid')}")
             with open(fname, "r", encoding='utf-8') as f:
@@ -360,7 +368,7 @@ class model(watch_base):
 
     @property
     def has_history(self):
-        fname = os.path.join(self.watch_data_dir, "history.txt")
+        fname = os.path.join(self.watch_data_dir, self.history_index_filename)
         return os.path.isfile(fname)
 
     @property
@@ -476,9 +484,9 @@ class model(watch_base):
 
     # Save some text file to the appropriate path and bump the history
     # result_obj from fetch_site_status.run()
-    def save_history_text(self, contents, timestamp, snapshot_id):
+    def save_history_blob(self, contents, timestamp, snapshot_id):
 
-        logger.trace(f"{self.get('uuid')} - Updating history.txt with timestamp {timestamp}")
+        logger.trace(f"{self.get('uuid')} - Updating {self.history_index_filename} with timestamp {timestamp}")
 
         self.ensure_data_dir_exists()
 
@@ -530,7 +538,7 @@ class model(watch_base):
                 self._write_atomic(dest, contents.encode('utf-8'))
 
         # Append to history.txt atomically
-        index_fname = os.path.join(self.watch_data_dir, "history.txt")
+        index_fname = os.path.join(self.watch_data_dir, self.history_index_filename)
         index_line = f"{timestamp},{snapshot_fname}\n"
 
         with open(index_fname, 'a', encoding='utf-8') as f:
