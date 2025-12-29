@@ -164,11 +164,6 @@ class difference_detection_processor():
             watch_uuid=self.watch_uuid,
        )
 
-        #@todo .quit here could go on close object, so we can run JS if change-detected
-        self.fetcher.quit(watch=self.watch)
-
-        # After init, call run_changedetection() which will do the actual change-detection
-
     @abstractmethod
     def run_changedetection(self, watch):
         update_obj = {'last_notification_error': False, 'last_error': False}

@@ -93,9 +93,9 @@ class fetcher(Fetcher):
     if os.getenv("PLAYWRIGHT_DRIVER_URL"):
         fetcher_description += " via '{}'".format(os.getenv("PLAYWRIGHT_DRIVER_URL"))
 
+    browser = None
     browser_type = ''
     command_executor = ''
-
     proxy = None
 
     # Capability flags
@@ -142,21 +142,20 @@ class fetcher(Fetcher):
                 proxy_url += f"{parsed.hostname}{port}{parsed.path}{q}"
                 self.browser_connection_url += f"{r}--proxy-server={proxy_url}"
 
-    # def screenshot_step(self, step_n=''):
-    #     screenshot = self.page.screenshot(type='jpeg', full_page=True, quality=85)
-    #
-    #     if self.browser_steps_screenshot_path is not None:
-    #         destination = os.path.join(self.browser_steps_screenshot_path, 'step_{}.jpeg'.format(step_n))
-    #         logger.debug(f"Saving step screenshot to {destination}")
-    #         with open(destination, 'wb') as f:
-    #             f.write(screenshot)
-    #
-    # def save_step_html(self, step_n):
-    #     content = self.page.content()
-    #     destination = os.path.join(self.browser_steps_screenshot_path, 'step_{}.html'.format(step_n))
-    #     logger.debug(f"Saving step HTML to {destination}")
-    #     with open(destination, 'w') as f:
-    #         f.write(content)
+    async def quit(self, watch=None):
+        try:
+            await self.page.close()
+            del self.page
+        except Exception as e:
+            pass
+
+        try:
+            await self.browser.close()
+            del self.browser
+        except Exception as e:
+            pass
+
+        logger.info("Cleanup puppeteer complete.")
 
     async def fetch_page(self,
                          current_include_filters,
@@ -185,9 +184,9 @@ class fetcher(Fetcher):
         # Connect directly using the specified browser_ws_endpoint
         # @todo timeout
         try:
-            browser = await pyppeteer_instance.connect(browserWSEndpoint=self.browser_connection_url,
-                                                       ignoreHTTPSErrors=True
-                                                       )
+            self.browser = await pyppeteer_instance.connect(browserWSEndpoint=self.browser_connection_url,
+                                                            ignoreHTTPSErrors=True
+                                                            )
         except websockets.exceptions.InvalidStatusCode as e:
             raise BrowserConnectError(msg=f"Error while trying to connect the browser, Code {e.status_code} (check your access, whitelist IP, password etc)")
         except websockets.exceptions.InvalidURI:
@@ -196,7 +195,7 @@ class fetcher(Fetcher):
             raise BrowserConnectError(msg=f"Error connecting to the browser - Exception '{str(e)}'")
 
         # more reliable is to just request a new page
-        self.page = await browser.newPage()
+        self.page = await self.browser.newPage()
         
         # Add console handler to capture console.log from favicon fetcher
         #self.page.on('console', lambda msg: logger.debug(f"Browser console [{msg.type}]: {msg.text}"))
@@ -256,32 +255,46 @@ class fetcher(Fetcher):
         #            browsersteps_interface = steppable_browser_interface()
         #            browsersteps_interface.page = self.page
 
-        async def handle_frame_navigation(event):
-            logger.debug(f"Frame navigated: {event}")
-            w = extra_wait - 2 if extra_wait > 4 else 2
-            logger.debug(f"Waiting {w} seconds before calling Page.stopLoading...")
-            await asyncio.sleep(w)
-            logger.debug("Issuing stopLoading command...")
-            await self.page._client.send('Page.stopLoading')
-            logger.debug("stopLoading command sent!")
+        # Enable Network domain to detect when first bytes arrive
+        await self.page._client.send('Network.enable')
 
-        self.page._client.on('Page.frameStartedNavigating', lambda event: asyncio.create_task(handle_frame_navigation(event)))
-        self.page._client.on('Page.frameStartedLoading', lambda event: asyncio.create_task(handle_frame_navigation(event)))
-        self.page._client.on('Page.frameStoppedLoading', lambda event: logger.debug(f"Frame stopped loading: {event}"))
+        async def setup_frame_handlers_on_first_response(event):
+            # Only trigger for the main document response
+            if event.get('type') == 'Document':
+                logger.debug("First response received, setting up frame handlers for forced page stop load.")
+
+                # De-register this listener - we only need it once
+                self.page._client.remove_listener('Network.responseReceived', setup_frame_handlers_on_first_response)
+
+                # Now set up the frame navigation handlers
+                async def handle_frame_navigation(event):
+                    # Wait n seconds after the frameStartedLoading, not from any frameStartedLoading/frameStartedNavigating
+                    logger.debug(f"Frame navigated: {event}")
+                    w = extra_wait - 2 if extra_wait > 4 else 2
+                    logger.debug(f"Waiting {w} seconds before calling Page.stopLoading...")
+                    await asyncio.sleep(w)
+                    logger.debug("Issuing stopLoading command...")
+                    await self.page._client.send('Page.stopLoading')
+                    logger.debug("stopLoading command sent!")
+
+                self.page._client.on('Page.frameStartedNavigating', lambda e: asyncio.create_task(handle_frame_navigation(e)))
+                self.page._client.on('Page.frameStartedLoading', lambda e: asyncio.create_task(handle_frame_navigation(e)))
+                self.page._client.on('Page.frameStoppedLoading', lambda e: logger.debug(f"Frame stopped loading: {e}"))
+
+        # Listen for first response to trigger frame handler setup
+        self.page._client.on('Network.responseReceived', setup_frame_handlers_on_first_response)
 
         response = None
         attempt=0
         while not response:
             logger.debug(f"Attempting page fetch {url} attempt {attempt}")
-            response = await self.page.goto(url)
+            response = await self.page.goto(url, timeout=0)
             await asyncio.sleep(1 + extra_wait)
             if response:
                 break
             if not response:
                 logger.warning("Page did not fetch! trying again!")
             if response is None and attempt>=2:
-                await self.page.close()
-                await browser.close()
                 logger.warning(f"Content Fetcher > Response object was none (as in, the response from the browser was empty, not just the content) exiting attmpt {attempt}")
                 raise EmptyReply(url=url, status_code=None)
             attempt+=1
@@ -294,8 +307,6 @@ class fetcher(Fetcher):
         except Exception as e:
             logger.warning("Got exception when running evaluate on custom JS code")
             logger.error(str(e))
-            await self.page.close()
-            await browser.close()
             # This can be ok, we will try to grab what we could retrieve
             raise PageUnloadable(url=url, status_code=None, message=str(e))
 
@@ -305,8 +316,6 @@ class fetcher(Fetcher):
             # https://github.com/dgtlmoon/changedetection.io/discussions/2122#discussioncomment-8241962
             logger.critical(f"Response from the browser/Playwright did not have a status_code! Response follows.")
             logger.critical(response)
-            await self.page.close()
-            await browser.close()
             raise PageUnloadable(url=url, status_code=None, message=str(e))
 
         if fetch_favicon:
@@ -324,8 +333,6 @@ class fetcher(Fetcher):
 
         if not empty_pages_are_a_change and len(content.strip()) == 0:
             logger.error("Content Fetcher > Content was empty (empty_pages_are_a_change is False), closing browsers")
-            await self.page.close()
-            await browser.close()
             raise EmptyReply(url=url, status_code=response.status)
 
         # Run Browser Steps here
@@ -357,10 +364,6 @@ class fetcher(Fetcher):
         self.screenshot = await capture_full_page(page=self.page)
 
         # It's good to log here in the case that the browser crashes on shutting down but we still get the data we need
-        logger.success(f"Fetching '{url}' complete, closing page")
-        await self.page.close()
-        logger.success(f"Fetching '{url}' complete, closing browser")
-        await browser.close()
         logger.success(f"Fetching '{url}' complete, exiting puppeteer fetch.")
 
     async def main(self, **kwargs):
