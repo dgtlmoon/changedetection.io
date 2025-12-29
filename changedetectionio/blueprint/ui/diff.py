@@ -92,6 +92,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             flash("No history found for the specified link, bad link?", "error")
             return redirect(url_for('watchlist.index'))
 
+        dates = list(watch.history.keys())
+        if not dates or len(dates) < 2:
+            flash("Not enough history (2 snapshots required) to show difference page for this watch.", "error")
+            return redirect(url_for('watchlist.index'))
+
         # Get the processor type for this watch
         processor_name = watch.get('processor', 'text_json_diff')
 
