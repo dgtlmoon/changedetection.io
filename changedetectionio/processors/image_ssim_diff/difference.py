@@ -426,14 +426,15 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
     # Images are now served via separate /processor-asset/ endpoints instead of base64
     return render_template(
         'image_ssim_diff/diff.html',
-        watch=watch,
-        uuid=watch.get('uuid'),
         change_percentage=change_percentage,
         comparison_data=comparison_data,  # Full history for charts/visualization
-        threshold=pixel_difference_threshold_sensitivity,
         comparison_method=method_display,
-        versions=versions,
+        current_diff_url=watch['url'],
         from_version=from_version,
+        percentage_different=change_percentage,
+        threshold=pixel_difference_threshold_sensitivity,
         to_version=to_version,
-        percentage_different=change_percentage
+        uuid=watch.get('uuid'),
+        versions=versions,
+        watch=watch,
     )
