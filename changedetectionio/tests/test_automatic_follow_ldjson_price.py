@@ -96,15 +96,13 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
     assert b'ldjson-price-track-offer' in res.data
 
     # Accept it
-    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
-    time.sleep(3)
     client.get(url_for('price_data_follower.accept', uuid=uuid, follow_redirects=True))
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     # Offer should be gone
     res = client.get(url_for("watchlist.index"))
     assert b'Embedded price data' not in res.data
-    assert b'tracking-ldjson-price-data' in res.data
+    assert b'processor-badge-restock_diff' in res.data
 
     # and last snapshop (via API) should be just the price
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
