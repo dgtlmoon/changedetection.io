@@ -61,15 +61,27 @@ data_sanity_test () {
 
 data_sanity_test
 
-# REMOVE_REQUESTS_OLD_SCREENSHOTS disabled so that we can write a screenshot and send it in test_notifications.py without a real browser
-REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest -n 30 --dist load  tests/test_*.py
+echo "-------------------- Running rest of tests in parallel -------------------------------"
 
-#time pytest -n auto --dist loadfile -vv --tb=long tests/test_*.py
+# REMOVE_REQUESTS_OLD_SCREENSHOTS disabled so that we can write a screenshot and send it in test_notifications.py without a real browser
+REMOVE_REQUESTS_OLD_SCREENSHOTS=false \
+pytest tests/test_*.py \
+  -n 30 \
+  --dist=load \
+  -vvv \
+  -s \
+  --capture=no \
+  --log-cli-level=DEBUG \
+  --log-cli-format="%(asctime)s [%(process)d] [%(levelname)s] %(name)s: %(message)s"
+
+echo "---------------------------- DONE parallel test ---------------------------------------"
+
 echo "RUNNING WITH BASE_URL SET"
 
 # Now re-run some tests with BASE_URL enabled
 # Re #65 - Ability to include a link back to the installation, in the notification.
 export BASE_URL="https://really-unique-domain.io"
+
 REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest -vv -s --maxfail=1 tests/test_notification.py
 
 
