@@ -67,19 +67,20 @@ def _brotli_subprocess_save(contents, filepath, mode=None, timeout=30, fallback_
         Exception: if compression fails and fallback_uncompressed is False
     """
     import brotli
-    from multiprocessing import Process, Pipe
+    import multiprocessing
     import sys
 
     # Ensure contents are bytes
     if isinstance(contents, str):
         contents = contents.encode('utf-8')
 
-    # Create pipe for communication
-    parent_conn, child_conn = Pipe()
+    # Use explicit spawn context for thread safety (avoids fork() with multi-threaded parent)
+    # Always use spawn - consistent behavior in tests and production
+    ctx = multiprocessing.get_context('spawn')
+    parent_conn, child_conn = ctx.Pipe()
 
-    # Run compression in subprocess
-    # On Windows, spawn method is default and safe; on Unix, fork is used
-    proc = Process(target=_brotli_compress_worker, args=(child_conn, filepath, mode))
+    # Run compression in subprocess using spawn (not fork)
+    proc = ctx.Process(target=_brotli_compress_worker, args=(child_conn, filepath, mode))
 
     # Windows-safe: Set daemon=False explicitly to avoid issues with process cleanup
     proc.daemon = False

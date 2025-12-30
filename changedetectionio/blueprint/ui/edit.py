@@ -1,8 +1,7 @@
-import time
 from copy import deepcopy
 import os
 import importlib.resources
-from flask import Blueprint, request, redirect, url_for, flash, render_template, make_response, send_from_directory, abort
+from flask import Blueprint, request, redirect, url_for, flash, render_template, abort
 from loguru import logger
 from jinja2 import Environment, FileSystemLoader
 
@@ -99,8 +98,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         # Load processor-specific config from JSON file for GET requests
         if request.method == 'GET' and processor_name:
             try:
+                from changedetectionio.processors.base import difference_detection_processor
                 # Create a processor instance to access config methods
-                processor_instance = processors.difference_detection_processor(datastore, uuid)
+                processor_instance = difference_detection_processor(datastore, uuid)
                 # Use processor name as filename so each processor keeps its own config
                 config_filename = f'{processor_name}.json'
                 processor_config = processor_instance.get_extra_watch_config(config_filename)

@@ -23,7 +23,7 @@ from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200
 async def capture_full_page(page, screenshot_format='JPEG'):
     import os
     import time
-    from multiprocessing import Process, Pipe
+    import multiprocessing
 
     start = time.time()
 
@@ -96,10 +96,12 @@ async def capture_full_page(page, screenshot_format='JPEG'):
         logger.debug("Element dimensions unlocked after screenshot capture")
 
     if len(screenshot_chunks) > 1:
+        # Always use spawn for thread safety - consistent behavior in tests and production
         from changedetectionio.content_fetchers.screenshot_handler import stitch_images_worker
         logger.debug(f"Screenshot stitching {len(screenshot_chunks)} chunks together")
-        parent_conn, child_conn = Pipe()
-        p = Process(target=stitch_images_worker, args=(child_conn, screenshot_chunks, page_height, SCREENSHOT_MAX_TOTAL_HEIGHT))
+        ctx = multiprocessing.get_context('spawn')
+        parent_conn, child_conn = ctx.Pipe()
+        p = ctx.Process(target=stitch_images_worker, args=(child_conn, screenshot_chunks, page_height, SCREENSHOT_MAX_TOTAL_HEIGHT))
         p.start()
         screenshot = parent_conn.recv_bytes()
         p.join()

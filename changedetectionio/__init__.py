@@ -20,6 +20,57 @@ from changedetectionio import store
 from changedetectionio.flask_app import changedetection_app
 from loguru import logger
 
+# ==============================================================================
+# Multiprocessing Configuration - CRITICAL for Thread Safety
+# ==============================================================================
+#
+# PROBLEM: Python 3.12+ warns about fork() with multi-threaded processes:
+#   "This process is multi-threaded, use of fork() may lead to deadlocks"
+#
+# WHY IT'S DANGEROUS:
+#   1. This Flask app has multiple threads (HTTP handlers, workers, SocketIO)
+#   2. fork() copies ONLY the calling thread to the child process
+#   3. BUT fork() also copies all locks/mutexes in their current state
+#   4. If another thread held a lock during fork() → child has locked lock with no owner
+#   5. Result: PERMANENT DEADLOCK if child tries to acquire that lock
+#
+# SOLUTION: Use 'spawn' instead of 'fork'
+#   - spawn starts a fresh Python interpreter (no inherited threads or locks)
+#   - Slower (~200ms vs ~1ms) but safe with multi-threaded parent
+#   - Consistent across all platforms (Windows already uses spawn by default)
+#
+# IMPLEMENTATION:
+#   1. Explicit contexts everywhere (primary protection):
+#      - Watch.py: ctx = multiprocessing.get_context('spawn')
+#      - playwright.py: ctx = multiprocessing.get_context('spawn')
+#      - puppeteer.py: ctx = multiprocessing.get_context('spawn')
+#
+#   2. Global default (defense-in-depth, below):
+#      - Safety net if future code forgets explicit context
+#      - Protects against third-party libraries using Process()
+#      - Costs nothing (explicit contexts always override it)
+#
+# WHY BOTH?
+#   - Explicit contexts: Clear, self-documenting, always works
+#   - Global default: Safety net for forgotten contexts or library code
+#   - If someone writes "Process()" instead of "ctx.Process()", still safe!
+#
+# See: https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
+# ==============================================================================
+
+import multiprocessing
+import sys
+
+# Set spawn as global default (safety net - all our code uses explicit contexts anyway)
+# Skip in tests to avoid breaking pytest-flask's LiveServer fixture (uses unpicklable local functions)
+if 'pytest' not in sys.modules:
+    try:
+        if multiprocessing.get_start_method(allow_none=True) is None:
+            multiprocessing.set_start_method('spawn', force=False)
+            logger.debug("Set multiprocessing default to 'spawn' for thread safety (explicit contexts used everywhere)")
+    except RuntimeError:
+        logger.debug(f"Multiprocessing start method already set: {multiprocessing.get_start_method()}")
+
 # Only global so we can access it in the signal handler
 app = None
 datastore = None
