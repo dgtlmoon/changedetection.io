@@ -29,18 +29,45 @@ $(document).ready(function () {
 
         $('#checkbox-operations button').on('click.socketHandlerNamespace', function (e) {
             e.preventDefault();
-            const op = $(this).val();
+            const $button = $(this);
+            const op = $button.val();
             const checkedUuids = $('input[name="uuids"]:checked').map(function () {
                 return this.value.trim();
             }).get();
-            console.log(`Socket.IO: Sending watch operation '${op}' for UUIDs:`, checkedUuids);
-            socket.emit('checkbox-operation', {
-                op: op,
-                uuids: checkedUuids,
-                extra_data: $('#op_extradata').val() // Set by the alert() handler
-            });
-            $('input[name="uuids"]:checked').prop('checked', false);
-            $('#check-all:checked').prop('checked', false);
+
+            // Check if this button requires confirmation
+            console.log('Button clicked, op:', op, 'requires-confirm:', $button.is('[data-requires-confirm]'));
+            if ($button.is('[data-requires-confirm]')) {
+                console.log('Showing modal confirmation for operation:', op);
+                const config = {
+                    type: $button.data('confirm-type') || 'danger',
+                    title: $button.data('confirm-title') || 'Confirm Action',
+                    message: $button.data('confirm-message') || '<p>Are you sure you want to proceed?</p>',
+                    confirmText: $button.data('confirm-button') || 'Confirm',
+                    cancelText: $button.data('cancel-button') || 'Cancel',
+                    onConfirm: function() {
+                        console.log(`Socket.IO: Sending watch operation '${op}' for UUIDs:`, checkedUuids);
+                        socket.emit('checkbox-operation', {
+                            op: op,
+                            uuids: checkedUuids,
+                            extra_data: $('#op_extradata').val()
+                        });
+                        $('input[name="uuids"]:checked').prop('checked', false);
+                        $('#check-all:checked').prop('checked', false);
+                    }
+                };
+                ModalDialog.confirm(config);
+            } else {
+                console.log(`Socket.IO: Sending watch operation '${op}' for UUIDs:`, checkedUuids);
+                socket.emit('checkbox-operation', {
+                    op: op,
+                    uuids: checkedUuids,
+                    extra_data: $('#op_extradata').val()
+                });
+                $('input[name="uuids"]:checked').prop('checked', false);
+                $('#check-all:checked').prop('checked', false);
+            }
+
             return false;
         });
 

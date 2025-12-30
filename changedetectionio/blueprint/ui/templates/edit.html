@@ -7,6 +7,7 @@
 <script src="{{url_for('static_content', group='js', filename='global-settings.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='scheduler.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='conditions.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='modal.js')}}"></script>
 
 
 <script>
@@ -483,9 +484,19 @@ Math: {{ 1 + 1 }}") }}
                 <div class="pure-control-group">
                     {{ render_button(form.save_button) }}
                     <a href="{{url_for('ui.form_delete', uuid=uuid)}}"
-                       class="pure-button button-error ">Delete</a>
+                       class="pure-button button-error"
+                       data-requires-confirm
+                       data-confirm-type="danger"
+                       data-confirm-title="Delete Watch?"
+                       data-confirm-message="<p>Are you sure you want to delete the watch for:</p><p><strong>{{ watch.get('url', 'this watch') }}</strong></p><p>This action cannot be undone.</p>"
+                       data-confirm-button="Delete">Delete</a>
                     {% if watch.history_n %}<a href="{{url_for('ui.clear_watch_history', uuid=uuid)}}"
-                       class="pure-button button-error">Clear History</a>{% endif %}
+                       class="pure-button button-error"
+                       data-requires-confirm
+                       data-confirm-type="warning"
+                       data-confirm-title="Clear History?"
+                       data-confirm-message="<p>Are you sure you want to clear all history for:</p><p><strong>{{ watch.get('url', 'this watch') }}</strong></p><p>This will remove all snapshots and previous versions. This action cannot be undone.</p>"
+                       data-confirm-button="Clear History">Clear History</a>{% endif %}
                     <a href="{{url_for('ui.form_clone', uuid=uuid)}}"
                        class="pure-button">Clone &amp; Edit</a>
                  <a href="{{ url_for('rss.rss_single_watch', uuid=uuid, token=app_rss_token)}}"><img alt="RSS Feed for this watch" style="padding: .5em 1em;" src="{{url_for('static_content', group='images', filename='generic_feed-icon.svg')}}" height="15"></a>
