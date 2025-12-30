@@ -425,12 +425,29 @@ def save_plugin_settings(datastore_path, plugin_id, settings):
 def get_plugin_template_paths():
     """Get list of plugin template directories for Jinja2 loader.
 
+    Scans both external pluggy plugins and built-in processor plugins.
+
     Returns:
         list: List of absolute paths to plugin template directories
     """
     template_paths = []
 
-    # Get all registered plugins
+    # Scan built-in processor plugins
+    from changedetectionio.processors import find_processors
+    processor_list = find_processors()
+    for processor_module, processor_name in processor_list:
+        # Each processor is a module, check if it has a templates directory
+        if hasattr(processor_module, '__file__'):
+            processor_file = processor_module.__file__
+            if processor_file:
+                # Get the processor directory (e.g., processors/image_ssim_diff/)
+                processor_dir = os.path.dirname(os.path.abspath(processor_file))
+                templates_dir = os.path.join(processor_dir, 'templates')
+                if os.path.isdir(templates_dir):
+                    template_paths.append(templates_dir)
+                    logger.debug(f"Added processor template path: {templates_dir}")
+
+    # Get all registered external pluggy plugins
     for plugin_name, plugin_obj in plugin_manager.list_name_plugin():
         # Check if plugin has a templates directory
         if hasattr(plugin_obj, '__file__'):

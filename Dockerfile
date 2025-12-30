@@ -34,6 +34,7 @@ ENV OPENSSL_LIB_DIR="/usr/lib/arm-linux-gnueabihf"
 ENV OPENSSL_INCLUDE_DIR="/usr/include/openssl"
 # Additional environment variables for cryptography Rust build
 ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
+
 RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
   pip install \
   --prefer-binary \
@@ -42,7 +43,6 @@ RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
   --cache-dir=/tmp/pip-cache \
   --target=/dependencies \
   -r /requirements.txt
-
 
 # Playwright is an alternative to Selenium
 # Excluded this package from requirements.txt to prevent arm/v6 and arm/v7 builds from failing
@@ -54,6 +54,25 @@ RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
   --target=/dependencies \
   playwright~=1.56.0 \
   || echo "WARN: Failed to install Playwright. The application can still run, but the Playwright option will be disabled."
+
+# OpenCV is optional for fast image comparison (pixelmatch is the fallback)
+# Skip on arm/v7 and arm/v8 where builds take weeks - excluded from requirements.txt
+ARG TARGETPLATFORM
+RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
+  case "$TARGETPLATFORM" in \
+    linux/arm/v7|linux/arm/v8) \
+      echo "INFO: Skipping OpenCV on $TARGETPLATFORM (build takes too long), using pixelmatch fallback" \
+      ;; \
+    *) \
+      pip install \
+        --prefer-binary \
+        --extra-index-url https://www.piwheels.org/simple \
+        --cache-dir=/tmp/pip-cache \
+        --target=/dependencies \
+        opencv-python-headless>=4.8.0.76 \
+        || echo "WARN: OpenCV install failed, will use pixelmatch fallback" \
+      ;; \
+  esac
 
 
 # Final image stage
@@ -69,6 +88,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # favicon type detection and other uses
     file \
     zlib1g \
+    # OpenCV dependencies for image processing
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 

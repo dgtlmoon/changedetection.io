@@ -97,7 +97,7 @@
         {% if last_error_text %}<li class="tab" id="error-text-tab"><a href="#error-text">Error Text</a></li> {% endif %}
         {% if last_error_screenshot %}<li class="tab" id="error-screenshot-tab"><a href="#error-screenshot">Error Screenshot</a></li> {% endif %}
         <li class="tab" id=""><a href="#text">Text</a></li>
-        <li class="tab" id="screenshot-tab"><a href="#screenshot">Screenshot</a></li>
+        <li class="tab" id="screenshot-tab"><a href="#screenshot">Current screenshot</a></li>
         <li class="tab" id="extract-tab"><a href="{{ url_for('ui.ui_diff.diff_history_page_extract_GET', uuid=uuid)}}">Extract Data</a></li>
     </ul>
 </div>

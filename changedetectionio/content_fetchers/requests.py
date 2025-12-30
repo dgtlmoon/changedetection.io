@@ -13,8 +13,8 @@ from changedetectionio.content_fetchers.base import Fetcher
 class fetcher(Fetcher):
     fetcher_description = "Basic fast Plaintext/HTTP Client"
 
-    def __init__(self, proxy_override=None, custom_browser_connection_url=None):
-        super().__init__()
+    def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
+        super().__init__(**kwargs)
         self.proxy_override = proxy_override
         # browser_connection_url is none because its always 'launched locally'
 
@@ -121,6 +121,12 @@ class fetcher(Fetcher):
 
         self.raw_content = r.content
 
+        # If the content is an image, set it as screenshot for SSIM/visual comparison
+        content_type = r.headers.get('content-type', '').lower()
+        if 'image/' in content_type:
+            self.screenshot = r.content
+            logger.debug(f"Image content detected ({content_type}), set as screenshot for comparison")
+
     async def run(self,
                   fetch_favicon=True,
                   current_include_filters=None,
@@ -130,6 +136,7 @@ class fetcher(Fetcher):
                   request_body=None,
                   request_headers=None,
                   request_method=None,
+                  screenshot_format=None,
                   timeout=None,
                   url=None,
                   watch_uuid=None,

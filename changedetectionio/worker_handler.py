@@ -187,26 +187,26 @@ def is_watch_running(watch_uuid):
     return watch_uuid in get_running_uuids()
 
 
-def queue_item_async_safe(update_q, item):
+def queue_item_async_safe(update_q, item, silent=False):
     """Bulletproof queue operation with comprehensive error handling"""
     item_uuid = 'unknown'
-    
+
     try:
         # Safely extract UUID for logging
         if hasattr(item, 'item') and isinstance(item.item, dict):
             item_uuid = item.item.get('uuid', 'unknown')
     except Exception as uuid_e:
         logger.critical(f"CRITICAL: Failed to extract UUID from queue item: {uuid_e}")
-    
+
     # Validate inputs
     if not update_q:
         logger.critical(f"CRITICAL: Queue is None/invalid for item {item_uuid}")
         return False
-    
+
     if not item:
         logger.critical(f"CRITICAL: Item is None/invalid")
         return False
-    
+
     # Attempt queue operation with multiple fallbacks
     try:
         # Primary: Use sync interface (thread-safe)
@@ -214,8 +214,9 @@ def queue_item_async_safe(update_q, item):
         if success is False:  # Explicit False return means failure
             logger.critical(f"CRITICAL: Queue.put() returned False for item {item_uuid}")
             return False
-        
-        logger.debug(f"Successfully queued item: {item_uuid}")
+
+        if not silent:
+            logger.debug(f"Successfully queued item: {item_uuid}")
         return True
         
     except Exception as e:

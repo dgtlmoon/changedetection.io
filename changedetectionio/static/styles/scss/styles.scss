@@ -21,6 +21,8 @@
 @use "parts/socket";
 @use "parts/visualselector";
 @use "parts/widgets";
+@use "parts/diff_image";
+
 
 body {
   color: var(--color-text);
@@ -180,6 +182,13 @@ code {
   border-radius: 5px;
   padding: 2px 5px;
   margin-right: 4px;
+}
+
+/* Processor type badges - colors auto-generated from processor names */
+.processor-badge {
+  @extend .inline-tag;
+  font-size: 0.85em;
+  font-weight: 500;
 }
 
 .watch-tag-list {
@@ -774,7 +783,7 @@ textarea::placeholder {
     display: block;
 
     li {
-      margin-right: 3px;
+      margin-right: 1px;
       display: inline-block;
       color: var(--color-text-tab);
       border-top-left-radius: 5px;
@@ -799,7 +808,7 @@ textarea::placeholder {
 
       a {
         display: block;
-        padding: 0.8em;
+        padding: 0.7em;
         color: var(--color-text-tab);
       }
     }

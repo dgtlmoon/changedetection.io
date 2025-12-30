@@ -6,12 +6,15 @@ from wtforms.widgets.core import TimeInput
 from changedetectionio.blueprint.rss import RSS_FORMAT_TYPES, RSS_TEMPLATE_TYPE_OPTIONS, RSS_TEMPLATE_HTML_DEFAULT
 from changedetectionio.conditions.form import ConditionFormRow
 from changedetectionio.notification_service import NotificationContextData
+from changedetectionio.processors.image_ssim_diff import SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS, \
+    SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT
 from changedetectionio.strtobool import strtobool
 
 from wtforms import (
     BooleanField,
     Form,
     Field,
+    FloatField,
     IntegerField,
     RadioField,
     SelectField,
@@ -994,6 +997,18 @@ class globalSettingsApplicationForm(commonSettingsForm):
     global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
     global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_json=False)])
     ignore_whitespace = BooleanField('Ignore whitespace')
+
+    # Screenshot comparison settings
+    min_change_percentage = FloatField(
+        'Screenshot: Minimum Change Percentage',
+        validators=[
+            validators.Optional(),
+            validators.NumberRange(min=0.0, max=100.0, message='Must be between 0 and 100')
+        ],
+        default=0.1,
+        render_kw={"placeholder": "0.1", "style": "width: 8em;"}
+    )
+
     password = SaltyPasswordField()
     pager_size = IntegerField('Pager size',
                               render_kw={"style": "width: 5em;"},

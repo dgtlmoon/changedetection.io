@@ -1,8 +1,7 @@
-import time
 from copy import deepcopy
 import os
 import importlib.resources
-from flask import Blueprint, request, redirect, url_for, flash, render_template, make_response, send_from_directory, abort
+from flask import Blueprint, request, redirect, url_for, flash, render_template, abort
 from loguru import logger
 from jinja2 import Environment, FileSystemLoader
 
@@ -96,6 +95,26 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         form.datastore = datastore
         form.watch = default
 
+        # Load processor-specific config from JSON file for GET requests
+        if request.method == 'GET' and processor_name:
+            try:
+                from changedetectionio.processors.base import difference_detection_processor
+                # Create a processor instance to access config methods
+                processor_instance = difference_detection_processor(datastore, uuid)
+                # Use processor name as filename so each processor keeps its own config
+                config_filename = f'{processor_name}.json'
+                processor_config = processor_instance.get_extra_watch_config(config_filename)
+
+                if processor_config:
+                    # Populate processor-config-* fields from JSON
+                    for config_key, config_value in processor_config.items():
+                        field_name = f'processor_config_{config_key}'
+                        if hasattr(form, field_name):
+                            getattr(form, field_name).data = config_value
+                            logger.debug(f"Loaded processor config from {config_filename}: {field_name} = {config_value}")
+            except Exception as e:
+                logger.warning(f"Failed to load processor config: {e}")
+
         for p in datastore.extra_browsers:
             form.fetch_backend.choices.append(p)
 
@@ -114,11 +133,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         if request.method == 'POST' and form.validate():
 
-            # If they changed processor, it makes sense to reset it.
-            if datastore.data['watching'][uuid].get('processor') != form.data.get('processor'):
-                datastore.data['watching'][uuid].clear_watch()
-                flash("Reset watch history due to change of processor")
-
             extra_update_obj = {
                 'consecutive_filter_failures': 0,
                 'last_error' : False
@@ -129,7 +143,60 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
             extra_update_obj['time_between_check'] = form.time_between_check.data
 
-             # Ignore text
+             # Handle processor-config-* fields separately (save to JSON, not datastore)
+            processor_config_data = {}
+            fields_to_remove = []
+            for field_name, field_value in form.data.items():
+                if field_name.startswith('processor_config_'):
+                    config_key = field_name.replace('processor_config_', '')
+                    if field_value:  # Only save non-empty values
+                        processor_config_data[config_key] = field_value
+                    fields_to_remove.append(field_name)
+
+            # Save processor config to JSON file if any config data exists
+            if processor_config_data:
+                try:
+                    processor_name = form.data.get('processor')
+                    # Create a processor instance to access config methods
+                    processor_instance = processors.difference_detection_processor(datastore, uuid)
+                    # Use processor name as filename so each processor keeps its own config
+                    config_filename = f'{processor_name}.json'
+                    processor_instance.update_extra_watch_config(config_filename, processor_config_data)
+                    logger.debug(f"Saved processor config to {config_filename}: {processor_config_data}")
+
+                    # Call optional edit_hook if processor has one
+                    try:
+                        # Try to import the edit_hook module from the processor package
+                        import importlib
+                        edit_hook_module_name = f'changedetectionio.processors.{processor_name}.edit_hook'
+
+                        try:
+                            edit_hook = importlib.import_module(edit_hook_module_name)
+                            logger.debug(f"Found edit_hook module for {processor_name}")
+
+                            if hasattr(edit_hook, 'on_config_save'):
+                                logger.info(f"Calling edit_hook.on_config_save for {processor_name}")
+                                watch_obj = datastore.data['watching'][uuid]
+                                # Call hook and get updated config
+                                updated_config = edit_hook.on_config_save(watch_obj, processor_config_data, datastore)
+                                # Save updated config back to file
+                                processor_instance.update_extra_watch_config(config_filename, updated_config)
+                                logger.info(f"Edit hook updated config: {updated_config}")
+                            else:
+                                logger.debug(f"Edit hook module found but no on_config_save function")
+                        except ModuleNotFoundError:
+                            logger.debug(f"No edit_hook module for processor {processor_name} (this is normal)")
+                    except Exception as hook_error:
+                        logger.error(f"Edit hook error (non-fatal): {hook_error}", exc_info=True)
+
+                except Exception as e:
+                    logger.error(f"Failed to save processor config: {e}")
+
+            # Remove processor-config-* fields from form.data before updating datastore
+            for field_name in fields_to_remove:
+                form.data.pop(field_name, None)
+
+            # Ignore text
             form_ignore_text = form.ignore_text.data
             datastore.data['watching'][uuid]['ignore_text'] = form_ignore_text
 
@@ -231,12 +298,17 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             # Get fetcher capabilities instead of hardcoded logic
             capabilities = get_fetcher_capabilities(watch, datastore)
             app_rss_token = datastore.data['settings']['application'].get('rss_access_token'),
+
+            c = [f"processor-{watch.get('processor')}"]
+            if worker_handler.is_watch_running(uuid):
+                c.append('checking-now')
+
             template_args = {
                 'available_processors': processors.available_processors(),
                 'available_timezones': sorted(available_timezones()),
                 'browser_steps_config': browser_step_ui_config,
                 'emailprefix': os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
-                'extra_classes': 'checking-now' if worker_handler.is_watch_running(uuid) else '',
+                'extra_classes': ' '.join(c),
                 'extra_notification_token_placeholder_info': datastore.get_unique_notification_token_placeholders_available(),
                 'extra_processor_config': form.extra_tab_content(),
                 'extra_title': f" - Edit - {watch.label}",

@@ -42,13 +42,13 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
         try:
             # Use native janus async interface - no threads needed!
             queued_item_data = await asyncio.wait_for(q.async_get(), timeout=1.0)
-            
+
         except asyncio.TimeoutError:
             # No jobs available, continue loop
             continue
         except Exception as e:
             logger.critical(f"CRITICAL: Worker {worker_id} failed to get queue item: {type(e).__name__}: {e}")
-            
+
             # Log queue health for debugging
             try:
                 queue_size = q.qsize()
@@ -56,15 +56,28 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                 logger.critical(f"CRITICAL: Worker {worker_id} queue health - size: {queue_size}, empty: {is_empty}")
             except Exception as health_e:
                 logger.critical(f"CRITICAL: Worker {worker_id} queue health check failed: {health_e}")
-            
+
             await asyncio.sleep(0.1)
             continue
-        
+
         uuid = queued_item_data.item.get('uuid')
-        fetch_start_time = round(time.time())
-        
-        # Mark this UUID as being processed
+
+        # RACE CONDITION FIX: Check if this UUID is already being processed by another worker
         from changedetectionio import worker_handler
+        from changedetectionio.queuedWatchMetaData import PrioritizedItem
+        if worker_handler.is_watch_running(uuid):
+            logger.trace(f"Worker {worker_id} skipping UUID {uuid} - already being processed, re-queuing for later")
+            # Re-queue with MUCH lower priority (higher number = processed later)
+            # This prevents tight loop where high-priority item keeps getting picked immediately
+            deferred_priority = max(1000, queued_item_data.priority * 10)
+            deferred_item = PrioritizedItem(priority=deferred_priority, item=queued_item_data.item)
+            worker_handler.queue_item_async_safe(q, deferred_item, silent=True)
+            await asyncio.sleep(0.1)  # Brief pause to avoid tight loop
+            continue
+
+        fetch_start_time = round(time.time())
+
+        # Mark this UUID as being processed
         worker_handler.set_uuid_processing(uuid, processing=True)
         
         try:
@@ -89,9 +102,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                     processor = watch.get('processor', 'text_json_diff')
 
                     # Init a new 'difference_detection_processor'
-                    processor_module_name = f"changedetectionio.processors.{processor}.processor"
                     try:
-                        processor_module = importlib.import_module(processor_module_name)
+                        processor_module = importlib.import_module(f"changedetectionio.processors.{processor}.processor")
                     except ModuleNotFoundError as e:
                         print(f"Processor module '{processor}' not found.")
                         raise e
@@ -332,7 +344,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                                 fetch_start_time += 1
                                 await asyncio.sleep(1)
 
-                            watch.save_history_text(contents=contents,
+                            watch.save_history_blob(contents=contents,
                                                     timestamp=int(fetch_start_time),
                                                     snapshot_id=update_obj.get('previous_md5', 'none'))
 
@@ -438,6 +450,10 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                     # 2. Setting it to None doesn't affect the datastore
                     # 3. GC can't collect the object anyway (still referenced by datastore)
                     # 4. It would just cause confusion
+
+                    # Force garbage collection after cleanup
+                    import gc
+                    gc.collect()
 
                     logger.debug(f"Worker {worker_id} completed watch {uuid} in {time.time()-fetch_start_time:.2f}s")
                 except Exception as cleanup_error:

@@ -20,10 +20,10 @@ from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200
 # Screenshots also travel via the ws:// (websocket) meaning that the binary data is base64 encoded
 # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
 # acceptable screenshot quality here
-async def capture_full_page(page):
+async def capture_full_page(page, screenshot_format='JPEG'):
     import os
     import time
-    from multiprocessing import Process, Pipe
+    import multiprocessing
 
     start = time.time()
 
@@ -41,11 +41,25 @@ async def capture_full_page(page):
     # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
     # acceptable screenshot quality here
 
+    # Use PNG for better quality (no compression artifacts), JPEG for smaller size
+    screenshot_type = screenshot_format.lower() if screenshot_format else 'jpeg'
+    # PNG should use quality 100, JPEG uses configurable quality
+    screenshot_quality = 100 if screenshot_type == 'png' else int(os.getenv("SCREENSHOT_QUALITY", 72))
 
     step_size = SCREENSHOT_SIZE_STITCH_THRESHOLD # Something that will not cause the GPU to overflow when taking the screenshot
     screenshot_chunks = []
     y = 0
+    elements_locked = False
     if page_height > page.viewport['height']:
+        # Lock all element dimensions BEFORE screenshot to prevent CSS media queries from resizing
+        # capture_full_page() changes viewport height which triggers @media (min-height) rules
+        lock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'lock-elements-sizing.js')
+        with open(lock_elements_js_path, 'r') as f:
+            lock_elements_js = f.read()
+        await page.evaluate(lock_elements_js)
+        elements_locked = True
+        logger.debug("Element dimensions locked before screenshot capture")
+
         if page_height < step_size:
             step_size = page_height # Incase page is bigger than default viewport but smaller than proposed step size
         await page.setViewport({'width': page.viewport['width'], 'height': step_size})
@@ -60,18 +74,34 @@ async def capture_full_page(page):
             y
         )
 
-        screenshot_chunks.append(await page.screenshot(type_='jpeg',
-                                                       fullPage=False,
-                                                       quality=int(os.getenv("SCREENSHOT_QUALITY", 72))))
+        screenshot_kwargs = {
+            'type_': screenshot_type,
+            'fullPage': False
+        }
+        # PNG doesn't support quality parameter in Puppeteer
+        if screenshot_type == 'jpeg':
+            screenshot_kwargs['quality'] = screenshot_quality
+
+        screenshot_chunks.append(await page.screenshot(**screenshot_kwargs))
         y += step_size
 
     await page.setViewport({'width': original_viewport['width'], 'height': original_viewport['height']})
 
+    # Unlock element dimensions if they were locked
+    if elements_locked:
+        unlock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'unlock-elements-sizing.js')
+        with open(unlock_elements_js_path, 'r') as f:
+            unlock_elements_js = f.read()
+        await page.evaluate(unlock_elements_js)
+        logger.debug("Element dimensions unlocked after screenshot capture")
+
     if len(screenshot_chunks) > 1:
+        # Always use spawn for thread safety - consistent behavior in tests and production
         from changedetectionio.content_fetchers.screenshot_handler import stitch_images_worker
         logger.debug(f"Screenshot stitching {len(screenshot_chunks)} chunks together")
-        parent_conn, child_conn = Pipe()
-        p = Process(target=stitch_images_worker, args=(child_conn, screenshot_chunks, page_height, SCREENSHOT_MAX_TOTAL_HEIGHT))
+        ctx = multiprocessing.get_context('spawn')
+        parent_conn, child_conn = ctx.Pipe()
+        p = ctx.Process(target=stitch_images_worker, args=(child_conn, screenshot_chunks, page_height, SCREENSHOT_MAX_TOTAL_HEIGHT))
         p.start()
         screenshot = parent_conn.recv_bytes()
         p.join()
@@ -112,8 +142,8 @@ class fetcher(Fetcher):
             'title': 'Using a Chrome browser'
         }
 
-    def __init__(self, proxy_override=None, custom_browser_connection_url=None):
-        super().__init__()
+    def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
+        super().__init__(**kwargs)
 
         if custom_browser_connection_url:
             self.browser_connection_is_custom = True
@@ -166,6 +196,7 @@ class fetcher(Fetcher):
                          request_body,
                          request_headers,
                          request_method,
+                         screenshot_format,
                          timeout,
                          url,
                          watch_uuid
@@ -210,7 +241,6 @@ class fetcher(Fetcher):
                     "height": int(match.group(2))
                 })
                 logger.debug(f"Puppeteer viewport size {self.page.viewport}")
-
         try:
             from pyppeteerstealth import inject_evasions_into_page
         except ImportError:
@@ -325,7 +355,7 @@ class fetcher(Fetcher):
                 logger.error(f"Error fetching FavIcon info {str(e)}, continuing.")
 
         if self.status_code != 200 and not ignore_status_codes:
-            screenshot = await capture_full_page(page=self.page)
+            screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format)
 
             raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=screenshot)
 
@@ -350,6 +380,12 @@ class fetcher(Fetcher):
             await self.page.evaluate(f"var include_filters=''")
 
         MAX_TOTAL_HEIGHT = int(os.getenv("SCREENSHOT_MAX_HEIGHT", SCREENSHOT_MAX_HEIGHT_DEFAULT))
+
+        self.content = await self.page.content
+
+        # Now take screenshot (scrolling may trigger layout changes, but measurements are already captured)
+        logger.debug(f"Screenshot format {self.screenshot_format}")
+        self.screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format)
         self.xpath_data = await self.page.evaluate(XPATH_ELEMENT_JS, {
             "visualselector_xpath_selectors": visualselector_xpath_selectors,
             "max_height": MAX_TOTAL_HEIGHT
@@ -357,11 +393,8 @@ class fetcher(Fetcher):
         if not self.xpath_data:
             raise Exception(f"Content Fetcher > xPath scraper failed. Please report this URL so we can fix it :)")
 
+
         self.instock_data = await self.page.evaluate(INSTOCK_DATA_JS)
-
-        self.content = await self.page.content
-
-        self.screenshot = await capture_full_page(page=self.page)
 
         # It's good to log here in the case that the browser crashes on shutting down but we still get the data we need
         logger.success(f"Fetching '{url}' complete, exiting puppeteer fetch.")
@@ -378,6 +411,7 @@ class fetcher(Fetcher):
                   request_body=None,
                   request_headers=None,
                   request_method=None,
+                  screenshot_format=None,
                   timeout=None,
                   url=None,
                   watch_uuid=None,
@@ -397,6 +431,7 @@ class fetcher(Fetcher):
                 request_body=request_body,
                 request_headers=request_headers,
                 request_method=request_method,
+                screenshot_format=None,
                 timeout=timeout,
                 url=url,
                 watch_uuid=watch_uuid,

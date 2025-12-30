@@ -28,8 +28,8 @@ class fetcher(Fetcher):
             'title': 'Using a Chrome browser'
         }
 
-    def __init__(self, proxy_override=None, custom_browser_connection_url=None):
-        super().__init__()
+    def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
+        super().__init__(**kwargs)
         from urllib.parse import urlparse
         from selenium.webdriver.common.proxy import Proxy
 
@@ -69,6 +69,7 @@ class fetcher(Fetcher):
                   request_body=None,
                   request_headers=None,
                   request_method=None,
+                  screenshot_format=None,
                   timeout=None,
                   url=None,
                   watch_uuid=None,
@@ -146,7 +147,21 @@ class fetcher(Fetcher):
                 time.sleep(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay)
                 self.content = driver.page_source
                 self.headers = {}
-                self.screenshot = driver.get_screenshot_as_png()
+
+                # Selenium always captures as PNG, convert to JPEG if needed
+                screenshot_png = driver.get_screenshot_as_png()
+
+                # Convert to JPEG if requested (for smaller file size)
+                if self.screenshot_format and self.screenshot_format.upper() == 'JPEG':
+                    from PIL import Image
+                    import io
+                    img = Image.open(io.BytesIO(screenshot_png))
+                    jpeg_buffer = io.BytesIO()
+                    img.save(jpeg_buffer, format='JPEG', quality=int(os.getenv("SCREENSHOT_QUALITY", 72)))
+                    self.screenshot = jpeg_buffer.getvalue()
+                    img.close()
+                else:
+                    self.screenshot = screenshot_png
             except Exception as e:
                 driver.quit()
                 raise e

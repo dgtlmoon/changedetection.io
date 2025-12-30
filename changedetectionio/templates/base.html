@@ -71,8 +71,7 @@
 
         <ul class="pure-menu-list" id="top-right-menu">
           {% if current_user.is_authenticated or not has_password %}
-            {% if not
-            current_diff_url %}
+            {% if not current_diff_url %}
               <li class="pure-menu-item">
                 <a href="{{ url_for('tags.tags_overview_page')}}" class="pure-menu-link">GROUPS</a>
               </li>

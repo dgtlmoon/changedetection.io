@@ -51,6 +51,7 @@ class Fetcher():
     favicon_blob = None
     instock_data = None
     instock_data_js = ""
+    screenshot_format = None
     status_code = None
     webdriver_js_execute_code = None
     xpath_data = None
@@ -69,6 +70,11 @@ class Fetcher():
     supports_browser_steps = False      # Can execute browser automation steps
     supports_screenshots = False        # Can capture page screenshots
     supports_xpath_element_data = False # Can extract xpath element positions/data for visual selector
+
+    def __init__(self, **kwargs):
+        if kwargs and 'screenshot_format' in kwargs:
+            self.screenshot_format = kwargs.get('screenshot_format')
+
 
     @classmethod
     def get_status_icon_data(cls):

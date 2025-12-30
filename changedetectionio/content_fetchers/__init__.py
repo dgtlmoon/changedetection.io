@@ -21,7 +21,9 @@ SCREENSHOT_MAX_TOTAL_HEIGHT = int(os.getenv("SCREENSHOT_MAX_HEIGHT", SCREENSHOT_
 # The size at which we will switch to stitching method, when below this (and
 # MAX_TOTAL_HEIGHT which can be set by a user) we will use the default
 # screenshot method.
-SCREENSHOT_SIZE_STITCH_THRESHOLD = 8000
+# Increased from 8000 to 10000 for better performance (fewer chunks = faster)
+# Most modern GPUs support 16384x16384 textures, so 1280x10000 is safe
+SCREENSHOT_SIZE_STITCH_THRESHOLD = int(os.getenv("SCREENSHOT_CHUNK_HEIGHT", 10000))
 
 # available_fetchers() will scan this implementation looking for anything starting with html_
 # this information is used in the form selections

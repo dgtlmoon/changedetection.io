@@ -48,7 +48,7 @@
                 </li> {% endif %}
             {% if history_n > 0 %}
                 <li class="tab" id="text-tab"><a href="#text">Text</a></li>
-                <li class="tab" id="screenshot-tab"><a href="#screenshot">Screenshot</a></li>
+                <li class="tab" id="screenshot-tab"><a href="#screenshot">Current screenshot</a></li>
             {% endif %}
         </ul>
     </div>
@@ -72,10 +72,8 @@
         <div class="tab-pane-inner" id="text">
             {{ highlight_trigger_ignored_explainer() }}
             <div class="snapshot-age">{{ current_version|format_timestamp_timeago }}</div>
-            <span class="tip"><strong>Pro-tip</strong>: Highlight text to add to ignore filters</span>
             <pre id="difference" style="border-left: 2px solid #ddd;">{{ content| diff_unescape_difference_spans }}</pre>
         </div>
-    </div>
 
         <div class="tab-pane-inner" id="screenshot">
             <div class="tip">
@@ -90,7 +88,7 @@
                     No screenshot available just yet! Try rechecking the page.
                 {% endif %}
             {% else %}
-                <strong>Screenshot requires a Content Fetcher ( Chrome, Zyte etc ) that supports screenshots.</strong>
+                <strong>Screenshot requires a Content Fetcher ( Sockpuppetbrowser, selenium, etc ) that supports screenshots.</strong>
             {% endif %}
         </div>
     </div>

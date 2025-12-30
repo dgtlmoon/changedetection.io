@@ -18,6 +18,9 @@ document.addEventListener('DOMContentLoaded', function() {
     background-repeat: no-repeat;
     transition: background-size 0.9s ease
 }
+
+/* Auto-generated processor badge colors */
+{{ processor_badge_css|safe }}
 </style>
 <div class="box" id="form-quick-watch-add">
 
@@ -173,8 +176,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="ldjson-price-track-offer">Switch to Restock & Price watch mode? <a href="{{url_for('price_data_follower.accept', uuid=watch.uuid)}}" class="pure-button button-xsmall">Yes</a> <a href="{{url_for('price_data_follower.reject', uuid=watch.uuid)}}" class="">No</a></div>
                                 {%- endif -%}
                             {%- endif -%}
-                            {%- if watch['processor'] == 'restock_diff' -%}
-                                <span class="tracking-ldjson-price-data" title="Automatically following embedded price information"><img src="{{url_for('static_content', group='images', filename='price-tag-icon.svg')}}"  class="status-icon price-follow-tag-icon" > Price</span>
+                            {%- if watch['processor'] and watch['processor'] in processor_badge_texts -%}
+                                <span class="processor-badge processor-badge-{{ watch['processor'] }}" title="{{ processor_descriptions.get(watch['processor'], watch['processor']) }}">{{ processor_badge_texts[watch['processor']] }}</span>
                             {%- endif -%}
                             {%- for watch_tag_uuid, watch_tag in datastore.get_all_tags_for_watch(watch['uuid']).items() -%}
                               <span class="watch-tag-list">{{ watch_tag.title }}</span>

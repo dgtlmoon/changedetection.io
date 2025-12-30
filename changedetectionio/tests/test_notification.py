@@ -142,7 +142,7 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-    time.sleep(3)
+    time.sleep(6)
 
     # Check no errors were recorded
     res = client.get(url_for("watchlist.index"))
@@ -198,7 +198,8 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
     # This should insert the {current_snapshot}
     set_more_modified_response(datastore_path=datastore_path)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
-    time.sleep(3)
+    wait_for_all_checks(client)
+    time.sleep(6)
     # Verify what was sent as a notification, this file should exist
     with open(os.path.join(datastore_path, "notification.txt"), "r") as f:
         notification_submission = f.read()
