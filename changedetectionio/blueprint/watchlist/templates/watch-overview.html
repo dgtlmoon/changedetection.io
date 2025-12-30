@@ -3,6 +3,7 @@
 {%- from '_helpers.html' import render_simple_field, render_field, render_nolabel_field, sort_by_title -%}
 <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='modal.js')}}"></script>
 <script>let nowtimeserver={{ now_time_server }};</script>
 <script>let favicon_baseURL="{{ url_for('static_content', group='favicon', filename="PLACEHOLDER")}}";</script>
 <script>
@@ -58,8 +59,18 @@ document.addEventListener('DOMContentLoaded', function() {
         <button class="pure-button button-secondary button-xsmall" name="op" value="mark-viewed"><i data-feather="eye" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>Mark viewed</button>
         <button class="pure-button button-secondary button-xsmall" name="op" value="notification-default"><i data-feather="bell" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>Use default notification</button>
         <button class="pure-button button-secondary button-xsmall" name="op" value="clear-errors"><i data-feather="x-circle" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>Clear errors</button>
-        <button class="pure-button button-secondary button-xsmall" style="background: #dd4242;" name="op" value="clear-history"><i data-feather="trash-2" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>Clear/reset history</button>
-        <button class="pure-button button-secondary button-xsmall" style="background: #dd4242;" name="op" value="delete"><i data-feather="trash" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>Delete</button>
+        <button class="pure-button button-secondary button-xsmall" style="background: #dd4242;" name="op" value="clear-history"
+                       data-requires-confirm
+                       data-confirm-type="danger"
+                       data-confirm-title="Clear Histories"
+                       data-confirm-message="<p>Are you sure you want to clear history for the selected items?</p><p>This action cannot be undone.</p>"
+                       data-confirm-button="OK"><i data-feather="trash-2" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>Clear/reset history</button>
+        <button class="pure-button button-secondary button-xsmall" style="background: #dd4242;" name="op" value="delete"
+                       data-requires-confirm
+                       data-confirm-type="danger"
+                       data-confirm-title="Delete Watches?"
+                       data-confirm-message="<p>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>"
+                       data-confirm-button="Delete"><i data-feather="trash" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>Delete</button>
     </div>
     {%- if watches|length >= pagination.per_page -%}
         {{ pagination.info }}
