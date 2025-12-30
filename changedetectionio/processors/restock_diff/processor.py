@@ -1,4 +1,4 @@
-from .. import difference_detection_processor
+from ..base import difference_detection_processor
 from ..exceptions import ProcessorException
 from . import Restock
 from loguru import logger
