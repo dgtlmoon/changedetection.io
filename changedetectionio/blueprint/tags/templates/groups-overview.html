@@ -2,6 +2,7 @@
 {% block content %}
 {% from '_helpers.html' import render_simple_field, render_field %}
 <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
+<script src="{{url_for('static_content', group='js', filename='modal.js')}}"></script>
 
 <div class="box">
     <form class="pure-form" action="{{ url_for('tags.form_tag_add') }}" method="POST" id="new-watch-form">
@@ -50,8 +51,22 @@
                 <td class="title-col inline"> <a href="{{url_for('watchlist.index', tag=uuid) }}">{{ tag.title }}</a></td>
                 <td>
                     <a class="pure-button pure-button-primary" href="{{ url_for('tags.form_tag_edit', uuid=uuid) }}">Edit</a>&nbsp;
-                    <a class="pure-button pure-button-primary" href="{{ url_for('tags.delete', uuid=uuid) }}" title="Deletes and removes tag">Delete</a>
-                    <a class="pure-button pure-button-primary" href="{{ url_for('tags.unlink', uuid=uuid) }}" title="Keep the tag but unlink any watches">Unlink</a>
+                    <a class="pure-button button-error"
+                       href="{{ url_for('tags.delete', uuid=uuid) }}"
+                       data-requires-confirm
+                       data-confirm-type="danger"
+                       data-confirm-title="Delete Group?"
+                       data-confirm-message="<p>Are you sure you want to delete group <strong>{{ tag.title }}</strong>?</p><p>This action cannot be undone.</p>"
+                       data-confirm-button="Delete"
+                       title="Deletes and removes tag">Delete</a>
+                    <a class="pure-button button-warning"
+                       href="{{ url_for('tags.unlink', uuid=uuid) }}"
+                       data-requires-confirm
+                       data-confirm-type="warning"
+                       data-confirm-title="Unlink Group?"
+                       data-confirm-message="<p>Are you sure you want to unlink all watches from group <strong>{{ tag.title }}</strong>?</p><p>The tag will be kept but watches will be removed from it.</p>"
+                       data-confirm-button="Unlink"
+                       title="Keep the tag but unlink any watches">Unlink</a>
                     <a href="{{ url_for('rss.rss_tag_feed', tag_uuid=uuid, token=app_rss_token)}}"><img alt="RSS Feed for this watch" style="padding-left: 1em;" src="{{url_for('static_content', group='images', filename='generic_feed-icon.svg')}}" height="15"></a>
                 </td>
             </tr>
