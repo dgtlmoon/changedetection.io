@@ -106,7 +106,8 @@ def available_processors():
     processor_classes = find_processors()
 
     # Check if ALLOWED_PROCESSORS env var is set
-    allowed_processors_env = os.getenv('ALLOWED_PROCESSORS', '').strip()
+    # For now we disable it, need to make a deploy with lots of new code and this will be an overload
+    allowed_processors_env = os.getenv('ALLOWED_PROCESSORS', 'text_json_diff, restock_diff').strip()
     allowed_processors = None
     if allowed_processors_env:
         # Parse comma-separated list and strip whitespace
