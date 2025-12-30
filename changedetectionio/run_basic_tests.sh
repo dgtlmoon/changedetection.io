@@ -59,11 +59,6 @@ data_sanity_test () {
   # datastore looks alright, continue
 }
 
-#temporary
-pytest -vv --tb=long  -s tests/test_filter_failure_notification.py::test_check_xpath_filter_failure_notification
-#####
-exit 0
-
 data_sanity_test
 
 # REMOVE_REQUESTS_OLD_SCREENSHOTS disabled so that we can write a screenshot and send it in test_notifications.py without a real browser
