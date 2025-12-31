@@ -52,6 +52,7 @@ class Fetcher():
     instock_data = None
     instock_data_js = ""
     status_code = None
+    total_bytes = None
     webdriver_js_execute_code = None
     xpath_data = None
     xpath_element_js = ""
