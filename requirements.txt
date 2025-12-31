@@ -53,7 +53,7 @@ linkify-it-py
 # - Requires extra wheel for rPi, adds build time for arm/v8 which is not in piwheels
 # Pinned to 43.0.1 for ARM compatibility (45.x may not have pre-built ARM wheels)
 # Also pinned because dependabot wants specific versions
-cryptography==44.0.1
+cryptography==46.0.3
 
 # apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
 # use any version other than 2.0.x due to https://github.com/eclipse/paho.mqtt.python/issues/814
