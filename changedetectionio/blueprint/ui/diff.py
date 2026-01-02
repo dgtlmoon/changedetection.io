@@ -1,4 +1,5 @@
 from flask import Blueprint, request, redirect, url_for, flash, render_template, make_response, send_from_directory
+from flask_babel import gettext
 
 import re
 import importlib
@@ -89,12 +90,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         try:
             watch = datastore.data['watching'][uuid]
         except KeyError:
-            flash("No history found for the specified link, bad link?", "error")
+            flash(gettext("No history found for the specified link, bad link?"), "error")
             return redirect(url_for('watchlist.index'))
 
         dates = list(watch.history.keys())
         if not dates or len(dates) < 2:
-            flash("Not enough history (2 snapshots required) to show difference page for this watch.", "error")
+            flash(gettext("Not enough history (2 snapshots required) to show difference page for this watch."), "error")
             return redirect(url_for('watchlist.index'))
 
         # Get the processor type for this watch
@@ -150,7 +151,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         try:
             watch = datastore.data['watching'][uuid]
         except KeyError:
-            flash("No history found for the specified link, bad link?", "error")
+            flash(gettext("No history found for the specified link, bad link?"), "error")
             return redirect(url_for('watchlist.index'))
 
         # Get the processor type for this watch
@@ -206,7 +207,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         try:
             watch = datastore.data['watching'][uuid]
         except KeyError:
-            flash("No history found for the specified link, bad link?", "error")
+            flash(gettext("No history found for the specified link, bad link?"), "error")
             return redirect(url_for('watchlist.index'))
 
         # Get the processor type for this watch
@@ -273,7 +274,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         try:
             watch = datastore.data['watching'][uuid]
         except KeyError:
-            flash("No history found for the specified link, bad link?", "error")
+            flash(gettext("No history found for the specified link, bad link?"), "error")
             return redirect(url_for('watchlist.index'))
 
         # Get the processor type for this watch

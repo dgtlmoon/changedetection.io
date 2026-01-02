@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-02 13:32+0100\n"
+"POT-Creation-Date: 2026-01-02 15:25+0100\n"
 "PO-Revision-Date: 2026-01-02 12:37+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh_Hant_TW\n"
@@ -25,523 +25,96 @@ msgstr ""
 msgid "Not yet"
 msgstr "還沒有"
 
-#: changedetectionio/forms.py:62 changedetectionio/forms.py:242
-msgid ""
-"At least one time interval (weeks, days, hours, minutes, or seconds) must"
-" be specified."
+#: changedetectionio/flask_app.py:468
+msgid "You must be logged in, please log in."
 msgstr ""
 
-#: changedetectionio/forms.py:63
-msgid ""
-"At least one time interval (weeks, days, hours, minutes, or seconds) must"
-" be specified when not using global settings."
+#: changedetectionio/flask_app.py:495
+msgid "Already logged in"
 msgstr ""
 
-#: changedetectionio/forms.py:163
-msgid "Invalid time format. Use HH:MM."
-msgstr "時間格式無效。使用時:分。"
+#: changedetectionio/flask_app.py:522
+#, fuzzy
+msgid "Incorrect password"
+msgstr "密碼"
 
-#: changedetectionio/forms.py:179
-msgid "Not a valid timezone name"
-msgstr "不是有效的時區名稱"
-
-#: changedetectionio/forms.py:182
-msgid "not set"
-msgstr "還沒有"
-
-#: changedetectionio/forms.py:183
-msgid "Start At"
-msgstr "統計數據"
-
-#: changedetectionio/forms.py:184
-msgid "Run duration"
-msgstr "暫無信息"
-
-#: changedetectionio/forms.py:187
-msgid "Use time scheduler"
-msgstr "使用時間調度器"
-
-#: changedetectionio/forms.py:197
-msgid "Optional timezone to run in"
-msgstr "運行時的可選時區"
-
-#: changedetectionio/forms.py:211
-msgid "Monday"
-msgstr "週一"
-
-#: changedetectionio/forms.py:212
-msgid "Tuesday"
-msgstr "週二"
-
-#: changedetectionio/forms.py:213
-msgid "Wednesday"
-msgstr "週三"
-
-#: changedetectionio/forms.py:214
-msgid "Thursday"
-msgstr "週四"
-
-#: changedetectionio/forms.py:215
-msgid "Friday"
-msgstr "星期五"
-
-#: changedetectionio/forms.py:216
-msgid "Saturday"
-msgstr "週六"
-
-#: changedetectionio/forms.py:217
-msgid "Sunday"
-msgstr "星期日"
-
-#: changedetectionio/forms.py:250
-msgid "Weeks"
-msgstr "週數"
-
-#: changedetectionio/forms.py:250 changedetectionio/forms.py:251
-#: changedetectionio/forms.py:252 changedetectionio/forms.py:253
-#: changedetectionio/forms.py:254 changedetectionio/forms.py:957
-msgid "Should contain zero or more seconds"
-msgstr "應包含零或更多秒"
-
-#: changedetectionio/forms.py:251
-msgid "Days"
-msgstr "天"
-
-#: changedetectionio/forms.py:252
-msgid "Hours"
-msgstr "字"
-
-#: changedetectionio/forms.py:253
-msgid "Minutes"
-msgstr "沉默的"
-
-#: changedetectionio/forms.py:254
-msgid "Seconds"
-msgstr "秒"
-
-#: changedetectionio/forms.py:459
+#: changedetectionio/forms.py:460
 msgid "Notification Body and Title is required when a Notification URL is used"
 msgstr "使用通知 URL 時需要通知正文和標題"
 
-#: changedetectionio/forms.py:488
+#: changedetectionio/forms.py:489
 #, python-format
 msgid "'%s' is not a valid AppRise URL."
 msgstr "“%s”不是有效的 AppRise URL。"
 
-#: changedetectionio/forms.py:561 changedetectionio/forms.py:580
+#: changedetectionio/forms.py:562 changedetectionio/forms.py:581
 #, python-format
 msgid "RegEx '%s' is not a valid regular expression."
 msgstr "RegEx“%s”不是有效的正則表達式。"
 
-#: changedetectionio/forms.py:621 changedetectionio/forms.py:636
+#: changedetectionio/forms.py:622 changedetectionio/forms.py:637
 #, python-format
 msgid "'%s' is not a valid XPath expression. (%s)"
 msgstr "“%s”不是有效的 XPath 表達式。 （%s）"
 
-#: changedetectionio/forms.py:656
+#: changedetectionio/forms.py:657
 #, python-format
 msgid "'%s' is not a valid JSONPath expression. (%s)"
 msgstr "“%s”不是有效的 JSONPath 表達式。 （%s）"
 
-#: changedetectionio/forms.py:678
+#: changedetectionio/forms.py:679
 #, python-format
 msgid "'%s' is not a valid jq expression. (%s)"
 msgstr "“%s”不是有效的 jq 表達式。 （%s）"
 
-#: changedetectionio/forms.py:724
-msgid "Empty value not allowed."
-msgstr "不允許為空值。"
-
-#: changedetectionio/forms.py:726
-msgid "Invalid value."
-msgstr "無效值。"
-
-#: changedetectionio/forms.py:733
-msgid "Watch"
-msgstr "# 手錶"
-
-#: changedetectionio/forms.py:734 changedetectionio/forms.py:768
-msgid "Processor"
-msgstr "處理器"
-
-#: changedetectionio/forms.py:735
-msgid "Edit > Watch"
-msgstr "先編輯後觀看"
-
-#: changedetectionio/forms.py:748 changedetectionio/forms.py:996
-msgid "Fetch Method"
-msgstr "設置獲取方法"
-
-#: changedetectionio/forms.py:749
-msgid "Notification Body"
-msgstr "通知"
-
-#: changedetectionio/forms.py:750
-msgid "Notification format"
-msgstr "通知"
-
-#: changedetectionio/forms.py:751
-msgid "Notification Title"
-msgstr "通知"
-
-#: changedetectionio/forms.py:752
-msgid "Notification URL List"
-msgstr "通知"
-
-#: changedetectionio/forms.py:753
-msgid "Processor - What do you want to achieve?"
-msgstr "處理器 - 您想要實現什麼？"
-
-#: changedetectionio/forms.py:754
-msgid "Default timezone for watch check scheduler"
-msgstr "手錶檢查調度程序的默認時區"
-
-#: changedetectionio/forms.py:755
-msgid "Wait seconds before extracting text"
-msgstr "提取文本前幾秒。"
-
-#: changedetectionio/forms.py:755
-msgid "Should contain one or more seconds"
-msgstr "應包含一秒或多秒"
-
-#: changedetectionio/forms.py:769
-msgid "URLs"
-msgstr "網址"
-
-#: changedetectionio/forms.py:770
-msgid "Upload .xlsx file"
-msgstr "上傳 .xlsx 文件"
-
-#: changedetectionio/forms.py:770
-msgid "Must be .xlsx file!"
-msgstr "必須是 .xlsx 文件！"
-
-#: changedetectionio/forms.py:771
-msgid "File mapping"
-msgstr "文件映射類型。"
-
-#: changedetectionio/forms.py:775
-msgid "Operation"
-msgstr "用戶界面選項"
-
-#: changedetectionio/forms.py:778
-msgid "Selector"
-msgstr "選擇方式："
-
-#: changedetectionio/forms.py:779
-msgid "value"
-msgstr "暫停"
-
-#: changedetectionio/forms.py:798
-msgid "Use global settings for time between check and scheduler."
-msgstr "使用全局設置檢查和調度程序之間的時間。"
-
-#: changedetectionio/forms.py:800
-msgid "CSS/JSONPath/JQ/XPath Filters"
-msgstr "CSS/xPath 過濾器"
-
-#: changedetectionio/forms.py:802 changedetectionio/forms.py:998
-msgid "Remove elements"
-msgstr "已刪除"
-
-#: changedetectionio/forms.py:804
-msgid "Extract text"
-msgstr "提取數據"
-
-#: changedetectionio/blueprint/imports/templates/import.html:106
-#: changedetectionio/forms.py:806
-msgid "Title"
-msgstr "標題"
-
-#: changedetectionio/forms.py:808
-msgid "Ignore lines containing"
-msgstr "忽略任何匹配的行"
-
-#: changedetectionio/forms.py:810
-msgid "Request body"
-msgstr "要求"
-
-#: changedetectionio/forms.py:811
-msgid "Request method"
-msgstr "要求"
-
-#: changedetectionio/forms.py:812
-msgid "Ignore status codes (process non-2xx status codes as normal)"
-msgstr "忽略狀態代碼（正常處理非 2xx 狀態代碼）"
-
-#: changedetectionio/forms.py:813
-msgid "Only trigger when unique lines appear in all history"
-msgstr "僅當出現唯一線條時觸發"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:336
-#: changedetectionio/forms.py:814
-msgid "Remove duplicate lines of text"
-msgstr "刪除重複的文本行"
-
-#: changedetectionio/forms.py:815
-msgid "Sort text alphabetically"
-msgstr "按字母順序對文本進行排序"
-
-#: changedetectionio/forms.py:816 changedetectionio/forms.py:1025
-msgid "Strip ignored lines"
-msgstr "去掉忽略的行"
-
-#: changedetectionio/forms.py:817
-msgid "Trim whitespace before and after text"
-msgstr "刪除每行文本前後的所有空格"
-
-#: changedetectionio/forms.py:819
-msgid "Added lines"
-msgstr "線路"
-
-#: changedetectionio/forms.py:820
-msgid "Replaced/changed lines"
-msgstr "更換/更改線路"
-
-#: changedetectionio/forms.py:821
-msgid "Removed lines"
-msgstr "已刪除"
-
-#: changedetectionio/forms.py:823
-msgid "Keyword triggers - Trigger/wait for text"
-msgstr "關鍵字觸發器 - 觸發/等待文本"
-
-#: changedetectionio/forms.py:826
-msgid "Block change-detection while text matches"
-msgstr "文本匹配時阻止更改檢測"
-
-#: changedetectionio/forms.py:827
-msgid "Execute JavaScript before change detection"
-msgstr "在更改檢測之前執行 JavaScript"
-
-#: changedetectionio/blueprint/tags/templates/groups-overview.html:17
-#: changedetectionio/forms.py:829 changedetectionio/forms.py:1053
-msgid "Save"
-msgstr "節省"
-
-#: changedetectionio/forms.py:831
-msgid "Proxy"
-msgstr "代理人"
-
-#: changedetectionio/forms.py:833
-msgid "Send a notification when the filter can no longer be found on the page"
-msgstr "當頁面上找不到過濾器時發送通知"
-
-#: changedetectionio/blueprint/settings/templates/settings.html:22
-#: changedetectionio/blueprint/tags/templates/edit-tag.html:32
-#: changedetectionio/blueprint/ui/templates/edit.html:59
-#: changedetectionio/forms.py:834
-msgid "Notifications"
-msgstr "通知"
-
-#: changedetectionio/forms.py:834
-msgid "Muted"
-msgstr "沉默的"
-
-#: changedetectionio/forms.py:834
-msgid "On"
-msgstr "沒有任何"
-
-#: changedetectionio/forms.py:835
-msgid "Attach screenshot to notification (where possible)"
-msgstr "將屏幕截圖附加到通知（如果可能）"
-
-#: changedetectionio/forms.py:837
-msgid "Match"
-msgstr "# 手錶"
-
-#: changedetectionio/forms.py:837
-msgid "Match all of the following"
-msgstr "匹配以下所有內容"
-
-#: changedetectionio/forms.py:837
-msgid "Match any of the following"
-msgstr "匹配以下任意一項"
-
-#: changedetectionio/forms.py:839
-msgid "Use page <title> in list"
-msgstr "使用列表中的頁面<標題>"
-
-#: changedetectionio/forms.py:856
+#: changedetectionio/forms.py:854
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "當請求方法設置為 GET 時，正文必須為空"
 
-#: changedetectionio/forms.py:865 changedetectionio/forms.py:879
-#: changedetectionio/forms.py:894
+#: changedetectionio/forms.py:863 changedetectionio/forms.py:877
+#: changedetectionio/forms.py:892
 #, python-format
 msgid "Invalid template syntax configuration: %(error)s"
 msgstr "模板語法配置無效：%(error)s"
 
-#: changedetectionio/forms.py:869 changedetectionio/forms.py:883
+#: changedetectionio/forms.py:867 changedetectionio/forms.py:881
 #, python-format
 msgid "Invalid template syntax: %(error)s"
 msgstr "無效的模板語法：%(error)s"
 
-#: changedetectionio/forms.py:898
+#: changedetectionio/forms.py:896
 #, python-format
 msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
 msgstr ""
 
-#: changedetectionio/forms.py:922 changedetectionio/forms.py:934
-msgid "Name"
-msgstr "取消靜音"
-
-#: changedetectionio/forms.py:923
-msgid "Proxy URL"
-msgstr "代理網址"
-
-#: changedetectionio/forms.py:928
-msgid "Proxy URLs must start with http://, https:// or socks5://"
-msgstr "代理 URL 必須以 http://、https:// 或ocks5:// 開頭"
-
-#: changedetectionio/forms.py:935
-msgid "Browser connection URL"
-msgstr "瀏覽器連接網址"
-
-#: changedetectionio/forms.py:940
-msgid "Browser URLs must start with wss:// or ws://"
-msgstr "瀏覽器 URL 必須以 wss:// 或 ws:// 開頭"
-
-#: changedetectionio/forms.py:946
-msgid "Plaintext requests"
-msgstr "明文請求"
-
-#: changedetectionio/forms.py:948
-msgid "Chrome requests"
-msgstr "要求"
-
-#: changedetectionio/forms.py:954
-msgid "Default proxy"
-msgstr "默認代理"
-
-#: changedetectionio/forms.py:955
-msgid "Random jitter seconds ± check"
-msgstr "隨機抖動秒±檢查"
-
-#: changedetectionio/forms.py:959
-msgid "Number of fetch workers"
-msgstr "取貨工人數量"
-
-#: changedetectionio/forms.py:962
-msgid "Should be between 1 and 50"
-msgstr "應介於 1 到 50 之間"
-
-#: changedetectionio/forms.py:964
-msgid "Requests timeout in seconds"
-msgstr "請求超時（以秒為單位）"
-
-#: changedetectionio/forms.py:967
-msgid "Should be between 1 and 999"
-msgstr "應介於 1 到 999 之間"
-
-#: changedetectionio/forms.py:972
-msgid "Default User-Agent overrides"
-msgstr "默認用戶代理覆蓋"
-
-#: changedetectionio/forms.py:978
+#: changedetectionio/forms.py:976
 msgid "Both a name, and a Proxy URL is required."
 msgstr "名稱和代理 URL 都是必需的。"
 
-#: changedetectionio/forms.py:982
-msgid "Open 'History' page in a new tab"
-msgstr "在新選項卡中打開“歷史記錄”頁面"
-
-#: changedetectionio/forms.py:983
-msgid "Realtime UI Updates Enabled"
-msgstr "離線實時更新"
-
-#: changedetectionio/forms.py:984
-msgid "Favicons Enabled"
-msgstr "考慮啟用"
-
-#: changedetectionio/forms.py:985
-msgid "Use page <title> in watch overview list"
-msgstr "在觀看概覽列表中使用頁面<標題>"
-
-#: changedetectionio/forms.py:990
-msgid "API access token security check enabled"
-msgstr "已啟用 API 訪問令牌安全檢查"
-
-#: changedetectionio/forms.py:991
-msgid "Notification base URL override"
-msgstr "通知警報計數"
-
-#: changedetectionio/forms.py:995
-msgid "Treat empty pages as a change?"
-msgstr "將空頁視為更改？"
-
-#: changedetectionio/forms.py:997
-msgid "Ignore Text"
-msgstr "錯誤文本"
-
-#: changedetectionio/forms.py:999
-msgid "Ignore whitespace"
-msgstr "忽略空格"
-
-#: changedetectionio/forms.py:1006
-#: changedetectionio/processors/image_ssim_diff/forms.py:50
-msgid "Must be between 0 and 100"
-msgstr "必須介於 0 到 100 之間"
-
-#: changedetectionio/forms.py:1013
-msgid "Pager size"
-msgstr "尋呼機尺寸"
-
-#: changedetectionio/forms.py:1016
-msgid "Should be atleast zero (disabled)"
-msgstr "應至少為零（禁用）"
-
-#: changedetectionio/forms.py:1018
-msgid "RSS Content format"
-msgstr "RSS 內容格式"
-
-#: changedetectionio/forms.py:1019
-msgid "RSS <description> body built from"
-msgstr "RSS <描述> 正文構建於"
-
-#: changedetectionio/forms.py:1020
-msgid "RSS \"System default\" template override"
+#: changedetectionio/store.py:386
+#, python-brace-format
+msgid "Error fetching metadata for {}"
 msgstr ""
 
-#: changedetectionio/forms.py:1022
-msgid "Remove password"
-msgstr "密碼"
+#: changedetectionio/store.py:390
+msgid "Watch protocol is not permitted or invalid URL format"
+msgstr ""
 
-#: changedetectionio/forms.py:1023
-msgid "Render anchor tag content"
-msgstr "渲染錨標記內容"
+#: changedetectionio/blueprint/backups/__init__.py:86
+msgid "A backup is already running, check back in a few minutes"
+msgstr ""
 
-#: changedetectionio/forms.py:1024
-msgid "Allow anonymous access to watch history page when password is enabled"
-msgstr "啟用密碼後允許匿名訪問觀看歷史記錄頁面"
+#: changedetectionio/blueprint/backups/__init__.py:90
+msgid "Maximum number of backups reached, please remove some"
+msgstr ""
 
-#: changedetectionio/forms.py:1026
-msgid "Hide muted watches from RSS feed"
-msgstr "從 RSS 源中隱藏靜音的手錶"
+#: changedetectionio/blueprint/backups/__init__.py:98
+msgid "Backup building in background, check back in a few minutes."
+msgstr ""
 
-#: changedetectionio/forms.py:1029
-msgid "Enable RSS reader mode "
-msgstr "啟用 RSS 閱讀器模式"
-
-#: changedetectionio/forms.py:1030
-msgid "Number of changes to show in watch RSS feed"
-msgstr "觀看 RSS 源中顯示的更改數量"
-
-#: changedetectionio/forms.py:1032 changedetectionio/forms.py:1037
-msgid "Should contain zero or more attempts"
-msgstr "應包含零次或多次嘗試"
-
-#: changedetectionio/forms.py:1034
-msgid "Number of times the filter can be missing before sending a notification"
-msgstr "發送通知之前過濾器可能丟失的次數"
-
-#: changedetectionio/forms.py:1057
-msgid "RegEx to extract"
-msgstr "要提取的正則表達式"
-
-#: changedetectionio/forms.py:1058
-msgid "Extract as CSV"
-msgstr "提取數據"
+#: changedetectionio/blueprint/backups/__init__.py:161
+msgid "Backups were deleted."
+msgstr ""
 
 #: changedetectionio/blueprint/backups/templates/overview.html:6
 msgid "Backups"
@@ -572,6 +145,59 @@ msgstr "創建備份"
 #: changedetectionio/blueprint/backups/templates/overview.html:30
 msgid "Remove backups"
 msgstr "刪除備份"
+
+#: changedetectionio/blueprint/imports/importer.py:45
+msgid ""
+"Importing 5,000 of the first URLs from your list, the rest can be "
+"imported again."
+msgstr ""
+
+#: changedetectionio/blueprint/imports/importer.py:78
+#, python-brace-format
+msgid "{} Imported from list in {:.2f}s, {} Skipped."
+msgstr ""
+
+#: changedetectionio/blueprint/imports/importer.py:98
+msgid "Unable to read JSON file, was it broken?"
+msgstr ""
+
+#: changedetectionio/blueprint/imports/importer.py:102
+msgid "JSON structure looks invalid, was it broken?"
+msgstr ""
+
+#: changedetectionio/blueprint/imports/importer.py:139
+#, python-brace-format
+msgid "{} Imported from Distill.io in {:.2f}s, {} Skipped."
+msgstr ""
+
+#: changedetectionio/blueprint/imports/importer.py:160
+#: changedetectionio/blueprint/imports/importer.py:239
+msgid "Unable to read export XLSX file, something wrong with the file?"
+msgstr ""
+
+#: changedetectionio/blueprint/imports/importer.py:200
+#: changedetectionio/blueprint/imports/importer.py:268
+#, python-brace-format
+msgid "Error processing row number {}, URL value was incorrect, row was skipped."
+msgstr ""
+
+#: changedetectionio/blueprint/imports/importer.py:214
+#: changedetectionio/blueprint/imports/importer.py:297
+#, python-brace-format
+msgid ""
+"Error processing row number {}, check all cell data types are correct, "
+"row was skipped."
+msgstr ""
+
+#: changedetectionio/blueprint/imports/importer.py:218
+#, python-brace-format
+msgid "{} imported from Wachete .xlsx in {:.2f}s"
+msgstr ""
+
+#: changedetectionio/blueprint/imports/importer.py:301
+#, python-brace-format
+msgid "{} imported from custom .xlsx in {:.2f}s"
+msgstr ""
 
 #: changedetectionio/blueprint/imports/templates/import.html:9
 msgid "URL List"
@@ -661,6 +287,10 @@ msgstr "沒有任何"
 msgid "URL"
 msgstr "網址"
 
+#: changedetectionio/blueprint/imports/templates/import.html:106
+msgid "Title"
+msgstr "標題"
+
 #: changedetectionio/blueprint/imports/templates/import.html:107
 msgid "CSS/xPath filter"
 msgstr "CSS/xPath 過濾器"
@@ -677,6 +307,43 @@ msgstr "複檢時間（分鐘）"
 msgid "Import"
 msgstr "進口"
 
+#: changedetectionio/blueprint/settings/__init__.py:64
+msgid "Password protection removed."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/__init__.py:98
+#, python-brace-format
+msgid "Worker count adjusted: {}"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/__init__.py:100
+msgid "Dynamic worker adjustment not supported for sync workers"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/__init__.py:102
+#, python-brace-format
+msgid "Error adjusting workers: {}"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/__init__.py:107
+msgid "Password protection enabled."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/__init__.py:126
+#, fuzzy
+msgid "Settings updated."
+msgstr "設定"
+
+#: changedetectionio/blueprint/settings/__init__.py:129
+#: changedetectionio/blueprint/ui/edit.py:283
+#: changedetectionio/processors/extract.py:105
+msgid "An error occurred, please see below."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/__init__.py:179
+msgid "API Key was regenerated."
+msgstr ""
+
 #: changedetectionio/blueprint/settings/templates/notification-log.html:7
 msgid "Notification debug log"
 msgstr "通知調試日誌"
@@ -686,6 +353,12 @@ msgstr "通知調試日誌"
 #: changedetectionio/blueprint/ui/templates/edit.html:47
 msgid "General"
 msgstr "一般的"
+
+#: changedetectionio/blueprint/settings/templates/settings.html:22
+#: changedetectionio/blueprint/tags/templates/edit-tag.html:32
+#: changedetectionio/blueprint/ui/templates/edit.html:59
+msgid "Notifications"
+msgstr "通知"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:23
 msgid "Fetching"
@@ -750,6 +423,39 @@ msgstr "後退"
 #: changedetectionio/blueprint/settings/templates/settings.html:406
 msgid "Clear Snapshot History"
 msgstr "清除快照歷史記錄"
+
+#: changedetectionio/blueprint/tags/__init__.py:46
+#, python-brace-format
+msgid "The tag \"{}\" already exists"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/__init__.py:50
+#, fuzzy
+msgid "Tag added"
+msgstr "額外"
+
+#: changedetectionio/blueprint/tags/__init__.py:75
+#, python-brace-format
+msgid "Tag deleted and removed from {} watches"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/__init__.py:87
+#, python-brace-format
+msgid "Tag unlinked removed from {} watches"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/__init__.py:97
+msgid "All tags deleted"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/__init__.py:109
+msgid "Tag not found"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/__init__.py:184
+#, fuzzy
+msgid "Updated"
+msgstr "沉默的"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html:28
 #: changedetectionio/blueprint/ui/templates/edit.html:56
@@ -827,6 +533,10 @@ msgstr "添加新的組織標籤"
 msgid "Watch group / tag"
 msgstr "觀看組/標籤"
 
+#: changedetectionio/blueprint/tags/templates/groups-overview.html:17
+msgid "Save"
+msgstr "節省"
+
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:21
 msgid ""
 "Groups allows you to manage filters and notifications for multiple "
@@ -897,6 +607,175 @@ msgstr "保留標籤但取消所有手錶的鏈接"
 #: changedetectionio/blueprint/ui/templates/edit.html:500
 msgid "RSS Feed for this watch"
 msgstr "此手錶的 RSS 源"
+
+#: changedetectionio/blueprint/ui/__init__.py:20
+#, python-brace-format
+msgid "{} watches deleted"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/__init__.py:27
+#, fuzzy, python-brace-format
+msgid "{} watches paused"
+msgstr "# 手錶"
+
+#: changedetectionio/blueprint/ui/__init__.py:34
+#, python-brace-format
+msgid "{} watches unpaused"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/__init__.py:41
+#, python-brace-format
+msgid "{} watches updated"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/__init__.py:48
+#, fuzzy, python-brace-format
+msgid "{} watches muted"
+msgstr "# 手錶"
+
+#: changedetectionio/blueprint/ui/__init__.py:55
+#, python-brace-format
+msgid "{} watches un-muted"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/__init__.py:63
+#, python-brace-format
+msgid "{} watches queued for rechecking"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/__init__.py:70
+#, python-brace-format
+msgid "{} watches errors cleared"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/__init__.py:77
+#, python-brace-format
+msgid "{} watches cleared/reset."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/__init__.py:90
+#, fuzzy, python-brace-format
+msgid "{} watches set to use default notification settings"
+msgstr "使用默認通知"
+
+#: changedetectionio/blueprint/ui/__init__.py:105
+#, python-brace-format
+msgid "{} watches were tagged"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/__init__.py:142
+#, fuzzy
+msgid "Watch not found"
+msgstr "關注這個網址！"
+
+#: changedetectionio/blueprint/ui/__init__.py:144
+#, fuzzy, python-brace-format
+msgid "Cleared snapshot history for watch {}"
+msgstr "清除快照歷史記錄"
+
+#: changedetectionio/blueprint/ui/__init__.py:156
+#, fuzzy
+msgid "Cleared snapshot history for all watches"
+msgstr "清除快照歷史記錄"
+
+#: changedetectionio/blueprint/ui/__init__.py:158
+#, fuzzy
+msgid "Incorrect confirmation text."
+msgstr "確認文字"
+
+#: changedetectionio/blueprint/ui/__init__.py:192
+#, python-brace-format
+msgid "The watch by UUID {} does not exist."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/__init__.py:199
+#, fuzzy
+msgid "Deleted."
+msgstr "刪除"
+
+#: changedetectionio/blueprint/ui/__init__.py:216
+msgid "Cloned, you are editing the new watch."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/__init__.py:255
+msgid "Queued 1 watch for rechecking."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/__init__.py:257
+#, python-brace-format
+msgid "Queued {} watches for rechecking."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/__init__.py:259
+msgid "No watches available to recheck."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/__init__.py:330
+#, python-brace-format
+msgid ""
+"Could not share, something went wrong while communicating with the share "
+"server - {}"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/diff.py:93
+#: changedetectionio/blueprint/ui/diff.py:154
+#: changedetectionio/blueprint/ui/diff.py:210
+#: changedetectionio/blueprint/ui/diff.py:277
+#: changedetectionio/blueprint/ui/preview.py:36
+#: changedetectionio/blueprint/ui/preview.py:160
+msgid "No history found for the specified link, bad link?"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/diff.py:98
+msgid ""
+"Not enough history (2 snapshots required) to show difference page for "
+"this watch."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/edit.py:35
+msgid "No watches to edit"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/edit.py:42
+#, python-brace-format
+msgid "No watch with the UUID {} found."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/edit.py:50
+#, python-brace-format
+msgid "Switched to mode - {}."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/edit.py:69
+#, python-brace-format
+msgid "Cannot load the edit form for processor/plugin '{}', plugin missing?"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/edit.py:239
+msgid "Updated watch - unpaused!"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/edit.py:239
+#, fuzzy
+msgid "Updated watch."
+msgstr "刪除手錶？"
+
+#: changedetectionio/blueprint/ui/preview.py:78
+msgid "Preview unavailable - No fetch/check completed or triggers not reached"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/views.py:24
+#, python-brace-format
+msgid "Warning, URL {} already exists"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/views.py:32
+msgid "Watch added in Paused state, saving will unpause."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/views.py:37
+msgid "Watch added."
+msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:12
 msgid ""
@@ -1030,7 +909,6 @@ msgstr "錯誤截圖"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:99
 #: changedetectionio/blueprint/ui/templates/preview.html:50
-#: changedetectionio/processors/text_json_diff/processor.py:24
 msgid "Text"
 msgstr "文字"
 
@@ -1386,6 +1264,10 @@ msgid ""
 "this watch."
 msgstr ""
 
+#: changedetectionio/blueprint/ui/templates/edit.html:336
+msgid "Remove duplicate lines of text"
+msgstr "刪除重複的文本行"
+
 #: changedetectionio/blueprint/ui/templates/edit.html:340
 msgid ""
 "Helps reduce changes detected caused by sites shuffling lines around, "
@@ -1739,132 +1621,27 @@ msgstr "重新檢查所有"
 msgid "in '%(title)s'"
 msgstr "在“%(title)s”中"
 
-#: changedetectionio/processors/image_ssim_diff/forms.py:19
-#: changedetectionio/processors/image_ssim_diff/forms.py:69
-msgid "Bounding box value is too long"
-msgstr "邊界框值太長"
-
-#: changedetectionio/processors/image_ssim_diff/forms.py:23
-msgid "Bounding box must be in format: x,y,width,height (integers only)"
-msgstr "邊界框的格式必須為：x,y,寬度,高度（僅限整數）"
-
-#: changedetectionio/processors/image_ssim_diff/forms.py:29
-msgid "Bounding box values must be non-negative"
-msgstr "邊界框值必須是非負數"
-
-#: changedetectionio/processors/image_ssim_diff/forms.py:31
-msgid "Bounding box values are too large"
-msgstr "邊界框值太大"
-
-#: changedetectionio/processors/image_ssim_diff/forms.py:40
-msgid "Selection mode must be either \"element\" or \"draw\""
+#: changedetectionio/processors/extract.py:131
+msgid "No matches found while scanning all of the watch history for that RegEx."
 msgstr ""
 
-#: changedetectionio/processors/image_ssim_diff/forms.py:47
-msgid "Minimum Change Percentage"
-msgstr "最小變化百分比"
+#: changedetectionio/processors/image_ssim_diff/difference.py:328
+msgid "Not enough history to compare. Need at least 2 snapshots."
+msgstr ""
 
-#: changedetectionio/processors/image_ssim_diff/forms.py:56
-msgid "Pixel Difference Sensitivity"
-msgstr "像素差異靈敏度"
+#: changedetectionio/processors/image_ssim_diff/difference.py:363
+#, python-brace-format
+msgid "Failed to load screenshots: {}"
+msgstr ""
 
-#: changedetectionio/processors/image_ssim_diff/forms.py:58
-msgid "Use global default"
-msgstr "使用系統默認值"
+#: changedetectionio/processors/image_ssim_diff/difference.py:412
+#, python-brace-format
+msgid "Failed to calculate diff: {}"
+msgstr ""
 
-#: changedetectionio/processors/image_ssim_diff/forms.py:66
-msgid "Bounding Box"
-msgstr "邊界框"
-
-#: changedetectionio/processors/image_ssim_diff/forms.py:76
-msgid "Selection Mode"
-msgstr "選擇方式："
-
-#: changedetectionio/processors/image_ssim_diff/forms.py:79
-msgid "Selection mode value is too long"
-msgstr "選擇模式值太長"
-
-#: changedetectionio/processors/image_ssim_diff/forms.py:87
-msgid "Screenshot Comparison"
-msgstr "截圖對比"
-
-#: changedetectionio/processors/image_ssim_diff/processor.py:20
-msgid "Visual / Image screenshot change detection"
-msgstr "視覺/圖像截圖變化檢測"
-
-#: changedetectionio/processors/image_ssim_diff/processor.py:21
-msgid "Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM"
-msgstr "使用快速 OpenCV 算法比較屏幕截圖，比 SSIM 快 10-100 倍"
-
-#: changedetectionio/processors/image_ssim_diff/processor.py:23
-msgid "Visual"
-msgstr "視覺的"
-
-#: changedetectionio/processors/restock_diff/forms.py:15
-msgid "Re-stock detection"
-msgstr "補貨檢測"
-
-#: changedetectionio/processors/restock_diff/forms.py:16
-msgid "In Stock only (Out Of Stock -> In Stock only)"
-msgstr "僅有庫存（缺貨 -> 僅有庫存）"
-
-#: changedetectionio/processors/restock_diff/forms.py:17
-msgid "Any availability changes"
-msgstr "任何可用性變更"
-
-#: changedetectionio/processors/restock_diff/forms.py:18
-msgid "Off, don't follow availability/restock"
-msgstr "關閉，不遵循庫存/補貨情況"
-
-#: changedetectionio/processors/restock_diff/forms.py:21
-msgid "Below price to trigger notification"
-msgstr "低於價格觸發通知"
-
-#: changedetectionio/processors/restock_diff/forms.py:22
-#: changedetectionio/processors/restock_diff/forms.py:24
-msgid "No limit"
-msgstr "無限制"
-
-#: changedetectionio/processors/restock_diff/forms.py:23
-msgid "Above price to trigger notification"
-msgstr "高於價格觸發通知"
-
-#: changedetectionio/processors/restock_diff/forms.py:25
-#, python-format
-msgid "Threshold in %% for price changes since the original price"
-msgstr "自原始價格以來價格變化的閾值（百分比）"
-
-#: changedetectionio/processors/restock_diff/forms.py:28
-msgid "Should be between 0 and 100"
-msgstr "應介於 0 到 100 之間"
-
-#: changedetectionio/processors/restock_diff/forms.py:31
-msgid "Follow price changes"
-msgstr "關注價格變化"
-
-#: changedetectionio/processors/restock_diff/forms.py:37
-msgid "Restock & Price Detection"
-msgstr "補貨及價格"
-
-#: changedetectionio/processors/restock_diff/processor.py:11
-msgid "Re-stock & Price detection for pages with a SINGLE product"
-msgstr "單個產品頁面的補貨和價格檢測"
-
-#: changedetectionio/processors/restock_diff/processor.py:12
-msgid "Detects if the product goes back to in-stock"
-msgstr "檢測產品是否恢復庫存"
-
-#: changedetectionio/processors/restock_diff/processor.py:14
-msgid "Restock"
-msgstr "補貨"
-
-#: changedetectionio/processors/text_json_diff/processor.py:21
-msgid "Webpage Text/HTML, JSON and PDF changes"
-msgstr "網頁文本/HTML、JSON 和 PDF 更改"
-
-#: changedetectionio/processors/text_json_diff/processor.py:22
-msgid "Detects all text changes where possible"
-msgstr "盡可能檢測所有文本更改"
+#: changedetectionio/processors/image_ssim_diff/preview.py:91
+msgid "Preview unavailable - No snapshots captured yet"
+msgstr ""
 
 #: changedetectionio/templates/base.html:77
 msgid "GROUPS"
@@ -1925,4 +1702,427 @@ msgstr "密碼"
 #: changedetectionio/templates/login.html:16
 msgid "Login"
 msgstr "登入"
+
+#~ msgid ""
+#~ "At least one time interval (weeks, "
+#~ "days, hours, minutes, or seconds) must"
+#~ " be specified."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "At least one time interval (weeks, "
+#~ "days, hours, minutes, or seconds) must"
+#~ " be specified when not using global"
+#~ " settings."
+#~ msgstr ""
+
+#~ msgid "Invalid time format. Use HH:MM."
+#~ msgstr "時間格式無效。使用時:分。"
+
+#~ msgid "Not a valid timezone name"
+#~ msgstr "不是有效的時區名稱"
+
+#~ msgid "not set"
+#~ msgstr "還沒有"
+
+#~ msgid "Start At"
+#~ msgstr "統計數據"
+
+#~ msgid "Run duration"
+#~ msgstr "暫無信息"
+
+#~ msgid "Use time scheduler"
+#~ msgstr "使用時間調度器"
+
+#~ msgid "Optional timezone to run in"
+#~ msgstr "運行時的可選時區"
+
+#~ msgid "Monday"
+#~ msgstr "週一"
+
+#~ msgid "Tuesday"
+#~ msgstr "週二"
+
+#~ msgid "Wednesday"
+#~ msgstr "週三"
+
+#~ msgid "Thursday"
+#~ msgstr "週四"
+
+#~ msgid "Friday"
+#~ msgstr "星期五"
+
+#~ msgid "Saturday"
+#~ msgstr "週六"
+
+#~ msgid "Sunday"
+#~ msgstr "星期日"
+
+#~ msgid "Weeks"
+#~ msgstr "週數"
+
+#~ msgid "Should contain zero or more seconds"
+#~ msgstr "應包含零或更多秒"
+
+#~ msgid "Days"
+#~ msgstr "天"
+
+#~ msgid "Hours"
+#~ msgstr "字"
+
+#~ msgid "Minutes"
+#~ msgstr "沉默的"
+
+#~ msgid "Seconds"
+#~ msgstr "秒"
+
+#~ msgid "Empty value not allowed."
+#~ msgstr "不允許為空值。"
+
+#~ msgid "Invalid value."
+#~ msgstr "無效值。"
+
+#~ msgid "Watch"
+#~ msgstr "# 手錶"
+
+#~ msgid "Processor"
+#~ msgstr "處理器"
+
+#~ msgid "Edit > Watch"
+#~ msgstr "先編輯後觀看"
+
+#~ msgid "Fetch Method"
+#~ msgstr "設置獲取方法"
+
+#~ msgid "Notification Body"
+#~ msgstr "通知"
+
+#~ msgid "Notification format"
+#~ msgstr "通知"
+
+#~ msgid "Notification Title"
+#~ msgstr "通知"
+
+#~ msgid "Notification URL List"
+#~ msgstr "通知"
+
+#~ msgid "Processor - What do you want to achieve?"
+#~ msgstr "處理器 - 您想要實現什麼？"
+
+#~ msgid "Default timezone for watch check scheduler"
+#~ msgstr "手錶檢查調度程序的默認時區"
+
+#~ msgid "Wait seconds before extracting text"
+#~ msgstr "提取文本前幾秒。"
+
+#~ msgid "Should contain one or more seconds"
+#~ msgstr "應包含一秒或多秒"
+
+#~ msgid "URLs"
+#~ msgstr "網址"
+
+#~ msgid "Upload .xlsx file"
+#~ msgstr "上傳 .xlsx 文件"
+
+#~ msgid "Must be .xlsx file!"
+#~ msgstr "必須是 .xlsx 文件！"
+
+#~ msgid "File mapping"
+#~ msgstr "文件映射類型。"
+
+#~ msgid "Operation"
+#~ msgstr "用戶界面選項"
+
+#~ msgid "Selector"
+#~ msgstr "選擇方式："
+
+#~ msgid "value"
+#~ msgstr "暫停"
+
+#~ msgid "Use global settings for time between check and scheduler."
+#~ msgstr "使用全局設置檢查和調度程序之間的時間。"
+
+#~ msgid "CSS/JSONPath/JQ/XPath Filters"
+#~ msgstr "CSS/xPath 過濾器"
+
+#~ msgid "Remove elements"
+#~ msgstr "已刪除"
+
+#~ msgid "Extract text"
+#~ msgstr "提取數據"
+
+#~ msgid "Ignore lines containing"
+#~ msgstr "忽略任何匹配的行"
+
+#~ msgid "Request body"
+#~ msgstr "要求"
+
+#~ msgid "Request method"
+#~ msgstr "要求"
+
+#~ msgid "Ignore status codes (process non-2xx status codes as normal)"
+#~ msgstr "忽略狀態代碼（正常處理非 2xx 狀態代碼）"
+
+#~ msgid "Only trigger when unique lines appear in all history"
+#~ msgstr "僅當出現唯一線條時觸發"
+
+#~ msgid "Sort text alphabetically"
+#~ msgstr "按字母順序對文本進行排序"
+
+#~ msgid "Strip ignored lines"
+#~ msgstr "去掉忽略的行"
+
+#~ msgid "Trim whitespace before and after text"
+#~ msgstr "刪除每行文本前後的所有空格"
+
+#~ msgid "Added lines"
+#~ msgstr "線路"
+
+#~ msgid "Replaced/changed lines"
+#~ msgstr "更換/更改線路"
+
+#~ msgid "Removed lines"
+#~ msgstr "已刪除"
+
+#~ msgid "Keyword triggers - Trigger/wait for text"
+#~ msgstr "關鍵字觸發器 - 觸發/等待文本"
+
+#~ msgid "Block change-detection while text matches"
+#~ msgstr "文本匹配時阻止更改檢測"
+
+#~ msgid "Execute JavaScript before change detection"
+#~ msgstr "在更改檢測之前執行 JavaScript"
+
+#~ msgid "Proxy"
+#~ msgstr "代理人"
+
+#~ msgid "Send a notification when the filter can no longer be found on the page"
+#~ msgstr "當頁面上找不到過濾器時發送通知"
+
+#~ msgid "On"
+#~ msgstr "沒有任何"
+
+#~ msgid "Attach screenshot to notification (where possible)"
+#~ msgstr "將屏幕截圖附加到通知（如果可能）"
+
+#~ msgid "Match"
+#~ msgstr "# 手錶"
+
+#~ msgid "Match all of the following"
+#~ msgstr "匹配以下所有內容"
+
+#~ msgid "Match any of the following"
+#~ msgstr "匹配以下任意一項"
+
+#~ msgid "Use page <title> in list"
+#~ msgstr "使用列表中的頁面<標題>"
+
+#~ msgid "Name"
+#~ msgstr "取消靜音"
+
+#~ msgid "Proxy URL"
+#~ msgstr "代理網址"
+
+#~ msgid "Proxy URLs must start with http://, https:// or socks5://"
+#~ msgstr "代理 URL 必須以 http://、https:// 或ocks5:// 開頭"
+
+#~ msgid "Browser connection URL"
+#~ msgstr "瀏覽器連接網址"
+
+#~ msgid "Browser URLs must start with wss:// or ws://"
+#~ msgstr "瀏覽器 URL 必須以 wss:// 或 ws:// 開頭"
+
+#~ msgid "Plaintext requests"
+#~ msgstr "明文請求"
+
+#~ msgid "Chrome requests"
+#~ msgstr "要求"
+
+#~ msgid "Default proxy"
+#~ msgstr "默認代理"
+
+#~ msgid "Random jitter seconds ± check"
+#~ msgstr "隨機抖動秒±檢查"
+
+#~ msgid "Number of fetch workers"
+#~ msgstr "取貨工人數量"
+
+#~ msgid "Should be between 1 and 50"
+#~ msgstr "應介於 1 到 50 之間"
+
+#~ msgid "Requests timeout in seconds"
+#~ msgstr "請求超時（以秒為單位）"
+
+#~ msgid "Should be between 1 and 999"
+#~ msgstr "應介於 1 到 999 之間"
+
+#~ msgid "Default User-Agent overrides"
+#~ msgstr "默認用戶代理覆蓋"
+
+#~ msgid "Open 'History' page in a new tab"
+#~ msgstr "在新選項卡中打開“歷史記錄”頁面"
+
+#~ msgid "Realtime UI Updates Enabled"
+#~ msgstr "離線實時更新"
+
+#~ msgid "Favicons Enabled"
+#~ msgstr "考慮啟用"
+
+#~ msgid "Use page <title> in watch overview list"
+#~ msgstr "在觀看概覽列表中使用頁面<標題>"
+
+#~ msgid "API access token security check enabled"
+#~ msgstr "已啟用 API 訪問令牌安全檢查"
+
+#~ msgid "Notification base URL override"
+#~ msgstr "通知警報計數"
+
+#~ msgid "Treat empty pages as a change?"
+#~ msgstr "將空頁視為更改？"
+
+#~ msgid "Ignore Text"
+#~ msgstr "錯誤文本"
+
+#~ msgid "Ignore whitespace"
+#~ msgstr "忽略空格"
+
+#~ msgid "Must be between 0 and 100"
+#~ msgstr "必須介於 0 到 100 之間"
+
+#~ msgid "Pager size"
+#~ msgstr "尋呼機尺寸"
+
+#~ msgid "Should be atleast zero (disabled)"
+#~ msgstr "應至少為零（禁用）"
+
+#~ msgid "RSS Content format"
+#~ msgstr "RSS 內容格式"
+
+#~ msgid "RSS <description> body built from"
+#~ msgstr "RSS <描述> 正文構建於"
+
+#~ msgid "RSS \"System default\" template override"
+#~ msgstr ""
+
+#~ msgid "Render anchor tag content"
+#~ msgstr "渲染錨標記內容"
+
+#~ msgid "Allow anonymous access to watch history page when password is enabled"
+#~ msgstr "啟用密碼後允許匿名訪問觀看歷史記錄頁面"
+
+#~ msgid "Hide muted watches from RSS feed"
+#~ msgstr "從 RSS 源中隱藏靜音的手錶"
+
+#~ msgid "Enable RSS reader mode "
+#~ msgstr "啟用 RSS 閱讀器模式"
+
+#~ msgid "Number of changes to show in watch RSS feed"
+#~ msgstr "觀看 RSS 源中顯示的更改數量"
+
+#~ msgid "Should contain zero or more attempts"
+#~ msgstr "應包含零次或多次嘗試"
+
+#~ msgid "Number of times the filter can be missing before sending a notification"
+#~ msgstr "發送通知之前過濾器可能丟失的次數"
+
+#~ msgid "RegEx to extract"
+#~ msgstr "要提取的正則表達式"
+
+#~ msgid "Extract as CSV"
+#~ msgstr "提取數據"
+
+#~ msgid "Bounding box value is too long"
+#~ msgstr "邊界框值太長"
+
+#~ msgid "Bounding box must be in format: x,y,width,height (integers only)"
+#~ msgstr "邊界框的格式必須為：x,y,寬度,高度（僅限整數）"
+
+#~ msgid "Bounding box values must be non-negative"
+#~ msgstr "邊界框值必須是非負數"
+
+#~ msgid "Bounding box values are too large"
+#~ msgstr "邊界框值太大"
+
+#~ msgid "Selection mode must be either \"element\" or \"draw\""
+#~ msgstr ""
+
+#~ msgid "Minimum Change Percentage"
+#~ msgstr "最小變化百分比"
+
+#~ msgid "Pixel Difference Sensitivity"
+#~ msgstr "像素差異靈敏度"
+
+#~ msgid "Use global default"
+#~ msgstr "使用系統默認值"
+
+#~ msgid "Bounding Box"
+#~ msgstr "邊界框"
+
+#~ msgid "Selection Mode"
+#~ msgstr "選擇方式："
+
+#~ msgid "Selection mode value is too long"
+#~ msgstr "選擇模式值太長"
+
+#~ msgid "Screenshot Comparison"
+#~ msgstr "截圖對比"
+
+#~ msgid "Visual / Image screenshot change detection"
+#~ msgstr "視覺/圖像截圖變化檢測"
+
+#~ msgid ""
+#~ "Compares screenshots using fast OpenCV "
+#~ "algorithm, 10-100x faster than SSIM"
+#~ msgstr "使用快速 OpenCV 算法比較屏幕截圖，比 SSIM 快 10-100 倍"
+
+#~ msgid "Visual"
+#~ msgstr "視覺的"
+
+#~ msgid "Re-stock detection"
+#~ msgstr "補貨檢測"
+
+#~ msgid "In Stock only (Out Of Stock -> In Stock only)"
+#~ msgstr "僅有庫存（缺貨 -> 僅有庫存）"
+
+#~ msgid "Any availability changes"
+#~ msgstr "任何可用性變更"
+
+#~ msgid "Off, don't follow availability/restock"
+#~ msgstr "關閉，不遵循庫存/補貨情況"
+
+#~ msgid "Below price to trigger notification"
+#~ msgstr "低於價格觸發通知"
+
+#~ msgid "No limit"
+#~ msgstr "無限制"
+
+#~ msgid "Above price to trigger notification"
+#~ msgstr "高於價格觸發通知"
+
+#~ msgid "Threshold in %% for price changes since the original price"
+#~ msgstr "自原始價格以來價格變化的閾值（百分比）"
+
+#~ msgid "Should be between 0 and 100"
+#~ msgstr "應介於 0 到 100 之間"
+
+#~ msgid "Follow price changes"
+#~ msgstr "關注價格變化"
+
+#~ msgid "Restock & Price Detection"
+#~ msgstr "補貨及價格"
+
+#~ msgid "Re-stock & Price detection for pages with a SINGLE product"
+#~ msgstr "單個產品頁面的補貨和價格檢測"
+
+#~ msgid "Detects if the product goes back to in-stock"
+#~ msgstr "檢測產品是否恢復庫存"
+
+#~ msgid "Restock"
+#~ msgstr "補貨"
+
+#~ msgid "Webpage Text/HTML, JSON and PDF changes"
+#~ msgstr "網頁文本/HTML、JSON 和 PDF 更改"
+
+#~ msgid "Detects all text changes where possible"
+#~ msgstr "盡可能檢測所有文本更改"
 

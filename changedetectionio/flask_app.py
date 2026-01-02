@@ -465,7 +465,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     @login_manager.unauthorized_handler
     def unauthorized_handler():
-        flash("You must be logged in, please log in.", 'error')
+        flash(gettext("You must be logged in, please log in."), 'error')
         return redirect(url_for('login', next=url_for('watchlist.index')))
 
     @app.route('/logout')
@@ -492,7 +492,7 @@ def changedetection_app(config=None, datastore_o=None):
 
         if request.method == 'GET':
             if flask_login.current_user.is_authenticated:
-                flash("Already logged in")
+                flash(gettext("Already logged in"))
                 return redirect(url_for("watchlist.index"))
 
             output = render_template("login.html")
@@ -519,7 +519,7 @@ def changedetection_app(config=None, datastore_o=None):
             return redirect(url_for('watchlist.index'))
 
         else:
-            flash('Incorrect password', 'error')
+            flash(gettext('Incorrect password'), 'error')
 
         return redirect(url_for('login'))
 

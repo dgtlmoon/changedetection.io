@@ -5,6 +5,7 @@ from zoneinfo import ZoneInfo, available_timezones
 import secrets
 import flask_login
 from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask_babel import gettext
 
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
@@ -60,7 +61,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 # SALTED_PASS means the password is "locked" to what we set in the Env var
                 if not os.getenv("SALTED_PASS", False):
                     datastore.remove_password()
-                    flash("Password protection removed.", 'notice')
+                    flash(gettext("Password protection removed."), 'notice')
                     flask_login.logout_user()
                     return redirect(url_for('settings.settings_page'))
 
@@ -94,16 +95,16 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     )
                     
                     if result['status'] == 'success':
-                        flash(f"Worker count adjusted: {result['message']}", 'notice')
+                        flash(gettext("Worker count adjusted: {}").format(result['message']), 'notice')
                     elif result['status'] == 'not_supported':
-                        flash("Dynamic worker adjustment not supported for sync workers", 'warning')
+                        flash(gettext("Dynamic worker adjustment not supported for sync workers"), 'warning')
                     elif result['status'] == 'error':
-                        flash(f"Error adjusting workers: {result['message']}", 'error')
+                        flash(gettext("Error adjusting workers: {}").format(result['message']), 'error')
 
                 if not os.getenv("SALTED_PASS", False) and len(form.application.form.password.encrypted_password):
                     datastore.data['settings']['application']['password'] = form.application.form.password.encrypted_password
                     datastore.needs_write_urgent = True
-                    flash("Password protection enabled.", 'notice')
+                    flash(gettext("Password protection enabled."), 'notice')
                     flask_login.logout_user()
                     return redirect(url_for('watchlist.index'))
 
@@ -122,10 +123,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     if plugin_form.data:
                         save_plugin_settings(datastore.datastore_path, plugin_id, plugin_form.data)
 
-                flash("Settings updated.")
+                flash(gettext("Settings updated."))
 
             else:
-                flash("An error occurred, please see below.", "error")
+                flash(gettext("An error occurred, please see below."), "error")
 
         # Convert to ISO 8601 format, all date/time relative events stored as UTC time
         utc_time = datetime.now(ZoneInfo("UTC")).isoformat()
@@ -175,7 +176,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         secret = secrets.token_hex(16)
         datastore.data['settings']['application']['api_access_token'] = secret
         datastore.needs_write_urgent = True
-        flash("API Key was regenerated.")
+        flash(gettext("API Key was regenerated."))
         return redirect(url_for('settings.settings_page')+'#api')
         
     @settings_blueprint.route("/notification-logs", methods=['GET'])

@@ -8,6 +8,7 @@ of concerns and easy backend swapping (LibVIPS, OpenCV, PIL, etc.).
 import os
 import json
 import time
+from flask_babel import gettext
 from loguru import logger
 
 from changedetectionio.processors.image_ssim_diff import SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT, PROCESSOR_CONFIG_NAME, \
@@ -324,7 +325,7 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
     versions = list(watch.history.keys())
 
     if len(versions) < 2:
-        flash("Not enough history to compare. Need at least 2 snapshots.", "error")
+        flash(gettext("Not enough history to compare. Need at least 2 snapshots."), "error")
         return redirect(url_for('watchlist.index'))
 
     # Default: compare latest two versions
@@ -359,7 +360,7 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
 
     except Exception as e:
         logger.error(f"Failed to load screenshots: {e}")
-        flash(f"Failed to load screenshots: {e}", "error")
+        flash(gettext("Failed to load screenshots: {}").format(e), "error")
         return redirect(url_for('watchlist.index'))
 
     # Calculate change percentage using isolated subprocess to prevent memory leaks (async-safe)
@@ -408,7 +409,7 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
         logger.error(f"Failed to calculate change percentage: {e}")
         import traceback
         logger.error(traceback.format_exc())
-        flash(f"Failed to calculate diff: {e}", "error")
+        flash(gettext("Failed to calculate diff: {}").format(e), "error")
         return redirect(url_for('watchlist.index'))
 
     # Load historical data if available (for charts/visualization)

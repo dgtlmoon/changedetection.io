@@ -4,6 +4,7 @@ Preview rendering for SSIM screenshot processor.
 Renders images properly in the browser instead of showing raw bytes.
 """
 
+from flask_babel import gettext
 from loguru import logger
 
 
@@ -87,7 +88,7 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
     versions = list(watch.history.keys())
 
     if len(versions) == 0:
-        flash("Preview unavailable - No snapshots captured yet", "error")
+        flash(gettext("Preview unavailable - No snapshots captured yet"), "error")
         return redirect(url_for('watchlist.index'))
 
     # Get the version to display (default: latest)

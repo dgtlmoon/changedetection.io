@@ -7,6 +7,7 @@ and exporting to CSV format. This is the default extractor that all processors
 """
 
 import os
+from flask_babel import gettext
 from loguru import logger
 
 
@@ -101,7 +102,7 @@ def process_extraction(watch, datastore, request, url_for, make_response, send_f
         )
 
     if not extract_form.validate():
-        flash("An error occurred, please see below.", "error")
+        flash(gettext("An error occurred, please see below."), "error")
         # render_template needs to be imported from Flask for this to work
         from flask import render_template as flask_render_template
         return render_form(
@@ -127,5 +128,5 @@ def process_extraction(watch, datastore, request, url_for, make_response, send_f
         response.headers['Expires'] = "0"
         return response
 
-    flash('No matches found while scanning all of the watch history for that RegEx.', 'error')
+    flash(gettext('No matches found while scanning all of the watch history for that RegEx.'), 'error')
     return redirect(url_for('ui.ui_diff.diff_history_page_extract_GET', uuid=uuid))
