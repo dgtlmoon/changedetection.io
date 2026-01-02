@@ -369,11 +369,11 @@ def changedetection_app(config=None, datastore_o=None):
         # 1. Try to get locale from session (user explicitly selected)
         if 'locale' in session:
             locale = session['locale']
-            print(f"DEBUG: get_locale() returning from session: {locale}")
+            logger.trace(f"DEBUG: get_locale() returning from session: {locale}")
             return locale
         # 2. Fall back to Accept-Language header
         locale = request.accept_languages.best_match(language_codes)
-        print(f"DEBUG: get_locale() returning from Accept-Language: {locale}")
+        logger.trace(f"DEBUG: get_locale() returning from Accept-Language: {locale}")
         return locale
 
     # Initialize Babel with locale selector
@@ -396,6 +396,12 @@ def changedetection_app(config=None, datastore_o=None):
             # Permitted
             if request.endpoint and request.endpoint == 'static_content' and request.view_args:
                 # Handled by static_content handler
+                return None
+            # Permitted - static flag icons need to load on login page
+            elif request.endpoint and request.endpoint == 'static_flags':
+                return None
+            # Permitted - language selection should work on login page
+            elif request.endpoint and request.endpoint == 'set_language':
                 return None
             # Permitted
             elif request.endpoint and 'login' in request.endpoint:

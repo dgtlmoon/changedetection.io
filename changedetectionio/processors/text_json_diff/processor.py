@@ -17,8 +17,11 @@ from changedetectionio.processors.magic import guess_stream_type
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-name = 'Webpage Text/HTML, JSON and PDF changes'
-description = 'Detects all text changes where possible'
+# Translation marker for extraction - allows pybabel to find these strings
+def _(x): return x
+name = _('Webpage Text/HTML, JSON and PDF changes')
+description = _('Detects all text changes where possible')
+del _  # Remove marker
 processor_weight = -100
 list_badge_text = "Text"
 

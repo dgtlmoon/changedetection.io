@@ -33,6 +33,8 @@ def test_language_switching(client, live_server, measure_memory_usage, datastore
     # Check for Italian text - "Annulla" (translation of "Cancel")
     assert b"Annulla" in res.data, "Expected Italian text 'Annulla' not found after setting language to Italian"
 
+    assert b'Modifiche testo/HTML, JSON e PDF' in res.data, "Expected italian from processors.available_processors()"
+
     # Step 3: Switch back to English
     res = client.get(
         url_for("set_language", locale="en"),

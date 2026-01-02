@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-02 15:43+0100\n"
+"POT-Creation-Date: 2026-01-02 16:07+0100\n"
 "PO-Revision-Date: 2026-01-02 11:40+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: cs\n"
@@ -38,6 +38,106 @@ msgstr ""
 msgid "Incorrect password"
 msgstr "Heslo"
 
+#: changedetectionio/forms.py:63 changedetectionio/forms.py:243
+msgid ""
+"At least one time interval (weeks, days, hours, minutes, or seconds) must"
+" be specified."
+msgstr ""
+
+#: changedetectionio/forms.py:64
+msgid ""
+"At least one time interval (weeks, days, hours, minutes, or seconds) must"
+" be specified when not using global settings."
+msgstr ""
+
+#: changedetectionio/forms.py:164
+msgid "Invalid time format. Use HH:MM."
+msgstr "Neplatný formát času. Použijte HH:MM."
+
+#: changedetectionio/forms.py:180
+msgid "Not a valid timezone name"
+msgstr "Neplatný název časového pásma"
+
+#: changedetectionio/forms.py:183
+#, fuzzy
+msgid "not set"
+msgstr "Ještě ne"
+
+#: changedetectionio/forms.py:184
+#, fuzzy
+msgid "Start At"
+msgstr "NASTAVENÍ"
+
+#: changedetectionio/forms.py:185
+#, fuzzy
+msgid "Run duration"
+msgstr "Žádné informace"
+
+#: changedetectionio/forms.py:188
+msgid "Use time scheduler"
+msgstr "Použijte časový plánovač"
+
+#: changedetectionio/forms.py:198
+msgid "Optional timezone to run in"
+msgstr "Volitelné časové pásmo pro spuštění"
+
+#: changedetectionio/forms.py:212
+msgid "Monday"
+msgstr "pondělí"
+
+#: changedetectionio/forms.py:213
+msgid "Tuesday"
+msgstr "úterý"
+
+#: changedetectionio/forms.py:214
+msgid "Wednesday"
+msgstr "středa"
+
+#: changedetectionio/forms.py:215
+msgid "Thursday"
+msgstr "čtvrtek"
+
+#: changedetectionio/forms.py:216
+msgid "Friday"
+msgstr "pátek"
+
+#: changedetectionio/forms.py:217
+msgid "Saturday"
+msgstr "sobota"
+
+#: changedetectionio/forms.py:218
+msgid "Sunday"
+msgstr "neděle"
+
+#: changedetectionio/forms.py:251
+msgid "Weeks"
+msgstr "týdny"
+
+#: changedetectionio/forms.py:251 changedetectionio/forms.py:252
+#: changedetectionio/forms.py:253 changedetectionio/forms.py:254
+#: changedetectionio/forms.py:255 changedetectionio/forms.py:955
+msgid "Should contain zero or more seconds"
+msgstr "Mělo by obsahovat nula nebo více sekund"
+
+#: changedetectionio/forms.py:252
+msgid "Days"
+msgstr "Dny"
+
+#: changedetectionio/forms.py:253
+#, fuzzy
+msgid "Hours"
+msgstr "Heslo"
+
+#: changedetectionio/forms.py:254
+#, fuzzy
+msgid "Minutes"
+msgstr "Ztlumit"
+
+#: changedetectionio/forms.py:255
+#, fuzzy
+msgid "Seconds"
+msgstr "sekundy"
+
 #: changedetectionio/forms.py:460
 msgid "Notification Body and Title is required when a Notification URL is used"
 msgstr "Při použití adresy URL oznámení je vyžadováno tělo a název oznámení"
@@ -67,6 +167,247 @@ msgstr "'%s' není platný výraz JSONPath. (%s)"
 msgid "'%s' is not a valid jq expression. (%s)"
 msgstr "'%s' není platný výraz jq. (%s)"
 
+#: changedetectionio/forms.py:725
+msgid "Empty value not allowed."
+msgstr "Prázdná hodnota není povolena."
+
+#: changedetectionio/forms.py:727
+msgid "Invalid value."
+msgstr "Neplatná hodnota."
+
+#: changedetectionio/forms.py:732
+#, fuzzy
+msgid "Watch"
+msgstr "# Hodinky"
+
+#: changedetectionio/forms.py:733 changedetectionio/forms.py:766
+msgid "Processor"
+msgstr "Procesor"
+
+#: changedetectionio/forms.py:734
+#, fuzzy
+msgid "Edit > Watch"
+msgstr "Nejprve upravte a poté sledujte"
+
+#: changedetectionio/forms.py:747 changedetectionio/forms.py:994
+#, fuzzy
+msgid "Fetch Method"
+msgstr "Nastavte metodu načítání"
+
+#: changedetectionio/forms.py:748
+#, fuzzy
+msgid "Notification Body"
+msgstr "Žádné informace"
+
+#: changedetectionio/forms.py:749
+#, fuzzy
+msgid "Notification format"
+msgstr "Žádné informace"
+
+#: changedetectionio/forms.py:750
+#, fuzzy
+msgid "Notification Title"
+msgstr "Žádné informace"
+
+#: changedetectionio/forms.py:751
+#, fuzzy
+msgid "Notification URL List"
+msgstr "Žádné informace"
+
+#: changedetectionio/forms.py:752
+msgid "Processor - What do you want to achieve?"
+msgstr "Procesor – Čeho chcete dosáhnout?"
+
+#: changedetectionio/forms.py:753
+msgid "Default timezone for watch check scheduler"
+msgstr "Výchozí časové pásmo pro plánovač kontroly hodinek"
+
+#: changedetectionio/forms.py:754
+#, fuzzy
+msgid "Wait seconds before extracting text"
+msgstr "sekund před extrahováním textu."
+
+#: changedetectionio/forms.py:754
+msgid "Should contain one or more seconds"
+msgstr "Měl by obsahovat jednu nebo více sekund"
+
+#: changedetectionio/forms.py:767
+#, fuzzy
+msgid "URLs"
+msgstr "URL"
+
+#: changedetectionio/forms.py:768
+msgid "Upload .xlsx file"
+msgstr "Nahrajte soubor .xlsx"
+
+#: changedetectionio/forms.py:768
+msgid "Must be .xlsx file!"
+msgstr "Musí to být soubor .xlsx!"
+
+#: changedetectionio/forms.py:769
+#, fuzzy
+msgid "File mapping"
+msgstr "Typ mapování souboru."
+
+#: changedetectionio/forms.py:773
+#, fuzzy
+msgid "Operation"
+msgstr "Možnosti uživatelského rozhraní"
+
+#: changedetectionio/forms.py:776
+#, fuzzy
+msgid "Selector"
+msgstr "Režim výběru:"
+
+#: changedetectionio/forms.py:777
+#, fuzzy
+msgid "value"
+msgstr "Pauza"
+
+#: changedetectionio/forms.py:796
+msgid "Use global settings for time between check and scheduler."
+msgstr "Použijte globální nastavení pro čas mezi kontrolou a plánovačem."
+
+#: changedetectionio/forms.py:798
+#, fuzzy
+msgid "CSS/JSONPath/JQ/XPath Filters"
+msgstr "CSS/xPath filtr"
+
+#: changedetectionio/forms.py:800 changedetectionio/forms.py:996
+#, fuzzy
+msgid "Remove elements"
+msgstr "Vyberte podle prvku"
+
+#: changedetectionio/forms.py:802
+#, fuzzy
+msgid "Extract text"
+msgstr "Extrahujte data"
+
+#: changedetectionio/blueprint/imports/templates/import.html:106
+#: changedetectionio/forms.py:804
+msgid "Title"
+msgstr "Titul"
+
+#: changedetectionio/forms.py:806
+#, fuzzy
+msgid "Ignore lines containing"
+msgstr "Ignorujte všechny odpovídající řádky"
+
+#: changedetectionio/forms.py:808
+#, fuzzy
+msgid "Request body"
+msgstr "Žádost"
+
+#: changedetectionio/forms.py:809
+#, fuzzy
+msgid "Request method"
+msgstr "Žádost"
+
+#: changedetectionio/forms.py:810
+msgid "Ignore status codes (process non-2xx status codes as normal)"
+msgstr ""
+"Ignorovat stavové kódy (zpracovat stavové "
+"kódy jiné než 2xx jako normálně)"
+
+#: changedetectionio/forms.py:811
+#, fuzzy
+msgid "Only trigger when unique lines appear in all history"
+msgstr "Spustit pouze tehdy, když se objeví jedinečné čáry"
+
+#: changedetectionio/blueprint/ui/templates/edit.html:336
+#: changedetectionio/forms.py:812
+msgid "Remove duplicate lines of text"
+msgstr "Odstraňte duplicitní řádky textu"
+
+#: changedetectionio/forms.py:813
+msgid "Sort text alphabetically"
+msgstr "Seřadit text podle abecedy"
+
+#: changedetectionio/forms.py:814 changedetectionio/forms.py:1023
+msgid "Strip ignored lines"
+msgstr "Odstraňte ignorované řádky"
+
+#: changedetectionio/forms.py:815
+#, fuzzy
+msgid "Trim whitespace before and after text"
+msgstr "Odstraňte všechny mezery před a za každým řádkem textu"
+
+#: changedetectionio/forms.py:817
+#, fuzzy
+msgid "Added lines"
+msgstr "Přihlášení"
+
+#: changedetectionio/forms.py:818
+msgid "Replaced/changed lines"
+msgstr "Vyměněny/změněny řádky"
+
+#: changedetectionio/forms.py:819
+#, fuzzy
+msgid "Removed lines"
+msgstr "Odebráno"
+
+#: changedetectionio/forms.py:821
+msgid "Keyword triggers - Trigger/wait for text"
+msgstr "Spouštěče klíčových slov – Spouštění/čekání na text"
+
+#: changedetectionio/forms.py:824
+msgid "Block change-detection while text matches"
+msgstr "Blokovat detekci změn, když se text shoduje"
+
+#: changedetectionio/forms.py:825
+msgid "Execute JavaScript before change detection"
+msgstr "Spusťte JavaScript před detekcí změn"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html:17
+#: changedetectionio/forms.py:827 changedetectionio/forms.py:1051
+msgid "Save"
+msgstr "Uložit"
+
+#: changedetectionio/forms.py:829
+msgid "Proxy"
+msgstr "Proxy"
+
+#: changedetectionio/forms.py:831
+msgid "Send a notification when the filter can no longer be found on the page"
+msgstr "Odeslat upozornění, když filtr již na stránce nelze najít"
+
+#: changedetectionio/blueprint/settings/templates/settings.html:22
+#: changedetectionio/blueprint/tags/templates/edit-tag.html:32
+#: changedetectionio/blueprint/ui/templates/edit.html:59
+#: changedetectionio/forms.py:832
+msgid "Notifications"
+msgstr "Žádné informace"
+
+#: changedetectionio/forms.py:832
+#, fuzzy
+msgid "Muted"
+msgstr "Ztlumit"
+
+#: changedetectionio/forms.py:832
+#, fuzzy
+msgid "On"
+msgstr "žádný"
+
+#: changedetectionio/forms.py:833
+msgid "Attach screenshot to notification (where possible)"
+msgstr "Připojte snímek obrazovky k oznámení (pokud je to možné)"
+
+#: changedetectionio/forms.py:835
+msgid "Match"
+msgstr "# Hodinky"
+
+#: changedetectionio/forms.py:835
+msgid "Match all of the following"
+msgstr "Spojte všechny následující položky"
+
+#: changedetectionio/forms.py:835
+msgid "Match any of the following"
+msgstr "Přiřaďte kteroukoli z následujících možností"
+
+#: changedetectionio/forms.py:837
+msgid "Use page <title> in list"
+msgstr "V seznamu použijte stránku <title>"
+
 #: changedetectionio/forms.py:854
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "Když je metoda požadavku nastavena na GET, tělo musí být prázdné"
@@ -87,9 +428,180 @@ msgstr "Neplatná syntaxe šablony: %(error)s"
 msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
 msgstr ""
 
+#: changedetectionio/forms.py:920 changedetectionio/forms.py:932
+#, fuzzy
+msgid "Name"
+msgstr "Zrušit ztlumení"
+
+#: changedetectionio/forms.py:921
+msgid "Proxy URL"
+msgstr "Proxy URL"
+
+#: changedetectionio/forms.py:926
+msgid "Proxy URLs must start with http://, https:// or socks5://"
+msgstr "Proxy URL musí začínat http://, https:// nebo socks5://"
+
+#: changedetectionio/forms.py:933
+msgid "Browser connection URL"
+msgstr "Adresa URL připojení prohlížeče"
+
+#: changedetectionio/forms.py:938
+msgid "Browser URLs must start with wss:// or ws://"
+msgstr "Adresy URL prohlížeče musí začínat wss:// nebo ws://"
+
+#: changedetectionio/forms.py:944
+msgid "Plaintext requests"
+msgstr "Požadavky na prostý text"
+
+#: changedetectionio/forms.py:946
+#, fuzzy
+msgid "Chrome requests"
+msgstr "Žádost"
+
+#: changedetectionio/forms.py:952
+msgid "Default proxy"
+msgstr "Výchozí proxy"
+
+#: changedetectionio/forms.py:953
+msgid "Random jitter seconds ± check"
+msgstr "Náhodné jitter sekundy ± kontrola"
+
+#: changedetectionio/forms.py:957
+msgid "Number of fetch workers"
+msgstr "Počet pracovníků aportů"
+
+#: changedetectionio/forms.py:960
+msgid "Should be between 1 and 50"
+msgstr "Mělo by být mezi 1 a 50"
+
+#: changedetectionio/forms.py:962
+msgid "Requests timeout in seconds"
+msgstr "Požaduje časový limit v sekundách"
+
+#: changedetectionio/forms.py:965
+msgid "Should be between 1 and 999"
+msgstr "Mělo by být mezi 1 a 999"
+
+#: changedetectionio/forms.py:970
+msgid "Default User-Agent overrides"
+msgstr "Výchozí přepisy User-Agent"
+
 #: changedetectionio/forms.py:976
 msgid "Both a name, and a Proxy URL is required."
 msgstr "Je vyžadován název i adresa URL proxy."
+
+#: changedetectionio/forms.py:980
+msgid "Open 'History' page in a new tab"
+msgstr "Otevřete stránku „Historie“ na nové kartě"
+
+#: changedetectionio/forms.py:981
+#, fuzzy
+msgid "Realtime UI Updates Enabled"
+msgstr "Aktualizace v reálném čase offline"
+
+#: changedetectionio/forms.py:982
+#, fuzzy
+msgid "Favicons Enabled"
+msgstr "zvážit povolení"
+
+#: changedetectionio/forms.py:983
+msgid "Use page <title> in watch overview list"
+msgstr "Použijte stránku <title> v přehledu sledování"
+
+#: changedetectionio/forms.py:988
+msgid "API access token security check enabled"
+msgstr "Kontrola zabezpečení přístupového tokenu API povolena"
+
+#: changedetectionio/forms.py:989
+#, fuzzy
+msgid "Notification base URL override"
+msgstr "Počet upozornění na upozornění"
+
+#: changedetectionio/forms.py:993
+msgid "Treat empty pages as a change?"
+msgstr "Považovat prázdné stránky za změnu?"
+
+#: changedetectionio/forms.py:995
+#, fuzzy
+msgid "Ignore Text"
+msgstr "Text chyby"
+
+#: changedetectionio/forms.py:997
+#, fuzzy
+msgid "Ignore whitespace"
+msgstr "Ignorujte mezery"
+
+#: changedetectionio/forms.py:1004
+#: changedetectionio/processors/image_ssim_diff/forms.py:50
+msgid "Must be between 0 and 100"
+msgstr "Musí být mezi 0 a 100"
+
+#: changedetectionio/forms.py:1011
+msgid "Pager size"
+msgstr "Velikost pageru"
+
+#: changedetectionio/forms.py:1014
+msgid "Should be atleast zero (disabled)"
+msgstr "Mělo by být alespoň nula (vypnuto)"
+
+#: changedetectionio/forms.py:1016
+msgid "RSS Content format"
+msgstr "Formát obsahu RSS"
+
+#: changedetectionio/forms.py:1017
+msgid "RSS <description> body built from"
+msgstr "RSS <description> tělo sestavené z"
+
+#: changedetectionio/forms.py:1018
+msgid "RSS \"System default\" template override"
+msgstr ""
+
+#: changedetectionio/forms.py:1020
+#, fuzzy
+msgid "Remove password"
+msgstr "Heslo"
+
+#: changedetectionio/forms.py:1021
+msgid "Render anchor tag content"
+msgstr "Vykreslit obsah kotvící značky"
+
+#: changedetectionio/forms.py:1022
+msgid "Allow anonymous access to watch history page when password is enabled"
+msgstr ""
+"Povolit anonymní přístup na stránku "
+"historie sledování, když je povoleno "
+"hesloPovolit anonymní přístup na stránku "
+"historie sledování, když je povoleno "
+"heslo"
+
+#: changedetectionio/forms.py:1024
+msgid "Hide muted watches from RSS feed"
+msgstr "Skrýt ztlumené hodinky ze zdroje RSS"
+
+#: changedetectionio/forms.py:1027
+msgid "Enable RSS reader mode "
+msgstr "Povolit režim čtečky RSS"
+
+#: changedetectionio/forms.py:1028
+msgid "Number of changes to show in watch RSS feed"
+msgstr "Počet změn, které se mají zobrazit v kanálu RSS sledování"
+
+#: changedetectionio/forms.py:1030 changedetectionio/forms.py:1035
+msgid "Should contain zero or more attempts"
+msgstr "Mělo by obsahovat nula nebo více pokusů"
+
+#: changedetectionio/forms.py:1032
+msgid "Number of times the filter can be missing before sending a notification"
+msgstr "Kolikrát může filtr chybět před odesláním upozornění"
+
+#: changedetectionio/forms.py:1055
+msgid "RegEx to extract"
+msgstr "RegEx k extrahování"
+
+#: changedetectionio/forms.py:1056
+#, fuzzy
+msgid "Extract as CSV"
+msgstr "Extrahujte data"
 
 #: changedetectionio/store.py:386
 #, python-brace-format
@@ -291,10 +803,6 @@ msgstr "žádný"
 msgid "URL"
 msgstr "URL"
 
-#: changedetectionio/blueprint/imports/templates/import.html:106
-msgid "Title"
-msgstr "Titul"
-
 #: changedetectionio/blueprint/imports/templates/import.html:107
 msgid "CSS/xPath filter"
 msgstr "CSS/xPath filtr"
@@ -357,12 +865,6 @@ msgstr "Protokol ladění oznámení"
 #: changedetectionio/blueprint/ui/templates/edit.html:47
 msgid "General"
 msgstr "Generál"
-
-#: changedetectionio/blueprint/settings/templates/settings.html:22
-#: changedetectionio/blueprint/tags/templates/edit-tag.html:32
-#: changedetectionio/blueprint/ui/templates/edit.html:59
-msgid "Notifications"
-msgstr "Žádné informace"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:23
 msgid "Fetching"
@@ -544,10 +1046,6 @@ msgstr "Přidejte novou značku organizace"
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:14
 msgid "Watch group / tag"
 msgstr "Sledovat skupinu / tag"
-
-#: changedetectionio/blueprint/tags/templates/groups-overview.html:17
-msgid "Save"
-msgstr "Uložit"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:21
 msgid ""
@@ -1288,10 +1786,6 @@ msgid ""
 "this watch."
 msgstr ""
 
-#: changedetectionio/blueprint/ui/templates/edit.html:336
-msgid "Remove duplicate lines of text"
-msgstr "Odstraňte duplicitní řádky textu"
-
 #: changedetectionio/blueprint/ui/templates/edit.html:340
 msgid ""
 "Helps reduce changes detected caused by sites shuffling lines around, "
@@ -1670,9 +2164,135 @@ msgstr ""
 msgid "Failed to calculate diff: {}"
 msgstr ""
 
+#: changedetectionio/processors/image_ssim_diff/forms.py:19
+#: changedetectionio/processors/image_ssim_diff/forms.py:69
+msgid "Bounding box value is too long"
+msgstr "Hodnota ohraničujícího rámečku je příliš dlouhá"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:23
+msgid "Bounding box must be in format: x,y,width,height (integers only)"
+msgstr ""
+"Ohraničovací rámeček musí být ve "
+"formátu: x,y,šířka,výška (pouze celá "
+"čísla)Ohraničovací rámeček musí být ve "
+"formátu: x,y,šířka,výška (pouze celá čísla)"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:29
+msgid "Bounding box values must be non-negative"
+msgstr "Hodnoty ohraničujícího rámečku musí být nezáporné"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:31
+msgid "Bounding box values are too large"
+msgstr "Hodnoty ohraničujícího rámečku jsou příliš velké"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:40
+msgid "Selection mode must be either \"element\" or \"draw\""
+msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:47
+msgid "Minimum Change Percentage"
+msgstr "Procento minimální změny"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:56
+msgid "Pixel Difference Sensitivity"
+msgstr "Rozdílová citlivost pixelů"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:58
+#, fuzzy
+msgid "Use global default"
+msgstr "Použít výchozí nastavení systému"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:66
+msgid "Bounding Box"
+msgstr "Bounding Box"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:76
+#, fuzzy
+msgid "Selection Mode"
+msgstr "Režim výběru:"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:79
+msgid "Selection mode value is too long"
+msgstr "Hodnota režimu výběru je příliš dlouhá"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:87
+msgid "Screenshot Comparison"
+msgstr "Porovnání snímků obrazovky"
+
 #: changedetectionio/processors/image_ssim_diff/preview.py:91
 msgid "Preview unavailable - No snapshots captured yet"
 msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/processor.py:21
+msgid "Visual / Image screenshot change detection"
+msgstr "Vizuální / Obrazová detekce změny snímku obrazovky"
+
+#: changedetectionio/processors/image_ssim_diff/processor.py:22
+msgid "Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/forms.py:15
+msgid "Re-stock detection"
+msgstr "Detekce doplnění zásob"
+
+#: changedetectionio/processors/restock_diff/forms.py:16
+msgid "In Stock only (Out Of Stock -> In Stock only)"
+msgstr "Pouze skladem (Není skladem -> Pouze skladem)"
+
+#: changedetectionio/processors/restock_diff/forms.py:17
+msgid "Any availability changes"
+msgstr "Jakékoli změny dostupnosti"
+
+#: changedetectionio/processors/restock_diff/forms.py:18
+msgid "Off, don't follow availability/restock"
+msgstr "Vypnuto, nesledujte dostupnost/doskladnění"
+
+#: changedetectionio/processors/restock_diff/forms.py:21
+msgid "Below price to trigger notification"
+msgstr "Pod cenou pro spuštění upozornění"
+
+#: changedetectionio/processors/restock_diff/forms.py:22
+#: changedetectionio/processors/restock_diff/forms.py:24
+msgid "No limit"
+msgstr "Bez omezení"
+
+#: changedetectionio/processors/restock_diff/forms.py:23
+msgid "Above price to trigger notification"
+msgstr "Vyšší cena pro spuštění upozornění"
+
+#: changedetectionio/processors/restock_diff/forms.py:25
+#, python-format
+msgid "Threshold in %% for price changes since the original price"
+msgstr "Prahová hodnota v % pro změny ceny od původní ceny"
+
+#: changedetectionio/processors/restock_diff/forms.py:28
+msgid "Should be between 0 and 100"
+msgstr "Mělo by být mezi 0 a 100"
+
+#: changedetectionio/processors/restock_diff/forms.py:31
+msgid "Follow price changes"
+msgstr "Sledujte změny cen"
+
+#: changedetectionio/processors/restock_diff/forms.py:37
+#, fuzzy
+msgid "Restock & Price Detection"
+msgstr "Doplnění zásob a cena"
+
+#: changedetectionio/processors/restock_diff/processor.py:13
+msgid "Re-stock & Price detection for pages with a SINGLE product"
+msgstr "Doplnění zásob a zjištění ceny pro stránky s JEDINÝM produktem"
+
+#: changedetectionio/processors/restock_diff/processor.py:14
+msgid "Detects if the product goes back to in-stock"
+msgstr "Zjistí, zda se produkt vrátí na sklad"
+
+#: changedetectionio/processors/text_json_diff/processor.py:22
+msgid "Webpage Text/HTML, JSON and PDF changes"
+msgstr "Změny textu webové stránky/HTML, JSON a PDF"
+
+#: changedetectionio/processors/text_json_diff/processor.py:23
+msgid "Detects all text changes where possible"
+msgstr "Detekuje všechny změny textu, kde je to možné"
 
 #: changedetectionio/templates/base.html:77
 msgid "GROUPS"
@@ -1739,19 +2359,6 @@ msgstr "Heslo"
 #: changedetectionio/templates/login.html:16
 msgid "Login"
 msgstr "Přihlášení"
-
-#~ msgid ""
-#~ "At least one time interval (weeks, "
-#~ "days, hours, minutes, or seconds) must"
-#~ " be specified."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "At least one time interval (weeks, "
-#~ "days, hours, minutes, or seconds) must"
-#~ " be specified when not using global"
-#~ " settings."
-#~ msgstr ""
 
 #~ msgid "Invalid time format. Use HH:MM."
 #~ msgstr "Neplatný formát času. Použijte HH:MM."
@@ -2040,9 +2647,6 @@ msgstr "Přihlášení"
 #~ msgid "RSS <description> body built from"
 #~ msgstr "RSS <description> tělo sestavené z"
 
-#~ msgid "RSS \"System default\" template override"
-#~ msgstr ""
-
 #~ msgid "Render anchor tag content"
 #~ msgstr "Vykreslit obsah kotvící značky"
 
@@ -2091,9 +2695,6 @@ msgstr "Přihlášení"
 #~ msgid "Bounding box values are too large"
 #~ msgstr "Hodnoty ohraničujícího rámečku jsou příliš velké"
 
-#~ msgid "Selection mode must be either \"element\" or \"draw\""
-#~ msgstr ""
-
 #~ msgid "Minimum Change Percentage"
 #~ msgstr "Procento minimální změny"
 
@@ -2114,20 +2715,6 @@ msgstr "Přihlášení"
 
 #~ msgid "Screenshot Comparison"
 #~ msgstr "Porovnání snímků obrazovky"
-
-#~ msgid "Visual / Image screenshot change detection"
-#~ msgstr "Vizuální / Obrazová detekce změny snímku obrazovky"
-
-#~ msgid ""
-#~ "Compares screenshots using fast OpenCV "
-#~ "algorithm, 10-100x faster than SSIM"
-#~ msgstr ""
-#~ "Porovnává snímky obrazovky pomocí rychlého "
-#~ "algoritmu OpenCV, 10-100x rychlejší než "
-#~ "SSIM"
-
-#~ msgid "Visual"
-#~ msgstr "Vizuální"
 
 #~ msgid "Re-stock detection"
 #~ msgstr "Detekce doplnění zásob"
@@ -2161,6 +2748,20 @@ msgstr "Přihlášení"
 
 #~ msgid "Restock & Price Detection"
 #~ msgstr "Doplnění zásob a cena"
+
+#~ msgid "Visual / Image screenshot change detection"
+#~ msgstr "Vizuální / Obrazová detekce změny snímku obrazovky"
+
+#~ msgid ""
+#~ "Compares screenshots using fast OpenCV "
+#~ "algorithm, 10-100x faster than SSIM"
+#~ msgstr ""
+#~ "Porovnává snímky obrazovky pomocí rychlého "
+#~ "algoritmu OpenCV, 10-100x rychlejší než "
+#~ "SSIM"
+
+#~ msgid "Visual"
+#~ msgstr "Vizuální"
 
 #~ msgid "Re-stock & Price detection for pages with a SINGLE product"
 #~ msgstr "Doplnění zásob a zjištění ceny pro stránky s JEDINÝM produktem"

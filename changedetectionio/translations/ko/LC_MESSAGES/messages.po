@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-02 15:43+0100\n"
+"POT-Creation-Date: 2026-01-02 16:07+0100\n"
 "PO-Revision-Date: 2026-01-02 11:40+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ko\n"
@@ -38,6 +38,106 @@ msgstr ""
 msgid "Incorrect password"
 msgstr "비밀번호"
 
+#: changedetectionio/forms.py:63 changedetectionio/forms.py:243
+msgid ""
+"At least one time interval (weeks, days, hours, minutes, or seconds) must"
+" be specified."
+msgstr ""
+
+#: changedetectionio/forms.py:64
+msgid ""
+"At least one time interval (weeks, days, hours, minutes, or seconds) must"
+" be specified when not using global settings."
+msgstr ""
+
+#: changedetectionio/forms.py:164
+msgid "Invalid time format. Use HH:MM."
+msgstr "시간 형식이 잘못되었습니다. HH:MM을 사용하세요."
+
+#: changedetectionio/forms.py:180
+msgid "Not a valid timezone name"
+msgstr "유효한 시간대 이름이 아닙니다."
+
+#: changedetectionio/forms.py:183
+#, fuzzy
+msgid "not set"
+msgstr "아직 아님"
+
+#: changedetectionio/forms.py:184
+#, fuzzy
+msgid "Start At"
+msgstr "설정"
+
+#: changedetectionio/forms.py:185
+#, fuzzy
+msgid "Run duration"
+msgstr "정보 없음"
+
+#: changedetectionio/forms.py:188
+msgid "Use time scheduler"
+msgstr "시간 스케줄러 사용"
+
+#: changedetectionio/forms.py:198
+msgid "Optional timezone to run in"
+msgstr "실행할 선택적 시간대"
+
+#: changedetectionio/forms.py:212
+msgid "Monday"
+msgstr "월요일"
+
+#: changedetectionio/forms.py:213
+msgid "Tuesday"
+msgstr "화요일"
+
+#: changedetectionio/forms.py:214
+msgid "Wednesday"
+msgstr "수요일"
+
+#: changedetectionio/forms.py:215
+msgid "Thursday"
+msgstr "목요일"
+
+#: changedetectionio/forms.py:216
+msgid "Friday"
+msgstr "금요일"
+
+#: changedetectionio/forms.py:217
+msgid "Saturday"
+msgstr "토요일"
+
+#: changedetectionio/forms.py:218
+msgid "Sunday"
+msgstr "일요일"
+
+#: changedetectionio/forms.py:251
+msgid "Weeks"
+msgstr "주"
+
+#: changedetectionio/forms.py:251 changedetectionio/forms.py:252
+#: changedetectionio/forms.py:253 changedetectionio/forms.py:254
+#: changedetectionio/forms.py:255 changedetectionio/forms.py:955
+msgid "Should contain zero or more seconds"
+msgstr "0초 이상을 포함해야 합니다."
+
+#: changedetectionio/forms.py:252
+msgid "Days"
+msgstr "날"
+
+#: changedetectionio/forms.py:253
+#, fuzzy
+msgid "Hours"
+msgstr "비밀번호"
+
+#: changedetectionio/forms.py:254
+#, fuzzy
+msgid "Minutes"
+msgstr "무음"
+
+#: changedetectionio/forms.py:255
+#, fuzzy
+msgid "Seconds"
+msgstr "초"
+
 #: changedetectionio/forms.py:460
 msgid "Notification Body and Title is required when a Notification URL is used"
 msgstr "알림 URL을 사용하는 경우 알림 본문 및 제목이 필요합니다."
@@ -67,6 +167,245 @@ msgstr "'%s'은(는) 유효한 JSONPath 표현식이 아닙니다. (%s)"
 msgid "'%s' is not a valid jq expression. (%s)"
 msgstr "'%s'은(는) 유효한 jq 표현식이 아닙니다. (%s)"
 
+#: changedetectionio/forms.py:725
+msgid "Empty value not allowed."
+msgstr "빈 값은 허용되지 않습니다."
+
+#: changedetectionio/forms.py:727
+msgid "Invalid value."
+msgstr "값이 잘못되었습니다."
+
+#: changedetectionio/forms.py:732
+#, fuzzy
+msgid "Watch"
+msgstr "# 시계"
+
+#: changedetectionio/forms.py:733 changedetectionio/forms.py:766
+msgid "Processor"
+msgstr "프로세서"
+
+#: changedetectionio/forms.py:734
+#, fuzzy
+msgid "Edit > Watch"
+msgstr "먼저 편집한 다음 보기"
+
+#: changedetectionio/forms.py:747 changedetectionio/forms.py:994
+#, fuzzy
+msgid "Fetch Method"
+msgstr "가져오기 방법 설정"
+
+#: changedetectionio/forms.py:748
+#, fuzzy
+msgid "Notification Body"
+msgstr "정보 없음"
+
+#: changedetectionio/forms.py:749
+#, fuzzy
+msgid "Notification format"
+msgstr "정보 없음"
+
+#: changedetectionio/forms.py:750
+#, fuzzy
+msgid "Notification Title"
+msgstr "정보 없음"
+
+#: changedetectionio/forms.py:751
+#, fuzzy
+msgid "Notification URL List"
+msgstr "정보 없음"
+
+#: changedetectionio/forms.py:752
+msgid "Processor - What do you want to achieve?"
+msgstr "프로세서 - 무엇을 달성하고 싶나요?"
+
+#: changedetectionio/forms.py:753
+msgid "Default timezone for watch check scheduler"
+msgstr "시계 확인 스케줄러의 기본 시간대"
+
+#: changedetectionio/forms.py:754
+#, fuzzy
+msgid "Wait seconds before extracting text"
+msgstr "텍스트를 추출하기 몇 초 전입니다."
+
+#: changedetectionio/forms.py:754
+msgid "Should contain one or more seconds"
+msgstr "1초 이상을 포함해야 합니다."
+
+#: changedetectionio/forms.py:767
+#, fuzzy
+msgid "URLs"
+msgstr "URL"
+
+#: changedetectionio/forms.py:768
+msgid "Upload .xlsx file"
+msgstr ".xlsx 파일 업로드"
+
+#: changedetectionio/forms.py:768
+msgid "Must be .xlsx file!"
+msgstr ".xlsx 파일이어야 합니다!"
+
+#: changedetectionio/forms.py:769
+#, fuzzy
+msgid "File mapping"
+msgstr "파일 매핑 유형."
+
+#: changedetectionio/forms.py:773
+#, fuzzy
+msgid "Operation"
+msgstr "UI 옵션"
+
+#: changedetectionio/forms.py:776
+#, fuzzy
+msgid "Selector"
+msgstr "선택 모드:"
+
+#: changedetectionio/forms.py:777
+#, fuzzy
+msgid "value"
+msgstr "정지시키다"
+
+#: changedetectionio/forms.py:796
+msgid "Use global settings for time between check and scheduler."
+msgstr "확인과 스케줄러 사이의 시간에 대한 전역 설정을 사용합니다."
+
+#: changedetectionio/forms.py:798
+#, fuzzy
+msgid "CSS/JSONPath/JQ/XPath Filters"
+msgstr "CSS/xPath 필터"
+
+#: changedetectionio/forms.py:800 changedetectionio/forms.py:996
+#, fuzzy
+msgid "Remove elements"
+msgstr "요소별로 선택"
+
+#: changedetectionio/forms.py:802
+#, fuzzy
+msgid "Extract text"
+msgstr "데이터 추출"
+
+#: changedetectionio/blueprint/imports/templates/import.html:106
+#: changedetectionio/forms.py:804
+msgid "Title"
+msgstr "제목"
+
+#: changedetectionio/forms.py:806
+#, fuzzy
+msgid "Ignore lines containing"
+msgstr "일치하는 줄을 무시하세요."
+
+#: changedetectionio/forms.py:808
+#, fuzzy
+msgid "Request body"
+msgstr "요구"
+
+#: changedetectionio/forms.py:809
+#, fuzzy
+msgid "Request method"
+msgstr "요구"
+
+#: changedetectionio/forms.py:810
+msgid "Ignore status codes (process non-2xx status codes as normal)"
+msgstr "상태 코드 무시(2xx가 아닌 상태 코드를 정상적으로 처리)"
+
+#: changedetectionio/forms.py:811
+#, fuzzy
+msgid "Only trigger when unique lines appear in all history"
+msgstr "고유한 줄이 나타날 때만 트리거됩니다."
+
+#: changedetectionio/blueprint/ui/templates/edit.html:336
+#: changedetectionio/forms.py:812
+msgid "Remove duplicate lines of text"
+msgstr "중복된 텍스트 줄 제거"
+
+#: changedetectionio/forms.py:813
+msgid "Sort text alphabetically"
+msgstr "텍스트를 알파벳순으로 정렬"
+
+#: changedetectionio/forms.py:814 changedetectionio/forms.py:1023
+msgid "Strip ignored lines"
+msgstr "무시된 줄 제거"
+
+#: changedetectionio/forms.py:815
+#, fuzzy
+msgid "Trim whitespace before and after text"
+msgstr "각 텍스트 줄 앞과 뒤의 공백을 제거하세요."
+
+#: changedetectionio/forms.py:817
+#, fuzzy
+msgid "Added lines"
+msgstr "로그인"
+
+#: changedetectionio/forms.py:818
+msgid "Replaced/changed lines"
+msgstr "교체/변경된 라인"
+
+#: changedetectionio/forms.py:819
+#, fuzzy
+msgid "Removed lines"
+msgstr "제거됨"
+
+#: changedetectionio/forms.py:821
+msgid "Keyword triggers - Trigger/wait for text"
+msgstr "키워드 트리거 - 텍스트 트리거/대기"
+
+#: changedetectionio/forms.py:824
+msgid "Block change-detection while text matches"
+msgstr "텍스트가 일치하는 동안 변경 감지 차단"
+
+#: changedetectionio/forms.py:825
+msgid "Execute JavaScript before change detection"
+msgstr "변경 감지 전에 JavaScript 실행"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html:17
+#: changedetectionio/forms.py:827 changedetectionio/forms.py:1051
+msgid "Save"
+msgstr "구하다"
+
+#: changedetectionio/forms.py:829
+msgid "Proxy"
+msgstr "대리"
+
+#: changedetectionio/forms.py:831
+msgid "Send a notification when the filter can no longer be found on the page"
+msgstr "페이지에서 필터를 더 이상 찾을 수 없으면 알림 보내기"
+
+#: changedetectionio/blueprint/settings/templates/settings.html:22
+#: changedetectionio/blueprint/tags/templates/edit-tag.html:32
+#: changedetectionio/blueprint/ui/templates/edit.html:59
+#: changedetectionio/forms.py:832
+msgid "Notifications"
+msgstr "정보 없음"
+
+#: changedetectionio/forms.py:832
+#, fuzzy
+msgid "Muted"
+msgstr "무음"
+
+#: changedetectionio/forms.py:832
+#, fuzzy
+msgid "On"
+msgstr "없음"
+
+#: changedetectionio/forms.py:833
+msgid "Attach screenshot to notification (where possible)"
+msgstr "알림에 스크린샷 첨부(가능한 경우)"
+
+#: changedetectionio/forms.py:835
+msgid "Match"
+msgstr "# 시계"
+
+#: changedetectionio/forms.py:835
+msgid "Match all of the following"
+msgstr "다음을 모두 일치시키세요."
+
+#: changedetectionio/forms.py:835
+msgid "Match any of the following"
+msgstr "다음 중 하나와 일치"
+
+#: changedetectionio/forms.py:837
+msgid "Use page <title> in list"
+msgstr "목록의 <제목> 페이지 사용"
+
 #: changedetectionio/forms.py:854
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "요청 방법이 GET으로 설정된 경우 본문이 비어 있어야 합니다."
@@ -87,9 +426,175 @@ msgstr "잘못된 템플릿 구문: %(error)s"
 msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
 msgstr ""
 
+#: changedetectionio/forms.py:920 changedetectionio/forms.py:932
+#, fuzzy
+msgid "Name"
+msgstr "음소거 해제"
+
+#: changedetectionio/forms.py:921
+msgid "Proxy URL"
+msgstr "프록시 URL"
+
+#: changedetectionio/forms.py:926
+msgid "Proxy URLs must start with http://, https:// or socks5://"
+msgstr "프록시 URL은 http://, https:// 또는 sock5://로 시작해야 합니다."
+
+#: changedetectionio/forms.py:933
+msgid "Browser connection URL"
+msgstr "브라우저 연결 URL"
+
+#: changedetectionio/forms.py:938
+msgid "Browser URLs must start with wss:// or ws://"
+msgstr "브라우저 URL은 wss:// 또는 ws://로 시작해야 합니다."
+
+#: changedetectionio/forms.py:944
+msgid "Plaintext requests"
+msgstr "일반 텍스트 요청"
+
+#: changedetectionio/forms.py:946
+#, fuzzy
+msgid "Chrome requests"
+msgstr "요구"
+
+#: changedetectionio/forms.py:952
+msgid "Default proxy"
+msgstr "기본 프록시"
+
+#: changedetectionio/forms.py:953
+msgid "Random jitter seconds ± check"
+msgstr "랜덤 지터 초 ± 확인"
+
+#: changedetectionio/forms.py:957
+msgid "Number of fetch workers"
+msgstr "가져오기 작업자 수"
+
+#: changedetectionio/forms.py:960
+msgid "Should be between 1 and 50"
+msgstr "1에서 50 사이여야 합니다."
+
+#: changedetectionio/forms.py:962
+msgid "Requests timeout in seconds"
+msgstr "요청 시간 초과(초)"
+
+#: changedetectionio/forms.py:965
+msgid "Should be between 1 and 999"
+msgstr "1에서 999 사이여야 합니다."
+
+#: changedetectionio/forms.py:970
+msgid "Default User-Agent overrides"
+msgstr "기본 사용자 에이전트 재정의"
+
 #: changedetectionio/forms.py:976
 msgid "Both a name, and a Proxy URL is required."
 msgstr "이름과 프록시 URL이 모두 필요합니다."
+
+#: changedetectionio/forms.py:980
+msgid "Open 'History' page in a new tab"
+msgstr "새 탭에서 '기록' 페이지 열기"
+
+#: changedetectionio/forms.py:981
+#, fuzzy
+msgid "Realtime UI Updates Enabled"
+msgstr "실시간 업데이트 오프라인"
+
+#: changedetectionio/forms.py:982
+#, fuzzy
+msgid "Favicons Enabled"
+msgstr "활성화하는 것을 고려해보세요"
+
+#: changedetectionio/forms.py:983
+msgid "Use page <title> in watch overview list"
+msgstr "시청 개요 목록에서 <제목> 페이지를 사용하세요."
+
+#: changedetectionio/forms.py:988
+msgid "API access token security check enabled"
+msgstr "API 액세스 토큰 보안 확인이 활성화되었습니다."
+
+#: changedetectionio/forms.py:989
+#, fuzzy
+msgid "Notification base URL override"
+msgstr "알림 경고 수"
+
+#: changedetectionio/forms.py:993
+msgid "Treat empty pages as a change?"
+msgstr "빈 페이지를 변경 사항으로 처리하시겠습니까?"
+
+#: changedetectionio/forms.py:995
+#, fuzzy
+msgid "Ignore Text"
+msgstr "오류 텍스트"
+
+#: changedetectionio/forms.py:997
+#, fuzzy
+msgid "Ignore whitespace"
+msgstr "공백 무시"
+
+#: changedetectionio/forms.py:1004
+#: changedetectionio/processors/image_ssim_diff/forms.py:50
+msgid "Must be between 0 and 100"
+msgstr "0에서 100 사이여야 합니다."
+
+#: changedetectionio/forms.py:1011
+msgid "Pager size"
+msgstr "호출기 크기"
+
+#: changedetectionio/forms.py:1014
+msgid "Should be atleast zero (disabled)"
+msgstr "0 이상이어야 합니다(비활성화됨)."
+
+#: changedetectionio/forms.py:1016
+msgid "RSS Content format"
+msgstr "RSS 콘텐츠 형식"
+
+#: changedetectionio/forms.py:1017
+msgid "RSS <description> body built from"
+msgstr "RSS <설명> 본문은 다음에서 작성되었습니다."
+
+#: changedetectionio/forms.py:1018
+msgid "RSS \"System default\" template override"
+msgstr ""
+
+#: changedetectionio/forms.py:1020
+#, fuzzy
+msgid "Remove password"
+msgstr "비밀번호"
+
+#: changedetectionio/forms.py:1021
+msgid "Render anchor tag content"
+msgstr "앵커 태그 콘텐츠 렌더링"
+
+#: changedetectionio/forms.py:1022
+msgid "Allow anonymous access to watch history page when password is enabled"
+msgstr "비밀번호가 활성화되면 시청 기록 페이지에 대한 익명 액세스를 허용합니다."
+
+#: changedetectionio/forms.py:1024
+msgid "Hide muted watches from RSS feed"
+msgstr "RSS 피드에서 음소거된 시계 숨기기"
+
+#: changedetectionio/forms.py:1027
+msgid "Enable RSS reader mode "
+msgstr "RSS 리더 모드 활성화"
+
+#: changedetectionio/forms.py:1028
+msgid "Number of changes to show in watch RSS feed"
+msgstr "시계 RSS 피드에 표시할 변경 사항 수"
+
+#: changedetectionio/forms.py:1030 changedetectionio/forms.py:1035
+msgid "Should contain zero or more attempts"
+msgstr "0개 이상의 시도를 포함해야 합니다."
+
+#: changedetectionio/forms.py:1032
+msgid "Number of times the filter can be missing before sending a notification"
+msgstr "알림을 보내기 전에 필터가 누락될 수 있는 횟수"
+
+#: changedetectionio/forms.py:1055
+msgid "RegEx to extract"
+msgstr "추출할 RegEx"
+
+#: changedetectionio/forms.py:1056
+#, fuzzy
+msgid "Extract as CSV"
+msgstr "데이터 추출"
 
 #: changedetectionio/store.py:386
 #, python-brace-format
@@ -287,10 +792,6 @@ msgstr "없음"
 msgid "URL"
 msgstr "URL"
 
-#: changedetectionio/blueprint/imports/templates/import.html:106
-msgid "Title"
-msgstr "제목"
-
 #: changedetectionio/blueprint/imports/templates/import.html:107
 msgid "CSS/xPath filter"
 msgstr "CSS/xPath 필터"
@@ -353,12 +854,6 @@ msgstr "알림 디버그 로그"
 #: changedetectionio/blueprint/ui/templates/edit.html:47
 msgid "General"
 msgstr "일반적인"
-
-#: changedetectionio/blueprint/settings/templates/settings.html:22
-#: changedetectionio/blueprint/tags/templates/edit-tag.html:32
-#: changedetectionio/blueprint/ui/templates/edit.html:59
-msgid "Notifications"
-msgstr "정보 없음"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:23
 msgid "Fetching"
@@ -532,10 +1027,6 @@ msgstr "새 조직 태그 추가"
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:14
 msgid "Watch group / tag"
 msgstr "감시 그룹/태그"
-
-#: changedetectionio/blueprint/tags/templates/groups-overview.html:17
-msgid "Save"
-msgstr "구하다"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:21
 msgid ""
@@ -1264,10 +1755,6 @@ msgid ""
 "this watch."
 msgstr ""
 
-#: changedetectionio/blueprint/ui/templates/edit.html:336
-msgid "Remove duplicate lines of text"
-msgstr "중복된 텍스트 줄 제거"
-
 #: changedetectionio/blueprint/ui/templates/edit.html:340
 msgid ""
 "Helps reduce changes detected caused by sites shuffling lines around, "
@@ -1639,9 +2126,131 @@ msgstr ""
 msgid "Failed to calculate diff: {}"
 msgstr ""
 
+#: changedetectionio/processors/image_ssim_diff/forms.py:19
+#: changedetectionio/processors/image_ssim_diff/forms.py:69
+msgid "Bounding box value is too long"
+msgstr "경계 상자 값이 너무 깁니다."
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:23
+msgid "Bounding box must be in format: x,y,width,height (integers only)"
+msgstr "경계 상자는 x,y,너비,높이(정수만) 형식이어야 합니다."
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:29
+msgid "Bounding box values must be non-negative"
+msgstr "경계 상자 값은 음수가 아니어야 합니다."
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:31
+msgid "Bounding box values are too large"
+msgstr "경계 상자 값이 너무 큽니다."
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:40
+msgid "Selection mode must be either \"element\" or \"draw\""
+msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:47
+msgid "Minimum Change Percentage"
+msgstr "최소 변경 비율"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:56
+msgid "Pixel Difference Sensitivity"
+msgstr "픽셀 차이 감도"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:58
+#, fuzzy
+msgid "Use global default"
+msgstr "시스템 기본값 사용"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:66
+msgid "Bounding Box"
+msgstr "경계 상자"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:76
+#, fuzzy
+msgid "Selection Mode"
+msgstr "선택 모드:"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:79
+msgid "Selection mode value is too long"
+msgstr "선택 모드 값이 너무 깁니다."
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:87
+msgid "Screenshot Comparison"
+msgstr "스크린샷 비교"
+
 #: changedetectionio/processors/image_ssim_diff/preview.py:91
 msgid "Preview unavailable - No snapshots captured yet"
 msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/processor.py:21
+msgid "Visual / Image screenshot change detection"
+msgstr "시각적/이미지 스크린샷 변경 감지"
+
+#: changedetectionio/processors/image_ssim_diff/processor.py:22
+msgid "Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/forms.py:15
+msgid "Re-stock detection"
+msgstr "재입고 감지"
+
+#: changedetectionio/processors/restock_diff/forms.py:16
+msgid "In Stock only (Out Of Stock -> In Stock only)"
+msgstr "재고만 있음 (품절 -> 재고만 있음)"
+
+#: changedetectionio/processors/restock_diff/forms.py:17
+msgid "Any availability changes"
+msgstr "이용 가능 여부 변경"
+
+#: changedetectionio/processors/restock_diff/forms.py:18
+msgid "Off, don't follow availability/restock"
+msgstr "끄기, 재고 여부를 따르지 않음/재입고"
+
+#: changedetectionio/processors/restock_diff/forms.py:21
+msgid "Below price to trigger notification"
+msgstr "알림을 실행할 가격 미만"
+
+#: changedetectionio/processors/restock_diff/forms.py:22
+#: changedetectionio/processors/restock_diff/forms.py:24
+msgid "No limit"
+msgstr "제한 없음"
+
+#: changedetectionio/processors/restock_diff/forms.py:23
+msgid "Above price to trigger notification"
+msgstr "가격보다 높으면 알림이 실행됩니다."
+
+#: changedetectionio/processors/restock_diff/forms.py:25
+#, python-format
+msgid "Threshold in %% for price changes since the original price"
+msgstr "원래 가격 이후 가격 변동에 대한 기준점(%)"
+
+#: changedetectionio/processors/restock_diff/forms.py:28
+msgid "Should be between 0 and 100"
+msgstr "0에서 100 사이여야 합니다."
+
+#: changedetectionio/processors/restock_diff/forms.py:31
+msgid "Follow price changes"
+msgstr "가격 변동을 따르세요"
+
+#: changedetectionio/processors/restock_diff/forms.py:37
+#, fuzzy
+msgid "Restock & Price Detection"
+msgstr "재입고 및 가격"
+
+#: changedetectionio/processors/restock_diff/processor.py:13
+msgid "Re-stock & Price detection for pages with a SINGLE product"
+msgstr "단일 제품이 포함된 페이지의 재입고 및 가격 감지"
+
+#: changedetectionio/processors/restock_diff/processor.py:14
+msgid "Detects if the product goes back to in-stock"
+msgstr "제품이 다시 재고로 돌아왔는지 감지합니다."
+
+#: changedetectionio/processors/text_json_diff/processor.py:22
+msgid "Webpage Text/HTML, JSON and PDF changes"
+msgstr "웹페이지 텍스트/HTML, JSON 및 PDF 변경"
+
+#: changedetectionio/processors/text_json_diff/processor.py:23
+msgid "Detects all text changes where possible"
+msgstr "가능한 경우 모든 텍스트 변경 사항을 감지합니다."
 
 #: changedetectionio/templates/base.html:77
 msgid "GROUPS"
@@ -1708,19 +2317,6 @@ msgstr "비밀번호"
 #: changedetectionio/templates/login.html:16
 msgid "Login"
 msgstr "로그인"
-
-#~ msgid ""
-#~ "At least one time interval (weeks, "
-#~ "days, hours, minutes, or seconds) must"
-#~ " be specified."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "At least one time interval (weeks, "
-#~ "days, hours, minutes, or seconds) must"
-#~ " be specified when not using global"
-#~ " settings."
-#~ msgstr ""
 
 #~ msgid "Invalid time format. Use HH:MM."
 #~ msgstr "시간 형식이 잘못되었습니다. HH:MM을 사용하세요."
@@ -2007,9 +2603,6 @@ msgstr "로그인"
 #~ msgid "RSS <description> body built from"
 #~ msgstr "RSS <설명> 본문은 다음에서 작성되었습니다."
 
-#~ msgid "RSS \"System default\" template override"
-#~ msgstr ""
-
 #~ msgid "Render anchor tag content"
 #~ msgstr "앵커 태그 콘텐츠 렌더링"
 
@@ -2049,9 +2642,6 @@ msgstr "로그인"
 #~ msgid "Bounding box values are too large"
 #~ msgstr "경계 상자 값이 너무 큽니다."
 
-#~ msgid "Selection mode must be either \"element\" or \"draw\""
-#~ msgstr ""
-
 #~ msgid "Minimum Change Percentage"
 #~ msgstr "최소 변경 비율"
 
@@ -2072,17 +2662,6 @@ msgstr "로그인"
 
 #~ msgid "Screenshot Comparison"
 #~ msgstr "스크린샷 비교"
-
-#~ msgid "Visual / Image screenshot change detection"
-#~ msgstr "시각적/이미지 스크린샷 변경 감지"
-
-#~ msgid ""
-#~ "Compares screenshots using fast OpenCV "
-#~ "algorithm, 10-100x faster than SSIM"
-#~ msgstr "SSIM보다 10~100배 빠른 빠른 OpenCV 알고리즘을 사용하여 스크린샷을 비교합니다."
-
-#~ msgid "Visual"
-#~ msgstr "시각적"
 
 #~ msgid "Re-stock detection"
 #~ msgstr "재입고 감지"
@@ -2116,6 +2695,17 @@ msgstr "로그인"
 
 #~ msgid "Restock & Price Detection"
 #~ msgstr "재입고 및 가격"
+
+#~ msgid "Visual / Image screenshot change detection"
+#~ msgstr "시각적/이미지 스크린샷 변경 감지"
+
+#~ msgid ""
+#~ "Compares screenshots using fast OpenCV "
+#~ "algorithm, 10-100x faster than SSIM"
+#~ msgstr "SSIM보다 10~100배 빠른 빠른 OpenCV 알고리즘을 사용하여 스크린샷을 비교합니다."
+
+#~ msgid "Visual"
+#~ msgstr "시각적"
 
 #~ msgid "Re-stock & Price detection for pages with a SINGLE product"
 #~ msgstr "단일 제품이 포함된 페이지의 재입고 및 가격 감지"

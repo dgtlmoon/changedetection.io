@@ -16,8 +16,11 @@ from ..base import difference_detection_processor, SCREENSHOT_FORMAT_PNG
 # All image operations now use OpenCV via isolated_opencv subprocess handler
 # Template matching temporarily disabled pending OpenCV implementation
 
-name = 'Visual / Image screenshot change detection'
-description = 'Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM'
+# Translation marker for extraction
+def _(x): return x
+name = _('Visual / Image screenshot change detection')
+description = _('Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM')
+del _
 processor_weight = 2
 list_badge_text = "Visual"
 

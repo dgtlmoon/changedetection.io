@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-02 15:43+0100\n"
+"POT-Creation-Date: 2026-01-02 16:07+0100\n"
 "PO-Revision-Date: 2026-01-02 15:32+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: it\n"
@@ -37,67 +37,556 @@ msgstr "Già autenticato"
 msgid "Incorrect password"
 msgstr "Password errata"
 
+#: changedetectionio/forms.py:63 changedetectionio/forms.py:243
+msgid ""
+"At least one time interval (weeks, days, hours, minutes, or seconds) must"
+" be specified."
+msgstr ""
+
+#: changedetectionio/forms.py:64
+msgid ""
+"At least one time interval (weeks, days, hours, minutes, or seconds) must"
+" be specified when not using global settings."
+msgstr ""
+
+#: changedetectionio/forms.py:164
+msgid "Invalid time format. Use HH:MM."
+msgstr "Formato orario non valido. Usa HH:MM."
+
+#: changedetectionio/forms.py:180
+msgid "Not a valid timezone name"
+msgstr "Nome fuso orario non valido"
+
+#: changedetectionio/forms.py:183
+#, fuzzy
+msgid "not set"
+msgstr "Non ancora"
+
+#: changedetectionio/forms.py:184
+#, fuzzy
+msgid "Start At"
+msgstr "Statistiche"
+
+#: changedetectionio/forms.py:185
+#, fuzzy
+msgid "Run duration"
+msgstr "Nessuna informazione"
+
+#: changedetectionio/forms.py:188
+msgid "Use time scheduler"
+msgstr "Usa pianificazione oraria"
+
+#: changedetectionio/forms.py:198
+msgid "Optional timezone to run in"
+msgstr "Fuso orario opzionale per l'esecuzione"
+
+#: changedetectionio/forms.py:212
+msgid "Monday"
+msgstr "Lunedì"
+
+#: changedetectionio/forms.py:213
+msgid "Tuesday"
+msgstr "Martedì"
+
+#: changedetectionio/forms.py:214
+msgid "Wednesday"
+msgstr "Mercoledì"
+
+#: changedetectionio/forms.py:215
+msgid "Thursday"
+msgstr "Giovedì"
+
+#: changedetectionio/forms.py:216
+msgid "Friday"
+msgstr "Venerdì"
+
+#: changedetectionio/forms.py:217
+msgid "Saturday"
+msgstr "Sabato"
+
+#: changedetectionio/forms.py:218
+msgid "Sunday"
+msgstr "Domenica"
+
+#: changedetectionio/forms.py:251
+msgid "Weeks"
+msgstr "Settimane"
+
+#: changedetectionio/forms.py:251 changedetectionio/forms.py:252
+#: changedetectionio/forms.py:253 changedetectionio/forms.py:254
+#: changedetectionio/forms.py:255 changedetectionio/forms.py:955
+msgid "Should contain zero or more seconds"
+msgstr "Deve contenere zero o più secondi"
+
+#: changedetectionio/forms.py:252
+msgid "Days"
+msgstr "Giorni"
+
+#: changedetectionio/forms.py:253
+msgid "Hours"
+msgstr "Ore"
+
+#: changedetectionio/forms.py:254
+#, fuzzy
+msgid "Minutes"
+msgstr "Silenzia"
+
+#: changedetectionio/forms.py:255
+#, fuzzy
+msgid "Seconds"
+msgstr "secondi"
+
 #: changedetectionio/forms.py:460
 msgid "Notification Body and Title is required when a Notification URL is used"
-msgstr ""
+msgstr "Corpo e titolo notifica sono richiesti quando si usa un URL di notifica"
 
 #: changedetectionio/forms.py:489
 #, python-format
 msgid "'%s' is not a valid AppRise URL."
-msgstr ""
+msgstr "'%s' non è un URL AppRise valido."
 
 #: changedetectionio/forms.py:562 changedetectionio/forms.py:581
 #, python-format
 msgid "RegEx '%s' is not a valid regular expression."
-msgstr ""
+msgstr "La RegEx '%s' non è un'espressione regolare valida."
 
 #: changedetectionio/forms.py:622 changedetectionio/forms.py:637
 #, python-format
 msgid "'%s' is not a valid XPath expression. (%s)"
-msgstr ""
+msgstr "'%s' non è un'espressione XPath valida. (%s)"
 
 #: changedetectionio/forms.py:657
 #, python-format
 msgid "'%s' is not a valid JSONPath expression. (%s)"
-msgstr ""
+msgstr "'%s' non è un'espressione JSONPath valida. (%s)"
 
 #: changedetectionio/forms.py:679
 #, python-format
 msgid "'%s' is not a valid jq expression. (%s)"
+msgstr "'%s' non è un'espressione jq valida. (%s)"
+
+#: changedetectionio/forms.py:725
+msgid "Empty value not allowed."
+msgstr "Valore vuoto non consentito."
+
+#: changedetectionio/forms.py:727
+msgid "Invalid value."
+msgstr "Valore non valido."
+
+#: changedetectionio/forms.py:732
+msgid "Watch"
+msgstr "Osserva"
+
+#: changedetectionio/forms.py:733 changedetectionio/forms.py:766
+msgid "Processor"
+msgstr "Processore"
+
+#: changedetectionio/forms.py:734
+#, fuzzy
+msgid "Edit > Watch"
+msgstr "Modifica prima poi Monitora"
+
+#: changedetectionio/forms.py:747 changedetectionio/forms.py:994
+msgid "Fetch Method"
+msgstr "Metodo di recupero"
+
+#: changedetectionio/forms.py:748
+#, fuzzy
+msgid "Notification Body"
+msgstr "Notifiche"
+
+#: changedetectionio/forms.py:749
+#, fuzzy
+msgid "Notification format"
+msgstr "Notifiche"
+
+#: changedetectionio/forms.py:750
+#, fuzzy
+msgid "Notification Title"
+msgstr "Notifiche"
+
+#: changedetectionio/forms.py:751
+#, fuzzy
+msgid "Notification URL List"
+msgstr "Notifiche"
+
+#: changedetectionio/forms.py:752
+msgid "Processor - What do you want to achieve?"
+msgstr "Processore - Cosa vuoi ottenere?"
+
+#: changedetectionio/forms.py:753
+msgid "Default timezone for watch check scheduler"
+msgstr "Fuso orario predefinito per pianificazione controlli"
+
+#: changedetectionio/forms.py:754
+msgid "Wait seconds before extracting text"
+msgstr "Secondi di attesa prima di estrarre il testo"
+
+#: changedetectionio/forms.py:754
+msgid "Should contain one or more seconds"
+msgstr "Deve contenere uno o più secondi"
+
+#: changedetectionio/forms.py:767
+#, fuzzy
+msgid "URLs"
+msgstr "URL"
+
+#: changedetectionio/forms.py:768
+msgid "Upload .xlsx file"
+msgstr "Carica file .xlsx"
+
+#: changedetectionio/forms.py:768
+msgid "Must be .xlsx file!"
+msgstr "Deve essere un file .xlsx!"
+
+#: changedetectionio/forms.py:769
+msgid "File mapping"
+msgstr "Mappatura file"
+
+#: changedetectionio/forms.py:773
+#, fuzzy
+msgid "Operation"
+msgstr "Opzioni interfaccia"
+
+#: changedetectionio/forms.py:776
+msgid "Selector"
+msgstr "Selettore"
+
+#: changedetectionio/forms.py:777
+#, fuzzy
+msgid "value"
+msgstr "Pausa"
+
+#: changedetectionio/forms.py:796
+msgid "Use global settings for time between check and scheduler."
+msgstr "Usa impostazioni globali per intervallo controlli e pianificazione."
+
+#: changedetectionio/forms.py:798
+#, fuzzy
+msgid "CSS/JSONPath/JQ/XPath Filters"
+msgstr "Filtro CSS/xPath"
+
+#: changedetectionio/forms.py:800 changedetectionio/forms.py:996
+msgid "Remove elements"
+msgstr "Rimuovi elementi"
+
+#: changedetectionio/forms.py:802
+msgid "Extract text"
+msgstr "Estrai testo"
+
+#: changedetectionio/blueprint/imports/templates/import.html:106
+#: changedetectionio/forms.py:804
+msgid "Title"
+msgstr "Titolo"
+
+#: changedetectionio/forms.py:806
+msgid "Ignore lines containing"
+msgstr "Ignora righe contenenti"
+
+#: changedetectionio/forms.py:808
+#, fuzzy
+msgid "Request body"
+msgstr "Richiesta"
+
+#: changedetectionio/forms.py:809
+#, fuzzy
+msgid "Request method"
+msgstr "Richiesta"
+
+#: changedetectionio/forms.py:810
+msgid "Ignore status codes (process non-2xx status codes as normal)"
+msgstr "Ignora codici stato (elabora codici non-2xx come normali)"
+
+#: changedetectionio/forms.py:811
+msgid "Only trigger when unique lines appear in all history"
+msgstr "Attiva solo quando appaiono righe uniche in tutta la cronologia"
+
+#: changedetectionio/blueprint/ui/templates/edit.html:336
+#: changedetectionio/forms.py:812
+msgid "Remove duplicate lines of text"
 msgstr ""
+
+#: changedetectionio/forms.py:813
+msgid "Sort text alphabetically"
+msgstr "Ordina testo alfabeticamente"
+
+#: changedetectionio/forms.py:814 changedetectionio/forms.py:1023
+msgid "Strip ignored lines"
+msgstr "Rimuovi righe ignorate"
+
+#: changedetectionio/forms.py:815
+msgid "Trim whitespace before and after text"
+msgstr "Rimuovi spazi prima e dopo il testo"
+
+#: changedetectionio/forms.py:817
+#, fuzzy
+msgid "Added lines"
+msgstr "Aggiunto"
+
+#: changedetectionio/forms.py:818
+msgid "Replaced/changed lines"
+msgstr "Righe sostituite/modificate"
+
+#: changedetectionio/forms.py:819
+#, fuzzy
+msgid "Removed lines"
+msgstr "Rimosso"
+
+#: changedetectionio/forms.py:821
+msgid "Keyword triggers - Trigger/wait for text"
+msgstr "Trigger parole chiave - Attiva/attendi testo"
+
+#: changedetectionio/forms.py:824
+msgid "Block change-detection while text matches"
+msgstr "Blocca rilevamento modifiche quando il testo corrisponde"
+
+#: changedetectionio/forms.py:825
+msgid "Execute JavaScript before change detection"
+msgstr "Esegui JavaScript prima del rilevamento"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html:17
+#: changedetectionio/forms.py:827 changedetectionio/forms.py:1051
+msgid "Save"
+msgstr "Salva"
+
+#: changedetectionio/forms.py:829
+msgid "Proxy"
+msgstr "Proxy"
+
+#: changedetectionio/forms.py:831
+msgid "Send a notification when the filter can no longer be found on the page"
+msgstr "Invia notifica quando il filtro non viene più trovato nella pagina"
+
+#: changedetectionio/blueprint/settings/templates/settings.html:22
+#: changedetectionio/blueprint/tags/templates/edit-tag.html:32
+#: changedetectionio/blueprint/ui/templates/edit.html:59
+#: changedetectionio/forms.py:832
+msgid "Notifications"
+msgstr "Notifiche"
+
+#: changedetectionio/forms.py:832
+#, fuzzy
+msgid "Muted"
+msgstr "Silenzia"
+
+#: changedetectionio/forms.py:832
+#, fuzzy
+msgid "On"
+msgstr "nessuno"
+
+#: changedetectionio/forms.py:833
+msgid "Attach screenshot to notification (where possible)"
+msgstr "Allega screenshot alla notifica (dove possibile)"
+
+#: changedetectionio/forms.py:835
+msgid "Match"
+msgstr "Corrisponde"
+
+#: changedetectionio/forms.py:835
+msgid "Match all of the following"
+msgstr "Corrisponde a tutti i seguenti"
+
+#: changedetectionio/forms.py:835
+msgid "Match any of the following"
+msgstr "Corrisponde a uno qualsiasi dei seguenti"
+
+#: changedetectionio/forms.py:837
+msgid "Use page <title> in list"
+msgstr "Usa <title> pagina nell'elenco"
 
 #: changedetectionio/forms.py:854
 msgid "Body must be empty when Request Method is set to GET"
-msgstr ""
+msgstr "Il corpo deve essere vuoto quando il metodo è impostato su GET"
 
 #: changedetectionio/forms.py:863 changedetectionio/forms.py:877
 #: changedetectionio/forms.py:892
 #, python-format
 msgid "Invalid template syntax configuration: %(error)s"
-msgstr ""
+msgstr "Configurazione sintassi template non valida: %(error)s"
 
 #: changedetectionio/forms.py:867 changedetectionio/forms.py:881
 #, python-format
 msgid "Invalid template syntax: %(error)s"
-msgstr ""
+msgstr "Sintassi template non valida: %(error)s"
 
 #: changedetectionio/forms.py:896
 #, python-format
 msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
 msgstr ""
 
+#: changedetectionio/forms.py:920 changedetectionio/forms.py:932
+#, fuzzy
+msgid "Name"
+msgstr "Riattiva audio"
+
+#: changedetectionio/forms.py:921
+msgid "Proxy URL"
+msgstr "URL Proxy"
+
+#: changedetectionio/forms.py:926
+msgid "Proxy URLs must start with http://, https:// or socks5://"
+msgstr "Gli URL proxy devono iniziare con http://, https:// o socks5://"
+
+#: changedetectionio/forms.py:933
+msgid "Browser connection URL"
+msgstr "URL connessione browser"
+
+#: changedetectionio/forms.py:938
+msgid "Browser URLs must start with wss:// or ws://"
+msgstr "Gli URL browser devono iniziare con wss:// o ws://"
+
+#: changedetectionio/forms.py:944
+msgid "Plaintext requests"
+msgstr "Richieste in chiaro"
+
+#: changedetectionio/forms.py:946
+#, fuzzy
+msgid "Chrome requests"
+msgstr "Richiesta"
+
+#: changedetectionio/forms.py:952
+msgid "Default proxy"
+msgstr "Proxy predefinito"
+
+#: changedetectionio/forms.py:953
+msgid "Random jitter seconds ± check"
+msgstr "Jitter casuale secondi ± controllo"
+
+#: changedetectionio/forms.py:957
+msgid "Number of fetch workers"
+msgstr "Numero di worker di recupero"
+
+#: changedetectionio/forms.py:960
+msgid "Should be between 1 and 50"
+msgstr "Deve essere tra 1 e 50"
+
+#: changedetectionio/forms.py:962
+msgid "Requests timeout in seconds"
+msgstr "Timeout richieste in secondi"
+
+#: changedetectionio/forms.py:965
+msgid "Should be between 1 and 999"
+msgstr "Deve essere tra 1 e 999"
+
+#: changedetectionio/forms.py:970
+msgid "Default User-Agent overrides"
+msgstr "Override User-Agent predefiniti"
+
 #: changedetectionio/forms.py:976
 msgid "Both a name, and a Proxy URL is required."
+msgstr "Sono richiesti sia un nome che un URL proxy."
+
+#: changedetectionio/forms.py:980
+msgid "Open 'History' page in a new tab"
+msgstr "Apri pagina 'Cronologia' in una nuova scheda"
+
+#: changedetectionio/forms.py:981
+msgid "Realtime UI Updates Enabled"
+msgstr "Aggiornamenti UI in tempo reale attivi"
+
+#: changedetectionio/forms.py:982
+msgid "Favicons Enabled"
+msgstr "Favicon attive"
+
+#: changedetectionio/forms.py:983
+msgid "Use page <title> in watch overview list"
+msgstr "Usa <title> pagina nell'elenco osservati"
+
+#: changedetectionio/forms.py:988
+msgid "API access token security check enabled"
+msgstr "Controllo sicurezza token API attivo"
+
+#: changedetectionio/forms.py:989
+#, fuzzy
+msgid "Notification base URL override"
+msgstr "Notifiche"
+
+#: changedetectionio/forms.py:993
+msgid "Treat empty pages as a change?"
+msgstr "Tratta pagine vuote come modifica?"
+
+#: changedetectionio/forms.py:995
+msgid "Ignore Text"
+msgstr "Ignora testo"
+
+#: changedetectionio/forms.py:997
+msgid "Ignore whitespace"
+msgstr "Ignora spazi"
+
+#: changedetectionio/forms.py:1004
+#: changedetectionio/processors/image_ssim_diff/forms.py:50
+msgid "Must be between 0 and 100"
+msgstr "Deve essere tra 0 e 100"
+
+#: changedetectionio/forms.py:1011
+msgid "Pager size"
+msgstr "Dimensione paginatore"
+
+#: changedetectionio/forms.py:1014
+msgid "Should be atleast zero (disabled)"
+msgstr "Deve essere almeno zero (disabilitato)"
+
+#: changedetectionio/forms.py:1016
+msgid "RSS Content format"
+msgstr "Formato contenuto RSS"
+
+#: changedetectionio/forms.py:1017
+msgid "RSS <description> body built from"
+msgstr "Corpo <description> RSS costruito da"
+
+#: changedetectionio/forms.py:1018
+msgid "RSS \"System default\" template override"
 msgstr ""
+
+#: changedetectionio/forms.py:1020
+#, fuzzy
+msgid "Remove password"
+msgstr "Password"
+
+#: changedetectionio/forms.py:1021
+msgid "Render anchor tag content"
+msgstr "Renderizza contenuto tag anchor"
+
+#: changedetectionio/forms.py:1022
+msgid "Allow anonymous access to watch history page when password is enabled"
+msgstr "Consenti accesso anonimo alla cronologia quando la password è attiva"
+
+#: changedetectionio/forms.py:1024
+msgid "Hide muted watches from RSS feed"
+msgstr "Nascondi osservazioni silenziate dal feed RSS"
+
+#: changedetectionio/forms.py:1027
+msgid "Enable RSS reader mode "
+msgstr "Abilita modalità lettore RSS "
+
+#: changedetectionio/forms.py:1028
+msgid "Number of changes to show in watch RSS feed"
+msgstr "Numero di modifiche da mostrare nel feed RSS"
+
+#: changedetectionio/forms.py:1030 changedetectionio/forms.py:1035
+msgid "Should contain zero or more attempts"
+msgstr "Deve contenere zero o più tentativi"
+
+#: changedetectionio/forms.py:1032
+msgid "Number of times the filter can be missing before sending a notification"
+msgstr "Numero di volte che il filtro può mancare prima di inviare notifica"
+
+#: changedetectionio/forms.py:1055
+msgid "RegEx to extract"
+msgstr "RegEx da estrarre"
+
+#: changedetectionio/forms.py:1056
+msgid "Extract as CSV"
+msgstr "Estrai come CSV"
 
 #: changedetectionio/store.py:386
 #, python-brace-format
 msgid "Error fetching metadata for {}"
-msgstr ""
+msgstr "Errore nel recupero metadati per {}"
 
 #: changedetectionio/store.py:390
 msgid "Watch protocol is not permitted or invalid URL format"
-msgstr ""
+msgstr "Protocollo non consentito o formato URL non valido"
 
 #: changedetectionio/blueprint/backups/__init__.py:86
 msgid "A backup is already running, check back in a few minutes"
@@ -294,10 +783,6 @@ msgstr "nessuno"
 msgid "URL"
 msgstr "URL"
 
-#: changedetectionio/blueprint/imports/templates/import.html:106
-msgid "Title"
-msgstr "Titolo"
-
 #: changedetectionio/blueprint/imports/templates/import.html:107
 msgid "CSS/xPath filter"
 msgstr "Filtro CSS/xPath"
@@ -359,12 +844,6 @@ msgstr ""
 #: changedetectionio/blueprint/ui/templates/edit.html:47
 msgid "General"
 msgstr "Generale"
-
-#: changedetectionio/blueprint/settings/templates/settings.html:22
-#: changedetectionio/blueprint/tags/templates/edit-tag.html:32
-#: changedetectionio/blueprint/ui/templates/edit.html:59
-msgid "Notifications"
-msgstr "Notifiche"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:23
 msgid "Fetching"
@@ -536,10 +1015,6 @@ msgstr ""
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:14
 msgid "Watch group / tag"
 msgstr ""
-
-#: changedetectionio/blueprint/tags/templates/groups-overview.html:17
-msgid "Save"
-msgstr "Salva"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:21
 msgid ""
@@ -1263,10 +1738,6 @@ msgid ""
 "this watch."
 msgstr ""
 
-#: changedetectionio/blueprint/ui/templates/edit.html:336
-msgid "Remove duplicate lines of text"
-msgstr ""
-
 #: changedetectionio/blueprint/ui/templates/edit.html:340
 msgid ""
 "Helps reduce changes detected caused by sites shuffling lines around, "
@@ -1289,7 +1760,7 @@ msgstr ""
 #: changedetectionio/blueprint/ui/templates/edit.html:361
 #: changedetectionio/blueprint/ui/templates/edit.html:417
 msgid "Loading..."
-msgstr ""
+msgstr "Caricamento..."
 
 #: changedetectionio/blueprint/ui/templates/edit.html:386
 msgid "The Visual Selector tool lets you select the"
@@ -1638,9 +2109,129 @@ msgstr ""
 msgid "Failed to calculate diff: {}"
 msgstr ""
 
+#: changedetectionio/processors/image_ssim_diff/forms.py:19
+#: changedetectionio/processors/image_ssim_diff/forms.py:69
+msgid "Bounding box value is too long"
+msgstr "Valore riquadro di selezione troppo lungo"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:23
+msgid "Bounding box must be in format: x,y,width,height (integers only)"
+msgstr "Il riquadro deve essere nel formato: x,y,larghezza,altezza (solo numeri interi)"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:29
+msgid "Bounding box values must be non-negative"
+msgstr "I valori del riquadro devono essere non negativi"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:31
+msgid "Bounding box values are too large"
+msgstr "I valori del riquadro sono troppo grandi"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:40
+msgid "Selection mode must be either \"element\" or \"draw\""
+msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:47
+msgid "Minimum Change Percentage"
+msgstr "Percentuale minima di modifica"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:56
+msgid "Pixel Difference Sensitivity"
+msgstr "Sensibilità differenza pixel"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:58
+#, fuzzy
+msgid "Use global default"
+msgstr "Filtri globali"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:66
+msgid "Bounding Box"
+msgstr "Riquadro di selezione"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:76
+msgid "Selection Mode"
+msgstr "Modalità selezione"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:79
+msgid "Selection mode value is too long"
+msgstr "Valore modalità selezione troppo lungo"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:87
+msgid "Screenshot Comparison"
+msgstr "Confronto screenshot"
+
 #: changedetectionio/processors/image_ssim_diff/preview.py:91
 msgid "Preview unavailable - No snapshots captured yet"
 msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/processor.py:21
+msgid "Visual / Image screenshot change detection"
+msgstr "Rilevamento modifiche screenshot visivi"
+
+#: changedetectionio/processors/image_ssim_diff/processor.py:22
+msgid "Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM"
+msgstr "Confronta screenshot con algoritmo OpenCV veloce, 10-100x più veloce di SSIM"
+
+#: changedetectionio/processors/restock_diff/forms.py:15
+msgid "Re-stock detection"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/forms.py:16
+msgid "In Stock only (Out Of Stock -> In Stock only)"
+msgstr "Solo disponibile (Esaurito -> Disponibile)"
+
+#: changedetectionio/processors/restock_diff/forms.py:17
+msgid "Any availability changes"
+msgstr "Qualsiasi cambio disponibilità"
+
+#: changedetectionio/processors/restock_diff/forms.py:18
+msgid "Off, don't follow availability/restock"
+msgstr "Disattivo, non seguire disponibilità/rifornimenti"
+
+#: changedetectionio/processors/restock_diff/forms.py:21
+msgid "Below price to trigger notification"
+msgstr "Prezzo minimo per attivare notifica"
+
+#: changedetectionio/processors/restock_diff/forms.py:22
+#: changedetectionio/processors/restock_diff/forms.py:24
+msgid "No limit"
+msgstr "Nessun limite"
+
+#: changedetectionio/processors/restock_diff/forms.py:23
+msgid "Above price to trigger notification"
+msgstr "Prezzo massimo per attivare notifica"
+
+#: changedetectionio/processors/restock_diff/forms.py:25
+#, python-format
+msgid "Threshold in %% for price changes since the original price"
+msgstr "Soglia in %% per modifiche prezzo dal prezzo originale"
+
+#: changedetectionio/processors/restock_diff/forms.py:28
+msgid "Should be between 0 and 100"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/forms.py:31
+msgid "Follow price changes"
+msgstr "Segui modifiche prezzo"
+
+#: changedetectionio/processors/restock_diff/forms.py:37
+msgid "Restock & Price Detection"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/processor.py:13
+msgid "Re-stock & Price detection for pages with a SINGLE product"
+msgstr "Rilevamento disponibilità e prezzi per pagine con UN SINGOLO prodotto"
+
+#: changedetectionio/processors/restock_diff/processor.py:14
+msgid "Detects if the product goes back to in-stock"
+msgstr "Rileva se il prodotto torna disponibile"
+
+#: changedetectionio/processors/text_json_diff/processor.py:22
+msgid "Webpage Text/HTML, JSON and PDF changes"
+msgstr "Modifiche testo/HTML, JSON e PDF"
+
+#: changedetectionio/processors/text_json_diff/processor.py:23
+msgid "Detects all text changes where possible"
+msgstr "Rileva tutte le modifiche di testo possibili"
 
 #: changedetectionio/templates/base.html:77
 msgid "GROUPS"
@@ -1698,7 +2289,9 @@ msgstr "Seleziona Lingua"
 msgid ""
 "Language support is in beta, please help us improve by opening a PR on "
 "GitHub with any updates."
-msgstr "Il supporto linguistico è in versione beta, aiutaci a migliorare aprendo una PR su GitHub con eventuali aggiornamenti."
+msgstr ""
+"Il supporto linguistico è in versione beta, aiutaci a migliorare aprendo "
+"una PR su GitHub con eventuali aggiornamenti."
 
 #: changedetectionio/templates/login.html:10
 msgid "Password"
