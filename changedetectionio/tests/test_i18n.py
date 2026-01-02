@@ -110,3 +110,42 @@ def test_language_persistence_in_session(client, live_server, measure_memory_usa
 
         assert res.status_code == 200
         assert b"Annulla" in res.data, "Italian text should persist across requests"
+
+
+def test_set_language_with_redirect(client, live_server, measure_memory_usage, datastore_path):
+    """
+    Test that changing language keeps the user on the same page.
+    Example: User is on /settings, changes language, stays on /settings.
+    """
+    from flask import url_for
+
+    # Set language with a redirect parameter (simulating language change from /settings)
+    res = client.get(
+        url_for("set_language", locale="de", redirect="/settings"),
+        follow_redirects=False
+    )
+
+    # Should redirect back to settings
+    assert res.status_code in [302, 303]
+    assert '/settings' in res.location
+
+    # Verify language was set in session
+    with client.session_transaction() as sess:
+        assert sess.get('locale') == 'de'
+
+    # Test with invalid locale (should still redirect safely)
+    res = client.get(
+        url_for("set_language", locale="invalid_locale", redirect="/settings"),
+        follow_redirects=False
+    )
+    assert res.status_code in [302, 303]
+    assert '/settings' in res.location
+
+    # Test with malicious redirect (should default to watchlist)
+    res = client.get(
+        url_for("set_language", locale="en", redirect="https://evil.com"),
+        follow_redirects=False
+    )
+    assert res.status_code in [302, 303]
+    # Should not redirect to evil.com
+    assert 'evil.com' not in res.location
