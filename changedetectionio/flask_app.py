@@ -26,7 +26,7 @@ from flask import (
     session,
     url_for,
 )
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urlparse
 from flask_compress import Compress as FlaskCompress
 from flask_login import current_user
 from flask_restful import abort, Api
@@ -345,59 +345,18 @@ class User(flask_login.UserMixin):
     pass
 
 
-def is_safe_url(target):
-    """
-    Validate that a redirect URL is safe to prevent open redirect vulnerabilities.
-
-    This follows Flask/Werkzeug best practices by ensuring the redirect URL:
-    1. Is a relative path starting with exactly one '/'
-    2. Does not start with '//' (double-slash attack)
-    3. Has no external protocol handlers
-
-    Returns True only for safe internal redirects like '/settings' or '/watchlist'.
-    Returns False for external URLs, protocol handlers, or malicious patterns.
-
-    References:
-    - https://flask-login.readthedocs.io/ (safe redirect patterns)
-    - https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-v-user-logins
-    - https://www.pythonkitchen.com/how-prevent-open-redirect-vulnerab-flask/
-    """
-    if not target:
-        return False
-
-    # First, check if it starts with // or more (double-slash attack)
-    if target.startswith('//'):
-        return False
-
-    # Parse the URL to check for scheme and netloc
-    parsed = urlparse(target)
-
-    # Block any URL with a scheme (http://, https://, javascript:, etc.)
-    if parsed.scheme:
-        return False
-
-    # Block any URL with a network location (netloc)
-    # This catches patterns like //evil.com, user@host, etc.
-    if parsed.netloc:
-        return False
-
-    # At this point, we have a relative URL with no scheme or netloc
-    # Use urljoin to resolve it and verify it points to the same host
-    ref_url = urlparse(request.host_url)
-    test_url = urlparse(urljoin(request.host_url, target))
-
-    # Final check: ensure the resolved URL has the same netloc as current host
-    return (
-        test_url.scheme in ('http', 'https') and
-        ref_url.netloc == test_url.netloc
-    )
-
-
 def changedetection_app(config=None, datastore_o=None):
     logger.trace("TRACE log is enabled")
 
     global datastore, socketio_server
     datastore = datastore_o
+
+    # Import and create a wrapper for is_safe_url that has access to app
+    from changedetectionio.is_safe_url import is_safe_url as _is_safe_url
+
+    def is_safe_url(target):
+        """Wrapper for is_safe_url that passes the app instance"""
+        return _is_safe_url(target, app)
 
     # so far just for read-only via tests, but this will be moved eventually to be the main source
     # (instead of the global var)
