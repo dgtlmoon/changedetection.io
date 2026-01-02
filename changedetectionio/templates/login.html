@@ -5,6 +5,7 @@
  <div class="inner">
     <form class="pure-form pure-form-stacked" action="{{url_for('login')}}" method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" id="redirect" name="redirect" value="{{ redirect_url }}">
         <fieldset>
             <div class="pure-control-group">
                 <label for="password">{{ _('Password') }}</label>

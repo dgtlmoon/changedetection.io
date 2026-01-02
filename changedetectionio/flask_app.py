@@ -26,6 +26,7 @@ from flask import (
     session,
     url_for,
 )
+from urllib.parse import urlparse
 from flask_compress import Compress as FlaskCompress
 from flask_login import current_user
 from flask_restful import abort, Api
@@ -350,6 +351,13 @@ def changedetection_app(config=None, datastore_o=None):
     global datastore, socketio_server
     datastore = datastore_o
 
+    # Import and create a wrapper for is_safe_url that has access to app
+    from changedetectionio.is_safe_url import is_safe_url as _is_safe_url
+
+    def is_safe_url(target):
+        """Wrapper for is_safe_url that passes the app instance"""
+        return _is_safe_url(target, app)
+
     # so far just for read-only via tests, but this will be moved eventually to be the main source
     # (instead of the global var)
     app.config['DATASTORE'] = datastore_o
@@ -471,11 +479,21 @@ def changedetection_app(config=None, datastore_o=None):
 
     @login_manager.unauthorized_handler
     def unauthorized_handler():
-        return redirect(url_for('login', next=url_for('watchlist.index')))
+        # Pass the current request path so users are redirected back after login
+        return redirect(url_for('login', redirect=request.path))
 
     @app.route('/logout')
     def logout():
         flask_login.logout_user()
+
+        # Check if there's a redirect parameter to return to after re-login
+        redirect_url = request.args.get('redirect')
+
+        # If redirect is provided and safe, pass it to login page
+        if redirect_url and is_safe_url(redirect_url):
+            return redirect(url_for('login', redirect=redirect_url))
+
+        # Otherwise just go to watchlist
         return redirect(url_for('watchlist.index'))
 
     @app.route('/set-language/<locale>')
@@ -487,20 +505,36 @@ def changedetection_app(config=None, datastore_o=None):
         else:
             logger.error(f"Invalid locale {locale}, available: {language_codes}")
 
-        # Redirect back to the page they came from, or home
+        # Check if there's a redirect parameter to return to the same page
+        redirect_url = request.args.get('redirect')
+
+        # If redirect is provided and safe, use it
+        if redirect_url and is_safe_url(redirect_url):
+            return redirect(redirect_url)
+
+        # Otherwise redirect to watchlist
         return redirect(url_for('watchlist.index'))
 
     # https://github.com/pallets/flask/blob/93dd1709d05a1cf0e886df6223377bdab3b077fb/examples/tutorial/flaskr/__init__.py#L39
     # You can divide up the stuff like this
     @app.route('/login', methods=['GET', 'POST'])
     def login():
+        # Extract and validate the redirect parameter
+        redirect_url = request.args.get('redirect') or request.form.get('redirect')
+
+        # Validate the redirect URL - default to watchlist if invalid
+        if redirect_url and is_safe_url(redirect_url):
+            validated_redirect = redirect_url
+        else:
+            validated_redirect = url_for('watchlist.index')
 
         if request.method == 'GET':
             if flask_login.current_user.is_authenticated:
+                # Already logged in - redirect immediately to the target
                 flash(gettext("Already logged in"))
-                return redirect(url_for("watchlist.index"))
+                return redirect(validated_redirect)
             flash(gettext("You must be logged in, please log in."), 'error')
-            output = render_template("login.html")
+            output = render_template("login.html", redirect_url=validated_redirect)
             return output
 
         user = User()
@@ -510,23 +544,13 @@ def changedetection_app(config=None, datastore_o=None):
 
         if (user.check_password(password)):
             flask_login.login_user(user, remember=True)
-
-            # For now there's nothing else interesting here other than the index/list page
-            # It's more reliable and safe to ignore the 'next' redirect
-            # When we used...
-            # next = request.args.get('next')
-            # return redirect(next or url_for('watchlist.index'))
-            # We would sometimes get login loop errors on sites hosted in sub-paths
-
-            # note for the future:
-            #            if not is_safe_valid_url(next):
-            #                return flask.abort(400)
-            return redirect(url_for('watchlist.index'))
+            # Redirect to the validated URL after successful login
+            return redirect(validated_redirect)
 
         else:
             flash(gettext('Incorrect password'), 'error')
 
-        return redirect(url_for('login'))
+        return redirect(url_for('login', redirect=redirect_url if redirect_url else None))
 
     @app.before_request
     def before_request_handle_cookie_x_settings():

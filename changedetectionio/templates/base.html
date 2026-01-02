@@ -97,7 +97,7 @@
           {% endif %}
           {% if current_user.is_authenticated %}
             <li class="pure-menu-item">
-              <a href="{{url_for('logout')}}" class="pure-menu-link">{{ _('LOG OUT') }}</a>
+              <a href="{{url_for('logout', redirect=request.path)}}" class="pure-menu-link">{{ _('LOG OUT') }}</a>
             </li>
           {% endif %}
           {% if current_user.is_authenticated or not has_password %}
@@ -261,7 +261,7 @@
       <div class="modal-body">
         <div class="language-list">
           {% for locale, lang_data in available_languages.items()|sort %}
-          <a href="{{ url_for('set_language', locale=locale) }}" class="language-option" data-locale="{{ locale }}">
+          <a href="{{ url_for('set_language', locale=locale, redirect=request.path) }}" class="language-option" data-locale="{{ locale }}">
             <span class="{{ lang_data.flag }}" style="display: inline-block; width: 1.5em; height: 1.5em; vertical-align: middle; margin-right: 0.5em; border-radius: 50%; overflow: hidden;"></span> <span class="language-name">{{ lang_data.name }}</span>
           </a>
           {% endfor %}
