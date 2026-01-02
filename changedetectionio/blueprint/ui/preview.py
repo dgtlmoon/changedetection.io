@@ -1,4 +1,5 @@
 from flask import Blueprint, request, url_for, flash, render_template, redirect
+from flask_babel import gettext
 import time
 from loguru import logger
 
@@ -32,7 +33,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         try:
             watch = datastore.data['watching'][uuid]
         except KeyError:
-            flash("No history found for the specified link, bad link?", "error")
+            flash(gettext("No history found for the specified link, bad link?"), "error")
             return redirect(url_for('watchlist.index'))
 
         # Get the processor type for this watch
@@ -74,7 +75,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         blocked_line_numbers = []
 
         if datastore.data['watching'][uuid].history_n == 0 and (watch.get_error_text() or watch.get_error_snapshot()):
-            flash("Preview unavailable - No fetch/check completed or triggers not reached", "error")
+            flash(gettext("Preview unavailable - No fetch/check completed or triggers not reached"), "error")
         else:
             # So prepare the latest preview or not
             preferred_version = request.args.get('version')
@@ -156,7 +157,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         try:
             watch = datastore.data['watching'][uuid]
         except KeyError:
-            flash("No history found for the specified link, bad link?", "error")
+            flash(gettext("No history found for the specified link, bad link?"), "error")
             return redirect(url_for('watchlist.index'))
 
         # Get the processor type for this watch

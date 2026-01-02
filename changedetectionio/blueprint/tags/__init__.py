@@ -1,5 +1,5 @@
 from flask import Blueprint, request, render_template, flash, url_for, redirect
-
+from flask_babel import gettext
 
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.flask_app import login_optionally_required
@@ -43,11 +43,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         title = request.form.get('name').strip()
 
         if datastore.tag_exists_by_name(title):
-            flash(f'The tag "{title}" already exists', "error")
+            flash(gettext('The tag "{}" already exists').format(title), "error")
             return redirect(url_for('tags.tags_overview_page'))
 
         datastore.add_tag(title)
-        flash("Tag added")
+        flash(gettext("Tag added"))
 
 
         return redirect(url_for('tags.tags_overview_page'))
@@ -72,7 +72,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 removed += 1
                 watch['tags'].remove(uuid)
 
-        flash(f"Tag deleted and removed from {removed} watches")
+        flash(gettext("Tag deleted and removed from {} watches").format(removed))
         return redirect(url_for('tags.tags_overview_page'))
 
     @tags_blueprint.route("/unlink/<string:uuid>", methods=['GET'])
@@ -84,7 +84,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 unlinked += 1
                 watch['tags'].remove(uuid)
 
-        flash(f"Tag unlinked removed from {unlinked} watches")
+        flash(gettext("Tag unlinked removed from {} watches").format(unlinked))
         return redirect(url_for('tags.tags_overview_page'))
 
     @tags_blueprint.route("/delete_all", methods=['GET'])
@@ -94,7 +94,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             watch['tags'] = []
         datastore.data['settings']['application']['tags'] = {}
 
-        flash(f"All tags deleted")
+        flash(gettext("All tags deleted"))
         return redirect(url_for('tags.tags_overview_page'))
 
     @tags_blueprint.route("/edit/<string:uuid>", methods=['GET'])
@@ -106,7 +106,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         default = datastore.data['settings']['application']['tags'].get(uuid)
         if not default:
-            flash("Tag not found", "error")
+            flash(gettext("Tag not found"), "error")
             return redirect(url_for('watchlist.index'))
 
         form = group_restock_settings_form(
@@ -181,7 +181,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         datastore.data['settings']['application']['tags'][uuid].update(form.data)
         datastore.data['settings']['application']['tags'][uuid]['processor'] = 'restock_diff'
         datastore.needs_write_urgent = True
-        flash("Updated")
+        flash(gettext("Updated"))
 
         return redirect(url_for('tags.tags_overview_page'))
 

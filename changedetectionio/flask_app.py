@@ -369,11 +369,11 @@ def changedetection_app(config=None, datastore_o=None):
         # 1. Try to get locale from session (user explicitly selected)
         if 'locale' in session:
             locale = session['locale']
-            print(f"DEBUG: get_locale() returning from session: {locale}")
+            logger.trace(f"DEBUG: get_locale() returning from session: {locale}")
             return locale
         # 2. Fall back to Accept-Language header
         locale = request.accept_languages.best_match(language_codes)
-        print(f"DEBUG: get_locale() returning from Accept-Language: {locale}")
+        logger.trace(f"DEBUG: get_locale() returning from Accept-Language: {locale}")
         return locale
 
     # Initialize Babel with locale selector
@@ -396,6 +396,12 @@ def changedetection_app(config=None, datastore_o=None):
             # Permitted
             if request.endpoint and request.endpoint == 'static_content' and request.view_args:
                 # Handled by static_content handler
+                return None
+            # Permitted - static flag icons need to load on login page
+            elif request.endpoint and request.endpoint == 'static_flags':
+                return None
+            # Permitted - language selection should work on login page
+            elif request.endpoint and request.endpoint == 'set_language':
                 return None
             # Permitted
             elif request.endpoint and 'login' in request.endpoint:
@@ -465,7 +471,6 @@ def changedetection_app(config=None, datastore_o=None):
 
     @login_manager.unauthorized_handler
     def unauthorized_handler():
-        flash("You must be logged in, please log in.", 'error')
         return redirect(url_for('login', next=url_for('watchlist.index')))
 
     @app.route('/logout')
@@ -492,9 +497,9 @@ def changedetection_app(config=None, datastore_o=None):
 
         if request.method == 'GET':
             if flask_login.current_user.is_authenticated:
-                flash("Already logged in")
+                flash(gettext("Already logged in"))
                 return redirect(url_for("watchlist.index"))
-
+            flash(gettext("You must be logged in, please log in."), 'error')
             output = render_template("login.html")
             return output
 
@@ -519,7 +524,7 @@ def changedetection_app(config=None, datastore_o=None):
             return redirect(url_for('watchlist.index'))
 
         else:
-            flash('Incorrect password', 'error')
+            flash(gettext('Incorrect password'), 'error')
 
         return redirect(url_for('login'))
 

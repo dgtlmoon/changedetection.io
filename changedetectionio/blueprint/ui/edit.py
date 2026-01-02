@@ -2,6 +2,7 @@ from copy import deepcopy
 import os
 import importlib.resources
 from flask import Blueprint, request, redirect, url_for, flash, render_template, abort
+from flask_babel import gettext
 from loguru import logger
 from jinja2 import Environment, FileSystemLoader
 
@@ -31,14 +32,14 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         # More for testing, possible to return the first/only
         if not datastore.data['watching'].keys():
-            flash("No watches to edit", "error")
+            flash(gettext("No watches to edit"), "error")
             return redirect(url_for('watchlist.index'))
 
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
 
         if not uuid in datastore.data['watching']:
-            flash("No watch with the UUID %s found." % (uuid), "error")
+            flash(gettext("No watch with the UUID {} found.").format(uuid), "error")
             return redirect(url_for('watchlist.index'))
 
         switch_processor = request.args.get('switch_processor')
@@ -46,7 +47,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             for p in processors.available_processors():
                 if p[0] == switch_processor:
                     datastore.data['watching'][uuid]['processor'] = switch_processor
-                    flash(f"Switched to mode - {p[1]}.")
+                    flash(gettext("Switched to mode - {}.").format(p[1]))
                     datastore.clear_watch_history(uuid)
                     redirect(url_for('ui_edit.edit_page', uuid=uuid))
 
@@ -65,7 +66,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         processor_name = datastore.data['watching'][uuid].get('processor', '')
         processor_classes = next((tpl for tpl in processors.find_processors() if tpl[1] == processor_name), None)
         if not processor_classes:
-            flash(f"Cannot load the edit form for processor/plugin '{processor_classes[1]}', plugin missing?", 'error')
+            flash(gettext("Cannot load the edit form for processor/plugin '{}', plugin missing?").format(processor_classes[1]), 'error')
             return redirect(url_for('watchlist.index'))
 
         parent_module = processors.get_parent_module(processor_classes[0])
@@ -235,7 +236,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             # Recast it if need be to right data Watch handler
             watch_class = processors.get_custom_watch_obj_for_processor(form.data.get('processor'))
             datastore.data['watching'][uuid] = watch_class(datastore_path=datastore.datastore_path, default=datastore.data['watching'][uuid])
-            flash("Updated watch - unpaused!" if request.args.get('unpause_on_save') else "Updated watch.")
+            flash(gettext("Updated watch - unpaused!") if request.args.get('unpause_on_save') else gettext("Updated watch."))
 
             # Re #286 - We wait for syncing new data to disk in another thread every 60 seconds
             # But in the case something is added we should save straight away
@@ -279,7 +280,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         else:
             if request.method == 'POST' and not form.validate():
-                flash("An error occurred, please see below.", "error")
+                flash(gettext("An error occurred, please see below."), "error")
 
             # JQ is difficult to install on windows and must be manually added (outside requirements.txt)
             jq_support = True

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-darkmode="{{ get_darkmode_state() }}">
+<html lang="{{ get_locale() }}" data-darkmode="{{ get_darkmode_state() }}">
 
   <head>
     <meta charset="utf-8" >
@@ -265,6 +265,9 @@
             <span class="{{ lang_data.flag }}" style="display: inline-block; width: 1.5em; height: 1.5em; vertical-align: middle; margin-right: 0.5em; border-radius: 50%; overflow: hidden;"></span> <span class="language-name">{{ lang_data.name }}</span>
           </a>
           {% endfor %}
+        </div>
+        <div>
+            {{ _('Language support is in beta, please help us improve by opening a PR on GitHub with any updates.') }}
         </div>
       </div>
       <div class="modal-footer">

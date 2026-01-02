@@ -7,6 +7,7 @@ from changedetectionio.validate_url import is_safe_valid_url
 from flask import (
     flash
 )
+from flask_babel import gettext
 
 from .blueprint.rss import RSS_CONTENT_FORMAT_DEFAULT
 from .html_tools import TRANSLATE_WHITESPACE_TABLE
@@ -382,11 +383,11 @@ class ChangeDetectionStore:
 
             except Exception as e:
                 logger.error(f"Error fetching metadata for shared watch link {url} {str(e)}")
-                flash("Error fetching metadata for {}".format(url), 'error')
+                flash(gettext("Error fetching metadata for {}").format(url), 'error')
                 return False
 
         if not is_safe_valid_url(url):
-            flash('Watch protocol is not permitted or invalid URL format', 'error')
+            flash(gettext('Watch protocol is not permitted or invalid URL format'), 'error')
 
             return None
 
