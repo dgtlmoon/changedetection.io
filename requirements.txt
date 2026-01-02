@@ -113,6 +113,8 @@ extruct
 
 # For cleaning up unknown currency formats
 babel
+# For internationalization (i18n) support
+Flask-Babel>=4.0.0
 
 levenshtein
 

@@ -18,21 +18,21 @@
 <div class="edit-form">
     <div class="tabs collapsable">
         <ul>
-            <li class="tab" id=""><a href="#general">General</a></li>
-            <li class="tab"><a href="#notifications">Notifications</a></li>
-            <li class="tab"><a href="#fetching">Fetching</a></li>
-            <li class="tab"><a href="#filters">Global Filters</a></li>
-            <li class="tab"><a href="#ui-options">UI Options</a></li>
-            <li class="tab"><a href="#api">API</a></li>
-            <li class="tab"><a href="#rss">RSS</a></li>
-            <li class="tab"><a href="#timedate">Time &amp Date</a></li>
-            <li class="tab"><a href="#proxies">CAPTCHA &amp; Proxies</a></li>
+            <li class="tab" id=""><a href="#general">{{ _('General') }}</a></li>
+            <li class="tab"><a href="#notifications">{{ _('Notifications') }}</a></li>
+            <li class="tab"><a href="#fetching">{{ _('Fetching') }}</a></li>
+            <li class="tab"><a href="#filters">{{ _('Global Filters') }}</a></li>
+            <li class="tab"><a href="#ui-options">{{ _('UI Options') }}</a></li>
+            <li class="tab"><a href="#api">{{ _('API') }}</a></li>
+            <li class="tab"><a href="#rss">{{ _('RSS') }}</a></li>
+            <li class="tab"><a href="#timedate">{{ _('Time & Date') }}</a></li>
+            <li class="tab"><a href="#proxies">{{ _('CAPTCHA & Proxies') }}</a></li>
             {% if plugin_tabs %}
                 {% for tab in plugin_tabs %}
             <li class="tab"><a href="#plugin-{{ tab.plugin_id }}">{{ tab.tab_label }}</a></li>
                 {% endfor %}
             {% endif %}
-            <li class="tab"><a href="#info">Info</a></li>
+            <li class="tab"><a href="#info">{{ _('Info') }}</a></li>
         </ul>
     </div>
     <div class="box-wrap inner">
@@ -43,7 +43,7 @@
                     <div class="pure-control-group">
                         {{ render_field(form.requests.form.time_between_check, class="time-check-widget") }}
 
-                        <span class="pure-form-message-inline">Default recheck time for all watches, current system minimum is <i>{{min_system_recheck_seconds}}</i> seconds (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Misc-system-settings#enviroment-variables">more info</a>).</span>
+                        <span class="pure-form-message-inline">{{ _('Default recheck time for all watches, current system minimum is') }} <i>{{min_system_recheck_seconds}}</i> {{ _('seconds') }} (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Misc-system-settings#enviroment-variables">{{ _('more info') }}</a>).</span>
                             <div id="time-between-check-schedule">
                                 <!-- Start Time and End Time {{ timezone_default_config }} -->
                                 <div id="limit-between-time">
@@ -387,8 +387,8 @@ nav
                 {% endfor %}
             {% endif %}
             <div class="tab-pane-inner" id="info">
-                <p><strong>Python version:</strong> {{ python_version }}</p>
-                <p><strong>Plugins active:</strong></p>
+                <p><strong>{{ _('Python version:') }}</strong> {{ python_version }}</p>
+                <p><strong>{{ _('Plugins active:') }}</strong></p>
                 {% if active_plugins %}
                 <ul>
                     {% for plugin in active_plugins %}
@@ -396,14 +396,14 @@ nav
                     {% endfor %}
                 </ul>
                 {% else %}
-                <p>No plugins active</p>
+                <p>{{ _('No plugins active') }}</p>
                 {% endif %}
             </div>
             <div id="actions">
                 <div class="pure-control-group">
                     {{ render_button(form.save_button) }}
-                    <a href="{{url_for('watchlist.index')}}" class="pure-button button-cancel">Back</a>
-                    <a href="{{url_for('ui.clear_all_history')}}" class="pure-button button-error">Clear Snapshot History</a>
+                    <a href="{{url_for('watchlist.index')}}" class="pure-button button-cancel">{{ _('Back') }}</a>
+                    <a href="{{url_for('ui.clear_all_history')}}" class="pure-button button-error">{{ _('Clear Snapshot History') }}</a>
                 </div>
             </div>
         </form>

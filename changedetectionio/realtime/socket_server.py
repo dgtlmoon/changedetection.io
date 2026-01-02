@@ -1,5 +1,6 @@
 import timeago
 from flask_socketio import SocketIO
+from flask_babel import gettext, get_locale
 
 import time
 import os
@@ -7,6 +8,7 @@ from loguru import logger
 from blinker import signal
 
 from changedetectionio import strtobool
+from changedetectionio.languages import get_timeago_locale
 
 
 class SignalHandler:
@@ -166,7 +168,7 @@ def handle_watch_update(socketio, **kwargs):
             'has_error': True if error_texts else False,
             'has_favicon': True if watch.get_favicon_filename() else False,
             'history_n': watch.history_n,
-            'last_changed_text': timeago.format(int(watch.last_changed), time.time()) if watch.history_n >= 2 and int(watch.last_changed) > 0 else 'Not yet',
+            'last_changed_text': timeago.format(int(watch.last_changed), time.time(), get_timeago_locale(str(get_locale()))) if watch.history_n >= 2 and int(watch.last_changed) > 0 else gettext('Not yet'),
             'last_checked': watch.get('last_checked'),
             'last_checked_text': _jinja2_filter_datetime(watch),
             'notification_muted': True if watch.get('notification_muted') else False,

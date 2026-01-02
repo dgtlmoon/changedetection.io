@@ -1,5 +1,6 @@
 from functools import lru_cache
 from loguru import logger
+from flask_babel import gettext
 import importlib
 import inspect
 import os
@@ -123,12 +124,12 @@ def available_processors():
 
         # Try to get the 'name' attribute from the processor module first
         if hasattr(module, 'name'):
-            description = module.name
+            description = gettext(module.name)
         else:
             # Fall back to processor_description from parent module's __init__.py
             parent_module = get_parent_module(module)
             if parent_module and hasattr(parent_module, 'processor_description'):
-                description = parent_module.processor_description
+                description = gettext(parent_module.processor_description)
             else:
                 # Final fallback to a readable name
                 description = sub_package_name.replace('_', ' ').title()
@@ -154,11 +155,10 @@ def available_processors():
     return [(name, desc) for name, desc, weight in available]
 
 
-@lru_cache(maxsize=1)
 def get_processor_badge_texts():
     """
     Get a dictionary mapping processor names to their list_badge_text values.
-    Cached to avoid repeated lookups.
+    Translations are applied based on the current request locale.
 
     :return: A dict mapping processor name to badge text (e.g., {'text_json_diff': 'Text', 'restock_diff': 'Restock'})
     """
@@ -168,21 +168,20 @@ def get_processor_badge_texts():
     for module, sub_package_name in processor_classes:
         # Try to get the 'list_badge_text' attribute from the processor module
         if hasattr(module, 'list_badge_text'):
-            badge_texts[sub_package_name] = module.list_badge_text
+            badge_texts[sub_package_name] = gettext(module.list_badge_text)
         else:
             # Fall back to parent module's __init__.py
             parent_module = get_parent_module(module)
             if parent_module and hasattr(parent_module, 'list_badge_text'):
-                badge_texts[sub_package_name] = parent_module.list_badge_text
+                badge_texts[sub_package_name] = gettext(parent_module.list_badge_text)
 
     return badge_texts
 
 
-@lru_cache(maxsize=1)
 def get_processor_descriptions():
     """
     Get a dictionary mapping processor names to their description/name values.
-    Cached to avoid repeated lookups.
+    Translations are applied based on the current request locale.
 
     :return: A dict mapping processor name to description (e.g., {'text_json_diff': 'Webpage Text/HTML, JSON and PDF changes'})
     """
@@ -192,16 +191,16 @@ def get_processor_descriptions():
     for module, sub_package_name in processor_classes:
         # Try to get the 'name' or 'description' attribute from the processor module first
         if hasattr(module, 'name'):
-            descriptions[sub_package_name] = module.name
+            descriptions[sub_package_name] = gettext(module.name)
         elif hasattr(module, 'description'):
-            descriptions[sub_package_name] = module.description
+            descriptions[sub_package_name] = gettext(module.description)
         else:
             # Fall back to parent module's __init__.py
             parent_module = get_parent_module(module)
             if parent_module and hasattr(parent_module, 'processor_description'):
-                descriptions[sub_package_name] = parent_module.processor_description
+                descriptions[sub_package_name] = gettext(parent_module.processor_description)
             elif parent_module and hasattr(parent_module, 'name'):
-                descriptions[sub_package_name] = parent_module.name
+                descriptions[sub_package_name] = gettext(parent_module.name)
             else:
                 # Final fallback to a readable name
                 descriptions[sub_package_name] = sub_package_name.replace('_', ' ').title()

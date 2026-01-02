@@ -7,10 +7,11 @@ import urllib3
 import time
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-name = 'Re-stock & Price detection for pages with a SINGLE product'
-description = 'Detects if the product goes back to in-stock'
+# Translatable strings - extracted by pybabel, translated at runtime in __init__.py
+name = 'Re-stock & Price detection for pages with a SINGLE product'  # _()
+description = 'Detects if the product goes back to in-stock'  # _()
 processor_weight = 1
-list_badge_text = "Restock"
+list_badge_text = "Restock"  # _()
 
 class UnableToExtractRestockData(Exception):
     def __init__(self, status_code):

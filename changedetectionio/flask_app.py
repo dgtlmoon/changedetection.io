@@ -23,6 +23,7 @@ from flask import (
     render_template,
     request,
     send_from_directory,
+    session,
     url_for,
 )
 from flask_compress import Compress as FlaskCompress
@@ -34,6 +35,7 @@ from flask_cors import CORS
 # Make this a global singleton to avoid multiple signal objects
 watch_check_update = signal('watch_check_update', doc='Signal sent when a watch check is completed')
 from flask_wtf import CSRFProtect
+from flask_babel import Babel, gettext, get_locale
 from loguru import logger
 
 from changedetectionio import __version__
@@ -41,6 +43,7 @@ from changedetectionio import queuedWatchMetaData
 from changedetectionio.api import Watch, WatchHistory, WatchSingleHistory, WatchHistoryDiff, CreateWatch, Import, SystemInfo, Tag, Tags, Notifications, WatchFavicon
 from changedetectionio.api.Search import Search
 from .time_handler import is_within_schedule
+from changedetectionio.languages import get_available_languages, get_language_codes, get_flag_for_locale, get_timeago_locale
 
 datastore = None
 
@@ -207,16 +210,26 @@ def _get_worker_status_info():
 def _jinja2_filter_datetime(watch_obj, format="%Y-%m-%d %H:%M:%S"):
 
     if watch_obj['last_checked'] == 0:
-        return 'Not yet'
+        return gettext('Not yet')
 
-    return timeago.format(int(watch_obj['last_checked']), time.time())
+    locale = get_timeago_locale(str(get_locale()))
+    try:
+        return timeago.format(int(watch_obj['last_checked']), time.time(), locale)
+    except:
+        # Fallback to English if locale not supported by timeago
+        return timeago.format(int(watch_obj['last_checked']), time.time(), 'en')
 
 @app.template_filter('format_timestamp_timeago')
 def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
     if not timestamp:
-        return 'Not yet'
+        return gettext('Not yet')
 
-    return timeago.format(int(timestamp), time.time())
+    locale = get_timeago_locale(str(get_locale()))
+    try:
+        return timeago.format(int(timestamp), time.time(), locale)
+    except:
+        # Fallback to English if locale not supported by timeago
+        return timeago.format(int(timestamp), time.time(), 'en')
 
 
 @app.template_filter('pagination_slice')
@@ -230,7 +243,7 @@ def _jinja2_filter_pagination_slice(arr, skip):
 @app.template_filter('format_seconds_ago')
 def _jinja2_filter_seconds_precise(timestamp):
     if timestamp == False:
-        return 'Not yet'
+        return gettext('Not yet')
 
     return format(int(time.time()-timestamp), ',d')
 
@@ -347,7 +360,33 @@ def changedetection_app(config=None, datastore_o=None):
     login_manager = flask_login.LoginManager(app)
     login_manager.login_view = 'login'
     app.secret_key = init_app_secret(config['datastore_path'])
-    
+
+    # Initialize Flask-Babel for i18n support
+    available_languages = get_available_languages()
+    language_codes = get_language_codes()
+
+    def get_locale():
+        # 1. Try to get locale from session (user explicitly selected)
+        if 'locale' in session:
+            locale = session['locale']
+            print(f"DEBUG: get_locale() returning from session: {locale}")
+            return locale
+        # 2. Fall back to Accept-Language header
+        locale = request.accept_languages.best_match(language_codes)
+        print(f"DEBUG: get_locale() returning from Accept-Language: {locale}")
+        return locale
+
+    # Initialize Babel with locale selector
+    babel = Babel(app, locale_selector=get_locale)
+
+    # Make i18n functions available to templates
+    app.jinja_env.globals.update(
+        _=gettext,
+        get_locale=get_locale,
+        get_flag_for_locale=get_flag_for_locale,
+        available_languages=available_languages
+    )
+
     # Set up a request hook to check authentication for all routes
     @app.before_request
     def check_authentication():
@@ -432,6 +471,18 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route('/logout')
     def logout():
         flask_login.logout_user()
+        return redirect(url_for('watchlist.index'))
+
+    @app.route('/set-language/<locale>')
+    def set_language(locale):
+        """Set the user's preferred language in the session"""
+        # Validate the locale against available languages
+        if locale in language_codes:
+            session['locale'] = locale
+        else:
+            logger.error(f"Invalid locale {locale}, available: {language_codes}")
+
+        # Redirect back to the page they came from, or home
         return redirect(url_for('watchlist.index'))
 
     # https://github.com/pallets/flask/blob/93dd1709d05a1cf0e886df6223377bdab3b077fb/examples/tutorial/flaskr/__init__.py#L39
