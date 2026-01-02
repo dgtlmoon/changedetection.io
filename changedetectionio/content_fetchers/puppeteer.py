@@ -325,7 +325,7 @@ class fetcher(Fetcher):
             if not response:
                 logger.warning("Page did not fetch! trying again!")
             if response is None and attempt>=2:
-                logger.warning(f"Content Fetcher > Response object was none (as in, the response from the browser was empty, not just the content) exiting attmpt {attempt}")
+                logger.warning(f"Content Fetcher > Response object was none (as in, the response from the browser was empty, not just the content) exiting attempt {attempt}")
                 raise EmptyReply(url=url, status_code=None)
             attempt+=1
 
