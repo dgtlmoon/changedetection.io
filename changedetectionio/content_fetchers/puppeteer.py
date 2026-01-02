@@ -204,7 +204,7 @@ class fetcher(Fetcher):
         import re
         self.delete_browser_steps_screenshots()
 
-        n = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
+        n = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 12)) + self.render_extract_delay
         extra_wait = min(n, 15)
 
         logger.debug(f"Extra wait set to {extra_wait}s, requested was {n}s.")
@@ -288,28 +288,27 @@ class fetcher(Fetcher):
         # Enable Network domain to detect when first bytes arrive
         await self.page._client.send('Network.enable')
 
+        # Now set up the frame navigation handlers
+        async def handle_frame_navigation(event=None):
+            # Wait n seconds after the frameStartedLoading, not from any frameStartedLoading/frameStartedNavigating
+            logger.debug(f"Frame navigated: {event}")
+            w = extra_wait - 2 if extra_wait > 4 else 2
+            logger.debug(f"Waiting {w} seconds before calling Page.stopLoading...")
+            await asyncio.sleep(w)
+            logger.debug("Issuing stopLoading command...")
+            await self.page._client.send('Page.stopLoading')
+            logger.debug("stopLoading command sent!")
+
         async def setup_frame_handlers_on_first_response(event):
             # Only trigger for the main document response
             if event.get('type') == 'Document':
                 logger.debug("First response received, setting up frame handlers for forced page stop load.")
-
-                # De-register this listener - we only need it once
-                self.page._client.remove_listener('Network.responseReceived', setup_frame_handlers_on_first_response)
-
-                # Now set up the frame navigation handlers
-                async def handle_frame_navigation(event):
-                    # Wait n seconds after the frameStartedLoading, not from any frameStartedLoading/frameStartedNavigating
-                    logger.debug(f"Frame navigated: {event}")
-                    w = extra_wait - 2 if extra_wait > 4 else 2
-                    logger.debug(f"Waiting {w} seconds before calling Page.stopLoading...")
-                    await asyncio.sleep(w)
-                    logger.debug("Issuing stopLoading command...")
-                    await self.page._client.send('Page.stopLoading')
-                    logger.debug("stopLoading command sent!")
-
                 self.page._client.on('Page.frameStartedNavigating', lambda e: asyncio.create_task(handle_frame_navigation(e)))
                 self.page._client.on('Page.frameStartedLoading', lambda e: asyncio.create_task(handle_frame_navigation(e)))
                 self.page._client.on('Page.frameStoppedLoading', lambda e: logger.debug(f"Frame stopped loading: {e}"))
+                logger.debug("First response received, setting up frame handlers for forced page stop load DONE SETUP")
+                # De-register this listener - we only need it once
+                self.page._client.remove_listener('Network.responseReceived', setup_frame_handlers_on_first_response)
 
         # Listen for first response to trigger frame handler setup
         self.page._client.on('Network.responseReceived', setup_frame_handlers_on_first_response)
@@ -318,8 +317,11 @@ class fetcher(Fetcher):
         attempt=0
         while not response:
             logger.debug(f"Attempting page fetch {url} attempt {attempt}")
+            asyncio.create_task(handle_frame_navigation())
             response = await self.page.goto(url, timeout=0)
             await asyncio.sleep(1 + extra_wait)
+            await self.page._client.send('Page.stopLoading')
+
             if response:
                 break
             if not response:
