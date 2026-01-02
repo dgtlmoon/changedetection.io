@@ -16,8 +16,8 @@ running_async_tasks = []
 async_loop = None
 async_loop_thread = None
 
-# Track currently processing UUIDs for async workers
-currently_processing_uuids = set()
+# Track currently processing UUIDs for async workers - maps {uuid: worker_id}
+currently_processing_uuids = {}
 
 # Configuration - async workers only
 USE_ASYNC_WORKERS = True
@@ -168,23 +168,31 @@ def get_worker_count():
 
 def get_running_uuids():
     """Get list of UUIDs currently being processed by async workers"""
-    return list(currently_processing_uuids)
+    return list(currently_processing_uuids.keys())
 
 
-def set_uuid_processing(uuid, processing=True):
-    """Mark a UUID as being processed or completed"""
+def set_uuid_processing(uuid, worker_id=None, processing=True):
+    """Mark a UUID as being processed or completed by a specific worker"""
     global currently_processing_uuids
     if processing:
-        currently_processing_uuids.add(uuid)
-        logger.debug(f"Started processing UUID: {uuid}")
+        currently_processing_uuids[uuid] = worker_id
+        logger.debug(f"Worker {worker_id} started processing UUID: {uuid}")
     else:
-        currently_processing_uuids.discard(uuid)
-        logger.debug(f"Finished processing UUID: {uuid}")
+        currently_processing_uuids.pop(uuid, None)
+        logger.debug(f"Worker {worker_id} finished processing UUID: {uuid}")
 
 
 def is_watch_running(watch_uuid):
-    """Check if a specific watch is currently being processed"""
-    return watch_uuid in get_running_uuids()
+    """Check if a specific watch is currently being processed by any worker"""
+    return watch_uuid in currently_processing_uuids
+
+
+def is_watch_running_by_another_worker(watch_uuid, current_worker_id):
+    """Check if a specific watch is currently being processed by a different worker"""
+    if watch_uuid not in currently_processing_uuids:
+        return False
+    processing_worker_id = currently_processing_uuids[watch_uuid]
+    return processing_worker_id != current_worker_id
 
 
 def queue_item_async_safe(update_q, item, silent=False):
