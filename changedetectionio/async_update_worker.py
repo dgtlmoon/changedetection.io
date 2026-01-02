@@ -65,20 +65,22 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
         # RACE CONDITION FIX: Check if this UUID is already being processed by another worker
         from changedetectionio import worker_handler
         from changedetectionio.queuedWatchMetaData import PrioritizedItem
-        if worker_handler.is_watch_running(uuid):
-            logger.trace(f"Worker {worker_id} skipping UUID {uuid} - already being processed, re-queuing for later")
-            # Re-queue with MUCH lower priority (higher number = processed later)
-            # This prevents tight loop where high-priority item keeps getting picked immediately
+        if worker_handler.is_watch_running_by_another_worker(uuid, worker_id):
+            logger.trace(f"Worker {worker_id} detected UUID {uuid} already being processed by another worker - deferring")
+            # Sleep to avoid tight loop and give the other worker time to finish
+            await asyncio.sleep(10.0)
+
+            # Re-queue with lower priority so it gets checked again after current processing finishes
             deferred_priority = max(1000, queued_item_data.priority * 10)
             deferred_item = PrioritizedItem(priority=deferred_priority, item=queued_item_data.item)
             worker_handler.queue_item_async_safe(q, deferred_item, silent=True)
-            await asyncio.sleep(0.1)  # Brief pause to avoid tight loop
+            logger.debug(f"Worker {worker_id} re-queued UUID {uuid} for subsequent check")
             continue
 
         fetch_start_time = round(time.time())
 
-        # Mark this UUID as being processed
-        worker_handler.set_uuid_processing(uuid, processing=True)
+        # Mark this UUID as being processed by this worker
+        worker_handler.set_uuid_processing(uuid, worker_id=worker_id, processing=True)
         
         try:
             if uuid in list(datastore.data['watching'].keys()) and datastore.data['watching'][uuid].get('url'):
@@ -421,8 +423,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
             # Always cleanup - this runs whether there was an exception or not
             if uuid:
                 try:
-                    # Mark UUID as no longer being processed
-                    worker_handler.set_uuid_processing(uuid, processing=False)
+                    # Mark UUID as no longer being processed by this worker
+                    worker_handler.set_uuid_processing(uuid, worker_id=worker_id, processing=False)
                     
                     # Send completion signal
                     if watch:
