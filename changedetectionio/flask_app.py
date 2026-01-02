@@ -531,6 +531,40 @@ def changedetection_app(config=None, datastore_o=None):
             app.config['SESSION_COOKIE_PATH'] = request.headers['X-Forwarded-Prefix']
         return None
 
+    @app.route("/static/flags/<path:flag_path>", methods=['GET'])
+    def static_flags(flag_path):
+        """Handle flag icon files with subdirectories"""
+        from flask import make_response
+        import re
+
+        # flag_path comes in as "1x1/de.svg" or "4x3/de.svg"
+        if re.match(r'^(1x1|4x3)/[a-z0-9-]+\.svg$', flag_path.lower()):
+            # Reconstruct the path safely with additional validation
+            parts = flag_path.lower().split('/')
+            if len(parts) != 2:
+                abort(404)
+
+            subdir = parts[0]
+            svg_file = parts[1]
+
+            # Extra validation: ensure subdir is exactly 1x1 or 4x3
+            if subdir not in ['1x1', '4x3']:
+                abort(404)
+
+            # Extra validation: ensure svg_file only contains safe characters
+            if not re.match(r'^[a-z0-9-]+\.svg$', svg_file):
+                abort(404)
+
+            try:
+                response = make_response(send_from_directory(f"static/flags/{subdir}", svg_file))
+                response.headers['Content-type'] = 'image/svg+xml'
+                response.headers['Cache-Control'] = 'max-age=86400, public'  # Cache for 24 hours
+                return response
+            except FileNotFoundError:
+                abort(404)
+        else:
+            abort(404)
+
     @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
     def static_content(group, filename):
         from flask import make_response
