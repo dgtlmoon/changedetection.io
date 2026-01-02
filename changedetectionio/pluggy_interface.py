@@ -430,7 +430,14 @@ def get_plugin_template_paths():
     Returns:
         list: List of absolute paths to plugin template directories
     """
-    template_paths = ['changedetectionio/processors/templates']
+    template_paths = []
+
+    # Add the base processors/templates directory (as absolute path)
+    processors_templates_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'processors', 'templates')
+    if os.path.isdir(processors_templates_dir):
+        template_paths.append(processors_templates_dir)
+        logger.debug(f"Added base processors template path: {processors_templates_dir}")
+
     # Scan built-in processor plugins
     from changedetectionio.processors import find_processors
     processor_list = find_processors()
