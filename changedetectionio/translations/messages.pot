@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-02 15:25+0100\n"
+"POT-Creation-Date: 2026-01-02 15:43+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -806,7 +806,7 @@ msgid "Clear History!"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:39
-#: changedetectionio/templates/base.html:271
+#: changedetectionio/templates/base.html:274
 msgid "Cancel"
 msgstr ""
 
@@ -1683,6 +1683,12 @@ msgstr ""
 
 #: changedetectionio/templates/base.html:259
 msgid "Select Language"
+msgstr ""
+
+#: changedetectionio/templates/base.html:270
+msgid ""
+"Language support is in beta, please help us improve by opening a PR on "
+"GitHub with any updates."
 msgstr ""
 
 #: changedetectionio/templates/login.html:10

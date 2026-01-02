@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-02 15:25+0100\n"
+"POT-Creation-Date: 2026-01-02 15:43+0100\n"
 "PO-Revision-Date: 2026-01-02 11:40+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -113,7 +113,9 @@ msgstr "Maximale Anzahl an Sicherungen erreicht, bitte entfernen Sie einige"
 
 #: changedetectionio/blueprint/backups/__init__.py:98
 msgid "Backup building in background, check back in a few minutes."
-msgstr "Sicherung wird im Hintergrund erstellt, schauen Sie in ein paar Minuten erneut vorbei."
+msgstr ""
+"Sicherung wird im Hintergrund erstellt, schauen Sie in ein paar Minuten "
+"erneut vorbei."
 
 #: changedetectionio/blueprint/backups/__init__.py:161
 msgid "Backups were deleted."
@@ -153,7 +155,9 @@ msgstr "BACKUPS"
 msgid ""
 "Importing 5,000 of the first URLs from your list, the rest can be "
 "imported again."
-msgstr "Es werden 5.000 der ersten URLs aus Ihrer Liste importiert, der Rest kann erneut importiert werden."
+msgstr ""
+"Es werden 5.000 der ersten URLs aus Ihrer Liste importiert, der Rest kann"
+" erneut importiert werden."
 
 #: changedetectionio/blueprint/imports/importer.py:78
 #, python-brace-format
@@ -182,7 +186,9 @@ msgstr "XLSX-Datei kann nicht gelesen werden, stimmt etwas mit der Datei nicht?"
 #: changedetectionio/blueprint/imports/importer.py:268
 #, python-brace-format
 msgid "Error processing row number {}, URL value was incorrect, row was skipped."
-msgstr "Fehler bei der Verarbeitung von Zeile {}, URL-Wert war falsch, Zeile wurde übersprungen."
+msgstr ""
+"Fehler bei der Verarbeitung von Zeile {}, URL-Wert war falsch, Zeile "
+"wurde übersprungen."
 
 #: changedetectionio/blueprint/imports/importer.py:214
 #: changedetectionio/blueprint/imports/importer.py:297
@@ -190,7 +196,9 @@ msgstr "Fehler bei der Verarbeitung von Zeile {}, URL-Wert war falsch, Zeile wur
 msgid ""
 "Error processing row number {}, check all cell data types are correct, "
 "row was skipped."
-msgstr "Fehler bei der Verarbeitung von Zeile {}, prüfen Sie, ob alle Zelldatentypen korrekt sind, Zeile wurde übersprungen."
+msgstr ""
+"Fehler bei der Verarbeitung von Zeile {}, prüfen Sie, ob alle "
+"Zelldatentypen korrekt sind, Zeile wurde übersprungen."
 
 #: changedetectionio/blueprint/imports/importer.py:218
 #, python-brace-format
@@ -839,7 +847,7 @@ msgid "Clear History!"
 msgstr "Klare Historien"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:39
-#: changedetectionio/templates/base.html:271
+#: changedetectionio/templates/base.html:274
 msgid "Cancel"
 msgstr "Stornieren"
 
@@ -1765,6 +1773,12 @@ msgstr "Echtzeit-Updates offline"
 #: changedetectionio/templates/base.html:259
 msgid "Select Language"
 msgstr "Wählen Sie Sprache aus"
+
+#: changedetectionio/templates/base.html:270
+msgid ""
+"Language support is in beta, please help us improve by opening a PR on "
+"GitHub with any updates."
+msgstr "Die Sprachunterstützung befindet sich in der Beta-Phase, bitte helfen Sie uns zu verbessern, indem Sie eine PR auf GitHub mit Updates öffnen."
 
 #: changedetectionio/templates/login.html:10
 msgid "Password"

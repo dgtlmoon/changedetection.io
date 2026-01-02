@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-02 15:25+0100\n"
+"POT-Creation-Date: 2026-01-02 15:43+0100\n"
 "PO-Revision-Date: 2026-01-02 11:40+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -115,7 +115,9 @@ msgstr "Nombre maximum de sauvegardes atteint, veuillez en supprimer quelques-un
 
 #: changedetectionio/blueprint/backups/__init__.py:98
 msgid "Backup building in background, check back in a few minutes."
-msgstr "Sauvegarde en cours de création en arrière-plan, revenez dans quelques minutes."
+msgstr ""
+"Sauvegarde en cours de création en arrière-plan, revenez dans quelques "
+"minutes."
 
 #: changedetectionio/blueprint/backups/__init__.py:161
 msgid "Backups were deleted."
@@ -155,7 +157,9 @@ msgstr "SAUVEGARDES"
 msgid ""
 "Importing 5,000 of the first URLs from your list, the rest can be "
 "imported again."
-msgstr "Importation de 5 000 des premières URL de votre liste, le reste peut être importé à nouveau."
+msgstr ""
+"Importation de 5 000 des premières URL de votre liste, le reste peut être"
+" importé à nouveau."
 
 #: changedetectionio/blueprint/imports/importer.py:78
 #, python-brace-format
@@ -178,13 +182,17 @@ msgstr "{} importées de Distill.io en {:.2f}s, {} ignorées."
 #: changedetectionio/blueprint/imports/importer.py:160
 #: changedetectionio/blueprint/imports/importer.py:239
 msgid "Unable to read export XLSX file, something wrong with the file?"
-msgstr "Impossible de lire le fichier XLSX d'exportation, quelque chose ne va pas avec le fichier ?"
+msgstr ""
+"Impossible de lire le fichier XLSX d'exportation, quelque chose ne va pas"
+" avec le fichier ?"
 
 #: changedetectionio/blueprint/imports/importer.py:200
 #: changedetectionio/blueprint/imports/importer.py:268
 #, python-brace-format
 msgid "Error processing row number {}, URL value was incorrect, row was skipped."
-msgstr "Erreur lors du traitement de la ligne numéro {}, la valeur de l'URL était incorrecte, la ligne a été ignorée."
+msgstr ""
+"Erreur lors du traitement de la ligne numéro {}, la valeur de l'URL était"
+" incorrecte, la ligne a été ignorée."
 
 #: changedetectionio/blueprint/imports/importer.py:214
 #: changedetectionio/blueprint/imports/importer.py:297
@@ -192,7 +200,9 @@ msgstr "Erreur lors du traitement de la ligne numéro {}, la valeur de l'URL ét
 msgid ""
 "Error processing row number {}, check all cell data types are correct, "
 "row was skipped."
-msgstr "Erreur lors du traitement de la ligne numéro {}, vérifiez que tous les types de données des cellules sont corrects, la ligne a été ignorée."
+msgstr ""
+"Erreur lors du traitement de la ligne numéro {}, vérifiez que tous les "
+"types de données des cellules sont corrects, la ligne a été ignorée."
 
 #: changedetectionio/blueprint/imports/importer.py:218
 #, python-brace-format
@@ -845,7 +855,7 @@ msgid "Clear History!"
 msgstr "Effacer les historiques"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:39
-#: changedetectionio/templates/base.html:271
+#: changedetectionio/templates/base.html:274
 msgid "Cancel"
 msgstr "Annuler"
 
@@ -1779,6 +1789,12 @@ msgstr "Mises à jour en temps réel hors ligne"
 #: changedetectionio/templates/base.html:259
 msgid "Select Language"
 msgstr "Sélectionnez la langue"
+
+#: changedetectionio/templates/base.html:270
+msgid ""
+"Language support is in beta, please help us improve by opening a PR on "
+"GitHub with any updates."
+msgstr "Le support linguistique est en version bêta, veuillez nous aider à améliorer en ouvrant une PR sur GitHub avec vos mises à jour."
 
 #: changedetectionio/templates/login.html:10
 msgid "Password"

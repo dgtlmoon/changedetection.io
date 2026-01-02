@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-02 15:25+0100\n"
+"POT-Creation-Date: 2026-01-02 15:43+0100\n"
 "PO-Revision-Date: 2026-01-02 11:40+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: cs\n"
@@ -828,7 +828,7 @@ msgid "Clear History!"
 msgstr "Jasné historie"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:39
-#: changedetectionio/templates/base.html:271
+#: changedetectionio/templates/base.html:274
 msgid "Cancel"
 msgstr "Zrušit"
 
@@ -1725,6 +1725,12 @@ msgstr "Aktualizace v reálném čase offline"
 #: changedetectionio/templates/base.html:259
 msgid "Select Language"
 msgstr "Vyberte Jazyk"
+
+#: changedetectionio/templates/base.html:270
+msgid ""
+"Language support is in beta, please help us improve by opening a PR on "
+"GitHub with any updates."
+msgstr ""
 
 #: changedetectionio/templates/login.html:10
 msgid "Password"
