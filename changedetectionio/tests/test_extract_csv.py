@@ -26,6 +26,9 @@ def test_check_extract_text_from_diff(client, live_server, measure_memory_usage,
 
     assert b"1 Imported" in res.data
     wait_for_all_checks(client)
+    res = client.get(url_for("ui.ui_diff.diff_history_page_extract_GET", uuid="first"))
+    assert res.status_code == 200
+    assert b'extract_regex' in res.data
 
     # Load in 5 different numbers/changes
     last_date=""
@@ -40,9 +43,6 @@ def test_check_extract_text_from_diff(client, live_server, measure_memory_usage,
         client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
 
-    res = client.get(url_for("ui.ui_diff.diff_history_page_extract_POST", uuid="first"))
-    assert res.status_code == 200
-    assert b'extract_regex' in res.data
 
 
     res = client.post(
