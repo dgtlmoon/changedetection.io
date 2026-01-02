@@ -16,6 +16,7 @@
         {%- endif -%}
     {%- endif -%}
     <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='pure-min.css')}}" >
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/css/flag-icons.min.css" >
     <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='styles.css')}}?v={{ get_css_version() }}" >
     {% if extra_stylesheets %}
       {% for m in extra_stylesheets %}
@@ -73,20 +74,20 @@
           {% if current_user.is_authenticated or not has_password %}
             {% if not current_diff_url %}
               <li class="pure-menu-item">
-                <a href="{{ url_for('tags.tags_overview_page')}}" class="pure-menu-link">GROUPS</a>
+                <a href="{{ url_for('tags.tags_overview_page')}}" class="pure-menu-link">{{ _('GROUPS') }}</a>
               </li>
               <li class="pure-menu-item">
-                <a href="{{ url_for('settings.settings_page')}}" class="pure-menu-link">SETTINGS</a>
+                <a href="{{ url_for('settings.settings_page')}}" class="pure-menu-link">{{ _('SETTINGS') }}</a>
               </li>
               <li class="pure-menu-item">
-                <a href="{{ url_for('imports.import_page')}}" class="pure-menu-link">IMPORT</a>
+                <a href="{{ url_for('imports.import_page')}}" class="pure-menu-link">{{ _('IMPORT') }}</a>
               </li>
               <li class="pure-menu-item">
-                <a href="{{ url_for('backups.index')}}" class="pure-menu-link">BACKUPS</a>
+                <a href="{{ url_for('backups.index')}}" class="pure-menu-link">{{ _('BACKUPS') }}</a>
               </li>
             {% else %}
               <li class="pure-menu-item">
-                <a href="{{ url_for('ui.ui_edit.edit_page', uuid=uuid, next='diff') }}" class="pure-menu-link">EDIT</a>
+                <a href="{{ url_for('ui.ui_edit.edit_page', uuid=uuid, next='diff') }}" class="pure-menu-link">{{ _('EDIT') }}</a>
               </li>
             {% endif %}
           {% else %}
@@ -96,7 +97,7 @@
           {% endif %}
           {% if current_user.is_authenticated %}
             <li class="pure-menu-item">
-              <a href="{{url_for('logout')}}" class="pure-menu-link">LOG OUT</a>
+              <a href="{{url_for('logout')}}" class="pure-menu-link">{{ _('LOG OUT') }}</a>
             </li>
           {% endif %}
           {% if current_user.is_authenticated or not has_password %}
@@ -105,21 +106,27 @@
             <form name="searchForm" action="" method="GET">
               <input id="search-q" class="" name="q" placeholder="URL or Title {% if active_tag_uuid %}in '{{ active_tag.title }}'{% endif %}" required="" type="text" value="">
               <input name="tags" type="hidden" value="{% if active_tag_uuid %}{{active_tag_uuid}}{% endif %}">
-              <button class="toggle-button " id="toggle-search" type="button" title="Search, or Use Alt+S Key" >
+              <button class="toggle-button " id="toggle-search" type="button" title="{{ _('Search, or Use Alt+S Key') }}" >
                 {% include "svgs/search-icon.svg" %}
               </button>
             </form>
           </li>
           {% endif %}
           <li class="pure-menu-item">
-            <button class="toggle-button" id ="toggle-light-mode" type="button" title="Toggle Light/Dark Mode">
-              <span class="visually-hidden">Toggle light/dark mode</span>
+            <button class="toggle-button" id ="toggle-light-mode" type="button" title="{{ _('Toggle Light/Dark Mode') }}">
+              <span class="visually-hidden">{{ _('Toggle light/dark mode') }}</span>
               <span class="icon-light">
                 {% include "svgs/light-mode-toggle-icon.svg" %}
               </span>
               <span class="icon-dark">
                 {% include "svgs/dark-mode-toggle-icon.svg" %}
               </span>
+            </button>
+          </li>
+          <li class="pure-menu-item">
+            <button class="toggle-button" id="language-selector" type="button" title="{{ _('Change Language') }}">
+              <span class="visually-hidden">{{ _('Change language') }}</span>
+              <span class="{{ get_flag_for_locale(get_locale()) }}" style="display: inline-block; width: 1.2em; height: 1.2em; vertical-align: middle; border-radius: 50%; overflow: hidden;"></span>
             </button>
           </li>
           <li class="pure-menu-item" id="heart-us">
@@ -238,13 +245,34 @@
     </section>
     <script src="{{url_for('static_content', group='js', filename='toggle-theme.js')}}" defer></script>
 
-    <div id="checking-now-fixed-tab" style="display: none;"><span class="spinner"></span><span class="status-text">&nbsp;Checking now</span></div>
-    <div id="realtime-conn-error" style="display:none">Real-time updates offline</div>
+    <div id="checking-now-fixed-tab" style="display: none;"><span class="spinner"></span><span class="status-text">&nbsp;{{ _('Checking now') }}</span></div>
+    <div id="realtime-conn-error" style="display:none">{{ _('Real-time updates offline') }}</div>
     {% if bottom_horizontal_offscreen_contents %}
         <div id="bottom-horizontal-offscreen" style="display:none">
             {{ bottom_horizontal_offscreen_contents|safe }}
         </div>
     {% endif %}
+
+    <!-- Language Selection Modal -->
+    <dialog id="language-modal" class="modal-dialog" aria-labelledby="language-modal-title">
+      <div class="modal-header">
+        <h2 class="modal-title" id="language-modal-title">{{ _('Select Language') }}</h2>
+      </div>
+      <div class="modal-body">
+        <div class="language-list">
+          {% for locale, lang_data in available_languages.items()|sort %}
+          <a href="{{ url_for('set_language', locale=locale) }}" class="language-option" data-locale="{{ locale }}">
+            <span class="{{ lang_data.flag }}" style="display: inline-block; width: 1.5em; height: 1.5em; vertical-align: middle; margin-right: 0.5em; border-radius: 50%; overflow: hidden;"></span> <span class="language-name">{{ lang_data.name }}</span>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="pure-button" id="close-language-modal">{{ _('Cancel') }}</button>
+      </div>
+    </dialog>
+
+    <script src="{{url_for('static_content', group='js', filename='language-selector.js')}}" defer></script>
   </body>
 
 </html>

@@ -113,6 +113,9 @@ EXPOSE 5000
 # The actual flask app module
 COPY changedetectionio /app/changedetectionio
 
+# Compile translation files for i18n support
+RUN pybabel compile -d /app/changedetectionio/translations
+
 # Also for OpenAPI validation wrapper - needs the YML
 RUN [ ! -d "/app/docs" ] && mkdir /app/docs
 COPY docs/api-spec.yaml /app/docs/api-spec.yaml

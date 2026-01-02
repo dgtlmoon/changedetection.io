@@ -1159,3 +1159,44 @@ ul#highlightSnippetActions {
   }
 }
 
+// Language Selector Modal Styles
+.language-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.language-option {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+  text-decoration: none;
+  color: var(--color-text);
+  border: 1px solid transparent;
+
+  &:hover {
+    background-color: var(--color-background-menu-link-hover);
+    border-color: var(--color-border-table-cell);
+  }
+
+  &.active {
+    background-color: var(--color-link);
+    color: var(--color-text-button);
+    font-weight: 600;
+  }
+
+  .flag {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .language-name {
+    flex-grow: 1;
+    font-size: 1rem;
+  }
+}
+

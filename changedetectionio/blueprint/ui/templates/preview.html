@@ -19,7 +19,7 @@
         <div id="diff-form" style="text-align: center;">
             <form class="pure-form " action="" method="POST">
                 <fieldset>
-                    <label for="preview-version">Select timestamp</label> <select id="preview-version"
+                    <label for="preview-version">{{ _('Select timestamp') }}</label> <select id="preview-version"
                                                                                  name="from_version"
                                                                                  class="needs-localtime">
                     {% for version in versions|reverse %}
@@ -28,27 +28,27 @@
                         </option>
                     {% endfor %}
                 </select>
-                    <button type="submit" class="pure-button pure-button-primary">Go</button>
+                    <button type="submit" class="pure-button pure-button-primary">{{ _('Go') }}</button>
 
                 </fieldset>
             </form>
                 <br>
-                <strong>Keyboard: </strong><a href="" class="pure-button pure-button-primary" id="btn-previous">
-                &larr; Previous</a> &nbsp; <a class="pure-button pure-button-primary" id="btn-next" href="">
-                &rarr; Next</a>
+                <strong>{{ _('Keyboard:') }} </strong><a href="" class="pure-button pure-button-primary" id="btn-previous">
+                &larr; {{ _('Previous') }}</a> &nbsp; <a class="pure-button pure-button-primary" id="btn-next" href="">
+                &rarr; {{ _('Next') }}</a>
         </div>
     {% endif %}
 
     <div class="tabs">
         <ul>
             {% if last_error_text %}
-                <li class="tab" id="error-text-tab"><a href="#error-text">Error Text</a></li> {% endif %}
+                <li class="tab" id="error-text-tab"><a href="#error-text">{{ _('Error Text') }}</a></li> {% endif %}
             {% if last_error_screenshot %}
-                <li class="tab" id="error-screenshot-tab"><a href="#error-screenshot">Error Screenshot</a>
+                <li class="tab" id="error-screenshot-tab"><a href="#error-screenshot">{{ _('Error Screenshot') }}</a>
                 </li> {% endif %}
             {% if history_n > 0 %}
-                <li class="tab" id="text-tab"><a href="#text">Text</a></li>
-                <li class="tab" id="screenshot-tab"><a href="#screenshot">Current screenshot</a></li>
+                <li class="tab" id="text-tab"><a href="#text">{{ _('Text') }}</a></li>
+                <li class="tab" id="screenshot-tab"><a href="#screenshot">{{ _('Current screenshot') }}</a></li>
             {% endif %}
         </ul>
     </div>
@@ -56,17 +56,17 @@
 
     <div id="diff-ui">
         <div class="tab-pane-inner" id="error-text">
-            <div class="snapshot-age error">{{ watch.error_text_ctime|format_seconds_ago }} seconds ago</div>
+            <div class="snapshot-age error">{{ watch.error_text_ctime|format_seconds_ago }} {{ _('seconds ago') }}</div>
             <pre>
             {{ last_error_text }}
         </pre>
         </div>
 
         <div class="tab-pane-inner" id="error-screenshot">
-            <div class="snapshot-age error">{{ watch.snapshot_error_screenshot_ctime|format_seconds_ago }} seconds ago
+            <div class="snapshot-age error">{{ watch.snapshot_error_screenshot_ctime|format_seconds_ago }} {{ _('seconds ago') }}
             </div>
             <img id="error-screenshot-img" style="max-width: 80%"
-                 alt="Current erroring screenshot from most recent request">
+                 alt="{{ _('Current erroring screenshot from most recent request') }}">
         </div>
 
         <div class="tab-pane-inner" id="text">
@@ -77,18 +77,18 @@
 
         <div class="tab-pane-inner" id="screenshot">
             <div class="tip">
-                For now, Differences are performed on text, not graphically, only the latest screenshot is available.
+                {{ _('For now, Differences are performed on text, not graphically, only the latest screenshot is available.') }}
             </div>
             <br>
             {% if capabilities.supports_screenshots %}
                 {% if screenshot %}
                     <div class="snapshot-age">{{ watch.snapshot_screenshot_ctime|format_timestamp_timeago }}</div>
-                    <img style="max-width: 80%" id="screenshot-img" alt="Current screenshot from most recent request">
+                    <img style="max-width: 80%" id="screenshot-img" alt="{{ _('Current screenshot from most recent request') }}">
                 {% else %}
-                    No screenshot available just yet! Try rechecking the page.
+                    {{ _('No screenshot available just yet! Try rechecking the page.') }}
                 {% endif %}
             {% else %}
-                <strong>Screenshot requires a Content Fetcher ( Sockpuppetbrowser, selenium, etc ) that supports screenshots.</strong>
+                <strong>{{ _('Screenshot requires a Content Fetcher ( Sockpuppetbrowser, selenium, etc ) that supports screenshots.') }}</strong>
             {% endif %}
         </div>
     </div>
