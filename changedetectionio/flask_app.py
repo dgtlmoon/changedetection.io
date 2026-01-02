@@ -471,7 +471,6 @@ def changedetection_app(config=None, datastore_o=None):
 
     @login_manager.unauthorized_handler
     def unauthorized_handler():
-        flash(gettext("You must be logged in, please log in."), 'error')
         return redirect(url_for('login', next=url_for('watchlist.index')))
 
     @app.route('/logout')
@@ -500,7 +499,7 @@ def changedetection_app(config=None, datastore_o=None):
             if flask_login.current_user.is_authenticated:
                 flash(gettext("Already logged in"))
                 return redirect(url_for("watchlist.index"))
-
+            flash(gettext("You must be logged in, please log in."), 'error')
             output = render_template("login.html")
             return output
 
