@@ -74,6 +74,9 @@ $(document).ready(function () {
     }
 
 
+    // Cache DOM elements for performance
+    const queueBubble = document.getElementById('queue-bubble');
+
     // Only try to connect if authentication isn't required or user is authenticated
     // The 'is_authenticated' variable will be set in the template
     if (typeof is_authenticated !== 'undefined' ? is_authenticated : true) {
@@ -115,7 +118,39 @@ $(document).ready(function () {
 
             socket.on('queue_size', function (data) {
                 console.log(`${data.event_timestamp} - Queue size update: ${data.q_length}`);
-                // Update queue size display if implemented in the UI
+
+                // Update queue bubble in action sidebar
+                if (queueBubble) {
+                    const count = parseInt(data.q_length) || 0;
+                    const oldCount = parseInt(queueBubble.getAttribute('data-count')) || 0;
+
+                    if (count > 0) {
+                        // Format number according to browser locale
+                        const formatter = new Intl.NumberFormat(navigator.language);
+                        queueBubble.textContent = formatter.format(count);
+                        queueBubble.setAttribute('data-count', count);
+                        queueBubble.classList.add('visible');
+
+                        // Add large-number class for numbers > 999
+                        if (count > 999) {
+                            queueBubble.classList.add('large-number');
+                        } else {
+                            queueBubble.classList.remove('large-number');
+                        }
+
+                        // Pulse animation if count changed
+                        if (count !== oldCount) {
+                            queueBubble.classList.remove('pulse');
+                            // Force reflow to restart animation
+                            void queueBubble.offsetWidth;
+                            queueBubble.classList.add('pulse');
+                        }
+                    } else {
+                        // Hide bubble when queue is empty
+                        queueBubble.classList.remove('visible', 'pulse', 'large-number');
+                        queueBubble.setAttribute('data-count', '0');
+                    }
+                }
             })
 
             // Listen for operation results

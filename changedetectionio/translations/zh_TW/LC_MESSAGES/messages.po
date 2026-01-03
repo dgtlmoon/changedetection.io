@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-02 16:07+0100\n"
+"POT-Creation-Date: 2026-01-03 14:31+0100\n"
 "PO-Revision-Date: 2026-01-02 12:37+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh_Hant_TW\n"
@@ -19,21 +19,21 @@ msgstr ""
 "Generated-By: Babel 2.17.0\n"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:241
-#: changedetectionio/flask_app.py:213 changedetectionio/flask_app.py:225
-#: changedetectionio/flask_app.py:246
+#: changedetectionio/flask_app.py:214 changedetectionio/flask_app.py:226
+#: changedetectionio/flask_app.py:247
 #: changedetectionio/realtime/socket_server.py:171
 msgid "Not yet"
 msgstr "還沒有"
 
-#: changedetectionio/flask_app.py:468
-msgid "You must be logged in, please log in."
-msgstr ""
-
-#: changedetectionio/flask_app.py:495
+#: changedetectionio/flask_app.py:534
 msgid "Already logged in"
 msgstr ""
 
-#: changedetectionio/flask_app.py:522
+#: changedetectionio/flask_app.py:536
+msgid "You must be logged in, please log in."
+msgstr ""
+
+#: changedetectionio/flask_app.py:551
 #, fuzzy
 msgid "Incorrect password"
 msgstr "密碼"
@@ -622,6 +622,8 @@ msgid "Backups were deleted."
 msgstr ""
 
 #: changedetectionio/blueprint/backups/templates/overview.html:6
+#: changedetectionio/templates/base.html:282
+#: changedetectionio/templates/base.html:290
 msgid "Backups"
 msgstr "備份"
 
@@ -1307,7 +1309,8 @@ msgid "Clear History!"
 msgstr "清除歷史！"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:39
-#: changedetectionio/templates/base.html:274
+#: changedetectionio/templates/base.html:379
+#: changedetectionio/templates/base.html:399
 msgid "Cancel"
 msgstr "取消"
 
@@ -2066,7 +2069,7 @@ msgid "No information"
 msgstr "暫無信息"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:234
-#: changedetectionio/templates/base.html:248
+#: changedetectionio/templates/base.html:353
 msgid "Checking now"
 msgstr "立即檢查"
 
@@ -2252,69 +2255,264 @@ msgstr "網頁文本/HTML、JSON 和 PDF 更改"
 msgid "Detects all text changes where possible"
 msgstr "盡可能檢測所有文本更改"
 
-#: changedetectionio/templates/base.html:77
+#: changedetectionio/templates/_helpers.html:25
+msgid "Entry"
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:153
+#, fuzzy
+msgid "Actions"
+msgstr "狀況"
+
+#: changedetectionio/templates/_helpers.html:172
+msgid "Add a row/rule after"
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:173
+msgid "Remove this row/rule"
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:174
+msgid "Verify this rule against current snapshot"
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:184
+msgid ""
+"Error - This watch needs Chrome (with playwright/sockpuppetbrowser), but "
+"Chrome based fetching is not enabled."
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:184
+msgid "Alternatively try our"
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:184
+msgid ""
+"very affordable subscription based service which has all this setup for "
+"you"
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:185
+#, fuzzy
+msgid "You may need to"
+msgstr "你需要"
+
+#: changedetectionio/templates/_helpers.html:185
+msgid "Enable playwright environment variable"
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:185
+msgid "and uncomment the"
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:185
+#, fuzzy
+msgid "in the"
+msgstr "這"
+
+#: changedetectionio/templates/_helpers.html:185
+#, fuzzy
+msgid "file"
+msgstr "標題"
+
+#: changedetectionio/templates/_helpers.html:240
+msgid "Set a hourly/week day schedule"
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:247
+#, fuzzy
+msgid "Schedule time limits"
+msgstr "複檢時間（分鐘）"
+
+#: changedetectionio/templates/_helpers.html:248
+msgid "Business hours"
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:249
+#, fuzzy
+msgid "Weekends"
+msgstr "週數"
+
+#: changedetectionio/templates/_helpers.html:250
+#, fuzzy
+msgid "Reset"
+msgstr "要求"
+
+#: changedetectionio/templates/_helpers.html:259
+msgid ""
+"Warning, one or more of your 'days' has a duration that would extend into"
+" the next day."
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:260
+msgid "This could have unintended consequences."
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:270
+#, fuzzy
+msgid "More help and examples about using the scheduler"
+msgstr "更多幫助和示例請參見此處"
+
+#: changedetectionio/templates/_helpers.html:275
+#, fuzzy
+msgid "Want to use a time schedule?"
+msgstr "使用時間調度器"
+
+#: changedetectionio/templates/_helpers.html:275
+msgid "First confirm/save your Time Zone Settings"
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:284
+msgid ""
+"Triggers a change if this text appears, AND something changed in the "
+"document."
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:284
+#, fuzzy
+msgid "Triggered text"
+msgstr "錯誤文本"
+
+#: changedetectionio/templates/_helpers.html:285
+msgid "Ignored for calculating changes, but still shown."
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:285
+#, fuzzy
+msgid "Ignored text"
+msgstr "錯誤文本"
+
+#: changedetectionio/templates/_helpers.html:286
+#, fuzzy
+msgid "No change-detection will occur because this text exists."
+msgstr "文本匹配時阻止更改檢測"
+
+#: changedetectionio/templates/_helpers.html:286
+#, fuzzy
+msgid "Blocked text"
+msgstr "錯誤文本"
+
+#: changedetectionio/templates/base.html:78
+#: changedetectionio/templates/base.html:168
 msgid "GROUPS"
 msgstr "團體"
 
-#: changedetectionio/templates/base.html:80
+#: changedetectionio/templates/base.html:81
+#: changedetectionio/templates/base.html:169
 msgid "SETTINGS"
 msgstr "設定"
 
-#: changedetectionio/templates/base.html:83
+#: changedetectionio/templates/base.html:84
+#: changedetectionio/templates/base.html:170
 msgid "IMPORT"
 msgstr "進口"
 
-#: changedetectionio/templates/base.html:86
+#: changedetectionio/templates/base.html:87
+#: changedetectionio/templates/base.html:171
 msgid "BACKUPS"
 msgstr "備份"
 
-#: changedetectionio/templates/base.html:90
+#: changedetectionio/templates/base.html:91
+#: changedetectionio/templates/base.html:173
 msgid "EDIT"
 msgstr "編輯"
 
-#: changedetectionio/templates/base.html:100
+#: changedetectionio/templates/base.html:101
+#: changedetectionio/templates/base.html:177
 msgid "LOG OUT"
 msgstr "退出"
 
-#: changedetectionio/templates/base.html:109
+#: changedetectionio/templates/base.html:108
 msgid "Search, or Use Alt+S Key"
 msgstr "搜索或使用 Alt+S 鍵"
 
-#: changedetectionio/templates/base.html:116
+#: changedetectionio/templates/base.html:114
 msgid "Toggle Light/Dark Mode"
 msgstr "切換亮/暗模式"
 
-#: changedetectionio/templates/base.html:117
+#: changedetectionio/templates/base.html:115
 msgid "Toggle light/dark mode"
 msgstr "切換亮/暗模式"
 
-#: changedetectionio/templates/base.html:127
+#: changedetectionio/templates/base.html:125
 msgid "Change Language"
 msgstr "更改語言"
 
-#: changedetectionio/templates/base.html:128
+#: changedetectionio/templates/base.html:126
 msgid "Change language"
 msgstr "更改語言"
 
-#: changedetectionio/templates/base.html:249
+#: changedetectionio/templates/base.html:253
+#, fuzzy
+msgid "Watch List"
+msgstr "# 手錶"
+
+#: changedetectionio/templates/base.html:258
+#, fuzzy
+msgid "Watches"
+msgstr "# 手錶"
+
+#: changedetectionio/templates/base.html:261
+msgid "Queue Status"
+msgstr ""
+
+#: changedetectionio/templates/base.html:270
+#, fuzzy
+msgid "Queue"
+msgstr "排隊"
+
+#: changedetectionio/templates/base.html:274
+#: changedetectionio/templates/base.html:279
+#, fuzzy
+msgid "Settings"
+msgstr "設定"
+
+#: changedetectionio/templates/base.html:293
+msgid "Sitemap Crawler"
+msgstr ""
+
+#: changedetectionio/templates/base.html:318
+msgid "Sitemap"
+msgstr ""
+
+#: changedetectionio/templates/base.html:354
 msgid "Real-time updates offline"
 msgstr "離線實時更新"
 
-#: changedetectionio/templates/base.html:259
+#: changedetectionio/templates/base.html:364
 msgid "Select Language"
 msgstr "選擇語言"
 
-#: changedetectionio/templates/base.html:270
+#: changedetectionio/templates/base.html:375
 msgid ""
 "Language support is in beta, please help us improve by opening a PR on "
 "GitHub with any updates."
 msgstr ""
 
-#: changedetectionio/templates/login.html:10
+#: changedetectionio/templates/base.html:387
+#: changedetectionio/templates/base.html:400
+#, fuzzy
+msgid "Search"
+msgstr "搜尋中"
+
+#: changedetectionio/templates/base.html:392
+msgid "URL or Title"
+msgstr ""
+
+#: changedetectionio/templates/base.html:392
+#, fuzzy
+msgid "in"
+msgstr "資訊"
+
+#: changedetectionio/templates/base.html:393
+msgid "Enter search term..."
+msgstr ""
+
+#: changedetectionio/templates/login.html:11
 msgid "Password"
 msgstr "密碼"
 
-#: changedetectionio/templates/login.html:16
+#: changedetectionio/templates/login.html:17
 msgid "Login"
 msgstr "登入"
 

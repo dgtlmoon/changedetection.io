@@ -23,6 +23,12 @@
 @use "parts/widgets";
 @use "parts/diff_image";
 @use "parts/modal";
+@use "parts/action_sidebar";
+@use "parts/hamburger_menu";
+@use "parts/search_modal";
+@use "parts/notification_bubble";
+@use "parts/toast";
+@use "parts/login_form";
 
 
 body {
@@ -71,20 +77,6 @@ a.github-link {
   }
 }
 
-#search-q {
-  opacity: 0;
-  -webkit-transition: all .9s ease;
-  -moz-transition: all .9s ease;
-  transition: all .9s ease;
-  width: 0;
-  display: none;
-  &.expanded {
-    width: auto;
-    display: inline-block;
-
-    opacity: 1;
-  }
-}
 #search-result-info {
   color: #fff;
 }
@@ -824,14 +816,7 @@ $form-edge-padding: 20px;
   }
 }
 
-.login-form {
-  .inner {
-    background: var(--color-background);
-    ;
-    padding: $form-edge-padding;
-    border-radius: 5px;
-  }
-}
+// Login form styles moved to parts/_login_form.scss
 
 .tab-pane-inner {
 
