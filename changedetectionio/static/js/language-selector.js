@@ -15,6 +15,22 @@ document.addEventListener('DOMContentLoaded', function() {
   // Open modal when language button is clicked
   languageButton.addEventListener('click', function(e) {
     e.preventDefault();
+
+    // Update all language links to include current hash in the redirect parameter
+    const currentPath = window.location.pathname;
+    const currentHash = window.location.hash;
+
+    if (currentHash) {
+      const languageOptions = languageModal.querySelectorAll('.language-option');
+      languageOptions.forEach(function(option) {
+        const url = new URL(option.href, window.location.origin);
+        // Update the redirect parameter to include the hash
+        const redirectPath = currentPath + currentHash;
+        url.searchParams.set('redirect', redirectPath);
+        option.setAttribute('href', url.pathname + url.search + url.hash);
+      });
+    }
+
     languageModal.showModal();
   });
 
