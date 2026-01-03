@@ -816,14 +816,7 @@ $form-edge-padding: 20px;
   }
 }
 
-.login-form {
-  .inner {
-    background: var(--color-background);
-    ;
-    padding: $form-edge-padding;
-    border-radius: 5px;
-  }
-}
+// Login form styles moved to parts/_login_form.scss
 
 .tab-pane-inner {
 

@@ -84,15 +84,13 @@
 }
 
 .content-main {
-  flex: 1;
+  flex: 0 1 auto;
+  width: 100%;
   min-width: 0;
   padding: 0;
-
-  // When action sidebar is not present, don't force full width
-  &:only-child {
-    flex: 0 1 auto;
-    margin: 0 auto;
-  }
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 // Dark mode adjustments
