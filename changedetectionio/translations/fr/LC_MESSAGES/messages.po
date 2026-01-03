@@ -142,10 +142,7 @@ msgid "Notification Body and Title is required when a Notification URL is used"
 msgstr ""
 "Le corps et le titre de la notification sont requis lorsqu'une URL de "
 "notification est utiliséeLe corps et le titre de la notification sont "
-"requis lorsqu'une URL de notification est utiliséeLe corps et le titre de"
-" la notification sont requis lorsqu'une URL de notification est "
-"utiliséeLe corps et le titre de la notification sont requis lorsqu'une "
-"URL de notification est utilisée"
+"requis lorsqu'une URL de notification est utilisée"
 
 #: changedetectionio/forms.py:489
 #, python-format
@@ -226,11 +223,7 @@ msgstr "Processeur – Que souhaitez-vous réaliser ?"
 #: changedetectionio/forms.py:753
 msgid "Default timezone for watch check scheduler"
 msgstr ""
-"Fuseau horaire par défaut pour le "
-"planificateur de contrôle de "
-"surveillanceFuseau horaire par défaut pour "
-"le planificateur de contrôle de "
-"surveillance"
+"Fuseau horaire par défaut pour le planificateur de contrôle de surveillance"
 
 #: changedetectionio/forms.py:754
 #, fuzzy
@@ -277,11 +270,8 @@ msgstr "Pause"
 #: changedetectionio/forms.py:796
 msgid "Use global settings for time between check and scheduler."
 msgstr ""
-"Utilisez les paramètres globaux pour le"
-" temps entre la vérification et le"
-" planificateur.Utilisez les paramètres globaux"
-" pour le temps entre la vérification"
-" et le planificateur."
+"Utilisez les paramètres globaux pour le temps entre la vérification et le "
+"planificateur."
 
 #: changedetectionio/forms.py:798
 #, fuzzy
@@ -321,10 +311,7 @@ msgstr "Demande"
 #: changedetectionio/forms.py:810
 msgid "Ignore status codes (process non-2xx status codes as normal)"
 msgstr ""
-"Ignorer les codes d'état (traiter les"
-" codes d'état non-2xx comme "
-"d'habitude)Ignorer les codes d'état (traiter"
-" les codes d'état non-2xx comme "
+"Ignorer les codes d'état (traiter les codes d'état non-2xx comme "
 "d'habitude)"
 
 #: changedetectionio/forms.py:811
@@ -591,13 +578,8 @@ msgstr "Afficher le contenu de la balise d'ancrage"
 #: changedetectionio/forms.py:1022
 msgid "Allow anonymous access to watch history page when password is enabled"
 msgstr ""
-"Autoriser l'accès anonyme à la page "
-"de l'historique des vidéos regardées "
-"lorsque le mot de passe est "
-"activéAutoriser l'accès anonyme à la "
-"page de l'historique des vidéos "
-"regardées lorsque le mot de passe "
-"est activé"
+"Autoriser l'accès anonyme à la page de l'historique des vidéos regardées "
+"lorsque le mot de passe est activé"
 
 #: changedetectionio/forms.py:1024
 msgid "Hide muted watches from RSS feed"
@@ -618,11 +600,8 @@ msgstr "Doit contenir zéro ou plusieurs tentatives"
 #: changedetectionio/forms.py:1032
 msgid "Number of times the filter can be missing before sending a notification"
 msgstr ""
-"Nombre de fois où le filtre peut"
-" être manquant avant l'envoi d'une "
-"notificationNombre de fois où le filtre"
-" peut être manquant avant l'envoi "
-"d'une notification"
+"Nombre de fois où le filtre peut être manquant avant l'envoi d'une "
+"notification"
 
 #: changedetectionio/forms.py:1055
 msgid "RegEx to extract"
@@ -810,18 +789,14 @@ msgstr "Comment exporter ?"
 #: changedetectionio/blueprint/imports/templates/import.html:49
 msgid "Be sure to set your default fetcher to Chrome if required."
 msgstr ""
-"Assurez-vous de définir votre outil de récupération par défaut sur Chrome"
-" si nécessaire.Assurez-vous de définir votre outil de récupération par "
-"défaut sur Chrome si nécessaire.Assurez-vous de définir votre outil de "
-"récupération par défaut sur Chrome si nécessaire."
+"Assurez-vous de définir votre outil de récupération par défaut sur Chrome "
+"si nécessaire."
 
 #: changedetectionio/blueprint/imports/templates/import.html:91
 msgid "Table of custom column and data types mapping for the"
 msgstr ""
-"Tableau de mappage des colonnes personnalisées et des types de données "
-"pour leTableau de mappage des colonnes personnalisées et des types de "
-"données pour leTableau de mappage des colonnes personnalisées et des "
-"types de données pour le"
+"Tableau de mappage des colonnes personnalisées et des types de données pour "
+"le"
 
 #: changedetectionio/blueprint/imports/templates/import.html:91
 msgid "Custom mapping"
@@ -946,9 +921,7 @@ msgstr "Plus d'informations"
 msgid "Default recheck time for all watches, current system minimum is"
 msgstr ""
 "Heure de revérification par défaut pour toutes les montres, le minimum "
-"actuel du système estHeure de revérification par défaut pour toutes les "
-"montres, le minimum actuel du système estHeure de revérification par "
-"défaut pour toutes les montres, le minimum actuel du système est"
+"actuel du système est"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:46
 msgid "seconds"
@@ -1043,11 +1016,8 @@ msgstr "A utiliser avec prudence !"
 #: changedetectionio/blueprint/ui/templates/edit.html:269
 msgid "This will easily fill up your email storage quota or flood other storages."
 msgstr ""
-"Cela remplira facilement votre quota de stockage de courrier électronique"
-" ou inondera d’autres stockages.Cela remplira facilement votre quota de "
-"stockage de courrier électronique ou inondera d’autres stockages.Cela "
-"remplira facilement votre quota de stockage de courrier électronique ou "
-"inondera d’autres stockages."
+"Cela remplira facilement votre quota de stockage de courrier électronique "
+"ou inondera d’autres stockages."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html:80
 #: changedetectionio/blueprint/ui/templates/edit.html:276
@@ -1073,19 +1043,15 @@ msgstr "URL de notification à l'échelle du système activées"
 #: changedetectionio/blueprint/ui/templates/edit.html:277
 msgid "this form will override notification settings for this watch only"
 msgstr ""
-"ce formulaire remplacera les paramètres de notification pour cette montre"
-" uniquementce formulaire remplacera les paramètres de notification pour "
-"cette montre uniquementce formulaire remplacera les paramètres de "
-"notification pour cette montre uniquement"
+"ce formulaire remplacera les paramètres de notification pour cette montre "
+"uniquement"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html:81
 #: changedetectionio/blueprint/ui/templates/edit.html:277
 msgid "an empty Notification URL list here will still send notifications."
 msgstr ""
 "une liste d'URL de notification vide ici enverra toujours des "
-"notifications.une liste d'URL de notification vide ici enverra toujours "
-"des notifications.une liste d'URL de notification vide ici enverra "
-"toujours des notifications."
+"notifications."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html:84
 #: changedetectionio/blueprint/ui/templates/edit.html:280
@@ -1522,9 +1488,7 @@ msgstr "Conseil:"
 msgid "Highlight text to share or add to ignore lists."
 msgstr ""
 "Mettez en surbrillance le texte à partager ou à ajouter pour ignorer les "
-"listes.Mettez en surbrillance le texte à partager ou à ajouter pour "
-"ignorer les listes.Mettez en surbrillance le texte à partager ou à "
-"ajouter pour ignorer les listes."
+"listes."
 
 #: changedetectionio/blueprint/ui/templates/diff.html:144
 #: changedetectionio/blueprint/ui/templates/preview.html:80
@@ -1542,10 +1506,8 @@ msgstr "Capture d'écran actuelle de la demande la plus récente"
 #: changedetectionio/blueprint/ui/templates/preview.html:88
 msgid "No screenshot available just yet! Try rechecking the page."
 msgstr ""
-"Aucune capture d'écran disponible pour l'instant ! Essayez de revérifier "
-"la page.Aucune capture d'écran disponible pour l'instant ! Essayez de "
-"revérifier la page.Aucune capture d'écran disponible pour l'instant ! "
-"Essayez de revérifier la page."
+"Aucune capture d'écran disponible pour l'instant ! Essayez de revérifier la "
+"page."
 
 #: changedetectionio/blueprint/ui/templates/diff.html:154
 msgid "Screenshot requires Playwright/WebDriver enabled"
@@ -1575,10 +1537,8 @@ msgstr "PARAMÈTRES"
 #: changedetectionio/blueprint/ui/templates/edit.html:313
 msgid "Some sites use JavaScript to create the content, for this you should"
 msgstr ""
-"Certains sites utilisent JavaScript pour créer le contenu, pour cela vous"
-" devezCertains sites utilisent JavaScript pour créer le contenu, pour "
-"cela vous devezCertains sites utilisent JavaScript pour créer le contenu,"
-" pour cela vous devez"
+"Certains sites utilisent JavaScript pour créer le contenu, pour cela vous "
+"devez"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:73
 #: changedetectionio/blueprint/ui/templates/edit.html:313
@@ -1599,9 +1559,7 @@ msgstr "aide et exemples ici"
 msgid "Organisational tag/group name used in the main listing page"
 msgstr ""
 "Balise organisationnelle/nom de groupe utilisé dans la page de liste "
-"principaleBalise organisationnelle/nom de groupe utilisé dans la page de "
-"liste principaleBalise organisationnelle/nom de groupe utilisé dans la "
-"page de liste principale"
+"principale"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:85
 msgid ""
@@ -1652,9 +1610,7 @@ msgstr ""
 msgid "Connect using Bright Data and Oxylabs Proxies, find out more here."
 msgstr ""
 "Connectez-vous à l'aide des proxys Bright Data et Oxylabs, découvrez-en "
-"plus ici.Connectez-vous à l'aide des proxys Bright Data et Oxylabs, "
-"découvrez-en plus ici.Connectez-vous à l'aide des proxys Bright Data et "
-"Oxylabs, découvrez-en plus ici."
+"plus ici."
 
 #: changedetectionio/blueprint/ui/templates/edit.html:130
 msgid "Check/Scan all"
@@ -1709,17 +1665,13 @@ msgstr "Les variables sont prises en charge dans les valeurs d'en-tête de requ�
 msgid "Alert! Extra headers file found and will be added to this watch!"
 msgstr ""
 "Alerte! Fichier d'en-têtes supplémentaire trouvé et sera ajouté à cette "
-"montre !Alerte! Fichier d'en-têtes supplémentaire trouvé et sera ajouté à"
-" cette montre !Alerte! Fichier d'en-têtes supplémentaire trouvé et sera "
-"ajouté à cette montre !"
+"montre !"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:194
 msgid "Headers can be also read from a file in your data-directory"
 msgstr ""
 "Les en-têtes peuvent également être lus à partir d'un fichier dans votre "
-"répertoire de donnéesLes en-têtes peuvent également être lus à partir "
-"d'un fichier dans votre répertoire de donnéesLes en-têtes peuvent "
-"également être lus à partir d'un fichier dans votre répertoire de données"
+"répertoire de données"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:194
 msgid "Read more here"
@@ -1736,11 +1688,8 @@ msgstr "Activer la recherche de texte"
 #: changedetectionio/blueprint/ui/templates/edit.html:224
 msgid "Please wait, first browser step can take a little time to load.."
 msgstr ""
-"Veuillez patienter, le chargement de la première étape du navigateur peut"
-" prendre un peu de temps.Veuillez patienter, le chargement de la première"
-" étape du navigateur peut prendre un peu de temps.Veuillez patienter, le "
-"chargement de la première étape du navigateur peut prendre un peu de "
-"temps."
+"Veuillez patienter, le chargement de la première étape du navigateur peut "
+"prendre un peu de temps."
 
 #: changedetectionio/blueprint/ui/templates/edit.html:231
 msgid "Click here to Start"
@@ -1759,10 +1708,7 @@ msgstr ""
 msgid "Visual Selector data is not ready, watch needs to be checked atleast once."
 msgstr ""
 "Les données du sélecteur visuel ne sont pas prêtes, la montre doit être "
-"vérifiée au moins une fois.Les données du sélecteur visuel ne sont pas "
-"prêtes, la montre doit être vérifiée au moins une fois.Les données du "
-"sélecteur visuel ne sont pas prêtes, la montre doit être vérifiée au "
-"moins une fois."
+"vérifiée au moins une fois."
 
 #: changedetectionio/blueprint/ui/templates/edit.html:253
 msgid ""
@@ -1810,9 +1756,7 @@ msgstr "Conseils de pro :"
 msgid "Use the preview page to see your filters and triggers highlighted."
 msgstr ""
 "Utilisez la page d'aperçu pour voir vos filtres et déclencheurs mis en "
-"surbrillance.Utilisez la page d'aperçu pour voir vos filtres et "
-"déclencheurs mis en surbrillance.Utilisez la page d'aperçu pour voir vos "
-"filtres et déclencheurs mis en surbrillance."
+"surbrillance."
 
 #: changedetectionio/blueprint/ui/templates/edit.html:322
 msgid "Limit trigger/ignore/block/extract to;"
@@ -1852,10 +1796,8 @@ msgstr "lorsque vous êtes intéressé par du nouveau contenu."
 #: changedetectionio/blueprint/ui/templates/edit.html:328
 msgid "When content is merely moved in a list, it will also trigger an"
 msgstr ""
-"Lorsque le contenu est simplement déplacé dans une liste, cela "
-"déclenchera également unLorsque le contenu est simplement déplacé dans "
-"une liste, cela déclenchera également unLorsque le contenu est simplement"
-" déplacé dans une liste, cela déclenchera également un"
+"Lorsque le contenu est simplement déplacé dans une liste, cela déclenchera "
+"également un"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:328
 msgid "consider enabling"
@@ -1941,10 +1883,8 @@ msgstr "Effacer la sélection"
 #: changedetectionio/blueprint/ui/templates/edit.html:408
 msgid "One moment, fetching screenshot and element information.."
 msgstr ""
-"Un instant, récupération de la capture d'écran et des informations sur "
-"les éléments.Un instant, récupération de la capture d'écran et des "
-"informations sur les éléments.Un instant, récupération de la capture "
-"d'écran et des informations sur les éléments."
+"Un instant, récupération de la capture d'écran et des informations sur les "
+"éléments."
 
 #: changedetectionio/blueprint/ui/templates/edit.html:417
 msgid "Currently:"
@@ -2161,12 +2101,9 @@ msgstr "Modifié"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:130
 msgid "No website watches configured, please add a URL in the box above, or"
 msgstr ""
-"Aucune surveillance de site Web configurée, veuillez ajouter une URL dans"
-" la case ci-dessus, ouAucune surveillance de site Web configurée, "
-"veuillez ajouter une URL dans la case ci-dessus, ouAucune surveillance de"
-" site Web configurée, veuillez ajouter une URL dans la case ci-dessus, "
-"ouAucune surveillance de site Web configurée, veuillez ajouter une URL "
-"dans la case ci-dessus, ou"
+"Aucune surveillance de site Web configurée, veuillez ajouter une URL dans "
+"la case ci-dessus, ouAucune surveillance de site Web configurée, veuillez "
+"ajouter une URL dans la case ci-dessus, ou"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:130
 msgid "import a list"
@@ -2261,11 +2198,8 @@ msgstr "La valeur du cadre de sélection est trop longue"
 #: changedetectionio/processors/image_ssim_diff/forms.py:23
 msgid "Bounding box must be in format: x,y,width,height (integers only)"
 msgstr ""
-"Le cadre de délimitation doit être "
-"au format : x,y,largeur,hauteur (entiers "
-"uniquement)Le cadre de délimitation doit "
-"être au format : x,y,largeur,hauteur "
-"(entiers uniquement)"
+"Le cadre de délimitation doit être au format : x,y,largeur,hauteur (entiers "
+"uniquement)"
 
 #: changedetectionio/processors/image_ssim_diff/forms.py:29
 msgid "Bounding box values must be non-negative"

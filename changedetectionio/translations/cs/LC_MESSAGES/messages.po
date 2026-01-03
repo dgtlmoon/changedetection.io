@@ -178,7 +178,7 @@ msgstr "Neplatná hodnota."
 #: changedetectionio/forms.py:732
 #, fuzzy
 msgid "Watch"
-msgstr "# Hodinky"
+msgstr "# monitory"
 
 #: changedetectionio/forms.py:733 changedetectionio/forms.py:766
 msgid "Processor"
@@ -220,7 +220,7 @@ msgstr "Procesor – Čeho chcete dosáhnout?"
 
 #: changedetectionio/forms.py:753
 msgid "Default timezone for watch check scheduler"
-msgstr "Výchozí časové pásmo pro plánovač kontroly hodinek"
+msgstr "Výchozí časové pásmo pro plánovač kontroly monitorů"
 
 #: changedetectionio/forms.py:754
 #, fuzzy
@@ -394,7 +394,7 @@ msgstr "Připojte snímek obrazovky k oznámení (pokud je to možné)"
 
 #: changedetectionio/forms.py:835
 msgid "Match"
-msgstr "# Hodinky"
+msgstr "# monitory"
 
 #: changedetectionio/forms.py:835
 msgid "Match all of the following"
@@ -568,15 +568,12 @@ msgstr "Vykreslit obsah kotvící značky"
 #: changedetectionio/forms.py:1022
 msgid "Allow anonymous access to watch history page when password is enabled"
 msgstr ""
-"Povolit anonymní přístup na stránku "
-"historie sledování, když je povoleno "
-"hesloPovolit anonymní přístup na stránku "
-"historie sledování, když je povoleno "
+"Povolit anonymní přístup na stránku historie sledování, když je povoleno "
 "heslo"
 
 #: changedetectionio/forms.py:1024
 msgid "Hide muted watches from RSS feed"
-msgstr "Skrýt ztlumené hodinky ze zdroje RSS"
+msgstr "Skrýt ztlumené monitory ze zdroje RSS"
 
 #: changedetectionio/forms.py:1027
 msgid "Enable RSS reader mode "
@@ -901,10 +898,8 @@ msgstr "Více informací"
 #: changedetectionio/blueprint/settings/templates/settings.html:46
 msgid "Default recheck time for all watches, current system minimum is"
 msgstr ""
-"Výchozí čas opětovné kontroly pro všechny hodinky, aktuální systémové "
-"minimum jeVýchozí čas opětovné kontroly pro všechny hodinky, aktuální "
-"systémové minimum jeVýchozí čas opětovné kontroly pro všechny hodinky, "
-"aktuální systémové minimum je"
+"Výchozí čas opětovné kontroly pro všechny monitory, aktuální systémové "
+"minimum je"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:46
 msgid "seconds"
@@ -983,7 +978,7 @@ msgstr "přidáno"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html:50
 msgid "to any existing watch configurations."
-msgstr "do všech existujících konfigurací hodinek."
+msgstr "do všech existujících konfigurací monitorů."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html:53
 #: changedetectionio/blueprint/ui/templates/edit.html:321
@@ -1000,9 +995,7 @@ msgstr "Používejte opatrně!"
 msgid "This will easily fill up your email storage quota or flood other storages."
 msgstr ""
 "Snadno tak zaplníte kvótu e-mailového úložiště nebo zahltíte další "
-"úložiště.Snadno tak zaplníte kvótu e-mailového úložiště nebo zahltíte "
-"další úložiště.Snadno tak zaplníte kvótu e-mailového úložiště nebo "
-"zahltíte další úložiště."
+"úložiště."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html:80
 #: changedetectionio/blueprint/ui/templates/edit.html:276
@@ -1027,7 +1020,7 @@ msgstr "povoleny adresy URL pro upozornění v celém systému"
 #: changedetectionio/blueprint/tags/templates/edit-tag.html:81
 #: changedetectionio/blueprint/ui/templates/edit.html:277
 msgid "this form will override notification settings for this watch only"
-msgstr "tento formulář přepíše nastavení oznámení pouze pro tyto hodinky"
+msgstr "tento formulář přepíše nastavení oznámení pouze pro tyto monitory"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html:81
 #: changedetectionio/blueprint/ui/templates/edit.html:277
@@ -1055,7 +1048,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:31
 msgid "# Watches"
-msgstr "# Hodinky"
+msgstr "# monitory"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:32
 msgid "Tag / Label name"
@@ -1111,12 +1104,12 @@ msgstr "Odpojit"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:69
 msgid "Keep the tag but unlink any watches"
-msgstr "Ponechte štítek, ale odpojte všechny hodinky"
+msgstr "Ponechte štítek, ale odpojte všechny monitory"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:70
 #: changedetectionio/blueprint/ui/templates/edit.html:500
 msgid "RSS Feed for this watch"
-msgstr "RSS kanál pro tyto hodinky"
+msgstr "RSS kanál pro tyto monitory"
 
 #: changedetectionio/blueprint/ui/__init__.py:20
 #, python-brace-format
@@ -1126,7 +1119,7 @@ msgstr ""
 #: changedetectionio/blueprint/ui/__init__.py:27
 #, fuzzy, python-brace-format
 msgid "{} watches paused"
-msgstr "# Hodinky"
+msgstr "# monitory"
 
 #: changedetectionio/blueprint/ui/__init__.py:34
 #, python-brace-format
@@ -1141,7 +1134,7 @@ msgstr ""
 #: changedetectionio/blueprint/ui/__init__.py:48
 #, fuzzy, python-brace-format
 msgid "{} watches muted"
-msgstr "# Hodinky"
+msgstr "# monitory"
 
 #: changedetectionio/blueprint/ui/__init__.py:55
 #, python-brace-format
@@ -1268,7 +1261,7 @@ msgstr ""
 #: changedetectionio/blueprint/ui/edit.py:239
 #, fuzzy
 msgid "Updated watch."
-msgstr "Smazat hodinky?"
+msgstr "Smazat monitory?"
 
 #: changedetectionio/blueprint/ui/preview.py:78
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
@@ -1487,9 +1480,7 @@ msgstr "Aktuální snímek obrazovky z poslední žádosti"
 msgid "No screenshot available just yet! Try rechecking the page."
 msgstr ""
 "Zatím není k dispozici žádný snímek obrazovky! Zkuste stránku znovu "
-"zkontrolovat.Zatím není k dispozici žádný snímek obrazovky! Zkuste "
-"stránku znovu zkontrolovat.Zatím není k dispozici žádný snímek obrazovky!"
-" Zkuste stránku znovu zkontrolovat."
+"zkontrolovat."
 
 #: changedetectionio/blueprint/ui/templates/diff.html:154
 msgid "Screenshot requires Playwright/WebDriver enabled"
@@ -1594,7 +1585,7 @@ msgstr "Znovu zkontrolujte vše"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:133
 msgid "Choose a proxy for this watch"
-msgstr "RSS kanál pro tyto hodinky"
+msgstr "RSS kanál pro tyto monitory"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:143
 msgid ""
@@ -1641,9 +1632,7 @@ msgstr "Proměnné jsou podporovány v hodnotách hlavičky požadavku"
 msgid "Alert! Extra headers file found and will be added to this watch!"
 msgstr ""
 "Upozornění! Byl nalezen další soubor záhlaví a bude přidán do těchto "
-"hodinek!Upozornění! Byl nalezen další soubor záhlaví a bude přidán do "
-"těchto hodinek!Upozornění! Byl nalezen další soubor záhlaví a bude přidán"
-" do těchto hodinek!"
+"monitorů!"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:194
 msgid "Headers can be also read from a file in your data-directory"
@@ -1681,10 +1670,8 @@ msgstr ""
 #: changedetectionio/blueprint/ui/templates/edit.html:419
 msgid "Visual Selector data is not ready, watch needs to be checked atleast once."
 msgstr ""
-"Data Visual Selector nejsou připravena, hodinky je třeba alespoň jednou "
-"zkontrolovat.Data Visual Selector nejsou připravena, hodinky je třeba "
-"alespoň jednou zkontrolovat.Data Visual Selector nejsou připravena, "
-"hodinky je třeba alespoň jednou zkontrolovat."
+"Data Visual Selector nejsou připravena, monitory je třeba alespoň jednou "
+"zkontrolovat."
 
 #: changedetectionio/blueprint/ui/templates/edit.html:253
 msgid ""
@@ -1900,11 +1887,11 @@ msgstr "Stáhněte si nejnovější HTML snímek"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:488
 msgid "Delete Watch?"
-msgstr "Smazat hodinky?"
+msgstr "Smazat monitory?"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:489
 msgid "Are you sure you want to delete the watch for:"
-msgstr "Opravdu chcete smazat hodinky pro:"
+msgstr "Opravdu chcete smazat monitory pro:"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:489
 msgid "This action cannot be undone."
@@ -1952,7 +1939,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:31
 msgid "Add a new web page change detection watch"
-msgstr "Přidejte nové hodinky zjišťování změn webové stránky"
+msgstr "Přidejte nové monitory zjišťování změn webové stránky"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:34
 msgid "Watch this URL!"
@@ -1968,7 +1955,7 @@ msgstr "Vytvořte odkaz ke sdílení"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:45
 msgid "Tip: You can also add 'shared' watches."
-msgstr "Tip: Můžete také přidat „sdílené“ hodinky."
+msgstr "Tip: Můžete také přidat „sdílené“ monitory."
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:45
 msgid "More info"
@@ -2031,7 +2018,7 @@ msgstr "Vymazat/resetovat historii"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:71
 msgid "Delete Watches?"
-msgstr "Smazat hodinky?"
+msgstr "Smazat monitory?"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:72
 msgid ""
@@ -2071,13 +2058,9 @@ msgstr "Změněno"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:130
 msgid "No website watches configured, please add a URL in the box above, or"
 msgstr ""
-"Nejsou nakonfigurována žádná sledování webových stránek, do výše "
-"uvedeného pole přidejte adresu URL neboNejsou nakonfigurována žádná "
-"sledování webových stránek, do výše uvedeného pole přidejte adresu URL "
-"neboNejsou nakonfigurována žádná sledování webových stránek, do výše "
-"uvedeného pole přidejte adresu URL neboNejsou nakonfigurována žádná "
-"sledování webových stránek, do výše uvedeného pole přidejte adresu URL "
-"nebo"
+"Nejsou nakonfigurována žádná sledování webových stránek, do výše uvedeného "
+"pole přidejte adresu URL neboNejsou nakonfigurována žádná sledování "
+"webových stránek, do výše uvedeného pole přidejte adresu URL nebo"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:130
 msgid "import a list"
@@ -2172,10 +2155,8 @@ msgstr "Hodnota ohraničujícího rámečku je příliš dlouhá"
 #: changedetectionio/processors/image_ssim_diff/forms.py:23
 msgid "Bounding box must be in format: x,y,width,height (integers only)"
 msgstr ""
-"Ohraničovací rámeček musí být ve "
-"formátu: x,y,šířka,výška (pouze celá "
-"čísla)Ohraničovací rámeček musí být ve "
-"formátu: x,y,šířka,výška (pouze celá čísla)"
+"Ohraničovací rámeček musí být ve formátu: x,y,šířka,výška (pouze celá "
+"čísla)"
 
 #: changedetectionio/processors/image_ssim_diff/forms.py:29
 msgid "Bounding box values must be non-negative"
@@ -2427,7 +2408,7 @@ msgstr "Přihlášení"
 #~ msgstr "Neplatná hodnota."
 
 #~ msgid "Watch"
-#~ msgstr "# Hodinky"
+#~ msgstr "# monitory"
 
 #~ msgid "Processor"
 #~ msgstr "Procesor"
@@ -2454,7 +2435,7 @@ msgstr "Přihlášení"
 #~ msgstr "Procesor – Čeho chcete dosáhnout?"
 
 #~ msgid "Default timezone for watch check scheduler"
-#~ msgstr "Výchozí časové pásmo pro plánovač kontroly hodinek"
+#~ msgstr "Výchozí časové pásmo pro plánovač kontroly monitorů"
 
 #~ msgid "Wait seconds before extracting text"
 #~ msgstr "sekund před extrahováním textu."
@@ -2552,7 +2533,7 @@ msgstr "Přihlášení"
 #~ msgstr "Připojte snímek obrazovky k oznámení (pokud je to možné)"
 
 #~ msgid "Match"
-#~ msgstr "# Hodinky"
+#~ msgstr "# monitory"
 
 #~ msgid "Match all of the following"
 #~ msgstr "Spojte všechny následující položky"
@@ -2659,7 +2640,7 @@ msgstr "Přihlášení"
 #~ "heslo"
 
 #~ msgid "Hide muted watches from RSS feed"
-#~ msgstr "Skrýt ztlumené hodinky ze zdroje RSS"
+#~ msgstr "Skrýt ztlumené monitory ze zdroje RSS"
 
 #~ msgid "Enable RSS reader mode "
 #~ msgstr "Povolit režim čtečky RSS"

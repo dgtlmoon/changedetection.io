@@ -786,9 +786,7 @@ msgstr "Wie exportiere ich?"
 msgid "Be sure to set your default fetcher to Chrome if required."
 msgstr ""
 "Stellen Sie bei Bedarf sicher, dass Ihr Standardabrufer auf Chrome "
-"eingestellt ist.\"Stellen Sie bei Bedarf sicher, dass Ihr Standardabrufer"
-" auf Chrome eingestellt ist.Stellen Sie bei Bedarf sicher, dass Ihr "
-"Standardabrufer auf Chrome eingestellt ist."
+"eingestellt ist."
 
 #: changedetectionio/blueprint/imports/templates/import.html:91
 msgid "Table of custom column and data types mapping for the"
@@ -917,9 +915,7 @@ msgstr "Weitere Informationen"
 msgid "Default recheck time for all watches, current system minimum is"
 msgstr ""
 "Standardzeit für erneute Überprüfungen für alle Uhren, aktuelles "
-"Systemminimum\"Standardzeit für erneute Überprüfungen für alle Uhren, "
-"aktuelles SystemminimumStandardzeit für erneute Überprüfungen für alle "
-"Uhren, aktuelles Systemminimum"
+"Systemminimum"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:46
 msgid "seconds"
@@ -1014,11 +1010,8 @@ msgstr "Mit Vorsicht verwenden!"
 #: changedetectionio/blueprint/ui/templates/edit.html:269
 msgid "This will easily fill up your email storage quota or flood other storages."
 msgstr ""
-"Dadurch wird Ihr E-Mail-Speicherkontingent leicht ausgeschöpft oder "
-"andere Speicher überflutet.\"Dadurch wird Ihr E-Mail-Speicherkontingent "
-"leicht ausgeschöpft oder andere Speicher überflutet.Dadurch wird Ihr E"
-"-Mail-Speicherkontingent leicht ausgeschöpft oder andere Speicher "
-"überflutet."
+"Dadurch wird Ihr E-Mail-Speicherkontingent leicht ausgeschöpft oder andere "
+"Speicher überflutet."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html:80
 #: changedetectionio/blueprint/ui/templates/edit.html:276
@@ -1045,18 +1038,14 @@ msgstr "Systemweite Benachrichtigungs-URLs aktiviert"
 msgid "this form will override notification settings for this watch only"
 msgstr ""
 "Dieses Formular überschreibt nur die Benachrichtigungseinstellungen für "
-"diese Uhr\"Dieses Formular überschreibt nur die "
-"Benachrichtigungseinstellungen für diese UhrDieses Formular überschreibt "
-"nur die Benachrichtigungseinstellungen für diese Uhr"
+"diese Uhr"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html:81
 #: changedetectionio/blueprint/ui/templates/edit.html:277
 msgid "an empty Notification URL list here will still send notifications."
 msgstr ""
 "Eine leere Benachrichtigungs-URL-Liste hier sendet weiterhin "
-"Benachrichtigungen.\"Eine leere Benachrichtigungs-URL-Liste hier sendet "
-"weiterhin Benachrichtigungen.Eine leere Benachrichtigungs-URL-Liste hier "
-"sendet weiterhin Benachrichtigungen."
+"Benachrichtigungen."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html:84
 #: changedetectionio/blueprint/ui/templates/edit.html:280
@@ -1510,17 +1499,13 @@ msgstr "Aktueller Screenshot der letzten Anfrage"
 msgid "No screenshot available just yet! Try rechecking the page."
 msgstr ""
 "Noch kein Screenshot verfügbar! Versuchen Sie, die Seite noch einmal zu "
-"überprüfen.\"Noch kein Screenshot verfügbar! Versuchen Sie, die Seite "
-"noch einmal zu überprüfen.Noch kein Screenshot verfügbar! Versuchen Sie, "
-"die Seite noch einmal zu überprüfen."
+"überprüfen."
 
 #: changedetectionio/blueprint/ui/templates/diff.html:154
 msgid "Screenshot requires Playwright/WebDriver enabled"
 msgstr ""
 "Für den Screenshot ist die Aktivierung von Playwright/WebDriver "
-"erforderlich\"Für den Screenshot ist die Aktivierung von "
-"Playwright/WebDriver erforderlichFür den Screenshot ist die Aktivierung "
-"von Playwright/WebDriver erforderlich"
+"erforderlich"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:48
 msgid "Request"
@@ -1547,9 +1532,7 @@ msgstr "EINSTELLUNGEN"
 msgid "Some sites use JavaScript to create the content, for this you should"
 msgstr ""
 "Einige Websites verwenden JavaScript, um den Inhalt zu erstellen. Dies "
-"sollten Sie tun\"Einige Websites verwenden JavaScript, um den Inhalt zu "
-"erstellen. Dies sollten Sie tunEinige Websites verwenden JavaScript, um "
-"den Inhalt zu erstellen. Dies sollten Sie tun"
+"sollten Sie tun"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:73
 #: changedetectionio/blueprint/ui/templates/edit.html:313
@@ -1570,9 +1553,7 @@ msgstr "Hilfe und Beispiele finden Sie hier"
 msgid "Organisational tag/group name used in the main listing page"
 msgstr ""
 "Organisations-Tag/Gruppenname, der auf der Haupteintragsseite verwendet "
-"wird\"Organisations-Tag/Gruppenname, der auf der Haupteintragsseite "
-"verwendet wirdOrganisations-Tag/Gruppenname, der auf der "
-"Haupteintragsseite verwendet wird"
+"wird"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:85
 msgid ""
@@ -1623,9 +1604,7 @@ msgstr ""
 msgid "Connect using Bright Data and Oxylabs Proxies, find out more here."
 msgstr ""
 "Stellen Sie eine Verbindung über Bright Data und Oxylabs Proxies her, "
-"erfahren Sie hier mehr.\"Stellen Sie eine Verbindung über Bright Data und"
-" Oxylabs Proxies her, erfahren Sie hier mehr.Stellen Sie eine Verbindung "
-"über Bright Data und Oxylabs Proxies her, erfahren Sie hier mehr."
+"erfahren Sie hier mehr."
 
 #: changedetectionio/blueprint/ui/templates/edit.html:130
 msgid "Check/Scan all"
@@ -1683,10 +1662,7 @@ msgstr "Alarm! Zusätzliche Header-Datei gefunden und wird dieser Uhr hinzugefü
 #: changedetectionio/blueprint/ui/templates/edit.html:194
 msgid "Headers can be also read from a file in your data-directory"
 msgstr ""
-"Header können auch aus einer Datei in Ihrem Datenverzeichnis gelesen "
-"werden\"Header können auch aus einer Datei in Ihrem Datenverzeichnis "
-"gelesen werdenHeader können auch aus einer Datei in Ihrem "
-"Datenverzeichnis gelesen werden"
+"Header können auch aus einer Datei in Ihrem Datenverzeichnis gelesen werden"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:194
 msgid "Read more here"
@@ -1711,10 +1687,7 @@ msgstr "Klicken Sie hier, um zu starten"
 #: changedetectionio/blueprint/ui/templates/edit.html:233
 msgid "Please allow 10-15 seconds for the browser to connect."
 msgstr ""
-"Bitte warten Sie 10–15 Sekunden, bis der Browser eine Verbindung "
-"herstellt.\"Bitte warten Sie 10–15 Sekunden, bis der Browser eine "
-"Verbindung herstellt.Bitte warten Sie 10–15 Sekunden, bis der Browser "
-"eine Verbindung herstellt."
+"Bitte warten Sie 10–15 Sekunden, bis der Browser eine Verbindung herstellt."
 
 #: changedetectionio/blueprint/ui/templates/edit.html:242
 msgid "Press \"Play\" to start."
@@ -1724,10 +1697,8 @@ msgstr ""
 #: changedetectionio/blueprint/ui/templates/edit.html:419
 msgid "Visual Selector data is not ready, watch needs to be checked atleast once."
 msgstr ""
-"Die Visual Selector-Daten sind nicht bereit, die Uhr muss mindestens "
-"einmal überprüft werden.\"Die Visual Selector-Daten sind nicht bereit, "
-"die Uhr muss mindestens einmal überprüft werden.Die Visual Selector-Daten"
-" sind nicht bereit, die Uhr muss mindestens einmal überprüft werden."
+"Die Visual Selector-Daten sind nicht bereit, die Uhr muss mindestens einmal "
+"überprüft werden."
 
 #: changedetectionio/blueprint/ui/templates/edit.html:253
 msgid ""
@@ -1774,10 +1745,8 @@ msgstr "Profi-Tipps:"
 #: changedetectionio/blueprint/ui/templates/edit.html:310
 msgid "Use the preview page to see your filters and triggers highlighted."
 msgstr ""
-"Verwenden Sie die Vorschauseite, um Ihre Filter und Auslöser "
-"hervorgehoben anzuzeigen.\"Verwenden Sie die Vorschauseite, um Ihre "
-"Filter und Auslöser hervorgehoben anzuzeigen.Verwenden Sie die "
-"Vorschauseite, um Ihre Filter und Auslöser hervorgehoben anzuzeigen."
+"Verwenden Sie die Vorschauseite, um Ihre Filter und Auslöser hervorgehoben "
+"anzuzeigen."
 
 #: changedetectionio/blueprint/ui/templates/edit.html:322
 msgid "Limit trigger/ignore/block/extract to;"
@@ -1818,9 +1787,7 @@ msgstr "wenn Sie an neuen Inhalten interessiert sind."
 msgid "When content is merely moved in a list, it will also trigger an"
 msgstr ""
 "Wenn Inhalte lediglich in einer Liste verschoben werden, wird auch ein "
-"Fehler ausgelöst\"Wenn Inhalte lediglich in einer Liste verschoben "
-"werden, wird auch ein Fehler ausgelöstWenn Inhalte lediglich in einer "
-"Liste verschoben werden, wird auch ein Fehler ausgelöst"
+"Fehler ausgelöst"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:328
 msgid "consider enabling"
@@ -2124,12 +2091,8 @@ msgstr "Geändert"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:130
 msgid "No website watches configured, please add a URL in the box above, or"
 msgstr ""
-"Es sind keine Website-Überwachungen konfiguriert. Bitte fügen Sie im Feld"
-" oben eine URL hinzu, oder\"Es sind keine Website-Überwachungen "
-"konfiguriert. Bitte fügen Sie im Feld oben eine URL hinzu, oderEs sind "
-"keine Website-Überwachungen konfiguriert. Bitte fügen Sie im Feld oben "
-"eine URL hinzu, oderEs sind keine Website-Überwachungen konfiguriert. "
-"Bitte fügen Sie im Feld oben eine URL hinzu, oder"
+"Es sind keine Website-Überwachungen konfiguriert. Bitte fügen Sie im Feld "
+"oben eine URL hinzu, oder"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:130
 msgid "import a list"
