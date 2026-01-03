@@ -35,7 +35,7 @@ msgstr ""
 
 #: changedetectionio/flask_app.py:551
 msgid "Incorrect password"
-msgstr "Heslo"
+msgstr "Nesprávné heslo"
 
 #: changedetectionio/forms.py:63 changedetectionio/forms.py:243
 msgid ""
@@ -304,7 +304,7 @@ msgstr "Odstraňte všechny mezery před a za každým řádkem textu"
 
 #: changedetectionio/forms.py:817
 msgid "Added lines"
-msgstr "Přihlášení"
+msgstr "Přidané řádky"
 
 #: changedetectionio/forms.py:818
 msgid "Replaced/changed lines"
@@ -517,7 +517,7 @@ msgstr ""
 
 #: changedetectionio/forms.py:1020
 msgid "Remove password"
-msgstr "Heslo"
+msgstr "Odebrat heslo"
 
 #: changedetectionio/forms.py:1021
 msgid "Render anchor tag content"
@@ -586,11 +586,11 @@ msgstr ""
 #: changedetectionio/templates/base.html:282
 #: changedetectionio/templates/base.html:290
 msgid "Backups"
-msgstr "ZÁLOHY"
+msgstr "Backups"
 
 #: changedetectionio/blueprint/backups/templates/overview.html:9
 msgid "A backup is running!"
-msgstr "Probíhá zálohování!"
+msgstr "A backup is running!"
 
 #: changedetectionio/blueprint/backups/templates/overview.html:13
 msgid ""
@@ -604,15 +604,15 @@ msgstr "Mb"
 
 #: changedetectionio/blueprint/backups/templates/overview.html:24
 msgid "No backups found."
-msgstr "Nebyly nalezeny žádné zálohy."
+msgstr "No backups found."
 
 #: changedetectionio/blueprint/backups/templates/overview.html:28
 msgid "Create backup"
-msgstr "ZÁLOHY"
+msgstr "Create backup"
 
 #: changedetectionio/blueprint/backups/templates/overview.html:30
 msgid "Remove backups"
-msgstr "ZÁLOHY"
+msgstr "Remove backups"
 
 #: changedetectionio/blueprint/imports/importer.py:45
 msgid ""
@@ -881,7 +881,7 @@ msgstr "Nejsou aktivní žádné pluginy"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:405
 msgid "Back"
-msgstr "ZÁLOHY"
+msgstr "Zpět"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:406
 msgid "Clear Snapshot History"
@@ -1243,7 +1243,7 @@ msgstr "Možná budete chtít použít"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:13
 msgid "BACKUP"
-msgstr "ZÁLOHY"
+msgstr "BACKUP"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:13
 msgid "link first."
@@ -1301,11 +1301,11 @@ msgstr "Na"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:53
 msgid "Words"
-msgstr "Heslo"
+msgstr "Slova"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:57
 msgid "Lines"
-msgstr "Přihlášení"
+msgstr "Řádky"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:61
 msgid "Ignore Whitespace"
@@ -1313,7 +1313,7 @@ msgstr "Ignorujte mezery"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:65
 msgid "Same/non-changed"
-msgstr "Změněno"
+msgstr "Stejné/beze změny"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:69
 msgid "Removed"
@@ -2367,7 +2367,7 @@ msgstr "IMPORTOVAT"
 #: changedetectionio/templates/base.html:87
 #: changedetectionio/templates/base.html:171
 msgid "BACKUPS"
-msgstr "ZÁLOHY"
+msgstr "BACKUPS"
 
 #: changedetectionio/templates/base.html:91
 #: changedetectionio/templates/base.html:173

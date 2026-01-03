@@ -173,7 +173,7 @@ msgstr "Valeur invalide."
 
 #: changedetectionio/forms.py:732
 msgid "Watch"
-msgstr "# Montres"
+msgstr "Moniteur"
 
 #: changedetectionio/forms.py:733 changedetectionio/forms.py:766
 msgid "Processor"
@@ -369,7 +369,7 @@ msgstr "Joindre une capture d'écran à la notification (si possible)"
 
 #: changedetectionio/forms.py:835
 msgid "Match"
-msgstr "# Montres"
+msgstr "Correspondance"
 
 #: changedetectionio/forms.py:835
 msgid "Match all of the following"
@@ -477,7 +477,7 @@ msgstr "envisager d'activer"
 
 #: changedetectionio/forms.py:983
 msgid "Use page <title> in watch overview list"
-msgstr "Utiliser la page <titre> dans la liste de présentation des montres"
+msgstr "Utiliser la page <titre> dans la liste de présentation des moniteurs"
 
 #: changedetectionio/forms.py:988
 msgid "API access token security check enabled"
@@ -540,7 +540,7 @@ msgstr ""
 
 #: changedetectionio/forms.py:1024
 msgid "Hide muted watches from RSS feed"
-msgstr "Masquer les montres en sourdine du flux RSS"
+msgstr "Masquer les moniteurs en sourdine du flux RSS"
 
 #: changedetectionio/forms.py:1027
 msgid "Enable RSS reader mode "
@@ -548,7 +548,7 @@ msgstr "Activer le mode lecteur RSS"
 
 #: changedetectionio/forms.py:1028
 msgid "Number of changes to show in watch RSS feed"
-msgstr "Nombre de modifications à afficher dans le flux RSS de la montre"
+msgstr "Nombre de modifications à afficher dans le flux RSS du moniteur"
 
 #: changedetectionio/forms.py:1030 changedetectionio/forms.py:1035
 msgid "Should contain zero or more attempts"
@@ -877,7 +877,7 @@ msgstr "Plus d'informations"
 #: changedetectionio/blueprint/settings/templates/settings.html:46
 msgid "Default recheck time for all watches, current system minimum is"
 msgstr ""
-"Heure de revérification par défaut pour toutes les montres, le minimum "
+"Heure de revérification par défaut pour tous les moniteurs, le minimum "
 "actuel du système est"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:46
@@ -955,7 +955,7 @@ msgstr "ajouté"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html:50
 msgid "to any existing watch configurations."
-msgstr "à toutes les configurations de montre existantes."
+msgstr "à toutes les configurations de moniteur existantes."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html:53
 #: changedetectionio/blueprint/ui/templates/edit.html:321
@@ -998,7 +998,7 @@ msgstr "URL de notification à l'échelle du système activées"
 #: changedetectionio/blueprint/ui/templates/edit.html:277
 msgid "this form will override notification settings for this watch only"
 msgstr ""
-"ce formulaire remplacera les paramètres de notification pour cette montre"
+"ce formulaire remplacera les paramètres de notification pour ce moniteur"
 " uniquement"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html:81
@@ -1029,7 +1029,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:31
 msgid "# Watches"
-msgstr "# Montres"
+msgstr "# Moniteurs"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:32
 msgid "Tag / Label name"
@@ -1085,12 +1085,12 @@ msgstr "Dissocier"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:69
 msgid "Keep the tag but unlink any watches"
-msgstr "Conservez l'étiquette mais dissociez les montres"
+msgstr "Conservez l'étiquette mais dissociez les moniteurs"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:70
 #: changedetectionio/blueprint/ui/templates/edit.html:500
 msgid "RSS Feed for this watch"
-msgstr "Flux RSS de cette montre"
+msgstr "Flux RSS de ce moniteur"
 
 #: changedetectionio/blueprint/ui/__init__.py:20
 #, python-brace-format
@@ -1098,9 +1098,9 @@ msgid "{} watches deleted"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py:27
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "{} watches paused"
-msgstr "# Montres"
+msgstr "{} moniteurs en pause"
 
 #: changedetectionio/blueprint/ui/__init__.py:34
 #, python-brace-format
@@ -1113,9 +1113,9 @@ msgid "{} watches updated"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py:48
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "{} watches muted"
-msgstr "# Montres"
+msgstr "{} moniteurs en sourdine"
 
 #: changedetectionio/blueprint/ui/__init__.py:55
 #, python-brace-format
@@ -1326,11 +1326,11 @@ msgstr "À"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:53
 msgid "Words"
-msgstr "Mot de passe"
+msgstr "Mots"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:57
 msgid "Lines"
-msgstr "Se connecter"
+msgstr "Lignes"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:61
 msgid "Ignore Whitespace"
@@ -1338,7 +1338,7 @@ msgstr "Ignorer les espaces"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:65
 msgid "Same/non-changed"
-msgstr "Modifié"
+msgstr "Identique/non modifié"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:69
 msgid "Removed"
@@ -1570,7 +1570,7 @@ msgstr "Revérifiez tout"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:133
 msgid "Choose a proxy for this watch"
-msgstr "Flux RSS de cette montre"
+msgstr "Choisissez un proxy pour ce moniteur"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:143
 msgid ""
@@ -1659,8 +1659,8 @@ msgstr ""
 #: changedetectionio/blueprint/ui/templates/edit.html:419
 msgid "Visual Selector data is not ready, watch needs to be checked atleast once."
 msgstr ""
-"Les données du sélecteur visuel ne sont pas prêtes, la montre doit être "
-"vérifiée au moins une fois."
+"Les données du sélecteur visuel ne sont pas prêtes, le moniteur doit être "
+"vérifié au moins une fois."
 
 #: changedetectionio/blueprint/ui/templates/edit.html:253
 msgid ""
@@ -2445,11 +2445,11 @@ msgstr "Changer de langue"
 
 #: changedetectionio/templates/base.html:253
 msgid "Watch List"
-msgstr "# Montres"
+msgstr "Moniteurs"
 
 #: changedetectionio/templates/base.html:258
 msgid "Watches"
-msgstr "# Montres"
+msgstr "Moniteurs"
 
 #: changedetectionio/templates/base.html:261
 msgid "Queue Status"

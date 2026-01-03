@@ -1323,11 +1323,11 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/diff.html:53
 msgid "Words"
-msgstr ""
+msgstr "Parole"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:57
 msgid "Lines"
-msgstr ""
+msgstr "Righe"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:61
 msgid "Ignore Whitespace"
@@ -1335,7 +1335,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/diff.html:65
 msgid "Same/non-changed"
-msgstr ""
+msgstr "Uguale/non modificato"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:69
 msgid "Removed"
@@ -1377,12 +1377,12 @@ msgstr ""
 #: changedetectionio/blueprint/ui/templates/diff.html:97
 #: changedetectionio/blueprint/ui/templates/preview.html:45
 msgid "Error Text"
-msgstr ""
+msgstr "Testo dell'errore"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:98
 #: changedetectionio/blueprint/ui/templates/preview.html:47
 msgid "Error Screenshot"
-msgstr ""
+msgstr "Screenshot dell'errore"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:99
 #: changedetectionio/blueprint/ui/templates/preview.html:50
@@ -1392,7 +1392,7 @@ msgstr "Testo"
 #: changedetectionio/blueprint/ui/templates/diff.html:100
 #: changedetectionio/blueprint/ui/templates/preview.html:51
 msgid "Current screenshot"
-msgstr ""
+msgstr "Screenshot corrente"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:101
 msgid "Extract Data"
@@ -1447,7 +1447,7 @@ msgstr ""
 #: changedetectionio/blueprint/ui/templates/diff.html:149
 #: changedetectionio/blueprint/ui/templates/preview.html:86
 msgid "Current screenshot from most recent request"
-msgstr ""
+msgstr "Screenshot corrente dalla richiesta più recente"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:151
 #: changedetectionio/blueprint/ui/templates/preview.html:88

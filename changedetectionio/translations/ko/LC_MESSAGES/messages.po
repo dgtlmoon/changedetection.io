@@ -1340,11 +1340,11 @@ msgstr "에게"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:53
 msgid "Words"
-msgstr "비밀번호"
+msgstr "단어"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:57
 msgid "Lines"
-msgstr "로그인"
+msgstr "줄"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:61
 msgid "Ignore Whitespace"
@@ -1352,7 +1352,7 @@ msgstr "공백 무시"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:65
 msgid "Same/non-changed"
-msgstr "변경됨"
+msgstr "동일/변경되지 않음"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:69
 msgid "Removed"

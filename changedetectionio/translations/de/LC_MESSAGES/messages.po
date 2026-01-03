@@ -366,7 +366,7 @@ msgstr "Screenshot an Benachrichtigung anhängen (sofern möglich)"
 
 #: changedetectionio/forms.py:835
 msgid "Match"
-msgstr "# Uhren"
+msgstr "Übereinstimmung"
 
 #: changedetectionio/forms.py:835
 msgid "Match all of the following"
@@ -539,7 +539,7 @@ msgstr ""
 
 #: changedetectionio/forms.py:1024
 msgid "Hide muted watches from RSS feed"
-msgstr "Stummgeschaltete Uhren aus dem RSS-Feed ausblenden"
+msgstr "Stummgeschaltete Monitore aus dem RSS-Feed ausblenden"
 
 #: changedetectionio/forms.py:1027
 msgid "Enable RSS reader mode "
@@ -547,7 +547,7 @@ msgstr "Aktivieren Sie den RSS-Reader-Modus"
 
 #: changedetectionio/forms.py:1028
 msgid "Number of changes to show in watch RSS feed"
-msgstr "Anzahl der Änderungen, die im RSS-Feed der Uhr angezeigt werden sollen"
+msgstr "Anzahl der Änderungen, die im RSS-Feed des Monitors angezeigt werden sollen"
 
 #: changedetectionio/forms.py:1030 changedetectionio/forms.py:1035
 msgid "Should contain zero or more attempts"
@@ -872,7 +872,7 @@ msgstr "Weitere Informationen"
 #: changedetectionio/blueprint/settings/templates/settings.html:46
 msgid "Default recheck time for all watches, current system minimum is"
 msgstr ""
-"Standardzeit für erneute Überprüfungen für alle Uhren, aktuelles "
+"Standardzeit für erneute Überprüfungen für alle Monitore, aktuelles "
 "Systemminimum"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:46
@@ -950,7 +950,7 @@ msgstr "hinzugefügt"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html:50
 msgid "to any existing watch configurations."
-msgstr "zu allen vorhandenen Uhrenkonfigurationen."
+msgstr "zu allen vorhandenen Monitor-Konfigurationen."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html:53
 #: changedetectionio/blueprint/ui/templates/edit.html:321
@@ -1024,7 +1024,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:31
 msgid "# Watches"
-msgstr "# Uhren"
+msgstr "# Monitore"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:32
 msgid "Tag / Label name"
@@ -1080,12 +1080,12 @@ msgstr "Verknüpfung aufheben"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:69
 msgid "Keep the tag but unlink any watches"
-msgstr "Behalten Sie das Tag, aber heben Sie die Verknüpfung aller Uhren auf"
+msgstr "Behalten Sie das Tag, aber heben Sie die Verknüpfung aller Monitore auf"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:70
 #: changedetectionio/blueprint/ui/templates/edit.html:500
 msgid "RSS Feed for this watch"
-msgstr "RSS-Feed für diese Uhr"
+msgstr "RSS-Feed für diesen Monitor"
 
 #: changedetectionio/blueprint/ui/__init__.py:20
 #, python-brace-format
@@ -1093,9 +1093,9 @@ msgid "{} watches deleted"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py:27
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "{} watches paused"
-msgstr "# Uhren"
+msgstr "{} Monitore pausiert"
 
 #: changedetectionio/blueprint/ui/__init__.py:34
 #, python-brace-format
@@ -1108,9 +1108,9 @@ msgid "{} watches updated"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py:48
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "{} watches muted"
-msgstr "# Uhren"
+msgstr "{} Monitore stummgeschaltet"
 
 #: changedetectionio/blueprint/ui/__init__.py:55
 #, python-brace-format
@@ -1232,7 +1232,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/edit.py:239
 msgid "Updated watch."
-msgstr "Uhren löschen?"
+msgstr "Monitor aktualisiert."
 
 #: changedetectionio/blueprint/ui/preview.py:78
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
@@ -1321,11 +1321,11 @@ msgstr "Zu"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:53
 msgid "Words"
-msgstr "Passwort"
+msgstr "Wörter"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:57
 msgid "Lines"
-msgstr "Login"
+msgstr "Zeilen"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:61
 msgid "Ignore Whitespace"
@@ -1333,7 +1333,7 @@ msgstr "Leerzeichen ignorieren"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:65
 msgid "Same/non-changed"
-msgstr "Geändert"
+msgstr "Gleich/unverändert"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:69
 msgid "Removed"
@@ -1565,7 +1565,7 @@ msgstr "Überprüfen Sie alles noch einmal"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:133
 msgid "Choose a proxy for this watch"
-msgstr "RSS-Feed für diese Uhr"
+msgstr "Wählen Sie einen Proxy für diesen Monitor"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:143
 msgid ""
@@ -1610,7 +1610,7 @@ msgstr "Variablen werden in den Anforderungsheaderwerten unterstützt"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:192
 msgid "Alert! Extra headers file found and will be added to this watch!"
-msgstr "Alarm! Zusätzliche Header-Datei gefunden und wird dieser Uhr hinzugefügt!"
+msgstr "Alarm! Zusätzliche Header-Datei gefunden und wird diesem Monitor hinzugefügt!"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:194
 msgid "Headers can be also read from a file in your data-directory"
@@ -1652,7 +1652,7 @@ msgstr ""
 #: changedetectionio/blueprint/ui/templates/edit.html:419
 msgid "Visual Selector data is not ready, watch needs to be checked atleast once."
 msgstr ""
-"Die Visual Selector-Daten sind nicht bereit, die Uhr muss mindestens "
+"Die Visual Selector-Daten sind nicht bereit, der Monitor muss mindestens "
 "einmal überprüft werden."
 
 #: changedetectionio/blueprint/ui/templates/edit.html:253
@@ -1873,11 +1873,11 @@ msgstr "Laden Sie den neuesten HTML-Snapshot herunter"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:488
 msgid "Delete Watch?"
-msgstr "Uhren löschen?"
+msgstr "Monitor löschen?"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:489
 msgid "Are you sure you want to delete the watch for:"
-msgstr "Sind Sie sicher, dass Sie die Überwachung löschen möchten für:"
+msgstr "Sind Sie sicher, dass Sie den Monitor löschen möchten für:"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:489
 msgid "This action cannot be undone."
@@ -2006,7 +2006,7 @@ msgstr "Verlauf löschen/zurücksetzen"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:71
 msgid "Delete Watches?"
-msgstr "Uhren löschen?"
+msgstr "Monitore löschen?"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:72
 msgid ""
@@ -2439,7 +2439,7 @@ msgstr "Watch"
 
 #: changedetectionio/templates/base.html:258
 msgid "Watches"
-msgstr "# Uhren"
+msgstr "Monitore"
 
 #: changedetectionio/templates/base.html:261
 msgid "Queue Status"
