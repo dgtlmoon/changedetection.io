@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-02 16:07+0100\n"
+"POT-Creation-Date: 2026-01-03 14:31+0100\n"
 "PO-Revision-Date: 2026-01-02 11:40+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: cs\n"
@@ -19,22 +19,21 @@ msgstr ""
 "Generated-By: Babel 2.17.0\n"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:241
-#: changedetectionio/flask_app.py:213 changedetectionio/flask_app.py:225
-#: changedetectionio/flask_app.py:246
+#: changedetectionio/flask_app.py:214 changedetectionio/flask_app.py:226
+#: changedetectionio/flask_app.py:247
 #: changedetectionio/realtime/socket_server.py:171
 msgid "Not yet"
 msgstr "Ještě ne"
 
-#: changedetectionio/flask_app.py:468
-msgid "You must be logged in, please log in."
-msgstr ""
-
-#: changedetectionio/flask_app.py:495
+#: changedetectionio/flask_app.py:534
 msgid "Already logged in"
 msgstr ""
 
-#: changedetectionio/flask_app.py:522
-#, fuzzy
+#: changedetectionio/flask_app.py:536
+msgid "You must be logged in, please log in."
+msgstr ""
+
+#: changedetectionio/flask_app.py:551
 msgid "Incorrect password"
 msgstr "Heslo"
 
@@ -59,19 +58,16 @@ msgid "Not a valid timezone name"
 msgstr "Neplatný název časového pásma"
 
 #: changedetectionio/forms.py:183
-#, fuzzy
 msgid "not set"
-msgstr "Ještě ne"
+msgstr "nenastaveno"
 
 #: changedetectionio/forms.py:184
-#, fuzzy
 msgid "Start At"
-msgstr "NASTAVENÍ"
+msgstr "Začíná v"
 
 #: changedetectionio/forms.py:185
-#, fuzzy
 msgid "Run duration"
-msgstr "Žádné informace"
+msgstr "Doba běhu"
 
 #: changedetectionio/forms.py:188
 msgid "Use time scheduler"
@@ -124,17 +120,14 @@ msgid "Days"
 msgstr "Dny"
 
 #: changedetectionio/forms.py:253
-#, fuzzy
 msgid "Hours"
-msgstr "Heslo"
+msgstr "Hodiny"
 
 #: changedetectionio/forms.py:254
-#, fuzzy
 msgid "Minutes"
-msgstr "Ztlumit"
+msgstr "Minuty"
 
 #: changedetectionio/forms.py:255
-#, fuzzy
 msgid "Seconds"
 msgstr "sekundy"
 
@@ -176,7 +169,6 @@ msgid "Invalid value."
 msgstr "Neplatná hodnota."
 
 #: changedetectionio/forms.py:732
-#, fuzzy
 msgid "Watch"
 msgstr "# monitory"
 
@@ -185,34 +177,28 @@ msgid "Processor"
 msgstr "Procesor"
 
 #: changedetectionio/forms.py:734
-#, fuzzy
 msgid "Edit > Watch"
 msgstr "Nejprve upravte a poté sledujte"
 
 #: changedetectionio/forms.py:747 changedetectionio/forms.py:994
-#, fuzzy
 msgid "Fetch Method"
 msgstr "Nastavte metodu načítání"
 
 #: changedetectionio/forms.py:748
-#, fuzzy
 msgid "Notification Body"
-msgstr "Žádné informace"
+msgstr "Text oznámení"
 
 #: changedetectionio/forms.py:749
-#, fuzzy
 msgid "Notification format"
-msgstr "Žádné informace"
+msgstr "Formát oznámení"
 
 #: changedetectionio/forms.py:750
-#, fuzzy
 msgid "Notification Title"
-msgstr "Žádné informace"
+msgstr "Název oznámení"
 
 #: changedetectionio/forms.py:751
-#, fuzzy
 msgid "Notification URL List"
-msgstr "Žádné informace"
+msgstr "Seznam URL oznámení"
 
 #: changedetectionio/forms.py:752
 msgid "Processor - What do you want to achieve?"
@@ -223,7 +209,6 @@ msgid "Default timezone for watch check scheduler"
 msgstr "Výchozí časové pásmo pro plánovač kontroly monitorů"
 
 #: changedetectionio/forms.py:754
-#, fuzzy
 msgid "Wait seconds before extracting text"
 msgstr "sekund před extrahováním textu."
 
@@ -232,7 +217,6 @@ msgid "Should contain one or more seconds"
 msgstr "Měl by obsahovat jednu nebo více sekund"
 
 #: changedetectionio/forms.py:767
-#, fuzzy
 msgid "URLs"
 msgstr "URL"
 
@@ -245,22 +229,18 @@ msgid "Must be .xlsx file!"
 msgstr "Musí to být soubor .xlsx!"
 
 #: changedetectionio/forms.py:769
-#, fuzzy
 msgid "File mapping"
 msgstr "Typ mapování souboru."
 
 #: changedetectionio/forms.py:773
-#, fuzzy
 msgid "Operation"
 msgstr "Možnosti uživatelského rozhraní"
 
 #: changedetectionio/forms.py:776
-#, fuzzy
 msgid "Selector"
 msgstr "Režim výběru:"
 
 #: changedetectionio/forms.py:777
-#, fuzzy
 msgid "value"
 msgstr "Pauza"
 
@@ -269,17 +249,14 @@ msgid "Use global settings for time between check and scheduler."
 msgstr "Použijte globální nastavení pro čas mezi kontrolou a plánovačem."
 
 #: changedetectionio/forms.py:798
-#, fuzzy
 msgid "CSS/JSONPath/JQ/XPath Filters"
 msgstr "CSS/xPath filtr"
 
 #: changedetectionio/forms.py:800 changedetectionio/forms.py:996
-#, fuzzy
 msgid "Remove elements"
 msgstr "Vyberte podle prvku"
 
 #: changedetectionio/forms.py:802
-#, fuzzy
 msgid "Extract text"
 msgstr "Extrahujte data"
 
@@ -289,28 +266,22 @@ msgid "Title"
 msgstr "Titul"
 
 #: changedetectionio/forms.py:806
-#, fuzzy
 msgid "Ignore lines containing"
 msgstr "Ignorujte všechny odpovídající řádky"
 
 #: changedetectionio/forms.py:808
-#, fuzzy
 msgid "Request body"
 msgstr "Žádost"
 
 #: changedetectionio/forms.py:809
-#, fuzzy
 msgid "Request method"
 msgstr "Žádost"
 
 #: changedetectionio/forms.py:810
 msgid "Ignore status codes (process non-2xx status codes as normal)"
-msgstr ""
-"Ignorovat stavové kódy (zpracovat stavové "
-"kódy jiné než 2xx jako normálně)"
+msgstr "Ignorovat stavové kódy (zpracovat stavové kódy jiné než 2xx jako normálně)"
 
 #: changedetectionio/forms.py:811
-#, fuzzy
 msgid "Only trigger when unique lines appear in all history"
 msgstr "Spustit pouze tehdy, když se objeví jedinečné čáry"
 
@@ -328,12 +299,10 @@ msgid "Strip ignored lines"
 msgstr "Odstraňte ignorované řádky"
 
 #: changedetectionio/forms.py:815
-#, fuzzy
 msgid "Trim whitespace before and after text"
 msgstr "Odstraňte všechny mezery před a za každým řádkem textu"
 
 #: changedetectionio/forms.py:817
-#, fuzzy
 msgid "Added lines"
 msgstr "Přihlášení"
 
@@ -342,7 +311,6 @@ msgid "Replaced/changed lines"
 msgstr "Vyměněny/změněny řádky"
 
 #: changedetectionio/forms.py:819
-#, fuzzy
 msgid "Removed lines"
 msgstr "Odebráno"
 
@@ -379,12 +347,10 @@ msgid "Notifications"
 msgstr "Žádné informace"
 
 #: changedetectionio/forms.py:832
-#, fuzzy
 msgid "Muted"
 msgstr "Ztlumit"
 
 #: changedetectionio/forms.py:832
-#, fuzzy
 msgid "On"
 msgstr "žádný"
 
@@ -429,7 +395,6 @@ msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
 msgstr ""
 
 #: changedetectionio/forms.py:920 changedetectionio/forms.py:932
-#, fuzzy
 msgid "Name"
 msgstr "Zrušit ztlumení"
 
@@ -454,7 +419,6 @@ msgid "Plaintext requests"
 msgstr "Požadavky na prostý text"
 
 #: changedetectionio/forms.py:946
-#, fuzzy
 msgid "Chrome requests"
 msgstr "Žádost"
 
@@ -495,12 +459,10 @@ msgid "Open 'History' page in a new tab"
 msgstr "Otevřete stránku „Historie“ na nové kartě"
 
 #: changedetectionio/forms.py:981
-#, fuzzy
 msgid "Realtime UI Updates Enabled"
 msgstr "Aktualizace v reálném čase offline"
 
 #: changedetectionio/forms.py:982
-#, fuzzy
 msgid "Favicons Enabled"
 msgstr "zvážit povolení"
 
@@ -513,7 +475,6 @@ msgid "API access token security check enabled"
 msgstr "Kontrola zabezpečení přístupového tokenu API povolena"
 
 #: changedetectionio/forms.py:989
-#, fuzzy
 msgid "Notification base URL override"
 msgstr "Počet upozornění na upozornění"
 
@@ -522,12 +483,10 @@ msgid "Treat empty pages as a change?"
 msgstr "Považovat prázdné stránky za změnu?"
 
 #: changedetectionio/forms.py:995
-#, fuzzy
 msgid "Ignore Text"
 msgstr "Text chyby"
 
 #: changedetectionio/forms.py:997
-#, fuzzy
 msgid "Ignore whitespace"
 msgstr "Ignorujte mezery"
 
@@ -557,7 +516,6 @@ msgid "RSS \"System default\" template override"
 msgstr ""
 
 #: changedetectionio/forms.py:1020
-#, fuzzy
 msgid "Remove password"
 msgstr "Heslo"
 
@@ -596,7 +554,6 @@ msgid "RegEx to extract"
 msgstr "RegEx k extrahování"
 
 #: changedetectionio/forms.py:1056
-#, fuzzy
 msgid "Extract as CSV"
 msgstr "Extrahujte data"
 
@@ -626,6 +583,8 @@ msgid "Backups were deleted."
 msgstr ""
 
 #: changedetectionio/blueprint/backups/templates/overview.html:6
+#: changedetectionio/templates/base.html:282
+#: changedetectionio/templates/base.html:290
 msgid "Backups"
 msgstr "ZÁLOHY"
 
@@ -839,7 +798,6 @@ msgid "Password protection enabled."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/__init__.py:126
-#, fuzzy
 msgid "Settings updated."
 msgstr "NASTAVENÍ"
 
@@ -935,7 +893,6 @@ msgid "The tag \"{}\" already exists"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/__init__.py:50
-#, fuzzy
 msgid "Tag added"
 msgstr "Přidáno"
 
@@ -958,7 +915,6 @@ msgid "Tag not found"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/__init__.py:184
-#, fuzzy
 msgid "Updated"
 msgstr "Ztlumit"
 
@@ -1167,7 +1123,6 @@ msgid "{} watches were tagged"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py:142
-#, fuzzy
 msgid "Watch not found"
 msgstr "Sledujte tuto adresu URL!"
 
@@ -1177,12 +1132,10 @@ msgid "Cleared snapshot history for watch {}"
 msgstr "Vymazat/resetovat historii"
 
 #: changedetectionio/blueprint/ui/__init__.py:156
-#, fuzzy
 msgid "Cleared snapshot history for all watches"
 msgstr "Vymazat/resetovat historii"
 
 #: changedetectionio/blueprint/ui/__init__.py:158
-#, fuzzy
 msgid "Incorrect confirmation text."
 msgstr "Žádné informace"
 
@@ -1192,7 +1145,6 @@ msgid "The watch by UUID {} does not exist."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py:199
-#, fuzzy
 msgid "Deleted."
 msgstr "Vymazat"
 
@@ -1259,7 +1211,6 @@ msgid "Updated watch - unpaused!"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/edit.py:239
-#, fuzzy
 msgid "Updated watch."
 msgstr "Smazat monitory?"
 
@@ -1319,7 +1270,8 @@ msgid "Clear History!"
 msgstr "Jasné historie"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:39
-#: changedetectionio/templates/base.html:274
+#: changedetectionio/templates/base.html:379
+#: changedetectionio/templates/base.html:399
 msgid "Cancel"
 msgstr "Zrušit"
 
@@ -2058,9 +2010,10 @@ msgstr "Změněno"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:130
 msgid "No website watches configured, please add a URL in the box above, or"
 msgstr ""
-"Nejsou nakonfigurována žádná sledování webových stránek, do výše uvedeného "
-"pole přidejte adresu URL neboNejsou nakonfigurována žádná sledování "
-"webových stránek, do výše uvedeného pole přidejte adresu URL nebo"
+"Nejsou nakonfigurována žádná sledování webových stránek, do výše "
+"uvedeného pole přidejte adresu URL neboNejsou nakonfigurována žádná "
+"sledování webových stránek, do výše uvedeného pole přidejte adresu URL "
+"nebo"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:130
 msgid "import a list"
@@ -2087,7 +2040,7 @@ msgid "No information"
 msgstr "Žádné informace"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:234
-#: changedetectionio/templates/base.html:248
+#: changedetectionio/templates/base.html:353
 msgid "Checking now"
 msgstr "Probíhá kontrola"
 
@@ -2179,7 +2132,6 @@ msgid "Pixel Difference Sensitivity"
 msgstr "Rozdílová citlivost pixelů"
 
 #: changedetectionio/processors/image_ssim_diff/forms.py:58
-#, fuzzy
 msgid "Use global default"
 msgstr "Použít výchozí nastavení systému"
 
@@ -2188,7 +2140,6 @@ msgid "Bounding Box"
 msgstr "Bounding Box"
 
 #: changedetectionio/processors/image_ssim_diff/forms.py:76
-#, fuzzy
 msgid "Selection Mode"
 msgstr "Režim výběru:"
 
@@ -2255,7 +2206,6 @@ msgid "Follow price changes"
 msgstr "Sledujte změny cen"
 
 #: changedetectionio/processors/restock_diff/forms.py:37
-#, fuzzy
 msgid "Restock & Price Detection"
 msgstr "Doplnění zásob a cena"
 
@@ -2275,69 +2225,245 @@ msgstr "Změny textu webové stránky/HTML, JSON a PDF"
 msgid "Detects all text changes where possible"
 msgstr "Detekuje všechny změny textu, kde je to možné"
 
-#: changedetectionio/templates/base.html:77
+#: changedetectionio/templates/_helpers.html:25
+msgid "Entry"
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:153
+msgid "Actions"
+msgstr "Podmínky"
+
+#: changedetectionio/templates/_helpers.html:172
+msgid "Add a row/rule after"
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:173
+msgid "Remove this row/rule"
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:174
+msgid "Verify this rule against current snapshot"
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:184
+msgid ""
+"Error - This watch needs Chrome (with playwright/sockpuppetbrowser), but "
+"Chrome based fetching is not enabled."
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:184
+msgid "Alternatively try our"
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:184
+msgid ""
+"very affordable subscription based service which has all this setup for "
+"you"
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:185
+msgid "You may need to"
+msgstr "musíte"
+
+#: changedetectionio/templates/_helpers.html:185
+msgid "Enable playwright environment variable"
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:185
+msgid "and uncomment the"
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:185
+msgid "in the"
+msgstr "The"
+
+#: changedetectionio/templates/_helpers.html:185
+msgid "file"
+msgstr "Titul"
+
+#: changedetectionio/templates/_helpers.html:240
+msgid "Set a hourly/week day schedule"
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:247
+msgid "Schedule time limits"
+msgstr "Znovu zkontrolovat čas (minuty)"
+
+#: changedetectionio/templates/_helpers.html:248
+msgid "Business hours"
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:249
+msgid "Weekends"
+msgstr "týdny"
+
+#: changedetectionio/templates/_helpers.html:250
+msgid "Reset"
+msgstr "Žádost"
+
+#: changedetectionio/templates/_helpers.html:259
+msgid ""
+"Warning, one or more of your 'days' has a duration that would extend into"
+" the next day."
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:260
+msgid "This could have unintended consequences."
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:270
+msgid "More help and examples about using the scheduler"
+msgstr "Další nápověda a příklady zde"
+
+#: changedetectionio/templates/_helpers.html:275
+msgid "Want to use a time schedule?"
+msgstr "Použijte časový plánovač"
+
+#: changedetectionio/templates/_helpers.html:275
+msgid "First confirm/save your Time Zone Settings"
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:284
+msgid ""
+"Triggers a change if this text appears, AND something changed in the "
+"document."
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:284
+msgid "Triggered text"
+msgstr "Text chyby"
+
+#: changedetectionio/templates/_helpers.html:285
+msgid "Ignored for calculating changes, but still shown."
+msgstr ""
+
+#: changedetectionio/templates/_helpers.html:285
+msgid "Ignored text"
+msgstr "Text chyby"
+
+#: changedetectionio/templates/_helpers.html:286
+msgid "No change-detection will occur because this text exists."
+msgstr "Blokovat detekci změn, když se text shoduje"
+
+#: changedetectionio/templates/_helpers.html:286
+msgid "Blocked text"
+msgstr "Text chyby"
+
+#: changedetectionio/templates/base.html:78
+#: changedetectionio/templates/base.html:168
 msgid "GROUPS"
 msgstr "SKUPINY"
 
-#: changedetectionio/templates/base.html:80
+#: changedetectionio/templates/base.html:81
+#: changedetectionio/templates/base.html:169
 msgid "SETTINGS"
 msgstr "NASTAVENÍ"
 
-#: changedetectionio/templates/base.html:83
+#: changedetectionio/templates/base.html:84
+#: changedetectionio/templates/base.html:170
 msgid "IMPORT"
 msgstr "IMPORTOVAT"
 
-#: changedetectionio/templates/base.html:86
+#: changedetectionio/templates/base.html:87
+#: changedetectionio/templates/base.html:171
 msgid "BACKUPS"
 msgstr "ZÁLOHY"
 
-#: changedetectionio/templates/base.html:90
+#: changedetectionio/templates/base.html:91
+#: changedetectionio/templates/base.html:173
 msgid "EDIT"
 msgstr "UPRAVIT"
 
-#: changedetectionio/templates/base.html:100
+#: changedetectionio/templates/base.html:101
+#: changedetectionio/templates/base.html:177
 msgid "LOG OUT"
 msgstr "ODHLÁSIT SE"
 
-#: changedetectionio/templates/base.html:109
+#: changedetectionio/templates/base.html:108
 msgid "Search, or Use Alt+S Key"
 msgstr "Vyhledejte nebo použijte klávesu Alt+S"
 
-#: changedetectionio/templates/base.html:116
+#: changedetectionio/templates/base.html:114
 msgid "Toggle Light/Dark Mode"
 msgstr "Přepnout režim Světlý/Tmavý"
 
-#: changedetectionio/templates/base.html:117
+#: changedetectionio/templates/base.html:115
 msgid "Toggle light/dark mode"
 msgstr "Přepínání mezi světlým/tmavým režimem"
 
-#: changedetectionio/templates/base.html:127
+#: changedetectionio/templates/base.html:125
 msgid "Change Language"
 msgstr "Změnit jazyk"
 
-#: changedetectionio/templates/base.html:128
+#: changedetectionio/templates/base.html:126
 msgid "Change language"
 msgstr "Změnit jazyk"
 
-#: changedetectionio/templates/base.html:249
+#: changedetectionio/templates/base.html:253
+msgid "Watch List"
+msgstr "# monitory"
+
+#: changedetectionio/templates/base.html:258
+msgid "Watches"
+msgstr "# monitory"
+
+#: changedetectionio/templates/base.html:261
+msgid "Queue Status"
+msgstr ""
+
+#: changedetectionio/templates/base.html:270
+msgid "Queue"
+msgstr "Ve frontě"
+
+#: changedetectionio/templates/base.html:274
+#: changedetectionio/templates/base.html:279
+msgid "Settings"
+msgstr "NASTAVENÍ"
+
+#: changedetectionio/templates/base.html:293
+msgid "Sitemap Crawler"
+msgstr ""
+
+#: changedetectionio/templates/base.html:318
+msgid "Sitemap"
+msgstr ""
+
+#: changedetectionio/templates/base.html:354
 msgid "Real-time updates offline"
 msgstr "Aktualizace v reálném čase offline"
 
-#: changedetectionio/templates/base.html:259
+#: changedetectionio/templates/base.html:364
 msgid "Select Language"
 msgstr "Vyberte Jazyk"
 
-#: changedetectionio/templates/base.html:270
+#: changedetectionio/templates/base.html:375
 msgid ""
 "Language support is in beta, please help us improve by opening a PR on "
 "GitHub with any updates."
 msgstr ""
 
-#: changedetectionio/templates/login.html:10
+#: changedetectionio/templates/base.html:387
+#: changedetectionio/templates/base.html:400
+msgid "Search"
+msgstr "Hledání"
+
+#: changedetectionio/templates/base.html:392
+msgid "URL or Title"
+msgstr ""
+
+#: changedetectionio/templates/base.html:392
+msgid "in"
+msgstr "Více informací"
+
+#: changedetectionio/templates/base.html:393
+msgid "Enter search term..."
+msgstr ""
+
+#: changedetectionio/templates/login.html:11
 msgid "Password"
 msgstr "Heslo"
 
-#: changedetectionio/templates/login.html:16
+#: changedetectionio/templates/login.html:17
 msgid "Login"
 msgstr "Přihlášení"
 

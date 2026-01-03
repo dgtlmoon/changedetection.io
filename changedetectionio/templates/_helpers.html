@@ -22,7 +22,7 @@
                     {% for idx, entry_errors in field.errors|enumerate %}
                         {% if entry_errors is mapping and entry_errors %}
                             {# Only show entries that have actual errors #}
-                            <li><strong>Entry {{ idx + 1 }}:</strong>
+                            <li><strong>{{ _('Entry') }} {{ idx + 1 }}:</strong>
                                 <ul>
                                     {% for field_name, messages in entry_errors.items() %}
                                         {% for message in messages %}
@@ -150,7 +150,7 @@
       {% for subfield in fieldlist[0] %}
         <div class="fieldlist-header-cell">{{ subfield.label }}</div>
       {% endfor %}
-      <div class="fieldlist-header-cell">Actions</div>
+      <div class="fieldlist-header-cell">{{ _('Actions') }}</div>
     </div>
     <div class="fieldlist-body">
       {% for form_row in fieldlist %}
@@ -169,9 +169,9 @@
             </div>
           {% endfor %}
           <div class="fieldlist-cell fieldlist-actions">
-            <button type="button" class="addRuleRow" title="Add a row/rule after">+</button>
-            <button type="button" class="removeRuleRow" title="Remove this row/rule">-</button>
-            <button type="button" class="verifyRuleRow" title="Verify this rule against current snapshot">✓</button>
+            <button type="button" class="addRuleRow" title="{{ _('Add a row/rule after') }}">+</button>
+            <button type="button" class="removeRuleRow" title="{{ _('Remove this row/rule') }}">-</button>
+            <button type="button" class="verifyRuleRow" title="{{ _('Verify this rule against current snapshot') }}">✓</button>
           </div>
         </div>
       {% endfor %}
@@ -181,8 +181,8 @@
 
 
 {% macro playwright_warning() %}
-    <p><strong>Error - This watch needs Chrome (with playwright/sockpuppetbrowser), but Chrome based fetching is not enabled.</strong> Alternatively try our <a href="https://changedetection.io">very affordable subscription based service which has all this setup for you</a>.</p>
-    <p>You may need to <a href="https://github.com/dgtlmoon/changedetection.io/blob/09ebc6ec6338545bdd694dc6eee57f2e9d2b8075/docker-compose.yml#L31">Enable playwright environment variable</a> and uncomment the <strong>sockpuppetbrowser</strong> in the <a href="https://github.com/dgtlmoon/changedetection.io/blob/master/docker-compose.yml">docker-compose.yml</a> file.</p>
+    <p><strong>{{ _('Error - This watch needs Chrome (with playwright/sockpuppetbrowser), but Chrome based fetching is not enabled.') }}</strong> {{ _('Alternatively try our') }} <a href="https://changedetection.io">{{ _('very affordable subscription based service which has all this setup for you') }}</a>.</p>
+    <p>{{ _('You may need to') }} <a href="https://github.com/dgtlmoon/changedetection.io/blob/09ebc6ec6338545bdd694dc6eee57f2e9d2b8075/docker-compose.yml#L31">{{ _('Enable playwright environment variable') }}</a> {{ _('and uncomment the') }} <strong>sockpuppetbrowser</strong> {{ _('in the') }} <a href="https://github.com/dgtlmoon/changedetection.io/blob/master/docker-compose.yml">docker-compose.yml</a> {{ _('file') }}.</p>
     <br>
 {% endmacro %}
 
@@ -237,18 +237,17 @@
         <span id="scheduler-icon-label" style="">
             {{ render_checkbox_field(form.time_schedule_limit.enabled) }}
             <div class="pure-form-message-inline">
-                Set a hourly/week day schedule
+                {{ _('Set a hourly/week day schedule') }}
             </div>
         </span>
 
     </div>
     <br>
     <div id="schedule-day-limits-wrapper">
-        <label>Schedule time limits</label><a data-template="business-hours"
-                                              class="set-schedule pure-button button-secondary button-xsmall">Business
-        hours</a>
-        <a data-template="weekend" class="set-schedule pure-button button-secondary button-xsmall">Weekends</a>
-        <a data-template="reset" class="set-schedule pure-button button-xsmall">Reset</a><br>
+        <label>{{ _('Schedule time limits') }}</label><a data-template="business-hours"
+                                              class="set-schedule pure-button button-secondary button-xsmall">{{ _('Business hours') }}</a>
+        <a data-template="weekend" class="set-schedule pure-button button-secondary button-xsmall">{{ _('Weekends') }}</a>
+        <a data-template="reset" class="set-schedule pure-button button-xsmall">{{ _('Reset') }}</a><br>
         <br>
 
         <ul id="day-wrapper">
@@ -257,8 +256,8 @@
                     {{ render_nolabel_field(form.time_schedule_limit[day]) }}
                 </li>
             {% endfor %}
-            <li id="timespan-warning">Warning, one or more of your 'days' has a duration that would extend into the next day.<br>
-            This could have unintended consequences.</li>
+            <li id="timespan-warning">{{ _("Warning, one or more of your 'days' has a duration that would extend into the next day.") }}<br>
+            {{ _('This could have unintended consequences.') }}</li>
             <li id="timezone-info">
                 {{ render_field(form.time_schedule_limit.timezone, placeholder=timezone_default_config) }} <span id="local-time-in-tz"></span>
                 <datalist id="timezones" style="display: none;">
@@ -268,12 +267,12 @@
         </ul>
     <br>
         <span class="pure-form-message-inline">
-         <a href="https://changedetection.io/tutorials">More help and examples about using the scheduler</a>
+         <a href="https://changedetection.io/tutorials">{{ _('More help and examples about using the scheduler') }}</a>
         </span>
     </div>
     {% else %}
         <span class="pure-form-message-inline">
-            Want to use a time schedule? <a href="{{url_for('settings.settings_page')}}#timedate">First confirm/save your Time Zone Settings</a>
+            {{ _('Want to use a time schedule?') }} <a href="{{url_for('settings.settings_page')}}#timedate">{{ _('First confirm/save your Time Zone Settings') }}</a>
         </span>
         <br>
     {% endif %}
@@ -282,8 +281,8 @@
 
 {% macro highlight_trigger_ignored_explainer() %}
                 <p>
-                    <span title="Triggers a change if this text appears, AND something changed in the document." style="background-color: var(--highlight-trigger-text-bg-color); color: #fff; padding: 4px; border-radius: 2px; margin-right: 4px;">Triggered text</span>
-                    <span title="Ignored for calculating changes, but still shown." style="background-color: var(--highlight-ignored-text-bg-color); color: #fff; padding: 4px; border-radius: 2px; margin-right: 4px;">Ignored text</span>
-                    <span title="No change-detection will occur because this text exists." style="background-color: var(--highlight-blocked-text-bg-color); color: #fff; padding: 4px; border-radius: 2px; margin-right: 4px;">Blocked text</span>
+                    <span title="{{ _('Triggers a change if this text appears, AND something changed in the document.') }}" style="background-color: var(--highlight-trigger-text-bg-color); color: #fff; padding: 4px; border-radius: 2px; margin-right: 4px;">{{ _('Triggered text') }}</span>
+                    <span title="{{ _('Ignored for calculating changes, but still shown.') }}" style="background-color: var(--highlight-ignored-text-bg-color); color: #fff; padding: 4px; border-radius: 2px; margin-right: 4px;">{{ _('Ignored text') }}</span>
+                    <span title="{{ _('No change-detection will occur because this text exists.') }}" style="background-color: var(--highlight-blocked-text-bg-color); color: #fff; padding: 4px; border-radius: 2px; margin-right: 4px;">{{ _('Blocked text') }}</span>
                 </p>
 {% endmacro %}
