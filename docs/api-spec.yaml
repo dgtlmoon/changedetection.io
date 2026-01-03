@@ -761,9 +761,9 @@ paths:
     get:
       operationId: getWatchHistoryDiff
       tags: [Watch History]
-      summary: Get diff between two snapshots
+      summary: Get the difference between two snapshots
       description: |
-        Generate a formatted diff (comparison) between two historical snapshots of a web page change monitor (watch).
+        Generate a difference (comparison) between two historical snapshots of a web page change monitor (watch).
 
         This endpoint compares content between two points in time and returns the differences in your chosen format.
         Perfect for reviewing what changed between specific versions or comparing recent changes.
