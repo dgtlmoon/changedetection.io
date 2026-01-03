@@ -1,3 +1,5 @@
+from blinker import signal
+
 from .processors.exceptions import ProcessorException
 import changedetectionio.content_fetchers.exceptions as content_fetchers_exceptions
 from changedetectionio.processors.text_json_diff.processor import FilterNotFoundInResponse
@@ -40,13 +42,13 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
         try:
             # Use native janus async interface - no threads needed!
             queued_item_data = await asyncio.wait_for(q.async_get(), timeout=1.0)
-            
+
         except asyncio.TimeoutError:
             # No jobs available, continue loop
             continue
         except Exception as e:
             logger.critical(f"CRITICAL: Worker {worker_id} failed to get queue item: {type(e).__name__}: {e}")
-            
+
             # Log queue health for debugging
             try:
                 queue_size = q.qsize()
@@ -54,16 +56,31 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                 logger.critical(f"CRITICAL: Worker {worker_id} queue health - size: {queue_size}, empty: {is_empty}")
             except Exception as health_e:
                 logger.critical(f"CRITICAL: Worker {worker_id} queue health check failed: {health_e}")
-            
+
             await asyncio.sleep(0.1)
             continue
-        
+
         uuid = queued_item_data.item.get('uuid')
-        fetch_start_time = round(time.time())
-        
-        # Mark this UUID as being processed
+
+        # RACE CONDITION FIX: Check if this UUID is already being processed by another worker
         from changedetectionio import worker_handler
-        worker_handler.set_uuid_processing(uuid, processing=True)
+        from changedetectionio.queuedWatchMetaData import PrioritizedItem
+        if worker_handler.is_watch_running_by_another_worker(uuid, worker_id):
+            logger.trace(f"Worker {worker_id} detected UUID {uuid} already being processed by another worker - deferring")
+            # Sleep to avoid tight loop and give the other worker time to finish
+            await asyncio.sleep(10.0)
+
+            # Re-queue with lower priority so it gets checked again after current processing finishes
+            deferred_priority = max(1000, queued_item_data.priority * 10)
+            deferred_item = PrioritizedItem(priority=deferred_priority, item=queued_item_data.item)
+            worker_handler.queue_item_async_safe(q, deferred_item, silent=True)
+            logger.debug(f"Worker {worker_id} re-queued UUID {uuid} for subsequent check")
+            continue
+
+        fetch_start_time = round(time.time())
+
+        # Mark this UUID as being processed by this worker
+        worker_handler.set_uuid_processing(uuid, worker_id=worker_id, processing=True)
         
         try:
             if uuid in list(datastore.data['watching'].keys()) and datastore.data['watching'][uuid].get('url'):
@@ -87,15 +104,17 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                     processor = watch.get('processor', 'text_json_diff')
 
                     # Init a new 'difference_detection_processor'
-                    processor_module_name = f"changedetectionio.processors.{processor}.processor"
                     try:
-                        processor_module = importlib.import_module(processor_module_name)
+                        processor_module = importlib.import_module(f"changedetectionio.processors.{processor}.processor")
                     except ModuleNotFoundError as e:
                         print(f"Processor module '{processor}' not found.")
                         raise e
 
                     update_handler = processor_module.perform_site_check(datastore=datastore,
                                                                          watch_uuid=uuid)
+
+                    update_signal = signal('watch_small_status_comment')
+                    update_signal.send(watch_uuid=uuid, status="Fetching page..")
 
                     # All fetchers are now async, so call directly
                     await update_handler.call_browser()
@@ -309,6 +328,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                 if not datastore.data['watching'].get(uuid):
                     continue
 
+                logger.debug(f"Processing watch UUID: {uuid} - xpath_data length returned {len(update_handler.xpath_data) if update_handler.xpath_data else 'empty.'}")
                 if process_changedetection_results:
                     try:
                         datastore.update_watch(uuid=uuid, update_obj=update_obj)
@@ -326,7 +346,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                                 fetch_start_time += 1
                                 await asyncio.sleep(1)
 
-                            watch.save_history_text(contents=contents,
+                            watch.save_history_blob(contents=contents,
                                                     timestamp=int(fetch_start_time),
                                                     snapshot_id=update_obj.get('previous_md5', 'none'))
 
@@ -394,11 +414,17 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                 datastore.update_watch(uuid=uuid, update_obj={'last_error': f"Worker error: {str(e)}"})
         
         finally:
+
+            try:
+                await update_handler.fetcher.quit(watch=watch)
+            except Exception as e:
+                logger.error(f"Exception while cleaning/quit after calling browser: {e}")
+
             # Always cleanup - this runs whether there was an exception or not
             if uuid:
                 try:
-                    # Mark UUID as no longer being processed
-                    worker_handler.set_uuid_processing(uuid, processing=False)
+                    # Mark UUID as no longer being processed by this worker
+                    worker_handler.set_uuid_processing(uuid, worker_id=worker_id, processing=False)
                     
                     # Send completion signal
                     if watch:
@@ -426,6 +452,10 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                     # 2. Setting it to None doesn't affect the datastore
                     # 3. GC can't collect the object anyway (still referenced by datastore)
                     # 4. It would just cause confusion
+
+                    # Force garbage collection after cleanup
+                    import gc
+                    gc.collect()
 
                     logger.debug(f"Worker {worker_id} completed watch {uuid} in {time.time()-fetch_start_time:.2f}s")
                 except Exception as cleanup_error:

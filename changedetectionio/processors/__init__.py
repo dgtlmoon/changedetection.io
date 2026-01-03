@@ -1,180 +1,10 @@
-from abc import abstractmethod
-from changedetectionio.content_fetchers.base import Fetcher
-from changedetectionio.strtobool import strtobool
-from copy import deepcopy
+from functools import lru_cache
 from loguru import logger
-import hashlib
+from flask_babel import gettext
 import importlib
 import inspect
 import os
 import pkgutil
-import re
-
-class difference_detection_processor():
-
-    browser_steps = None
-    datastore = None
-    fetcher = None
-    screenshot = None
-    watch = None
-    xpath_data = None
-    preferred_proxy = None
-
-    def __init__(self, *args, datastore, watch_uuid, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.datastore = datastore
-        self.watch = deepcopy(self.datastore.data['watching'].get(watch_uuid))
-        # Generic fetcher that should be extended (requests, playwright etc)
-        self.fetcher = Fetcher()
-
-    async def call_browser(self, preferred_proxy_id=None):
-
-        from requests.structures import CaseInsensitiveDict
-
-        url = self.watch.link
-
-        # Protect against file:, file:/, file:// access, check the real "link" without any meta "source:" etc prepended.
-        if re.search(r'^file:', url.strip(), re.IGNORECASE):
-            if not strtobool(os.getenv('ALLOW_FILE_URI', 'false')):
-                raise Exception(
-                    "file:// type access is denied for security reasons."
-                )
-
-        # Requests, playwright, other browser via wss:// etc, fetch_extra_something
-        prefer_fetch_backend = self.watch.get('fetch_backend', 'system')
-
-        # Proxy ID "key"
-        preferred_proxy_id = preferred_proxy_id if preferred_proxy_id else self.datastore.get_preferred_proxy_for_watch(uuid=self.watch.get('uuid'))
-
-        # Pluggable content self.fetcher
-        if not prefer_fetch_backend or prefer_fetch_backend == 'system':
-            prefer_fetch_backend = self.datastore.data['settings']['application'].get('fetch_backend')
-
-        # In the case that the preferred fetcher was a browser config with custom connection URL..
-        # @todo - on save watch, if its extra_browser_ then it should be obvious it will use playwright (like if its requests now..)
-        custom_browser_connection_url = None
-        if prefer_fetch_backend.startswith('extra_browser_'):
-            (t, key) = prefer_fetch_backend.split('extra_browser_')
-            connection = list(
-                filter(lambda s: (s['browser_name'] == key), self.datastore.data['settings']['requests'].get('extra_browsers', [])))
-            if connection:
-                prefer_fetch_backend = 'html_webdriver'
-                custom_browser_connection_url = connection[0].get('browser_connection_url')
-
-        # PDF should be html_requests because playwright will serve it up (so far) in a embedded page
-        # @todo https://github.com/dgtlmoon/changedetection.io/issues/2019
-        # @todo needs test to or a fix
-        if self.watch.is_pdf:
-           prefer_fetch_backend = "html_requests"
-
-        # Grab the right kind of 'fetcher', (playwright, requests, etc)
-        from changedetectionio import content_fetchers
-        if hasattr(content_fetchers, prefer_fetch_backend):
-            # @todo TEMPORARY HACK - SWITCH BACK TO PLAYWRIGHT FOR BROWSERSTEPS
-            if prefer_fetch_backend == 'html_webdriver' and self.watch.has_browser_steps:
-                # This is never supported in selenium anyway
-                logger.warning("Using playwright fetcher override for possible puppeteer request in browsersteps, because puppetteer:browser steps is incomplete.")
-                from changedetectionio.content_fetchers.playwright import fetcher as playwright_fetcher
-                fetcher_obj = playwright_fetcher
-            else:
-                fetcher_obj = getattr(content_fetchers, prefer_fetch_backend)
-        else:
-            # What it referenced doesnt exist, Just use a default
-            fetcher_obj = getattr(content_fetchers, "html_requests")
-
-        proxy_url = None
-        if preferred_proxy_id:
-            # Custom browser endpoints should NOT have a proxy added
-            if not prefer_fetch_backend.startswith('extra_browser_'):
-                proxy_url = self.datastore.proxy_list.get(preferred_proxy_id).get('url')
-                logger.debug(f"Selected proxy key '{preferred_proxy_id}' as proxy URL '{proxy_url}' for {url}")
-            else:
-                logger.debug("Skipping adding proxy data when custom Browser endpoint is specified. ")
-
-        logger.debug(f"Using proxy '{proxy_url}' for {self.watch['uuid']}")
-
-        # Now call the fetcher (playwright/requests/etc) with arguments that only a fetcher would need.
-        # When browser_connection_url is None, it method should default to working out whats the best defaults (os env vars etc)
-        self.fetcher = fetcher_obj(proxy_override=proxy_url,
-                                   custom_browser_connection_url=custom_browser_connection_url
-                                   )
-
-        if self.watch.has_browser_steps:
-            self.fetcher.browser_steps = self.watch.get('browser_steps', [])
-            self.fetcher.browser_steps_screenshot_path = os.path.join(self.datastore.datastore_path, self.watch.get('uuid'))
-
-        # Tweak the base config with the per-watch ones
-        from changedetectionio.jinja2_custom import render as jinja_render
-        request_headers = CaseInsensitiveDict()
-
-        ua = self.datastore.data['settings']['requests'].get('default_ua')
-        if ua and ua.get(prefer_fetch_backend):
-            request_headers.update({'User-Agent': ua.get(prefer_fetch_backend)})
-
-        request_headers.update(self.watch.get('headers', {}))
-        request_headers.update(self.datastore.get_all_base_headers())
-        request_headers.update(self.datastore.get_all_headers_in_textfile_for_watch(uuid=self.watch.get('uuid')))
-
-        # https://github.com/psf/requests/issues/4525
-        # Requests doesnt yet support brotli encoding, so don't put 'br' here, be totally sure that the user cannot
-        # do this by accident.
-        if 'Accept-Encoding' in request_headers and "br" in request_headers['Accept-Encoding']:
-            request_headers['Accept-Encoding'] = request_headers['Accept-Encoding'].replace(', br', '')
-
-        for header_name in request_headers:
-            request_headers.update({header_name: jinja_render(template_str=request_headers.get(header_name))})
-
-        timeout = self.datastore.data['settings']['requests'].get('timeout')
-
-        request_body = self.watch.get('body')
-        if request_body:
-            request_body = jinja_render(template_str=self.watch.get('body'))
-        
-        request_method = self.watch.get('method')
-        ignore_status_codes = self.watch.get('ignore_status_codes', False)
-
-        # Configurable per-watch or global extra delay before extracting text (for webDriver types)
-        system_webdriver_delay = self.datastore.data['settings']['application'].get('webdriver_delay', None)
-        if self.watch.get('webdriver_delay'):
-            self.fetcher.render_extract_delay = self.watch.get('webdriver_delay')
-        elif system_webdriver_delay is not None:
-            self.fetcher.render_extract_delay = system_webdriver_delay
-
-        if self.watch.get('webdriver_js_execute_code') is not None and self.watch.get('webdriver_js_execute_code').strip():
-            self.fetcher.webdriver_js_execute_code = self.watch.get('webdriver_js_execute_code')
-
-        # Requests for PDF's, images etc should be passwd the is_binary flag
-        is_binary = self.watch.is_pdf
-
-        # And here we go! call the right browser with browser-specific settings
-        empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
-        # All fetchers are now async
-        await self.fetcher.run(
-            current_include_filters=self.watch.get('include_filters'),
-            empty_pages_are_a_change=empty_pages_are_a_change,
-            fetch_favicon=self.watch.favicon_is_expired(),
-            ignore_status_codes=ignore_status_codes,
-            is_binary=is_binary,
-            request_body=request_body,
-            request_headers=request_headers,
-            request_method=request_method,
-            timeout=timeout,
-            url=url,
-       )
-
-        #@todo .quit here could go on close object, so we can run JS if change-detected
-        self.fetcher.quit(watch=self.watch)
-
-        # After init, call run_changedetection() which will do the actual change-detection
-
-    @abstractmethod
-    def run_changedetection(self, watch):
-        update_obj = {'last_notification_error': False, 'last_error': False}
-        some_data = 'xxxxx'
-        update_obj["previous_md5"] = hashlib.md5(some_data.encode('utf-8')).hexdigest()
-        changed_detected = False
-        return changed_detected, update_obj, ''.encode('utf-8')
-
 
 def find_sub_packages(package_name):
     """
@@ -198,6 +28,7 @@ def find_processors():
 
     processors = []
     sub_packages = find_sub_packages(package_name)
+    from changedetectionio.processors.base import difference_detection_processor
 
     for sub_package in sub_packages:
         module_name = f"{package_name}.{sub_package}.processor"
@@ -206,8 +37,12 @@ def find_processors():
 
             # Iterate through all classes in the module
             for name, obj in inspect.getmembers(module, inspect.isclass):
-                if issubclass(obj, difference_detection_processor) and obj is not difference_detection_processor:
+                # Only register classes that are actually defined in this module (not imported)
+                if (issubclass(obj, difference_detection_processor) and
+                    obj is not difference_detection_processor and
+                    obj.__module__ == module.__name__):
                     processors.append((module, sub_package))
+                    break  # Only need one processor per module
         except (ModuleNotFoundError, ImportError) as e:
             logger.warning(f"Failed to import module {module_name}: {e} (find_processors())")
 
@@ -242,17 +77,205 @@ def get_custom_watch_obj_for_processor(processor_name):
     return watch_class
 
 
+def find_processor_module(processor_name):
+    """
+    Find the processor module by name.
+
+    Args:
+        processor_name: Processor machine name (e.g., 'image_ssim_diff')
+
+    Returns:
+        module: The processor's parent module, or None if not found
+    """
+    processor_classes = find_processors()
+    processor_tuple = next((tpl for tpl in processor_classes if tpl[1] == processor_name), None)
+
+    if processor_tuple:
+        # Return the parent module (the package containing processor.py)
+        return get_parent_module(processor_tuple[0])
+
+    return None
+
+
 def available_processors():
     """
-    Get a list of processors by name and description for the UI elements
+    Get a list of processors by name and description for the UI elements.
+    Can be filtered via ALLOWED_PROCESSORS environment variable (comma-separated list).
     :return: A list :)
     """
 
     processor_classes = find_processors()
 
-    available = []
-    for package, processor_class in processor_classes:
-        available.append((processor_class, package.name))
+    # Check if ALLOWED_PROCESSORS env var is set
+    # For now we disable it, need to make a deploy with lots of new code and this will be an overload
+    allowed_processors_env = os.getenv('ALLOWED_PROCESSORS', 'text_json_diff, restock_diff').strip()
+    allowed_processors = None
+    if allowed_processors_env:
+        # Parse comma-separated list and strip whitespace
+        allowed_processors = [p.strip() for p in allowed_processors_env.split(',') if p.strip()]
+        logger.info(f"ALLOWED_PROCESSORS set, filtering to: {allowed_processors}")
 
-    return available
+    available = []
+    for module, sub_package_name in processor_classes:
+        # Filter by allowed processors if set
+        if allowed_processors and sub_package_name not in allowed_processors:
+            logger.debug(f"Skipping processor '{sub_package_name}' (not in ALLOWED_PROCESSORS)")
+            continue
+
+        # Try to get the 'name' attribute from the processor module first
+        if hasattr(module, 'name'):
+            description = gettext(module.name)
+        else:
+            # Fall back to processor_description from parent module's __init__.py
+            parent_module = get_parent_module(module)
+            if parent_module and hasattr(parent_module, 'processor_description'):
+                description = gettext(parent_module.processor_description)
+            else:
+                # Final fallback to a readable name
+                description = sub_package_name.replace('_', ' ').title()
+
+        # Get weight for sorting (lower weight = higher in list)
+        weight = 0  # Default weight for processors without explicit weight
+
+        # Check processor module itself first
+        if hasattr(module, 'processor_weight'):
+            weight = module.processor_weight
+        else:
+            # Fall back to parent module (package __init__.py)
+            parent_module = get_parent_module(module)
+            if parent_module and hasattr(parent_module, 'processor_weight'):
+                weight = parent_module.processor_weight
+
+        available.append((sub_package_name, description, weight))
+
+    # Sort by weight (lower weight = appears first)
+    available.sort(key=lambda x: x[2])
+
+    # Return as tuples without weight (for backwards compatibility)
+    return [(name, desc) for name, desc, weight in available]
+
+
+def get_processor_badge_texts():
+    """
+    Get a dictionary mapping processor names to their list_badge_text values.
+    Translations are applied based on the current request locale.
+
+    :return: A dict mapping processor name to badge text (e.g., {'text_json_diff': 'Text', 'restock_diff': 'Restock'})
+    """
+    processor_classes = find_processors()
+    badge_texts = {}
+
+    for module, sub_package_name in processor_classes:
+        # Try to get the 'list_badge_text' attribute from the processor module
+        if hasattr(module, 'list_badge_text'):
+            badge_texts[sub_package_name] = gettext(module.list_badge_text)
+        else:
+            # Fall back to parent module's __init__.py
+            parent_module = get_parent_module(module)
+            if parent_module and hasattr(parent_module, 'list_badge_text'):
+                badge_texts[sub_package_name] = gettext(parent_module.list_badge_text)
+
+    return badge_texts
+
+
+def get_processor_descriptions():
+    """
+    Get a dictionary mapping processor names to their description/name values.
+    Translations are applied based on the current request locale.
+
+    :return: A dict mapping processor name to description (e.g., {'text_json_diff': 'Webpage Text/HTML, JSON and PDF changes'})
+    """
+    processor_classes = find_processors()
+    descriptions = {}
+
+    for module, sub_package_name in processor_classes:
+        # Try to get the 'name' or 'description' attribute from the processor module first
+        if hasattr(module, 'name'):
+            descriptions[sub_package_name] = gettext(module.name)
+        elif hasattr(module, 'description'):
+            descriptions[sub_package_name] = gettext(module.description)
+        else:
+            # Fall back to parent module's __init__.py
+            parent_module = get_parent_module(module)
+            if parent_module and hasattr(parent_module, 'processor_description'):
+                descriptions[sub_package_name] = gettext(parent_module.processor_description)
+            elif parent_module and hasattr(parent_module, 'name'):
+                descriptions[sub_package_name] = gettext(parent_module.name)
+            else:
+                # Final fallback to a readable name
+                descriptions[sub_package_name] = sub_package_name.replace('_', ' ').title()
+
+    return descriptions
+
+
+def generate_processor_badge_colors(processor_name):
+    """
+    Generate consistent colors for a processor badge based on its name.
+    Uses a hash of the processor name to generate pleasing, accessible colors
+    for both light and dark modes.
+
+    :param processor_name: The processor name (e.g., 'text_json_diff')
+    :return: A dict with 'light' and 'dark' color schemes, each containing 'bg' and 'color'
+    """
+    import hashlib
+
+    # Generate a consistent hash from the processor name
+    hash_obj = hashlib.md5(processor_name.encode('utf-8'))
+    hash_int = int(hash_obj.hexdigest()[:8], 16)
+
+    # Generate hue from hash (0-360)
+    hue = hash_int % 360
+
+    # Light mode: pastel background with darker text
+    light_saturation = 60 + (hash_int % 25)  # 60-85%
+    light_lightness = 85 + (hash_int % 10)   # 85-95% - very light
+    text_lightness = 25 + (hash_int % 15)    # 25-40% - dark
+
+    # Dark mode: solid, vibrant colors with white text
+    dark_saturation = 55 + (hash_int % 20)   # 55-75%
+    dark_lightness = 45 + (hash_int % 15)    # 45-60%
+
+    return {
+        'light': {
+            'bg': f'hsl({hue}, {light_saturation}%, {light_lightness}%)',
+            'color': f'hsl({hue}, 50%, {text_lightness}%)'
+        },
+        'dark': {
+            'bg': f'hsl({hue}, {dark_saturation}%, {dark_lightness}%)',
+            'color': '#fff'
+        }
+    }
+
+
+@lru_cache(maxsize=1)
+def get_processor_badge_css():
+    """
+    Generate CSS for all processor badges with auto-generated colors.
+    This creates CSS rules for both light and dark modes for each processor.
+
+    :return: A string containing CSS rules for all processor badges
+    """
+    processor_classes = find_processors()
+    css_rules = []
+
+    for module, sub_package_name in processor_classes:
+        colors = generate_processor_badge_colors(sub_package_name)
+
+        # Light mode rule
+        css_rules.append(
+            f".processor-badge-{sub_package_name} {{\n"
+            f"  background-color: {colors['light']['bg']};\n"
+            f"  color: {colors['light']['color']};\n"
+            f"}}"
+        )
+
+        # Dark mode rule
+        css_rules.append(
+            f"html[data-darkmode=\"true\"] .processor-badge-{sub_package_name} {{\n"
+            f"  background-color: {colors['dark']['bg']};\n"
+            f"  color: {colors['dark']['color']};\n"
+            f"}}"
+        )
+
+    return '\n\n'.join(css_rules)
 

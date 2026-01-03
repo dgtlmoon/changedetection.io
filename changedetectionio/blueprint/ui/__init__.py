@@ -1,11 +1,13 @@
 import time
 from flask import Blueprint, request, redirect, url_for, flash, render_template, session
+from flask_babel import gettext
 from loguru import logger
 
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.blueprint.ui.edit import construct_blueprint as construct_edit_blueprint
 from changedetectionio.blueprint.ui.notification import construct_blueprint as construct_notification_blueprint
 from changedetectionio.blueprint.ui.views import construct_blueprint as construct_views_blueprint
+from changedetectionio.blueprint.ui import diff, preview
 
 def _handle_operations(op, uuids, datastore, worker_handler, update_q, queuedWatchMetaData, watch_check_update, extra_data=None, emit_flash=True):
     from flask import request, flash
@@ -15,42 +17,42 @@ def _handle_operations(op, uuids, datastore, worker_handler, update_q, queuedWat
             if datastore.data['watching'].get(uuid):
                 datastore.delete(uuid)
         if emit_flash:
-            flash(f"{len(uuids)} watches deleted")
+            flash(gettext("{} watches deleted").format(len(uuids)))
 
     elif op == 'pause':
         for uuid in uuids:
             if datastore.data['watching'].get(uuid):
                 datastore.data['watching'][uuid]['paused'] = True
         if emit_flash:
-            flash(f"{len(uuids)} watches paused")
+            flash(gettext("{} watches paused").format(len(uuids)))
 
     elif op == 'unpause':
         for uuid in uuids:
             if datastore.data['watching'].get(uuid):
                 datastore.data['watching'][uuid.strip()]['paused'] = False
         if emit_flash:
-            flash(f"{len(uuids)} watches unpaused")
+            flash(gettext("{} watches unpaused").format(len(uuids)))
 
     elif (op == 'mark-viewed'):
         for uuid in uuids:
             if datastore.data['watching'].get(uuid):
                 datastore.set_last_viewed(uuid, int(time.time()))
         if emit_flash:
-            flash(f"{len(uuids)} watches updated")
+            flash(gettext("{} watches updated").format(len(uuids)))
 
     elif (op == 'mute'):
         for uuid in uuids:
             if datastore.data['watching'].get(uuid):
                 datastore.data['watching'][uuid]['notification_muted'] = True
         if emit_flash:
-            flash(f"{len(uuids)} watches muted")
+            flash(gettext("{} watches muted").format(len(uuids)))
 
     elif (op == 'unmute'):
         for uuid in uuids:
             if datastore.data['watching'].get(uuid):
                 datastore.data['watching'][uuid]['notification_muted'] = False
         if emit_flash:
-            flash(f"{len(uuids)} watches un-muted")
+            flash(gettext("{} watches un-muted").format(len(uuids)))
 
     elif (op == 'recheck'):
         for uuid in uuids:
@@ -58,21 +60,21 @@ def _handle_operations(op, uuids, datastore, worker_handler, update_q, queuedWat
                 # Recheck and require a full reprocessing
                 worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
         if emit_flash:
-            flash(f"{len(uuids)} watches queued for rechecking")
+            flash(gettext("{} watches queued for rechecking").format(len(uuids)))
 
     elif (op == 'clear-errors'):
         for uuid in uuids:
             if datastore.data['watching'].get(uuid):
                 datastore.data['watching'][uuid]["last_error"] = False
         if emit_flash:
-            flash(f"{len(uuids)} watches errors cleared")
+            flash(gettext("{} watches errors cleared").format(len(uuids)))
 
     elif (op == 'clear-history'):
         for uuid in uuids:
             if datastore.data['watching'].get(uuid):
                 datastore.clear_watch_history(uuid)
         if emit_flash:
-            flash(f"{len(uuids)} watches cleared/reset.")
+            flash(gettext("{} watches cleared/reset.").format(len(uuids)))
 
     elif (op == 'notification-default'):
         from changedetectionio.notification import (
@@ -85,7 +87,7 @@ def _handle_operations(op, uuids, datastore, worker_handler, update_q, queuedWat
                 datastore.data['watching'][uuid]['notification_urls'] = []
                 datastore.data['watching'][uuid]['notification_format'] = USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
         if emit_flash:
-            flash(f"{len(uuids)} watches set to use default notification settings")
+            flash(gettext("{} watches set to use default notification settings").format(len(uuids)))
 
     elif (op == 'assign-tag'):
         op_extradata = extra_data
@@ -100,7 +102,7 @@ def _handle_operations(op, uuids, datastore, worker_handler, update_q, queuedWat
 
                         datastore.data['watching'][uuid]['tags'].append(tag_uuid)
         if emit_flash:
-            flash(f"{len(uuids)} watches were tagged")
+            flash(gettext("{} watches were tagged").format(len(uuids)))
 
     if uuids:
         for uuid in uuids:
@@ -121,6 +123,13 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
     views_blueprint = construct_views_blueprint(datastore, update_q, queuedWatchMetaData, watch_check_update)
     ui_blueprint.register_blueprint(views_blueprint)
 
+    # Register diff and preview blueprints
+    diff_blueprint = diff.construct_blueprint(datastore)
+    ui_blueprint.register_blueprint(diff_blueprint)
+
+    preview_blueprint = preview.construct_blueprint(datastore)
+    ui_blueprint.register_blueprint(preview_blueprint)
+
     # Import the login decorator
     from changedetectionio.auth_decorator import login_optionally_required
 
@@ -130,9 +139,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
         try:
             datastore.clear_watch_history(uuid)
         except KeyError:
-            flash('Watch not found', 'error')
+            flash(gettext('Watch not found'), 'error')
         else:
-            flash("Cleared snapshot history for watch {}".format(uuid))
+            flash(gettext("Cleared snapshot history for watch {}").format(uuid))
         return redirect(url_for('watchlist.index'))
 
     @ui_blueprint.route("/clear_history", methods=['GET', 'POST'])
@@ -144,9 +153,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
             if confirmtext == 'clear':
                 for uuid in datastore.data['watching'].keys():
                     datastore.clear_watch_history(uuid)
-                flash("Cleared snapshot history for all watches")
+                flash(gettext("Cleared snapshot history for all watches"))
             else:
-                flash('Incorrect confirmation text.', 'error')
+                flash(gettext('Incorrect confirmation text.'), 'error')
 
             return redirect(url_for('watchlist.index'))
 
@@ -180,14 +189,14 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
         uuid = request.args.get('uuid')
 
         if uuid != 'all' and not uuid in datastore.data['watching'].keys():
-            flash('The watch by UUID {} does not exist.'.format(uuid), 'error')
+            flash(gettext('The watch by UUID {} does not exist.').format(uuid), 'error')
             return redirect(url_for('watchlist.index'))
 
         # More for testing, possible to return the first/only
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
         datastore.delete(uuid)
-        flash('Deleted.')
+        flash(gettext('Deleted.'))
 
         return redirect(url_for('watchlist.index'))
 
@@ -204,7 +213,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
         if not datastore.data['watching'].get(uuid).get('paused'):
             worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=5, item={'uuid': new_uuid}))
 
-        flash('Cloned, you are editing the new watch.')
+        flash(gettext('Cloned, you are editing the new watch.'))
 
         return redirect(url_for("ui.ui_edit.edit_page", uuid=new_uuid))
 
@@ -243,13 +252,13 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
                         i += 1
 
         if i == 1:
-            flash("Queued 1 watch for rechecking.")
+            flash(gettext("Queued 1 watch for rechecking."))
         if i > 1:
-            flash(f"Queued {i} watches for rechecking.")
+            flash(gettext("Queued {} watches for rechecking.").format(i))
         if i == 0:
-            flash("No watches available to recheck.")
+            flash(gettext("No watches available to recheck."))
 
-        return redirect(url_for('watchlist.index'))
+        return redirect(url_for('watchlist.index', **({'tag': tag} if tag else {})))
 
     @ui_blueprint.route("/form/checkbox-operations", methods=['POST'])
     @login_optionally_required
@@ -318,7 +327,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
 
         except Exception as e:
             logger.error(f"Error sharing -{str(e)}")
-            flash(f"Could not share, something went wrong while communicating with the share server - {str(e)}", 'error')
+            flash(gettext("Could not share, something went wrong while communicating with the share server - {}").format(str(e)), 'error')
 
         return redirect(url_for('watchlist.index'))
 

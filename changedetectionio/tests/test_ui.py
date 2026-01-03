@@ -269,7 +269,7 @@ def test_ui_viewed_unread_flag(client, live_server, measure_memory_usage, datast
     assert res.data.count(b'data-watch-uuid') == 2
 
     # one should now be viewed, but two in total still
-    client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
+    client.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
     res = client.get(url_for("watchlist.index"))
     assert b'<span id="unread-tab-counter">1</span>' in res.data
     assert res.data.count(b'data-watch-uuid') == 2

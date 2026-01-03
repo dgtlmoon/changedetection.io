@@ -38,7 +38,7 @@ class TestTriggerConditions(unittest.TestCase):
         first_content = "I saw 100 people at a rock show"
         timestamp1 = int(time.time())
         snapshot_id1 = str(uuid.uuid4())
-        watch.save_history_text(contents=first_content,
+        watch.save_history_blob(contents=first_content,
                                 timestamp=timestamp1,
                                 snapshot_id=snapshot_id1)
 
@@ -46,7 +46,7 @@ class TestTriggerConditions(unittest.TestCase):
         second_content = "I saw 200 people at a rock show"
         timestamp2 = int(time.time()) + 60
         snapshot_id2 = str(uuid.uuid4())
-        watch.save_history_text(contents=second_content,
+        watch.save_history_blob(contents=second_content,
                                 timestamp=timestamp2,
                                 snapshot_id=snapshot_id2)
 

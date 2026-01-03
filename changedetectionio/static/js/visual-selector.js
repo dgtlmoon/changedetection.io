@@ -11,6 +11,18 @@ $(document).ready(() => {
     let c, xctx, ctx;
     let xScale = 1, yScale = 1;
     let selectorImage, selectorImageRect, selectorData;
+    let elementHandlers = {}; // Store references to element selection handlers (needed for draw mode toggling)
+
+    // Box drawing mode variables (for image_ssim_diff processor)
+    let drawMode = false;
+    let isDrawing = false;
+    let isDragging = false;
+    let drawStartX, drawStartY;
+    let dragOffsetX, dragOffsetY;
+    let drawnBox = null;
+    let resizeHandle = null;
+    const HANDLE_SIZE = 8;
+    const isImageProcessor = $('input[value="image_ssim_diff"]').is(':checked');
 
 
     // Global jQuery selectors with "Elem" appended
@@ -141,6 +153,10 @@ $(document).ready(() => {
 
             setScale();
             reflowSelector();
+
+            // Initialize draw mode after everything is set up
+            initializeDrawMode();
+
             $fetchingUpdateNoticeElem.fadeOut();
         });
     }
@@ -201,9 +217,14 @@ $(document).ready(() => {
         highlightCurrentSelected();
         updateFiltersText();
 
-        $selectorCanvasElem.bind('mousemove', handleMouseMove.debounce(5));
-        $selectorCanvasElem.bind('mousedown', handleMouseDown.debounce(5));
-        $selectorCanvasElem.bind('mouseleave', highlightCurrentSelected.debounce(5));
+        // Store handler references for later use
+        elementHandlers.handleMouseMove = handleMouseMove.debounce(5);
+        elementHandlers.handleMouseDown = handleMouseDown.debounce(5);
+        elementHandlers.handleMouseLeave = highlightCurrentSelected.debounce(5);
+
+        $selectorCanvasElem.bind('mousemove', elementHandlers.handleMouseMove);
+        $selectorCanvasElem.bind('mousedown', elementHandlers.handleMouseDown);
+        $selectorCanvasElem.bind('mouseleave', elementHandlers.handleMouseLeave);
 
         function handleMouseMove(e) {
             if (!e.offsetX && !e.offsetY) {
@@ -256,5 +277,373 @@ $(document).ready(() => {
             //xctx.clearRect(sel.left * xScale, sel.top * yScale, sel.width * xScale, sel.height * yScale);
             xctx.strokeRect(sel.left * xScale, sel.top * yScale, sel.width * xScale, sel.height * yScale);
         });
+    }
+
+    // ============= BOX DRAWING MODE (for image_ssim_diff processor) =============
+
+    function initializeDrawMode() {
+        if (!isImageProcessor || !c) return;
+
+        const $selectorModeRadios = $('input[name="selector-mode"]');
+        const $boundingBoxField = $('#bounding_box');
+        const $selectionModeField = $('#selection_mode');
+
+        // Load existing selection mode if present
+        const savedMode = $selectionModeField.val();
+        if (savedMode && (savedMode === 'element' || savedMode === 'draw')) {
+            $selectorModeRadios.filter(`[value="${savedMode}"]`).prop('checked', true);
+            console.log('Loaded saved mode:', savedMode);
+        }
+
+        // Load existing bounding box if present
+        const existingBox = $boundingBoxField.val();
+        if (existingBox) {
+            try {
+                const parts = existingBox.split(',').map(p => parseFloat(p));
+                if (parts.length === 4) {
+                    drawnBox = {
+                        x: parts[0] * xScale,
+                        y: parts[1] * yScale,
+                        width: parts[2] * xScale,
+                        height: parts[3] * yScale
+                    };
+                    console.log('Loaded saved bounding box:', existingBox);
+                }
+            } catch (e) {
+                console.error('Failed to parse existing bounding box:', e);
+            }
+        }
+
+        // Update mode when radio changes
+        $selectorModeRadios.off('change').on('change', function() {
+            const newMode = $(this).val();
+            drawMode = newMode === 'draw';
+            console.log('Mode changed to:', newMode);
+
+            // Save the mode to the hidden field
+            $selectionModeField.val(newMode);
+
+            if (drawMode) {
+                enableDrawMode();
+            } else {
+                disableDrawMode();
+            }
+        });
+
+        // Set initial mode based on which radio is checked
+        drawMode = $selectorModeRadios.filter(':checked').val() === 'draw';
+        console.log('Initial mode:', drawMode ? 'draw' : 'element');
+
+        // Save initial mode
+        $selectionModeField.val(drawMode ? 'draw' : 'element');
+
+        if (drawMode) {
+            enableDrawMode();
+        }
+    }
+
+    function enableDrawMode() {
+        console.log('Enabling draw mode...');
+
+        // Unbind element selection handlers
+        $selectorCanvasElem.unbind('mousemove mousedown mouseleave');
+
+        // Set cursor to crosshair
+        $selectorCanvasElem.css('cursor', 'crosshair');
+
+        // Bind draw mode handlers
+        $selectorCanvasElem.on('mousedown', handleDrawMouseDown);
+        $selectorCanvasElem.on('mousemove', handleDrawMouseMove);
+        $selectorCanvasElem.on('mouseup', handleDrawMouseUp);
+        $selectorCanvasElem.on('mouseleave', handleDrawMouseUp);
+
+        // Clear element selections and xpath display
+        currentSelections = [];
+        $includeFiltersElem.val('');
+        $selectorCurrentXpathElem.html('Draw mode - click and drag to select an area');
+
+        // Clear the canvas
+        if (ctx && xctx) {
+            ctx.clearRect(0, 0, c.width, c.height);
+            xctx.clearRect(0, 0, c.width, c.height);
+        }
+
+        // Redraw if we have an existing box
+        if (drawnBox) {
+            drawBox();
+        }
+    }
+
+    function disableDrawMode() {
+        console.log('Disabling draw mode, switching to element mode...');
+
+        // Unbind draw handlers
+        $selectorCanvasElem.unbind('mousedown mousemove mouseup mouseleave');
+
+        // Reset cursor
+        $selectorCanvasElem.css('cursor', 'default');
+
+        // Clear drawn box
+        drawnBox = null;
+        $('#bounding_box').val('');
+
+        // Clear the canvases
+        if (ctx && xctx) {
+            ctx.clearRect(0, 0, c.width, c.height);
+            xctx.clearRect(0, 0, c.width, c.height);
+        }
+
+        // Restore element selections from include_filters
+        currentSelections = [];
+        if (selectorData && selectorData['size_pos']) {
+            let existingFilters = splitToList($includeFiltersElem.val());
+
+            selectorData['size_pos'].forEach(sel => {
+                if ((!runInClearMode && sel.highlight_as_custom_filter) || existingFilters.includes(sel.xpath)) {
+                    console.log("Restoring selection: " + sel.xpath);
+                    currentSelections.push(sel);
+                }
+            });
+        }
+
+        // Re-enable element selection handlers using stored references
+        if (elementHandlers.handleMouseMove) {
+            $selectorCanvasElem.bind('mousemove', elementHandlers.handleMouseMove);
+            $selectorCanvasElem.bind('mousedown', elementHandlers.handleMouseDown);
+            $selectorCanvasElem.bind('mouseleave', elementHandlers.handleMouseLeave);
+        }
+
+        // Restore the element selection display
+        $selectorCurrentXpathElem.html('Hover over elements to select');
+
+        // Highlight the restored selections
+        highlightCurrentSelected();
+    }
+
+    function handleDrawMouseDown(e) {
+        const rect = c.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        // Check if clicking on a resize handle
+        if (drawnBox) {
+            resizeHandle = getResizeHandle(x, y);
+            if (resizeHandle) {
+                isDrawing = true;
+                drawStartX = x;
+                drawStartY = y;
+                return;
+            }
+
+            // Check if clicking inside the box (for dragging)
+            if (isInsideBox(x, y)) {
+                isDragging = true;
+                dragOffsetX = x - drawnBox.x;
+                dragOffsetY = y - drawnBox.y;
+                $selectorCanvasElem.css('cursor', 'move');
+                return;
+            }
+        }
+
+        // Start new box
+        isDrawing = true;
+        drawStartX = x;
+        drawStartY = y;
+        drawnBox = { x: x, y: y, width: 0, height: 0 };
+    }
+
+    function handleDrawMouseMove(e) {
+        const rect = c.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        // Update cursor based on position
+        if (!isDrawing && !isDragging && drawnBox) {
+            const handle = getResizeHandle(x, y);
+            if (handle) {
+                $selectorCanvasElem.css('cursor', getHandleCursor(handle));
+            } else if (isInsideBox(x, y)) {
+                $selectorCanvasElem.css('cursor', 'move');
+            } else {
+                $selectorCanvasElem.css('cursor', 'crosshair');
+            }
+        }
+
+        // Handle dragging the box
+        if (isDragging) {
+            drawnBox.x = x - dragOffsetX;
+            drawnBox.y = y - dragOffsetY;
+            drawBox();
+            return;
+        }
+
+        if (!isDrawing) return;
+
+        if (resizeHandle) {
+            // Resize existing box
+            resizeBox(x, y);
+        } else {
+            // Draw new box
+            drawnBox.width = x - drawStartX;
+            drawnBox.height = y - drawStartY;
+        }
+
+        drawBox();
+    }
+
+    function handleDrawMouseUp(e) {
+        if (!isDrawing && !isDragging) return;
+
+        isDrawing = false;
+        isDragging = false;
+        resizeHandle = null;
+
+        if (drawnBox) {
+            // Normalize box (handle negative dimensions)
+            if (drawnBox.width < 0) {
+                drawnBox.x += drawnBox.width;
+                drawnBox.width = Math.abs(drawnBox.width);
+            }
+            if (drawnBox.height < 0) {
+                drawnBox.y += drawnBox.height;
+                drawnBox.height = Math.abs(drawnBox.height);
+            }
+
+            // Constrain to canvas bounds
+            drawnBox.x = Math.max(0, Math.min(drawnBox.x, c.width - drawnBox.width));
+            drawnBox.y = Math.max(0, Math.min(drawnBox.y, c.height - drawnBox.height));
+
+            // Save to form field (convert from scaled to natural coordinates)
+            const naturalX = Math.round(drawnBox.x / xScale);
+            const naturalY = Math.round(drawnBox.y / yScale);
+            const naturalWidth = Math.round(drawnBox.width / xScale);
+            const naturalHeight = Math.round(drawnBox.height / yScale);
+
+            $('#bounding_box').val(`${naturalX},${naturalY},${naturalWidth},${naturalHeight}`);
+
+            drawBox();
+        }
+    }
+
+    function drawBox() {
+        if (!drawnBox) return;
+
+        // Clear and redraw
+        ctx.clearRect(0, 0, c.width, c.height);
+        xctx.clearRect(0, 0, c.width, c.height);
+
+        // Draw box
+        ctx.strokeStyle = STROKE_STYLE_REDLINE;
+        ctx.fillStyle = FILL_STYLE_REDLINE;
+        ctx.lineWidth = 3;
+
+        const drawX = drawnBox.width >= 0 ? drawnBox.x : drawnBox.x + drawnBox.width;
+        const drawY = drawnBox.height >= 0 ? drawnBox.y : drawnBox.y + drawnBox.height;
+        const drawW = Math.abs(drawnBox.width);
+        const drawH = Math.abs(drawnBox.height);
+
+        ctx.strokeRect(drawX, drawY, drawW, drawH);
+        ctx.fillRect(drawX, drawY, drawW, drawH);
+
+        // Draw resize handles
+        if (!isDrawing) {
+            drawResizeHandles(drawX, drawY, drawW, drawH);
+        }
+    }
+
+    function drawResizeHandles(x, y, w, h) {
+        ctx.fillStyle = '#fff';
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 1;
+
+        const handles = [
+            { x: x, y: y },                    // top-left
+            { x: x + w, y: y },                // top-right
+            { x: x, y: y + h },                // bottom-left
+            { x: x + w, y: y + h }             // bottom-right
+        ];
+
+        handles.forEach(handle => {
+            ctx.fillRect(handle.x - HANDLE_SIZE/2, handle.y - HANDLE_SIZE/2, HANDLE_SIZE, HANDLE_SIZE);
+            ctx.strokeRect(handle.x - HANDLE_SIZE/2, handle.y - HANDLE_SIZE/2, HANDLE_SIZE, HANDLE_SIZE);
+        });
+    }
+
+    function isInsideBox(x, y) {
+        if (!drawnBox) return false;
+
+        const drawX = drawnBox.width >= 0 ? drawnBox.x : drawnBox.x + drawnBox.width;
+        const drawY = drawnBox.height >= 0 ? drawnBox.y : drawnBox.y + drawnBox.height;
+        const drawW = Math.abs(drawnBox.width);
+        const drawH = Math.abs(drawnBox.height);
+
+        return x >= drawX && x <= drawX + drawW && y >= drawY && y <= drawY + drawH;
+    }
+
+    function getResizeHandle(x, y) {
+        if (!drawnBox) return null;
+
+        const drawX = drawnBox.width >= 0 ? drawnBox.x : drawnBox.x + drawnBox.width;
+        const drawY = drawnBox.height >= 0 ? drawnBox.y : drawnBox.y + drawnBox.height;
+        const drawW = Math.abs(drawnBox.width);
+        const drawH = Math.abs(drawnBox.height);
+
+        const handles = {
+            'tl': { x: drawX, y: drawY },
+            'tr': { x: drawX + drawW, y: drawY },
+            'bl': { x: drawX, y: drawY + drawH },
+            'br': { x: drawX + drawW, y: drawY + drawH }
+        };
+
+        for (const [key, handle] of Object.entries(handles)) {
+            if (Math.abs(x - handle.x) <= HANDLE_SIZE && Math.abs(y - handle.y) <= HANDLE_SIZE) {
+                return key;
+            }
+        }
+
+        return null;
+    }
+
+    function getHandleCursor(handle) {
+        const cursors = {
+            'tl': 'nw-resize',
+            'tr': 'ne-resize',
+            'bl': 'sw-resize',
+            'br': 'se-resize'
+        };
+        return cursors[handle] || 'crosshair';
+    }
+
+    function resizeBox(x, y) {
+        const dx = x - drawStartX;
+        const dy = y - drawStartY;
+
+        const originalBox = { ...drawnBox };
+
+        switch (resizeHandle) {
+            case 'tl':
+                drawnBox.x = x;
+                drawnBox.y = y;
+                drawnBox.width = originalBox.x + originalBox.width - x;
+                drawnBox.height = originalBox.y + originalBox.height - y;
+                break;
+            case 'tr':
+                drawnBox.y = y;
+                drawnBox.width = x - originalBox.x;
+                drawnBox.height = originalBox.y + originalBox.height - y;
+                break;
+            case 'bl':
+                drawnBox.x = x;
+                drawnBox.width = originalBox.x + originalBox.width - x;
+                drawnBox.height = y - originalBox.y;
+                break;
+            case 'br':
+                drawnBox.width = x - originalBox.x;
+                drawnBox.height = y - originalBox.y;
+                break;
+        }
+
+        drawStartX = x;
+        drawStartY = y;
     }
 });

@@ -124,7 +124,7 @@ def test_basic_cdata_rss_markup(client, live_server, measure_memory_usage, datas
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
     assert b'CDATA' not in res.data
@@ -166,7 +166,7 @@ def test_rss_xpath_filtering(client, live_server, measure_memory_usage, datastor
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
     assert b'CDATA' not in res.data
@@ -341,14 +341,16 @@ def test_rss_single_watch_feed(client, live_server, measure_memory_usage, datast
         descriptions.append(desc if desc else "")
 
     # First item should contain newest change (Version 5)
-    assert b"Version 5" in descriptions[0].encode() or "Version 5" in descriptions[0], \
-        f"First item should show newest change (Version 5), but got: {descriptions[0][:200]}"
+    # Note: Content may include [edit watch] links and diff markup with HTML tags
+    # Diff markup may split version numbers or keep them together depending on change type
+    assert (">5<" in descriptions[0] or "Version 5" in descriptions[0]) and "content" in descriptions[0], \
+        f"First item should show newest change, but got: {descriptions[0][:500]}"
 
     # Second item should contain Version 4
-    assert b"Version 4" in descriptions[1].encode() or "Version 4" in descriptions[1], \
-        f"Second item should show Version 4, but got: {descriptions[1][:200]}"
+    assert (">4<" in descriptions[1] or "Version 4" in descriptions[1]) and "content" in descriptions[1], \
+        f"Second item should show Version 4, but got: {descriptions[1][:500]}"
 
     # Third item should contain Version 3
-    assert b"Version 3" in descriptions[2].encode() or "Version 3" in descriptions[2], \
-        f"Third item should show Version 3, but got: {descriptions[2][:200]}"
+    assert (">3<" in descriptions[2] or "Version 3" in descriptions[2]) and "content" in descriptions[2], \
+        f"Third item should show Version 3, but got: {descriptions[2][:500]}"
 

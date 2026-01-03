@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<script src="{{ url_for('static_content', group='js', filename='preview.js') }}" defer></script>
+    {% if versions|length >= 2 %}
+        <div id="diff-form" style="text-align: center;">
+            <form class="pure-form " action="" method="GET">
+                <fieldset>
+                    <label for="preview-version">Select timestamp</label> <select id="preview-version"
+                                                                                 name="version"
+                                                                                 class="needs-localtime">
+                    {% for version in versions|reverse %}
+                        <option value="{{ version }}" {% if version == timestamp %} selected="" {% endif %}>
+                            {{ version }}
+                        </option>
+                    {% endfor %}
+                </select>
+                    <button type="submit" class="pure-button pure-button-primary">Go</button>
+
+                </fieldset>
+            </form>
+                <br>
+                <strong>Keyboard: </strong><a href="" class="pure-button pure-button-primary" id="btn-previous">
+                &larr; Previous</a> &nbsp; <a class="pure-button pure-button-primary" id="btn-next" href="">
+                &rarr; Next</a>
+        </div>
+    {% endif %}
+
+    <div id="screenshot-container" style="text-align: center; border: 1px solid #ddd; padding: 2em; background: #fafafa; border-radius: 4px;">
+        <h3 style="margin-top: 0;">Screenshot from {{ timestamp|format_timestamp_timeago }}</h3>
+        <img src="{{ url_for('ui.ui_preview.processor_asset', uuid=uuid, asset_name='screenshot', version=timestamp) }}"
+             alt="Screenshot preview"
+             style="max-width: 100%; height: auto; border: 1px solid #ccc; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 2px;">
+    </div>
+{% endblock %}

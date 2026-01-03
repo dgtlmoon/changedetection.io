@@ -74,7 +74,7 @@ def test_socks5(client, live_server, measure_memory_usage, datastore_path):
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 

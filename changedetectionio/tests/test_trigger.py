@@ -13,6 +13,7 @@ def set_original_ignore_response(datastore_path):
      <p>Which is across multiple lines</p>
      <br>
      So let's see what happens.  <br>
+     and more<br>
      </body>
      </html>
 
@@ -29,6 +30,7 @@ def set_modified_original_ignore_response(datastore_path):
      <p>Which is across multiple lines</p>
      <br>
      So let's see what happens.  <br>
+     and more<br>
      </body>
      </html>
 
@@ -47,6 +49,7 @@ def set_modified_with_trigger_text_response(datastore_path):
      Add to cart
      <br>
      So let's see what happens.  <br>
+     and more<br>
      </body>
      </html>
 
@@ -59,10 +62,8 @@ def set_modified_with_trigger_text_response(datastore_path):
 def test_trigger_functionality(client, live_server, measure_memory_usage, datastore_path):
 
    #  live_server_setup(live_server) # Setup on conftest per function
-
     trigger_text = "Add to cart"
     set_original_ignore_response(datastore_path=datastore_path)
-
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
@@ -77,6 +78,7 @@ def test_trigger_functionality(client, live_server, measure_memory_usage, datast
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"trigger_text": trigger_text,
+              "ignore_text": "and more",
               "url": test_url,
               "fetch_backend": "html_requests",
               "time_between_check_use_default": "y"},
@@ -94,7 +96,7 @@ def test_trigger_functionality(client, live_server, measure_memory_usage, datast
 
     
     # so that we set the state to 'has-unread-changes' after all the edits
-    client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
+    client.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
 
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -124,14 +126,15 @@ def test_trigger_functionality(client, live_server, measure_memory_usage, datast
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' in res.data
-    
+
     # https://github.com/dgtlmoon/changedetection.io/issues/616
     # Apparently the actual snapshot that contains the trigger never shows
-    res = client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
+    res = client.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
     assert b'Add to cart' in res.data
 
     # Check the preview/highlighter, we should be able to see what we triggered on, but it should be highlighted
-    res = client.get(url_for("ui.ui_views.preview_page", uuid="first"))
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid="first"))
+    assert b'ignored_line_numbers = [8]' in res.data
 
     # We should be able to see what we triggered on
     # The JS highlighter should tell us which lines (also used in the live-preview)

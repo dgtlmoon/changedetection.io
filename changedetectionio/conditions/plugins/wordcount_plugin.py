@@ -1,3 +1,7 @@
+"""
+Word count plugin for content analysis.
+Provides word count metrics for snapshot content.
+"""
 import pluggy
 from loguru import logger
 

@@ -6,9 +6,9 @@
 
     <div class="tabs collapsable">
         <ul>
-            <li class="tab" id=""><a href="#url-list">URL List</a></li>
-            <li class="tab"><a href="#distill-io">Distill.io</a></li>
-            <li class="tab"><a href="#xlsx">.XLSX &amp; Wachete</a></li>
+            <li class="tab" id=""><a href="#url-list">{{ _('URL List') }}</a></li>
+            <li class="tab"><a href="#distill-io">{{ _('Distill.io') }}</a></li>
+            <li class="tab"><a href="#xlsx">{{ _('.XLSX & Wachete') }}</a></li>
         </ul>
     </div>
 
@@ -17,11 +17,10 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="tab-pane-inner" id="url-list">
                 <div class="pure-control-group">
-                        Enter one URL per line, and optionally add tags for each URL after a space, delineated by comma
-                        (,):
+                        {{ _('Enter one URL per line, and optionally add tags for each URL after a space, delineated by comma (,):') }}
                         <br>
-                        <p><strong>Example:  </strong><code>https://example.com tag1, tag2, last tag</code></p>
-                        URLs which do not pass validation will stay in the textarea.
+                        <p><strong>{{ _('Example:') }}  </strong><code>https://example.com tag1, tag2, last tag</code></p>
+                        {{ _('URLs which do not pass validation will stay in the textarea.') }}
                 </div>
                 {{ render_field(form.processor, class="processor") }}
                 
@@ -42,12 +41,12 @@
 
 
                     <div class="pure-control-group">
-                        Copy and Paste your Distill.io watch 'export' file, this should be a JSON file.<br>
-                        This is <i>experimental</i>, supported fields are <code>name</code>, <code>uri</code>, <code>tags</code>, <code>config:selections</code>, the rest (including <code>schedule</code>) are ignored.
+                        {{ _('Copy and Paste your Distill.io watch \'export\' file, this should be a JSON file.') }}<br>
+                        {{ _('This is') }} <i>{{ _('experimental') }}</i>, {{ _('supported fields are') }} <code>name</code>, <code>uri</code>, <code>tags</code>, <code>config:selections</code>, {{ _('the rest (including') }} <code>schedule</code>) {{ _('are ignored.') }}
                         <br>
                         <p>
-                        How to export? <a href="https://distill.io/docs/web-monitor/how-export-and-import-monitors/">https://distill.io/docs/web-monitor/how-export-and-import-monitors/</a><br>
-                        Be sure to set your default fetcher to Chrome if required.<br>
+                        {{ _('How to export?') }} <a href="https://distill.io/docs/web-monitor/how-export-and-import-monitors/">https://distill.io/docs/web-monitor/how-export-and-import-monitors/</a><br>
+                        {{ _('Be sure to set your default fetcher to Chrome if required.') }}<br>
                         </p>
                     </div>
 
@@ -89,32 +88,32 @@
             </fieldset>
                 <div class="pure-control-group">
                 <span class="pure-form-message-inline">
-                    Table of custom column and data types mapping for the <strong>Custom mapping</strong> File mapping type.
+                    {{ _('Table of custom column and data types mapping for the') }} <strong>{{ _('Custom mapping') }}</strong> {{ _('File mapping type.') }}
                 </span>
                     <table style="border: 1px solid #aaa; padding: 0.5rem; border-radius: 4px;">
                         <tr>
-                            <td><strong>Column #</strong></td>
+                            <td><strong>{{ _('Column #') }}</strong></td>
                             {% for n in range(4) %}
                                 <td><input type="number" name="custom_xlsx[col_{{n}}]" style="width: 4rem;" min="1"></td>
                             {%  endfor %}
                         </tr>
                         <tr>
-                            <td><strong>Type</strong></td>
+                            <td><strong>{{ _('Type') }}</strong></td>
                             {% for n in range(4) %}
                                 <td><select name="custom_xlsx[col_type_{{n}}]">
-                                    <option value="" style="color: #aaa"> -- none --</option>
-                                    <option value="url">URL</option>
-                                    <option value="title">Title</option>
-                                    <option value="include_filters">CSS/xPath filter</option>
-                                    <option value="tag">Group / Tag name(s)</option>
-                                    <option value="interval_minutes">Recheck time (minutes)</option>
+                                    <option value="" style="color: #aaa"> -- {{ _('none') }} --</option>
+                                    <option value="url">{{ _('URL') }}</option>
+                                    <option value="title">{{ _('Title') }}</option>
+                                    <option value="include_filters">{{ _('CSS/xPath filter') }}</option>
+                                    <option value="tag">{{ _('Group / Tag name(s)') }}</option>
+                                    <option value="interval_minutes">{{ _('Recheck time (minutes)') }}</option>
                                 </select></td>
                             {%  endfor %}
                         </tr>
                     </table>
                 </div>
             </div>
-            <button type="submit" class="pure-button pure-input-1-2 pure-button-primary">Import</button>
+            <button type="submit" class="pure-button pure-input-1-2 pure-button-primary">{{ _('Import') }}</button>
         </form>
 
     </div>

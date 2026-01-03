@@ -18,12 +18,12 @@ class TestDiffBuilder(unittest.TestCase):
 
 
         # Contents from the browser are always returned from the browser/requests/etc as str, str is basically UTF-16 in python
-        watch.save_history_text(contents="hello world", timestamp=100, snapshot_id=str(uuid_builder.uuid4()))
-        watch.save_history_text(contents="hello world", timestamp=105, snapshot_id=str(uuid_builder.uuid4()))
-        watch.save_history_text(contents="hello world", timestamp=109, snapshot_id=str(uuid_builder.uuid4()))
-        watch.save_history_text(contents="hello world", timestamp=112, snapshot_id=str(uuid_builder.uuid4()))
-        watch.save_history_text(contents="hello world", timestamp=115, snapshot_id=str(uuid_builder.uuid4()))
-        watch.save_history_text(contents="hello world", timestamp=117, snapshot_id=str(uuid_builder.uuid4()))
+        watch.save_history_blob(contents="hello world", timestamp=100, snapshot_id=str(uuid_builder.uuid4()))
+        watch.save_history_blob(contents="hello world", timestamp=105, snapshot_id=str(uuid_builder.uuid4()))
+        watch.save_history_blob(contents="hello world", timestamp=109, snapshot_id=str(uuid_builder.uuid4()))
+        watch.save_history_blob(contents="hello world", timestamp=112, snapshot_id=str(uuid_builder.uuid4()))
+        watch.save_history_blob(contents="hello world", timestamp=115, snapshot_id=str(uuid_builder.uuid4()))
+        watch.save_history_blob(contents="hello world", timestamp=117, snapshot_id=str(uuid_builder.uuid4()))
     
         p = watch.get_from_version_based_on_last_viewed
         assert p == "100", "Correct 'last viewed' timestamp was detected"
@@ -53,7 +53,7 @@ class TestDiffBuilder(unittest.TestCase):
         p = watch.get_from_version_based_on_last_viewed
         assert p == None, "None when no history available"
 
-        watch.save_history_text(contents="hello world", timestamp=100, snapshot_id=str(uuid_builder.uuid4()))
+        watch.save_history_blob(contents="hello world", timestamp=100, snapshot_id=str(uuid_builder.uuid4()))
         p = watch.get_from_version_based_on_last_viewed
         assert p == "100", "Correct with only one history snapshot"
 

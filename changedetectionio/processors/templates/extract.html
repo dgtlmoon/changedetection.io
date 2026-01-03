@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_button %}
+{% block content %}
+    <div class="tabs">
+    <ul>
+        {% if last_error_text %}<li class="tab" id="error-text-tab"><a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=uuid)}}#error-text">Error Text</a></li> {% endif %}
+        {% if last_error_screenshot %}<li class="tab" id="error-screenshot-tab"><a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=uuid)}}#error-screenshot">Error Screenshot</a></li> {% endif %}
+        <li class="tab" id=""><a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=uuid)}}#text">Text</a></li>
+        <li class="tab" id="screenshot-tab"><a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=uuid)}}#screenshot">Screenshot</a></li>
+        <li class="tab active" id="extract-tab"><a href="{{ url_for('ui.ui_diff.diff_history_page_extract_GET', uuid=uuid)}}">Extract Data</a></li>
+    </ul>
+</div>
+
+    <div id="diff-ui">
+
+ <div class="xxxxtab-pane-inner" id="extract">
+        <form id="extract-data-form" class="pure-form pure-form-stacked edit-form"  action="{{ url_for('ui.ui_diff.diff_history_page_extract_POST', uuid=uuid) }}"  method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <p>This tool will extract text data from all of the watch history.</p>
+
+            <div class="pure-control-group">
+                {{ render_field(extract_form.extract_regex) }}
+                <span class="pure-form-message-inline">
+                    A <strong>RegEx</strong> is a pattern that identifies exactly which part inside of the text that you want to extract.<br>
+
+                    <p>
+                        For example, to extract only the numbers from text &dash;<br>
+                        <strong>Raw text</strong>: <code>Temperature <span style="color: red">5.5</span>°C in Sydney</code><br>
+                        <strong>RegEx to extract:</strong> <code>Temperature <span style="color: red">([0-9\.]+)</span></code><br>
+                    </p>
+                    <p>
+                        <a href="https://RegExr.com/">Be sure to test your RegEx here.</a>
+                    </p>
+                    <p>
+                        Each RegEx group bracket <code>()</code> will be in its own column, the first column value is always the date.
+                    </p>
+                </span>
+            </div>
+            <div class="pure-control-group">
+                {{ render_button(extract_form.extract_submit_button) }}
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

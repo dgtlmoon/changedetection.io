@@ -291,7 +291,7 @@ def test_lev_conditions_plugin(client, live_server, measure_memory_usage, datast
 
     # Check the content saved initially, even tho a condition was set - this is the first snapshot so shouldnt be affected by conditions
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid=uuid),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
     assert b'Which is across multiple lines' in res.data

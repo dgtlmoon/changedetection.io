@@ -89,20 +89,20 @@ class RecheckPriorityQueue:
         try:
             # Wait for notification
             self.sync_q.get(block=block, timeout=timeout)
-            
+
             # Get highest priority item
             with self._lock:
                 if not self._priority_items:
                     logger.critical(f"CRITICAL: Queue notification received but no priority items available")
                     raise Exception("Priority queue inconsistency")
                 item = heapq.heappop(self._priority_items)
-            
+
             # Emit signals
             self._emit_get_signals()
-            
+
             logger.debug(f"Successfully retrieved item: {self._get_item_uuid(item)}")
             return item
-            
+
         except Exception as e:
             logger.critical(f"CRITICAL: Failed to get item from queue: {str(e)}")
             raise
@@ -141,20 +141,20 @@ class RecheckPriorityQueue:
         try:
             # Wait for notification
             await self.async_q.get()
-            
+
             # Get highest priority item
             with self._lock:
                 if not self._priority_items:
                     logger.critical(f"CRITICAL: Async queue notification received but no priority items available")
                     raise Exception("Priority queue inconsistency")
                 item = heapq.heappop(self._priority_items)
-            
+
             # Emit signals
             self._emit_get_signals()
-            
+
             logger.debug(f"Successfully async retrieved item: {self._get_item_uuid(item)}")
             return item
-            
+
         except Exception as e:
             logger.critical(f"CRITICAL: Failed to async get item from queue: {str(e)}")
             raise

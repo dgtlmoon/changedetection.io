@@ -67,7 +67,7 @@ def construct_tag_routes(rss_blueprint, datastore):
                 watch['uuid'] = uuid
 
                 # Include a link to the diff page
-                diff_link = {'href': url_for('ui.ui_views.diff_history_page', uuid=watch['uuid'], _external=True)}
+                diff_link = {'href': url_for('ui.ui_diff.diff_history_page', uuid=watch['uuid'], _external=True)}
 
                 # Get watch label
                 watch_label = get_watch_label(datastore, watch)

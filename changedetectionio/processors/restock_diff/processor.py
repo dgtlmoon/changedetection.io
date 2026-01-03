@@ -1,4 +1,4 @@
-from .. import difference_detection_processor
+from ..base import difference_detection_processor
 from ..exceptions import ProcessorException
 from . import Restock
 from loguru import logger
@@ -7,8 +7,14 @@ import urllib3
 import time
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-name = 'Re-stock & Price detection for pages with a SINGLE product'
-description = 'Detects if the product goes back to in-stock'
+# Translatable strings - extracted by pybabel, translated at runtime in __init__.py
+# Use a marker function so pybabel can extract these strings
+def _(x): return x  # Translation marker for extraction only
+name = _('Re-stock & Price detection for pages with a SINGLE product')
+description = _('Detects if the product goes back to in-stock')
+del _  # Remove marker function
+processor_weight = 1
+list_badge_text = "Restock"  # _()
 
 class UnableToExtractRestockData(Exception):
     def __init__(self, status_code):
@@ -187,6 +193,8 @@ class perform_site_check(difference_detection_processor):
 
 
         itemprop_availability = {}
+
+        # Try built-in extraction first, this will scan metadata in the HTML
         try:
             itemprop_availability = get_itemprop_availability(self.fetcher.content)
         except MoreThanOnePriceFound as e:
@@ -197,6 +205,33 @@ class perform_site_check(difference_detection_processor):
                                      screenshot=self.fetcher.screenshot,
                                      xpath_data=self.fetcher.xpath_data
                                      )
+
+        # If built-in extraction didn't get both price AND availability, try plugin override
+        # Only check plugin if this watch is using a fetcher that might provide better data
+        has_price = itemprop_availability.get('price') is not None
+        has_availability = itemprop_availability.get('availability') is not None
+
+        # @TODO !!! some setting like "Use as fallback" or "always use", "t
+        if not (has_price and has_availability) or True:
+            from changedetectionio.pluggy_interface import get_itemprop_availability_from_plugin
+            fetcher_name = watch.get('fetch_backend', 'html_requests')
+
+            # Only try plugin override if not using system default (which might be anything)
+            if fetcher_name and fetcher_name != 'system':
+                logger.debug("Calling extra plugins for getting item price/availability")
+                plugin_availability = get_itemprop_availability_from_plugin(self.fetcher.content, fetcher_name, self.fetcher, watch.link)
+
+                if plugin_availability:
+                    # Plugin provided better data, use it
+                    plugin_has_price = plugin_availability.get('price') is not None
+                    plugin_has_availability = plugin_availability.get('availability') is not None
+
+                    # Only use plugin data if it's actually better than what we have
+                    if plugin_has_price or plugin_has_availability:
+                        itemprop_availability = plugin_availability
+                        logger.info(f"Using plugin-provided availability data for fetcher '{fetcher_name}' (built-in had price={has_price}, availability={has_availability}; plugin has price={plugin_has_price}, availability={plugin_has_availability})")
+                if not plugin_availability:
+                    logger.debug("No item price/availability from plugins")
 
         # Something valid in get_itemprop_availability() by scraping metadata ?
         if itemprop_availability.get('price') or itemprop_availability.get('availability'):

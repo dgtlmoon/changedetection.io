@@ -49,7 +49,7 @@ def test_ignore(client, live_server, measure_memory_usage, datastore_path):
     assert b'href' in res.data
 
     # It should not be in the preview anymore
-    res = client.get(url_for("ui.ui_views.preview_page", uuid=uuid))
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid=uuid))
     assert b'<div class="ignored">oh yeah 456' not in res.data
 
     # Should be in base.html
@@ -84,6 +84,6 @@ def test_strip_ignore_lines(client, live_server, measure_memory_usage, datastore
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
 
     # It should not be in the preview anymore
-    res = client.get(url_for("ui.ui_views.preview_page", uuid=uuid))
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid=uuid))
     assert b'<div class="ignored">' not in res.data
     assert b'Which is across multiple' not in res.data

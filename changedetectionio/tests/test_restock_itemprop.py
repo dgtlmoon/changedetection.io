@@ -240,7 +240,6 @@ def test_restock_itemprop_with_tag(client, live_server, measure_memory_usage, da
 
 
 def test_itemprop_percent_threshold(client, live_server, measure_memory_usage, datastore_path):
-    
 
     delete_all_watches(client)
 
@@ -299,7 +298,26 @@ def test_itemprop_percent_threshold(client, live_server, measure_memory_usage, d
     assert b'has-unread-changes' not in res.data
 
 
+    # Re #2600 - Switch the mode to normal type and back, and see if the values stick..
+    ###################################################################################
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
 
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        data={"restock_settings-follow_price_changes": "y",
+              "restock_settings-price_change_threshold_percent": 5.05,
+              "processor": "text_json_diff",
+              "url": test_url,
+              'fetch_backend': "html_requests",
+              "time_between_check_use_default": "y"
+              },
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+    # And back again
+    live_server.app.config['DATASTORE'].data['watching'][uuid]['processor'] = 'restock_diff'
+    res = client.get(url_for("ui.ui_edit.edit_page", uuid=uuid))
+    assert b'type="text" value="5.05"' in res.data
 
     delete_all_watches(client)
 
@@ -443,3 +461,4 @@ def test_special_prop_examples(client, live_server, measure_memory_usage, datast
             res = client.get(url_for("watchlist.index"))
             assert b'ception' not in res.data
             assert b'155.55' in res.data
+

@@ -16,8 +16,8 @@ running_async_tasks = []
 async_loop = None
 async_loop_thread = None
 
-# Track currently processing UUIDs for async workers
-currently_processing_uuids = set()
+# Track currently processing UUIDs for async workers - maps {uuid: worker_id}
+currently_processing_uuids = {}
 
 # Configuration - async workers only
 USE_ASYNC_WORKERS = True
@@ -168,45 +168,53 @@ def get_worker_count():
 
 def get_running_uuids():
     """Get list of UUIDs currently being processed by async workers"""
-    return list(currently_processing_uuids)
+    return list(currently_processing_uuids.keys())
 
 
-def set_uuid_processing(uuid, processing=True):
-    """Mark a UUID as being processed or completed"""
+def set_uuid_processing(uuid, worker_id=None, processing=True):
+    """Mark a UUID as being processed or completed by a specific worker"""
     global currently_processing_uuids
     if processing:
-        currently_processing_uuids.add(uuid)
-        logger.debug(f"Started processing UUID: {uuid}")
+        currently_processing_uuids[uuid] = worker_id
+        logger.debug(f"Worker {worker_id} started processing UUID: {uuid}")
     else:
-        currently_processing_uuids.discard(uuid)
-        logger.debug(f"Finished processing UUID: {uuid}")
+        currently_processing_uuids.pop(uuid, None)
+        logger.debug(f"Worker {worker_id} finished processing UUID: {uuid}")
 
 
 def is_watch_running(watch_uuid):
-    """Check if a specific watch is currently being processed"""
-    return watch_uuid in get_running_uuids()
+    """Check if a specific watch is currently being processed by any worker"""
+    return watch_uuid in currently_processing_uuids
 
 
-def queue_item_async_safe(update_q, item):
+def is_watch_running_by_another_worker(watch_uuid, current_worker_id):
+    """Check if a specific watch is currently being processed by a different worker"""
+    if watch_uuid not in currently_processing_uuids:
+        return False
+    processing_worker_id = currently_processing_uuids[watch_uuid]
+    return processing_worker_id != current_worker_id
+
+
+def queue_item_async_safe(update_q, item, silent=False):
     """Bulletproof queue operation with comprehensive error handling"""
     item_uuid = 'unknown'
-    
+
     try:
         # Safely extract UUID for logging
         if hasattr(item, 'item') and isinstance(item.item, dict):
             item_uuid = item.item.get('uuid', 'unknown')
     except Exception as uuid_e:
         logger.critical(f"CRITICAL: Failed to extract UUID from queue item: {uuid_e}")
-    
+
     # Validate inputs
     if not update_q:
         logger.critical(f"CRITICAL: Queue is None/invalid for item {item_uuid}")
         return False
-    
+
     if not item:
         logger.critical(f"CRITICAL: Item is None/invalid")
         return False
-    
+
     # Attempt queue operation with multiple fallbacks
     try:
         # Primary: Use sync interface (thread-safe)
@@ -214,8 +222,9 @@ def queue_item_async_safe(update_q, item):
         if success is False:  # Explicit False return means failure
             logger.critical(f"CRITICAL: Queue.put() returned False for item {item_uuid}")
             return False
-        
-        logger.debug(f"Successfully queued item: {item_uuid}")
+
+        if not silent:
+            logger.debug(f"Successfully queued item: {item_uuid}")
         return True
         
     except Exception as e:

@@ -3,6 +3,7 @@ import hashlib
 import os
 import re
 import asyncio
+from functools import partial
 from changedetectionio import strtobool
 from changedetectionio.content_fetchers.exceptions import BrowserStepsInUnsupportedFetcher, EmptyReply, Non200ErrorCodeReceived
 from changedetectionio.content_fetchers.base import Fetcher
@@ -12,8 +13,8 @@ from changedetectionio.content_fetchers.base import Fetcher
 class fetcher(Fetcher):
     fetcher_description = "Basic fast Plaintext/HTTP Client"
 
-    def __init__(self, proxy_override=None, custom_browser_connection_url=None):
-        super().__init__()
+    def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
+        super().__init__(**kwargs)
         self.proxy_override = proxy_override
         # browser_connection_url is none because its always 'launched locally'
 
@@ -26,7 +27,9 @@ class fetcher(Fetcher):
             ignore_status_codes=False,
             current_include_filters=None,
             is_binary=False,
-            empty_pages_are_a_change=False):
+            empty_pages_are_a_change=False,
+            watch_uuid=None,
+            ):
         """Synchronous version of run - the original requests implementation"""
 
         import chardet
@@ -118,6 +121,12 @@ class fetcher(Fetcher):
 
         self.raw_content = r.content
 
+        # If the content is an image, set it as screenshot for SSIM/visual comparison
+        content_type = r.headers.get('content-type', '').lower()
+        if 'image/' in content_type:
+            self.screenshot = r.content
+            logger.debug(f"Image content detected ({content_type}), set as screenshot for comparison")
+
     async def run(self,
                   fetch_favicon=True,
                   current_include_filters=None,
@@ -127,8 +136,10 @@ class fetcher(Fetcher):
                   request_body=None,
                   request_headers=None,
                   request_method=None,
+                  screenshot_format=None,
                   timeout=None,
                   url=None,
+                  watch_uuid=None,
                   ):
         """Async wrapper that runs the synchronous requests code in a thread pool"""
         
@@ -146,11 +157,12 @@ class fetcher(Fetcher):
                 ignore_status_codes=ignore_status_codes,
                 current_include_filters=current_include_filters,
                 is_binary=is_binary,
-                empty_pages_are_a_change=empty_pages_are_a_change
+                empty_pages_are_a_change=empty_pages_are_a_change,
+                watch_uuid=watch_uuid,
             )
         )
 
-    def quit(self, watch=None):
+    async def quit(self, watch=None):
 
         # In case they switched to `requests` fetcher from something else
         # Then the screenshot could be old, in any case, it's not used here.
@@ -163,3 +175,15 @@ class fetcher(Fetcher):
                 except Exception as e:
                     logger.warning(f"Failed to unlink screenshot: {screenshot} - {e}")
 
+
+# Plugin registration for built-in fetcher
+class RequestsFetcherPlugin:
+    """Plugin class that registers the requests fetcher as a built-in plugin."""
+
+    def register_content_fetcher(self):
+        """Register the requests fetcher"""
+        return ('html_requests', fetcher)
+
+
+# Create module-level instance for plugin registration
+requests_plugin = RequestsFetcherPlugin()
