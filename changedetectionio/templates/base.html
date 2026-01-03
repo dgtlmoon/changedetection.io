@@ -74,16 +74,16 @@
           <!-- Collapsible menu items (hidden on mobile, shown in drawer) -->
           {% if current_user.is_authenticated or not has_password %}
             {% if not current_diff_url %}
-              <li class="pure-menu-item menu-collapsible">
+              <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('tags.') %}active{% endif %}">
                 <a href="{{ url_for('tags.tags_overview_page')}}" class="pure-menu-link">{{ _('GROUPS') }}</a>
               </li>
-              <li class="pure-menu-item menu-collapsible">
+              <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('settings.') %}active{% endif %}">
                 <a href="{{ url_for('settings.settings_page')}}" class="pure-menu-link">{{ _('SETTINGS') }}</a>
               </li>
-              <li class="pure-menu-item menu-collapsible">
+              <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('imports.') %}active{% endif %}">
                 <a href="{{ url_for('imports.import_page')}}" class="pure-menu-link">{{ _('IMPORT') }}</a>
               </li>
-              <li class="pure-menu-item menu-collapsible">
+              <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('backups.') %}active{% endif %}">
                 <a href="{{ url_for('backups.index')}}" class="pure-menu-link">{{ _('BACKUPS') }}</a>
               </li>
             {% else %}
@@ -250,7 +250,7 @@
         <div class="content-wrapper">
           {% if current_user.is_authenticated or not has_password %}
           <aside class="action-sidebar">
-            <a href="{{ url_for('watchlist.index') }}" class="action-sidebar-item" title="{{ _('Watch List') }}">
+            <a href="{{ url_for('watchlist.index') }}" class="action-sidebar-item {% if request.endpoint.startswith('watchlist.') or request.endpoint.startswith('ui.') %}active{% endif %}" title="{{ _('Watch List') }}">
               <svg class="action-icon" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="10"/>
                 <path d="M12 6v6l4 2"/>
@@ -258,7 +258,7 @@
               <span class="action-label">{{ _('Watches') }}</span>
             </a>
 
-            <a href="{{ url_for('queue_status') }}" class="action-sidebar-item" id="queue-action-item" title="{{ _('Queue Status') }}">
+            <a href="{{ url_for('queue_status') }}" class="action-sidebar-item {% if request.endpoint == 'queue_status' %}active{% endif %}" id="queue-action-item" title="{{ _('Queue Status') }}">
               <svg class="action-icon" viewBox="0 0 24 24">
                 <line x1="8" y1="6" x2="21" y2="6"/>
                 <line x1="8" y1="12" x2="21" y2="12"/>
@@ -271,7 +271,7 @@
               <span class="notification-bubble blue-bubble" id="queue-bubble" data-count="0"></span>
             </a>
 
-            <a href="{{ url_for('settings.settings_page') }}" class="action-sidebar-item" title="{{ _('Settings') }}">
+            <a href="{{ url_for('settings.settings_page') }}" class="action-sidebar-item {% if request.endpoint.startswith('settings.') %}active{% endif %}" title="{{ _('Settings') }}">
               <svg class="action-icon" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="3"/>
                 <path d="M12 1v6m0 6v10M3.5 3.5l4.2 4.2m5.6 5.6l4.2 4.2M1 12h6m6 0h10M3.5 20.5l4.2-4.2m5.6-5.6l4.2-4.2"/>
@@ -279,7 +279,7 @@
               <span class="action-label">{{ _('Settings') }}</span>
             </a>
 
-            <a href="{{ url_for('backups.index') }}" class="action-sidebar-item" title="{{ _('Backups') }}">
+            <a href="{{ url_for('backups.index') }}" class="action-sidebar-item {% if request.endpoint.startswith('backups.') %}active{% endif %}" title="{{ _('Backups') }}">
               <svg class="action-icon" viewBox="0 0 24 24">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
