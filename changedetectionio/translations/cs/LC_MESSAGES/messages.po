@@ -2011,9 +2011,7 @@ msgstr "Změněno"
 msgid "No website watches configured, please add a URL in the box above, or"
 msgstr ""
 "Nejsou nakonfigurována žádná sledování webových stránek, do výše "
-"uvedeného pole přidejte adresu URL neboNejsou nakonfigurována žádná "
-"sledování webových stránek, do výše uvedeného pole přidejte adresu URL "
-"nebo"
+"uvedeného pole přidejte adresu URL nebo"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:130
 msgid "import a list"

@@ -2021,7 +2021,7 @@ msgstr "Modifica"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:130
 msgid "No website watches configured, please add a URL in the box above, or"
-msgstr ""
+msgstr "Nessun monitoraggio configurato, aggiungi un URL nella casella sopra, oppure"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:130
 msgid "import a list"

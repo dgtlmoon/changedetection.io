@@ -2054,8 +2054,7 @@ msgstr "Modifié"
 msgid "No website watches configured, please add a URL in the box above, or"
 msgstr ""
 "Aucune surveillance de site Web configurée, veuillez ajouter une URL dans"
-" la case ci-dessus, ouAucune surveillance de site Web configurée, "
-"veuillez ajouter une URL dans la case ci-dessus, ou"
+" la case ci-dessus, ou"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:130
 msgid "import a list"
