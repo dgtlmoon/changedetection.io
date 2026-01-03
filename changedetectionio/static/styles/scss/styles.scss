@@ -24,6 +24,9 @@
 @use "parts/diff_image";
 @use "parts/modal";
 @use "parts/action_sidebar";
+@use "parts/hamburger_menu";
+@use "parts/search_modal";
+@use "parts/notification_bubble";
 
 
 body {
@@ -72,20 +75,6 @@ a.github-link {
   }
 }
 
-#search-q {
-  opacity: 0;
-  -webkit-transition: all .9s ease;
-  -moz-transition: all .9s ease;
-  transition: all .9s ease;
-  width: 0;
-  display: none;
-  &.expanded {
-    width: auto;
-    display: inline-block;
-
-    opacity: 1;
-  }
-}
 #search-result-info {
   color: #fff;
 }
