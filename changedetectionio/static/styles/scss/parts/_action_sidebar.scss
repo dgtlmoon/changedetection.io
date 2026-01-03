@@ -87,6 +87,12 @@
   flex: 1;
   min-width: 0;
   padding: 0;
+
+  // When action sidebar is not present, don't force full width
+  &:only-child {
+    flex: 0 1 auto;
+    margin: 0 auto;
+  }
 }
 
 // Dark mode adjustments
