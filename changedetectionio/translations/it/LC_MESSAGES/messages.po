@@ -175,16 +175,15 @@ msgstr "Valore non valido."
 
 #: changedetectionio/forms.py:732
 msgid "Watch"
-msgstr "Osserva"
+msgstr "Monitora"
 
 #: changedetectionio/forms.py:733 changedetectionio/forms.py:766
 msgid "Processor"
 msgstr "Processore"
 
 #: changedetectionio/forms.py:734
-#, fuzzy
 msgid "Edit > Watch"
-msgstr "Modifica prima poi Monitora"
+msgstr "Modifica > Monitora"
 
 #: changedetectionio/forms.py:747 changedetectionio/forms.py:994
 msgid "Fetch Method"
@@ -1023,7 +1022,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:31
 msgid "# Watches"
-msgstr ""
+msgstr "# Monitoraggi"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:32
 msgid "Tag / Label name"
@@ -1912,7 +1911,7 @@ msgstr "Monitora questo URL!"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:35
 msgid "Edit first then Watch"
-msgstr "Modifica prima poi Monitora"
+msgstr "Modifica > Monitora"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:45
 msgid "Create a shareable link"
@@ -2425,12 +2424,12 @@ msgstr "Cambia lingua"
 #: changedetectionio/templates/base.html:253
 #, fuzzy
 msgid "Watch List"
-msgstr "Osserva"
+msgstr "Lista Monitoraggi"
 
 #: changedetectionio/templates/base.html:258
 #, fuzzy
 msgid "Watches"
-msgstr "Osserva"
+msgstr "Monitoraggi"
 
 #: changedetectionio/templates/base.html:261
 msgid "Queue Status"

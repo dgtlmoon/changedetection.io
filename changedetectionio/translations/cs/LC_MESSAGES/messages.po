@@ -170,7 +170,7 @@ msgstr "Neplatná hodnota."
 
 #: changedetectionio/forms.py:732
 msgid "Watch"
-msgstr "# monitory"
+msgstr "Monitorovat"
 
 #: changedetectionio/forms.py:733 changedetectionio/forms.py:766
 msgid "Processor"
@@ -178,7 +178,7 @@ msgstr "Procesor"
 
 #: changedetectionio/forms.py:734
 msgid "Edit > Watch"
-msgstr "Nejprve upravte a poté sledujte"
+msgstr "Upravit > Monitorovat"
 
 #: changedetectionio/forms.py:747 changedetectionio/forms.py:994
 msgid "Fetch Method"
@@ -1004,7 +1004,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:31
 msgid "# Watches"
-msgstr "# monitory"
+msgstr "# monitorů"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:32
 msgid "Tag / Label name"
@@ -1456,7 +1456,7 @@ msgstr "Podmínky"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:60
 msgid "Stats"
-msgstr "NASTAVENÍ"
+msgstr "Statistiky"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:73
 #: changedetectionio/blueprint/ui/templates/edit.html:313
@@ -1895,11 +1895,11 @@ msgstr "Přidejte nové monitory zjišťování změn webové stránky"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:34
 msgid "Watch this URL!"
-msgstr "Sledujte tuto adresu URL!"
+msgstr "Monitorovat tuto URL!"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:35
 msgid "Edit first then Watch"
-msgstr "Nejprve upravte a poté sledujte"
+msgstr "Upravit a monitorovat"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:45
 msgid "Create a shareable link"
@@ -2401,11 +2401,11 @@ msgstr "Změnit jazyk"
 
 #: changedetectionio/templates/base.html:253
 msgid "Watch List"
-msgstr "# monitory"
+msgstr "Seznam monitorů"
 
 #: changedetectionio/templates/base.html:258
 msgid "Watches"
-msgstr "# monitory"
+msgstr "Monitory"
 
 #: changedetectionio/templates/base.html:261
 msgid "Queue Status"

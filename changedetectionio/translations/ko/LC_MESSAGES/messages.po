@@ -176,18 +176,16 @@ msgid "Invalid value."
 msgstr "값이 잘못되었습니다."
 
 #: changedetectionio/forms.py:732
-#, fuzzy
 msgid "Watch"
-msgstr "# 시계"
+msgstr "모니터"
 
 #: changedetectionio/forms.py:733 changedetectionio/forms.py:766
 msgid "Processor"
 msgstr "프로세서"
 
 #: changedetectionio/forms.py:734
-#, fuzzy
 msgid "Edit > Watch"
-msgstr "먼저 편집한 다음 보기"
+msgstr "편집 > 모니터"
 
 #: changedetectionio/forms.py:747 changedetectionio/forms.py:994
 #, fuzzy
@@ -1035,7 +1033,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:31
 msgid "# Watches"
-msgstr "# 시계"
+msgstr "# 모니터"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:32
 msgid "Tag / Label name"
@@ -1490,7 +1488,7 @@ msgstr "정황"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:60
 msgid "Stats"
-msgstr "설정"
+msgstr "통계"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:73
 #: changedetectionio/blueprint/ui/templates/edit.html:313
@@ -1925,11 +1923,11 @@ msgstr "새로운 웹 페이지 변경 감지 감시 추가"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:34
 msgid "Watch this URL!"
-msgstr "이 URL을 시청하세요!"
+msgstr "이 URL 모니터!"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:35
 msgid "Edit first then Watch"
-msgstr "먼저 편집한 다음 보기"
+msgstr "편집 후 모니터"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:45
 msgid "Create a shareable link"
@@ -2442,12 +2440,12 @@ msgstr "언어 변경"
 #: changedetectionio/templates/base.html:253
 #, fuzzy
 msgid "Watch List"
-msgstr "# 시계"
+msgstr "모니터 목록"
 
 #: changedetectionio/templates/base.html:258
 #, fuzzy
 msgid "Watches"
-msgstr "# 시계"
+msgstr "모니터"
 
 #: changedetectionio/templates/base.html:261
 msgid "Queue Status"

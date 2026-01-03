@@ -176,18 +176,16 @@ msgid "Invalid value."
 msgstr "無效值。"
 
 #: changedetectionio/forms.py:732
-#, fuzzy
 msgid "Watch"
-msgstr "# 手錶"
+msgstr "監控"
 
 #: changedetectionio/forms.py:733 changedetectionio/forms.py:766
 msgid "Processor"
 msgstr "處理器"
 
 #: changedetectionio/forms.py:734
-#, fuzzy
 msgid "Edit > Watch"
-msgstr "先編輯後觀看"
+msgstr "編輯 > 監控"
 
 #: changedetectionio/forms.py:747 changedetectionio/forms.py:994
 #, fuzzy
@@ -1035,7 +1033,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:31
 msgid "# Watches"
-msgstr "# 手錶"
+msgstr "# 監控項"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:32
 msgid "Tag / Label name"
@@ -1925,11 +1923,11 @@ msgstr "添加新的網頁更改檢測監視"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:34
 msgid "Watch this URL!"
-msgstr "關注這個網址！"
+msgstr "監控此URL！"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:35
 msgid "Edit first then Watch"
-msgstr "先編輯後觀看"
+msgstr "編輯後監控"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:45
 msgid "Create a shareable link"
@@ -2442,12 +2440,12 @@ msgstr "更改語言"
 #: changedetectionio/templates/base.html:253
 #, fuzzy
 msgid "Watch List"
-msgstr "# 手錶"
+msgstr "監控列表"
 
 #: changedetectionio/templates/base.html:258
 #, fuzzy
 msgid "Watches"
-msgstr "# 手錶"
+msgstr "監控項"
 
 #: changedetectionio/templates/base.html:261
 msgid "Queue Status"

@@ -172,7 +172,7 @@ msgstr "Ungültiger Wert."
 
 #: changedetectionio/forms.py:732
 msgid "Watch"
-msgstr "Watch"
+msgstr "Monitor"
 
 #: changedetectionio/forms.py:733 changedetectionio/forms.py:766
 msgid "Processor"
@@ -180,7 +180,7 @@ msgstr "Prozessor"
 
 #: changedetectionio/forms.py:734
 msgid "Edit > Watch"
-msgstr "Edit > Watch"
+msgstr "Bearbeiten > Monitor"
 
 #: changedetectionio/forms.py:747 changedetectionio/forms.py:994
 msgid "Fetch Method"
@@ -815,7 +815,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/__init__.py:126
 msgid "Settings updated."
-msgstr "EINSTELLUNGEN"
+msgstr "Einstellungen aktualisiert."
 
 #: changedetectionio/blueprint/settings/__init__.py:129
 #: changedetectionio/blueprint/ui/edit.py:283
@@ -942,7 +942,7 @@ msgstr "Filter und Trigger"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html:50
 msgid "These settings are"
-msgstr "EINSTELLUNGEN"
+msgstr "Diese Einstellungen sind"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html:50
 msgid "added"
@@ -1420,7 +1420,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/diff.html:127
 msgid "from settings."
-msgstr "EINSTELLUNGEN"
+msgstr "aus den Einstellungen."
 
 #: changedetectionio/blueprint/ui/templates/diff.html:133
 msgid "Goto single snapshot"
@@ -1478,7 +1478,7 @@ msgstr "Bedingungen"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:60
 msgid "Stats"
-msgstr "EINSTELLUNGEN"
+msgstr "Statistiken"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:73
 #: changedetectionio/blueprint/ui/templates/edit.html:313
@@ -1931,11 +1931,11 @@ msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:34
 msgid "Watch this URL!"
-msgstr "Sehen Sie sich diese URL an!"
+msgstr "Diese URL überwachen!"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:35
 msgid "Edit first then Watch"
-msgstr "Zuerst bearbeiten, dann ansehen"
+msgstr "Bearbeiten > Überwachen"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:45
 msgid "Create a shareable link"

@@ -176,9 +176,8 @@ msgid "Invalid value."
 msgstr "无效值。"
 
 #: changedetectionio/forms.py:732
-#, fuzzy
 msgid "Watch"
-msgstr "# 手表"
+msgstr "监控"
 
 #: changedetectionio/forms.py:733 changedetectionio/forms.py:766
 msgid "Processor"
@@ -187,7 +186,7 @@ msgstr "处理器"
 #: changedetectionio/forms.py:734
 #, fuzzy
 msgid "Edit > Watch"
-msgstr "先编辑后观看"
+msgstr "编辑 > 监控"
 
 #: changedetectionio/forms.py:747 changedetectionio/forms.py:994
 #, fuzzy
@@ -1035,7 +1034,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:31
 msgid "# Watches"
-msgstr "# 手表"
+msgstr "# 监控项"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:32
 msgid "Tag / Label name"
@@ -1490,7 +1489,7 @@ msgstr "状况"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:60
 msgid "Stats"
-msgstr "设置"
+msgstr "统计"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:73
 #: changedetectionio/blueprint/ui/templates/edit.html:313
@@ -1925,11 +1924,11 @@ msgstr "添加新的网页更改检测监视"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:34
 msgid "Watch this URL!"
-msgstr "关注这个网址！"
+msgstr "监控此URL！"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:35
 msgid "Edit first then Watch"
-msgstr "先编辑后观看"
+msgstr "编辑后监控"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:45
 msgid "Create a shareable link"
@@ -2442,12 +2441,12 @@ msgstr "更改语言"
 #: changedetectionio/templates/base.html:253
 #, fuzzy
 msgid "Watch List"
-msgstr "# 手表"
+msgstr "监控列表"
 
 #: changedetectionio/templates/base.html:258
 #, fuzzy
 msgid "Watches"
-msgstr "# 手表"
+msgstr "监控项"
 
 #: changedetectionio/templates/base.html:261
 msgid "Queue Status"

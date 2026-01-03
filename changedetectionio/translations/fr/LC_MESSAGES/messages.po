@@ -181,7 +181,7 @@ msgstr "Processeur"
 
 #: changedetectionio/forms.py:734
 msgid "Edit > Watch"
-msgstr "Modifiez d'abord, puis regardez"
+msgstr "Modifier > Surveiller"
 
 #: changedetectionio/forms.py:747 changedetectionio/forms.py:994
 msgid "Fetch Method"
@@ -1483,7 +1483,7 @@ msgstr "Conditions"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:60
 msgid "Stats"
-msgstr "PARAMÈTRES"
+msgstr "Statistiques"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:73
 #: changedetectionio/blueprint/ui/templates/edit.html:313
@@ -1942,7 +1942,7 @@ msgstr "Surveillez cette URL !"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:35
 msgid "Edit first then Watch"
-msgstr "Modifiez d'abord, puis regardez"
+msgstr "Modifier > Surveiller"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:45
 msgid "Create a shareable link"
