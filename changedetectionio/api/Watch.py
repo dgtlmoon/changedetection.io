@@ -302,18 +302,28 @@ class WatchHistoryDiff(Resource):
         from_version_file_contents = watch.get_history_snapshot(from_timestamp)
         to_version_file_contents = watch.get_history_snapshot(to_timestamp)
 
-        # Get diff preferences (using defaults similar to the existing code)
-        diff_prefs = {
-            'diff_ignoreWhitespace': False,
-            'diff_changesOnly': True
-        }
+        # Get diff preferences from query parameters (matching UI preferences in DIFF_PREFERENCES_CONFIG)
+        # Support both 'type' (UI parameter) and 'word_diff' (API parameter) for backward compatibility
+        diff_type = request.args.get('type', 'diffLines')
+        if diff_type == 'diffWords':
+            word_diff = True
 
-        # Generate the diff
+        # Get boolean diff preferences with defaults from DIFF_PREFERENCES_CONFIG
+        changes_only = strtobool(request.args.get('changesOnly', 'true'))
+        ignore_whitespace = strtobool(request.args.get('ignoreWhitespace', 'false'))
+        include_removed = strtobool(request.args.get('removed', 'true'))
+        include_added = strtobool(request.args.get('added', 'true'))
+        include_replaced = strtobool(request.args.get('replaced', 'true'))
+
+        # Generate the diff with all preferences
         content = diff.render_diff(
             previous_version_file_contents=from_version_file_contents,
             newest_version_file_contents=to_version_file_contents,
-            ignore_junk=diff_prefs.get('diff_ignoreWhitespace'),
-            include_equal=not diff_prefs.get('diff_changesOnly'),
+            ignore_junk=ignore_whitespace,
+            include_equal=changes_only,
+            include_removed=include_removed,
+            include_added=include_added,
+            include_replaced=include_replaced,
             word_diff=word_diff,
         )
 

@@ -165,17 +165,82 @@ def test_api_simple(client, live_server, measure_memory_usage, datastore_path):
     assert b'<div id' in res.data
 
 
-    # Fetch the difference between two versions
+    # Fetch the difference between two versions (default text format)
     res = client.get(
         url_for("watchhistorydiff", uuid=watch_uuid, from_timestamp='previous', to_timestamp='latest'),
         headers={'x-api-key': api_key},
     )
     assert b'(changed) Which is across' in res.data
+
+    # Test htmlcolor format
     res = client.get(
         url_for("watchhistorydiff", uuid=watch_uuid, from_timestamp='previous', to_timestamp='latest')+'?format=htmlcolor',
         headers={'x-api-key': api_key},
     )
     assert b'aria-label="Changed text" title="Changed text">Which is across multiple lines' in res.data
+
+    # Test html format
+    res = client.get(
+        url_for("watchhistorydiff", uuid=watch_uuid, from_timestamp='previous', to_timestamp='latest')+'?format=html',
+        headers={'x-api-key': api_key},
+    )
+    assert res.status_code == 200
+    assert b'<br>' in res.data
+
+    # Test markdown format
+    res = client.get(
+        url_for("watchhistorydiff", uuid=watch_uuid, from_timestamp='previous', to_timestamp='latest')+'?format=markdown',
+        headers={'x-api-key': api_key},
+    )
+    assert res.status_code == 200
+
+    # Test new diff preference parameters
+    # Test removed=false (should hide removed content)
+    res = client.get(
+        url_for("watchhistorydiff", uuid=watch_uuid, from_timestamp='previous', to_timestamp='latest')+'?removed=false',
+        headers={'x-api-key': api_key},
+    )
+    # Should not contain removed content indicator
+    assert b'(removed)' not in res.data
+    # Should still contain added content
+    assert b'(added)' in res.data or b'which has this one new line' in res.data
+
+    # Test added=false (should hide added content)
+    # Note: The test data has replacements, not pure additions, so we test differently
+    res = client.get(
+        url_for("watchhistorydiff", uuid=watch_uuid, from_timestamp='previous', to_timestamp='latest')+'?added=false&replaced=false',
+        headers={'x-api-key': api_key},
+    )
+    # With both added and replaced disabled, should have minimal content
+    # Should not contain added indicators
+    assert b'(added)' not in res.data
+
+    # Test replaced=false (should hide replaced/changed content)
+    res = client.get(
+        url_for("watchhistorydiff", uuid=watch_uuid, from_timestamp='previous', to_timestamp='latest')+'?replaced=false',
+        headers={'x-api-key': api_key},
+    )
+    # Should not contain changed content indicator
+    assert b'(changed)' not in res.data
+
+    # Test type=diffWords for word-level diff
+    res = client.get(
+        url_for("watchhistorydiff", uuid=watch_uuid, from_timestamp='previous', to_timestamp='latest')+'?type=diffWords&format=htmlcolor',
+        headers={'x-api-key': api_key},
+    )
+    # Should contain HTML formatted diff
+    assert res.status_code == 200
+    assert len(res.data) > 0
+
+    # Test combined parameters: show only additions with word diff
+    res = client.get(
+        url_for("watchhistorydiff", uuid=watch_uuid, from_timestamp='previous', to_timestamp='latest')+'?removed=false&replaced=false&type=diffWords',
+        headers={'x-api-key': api_key},
+    )
+    assert res.status_code == 200
+    # Should not contain removed or changed markers
+    assert b'(removed)' not in res.data
+    assert b'(changed)' not in res.data
 
 
     # Fetch the whole watch
