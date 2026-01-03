@@ -608,11 +608,11 @@ msgstr "No backups found."
 
 #: changedetectionio/blueprint/backups/templates/overview.html:28
 msgid "Create backup"
-msgstr "Create backup"
+msgstr "Vytvořit zálohu"
 
 #: changedetectionio/blueprint/backups/templates/overview.html:30
 msgid "Remove backups"
-msgstr "Remove backups"
+msgstr "Odstranit zálohy"
 
 #: changedetectionio/blueprint/imports/importer.py:45
 msgid ""
