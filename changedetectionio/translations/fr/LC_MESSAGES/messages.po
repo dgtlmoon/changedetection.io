@@ -353,7 +353,7 @@ msgstr "Envoyer une notification lorsque le filtre n'est plus trouvé sur la pag
 #: changedetectionio/blueprint/ui/templates/edit.html:59
 #: changedetectionio/forms.py:832
 msgid "Notifications"
-msgstr "Aucune information"
+msgstr "Notifications"
 
 #: changedetectionio/forms.py:832
 msgid "Muted"
@@ -844,7 +844,7 @@ msgstr "Général"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:23
 msgid "Fetching"
-msgstr "Recherche"
+msgstr "Récupération"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:24
 msgid "Global Filters"
@@ -872,7 +872,7 @@ msgstr "CAPTCHA et procurations"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:35
 msgid "Info"
-msgstr "Plus d'informations"
+msgstr "Info"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:46
 msgid "Default recheck time for all watches, current system minimum is"

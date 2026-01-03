@@ -374,7 +374,7 @@ msgstr "当页面上找不到过滤器时发送通知"
 #: changedetectionio/blueprint/ui/templates/edit.html:59
 #: changedetectionio/forms.py:832
 msgid "Notifications"
-msgstr "暂无信息"
+msgstr "通知"
 
 #: changedetectionio/forms.py:832
 #, fuzzy
@@ -859,7 +859,7 @@ msgstr "一般的"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:23
 msgid "Fetching"
-msgstr "搜寻中"
+msgstr "获取"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:24
 msgid "Global Filters"
@@ -887,7 +887,7 @@ msgstr "验证码和代理"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:35
 msgid "Info"
-msgstr "更多信息"
+msgstr "信息"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:46
 msgid "Default recheck time for all watches, current system minimum is"

@@ -344,7 +344,7 @@ msgstr "Odeslat upozornění, když filtr již na stránce nelze najít"
 #: changedetectionio/blueprint/ui/templates/edit.html:59
 #: changedetectionio/forms.py:832
 msgid "Notifications"
-msgstr "Žádné informace"
+msgstr "Oznámení"
 
 #: changedetectionio/forms.py:832
 msgid "Muted"
@@ -823,7 +823,7 @@ msgstr "Generál"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:23
 msgid "Fetching"
-msgstr "Hledání"
+msgstr "Načítání"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:24
 msgid "Global Filters"
@@ -851,7 +851,7 @@ msgstr "CAPTCHA a proxy"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:35
 msgid "Info"
-msgstr "Více informací"
+msgstr "Info"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:46
 msgid "Default recheck time for all watches, current system minimum is"

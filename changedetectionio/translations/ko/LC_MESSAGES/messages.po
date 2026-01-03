@@ -374,7 +374,7 @@ msgstr "페이지에서 필터를 더 이상 찾을 수 없으면 알림 보내�
 #: changedetectionio/blueprint/ui/templates/edit.html:59
 #: changedetectionio/forms.py:832
 msgid "Notifications"
-msgstr "정보 없음"
+msgstr "알림"
 
 #: changedetectionio/forms.py:832
 #, fuzzy
@@ -859,7 +859,7 @@ msgstr "일반적인"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:23
 msgid "Fetching"
-msgstr "수색"
+msgstr "가져오기"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:24
 msgid "Global Filters"
@@ -887,7 +887,7 @@ msgstr "보안 문자 및 프록시"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:35
 msgid "Info"
-msgstr "추가 정보"
+msgstr "정보"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:46
 msgid "Default recheck time for all watches, current system minimum is"

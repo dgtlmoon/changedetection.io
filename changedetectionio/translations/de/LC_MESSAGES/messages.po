@@ -350,7 +350,7 @@ msgstr ""
 #: changedetectionio/blueprint/ui/templates/edit.html:59
 #: changedetectionio/forms.py:832
 msgid "Notifications"
-msgstr "Keine Informationen"
+msgstr "Benachrichtigungen"
 
 #: changedetectionio/forms.py:832
 msgid "Muted"
@@ -839,7 +839,7 @@ msgstr "Allgemein"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:23
 msgid "Fetching"
-msgstr "Suchen"
+msgstr "Abrufen"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:24
 msgid "Global Filters"
@@ -867,7 +867,7 @@ msgstr "CAPTCHA & Proxys"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:35
 msgid "Info"
-msgstr "Weitere Informationen"
+msgstr "Info"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:46
 msgid "Default recheck time for all watches, current system minimum is"
