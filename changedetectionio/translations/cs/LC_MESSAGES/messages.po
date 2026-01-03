@@ -396,7 +396,7 @@ msgstr ""
 
 #: changedetectionio/forms.py:920 changedetectionio/forms.py:932
 msgid "Name"
-msgstr "Zrušit ztlumení"
+msgstr "Název"
 
 #: changedetectionio/forms.py:921
 msgid "Proxy URL"
@@ -420,7 +420,7 @@ msgstr "Požadavky na prostý text"
 
 #: changedetectionio/forms.py:946
 msgid "Chrome requests"
-msgstr "Žádost"
+msgstr "Chrome požadavky"
 
 #: changedetectionio/forms.py:952
 msgid "Default proxy"
@@ -476,7 +476,7 @@ msgstr "Kontrola zabezpečení přístupového tokenu API povolena"
 
 #: changedetectionio/forms.py:989
 msgid "Notification base URL override"
-msgstr "Počet upozornění na upozornění"
+msgstr "Základní URL pro upozornění"
 
 #: changedetectionio/forms.py:993
 msgid "Treat empty pages as a change?"
@@ -1251,7 +1251,7 @@ msgstr "nejprve odkaz."
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:17
 msgid "Confirmation text"
-msgstr "Žádné informace"
+msgstr "Potvrzovací text"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:27
 msgid "Type in the word"
@@ -2050,7 +2050,7 @@ msgstr "Ve frontě"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:250
 msgid "History"
-msgstr "Dějiny"
+msgstr "Historie"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:251
 msgid "Preview"

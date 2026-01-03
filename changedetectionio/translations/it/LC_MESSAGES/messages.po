@@ -415,9 +415,8 @@ msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
 msgstr ""
 
 #: changedetectionio/forms.py:920 changedetectionio/forms.py:932
-#, fuzzy
 msgid "Name"
-msgstr "Riattiva audio"
+msgstr "Nome"
 
 #: changedetectionio/forms.py:921
 msgid "Proxy URL"
@@ -440,9 +439,8 @@ msgid "Plaintext requests"
 msgstr "Richieste in chiaro"
 
 #: changedetectionio/forms.py:946
-#, fuzzy
 msgid "Chrome requests"
-msgstr "Richiesta"
+msgstr "Richieste Chrome"
 
 #: changedetectionio/forms.py:952
 msgid "Default proxy"
@@ -497,9 +495,8 @@ msgid "API access token security check enabled"
 msgstr "Controllo sicurezza token API attivo"
 
 #: changedetectionio/forms.py:989
-#, fuzzy
 msgid "Notification base URL override"
-msgstr "Notifiche"
+msgstr "URL base notifiche"
 
 #: changedetectionio/forms.py:993
 msgid "Treat empty pages as a change?"
@@ -1273,7 +1270,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:17
 msgid "Confirmation text"
-msgstr ""
+msgstr "Testo di conferma"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:27
 msgid "Type in the word"

@@ -337,7 +337,7 @@ msgstr "Speichern"
 
 #: changedetectionio/forms.py:829
 msgid "Proxy"
-msgstr "Stellvertreter"
+msgstr "Proxy"
 
 #: changedetectionio/forms.py:831
 msgid "Send a notification when the filter can no longer be found on the page"
@@ -404,7 +404,7 @@ msgstr ""
 
 #: changedetectionio/forms.py:920 changedetectionio/forms.py:932
 msgid "Name"
-msgstr "Stummschaltung aufheben"
+msgstr "Name"
 
 #: changedetectionio/forms.py:921
 msgid "Proxy URL"
@@ -428,7 +428,7 @@ msgstr "Klartextanfragen"
 
 #: changedetectionio/forms.py:946
 msgid "Chrome requests"
-msgstr "Anfrage"
+msgstr "Chrome Requests"
 
 #: changedetectionio/forms.py:952
 msgid "Default proxy"
@@ -484,7 +484,7 @@ msgstr "Sicherheitsüberprüfung des API-Zugriffstokens aktiviert"
 
 #: changedetectionio/forms.py:989
 msgid "Notification base URL override"
-msgstr "Anzahl der Benachrichtigungsalarme"
+msgstr "Basis-URL für Benachrichtigungen"
 
 #: changedetectionio/forms.py:993
 msgid "Treat empty pages as a change?"
@@ -897,7 +897,7 @@ msgstr "Keine Plugins aktiv"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:405
 msgid "Back"
-msgstr "BACKUPS"
+msgstr "Zurück"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:406
 msgid "Clear Snapshot History"
@@ -1271,7 +1271,7 @@ msgstr "Link zuerst."
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:17
 msgid "Confirmation text"
-msgstr "Keine Informationen"
+msgstr "Bestätigungstext"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:27
 msgid "Type in the word"
@@ -2396,7 +2396,7 @@ msgstr "EINSTELLUNGEN"
 #: changedetectionio/templates/base.html:84
 #: changedetectionio/templates/base.html:170
 msgid "IMPORT"
-msgstr "IMPORT"
+msgstr "IMPORTIEREN"
 
 #: changedetectionio/templates/base.html:87
 #: changedetectionio/templates/base.html:171

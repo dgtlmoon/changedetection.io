@@ -363,7 +363,7 @@ msgstr "구하다"
 
 #: changedetectionio/forms.py:829
 msgid "Proxy"
-msgstr "대리"
+msgstr "프록시"
 
 #: changedetectionio/forms.py:831
 msgid "Send a notification when the filter can no longer be found on the page"
@@ -427,9 +427,8 @@ msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
 msgstr ""
 
 #: changedetectionio/forms.py:920 changedetectionio/forms.py:932
-#, fuzzy
 msgid "Name"
-msgstr "음소거 해제"
+msgstr "이름"
 
 #: changedetectionio/forms.py:921
 msgid "Proxy URL"
@@ -452,9 +451,8 @@ msgid "Plaintext requests"
 msgstr "일반 텍스트 요청"
 
 #: changedetectionio/forms.py:946
-#, fuzzy
 msgid "Chrome requests"
-msgstr "요구"
+msgstr "Chrome 요청"
 
 #: changedetectionio/forms.py:952
 msgid "Default proxy"
@@ -511,9 +509,8 @@ msgid "API access token security check enabled"
 msgstr "API 액세스 토큰 보안 확인이 활성화되었습니다."
 
 #: changedetectionio/forms.py:989
-#, fuzzy
 msgid "Notification base URL override"
-msgstr "알림 경고 수"
+msgstr "알림 기본 URL"
 
 #: changedetectionio/forms.py:993
 msgid "Treat empty pages as a change?"
@@ -915,7 +912,7 @@ msgstr "활성화된 플러그인이 없습니다."
 
 #: changedetectionio/blueprint/settings/templates/settings.html:405
 msgid "Back"
-msgstr "백업"
+msgstr "뒤로"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:406
 msgid "Clear Snapshot History"
@@ -1290,7 +1287,7 @@ msgstr "먼저 링크하세요."
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:17
 msgid "Confirmation text"
-msgstr "정보 없음"
+msgstr "확인 텍스트"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:27
 msgid "Type in the word"
@@ -2079,7 +2076,7 @@ msgstr "대기 중"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:250
 msgid "History"
-msgstr "역사"
+msgstr "기록"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:251
 msgid "Preview"
@@ -2405,7 +2402,7 @@ msgstr "설정"
 #: changedetectionio/templates/base.html:84
 #: changedetectionio/templates/base.html:170
 msgid "IMPORT"
-msgstr "수입"
+msgstr "가져오기"
 
 #: changedetectionio/templates/base.html:87
 #: changedetectionio/templates/base.html:171

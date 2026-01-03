@@ -363,7 +363,7 @@ msgstr "节省"
 
 #: changedetectionio/forms.py:829
 msgid "Proxy"
-msgstr "代理人"
+msgstr "代理"
 
 #: changedetectionio/forms.py:831
 msgid "Send a notification when the filter can no longer be found on the page"
@@ -427,9 +427,8 @@ msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
 msgstr ""
 
 #: changedetectionio/forms.py:920 changedetectionio/forms.py:932
-#, fuzzy
 msgid "Name"
-msgstr "取消静音"
+msgstr "名称"
 
 #: changedetectionio/forms.py:921
 msgid "Proxy URL"
@@ -452,9 +451,8 @@ msgid "Plaintext requests"
 msgstr "明文请求"
 
 #: changedetectionio/forms.py:946
-#, fuzzy
 msgid "Chrome requests"
-msgstr "要求"
+msgstr "Chrome请求"
 
 #: changedetectionio/forms.py:952
 msgid "Default proxy"
@@ -511,9 +509,8 @@ msgid "API access token security check enabled"
 msgstr "已启用 API 访问令牌安全检查"
 
 #: changedetectionio/forms.py:989
-#, fuzzy
 msgid "Notification base URL override"
-msgstr "通知警报计数"
+msgstr "通知基础URL"
 
 #: changedetectionio/forms.py:993
 msgid "Treat empty pages as a change?"
@@ -915,7 +912,7 @@ msgstr "没有激活的插件"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:405
 msgid "Back"
-msgstr "备份"
+msgstr "返回"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:406
 msgid "Clear Snapshot History"
@@ -1290,7 +1287,7 @@ msgstr "先链接。"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:17
 msgid "Confirmation text"
-msgstr "暂无信息"
+msgstr "确认文本"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:27
 msgid "Type in the word"
@@ -2405,7 +2402,7 @@ msgstr "设置"
 #: changedetectionio/templates/base.html:84
 #: changedetectionio/templates/base.html:170
 msgid "IMPORT"
-msgstr "进口"
+msgstr "导入"
 
 #: changedetectionio/templates/base.html:87
 #: changedetectionio/templates/base.html:171

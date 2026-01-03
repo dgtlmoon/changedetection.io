@@ -363,7 +363,7 @@ msgstr "節省"
 
 #: changedetectionio/forms.py:829
 msgid "Proxy"
-msgstr "代理人"
+msgstr "代理"
 
 #: changedetectionio/forms.py:831
 msgid "Send a notification when the filter can no longer be found on the page"
@@ -427,9 +427,8 @@ msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
 msgstr ""
 
 #: changedetectionio/forms.py:920 changedetectionio/forms.py:932
-#, fuzzy
 msgid "Name"
-msgstr "取消靜音"
+msgstr "名稱"
 
 #: changedetectionio/forms.py:921
 msgid "Proxy URL"
@@ -452,9 +451,8 @@ msgid "Plaintext requests"
 msgstr "明文請求"
 
 #: changedetectionio/forms.py:946
-#, fuzzy
 msgid "Chrome requests"
-msgstr "要求"
+msgstr "Chrome請求"
 
 #: changedetectionio/forms.py:952
 msgid "Default proxy"
@@ -511,9 +509,8 @@ msgid "API access token security check enabled"
 msgstr "已啟用 API 訪問令牌安全檢查"
 
 #: changedetectionio/forms.py:989
-#, fuzzy
 msgid "Notification base URL override"
-msgstr "通知警報計數"
+msgstr "通知基礎URL"
 
 #: changedetectionio/forms.py:993
 msgid "Treat empty pages as a change?"
@@ -2405,7 +2402,7 @@ msgstr "設定"
 #: changedetectionio/templates/base.html:84
 #: changedetectionio/templates/base.html:170
 msgid "IMPORT"
-msgstr "進口"
+msgstr "導入"
 
 #: changedetectionio/templates/base.html:87
 #: changedetectionio/templates/base.html:171

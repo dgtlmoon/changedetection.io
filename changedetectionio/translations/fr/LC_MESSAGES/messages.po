@@ -342,7 +342,7 @@ msgstr "Sauvegarder"
 
 #: changedetectionio/forms.py:829
 msgid "Proxy"
-msgstr "Procuration"
+msgstr "Proxy"
 
 #: changedetectionio/forms.py:831
 msgid "Send a notification when the filter can no longer be found on the page"
@@ -405,7 +405,7 @@ msgstr ""
 
 #: changedetectionio/forms.py:920 changedetectionio/forms.py:932
 msgid "Name"
-msgstr "Réactiver le son"
+msgstr "Nom"
 
 #: changedetectionio/forms.py:921
 msgid "Proxy URL"
@@ -429,7 +429,7 @@ msgstr "Requêtes en texte brut"
 
 #: changedetectionio/forms.py:946
 msgid "Chrome requests"
-msgstr "Demande"
+msgstr "Requêtes Chrome"
 
 #: changedetectionio/forms.py:952
 msgid "Default proxy"
@@ -485,7 +485,7 @@ msgstr "Contrôle de sécurité du jeton d'accès à l'API activé"
 
 #: changedetectionio/forms.py:989
 msgid "Notification base URL override"
-msgstr "Nombre d'alertes de notification"
+msgstr "URL de base pour les notifications"
 
 #: changedetectionio/forms.py:993
 msgid "Treat empty pages as a change?"
@@ -902,7 +902,7 @@ msgstr "Aucun plugin actif"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:405
 msgid "Back"
-msgstr "SAUVEGARDES"
+msgstr "Retour"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:406
 msgid "Clear Snapshot History"
@@ -1276,7 +1276,7 @@ msgstr "lien d'abord."
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:17
 msgid "Confirmation text"
-msgstr "Aucune information"
+msgstr "Texte de confirmation"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:27
 msgid "Type in the word"
@@ -2092,7 +2092,7 @@ msgstr "En file d'attente"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:250
 msgid "History"
-msgstr "Histoire"
+msgstr "Historique"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:251
 msgid "Preview"
