@@ -104,8 +104,12 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:dev,ghcr.io/${{ github.repository }}:dev
           platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v8
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: |
+            type=gha,scope=buildkit-master
+            type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:buildcache
+          cache-to: |
+            type=gha,mode=max,scope=buildkit-master
+            type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:buildcache,mode=max
 
 # Looks like this was disabled
 #          provenance: false
@@ -142,8 +146,12 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v8
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: |
+            type=gha,scope=buildkit-release
+            type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:buildcache
+          cache-to: |
+            type=gha,mode=max,scope=buildkit-release
+            type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:buildcache,mode=max
 # Looks like this was disabled
 #          provenance: false
 
