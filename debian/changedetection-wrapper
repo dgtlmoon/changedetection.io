@@ -1,0 +1,3 @@
+#!/bin/sh
+# Wrapper script to run changedetection.io from venv
+exec /opt/changedetection/bin/python3 /opt/changedetection/bin/changedetection.io "$@"

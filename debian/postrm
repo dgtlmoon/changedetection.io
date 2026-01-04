@@ -1,0 +1,29 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    purge)
+        # Remove system user on purge
+        if getent passwd _changedetection >/dev/null; then
+            deluser --system _changedetection >/dev/null || true
+        fi
+
+        # Remove data directory on purge (with confirmation in package description)
+        if [ -d /var/lib/changedetection ]; then
+            echo "Note: Data directory /var/lib/changedetection has been preserved."
+            echo "Remove manually with: rm -rf /var/lib/changedetection"
+        fi
+        ;;
+
+    remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+        ;;
+
+    *)
+        echo "postrm called with unknown argument \`$1'" >&2
+        exit 1
+        ;;
+esac
+
+#DEBHELPER#
+
+exit 0
