@@ -911,8 +911,8 @@ def test_delivered_notifications_appear_in_dashboard(client, live_server, measur
     # Create a test endpoint for the gets:// notification to call
     test_notification_endpoint = url_for('test_notification_endpoint', _external=True, _scheme='http')
 
-    # Use gets:// URL which will succeed
-    working_notification_url = f"gets://{test_notification_endpoint.replace('http://', '')}"
+    # Use get:// (not gets://) to avoid SSL for HTTP-only test server
+    working_notification_url = f"get://{test_notification_endpoint.replace('http://', '')}"
 
     logging.info(f"Setting up watch with working notification URL: {working_notification_url}")
 
@@ -935,13 +935,17 @@ def test_delivered_notifications_appear_in_dashboard(client, live_server, measur
     assert b"Updated watch." in res.data
     logging.info("✓ Watch updated with notification settings")
 
+    # Wait for any pending checks to complete
+    wait_for_all_checks(client)
+
     # Trigger a change
     set_modified_response(datastore_path=datastore_path)
 
     # Trigger a recheck that will send notification
     res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
-    # Just verify we got a response (the check may queue or run immediately)
-    assert res.status_code == 200
+    assert b'Queued 1 watch for rechecking.' in res.data
+
+    # Wait for the check to complete
     wait_for_all_checks(client)
 
     logging.info("Waiting for notification to be delivered...")

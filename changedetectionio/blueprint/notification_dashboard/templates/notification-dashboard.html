@@ -206,6 +206,12 @@ $(function() {
             html += '<div class="detail-row"><span class="detail-label">Next Retry:</span>';
             html += `<span class="detail-value">${event.retry_at_formatted}</span></div>`;
         }
+
+        // Task ID
+        if (event.id) {
+            html += '<div class="detail-row"><span class="detail-label">Task ID:</span>';
+            html += `<span class="detail-value"><code>${event.id}</code></span></div>`;
+        }
         html += '</div>';
 
         // Watch section
