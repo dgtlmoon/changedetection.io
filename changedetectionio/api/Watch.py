@@ -61,8 +61,17 @@ class Watch(Resource):
     @validate_openapi_request('getWatch')
     def get(self, uuid):
         """Get information about a single watch, recheck, pause, or mute."""
+        import time
         from copy import deepcopy
-        watch = deepcopy(self.datastore.data['watching'].get(uuid))
+        watch = None
+        for _ in range(20):
+            try:
+                watch = deepcopy(self.datastore.data['watching'].get(uuid))
+                break
+            except RuntimeError:
+                # Incase dict changed, try again
+                time.sleep(0.01)
+
         if not watch:
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
 
