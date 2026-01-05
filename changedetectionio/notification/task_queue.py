@@ -13,6 +13,7 @@ Environment Variables:
 
 import os
 import struct
+import time
 from loguru import logger
 
 # Get queue storage type from environment
@@ -760,6 +761,7 @@ def send_notification_task(n_object_dict):
     from changedetectionio.flask_app import datastore, notification_debug_log, app
     from datetime import datetime
     import json
+    import time
 
     # Reconstruct NotificationContextData from serialized dict
     n_object = NotificationContextData(initial_data=n_object_dict)
@@ -894,7 +896,6 @@ def send_notification_task(n_object_dict):
         # Store retry attempt details with Apprise logs
         # Note: We use watch_uuid as the identifier since Huey doesn't expose task ID easily
         try:
-            import time
             import os
             import uuid
 
