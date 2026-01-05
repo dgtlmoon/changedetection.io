@@ -16,34 +16,31 @@ def construct_blueprint():
     @notification_dashboard.route("/", methods=['GET'])
     @login_optionally_required
     def dashboard():
-        """Notification queue dashboard - shows pending, retrying, and failed notifications"""
+        """Notification queue dashboard - shows all notification events in timeline view"""
         from changedetectionio.notification.task_queue import (
-            get_pending_notifications,
-            get_failed_notifications,
-            get_retry_config,
-            get_last_successful_notification
+            get_all_notification_events,
+            get_retry_config
         )
 
-        # Get pending/retrying notifications
-        pending_list = get_pending_notifications(limit=1000)
-        pending_count = len(pending_list) if pending_list else 0
-
-        # Get failed (dead letter) notifications
-        failed_notifications = get_failed_notifications()
+        # Get all notification events (delivered, queued, retrying, failed)
+        events = get_all_notification_events(limit=100)
 
         # Get retry configuration for display
         retry_config = get_retry_config()
 
-        # Get last successful notification for reference
-        last_success = get_last_successful_notification()
+        # Count by status for summary
+        status_counts = {
+            'delivered': sum(1 for e in events if e['status'] == 'delivered'),
+            'queued': sum(1 for e in events if e['status'] == 'queued'),
+            'retrying': sum(1 for e in events if e['status'] == 'retrying'),
+            'failed': sum(1 for e in events if e['status'] == 'failed')
+        }
 
         return render_template(
             'notification-dashboard.html',
-            pending_list=pending_list,
-            pending_count=pending_count,
-            failed_notifications=failed_notifications,
+            events=events,
             retry_config=retry_config,
-            last_success=last_success
+            status_counts=status_counts
         )
 
     @notification_dashboard.route("/log/<task_id>", methods=['GET'])

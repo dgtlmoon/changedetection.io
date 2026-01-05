@@ -381,7 +381,8 @@ def get_pending_notifications(limit=50):
                             retry_number = 1  # Default to 1 (first retry after initial failure)
                             total_retries = NOTIFICATION_RETRY_COUNT
                             watch_uuid = notification_data.get('uuid')
-                            if watch_uuid and huey and hasattr(huey.storage, 'path'):
+                            # NOTE: Use "is not None" instead of truthiness check because Huey objects can evaluate to False
+                            if watch_uuid and huey is not None and hasattr(huey.storage, 'path'):
                                 try:
                                     import os
                                     attempts_dir = os.path.join(huey.storage.path, 'retry_attempts')
@@ -446,6 +447,152 @@ def _enumerate_results():
     return task_manager.enumerate_results()
 
 
+def get_all_notification_events(limit=100):
+    """
+    Get ALL notification events in a unified format for timeline view.
+    Returns successful deliveries, queued, retrying, and failed notifications.
+
+    Returns list sorted by timestamp (newest first) with structure:
+    {
+        'id': 'task_id or unique_id',
+        'status': 'delivered' | 'queued' | 'retrying' | 'failed',
+        'timestamp': unix_timestamp,
+        'timestamp_formatted': 'human readable',
+        'watch_uuid': 'uuid',
+        'watch_url': 'url',
+        'watch_title': 'title or truncated url',
+        'notification_urls': ['endpoint1', 'endpoint2'],
+        'retry_number': 1,  # for retrying status
+        'total_retries': 3,  # for retrying status
+        'apprise_logs': 'logs text',
+        'error': 'error text if failed'
+    }
+    """
+    events = []
+
+    # 1. Get delivered (successful) notifications (up to 100)
+    delivered = get_delivered_notifications(limit=limit)
+    for success in delivered:
+        events.append({
+            'id': success.get('task_id') or f"success-{success.get('timestamp', 0)}",
+            'status': 'delivered',
+            'timestamp': success.get('timestamp'),
+            'timestamp_formatted': success.get('timestamp_formatted'),
+            'watch_uuid': success.get('watch_uuid'),
+            'watch_url': success.get('watch_url'),
+            'watch_title': success.get('watch_url', 'Unknown')[:50],
+            'notification_urls': success.get('notification_urls', []),
+            'apprise_logs': '\n'.join(success.get('apprise_logs', [])) if isinstance(success.get('apprise_logs'), list) else success.get('apprise_logs', ''),
+            'error': None
+        })
+
+    # 2. Get pending/queued notifications
+    pending = get_pending_notifications(limit=limit)
+    for item in pending:
+        status = 'retrying' if item.get('status') == 'retrying' else 'queued'
+
+        # Get apprise logs for this task if available
+        apprise_logs = None
+        task_id = item.get('task_id')
+        if task_id:
+            log_data = get_task_apprise_log(task_id)
+            if log_data and log_data.get('apprise_log'):
+                apprise_logs = log_data.get('apprise_log')
+
+        events.append({
+            'id': task_id,
+            'status': status,
+            'timestamp': item.get('queued_at'),
+            'timestamp_formatted': item.get('queued_at_formatted'),
+            'watch_uuid': item.get('watch_uuid'),
+            'watch_url': item.get('watch_url'),
+            'watch_title': item.get('watch_url', 'Unknown')[:50],
+            'notification_urls': item.get('notification_urls', []) if item.get('notification_urls') else [],
+            'retry_number': item.get('retry_number'),
+            'total_retries': item.get('total_retries'),
+            'retry_at': item.get('retry_at_timestamp'),
+            'retry_at_formatted': item.get('retry_at_formatted'),
+            'apprise_logs': apprise_logs,
+            'error': None
+        })
+
+    # 3. Get failed notifications (dead letter)
+    failed = get_failed_notifications(limit=limit)
+    for item in failed:
+        # Get apprise logs for failed tasks
+        apprise_logs = None
+        task_id = item.get('task_id')
+        if task_id:
+            log_data = get_task_apprise_log(task_id)
+            if log_data and log_data.get('apprise_log'):
+                apprise_logs = log_data.get('apprise_log')
+
+        events.append({
+            'id': task_id,
+            'status': 'failed',
+            'timestamp': item.get('timestamp'),
+            'timestamp_formatted': item.get('timestamp_formatted'),
+            'watch_uuid': item.get('notification_data', {}).get('uuid'),
+            'watch_url': item.get('notification_data', {}).get('watch_url'),
+            'watch_title': item.get('notification_data', {}).get('watch_url', 'Unknown')[:50],
+            'notification_urls': item.get('notification_data', {}).get('notification_urls', []),
+            'apprise_logs': apprise_logs,
+            'error': item.get('error')
+        })
+
+    # Sort by timestamp (newest first)
+    events.sort(key=lambda x: x.get('timestamp', 0) or 0, reverse=True)
+
+    # Limit results
+    return events[:limit]
+
+
+def get_delivered_notifications(limit=100):
+    """
+    Get list of delivered (successful) notifications.
+
+    Args:
+        limit: Maximum number to return (default: 100, max: 100)
+
+    Returns:
+        List of dicts with delivered notification info (newest first)
+    """
+    if huey is None or not hasattr(huey.storage, 'path'):
+        return []
+
+    import os
+    import json
+
+    try:
+        # Try new format (list of notifications)
+        success_file = os.path.join(huey.storage.path, 'successful_notifications.json')
+        if os.path.exists(success_file):
+            with open(success_file, 'r') as f:
+                notifications = json.load(f)
+                if isinstance(notifications, list):
+                    # Format timestamps for display
+                    from changedetectionio.notification_service import timestamp_to_localtime
+                    for notif in notifications:
+                        if notif.get('timestamp'):
+                            notif['timestamp_formatted'] = timestamp_to_localtime(notif['timestamp'])
+                    return notifications[:limit]
+
+        # Fall back to old format (single notification) for backward compatibility
+        old_success_file = os.path.join(huey.storage.path, 'last_successful_notification.json')
+        if os.path.exists(old_success_file):
+            with open(old_success_file, 'r') as f:
+                success_data = json.load(f)
+                from changedetectionio.notification_service import timestamp_to_localtime
+                if success_data.get('timestamp'):
+                    success_data['timestamp_formatted'] = timestamp_to_localtime(success_data['timestamp'])
+                return [success_data]  # Return as list
+
+    except Exception as e:
+        logger.debug(f"Unable to load delivered notifications: {e}")
+
+    return []
+
+
 def get_last_successful_notification():
     """
     Get the most recent successful notification for reference.
@@ -453,29 +600,8 @@ def get_last_successful_notification():
     Returns:
         Dict with success info or None if no successful notifications yet
     """
-    if huey is None or not hasattr(huey.storage, 'path'):
-        return None
-
-    import os
-    import json
-
-    try:
-        success_file = os.path.join(huey.storage.path, 'last_successful_notification.json')
-        if os.path.exists(success_file):
-            with open(success_file, 'r') as f:
-                success_data = json.load(f)
-
-                # Format timestamp for display
-                from changedetectionio.notification_service import timestamp_to_localtime
-                success_time = success_data.get('timestamp')
-                if success_time:
-                    success_data['timestamp_formatted'] = timestamp_to_localtime(success_time)
-
-                return success_data
-    except Exception as e:
-        logger.debug(f"Unable to load last successful notification: {e}")
-
-    return None
+    delivered = get_delivered_notifications(limit=1)
+    return delivered[0] if delivered else None
 
 
 def get_failed_notifications(limit=100, max_age_days=30):
@@ -1037,10 +1163,18 @@ def send_notification_task(n_object_dict):
             import os
             import glob
 
-            if huey and hasattr(huey.storage, 'path'):
+            # Get storage path (works for FileStorage, others may not have path attribute)
+            # NOTE: Use "is not None" instead of truthiness check because Huey objects can evaluate to False
+            storage_path = None
+            if huey is not None:
+                storage_path = getattr(huey.storage, 'path', None)
+                storage_type = type(huey.storage).__name__
+                logger.debug(f"Storage check - type: {storage_type}, path: {storage_path}")
+
+            if storage_path:
                 watch_uuid = n_object.get('uuid')
                 if watch_uuid:
-                    attempts_dir = os.path.join(huey.storage.path, 'retry_attempts')
+                    attempts_dir = os.path.join(storage_path, 'retry_attempts')
                     if os.path.exists(attempts_dir):
                         # Delete all attempt files for this watch
                         attempt_pattern = os.path.join(attempts_dir, f"{watch_uuid}.*.json")
@@ -1049,20 +1183,56 @@ def send_notification_task(n_object_dict):
                         logger.debug(f"Cleaned up retry attempt files for successful watch {watch_uuid}")
 
                 # Store last successful notification for reference
-                # Note: This file is overwritten on each success (only keeps most recent)
-                # Logs are limited to 50 lines x 500 chars = ~25KB max
-                success_file = os.path.join(huey.storage.path, 'last_successful_notification.json')
+                # Store successful notification in history (keep last 100)
+                # Logs are limited to 50 lines x 500 chars = ~25KB max per notification
+                success_file = os.path.join(storage_path, 'successful_notifications.json')
+
+                # Generate unique ID for this delivered notification
+                timestamp = time.time()
+                watch_uuid = n_object.get('uuid')
+                unique_id = f"delivered-{watch_uuid}-{int(timestamp * 1000)}"  # millisecond precision
+
+                # Extract notification URLs (could be dict or list)
+                notif_urls = n_object.get('notification_urls', [])
+                if isinstance(notif_urls, dict):
+                    notif_urls = list(notif_urls.keys())
+                elif not isinstance(notif_urls, list):
+                    notif_urls = []
+
                 success_data = {
-                    'timestamp': time.time(),
+                    'task_id': unique_id,
+                    'timestamp': timestamp,
                     'watch_url': n_object.get('watch_url'),
-                    'watch_uuid': n_object.get('uuid'),
-                    'notification_urls': list(n_object.get('notification_urls', {}).keys()) if n_object.get('notification_urls') else [],
+                    'watch_uuid': watch_uuid,
+                    'notification_urls': notif_urls,
                     'apprise_logs': apprise_logs if apprise_logs else [],
                 }
+
+                # Load existing successful notifications
+                successful_notifications = []
+                if os.path.exists(success_file):
+                    try:
+                        with open(success_file, 'r') as f:
+                            successful_notifications = json.load(f)
+                            if not isinstance(successful_notifications, list):
+                                successful_notifications = []
+                    except Exception as e:
+                        logger.debug(f"Error loading successful notifications history: {e}")
+                        successful_notifications = []
+
+                # Prepend new success (newest first)
+                successful_notifications.insert(0, success_data)
+
+                # Keep only last 100
+                successful_notifications = successful_notifications[:100]
+
+                # Save updated list
                 with open(success_file, 'w') as f:
-                    json.dump(success_data, f, indent=2)
+                    json.dump(successful_notifications, f, indent=2)
+
+                logger.info(f"✓ Stored delivered notification: {unique_id} (total: {len(successful_notifications)})")
         except Exception as cleanup_error:
-            logger.debug(f"Unable to cleanup retry attempts: {cleanup_error}")
+            logger.error(f"Failed to store delivered notification: {cleanup_error}", exc_info=True)
 
         logger.success(f"Notification sent successfully for {n_object.get('watch_url')}")
         return sent_obj
@@ -1077,7 +1247,8 @@ def send_notification_task(n_object_dict):
             import os
             import uuid
 
-            if huey and hasattr(huey.storage, 'path'):
+            # NOTE: Use "is not None" instead of truthiness check because Huey objects can evaluate to False
+            if huey is not None and hasattr(huey.storage, 'path'):
                 attempts_dir = os.path.join(huey.storage.path, 'retry_attempts')
                 os.makedirs(attempts_dir, exist_ok=True)
 

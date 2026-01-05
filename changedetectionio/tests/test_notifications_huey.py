@@ -640,18 +640,30 @@ def test_notification_ajax_log_shows_apprise_details(client, live_server, measur
         has_error_details = False
         if log_data.get('error'):
             error_text = str(log_data['error'])
-            has_error_details = ('Name or service not known' in error_text or
-                               'Failed to establish' in error_text or
-                               'Connection' in error_text)
+            has_error_details = (
+                'No address found' in error_text or
+                'Name or service not known' in error_text or
+                'nodename nor servname provided' in error_text or
+                'Temporary failure in name resolution' in error_text or
+                'Failed to establish a new connection' in error_text or
+                'Connection error occurred' in error_text or
+                'Connection' in error_text
+            )
 
         # Check if apprise_log contains useful error details
         has_log_details = False
         if log_data.get('apprise_log') and log_data['apprise_log'] != 'No log available':
             log_text = log_data['apprise_log']
-            has_log_details = ('Name or service not known' in log_text or
-                             'Failed to establish' in log_text or
-                             'Connection' in log_text or
-                             'Socket Exception' in log_text)
+            has_log_details = (
+                'No address found' in log_text or
+                'Name or service not known' in log_text or
+                'nodename nor servname provided' in log_text or
+                'Temporary failure in name resolution' in log_text or
+                'Failed to establish a new connection' in log_text or
+                'Connection error occurred' in log_text or
+                'Connection' in log_text or
+                'Socket Exception' in log_text
+            )
 
         # At least one should have detailed error information
         assert has_error_details or has_log_details, \
@@ -678,7 +690,16 @@ def test_notification_ajax_log_shows_apprise_details(client, live_server, measur
         # Failed notifications should definitely have error details
         if log_data.get('error'):
             error_text = str(log_data['error'])
-            assert 'Name or service not known' in error_text or 'Connection' in error_text, \
+            found_name_resolution_error = (
+                'No address found' in error_text or
+                'Name or service not known' in error_text or
+                'nodename nor servname provided' in error_text or
+                'Temporary failure in name resolution' in error_text or
+                'Failed to establish a new connection' in error_text or
+                'Connection error occurred' in error_text or
+                'Connection' in error_text
+            )
+            assert found_name_resolution_error, \
                 f"Failed notification error should contain connection failure details. Got: {error_text[:300]}"
 
         logging.info("✓ Failed notification shows error details")
@@ -857,3 +878,133 @@ def test_retry_count_display(client, live_server, measure_memory_usage, datastor
     client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
     logging.info("✓ Retry count display test completed successfully")
+
+
+def test_delivered_notifications_appear_in_dashboard(client, live_server, measure_memory_usage, datastore_path):
+    """
+    Test that successfully delivered notifications appear in the notification dashboard.
+
+    Steps:
+    1. Set up a watch with a working notification URL (gets://)
+    2. Trigger a change that will send a notification
+    3. Wait for the notification to be delivered
+    4. Check that it appears in the dashboard with "delivered" status
+    5. Verify apprise logs are available
+    """
+    import time
+    import json
+    import logging
+    from flask import url_for
+    from changedetectionio.notification.task_queue import get_delivered_notifications, get_all_notification_events
+    from .util import set_original_response, set_modified_response, wait_for_all_checks
+
+    logging.info("Starting delivered notifications dashboard test")
+
+    set_original_response(datastore_path=datastore_path)
+
+    # Set a URL and fetch it
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+
+    wait_for_all_checks(client)
+
+    # Create a test endpoint for the gets:// notification to call
+    test_notification_endpoint = url_for('test_notification_endpoint', _external=True, _scheme='http')
+
+    # Use gets:// URL which will succeed
+    working_notification_url = f"gets://{test_notification_endpoint.replace('http://', '')}"
+
+    logging.info(f"Setting up watch with working notification URL: {working_notification_url}")
+
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid="first"),
+        data={
+            "notification_urls": working_notification_url,
+            "notification_title": "Test Delivered",
+            "notification_body": "This notification should succeed",
+            "notification_format": 'text',
+            "url": test_url,
+            "tags": "",
+            "title": "",
+            "headers": "",
+            "fetch_backend": "html_requests",
+            "time_between_check_use_default": "y"
+        },
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+    logging.info("✓ Watch updated with notification settings")
+
+    # Trigger a change
+    set_modified_response(datastore_path=datastore_path)
+
+    # Trigger a recheck that will send notification
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    # Just verify we got a response (the check may queue or run immediately)
+    assert res.status_code == 200
+    wait_for_all_checks(client)
+
+    logging.info("Waiting for notification to be delivered...")
+
+    # Wait up to 15 seconds for notification to complete
+    max_wait = 15
+    delivered_found = False
+    for i in range(max_wait):
+        delivered = get_delivered_notifications(limit=10)
+        if delivered and len(delivered) > 0:
+            # Check if our notification is there
+            for notif in delivered:
+                if notif.get('watch_url') == test_url:
+                    delivered_found = True
+                    logging.info(f"✓ Found delivered notification in storage after {i+1}s")
+                    logging.info(f"  Task ID: {notif.get('task_id')}")
+                    logging.info(f"  Watch URL: {notif.get('watch_url')}")
+                    logging.info(f"  Notification URLs: {notif.get('notification_urls')}")
+                    break
+        if delivered_found:
+            break
+        time.sleep(1)
+
+    assert delivered_found, \
+        f"Delivered notification should appear in storage within {max_wait}s. " \
+        f"Found {len(delivered) if delivered else 0} delivered notifications total."
+
+    # Now check that it appears in the unified events list
+    events = get_all_notification_events(limit=100)
+
+    delivered_events = [e for e in events if e['status'] == 'delivered']
+    logging.info(f"Found {len(delivered_events)} delivered events in unified events list")
+
+    # Find our specific event
+    our_delivered_event = None
+    for event in delivered_events:
+        if event.get('watch_url') == test_url:
+            our_delivered_event = event
+            break
+
+    assert our_delivered_event is not None, \
+        f"Our delivered notification should appear in unified events list. " \
+        f"Total events: {len(events)}, delivered events: {len(delivered_events)}"
+
+    logging.info("✓ Delivered notification appears in unified events list")
+    logging.info(f"  Event ID: {our_delivered_event.get('id')}")
+    logging.info(f"  Status: {our_delivered_event.get('status')}")
+    logging.info(f"  Watch URL: {our_delivered_event.get('watch_url')}")
+
+    # Verify apprise logs are present
+    assert our_delivered_event.get('apprise_logs'), \
+        "Delivered event should have apprise logs"
+
+    logging.info("✓ Delivered event has apprise logs")
+
+    # Now check the dashboard UI shows it
+    res = client.get(url_for("notification_dashboard.dashboard"))
+    assert res.status_code == 200
+    assert b"delivered" in res.data.lower(), \
+        "Dashboard should show 'delivered' status"
+
+    logging.info("✓ Dashboard page loads and shows delivered status")
+
+    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+
+    logging.info("✓ Delivered notifications dashboard test completed successfully")
