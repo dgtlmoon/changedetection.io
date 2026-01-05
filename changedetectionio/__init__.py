@@ -44,10 +44,10 @@ def sigshutdown_handler(_signo, _stack_frame):
     
     # Close janus queues properly
     try:
-        from changedetectionio.flask_app import update_q, notification_q
+        from changedetectionio.flask_app import update_q
         update_q.close()
-        notification_q.close()
-        logger.debug("Janus queues closed successfully")
+        logger.debug("Janus update queue closed successfully")
+        # notification_q is deprecated - now using Huey task queue which handles its own shutdown
     except Exception as e:
         logger.critical(f"CRITICAL: Failed to close janus queues: {e}")
     

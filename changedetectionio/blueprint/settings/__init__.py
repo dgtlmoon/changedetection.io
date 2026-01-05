@@ -77,12 +77,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 # Adjust worker count if it changed
                 if new_worker_count != old_worker_count:
                     from changedetectionio import worker_handler
-                    from changedetectionio.flask_app import update_q, notification_q, app, datastore as ds
-                    
+                    from changedetectionio.flask_app import update_q, app, datastore as ds
+
                     result = worker_handler.adjust_async_worker_count(
                         new_count=new_worker_count,
                         update_q=update_q,
-                        notification_q=notification_q,
+                        notification_q=None,  # Now using Huey task queue
                         app=app,
                         datastore=ds
                     )
@@ -141,5 +141,32 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         output = render_template("notification-log.html",
                                logs=notification_debug_log if len(notification_debug_log) else ["Notification logs are empty - no notifications sent yet."])
         return output
+
+    @settings_blueprint.route("/failed-notifications", methods=['GET'])
+    @login_optionally_required
+    def failed_notifications():
+        """View notifications that failed all retry attempts"""
+        from changedetectionio.notification.task_queue import get_failed_notifications
+
+        failed = get_failed_notifications(limit=100)
+
+        output = render_template("failed-notifications.html",
+                               failed_notifications=failed)
+        return output
+
+    @settings_blueprint.route("/retry-notification/<task_id>", methods=['POST'])
+    @login_optionally_required
+    def retry_notification(task_id):
+        """Retry a failed notification by task ID"""
+        from changedetectionio.notification.task_queue import retry_failed_notification
+
+        success = retry_failed_notification(task_id)
+
+        if success:
+            flash(f"Notification {task_id} queued for retry.", 'notice')
+        else:
+            flash(f"Failed to retry notification {task_id}. Check logs for details.", 'error')
+
+        return redirect(url_for('settings.failed_notifications'))
 
     return settings_blueprint
