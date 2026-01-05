@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="edit-form">
+    <div class="inner">
+
+        <h4 style="margin-top: 0px;">Failed Notifications (Exhausted Retries)</h4>
+
+        <!-- Last Successful Notification Reference -->
+        {% if last_success %}
+        <div style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; padding: 15px; margin-bottom: 20px;">
+            <h5 style="margin-top: 0; color: #155724;">✅ Most Recent Successful Notification</h5>
+            <div style="font-size: 90%;">
+                <div style="margin-bottom: 5px;">
+                    <strong>Timestamp:</strong> {{ last_success.timestamp_formatted }}
+                </div>
+                {% if last_success.watch_url %}
+                <div style="margin-bottom: 5px;">
+                    <strong>Watch URL:</strong> <a href="{{ last_success.watch_url }}" target="_blank" style="word-break: break-all;">{{ last_success.watch_url }}</a>
+                </div>
+                {% endif %}
+                {% if last_success.notification_urls %}
+                <div style="margin-bottom: 5px;">
+                    <strong>Sent via:</strong>
+                    {% for url in last_success.notification_urls %}
+                        <code style="background: #fff; padding: 2px 6px; border-radius: 3px; margin-right: 5px; font-size: 85%;">{{ url }}</code>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% if last_success.apprise_logs %}
+                <details style="margin-top: 10px;">
+                    <summary style="cursor: pointer; font-weight: bold; font-size: 90%; color: #155724;">📋 View Apprise Logs</summary>
+                    <pre style="background: #fff; padding: 10px; border-radius: 3px; border: 1px solid #c3e6cb; margin: 10px 0 0 0; white-space: pre-wrap; word-wrap: break-word; font-size: 80%; color: #333; max-height: 300px; overflow-y: auto;">{% for log_line in last_success.apprise_logs %}{{ log_line }}
+{% endfor %}</pre>
+                </details>
+                {% endif %}
+            </div>
+            <p style="font-size: 85%; color: #155724; margin: 10px 0 0 0; font-style: italic;">
+                Use this as reference - this notification was sent successfully with current settings.
+            </p>
+        </div>
+        {% endif %}
+
+        <!-- Notification Queue Status Summary -->
+        <div style="background: #f0f7ff; border: 1px solid #b8daff; border-radius: 5px; padding: 15px; margin-bottom: 20px;">
+            <h5 style="margin-top: 0; margin-bottom: 10px;">Notification Queue Status</h5>
+            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 200px;">
+                    {% if pending_count is not none %}
+                    <div style="font-size: 90%;">
+                        <strong>🔄 Pending/Retrying:</strong>
+                        <span style="font-size: 120%; font-weight: bold; color: #0066cc;">{{ pending_count }}</span>
+                        <span style="color: #666; font-size: 85%;">notification{{ 's' if pending_count != 1 else '' }}</span>
+                    </div>
+                    <p style="font-size: 85%; color: #666; margin: 5px 0 0 0;">
+                        Currently in queue or being retried
+                    </p>
+                    {% else %}
+                    <div style="font-size: 90%; color: #666;">
+                        <strong>🔄 Pending/Retrying:</strong> <em>Unable to determine</em>
+                    </div>
+                    {% endif %}
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <div style="font-size: 90%;">
+                        <strong>💀 Failed (Dead Letter):</strong>
+                        <span style="font-size: 120%; font-weight: bold; color: {% if failed_notifications|length == 0 %}#28a745{% else %}#dc3545{% endif %};">{{ failed_notifications|length }}</span>
+                        <span style="color: #666; font-size: 85%;">notification{{ 's' if failed_notifications|length != 1 else '' }}</span>
+                    </div>
+                    <p style="font-size: 85%; color: #666; margin: 5px 0 0 0;">
+                        Exhausted all retry attempts
+                    </p>
+                </div>
+            </div>
+
+            <!-- List of pending notifications -->
+            {% if pending_list %}
+            <details style="margin-top: 15px;">
+                <summary style="cursor: pointer; font-weight: bold; font-size: 90%; color: #0066cc;">📋 View Pending/Retrying Notifications ({{ pending_list|length }})</summary>
+                <div style="margin-top: 10px;">
+                    {% for item in pending_list %}
+                    <div style="background: #fff; border: 1px solid #dee2e6; border-radius: 3px; padding: 8px; margin-bottom: 5px; font-size: 85%;">
+                        <div style="margin-bottom: 3px;">
+                            <strong>{% if item.status == 'queued' %}⏳ Queued{% else %}🔄 Retrying{% endif %}:</strong>
+                            {% if item.watch_url %}
+                            <a href="{{ item.watch_url }}" target="_blank" style="word-break: break-all;">{{ item.watch_url }}</a>
+                            {% else %}
+                            <span style="color: #666;">Test notification</span>
+                            {% endif %}
+                        </div>
+                        {% if item.status == 'retrying' and item.retry_at_formatted %}
+                        <div style="color: #666; font-size: 90%;">
+                            Retry at: {{ item.retry_at_formatted }}
+                            {% if item.retry_in_seconds > 0 %}
+                            (in {{ item.retry_in_seconds }}s)
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </details>
+            {% endif %}
+        </div>
+
+        <!-- Retry Schedule Information -->
+        <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; padding: 15px; margin-bottom: 20px;">
+            <h5 style="margin-top: 0;">Automatic Retry Schedule (Exponential Backoff)</h5>
+            <p style="font-size: 90%; margin-bottom: 10px;">
+                Notifications are automatically retried <strong>{{ retry_config.retry_count }} times</strong> with <strong>exponential backoff</strong> starting at {{ retry_config.retry_delay_seconds }} seconds.
+            </p>
+            <table class="pure-table" style="width: 100%; font-size: 90%;">
+                <thead>
+                    <tr>
+                        <th>Attempt</th>
+                        <th>Time</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>1st</strong> (initial)</td>
+                        <td>T+0:00</td>
+                        <td>⚠️ Fails (e.g., SMTP server down)</td>
+                    </tr>
+                    {% for i in range(retry_config.retry_count) %}
+                    {% set delay = retry_config.retry_delays[i] %}
+                    {% set cumulative_time = retry_config.retry_delays[:i+1]|sum %}
+                    <tr>
+                        <td><strong>{{ i + 2 }}{{ ['st', 'nd', 'rd'][i + 1] if i + 1 < 3 else 'th' }}</strong> (retry {{ i + 1 }})</td>
+                        <td>T+{{ '%d:%02d' % (cumulative_time // 60, cumulative_time % 60) }}</td>
+                        <td>{% if i < retry_config.retry_count - 1 %}⚠️ Fails → Wait {{ delay }}s ({{ '%d:%02d' % (delay // 60, delay % 60) }}){% else %}⚠️ Fails → Give up{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr style="background: #fff3cd;">
+                        <td><strong>Dead Letter</strong></td>
+                        <td>T+{{ '%d:%02d' % (retry_config.total_time_seconds // 60, retry_config.total_time_seconds % 60) }}</td>
+                        <td>💀 Moved to this failed notifications list</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="font-size: 85%; margin-top: 10px; margin-bottom: 0; color: #666;">
+                <strong>Total:</strong> {{ retry_config.total_attempts }} attempts over {{ '%d:%02d' % (retry_config.total_time_seconds // 60, retry_config.total_time_seconds % 60) }} (mm:ss).
+                Failed notifications are kept for 30 days, then automatically deleted.
+            </p>
+        </div>
+
+        <!-- Action Buttons (always visible) -->
+        <div style="margin-bottom: 15px;">
+            {% if failed_notifications|length > 0 %}
+            <p style="font-size: 90%; color: #666; margin-bottom: 10px;">
+                These notifications failed after all {{ retry_config.retry_count }} retry attempts.
+                You can fix the notification settings (e.g., SMTP server) and retry them manually below.
+            </p>
+            <form method="POST" action="{{ url_for('settings.retry_all_notifications') }}" style="display: inline-block; margin-right: 10px;">
+                <button type="submit" class="pure-button pure-button-primary" style="background: #28a745;" onclick="return confirm('Retry all {{ failed_notifications|length }} failed notifications?');">
+                    <span class="icon-repeat"></span> Retry All ({{ failed_notifications|length }})
+                </button>
+            </form>
+            {% endif %}
+
+            <!-- Clear All button - always visible -->
+            {% if pending_count > 0 or failed_notifications|length > 0 %}
+            <form method="POST" action="{{ url_for('settings.clear_all_notifications') }}" style="display: inline-block;">
+                <button type="submit" class="pure-button" style="background: #dc3545; color: white;" onclick="return confirm('⚠️ WARNING: This will DELETE ALL notifications:\n\n- {{ pending_count if pending_count else 0 }} Pending/Retrying\n- {{ failed_notifications|length }} Failed\n- All retry attempts\n\nThis action cannot be undone!\n\nAre you sure?');">
+                    <span class="icon-trash"></span> Clear All
+                </button>
+            </form>
+            {% endif %}
+
+            {% if failed_notifications|length > 0 or pending_count > 0 %}
+            <div style="font-size: 85%; color: #666; margin-top: 10px;">
+                {% if failed_notifications|length > 0 %}
+                <strong>Retry All:</strong> Re-queue failed notifications with current settings.<br>
+                {% endif %}
+                <strong>Clear All:</strong> Delete ALL pending, retrying, and failed notifications (cannot be undone).
+            </div>
+            {% endif %}
+        </div>
+
+        {% if failed_notifications|length == 0 %}
+        <div style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; padding: 15px; text-align: center;">
+            <p style="margin: 0; font-size: 110%; color: #155724;">
+                <strong>✅ No failed notifications</strong> - All notifications either succeeded or are still being retried.
+            </p>
+        </div>
+
+        <div id="failed-notifications-list">
+            {% for notification in failed_notifications %}
+            <div class="failed-notification-item" style="border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 5px; background: #fafafa;">
+                {% if notification.timestamp %}
+                <div style="margin-bottom: 10px; font-size: 90%; color: #dc3545;">
+                    <strong>⚠️ Failed:</strong> {{ notification.timestamp_formatted }}
+                    {% if notification.days_ago is defined %}
+                    <span style="color: #666;">({{ notification.days_ago }} day{{ 's' if notification.days_ago != 1 else '' }} ago)</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <div style="margin-bottom: 10px; font-size: 85%; color: #666;">
+                    <strong>Task ID:</strong> <code style="background: #eee; padding: 2px 4px; border-radius: 3px; font-size: 80%;">{{ notification.task_id }}</code>
+                </div>
+
+                {% if notification.notification_data and notification.notification_data.get('watch_url') %}
+                <div style="margin-bottom: 10px;">
+                    <strong>Watch URL:</strong>
+                    <a href="{{ notification.notification_data.get('watch_url') }}" target="_blank" style="word-break: break-all;">
+                        {{ notification.notification_data.get('watch_url') }}
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if notification.notification_data and notification.notification_data.get('uuid') %}
+                <div style="margin-bottom: 10px; font-size: 90%;">
+                    <strong>Watch UUID:</strong> <code style="background: #eee; padding: 2px 6px; border-radius: 3px;">{{ notification.notification_data.get('uuid') }}</code>
+                </div>
+                {% endif %}
+
+                {% if notification.retry_attempts %}
+                <div style="margin-bottom: 15px;">
+                    <strong>Retry Attempts:</strong>
+                    <div style="margin-top: 5px;">
+                        {% for attempt in notification.retry_attempts %}
+                        <details style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 3px; padding: 10px; margin-bottom: 5px;">
+                            <summary style="cursor: pointer; font-weight: bold; font-size: 90%;">
+                                Attempt #{{ attempt.attempt_number }} - {{ attempt.timestamp_formatted }}
+                                {% if attempt.will_retry %}
+                                <span style="color: #0066cc;">→ Will retry</span>
+                                {% else %}
+                                <span style="color: #dc3545;">→ Final attempt</span>
+                                {% endif %}
+                            </summary>
+                            <div style="margin-top: 10px;">
+                                <pre style="background: #fff; padding: 8px; border-radius: 3px; border: 1px solid #dee2e6; margin: 0; white-space: pre-wrap; word-wrap: break-word; font-size: 80%;">{{ attempt.error }}</pre>
+                            </div>
+                        </details>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <div style="margin-bottom: 10px;">
+                    <strong>Error:</strong>
+                    <pre style="background: #fff3cd; padding: 10px; border-radius: 3px; border: 1px solid #ffc107; margin: 5px 0 0 0; white-space: pre-wrap; word-wrap: break-word; font-size: 85%;">{{ notification.error }}</pre>
+                </div>
+                {% endif %}
+
+                <form method="POST" action="{{ url_for('settings.retry_notification', task_id=notification.task_id) }}" style="margin-top: 10px;">
+                    <button type="submit" class="pure-button pure-button-primary" style="font-size: 90%;">
+                        <span class="icon-repeat"></span> Retry This Notification
+                    </button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}

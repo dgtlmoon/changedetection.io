@@ -146,16 +146,20 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @login_optionally_required
     def failed_notifications():
         """View notifications that failed all retry attempts"""
-        from changedetectionio.notification.task_queue import get_failed_notifications, get_retry_config, get_pending_notifications_count
+        from changedetectionio.notification.task_queue import get_failed_notifications, get_retry_config, get_pending_notifications_count, get_last_successful_notification, get_pending_notifications
 
         failed = get_failed_notifications(limit=100)
         retry_config = get_retry_config()
         pending_count = get_pending_notifications_count()
+        pending_list = get_pending_notifications(limit=50)
+        last_success = get_last_successful_notification()
 
         output = render_template("failed-notifications.html",
                                failed_notifications=failed,
                                retry_config=retry_config,
-                               pending_count=pending_count)
+                               pending_count=pending_count,
+                               pending_list=pending_list,
+                               last_success=last_success)
         return output
 
     @settings_blueprint.route("/retry-notification/<task_id>", methods=['POST'])
@@ -187,6 +191,22 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             flash(f"Successfully queued {result['success']} notification(s) for retry.", 'notice')
         else:
             flash(f"Queued {result['success']} notification(s) for retry. {result['failed']} failed to queue.", 'error')
+
+        return redirect(url_for('settings.failed_notifications'))
+
+    @settings_blueprint.route("/clear-all-notifications", methods=['POST'])
+    @login_optionally_required
+    def clear_all_notifications():
+        """Clear ALL notifications (queue, schedule, results, retry attempts)"""
+        from changedetectionio.notification.task_queue import clear_all_notifications as clear_all
+
+        result = clear_all()
+
+        if 'error' in result:
+            flash(f"Error clearing notifications: {result['error']}", 'error')
+        else:
+            total = result['queue'] + result['schedule'] + result['results'] + result['retry_attempts'] + result.get('task_metadata', 0)
+            flash(f"Cleared {total} notification(s): {result['queue']} queued, {result['schedule']} scheduled, {result['results']} failed, {result['retry_attempts']} retry attempts, {result.get('task_metadata', 0)} task metadata.", 'notice')
 
         return redirect(url_for('settings.failed_notifications'))
 
