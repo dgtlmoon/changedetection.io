@@ -146,12 +146,14 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @login_optionally_required
     def failed_notifications():
         """View notifications that failed all retry attempts"""
-        from changedetectionio.notification.task_queue import get_failed_notifications
+        from changedetectionio.notification.task_queue import get_failed_notifications, get_retry_config
 
         failed = get_failed_notifications(limit=100)
+        retry_config = get_retry_config()
 
         output = render_template("failed-notifications.html",
-                               failed_notifications=failed)
+                               failed_notifications=failed,
+                               retry_config=retry_config)
         return output
 
     @settings_blueprint.route("/retry-notification/<task_id>", methods=['POST'])
@@ -168,5 +170,55 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             flash(f"Failed to retry notification {task_id}. Check logs for details.", 'error')
 
         return redirect(url_for('settings.failed_notifications'))
+
+    @settings_blueprint.route("/retry-all-notifications", methods=['POST'])
+    @login_optionally_required
+    def retry_all_notifications():
+        """Retry all failed notifications"""
+        from changedetectionio.notification.task_queue import retry_all_failed_notifications
+
+        result = retry_all_failed_notifications()
+
+        if result['total'] == 0:
+            flash("No failed notifications to retry.", 'notice')
+        elif result['failed'] == 0:
+            flash(f"Successfully queued {result['success']} notification(s) for retry.", 'notice')
+        else:
+            flash(f"Queued {result['success']} notification(s) for retry. {result['failed']} failed to queue.", 'error')
+
+        return redirect(url_for('settings.failed_notifications'))
+
+    @settings_blueprint.route("/api/v1/notifications/failed", methods=['GET'])
+    @login_optionally_required
+    def api_get_failed_notifications():
+        """API endpoint to get list of failed notifications (dead letter queue)"""
+        from changedetectionio.notification.task_queue import get_failed_notifications
+        from flask import jsonify, request
+
+        limit = request.args.get('limit', default=100, type=int)
+        limit = max(1, min(1000, limit))  # Clamp to 1-1000
+
+        failed = get_failed_notifications(limit=limit)
+
+        return jsonify({
+            'count': len(failed),
+            'limit': limit,
+            'notifications': failed
+        }), 200
+
+    @settings_blueprint.route("/api/v1/notifications/retry-all", methods=['POST'])
+    @login_optionally_required
+    def api_retry_all_notifications():
+        """API endpoint to retry all failed notifications"""
+        from changedetectionio.notification.task_queue import retry_all_failed_notifications
+        from flask import jsonify
+
+        result = retry_all_failed_notifications()
+
+        return jsonify({
+            'status': 'success' if result['failed'] == 0 else 'partial',
+            'message': f"Queued {result['success']} notifications for retry",
+            'details': result
+        }), 200
 
     return settings_blueprint

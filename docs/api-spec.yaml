@@ -1318,6 +1318,65 @@ paths:
         '500':
           description: Server error
 
+  /notifications/retry-all:
+    post:
+      operationId: retryAllFailedNotifications
+      tags: [Notification Management]
+      summary: Retry all failed notifications
+      description: |
+        Retry all notifications that failed after exhausting all retry attempts (dead letter queue).
+
+        Failed notifications are removed from the dead letter queue and re-queued with current settings.
+        If they fail again, they will return to the dead letter queue.
+
+        Useful after fixing notification settings (e.g., correcting SMTP server configuration).
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X POST "http://localhost:5000/api/v1/notifications/retry-all" \
+              -H "x-api-key: YOUR_API_KEY"
+        - lang: 'Python'
+          source: |
+            import requests
+
+            headers = {'x-api-key': 'YOUR_API_KEY'}
+            response = requests.post('http://localhost:5000/api/v1/notifications/retry-all', headers=headers)
+            print(response.json())
+      responses:
+        '200':
+          description: Retry operation completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [success, partial]
+                    description: Success if all notifications re-queued, partial if some failed
+                  message:
+                    type: string
+                    description: Human-readable result message
+                  details:
+                    type: object
+                    properties:
+                      success:
+                        type: integer
+                        description: Number of notifications successfully re-queued
+                      failed:
+                        type: integer
+                        description: Number of notifications that failed to re-queue
+                      total:
+                        type: integer
+                        description: Total number of failed notifications processed
+              example:
+                status: "success"
+                message: "Queued 3 notifications for retry"
+                details:
+                  success: 3
+                  failed: 0
+                  total: 3
+
   /systeminfo:
     get:
       operationId: getSystemInfo

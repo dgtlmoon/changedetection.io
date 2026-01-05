@@ -17,6 +17,81 @@ from loguru import logger
 # Get queue storage type from environment
 QUEUE_STORAGE = os.getenv('QUEUE_STORAGE', 'file').lower()
 
+# Get retry configuration from environment (with validation)
+def _get_retry_config():
+    """Get retry configuration from environment variables with validation."""
+    import re
+
+    # Default values
+    default_retries = 3
+    default_delay = 60
+
+    # Get and validate NOTIFICATION_RETRY_COUNT (must be 0-10)
+    retry_count_str = os.getenv('NOTIFICATION_RETRY_COUNT', str(default_retries))
+    if re.match(r'^\d+$', retry_count_str):
+        retry_count = int(retry_count_str)
+        retry_count = max(0, min(10, retry_count))  # Clamp to 0-10
+    else:
+        logger.warning(f"Invalid NOTIFICATION_RETRY_COUNT '{retry_count_str}', using default {default_retries}")
+        retry_count = default_retries
+
+    # Get and validate NOTIFICATION_RETRY_DELAY (must be 10-3600 seconds)
+    retry_delay_str = os.getenv('NOTIFICATION_RETRY_DELAY', str(default_delay))
+    if re.match(r'^\d+$', retry_delay_str):
+        retry_delay = int(retry_delay_str)
+        retry_delay = max(10, min(3600, retry_delay))  # Clamp to 10-3600 seconds
+    else:
+        logger.warning(f"Invalid NOTIFICATION_RETRY_DELAY '{retry_delay_str}', using default {default_delay}")
+        retry_delay = default_delay
+
+    return retry_count, retry_delay
+
+NOTIFICATION_RETRY_COUNT, NOTIFICATION_RETRY_DELAY = _get_retry_config()
+
+
+def get_retry_delays():
+    """
+    Calculate retry delays with exponential backoff.
+
+    Returns a tuple of delays for each retry attempt.
+    Example: base delay 60s → (60, 120, 240, 480, ...)
+    """
+    if NOTIFICATION_RETRY_COUNT == 0:
+        return tuple()
+
+    delays = []
+    for i in range(NOTIFICATION_RETRY_COUNT):
+        delay = NOTIFICATION_RETRY_DELAY * (2 ** i)  # Exponential backoff
+        delays.append(delay)
+
+    return tuple(delays)
+
+
+def get_retry_config():
+    """
+    Get current retry configuration for display in UI.
+
+    Returns:
+        dict: {
+            'retry_count': int,
+            'retry_delay_seconds': int,  # Base delay
+            'retry_delays': tuple,  # Actual delays for each retry
+            'total_attempts': int,
+            'total_time_seconds': int
+        }
+    """
+    retry_delays = get_retry_delays()
+    total_time = sum(retry_delays) if retry_delays else 0
+
+    return {
+        'retry_count': NOTIFICATION_RETRY_COUNT,
+        'retry_delay_seconds': NOTIFICATION_RETRY_DELAY,
+        'retry_delays': retry_delays,
+        'total_attempts': NOTIFICATION_RETRY_COUNT + 1,  # initial + retries
+        'total_time_seconds': total_time
+    }
+
+
 # Global Huey instance (initialized later with proper datastore path)
 huey = None
 
@@ -101,6 +176,52 @@ def init_huey(datastore_path):
     return huey
 
 
+def get_pending_notifications(limit=20):
+    """
+    Get list of pending notifications in the queue (not yet processed or being retried).
+
+    Args:
+        limit: Maximum number of pending notifications to return (default: 20)
+
+    Returns:
+        List of dicts containing pending notification info:
+        - task_id: Huey task ID
+        - watch_url: URL of the watch (if available)
+        - watch_uuid: UUID of the watch (if available)
+        - queued_at: When the notification was queued (if available)
+    """
+    if huey is None:
+        return []
+
+    pending_tasks = []
+
+    try:
+        # Get pending tasks from the queue
+        # Note: This accesses Huey's internal queue storage
+        queue = huey.storage.queue
+
+        # For FileHuey, the queue is a directory with files
+        # For SqliteHuey/RedisHuey, we'd need different logic
+        # This is a simplified implementation
+
+        # Try to get queue length (varies by storage backend)
+        try:
+            queue_length = len(queue)
+            if queue_length > 0:
+                logger.info(f"Found {queue_length} pending notifications in queue")
+        except:
+            pass
+
+        # Return simplified info - full introspection of pending tasks
+        # is complex and varies by storage backend
+        return []  # Simplified for now
+
+    except Exception as e:
+        logger.error(f"Error querying pending notifications: {e}")
+
+    return pending_tasks
+
+
 def get_failed_notifications(limit=100, max_age_days=30):
     """
     Get list of failed notification tasks from Huey's result store.
@@ -149,9 +270,16 @@ def get_failed_notifications(limit=100, max_age_days=30):
                             huey.storage.delete(task_id)
                             continue
 
+                        # Format timestamp for display with locale awareness
+                        from changedetectionio.notification_service import timestamp_to_localtime
+                        timestamp_formatted = timestamp_to_localtime(task_time) if task_time else 'Unknown'
+                        days_ago = int((time.time() - task_time) / 86400) if task_time else 0
+
                         failed_tasks.append({
                             'task_id': task_id,
                             'timestamp': task_data.get('execute_time'),
+                            'timestamp_formatted': timestamp_formatted,
+                            'days_ago': days_ago,
                             'error': str(result),
                             'notification_data': task_data.get('args', [{}])[0] if task_data.get('args') else {},
                         })
@@ -170,6 +298,9 @@ def get_failed_notifications(limit=100, max_age_days=30):
 def retry_failed_notification(task_id):
     """
     Retry a failed notification by task ID.
+
+    Removes the task from the dead letter queue and re-queues it.
+    If it fails again, it will go back to the dead letter queue.
 
     Args:
         task_id: Huey task ID to retry
@@ -193,9 +324,13 @@ def retry_failed_notification(task_id):
         notification_data = task_data.get('args', [{}])[0] if task_data.get('args') else {}
 
         if notification_data:
-            # Queue it again
+            # Queue it again with current settings
             send_notification_task(notification_data)
-            logger.info(f"Re-queued failed notification task {task_id}")
+
+            # Remove from dead letter queue (it will go back if it fails again)
+            huey.storage.delete(task_id)
+
+            logger.info(f"Re-queued failed notification task {task_id} and removed from dead letter queue")
             return True
         else:
             logger.error(f"No notification data found for task {task_id}")
@@ -204,6 +339,51 @@ def retry_failed_notification(task_id):
     except Exception as e:
         logger.error(f"Error retrying notification {task_id}: {e}")
         return False
+
+
+def retry_all_failed_notifications():
+    """
+    Retry all failed notifications in the dead letter queue.
+
+    Returns:
+        dict: {
+            'success': int,  # Number of notifications successfully re-queued
+            'failed': int,   # Number that failed to re-queue
+            'total': int     # Total number processed
+        }
+    """
+    if huey is None:
+        return {'success': 0, 'failed': 0, 'total': 0}
+
+    success_count = 0
+    failed_count = 0
+
+    try:
+        from huey.storage import PeeweeStorage
+
+        # Get all failed tasks
+        results = huey.storage.result_store.flush()
+
+        for task_id, result in results.items():
+            if isinstance(result, Exception):
+                # Try to retry this failed notification
+                if retry_failed_notification(task_id):
+                    success_count += 1
+                else:
+                    failed_count += 1
+
+        total = success_count + failed_count
+        logger.info(f"Retry all: {success_count} succeeded, {failed_count} failed, {total} total")
+
+        return {
+            'success': success_count,
+            'failed': failed_count,
+            'total': total
+        }
+
+    except Exception as e:
+        logger.error(f"Error retrying all failed notifications: {e}")
+        return {'success': success_count, 'failed': failed_count, 'total': success_count + failed_count}
 
 
 def send_notification_task(n_object_dict):
@@ -352,8 +532,62 @@ def init_huey_task():
     if huey is None:
         raise RuntimeError("Huey not initialized! Call init_huey(datastore_path) first")
 
-    # Apply Huey task decorator
-    send_notification_task = huey.task(retries=3, retry_delay=60)(send_notification_task)
+    # Apply Huey task decorator with exponential backoff retry settings
+    retry_delays = get_retry_delays()
+    send_notification_task = huey.task(
+        retries=NOTIFICATION_RETRY_COUNT,
+        retry_delay=retry_delays if retry_delays else NOTIFICATION_RETRY_DELAY
+    )(send_notification_task)
+
+    if retry_delays:
+        logger.info(f"Notification retry configuration: {NOTIFICATION_RETRY_COUNT} retries with exponential backoff: {retry_delays}")
+    else:
+        logger.info(f"Notification retry configuration: No retries configured")
+
+
+def cleanup_old_failed_notifications(max_age_days=30):
+    """
+    Clean up failed notifications older than max_age_days.
+
+    Called on startup to prevent indefinite accumulation of old failures.
+
+    Args:
+        max_age_days: Delete failed notifications older than this (default: 30 days)
+
+    Returns:
+        Number of old failed notifications deleted
+    """
+    if huey is None:
+        return 0
+
+    import time
+    deleted_count = 0
+
+    try:
+        from huey.storage import PeeweeStorage
+
+        results = huey.storage.result_store.flush()
+        cutoff_time = time.time() - (max_age_days * 86400)
+
+        for task_id, result in results.items():
+            if isinstance(result, Exception):
+                try:
+                    task_data = huey.storage.get(task_id)
+                    if task_data:
+                        task_time = task_data.get('execute_time', 0)
+                        if task_time and task_time < cutoff_time:
+                            huey.storage.delete(task_id)
+                            deleted_count += 1
+                except Exception as e:
+                    logger.error(f"Error cleaning up old failed notification {task_id}: {e}")
+
+        if deleted_count > 0:
+            logger.info(f"Cleaned up {deleted_count} old failed notifications (older than {max_age_days} days)")
+
+    except Exception as e:
+        logger.error(f"Error during failed notification cleanup: {e}")
+
+    return deleted_count
 
 
 def start_huey_consumer():
@@ -372,6 +606,9 @@ def start_huey_consumer():
         raise RuntimeError("Huey not initialized! Call init_huey(datastore_path) first")
 
     logger.info(f"Starting Huey notification consumer (single-threaded)")
+
+    # Clean up old failed notifications on startup
+    cleanup_old_failed_notifications(max_age_days=30)
 
     try:
         from huey.consumer import Consumer
