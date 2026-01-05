@@ -1127,3 +1127,13 @@ ul {
   color: #fff;
   opacity: 0.8;
 }
+
+#failed-notifications-icon {
+  display: none;
+}
+
+body.failed-notifications {
+  #failed-notifications-icon {
+    display: block;
+  }
+}
