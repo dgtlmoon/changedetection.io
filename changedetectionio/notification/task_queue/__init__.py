@@ -97,6 +97,40 @@ def get_retry_config():
     }
 
 
+# ============================================================================
+# Storage Backend Abstraction - Import Task Manager Classes
+# ============================================================================
+
+from .base import HueyTaskManager
+from .file_storage import FileStorageTaskManager
+from .sqlite_storage import SqliteStorageTaskManager
+from .redis_storage import RedisStorageTaskManager
+
+
+def _get_task_manager():
+    """
+    Factory function to get the appropriate task manager for the current storage backend.
+
+    Returns:
+        HueyTaskManager: Concrete task manager instance for the storage backend
+    """
+    if huey is None:
+        return None
+
+    storage_type = type(huey.storage).__name__
+
+    if storage_type == 'FileStorage':
+        storage_path = getattr(huey.storage, 'path', None)
+        return FileStorageTaskManager(huey.storage, storage_path)
+    elif storage_type in ['SqliteStorage', 'SqliteHuey']:
+        return SqliteStorageTaskManager(huey.storage)
+    elif storage_type in ['RedisStorage', 'RedisHuey']:
+        return RedisStorageTaskManager(huey.storage)
+    else:
+        logger.warning(f"Unknown storage type {storage_type}, operations may fail")
+        return None
+
+
 # Global Huey instance (initialized later with proper datastore path)
 huey = None
 
@@ -181,89 +215,18 @@ def init_huey(datastore_path):
     return huey
 
 
-def _count_storage_items(storage, storage_type):
+def _count_storage_items():
     """
-    Count items in Huey storage (queue + schedule) based on storage backend type.
-
-    Args:
-        storage: Huey storage instance
-        storage_type: Type name string (e.g., 'FileStorage', 'SqliteStorage', 'RedisStorage')
+    Count items in Huey storage (queue + schedule) using task manager.
 
     Returns:
         Tuple of (queue_count, schedule_count)
     """
-    queue_count = 0
-    schedule_count = 0
+    task_manager = _get_task_manager()
+    if task_manager is None:
+        return 0, 0
 
-    import os
-
-    if storage_type == 'FileStorage':
-        # FileStorage: Walk file directories
-        try:
-            if hasattr(storage, 'path'):
-                # Count queue files
-                queue_dir = os.path.join(storage.path, 'queue')
-                if os.path.exists(queue_dir):
-                    for root, dirs, files in os.walk(queue_dir):
-                        queue_count += len([f for f in files if not f.startswith('.')])
-
-                # Count schedule files
-                schedule_dir = os.path.join(storage.path, 'schedule')
-                if os.path.exists(schedule_dir):
-                    for root, dirs, files in os.walk(schedule_dir):
-                        schedule_count += len([f for f in files if not f.startswith('.')])
-        except Exception as e:
-            logger.debug(f"FileStorage count error: {e}")
-
-    elif storage_type in ['SqliteStorage', 'SqliteHuey']:
-        # SqliteStorage: Query database tables
-        try:
-            import sqlite3
-            if hasattr(storage, 'filename'):
-                conn = sqlite3.connect(storage.filename)
-                cursor = conn.cursor()
-
-                # Count queue
-                cursor.execute("SELECT COUNT(*) FROM queue")
-                queue_count = cursor.fetchone()[0]
-
-                # Count schedule
-                cursor.execute("SELECT COUNT(*) FROM schedule")
-                schedule_count = cursor.fetchone()[0]
-
-                conn.close()
-        except Exception as e:
-            logger.debug(f"SqliteStorage count error: {e}")
-
-    elif storage_type in ['RedisStorage', 'RedisHuey']:
-        # RedisStorage: Use Redis commands
-        try:
-            if hasattr(storage, 'conn'):
-                # Queue is a list
-                queue_count = storage.conn.llen(f"{storage.name}:queue")
-
-                # Schedule is a sorted set
-                schedule_count = storage.conn.zcard(f"{storage.name}:schedule")
-        except Exception as e:
-            logger.debug(f"RedisStorage count error: {e}")
-
-    else:
-        # Unknown storage type - try generic attributes
-        try:
-            if hasattr(storage, 'queue_size'):
-                queue_count = storage.queue_size()
-            elif hasattr(storage, 'queue'):
-                queue_count = len(storage.queue)
-        except Exception:
-            pass
-
-        try:
-            if hasattr(storage, 'schedule'):
-                schedule_count = len(storage.schedule)
-        except Exception:
-            pass
-
-    return queue_count, schedule_count
+    return task_manager.count_storage_items()
 
 
 def get_pending_notifications_count():
@@ -283,11 +246,8 @@ def get_pending_notifications_count():
         return 0
 
     try:
-        # Detect storage backend type
-        storage_type = type(huey.storage).__name__
-
-        # Get counts using backend-specific logic
-        queue_count, schedule_count = _count_storage_items(huey.storage, storage_type)
+        # Get counts using task manager (polymorphic, backend-agnostic)
+        queue_count, schedule_count = _count_storage_items()
 
         total_count = queue_count + schedule_count
 
@@ -427,6 +387,22 @@ def get_pending_notifications(limit=50):
     return pending
 
 
+def _enumerate_results():
+    """
+    Enumerate all results from Huey's result store.
+
+    Uses polymorphic task manager to handle storage backend differences.
+
+    Returns:
+        dict: {task_id: result_data} for all stored results
+    """
+    task_manager = _get_task_manager()
+    if task_manager is None:
+        return {}
+
+    return task_manager.enumerate_results()
+
+
 def get_last_successful_notification():
     """
     Get the most recent successful notification for reference.
@@ -483,81 +459,11 @@ def get_failed_notifications(limit=100, max_age_days=30):
     import time
 
     try:
-        # Query Huey's result storage for failed tasks
-        # Different storage backends work differently
+        # Query Huey's result storage for failed tasks using backend-agnostic helper
         cutoff_time = time.time() - (max_age_days * 86400)
 
-        results = {}
-
-        # Try to get results - method varies by storage backend
-        try:
-            # SqliteHuey/RedisHuey have result_store.flush()
-            results = huey.storage.result_store.flush()
-        except AttributeError:
-            # FileStorage doesn't have result_store.flush()
-            # Need to enumerate result files directly from filesystem
-            import os
-            import pickle
-
-            try:
-                # FileStorage stores results as pickled files in subdirectories
-                # Path structure: {storage.path}/results/{hash_subdir}/...
-                storage_path = huey.storage.path
-                results_dir = os.path.join(storage_path, 'results')
-
-                if os.path.exists(results_dir):
-                    # Walk through all subdirectories to find result files
-                    for root, dirs, files in os.walk(results_dir):
-                        for filename in files:
-                            if filename.startswith('.'):
-                                continue
-
-                            filepath = os.path.join(root, filename)
-                            try:
-                                # Read and unpickle the result
-                                # Huey FileStorage format: 4-byte length + task_id + pickled data
-                                with open(filepath, 'rb') as f:
-                                    # Read the task ID header (length-prefixed)
-                                    task_id_len_bytes = f.read(4)
-                                    if len(task_id_len_bytes) < 4:
-                                        raise EOFError("Incomplete header")
-                                    task_id_len = struct.unpack('>I', task_id_len_bytes)[0]
-                                    task_id_bytes = f.read(task_id_len)
-                                    if len(task_id_bytes) < task_id_len:
-                                        raise EOFError("Incomplete task ID")
-                                    task_id = task_id_bytes.decode('utf-8')
-
-                                    # Now unpickle the result data
-                                    result_data = pickle.load(f)
-                                    results[task_id] = result_data
-                            except (pickle.UnpicklingError, EOFError) as e:
-                                # Corrupted or incomplete result file
-                                # This can happen if:
-                                # - Process crashed during write
-                                # - Disk full
-                                # - Leftover from interrupted shutdown
-                                file_size = os.path.getsize(filepath)
-                                logger.warning(f"Corrupted result file {filename} ({file_size} bytes) - likely from interrupted write. Moving to lost-found.")
-                                try:
-                                    # Move to lost-found directory instead of deleting
-                                    import shutil
-                                    lost_found_dir = os.path.join(storage_path, 'lost-found', 'results')
-                                    os.makedirs(lost_found_dir, exist_ok=True)
-
-                                    # Add timestamp to filename to avoid collisions
-                                    import time
-                                    timestamp = int(time.time())
-                                    lost_found_path = os.path.join(lost_found_dir, f"{filename}.{timestamp}.corrupted")
-
-                                    shutil.move(filepath, lost_found_path)
-                                    logger.info(f"Moved corrupted file to {lost_found_path}")
-                                except Exception as move_err:
-                                    logger.error(f"Unable to move corrupted file to lost-found: {move_err}")
-                            except Exception as e:
-                                logger.debug(f"Unable to read result file {filename}: {e}")
-                # Note: Not logging when results_dir doesn't exist - this is normal when no failures yet
-            except Exception as e:
-                logger.debug(f"Unable to enumerate FileStorage results: {e}")
+        # Use helper function that works with all storage backends
+        results = _enumerate_results()
 
         # Import Huey's Error class for checking failed tasks
         from huey.utils import Error as HueyError
@@ -629,6 +535,23 @@ def get_failed_notifications(limit=100, max_age_days=30):
     return failed_tasks
 
 
+def _delete_result(task_id):
+    """
+    Delete a result from Huey's result store using task manager.
+
+    Args:
+        task_id: Task ID to delete result for
+
+    Returns:
+        True if deleted successfully, False otherwise
+    """
+    task_manager = _get_task_manager()
+    if task_manager is None:
+        return False
+
+    return task_manager.delete_result(task_id)
+
+
 def retry_failed_notification(task_id):
     """
     Retry a failed notification by task ID.
@@ -662,8 +585,8 @@ def retry_failed_notification(task_id):
             # which will store new metadata for the new task
             queue_notification(notification_data)
 
-            # Remove from dead letter queue (it will go back if it fails again)
-            huey.storage.delete(task_id)
+            # Remove from dead letter queue using backend-appropriate method
+            _delete_result(task_id)
 
             # Clean up old metadata
             _delete_task_metadata(task_id)
@@ -699,8 +622,9 @@ def retry_all_failed_notifications():
     try:
         from huey.utils import Error as HueyError
 
-        # Get all failed tasks
-        results = huey.storage.result_store.flush()
+        # Use helper function to get all results from backend-agnostic storage
+        # This works with FileStorage (default), SqliteStorage, and RedisStorage
+        results = _enumerate_results()
 
         for task_id, result in results.items():
             if isinstance(result, (Exception, HueyError)):
@@ -964,60 +888,31 @@ def send_notification_task(n_object_dict):
 # Decorator will be applied after huey is initialized
 # This is set up in init_huey_task()
 def _store_task_metadata(task_id, n_object_dict):
-    """Store notification metadata for a task so we can retrieve it later when task fails."""
-    if not huey or not hasattr(huey.storage, 'path'):
-        return
+    """Store notification metadata using task manager."""
+    task_manager = _get_task_manager()
+    if task_manager is None:
+        return False
 
-    try:
-        import json
-        metadata_dir = os.path.join(huey.storage.path, 'task_metadata')
-        os.makedirs(metadata_dir, exist_ok=True)
-
-        metadata_file = os.path.join(metadata_dir, f"{task_id}.json")
-        metadata = {
-            'task_id': task_id,
-            'timestamp': time.time(),
-            'notification_data': n_object_dict
-        }
-
-        with open(metadata_file, 'w') as f:
-            json.dump(metadata, f, indent=2)
-    except Exception as e:
-        logger.debug(f"Unable to store task metadata: {e}")
+    metadata = {'notification_data': n_object_dict}
+    return task_manager.store_task_metadata(task_id, metadata)
 
 
 def _get_task_metadata(task_id):
-    """Retrieve notification metadata for a task ID."""
-    if not huey or not hasattr(huey.storage, 'path'):
+    """Retrieve notification metadata using task manager."""
+    task_manager = _get_task_manager()
+    if task_manager is None:
         return None
 
-    try:
-        import json
-        metadata_dir = os.path.join(huey.storage.path, 'task_metadata')
-        metadata_file = os.path.join(metadata_dir, f"{task_id}.json")
-
-        if os.path.exists(metadata_file):
-            with open(metadata_file, 'r') as f:
-                return json.load(f)
-    except Exception as e:
-        logger.debug(f"Unable to load task metadata for {task_id}: {e}")
-
-    return None
+    return task_manager.get_task_metadata(task_id)
 
 
 def _delete_task_metadata(task_id):
-    """Delete task metadata file (cleanup after success or manual deletion)."""
-    if not huey or not hasattr(huey.storage, 'path'):
-        return
+    """Delete task metadata using task manager."""
+    task_manager = _get_task_manager()
+    if task_manager is None:
+        return False
 
-    try:
-        metadata_dir = os.path.join(huey.storage.path, 'task_metadata')
-        metadata_file = os.path.join(metadata_dir, f"{task_id}.json")
-
-        if os.path.exists(metadata_file):
-            os.remove(metadata_file)
-    except Exception as e:
-        logger.debug(f"Unable to delete task metadata for {task_id}: {e}")
+    return task_manager.delete_task_metadata(task_id)
 
 
 def queue_notification(n_object_dict):
@@ -1078,114 +973,19 @@ def clear_all_notifications():
     - Schedule (retrying/delayed notifications)
     - Results (failed notifications)
     - Retry attempt files
+    - Task metadata
 
     Returns:
         Dict with counts of cleared items
     """
-    if huey is None:
+    task_manager = _get_task_manager()
+    if task_manager is None:
         return {'error': 'Huey not initialized'}
 
-    import os
-    import shutil
-
-    cleared = {
-        'queue': 0,
-        'schedule': 0,
-        'results': 0,
-        'retry_attempts': 0,
-        'task_metadata': 0
-    }
-
     try:
-        storage_type = type(huey.storage).__name__
-
-        if storage_type == 'FileStorage' and hasattr(huey.storage, 'path'):
-            # FileStorage: Delete directory contents
-            storage_path = huey.storage.path
-
-            # Clear queue
-            queue_dir = os.path.join(storage_path, 'queue')
-            if os.path.exists(queue_dir):
-                for root, dirs, files in os.walk(queue_dir):
-                    for f in files:
-                        if not f.startswith('.'):
-                            os.remove(os.path.join(root, f))
-                            cleared['queue'] += 1
-
-            # Clear schedule
-            schedule_dir = os.path.join(storage_path, 'schedule')
-            if os.path.exists(schedule_dir):
-                for root, dirs, files in os.walk(schedule_dir):
-                    for f in files:
-                        if not f.startswith('.'):
-                            os.remove(os.path.join(root, f))
-                            cleared['schedule'] += 1
-
-            # Clear results
-            results_dir = os.path.join(storage_path, 'results')
-            if os.path.exists(results_dir):
-                for root, dirs, files in os.walk(results_dir):
-                    for f in files:
-                        if not f.startswith('.'):
-                            os.remove(os.path.join(root, f))
-                            cleared['results'] += 1
-
-            # Clear retry attempts
-            attempts_dir = os.path.join(storage_path, 'retry_attempts')
-            if os.path.exists(attempts_dir):
-                for f in os.listdir(attempts_dir):
-                    if f.endswith('.json'):
-                        os.remove(os.path.join(attempts_dir, f))
-                        cleared['retry_attempts'] += 1
-
-            # Clear task metadata
-            metadata_dir = os.path.join(storage_path, 'task_metadata')
-            if os.path.exists(metadata_dir):
-                for f in os.listdir(metadata_dir):
-                    if f.endswith('.json'):
-                        os.remove(os.path.join(metadata_dir, f))
-                        cleared['task_metadata'] += 1
-
-        elif storage_type in ['SqliteStorage', 'SqliteHuey'] and hasattr(huey.storage, 'filename'):
-            # SqliteStorage: Delete from tables
-            import sqlite3
-            conn = sqlite3.connect(huey.storage.filename)
-            cursor = conn.cursor()
-
-            cursor.execute("DELETE FROM queue")
-            cleared['queue'] = cursor.rowcount
-
-            cursor.execute("DELETE FROM schedule")
-            cleared['schedule'] = cursor.rowcount
-
-            cursor.execute("DELETE FROM results")
-            cleared['results'] = cursor.rowcount
-
-            conn.commit()
-            conn.close()
-
-        elif storage_type in ['RedisStorage', 'RedisHuey'] and hasattr(huey.storage, 'conn'):
-            # RedisStorage: Delete keys
-            name = huey.storage.name
-
-            # Clear queue (list)
-            cleared['queue'] = huey.storage.conn.llen(f"{name}:queue")
-            huey.storage.conn.delete(f"{name}:queue")
-
-            # Clear schedule (sorted set)
-            cleared['schedule'] = huey.storage.conn.zcard(f"{name}:schedule")
-            huey.storage.conn.delete(f"{name}:schedule")
-
-            # Clear results (hash or keys)
-            # Note: This depends on how Huey stores results in Redis
-            result_keys = huey.storage.conn.keys(f"{name}:result:*")
-            if result_keys:
-                cleared['results'] = len(result_keys)
-                huey.storage.conn.delete(*result_keys)
-
+        cleared = task_manager.clear_all_notifications()
         logger.warning(f"Cleared all notifications: {cleared}")
         return cleared
-
     except Exception as e:
         logger.error(f"Error clearing notifications: {e}", exc_info=True)
         return {'error': str(e)}
@@ -1201,50 +1001,35 @@ def cleanup_old_failed_notifications(max_age_days=30):
         max_age_days: Delete failed notifications older than this (default: 30 days)
 
     Returns:
-        Number of old failed notifications deleted
+        Number of old retry attempts deleted
     """
     if huey is None:
         return 0
 
     import time
-    import os
-    deleted_count = 0
 
     try:
-        # Use get_failed_notifications with auto-cleanup to handle this
-        # It already has logic to delete old failed notifications
-        # We just call it and let it do the cleanup
         cutoff_time = time.time() - (max_age_days * 86400)
 
-        # FileStorage and other backends handle result storage differently
+        # Trigger cleanup of old failed notifications
         # The get_failed_notifications function already handles cleanup
-        # So we just trigger it here
         get_failed_notifications(limit=1000, max_age_days=max_age_days)
 
-        # Also clean up old retry attempt files
-        if hasattr(huey.storage, 'path'):
-            attempts_dir = os.path.join(huey.storage.path, 'retry_attempts')
-            if os.path.exists(attempts_dir):
-                for filename in os.listdir(attempts_dir):
-                    if filename.endswith('.json'):
-                        filepath = os.path.join(attempts_dir, filename)
-                        try:
-                            file_mtime = os.path.getmtime(filepath)
-                            if file_mtime < cutoff_time:
-                                os.remove(filepath)
-                                deleted_count += 1
-                        except Exception as fe:
-                            logger.debug(f"Unable to delete old retry attempt file {filename}: {fe}")
-
-                if deleted_count > 0:
-                    logger.info(f"Cleaned up {deleted_count} old retry attempt files (older than {max_age_days} days)")
+        # Clean up old retry attempts using task manager
+        task_manager = _get_task_manager()
+        if task_manager:
+            deleted_count = task_manager.cleanup_old_retry_attempts(cutoff_time)
+            if deleted_count > 0:
+                logger.info(f"Cleaned up {deleted_count} old retry attempt files (older than {max_age_days} days)")
+        else:
+            deleted_count = 0
 
         logger.info(f"Completed cleanup check for failed notifications older than {max_age_days} days")
+        return deleted_count
 
     except Exception as e:
         logger.debug(f"Unable to cleanup old failed notifications: {e}")
-
-    return deleted_count
+        return 0
 
 
 def start_huey_consumer():

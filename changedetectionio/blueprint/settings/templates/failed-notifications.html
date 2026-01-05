@@ -153,7 +153,8 @@
                 You can fix the notification settings (e.g., SMTP server) and retry them manually below.
             </p>
             <form method="POST" action="{{ url_for('settings.retry_all_notifications') }}" style="display: inline-block; margin-right: 10px;">
-                <button type="submit" class="pure-button pure-button-primary" style="background: #28a745;" onclick="return confirm('Retry all {{ failed_notifications|length }} failed notifications?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
+                <button type="submit" class="pure-button pure-button-primary" style="background: #28a745;" data-confirm-action data-confirm-message="Retry all {{ failed_notifications|length }} failed notifications?">
                     <span class="icon-repeat"></span> Retry All ({{ failed_notifications|length }})
                 </button>
             </form>
