@@ -630,13 +630,15 @@ def changedetection_app(config=None, datastore_o=None):
     worker_handler.start_workers(n_workers, update_q, None, app, datastore)
 
     # Initialize Huey task queue for notifications
-    from changedetectionio.notification.task_queue import init_huey, init_huey_task, start_huey_consumer
+    from changedetectionio.notification.task_queue import init_huey, init_huey_task, start_huey_consumer_with_watchdog
     init_huey(datastore.datastore_path)
     init_huey_task()  # Apply task decorator
 
     # Start Huey consumer for notification processing (replaces notification_runner)
-    # Using 1 worker thread to match original notification_runner behavior
-    threading.Thread(target=start_huey_consumer, args=(1,), daemon=True).start()
+    # Watchdog will automatically restart consumer if it crashes
+    # Queued notifications are persistent and won't be lost during crashes
+    # Uses app.config.exit for clean shutdown (same pattern as other threads)
+    threading.Thread(target=start_huey_consumer_with_watchdog, args=(app,), daemon=True).start()
 
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
