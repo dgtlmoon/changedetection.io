@@ -680,7 +680,7 @@ def notification_runner():
                 # At the moment only one thread runs (single runner)
                 n_object = notification_q.get(block=False)
             except queue.Empty:
-                time.sleep(1)
+                app.config.exit.wait(1)
 
             else:
 
@@ -775,7 +775,7 @@ def ticker_thread_check_time_launch_checks():
         # Re #438 - Don't place more watches in the queue to be checked if the queue is already large
         while update_q.qsize() >= 2000:
             logger.warning(f"Recheck watches queue size limit reached ({MAX_QUEUE_SIZE}), skipping adding more items")
-            time.sleep(3)
+            app.config.exit.wait(10.0)
 
 
         recheck_time_system_seconds = int(datastore.threshold_seconds)
@@ -872,9 +872,6 @@ def ticker_thread_check_time_launch_checks():
                         
                     # Reset for next time
                     watch.jitter_seconds = 0
-
-        # Wait before checking the list again - saves CPU
-        time.sleep(1)
 
         # Should be low so we can break this out in testing
         app.config.exit.wait(1)
