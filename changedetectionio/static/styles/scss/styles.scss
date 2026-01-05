@@ -21,6 +21,7 @@
 @use "parts/socket";
 @use "parts/visualselector";
 @use "parts/widgets";
+@use "parts/notificationsdashboard";
 
 body {
   color: var(--color-text);
@@ -1134,6 +1135,7 @@ ul {
 
 body.failed-notifications {
   #failed-notifications-icon {
-    display: block;
+    display: inline-block;
+    vertical-align: middle;
   }
 }

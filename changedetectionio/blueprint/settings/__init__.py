@@ -4,7 +4,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo, available_timezones
 import secrets
 import flask_login
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
@@ -142,73 +142,42 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                logs=notification_debug_log if len(notification_debug_log) else ["Notification logs are empty - no notifications sent yet."])
         return output
 
+    # Legacy routes - redirect to new notification dashboard blueprint
     @settings_blueprint.route("/failed-notifications", methods=['GET'])
     @login_optionally_required
     def failed_notifications():
-        """View notifications that failed all retry attempts"""
-        from changedetectionio.notification.task_queue import get_failed_notifications, get_retry_config, get_pending_notifications_count, get_last_successful_notification, get_pending_notifications
+        """Redirect to new notification dashboard"""
+        return redirect(url_for('notification_dashboard.dashboard'))
 
-        failed = get_failed_notifications(limit=100)
-        retry_config = get_retry_config()
-        pending_count = get_pending_notifications_count()
-        pending_list = get_pending_notifications(limit=50)
-        last_success = get_last_successful_notification()
-
-        output = render_template("failed-notifications.html",
-                               failed_notifications=failed,
-                               retry_config=retry_config,
-                               pending_count=pending_count,
-                               pending_list=pending_list,
-                               last_success=last_success)
-        return output
+    @settings_blueprint.route("/notification-log/<task_id>", methods=['GET'])
+    @login_optionally_required
+    def get_notification_log(task_id):
+        """Redirect to new notification dashboard log endpoint"""
+        return redirect(url_for('notification_dashboard.get_notification_log', task_id=task_id))
 
     @settings_blueprint.route("/retry-notification/<task_id>", methods=['POST'])
     @login_optionally_required
     def retry_notification(task_id):
-        """Retry a failed notification by task ID"""
-        from changedetectionio.notification.task_queue import retry_failed_notification
+        """Redirect to new notification dashboard retry endpoint"""
+        return redirect(url_for('notification_dashboard.retry_notification', task_id=task_id), code=307)
 
-        success = retry_failed_notification(task_id)
-
-        if success:
-            flash(f"Notification {task_id} queued for retry.", 'notice')
-        else:
-            flash(f"Failed to retry notification {task_id}. Check logs for details.", 'error')
-
-        return redirect(url_for('settings.failed_notifications'))
+    @settings_blueprint.route("/send-now/<task_id>", methods=['GET'])
+    @login_optionally_required
+    def send_now(task_id):
+        """Redirect to new notification dashboard send now endpoint"""
+        return redirect(url_for('notification_dashboard.send_now', task_id=task_id))
 
     @settings_blueprint.route("/retry-all-notifications", methods=['POST'])
     @login_optionally_required
     def retry_all_notifications():
-        """Retry all failed notifications"""
-        from changedetectionio.notification.task_queue import retry_all_failed_notifications
-
-        result = retry_all_failed_notifications()
-
-        if result['total'] == 0:
-            flash("No failed notifications to retry.", 'notice')
-        elif result['failed'] == 0:
-            flash(f"Successfully queued {result['success']} notification(s) for retry.", 'notice')
-        else:
-            flash(f"Queued {result['success']} notification(s) for retry. {result['failed']} failed to queue.", 'error')
-
-        return redirect(url_for('settings.failed_notifications'))
+        """Redirect to new notification dashboard retry all endpoint"""
+        return redirect(url_for('notification_dashboard.retry_all_notifications'), code=307)
 
     @settings_blueprint.route("/clear-all-notifications", methods=['POST'])
     @login_optionally_required
     def clear_all_notifications():
-        """Clear ALL notifications (queue, schedule, results, retry attempts)"""
-        from changedetectionio.notification.task_queue import clear_all_notifications as clear_all
-
-        result = clear_all()
-
-        if 'error' in result:
-            flash(f"Error clearing notifications: {result['error']}", 'error')
-        else:
-            total = result['queue'] + result['schedule'] + result['results'] + result['retry_attempts'] + result.get('task_metadata', 0)
-            flash(f"Cleared {total} notification(s): {result['queue']} queued, {result['schedule']} scheduled, {result['results']} failed, {result['retry_attempts']} retry attempts, {result.get('task_metadata', 0)} task metadata.", 'notice')
-
-        return redirect(url_for('settings.failed_notifications'))
+        """Redirect to new notification dashboard clear all endpoint"""
+        return redirect(url_for('notification_dashboard.clear_all_notifications'), code=307)
 
     @settings_blueprint.route("/api/v1/notifications/failed", methods=['GET'])
     @login_optionally_required

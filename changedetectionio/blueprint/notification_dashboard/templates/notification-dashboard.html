@@ -45,14 +45,14 @@
         {% if (pending_count and pending_count > 0) or failed_notifications|length > 0 %}
         <div class="dashboard-actions">
             {% if failed_notifications|length > 0 %}
-            <form method="POST" action="{{ url_for('settings.retry_all_notifications') }}" style="display: inline-block;">
+            <form method="POST" action="{{ url_for('notification_dashboard.retry_all_notifications') }}" style="display: inline-block;">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="pure-button pure-button-primary retry-all-btn" data-confirm-action data-confirm-message="Retry all {{ failed_notifications|length }} failed notifications?">
                     <span class="icon-repeat"></span> Retry All ({{ failed_notifications|length }})
                 </button>
             </form>
             {% endif %}
-            <form method="POST" action="{{ url_for('settings.clear_all_notifications') }}" style="display: inline-block;" onsubmit="return confirm('⚠️ WARNING: This will DELETE ALL notifications:\n\n- {{ pending_count if pending_count else 0 }} Pending/Retrying\n- {{ failed_notifications|length }} Failed\n- All retry attempts\n\nThis action cannot be undone!\n\nAre you sure?');">
+            <form method="POST" action="{{ url_for('notification_dashboard.clear_all_notifications') }}" style="display: inline-block;" onsubmit="return confirm('⚠️ WARNING: This will DELETE ALL notifications:\n\n- {{ pending_count if pending_count else 0 }} Pending/Retrying\n- {{ failed_notifications|length }} Failed\n- All retry attempts\n\nThis action cannot be undone!\n\nAre you sure?');">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="pure-button clear-all-btn">
                     <span class="icon-trash"></span> Clear All
@@ -102,7 +102,7 @@
                                 {% endif %}
                             </span>
                             {% if item.task_id %}
-                            <a href="{{ url_for('settings.send_now', task_id=item.task_id) }}" class="pure-button send-now-btn" title="Send this notification now (cancel scheduled retry)">Send Now</a>
+                            <a href="{{ url_for('notification_dashboard.send_now', task_id=item.task_id) }}" class="pure-button send-now-btn" title="Send this notification now (cancel scheduled retry)">Send Now</a>
                             {% endif %}
                         </div>
                         {% endif %}
@@ -158,7 +158,7 @@
                             {% endif %}
                         </div>
                         {% endif %}
-                        <form method="POST" action="{{ url_for('settings.retry_notification', task_id=notification.task_id) }}" class="retry-form">
+                        <form method="POST" action="{{ url_for('notification_dashboard.retry_notification', task_id=notification.task_id) }}" class="retry-form">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="pure-button">
                                 <span class="icon-repeat"></span> Retry This
@@ -244,7 +244,7 @@
         </div>
 
         <!-- Hidden data elements for JavaScript -->
-        <div id="log-url-template" data-url="{{ url_for('settings.get_notification_log', task_id='TASK_ID') }}" style="display: none;"></div>
+        <div id="log-url-template" data-url="{{ url_for('notification_dashboard.get_notification_log', task_id='TASK_ID') }}" style="display: none;"></div>
 
         <script src="{{url_for('static_content', group='js', filename='notification-dashboard.js')}}" defer></script>
 

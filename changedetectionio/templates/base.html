@@ -86,8 +86,8 @@
                 <a href="{{ url_for('backups.index')}}" class="pure-menu-link">BACKUPS</a>
               </li>
               <li class="pure-menu-item" id="failed-notifications-icon">
-                <a href="{{ url_for('settings.failed_notifications')}}" class="pure-menu-link" title="Failed notifications - requires attention" style="position: relative; padding: 0.5em 0.8em;">
-                  <img src="{{url_for('static_content', group='images', filename='notification-fail.svg')}}" alt="Failed notifications" style="vertical-align: middle; width: 20px; height: 20px;">
+                <a href="{{ url_for('notification_dashboard.dashboard')}}" class="pure-menu-link" title="Notification Queue - pending, retrying, and failed notifications" >
+                  <img src="{{url_for('static_content', group='images', filename='notification-fail.svg')}}" alt="Notification Queue" style="height: 22px;">
                 </a>
               </li>
             {% else %}

@@ -527,6 +527,9 @@ def changedetection_app(config=None, datastore_o=None):
     import changedetectionio.blueprint.settings as settings
     app.register_blueprint(settings.construct_blueprint(datastore), url_prefix='/settings')
 
+    import changedetectionio.blueprint.notification_dashboard as notification_dashboard
+    app.register_blueprint(notification_dashboard.construct_blueprint(), url_prefix='/notification-dashboard')
+
     import changedetectionio.conditions.blueprint as conditions
     app.register_blueprint(conditions.construct_blueprint(datastore), url_prefix='/conditions')
 

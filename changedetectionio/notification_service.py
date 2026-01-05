@@ -118,7 +118,8 @@ class NotificationContextData(dict):
 
 def timestamp_to_localtime(timestamp):
     # Format the date using locale-aware formatting with timezone
-    dt = datetime.datetime.fromtimestamp(int(timestamp))
+    # Unix timestamps are always UTC, so use utcfromtimestamp to avoid double conversion
+    dt = datetime.datetime.utcfromtimestamp(int(timestamp))
     dt = dt.replace(tzinfo=pytz.UTC)
 
     # Get local timezone-aware datetime
@@ -229,9 +230,9 @@ class NotificationService:
                                                     timestamp_changed=dates[date_index_to]))
 
         # Queue notification to Huey for processing with retry logic
-        from changedetectionio.notification.task_queue import send_notification_task
+        from changedetectionio.notification.task_queue import queue_notification
         logger.debug("Queuing notification to Huey for sending with retry")
-        send_notification_task(dict(n_object))
+        queue_notification(dict(n_object))
         return n_object
 
     def send_content_changed_notification(self, watch_uuid):
