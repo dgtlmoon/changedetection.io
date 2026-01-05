@@ -167,7 +167,7 @@ def _get_worker_status_info():
     """Get detailed worker status information for display"""
     status = worker_handler.get_worker_status()
     running_uuids = worker_handler.get_running_uuids()
-    
+
     return {
         'count': status['worker_count'],
         'type': status['worker_type'],
@@ -175,6 +175,17 @@ def _get_worker_status_info():
         'processing_watches': running_uuids,
         'loop_running': status.get('async_loop_running', None)
     }
+
+@app.template_global('get_failed_notifications_count')
+def _get_failed_notifications_count():
+    """Check if there are any failed notifications in dead letter queue"""
+    try:
+        from changedetectionio.notification.task_queue import get_failed_notifications
+        failed = get_failed_notifications(limit=1)  # Just check if any exist
+        return len(failed)
+    except Exception as e:
+        logger.debug(f"Unable to get failed notifications count: {e}")
+        return 0
 
 
 # We use the whole watch object from the store/JSON so we can see if there's some related status in terms of a thread

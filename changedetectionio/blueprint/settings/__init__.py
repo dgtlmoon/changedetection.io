@@ -146,14 +146,16 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @login_optionally_required
     def failed_notifications():
         """View notifications that failed all retry attempts"""
-        from changedetectionio.notification.task_queue import get_failed_notifications, get_retry_config
+        from changedetectionio.notification.task_queue import get_failed_notifications, get_retry_config, get_pending_notifications_count
 
         failed = get_failed_notifications(limit=100)
         retry_config = get_retry_config()
+        pending_count = get_pending_notifications_count()
 
         output = render_template("failed-notifications.html",
                                failed_notifications=failed,
-                               retry_config=retry_config)
+                               retry_config=retry_config,
+                               pending_count=pending_count)
         return output
 
     @settings_blueprint.route("/retry-notification/<task_id>", methods=['POST'])

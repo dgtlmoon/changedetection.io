@@ -176,50 +176,36 @@ def init_huey(datastore_path):
     return huey
 
 
-def get_pending_notifications(limit=20):
+def get_pending_notifications_count():
     """
-    Get list of pending notifications in the queue (not yet processed or being retried).
+    Get count of pending notifications in the queue (not yet processed or being retried).
 
-    Args:
-        limit: Maximum number of pending notifications to return (default: 20)
+    This provides a simple count without needing to introspect individual task details,
+    which can vary significantly by storage backend (FileHuey, SqliteHuey, RedisHuey).
 
     Returns:
-        List of dicts containing pending notification info:
-        - task_id: Huey task ID
-        - watch_url: URL of the watch (if available)
-        - watch_uuid: UUID of the watch (if available)
-        - queued_at: When the notification was queued (if available)
+        Integer count of pending notifications, or None if unable to determine
     """
     if huey is None:
-        return []
-
-    pending_tasks = []
+        return 0
 
     try:
-        # Get pending tasks from the queue
-        # Note: This accesses Huey's internal queue storage
-        queue = huey.storage.queue
-
-        # For FileHuey, the queue is a directory with files
-        # For SqliteHuey/RedisHuey, we'd need different logic
-        # This is a simplified implementation
-
-        # Try to get queue length (varies by storage backend)
+        # Try to get queue length
+        # This works for most Huey storage backends
+        queue_length = len(huey.storage.queue)
+        return queue_length
+    except (AttributeError, TypeError):
+        # Some storage backends may not support len() on queue
         try:
-            queue_length = len(queue)
-            if queue_length > 0:
-                logger.info(f"Found {queue_length} pending notifications in queue")
+            # Alternative: try to peek at queue
+            if hasattr(huey.storage, 'queue_size'):
+                return huey.storage.queue_size()
         except:
             pass
-
-        # Return simplified info - full introspection of pending tasks
-        # is complex and varies by storage backend
-        return []  # Simplified for now
-
     except Exception as e:
-        logger.error(f"Error querying pending notifications: {e}")
+        logger.debug(f"Unable to determine pending notification count: {e}")
 
-    return pending_tasks
+    return None  # Unable to determine
 
 
 def get_failed_notifications(limit=100, max_age_days=30):
@@ -564,8 +550,6 @@ def cleanup_old_failed_notifications(max_age_days=30):
     deleted_count = 0
 
     try:
-        from huey.storage import PeeweeStorage
-
         results = huey.storage.result_store.flush()
         cutoff_time = time.time() - (max_age_days * 86400)
 
