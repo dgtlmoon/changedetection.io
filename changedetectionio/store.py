@@ -1,30 +1,27 @@
-import shutil
-
-from changedetectionio.strtobool import strtobool
-
-from changedetectionio.validate_url import is_safe_valid_url
-
-from flask import (
-    flash
-)
-from flask_babel import gettext
-
-from .blueprint.rss import RSS_CONTENT_FORMAT_DEFAULT
-from .html_tools import TRANSLATE_WHITESPACE_TABLE
-from .model import App, Watch, USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
-from copy import deepcopy, copy
-from os import path, unlink
-from threading import Lock
 import json
 import os
 import re
 import secrets
+import shutil
 import sys
 import threading
 import time
 import uuid as uuid_builder
-from loguru import logger
+from copy import deepcopy
+from os import path, unlink
+from threading import Lock
+
 from blinker import signal
+from flask import flash
+from flask_babel import gettext
+from loguru import logger
+
+from changedetectionio.strtobool import strtobool
+from changedetectionio.validate_url import is_safe_valid_url
+
+from .blueprint.rss import RSS_CONTENT_FORMAT_DEFAULT
+from .html_tools import TRANSLATE_WHITESPACE_TABLE
+from .model import USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH, App, Watch
 
 # Try to import orjson for faster JSON serialization
 try:
@@ -165,7 +162,7 @@ class ChangeDetectionStore:
             self.__data['settings']['application']['password'] = False
             unlink(password_reset_lockfile)
 
-        if not 'app_guid' in self.__data:
+        if 'app_guid' not in self.__data:
             if "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ:
                 self.__data['app_guid'] = "test-" + str(uuid_builder.uuid4())
             else:
@@ -408,6 +405,16 @@ class ChangeDetectionStore:
         if apply_extras.get('tags'):
             apply_extras['tags'] = list(set(apply_extras.get('tags')))
 
+        # Auto-apply tags based on URL pattern matching
+        for tag_uuid, tag in self.__data['settings']['application'].get('tags', {}).items():
+            if tag.matches_url(url) and tag_uuid not in apply_extras['tags']:
+                apply_extras['tags'].append(tag_uuid)
+                logger.debug(f"Auto-applied tag '{tag.get('title')}' to URL '{url}' based on pattern '{tag.get('url_match_pattern')}'")
+
+        # Make tags unique again after auto-apply
+        if apply_extras.get('tags'):
+            apply_extras['tags'] = list(set(apply_extras.get('tags')))
+
         # If the processor also has its own Watch implementation
         watch_class = get_custom_watch_obj_for_processor(apply_extras.get('processor'))
         new_watch = watch_class(datastore_path=self.datastore_path, url=url)
@@ -517,7 +524,7 @@ class ChangeDetectionStore:
         # Only in the sub-directories
         for uuid in self.data['watching']:
             for item in pathlib.Path(self.datastore_path).rglob(uuid+"/*.txt"):
-                if not str(item) in index:
+                if str(item) not in index:
                     logger.info(f"Removing {item}")
                     unlink(item)
 
@@ -705,7 +712,7 @@ class ChangeDetectionStore:
             if watch.get('processor') == processor_name:
                 return True
         return False
-        
+
     def search_watches_for_url(self, query, tag_limit=None, partial=False):
         """Search watches by URL, title, or error messages
         
@@ -724,7 +731,7 @@ class ChangeDetectionStore:
         for uuid, watch in self.data['watching'].items():
             # Filter by tag if requested
             if tag_limit:
-                if not tag.get('uuid') in watch.get('tags', []):
+                if tag.get('uuid') not in watch.get('tags', []):
                     continue
 
             # Search in URL, title, or error messages
@@ -858,7 +865,7 @@ class ChangeDetectionStore:
             if watch.get('history', False):
                 for d, p in watch['history'].items():
                     d = int(d)  # Used to be keyed as str, we'll fix this now too
-                    history.append("{},{}\n".format(d,p))
+                    history.append(f"{d},{p}\n")
 
                 if len(history):
                     target_path = os.path.join(self.datastore_path, uuid)
@@ -904,7 +911,7 @@ class ChangeDetectionStore:
                 if watch_title and watch_title.translate(TRANSLATE_WHITESPACE_TABLE) == current_system_title:
                     # Looks the same as the default one, so unset it
                     watch['notification_title'] = None
-            except Exception as e:
+            except Exception:
                 continue
         return
 

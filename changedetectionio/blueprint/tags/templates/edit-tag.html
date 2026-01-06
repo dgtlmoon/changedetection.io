@@ -43,6 +43,14 @@
                     <div class="pure-control-group">
                         {{ render_field(form.title, placeholder="https://...", required=true, class="m-d") }}
                     </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.url_match_pattern) }}
+                        <span class="pure-form-message-inline">
+                            {{ _('Automatically apply this tag to new watches whose URL matches this pattern.') }}<br>
+                            {{ _('Use') }} <code>*</code> {{ _('as wildcard. Examples:') }} <code>*github.com*</code>, <code>*example.com/products/*</code><br>
+                            {{ _('Or use a simple substring like') }} <code>github.com</code> {{ _('to match any URL containing it.') }}
+                        </span>
+                    </div>
                 </fieldset>
             </div>
 
