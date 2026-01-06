@@ -132,7 +132,8 @@ class FileStorageTaskManager(HueyTaskManager):
             'schedule': 0,
             'results': 0,
             'retry_attempts': 0,
-            'task_metadata': 0
+            'task_metadata': 0,
+            'delivered': 0
         }
 
         if not self.storage_path:
@@ -180,6 +181,14 @@ class FileStorageTaskManager(HueyTaskManager):
                 if f.endswith('.json'):
                     os.remove(os.path.join(metadata_dir, f))
                     cleared['task_metadata'] += 1
+
+        # Clear delivered (success) notifications
+        success_dir = os.path.join(self.storage_path, 'success')
+        if os.path.exists(success_dir):
+            for f in os.listdir(success_dir):
+                if f.startswith('success-') and f.endswith('.json'):
+                    os.remove(os.path.join(success_dir, f))
+                    cleared['delivered'] += 1
 
         return cleared
 

@@ -1067,14 +1067,17 @@ def retry_notification_now(task_id):
             return True
 
         except Exception as e:
-            # Notification failed - but we already revoked it, so it won't retry automatically
-            # The failure will be logged and visible in the dashboard
+            # Notification failed - re-queue it so it doesn't disappear and can retry automatically
             logger.warning(f"Failed to send notification for task {task_id}: {e}")
-            logger.info(f"Task {task_id} already removed from queue (user requested immediate execution)")
+            logger.info(f"Re-queueing notification for automatic retry after manual send failed")
 
-            # Clean up metadata and result
-            _delete_result(task_id)
-            _delete_task_metadata(task_id)
+            # Re-queue the notification for automatic retry with exponential backoff
+            # This ensures it doesn't disappear from the dashboard and will retry later
+            try:
+                result = send_notification_task(notification_data)
+                logger.info(f"Re-queued notification after failed manual send")
+            except Exception as queue_error:
+                logger.error(f"Failed to re-queue notification: {queue_error}")
 
             return False
 
@@ -1429,8 +1432,13 @@ def send_notification_task(n_object: NotificationContextData):
     """
     from changedetectionio.notification.handler import process_notification
     from changedetectionio.flask_app import datastore, notification_debug_log, app
+    from changedetectionio.notification_service import NotificationContextData
     from datetime import datetime
     import json
+
+    # Wrap dict in NotificationContextData if needed (for retried tasks from Huey)
+    if not isinstance(n_object, NotificationContextData):
+        n_object = NotificationContextData(n_object)
 
     # Load watch
     watch = datastore.data['watching'].get(n_object.get('uuid'))

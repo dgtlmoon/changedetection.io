@@ -67,7 +67,7 @@ def construct_blueprint():
             message = "✓ Notification sent successfully and removed from queue."
             flash(message, 'notice')
         else:
-            message = "Failed to send notification. It remains scheduled for automatic retry."
+            message = "Failed to send notification. It has been re-queued for automatic retry."
             flash(message, 'error')
 
         return redirect(url_for('notification_dashboard.dashboard'))
@@ -108,7 +108,7 @@ def construct_blueprint():
     @notification_dashboard.route("/clear-all", methods=['POST'])
     @login_optionally_required
     def clear_all_notifications():
-        """Clear ALL notifications (pending, retrying, and failed)"""
+        """Clear ALL notifications (delivered, pending, retrying, and failed)"""
         from changedetectionio.notification.task_queue import clear_all_notifications
 
         result = clear_all_notifications()
@@ -116,8 +116,8 @@ def construct_blueprint():
         if 'error' in result:
             flash(f"Error clearing notifications: {result['error']}", 'error')
         else:
-            total_cleared = result.get('queue', 0) + result.get('schedule', 0) + result.get('results', 0)
-            flash(f"Cleared {total_cleared} notification(s) from queue.", 'notice')
+            total_cleared = result.get('queue', 0) + result.get('schedule', 0) + result.get('results', 0) + result.get('delivered', 0)
+            flash(f"Cleared {total_cleared} notification(s) (delivered, queued, retrying, and failed).", 'notice')
 
         return redirect(url_for('notification_dashboard.dashboard'))
 

@@ -769,37 +769,39 @@ def test_send_now_button(client, live_server, measure_memory_usage, datastore_pa
     # Click "Send Now" button (GET request)
     res = client.get(url_for("notification_dashboard.send_now", task_id=task_id), follow_redirects=True)
 
-    # Should redirect back to notification dashboard with message
-    # The notification will still fail (bad SMTP server), but should be executed immediately
-    # and removed from the retry schedule
+    # Should redirect back to notification dashboard with error message
+    # The notification will fail (bad SMTP server) and be re-queued for automatic retry
+    assert b'Failed to send notification' in res.data, "Should show error message"
+    assert b're-queued for automatic retry' in res.data, "Should indicate notification was re-queued"
 
-    # Wait for the task to be removed from schedule (give revoke time to propagate)
+    # Wait for the notification to be re-queued (old task revoked, new task created)
+    # The re-queued notification will have a different task_id
     max_wait = 5
     start_time = time.time()
-    task_removed = False
+    notification_requeued = False
 
     while time.time() - start_time < max_wait:
         pending_after = get_pending_notifications(limit=100)
         all_retrying = [n for n in pending_after if n.get('status') == 'retrying']
-        retrying_after = [n for n in all_retrying if n.get('task_id') == task_id]
 
-        logging.info(f"[{time.time() - start_time:.1f}s] Total retrying: {len(all_retrying)}, Matching task_id {task_id[:8]}: {len(retrying_after)}")
+        # Check if there's still a retrying notification for this watch
+        # (it will have a different task_id after re-queueing)
+        retrying_for_watch = [n for n in all_retrying if n.get('watch_uuid') == uuid]
 
-        if len(retrying_after) == 0:
-            task_removed = True
-            logging.info(f"✓ Task {task_id} removed from retry schedule after {time.time() - start_time:.1f}s")
+        logging.info(f"[{time.time() - start_time:.1f}s] Total retrying: {len(all_retrying)}, For this watch: {len(retrying_for_watch)}")
+
+        if len(retrying_for_watch) > 0:
+            notification_requeued = True
+            new_task_id = retrying_for_watch[0].get('task_id')
+            logging.info(f"✓ Notification re-queued with new task_id {new_task_id[:8]}... after {time.time() - start_time:.1f}s")
             break
-
-        # Log details of the found notification
-        if retrying_after:
-            logging.info(f"  Found retrying notification: {retrying_after[0].get('retry_at')}")
 
         time.sleep(0.5)
 
-    # The task should be gone from schedule (either succeeded or moved to dead letter)
-    assert task_removed, f"Notification should be removed from retry schedule after 'Send Now', but still found after {max_wait}s"
+    # The notification should be re-queued (not disappeared)
+    assert notification_requeued, f"Notification should be re-queued after failed 'Send Now', but not found after {max_wait}s"
 
-    logging.info("✓ Send Now button successfully executed notification immediately")
+    logging.info("✓ Send Now button correctly re-queued failed notification")
 
     client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
