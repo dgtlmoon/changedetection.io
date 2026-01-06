@@ -87,6 +87,7 @@ def measure_memory_usage(request):
 
 def cleanup(datastore_path):
     import glob
+    import shutil
     # Unlink test output files
     for g in ["*.txt", "*.json", "*.pdf"]:
         files = glob.glob(os.path.join(datastore_path, g))
@@ -96,6 +97,15 @@ def cleanup(datastore_path):
                 continue
             if os.path.isfile(f):
                 os.unlink(f)
+
+    # Clean up Huey retry_attempts directory to prevent test interference
+    retry_attempts_dir = os.path.join(datastore_path, 'notification-queue', 'retry_attempts')
+    if os.path.exists(retry_attempts_dir):
+        try:
+            shutil.rmtree(retry_attempts_dir)
+            logger.debug(f"Cleaned up retry_attempts directory: {retry_attempts_dir}")
+        except Exception as e:
+            logger.warning(f"Error cleaning retry_attempts directory: {e}")
 
 def pytest_addoption(parser):
     """Add custom command-line options for pytest.
@@ -189,6 +199,16 @@ def prepare_test_function(live_server, datastore_path):
         datastore.needs_write = True
     except Exception as e:
         logger.warning(f"Error during datastore cleanup: {e}")
+
+    # Cleanup: Stop Huey consumer and clear queue state
+    try:
+        from changedetectionio.notification import task_queue
+        if hasattr(task_queue, 'consumer_process') and task_queue.consumer_process:
+            task_queue.consumer_process.terminate()
+            task_queue.consumer_process.join(timeout=2)
+            task_queue.consumer_process = None
+    except Exception as e:
+        logger.warning(f"Error stopping Huey consumer: {e}")
 
 
 # So the app can also know which test name it was

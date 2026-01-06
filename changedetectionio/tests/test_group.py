@@ -169,16 +169,17 @@ def test_group_tag_notification(client, live_server, measure_memory_usage, datas
     set_original_response(datastore_path=datastore_path)
 
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("ui.ui_views.form_quick_watch_add"),
-        data={"url": test_url, "tags": 'test-tag, other-tag'},
-        follow_redirects=True
-    )
 
-    assert b"Watch added" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, tag='test-tag')
 
-    notification_url = url_for('test_notification_endpoint', _external=True).replace('http', 'json')
-    notification_form_data = {"notification_urls": notification_url,
+    # Force recheck
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
+    wait_for_all_checks(client)
+
+    assert len(live_server.app.config['DATASTORE'].data['watching'][uuid]['tags']), "Should have tag associated"
+
+    group_notification_form_data = {"notification_urls":  url_for('test_notification_endpoint', _external=True).replace('http', 'json'),
                               "notification_title": "New GROUP TAG ChangeDetection.io Notification - {{watch_url}}",
                               "notification_body": "BASE URL: {{base_url}}\n"
                                                    "Watch URL: {{watch_url}}\n"
@@ -197,19 +198,26 @@ def test_group_tag_notification(client, live_server, measure_memory_usage, datas
                               "notification_screenshot": True,
                               "notification_format": 'text',
                               "title": "test-tag"}
-
     res = client.post(
         url_for("tags.form_tag_edit_submit", uuid=get_UUID_for_tag_name(client, name="test-tag")),
-        data=notification_form_data,
+        data=group_notification_form_data,
         follow_redirects=True
     )
     assert b"Updated" in res.data
+    time.sleep(1)
 
-    wait_for_all_checks(client)
-
+    # Now a change to the watch should trigger a notification
     set_modified_response(datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
+    wait_for_all_checks(client)
     time.sleep(3)
+
+
+
+    res = client.get(url_for("watchlist.index"))
+    with open('/tmp/fuck.html', 'wb') as f:
+        f.write(res.data)
 
     assert os.path.isfile(os.path.join(datastore_path, "notification.txt"))
 

@@ -50,6 +50,12 @@ def _get_retry_config():
 NOTIFICATION_RETRY_COUNT, NOTIFICATION_RETRY_DELAY = _get_retry_config()
 
 
+def reload_retry_config():
+    """Reload retry configuration from environment variables (useful for testing)"""
+    global NOTIFICATION_RETRY_COUNT, NOTIFICATION_RETRY_DELAY
+    NOTIFICATION_RETRY_COUNT, NOTIFICATION_RETRY_DELAY = _get_retry_config()
+
+
 def get_retry_delays():
     """
     Calculate retry delays with exponential backoff for display purposes.
@@ -297,6 +303,13 @@ def get_pending_notifications(limit=50):
                         break
                     try:
                         message = pickle.loads(queued_bytes)
+
+                        # Skip revoked tasks - check if task is in revoked set
+                        task_id = message.id if hasattr(message, 'id') else None
+                        if task_id and huey.is_revoked(task_id):
+                            logger.debug(f"Skipping revoked task {task_id} in get_pending_notifications")
+                            continue
+
                         if hasattr(message, 'args') and message.args:
                             notification_data = message.args[0]
                             # Get task ID and metadata for timestamp
@@ -331,6 +344,13 @@ def get_pending_notifications(limit=50):
                         break
                     try:
                         message = pickle.loads(scheduled_bytes)
+
+                        # Skip revoked tasks - check if task is in revoked set
+                        task_id = message.id if hasattr(message, 'id') else None
+                        if task_id and huey.is_revoked(task_id):
+                            logger.debug(f"Skipping revoked task {task_id} in get_pending_notifications")
+                            continue
+
                         if hasattr(message, 'args') and message.args:
                             notification_data = message.args[0]
                             eta = message.eta if hasattr(message, 'eta') else None
@@ -377,9 +397,10 @@ def get_pending_notifications(limit=50):
                             queued_at_formatted = timestamp_to_localtime(queued_timestamp) if queued_timestamp else 'Unknown'
 
                             # Get retry count from retry_attempts directory
-                            # If there are N attempt files, the next attempt will be N+1
+                            # Retry number represents which retry this is (1st retry, 2nd retry, etc.)
+                            # If there are N attempt files, we're currently on retry #N
                             retry_number = 1  # Default to 1 (first retry after initial failure)
-                            total_retries = NOTIFICATION_RETRY_COUNT
+                            total_attempts = NOTIFICATION_RETRY_COUNT + 1  # Initial attempt + retries
                             watch_uuid = notification_data.get('uuid')
                             # NOTE: Use "is not None" instead of truthiness check because Huey objects can evaluate to False
                             if watch_uuid and huey is not None and hasattr(huey.storage, 'path'):
@@ -389,17 +410,18 @@ def get_pending_notifications(limit=50):
                                     if os.path.exists(attempts_dir):
                                         attempt_files = [f for f in os.listdir(attempts_dir) if f.startswith(f"{watch_uuid}.")]
                                         if len(attempt_files) > 0:
-                                            # Next attempt number = number of previous attempts + 1
-                                            retry_number = len(attempt_files) + 1
-                                            logger.debug(f"Watch {watch_uuid[:8]}: Found {len(attempt_files)} retry files, next attempt will be #{retry_number}/{total_retries}")
+                                            # Current retry number = number of attempt files
+                                            # (1 file = 1st retry, 2 files = 2nd retry, etc.)
+                                            retry_number = len(attempt_files)
+                                            logger.debug(f"Watch {watch_uuid[:8]}: Found {len(attempt_files)} retry files, currently on retry #{retry_number}/{total_attempts}")
                                         else:
                                             # Directory exists but no files yet - first retry
                                             retry_number = 1
-                                            logger.debug(f"Watch {watch_uuid[:8]}: Retry attempts dir exists but empty, first retry (attempt #1/{total_retries})")
+                                            logger.debug(f"Watch {watch_uuid[:8]}: Retry attempts dir exists but empty, first retry (retry #1/{total_attempts})")
                                     else:
                                         # No attempts dir yet - this is first retry (after initial failure)
                                         retry_number = 1
-                                        logger.debug(f"Watch {watch_uuid[:8]}: No retry attempts dir, this is first retry (attempt #1/{total_retries})")
+                                        logger.debug(f"Watch {watch_uuid[:8]}: No retry attempts dir, this is first retry (retry #1/{total_attempts})")
                                 except Exception as e:
                                     logger.warning(f"Error reading retry attempts for {watch_uuid}: {e}, defaulting to attempt #1")
                                     retry_number = 1  # Fallback to 1 on error
@@ -416,7 +438,7 @@ def get_pending_notifications(limit=50):
                                 'queued_at': queued_timestamp,
                                 'queued_at_formatted': queued_at_formatted,
                                 'retry_number': retry_number,
-                                'total_retries': total_retries,
+                                'total_retries': total_attempts,
                             })
                     except Exception as e:
                         logger.debug(f"Error processing scheduled item: {e}")
@@ -547,45 +569,97 @@ def get_all_notification_events(limit=100):
     return events[:limit]
 
 
-def get_delivered_notifications(limit=100):
+def _cleanup_old_success_notifications(success_dir, keep=50):
     """
-    Get list of delivered (successful) notifications.
+    Clean up old success notification files, keeping only the newest 'keep' files.
+
+    This is called after each successful notification to maintain a manageable number of files.
+    Can also be called on startup to clean up old files.
 
     Args:
-        limit: Maximum number to return (default: 100, max: 100)
+        success_dir: Directory containing success-*.json files
+        keep: Number of newest files to keep (default: 50)
+    """
+    try:
+        import os
+        if not os.path.exists(success_dir):
+            return
+
+        # Get all success-*.json files
+        success_files = [f for f in os.listdir(success_dir) if f.startswith('success-') and f.endswith('.json')]
+
+        # If we're under the limit, no cleanup needed
+        if len(success_files) <= keep:
+            return
+
+        # Sort by modification time (oldest first for deletion)
+        success_files.sort(key=lambda f: os.path.getmtime(os.path.join(success_dir, f)))
+
+        # Delete oldest files beyond the keep limit
+        files_to_delete = success_files[:-keep]  # All but the newest 'keep' files
+        for filename in files_to_delete:
+            try:
+                os.remove(os.path.join(success_dir, filename))
+            except Exception as e:
+                logger.debug(f"Error deleting old success file {filename}: {e}")
+
+        if files_to_delete:
+            logger.debug(f"Cleaned up {len(files_to_delete)} old success notification files (keeping {keep} newest)")
+    except Exception as e:
+        logger.debug(f"Error cleaning up old success notifications: {e}")
+
+
+def get_delivered_notifications(limit=50):
+    """
+    Get list of delivered (successful) notifications by scanning the success directory.
+
+    Each successful notification is stored as an individual file:
+    {storage_path}/success/success-{task_id}.json
+
+    Args:
+        limit: Maximum number to return (default: 50)
 
     Returns:
         List of dicts with delivered notification info (newest first)
     """
-    if huey is None or not hasattr(huey.storage, 'path'):
+    if huey is None:
+        return []
+
+    storage_path = getattr(huey.storage, 'path', None)
+    if not storage_path:
         return []
 
     import os
     import json
 
     try:
-        # Try new format (list of notifications)
-        success_file = os.path.join(huey.storage.path, 'successful_notifications.json')
-        if os.path.exists(success_file):
-            with open(success_file, 'r') as f:
-                notifications = json.load(f)
-                if isinstance(notifications, list):
-                    # Format timestamps for display
-                    from changedetectionio.notification_service import timestamp_to_localtime
-                    for notif in notifications:
-                        if notif.get('timestamp'):
-                            notif['timestamp_formatted'] = timestamp_to_localtime(notif['timestamp'])
-                    return notifications[:limit]
+        success_dir = os.path.join(storage_path, 'success')
 
-        # Fall back to old format (single notification) for backward compatibility
-        old_success_file = os.path.join(huey.storage.path, 'last_successful_notification.json')
-        if os.path.exists(old_success_file):
-            with open(old_success_file, 'r') as f:
-                success_data = json.load(f)
-                from changedetectionio.notification_service import timestamp_to_localtime
-                if success_data.get('timestamp'):
-                    success_data['timestamp_formatted'] = timestamp_to_localtime(success_data['timestamp'])
-                return [success_data]  # Return as list
+        if not os.path.exists(success_dir):
+            return []
+
+        # Get all success-*.json files
+        success_files = [f for f in os.listdir(success_dir) if f.startswith('success-') and f.endswith('.json')]
+
+        # Sort by modification time (newest first)
+        success_files.sort(key=lambda f: os.path.getmtime(os.path.join(success_dir, f)), reverse=True)
+
+        # Load up to 'limit' files
+        notifications = []
+        from changedetectionio.notification_service import timestamp_to_localtime
+        for filename in success_files[:limit]:
+            try:
+                file_path = os.path.join(success_dir, filename)
+                with open(file_path, 'r') as f:
+                    notif = json.load(f)
+                    if notif.get('timestamp'):
+                        notif['timestamp_formatted'] = timestamp_to_localtime(notif['timestamp'])
+                    notifications.append(notif)
+            except Exception as e:
+                logger.debug(f"Error reading {filename}: {e}")
+                continue
+
+        return notifications
 
     except Exception as e:
         logger.debug(f"Unable to load delivered notifications: {e}")
@@ -893,6 +967,11 @@ def execute_scheduled_notification(task_id):
         # Execute the notification NOW (synchronously, not queued) by calling the task function directly
         logger.info(f"Executing notification for task {task_id} immediately (not queued)...")
 
+        # CRITICAL: Revoke the scheduled task FIRST to prevent race condition
+        # where the consumer picks it up while we're executing it
+        huey.revoke_by_id(task_id, revoke_once=True)
+        logger.info(f"Revoked scheduled task {task_id} before execution (prevents automatic retry)")
+
         try:
             # Import here to avoid circular dependency
             from changedetectionio.flask_app import datastore
@@ -910,10 +989,6 @@ def execute_scheduled_notification(task_id):
             # If we get here, notification was sent successfully!
             logger.info(f"✓ Notification sent successfully for task {task_id}")
 
-            # NOW revoke the scheduled task since we successfully sent it
-            huey.revoke_by_id(task_id, revoke_once=True)
-            logger.info(f"Revoked scheduled task {task_id} (no longer needed)")
-
             # Clean up old metadata and result
             _delete_result(task_id)
             _delete_task_metadata(task_id)
@@ -922,9 +997,15 @@ def execute_scheduled_notification(task_id):
             return True
 
         except Exception as e:
-            # Notification failed - keep the scheduled task so it retries later
+            # Notification failed - but we already revoked it, so it won't retry automatically
+            # The failure will be logged and visible in the dashboard
             logger.warning(f"Failed to send notification for task {task_id}: {e}")
-            logger.info(f"Keeping scheduled task {task_id} in queue for automatic retry")
+            logger.info(f"Task {task_id} already removed from queue (user requested immediate execution)")
+
+            # Clean up metadata and result
+            _delete_result(task_id)
+            _delete_task_metadata(task_id)
+
             return False
 
     except Exception as e:
@@ -1182,10 +1263,10 @@ def send_notification_task(n_object_dict):
                             os.remove(attempt_file)
                         logger.debug(f"Cleaned up retry attempt files for successful watch {watch_uuid}")
 
-                # Store last successful notification for reference
-                # Store successful notification in history (keep last 100)
-                # Logs are limited to 50 lines x 500 chars = ~25KB max per notification
-                success_file = os.path.join(storage_path, 'successful_notifications.json')
+                # Store successful notification in individual file
+                # Each notification is stored as: {storage_path}/success/success-{task_id}.json
+                success_dir = os.path.join(storage_path, 'success')
+                os.makedirs(success_dir, exist_ok=True)
 
                 # Generate unique ID for this delivered notification
                 timestamp = time.time()
@@ -1208,29 +1289,15 @@ def send_notification_task(n_object_dict):
                     'apprise_logs': apprise_logs if apprise_logs else [],
                 }
 
-                # Load existing successful notifications
-                successful_notifications = []
-                if os.path.exists(success_file):
-                    try:
-                        with open(success_file, 'r') as f:
-                            successful_notifications = json.load(f)
-                            if not isinstance(successful_notifications, list):
-                                successful_notifications = []
-                    except Exception as e:
-                        logger.debug(f"Error loading successful notifications history: {e}")
-                        successful_notifications = []
-
-                # Prepend new success (newest first)
-                successful_notifications.insert(0, success_data)
-
-                # Keep only last 100
-                successful_notifications = successful_notifications[:100]
-
-                # Save updated list
+                # Write individual file
+                success_file = os.path.join(success_dir, f"success-{unique_id}.json")
                 with open(success_file, 'w') as f:
-                    json.dump(successful_notifications, f, indent=2)
+                    json.dump(success_data, f, indent=2)
 
-                logger.info(f"✓ Stored delivered notification: {unique_id} (total: {len(successful_notifications)})")
+                logger.debug(f"Stored delivered notification: success-{unique_id}.json")
+
+                # Clean up old success files (keep only 50 newest)
+                _cleanup_old_success_notifications(success_dir, keep=50)
         except Exception as cleanup_error:
             logger.error(f"Failed to store delivered notification: {cleanup_error}", exc_info=True)
 
@@ -1258,6 +1325,20 @@ def send_notification_task(n_object_dict):
                 # Count existing attempts for this watch
                 attempt_files = [f for f in os.listdir(attempts_dir) if f.startswith(f"{watch_uuid}.")]
                 attempt_number = len(attempt_files) + 1
+
+                # Clean up old attempt files if this looks like a new notification task
+                # (i.e., if the oldest file is more than 5 minutes old, assume it's from a previous task)
+                if attempt_files:
+                    oldest_file = min(attempt_files, key=lambda f: os.path.getmtime(os.path.join(attempts_dir, f)))
+                    oldest_time = os.path.getmtime(os.path.join(attempts_dir, oldest_file))
+                    if time.time() - oldest_time > 300:  # 5 minutes
+                        logger.debug(f"Cleaning up {len(attempt_files)} old retry attempt files for {watch_uuid}")
+                        for old_file in attempt_files:
+                            try:
+                                os.remove(os.path.join(attempts_dir, old_file))
+                            except:
+                                pass
+                        attempt_number = 1  # This is the first attempt of a new notification
 
                 # Store with timestamp to avoid collisions
                 timestamp = int(time.time())
