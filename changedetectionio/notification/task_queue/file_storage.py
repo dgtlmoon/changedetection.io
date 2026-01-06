@@ -2,6 +2,11 @@
 FileStorage backend task manager for Huey notifications.
 
 This is the default backend, optimized for NAS/CIFS compatibility.
+
+INDUSTRIAL-GRADE ENHANCEMENTS:
+- Atomic file writes (prevents corruption on crash/power failure)
+- JSON corruption detection and recovery
+- Lost-found directory for corrupted files
 """
 
 from loguru import logger
@@ -9,6 +14,107 @@ from loguru import logger
 from .base import HueyTaskManager
 
 import os
+
+
+def _atomic_json_write(filepath, data):
+    """
+    Atomic JSON write - never leaves partial/corrupted files.
+
+    Critical for aerospace-grade reliability:
+    - Writes to temp file first
+    - Forces data to disk (fsync)
+    - Atomic rename (POSIX guarantees atomicity)
+
+    If process crashes mid-write, you either get:
+    - Old complete file (rename didn't happen)
+    - New complete file (rename succeeded)
+    Never a partial/corrupted file.
+
+    Args:
+        filepath: Target file path
+        data: Data to write (will be JSON encoded)
+
+    Returns:
+        True on success
+
+    Raises:
+        Exception on write failure
+    """
+    import tempfile
+    import json
+
+    directory = os.path.dirname(filepath)
+
+    # Write to temp file in same directory (same filesystem = atomic rename)
+    fd, temp_path = tempfile.mkstemp(dir=directory, prefix='.tmp_', suffix='.json')
+
+    try:
+        with os.fdopen(fd, 'w') as f:
+            json.dump(data, f, indent=2)
+            f.flush()
+            os.fsync(f.fileno())  # Force to disk before rename
+
+        # Atomic rename (POSIX guarantees atomicity)
+        # If crash happens here, worst case is orphaned temp file
+        os.replace(temp_path, filepath)
+        return True
+
+    except Exception as e:
+        # Clean up temp file on error
+        try:
+            os.unlink(temp_path)
+        except:
+            pass
+        raise
+
+
+def _safe_json_load(filepath, schema_name, storage_path):
+    """
+    Load JSON with corruption detection and recovery.
+
+    Corrupted files are moved to lost-found for forensic analysis.
+
+    Args:
+        filepath: JSON file to load
+        schema_name: Schema type (for lost-found directory)
+        storage_path: Root storage path
+
+    Returns:
+        Parsed JSON data or None if corrupted
+    """
+    import json
+    import shutil
+    import time
+
+    try:
+        with open(filepath, 'r') as f:
+            return json.load(f)
+
+    except (json.JSONDecodeError, EOFError) as e:
+        # Corrupted or incomplete JSON file
+        file_size = os.path.getsize(filepath) if os.path.exists(filepath) else 0
+        filename = os.path.basename(filepath)
+        logger.warning(f"Corrupted {schema_name} file: {filename} ({file_size} bytes) - moving to lost-found")
+
+        try:
+            lost_found_dir = os.path.join(storage_path, 'lost-found', schema_name)
+            os.makedirs(lost_found_dir, exist_ok=True)
+
+            timestamp = int(time.time())
+            lost_found_path = os.path.join(lost_found_dir, f"{filename}.{timestamp}.corrupted")
+
+            shutil.move(filepath, lost_found_path)
+            logger.info(f"Moved corrupted {schema_name} file to {lost_found_path}")
+
+        except Exception as move_err:
+            logger.error(f"Unable to move corrupted {schema_name} file: {move_err}")
+
+        return None
+
+    except Exception as e:
+        logger.debug(f"Unable to load {schema_name} file {filepath}: {e}")
+        return None
+
 
 class FileStorageTaskManager(HueyTaskManager):
     """Task manager for FileStorage backend (default, NAS-safe)."""
@@ -193,8 +299,7 @@ class FileStorageTaskManager(HueyTaskManager):
         return cleared
 
     def store_task_metadata(self, task_id, metadata):
-        """Store task metadata as JSON file."""
-        import json
+        """Store task metadata as JSON file with atomic write."""
         import time
 
         if not self.storage_path:
@@ -211,17 +316,16 @@ class FileStorageTaskManager(HueyTaskManager):
                 **metadata
             }
 
-            with open(metadata_file, 'w') as f:
-                json.dump(metadata_with_id, f, indent=2)
+            # Use atomic write to prevent corruption
+            _atomic_json_write(metadata_file, metadata_with_id)
             return True
+
         except Exception as e:
             logger.debug(f"Unable to store task metadata: {e}")
             return False
 
     def get_task_metadata(self, task_id):
-        """Retrieve task metadata from JSON file."""
-        import json
-
+        """Retrieve task metadata from JSON file with corruption handling."""
         if not self.storage_path:
             return None
 
@@ -230,8 +334,9 @@ class FileStorageTaskManager(HueyTaskManager):
             metadata_file = os.path.join(metadata_dir, f"{task_id}.json")
 
             if os.path.exists(metadata_file):
-                with open(metadata_file, 'r') as f:
-                    return json.load(f)
+                # Use safe JSON load with corruption handling
+                return _safe_json_load(metadata_file, 'task_metadata', self.storage_path)
+
         except Exception as e:
             logger.debug(f"Unable to load task metadata for {task_id}: {e}")
 

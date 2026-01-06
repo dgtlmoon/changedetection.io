@@ -91,15 +91,25 @@ def construct_blueprint():
     @login_optionally_required
     def retry_notification(task_id):
         """Retry a failed notification (from dead letter queue)"""
-        from changedetectionio.notification.task_queue import retry_failed_notification
+        from changedetectionio.notification.task_queue import retry_failed_notification, get_task_metadata
+
+        # Check if task_id exists first to provide better error message
+        if not task_id or task_id == 'TASK_ID_PLACEHOLDER':
+            flash("Invalid task ID. Please refresh the page and try again.", 'error')
+            return redirect(url_for('notification_dashboard.dashboard'))
+
+        # Check if task exists in metadata
+        task_metadata = get_task_metadata(task_id)
+        if not task_metadata:
+            flash(f"Task ID '{task_id}' not found. It may have been already retried or removed.", 'error')
+            return redirect(url_for('notification_dashboard.dashboard'))
 
         success = retry_failed_notification(task_id)
-        message = f"Notification queued for retry." if success else f"Failed to retry notification. Check logs for details."
 
         if success:
-            flash(message, 'notice')
+            flash("Notification queued for retry.", 'notice')
         else:
-            flash(message, 'error')
+            flash("Failed to retry notification. The task may be missing notification data. Check logs for details.", 'error')
 
         return redirect(url_for('notification_dashboard.dashboard'))
 

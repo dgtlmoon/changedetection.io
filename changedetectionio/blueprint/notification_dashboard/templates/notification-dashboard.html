@@ -193,15 +193,20 @@ $(function() {
         html += '<div class="detail-header">';
         html += `<h5>Event Details</h5>`;
         if (event.status === 'failed') {
-            html += `<a href="/notification-dashboard/retry/${event.id}" class="pure-button button-small resend-btn">
-                <svg width="14" height="14" viewBox="0 0 16 16" style="vertical-align: middle; margin-right: 4px;">
-                    <path d="M13.5 8a5.5 5.5 0 1 1-1.65-3.95" stroke="currentColor" stroke-width="1.5" fill="none"/>
-                    <path d="M13.5 2v4h-4" stroke="currentColor" stroke-width="1.5" fill="none"/>
-                </svg>
-                Retry
-            </a>`;
+            const retryUrl = '/notification-dashboard/retry/' + event.id;
+            html += `<form method="POST" action="${retryUrl}" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="pure-button button-small resend-btn">
+                    <svg width="14" height="14" viewBox="0 0 16 16" style="vertical-align: middle; margin-right: 4px;">
+                        <path d="M13.5 8a5.5 5.5 0 1 1-1.65-3.95" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                        <path d="M13.5 2v4h-4" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                    </svg>
+                    Retry
+                </button>
+            </form>`;
         } else if (event.status === 'retrying') {
-            html += `<a href="/notification-dashboard/send-now/${event.id}" class="pure-button button-small resend-btn">Send Now</a>`;
+            const sendNowUrl = '/notification-dashboard/send-now/' + event.id;
+            html += `<a href="${sendNowUrl}" class="pure-button button-small resend-btn">Send Now</a>`;
         }
         html += '</div>';
 
