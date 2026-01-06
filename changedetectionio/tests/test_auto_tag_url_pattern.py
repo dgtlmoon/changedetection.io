@@ -361,3 +361,107 @@ def test_auto_tag_with_notification(client, live_server, measure_memory_usage, d
         os.unlink(notification_file)
     delete_all_watches(client)
     res = client.get(url_for("tags.delete_all"), follow_redirects=True)
+
+
+def test_auto_tag_ui_watch_edit_page(client, live_server, measure_memory_usage, datastore_path):
+    """
+    Test that the watch edit page displays auto-applied tags with their patterns.
+    """
+    # Create a tag with URL pattern
+    res = client.post(
+        url_for("tags.form_tag_add"),
+        data={"name": "ui-test-tag"},
+        follow_redirects=True
+    )
+    assert b"Tag added" in res.data
+
+    tag_uuid = get_UUID_for_tag_name(client, name="ui-test-tag")
+
+    # Configure the tag with URL pattern
+    res = client.post(
+        url_for("tags.form_tag_edit_submit", uuid=tag_uuid),
+        data={
+            "title": "ui-test-tag",
+            "url_match_pattern": "*github.com*",
+        },
+        follow_redirects=True
+    )
+    assert b"Updated" in res.data
+
+    # Add a watch that matches the pattern
+    test_url = "https://github.com/test/repo"
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": ""},
+        follow_redirects=True
+    )
+    assert b"Watch added" in res.data
+
+    # Get the watch UUID
+    watch_uuid = None
+    for uuid, watch in live_server.app.config['DATASTORE'].data['watching'].items():
+        if watch['url'] == test_url:
+            watch_uuid = uuid
+            break
+
+    assert watch_uuid is not None
+
+    # Visit the watch edit page and verify the auto-applied tag info is displayed
+    res = client.get(url_for("ui.ui_edit.edit_page", uuid=watch_uuid))
+    assert res.status_code == 200
+
+    # Check that the auto-applied tags section is displayed
+    assert b"Auto-applied tags" in res.data
+    assert b"ui-test-tag" in res.data
+    assert b"*github.com*" in res.data
+
+    # Cleanup
+    delete_all_watches(client)
+    res = client.get(url_for("tags.delete_all"), follow_redirects=True)
+
+
+def test_auto_tag_ui_tag_edit_page(client, live_server, measure_memory_usage, datastore_path):
+    """
+    Test that the tag edit page displays matching watches.
+    """
+    # Add a watch first
+    test_url = "https://github.com/test/repo"
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": ""},
+        follow_redirects=True
+    )
+    assert b"Watch added" in res.data
+
+    # Create a tag with URL pattern that matches the watch
+    res = client.post(
+        url_for("tags.form_tag_add"),
+        data={"name": "matching-tag"},
+        follow_redirects=True
+    )
+    assert b"Tag added" in res.data
+
+    tag_uuid = get_UUID_for_tag_name(client, name="matching-tag")
+
+    # Configure the tag with URL pattern
+    res = client.post(
+        url_for("tags.form_tag_edit_submit", uuid=tag_uuid),
+        data={
+            "title": "matching-tag",
+            "url_match_pattern": "*github.com*",
+        },
+        follow_redirects=True
+    )
+    assert b"Updated" in res.data
+
+    # Visit the tag edit page and verify matching watches are displayed
+    res = client.get(url_for("tags.form_tag_edit", uuid=tag_uuid))
+    assert res.status_code == 200
+
+    # Check that the matching watches section is displayed
+    assert b"Existing watches matching this pattern" in res.data
+    assert b"github.com/test/repo" in res.data
+
+    # Cleanup
+    delete_all_watches(client)
+    res = client.get(url_for("tags.delete_all"), follow_redirects=True)
