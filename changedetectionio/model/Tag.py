@@ -19,10 +19,10 @@ class model(watch_base):
         """
         Check if a URL matches this tag's url_match_pattern.
         Supports wildcard patterns (using * and ?) and substring matching.
-
+        
         Args:
             url: The URL to check against the pattern
-
+            
         Returns:
             bool: True if the URL matches the pattern, False otherwise
         """

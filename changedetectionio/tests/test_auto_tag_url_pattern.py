@@ -4,9 +4,18 @@ Tests for auto-applying tags based on URL pattern matching.
 Related to GitHub issue #3454
 """
 
+import os
+
 from flask import url_for
 
-from .util import delete_all_watches, get_UUID_for_tag_name
+from .util import (
+    delete_all_watches,
+    get_UUID_for_tag_name,
+    set_modified_response,
+    set_original_response,
+    wait_for_all_checks,
+    wait_for_notification_endpoint_output,
+)
 
 
 def test_auto_tag_wildcard_pattern(client, live_server, measure_memory_usage, datastore_path):
@@ -263,5 +272,92 @@ def test_auto_tag_empty_pattern_no_match(client, live_server, measure_memory_usa
     watch = live_server.app.config['DATASTORE'].data['watching'][watch_uuid]
     assert tag_uuid not in watch.get('tags', [])
 
+    delete_all_watches(client)
+    res = client.get(url_for("tags.delete_all"), follow_redirects=True)
+
+
+def test_auto_tag_with_notification(client, live_server, measure_memory_usage, datastore_path):
+    """
+    End-to-end test: Verify that notifications configured on a tag work correctly
+    for watches that are auto-tagged based on URL pattern matching.
+    """
+    set_original_response(datastore_path=datastore_path)
+
+    # Clean up any existing notification file
+    notification_file = os.path.join(datastore_path, "notification.txt")
+    if os.path.isfile(notification_file):
+        os.unlink(notification_file)
+
+    # Create a tag with URL pattern and notification settings
+    res = client.post(
+        url_for("tags.form_tag_add"),
+        data={"name": "notify-tag"},
+        follow_redirects=True
+    )
+    assert b"Tag added" in res.data
+
+    tag_uuid = get_UUID_for_tag_name(client, name="notify-tag")
+
+    # Configure the tag with URL pattern AND notification URL
+    notification_url = url_for('test_notification_endpoint', _external=True).replace('http', 'json')
+    res = client.post(
+        url_for("tags.form_tag_edit_submit", uuid=tag_uuid),
+        data={
+            "title": "notify-tag",
+            "url_match_pattern": "*test-endpoint*",
+            "notification_urls": notification_url,
+            "notification_title": "Auto-tag notification test",
+            "notification_body": "URL: {{watch_url}} Tag: {{watch_tag}}",
+        },
+        follow_redirects=True
+    )
+    assert b"Updated" in res.data
+
+    # Add a watch that matches the pattern - should auto-apply the tag
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": ""},
+        follow_redirects=True
+    )
+    assert b"Watch added" in res.data
+
+    # Verify the tag was auto-applied
+    watch_uuid = None
+    for uuid, watch in live_server.app.config['DATASTORE'].data['watching'].items():
+        if watch['url'] == test_url:
+            watch_uuid = uuid
+            break
+
+    assert watch_uuid is not None
+    watch = live_server.app.config['DATASTORE'].data['watching'][watch_uuid]
+    assert tag_uuid in watch.get('tags', []), "Tag should be auto-applied to the watch"
+
+    # Wait for initial check
+    wait_for_all_checks(client)
+
+    # Modify the response to trigger a change detection
+    set_modified_response(datastore_path=datastore_path)
+
+    # Trigger a recheck
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    # Wait for notification to be sent
+    notification_sent = wait_for_notification_endpoint_output(datastore_path)
+
+    # Verify notification was sent
+    assert notification_sent, "Notification should have been sent for auto-tagged watch"
+
+    # Verify notification content
+    with open(notification_file) as f:
+        notification_content = f.read()
+
+    assert test_url in notification_content, "Notification should contain the watch URL"
+    assert "notify-tag" in notification_content, "Notification should contain the tag name"
+
+    # Cleanup
+    if os.path.isfile(notification_file):
+        os.unlink(notification_file)
     delete_all_watches(client)
     res = client.get(url_for("tags.delete_all"), follow_redirects=True)
