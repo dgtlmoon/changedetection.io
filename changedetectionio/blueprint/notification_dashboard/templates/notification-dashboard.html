@@ -154,6 +154,7 @@
     </div>
 </div>
 
+<script src="{{ url_for('static_content', group='js', filename='notification-dashboard.js') }}"></script>
 <script>
 // Event selection and detail display
 $(function() {
@@ -196,16 +197,16 @@ $(function() {
         }
         html += `<span class="detail-value"><span class="status-pill ${statusClass}">${statusText}</span></span></div>`;
 
-        // Timestamp
+        // Timestamp (converted to browser's local timezone)
         if (event.timestamp) {
             html += '<div class="detail-row"><span class="detail-label">Timestamp:</span>';
-            html += `<span class="detail-value">${event.timestamp_formatted || 'N/A'}</span></div>`;
+            html += `<span class="detail-value">${window.formatTimestampLocal(event.timestamp)}</span></div>`;
         }
 
-        // Retry time (for retrying status)
-        if (event.status === 'retrying' && event.retry_at_formatted) {
+        // Retry time (for retrying status, converted to browser's local timezone)
+        if (event.status === 'retrying' && event.retry_at) {
             html += '<div class="detail-row"><span class="detail-label">Next Retry:</span>';
-            html += `<span class="detail-value">${event.retry_at_formatted}</span></div>`;
+            html += `<span class="detail-value">${window.formatTimestampLocal(event.retry_at)}</span></div>`;
         }
 
         // Task ID

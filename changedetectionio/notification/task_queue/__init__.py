@@ -1436,6 +1436,12 @@ def send_notification_task(n_object: NotificationContextData):
     from datetime import datetime
     import json
 
+    from changedetectionio.notification.exceptions import (
+        AppriseNotificationException,
+        WatchNotFoundException,
+        NotificationConfigurationException
+    )
+
     # Wrap dict in NotificationContextData if needed (for retried tasks from Huey)
     if not isinstance(n_object, NotificationContextData):
         n_object = NotificationContextData(n_object)
@@ -1443,7 +1449,7 @@ def send_notification_task(n_object: NotificationContextData):
     # Load watch
     watch = datastore.data['watching'].get(n_object.get('uuid'))
     if not watch:
-        raise Exception(f"No watch found for uuid {n_object.get('uuid')}")
+        raise WatchNotFoundException(f"No watch found for uuid {n_object.get('uuid')}")
 
     try:
         # Reload notification config with cascading (Watch > Tag > System)
@@ -1481,37 +1487,79 @@ def send_notification_task(n_object: NotificationContextData):
         logger.success(f"Notification sent successfully for {n_object.get('watch_url')}")
         return sent_objs
 
-    except Exception as e:
-        # Log error
-        logger.error(f"Watch URL: {n_object.get('watch_url')} Error: {str(e)}")
+    except (WatchNotFoundException, NotificationConfigurationException) as e:
+        # Non-recoverable error - don't retry, immediately mark as failed
+        logger.error(f"Non-recoverable notification error: {str(e)}")
 
-        # Try to render the notification to show what was actually attempted
-        # This ensures RETRYING and FAILED notifications show rendered content, not templates
-        attempted_payload = None
+        # Store as failed (no retries) with error details
+        attempted_payload = {
+            'notification_urls': n_object.get('notification_urls'),
+            'notification_title': n_object.get('notification_title'),
+            'notification_body': n_object.get('notification_body'),
+            'notification_format': n_object.get('notification_format'),
+        }
+
+        # Store in dead-letter queue immediately (no retries)
         try:
-            from changedetectionio.jinja2_custom import render as jinja_render
-            from changedetectionio.notification.handler import create_notification_parameters
+            _store_retry_attempt(n_object, e, payload=attempted_payload)
+        except Exception as store_error:
+            logger.debug(f"Unable to store failed notification: {store_error}")
 
-            # Render the notification the same way process_notification does
-            notification_parameters = create_notification_parameters(n_object, datastore)
-            rendered_title = jinja_render(template_str=n_object.get('notification_title', ''), **notification_parameters)
-            rendered_body = jinja_render(template_str=n_object.get('notification_body', ''), **notification_parameters)
+        # Handle error: update watch, log, signal
+        watch_uuid = n_object.get('uuid')
+        _handle_notification_error(watch_uuid, e, notification_debug_log, app, datastore)
 
+        # Re-raise to ensure Huey marks it as failed
+        # But since this is non-recoverable, Huey will exhaust retries and mark as failed
+        raise
+
+    except AppriseNotificationException as e:
+        # Recoverable Apprise error - retry with exponential backoff
+        logger.error(f"Apprise notification failed (will retry): {str(e)}")
+
+        # Get rendered notification payload from exception
+        attempted_payload = None
+        if e.sent_objs:
+            first_sent = e.sent_objs[0]
             attempted_payload = {
                 'notification_urls': n_object.get('notification_urls'),
-                'notification_title': rendered_title,
-                'notification_body': rendered_body,
+                'notification_title': first_sent.get('title'),
+                'notification_body': first_sent.get('body'),
                 'notification_format': n_object.get('notification_format'),
             }
-        except Exception as render_error:
-            # If rendering fails, fall back to raw template
-            logger.debug(f"Unable to render notification for retry attempt, using raw template: {render_error}")
+            logger.debug("Using fully rendered notification from AppriseNotificationException")
+        else:
+            # No sent_objs (shouldn't happen, but fallback)
             attempted_payload = {
                 'notification_urls': n_object.get('notification_urls'),
                 'notification_title': n_object.get('notification_title'),
                 'notification_body': n_object.get('notification_body'),
                 'notification_format': n_object.get('notification_format'),
             }
+
+        # Store retry attempt
+        try:
+            _store_retry_attempt(n_object, e, payload=attempted_payload)
+        except Exception as store_error:
+            logger.debug(f"Unable to store retry attempt: {store_error}")
+
+        # Handle error: update watch, log, signal
+        watch_uuid = n_object.get('uuid')
+        _handle_notification_error(watch_uuid, e, notification_debug_log, app, datastore)
+
+        # Re-raise to trigger Huey retry
+        raise
+
+    except Exception as e:
+        # Other unexpected errors - log and retry
+        logger.error(f"Unexpected error sending notification: {str(e)}", exc_info=True)
+
+        attempted_payload = {
+            'notification_urls': n_object.get('notification_urls'),
+            'notification_title': n_object.get('notification_title'),
+            'notification_body': n_object.get('notification_body'),
+            'notification_format': n_object.get('notification_format'),
+        }
 
         # Store retry attempt
         try:

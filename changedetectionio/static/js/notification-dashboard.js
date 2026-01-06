@@ -3,17 +3,22 @@
  * Handles timezone conversion, AJAX log fetching, and user interactions
  */
 
+// Global utility function to format Unix timestamp to local timezone
+window.formatTimestampLocal = function(timestamp) {
+    if (!timestamp) return 'N/A';
+    return new Intl.DateTimeFormat(undefined, {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        timeZoneName: 'short'
+    }).format(timestamp * 1000);
+};
+
 $(function() {
     // Convert retry timestamps to local timezone
     $('.retry-time[data-timestamp]').each(function() {
         var timestamp = parseInt($(this).data('timestamp'));
         if (timestamp) {
-            var formatted = new Intl.DateTimeFormat(undefined, {
-                year: 'numeric', month: '2-digit', day: '2-digit',
-                hour: '2-digit', minute: '2-digit', second: '2-digit',
-                timeZoneName: 'short'
-            }).format(timestamp * 1000);
-            $(this).text(formatted);
+            $(this).text(window.formatTimestampLocal(timestamp));
         }
     });
 

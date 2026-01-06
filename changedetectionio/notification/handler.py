@@ -12,6 +12,7 @@ from ..diff import HTML_REMOVED_STYLE, REMOVED_PLACEMARKER_OPEN, REMOVED_PLACEMA
 import re
 
 from ..notification_service import NotificationContextData
+from .exceptions import AppriseNotificationException
 
 newline_re = re.compile(r'\r\n|\r|\n')
 
@@ -437,10 +438,10 @@ def process_notification(n_object: NotificationContextData, datastore):
             if log_value:
                 error_msg += f"\nApprise logs:\n{log_value}"
             logger.critical(error_msg)
-            raise Exception(error_msg)
+            raise AppriseNotificationException(error_msg, sent_objs=sent_objs)
         elif log_value and ('WARNING' in log_value or 'ERROR' in log_value):
             logger.critical(f"Apprise warning/error detected:\n{log_value}")
-            raise Exception(log_value)
+            raise AppriseNotificationException(log_value, sent_objs=sent_objs)
 
     # Return what was sent for better logging - after the for loop
     return sent_objs
