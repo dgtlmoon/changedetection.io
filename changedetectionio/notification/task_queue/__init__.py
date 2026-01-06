@@ -14,6 +14,7 @@ Environment Variables:
 import os
 
 from loguru import logger
+from changedetectionio.notification_service import NotificationContextData, _check_cascading_vars
 
 # Get queue storage type from environment
 QUEUE_STORAGE = os.getenv('QUEUE_STORAGE', 'file').lower()
@@ -1110,283 +1111,299 @@ def retry_all_failed_notifications():
         return {'success': success_count, 'failed': failed_count, 'total': success_count + failed_count}
 
 
-def send_notification_task(n_object_dict):
+
+def _reload_notification_config(n_object, watch, datastore):
+    """
+    Reload notification_urls and notification_format with cascading priority.
+
+    Priority: Watch settings > Tag settings > Global settings
+
+    This is done on every send/retry to allow operators to fix broken
+    notification settings and retry with corrected configuration.
+    """
+    n_object['notification_urls'] = _check_cascading_vars(datastore, 'notification_urls', watch)
+    n_object['notification_format'] = _check_cascading_vars(datastore, 'notification_format', watch)
+
+    if not n_object.get('notification_urls'):
+        raise Exception("No notification_urls defined after checking cascading (Watch > Tag > System)")
+
+
+def _capture_apprise_logs(callback):
+    """
+    Capture Apprise logs during notification send with size limits.
+
+    Returns:
+        tuple: (result from callback, list of log lines)
+    """
+    import logging
+    import io
+
+    log_capture = io.StringIO()
+    handler = logging.StreamHandler(log_capture)
+    handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+
+    apprise_logger = logging.getLogger('apprise')
+    apprise_logger.addHandler(handler)
+
+    try:
+        result = callback()
+
+        # Capture logs with limits to prevent bloat
+        log_output = log_capture.getvalue()
+        apprise_logs = []
+
+        if log_output:
+            apprise_logs = log_output.strip().split('\n')
+
+            # Limit: Keep only last 50 lines
+            if len(apprise_logs) > 50:
+                apprise_logs = apprise_logs[-50:]
+
+            # Limit: Truncate each line to 500 chars
+            apprise_logs = [line[:500] + '...' if len(line) > 500 else line for line in apprise_logs]
+
+        return result, apprise_logs
+    finally:
+        apprise_logger.removeHandler(handler)
+        log_capture.close()
+
+
+def _add_to_debug_log(notification_debug_log, message):
+    """Add message to debug log and trim to max 100 entries."""
+    notification_debug_log.append(message)
+    while len(notification_debug_log) > 100:
+        notification_debug_log.pop(0)
+
+
+def _get_storage_path():
+    """Get Huey storage path if available."""
+    if huey is None:
+        return None
+    storage_path = getattr(huey.storage, 'path', None)
+    if storage_path:
+        logger.debug(f"Storage type: {type(huey.storage).__name__}, path: {storage_path}")
+    return storage_path
+
+
+def _cleanup_retry_attempts(watch_uuid, storage_path):
+    """Delete all retry attempt files for a watch after successful send."""
+    import os
+    import glob
+
+    if not watch_uuid or not storage_path:
+        return
+
+    attempts_dir = os.path.join(storage_path, 'retry_attempts')
+    if not os.path.exists(attempts_dir):
+        return
+
+    attempt_pattern = os.path.join(attempts_dir, f"{watch_uuid}.*.json")
+    for attempt_file in glob.glob(attempt_pattern):
+        os.remove(attempt_file)
+    logger.debug(f"Cleaned up retry attempt files for successful watch {watch_uuid}")
+
+
+def _extract_notification_urls(n_object):
+    """Extract notification URLs from n_object (handles dict or list)."""
+    notif_urls = n_object.get('notification_urls', [])
+    if isinstance(notif_urls, dict):
+        return list(notif_urls.keys())
+    elif isinstance(notif_urls, list):
+        return notif_urls
+    return []
+
+
+def _store_successful_notification(n_object, apprise_logs):
+    """Store successful notification record and cleanup retry attempts."""
+    import os
+    import json
+    import time
+
+    storage_path = _get_storage_path()
+    if not storage_path:
+        return
+
+    watch_uuid = n_object.get('uuid')
+
+    # Cleanup retry attempts
+    _cleanup_retry_attempts(watch_uuid, storage_path)
+
+    # Store success record
+    success_dir = os.path.join(storage_path, 'success')
+    os.makedirs(success_dir, exist_ok=True)
+
+    timestamp = time.time()
+    unique_id = f"delivered-{watch_uuid}-{int(timestamp * 1000)}"
+
+    success_data = {
+        'task_id': unique_id,
+        'timestamp': timestamp,
+        'watch_url': n_object.get('watch_url'),
+        'watch_uuid': watch_uuid,
+        'notification_urls': _extract_notification_urls(n_object),
+        'apprise_logs': apprise_logs if apprise_logs else [],
+    }
+
+    success_file = os.path.join(success_dir, f"success-{unique_id}.json")
+    with open(success_file, 'w') as f:
+        json.dump(success_data, f, indent=2)
+
+    logger.debug(f"Stored delivered notification: {unique_id}")
+
+    # Cleanup old success files
+    _cleanup_old_success_notifications(success_dir, keep=50)
+
+
+def _store_retry_attempt(n_object, error):
+    """Store retry attempt details after failure."""
+    import os
+    import json
+    import time
+    import uuid
+
+    if huey is None or not hasattr(huey.storage, 'path'):
+        return
+
+    attempts_dir = os.path.join(huey.storage.path, 'retry_attempts')
+    os.makedirs(attempts_dir, exist_ok=True)
+
+    watch_uuid = n_object.get('uuid', str(uuid.uuid4()))
+
+    # Count existing attempts
+    attempt_files = [f for f in os.listdir(attempts_dir) if f.startswith(f"{watch_uuid}.")]
+    attempt_number = len(attempt_files) + 1
+
+    # Cleanup stale attempts (>5 minutes old)
+    if attempt_files:
+        oldest_file = min(attempt_files, key=lambda f: os.path.getmtime(os.path.join(attempts_dir, f)))
+        oldest_time = os.path.getmtime(os.path.join(attempts_dir, oldest_file))
+        if time.time() - oldest_time > 300:  # 5 minutes
+            logger.debug(f"Cleaning up {len(attempt_files)} stale retry files for {watch_uuid}")
+            for old_file in attempt_files:
+                try:
+                    os.remove(os.path.join(attempts_dir, old_file))
+                except:
+                    pass
+            attempt_number = 1
+
+    # Store attempt
+    timestamp = int(time.time())
+    attempt_file = os.path.join(attempts_dir, f"{watch_uuid}.{attempt_number}.{timestamp}.json")
+
+    attempt_data = {
+        'watch_uuid': watch_uuid,
+        'attempt_number': attempt_number,
+        'timestamp': time.time(),
+        'watch_url': n_object.get('watch_url'),
+        'error': str(error),
+        'will_retry': attempt_number <= NOTIFICATION_RETRY_COUNT
+    }
+
+    with open(attempt_file, 'w') as f:
+        json.dump(attempt_data, f, indent=2)
+
+    logger.debug(f"Stored retry attempt {attempt_number} for watch {watch_uuid}")
+
+
+def _handle_notification_error(watch_uuid, error, notification_debug_log, app, datastore):
+    """Handle notification error: update watch, log error, emit signal."""
+    # Update watch with error status
+    if watch_uuid:
+        try:
+            if watch_uuid in datastore.data['watching']:
+                datastore.update_watch(
+                    uuid=watch_uuid,
+                    update_obj={'last_notification_error': "Notification error detected, goto notification log."}
+                )
+        except Exception as update_error:
+            logger.error(f"Failed to update watch error status: {update_error}")
+
+    # Add error to debug log
+    log_lines = str(error).splitlines()
+    notification_debug_log.extend(log_lines)
+    while len(notification_debug_log) > 100:
+        notification_debug_log.pop(0)
+
+    # Emit signal
+    try:
+        with app.app_context():
+            app.config['watch_check_update_SIGNAL'].send(app_context=app, watch_uuid=watch_uuid)
+    except Exception as signal_error:
+        logger.error(f"Failed to send watch_check_update signal: {signal_error}")
+
+
+def send_notification_task(n_object: NotificationContextData):
     """
     Background task to send a notification with automatic retry on failure.
 
-    Retries 3 times with 60 second delay between attempts.
+    Retries 3 times with exponential backoff (60s, 120s, 240s).
 
     IMPORTANT: notification_urls and notification_format are RELOADED from the
-    datastore at retry time. This allows operators to fix broken settings (e.g.,
-    wrong SMTP server) and retry with corrected configuration.
+    datastore on every attempt with cascading priority (Watch > Tag > System).
+    This allows operators to fix broken settings and retry with corrected config.
 
     notification_title and notification_body are preserved from the original
-    notification context to support special notifications (e.g., filter failure
-    notifications with custom messages).
-
-    Snapshot data (diff, watch_url, triggered_text, etc.) is preserved from
-    the original notification trigger.
-
-    Preserves all logic from the original notification_runner including:
-    - Reloading notification_urls from current datastore state at retry time
-    - notification_debug_log tracking
-    - Signal emission on errors
-    - Error handling and watch updates
+    context to support special notifications (e.g., filter failure alerts).
 
     Args:
-        n_object_dict: Serialized NotificationContextData as dict (snapshot data)
+        n_object: NotificationContextData with snapshot data
 
     Returns:
         List of sent notification objects with title, body, url
 
     Raises:
-        Exception: Any error during notification sending (triggers retry)
+        Exception: Any error during sending (triggers Huey retry)
     """
-    from changedetectionio.notification_service import NotificationContextData
     from changedetectionio.notification.handler import process_notification
     from changedetectionio.flask_app import datastore, notification_debug_log, app
     from datetime import datetime
     import json
-    import time
 
-    # Reconstruct NotificationContextData from serialized dict
-    n_object = NotificationContextData(initial_data=n_object_dict)
-
-    now = datetime.now()
-    sent_obj = None
+    # Load watch
+    watch = datastore.data['watching'].get(n_object.get('uuid'))
+    if not watch:
+        raise Exception(f"No watch found for uuid {n_object.get('uuid')}")
 
     try:
-        # ALWAYS reload notification_urls from current datastore state
-        # This allows operators to fix broken notification settings (e.g., wrong SMTP server)
-        # and retry failed notifications with the corrected configuration
-        #
-        # NOTE: We only reload notification_urls and notification_format.
-        # We do NOT reload notification_title or notification_body because they might be
-        # custom for special notifications (e.g., filter failure notifications have their own
-        # specific title and body that should be preserved).
-        watch_uuid = n_object.get('uuid')
-        watch = None
+        # Reload notification config with cascading (Watch > Tag > System)
+        _reload_notification_config(n_object, watch, datastore)
 
-        # Get current watch data if this is a watch notification (not a test notification)
-        if watch_uuid and watch_uuid in datastore.data['watching']:
-            watch = datastore.data['watching'][watch_uuid]
+        # Send notification with Apprise log capture
+        sent_obj, apprise_logs = _capture_apprise_logs(
+            lambda: process_notification(n_object, datastore)
+        )
 
-        # Reload notification_urls from current settings (watch-level or system-level)
-        # This is the main goal: allow fixing broken SMTP servers, etc.
-        if watch and watch.get('notification_urls'):
-            n_object['notification_urls'] = watch.get('notification_urls')
-        else:
-            # Fallback to system-level notification_urls
-            n_object['notification_urls'] = datastore.data['settings']['application'].get('notification_urls', {})
+        # Log success
+        now = datetime.now()
+        _add_to_debug_log(
+            notification_debug_log,
+            f"{now.strftime('%c')} - SENDING - {json.dumps(sent_obj)}"
+        )
 
-        # Reload notification_format from current settings
-        if watch and watch.get('notification_format'):
-            n_object['notification_format'] = watch.get('notification_format')
-        else:
-            n_object['notification_format'] = datastore.data['settings']['application'].get('notification_format')
-
-        # NOTE: notification_title and notification_body are NOT reloaded here.
-        # They are preserved from the original notification context to support special
-        # notifications like filter failures that have custom titles and bodies.
-
-        # Process and send the notification using shared datastore
-        # Capture Apprise logs during send
-        apprise_logs = []
-        if n_object.get('notification_urls'):
-            import logging
-            import io
-
-            # Create a string buffer to capture Apprise logs
-            log_capture = io.StringIO()
-            handler = logging.StreamHandler(log_capture)
-            handler.setLevel(logging.DEBUG)
-            formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-            handler.setFormatter(formatter)
-
-            # Add handler to Apprise logger
-            apprise_logger = logging.getLogger('apprise')
-            apprise_logger.addHandler(handler)
-
-            try:
-                sent_obj = process_notification(n_object, datastore)
-
-                # Capture the logs with limits to prevent excessive growth
-                log_output = log_capture.getvalue()
-                if log_output:
-                    apprise_logs = log_output.strip().split('\n')
-
-                    # Limit: Keep only last 50 lines to prevent bloat
-                    if len(apprise_logs) > 50:
-                        apprise_logs = apprise_logs[-50:]
-
-                    # Limit: Truncate each line to 500 chars max
-                    apprise_logs = [line[:500] + '...' if len(line) > 500 else line for line in apprise_logs]
-            finally:
-                # Always remove the handler
-                apprise_logger.removeHandler(handler)
-                log_capture.close()
-
-        # Clear any previous error on success
-        watch_uuid = n_object.get('uuid')
-        if watch_uuid and watch_uuid in datastore.data['watching']:
-            datastore.update_watch(
-                uuid=watch_uuid,
-                update_obj={'last_notification_error': None}
-            )
-
-        # Add to notification debug log (preserve original logging)
-        notification_debug_log.append("{} - SENDING - {}".format(now.strftime("%c"), json.dumps(sent_obj)))
-        # Trim the log length
-        while len(notification_debug_log) > 100:
-            notification_debug_log.pop(0)
-
-        # Clean up retry attempt files on success and store last successful notification
+        # Store success record and cleanup retries
         try:
-            import os
-            import glob
-
-            # Get storage path (works for FileStorage, others may not have path attribute)
-            # NOTE: Use "is not None" instead of truthiness check because Huey objects can evaluate to False
-            storage_path = None
-            if huey is not None:
-                storage_path = getattr(huey.storage, 'path', None)
-                storage_type = type(huey.storage).__name__
-                logger.debug(f"Storage check - type: {storage_type}, path: {storage_path}")
-
-            if storage_path:
-                watch_uuid = n_object.get('uuid')
-                if watch_uuid:
-                    attempts_dir = os.path.join(storage_path, 'retry_attempts')
-                    if os.path.exists(attempts_dir):
-                        # Delete all attempt files for this watch
-                        attempt_pattern = os.path.join(attempts_dir, f"{watch_uuid}.*.json")
-                        for attempt_file in glob.glob(attempt_pattern):
-                            os.remove(attempt_file)
-                        logger.debug(f"Cleaned up retry attempt files for successful watch {watch_uuid}")
-
-                # Store successful notification in individual file
-                # Each notification is stored as: {storage_path}/success/success-{task_id}.json
-                success_dir = os.path.join(storage_path, 'success')
-                os.makedirs(success_dir, exist_ok=True)
-
-                # Generate unique ID for this delivered notification
-                timestamp = time.time()
-                watch_uuid = n_object.get('uuid')
-                unique_id = f"delivered-{watch_uuid}-{int(timestamp * 1000)}"  # millisecond precision
-
-                # Extract notification URLs (could be dict or list)
-                notif_urls = n_object.get('notification_urls', [])
-                if isinstance(notif_urls, dict):
-                    notif_urls = list(notif_urls.keys())
-                elif not isinstance(notif_urls, list):
-                    notif_urls = []
-
-                success_data = {
-                    'task_id': unique_id,
-                    'timestamp': timestamp,
-                    'watch_url': n_object.get('watch_url'),
-                    'watch_uuid': watch_uuid,
-                    'notification_urls': notif_urls,
-                    'apprise_logs': apprise_logs if apprise_logs else [],
-                }
-
-                # Write individual file
-                success_file = os.path.join(success_dir, f"success-{unique_id}.json")
-                with open(success_file, 'w') as f:
-                    json.dump(success_data, f, indent=2)
-
-                logger.debug(f"Stored delivered notification: success-{unique_id}.json")
-
-                # Clean up old success files (keep only 50 newest)
-                _cleanup_old_success_notifications(success_dir, keep=50)
-        except Exception as cleanup_error:
-            logger.error(f"Failed to store delivered notification: {cleanup_error}", exc_info=True)
+            _store_successful_notification(n_object, apprise_logs)
+        except Exception as e:
+            logger.error(f"Failed to store delivered notification: {e}", exc_info=True)
 
         logger.success(f"Notification sent successfully for {n_object.get('watch_url')}")
         return sent_obj
 
     except Exception as e:
-        # Log error and update watch with error message (preserve original error handling)
-        logger.error(f"Watch URL: {n_object.get('watch_url')}  Error {str(e)}")
+        # Log error
+        logger.error(f"Watch URL: {n_object.get('watch_url')} Error: {str(e)}")
 
-        # Store retry attempt details with Apprise logs
-        # Note: We use watch_uuid as the identifier since Huey doesn't expose task ID easily
+        # Store retry attempt
         try:
-            import os
-            import uuid
-
-            # NOTE: Use "is not None" instead of truthiness check because Huey objects can evaluate to False
-            if huey is not None and hasattr(huey.storage, 'path'):
-                attempts_dir = os.path.join(huey.storage.path, 'retry_attempts')
-                os.makedirs(attempts_dir, exist_ok=True)
-
-                # Use watch UUID as identifier (or generate one for test notifications)
-                watch_uuid = n_object.get('uuid', str(uuid.uuid4()))
-
-                # Count existing attempts for this watch
-                attempt_files = [f for f in os.listdir(attempts_dir) if f.startswith(f"{watch_uuid}.")]
-                attempt_number = len(attempt_files) + 1
-
-                # Clean up old attempt files if this looks like a new notification task
-                # (i.e., if the oldest file is more than 5 minutes old, assume it's from a previous task)
-                if attempt_files:
-                    oldest_file = min(attempt_files, key=lambda f: os.path.getmtime(os.path.join(attempts_dir, f)))
-                    oldest_time = os.path.getmtime(os.path.join(attempts_dir, oldest_file))
-                    if time.time() - oldest_time > 300:  # 5 minutes
-                        logger.debug(f"Cleaning up {len(attempt_files)} old retry attempt files for {watch_uuid}")
-                        for old_file in attempt_files:
-                            try:
-                                os.remove(os.path.join(attempts_dir, old_file))
-                            except:
-                                pass
-                        attempt_number = 1  # This is the first attempt of a new notification
-
-                # Store with timestamp to avoid collisions
-                timestamp = int(time.time())
-                attempt_file = os.path.join(attempts_dir, f"{watch_uuid}.{attempt_number}.{timestamp}.json")
-
-                attempt_data = {
-                    'watch_uuid': watch_uuid,
-                    'attempt_number': attempt_number,
-                    'timestamp': time.time(),
-                    'watch_url': n_object.get('watch_url'),
-                    'error': str(e),  # Includes Apprise logs from exception message
-                    'will_retry': attempt_number <= NOTIFICATION_RETRY_COUNT
-                }
-
-                with open(attempt_file, 'w') as f:
-                    json.dump(attempt_data, f, indent=2)
-
-                logger.debug(f"Stored retry attempt {attempt_number} for watch {watch_uuid}")
+            _store_retry_attempt(n_object, e)
         except Exception as store_error:
             logger.debug(f"Unable to store retry attempt: {store_error}")
 
+        # Handle error: update watch, log, signal
         watch_uuid = n_object.get('uuid')
-
-        # UUID wont be present when we submit a 'test' from the global settings
-        if watch_uuid:
-            try:
-                if watch_uuid in datastore.data['watching']:
-                    datastore.update_watch(
-                        uuid=watch_uuid,
-                        update_obj={'last_notification_error': "Notification error detected, goto notification log."}
-                    )
-            except Exception as update_error:
-                logger.error(f"Failed to update watch error status: {update_error}")
-
-        # Add error lines to debug log (preserve original logging)
-        log_lines = str(e).splitlines()
-        notification_debug_log.extend(log_lines)
-        # Trim the log length
-        while len(notification_debug_log) > 100:
-            notification_debug_log.pop(0)
-
-        # Send signal (preserve original signal emission)
-        try:
-            with app.app_context():
-                app.config['watch_check_update_SIGNAL'].send(app_context=app, watch_uuid=watch_uuid)
-        except Exception as signal_error:
-            logger.error(f"Failed to send watch_check_update signal: {signal_error}")
+        _handle_notification_error(watch_uuid, e, notification_debug_log, app, datastore)
 
         # Re-raise to trigger Huey retry
         raise
@@ -1394,13 +1411,13 @@ def send_notification_task(n_object_dict):
 
 # Decorator will be applied after huey is initialized
 # This is set up in init_huey_task()
-def _store_task_metadata(task_id, n_object_dict):
+def _store_task_metadata(task_id, n_object: NotificationContextData):
     """Store notification metadata using task manager."""
     task_manager = _get_task_manager()
     if task_manager is None:
         return False
 
-    metadata = {'notification_data': n_object_dict}
+    metadata = {'notification_data': n_object}
     return task_manager.store_task_metadata(task_id, metadata)
 
 
@@ -1422,7 +1439,7 @@ def _delete_task_metadata(task_id):
     return task_manager.delete_task_metadata(task_id)
 
 
-def queue_notification(n_object_dict):
+def queue_notification(n_object: NotificationContextData):
     """
     Queue a notification task and store its metadata for later retrieval.
 
@@ -1431,17 +1448,17 @@ def queue_notification(n_object_dict):
     retrieve notification details even after the task completes.
 
     Args:
-        n_object_dict: Notification data dictionary
+        n_object: NotificationContextData object
 
     Returns:
         Huey TaskResultWrapper with task ID
     """
     # Queue the task with Huey
-    task_result = send_notification_task(n_object_dict)
+    task_result = send_notification_task(n_object)
 
     # Store metadata so we can retrieve it later
     if task_result and hasattr(task_result, 'id'):
-        _store_task_metadata(task_result.id, n_object_dict)
+        _store_task_metadata(task_result.id, n_object)
 
     return task_result
 

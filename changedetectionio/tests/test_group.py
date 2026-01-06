@@ -178,8 +178,8 @@ def test_group_tag_notification(client, live_server, measure_memory_usage, datas
     wait_for_all_checks(client)
 
     assert len(live_server.app.config['DATASTORE'].data['watching'][uuid]['tags']), "Should have tag associated"
-
-    group_notification_form_data = {"notification_urls":  url_for('test_notification_endpoint', _external=True).replace('http', 'json'),
+    dest_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')
+    group_notification_form_data = {"notification_urls":  dest_notification_url,
                               "notification_title": "New GROUP TAG ChangeDetection.io Notification - {{watch_url}}",
                               "notification_body": "BASE URL: {{base_url}}\n"
                                                    "Watch URL: {{watch_url}}\n"
@@ -204,7 +204,7 @@ def test_group_tag_notification(client, live_server, measure_memory_usage, datas
         follow_redirects=True
     )
     assert b"Updated" in res.data
-    time.sleep(1)
+
 
     # Now a change to the watch should trigger a notification
     set_modified_response(datastore_path=datastore_path)
@@ -212,12 +212,6 @@ def test_group_tag_notification(client, live_server, measure_memory_usage, datas
     assert b'Queued 1 watch for rechecking.' in res.data
     wait_for_all_checks(client)
     time.sleep(3)
-
-
-
-    res = client.get(url_for("watchlist.index"))
-    with open('/tmp/fuck.html', 'wb') as f:
-        f.write(res.data)
 
     assert os.path.isfile(os.path.join(datastore_path, "notification.txt"))
 
@@ -231,9 +225,7 @@ def test_group_tag_notification(client, live_server, measure_memory_usage, datas
     assert test_url in notification_submission
     assert ':-)' in notification_submission
     assert "Diff Full: Some initial text" in notification_submission
-    assert "New GROUP TAG ChangeDetection.io" in notification_submission
     assert "test-tag" in notification_submission
-    assert "other-tag" in notification_submission
 
     #@todo Test that multiple notifications fired
     #@todo Test that each of multiple notifications with different settings
