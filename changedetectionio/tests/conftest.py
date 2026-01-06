@@ -193,10 +193,19 @@ def prepare_test_function(live_server, datastore_path):
 
     yield
 
-    # Cleanup: Clear watches again after test
+    # Cleanup: Clear watches and Huey queue after test
     try:
         datastore.data['watching'] = {}
         datastore.needs_write = True
+
+        # Also clear Huey notification queue to prevent test interference
+        from changedetectionio.notification.task_queue import clear_all_notifications
+        try:
+            clear_all_notifications()
+            logger.debug("Cleared Huey notification queue after test")
+        except Exception as he:
+            logger.debug(f"Could not clear Huey queue: {he}")
+
     except Exception as e:
         logger.warning(f"Error during datastore cleanup: {e}")
 

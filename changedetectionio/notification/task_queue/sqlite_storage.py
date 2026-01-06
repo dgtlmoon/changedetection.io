@@ -2,6 +2,11 @@
 SQLiteStorage backend task manager for Huey notifications.
 
 WARNING: Only use on local disk storage, NOT on NFS/CIFS network storage!
+
+Enhancements:
+- SQLite provides ACID transactions (atomicity built-in)
+- Hybrid mode: queue data in SQLite, retry attempts/success in JSON files
+- JSON files use atomic writes from file_storage module
 """
 
 from loguru import logger
@@ -12,13 +17,25 @@ from .base import HueyTaskManager
 class SqliteStorageTaskManager(HueyTaskManager):
     """Task manager for SqliteStorage backend (local disk only)."""
 
+    def __init__(self, storage, storage_path=None):
+        """
+        Initialize SQLite task manager.
+
+        Args:
+            storage: Huey SQLite storage instance
+            storage_path: Directory for file-based data (retry attempts, success)
+        """
+        super().__init__(storage)
+        self.storage_path = storage_path
+
     def enumerate_results(self):
         import pickle
         import sqlite3
         """Enumerate results by querying SQLite database."""
         results = {}
 
-        if not hasattr(self.storage, 'filename'):
+        if not hasattr(self.storage, 'filename') or self.storage.filename is None:
+            logger.warning("SQLite storage has no filename, cannot enumerate results")
             return results
 
         try:
@@ -81,18 +98,21 @@ class SqliteStorageTaskManager(HueyTaskManager):
         return queue_count, schedule_count
 
     def clear_all_notifications(self):
-        """Clear all notifications from SQLite database."""
+        """Clear all notifications from SQLite database and file-based retry attempts/success."""
         cleared = {
             'queue': 0,
             'schedule': 0,
             'results': 0,
             'retry_attempts': 0,
-            'task_metadata': 0
+            'task_metadata': 0,
+            'delivered': 0
         }
 
         if not hasattr(self.storage, 'filename'):
             return cleared
         import sqlite3
+        import os
+
         try:
             conn = sqlite3.connect(self.storage.filename)
             cursor = conn.cursor()
@@ -106,8 +126,34 @@ class SqliteStorageTaskManager(HueyTaskManager):
             cursor.execute("DELETE FROM results")
             cleared['results'] = cursor.rowcount
 
+            # Also clear task_metadata table if it exists
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='task_metadata'")
+            if cursor.fetchone():
+                cursor.execute("DELETE FROM task_metadata")
+                cleared['task_metadata'] = cursor.rowcount
+
             conn.commit()
             conn.close()
+
+            # Clear file-based retry attempts and success notifications
+            # These are stored as JSON files even in SQLite mode (hybrid approach)
+            if self.storage_path:
+                # Clear retry attempts
+                attempts_dir = os.path.join(self.storage_path, 'retry_attempts')
+                if os.path.exists(attempts_dir):
+                    for f in os.listdir(attempts_dir):
+                        if f.endswith('.json'):
+                            os.remove(os.path.join(attempts_dir, f))
+                            cleared['retry_attempts'] += 1
+
+                # Clear delivered (success) notifications
+                success_dir = os.path.join(self.storage_path, 'success')
+                if os.path.exists(success_dir):
+                    for f in os.listdir(success_dir):
+                        if f.startswith('success-') and f.endswith('.json'):
+                            os.remove(os.path.join(success_dir, f))
+                            cleared['delivered'] += 1
+
         except Exception as e:
             logger.error(f"Error clearing SQLite notifications: {e}")
 

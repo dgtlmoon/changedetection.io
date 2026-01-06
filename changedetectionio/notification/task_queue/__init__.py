@@ -129,16 +129,23 @@ def _get_task_manager():
         storage_path = getattr(huey.storage, 'path', None)
         return FileStorageTaskManager(huey.storage, storage_path)
     elif storage_type in ['SqliteStorage', 'SqliteHuey']:
-        return SqliteStorageTaskManager(huey.storage)
+        # For SQLite, storage_path is the directory containing the .db file
+        # Extract from filename: /path/to/notification-queue.db -> /path/to
+        import os
+        db_filename = getattr(huey.storage, 'filename', None)
+        storage_path = os.path.dirname(db_filename) if db_filename else None
+        return SqliteStorageTaskManager(huey.storage, storage_path)
     elif storage_type in ['RedisStorage', 'RedisHuey']:
-        return RedisStorageTaskManager(huey.storage)
+        # For Redis, use global datastore path for file-based data
+        return RedisStorageTaskManager(huey.storage, _datastore_path)
     else:
         logger.warning(f"Unknown storage type {storage_type}, operations may fail")
         return None
 
 
-# Global Huey instance (initialized later with proper datastore path)
+# Global Huey instance and datastore path (initialized later)
 huey = None
+_datastore_path = None  # For file-based retry attempts/success in all backends
 
 
 def init_huey(datastore_path):
@@ -153,7 +160,10 @@ def init_huey(datastore_path):
     Returns:
         Huey instance configured for the specified storage backend
     """
-    global huey
+    global huey, _datastore_path
+
+    # Store datastore path globally for file-based retry attempts/success
+    _datastore_path = datastore_path
 
     # Common options for all queue storage types
     common_options = {
@@ -194,10 +204,9 @@ def init_huey(datastore_path):
         huey = SqliteHuey(
             filename=queue_file,
             immediate=False,
-            storage_kwargs={
-                'journal_mode': 'WAL',
-                'timeout': 10
-            },
+            journal_mode='wal',  # Write-Ahead Logging for better concurrency
+            timeout=10,  # Longer timeout for busy databases
+            fsync=True,  # Force data to disk for reliability
             **common_options
         )
 
@@ -807,6 +816,20 @@ def get_failed_notifications(limit=100, max_age_days=30):
                                         continue
                         except Exception as se:
                             logger.debug(f"Error checking schedule: {se}")
+
+                        # Also check if task failed very recently (within last 5 seconds)
+                        # Handles race condition where result is written before retry is scheduled
+                        if not task_still_scheduled:
+                            task_metadata = _get_task_metadata(task_id)
+                            if task_metadata:
+                                task_time = task_metadata.get('timestamp', 0)
+                                time_since_failure = time.time() - task_time if task_time else 999
+
+                                # If task failed very recently (< 5 seconds ago), it might still be scheduling a retry
+                                # Be conservative and don't count it as permanently failed yet
+                                if time_since_failure < 5:
+                                    logger.debug(f"Task {task_id[:20]}... failed only {time_since_failure:.1f}s ago, might still be scheduling retry")
+                                    task_still_scheduled = True  # Treat as potentially still retrying
 
                         # Skip this task if it's still scheduled for retry
                         if task_still_scheduled:
@@ -1705,10 +1728,9 @@ def clear_all_notifications():
 
 def cleanup_old_failed_notifications(max_age_days=30, max_failed_count=None):
     """
-    Clean up failed notifications with both age and count limits (INDUSTRIAL-GRADE: overflow protection).
+    Clean up failed notifications with both age and count limits.
 
-    This prevents unbounded growth of the dead letter queue which could cause
-    disk space issues in long-running aerospace/industrial systems.
+    Prevents unbounded growth of the dead letter queue.
 
     Called on startup to prevent indefinite accumulation of old failures.
 

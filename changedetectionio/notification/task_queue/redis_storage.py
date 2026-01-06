@@ -2,6 +2,11 @@
 RedisStorage backend task manager for Huey notifications.
 
 For distributed deployments with Redis.
+
+Enhancements:
+- Redis provides atomic operations (ACID-like semantics)
+- Hybrid mode: queue data in Redis, retry attempts/success in JSON files
+- JSON files use atomic writes from file_storage module
 """
 
 from loguru import logger
@@ -11,6 +16,17 @@ from .base import HueyTaskManager
 
 class RedisStorageTaskManager(HueyTaskManager):
     """Task manager for RedisStorage backend (distributed deployments)."""
+
+    def __init__(self, storage, storage_path=None):
+        """
+        Initialize Redis task manager.
+
+        Args:
+            storage: Huey Redis storage instance
+            storage_path: Directory for file-based data (retry attempts, success)
+        """
+        super().__init__(storage)
+        self.storage_path = storage_path
 
     def enumerate_results(self):
         import pickle
@@ -78,17 +94,20 @@ class RedisStorageTaskManager(HueyTaskManager):
         return queue_count, schedule_count
 
     def clear_all_notifications(self):
-        """Clear all notifications from Redis."""
+        """Clear all notifications from Redis and file-based retry attempts/success."""
         cleared = {
             'queue': 0,
             'schedule': 0,
             'results': 0,
             'retry_attempts': 0,
-            'task_metadata': 0
+            'task_metadata': 0,
+            'delivered': 0
         }
 
         if not hasattr(self.storage, 'conn'):
             return cleared
+
+        import os
 
         try:
             name = self.storage.name
@@ -106,6 +125,32 @@ class RedisStorageTaskManager(HueyTaskManager):
             if result_keys:
                 cleared['results'] = len(result_keys)
                 self.storage.conn.delete(*result_keys)
+
+            # Clear metadata (keys)
+            metadata_keys = self.storage.conn.keys(f"{name}:metadata:*")
+            if metadata_keys:
+                cleared['task_metadata'] = len(metadata_keys)
+                self.storage.conn.delete(*metadata_keys)
+
+            # Clear file-based retry attempts and success notifications
+            # These are stored as JSON files even in Redis mode (hybrid approach)
+            if self.storage_path:
+                # Clear retry attempts
+                attempts_dir = os.path.join(self.storage_path, 'retry_attempts')
+                if os.path.exists(attempts_dir):
+                    for f in os.listdir(attempts_dir):
+                        if f.endswith('.json'):
+                            os.remove(os.path.join(attempts_dir, f))
+                            cleared['retry_attempts'] += 1
+
+                # Clear delivered (success) notifications
+                success_dir = os.path.join(self.storage_path, 'success')
+                if os.path.exists(success_dir):
+                    for f in os.listdir(success_dir):
+                        if f.startswith('success-') and f.endswith('.json'):
+                            os.remove(os.path.join(success_dir, f))
+                            cleared['delivered'] += 1
+
         except Exception as e:
             logger.error(f"Error clearing Redis notifications: {e}")
 

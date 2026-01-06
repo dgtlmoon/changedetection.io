@@ -3,7 +3,7 @@ FileStorage backend task manager for Huey notifications.
 
 This is the default backend, optimized for NAS/CIFS compatibility.
 
-INDUSTRIAL-GRADE ENHANCEMENTS:
+Enhancements:
 - Atomic file writes (prevents corruption on crash/power failure)
 - JSON corruption detection and recovery
 - Lost-found directory for corrupted files
