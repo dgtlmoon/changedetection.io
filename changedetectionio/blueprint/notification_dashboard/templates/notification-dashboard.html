@@ -160,6 +160,7 @@ $(function() {
     let currentSelectedId = null;
 
     // Time displays now show actual date/time from backend instead of relative format
+    // Note: All user-controlled content is HTML-escaped on the backend for security
 
     // Function to render event details
     function renderEventDetails(event) {
@@ -237,6 +238,29 @@ $(function() {
             event.notification_urls.forEach(url => {
                 html += `<div class="endpoint-item"><code>${url}</code></div>`;
             });
+            html += '</div>';
+        }
+
+        // Payload (what was sent)
+        if (event.payload) {
+            html += '<div class="detail-section">';
+            html += '<h6>Payload</h6>';
+
+            if (event.payload.notification_title) {
+                html += '<div class="detail-row"><span class="detail-label">Title:</span>';
+                html += `<span class="detail-value"><code>${event.payload.notification_title}</code></span></div>`;
+            }
+
+            if (event.payload.notification_body) {
+                html += '<div class="detail-row"><span class="detail-label">Body:</span>';
+                html += `<span class="detail-value"><pre class="payload-content">${event.payload.notification_body}</pre></span></div>`;
+            }
+
+            if (event.payload.notification_format) {
+                html += '<div class="detail-row"><span class="detail-label">Format:</span>';
+                html += `<span class="detail-value"><code>${event.payload.notification_format}</code></span></div>`;
+            }
+
             html += '</div>';
         }
 

@@ -403,18 +403,43 @@ def get_pending_notifications(limit=50):
                             retry_number = 1  # Default to 1 (first retry after initial failure)
                             total_attempts = NOTIFICATION_RETRY_COUNT + 1  # Initial attempt + retries
                             watch_uuid = notification_data.get('uuid')
+                            retry_attempts = []
+                            notification_urls = []
+
                             # NOTE: Use "is not None" instead of truthiness check because Huey objects can evaluate to False
                             if watch_uuid and huey is not None and hasattr(huey.storage, 'path'):
                                 try:
                                     import os
+                                    import json
+                                    import glob
                                     attempts_dir = os.path.join(huey.storage.path, 'retry_attempts')
                                     if os.path.exists(attempts_dir):
-                                        attempt_files = [f for f in os.listdir(attempts_dir) if f.startswith(f"{watch_uuid}.")]
-                                        if len(attempt_files) > 0:
+                                        # Load retry attempt files to get notification_urls and payload
+                                        attempt_pattern = os.path.join(attempts_dir, f"{watch_uuid}.*.json")
+                                        for attempt_file in sorted(glob.glob(attempt_pattern)):
+                                            try:
+                                                with open(attempt_file, 'r') as f:
+                                                    attempt_data = json.load(f)
+                                                    # Format timestamp for display
+                                                    attempt_time = attempt_data.get('timestamp')
+                                                    if attempt_time:
+                                                        from changedetectionio.notification_service import timestamp_to_localtime
+                                                        attempt_data['timestamp_formatted'] = timestamp_to_localtime(attempt_time)
+                                                    retry_attempts.append(attempt_data)
+                                            except Exception as ae:
+                                                logger.debug(f"Unable to load retry attempt file {attempt_file}: {ae}")
+
+                                        if len(retry_attempts) > 0:
                                             # Current retry number = number of attempt files
                                             # (1 file = 1st retry, 2 files = 2nd retry, etc.)
-                                            retry_number = len(attempt_files)
-                                            logger.debug(f"Watch {watch_uuid[:8]}: Found {len(attempt_files)} retry files, currently on retry #{retry_number}/{total_attempts}")
+                                            retry_number = len(retry_attempts)
+                                            logger.debug(f"Watch {watch_uuid[:8]}: Found {len(retry_attempts)} retry files, currently on retry #{retry_number}/{total_attempts}")
+
+                                            # Extract notification_urls from latest retry attempt
+                                            latest_attempt = retry_attempts[-1]
+                                            attempt_notification_data = latest_attempt.get('notification_data', {})
+                                            if attempt_notification_data:
+                                                notification_urls = attempt_notification_data.get('notification_urls', [])
                                         else:
                                             # Directory exists but no files yet - first retry
                                             retry_number = 1
@@ -440,6 +465,8 @@ def get_pending_notifications(limit=50):
                                 'queued_at_formatted': queued_at_formatted,
                                 'retry_number': retry_number,
                                 'total_retries': total_attempts,
+                                'retry_attempts': retry_attempts,
+                                'notification_urls': notification_urls,
                             })
                     except Exception as e:
                         logger.debug(f"Error processing scheduled item: {e}")
@@ -506,6 +533,7 @@ def get_all_notification_events(limit=100):
             'watch_title': success.get('watch_url', 'Unknown')[:50],
             'notification_urls': success.get('notification_urls', []),
             'apprise_logs': '\n'.join(success.get('apprise_logs', [])) if isinstance(success.get('apprise_logs'), list) else success.get('apprise_logs', ''),
+            'payload': success.get('payload'),
             'error': None
         })
 
@@ -514,13 +542,18 @@ def get_all_notification_events(limit=100):
     for item in pending:
         status = 'retrying' if item.get('status') == 'retrying' else 'queued'
 
-        # Get apprise logs for this task if available
+        # Get apprise logs and payload for this task if available
         apprise_logs = None
+        payload = None
         task_id = item.get('task_id')
         if task_id:
             log_data = get_task_apprise_log(task_id)
             if log_data and log_data.get('apprise_log'):
                 apprise_logs = log_data.get('apprise_log')
+            # Get payload from retry attempts if available
+            retry_attempts = item.get('retry_attempts', [])
+            if retry_attempts:
+                payload = retry_attempts[-1].get('payload')
 
         events.append({
             'id': task_id,
@@ -536,19 +569,26 @@ def get_all_notification_events(limit=100):
             'retry_at': item.get('retry_at_timestamp'),
             'retry_at_formatted': item.get('retry_at_formatted'),
             'apprise_logs': apprise_logs,
+            'payload': payload,
             'error': None
         })
 
     # 3. Get failed notifications (dead letter)
     failed = get_failed_notifications(limit=limit)
     for item in failed:
-        # Get apprise logs for failed tasks
+        # Get apprise logs and payload for failed tasks
         apprise_logs = None
+        payload = None
         task_id = item.get('task_id')
         if task_id:
             log_data = get_task_apprise_log(task_id)
             if log_data and log_data.get('apprise_log'):
                 apprise_logs = log_data.get('apprise_log')
+
+        # Get payload from retry attempts (has the most recent attempt data)
+        retry_attempts = item.get('retry_attempts', [])
+        if retry_attempts:
+            payload = retry_attempts[-1].get('payload')
 
         events.append({
             'id': task_id,
@@ -560,11 +600,32 @@ def get_all_notification_events(limit=100):
             'watch_title': item.get('notification_data', {}).get('watch_url', 'Unknown')[:50],
             'notification_urls': item.get('notification_data', {}).get('notification_urls', []),
             'apprise_logs': apprise_logs,
+            'payload': payload,
             'error': item.get('error')
         })
 
     # Sort by timestamp (newest first)
     events.sort(key=lambda x: x.get('timestamp', 0) or 0, reverse=True)
+
+    # HTML escape user-controlled fields to prevent XSS in UI
+    from changedetectionio.jinja2_custom.safe_jinja import render_fully_escaped
+    for event in events:
+        # Escape apprise logs
+        if event.get('apprise_logs'):
+            event['apprise_logs'] = render_fully_escaped(event['apprise_logs'])
+
+        # Escape error messages
+        if event.get('error'):
+            event['error'] = render_fully_escaped(event['error'])
+
+        # Escape payload fields (notification title, body, format)
+        if event.get('payload') and isinstance(event['payload'], dict):
+            if event['payload'].get('notification_title'):
+                event['payload']['notification_title'] = render_fully_escaped(event['payload']['notification_title'])
+            if event['payload'].get('notification_body'):
+                event['payload']['notification_body'] = render_fully_escaped(event['payload']['notification_body'])
+            if event['payload'].get('notification_format'):
+                event['payload']['notification_format'] = render_fully_escaped(event['payload']['notification_format'])
 
     # Limit results
     return events[:limit]
@@ -1222,7 +1283,7 @@ def _extract_notification_urls(n_object):
     return []
 
 
-def _store_successful_notification(n_object, apprise_logs):
+def _store_successful_notification(n_object, apprise_logs, payload=None):
     """Store successful notification record and cleanup retry attempts."""
     import os
     import json
@@ -1251,6 +1312,7 @@ def _store_successful_notification(n_object, apprise_logs):
         'watch_uuid': watch_uuid,
         'notification_urls': _extract_notification_urls(n_object),
         'apprise_logs': apprise_logs if apprise_logs else [],
+        'payload': payload  # What was actually sent to Apprise
     }
 
     success_file = os.path.join(success_dir, f"success-{unique_id}.json")
@@ -1263,7 +1325,7 @@ def _store_successful_notification(n_object, apprise_logs):
     _cleanup_old_success_notifications(success_dir, keep=50)
 
 
-def _store_retry_attempt(n_object, error):
+def _store_retry_attempt(n_object, error, payload=None):
     """Store retry attempt details after failure."""
     import os
     import json
@@ -1306,7 +1368,8 @@ def _store_retry_attempt(n_object, error):
         'watch_url': n_object.get('watch_url'),
         'error': str(error),
         'will_retry': attempt_number <= NOTIFICATION_RETRY_COUNT,
-        'notification_data': n_object  # Full notification context for verification
+        'notification_data': n_object,  # Full notification context for verification
+        'payload': payload  # What was attempted to be sent to Apprise
     }
 
     with open(attempt_file, 'w') as f:
@@ -1379,33 +1442,72 @@ def send_notification_task(n_object: NotificationContextData):
         _reload_notification_config(n_object, watch, datastore)
 
         # Send notification with Apprise log capture
-        sent_obj, apprise_logs = _capture_apprise_logs(
+        sent_objs, apprise_logs = _capture_apprise_logs(
             lambda: process_notification(n_object, datastore)
         )
+
+        # Extract rendered notification from first item in list (has actual title/body after Jinja rendering)
+        rendered_notification = None
+        if sent_objs and len(sent_objs) > 0:
+            first_sent = sent_objs[0]
+            rendered_notification = {
+                'notification_title': first_sent.get('title'),
+                'notification_body': first_sent.get('body'),
+                'notification_format': n_object.get('notification_format'),
+                'notification_urls': n_object.get('notification_urls'),
+            }
 
         # Log success
         now = datetime.now()
         _add_to_debug_log(
             notification_debug_log,
-            f"{now.strftime('%c')} - SENDING - {json.dumps(sent_obj)}"
+            f"{now.strftime('%c')} - SENDING - {json.dumps(sent_objs)}"
         )
 
-        # Store success record and cleanup retries
+        # Store success record with rendered notification payload
         try:
-            _store_successful_notification(n_object, apprise_logs)
+            _store_successful_notification(n_object, apprise_logs, payload=rendered_notification)
         except Exception as e:
             logger.error(f"Failed to store delivered notification: {e}", exc_info=True)
 
         logger.success(f"Notification sent successfully for {n_object.get('watch_url')}")
-        return sent_obj
+        return sent_objs
 
     except Exception as e:
         # Log error
         logger.error(f"Watch URL: {n_object.get('watch_url')} Error: {str(e)}")
 
+        # Try to render the notification to show what was actually attempted
+        # This ensures RETRYING and FAILED notifications show rendered content, not templates
+        attempted_payload = None
+        try:
+            from changedetectionio.jinja2_custom import render as jinja_render
+            from changedetectionio.notification.handler import create_notification_parameters
+
+            # Render the notification the same way process_notification does
+            notification_parameters = create_notification_parameters(n_object, datastore)
+            rendered_title = jinja_render(template_str=n_object.get('notification_title', ''), **notification_parameters)
+            rendered_body = jinja_render(template_str=n_object.get('notification_body', ''), **notification_parameters)
+
+            attempted_payload = {
+                'notification_urls': n_object.get('notification_urls'),
+                'notification_title': rendered_title,
+                'notification_body': rendered_body,
+                'notification_format': n_object.get('notification_format'),
+            }
+        except Exception as render_error:
+            # If rendering fails, fall back to raw template
+            logger.debug(f"Unable to render notification for retry attempt, using raw template: {render_error}")
+            attempted_payload = {
+                'notification_urls': n_object.get('notification_urls'),
+                'notification_title': n_object.get('notification_title'),
+                'notification_body': n_object.get('notification_body'),
+                'notification_format': n_object.get('notification_format'),
+            }
+
         # Store retry attempt
         try:
-            _store_retry_attempt(n_object, e)
+            _store_retry_attempt(n_object, e, payload=attempted_payload)
         except Exception as store_error:
             logger.debug(f"Unable to store retry attempt: {store_error}")
 

@@ -96,6 +96,27 @@ def test_notification_dead_letter_retry(client, live_server, measure_memory_usag
     failed_count_before = len(failed_before)
     assert failed_count_before > 0, "Should have at least one failed notification before retry"
 
+    # Verify payload is present in failed notification
+    first_failed = failed_before[0]
+    retry_attempts = first_failed.get('retry_attempts', [])
+    assert len(retry_attempts) > 0, "Failed notification should have retry attempts"
+
+    last_attempt = retry_attempts[-1]
+    payload = last_attempt.get('payload')
+    assert payload is not None, "Retry attempt should have payload"
+    assert 'notification_urls' in payload, "Payload should contain notification_urls"
+    assert 'notification_title' in payload, "Payload should contain notification_title"
+    assert 'notification_body' in payload, "Payload should contain notification_body"
+    assert 'notification_format' in payload, "Payload should contain notification_format"
+
+    # Verify the actual content we set
+    assert payload.get('notification_title') == 'Test Dead Letter', "Payload title should match what was set"
+    assert 'dead letter queue' in payload.get('notification_body', '').lower(), "Payload body should contain expected text"
+    assert payload.get('notification_format') == 'text', "Payload format should be text"
+    assert 'broken-url-xxxxxxxx-will-fail-456' in str(payload.get('notification_urls', '')), "Payload should contain the broken URL"
+
+    logging.info(f"✓ Payload verified: title='{payload.get('notification_title')}', format={payload.get('notification_format')}")
+    logging.info(f"✓ Payload body: '{payload.get('notification_body')[:50]}...'")
     logging.info(f"Dead-letter queue has {failed_count_before} failed notification(s) before retry")
 
     # Fix the notification URL before retrying so the retry will succeed
