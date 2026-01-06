@@ -59,10 +59,10 @@ def construct_blueprint():
     @notification_dashboard.route("/send-now/<task_id>", methods=['GET'])
     @login_optionally_required
     def send_now(task_id):
-        """Execute a scheduled notification immediately"""
-        from changedetectionio.notification.task_queue import execute_scheduled_notification
+        """Manually retry a scheduled notification immediately"""
+        from changedetectionio.notification.task_queue import retry_notification_now
 
-        success = execute_scheduled_notification(task_id)
+        success = retry_notification_now(task_id)
         if success:
             message = "✓ Notification sent successfully and removed from queue."
             flash(message, 'notice')

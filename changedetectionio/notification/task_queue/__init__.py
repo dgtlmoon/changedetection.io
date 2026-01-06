@@ -920,14 +920,15 @@ def get_task_apprise_log(task_id):
         return None
 
 
-def execute_scheduled_notification(task_id):
+def retry_notification_now(task_id):
     """
-    Execute a scheduled/retrying notification immediately by canceling the schedule and queuing it now.
+    Manually retry a scheduled/retrying notification immediately (used by "Send Now" button in UI).
 
-    Uses Huey's native revoke_by_id() to cancel the scheduled task, then immediately queues it.
+    Revokes the scheduled task and executes the notification synchronously in the current thread.
+    This is for manual retry from the notification dashboard, not automatic scheduled retry.
 
     Args:
-        task_id: Huey task ID to execute immediately
+        task_id: Huey task ID to retry immediately
 
     Returns:
         True if successfully executed, False otherwise
