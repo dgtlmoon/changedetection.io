@@ -22,25 +22,40 @@ def construct_blueprint():
             get_retry_config
         )
 
+        # Get filter parameter from query string
+        filter_status = request.args.get('filter', '').lower()
+        valid_filters = ['delivered', 'queued', 'retrying', 'failed']
+
+        # Validate filter
+        if filter_status and filter_status not in valid_filters:
+            filter_status = ''
+
         # Get all notification events (delivered, queued, retrying, failed)
-        events = get_all_notification_events(limit=100)
+        all_events = get_all_notification_events(limit=100)
 
         # Get retry configuration for display
         retry_config = get_retry_config()
 
-        # Count by status for summary
+        # Count by status for summary (always show all counts)
         status_counts = {
-            'delivered': sum(1 for e in events if e['status'] == 'delivered'),
-            'queued': sum(1 for e in events if e['status'] == 'queued'),
-            'retrying': sum(1 for e in events if e['status'] == 'retrying'),
-            'failed': sum(1 for e in events if e['status'] == 'failed')
+            'delivered': sum(1 for e in all_events if e['status'] == 'delivered'),
+            'queued': sum(1 for e in all_events if e['status'] == 'queued'),
+            'retrying': sum(1 for e in all_events if e['status'] == 'retrying'),
+            'failed': sum(1 for e in all_events if e['status'] == 'failed')
         }
+
+        # Filter events if a filter is active
+        if filter_status:
+            events = [e for e in all_events if e['status'] == filter_status]
+        else:
+            events = all_events
 
         return render_template(
             'notification-dashboard.html',
             events=events,
             retry_config=retry_config,
-            status_counts=status_counts
+            status_counts=status_counts,
+            active_filter=filter_status
         )
 
     @notification_dashboard.route("/log/<task_id>", methods=['GET'])

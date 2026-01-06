@@ -8,18 +8,36 @@
 
         <!-- Summary Stats -->
         <div class="event-summary">
-            <span class="stat-item">
+            <a href="{{ url_for('notification_dashboard.dashboard', filter='delivered') }}"
+               class="stat-item stat-filter-link {% if active_filter == 'delivered' %}stat-filter-active{% endif %}"
+               title="Show only delivered notifications">
                 <span class="stat-badge stat-delivered">{{ status_counts.delivered }}</span> Delivered
-            </span>
-            <span class="stat-item">
+            </a>
+            <a href="{{ url_for('notification_dashboard.dashboard', filter='queued') }}"
+               class="stat-item stat-filter-link {% if active_filter == 'queued' %}stat-filter-active{% endif %}"
+               title="Show only queued notifications">
                 <span class="stat-badge stat-queued">{{ status_counts.queued }}</span> Queued
-            </span>
-            <span class="stat-item">
+            </a>
+            <a href="{{ url_for('notification_dashboard.dashboard', filter='retrying') }}"
+               class="stat-item stat-filter-link {% if active_filter == 'retrying' %}stat-filter-active{% endif %}"
+               title="Show only retrying notifications">
                 <span class="stat-badge stat-retrying">{{ status_counts.retrying }}</span> Retrying
-            </span>
-            <span class="stat-item">
+            </a>
+            <a href="{{ url_for('notification_dashboard.dashboard', filter='failed') }}"
+               class="stat-item stat-filter-link {% if active_filter == 'failed' %}stat-filter-active{% endif %}"
+               title="Show only failed notifications">
                 <span class="stat-badge stat-failed">{{ status_counts.failed }}</span> Failed
-            </span>
+            </a>
+            {% if active_filter %}
+            <a href="{{ url_for('notification_dashboard.dashboard') }}"
+               class="stat-item stat-clear-filter"
+               title="Clear filter and show all notifications">
+                <svg width="14" height="14" viewBox="0 0 16 16" style="vertical-align: middle; margin-right: 4px;">
+                    <path d="M4 4l8 8m0-8l-8 8" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                Clear Filter
+            </a>
+            {% endif %}
         </div>
 
         <!-- Action Buttons -->

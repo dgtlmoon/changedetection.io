@@ -658,6 +658,60 @@
         }
       }
     }
+
+    // Clickable filter links
+    .stat-filter-link {
+      text-decoration: none;
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: 8px;
+      transition: all 0.15s ease;
+
+      &:hover {
+        background: rgba(0, 120, 231, 0.08);
+        transform: translateY(-1px);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+
+      // Active filter state
+      &.stat-filter-active {
+        background: rgba(0, 120, 231, 0.15);
+        border: 2px solid #0078e7;
+        padding: 4px 10px; // Adjust for border
+
+        .stat-badge {
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        }
+      }
+    }
+
+    // Clear filter link
+    .stat-clear-filter {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-link);
+      background: rgba(108, 117, 125, 0.1);
+      transition: all 0.15s ease;
+
+      &:hover {
+        background: rgba(108, 117, 125, 0.2);
+        transform: translateY(-1px);
+      }
+
+      svg {
+        width: 14px;
+        height: 14px;
+      }
+    }
   }
 
   // Action buttons
