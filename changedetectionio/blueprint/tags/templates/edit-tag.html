@@ -50,6 +50,16 @@
                             {{ _('Use') }} <code>*</code> {{ _('as wildcard. Examples:') }} <code>*github.com*</code>, <code>*example.com/products/*</code><br>
                             {{ _('Or use a simple substring like') }} <code>github.com</code> {{ _('to match any URL containing it.') }}
                         </span>
+                        {% if matching_watches %}
+                        <div class="pure-form-message-inline" style="margin-top: 10px;">
+                            <strong>{{ _('Existing watches matching this pattern:') }}</strong>
+                            <ul style="margin: 5px 0; padding-left: 20px;">
+                            {% for watch in matching_watches %}
+                                <li><a href="{{ url_for('ui.ui_edit.edit_page', uuid=watch.uuid) }}">{{ watch.label }}</a></li>
+                            {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
                     </div>
                 </fieldset>
             </div>

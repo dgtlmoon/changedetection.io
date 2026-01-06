@@ -116,10 +116,23 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                        default_system_settings = datastore.data['settings'],
                                        )
 
+        # Find watches that match this tag's URL pattern
+        matching_watches = []
+        url_pattern = default.get('url_match_pattern', '').strip()
+        if url_pattern:
+            for watch_uuid, watch in datastore.data['watching'].items():
+                if default.matches_url(watch.get('url', '')):
+                    matching_watches.append({
+                        'uuid': watch_uuid,
+                        'label': watch.label,
+                        'url': watch.get('url', '')
+                    })
+
         template_args = {
             'data': default,
             'form': form,
             'watch': default,
+            'matching_watches': matching_watches,
             'extra_notification_token_placeholder_info': datastore.get_unique_notification_token_placeholders_available(),
         }
 

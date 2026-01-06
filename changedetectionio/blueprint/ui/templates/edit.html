@@ -76,6 +76,16 @@
                     <div class="pure-control-group">
                         {{ render_field(form.tags) }}
                         <span class="pure-form-message-inline">{{ _('Organisational tag/group name used in the main listing page') }}</span>
+                        {% if auto_applied_tags %}
+                        <div class="pure-form-message-inline" style="margin-top: 5px;">
+                            <strong>{{ _('Auto-applied tags (by URL pattern):') }}</strong>
+                            <ul style="margin: 5px 0; padding-left: 20px;">
+                            {% for tag in auto_applied_tags %}
+                                <li><a href="{{ url_for('tags.form_tag_edit', uuid=tag.uuid) }}">{{ tag.title }}</a> <code style="font-size: 0.85em;">({{ tag.pattern }})</code></li>
+                            {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
                     </div>
                     <div class="pure-control-group inline-radio">
                         {{ render_field(form.processor) }}
