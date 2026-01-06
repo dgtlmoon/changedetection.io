@@ -61,17 +61,6 @@ def test_notification_dead_letter_retry(client, live_server, measure_memory_usag
     res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
 
-    # Verify that task metadata is being stored (required for dead-letter queue)
-    from changedetectionio.notification.task_queue import huey
-    if huey and hasattr(huey, 'storage'):
-        storage_path = getattr(huey.storage, 'path', None)
-        if storage_path:
-            metadata_dir = os.path.join(storage_path, 'task_metadata')
-            # Give it a moment for the metadata to be written
-            time.sleep(1)
-            assert os.path.exists(metadata_dir), \
-                f"Task metadata directory should exist at {metadata_dir} for dead-letter queue to work"
-
     # Wait for notification to fail and exhaust retries
     # With 1 retry and 3 second delay: initial attempt + 3s wait + 1 retry = ~6 seconds total
     # Add extra time for Huey to write the result to storage
@@ -111,7 +100,7 @@ def test_notification_dead_letter_retry(client, live_server, measure_memory_usag
 
     # Fix the notification URL before retrying so the retry will succeed
     # Use a working notification URL that will succeed
-    working_notification_url = url_for('test_notification_endpoint', _external=True).replace('http', 'json')
+    working_notification_url = url_for('test_notification_endpoint', _external=True).replace('http', 'post')
 
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),

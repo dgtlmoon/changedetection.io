@@ -796,6 +796,13 @@ def get_failed_notifications(limit=100, max_age_days=30):
                                     except Exception as ae:
                                         logger.debug(f"Unable to load retry attempt file {attempt_file}: {ae}")
 
+                        # Merge notification_data from latest retry attempt (has reloaded notification_urls)
+                        if retry_attempts:
+                            latest_attempt = retry_attempts[-1]
+                            attempt_notification_data = latest_attempt.get('notification_data', {})
+                            if attempt_notification_data:
+                                notification_data.update(attempt_notification_data)
+
                         failed_tasks.append({
                             'task_id': task_id,
                             'timestamp': task_time,
@@ -1298,7 +1305,8 @@ def _store_retry_attempt(n_object, error):
         'timestamp': time.time(),
         'watch_url': n_object.get('watch_url'),
         'error': str(error),
-        'will_retry': attempt_number <= NOTIFICATION_RETRY_COUNT
+        'will_retry': attempt_number <= NOTIFICATION_RETRY_COUNT,
+        'notification_data': n_object  # Full notification context for verification
     }
 
     with open(attempt_file, 'w') as f:
