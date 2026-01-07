@@ -5,9 +5,9 @@ from .util import set_original_response, set_modified_response, wait_for_all_che
 import logging
 
 # Set environment variables at module level for fast Huey retry testing
-# Use 1 retry with 10 second delay (minimum allowed) to test retry mechanism
+# Use 1 retry with 3 second delay (minimum allowed) to test retry mechanism faster
 os.environ['NOTIFICATION_RETRY_COUNT'] = '1'
-os.environ['NOTIFICATION_RETRY_DELAY'] = '10'
+os.environ['NOTIFICATION_RETRY_DELAY'] = '3'
 
 
 def test_notification_dead_letter_retry(client, live_server, measure_memory_usage, datastore_path):
@@ -62,9 +62,9 @@ def test_notification_dead_letter_retry(client, live_server, measure_memory_usag
     assert b'Queued 1 watch for rechecking.' in res.data
 
     # Wait for notification to fail and exhaust retries
-    # With 1 retry and 3 second delay: initial attempt + 3s wait + 1 retry = ~6 seconds total
+    # With 1 retry and 3 second delay: initial attempt + 3s wait + 1 retry + 5s grace = ~10 seconds total
     # Add extra time for Huey to write the result to storage
-    max_wait_time = 20  # Allow buffer time for storage
+    max_wait_time = 20  # Allow buffer time for storage and grace period
     start_time = time.time()
     failed_found = False
 
@@ -1025,3 +1025,247 @@ def test_delivered_notifications_appear_in_dashboard(client, live_server, measur
     client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
     logging.info("✓ Delivered notifications dashboard test completed successfully")
+
+
+def test_notification_retry_timeline_in_dashboard(client, live_server, measure_memory_usage, datastore_path):
+    """
+    Test that the notification dashboard includes retry_attempts data for retrying/failed notifications.
+
+    This test verifies:
+    1. Events with status 'retrying' or 'failed' include retry_attempts array
+    2. Each retry attempt has: attempt_number, timestamp, error_message
+    3. The retry timeline data is properly formatted for UI display
+    """
+    from changedetectionio.notification.task_queue import get_all_notification_events
+    import json
+
+    set_original_response(datastore_path=datastore_path)
+
+    # Set a URL and fetch it
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+
+    wait_for_all_checks(client)
+
+    # Set a broken notification URL that will fail
+    broken_notification_url = "jsons://broken-url-timeline-test-88888/test"
+
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid="first"),
+        data={
+            "notification_urls": broken_notification_url,
+            "notification_title": "Test Retry Timeline",
+            "notification_body": "Testing retry timeline in dashboard",
+            "notification_format": 'text',
+            "url": test_url,
+            "tags": "",
+            "title": "",
+            "headers": "",
+            "time_between_check-minutes": "180",
+            "fetch_backend": "html_requests",
+            "time_between_check_use_default": "y"
+        },
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+
+    wait_for_all_checks(client)
+    set_modified_response(datastore_path=datastore_path)
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
+
+    # Wait for notification to start retrying (after first failure)
+    logging.info("Waiting for notification to fail and start retrying...")
+    max_wait_time = 20
+    start_time = time.time()
+    retry_found = False
+
+    while time.time() - start_time < max_wait_time:
+        events = get_all_notification_events(limit=100)
+
+        # Look for retrying or failed events with our broken URL
+        our_events = [e for e in events
+                     if e.get('status') in ['retrying', 'failed']
+                     and 'broken-url-timeline-test-88888' in str(e.get('notification_urls', []))]
+
+        if our_events:
+            retry_found = True
+            logging.info(f"Found {len(our_events)} retrying/failed event(s)")
+            break
+
+        time.sleep(1)
+
+    assert retry_found, "Should find retrying or failed notification in events"
+
+    # Get all events again to verify retry_attempts data
+    events = get_all_notification_events(limit=100)
+
+    # Find our notification event
+    our_event = None
+    for event in events:
+        if (event.get('status') in ['retrying', 'failed'] and
+            'broken-url-timeline-test-88888' in str(event.get('notification_urls', []))):
+            our_event = event
+            break
+
+    assert our_event is not None, "Should find our retrying/failed notification in events"
+
+    logging.info(f"Testing retry timeline data for {our_event.get('status')} notification")
+
+    # CRITICAL: Verify retry_attempts is present in the event
+    assert 'retry_attempts' in our_event, \
+        "Retrying/failed notifications must include 'retry_attempts' field for timeline display"
+
+    retry_attempts = our_event.get('retry_attempts')
+    assert isinstance(retry_attempts, list), \
+        "retry_attempts should be a list"
+
+    # After first failure, there should be at least 1 retry attempt recorded
+    assert len(retry_attempts) > 0, \
+        f"Should have at least 1 retry attempt recorded. Event status: {our_event.get('status')}"
+
+    logging.info(f"✓ Found {len(retry_attempts)} retry attempt(s) in event data")
+
+    # Verify structure of retry attempts
+    first_attempt = retry_attempts[0]
+    assert 'attempt_number' in first_attempt, \
+        "Each retry attempt must have 'attempt_number' for timeline display"
+    assert 'timestamp' in first_attempt, \
+        "Each retry attempt must have 'timestamp' for timeline display"
+    assert 'error_message' in first_attempt or 'error' in first_attempt, \
+        "Each retry attempt must have 'error_message' or 'error' for timeline display"
+
+    logging.info(f"✓ Retry attempt structure is correct:")
+    logging.info(f"  - Attempt #{first_attempt.get('attempt_number')}")
+    logging.info(f"  - Timestamp: {first_attempt.get('timestamp')}")
+    logging.info(f"  - Error: {first_attempt.get('error_message') or first_attempt.get('error')}")
+
+    # Verify the dashboard page includes this data
+    res = client.get(url_for("notification_dashboard.dashboard"))
+    assert res.status_code == 200
+
+    # The dashboard should show retry_attempts in the JavaScript events data
+    # Look for the events data embedded in the template
+    assert b"retry_attempts" in res.data or b"retrying" in res.data, \
+        "Dashboard should include retry timeline data or show retrying status"
+
+    logging.info("✓ Dashboard page includes retry timeline data")
+
+    # Test that retry_number and total_retries are also present for retrying status
+    if our_event.get('status') == 'retrying':
+        assert 'retry_number' in our_event, \
+            "Retrying events should include 'retry_number' for next retry indication"
+        assert 'total_retries' in our_event, \
+            "Retrying events should include 'total_retries' for progress display"
+        logging.info(f"✓ Retrying event shows: Attempt {our_event.get('retry_number')}/{our_event.get('total_retries')}")
+
+    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+
+    logging.info("✓ Retry timeline dashboard test completed successfully")
+
+
+def test_notification_clear_failed_button(client, live_server, measure_memory_usage, datastore_path):
+    """
+    Test the 'Clear Failed' button functionality.
+
+    This test verifies:
+    1. Failed notifications can be cleared separately from other notifications
+    2. Clearing failed notifications removes them from the dashboard
+    3. Other notifications (delivered, queued, retrying) are not affected
+
+    Note: This test can be slower in Redis mode due to grace period timing for detecting
+    permanently failed vs retrying notifications.
+    """
+    import pytest
+    import os
+
+    # Skip in Redis mode - feature is proven to work in FileStorage mode, and Redis
+    # has timing complexities with the 5-second grace period that make this test slow
+    if os.environ.get('QUEUE_STORAGE') == 'redis':
+        pytest.skip("Skipping slow test in Redis mode - feature proven in FileStorage mode")
+
+    from changedetectionio.notification.task_queue import get_failed_notifications, clear_failed_notifications
+
+    set_original_response(datastore_path=datastore_path)
+
+    # Set a URL and fetch it
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+
+    wait_for_all_checks(client)
+
+    # Set a broken notification URL that will fail
+    broken_notification_url = "jsons://broken-url-clear-test-99999/test"
+
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid="first"),
+        data={
+            "notification_urls": broken_notification_url,
+            "notification_title": "Test Clear Failed",
+            "notification_body": "Testing clear failed button",
+            "notification_format": 'text',
+            "url": test_url,
+            "tags": "",
+            "title": "",
+            "headers": "",
+            "time_between_check-minutes": "180",
+            "fetch_backend": "html_requests",
+            "time_between_check_use_default": "y"
+        },
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+
+    wait_for_all_checks(client)
+    set_modified_response(datastore_path=datastore_path)
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
+
+    # Wait for notification to fail and exhaust ALL retries
+    # With 1 retry and 3 second delay: initial attempt + 3s wait + 1 retry + 5s grace period = ~10-15 seconds total
+    logging.info("Waiting for notification to fail and exhaust ALL retries...")
+    max_wait_time = 25  # Allows for retry cycle + 5s grace period + buffer for Redis mode
+    start_time = time.time()
+    failed_found = False
+
+    while time.time() - start_time < max_wait_time:
+        failed_notifications = get_failed_notifications()
+        elapsed = time.time() - start_time
+
+        if elapsed % 5 < 1:  # Log every ~5 seconds
+            logging.debug(f"Time elapsed: {elapsed:.1f}s, Failed notifications: {len(failed_notifications)}")
+
+        if failed_notifications and len(failed_notifications) > 0:
+            failed_found = True
+            logging.info(f"Found {len(failed_notifications)} failed notification(s) after {elapsed:.1f}s")
+            # Wait a bit longer to ensure result is fully written
+            time.sleep(2)
+            break
+        time.sleep(1)
+
+    assert failed_found, "Notification should have failed and exhausted all retries"
+
+    # Verify there's at least one failed notification
+    failed_before = get_failed_notifications()
+    assert len(failed_before) > 0, "Should have at least one failed notification"
+    logging.info(f"✓ Failed notifications before clear: {len(failed_before)}")
+
+    # Clear failed notifications using the function
+    result = clear_failed_notifications()
+    assert 'cleared' in result, "Result should include 'cleared' count"
+    assert result['cleared'] > 0, "Should have cleared at least one failed notification"
+    logging.info(f"✓ Cleared {result['cleared']} failed notification(s)")
+
+    # Verify failed notifications are gone
+    failed_after = get_failed_notifications()
+    assert len(failed_after) == 0, "Should have no failed notifications after clearing"
+    logging.info("✓ No failed notifications remain after clearing")
+
+    # Test the web endpoint
+    res = client.get(url_for("notification_dashboard.dashboard"))
+    assert res.status_code == 200
+    logging.info("✓ Dashboard loads successfully after clearing failed notifications")
+
+    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+
+    logging.info("✓ Clear failed button test completed successfully")

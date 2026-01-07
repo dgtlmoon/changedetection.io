@@ -130,6 +130,25 @@ def construct_blueprint():
 
         return redirect(url_for('notification_dashboard.dashboard'))
 
+    @notification_dashboard.route("/clear-failed", methods=['POST'])
+    @login_optionally_required
+    def clear_failed_notifications():
+        """Clear only failed notifications (dead letter queue)"""
+        from changedetectionio.notification.task_queue import clear_failed_notifications
+
+        result = clear_failed_notifications()
+
+        if 'error' in result:
+            flash(f"Error clearing failed notifications: {result['error']}", 'error')
+        else:
+            cleared_count = result.get('cleared', 0)
+            if cleared_count == 0:
+                flash("No failed notifications to clear.", 'notice')
+            else:
+                flash(f"Cleared {cleared_count} failed notification(s).", 'notice')
+
+        return redirect(url_for('notification_dashboard.dashboard'))
+
     @notification_dashboard.route("/clear-all", methods=['POST'])
     @login_optionally_required
     def clear_all_notifications():

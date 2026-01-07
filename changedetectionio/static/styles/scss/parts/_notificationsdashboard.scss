@@ -751,6 +751,11 @@
       color: white;
     }
 
+    .clear-failed-btn {
+      background: #dc3545;
+      color: white;
+    }
+
     .clear-all-btn {
       background: #6c757d;
       color: white;
@@ -1060,6 +1065,146 @@
             color: #dc3545;
           }
         }
+
+        // Retry Timeline Styling
+        &.retry-timeline {
+          .timeline {
+            position: relative;
+            padding-left: 40px;
+            margin-top: 16px;
+
+            // Vertical connecting line
+            &::before {
+              content: '';
+              position: absolute;
+              left: 15px;
+              top: 10px;
+              bottom: 10px;
+              width: 2px;
+              background: linear-gradient(to bottom,
+                var(--color-grey-600) 0%,
+                var(--color-grey-600) 85%,
+                transparent 100%);
+            }
+
+            .timeline-item {
+              position: relative;
+              padding-bottom: 24px;
+
+              &:last-child {
+                padding-bottom: 0;
+              }
+
+              .timeline-marker {
+                position: absolute;
+                left: -40px;
+                top: 0;
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                background: #0078e7;
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 600;
+                font-size: 13px;
+                border: 3px solid var(--color-background);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+                z-index: 1;
+              }
+
+              .timeline-content {
+                background: var(--color-background-code);
+                border: 1px solid var(--color-grey-700);
+                border-radius: 6px;
+                padding: 12px;
+
+                .timeline-header {
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  margin-bottom: 8px;
+
+                  strong {
+                    font-size: 13px;
+                    color: var(--color-text);
+                  }
+
+                  .timeline-time {
+                    font-size: 11px;
+                    color: var(--color-grey-500);
+                    font-weight: normal;
+                  }
+                }
+
+                .timeline-error {
+                  font-size: 12px;
+                  color: #dc3545;
+                  background: rgba(220, 53, 69, 0.1);
+                  padding: 8px 10px;
+                  border-radius: 4px;
+                  border-left: 3px solid #dc3545;
+                  margin-top: 8px;
+                  line-height: 1.4;
+                }
+
+                .timeline-status {
+                  font-size: 12px;
+                  color: var(--color-grey-600);
+                  margin-top: 6px;
+                  font-style: italic;
+                }
+              }
+
+              // Future retry (upcoming attempt)
+              &.timeline-future {
+                .timeline-marker {
+                  background: #ffc107;
+                  color: #333;
+                  font-size: 16px;
+                }
+
+                .timeline-content {
+                  border-color: #ffc107;
+                  border-width: 2px;
+
+                  .timeline-header strong {
+                    color: #f57c00;
+                  }
+
+                  .timeline-status {
+                    color: #f57c00;
+                    font-weight: 500;
+                  }
+                }
+              }
+
+              // Final state (exhausted retries)
+              &.timeline-end {
+                .timeline-marker {
+                  background: #dc3545;
+                  color: white;
+                  font-size: 16px;
+                }
+
+                .timeline-content {
+                  border-color: #dc3545;
+                  border-width: 2px;
+
+                  .timeline-header strong {
+                    color: #dc3545;
+                  }
+
+                  .timeline-status {
+                    color: #dc3545;
+                    font-weight: 600;
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -1196,6 +1341,55 @@
           background: rgba(220, 53, 69, 0.2);
           border-color: rgba(220, 53, 69, 0.4);
         }
+
+        // Dark mode timeline enhancements
+        &.retry-timeline {
+          .timeline {
+            &::before {
+              background: linear-gradient(to bottom,
+                rgba(255, 255, 255, 0.2) 0%,
+                rgba(255, 255, 255, 0.2) 85%,
+                transparent 100%);
+            }
+
+            .timeline-item {
+              .timeline-marker {
+                border-color: #1e1e1e;
+              }
+
+              .timeline-content {
+                .timeline-error {
+                  background: rgba(220, 53, 69, 0.25);
+                  color: #ef9a9a;
+                }
+              }
+
+              &.timeline-future {
+                .timeline-content {
+                  .timeline-header strong {
+                    color: #ffd54f;
+                  }
+
+                  .timeline-status {
+                    color: #ffd54f;
+                  }
+                }
+              }
+
+              &.timeline-end {
+                .timeline-content {
+                  .timeline-header strong {
+                    color: #ef5350;
+                  }
+
+                  .timeline-status {
+                    color: #ef5350;
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -1262,6 +1456,55 @@ html[data-darkmode="true"] {
         pre.error-content {
           background: rgba(220, 53, 69, 0.2);
           border-color: rgba(220, 53, 69, 0.4);
+        }
+
+        // Dark mode timeline enhancements
+        &.retry-timeline {
+          .timeline {
+            &::before {
+              background: linear-gradient(to bottom,
+                rgba(255, 255, 255, 0.2) 0%,
+                rgba(255, 255, 255, 0.2) 85%,
+                transparent 100%);
+            }
+
+            .timeline-item {
+              .timeline-marker {
+                border-color: #1e1e1e;
+              }
+
+              .timeline-content {
+                .timeline-error {
+                  background: rgba(220, 53, 69, 0.25);
+                  color: #ef9a9a;
+                }
+              }
+
+              &.timeline-future {
+                .timeline-content {
+                  .timeline-header strong {
+                    color: #ffd54f;
+                  }
+
+                  .timeline-status {
+                    color: #ffd54f;
+                  }
+                }
+              }
+
+              &.timeline-end {
+                .timeline-content {
+                  .timeline-header strong {
+                    color: #ef5350;
+                  }
+
+                  .timeline-status {
+                    color: #ef5350;
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }

@@ -947,6 +947,58 @@ def init_huey_task():
         logger.info(f"Notification retry configuration: No retries configured")
 
 
+def clear_failed_notifications():
+    """
+    Clear only FAILED notifications (dead letter queue).
+
+    This removes:
+    - Failed task results from Huey's result store
+    - Task metadata for failed tasks
+    - Retry attempts for failed tasks
+
+    Does NOT clear:
+    - Pending/queued notifications
+    - Retrying notifications (scheduled)
+    - Successfully delivered notifications
+
+    Returns:
+        Dict with count of cleared failed notifications
+    """
+    retriever = _get_state_retriever()
+    task_manager = _get_task_manager()
+
+    if retriever is None or task_manager is None:
+        return {'error': 'Huey not initialized', 'cleared': 0}
+
+    try:
+        # Get all failed notifications
+        failed_notifications = retriever.get_failed_notifications(limit=1000, max_age_days=999999)
+        cleared_count = 0
+
+        for failed in failed_notifications:
+            task_id = failed.get('task_id')
+            watch_uuid = failed.get('notification_data', {}).get('uuid')
+
+            if task_id:
+                # Delete the failed task result
+                task_manager.delete_result(task_id)
+
+                # Delete task metadata
+                task_manager.delete_task_metadata(task_id)
+
+                # Delete retry attempts for this watch
+                if watch_uuid and task_data_manager:
+                    task_data_manager.clear_retry_attempts(watch_uuid)
+
+                cleared_count += 1
+
+        logger.warning(f"Cleared {cleared_count} failed notifications")
+        return {'cleared': cleared_count}
+    except Exception as e:
+        logger.error(f"Error clearing failed notifications: {e}", exc_info=True)
+        return {'error': str(e), 'cleared': 0}
+
+
 def clear_all_notifications():
     """
     Clear ALL notifications from queue, schedule, results, and retry attempts.

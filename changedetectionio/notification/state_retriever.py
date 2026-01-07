@@ -471,6 +471,7 @@ class NotificationStateRetriever:
                 'total_retries': item.get('total_retries'),
                 'retry_at': item.get('retry_at_timestamp'),
                 'retry_at_formatted': item.get('retry_at_formatted'),
+                'retry_attempts': item.get('retry_attempts', []),
                 'apprise_logs': apprise_logs,
                 'payload': payload,
                 'error': None
@@ -502,6 +503,7 @@ class NotificationStateRetriever:
                 'watch_url': item.get('notification_data', {}).get('watch_url'),
                 'watch_title': item.get('notification_data', {}).get('watch_url', 'Unknown')[:50],
                 'notification_urls': item.get('notification_data', {}).get('notification_urls', []),
+                'retry_attempts': item.get('retry_attempts', []),
                 'apprise_logs': apprise_logs,
                 'payload': payload,
                 'error': item.get('error')

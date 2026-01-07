@@ -53,6 +53,15 @@
                     Retry All Failed ({{ status_counts.failed }})
                 </button>
             </form>
+            <form method="POST" action="{{ url_for('notification_dashboard.clear_failed_notifications') }}" style="display: inline;" onsubmit="return confirm('Clear all {{ status_counts.failed }} failed notification(s)?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="pure-button button-small clear-failed-btn">
+                    <svg width="14" height="14" viewBox="0 0 16 16" style="vertical-align: middle; margin-right: 4px;">
+                        <path d="M4 4l8 8m0-8l-8 8" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    Clear Failed ({{ status_counts.failed }})
+                </button>
+            </form>
             {% endif %}
             {% if events|length > 0 %}
             <form method="POST" action="{{ url_for('notification_dashboard.clear_all_notifications') }}" style="display: inline;" onsubmit="return confirm('Clear all notifications (delivered, queued, retrying, and failed)?');">
@@ -302,6 +311,60 @@ $(function() {
             html += '<h6>Error</h6>';
             html += `<pre class="error-content">${event.error}</pre>`;
             html += '</div>';
+        }
+
+        // Retry attempts timeline (for retrying and failed notifications)
+        if ((event.status === 'retrying' || event.status === 'failed') && event.retry_attempts && event.retry_attempts.length > 0) {
+            html += '<div class="detail-section retry-timeline">';
+            html += '<h6>Retry Attempts History</h6>';
+            html += '<div class="timeline">';
+
+            // Sort by attempt number to ensure chronological order
+            const attempts = [...event.retry_attempts].sort((a, b) => a.attempt_number - b.attempt_number);
+
+            attempts.forEach((attempt, index) => {
+                html += '<div class="timeline-item">';
+                html += `<div class="timeline-marker">${attempt.attempt_number}</div>`;
+                html += '<div class="timeline-content">';
+                html += `<div class="timeline-header">`;
+                html += `<strong>Attempt #${attempt.attempt_number}</strong>`;
+                if (attempt.timestamp) {
+                    html += ` <span class="timeline-time">${window.formatTimestampLocal(attempt.timestamp)}</span>`;
+                }
+                html += `</div>`;
+
+                if (attempt.error || attempt.error_message) {
+                    html += `<div class="timeline-error">⚠️ ${attempt.error || attempt.error_message}</div>`;
+                }
+
+                html += '</div>';
+                html += '</div>';
+            });
+
+            // Add current status indicator
+            if (event.status === 'retrying' && event.retry_at) {
+                html += '<div class="timeline-item timeline-future">';
+                html += `<div class="timeline-marker">⏰</div>`;
+                html += '<div class="timeline-content">';
+                html += `<div class="timeline-header">`;
+                html += `<strong>Next Retry</strong>`;
+                html += ` <span class="timeline-time">${window.formatTimestampLocal(event.retry_at)}</span>`;
+                html += `</div>`;
+                html += `<div class="timeline-status">Scheduled (Attempt ${event.retry_number + 1}/${event.total_retries})</div>`;
+                html += '</div>';
+                html += '</div>';
+            } else if (event.status === 'failed') {
+                html += '<div class="timeline-item timeline-end">';
+                html += `<div class="timeline-marker">✖</div>`;
+                html += '<div class="timeline-content">';
+                html += `<div class="timeline-header"><strong>Exhausted Retries</strong></div>`;
+                html += `<div class="timeline-status">All ${attempts.length} retry attempts failed</div>`;
+                html += '</div>';
+                html += '</div>';
+            }
+
+            html += '</div>'; // Close timeline
+            html += '</div>'; // Close detail-section
         }
 
         html += '</div>';
