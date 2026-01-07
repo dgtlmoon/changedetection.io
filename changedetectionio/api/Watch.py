@@ -91,7 +91,7 @@ class Watch(Resource):
         # attr .last_changed will check for the last written text snapshot on change
         watch['last_changed'] = watch.last_changed
         watch['viewed'] = watch.viewed
-        watch['link'] = watch.link,
+        watch['link'] = watch.link
 
         return watch
 

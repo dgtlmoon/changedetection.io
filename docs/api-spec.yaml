@@ -287,6 +287,11 @@ components:
         - $ref: '#/components/schemas/WatchBase'
         - type: object
           properties:
+            link_to_open:
+              type: string
+              format: uri
+              description: Optional URL to open when clicking the watch or in notifications. If empty, the watched URL will be used.
+              maxLength: 5000
             last_viewed:
               type: integer
               description: Unix timestamp in seconds of the last time the watch was viewed. Setting it to a value higher than `last_changed` in the "Update watch" endpoint marks the watch as viewed.
