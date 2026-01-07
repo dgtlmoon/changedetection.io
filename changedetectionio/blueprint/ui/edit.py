@@ -304,7 +304,20 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             if worker_handler.is_watch_running(uuid):
                 c.append('checking-now')
 
+            # Find tags that were auto-applied to this watch based on URL pattern
+            auto_applied_tags = []
+            watch_url = watch.get('url', '')
+            for tag_uuid in watch.get('tags', []):
+                tag = datastore.data['settings']['application'].get('tags', {}).get(tag_uuid)
+                if tag and tag.get('url_match_pattern') and tag.matches_url(watch_url):
+                    auto_applied_tags.append({
+                        'uuid': tag_uuid,
+                        'title': tag.get('title', 'Untitled'),
+                        'pattern': tag.get('url_match_pattern')
+                    })
+
             template_args = {
+                'auto_applied_tags': auto_applied_tags,
                 'available_processors': processors.available_processors(),
                 'available_timezones': sorted(available_timezones()),
                 'browser_steps_config': browser_step_ui_config,
