@@ -62,7 +62,7 @@ data_sanity_test () {
 data_sanity_test
 
 # REMOVE_REQUESTS_OLD_SCREENSHOTS disabled so that we can write a screenshot and send it in test_notifications.py without a real browser
-REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest -n 30 --dist load  tests/test_*.py
+REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest -n 30 --dist load tests/test_*.py
 
 #time pytest -n auto --dist loadfile -vv --tb=long tests/test_*.py
 echo "RUNNING WITH BASE_URL SET"
@@ -78,11 +78,8 @@ export HIDE_REFERER=True
 pytest -vv -s --maxfail=1 tests/test_access_control.py
 
 # Re-run a few tests that will trigger brotli based storage
-export SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD=5
-pytest -vv -s --maxfail=1 tests/test_access_control.py
-pytest -vv -s --maxfail=1 tests/test_backend.py
-pytest -vv -s --maxfail=1 tests/test_rss.py
-pytest -vv -s --maxfail=1 tests/test_unique_lines.py
+SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD=5 pytest -n 30 --dist load -vv -s --maxfail=1 tests/test_access_control.py tests/test_backend.py tests/test_rss.py tests/test_unique_lines.py
+
 
 # Try high concurrency
 FETCH_WORKERS=130 pytest  tests/test_history_consistency.py -v -l
