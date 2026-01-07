@@ -242,6 +242,7 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
     )
     assert b"Updated watch." in res.data
 
+    wait_for_all_checks(client)
     wait_for_notification_endpoint_output(datastore_path=datastore_path)
 
     # Verify what was sent as a notification, this file should exist
