@@ -124,8 +124,8 @@ jobs:
           name: test-cdio-basic-tests-output-py${{ env.PYTHON_VERSION }}
           path: output-logs
 
-  # Basic pytest tests with ancillary services
-  notification-backend-storage-test:
+  notification-queue-storage-test:
+    # The notifications are put into a retry queue so they cant be lost.
     runs-on: ubuntu-latest
     needs: build
     timeout-minutes: 25
