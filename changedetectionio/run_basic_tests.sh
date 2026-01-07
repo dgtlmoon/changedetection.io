@@ -94,3 +94,8 @@ ALLOW_FILE_URI=yes pytest -vv -s  tests/test_security.py
 
 
 
+QUEUE_STORAGE=sqlite pytest tests/test_notifications_huey.py -v
+
+docker run --rm -d --name redis-test-huey  -p 127.0.0.1:6379:6379 redis:7
+pip3 install redis
+QUEUE_STORAGE=redis REDIS_URL=redis://localhost:6379/0 pytest tests/test_notifications_huey.py -v

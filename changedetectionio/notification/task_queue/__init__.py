@@ -303,8 +303,7 @@ def get_pending_notifications(limit=50):
         return []
 
     pending = []
-    import pickle
-    import time
+    from changedetectionio.notification.message_unpacker import HueyMessageUnpacker
 
     try:
         # Use Huey's built-in methods to get queued and scheduled items
@@ -317,37 +316,30 @@ def get_pending_notifications(limit=50):
                 for queued_bytes in queued_items:
                     if len(pending) >= limit:
                         break
-                    try:
-                        message = pickle.loads(queued_bytes)
 
-                        # Skip revoked tasks - check if task is in revoked set
-                        task_id = message.id if hasattr(message, 'id') else None
-                        if task_id and huey.is_revoked(task_id):
-                            logger.debug(f"Skipping revoked task {task_id} in get_pending_notifications")
-                            continue
-
-                        if hasattr(message, 'args') and message.args:
-                            notification_data = message.args[0]
-                            # Get task ID and metadata for timestamp
-                            task_id = message.id if hasattr(message, 'id') else None
-                            metadata = _get_task_metadata(task_id) if task_id else None
-                            queued_timestamp = metadata.get('timestamp') if metadata else None
-
-                            # Format timestamp for display
-                            from changedetectionio.notification_service import timestamp_to_localtime
-                            queued_at_formatted = timestamp_to_localtime(queued_timestamp) if queued_timestamp else 'Unknown'
-
-                            pending.append({
-                                'status': 'queued',
-                                'watch_url': notification_data.get('watch_url', 'Unknown'),
-                                'watch_uuid': notification_data.get('uuid'),
-                                'task_id': task_id,
-                                'queued_at': queued_timestamp,
-                                'queued_at_formatted': queued_at_formatted,
-                            })
-                    except Exception as e:
-                        logger.debug(f"Error processing queued item: {e}")
+                    # Use centralized unpacker
+                    result = HueyMessageUnpacker.unpack_queued_notification(queued_bytes, huey)
+                    if result is None:
                         continue
+
+                    task_id, notification_data = result
+
+                    # Get metadata for timestamp
+                    metadata = _get_task_metadata(task_id) if task_id else None
+                    queued_timestamp = metadata.get('timestamp') if metadata else None
+
+                    # Format timestamp for display
+                    from changedetectionio.notification_service import timestamp_to_localtime
+                    queued_at_formatted = timestamp_to_localtime(queued_timestamp) if queued_timestamp else 'Unknown'
+
+                    pending.append({
+                        'status': 'queued',
+                        'watch_url': notification_data.get('watch_url', 'Unknown'),
+                        'watch_uuid': notification_data.get('uuid'),
+                        'task_id': task_id,
+                        'queued_at': queued_timestamp,
+                        'queued_at_formatted': queued_at_formatted,
+                    })
             except Exception as e:
                 logger.debug(f"Error getting queued items: {e}")
 
@@ -358,112 +350,88 @@ def get_pending_notifications(limit=50):
                 for scheduled_bytes in scheduled_items:
                     if len(pending) >= limit:
                         break
-                    try:
-                        message = pickle.loads(scheduled_bytes)
 
-                        # Skip revoked tasks - check if task is in revoked set
-                        task_id = message.id if hasattr(message, 'id') else None
-                        if task_id and huey.is_revoked(task_id):
-                            logger.debug(f"Skipping revoked task {task_id} in get_pending_notifications")
-                            continue
-
-                        if hasattr(message, 'args') and message.args:
-                            notification_data = message.args[0]
-                            eta = message.eta if hasattr(message, 'eta') else None
-                            # Calculate seconds until retry (eta is a datetime object)
-                            import datetime
-                            if eta:
-                                now = datetime.datetime.now() if eta.tzinfo is None else datetime.datetime.now(datetime.timezone.utc)
-                                retry_in_seconds = int((eta - now).total_seconds())
-
-                                # Convert eta to local timezone for display
-                                if eta.tzinfo is not None:
-                                    local_tz = datetime.datetime.now().astimezone().tzinfo
-                                    eta_local = eta.astimezone(local_tz)
-                                    eta_formatted = eta_local.strftime('%Y-%m-%d %H:%M:%S %Z')
-                                else:
-                                    eta_formatted = eta.strftime('%Y-%m-%d %H:%M:%S')
-                            else:
-                                retry_in_seconds = 0
-                                eta_formatted = 'Unknown'
-
-                            # Get task ID for manual retry button
-                            task_id = message.id if hasattr(message, 'id') else None
-
-                            # Convert eta to Unix timestamp for JavaScript (with safety check)
-                            retry_at_timestamp = None
-                            if eta and hasattr(eta, 'timestamp'):
-                                try:
-                                    # Huey stores ETA as naive datetime in UTC - need to add timezone info
-                                    if eta.tzinfo is None:
-                                        # Naive datetime - assume it's UTC (Huey's default)
-                                        import datetime
-                                        eta = eta.replace(tzinfo=datetime.timezone.utc)
-                                    retry_at_timestamp = int(eta.timestamp())
-                                    logger.debug(f"ETA after timezone fix: {eta}, Timestamp: {retry_at_timestamp}")
-                                except Exception as e:
-                                    logger.debug(f"Error converting eta to timestamp: {e}")
-
-                            # Get original queued timestamp from metadata
-                            metadata = _get_task_metadata(task_id) if task_id else None
-                            queued_timestamp = metadata.get('timestamp') if metadata else None
-
-                            # Format timestamp for display
-                            from changedetectionio.notification_service import timestamp_to_localtime
-                            queued_at_formatted = timestamp_to_localtime(queued_timestamp) if queued_timestamp else 'Unknown'
-
-                            # Get retry count from retry_attempts (using polymorphic task_data_manager)
-                            # Retry number represents which retry this is (1st retry, 2nd retry, etc.)
-                            # If there are N attempt files, we're currently on retry #N
-                            retry_number = 1  # Default to 1 (first retry after initial failure)
-                            total_attempts = NOTIFICATION_RETRY_COUNT + 1  # Initial attempt + retries
-                            watch_uuid = notification_data.get('uuid')
-                            retry_attempts = []
-                            notification_urls = []
-
-                            # Load retry attempts using polymorphic manager
-                            if watch_uuid and task_data_manager is not None:
-                                try:
-                                    retry_attempts = task_data_manager.load_retry_attempts(watch_uuid)
-
-                                    if len(retry_attempts) > 0:
-                                        # Current retry number = number of attempt files
-                                        # (1 file = 1st retry, 2 files = 2nd retry, etc.)
-                                        retry_number = len(retry_attempts)
-                                        logger.debug(f"Watch {watch_uuid[:8]}: Found {len(retry_attempts)} retry files, currently on retry #{retry_number}/{total_attempts}")
-
-                                        # Extract notification_urls from latest retry attempt
-                                        latest_attempt = retry_attempts[-1]
-                                        attempt_notification_data = latest_attempt.get('notification_data', {})
-                                        if attempt_notification_data:
-                                            notification_urls = attempt_notification_data.get('notification_urls', [])
-                                    else:
-                                        # No retry attempts yet - first retry
-                                        retry_number = 1
-                                        logger.debug(f"Watch {watch_uuid[:8]}: No retry attempts yet, first retry (retry #1/{total_attempts})")
-                                except Exception as e:
-                                    logger.warning(f"Error reading retry attempts for {watch_uuid}: {e}, defaulting to attempt #1")
-                                    retry_number = 1  # Fallback to 1 on error
-
-                            pending.append({
-                                'status': 'retrying',
-                                'watch_url': notification_data.get('watch_url', 'Unknown'),
-                                'watch_uuid': notification_data.get('uuid'),
-                                'retry_at': eta,
-                                'retry_at_formatted': eta_formatted,
-                                'retry_at_timestamp': retry_at_timestamp,
-                                'retry_in_seconds': retry_in_seconds,
-                                'task_id': task_id,
-                                'queued_at': queued_timestamp,
-                                'queued_at_formatted': queued_at_formatted,
-                                'retry_number': retry_number,
-                                'total_retries': total_attempts,
-                                'retry_attempts': retry_attempts,
-                                'notification_urls': notification_urls,
-                            })
-                    except Exception as e:
-                        logger.debug(f"Error processing scheduled item: {e}")
+                    # Use centralized unpacker
+                    result = HueyMessageUnpacker.unpack_scheduled_notification(scheduled_bytes, huey)
+                    if result is None:
                         continue
+
+                    task_id, notification_data, eta = result
+
+                    # Calculate retry timing using unpacker utility
+                    retry_in_seconds, eta_formatted = HueyMessageUnpacker.calculate_retry_timing(eta)
+
+                    # Convert eta to Unix timestamp for JavaScript (with safety check)
+                    retry_at_timestamp = None
+                    if eta and hasattr(eta, 'timestamp'):
+                        try:
+                            # Huey stores ETA as naive datetime in UTC - need to add timezone info
+                            if eta.tzinfo is None:
+                                # Naive datetime - assume it's UTC (Huey's default)
+                                import datetime
+                                eta = eta.replace(tzinfo=datetime.timezone.utc)
+                            retry_at_timestamp = int(eta.timestamp())
+                            logger.debug(f"ETA after timezone fix: {eta}, Timestamp: {retry_at_timestamp}")
+                        except Exception as e:
+                            logger.debug(f"Error converting eta to timestamp: {e}")
+
+                    # Get original queued timestamp from metadata
+                    metadata = _get_task_metadata(task_id) if task_id else None
+                    queued_timestamp = metadata.get('timestamp') if metadata else None
+
+                    # Format timestamp for display
+                    from changedetectionio.notification_service import timestamp_to_localtime
+                    queued_at_formatted = timestamp_to_localtime(queued_timestamp) if queued_timestamp else 'Unknown'
+
+                    # Get retry count from retry_attempts (using polymorphic task_data_manager)
+                    # Retry number represents which retry this is (1st retry, 2nd retry, etc.)
+                    # If there are N attempt files, we're currently on retry #N
+                    retry_number = 1  # Default to 1 (first retry after initial failure)
+                    total_attempts = NOTIFICATION_RETRY_COUNT + 1  # Initial attempt + retries
+                    watch_uuid = notification_data.get('uuid')
+                    retry_attempts = []
+                    notification_urls = []
+
+                    # Load retry attempts using polymorphic manager
+                    if watch_uuid and task_data_manager is not None:
+                        try:
+                            retry_attempts = task_data_manager.load_retry_attempts(watch_uuid)
+
+                            if len(retry_attempts) > 0:
+                                # Current retry number = number of attempt files
+                                # (1 file = 1st retry, 2 files = 2nd retry, etc.)
+                                retry_number = len(retry_attempts)
+                                logger.debug(f"Watch {watch_uuid[:8]}: Found {len(retry_attempts)} retry files, currently on retry #{retry_number}/{total_attempts}")
+
+                                # Extract notification_urls from latest retry attempt
+                                latest_attempt = retry_attempts[-1]
+                                attempt_notification_data = latest_attempt.get('notification_data', {})
+                                if attempt_notification_data:
+                                    notification_urls = attempt_notification_data.get('notification_urls', [])
+                            else:
+                                # No retry attempts yet - first retry
+                                retry_number = 1
+                                logger.debug(f"Watch {watch_uuid[:8]}: No retry attempts yet, first retry (retry #1/{total_attempts})")
+                        except Exception as e:
+                            logger.warning(f"Error reading retry attempts for {watch_uuid}: {e}, defaulting to attempt #1")
+                            retry_number = 1  # Fallback to 1 on error
+
+                    pending.append({
+                        'status': 'retrying',
+                        'watch_url': notification_data.get('watch_url', 'Unknown'),
+                        'watch_uuid': notification_data.get('uuid'),
+                        'retry_at': eta,
+                        'retry_at_formatted': eta_formatted,
+                        'retry_at_timestamp': retry_at_timestamp,
+                        'retry_in_seconds': retry_in_seconds,
+                        'task_id': task_id,
+                        'queued_at': queued_timestamp,
+                        'queued_at_formatted': queued_at_formatted,
+                        'retry_number': retry_number,
+                        'total_retries': total_attempts,
+                        'retry_attempts': retry_attempts,
+                        'notification_urls': notification_urls,
+                    })
             except Exception as e:
                 logger.debug(f"Error getting scheduled items: {e}")
 
@@ -754,22 +722,15 @@ def get_failed_notifications(limit=100, max_age_days=30):
                         # Use Huey's built-in scheduled_items() method to get scheduled tasks
                         try:
                             if hasattr(huey.storage, 'scheduled_items'):
-                                import pickle
+                                from changedetectionio.notification.message_unpacker import HueyMessageUnpacker
                                 scheduled_items = list(huey.storage.scheduled_items())
                                 for scheduled_bytes in scheduled_items:
-                                    try:
-                                        # scheduled_items() returns pickled bytes, need to unpickle
-                                        scheduled_message = pickle.loads(scheduled_bytes)
-                                        # Each item is a Message object with an 'id' attribute
-                                        if hasattr(scheduled_message, 'id'):
-                                            scheduled_task_id = scheduled_message.id
-                                            if scheduled_task_id == task_id:
-                                                task_still_scheduled = True
-                                                logger.debug(f"Task {task_id[:20]}... IS scheduled")
-                                                break
-                                    except Exception as e:
-                                        logger.debug(f"Error checking scheduled message: {e}")
-                                        continue
+                                    # Use centralized unpacker to extract just the task ID
+                                    scheduled_task_id = HueyMessageUnpacker.extract_task_id_from_scheduled(scheduled_bytes)
+                                    if scheduled_task_id == task_id:
+                                        task_still_scheduled = True
+                                        logger.debug(f"Task {task_id[:20]}... IS scheduled")
+                                        break
                         except Exception as se:
                             logger.debug(f"Error checking schedule: {se}")
 
@@ -976,23 +937,22 @@ def retry_notification_now(task_id):
 
     try:
         # First, check if task is actually scheduled
+        from changedetectionio.notification.message_unpacker import HueyMessageUnpacker
         scheduled_items = list(huey.storage.scheduled_items())
         task_found = False
         notification_data = None
 
-        import pickle
         for scheduled_bytes in scheduled_items:
-            try:
-                message = pickle.loads(scheduled_bytes)
-                if hasattr(message, 'id') and message.id == task_id:
-                    task_found = True
-                    # Extract notification data from scheduled task
-                    if hasattr(message, 'args') and message.args:
-                        notification_data = message.args[0]
-                    break
-            except Exception as e:
-                logger.debug(f"Error checking scheduled task: {e}")
+            # Use centralized unpacker
+            result = HueyMessageUnpacker.unpack_scheduled_notification(scheduled_bytes, huey)
+            if result is None:
                 continue
+
+            found_task_id, found_notification_data, _ = result
+            if found_task_id == task_id:
+                task_found = True
+                notification_data = found_notification_data
+                break
 
         if not task_found:
             logger.error(f"Task {task_id} not found in schedule")
