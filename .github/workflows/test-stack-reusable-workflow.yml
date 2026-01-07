@@ -147,7 +147,6 @@ jobs:
       - name: Test Huey notification backend - SQLite
         run: |
           docker network inspect changedet-network >/dev/null 2>&1 || docker network create changedet-network
-          docker run --network changedet-network -d --name redis-test-huey --hostname redis-test-huey -p 127.0.0.1:6379:6379 redis:7
           docker run --name test-cdio-basic-tests --network changedet-network test-changedetectionio bash -c 'cd changedetectionio && QUEUE_STORAGE=sqlite pytest tests/test_notifications_huey.py -v'
 
       - name: Test Huey notification backend - Redis
