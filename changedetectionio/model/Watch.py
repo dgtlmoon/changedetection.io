@@ -191,7 +191,8 @@ class model(watch_base):
     @property
     def link(self):
         # Check if link_to_open is set, if so use it instead of the watch URL
-        link_to_open = self.get('link_to_open', '').strip()
+        link_to_open = self.get('link_to_open') or ''
+        link_to_open = link_to_open.strip() if isinstance(link_to_open, str) else ''
         if link_to_open:
             # Validate and process link_to_open
             if '{%' in link_to_open or '{{' in link_to_open:
