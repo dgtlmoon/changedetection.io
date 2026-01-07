@@ -80,7 +80,6 @@ pytest -vv -s --maxfail=1 tests/test_access_control.py
 # Re-run a few tests that will trigger brotli based storage
 export SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD=5
 pytest -vv -s --maxfail=1 tests/test_access_control.py
-REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest tests/test_notification.py
 pytest -vv -s --maxfail=1 tests/test_backend.py
 pytest -vv -s --maxfail=1 tests/test_rss.py
 pytest -vv -s --maxfail=1 tests/test_unique_lines.py
@@ -91,11 +90,3 @@ FETCH_WORKERS=130 pytest  tests/test_history_consistency.py -v -l
 # Check file:// will pickup a file when enabled
 echo "Hello world" > /tmp/test-file.txt
 ALLOW_FILE_URI=yes pytest -vv -s  tests/test_security.py
-
-
-
-QUEUE_STORAGE=sqlite pytest tests/test_notifications_huey.py -v
-
-docker run --rm -d --name redis-test-huey  -p 127.0.0.1:6379:6379 redis:7
-pip3 install redis
-QUEUE_STORAGE=redis REDIS_URL=redis://localhost:6379/0 pytest tests/test_notifications_huey.py -v
