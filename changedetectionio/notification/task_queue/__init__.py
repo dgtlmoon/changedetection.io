@@ -232,7 +232,7 @@ def init_huey(datastore_path):
 
     # Initialize state retriever service
     from changedetectionio.notification.state_retriever import NotificationStateRetriever
-    state_retriever = NotificationStateRetriever(huey, task_data_manager, _get_task_manager())
+    state_retriever = NotificationStateRetriever(huey, task_data_manager, _get_task_manager(), retry_count=NOTIFICATION_RETRY_COUNT)
     logger.info("Notification state retriever service initialized")
 
     # Configure Huey's logger to only show INFO and above (reduce scheduler DEBUG spam)

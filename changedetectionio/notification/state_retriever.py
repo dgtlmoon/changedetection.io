@@ -25,10 +25,7 @@ class NotificationStateRetriever:
     - Unified event timeline
     """
 
-    # Retry configuration constants
-    NOTIFICATION_RETRY_COUNT = 2  # Number of retries (initial attempt + 2 retries = 3 total)
-
-    def __init__(self, huey, task_data_manager, task_manager):
+    def __init__(self, huey, task_data_manager, task_manager, retry_count=2):
         """
         Initialize state retriever service.
 
@@ -36,10 +33,12 @@ class NotificationStateRetriever:
             huey: Huey instance for queue/schedule access
             task_data_manager: Task data storage manager for retry attempts and delivered notifications
             task_manager: Task manager for result store and metadata access
+            retry_count: Number of retries (default: 2, from NOTIFICATION_RETRY_COUNT)
         """
         self.huey = huey
         self.task_data_manager = task_data_manager
         self.task_manager = task_manager
+        self.retry_count = retry_count
 
     def get_pending_notifications_count(self):
         """
@@ -171,7 +170,7 @@ class NotificationStateRetriever:
                         # Retry number represents which retry this is (1st retry, 2nd retry, etc.)
                         # If there are N attempt files, we're currently on retry #N
                         retry_number = 1  # Default to 1 (first retry after initial failure)
-                        total_attempts = self.NOTIFICATION_RETRY_COUNT + 1  # Initial attempt + retries
+                        total_attempts = self.retry_count + 1  # Initial attempt + retries
                         watch_uuid = notification_data.get('uuid')
                         retry_attempts = []
                         notification_urls = []
