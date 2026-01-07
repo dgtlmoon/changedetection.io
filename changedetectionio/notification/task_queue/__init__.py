@@ -416,51 +416,53 @@ def get_pending_notifications(limit=50):
                             notification_urls = []
 
                             # NOTE: Use "is not None" instead of truthiness check because Huey objects can evaluate to False
-                            if watch_uuid and huey is not None and hasattr(huey.storage, 'path'):
-                                try:
-                                    import os
-                                    import glob
-                                    from .file_storage import _safe_json_load
-                                    attempts_dir = os.path.join(huey.storage.path, 'retry_attempts')
-                                    if os.path.exists(attempts_dir):
-                                        # Load retry attempt files to get notification_urls and payload
-                                        attempt_pattern = os.path.join(attempts_dir, f"{watch_uuid}.*.json")
-                                        for attempt_file in sorted(glob.glob(attempt_pattern)):
-                                            try:
-                                                # Use safe JSON load with corruption handling
-                                                attempt_data = _safe_json_load(attempt_file, 'retry_attempts', huey.storage.path)
-                                                if attempt_data:
-                                                    # Format timestamp for display
-                                                    attempt_time = attempt_data.get('timestamp')
-                                                    if attempt_time:
-                                                        from changedetectionio.notification_service import timestamp_to_localtime
-                                                        attempt_data['timestamp_formatted'] = timestamp_to_localtime(attempt_time)
-                                                    retry_attempts.append(attempt_data)
-                                            except Exception as ae:
-                                                logger.debug(f"Unable to load retry attempt file {attempt_file}: {ae}")
+                            if watch_uuid and huey is not None:
+                                storage_path = _get_storage_path()
+                                if storage_path:
+                                    try:
+                                        import os
+                                        import glob
+                                        from .file_storage import _safe_json_load
+                                        attempts_dir = os.path.join(storage_path, 'retry_attempts')
+                                        if os.path.exists(attempts_dir):
+                                            # Load retry attempt files to get notification_urls and payload
+                                            attempt_pattern = os.path.join(attempts_dir, f"{watch_uuid}.*.json")
+                                            for attempt_file in sorted(glob.glob(attempt_pattern)):
+                                                try:
+                                                    # Use safe JSON load with corruption handling
+                                                    attempt_data = _safe_json_load(attempt_file, 'retry_attempts', storage_path)
+                                                    if attempt_data:
+                                                        # Format timestamp for display
+                                                        attempt_time = attempt_data.get('timestamp')
+                                                        if attempt_time:
+                                                            from changedetectionio.notification_service import timestamp_to_localtime
+                                                            attempt_data['timestamp_formatted'] = timestamp_to_localtime(attempt_time)
+                                                        retry_attempts.append(attempt_data)
+                                                except Exception as ae:
+                                                    logger.debug(f"Unable to load retry attempt file {attempt_file}: {ae}")
 
-                                        if len(retry_attempts) > 0:
-                                            # Current retry number = number of attempt files
-                                            # (1 file = 1st retry, 2 files = 2nd retry, etc.)
-                                            retry_number = len(retry_attempts)
-                                            logger.debug(f"Watch {watch_uuid[:8]}: Found {len(retry_attempts)} retry files, currently on retry #{retry_number}/{total_attempts}")
+                                            if len(retry_attempts) > 0:
+                                                # Current retry number = number of attempt files
+                                                # (1 file = 1st retry, 2 files = 2nd retry, etc.)
+                                                retry_number = len(retry_attempts)
+                                                logger.debug(f"Watch {watch_uuid[:8]}: Found {len(retry_attempts)} retry files, currently on retry #{retry_number}/{total_attempts}")
 
-                                            # Extract notification_urls from latest retry attempt
-                                            latest_attempt = retry_attempts[-1]
-                                            attempt_notification_data = latest_attempt.get('notification_data', {})
-                                            if attempt_notification_data:
-                                                notification_urls = attempt_notification_data.get('notification_urls', [])
+                                                # Extract notification_urls from latest retry attempt
+                                                latest_attempt = retry_attempts[-1]
+                                                attempt_notification_data = latest_attempt.get('notification_data', {})
+                                                if attempt_notification_data:
+                                                    notification_urls = attempt_notification_data.get('notification_urls', [])
+                                            else:
+                                                # Directory exists but no files yet - first retry
+                                                retry_number = 1
+                                                logger.debug(f"Watch {watch_uuid[:8]}: Retry attempts dir exists but empty, first retry (retry #1/{total_attempts})")
                                         else:
-                                            # Directory exists but no files yet - first retry
+                                            # No attempts dir yet - this is first retry (after initial failure)
                                             retry_number = 1
-                                            logger.debug(f"Watch {watch_uuid[:8]}: Retry attempts dir exists but empty, first retry (retry #1/{total_attempts})")
-                                    else:
-                                        # No attempts dir yet - this is first retry (after initial failure)
-                                        retry_number = 1
-                                        logger.debug(f"Watch {watch_uuid[:8]}: No retry attempts dir, this is first retry (retry #1/{total_attempts})")
-                                except Exception as e:
-                                    logger.warning(f"Error reading retry attempts for {watch_uuid}: {e}, defaulting to attempt #1")
-                                    retry_number = 1  # Fallback to 1 on error
+                                            logger.debug(f"Watch {watch_uuid[:8]}: No retry attempts dir, this is first retry (retry #1/{total_attempts})")
+                                    except Exception as e:
+                                        logger.warning(f"Error reading retry attempts for {watch_uuid}: {e}, defaulting to attempt #1")
+                                        retry_number = 1  # Fallback to 1 on error
 
                             pending.append({
                                 'status': 'retrying',
@@ -697,7 +699,7 @@ def get_delivered_notifications(limit=50):
     if huey is None:
         return []
 
-    storage_path = getattr(huey.storage, 'path', None)
+    storage_path = _get_storage_path()
     if not storage_path:
         return []
 
@@ -863,26 +865,28 @@ def get_failed_notifications(limit=100, max_age_days=30):
                         # Load retry attempts for this notification (by watch_uuid)
                         retry_attempts = []
                         notification_watch_uuid = notification_data.get('uuid')
-                        if notification_watch_uuid and hasattr(huey.storage, 'path'):
-                            import os
-                            import glob
-                            from .file_storage import _safe_json_load
+                        if notification_watch_uuid:
+                            storage_path = _get_storage_path()
+                            if storage_path:
+                                import os
+                                import glob
+                                from .file_storage import _safe_json_load
 
-                            attempts_dir = os.path.join(huey.storage.path, 'retry_attempts')
-                            if os.path.exists(attempts_dir):
-                                attempt_pattern = os.path.join(attempts_dir, f"{notification_watch_uuid}.*.json")
-                                for attempt_file in sorted(glob.glob(attempt_pattern)):
-                                    try:
-                                        # Use safe JSON load with corruption handling
-                                        attempt_data = _safe_json_load(attempt_file, 'retry_attempts', huey.storage.path)
-                                        if attempt_data:
-                                            # Format timestamp for display
-                                            attempt_time = attempt_data.get('timestamp')
-                                            if attempt_time:
-                                                attempt_data['timestamp_formatted'] = timestamp_to_localtime(attempt_time)
-                                            retry_attempts.append(attempt_data)
-                                    except Exception as ae:
-                                        logger.debug(f"Unable to load retry attempt file {attempt_file}: {ae}")
+                                attempts_dir = os.path.join(storage_path, 'retry_attempts')
+                                if os.path.exists(attempts_dir):
+                                    attempt_pattern = os.path.join(attempts_dir, f"{notification_watch_uuid}.*.json")
+                                    for attempt_file in sorted(glob.glob(attempt_pattern)):
+                                        try:
+                                            # Use safe JSON load with corruption handling
+                                            attempt_data = _safe_json_load(attempt_file, 'retry_attempts', storage_path)
+                                            if attempt_data:
+                                                # Format timestamp for display
+                                                attempt_time = attempt_data.get('timestamp')
+                                                if attempt_time:
+                                                    attempt_data['timestamp_formatted'] = timestamp_to_localtime(attempt_time)
+                                                retry_attempts.append(attempt_data)
+                                        except Exception as ae:
+                                            logger.debug(f"Unable to load retry attempt file {attempt_file}: {ae}")
 
                         # Merge notification_data from latest retry attempt (has reloaded notification_urls)
                         if retry_attempts:
@@ -1276,10 +1280,23 @@ def _add_to_debug_log(notification_debug_log, message):
 
 
 def _get_storage_path():
-    """Get Huey storage path if available."""
+    """Get Huey storage path if available (works for FileStorage, SQLiteStorage, RedisStorage)."""
     if huey is None:
         return None
+
+    # Try FileStorage 'path' attribute first
     storage_path = getattr(huey.storage, 'path', None)
+
+    # If no 'path', try SQLiteStorage 'filename' attribute
+    if not storage_path:
+        import os
+        db_filename = getattr(huey.storage, 'filename', None)
+        storage_path = os.path.dirname(db_filename) if db_filename else None
+
+    # Fallback to global datastore path (for RedisStorage)
+    if not storage_path:
+        storage_path = _datastore_path
+
     if storage_path:
         logger.debug(f"Storage type: {type(huey.storage).__name__}, path: {storage_path}")
     return storage_path
@@ -1364,10 +1381,14 @@ def _store_retry_attempt(n_object, error, payload=None):
     import time
     import uuid
 
-    if huey is None or not hasattr(huey.storage, 'path'):
+    if huey is None:
         return
 
-    attempts_dir = os.path.join(huey.storage.path, 'retry_attempts')
+    storage_path = _get_storage_path()
+    if not storage_path:
+        return
+
+    attempts_dir = os.path.join(storage_path, 'retry_attempts')
     os.makedirs(attempts_dir, exist_ok=True)
 
     watch_uuid = n_object.get('uuid', str(uuid.uuid4()))

@@ -42,8 +42,15 @@ class SqliteStorageTaskManager(HueyTaskManager):
             conn = sqlite3.connect(self.storage.filename)
             cursor = conn.cursor()
 
-            # Query all results from database
-            cursor.execute("SELECT key, value FROM results")
+            # SQLite storage uses 'kv' table for results, not 'results'
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='kv'")
+            if not cursor.fetchone():
+                conn.close()
+                return results
+
+            # Query all results from kv table
+            # Huey SQLiteStorage stores everything in kv table with queue=<name>
+            cursor.execute("SELECT key, value FROM kv WHERE queue = ?", (self.storage.name,))
             for row in cursor.fetchall():
                 task_id = row[0]
                 result_data = pickle.loads(row[1])
@@ -51,19 +58,21 @@ class SqliteStorageTaskManager(HueyTaskManager):
 
             conn.close()
         except Exception as e:
-            logger.error(f"Error enumerating SQLite results: {e}")
+            logger.debug(f"Error enumerating SQLite results: {e}")
 
         return results
 
     def delete_result(self, task_id):
         """Delete result from SQLite database."""
-        if not hasattr(self.storage, 'filename'):
+        if not hasattr(self.storage, 'filename') or self.storage.filename is None:
             return False
         import sqlite3
         try:
             conn = sqlite3.connect(self.storage.filename)
             cursor = conn.cursor()
-            cursor.execute("DELETE FROM results WHERE key = ?", (task_id,))
+            # SQLite stores results in kv table
+            cursor.execute("DELETE FROM kv WHERE queue = ? AND key = ?",
+                          (self.storage.name, task_id))
             conn.commit()
             deleted = cursor.rowcount > 0
             conn.close()
@@ -78,18 +87,23 @@ class SqliteStorageTaskManager(HueyTaskManager):
         queue_count = 0
         schedule_count = 0
 
-        if not hasattr(self.storage, 'filename'):
+        if not hasattr(self.storage, 'filename') or self.storage.filename is None:
             return queue_count, schedule_count
         import sqlite3
         try:
             conn = sqlite3.connect(self.storage.filename)
             cursor = conn.cursor()
 
-            cursor.execute("SELECT COUNT(*) FROM queue")
-            queue_count = cursor.fetchone()[0]
+            # SQLite uses 'task' table for queue, 'schedule' for scheduled items
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='task'")
+            if cursor.fetchone():
+                cursor.execute("SELECT COUNT(*) FROM task WHERE queue = ?", (self.storage.name,))
+                queue_count = cursor.fetchone()[0]
 
-            cursor.execute("SELECT COUNT(*) FROM schedule")
-            schedule_count = cursor.fetchone()[0]
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='schedule'")
+            if cursor.fetchone():
+                cursor.execute("SELECT COUNT(*) FROM schedule WHERE queue = ?", (self.storage.name,))
+                schedule_count = cursor.fetchone()[0]
 
             conn.close()
         except Exception as e:
@@ -117,16 +131,25 @@ class SqliteStorageTaskManager(HueyTaskManager):
             conn = sqlite3.connect(self.storage.filename)
             cursor = conn.cursor()
 
-            cursor.execute("DELETE FROM queue")
-            cleared['queue'] = cursor.rowcount
+            # SQLite uses 'task' table for queue
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='task'")
+            if cursor.fetchone():
+                cursor.execute("DELETE FROM task WHERE queue = ?", (self.storage.name,))
+                cleared['queue'] = cursor.rowcount
 
-            cursor.execute("DELETE FROM schedule")
-            cleared['schedule'] = cursor.rowcount
+            # SQLite uses 'schedule' table
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='schedule'")
+            if cursor.fetchone():
+                cursor.execute("DELETE FROM schedule WHERE queue = ?", (self.storage.name,))
+                cleared['schedule'] = cursor.rowcount
 
-            cursor.execute("DELETE FROM results")
-            cleared['results'] = cursor.rowcount
+            # SQLite uses 'kv' table for results
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='kv'")
+            if cursor.fetchone():
+                cursor.execute("DELETE FROM kv WHERE queue = ?", (self.storage.name,))
+                cleared['results'] = cursor.rowcount
 
-            # Also clear task_metadata table if it exists
+            # Check and clear task_metadata table if it exists
             cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='task_metadata'")
             if cursor.fetchone():
                 cursor.execute("DELETE FROM task_metadata")
