@@ -468,6 +468,61 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage, datasto
     # Message will come from `flask_expects_json`
     assert b'Additional properties are not allowed' in res.data
 
+    ######################################################
+    # Test link_to_open field
+    # Set link_to_open via API
+    link_to_open_url = "https://example.com/blog/"
+    res = client.put(
+        url_for("watch", uuid=watch_uuid),
+        headers={'x-api-key': api_key, 'content-type': 'application/json'},
+        data=json.dumps({
+            "link_to_open": link_to_open_url
+        }),
+    )
+    if res.status_code != 200:
+        # Print error for debugging
+        print(f"API error response: {res.data.decode('utf-8')}")
+    assert res.status_code == 200, f"HTTP PUT update with link_to_open was sent OK. Got {res.status_code}: {res.data.decode('utf-8') if res.data else 'No response body'}"
+
+    # Verify link_to_open was saved and link property uses it
+    res = client.get(
+        url_for("watch", uuid=watch_uuid),
+        headers={'x-api-key': api_key}
+    )
+    watch = res.json
+    assert watch.get('link_to_open') == link_to_open_url, "link_to_open was saved correctly"
+    # The link property should use link_to_open when set
+    assert watch.get('link') == link_to_open_url, "link property should use link_to_open when set"
+
+    # Test that link falls back to URL when link_to_open is empty
+    res = client.put(
+        url_for("watch", uuid=watch_uuid),
+        headers={'x-api-key': api_key, 'content-type': 'application/json'},
+        data=json.dumps({
+            "link_to_open": ""
+        }),
+    )
+    assert res.status_code == 200
+
+    res = client.get(
+        url_for("watch", uuid=watch_uuid),
+        headers={'x-api-key': api_key}
+    )
+    watch = res.json
+    # When link_to_open is empty, link should fall back to URL
+    assert watch.get('link') == test_url, "link should fall back to URL when link_to_open is empty"
+
+    # Test invalid link_to_open URL
+    res = client.put(
+        url_for("watch", uuid=watch_uuid),
+        headers={'x-api-key': api_key, 'content-type': 'application/json'},
+        data=json.dumps({
+            "link_to_open": "not-a-valid-url"
+        }),
+    )
+    assert res.status_code == 400, "Should reject invalid link_to_open URL"
+
+    ######################################################
 
     # Try a XSS URL
     res = client.put(

@@ -803,6 +803,8 @@ class processor_text_json_diff_form(commonSettingsForm):
 
     title = StringField(_l('Title'), default='')
 
+    link_to_open = StringField(_l('Link to open'), validators=[validators.Optional(), ValidateSimpleURL()], render_kw={"placeholder": "https://..."})
+
     ignore_text = StringListField(_l('Ignore lines containing'), [ValidateListRegex()])
     headers = StringDictKeyValue('Request headers')
     body = TextAreaField(_l('Request body'), [validators.Optional()])
@@ -866,6 +868,19 @@ class processor_text_json_diff_form(commonSettingsForm):
             logger.error(e)
             self.url.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
             result = False
+
+        # Attempt to validate jinja2 templates in link_to_open if provided
+        if self.link_to_open.data and self.link_to_open.data.strip():
+            try:
+                jinja_render(template_str=self.link_to_open.data)
+            except ModuleNotFoundError as e:
+                logger.error(e)
+                self.link_to_open.errors.append(gettext('Invalid template syntax configuration: %(error)s') % {'error': e})
+                result = False
+            except Exception as e:
+                logger.error(e)
+                self.link_to_open.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
+                result = False
 
         # Attempt to validate jinja2 templates in the body
         if self.body.data and self.body.data.strip():

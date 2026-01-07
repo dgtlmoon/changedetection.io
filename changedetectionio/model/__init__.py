@@ -125,6 +125,7 @@ class watch_base(dict):
                 },
             },
             'title': None, # An arbitrary field that overrides 'page_title'
+            'link_to_open': None,  # Optional alternative URL to open when clicking the watch or in notifications
             'track_ldjson_price_data': None,
             'trim_text_whitespace': False,
             'remove_duplicate_lines': False,

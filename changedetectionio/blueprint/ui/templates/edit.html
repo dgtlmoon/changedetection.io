@@ -84,6 +84,10 @@
                         {{ render_field(form.title, class="m-d", placeholder=watch.label) }}
                         <span class="pure-form-message-inline">{{ _('Automatically uses the page title if found, you can also use your own title/description here') }}</span>
                     </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.link_to_open, class="m-d", placeholder="https://...") }}
+                        <span class="pure-form-message-inline">{{ _('Optional: URL to open when clicking the watch or in notifications. If empty, the watched URL will be used. Useful for RSS feeds or API endpoints where the monitored URL differs from the URL to open.') }}</span>
+                    </div>
                     <div class="pure-control-group time-between-check border-fieldset">
 
                         {{ render_checkbox_field(form.time_between_check_use_default, class="use-default-timecheck") }}

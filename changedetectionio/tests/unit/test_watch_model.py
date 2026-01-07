@@ -61,5 +61,37 @@ class TestDiffBuilder(unittest.TestCase):
         p = watch.get_from_version_based_on_last_viewed
         assert p == "100", "Correct with only one history snapshot"
 
+    def test_watch_link_property_with_link_to_open(self):
+        """Test that link property uses link_to_open when set, otherwise falls back to URL"""
+        watch = Watch.model(datastore_path='/tmp', default={'url': 'https://example.com/feed/rss'})
+        
+        # Test 1: When link_to_open is not set, should use URL
+        assert watch.link == 'https://example.com/feed/rss'
+        
+        # Test 2: When link_to_open is set, should use it
+        watch['link_to_open'] = 'https://example.com/blog/'
+        assert watch.link == 'https://example.com/blog/'
+        
+        # Test 3: When link_to_open is empty string, should fall back to URL
+        watch['link_to_open'] = ''
+        assert watch.link == 'https://example.com/feed/rss'
+        
+        # Test 4: When link_to_open is None, should fall back to URL
+        watch['link_to_open'] = None
+        assert watch.link == 'https://example.com/feed/rss'
+        
+        # Test 5: When link_to_open has whitespace, should be trimmed and used
+        watch['link_to_open'] = '  https://example.com/blog/  '
+        assert watch.link == 'https://example.com/blog/'
+        
+        # Test 6: When link_to_open is invalid URL, should fall back to URL
+        watch['link_to_open'] = 'not-a-valid-url'
+        assert watch.link == 'https://example.com/feed/rss'
+        
+        # Test 7: When URL is invalid, link should return 'DISABLED'
+        watch['url'] = 'invalid-url'
+        watch['link_to_open'] = None
+        assert watch.link == 'DISABLED'
+
 if __name__ == '__main__':
     unittest.main()

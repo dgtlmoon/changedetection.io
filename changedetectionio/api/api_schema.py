@@ -68,6 +68,7 @@ def build_watch_json_schema(d):
 
     # Can also be a string (or None by default above)
     for v in ['body',
+              'link_to_open',
               'notification_body',
               'notification_format',
               'notification_title',
