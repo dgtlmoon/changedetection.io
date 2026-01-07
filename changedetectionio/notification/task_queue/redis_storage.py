@@ -94,7 +94,7 @@ class RedisStorageTaskManager(HueyTaskManager):
         return queue_count, schedule_count
 
     def clear_all_notifications(self):
-        """Clear all notifications from Redis and file-based retry attempts/success."""
+        """Clear all notifications from Redis including task data stored natively in Redis."""
         cleared = {
             'queue': 0,
             'schedule': 0,
@@ -106,8 +106,6 @@ class RedisStorageTaskManager(HueyTaskManager):
 
         if not hasattr(self.storage, 'conn'):
             return cleared
-
-        import os
 
         try:
             name = self.storage.name
@@ -132,24 +130,22 @@ class RedisStorageTaskManager(HueyTaskManager):
                 cleared['task_metadata'] = len(metadata_keys)
                 self.storage.conn.delete(*metadata_keys)
 
-            # Clear file-based retry attempts and success notifications
-            # These are stored as JSON files even in Redis mode (hybrid approach)
-            if self.storage_path:
-                # Clear retry attempts
-                attempts_dir = os.path.join(self.storage_path, 'retry_attempts')
-                if os.path.exists(attempts_dir):
-                    for f in os.listdir(attempts_dir):
-                        if f.endswith('.json'):
-                            os.remove(os.path.join(attempts_dir, f))
-                            cleared['retry_attempts'] += 1
+            # Clear task data (retry attempts and delivered notifications) natively stored in Redis
+            # These are now stored using RedisTaskDataStorageManager with keys like:
+            # - {name}:task_data:retry:{watch_uuid}:{attempt_number}
+            # - {name}:task_data:delivered:{task_id}
+            task_data_keys = self.storage.conn.keys(f"{name}:task_data:*")
+            if task_data_keys:
+                # Count retry vs delivered
+                for key in task_data_keys:
+                    key_str = key.decode('utf-8') if isinstance(key, bytes) else key
+                    if ':retry:' in key_str:
+                        cleared['retry_attempts'] += 1
+                    elif ':delivered:' in key_str:
+                        cleared['delivered'] += 1
 
-                # Clear delivered (success) notifications
-                success_dir = os.path.join(self.storage_path, 'success')
-                if os.path.exists(success_dir):
-                    for f in os.listdir(success_dir):
-                        if f.startswith('success-') and f.endswith('.json'):
-                            os.remove(os.path.join(success_dir, f))
-                            cleared['delivered'] += 1
+                # Delete all task data keys
+                self.storage.conn.delete(*task_data_keys)
 
         except Exception as e:
             logger.error(f"Error clearing Redis notifications: {e}")
