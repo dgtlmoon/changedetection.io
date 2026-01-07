@@ -488,6 +488,9 @@ def create_notification_parameters(n_object: NotificationContextData, datastore)
 
     watch_url = n_object['watch_url']
 
+    # Get link_to_open from watch if available, otherwise use watch_url
+    link_to_open = watch.link if watch else watch_url
+
     # Build URLs manually instead of using url_for() to avoid requiring a request context
     # This allows notifications to be processed in background threads
     uuid = n_object['uuid']
@@ -512,6 +515,7 @@ def create_notification_parameters(n_object: NotificationContextData, datastore)
             'watch_tag': watch_tag if watch_tag is not None else '',
             'watch_title': watch_title if watch_title is not None else '',
             'watch_url': watch_url,
+            'link_to_open': link_to_open,
             'watch_uuid': n_object['uuid'],
         })
 

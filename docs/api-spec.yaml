@@ -135,6 +135,11 @@ components:
           type: string
           description: Custom title for the web page change monitor (watch), not to be confused with page_title
           maxLength: 5000
+        link_to_open:
+          type: string
+          format: uri
+          description: Optional URL to open when clicking the watch or in notifications. If empty, the watched URL will be used. Useful for RSS feeds or API endpoints where the monitored URL differs from the URL to open.
+          maxLength: 5000
         tag:
           type: string
           description: Tag UUID to associate with this web page change monitor (watch)

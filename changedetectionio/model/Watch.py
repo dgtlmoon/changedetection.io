@@ -190,6 +190,24 @@ class model(watch_base):
 
     @property
     def link(self):
+        # Check if link_to_open is set, if so use it instead of the watch URL
+        link_to_open = self.get('link_to_open', '').strip()
+        if link_to_open:
+            # Validate and process link_to_open
+            if '{%' in link_to_open or '{{' in link_to_open:
+                # Jinja2 available in URLs along with https://pypi.org/project/jinja2-time/
+                try:
+                    link_to_open = jinja_render(template_str=link_to_open)
+                except Exception as e:
+                    logger.critical(f"Invalid link_to_open template for: '{link_to_open}' - {str(e)}")
+                    # Fall back to URL if link_to_open template is invalid
+                    link_to_open = ''
+            
+            if link_to_open and is_safe_valid_url(link_to_open):
+                if link_to_open.startswith('source:'):
+                    link_to_open = link_to_open.replace('source:', '')
+                return link_to_open
+            # If link_to_open is invalid, fall through to use URL
 
         url = self.get('url', '')
         if not is_safe_valid_url(url):

@@ -127,6 +127,11 @@ class Watch(Resource):
         # XSS etc protection
         if request.json.get('url') and not is_safe_valid_url(request.json.get('url')):
             return "Invalid URL", 400
+        
+        # Validate link_to_open if provided
+        if request.json.get('link_to_open') and request.json.get('link_to_open').strip():
+            if not is_safe_valid_url(request.json.get('link_to_open')):
+                return "Invalid link_to_open URL", 400
 
         # Handle processor-config-* fields separately (save to JSON, not datastore)
         from changedetectionio import processors
