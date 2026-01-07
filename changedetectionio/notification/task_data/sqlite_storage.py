@@ -311,6 +311,34 @@ class SqliteTaskDataStorageManager(HueyTaskDataStorageManager):
             logger.debug(f"Error cleaning up old delivered notifications from SQLite: {e}")
             return 0
 
+    def clear_retry_attempts(self, watch_uuid):
+        """Clear all retry attempts for a specific watch from SQLite."""
+        if not watch_uuid:
+            return 0
+
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+
+            # Delete all retry attempts for this watch
+            cursor.execute(
+                "DELETE FROM notification_retry_attempts WHERE watch_uuid = ?",
+                (watch_uuid,)
+            )
+
+            cleared_count = cursor.rowcount
+            conn.commit()
+            conn.close()
+
+            if cleared_count > 0:
+                logger.debug(f"Cleared {cleared_count} retry attempts for watch {watch_uuid[:8]} from SQLite")
+
+            return cleared_count
+
+        except Exception as e:
+            logger.debug(f"Error clearing retry attempts for watch {watch_uuid} from SQLite: {e}")
+            return 0
+
     def clear_all_data(self):
         """Clear all retry attempts and delivered notifications from SQLite."""
         try:

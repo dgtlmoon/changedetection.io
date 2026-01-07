@@ -34,18 +34,18 @@ class RedisTaskDataStorageManager(HueyTaskDataStorageManager):
         """
         Get storage path for Redis backend.
 
-        Redis stores everything in Redis, but we return the fallback path
-        for backward compatibility (not actually used for storage).
+        Redis stores EVERYTHING natively in Redis (keys + JSON strings).
+        This property returns None because Redis doesn't use filesystem storage.
+
+        All operations (store/load/cleanup) are implemented using native Redis commands
+        and do not touch the filesystem.
 
         Returns:
-            str: Fallback storage path (not used for actual storage)
+            None - Redis uses native database storage, not filesystem
         """
-        # Use explicit path if provided (for testing)
-        if self._explicit_storage_path:
-            return self._explicit_storage_path
-
-        # Return fallback path for backward compatibility
-        return self._fallback_path
+        # Redis stores everything in Redis database, no filesystem path needed
+        # If any code tries to use storage_path, it will get None and should fail fast
+        return None
 
     @property
     def redis_conn(self):
@@ -278,6 +278,32 @@ class RedisTaskDataStorageManager(HueyTaskDataStorageManager):
             logger.debug(f"Error cleaning up old delivered notifications from Redis: {e}")
 
         return deleted_count
+
+    def clear_retry_attempts(self, watch_uuid):
+        """Clear all retry attempts for a specific watch from Redis."""
+        if not self.redis_conn or not watch_uuid:
+            return 0
+
+        try:
+            key_prefix = self._get_key_prefix()
+
+            # Find all retry attempt keys for this watch
+            pattern = f"{key_prefix}:retry:{watch_uuid}:*"
+            retry_keys = self.redis_conn.keys(pattern)
+
+            cleared_count = 0
+            if retry_keys:
+                self.redis_conn.delete(*retry_keys)
+                cleared_count = len(retry_keys)
+
+            if cleared_count > 0:
+                logger.debug(f"Cleared {cleared_count} retry attempts for watch {watch_uuid[:8]} from Redis")
+
+            return cleared_count
+
+        except Exception as e:
+            logger.debug(f"Error clearing retry attempts for watch {watch_uuid} from Redis: {e}")
+            return 0
 
     def clear_all_data(self):
         """Clear all retry attempts and delivered notifications from Redis."""

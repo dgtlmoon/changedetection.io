@@ -143,10 +143,12 @@ def _get_task_manager():
         return None
 
 
-# Global Huey instance, datastore path, and task data manager (initialized later)
+# Global Huey instance, datastore path, managers, and services (initialized later)
 huey = None
 _datastore_path = None  # For file-based retry attempts/success in all backends
 task_data_manager = None  # Polymorphic manager for retry attempts and delivered notifications
+retry_service = None  # Retry service for failed/scheduled notifications
+state_retriever = None  # State retriever service for notification display
 
 
 def init_huey(datastore_path):
@@ -161,7 +163,7 @@ def init_huey(datastore_path):
     Returns:
         Huey instance configured for the specified storage backend
     """
-    global huey, _datastore_path, task_data_manager
+    global huey, _datastore_path, task_data_manager, state_retriever
 
     # Store datastore path globally for file-based retry attempts/success
     _datastore_path = datastore_path
@@ -228,6 +230,11 @@ def init_huey(datastore_path):
     task_data_manager = create_task_data_storage_manager(huey.storage, fallback_path=_datastore_path)
     logger.info(f"Task data storage manager initialized: {type(task_data_manager).__name__}")
 
+    # Initialize state retriever service
+    from changedetectionio.notification.state_retriever import NotificationStateRetriever
+    state_retriever = NotificationStateRetriever(huey, task_data_manager, _get_task_manager())
+    logger.info("Notification state retriever service initialized")
+
     # Configure Huey's logger to only show INFO and above (reduce scheduler DEBUG spam)
     # Don't do this when running under pytest - tests may want to see DEBUG logs
     import logging
@@ -257,41 +264,23 @@ def get_pending_notifications_count():
     """
     Get count of pending notifications (immediate queue + scheduled/retrying).
 
-    This includes:
-    - Tasks in the immediate queue (ready to execute now)
-    - Tasks in the schedule (waiting for retry or delayed execution)
-
-    Supports FileStorage, SqliteStorage, and RedisStorage backends.
+    Delegates to NotificationStateRetriever for execution.
 
     Returns:
         Integer count of pending notifications, or None if unable to determine
     """
-    if huey is None:
+    retriever = _get_state_retriever()
+    if retriever is None:
         return 0
 
-    try:
-        # Get counts using task manager (polymorphic, backend-agnostic)
-        queue_count, schedule_count = _count_storage_items()
-
-        total_count = queue_count + schedule_count
-
-        if queue_count > 0:
-            logger.debug(f"Pending notifications - queue: {queue_count}")
-        if schedule_count > 0:
-            logger.debug(f"Pending notifications - schedule: {schedule_count}")
-        if total_count > 0:
-            logger.info(f"Total pending/retrying notifications: {total_count}")
-
-        return total_count
-
-    except Exception as e:
-        logger.error(f"Error getting pending notification count: {e}", exc_info=True)
-        return None  # Unable to determine
+    return retriever.get_pending_notifications_count()
 
 
 def get_pending_notifications(limit=50):
     """
     Get list of pending/retrying notifications from queue and schedule.
+
+    Delegates to NotificationStateRetriever for execution.
 
     Args:
         limit: Maximum number to return (default: 50)
@@ -299,147 +288,11 @@ def get_pending_notifications(limit=50):
     Returns:
         List of dicts with pending notification info
     """
-    if huey is None:
+    retriever = _get_state_retriever()
+    if retriever is None:
         return []
 
-    pending = []
-    from changedetectionio.notification.message_unpacker import HueyMessageUnpacker
-
-    try:
-        # Use Huey's built-in methods to get queued and scheduled items
-        # These methods return pickled bytes that need to be unpickled
-
-        # Get queued tasks (immediate execution)
-        if hasattr(huey.storage, 'enqueued_items'):
-            try:
-                queued_items = list(huey.storage.enqueued_items(limit=limit))
-                for queued_bytes in queued_items:
-                    if len(pending) >= limit:
-                        break
-
-                    # Use centralized unpacker
-                    result = HueyMessageUnpacker.unpack_queued_notification(queued_bytes, huey)
-                    if result is None:
-                        continue
-
-                    task_id, notification_data = result
-
-                    # Get metadata for timestamp
-                    metadata = _get_task_metadata(task_id) if task_id else None
-                    queued_timestamp = metadata.get('timestamp') if metadata else None
-
-                    # Format timestamp for display
-                    from changedetectionio.notification_service import timestamp_to_localtime
-                    queued_at_formatted = timestamp_to_localtime(queued_timestamp) if queued_timestamp else 'Unknown'
-
-                    pending.append({
-                        'status': 'queued',
-                        'watch_url': notification_data.get('watch_url', 'Unknown'),
-                        'watch_uuid': notification_data.get('uuid'),
-                        'task_id': task_id,
-                        'queued_at': queued_timestamp,
-                        'queued_at_formatted': queued_at_formatted,
-                    })
-            except Exception as e:
-                logger.debug(f"Error getting queued items: {e}")
-
-        # Get scheduled tasks (retrying)
-        if hasattr(huey.storage, 'scheduled_items'):
-            try:
-                scheduled_items = list(huey.storage.scheduled_items(limit=limit))
-                for scheduled_bytes in scheduled_items:
-                    if len(pending) >= limit:
-                        break
-
-                    # Use centralized unpacker
-                    result = HueyMessageUnpacker.unpack_scheduled_notification(scheduled_bytes, huey)
-                    if result is None:
-                        continue
-
-                    task_id, notification_data, eta = result
-
-                    # Calculate retry timing using unpacker utility
-                    retry_in_seconds, eta_formatted = HueyMessageUnpacker.calculate_retry_timing(eta)
-
-                    # Convert eta to Unix timestamp for JavaScript (with safety check)
-                    retry_at_timestamp = None
-                    if eta and hasattr(eta, 'timestamp'):
-                        try:
-                            # Huey stores ETA as naive datetime in UTC - need to add timezone info
-                            if eta.tzinfo is None:
-                                # Naive datetime - assume it's UTC (Huey's default)
-                                import datetime
-                                eta = eta.replace(tzinfo=datetime.timezone.utc)
-                            retry_at_timestamp = int(eta.timestamp())
-                            logger.debug(f"ETA after timezone fix: {eta}, Timestamp: {retry_at_timestamp}")
-                        except Exception as e:
-                            logger.debug(f"Error converting eta to timestamp: {e}")
-
-                    # Get original queued timestamp from metadata
-                    metadata = _get_task_metadata(task_id) if task_id else None
-                    queued_timestamp = metadata.get('timestamp') if metadata else None
-
-                    # Format timestamp for display
-                    from changedetectionio.notification_service import timestamp_to_localtime
-                    queued_at_formatted = timestamp_to_localtime(queued_timestamp) if queued_timestamp else 'Unknown'
-
-                    # Get retry count from retry_attempts (using polymorphic task_data_manager)
-                    # Retry number represents which retry this is (1st retry, 2nd retry, etc.)
-                    # If there are N attempt files, we're currently on retry #N
-                    retry_number = 1  # Default to 1 (first retry after initial failure)
-                    total_attempts = NOTIFICATION_RETRY_COUNT + 1  # Initial attempt + retries
-                    watch_uuid = notification_data.get('uuid')
-                    retry_attempts = []
-                    notification_urls = []
-
-                    # Load retry attempts using polymorphic manager
-                    if watch_uuid and task_data_manager is not None:
-                        try:
-                            retry_attempts = task_data_manager.load_retry_attempts(watch_uuid)
-
-                            if len(retry_attempts) > 0:
-                                # Current retry number = number of attempt files
-                                # (1 file = 1st retry, 2 files = 2nd retry, etc.)
-                                retry_number = len(retry_attempts)
-                                logger.debug(f"Watch {watch_uuid[:8]}: Found {len(retry_attempts)} retry files, currently on retry #{retry_number}/{total_attempts}")
-
-                                # Extract notification_urls from latest retry attempt
-                                latest_attempt = retry_attempts[-1]
-                                attempt_notification_data = latest_attempt.get('notification_data', {})
-                                if attempt_notification_data:
-                                    notification_urls = attempt_notification_data.get('notification_urls', [])
-                            else:
-                                # No retry attempts yet - first retry
-                                retry_number = 1
-                                logger.debug(f"Watch {watch_uuid[:8]}: No retry attempts yet, first retry (retry #1/{total_attempts})")
-                        except Exception as e:
-                            logger.warning(f"Error reading retry attempts for {watch_uuid}: {e}, defaulting to attempt #1")
-                            retry_number = 1  # Fallback to 1 on error
-
-                    pending.append({
-                        'status': 'retrying',
-                        'watch_url': notification_data.get('watch_url', 'Unknown'),
-                        'watch_uuid': notification_data.get('uuid'),
-                        'retry_at': eta,
-                        'retry_at_formatted': eta_formatted,
-                        'retry_at_timestamp': retry_at_timestamp,
-                        'retry_in_seconds': retry_in_seconds,
-                        'task_id': task_id,
-                        'queued_at': queued_timestamp,
-                        'queued_at_formatted': queued_at_formatted,
-                        'retry_number': retry_number,
-                        'total_retries': total_attempts,
-                        'retry_attempts': retry_attempts,
-                        'notification_urls': notification_urls,
-                    })
-            except Exception as e:
-                logger.debug(f"Error getting scheduled items: {e}")
-
-    except Exception as e:
-        logger.error(f"Error getting pending notifications: {e}", exc_info=True)
-
-    logger.debug(f"get_pending_notifications returning {len(pending)} items")
-    return pending
+    return retriever.get_pending_notifications(limit=limit)
 
 
 def _enumerate_results():
@@ -461,183 +314,36 @@ def _enumerate_results():
 def get_all_notification_events(limit=100):
     """
     Get ALL notification events in a unified format for timeline view.
-    Returns successful deliveries, queued, retrying, and failed notifications.
 
-    Returns list sorted by timestamp (newest first) with structure:
-    {
-        'id': 'task_id or unique_id',
-        'status': 'delivered' | 'queued' | 'retrying' | 'failed',
-        'timestamp': unix_timestamp,
-        'timestamp_formatted': 'human readable',
-        'watch_uuid': 'uuid',
-        'watch_url': 'url',
-        'watch_title': 'title or truncated url',
-        'notification_urls': ['endpoint1', 'endpoint2'],
-        'retry_number': 1,  # for retrying status
-        'total_retries': 3,  # for retrying status
-        'apprise_logs': 'logs text',
-        'error': 'error text if failed'
-    }
-    """
-    events = []
+    Delegates to NotificationStateRetriever for execution.
 
-    # 1. Get delivered (successful) notifications (up to 100)
-    delivered = get_delivered_notifications(limit=limit)
-    for success in delivered:
-        events.append({
-            'id': success.get('task_id') or f"success-{success.get('timestamp', 0)}",
-            'status': 'delivered',
-            'timestamp': success.get('timestamp'),
-            'timestamp_formatted': success.get('timestamp_formatted'),
-            'watch_uuid': success.get('watch_uuid'),
-            'watch_url': success.get('watch_url'),
-            'watch_title': success.get('watch_url', 'Unknown')[:50],
-            'notification_urls': success.get('notification_urls', []),
-            'apprise_logs': '\n'.join(success.get('apprise_logs', [])) if isinstance(success.get('apprise_logs'), list) else success.get('apprise_logs', ''),
-            'payload': success.get('payload'),
-            'error': None
-        })
-
-    # 2. Get pending/queued notifications
-    pending = get_pending_notifications(limit=limit)
-    for item in pending:
-        status = 'retrying' if item.get('status') == 'retrying' else 'queued'
-
-        # Get apprise logs and payload for this task if available
-        apprise_logs = None
-        payload = None
-        task_id = item.get('task_id')
-        if task_id:
-            log_data = get_task_apprise_log(task_id)
-            if log_data and log_data.get('apprise_log'):
-                apprise_logs = log_data.get('apprise_log')
-            # Get payload from retry attempts if available
-            retry_attempts = item.get('retry_attempts', [])
-            if retry_attempts:
-                payload = retry_attempts[-1].get('payload')
-
-        events.append({
-            'id': task_id,
-            'status': status,
-            'timestamp': item.get('queued_at'),
-            'timestamp_formatted': item.get('queued_at_formatted'),
-            'watch_uuid': item.get('watch_uuid'),
-            'watch_url': item.get('watch_url'),
-            'watch_title': item.get('watch_url', 'Unknown')[:50],
-            'notification_urls': item.get('notification_urls', []) if item.get('notification_urls') else [],
-            'retry_number': item.get('retry_number'),
-            'total_retries': item.get('total_retries'),
-            'retry_at': item.get('retry_at_timestamp'),
-            'retry_at_formatted': item.get('retry_at_formatted'),
-            'apprise_logs': apprise_logs,
-            'payload': payload,
-            'error': None
-        })
-
-    # 3. Get failed notifications (dead letter)
-    failed = get_failed_notifications(limit=limit)
-    for item in failed:
-        # Get apprise logs and payload for failed tasks
-        apprise_logs = None
-        payload = None
-        task_id = item.get('task_id')
-        if task_id:
-            log_data = get_task_apprise_log(task_id)
-            if log_data and log_data.get('apprise_log'):
-                apprise_logs = log_data.get('apprise_log')
-
-        # Get payload from retry attempts (has the most recent attempt data)
-        retry_attempts = item.get('retry_attempts', [])
-        if retry_attempts:
-            payload = retry_attempts[-1].get('payload')
-
-        events.append({
-            'id': task_id,
-            'status': 'failed',
-            'timestamp': item.get('timestamp'),
-            'timestamp_formatted': item.get('timestamp_formatted'),
-            'watch_uuid': item.get('notification_data', {}).get('uuid'),
-            'watch_url': item.get('notification_data', {}).get('watch_url'),
-            'watch_title': item.get('notification_data', {}).get('watch_url', 'Unknown')[:50],
-            'notification_urls': item.get('notification_data', {}).get('notification_urls', []),
-            'apprise_logs': apprise_logs,
-            'payload': payload,
-            'error': item.get('error')
-        })
-
-    # Sort by timestamp (newest first)
-    events.sort(key=lambda x: x.get('timestamp', 0) or 0, reverse=True)
-
-    # HTML escape user-controlled fields to prevent XSS in UI
-    from changedetectionio.jinja2_custom.safe_jinja import render_fully_escaped
-    for event in events:
-        # Escape apprise logs
-        if event.get('apprise_logs'):
-            event['apprise_logs'] = render_fully_escaped(event['apprise_logs'])
-
-        # Escape error messages
-        if event.get('error'):
-            event['error'] = render_fully_escaped(event['error'])
-
-        # Escape payload fields (notification title, body, format)
-        if event.get('payload') and isinstance(event['payload'], dict):
-            if event['payload'].get('notification_title'):
-                event['payload']['notification_title'] = render_fully_escaped(event['payload']['notification_title'])
-            if event['payload'].get('notification_body'):
-                event['payload']['notification_body'] = render_fully_escaped(event['payload']['notification_body'])
-            if event['payload'].get('notification_format'):
-                event['payload']['notification_format'] = render_fully_escaped(event['payload']['notification_format'])
-
-    # Limit results
-    return events[:limit]
-
-
-def _cleanup_old_success_notifications(success_dir, keep=50):
-    """
-    Clean up old success notification files, keeping only the newest 'keep' files.
-
-    This is called after each successful notification to maintain a manageable number of files.
-    Can also be called on startup to clean up old files.
+    Returns list sorted by timestamp (newest first) with events for:
+    - delivered (successful) notifications
+    - queued notifications
+    - retrying notifications
+    - failed notifications (dead letter)
 
     Args:
-        success_dir: Directory containing success-*.json files
-        keep: Number of newest files to keep (default: 50)
+        limit: Maximum number of events to return (default: 100)
+
+    Returns:
+        List of event dicts with status, timestamp, watch info, logs, etc.
     """
-    try:
-        import os
-        if not os.path.exists(success_dir):
-            return
+    retriever = _get_state_retriever()
+    if retriever is None:
+        return []
 
-        # Get all success-*.json files
-        success_files = [f for f in os.listdir(success_dir) if f.startswith('success-') and f.endswith('.json')]
+    return retriever.get_all_notification_events(limit=limit)
 
-        # If we're under the limit, no cleanup needed
-        if len(success_files) <= keep:
-            return
 
-        # Sort by modification time (oldest first for deletion)
-        success_files.sort(key=lambda f: os.path.getmtime(os.path.join(success_dir, f)))
-
-        # Delete oldest files beyond the keep limit
-        files_to_delete = success_files[:-keep]  # All but the newest 'keep' files
-        for filename in files_to_delete:
-            try:
-                os.remove(os.path.join(success_dir, filename))
-            except Exception as e:
-                logger.debug(f"Error deleting old success file {filename}: {e}")
-
-        if files_to_delete:
-            logger.debug(f"Cleaned up {len(files_to_delete)} old success notification files (keeping {keep} newest)")
-    except Exception as e:
-        logger.debug(f"Error cleaning up old success notifications: {e}")
+# Removed: _cleanup_old_success_notifications - dead code, not used anywhere
 
 
 def get_delivered_notifications(limit=50):
     """
-    Get list of delivered (successful) notifications (using polymorphic task_data_manager).
+    Get list of delivered (successful) notifications.
 
-    Each successful notification is stored as an individual file:
-    {storage_path}/success/success-{task_id}.json
+    Delegates to NotificationStateRetriever for execution.
 
     Args:
         limit: Maximum number to return (default: 50)
@@ -645,173 +351,47 @@ def get_delivered_notifications(limit=50):
     Returns:
         List of dicts with delivered notification info (newest first)
     """
-    if task_data_manager is None:
-        logger.debug("Task data manager not initialized")
+    retriever = _get_state_retriever()
+    if retriever is None:
         return []
 
-    try:
-        # Load using polymorphic manager (handles FileStorage, SQLiteStorage, RedisStorage)
-        notifications = task_data_manager.load_delivered_notifications()
-
-        # Apply limit
-        if limit and len(notifications) > limit:
-            notifications = notifications[:limit]
-
-        return notifications
-
-    except Exception as e:
-        logger.debug(f"Unable to load delivered notifications: {e}")
-
-    return []
+    return retriever.get_delivered_notifications(limit=limit)
 
 
 def get_last_successful_notification():
     """
     Get the most recent successful notification for reference.
 
+    Delegates to NotificationStateRetriever for execution.
+
     Returns:
         Dict with success info or None if no successful notifications yet
     """
-    delivered = get_delivered_notifications(limit=1)
-    return delivered[0] if delivered else None
+    retriever = _get_state_retriever()
+    if retriever is None:
+        return None
+
+    return retriever.get_last_successful_notification()
 
 
 def get_failed_notifications(limit=100, max_age_days=30):
     """
     Get list of failed notification tasks from Huey's result store.
 
+    Delegates to NotificationStateRetriever for execution.
+
     Args:
         limit: Maximum number of failed tasks to return (default: 100)
         max_age_days: Auto-delete failed notifications older than this (default: 30 days)
 
     Returns:
-        List of dicts containing failed notification info:
-        - task_id: Huey task ID
-        - timestamp: When the task failed
-        - error: Error message
-        - notification_data: Original notification data
-        - watch_url: URL of the watch
-        - watch_uuid: UUID of the watch
+        List of dicts containing failed notification info
     """
-    if huey is None:
+    retriever = _get_state_retriever()
+    if retriever is None:
         return []
 
-    failed_tasks = []
-    import time
-
-    try:
-        # Query Huey's result storage for failed tasks using backend-agnostic helper
-        cutoff_time = time.time() - (max_age_days * 86400)
-
-        # Use helper function that works with all storage backends
-        results = _enumerate_results()
-
-        # Import Huey's Error class for checking failed tasks
-        from huey.utils import Error as HueyError
-
-        for task_id, result in results.items():
-            if isinstance(result, (Exception, HueyError)):
-                # This is a failed task (either Exception or Huey Error object)
-                # Check if task is still scheduled for retry
-                # If it is, don't include it in failed list (still retrying)
-                if huey.storage:
-                    try:
-                        # Check if this task is in the schedule queue (still being retried)
-                        task_still_scheduled = False
-
-                        # Use Huey's built-in scheduled_items() method to get scheduled tasks
-                        try:
-                            if hasattr(huey.storage, 'scheduled_items'):
-                                from changedetectionio.notification.message_unpacker import HueyMessageUnpacker
-                                scheduled_items = list(huey.storage.scheduled_items())
-                                for scheduled_bytes in scheduled_items:
-                                    # Use centralized unpacker to extract just the task ID
-                                    scheduled_task_id = HueyMessageUnpacker.extract_task_id_from_scheduled(scheduled_bytes)
-                                    if scheduled_task_id == task_id:
-                                        task_still_scheduled = True
-                                        logger.debug(f"Task {task_id[:20]}... IS scheduled")
-                                        break
-                        except Exception as se:
-                            logger.debug(f"Error checking schedule: {se}")
-
-                        # Also check if task failed very recently (within last 5 seconds)
-                        # Handles race condition where result is written before retry is scheduled
-                        if not task_still_scheduled:
-                            task_metadata = _get_task_metadata(task_id)
-                            if task_metadata:
-                                task_time = task_metadata.get('timestamp', 0)
-                                time_since_failure = time.time() - task_time if task_time else 999
-
-                                # If task failed very recently (< 5 seconds ago), it might still be scheduling a retry
-                                # Be conservative and don't count it as permanently failed yet
-                                if time_since_failure < 5:
-                                    logger.debug(f"Task {task_id[:20]}... failed only {time_since_failure:.1f}s ago, might still be scheduling retry")
-                                    task_still_scheduled = True  # Treat as potentially still retrying
-
-                        # Skip this task if it's still scheduled for retry
-                        if task_still_scheduled:
-                            logger.debug(f"Task {task_id[:20]}... still scheduled for retry, not counting as failed yet")
-                            continue
-                        else:
-                            logger.debug(f"Task {task_id[:20]}... NOT in schedule, counting as failed")
-                    except Exception as e:
-                        logger.debug(f"Error checking schedule for task {task_id}: {e}")
-
-                # Try to extract notification data from task metadata storage
-                try:
-                    # Get task metadata from our metadata storage
-                    task_metadata = _get_task_metadata(task_id)
-                    if task_metadata:
-                        task_time = task_metadata.get('timestamp', 0)
-                        notification_data = task_metadata.get('notification_data', {})
-
-                        # Auto-cleanup old failed notifications to free memory
-                        if task_time and task_time < cutoff_time:
-                            logger.info(f"Auto-deleting old failed notification {task_id} (age: {(time.time() - task_time) / 86400:.1f} days)")
-                            huey.storage.delete(task_id)
-                            _delete_task_metadata(task_id)
-                            continue
-
-                        # Format timestamp for display with locale awareness
-                        from changedetectionio.notification_service import timestamp_to_localtime
-                        timestamp_formatted = timestamp_to_localtime(task_time) if task_time else 'Unknown'
-                        days_ago = int((time.time() - task_time) / 86400) if task_time else 0
-
-                        # Load retry attempts for this notification (using polymorphic task_data_manager)
-                        retry_attempts = []
-                        notification_watch_uuid = notification_data.get('uuid')
-                        if notification_watch_uuid and task_data_manager is not None:
-                            try:
-                                retry_attempts = task_data_manager.load_retry_attempts(notification_watch_uuid)
-                            except Exception as e:
-                                logger.debug(f"Error loading retry attempts for {notification_watch_uuid}: {e}")
-
-                        # Merge notification_data from latest retry attempt (has reloaded notification_urls)
-                        if retry_attempts:
-                            latest_attempt = retry_attempts[-1]
-                            attempt_notification_data = latest_attempt.get('notification_data', {})
-                            if attempt_notification_data:
-                                notification_data.update(attempt_notification_data)
-
-                        failed_tasks.append({
-                            'task_id': task_id,
-                            'timestamp': task_time,
-                            'timestamp_formatted': timestamp_formatted,
-                            'days_ago': days_ago,
-                            'error': str(result),
-                            'notification_data': notification_data,
-                            'retry_attempts': retry_attempts,
-                        })
-                except Exception as e:
-                    logger.error(f"Error extracting failed task data: {e}")
-
-            if len(failed_tasks) >= limit:
-                break
-
-    except Exception as e:
-        logger.error(f"Error querying failed notifications: {e}")
-
-    return failed_tasks
+    return retriever.get_failed_notifications(limit=limit, max_age_days=max_age_days)
 
 
 def _delete_result(task_id):
@@ -835,6 +415,8 @@ def get_task_apprise_log(task_id):
     """
     Get the Apprise log for a specific task.
 
+    Delegates to NotificationStateRetriever for execution.
+
     Returns dict with:
         - apprise_log: str (the log text)
         - task_id: str
@@ -842,80 +424,31 @@ def get_task_apprise_log(task_id):
         - notification_urls: list (if available)
         - error: str (if failed)
     """
-    if huey is None:
+    retriever = _get_state_retriever()
+    if retriever is None:
         return None
 
-    try:
-        # First check task metadata for notification data and logs
-        metadata = _get_task_metadata(task_id)
+    return retriever.get_task_apprise_log(task_id)
 
-        # Also check Huey result for error info (failed tasks)
-        from huey.utils import Error as HueyError
-        error_info = None
-        try:
-            result = huey.result(task_id, preserve=True)
-            if result and isinstance(result, (Exception, HueyError)):
-                error_info = str(result)
-        except Exception as e:
-            # If huey.result() raises an exception, that IS the error we want
-            # (Huey raises the stored exception when calling result() on failed tasks)
-            error_info = str(e)
-            logger.debug(f"Got error from result for task {task_id}: {type(e).__name__}")
 
-        if metadata:
-            # Get apprise logs from metadata (could be 'apprise_logs' list or 'apprise_log' string)
-            apprise_logs = metadata.get('apprise_logs', [])
-            apprise_log_text = '\n'.join(apprise_logs) if isinstance(apprise_logs, list) else metadata.get('apprise_log', '')
+def _get_retry_service():
+    """Get or create NotificationRetryService instance."""
+    from changedetectionio.flask_app import datastore
+    from changedetectionio.notification.retry_service import NotificationRetryService
 
-            # If no logs in metadata but we have error_info, try to extract from error
-            if not apprise_log_text and error_info and 'Apprise logs:' in error_info:
-                parts = error_info.split('Apprise logs:', 1)
-                if len(parts) > 1:
-                    apprise_log_text = parts[1].strip()
-                    # The exception string has escaped newlines (\n), convert to actual newlines
-                    apprise_log_text = apprise_log_text.replace('\\n', '\n')
-                    # Also remove trailing quotes and closing parens from exception repr
-                    apprise_log_text = apprise_log_text.rstrip("')")
-                    logger.debug(f"Extracted Apprise logs from error for task {task_id}: {len(apprise_log_text)} chars")
-
-                # Clean up error to not duplicate the Apprise logs
-                # Only show the main error message, not the logs again
-                error_parts = error_info.split('\nApprise logs:', 1)
-                if len(error_parts) > 1:
-                    error_info = error_parts[0]  # Keep only the main error message
-
-            # Use metadata for apprise_log and notification data, but also include error from result
-            result = {
-                'task_id': task_id,
-                'apprise_log': apprise_log_text if apprise_log_text else 'No log available',
-                'watch_url': metadata.get('notification_data', {}).get('watch_url'),
-                'notification_urls': metadata.get('notification_data', {}).get('notification_urls', []),
-                'error': error_info if error_info else metadata.get('error'),
-                'timestamp': metadata.get('timestamp')
-            }
-            logger.debug(f"Returning log data for task {task_id}: apprise_log length={len(result['apprise_log'])}, has_error={bool(result['error'])}")
-            return result
-
-        # If not in metadata, try to extract from result only
-        if error_info:
-            # Try to extract Apprise log from error message
-            apprise_log = 'No detailed log available'
-            if 'Apprise logs:' in error_info:
-                parts = error_info.split('Apprise logs:', 1)
-                if len(parts) > 1:
-                    apprise_log = parts[1].strip()
-
-            return {
-                'task_id': task_id,
-                'apprise_log': apprise_log,
-                'error': error_info
-            }
-
+    if huey is None or datastore is None:
         return None
 
-    except Exception as e:
-        logger.error(f"Error getting Apprise log for task {task_id}: {e}")
+    return NotificationRetryService(huey, datastore)
+
+
+def _get_state_retriever():
+    """Get NotificationStateRetriever instance."""
+    if state_retriever is None:
+        logger.error("State retriever not initialized")
         return None
+
+    return state_retriever
 
 
 def retry_notification_now(task_id):
@@ -931,87 +464,12 @@ def retry_notification_now(task_id):
     Returns:
         True if successfully executed, False otherwise
     """
-    if huey is None:
-        logger.error("Huey not initialized")
+    service = _get_retry_service()
+    if service is None:
+        logger.error("Retry service not available")
         return False
 
-    try:
-        # First, check if task is actually scheduled
-        from changedetectionio.notification.message_unpacker import HueyMessageUnpacker
-        scheduled_items = list(huey.storage.scheduled_items())
-        task_found = False
-        notification_data = None
-
-        for scheduled_bytes in scheduled_items:
-            # Use centralized unpacker
-            result = HueyMessageUnpacker.unpack_scheduled_notification(scheduled_bytes, huey)
-            if result is None:
-                continue
-
-            found_task_id, found_notification_data, _ = result
-            if found_task_id == task_id:
-                task_found = True
-                notification_data = found_notification_data
-                break
-
-        if not task_found:
-            logger.error(f"Task {task_id} not found in schedule")
-            return False
-
-        if not notification_data:
-            logger.error(f"No notification data found for task {task_id}")
-            return False
-
-        # Execute the notification NOW (synchronously, not queued) by calling the task function directly
-        logger.info(f"Executing notification for task {task_id} immediately (not queued)...")
-
-        # CRITICAL: Revoke the scheduled task FIRST to prevent race condition
-        # where the consumer picks it up while we're executing it
-        huey.revoke_by_id(task_id, revoke_once=True)
-        logger.info(f"Revoked scheduled task {task_id} before execution (prevents automatic retry)")
-
-        try:
-            # Import here to avoid circular dependency
-            from changedetectionio.flask_app import datastore
-            from changedetectionio.notification.handler import process_notification
-            from changedetectionio.notification_service import NotificationContextData
-
-            # Wrap dict in NotificationContextData if needed
-            if not isinstance(notification_data, NotificationContextData):
-                notification_data = NotificationContextData(notification_data)
-
-            # Call the notification processing function directly (not via Huey queue)
-            # This executes synchronously in the current thread
-            sent_obj = process_notification(notification_data, datastore)
-
-            # If we get here, notification was sent successfully!
-            logger.info(f"✓ Notification sent successfully for task {task_id}")
-
-            # Clean up old metadata and result
-            _delete_result(task_id)
-            _delete_task_metadata(task_id)
-            logger.info(f"Cleaned up old result/metadata for task {task_id}")
-
-            return True
-
-        except Exception as e:
-            # Notification failed - re-queue it so it doesn't disappear and can retry automatically
-            logger.warning(f"Failed to send notification for task {task_id}: {e}")
-            logger.info(f"Re-queueing notification for automatic retry after manual send failed")
-
-            # Re-queue the notification for automatic retry with exponential backoff
-            # This ensures it doesn't disappear from the dashboard and will retry later
-            try:
-                result = send_notification_task(notification_data)
-                logger.info(f"Re-queued notification after failed manual send")
-            except Exception as queue_error:
-                logger.error(f"Failed to re-queue notification: {queue_error}")
-
-            return False
-
-    except Exception as e:
-        logger.error(f"Error executing scheduled notification {task_id}: {e}")
-        return False
+    return service.retry_now(task_id)
 
 
 def retry_failed_notification(task_id):
@@ -1027,46 +485,19 @@ def retry_failed_notification(task_id):
     Returns:
         True if successfully queued for retry, False otherwise
     """
-    if huey is None:
-        logger.error("Huey not initialized")
+    service = _get_retry_service()
+    if service is None:
+        logger.error("Retry service not available")
         return False
 
-    try:
-        # Get the original task metadata from our storage
-        task_metadata = _get_task_metadata(task_id)
-
-        if not task_metadata:
-            logger.error(f"Task metadata for {task_id} not found in storage")
-            return False
-
-        # Extract notification data
-        notification_data = task_metadata.get('notification_data', {})
-
-        if notification_data:
-            # Queue it again with current settings using queue_notification
-            # which will store new metadata for the new task
-            queue_notification(notification_data)
-
-            # Remove from dead letter queue using backend-appropriate method
-            _delete_result(task_id)
-
-            # Clean up old metadata
-            _delete_task_metadata(task_id)
-
-            logger.info(f"Re-queued failed notification task {task_id} and removed from dead letter queue")
-            return True
-        else:
-            logger.error(f"No notification data found for task {task_id}")
-            return False
-
-    except Exception as e:
-        logger.error(f"Error retrying notification {task_id}: {e}")
-        return False
+    return service.retry_failed(task_id)
 
 
 def retry_all_failed_notifications():
     """
     Retry all failed notifications in the dead letter queue.
+
+    Delegates to NotificationRetryService for execution.
 
     Returns:
         dict: {
@@ -1075,39 +506,11 @@ def retry_all_failed_notifications():
             'total': int     # Total number processed
         }
     """
-    if huey is None:
+    service = _get_retry_service()
+    if service is None:
         return {'success': 0, 'failed': 0, 'total': 0}
 
-    success_count = 0
-    failed_count = 0
-
-    try:
-        from huey.utils import Error as HueyError
-
-        # Use helper function to get all results from backend-agnostic storage
-        # This works with FileStorage (default), SqliteStorage, and RedisStorage
-        results = _enumerate_results()
-
-        for task_id, result in results.items():
-            if isinstance(result, (Exception, HueyError)):
-                # Try to retry this failed notification
-                if retry_failed_notification(task_id):
-                    success_count += 1
-                else:
-                    failed_count += 1
-
-        total = success_count + failed_count
-        logger.info(f"Retry all: {success_count} succeeded, {failed_count} failed, {total} total")
-
-        return {
-            'success': success_count,
-            'failed': failed_count,
-            'total': total
-        }
-
-    except Exception as e:
-        logger.error(f"Error retrying all failed notifications: {e}")
-        return {'success': success_count, 'failed': failed_count, 'total': success_count + failed_count}
+    return service.retry_all_failed()
 
 
 
@@ -1119,12 +522,17 @@ def _reload_notification_config(n_object, watch, datastore):
 
     This is done on every send/retry to allow operators to fix broken
     notification settings and retry with corrected configuration.
-    """
-    n_object['notification_urls'] = _check_cascading_vars(datastore, 'notification_urls', watch)
-    n_object['notification_format'] = _check_cascading_vars(datastore, 'notification_format', watch)
 
-    if not n_object.get('notification_urls'):
-        raise Exception("No notification_urls defined after checking cascading (Watch > Tag > System)")
+    Delegates to NotificationRetryService for execution.
+
+    Note: The datastore parameter is ignored since the retry service
+    uses its own datastore instance. This signature is kept for compatibility.
+    """
+    service = _get_retry_service()
+    if service is None:
+        raise Exception("Retry service not available")
+
+    service.reload_notification_config(n_object, watch)
 
 
 def _capture_apprise_logs(callback):
@@ -1180,28 +588,11 @@ def _add_to_debug_log(notification_debug_log, message):
 
 
 def _cleanup_retry_attempts(watch_uuid):
-    """Delete all retry attempt files for a watch after successful send (using polymorphic task_data_manager)."""
+    """Delete all retry attempts for a watch after successful send (delegates to polymorphic task_data_manager)."""
     if not watch_uuid or task_data_manager is None:
         return
 
-    import os
-    import glob
-
-    storage_path = task_data_manager.storage_path
-    if not storage_path:
-        return
-
-    attempts_dir = os.path.join(storage_path, 'retry_attempts')
-    if not os.path.exists(attempts_dir):
-        return
-
-    attempt_pattern = os.path.join(attempts_dir, f"{watch_uuid}.*.json")
-    for attempt_file in glob.glob(attempt_pattern):
-        try:
-            os.remove(attempt_file)
-        except Exception as e:
-            logger.debug(f"Error removing retry attempt file {attempt_file}: {e}")
-    logger.debug(f"Cleaned up retry attempt files for successful watch {watch_uuid}")
+    task_data_manager.clear_retry_attempts(watch_uuid)
 
 
 def _extract_notification_urls(n_object):

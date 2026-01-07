@@ -323,6 +323,51 @@ class HueyTaskDataStorageManager:
 
         return deleted_count
 
+    def clear_retry_attempts(self, watch_uuid):
+        """
+        Clear all retry attempts for a specific watch.
+
+        Called after successful notification delivery to clean up the audit trail.
+
+        Args:
+            watch_uuid: UUID of the watch to clear retry attempts for
+
+        Returns:
+            int: Number of retry attempts cleared
+        """
+        import os
+        import glob
+
+        storage_path = self.storage_path
+        if not storage_path or not watch_uuid:
+            return 0
+
+        try:
+            attempts_dir = os.path.join(storage_path, 'retry_attempts')
+            if not os.path.exists(attempts_dir):
+                return 0
+
+            # Find all retry attempt files for this watch
+            attempt_pattern = os.path.join(attempts_dir, f"{watch_uuid}.*.json")
+            attempt_files = glob.glob(attempt_pattern)
+
+            cleared_count = 0
+            for attempt_file in attempt_files:
+                try:
+                    os.remove(attempt_file)
+                    cleared_count += 1
+                except Exception as e:
+                    logger.debug(f"Error removing retry attempt file {attempt_file}: {e}")
+
+            if cleared_count > 0:
+                logger.debug(f"Cleared {cleared_count} retry attempts for watch {watch_uuid[:8]}")
+
+            return cleared_count
+
+        except Exception as e:
+            logger.debug(f"Error clearing retry attempts for watch {watch_uuid}: {e}")
+            return 0
+
     def clear_all_data(self):
         """
         Clear all retry attempts and delivered notifications.
