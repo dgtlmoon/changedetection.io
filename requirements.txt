@@ -107,6 +107,8 @@ extruct
 
 # For cleaning up unknown currency formats
 babel
+# For normalizing currency symbols to ISO 4217 codes
+iso4217parse
 
 levenshtein
 
