@@ -22,6 +22,12 @@
            class="pure-menu-link">{{ _('EDIT') }}</a>
     </li>
 {% endif %}
+{%- if current_user.is_authenticated -%}
+    <li class="pure-menu-item menu-collapsible">
+        <a href="{{ url_for('logout', redirect=request.path) }}" class="pure-menu-link">{{ _('LOG OUT') }}</a>
+    </li>
+{%- endif -%}
+
 {% else %}
     <li class="pure-menu-item menu-collapsible">
         <a class="pure-menu-link" href="https://changedetection.io">Website Change Detection and Notification.</a>
@@ -45,9 +51,4 @@
             {% include "svgs/github.svg" %}
         </a>
     </li>
-{%- if current_user.is_authenticated -%}
-    <li class="pure-menu-item menu-collapsible">
-        <a href="{{ url_for('logout', redirect=request.path) }}" class="pure-menu-link">{{ _('LOG OUT') }}</a>
-    </li>
-{%- endif -%}
 
