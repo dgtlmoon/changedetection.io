@@ -354,6 +354,15 @@
       clearTimeout(timer);
       timer = setTimeout(check, 100);
     });
+
+    // Re-check wrapping when tabs are switched via anchors
+    window.addEventListener('hashchange', () => {
+      clearTimeout(timer);
+      // Use requestAnimationFrame + setTimeout to ensure DOM has settled
+      requestAnimationFrame(() => {
+        timer = setTimeout(check, 0);
+      });
+    });
   })();
   </script>
 
