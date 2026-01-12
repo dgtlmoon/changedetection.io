@@ -34,13 +34,16 @@ def get_timeago_locale(flask_locale):
         'no': 'nb_NO',      # Norwegian Bokmål
         'hi': 'in_HI',      # Hindi
         'cs': 'en',         # Czech not supported by timeago, fallback to English
+        'en_GB': 'en',      # British English - timeago uses 'en'
+        'en_US': 'en',      # American English - timeago uses 'en'
     }
     return locale_map.get(flask_locale, flask_locale)
 
 # Language metadata: flag icon CSS class and native name
 # Using flag-icons library: https://flagicons.lipis.dev/
 LANGUAGE_DATA = {
-    'en': {'flag': 'fi fi-gb fis', 'name': 'English'},
+    'en_GB': {'flag': 'fi fi-gb fis', 'name': 'English (UK)'},
+    'en_US': {'flag': 'fi fi-us fis', 'name': 'English (US)'},
     'de': {'flag': 'fi fi-de fis', 'name': 'Deutsch'},
     'fr': {'flag': 'fi fi-fr fis', 'name': 'Français'},
     'ko': {'flag': 'fi fi-kr fis', 'name': '한국어'},
@@ -71,10 +74,7 @@ def get_available_languages():
     """
     translations_dir = Path(__file__).parent / 'translations'
 
-    # Always include English as base language
-    available = {
-        'en': LANGUAGE_DATA['en']
-    }
+    available = {}
 
     # Scan for translation directories
     if translations_dir.exists():
@@ -84,6 +84,10 @@ def get_available_languages():
                 po_file = lang_dir / 'LC_MESSAGES' / 'messages.po'
                 if po_file.exists():
                     available[lang_dir.name] = LANGUAGE_DATA[lang_dir.name]
+
+    # If no English variants found, fall back to adding en_GB as default
+    if 'en_GB' not in available and 'en_US' not in available:
+        available['en_GB'] = LANGUAGE_DATA['en_GB']
 
     return available
 
