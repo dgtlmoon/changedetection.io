@@ -22,6 +22,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
 /* Auto-generated processor badge colors */
 {{ processor_badge_css|safe }}
+
+/* Auto-generated tag colors */
+{%- for uuid, tag in tags -%}
+{%- if tag and tag.title -%}
+{%- set class_name = tag.title|sanitize_tag_class -%}
+{%- set colors = generate_tag_colors(tag.title) -%}
+.button-tag.tag-{{ class_name }} {
+  background-color: {{ colors['light']['bg'] }};
+  color: {{ colors['light']['color'] }};
+}
+
+.watch-tag-list.tag-{{ class_name }} {
+  background-color: {{ colors['light']['bg'] }};
+  color: {{ colors['light']['color'] }};
+}
+
+html[data-darkmode="true"] .button-tag.tag-{{ class_name }} {
+  background-color: {{ colors['dark']['bg'] }};
+  color: {{ colors['dark']['color'] }};
+}
+
+html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
+  background-color: {{ colors['dark']['bg'] }};
+  color: {{ colors['dark']['color'] }};
+}
+{%- endif -%}
+{%- endfor -%}
 </style>
 <div class="box" id="form-quick-watch-add">
 
@@ -82,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- tag list -->
     {%- for uuid, tag in tags -%}
         {%- if tag != "" -%}
-            <a href="{{url_for('watchlist.index', tag=uuid) }}" class="pure-button button-tag {{'active' if active_tag_uuid == uuid }}">{{ tag.title }}</a>
+            <a href="{{url_for('watchlist.index', tag=uuid) }}" class="pure-button button-tag tag-{{ tag.title|sanitize_tag_class }} {{'active' if active_tag_uuid == uuid }}">{{ tag.title }}</a>
         {%- endif -%}
     {%- endfor -%}
     </div>
@@ -191,7 +218,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <span class="processor-badge processor-badge-{{ watch['processor'] }}" title="{{ processor_descriptions.get(watch['processor'], watch['processor']) }}">{{ processor_badge_texts[watch['processor']] }}</span>
                             {%- endif -%}
                             {%- for watch_tag_uuid, watch_tag in datastore.get_all_tags_for_watch(watch['uuid']).items() -%}
-                              <span class="watch-tag-list">{{ watch_tag.title }}</span>
+                              <span class="watch-tag-list tag-{{ watch_tag.title|sanitize_tag_class }}">{{ watch_tag.title }}</span>
                             {%- endfor -%}
                         </div>
                     <div class="status-icons">

@@ -297,6 +297,25 @@ def _jinja2_filter_fetcher_status_icons(fetcher_name):
 
     return ''
 
+@app.template_filter('sanitize_tag_class')
+def _jinja2_filter_sanitize_tag_class(tag_title):
+    """Sanitize a tag title to create a valid CSS class name.
+    Removes all non-alphanumeric characters and converts to lowercase.
+
+    Args:
+        tag_title: The tag title string
+
+    Returns:
+        str: A sanitized string suitable for use as a CSS class name
+    """
+    import re
+    # Remove all non-alphanumeric characters and convert to lowercase
+    sanitized = re.sub(r'[^a-zA-Z0-9]', '', tag_title).lower()
+    # Ensure it starts with a letter (CSS requirement)
+    if sanitized and not sanitized[0].isalpha():
+        sanitized = 'tag' + sanitized
+    return sanitized if sanitized else 'tag'
+
 # Import login_optionally_required from auth_decorator
 from changedetectionio.auth_decorator import login_optionally_required
 
