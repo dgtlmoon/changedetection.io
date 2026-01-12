@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_button %}
+
+{% block content %}
+<link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='diff-image.css')}}?v={{ get_css_version() }}">
+<script src="{{url_for('static_content', group='js', filename='diff-overview.js')}}" defer></script>
+
+<div id="settings">
+    <form class="pure-form " action="{{ url_for('ui.ui_diff.diff_history_page', uuid=uuid) }}" method="GET" id="diff-form">
+        <fieldset class="diff-fieldset">
+            {% if versions|length >= 1 %}
+                <span style="white-space: nowrap;">
+                <label id="change-from" for="diff-from-version" class="from-to-label">From</label>
+                <select id="diff-from-version" name="from_version" class="needs-localtime">
+                    {%- for version in versions|reverse -%}
+                        <option value="{{ version }}" {% if version== from_version %} selected="" {% endif %}>
+                            {{ version }}
+                        </option>
+                    {%- endfor -%}
+                </select>
+                </span>
+                <span style="white-space: nowrap;">
+                <label id="change-to" for="diff-to-version" class="from-to-label">To</label>
+                <select id="diff-to-version" name="to_version" class="needs-localtime">
+                    {%- for version in versions|reverse -%}
+                        <option value="{{ version }}" {% if version== to_version %} selected="" {% endif %}>
+                            {{ version }}
+                        </option>
+                    {%- endfor -%}
+                </select>
+                </span>
+            {% endif %}
+        </fieldset>
+        <fieldset id="diff-style">
+            <span>
+                <strong>Change Detection:</strong> {{ "%.2f"|format(change_percentage) }}% of pixels changed
+                {% if change_percentage > 0.1 %}
+                    <span class="change-detected">⚠ Change Detected</span>
+                {% else %}
+                    <span class="no-change">✓ No Significant Change</span>
+                {% endif %}
+            </span>
+        </fieldset>
+        {%- if versions|length >= 2 -%}
+            <div id="keyboard-nav">
+                <strong>Keyboard: </strong>
+                <a href="" class="pure-button pure-button-primary" id="btn-previous"> &larr; Previous</a>
+                &nbsp; <a class="pure-button pure-button-primary" id="btn-next" href=""> &rarr; Next</a>
+            </div>
+        {%- endif -%}
+    </form>
+</div>
+
+<div id="screenshot-comparison">
+    <!-- Two-panel layout: Interactive slider + Static diff -->
+    <div class="comparison-grid">
+        <!-- Panel 1: Interactive Comparison Slider (Previous ↔ Current) -->
+        <div class="screenshot-panel">
+            <h3>Interactive Comparison</h3>
+            <div class="comparison-description">
+                Drag slider to compare Previous ({{ from_version|format_timestamp_timeago }})
+                vs Current ({{ to_version|format_timestamp_timeago }})
+            </div>
+            <div style="text-align: center; margin-bottom: 0.5em; display: flex; justify-content: center; gap: 1em;">
+                <a href="#" onclick="downloadImage('img-before', '{{ from_version }}'); return false;" class="download-link" title="Download previous snapshot">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="display: inline-block;">
+                        <path d="M8 12L3 7h3V1h4v6h3z"/>
+                        <path d="M1 14h14v2H1z"/>
+                    </svg>
+                    Previous
+                </a>
+                <a href="#" onclick="downloadImage('img-after', '{{ to_version }}'); return false;" class="download-link" title="Download current snapshot">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="display: inline-block;">
+                        <path d="M8 12L3 7h3V1h4v6h3z"/>
+                        <path d="M1 14h14v2H1z"/>
+                    </svg>
+                    Current
+                </a>
+            </div>
+
+            <div class="image-comparison" id="comparison-container">
+                <!-- Before image wrapper (Previous snapshot) -->
+                <div class="comparison-image-wrapper">
+                    <img id="img-before" src="{{ url_for('ui.ui_diff.processor_asset', uuid=uuid, asset_name='before', from_version=from_version, to_version=to_version) }}" alt="Previous screenshot">
+                </div>
+
+                <!-- After image wrapper (Current snapshot) -->
+                <div class="comparison-image-wrapper comparison-after">
+                    <img id="img-after" src="{{ url_for('ui.ui_diff.processor_asset', uuid=uuid, asset_name='after', from_version=from_version, to_version=to_version) }}" alt="Current screenshot">
+                </div>
+
+                <!-- Labels -->
+                <div class="comparison-labels">
+                    <span class="comparison-label">Previous</span>
+                    <span class="comparison-label">Current</span>
+                </div>
+
+                <!-- Draggable slider -->
+                <div class="comparison-slider" id="comparison-slider">
+                    <div class="comparison-handle"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel 2: Difference Visualization (Static) -->
+        <div class="screenshot-panel diff">
+            <h3>Difference Visualization</h3>
+            <div class="diff-section-header">
+                <span>Red = Changed Pixels</span>
+            </div>
+            <div style="text-align: center; margin-bottom: 0.5em;">
+                <a href="#" onclick="downloadImage('diff-image', '{{ to_version }}_diff'); return false;" class="download-link" title="Download difference image">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="display: inline-block;">
+                        <path d="M8 12L3 7h3V1h4v6h3z"/>
+                        <path d="M1 14h14v2H1z"/>
+                    </svg>
+                    Download
+                </a>
+            </div>
+            <img id="diff-image" src="{{ url_for('ui.ui_diff.processor_asset', uuid=uuid, asset_name='rendered_diff', from_version=from_version, to_version=to_version) }}" alt="Difference visualization with red highlights">
+        </div>
+    </div>
+
+    {% if comparison_data and comparison_data.get('history') and comparison_data.history|length > 1 %}
+    <div class="comparison-history-section">
+        <h3>Comparison History</h3>
+        <p>Recent comparison results (last {{ comparison_data.history|length }} checks)</p>
+        <div style="overflow-x: auto;">
+            <table class="pure-table pure-table-striped" style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Change %</th>
+                        <th>Method</th>
+                        <th>Changed?</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in comparison_data.history|reverse %}
+                    <tr>
+                        <td>{{ entry.timestamp|format_timestamp_timeago }}</td>
+                        <td>{{ "%.2f"|format(entry.change_percentage) }}%</td>
+                        <td>{{ entry.method }}</td>
+                        <td>
+                            {% if entry.changed %}
+                                <span class="history-changed-yes">Yes</span>
+                            {% else %}
+                                <span class="history-changed-no">No</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function downloadImage(imageId, filename) {
+    // Get the image element
+    const img = document.getElementById(imageId);
+    const base64Data = img.src;
+
+    // Convert base64 to blob
+    const byteString = atob(base64Data.split(',')[1]);
+    const mimeString = base64Data.split(',')[0].split(':')[1].split(';')[0];
+
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+
+    const blob = new Blob([ab], { type: mimeString });
+
+    // Determine file extension from MIME type
+    const extension = mimeString.includes('jpeg') ? '.jpeg' : '.png';
+
+    // Create download link
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename + extension;
+    document.body.appendChild(a);
+    a.click();
+
+    // Cleanup
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 100);
+}
+
+/**
+ * Synchronize comparison slider width with diff image width
+ * This ensures both panels display images at the same max-width
+ */
+function syncComparisonWidth() {
+    const diffImage = document.getElementById('diff-image');
+    const comparisonContainer = document.getElementById('comparison-container');
+
+    if (!diffImage || !comparisonContainer) return;
+
+    // Wait for diff image to load to get its actual rendered width
+    if (diffImage.complete) {
+        applyWidth();
+    } else {
+        diffImage.addEventListener('load', applyWidth);
+    }
+
+    function applyWidth() {
+        const diffImageWidth = diffImage.offsetWidth;
+        if (diffImageWidth > 0) {
+            comparisonContainer.style.maxWidth = diffImageWidth + 'px';
+            comparisonContainer.style.margin = '0 auto';
+        }
+    }
+}
+
+// Run on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', syncComparisonWidth);
+} else {
+    syncComparisonWidth();
+}
+
+// Re-sync on window resize
+window.addEventListener('resize', syncComparisonWidth);
+</script>
+
+<script src="{{ url_for('static_content', group='js', filename='comparison-slider.js') }}" defer></script>
+
+{% endblock %}

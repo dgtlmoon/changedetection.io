@@ -178,7 +178,7 @@ def test_check_xpath_text_function_utf8(client, live_server, measure_memory_usag
 
     # The service should echo back the request headers
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -214,7 +214,7 @@ def test_check_markup_xpath_filter_restriction(client, live_server, measure_memo
     wait_for_all_checks(client)
 
     # view it/reset state back to viewed
-    client.get(url_for("ui.ui_views.diff_history_page", uuid="first"), follow_redirects=True)
+    client.get(url_for("ui.ui_diff.diff_history_page", uuid="first"), follow_redirects=True)
 
     #  Make a change
     set_modified_response(datastore_path=datastore_path)
@@ -310,7 +310,7 @@ def test_xpath1_lxml(client, live_server, measure_memory_usage, datastore_path):
     assert b'_ElementStringResult' not in res.data # tested with 5.1.1 when it was removed and 5.1.0
     assert b'Exception' not in res.data
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -359,7 +359,7 @@ def test_check_with_prefix_include_filters(client, live_server, measure_memory_u
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -437,7 +437,7 @@ def test_xpath_20(client, live_server, measure_memory_usage, datastore_path):
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -471,7 +471,7 @@ def test_xpath_20_function_count(client, live_server, measure_memory_usage, data
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -504,7 +504,7 @@ def test_xpath_20_function_count2(client, live_server, measure_memory_usage, dat
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -538,7 +538,7 @@ def test_xpath_20_function_string_join_matches(client, live_server, measure_memo
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid=uuid),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
 
@@ -575,7 +575,7 @@ def _subtest_xpath_rss(client, datastore_path, content_type='text/html'):
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 

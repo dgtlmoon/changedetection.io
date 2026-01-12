@@ -3,6 +3,7 @@ import glob
 import threading
 
 from flask import Blueprint, render_template, send_from_directory, flash, url_for, redirect, abort
+from flask_babel import gettext
 import os
 
 from changedetectionio.store import ChangeDetectionStore
@@ -82,11 +83,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @backups_blueprint.route("/request-backup", methods=['GET'])
     def request_backup():
         if any(thread.is_alive() for thread in backup_threads):
-            flash("A backup is already running, check back in a few minutes", "error")
+            flash(gettext("A backup is already running, check back in a few minutes"), "error")
             return redirect(url_for('backups.index'))
 
         if len(find_backups()) > int(os.getenv("MAX_NUMBER_BACKUPS", 100)):
-            flash("Maximum number of backups reached, please remove some", "error")
+            flash(gettext("Maximum number of backups reached, please remove some"), "error")
             return redirect(url_for('backups.index'))
 
         # Be sure we're written fresh
@@ -94,7 +95,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         zip_thread = threading.Thread(target=create_backup, args=(datastore.datastore_path, datastore.data.get("watching")))
         zip_thread.start()
         backup_threads.append(zip_thread)
-        flash("Backup building in background, check back in a few minutes.")
+        flash(gettext("Backup building in background, check back in a few minutes."))
 
         return redirect(url_for('backups.index'))
 
@@ -157,7 +158,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         for backup in backups:
             os.unlink(backup)
 
-        flash("Backups were deleted.")
+        flash(gettext("Backups were deleted."))
 
         return redirect(url_for('backups.index'))
 

@@ -1,12 +1,13 @@
 {% extends 'base.html' %}
 {% block content %}
-{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, playwright_warning, only_playwright_type_watches_warning, render_conditions_fieldlist_of_formfields_as_table, render_ternary_field %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, playwright_warning, only_playwright_type_watches_warning, highlight_trigger_ignored_explainer, render_conditions_fieldlist_of_formfields_as_table, render_ternary_field %}
 {% from '_common_fields.html' import render_common_settings_form %}
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='vis.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='global-settings.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='scheduler.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='conditions.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='modal.js')}}"></script>
 
 
 <script>
@@ -43,20 +44,20 @@
 
     <div class="tabs collapsable">
         <ul>
-            <li class="tab"><a href="#general">General</a></li>
-            <li class="tab"><a href="#request">Request</a></li>
+            <li class="tab"><a href="#general">{{ _('General') }}</a></li>
+            <li class="tab"><a href="#request">{{ _('Request') }}</a></li>
             {% if extra_tab_content %}
             <li class="tab"><a href="#extras_tab">{{ extra_tab_content }}</a></li>
             {% endif %}
-            <li class="tab"><a id="browsersteps-tab" href="#browser-steps">Browser Steps</a></li>
+            <li class="tab"><a id="browsersteps-tab" href="#browser-steps">{{ _('Browser Steps') }}</a></li>
         <!-- should goto extra forms? -->
-            {% if watch['processor'] == 'text_json_diff' %}
-            <li class="tab"><a id="visualselector-tab" href="#visualselector">Visual Filter Selector</a></li>
-            <li class="tab" id="filters-and-triggers-tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
-            <li class="tab" id="conditions-tab"><a href="#conditions">Conditions</a></li>
+            {% if watch['processor'] == 'text_json_diff' or watch['processor'] == 'image_ssim_diff' %}
+            <li class="tab"><a id="visualselector-tab" href="#visualselector">{{ _('Visual Filter Selector') }}</a></li>
+            <li class="tab" id="filters-and-triggers-tab"><a href="#filters-and-triggers">{{ _('Filters & Triggers') }}</a></li>
+            <li class="tab" id="conditions-tab"><a href="#conditions">{{ _('Conditions') }}</a></li>
             {% endif %}
-            <li class="tab"><a href="#notifications">Notifications</a></li>
-            <li class="tab"><a href="#stats">Stats</a></li>
+            <li class="tab"><a href="#notifications">{{ _('Notifications') }}</a></li>
+            <li class="tab"><a href="#stats">{{ _('Stats') }}</a></li>
         </ul>
     </div>
 
@@ -69,19 +70,19 @@
                 <fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.url, placeholder="https://...", required=true, class="m-d") }}
-                        <div class="pure-form-message">Some sites use JavaScript to create the content, for this you should <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">use the Chrome/WebDriver Fetcher</a></div>
-                        <div class="pure-form-message">Variables are supported in the URL (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Handling-variables-in-the-watched-URL">help and examples here</a>).</div>
+                        <div class="pure-form-message">{{ _('Some sites use JavaScript to create the content, for this you should') }} <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">{{ _('use the Chrome/WebDriver Fetcher') }}</a></div>
+                        <div class="pure-form-message">{{ _('Variables are supported in the URL') }} (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Handling-variables-in-the-watched-URL">{{ _('help and examples here') }}</a>).</div>
                     </div>
                     <div class="pure-control-group">
                         {{ render_field(form.tags) }}
-                        <span class="pure-form-message-inline">Organisational tag/group name used in the main listing page</span>
+                        <span class="pure-form-message-inline">{{ _('Organisational tag/group name used in the main listing page') }}</span>
                     </div>
                     <div class="pure-control-group inline-radio">
                         {{ render_field(form.processor) }}
                     </div>
                     <div class="pure-control-group">
                         {{ render_field(form.title, class="m-d", placeholder=watch.label) }}
-                        <span class="pure-form-message-inline">Automatically uses the page title if found, you can also use your own title/description here</span>
+                        <span class="pure-form-message-inline">{{ _('Automatically uses the page title if found, you can also use your own title/description here') }}</span>
                     </div>
                     <div class="pure-control-group time-between-check border-fieldset">
 
@@ -91,7 +92,7 @@
                             {{ render_field(form.time_between_check, class="time-check-widget") }}
 
                             <span class="pure-form-message-inline">
-                             The interval/amount of time between each check.
+                             {{ _('The interval/amount of time between each check.') }}
                             </span>
                         </div>
                         <div id="time-between-check-schedule">
@@ -106,7 +107,7 @@
                     <div class="pure-control-group">
                         {{ render_checkbox_field(form.filter_failure_notification_send) }}
                         <span class="pure-form-message-inline">
-                         Sends a notification when the filter can no longer be seen on the page, good for knowing when the page changed and your filter will not work anymore.
+                         {{ _('Sends a notification when the filter can no longer be seen on the page, good for knowing when the page changed and your filter will not work anymore.') }}
                         </span>
                     </div>
                     <div class="pure-control-group">
@@ -119,17 +120,17 @@
                     <div class="pure-control-group inline-radio">
                         {{ render_field(form.fetch_backend, class="fetch-backend") }}
                         <span class="pure-form-message-inline">
-                            <p>Use the <strong>Basic</strong> method (default) where your watched site doesn't need Javascript to render.</p>
-                            <p>The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'. </p>
-                            Tip: <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#brightdata-proxy-support">Connect using Bright Data and Oxylabs Proxies, find out more here.</a>
+                            <p>{{ _('Use the') }} <strong>{{ _('Basic') }}</strong> {{ _('method (default) where your watched site doesn\'t need Javascript to render.') }}</p>
+                            <p>{{ _('The') }} <strong>{{ _('Chrome/Javascript') }}</strong> {{ _('method requires a network connection to a running WebDriver+Chrome server, set by the ENV var \'WEBDRIVER_URL\'.') }} </p>
+                            {{ _('Tip:') }} <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#brightdata-proxy-support">{{ _('Connect using Bright Data and Oxylabs Proxies, find out more here.') }}</a>
                         </span>
                     </div>
                 {% if form.proxy %}
                     <div class="pure-control-group inline-radio">
-                          <div>{{ form.proxy.label }} <a href="" id="check-all-proxies" class="pure-button button-secondary button-xsmall" >Check/Scan all</a></div>
+                          <div>{{ form.proxy.label }} <a href="" id="check-all-proxies" class="pure-button button-secondary button-xsmall" >{{ _('Check/Scan all') }}</a></div>
                           <div>{{ form.proxy(class="fetch-backend-proxy") }}</div>
                         <span class="pure-form-message-inline">
-                        Choose a proxy for this watch
+                        {{ _('Choose a proxy for this watch') }}
                         </span>
                     </div>
                 {% endif %}
@@ -139,31 +140,29 @@
                     <div class="pure-control-group">
                         {{ render_field(form.webdriver_delay) }}
                         <div class="pure-form-message-inline">
-                            <strong>If you're having trouble waiting for the page to be fully rendered (text missing etc), try increasing the 'wait' time here.</strong>
+                            <strong>{{ _('If you\'re having trouble waiting for the page to be fully rendered (text missing etc), try increasing the \'wait\' time here.') }}</strong>
                             <br>
-                            This will wait <i>n</i> seconds before extracting the text.
+                            {{ _('This will wait') }} <i>n</i> {{ _('seconds before extracting the text.') }}
                             {% if using_global_webdriver_wait %}
-                            <br><strong>Using the current global default settings</strong>
+                            <br><strong>{{ _('Using the current global default settings') }}</strong>
                             {% endif %}
                         </div>
                     </div>
                     <div class="pure-control-group">
-                        <a class="pure-button button-secondary button-xsmall show-advanced">Show advanced options</a>
+                        <a class="pure-button button-secondary button-xsmall show-advanced">{{ _('Show advanced options') }}</a>
                     </div>
                     <div class="advanced-options"  style="display: none;">
                         {{ render_field(form.webdriver_js_execute_code) }}
                         <div class="pure-form-message-inline">
-                            Run this code before performing change detection, handy for filling in fields and other
-                            actions <a
-                                href="https://github.com/dgtlmoon/changedetection.io/wiki/Run-JavaScript-before-change-detection">More
-                            help and examples here</a>
+                            {{ _('Run this code before performing change detection, handy for filling in fields and other actions') }} <a
+                                href="https://github.com/dgtlmoon/changedetection.io/wiki/Run-JavaScript-before-change-detection">{{ _('More help and examples here') }}</a>
                         </div>
                     </div>
                 </fieldset>
                 <!-- html requests always -->
                 <fieldset data-visible-for="fetch_backend=html_requests">
                     <div class="pure-control-group">
-                        <a class="pure-button button-secondary button-xsmall show-advanced">Show advanced options</a>
+                        <a class="pure-button button-secondary button-xsmall show-advanced">{{ _('Show advanced options') }}</a>
                     </div>
                     <div class="advanced-options"  style="display: none;">
                         <div class="pure-control-group" id="request-method">
@@ -178,7 +177,7 @@
    \"year\":{% now 'Europe/Berlin', '%Y' %}
 }") }}
                         </div>
-                        <div class="pure-form-message">Variables are supported in the request body (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Handling-variables-in-the-watched-URL">help and examples here</a>).</div>
+                        <div class="pure-form-message">{{ _('Variables are supported in the request body') }} (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Handling-variables-in-the-watched-URL">{{ _('help and examples here') }}</a>).</div>
                     </div>
                 </fieldset>
             <!-- hmm -->
@@ -187,15 +186,15 @@
 Cookie: foobar
 User-Agent: wonderbra 1.0
 Math: {{ 1 + 1 }}") }}
-                        <div class="pure-form-message">Variables are supported in the request header values (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Handling-variables-in-the-watched-URL">help and examples here</a>).</div>
+                        <div class="pure-form-message">{{ _('Variables are supported in the request header values') }} (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Handling-variables-in-the-watched-URL">{{ _('help and examples here') }}</a>).</div>
                         <div class="pure-form-message-inline">
                             {% if has_extra_headers_file %}
-                                <strong>Alert! Extra headers file found and will be added to this watch!</strong>
+                                <strong>{{ _('Alert! Extra headers file found and will be added to this watch!') }}</strong>
                             {% else %}
-                                Headers can be also read from a file in your data-directory <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Adding-headers-from-an-external-file">Read more here</a>
+                                {{ _('Headers can be also read from a file in your data-directory') }} <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Adding-headers-from-an-external-file">{{ _('Read more here') }}</a>
                             {% endif %}
                             <br>
-                            (Not supported by Selenium browser)
+                            ({{ _('Not supported by Selenium browser') }})
                         </div>
                     </div>
             <fieldset data-visible-for="fetch_backend=html_requests fetch_backend=html_webdriver" >
@@ -206,9 +205,8 @@ Math: {{ 1 + 1 }}") }}
             </div>
 
             <div class="tab-pane-inner" id="browser-steps">
-            {% if watch_needs_selenium_or_playwright %}
-                {# Only works with playwright #}
-                {% if system_has_playwright_configured %}
+            {% if capabilities.supports_browser_steps %}
+               {% if visual_selector_data_ready %}
                 <img class="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}" alt="New beta functionality">
                 <fieldset>
                     <div class="pure-control-group">
@@ -220,19 +218,19 @@ Math: {{ 1 + 1 }}") }}
 
                         <!---  Do this later -->
                         <div class="checkbox" style="display: none;">
-                            <input type=checkbox id="include_text_elements" > <label for="include_text_elements">Turn on text finder</label>
+                            <input type=checkbox id="include_text_elements" > <label for="include_text_elements">{{ _('Turn on text finder') }}</label>
                         </div>
 
-                        <div id="loading-status-text" style="display: none;">Please wait, first browser step can take a little time to load..<div class="spinner"></div></div>
+                        <div id="loading-status-text" style="display: none;">{{ _('Please wait, first browser step can take a little time to load..') }}<div class="spinner"></div></div>
                         <div class="flex-wrapper" >
 
                             <div id="browser-steps-ui" class="noselect">
                                 <div class="noselect"  id="browsersteps-selector-wrapper" style="width: 100%">
                                     <span class="loader" >
                                         <span id="browsersteps-click-start">
-                                            <h2 >Click here to Start</h2>
+                                            <h2 >{{ _('Click here to Start') }}</h2>
                                             <svg style="height: 3.5rem;" version="1.1" viewBox="0 0 32 32"  xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g id="start"/><g id="play_x5F_alt"><path d="M16,0C7.164,0,0,7.164,0,16s7.164,16,16,16s16-7.164,16-16S24.836,0,16,0z M10,24V8l16.008,8L10,24z" style="fill: var(--color-grey-400);"/></g></svg><br>
-                                            Please allow 10-15 seconds for the browser to connect.<br>
+                                            {{ _('Please allow 10-15 seconds for the browser to connect.') }}<br>
                                         </span>
                                         <div class="spinner"  style="display: none;"></div>
                                     </span>
@@ -241,22 +239,20 @@ Math: {{ 1 + 1 }}") }}
                                 </div>
                             </div>
                             <div id="browser-steps-fieldlist" >
-                                <span id="browser-seconds-remaining">Press "Play" to start.</span> <span style="font-size: 80%;"> (<a target="newwindow" href="https://github.com/dgtlmoon/changedetection.io/pull/478/files#diff-1a79d924d1840c485238e66772391268a89c95b781d69091384cf1ea1ac146c9R4">?</a>) </span>
+                                <span id="browser-seconds-remaining">{{ _('Press "Play" to start.') }}</span> <span style="font-size: 80%;"> (<a target="newwindow" href="https://github.com/dgtlmoon/changedetection.io/pull/478/files#diff-1a79d924d1840c485238e66772391268a89c95b781d69091384cf1ea1ac146c9R4">?</a>) </span>
                                 {{ render_field(form.browser_steps) }}
                             </div>
                         </div>
                     </div>
                 </fieldset>
                 {% else %}
-                    {# it's configured to use selenium or chrome but system says its not configured #}
-                    {{ playwright_warning() }}
-                    {% if system_has_webdriver_configured %}
-                        <strong>Selenium/Webdriver cant be used here because it wont fetch screenshots reliably.</strong>
-                    {% endif %}
+                    <strong>{{ _('Visual Selector data is not ready, watch needs to be checked atleast once.') }}</strong>
                 {% endif %}
             {% else %}
-                {# "This functionality needs chrome.." #}
-                {{ only_playwright_type_watches_warning() }}
+                <p>
+                    <strong>{{ _('Sorry, this functionality only works with fetchers that support interactive Javascript (so far only Playwright based fetchers)') }}<br>
+                    {{ _('You need to') }} <a href="#request">{{ _('Set the fetch method') }}</a> {{ _('to one that supports interactive Javascript.') }}</strong>
+                </p>
             {% endif %}
             </div>
 
@@ -266,28 +262,28 @@ Math: {{ 1 + 1 }}") }}
                     <div  class="pure-control-group inline-radio">
                       {{ render_ternary_field(form.notification_muted, BooleanField=true) }}
                     </div>
-                    {% if watch_needs_selenium_or_playwright %}
+                    {% if capabilities.supports_screenshots %}
                     <div class="pure-control-group inline-radio">
                       {{ render_checkbox_field(form.notification_screenshot) }}
                         <span class="pure-form-message-inline">
-                            <strong>Use with caution!</strong> This will easily fill up your email storage quota or flood other storages.
+                            <strong>{{ _('Use with caution!') }}</strong> {{ _('This will easily fill up your email storage quota or flood other storages.') }}
                         </span>
                     </div>
                     {% endif %}
                     <div class="field-group" id="notification-field-group">
                         {% if has_default_notification_urls %}
                         <div class="inline-warning">
-                            <img class="inline-warning-icon" src="{{url_for('static_content', group='images', filename='notice.svg')}}" alt="Look out!" title="Lookout!" >
-                            There are <a href="{{ url_for('settings.settings_page')}}#notifications">system-wide notification URLs enabled</a>, this form will override notification settings for this watch only &dash; an empty Notification URL list here will still send notifications.
+                            <img class="inline-warning-icon" src="{{url_for('static_content', group='images', filename='notice.svg')}}" alt="{{ _('Look out!') }}" title="{{ _('Lookout!') }}" >
+                            {{ _('There are') }} <a href="{{ url_for('settings.settings_page')}}#notifications">{{ _('system-wide notification URLs enabled') }}</a>, {{ _('this form will override notification settings for this watch only') }} &dash; {{ _('an empty Notification URL list here will still send notifications.') }}
                         </div>
                         {% endif %}
-                        <a href="#notifications" id="notification-setting-reset-to-default" class="pure-button button-xsmall" style="right: 20px; top: 20px; position: absolute; background-color: #5f42dd; border-radius: 4px; font-size: 70%; color: #fff">Use system defaults</a>
+                        <a href="#notifications" id="notification-setting-reset-to-default" class="pure-button button-xsmall" style="right: 20px; top: 20px; position: absolute; background-color: #5f42dd; border-radius: 4px; font-size: 70%; color: #fff">{{ _('Use system defaults') }}</a>
                         {{ render_common_settings_form(form, emailprefix, settings_application, extra_notification_token_placeholder_info) }}
                     </div>
                 </fieldset>
             </div>
 
-            {% if watch['processor'] == 'text_json_diff' %}
+            {% if watch['processor'] == 'text_json_diff' or watch['processor'] == 'image_ssim_diff' %}
 
             <div class="tab-pane-inner" id="conditions">
                     <script>
@@ -298,23 +294,23 @@ Math: {{ 1 + 1 }}") }}
                     {{ render_conditions_fieldlist_of_formfields_as_table(form.conditions) }}
                     <div class="pure-form-message-inline">
 
-                        <p id="verify-state-text">Use the verify (✓) button to test if a condition passes against the current snapshot.</p>
-                       Read a quick tutorial about <a href="https://changedetection.io/tutorial/conditional-actions-web-page-changes">using conditional web page changes here</a>.<br>
+                        <p id="verify-state-text">{{ _('Use the verify (✓) button to test if a condition passes against the current snapshot.') }}</p>
+                       {{ _('Read a quick tutorial about') }} <a href="https://changedetection.io/tutorial/conditional-actions-web-page-changes">{{ _('using conditional web page changes here') }}</a>.<br>
                     </div>
                 </div>
             </div>
             <div class="tab-pane-inner" id="filters-and-triggers">
-                <span id="activate-text-preview" class="pure-button pure-button-primary button-xsmall">Activate preview</span>
+                <span id="activate-text-preview" class="pure-button pure-button-primary button-xsmall">{{ _('Activate preview') }}</span>
               <div>
               <div id="edit-text-filter">
                     <div class="pure-control-group" id="pro-tips">
-                            <strong>Pro-tips:</strong><br>
+                            <strong>{{ _('Pro-tips:') }}</strong><br>
                             <ul>
                                 <li>
-                                    Use the preview page to see your filters and triggers highlighted.
+                                    {{ _('Use the preview page to see your filters and triggers highlighted.') }}
                                 </li>
                                 <li>
-                                    Some sites use JavaScript to create the content, for this you should <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">use the Chrome/WebDriver Fetcher</a>
+                                    {{ _('Some sites use JavaScript to create the content, for this you should') }} <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">{{ _('use the Chrome/WebDriver Fetcher') }}</a>
                                 </li>
                             </ul>
                     </div>
@@ -322,50 +318,51 @@ Math: {{ 1 + 1 }}") }}
 {% include "edit/include_subtract.html" %}
                 <div class="text-filtering border-fieldset">
                 <fieldset class="pure-group" id="text-filtering-type-options">
-                    <h3>Text filtering</h3>
-                        Limit trigger/ignore/block/extract to;<br>
+                    <h3>{{ _('Text filtering') }}</h3>
+                        {{ _('Limit trigger/ignore/block/extract to;') }}<br>
                         {{ render_checkbox_field(form.filter_text_added) }}
                         {{ render_checkbox_field(form.filter_text_replaced) }}
                         {{ render_checkbox_field(form.filter_text_removed) }}
-                    <span class="pure-form-message-inline">Note: Depending on the length and similarity of the text on each line, the algorithm may consider an <strong>addition</strong> instead of <strong>replacement</strong> for example.</span><br>
-                    <span class="pure-form-message-inline">&nbsp;So it's always better to select <strong>Added</strong>+<strong>Replaced</strong> when you're interested in new content.</span><br>
-                    <span class="pure-form-message-inline">&nbsp;When content is merely moved in a list, it will also trigger an <strong>addition</strong>, consider enabling <code><strong>Only trigger when unique lines appear</strong></code></span>
+                    <span class="pure-form-message-inline">{{ _('Note: Depending on the length and similarity of the text on each line, the algorithm may consider an') }} <strong>{{ _('addition') }}</strong> {{ _('instead of') }} <strong>{{ _('replacement') }}</strong> {{ _('for example.') }}</span><br>
+                    <span class="pure-form-message-inline">&nbsp;{{ _('So it\'s always better to select') }} <strong>{{ _('Added') }}</strong>+<strong>{{ _('Replaced') }}</strong> {{ _('when you\'re interested in new content.') }}</span><br>
+                    <span class="pure-form-message-inline">&nbsp;{{ _('When content is merely moved in a list, it will also trigger an') }} <strong>{{ _('addition') }}</strong>, {{ _('consider enabling') }} <code><strong>{{ _('Only trigger when unique lines appear') }}</strong></code></span>
                 </fieldset>
                 <fieldset class="pure-control-group">
                     {{ render_checkbox_field(form.check_unique_lines) }}
-                    <span class="pure-form-message-inline">Good for websites that just move the content around, and you want to know when NEW content is added, compares new lines against all history for this watch.</span>
+                    <span class="pure-form-message-inline">{{ _('Good for websites that just move the content around, and you want to know when NEW content is added, compares new lines against all history for this watch.') }}</span>
                 </fieldset>
                 <fieldset class="pure-control-group">
                     {{ render_checkbox_field(form.remove_duplicate_lines) }}
-                    <span class="pure-form-message-inline">Remove duplicate lines of text</span>
+                    <span class="pure-form-message-inline">{{ _('Remove duplicate lines of text') }}</span>
                 </fieldset>
                 <fieldset class="pure-control-group">
                     {{ render_checkbox_field(form.sort_text_alphabetically) }}
-                    <span class="pure-form-message-inline">Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below.</span>
+                    <span class="pure-form-message-inline">{{ _('Helps reduce changes detected caused by sites shuffling lines around, combine with') }} <i>{{ _('check unique lines') }}</i> {{ _('below.') }}</span>
                 </fieldset>
                 <fieldset class="pure-control-group">
                     {{ render_checkbox_field(form.trim_text_whitespace) }}
-                    <span class="pure-form-message-inline">Remove any whitespace before and after each line of text</span>
+                    <span class="pure-form-message-inline">{{ _('Remove any whitespace before and after each line of text') }}</span>
                 </fieldset>
                 {% include "edit/text-options.html" %}
                 </div>
               </div>
               <div id="text-preview" style="display: none;" >
-                    <script>
-                        const preview_text_edit_filters_url="{{url_for('ui.ui_edit.watch_get_preview_rendered', uuid=uuid)}}";
-                    </script>
-                    <br>
-                    {#<div id="text-preview-controls"><span id="text-preview-refresh" class="pure-button button-xsmall">Refresh</span></div>#}
-                    <div class="minitabs-wrapper">
-                      <div class="minitabs-content">
-                          <div id="text-preview-inner" class="monospace-preview">
-                              <p>Loading...</p>
-                          </div>
-                          <div id="text-preview-before-inner" style="display: none;" class="monospace-preview">
-                              <p>Loading...</p>
-                          </div>
+                <script>
+                    const preview_text_edit_filters_url="{{url_for('ui.ui_edit.watch_get_preview_rendered', uuid=uuid)}}";
+                </script>
+                <br>
+                {#<div id="text-preview-controls"><span id="text-preview-refresh" class="pure-button button-xsmall">Refresh</span></div>#}
+                <div class="minitabs-wrapper">
+                  <div class="minitabs-content">
+                      <div id="text-preview-inner" class="monospace-preview">
+                          <p>{{ _('Loading...') }}</p>
                       </div>
-                    </div>
+                      <div id="text-preview-before-inner" style="display: none;" class="monospace-preview">
+                          <p>{{ _('Loading...') }}</p>
+                      </div>
+                  </div>
+                </div>
+                {{ highlight_trigger_ignored_explainer() }}
             </div>
           </div>
         </div>
@@ -377,41 +374,55 @@ Math: {{ 1 + 1 }}") }}
             {{ extra_form_content|safe }}
             </div>
         {% endif %}
-            {% if watch['processor'] == 'text_json_diff' %}
+            {% if watch['processor'] == 'text_json_diff' or watch['processor'] == 'image_ssim_diff' %}
             <div class="tab-pane-inner visual-selector-ui" id="visualselector">
                 <img class="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}" alt="New beta functionality">
 
                 <fieldset>
                     <div class="pure-control-group">
-                        {% if watch_needs_selenium_or_playwright %}
-                            {% if system_has_playwright_configured %}
-                            <span class="pure-form-message-inline" id="visual-selector-heading">
-                                The Visual Selector tool lets you select the <i>text</i> elements that will be used for the change detection. It automatically fills-in the filters in the "CSS/JSONPath/JQ/XPath Filters" box of the <a href="#filters-and-triggers">Filters & Triggers</a> tab. Use <strong>Shift+Click</strong> to select multiple items.
-                            </span>
+                        {% if capabilities.supports_screenshots and capabilities.supports_xpath_element_data %}
+                            {% if visual_selector_data_ready %}
+                                <span class="pure-form-message-inline" id="visual-selector-heading">
+                                    {{ _('The Visual Selector tool lets you select the') }} <i>{{ _('text') }}</i> {{ _('elements that will be used for the change detection. It automatically fills-in the filters in the "CSS/JSONPath/JQ/XPath Filters" box of the') }} <a href="#filters-and-triggers">{{ _('Filters & Triggers') }}</a> {{ _('tab. Use') }} <strong>{{ _('Shift+Click') }}</strong> {{ _('to select multiple items.') }}
+                                </span>
 
-                            <div id="selector-header">
-                                <a id="clear-selector" class="pure-button button-secondary button-xsmall" style="font-size: 70%">Clear selection</a>
-                                <!-- visual selector IMG will try to load, it will either replace this or on error replace it with some handy text -->
-                                <i class="fetching-update-notice" style="font-size: 80%;">One moment, fetching screenshot and element information..</i>
-                            </div>
-                            <div id="selector-wrapper" style="display: none">
-                                <!-- request the screenshot and get the element offset info ready -->
-                                <!-- use img src ready load to know everything is ready to map out -->
-                                <!-- @todo: maybe something interesting like a field to select 'elements that contain text... and their parents n' -->
-                                <img id="selector-background" >
-                                <canvas id="selector-canvas"></canvas>
-                            </div>
-                            <div id="selector-current-xpath" style="overflow-x: hidden"><strong>Currently:</strong>&nbsp;<span class="text">Loading...</span></div>
-                        {% else %}
-                            {# The watch needed chrome but system says that playwright is not ready #}
-                            {{ playwright_warning() }}
-                        {% endif %}
-                            {% if system_has_webdriver_configured %}
-                                <strong>Selenium/Webdriver cant be used here because it wont fetch screenshots reliably.</strong>
-                            {% endif %}
+                                {% if watch['processor'] == 'image_ssim_diff' %}
+                                <div id="selection-mode-controls" style="margin: 10px 0; padding: 10px; background: var(--color-background-tab); border-radius: 5px;">
+                                    <label style="font-weight: 600; margin-right: 15px;">{{ _('Selection Mode:') }}</label>
+                                    <label style="margin-right: 15px;">
+                                        <input type="radio" name="selector-mode" value="element" style="margin-right: 5px;">
+                                        {{ _('Select by element') }}
+                                    </label>
+                                    <label>
+                                        <input type="radio" name="selector-mode" value="draw" checked style="margin-right: 5px;">
+                                        {{ _('Draw area') }}
+                                    </label>
+                                    {{ render_field(form.processor_config_bounding_box) }}
+                                    {{ render_field(form.processor_config_selection_mode) }}
+                                </div>
+                                {% endif %}
+
+                                <div id="selector-header">
+                                    <a id="clear-selector" class="pure-button button-secondary button-xsmall" style="font-size: 70%">{{ _('Clear selection') }}</a>
+                                    <!-- visual selector IMG will try to load, it will either replace this or on error replace it with some handy text -->
+                                    <i class="fetching-update-notice" style="font-size: 80%;">{{ _('One moment, fetching screenshot and element information..') }}</i>
+                                </div>
+                                <div id="selector-wrapper" style="display: none">
+                                    <!-- request the screenshot and get the element offset info ready -->
+                                    <!-- use img src ready load to know everything is ready to map out -->
+                                    <!-- @todo: maybe something interesting like a field to select 'elements that contain text... and their parents n' -->
+                                    <img id="selector-background" >
+                                    <canvas id="selector-canvas"></canvas>
+                                </div>
+                                <div id="selector-current-xpath" style="overflow-x: hidden"><strong>{{ _('Currently:') }}</strong>&nbsp;<span class="text">{{ _('Loading...') }}</span></div>
+                            {%  else %}
+                                <strong>{{ _('Visual Selector data is not ready, watch needs to be checked atleast once.') }}</strong>
+                            {%  endif %}
                     {% else %}
-                        {# "This functionality needs chrome.." #}
-                        {{ only_playwright_type_watches_warning() }}
+                        <p>
+                            <strong>{{ _('Sorry, this functionality only works with fetchers that support Javascript and screenshots (such as playwright etc).') }}<br>
+                            {{ _('You need to') }} <a href="#request">{{ _('Set the fetch method') }}</a> {{ _('to one that supports Javascript and screenshots.') }}</strong>
+                        </p>
                     {% endif %}
                     </div>
                 </fieldset>
@@ -427,27 +438,27 @@ Math: {{ 1 + 1 }}") }}
                     <table class="pure-table" id="stats-table">
                         <tbody>
                         <tr>
-                            <td>Check count</td>
+                            <td>{{ _('Check count') }}</td>
                             <td>{{ "{:,}".format( watch.check_count) }}</td>
                         </tr>
                         <tr>
-                            <td>Consecutive filter failures</td>
+                            <td>{{ _('Consecutive filter failures') }}</td>
                             <td>{{ "{:,}".format( watch.consecutive_filter_failures) }}</td>
                         </tr>
                         <tr>
-                            <td>History length</td>
+                            <td>{{ _('History length') }}</td>
                             <td>{{ "{:,}".format(watch.history|length) }}</td>
                         </tr>
                         <tr>
-                            <td>Last fetch duration</td>
+                            <td>{{ _('Last fetch duration') }}</td>
                             <td>{{ watch.fetch_time }}s</td>
                         </tr>
                         <tr>
-                            <td>Notification alert count</td>
+                            <td>{{ _('Notification alert count') }}</td>
                             <td>{{ watch.notification_alert_count }}</td>
                         </tr>
                         <tr>
-                            <td>Server type reply</td>
+                            <td>{{ _('Server type reply') }}</td>
                             <td>{{ watch.get('remote_server_reply') }}</td>
                         </tr>
                         </tbody>
@@ -461,7 +472,7 @@ Math: {{ 1 + 1 }}") }}
 
                     {% if watch.history_n %}
                         <p>
-                             <a href="{{url_for('ui.ui_edit.watch_get_latest_html', uuid=uuid)}}" class="pure-button button-small">Download latest HTML snapshot</a>
+                             <a href="{{url_for('ui.ui_edit.watch_get_latest_html', uuid=uuid)}}" class="pure-button button-small">{{ _('Download latest HTML snapshot') }}</a>
                         </p>
                     {% endif %}
 
@@ -471,12 +482,22 @@ Math: {{ 1 + 1 }}") }}
                 <div class="pure-control-group">
                     {{ render_button(form.save_button) }}
                     <a href="{{url_for('ui.form_delete', uuid=uuid)}}"
-                       class="pure-button button-error ">Delete</a>
+                       class="pure-button button-error"
+                       data-requires-confirm
+                       data-confirm-type="danger"
+                       data-confirm-title="{{ _('Delete Watch?') }}"
+                       data-confirm-message="<p>{{ _('Are you sure you want to delete the watch for:') }}</p><p><strong>{{ watch.get('url', 'this watch') }}</strong></p><p>{{ _('This action cannot be undone.') }}</p>"
+                       data-confirm-button="{{ _('Delete') }}">{{ _('Delete') }}</a>
                     {% if watch.history_n %}<a href="{{url_for('ui.clear_watch_history', uuid=uuid)}}"
-                       class="pure-button button-error">Clear History</a>{% endif %}
+                       class="pure-button button-error"
+                       data-requires-confirm
+                       data-confirm-type="warning"
+                       data-confirm-title="{{ _('Clear History?') }}"
+                       data-confirm-message="<p>{{ _('Are you sure you want to clear all history for:') }}</p><p><strong>{{ watch.get('url', 'this watch') }}</strong></p><p>{{ _('This will remove all snapshots and previous versions. This action cannot be undone.') }}</p>"
+                       data-confirm-button="{{ _('Clear History') }}">{{ _('Clear History') }}</a>{% endif %}
                     <a href="{{url_for('ui.form_clone', uuid=uuid)}}"
-                       class="pure-button">Clone &amp; Edit</a>
-                 <a href="{{ url_for('rss.rss_single_watch', uuid=uuid, token=app_rss_token)}}"><img alt="RSS Feed for this watch" style="padding: .5em 1em;" src="{{url_for('static_content', group='images', filename='generic_feed-icon.svg')}}" height="15"></a>
+                       class="pure-button">{{ _('Clone & Edit') }}</a>
+                 <a href="{{ url_for('rss.rss_single_watch', uuid=uuid, token=app_rss_token)}}"><img alt="{{ _('RSS Feed for this watch') }}" style="padding: .5em 1em;" src="{{url_for('static_content', group='images', filename='generic_feed-icon.svg')}}" height="15"></a>
                 </div>
             </div>
         </form>

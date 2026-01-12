@@ -1,15 +1,13 @@
 
-#toggle-light-mode {
-/*  width: 3rem;*/
+.toggle-light-mode {
   /* default */
   .icon-dark {
     display: none;
   }
-
 }
 
 html[data-darkmode="true"] {
-  #toggle-light-mode {
+  .toggle-light-mode {
     .icon-light {
       display: none;
     }

@@ -1,0 +1,73 @@
+// Reusable notification bubble for action sidebar icons
+
+.action-sidebar-item {
+  position: relative;
+
+  .notification-bubble {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    min-width: 18px;
+    height: 18px;
+    background: #ff4444;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+    border-radius: 9px;
+    padding: 0 2px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+    transition: all 0.2s ease;
+    display: none;
+
+    // Red bubble for errors/urgent
+    &.red-bubble {
+      background: #ff4444;
+    }
+
+    // Blue bubble for informational
+    &.blue-bubble {
+      background: #4a9eff;
+      color: #fff;
+    }
+
+    &.visible {
+      display: block;
+    }
+
+    // Pulse animation when value changes
+    &.pulse {
+      animation: bubblePulse 0.4s ease-out;
+    }
+
+    // Large numbers get smaller font
+    &.large-number {
+      font-size: 8px;
+      min-width: 20px;
+      height: 20px;
+      line-height: 20px;
+      border-radius: 10px;
+    }
+  }
+}
+
+@keyframes bubblePulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+// Dark mode adjustments
+html[data-darkmode=true] {
+  .notification-bubble {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  }
+}

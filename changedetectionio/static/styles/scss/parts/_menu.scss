@@ -22,4 +22,22 @@
       cursor: pointer;
     }
   }
+
+  // Active menu item styling
+  &.active {
+    .pure-menu-link {
+      background-color: var(--color-background-menu-link-hover);
+      color: var(--color-text-menu-link-hover);
+    }
+  }
+}
+
+#cdio-logo {
+  padding-left: 0.5em;
+}
+
+#inline-menu-extras-group {
+  >* {
+    display: inline-block;
+  }
 }

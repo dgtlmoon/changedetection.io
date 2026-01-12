@@ -24,12 +24,12 @@
 
     <div class="tabs collapsable">
         <ul>
-            <li class="tab" id=""><a href="#general">General</a></li>
-            <li class="tab"><a href="#filters-and-triggers">Filters &amp; Triggers</a></li>
+            <li class="tab" id=""><a href="#general">{{ _('General') }}</a></li>
+            <li class="tab"><a href="#filters-and-triggers">{{ _('Filters & Triggers') }}</a></li>
             {% if extra_tab_content %}
             <li class="tab"><a href="#extras_tab">{{ extra_tab_content }}</a></li>
             {% endif %}
-            <li class="tab"><a href="#notifications">Notifications</a></li>
+            <li class="tab"><a href="#notifications">{{ _('Notifications') }}</a></li>
         </ul>
     </div>
 
@@ -47,10 +47,10 @@
             </div>
 
             <div class="tab-pane-inner" id="filters-and-triggers">
-                <p>These settings are <strong><i>added</i></strong> to any existing watch configurations.</p>
+                <p>{{ _('These settings are') }} <strong><i>{{ _('added') }}</i></strong> {{ _('to any existing watch configurations.') }}</p>
                 {% include "edit/include_subtract.html" %}
                 <div class="text-filtering border-fieldset">
-                    <h3>Text filtering</h3>
+                    <h3>{{ _('Text filtering') }}</h3>
                     {% include "edit/text-options.html" %}
                 </div>
             </div>
@@ -70,18 +70,18 @@
                     <div class="pure-control-group inline-radio">
                       {{ render_checkbox_field(form.notification_screenshot) }}
                         <span class="pure-form-message-inline">
-                            <strong>Use with caution!</strong> This will easily fill up your email storage quota or flood other storages.
+                            <strong>{{ _('Use with caution!') }}</strong> {{ _('This will easily fill up your email storage quota or flood other storages.') }}
                         </span>
                     </div>
                     {% endif %}
                     <div class="field-group" id="notification-field-group">
                         {% if has_default_notification_urls %}
                         <div class="inline-warning">
-                            <img class="inline-warning-icon" src="{{url_for('static_content', group='images', filename='notice.svg')}}" alt="Look out!" title="Lookout!" >
-                            There are <a href="{{ url_for('settings.settings_page')}}#notifications">system-wide notification URLs enabled</a>, this form will override notification settings for this watch only &dash; an empty Notification URL list here will still send notifications.
+                            <img class="inline-warning-icon" src="{{url_for('static_content', group='images', filename='notice.svg')}}" alt="{{ _('Look out!') }}" title="{{ _('Lookout!') }}" >
+                            {{ _('There are') }} <a href="{{ url_for('settings.settings_page')}}#notifications">{{ _('system-wide notification URLs enabled') }}</a>, {{ _('this form will override notification settings for this watch only') }} &dash; {{ _('an empty Notification URL list here will still send notifications.') }}
                         </div>
                         {% endif %}
-                        <a href="#notifications" id="notification-setting-reset-to-default" class="pure-button button-xsmall" style="right: 20px; top: 20px; position: absolute; background-color: #5f42dd; border-radius: 4px; font-size: 70%; color: #fff">Use system defaults</a>
+                        <a href="#notifications" id="notification-setting-reset-to-default" class="pure-button button-xsmall" style="right: 20px; top: 20px; position: absolute; background-color: #5f42dd; border-radius: 4px; font-size: 70%; color: #fff">{{ _('Use system defaults') }}</a>
 
                         {{ render_common_settings_form(form, emailprefix, settings_application, extra_notification_token_placeholder_info) }}
                     </div>

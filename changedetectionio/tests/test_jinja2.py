@@ -30,7 +30,7 @@ def test_jinja2_in_url_query(client, live_server, measure_memory_usage, datastor
 
     # It should report nothing found (no new 'has-unread-changes' class)
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
     assert b'date=2' in res.data
@@ -56,7 +56,7 @@ def test_jinja2_time_offset_in_url_query(client, live_server, measure_memory_usa
 
     # Verify the URL was processed correctly (should not have errors)
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
     # Should have a valid timestamp in the response

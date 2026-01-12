@@ -503,7 +503,7 @@ def test_single_send_test_notification_on_watch(client, live_server, measure_mem
 
     test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')+"?xxx={{ watch_url }}&+custom-header=123"
     # 1995 UTF-8 content should be encoded
-    test_body = 'change detection is cool 网站监测 内容更新了 - {{diff_full}}'
+    test_body = 'change detection is cool 网站监测 内容更新了 - {{diff_full}}\n\nCurrent snapshot: {{current_snapshot}}'
     ######### Test global/system settings
     res = client.post(
         url_for("ui.ui_notification.ajax_callback_send_notification_test")+f"/{uuid}",
@@ -528,7 +528,8 @@ def test_single_send_test_notification_on_watch(client, live_server, measure_mem
             assert 'title="Changed into">Example text:' not in x
             assert 'span' not in x
             assert 'Example text:' in x
-
+        #3720 current_snapshot check, was working but lets test it exactly.
+        assert 'Current snapshot: Example text: example test' in x
     os.unlink(os.path.join(datastore_path, "notification.txt"))
 
 def _test_color_notifications(client, notification_body_token, datastore_path):
@@ -579,9 +580,8 @@ def _test_color_notifications(client, notification_body_token, datastore_path):
 
     with open(os.path.join(datastore_path, "notification.txt"), 'r') as f:
         x = f.read()
-        s =  f'<span style="{HTML_CHANGED_STYLE}" role="note" aria-label="Changed text" title="Changed text">Which is across multiple lines'
+        s = f'<span style="{HTML_CHANGED_STYLE}" role="note" aria-label="Changed text" title="Changed text">Which is across multiple lines</span><br>'
         assert s in x
-
 
     client.get(
         url_for("ui.form_delete", uuid="all"),
