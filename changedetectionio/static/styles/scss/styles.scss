@@ -2,7 +2,7 @@
  * -- BASE STYLES --
  */
 
-@use "parts/settings" as *;
+@use "settings" as *;
 @use "parts/variables";
 @use "parts/arrows";
 @use "parts/browser-steps";
@@ -160,7 +160,13 @@ body.spinner-active {
 }
 
 section.content {
-  padding-top: 100px;
+  @media only screen and (max-width: $desktop-wide-breakpoint) {
+    padding-top: 80px;
+  }
+  @media only screen and (min-width: $desktop-wide-breakpoint) {
+    padding-top: 100px;
+  }
+
   padding-bottom: 1em;
   flex-direction: column;
   display: flex;
@@ -517,6 +523,9 @@ footer {
 }
 
 .sticky-tab {
+  @media only screen and (max-width: $desktop-wide-breakpoint) {
+    display: none;
+  }
   position: absolute;
   top: 60px;
   font-size: 65%;
@@ -673,10 +682,7 @@ footer {
 }
 
 
-@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1030px) {
-  section.content {
-    padding-top: 110px;
-  }
+@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: $desktop-wide-breakpoint) {
   input[type='text'] {
     width: 100%;
   }
