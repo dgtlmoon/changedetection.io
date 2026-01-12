@@ -72,61 +72,37 @@
 
         <ul class="pure-menu-list" id="top-right-menu">
           <!-- Collapsible menu items (hidden on mobile, shown in drawer) -->
+          {% include "menu.html" %}
+
           {% if current_user.is_authenticated or not has_password %}
             {% if not current_diff_url %}
-              <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('tags.') %}active{% endif %}">
-                <a href="{{ url_for('tags.tags_overview_page')}}" class="pure-menu-link">{{ _('GROUPS') }}</a>
+              <li class="pure-menu-item  menu-collapsible">
+              <a href="{{ url_for('backups.index')}}" class="pure-menu-link">{{ _('SEARCH') }}</a>
+                <button class="toggle-button" id="open-search-modal" type="button" title="{{ _('Search, or Use Alt+S Key') }}">
+                  {% include "svgs/search-icon.svg" %}
+                </button>
               </li>
-              <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('settings.') %}active{% endif %}">
-                <a href="{{ url_for('settings.settings_page')}}" class="pure-menu-link">{{ _('SETTINGS') }}</a>
+
+              <li class="pure-menu-item">
+                <button class="toggle-button" id ="toggle-light-mode" type="button" title="{{ _('Toggle Light/Dark Mode') }}">
+                  <span class="visually-hidden">{{ _('Toggle light/dark mode') }}</span>
+                  <span class="icon-light">
+                    {% include "svgs/light-mode-toggle-icon.svg" %}
+                  </span>
+                  <span class="icon-dark">
+                    {% include "svgs/dark-mode-toggle-icon.svg" %}
+                  </span>
+                </button>
               </li>
-              <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('imports.') %}active{% endif %}">
-                <a href="{{ url_for('imports.import_page')}}" class="pure-menu-link">{{ _('IMPORT') }}</a>
-              </li>
-              <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('backups.') %}active{% endif %}">
-                <a href="{{ url_for('backups.index')}}" class="pure-menu-link">{{ _('BACKUPS') }}</a>
-              </li>
-            {% else %}
-              <li class="pure-menu-item menu-collapsible">
-                <a href="{{ url_for('ui.ui_edit.edit_page', uuid=uuid, next='diff') }}" class="pure-menu-link">{{ _('EDIT') }}</a>
+              <li class="pure-menu-item">
+                <button class="toggle-button" id="language-selector" type="button" title="{{ _('Change Language') }}">
+                  <span class="visually-hidden">{{ _('Change language') }}</span>
+                  <span class="{{ get_flag_for_locale(get_locale()) }}" id="language-selector-flag"></span>
+                </button>
               </li>
             {% endif %}
-          {% else %}
-            <li class="pure-menu-item menu-collapsible">
-              <a class="pure-menu-link" href="https://changedetection.io">Website Change Detection and Notification.</a>
-            </li>
-          {% endif %}
-          {% if current_user.is_authenticated %}
-            <li class="pure-menu-item menu-collapsible">
-              <a href="{{url_for('logout', redirect=request.path)}}" class="pure-menu-link">{{ _('LOG OUT') }}</a>
-            </li>
           {% endif %}
 
-          <!-- Always visible items -->
-          {% if current_user.is_authenticated or not has_password %}
-          <li class="pure-menu-item">
-            <button class="toggle-button" id="open-search-modal" type="button" title="{{ _('Search, or Use Alt+S Key') }}">
-              {% include "svgs/search-icon.svg" %}
-            </button>
-          </li>
-          {% endif %}
-          <li class="pure-menu-item">
-            <button class="toggle-button" id ="toggle-light-mode" type="button" title="{{ _('Toggle Light/Dark Mode') }}">
-              <span class="visually-hidden">{{ _('Toggle light/dark mode') }}</span>
-              <span class="icon-light">
-                {% include "svgs/light-mode-toggle-icon.svg" %}
-              </span>
-              <span class="icon-dark">
-                {% include "svgs/dark-mode-toggle-icon.svg" %}
-              </span>
-            </button>
-          </li>
-          <li class="pure-menu-item">
-            <button class="toggle-button" id="language-selector" type="button" title="{{ _('Change Language') }}">
-              <span class="visually-hidden">{{ _('Change language') }}</span>
-              <span class="{{ get_flag_for_locale(get_locale()) }}" id="language-selector-flag"></span>
-            </button>
-          </li>
           <li class="pure-menu-item" id="heart-us">
                 <svg
                    fill="#ff0000"
@@ -136,8 +112,7 @@
                    id="svg-heart"
                    xmlns="http://www.w3.org/2000/svg"
                    >
-                  <path id="heartpath" d="M 5.338316,0.50302766 C 0.71136983,0.50647126 -3.9576371,7.2707777 8.5004254,15.503028 23.833425,5.3700277 13.220206,-2.5384409 8.6762066,1.6475589 c -0.060791,0.054322 -0.11943,0.1110064 -0.1757812,0.1699219 -0.057,-0.059 -0.1157813,-0.116875 -0.1757812,-0.171875 C 7.4724566,0.86129334 6.4060729,0.50223298 5.338316,0.50302766 Z"
-                     style="fill:var(--color-background);fill-opacity:1;stroke:#ff0000;stroke-opacity:1" />
+                  <path id="heartpath" d="M 5.338316,0.50302766 C 0.71136983,0.50647126 -3.9576371,7.2707777 8.5004254,15.503028 23.833425,5.3700277 13.220206,-2.5384409 8.6762066,1.6475589 c -0.060791,0.054322 -0.11943,0.1110064 -0.1757812,0.1699219 -0.057,-0.059 -0.1157813,-0.116875 -0.1757812,-0.171875 C 7.4724566,0.86129334 6.4060729,0.50223298 5.338316,0.50302766 Z" style="fill:var(--color-background);fill-opacity:1;stroke:#ff0000;stroke-opacity:1" />
                 </svg>
           </li>
           <li class="pure-menu-item">
@@ -163,19 +138,7 @@
       <div class="mobile-menu-overlay" id="mobile-menu-overlay"></div>
       <div class="mobile-menu-drawer" id="mobile-menu-drawer">
         <ul class="mobile-menu-items">
-          {% if current_user.is_authenticated or not has_password %}
-            {% if not current_diff_url %}
-              <li><a href="{{ url_for('tags.tags_overview_page')}}">{{ _('GROUPS') }}</a></li>
-              <li><a href="{{ url_for('settings.settings_page')}}">{{ _('SETTINGS') }}</a></li>
-              <li><a href="{{ url_for('imports.import_page')}}">{{ _('IMPORT') }}</a></li>
-              <li><a href="{{ url_for('backups.index')}}">{{ _('BACKUPS') }}</a></li>
-            {% else %}
-              <li><a href="{{ url_for('ui.ui_edit.edit_page', uuid=uuid, next='diff') }}">{{ _('EDIT') }}</a></li>
-            {% endif %}
-          {% endif %}
-          {% if current_user.is_authenticated %}
-            <li><a href="{{url_for('logout', redirect=request.path)}}">{{ _('LOG OUT') }}</a></li>
-          {% endif %}
+          {% include "menu.html" %}
         </ul>
       </div>
       <div id="pure-menu-horizontal-spinner"></div>

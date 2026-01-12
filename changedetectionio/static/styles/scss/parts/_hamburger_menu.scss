@@ -135,9 +135,9 @@
   margin-left: auto;
 }
 
-// Hide regular menu items on mobile
+// Hide regular menu items on mobile (but not in mobile drawer)
 @media only screen and (max-width: 768px) {
-  .menu-collapsible {
+  #top-right-menu .menu-collapsible {
     display: none !important;
   }
 
