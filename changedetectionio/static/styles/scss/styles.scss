@@ -178,13 +178,13 @@ code {
   border-radius: 5px;
   padding: 2px 5px;
   margin-right: 4px;
+  line-height: 1.2rem;
 }
 
 /* Processor type badges - colors auto-generated from processor names */
 .processor-badge {
   @extend .inline-tag;
-  font-size: 0.85em;
-  font-weight: 500;
+  font-weight: 900;
 }
 
 .watch-tag-list {
