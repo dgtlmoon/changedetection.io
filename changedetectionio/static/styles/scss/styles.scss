@@ -2,6 +2,7 @@
  * -- BASE STYLES --
  */
 
+@use "parts/settings" as *;
 @use "parts/variables";
 @use "parts/arrows";
 @use "parts/browser-steps";
@@ -660,7 +661,7 @@ footer {
 
 
 @media only screen and (max-width: 760px),
-(min-device-width: 768px) and (max-device-width: 1024px) {
+(min-device-width: 768px) and (max-device-width: $desktop-wide-breakpoint) {
   .edit-form {
     padding: 0.5em;
     margin: 0;
