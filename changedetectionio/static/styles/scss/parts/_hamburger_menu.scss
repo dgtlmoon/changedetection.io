@@ -9,7 +9,7 @@
   z-index: 10001;
   position: relative;
 
-  @media only screen and (max-width: 768px) {
+  @media only screen and (max-width: 1024px) {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -97,7 +97,7 @@
     li {
       border-bottom: 1px solid var(--color-border-table-cell);
 
-      a {
+      >* {
         display: block;
         padding: 1rem 1.5rem;
         color: var(--color-text);
@@ -136,7 +136,7 @@
 }
 
 // Hide regular menu items on mobile (but not in mobile drawer)
-@media only screen and (max-width: 768px) {
+@media only screen and (max-width: 1024px) {
   #top-right-menu .menu-collapsible {
     display: none !important;
   }
@@ -151,7 +151,7 @@
 }
 
 // Desktop - hide mobile menu elements
-@media only screen and (min-width: 769px) {
+@media only screen and (min-width: 1025px) {
   .hamburger-menu,
   .mobile-menu-drawer,
   .mobile-menu-overlay {

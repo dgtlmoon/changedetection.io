@@ -30,6 +30,7 @@
 @use "parts/notification_bubble";
 @use "parts/toast";
 @use "parts/login_form";
+@use "parts/tabs";
 
 
 body {
@@ -671,30 +672,13 @@ footer {
 }
 
 
-@media only screen and (max-width: 760px),
-(min-device-width: 768px) and (max-device-width: 800px) {
-
-  div.sticky-tab#hosted-sticky {
-    top: 60px;
-    left: 0px;
-    right: auto;
-  }
-
+@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1030px) {
   section.content {
     padding-top: 110px;
   }
-
-  // Make the tabs easier to hit, they will be all nice and horizontal
-  div.tabs.collapsable ul li {
-    display: block;
-    border-radius: 0px;
-    margin-right: 0px;
-  }
-
   input[type='text'] {
     width: 100%;
   }
-
 }
 
 .pure-table {
@@ -769,45 +753,6 @@ textarea::placeholder {
   }
 }
 
-
-.tabs {
-  ul {
-    margin: 0px;
-    padding: 0px;
-    display: block;
-
-    li {
-      margin-right: 1px;
-      display: inline-block;
-      color: var(--color-text-tab);
-      border-top-left-radius: 5px;
-      border-top-right-radius: 5px;
-      background-color: var(--color-background-tab);
-
-      &:not(.active) {
-        &:hover {
-          background-color: var(--color-background-tab-hover);
-        }
-      }
-
-      &.active,
-      :target {
-        background-color: var(--color-background);
-
-        a {
-          color: var(--color-text-tab-active);
-          font-weight: bold;
-        }
-      }
-
-      a {
-        display: block;
-        padding: 0.7em;
-        color: var(--color-text-tab);
-      }
-    }
-  }
-}
 
 $form-edge-padding: 20px;
 

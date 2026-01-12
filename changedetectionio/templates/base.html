@@ -53,10 +53,10 @@
       <div class="home-menu pure-menu pure-menu-horizontal" id="nav-menu">
 
         {% if has_password and not current_user.is_authenticated %}
-          <a class="pure-menu-heading" href="https://changedetection.io" rel="noopener">
+          <a id="cdio-logo" class="pure-menu-heading" href="https://changedetection.io" rel="noopener">
             <strong>Change</strong>Detection.io</a>
         {% else %}
-          <a class="pure-menu-heading" href="{{url_for('watchlist.index')}}">
+          <a  id="cdio-logo" class="pure-menu-heading" href="{{url_for('watchlist.index')}}">
             <strong>Change</strong>Detection.io</a>
         {% endif %}
         {% if current_diff_url and is_safe_valid_url(current_diff_url) %}
@@ -77,29 +77,11 @@
           {% if current_user.is_authenticated or not has_password %}
             {% if not current_diff_url %}
               <li class="pure-menu-item  menu-collapsible">
-              <a href="{{ url_for('backups.index')}}" class="pure-menu-link">{{ _('SEARCH') }}</a>
                 <button class="toggle-button" id="open-search-modal" type="button" title="{{ _('Search, or Use Alt+S Key') }}">
                   {% include "svgs/search-icon.svg" %}
                 </button>
               </li>
 
-              <li class="pure-menu-item">
-                <button class="toggle-button" id ="toggle-light-mode" type="button" title="{{ _('Toggle Light/Dark Mode') }}">
-                  <span class="visually-hidden">{{ _('Toggle light/dark mode') }}</span>
-                  <span class="icon-light">
-                    {% include "svgs/light-mode-toggle-icon.svg" %}
-                  </span>
-                  <span class="icon-dark">
-                    {% include "svgs/dark-mode-toggle-icon.svg" %}
-                  </span>
-                </button>
-              </li>
-              <li class="pure-menu-item">
-                <button class="toggle-button" id="language-selector" type="button" title="{{ _('Change Language') }}">
-                  <span class="visually-hidden">{{ _('Change language') }}</span>
-                  <span class="{{ get_flag_for_locale(get_locale()) }}" id="language-selector-flag"></span>
-                </button>
-              </li>
             {% endif %}
           {% endif %}
 
@@ -115,12 +97,6 @@
                   <path id="heartpath" d="M 5.338316,0.50302766 C 0.71136983,0.50647126 -3.9576371,7.2707777 8.5004254,15.503028 23.833425,5.3700277 13.220206,-2.5384409 8.6762066,1.6475589 c -0.060791,0.054322 -0.11943,0.1110064 -0.1757812,0.1699219 -0.057,-0.059 -0.1157813,-0.116875 -0.1757812,-0.171875 C 7.4724566,0.86129334 6.4060729,0.50223298 5.338316,0.50302766 Z" style="fill:var(--color-background);fill-opacity:1;stroke:#ff0000;stroke-opacity:1" />
                 </svg>
           </li>
-          <li class="pure-menu-item">
-            <a class="github-link" href="https://github.com/dgtlmoon/changedetection.io">
-              {% include "svgs/github.svg" %}
-            </a>
-          </li>
-
           <!-- Hamburger menu button (mobile only) -->
           <li class="pure-menu-item">
             <button class="hamburger-menu" id="hamburger-toggle" aria-label="Toggle menu">
@@ -139,14 +115,16 @@
       <div class="mobile-menu-drawer" id="mobile-menu-drawer">
         <ul class="mobile-menu-items">
           {% include "menu.html" %}
+            <li class="pure-menu-item menu-collapsible">
+                {%- if right_sticky -%}<div>{{ right_sticky }}</div>{%- endif -%}
+                <a href="https://changedetection.io/?ref={{ guid }}">Let us host your instance!</a><br>
+            </li>
         </ul>
       </div>
       <div id="pure-menu-horizontal-spinner"></div>
       </div>
 
     </div>
-
-
     {% if hosted_sticky %}
       <div class="sticky-tab" id="hosted-sticky">
         <a href="https://changedetection.io/?ref={{guid}}">Let us host your instance!</a>
@@ -211,6 +189,7 @@
         </div>
 
         <div class="content-wrapper">
+{#
           {% if current_user.is_authenticated or not has_password %}
           <aside class="action-sidebar">
             <a href="{{ url_for('watchlist.index') }}" class="action-sidebar-item {% if request.endpoint.startswith('watchlist.') or request.endpoint.startswith('ui.') %}active{% endif %}" title="{{ _('Watch List') }}">
@@ -220,7 +199,6 @@
               </svg>
               <span class="action-label">{{ _('Watches') }}</span>
             </a>
-
             <a href="{{ url_for('queue_status') }}" class="action-sidebar-item {% if request.endpoint == 'queue_status' %}active{% endif %}" id="queue-action-item" title="{{ _('Queue Status') }}">
               <svg class="action-icon" viewBox="0 0 24 24">
                 <line x1="8" y1="6" x2="21" y2="6"/>
@@ -233,56 +211,9 @@
               <span class="action-label">{{ _('Queue') }}</span>
               <span class="notification-bubble blue-bubble" id="queue-bubble" data-count="0"></span>
             </a>
-
-            <a href="{{ url_for('settings.settings_page') }}" class="action-sidebar-item {% if request.endpoint.startswith('settings.') %}active{% endif %}" title="{{ _('Settings') }}">
-              <svg class="action-icon" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M12 1v6m0 6v10M3.5 3.5l4.2 4.2m5.6 5.6l4.2 4.2M1 12h6m6 0h10M3.5 20.5l4.2-4.2m5.6-5.6l4.2-4.2"/>
-              </svg>
-              <span class="action-label">{{ _('Settings') }}</span>
-            </a>
-
-            <a href="{{ url_for('backups.index') }}" class="action-sidebar-item {% if request.endpoint.startswith('backups.') %}active{% endif %}" title="{{ _('Backups') }}">
-              <svg class="action-icon" viewBox="0 0 24 24">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-                <polyline points="10 9 9 9 8 9"/>
-              </svg>
-              <span class="action-label">{{ _('Backups') }}</span>
-            </a>
-
-            <a href="#" class="action-sidebar-item" title="{{ _('Sitemap Crawler') }}">
-              <svg class="action-icon" viewBox="0 0 24 24">
-                <!-- Spider web with map nodes -->
-                <circle cx="12" cy="12" r="2"/>
-                <!-- Radial web lines -->
-                <line x1="12" y1="12" x2="12" y2="4"/>
-                <line x1="12" y1="12" x2="19" y2="7"/>
-                <line x1="12" y1="12" x2="20" y2="12"/>
-                <line x1="12" y1="12" x2="19" y2="17"/>
-                <line x1="12" y1="12" x2="12" y2="20"/>
-                <line x1="12" y1="12" x2="5" y2="17"/>
-                <line x1="12" y1="12" x2="4" y2="12"/>
-                <line x1="12" y1="12" x2="5" y2="7"/>
-                <!-- Outer web ring -->
-                <circle cx="12" cy="12" r="8" fill="none"/>
-                <!-- Map nodes on web -->
-                <circle cx="12" cy="4" r="1.5"/>
-                <circle cx="19" cy="7" r="1.5"/>
-                <circle cx="20" cy="12" r="1.5"/>
-                <circle cx="19" cy="17" r="1.5"/>
-                <circle cx="12" cy="20" r="1.5"/>
-                <circle cx="5" cy="17" r="1.5"/>
-                <circle cx="4" cy="12" r="1.5"/>
-                <circle cx="5" cy="7" r="1.5"/>
-              </svg>
-              <span class="action-label">{{ _('Sitemap') }}</span>
-            </a>
           </aside>
           {% endif %}
-
+#}
           <div class="content-main">
             <header>
               {% block header %}{% endblock %}
@@ -364,6 +295,68 @@
       </div>
     </dialog>
     {% endif %}
+
+
+  <script>
+  (function() {
+      /* AUTOMATIC TAB COLUMN-IZER FOR WHEN TABS WRAP */
+    // Exit early if no tabs on page
+    if (!document.querySelector('.tab')) return;
+
+    const cache = new Map();
+
+    function checkWrapping(ul) {
+      const tabs = ul.querySelectorAll('.tab');
+      if (tabs.length < 2) return false;
+
+      // Init cache on first run
+      if (!cache.has(ul)) {
+        ul.style.setProperty('--tab-width', '');
+        void ul.offsetHeight;
+        let max = 0;
+        tabs.forEach(t => max = Math.max(max, t.offsetWidth));
+        cache.set(ul, max);
+      }
+
+      // Temporarily use flex wrap to check if wrapping occurs
+      ul.style.display = 'flex';
+      ul.style.flexWrap = 'wrap';
+      void ul.offsetHeight;
+
+      const top = tabs[0].offsetTop;
+      const wrapped = Array.from(tabs).some((t, i) => i > 0 && t.offsetTop !== top);
+
+      // Reset display to use CSS grid
+      ul.style.display = '';
+      ul.style.flexWrap = '';
+
+      // Set CSS variable for wrapped mode
+      if (wrapped) {
+        ul.style.setProperty('--tab-width', `${cache.get(ul) + 10}px`);
+      } else {
+        ul.style.setProperty('--tab-width', '');
+      }
+
+      return wrapped;
+    }
+
+    function check() {
+      let any = false;
+      document.querySelectorAll('ul').forEach(ul => {
+        if (ul.querySelector('.tab') && checkWrapping(ul)) any = true;
+      });
+      document.body.classList.toggle('wrapped-tabs', any);
+    }
+
+    check();
+    let timer;
+    window.addEventListener('resize', () => {
+      clearTimeout(timer);
+      timer = setTimeout(check, 100);
+    });
+  })();
+  </script>
+
 
     <script src="{{url_for('static_content', group='js', filename='language-selector.js')}}" defer></script>
     <script src="{{url_for('static_content', group='js', filename='search-modal.js')}}" defer></script>

@@ -24,7 +24,7 @@
   flex-direction: column;
   gap: 0.5rem;
   align-items: center;
-  z-index: 10;
+  z-index: 0;
 
   @media only screen and (max-width: 900px) {
     position: relative;
@@ -32,7 +32,7 @@
     width: 100%;
     flex-direction: row;
     justify-content: space-around;
-    padding: 1rem 0.5rem;
+    padding: 0;
     overflow-x: auto;
   }
 }
