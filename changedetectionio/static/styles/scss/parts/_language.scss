@@ -52,3 +52,18 @@
     font-size: 1rem;
   }
 }
+
+.language-modal {
+  .language-list {
+    .lang-option {
+      display: inline-block;
+      width: 1.5em;
+      height: 1.5em;
+      vertical-align: middle;
+      margin-right: 0.5em;
+      border-radius: 50%;
+      overflow: hidden;
+    }
+  }
+}
+
