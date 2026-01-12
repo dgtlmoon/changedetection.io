@@ -119,6 +119,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             sent_obj = process_notification(n_object, datastore)
 
         except Exception as e:
+            logger.error(e)
             e_str = str(e)
             # Remove this text which is not important and floods the container
             e_str = e_str.replace(
