@@ -781,7 +781,7 @@ class SingleBrowserStep(Form):
 
 class processor_text_json_diff_form(commonSettingsForm):
 
-    url = fields.URLField('URL', validators=[validateURL()])
+    url = fields.URLField('Web page URL', validators=[validateURL()])
     tags = StringTagUUID('Group tag', [validators.Optional()], default='')
 
     time_between_check = EnhancedFormField(
