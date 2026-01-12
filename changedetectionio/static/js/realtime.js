@@ -120,7 +120,8 @@ $(document).ready(function () {
                 console.log(`${data.event_timestamp} - Queue size update: ${data.q_length}`);
 
                 // Update queue bubble in action sidebar
-                if (queueBubble) {
+                //if (queueBubble) {
+                if (0) {
                     const count = parseInt(data.q_length) || 0;
                     const oldCount = parseInt(queueBubble.getAttribute('data-count')) || 0;
 
