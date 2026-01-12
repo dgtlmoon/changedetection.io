@@ -85,9 +85,7 @@
 
             <div class="tab-pane-inner" id="notifications">
                 <fieldset>
-                    <div class="field-group">
-                        {{ render_common_settings_form(form.application.form, emailprefix, settings_application, extra_notification_token_placeholder_info) }}
-                    </div>
+                    {{ render_common_settings_form(form.application.form, emailprefix, settings_application, extra_notification_token_placeholder_info) }}
                 </fieldset>
                 <div class="pure-control-group" id="notification-base-url">
                     {{ render_field(form.application.form.base_url, class="m-d") }}
@@ -128,7 +126,7 @@
                 </div>
                 <div class="pure-control-group">
                     {{ render_field(form.requests.form.timeout) }}
-                    <span class="pure-form-message-inline">For regular plain requests (not chrome based), maximum number of seconds until timeout, 1-999.<br>
+                    <span class="pure-form-message-inline">For regular plain requests (not chrome based), maximum number of seconds until timeout, 1-999.</span><br>
                 </div>
                 <div class="pure-control-group inline-radio">
                     {{ render_field(form.requests.form.default_ua) }}
@@ -219,7 +217,7 @@ nav
                         <a id="chrome-extension-link"
                            title="Try our new Chrome Extension!"
                            href="https://chromewebstore.google.com/detail/changedetectionio-website/kefcfmgmlhmankjmnbijimhofdjekbop">
-                            <img alt="Chrome store icon" src="{{ url_for('static_content', group='images', filename='google-chrome-icon.png') }}" alt="Chrome">
+                            <img alt="Chrome store icon" src="{{ url_for('static_content', group='images', filename='google-chrome-icon.png') }}" >
                             Chrome Webstore
                         </a>
                     </p>
@@ -260,14 +258,14 @@ nav
                     Ensure the settings below are correct, they are used to manage the time schedule for checking your web page watches.
                 </div>
                 <div class="pure-control-group">
-                    <p><strong>UTC Time &amp Date from Server:</strong> <span id="utc-time" >{{ utc_time }}</span></p>
-                    <p><strong>Local Time &amp Date in Browser:</strong> <span class="local-time" data-utc="{{ utc_time }}"></span></p>
-                    <p>
+                    <p><strong>UTC Time &amp; Date from Server:</strong> <span id="utc-time" >{{ utc_time }}</span></p>
+                    <p><strong>Local Time &amp; Date in Browser:</strong> <span class="local-time" data-utc="{{ utc_time }}"></span></p>
+                    <div>
                        {{ render_field(form.application.form.scheduler_timezone_default) }}
                         <datalist id="timezones" style="display: none;">
                             {%- for timezone in available_timezones -%}<option value="{{ timezone }}">{{ timezone }}</option>{%- endfor -%}
                         </datalist>
-                    </p>
+                    </div>
                 </div>
             </div>
             <div class="tab-pane-inner" id="ui-options">
@@ -336,7 +334,7 @@ nav
                     </div>
                 </div>
 
-               <p><strong>Tip</strong>: "Residential" and "Mobile" proxy type can be more successfull than "Data Center" for blocked websites.
+                <p><strong>Tip</strong>: "Residential" and "Mobile" proxy type can be more successfull than "Data Center" for blocked websites.</p>
 
                 <div class="pure-control-group" id="extra-proxies-setting">
                 {{ render_fieldlist_with_inline_errors(form.requests.form.extra_proxies) }}
