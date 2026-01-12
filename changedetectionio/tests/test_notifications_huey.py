@@ -8,6 +8,8 @@ import logging
 # Use 1 retry with 3 second delay (minimum allowed) to test retry mechanism faster
 os.environ['NOTIFICATION_RETRY_COUNT'] = '1'
 os.environ['NOTIFICATION_RETRY_DELAY'] = '3'
+# Use 1 second grace period in tests (vs 5 seconds in production) for faster failed detection
+os.environ['NOTIFICATION_FAILED_GRACE_PERIOD'] = '1'
 
 
 def test_notification_dead_letter_retry(client, live_server, measure_memory_usage, datastore_path):
@@ -62,9 +64,9 @@ def test_notification_dead_letter_retry(client, live_server, measure_memory_usag
     assert b'Queued 1 watch for rechecking.' in res.data
 
     # Wait for notification to fail and exhaust retries
-    # With 1 retry and 3 second delay: initial attempt + 3s wait + 1 retry + 5s grace = ~10 seconds total
+    # With 1 retry and 3 second delay: initial attempt + 3s wait + 1 retry + 1s grace = ~6-8 seconds total
     # Add extra time for Huey to write the result to storage
-    max_wait_time = 20  # Allow buffer time for storage and grace period
+    max_wait_time = 15  # Allow buffer time for storage, grace period, and slower CI
     start_time = time.time()
     failed_found = False
 
@@ -242,9 +244,9 @@ def test_notification_dead_letter_ui_and_utilities(client, live_server, measure_
     assert pending_count >= 0, "Should be able to get pending notifications count"
 
     # Wait for notification to fail and exhaust ALL retries
-    # With 1 retry and 3s delay: initial attempt + 3s + retry = ~4 seconds
-    # But we need to wait for the retry to complete and result to be stored
-    max_wait_time = 20
+    # With 1 retry and 3s delay: initial attempt + 3s + retry + 1s grace = ~6-8 seconds
+    # Extra buffer for Redis mode in CI environments
+    max_wait_time = 30
     start_time = time.time()
     failed_found = False
 
@@ -509,7 +511,7 @@ def test_notification_ajax_log_endpoint(client, live_server, measure_memory_usag
 
     # Wait for notification to fail and exhaust all retries
     logging.info("Waiting for notification to fail...")
-    max_wait_time = 20
+    max_wait_time = 30
     start_time = time.time()
     failed_found = False
 
@@ -1076,7 +1078,7 @@ def test_notification_retry_timeline_in_dashboard(client, live_server, measure_m
 
     # Wait for notification to start retrying (after first failure)
     logging.info("Waiting for notification to fail and start retrying...")
-    max_wait_time = 20
+    max_wait_time = 30
     start_time = time.time()
     retry_found = False
 
@@ -1172,18 +1174,7 @@ def test_notification_clear_failed_button(client, live_server, measure_memory_us
     1. Failed notifications can be cleared separately from other notifications
     2. Clearing failed notifications removes them from the dashboard
     3. Other notifications (delivered, queued, retrying) are not affected
-
-    Note: This test can be slower in Redis mode due to grace period timing for detecting
-    permanently failed vs retrying notifications.
     """
-    import pytest
-    import os
-
-    # Skip in Redis mode - feature is proven to work in FileStorage mode, and Redis
-    # has timing complexities with the 5-second grace period that make this test slow
-    if os.environ.get('QUEUE_STORAGE') == 'redis':
-        pytest.skip("Skipping slow test in Redis mode - feature proven in FileStorage mode")
-
     from changedetectionio.notification.task_queue import get_failed_notifications, clear_failed_notifications
 
     set_original_response(datastore_path=datastore_path)
@@ -1222,9 +1213,10 @@ def test_notification_clear_failed_button(client, live_server, measure_memory_us
     assert b'Queued 1 watch for rechecking.' in res.data
 
     # Wait for notification to fail and exhaust ALL retries
-    # With 1 retry and 3 second delay: initial attempt + 3s wait + 1 retry + 5s grace period = ~10-15 seconds total
+    # With 1 retry and 3 second delay: initial attempt + 3s wait + 1 retry + 1s grace period = ~6-8 seconds total
+    # Redis mode can be slower due to network latency between containers in CI
     logging.info("Waiting for notification to fail and exhaust ALL retries...")
-    max_wait_time = 25  # Allows for retry cycle + 5s grace period + buffer for Redis mode
+    max_wait_time = 30  # Extra buffer for Redis mode in CI environments with slower networks
     start_time = time.time()
     failed_found = False
 

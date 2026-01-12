@@ -322,7 +322,7 @@ class NotificationStateRetriever:
                             except Exception as se:
                                 logger.debug(f"Error checking schedule: {se}")
 
-                            # Also check if task failed very recently (within last 5 seconds)
+                            # Also check if task failed very recently
                             # Handles race condition where result is written before retry is scheduled
                             if not task_still_scheduled:
                                 task_metadata = self._get_task_metadata(task_id)
@@ -330,18 +330,41 @@ class NotificationStateRetriever:
                                     task_time = task_metadata.get('timestamp', 0)
                                     time_since_failure = time.time() - task_time if task_time else 999
 
-                                    # If task failed very recently (< 5 seconds ago), it might still be scheduling a retry
+                                    # Grace period before marking as permanently failed (configurable for tests)
+                                    # Default 5 seconds in production, but can be reduced to 1 second in tests
+                                    import os
+                                    grace_period = int(os.environ.get('NOTIFICATION_FAILED_GRACE_PERIOD', '5'))
+
+                                    # If task failed very recently, it might still be scheduling a retry
                                     # Be conservative and don't count it as permanently failed yet
-                                    if time_since_failure < 5:
-                                        logger.debug(f"Task {task_id[:20]}... failed only {time_since_failure:.1f}s ago, might still be scheduling retry")
+                                    if time_since_failure < grace_period:
+                                        logger.debug(f"Task {task_id[:20]}... failed only {time_since_failure:.1f}s ago (grace period: {grace_period}s), might still be scheduling retry")
                                         task_still_scheduled = True  # Treat as potentially still retrying
+
+                            # SMART DETECTION: Check retry attempt count
+                            # If this task has exhausted all retries, it's permanently failed
+                            # regardless of schedule state (handles Redis timing issues)
+                            task_metadata = self._get_task_metadata(task_id)
+                            if task_metadata:
+                                notification_watch_uuid = task_metadata.get('notification_data', {}).get('uuid')
+                                if notification_watch_uuid and self.task_data_manager:
+                                    try:
+                                        retry_attempts = self.task_data_manager.load_retry_attempts(notification_watch_uuid)
+                                        num_attempts = len(retry_attempts)
+
+                                        # If we have retry_count + 1 attempts (initial + retries), it's exhausted
+                                        if num_attempts >= self.retry_count + 1:
+                                            logger.debug(f"Task {task_id[:20]}... has {num_attempts} attempts (max: {self.retry_count + 1}), marking as permanently failed")
+                                            task_still_scheduled = False  # Override - definitely failed
+                                    except Exception as e:
+                                        logger.debug(f"Error checking retry attempts: {e}")
 
                             # Skip this task if it's still scheduled for retry
                             if task_still_scheduled:
                                 logger.debug(f"Task {task_id[:20]}... still scheduled for retry, not counting as failed yet")
                                 continue
                             else:
-                                logger.debug(f"Task {task_id[:20]}... NOT in schedule, counting as failed")
+                                logger.debug(f"Task {task_id[:20]}... NOT in schedule or exhausted retries, counting as failed")
                         except Exception as e:
                             logger.debug(f"Error checking schedule for task {task_id}: {e}")
 
