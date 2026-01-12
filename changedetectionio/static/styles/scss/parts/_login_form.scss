@@ -20,23 +20,8 @@
     overflow: hidden;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 
-    // Subtle accent line at top
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(
-        90deg,
-        var(--color-link) 0%,
-        var(--color-menu-accent) 100%
-      );
-    }
-
     &:hover {
-      transform: translateY(-2px);
+
       box-shadow:
         0 15px 50px rgba(0, 0, 0, 0.12),
         0 5px 15px rgba(0, 0, 0, 0.06);
@@ -108,7 +93,6 @@
     box-shadow: 0 2px 8px rgba(27, 152, 248, 0.2);
 
     &:hover {
-      transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(27, 152, 248, 0.3);
       background: #0066cc;
     }
