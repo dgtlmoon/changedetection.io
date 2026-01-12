@@ -580,9 +580,8 @@ def _test_color_notifications(client, notification_body_token, datastore_path):
 
     with open(os.path.join(datastore_path, "notification.txt"), 'r') as f:
         x = f.read()
-        s =  f'<span style="{HTML_CHANGED_STYLE}" role="note" aria-label="Changed text" title="Changed text">Which is across multiple lines'
+        s = f'<span style="{HTML_CHANGED_STYLE}" role="note" aria-label="Changed text" title="Changed text">Which is across multiple lines</span><br>'
         assert s in x
-
 
     client.get(
         url_for("ui.form_delete", uuid="all"),

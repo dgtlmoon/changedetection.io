@@ -107,7 +107,7 @@ def test_check_filter_multiline(client, live_server, measure_memory_usage, datas
     assert b'not at the start of the expression' not in res.data
 
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
     # Plaintext that doesnt look like a regex should match also
@@ -174,7 +174,7 @@ def test_check_filter_and_regex_extract(client, live_server, measure_memory_usag
 
     # Check HTML conversion detected and workd
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 

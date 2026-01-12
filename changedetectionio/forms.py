@@ -2,16 +2,21 @@ import os
 import re
 from loguru import logger
 from wtforms.widgets.core import TimeInput
+from flask_babel import lazy_gettext as _l, gettext
 
 from changedetectionio.blueprint.rss import RSS_FORMAT_TYPES, RSS_TEMPLATE_TYPE_OPTIONS, RSS_TEMPLATE_HTML_DEFAULT
 from changedetectionio.conditions.form import ConditionFormRow
 from changedetectionio.notification_service import NotificationContextData
+from changedetectionio.processors.image_ssim_diff import SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS, \
+    SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT
 from changedetectionio.strtobool import strtobool
+from changedetectionio import processors
 
 from wtforms import (
     BooleanField,
     Form,
     Field,
+    FloatField,
     IntegerField,
     RadioField,
     SelectField,
@@ -55,8 +60,8 @@ valid_method = {
 
 default_method = 'GET'
 allow_simplehost = not strtobool(os.getenv('BLOCK_SIMPLEHOSTS', 'False'))
-REQUIRE_ATLEAST_ONE_TIME_PART_MESSAGE_DEFAULT='At least one time interval (weeks, days, hours, minutes, or seconds) must be specified.'
-REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT='At least one time interval (weeks, days, hours, minutes, or seconds) must be specified when not using global settings.'
+REQUIRE_ATLEAST_ONE_TIME_PART_MESSAGE_DEFAULT=_l('At least one time interval (weeks, days, hours, minutes, or seconds) must be specified.')
+REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT=_l('At least one time interval (weeks, days, hours, minutes, or seconds) must be specified when not using global settings.')
 
 class StringListField(StringField):
     widget = widgets.TextArea()
@@ -156,7 +161,7 @@ class TimeStringField(Field):
             time_str = valuelist[0]
             # Simple validation for HH:MM format
             if not time_str or len(time_str.split(":")) != 2:
-                raise ValidationError("Invalid time format. Use HH:MM.")
+                raise ValidationError(_l("Invalid time format. Use HH:MM."))
             self.data = time_str
 
 
@@ -172,15 +177,15 @@ class validateTimeZoneName(object):
         from zoneinfo import available_timezones
         python_timezones = available_timezones()
         if field.data and field.data not in python_timezones:
-            raise ValidationError("Not a valid timezone name")
+            raise ValidationError(_l("Not a valid timezone name"))
 
 class ScheduleLimitDaySubForm(Form):
-    enabled = BooleanField("not set", default=True)
-    start_time = TimeStringField("Start At", default="00:00", validators=[validators.Optional()])
-    duration = FormField(TimeDurationForm, label="Run duration")
+    enabled = BooleanField(_l("not set"), default=True)
+    start_time = TimeStringField(_l("Start At"), default="00:00", validators=[validators.Optional()])
+    duration = FormField(TimeDurationForm, label=_l("Run duration"))
 
 class ScheduleLimitForm(Form):
-    enabled = BooleanField("Use time scheduler", default=False)
+    enabled = BooleanField(_l("Use time scheduler"), default=False)
     # Because the label for=""" doesnt line up/work with the actual checkbox
     monday = FormField(ScheduleLimitDaySubForm, label="")
     tuesday = FormField(ScheduleLimitDaySubForm, label="")
@@ -190,7 +195,7 @@ class ScheduleLimitForm(Form):
     saturday = FormField(ScheduleLimitDaySubForm, label="")
     sunday = FormField(ScheduleLimitDaySubForm, label="")
 
-    timezone = StringField("Optional timezone to run in",
+    timezone = StringField(_l("Optional timezone to run in"),
                                   render_kw={"list": "timezones"},
                                   validators=[validateTimeZoneName()]
                                   )
@@ -204,13 +209,13 @@ class ScheduleLimitForm(Form):
         **kwargs,
     ):
         super().__init__(formdata, obj, prefix, data, meta, **kwargs)
-        self.monday.form.enabled.label.text="Monday"
-        self.tuesday.form.enabled.label.text = "Tuesday"
-        self.wednesday.form.enabled.label.text = "Wednesday"
-        self.thursday.form.enabled.label.text = "Thursday"
-        self.friday.form.enabled.label.text = "Friday"
-        self.saturday.form.enabled.label.text = "Saturday"
-        self.sunday.form.enabled.label.text = "Sunday"
+        self.monday.form.enabled.label.text=_l("Monday")
+        self.tuesday.form.enabled.label.text = _l("Tuesday")
+        self.wednesday.form.enabled.label.text = _l("Wednesday")
+        self.thursday.form.enabled.label.text = _l("Thursday")
+        self.friday.form.enabled.label.text = _l("Friday")
+        self.saturday.form.enabled.label.text = _l("Saturday")
+        self.sunday.form.enabled.label.text = _l("Sunday")
 
 
 def validate_time_between_check_has_values(form):
@@ -235,7 +240,7 @@ class RequiredTimeInterval(object):
     Use this with FormField(TimeBetweenCheckForm, validators=[RequiredTimeInterval()]).
     """
     def __init__(self, message=None):
-        self.message = message or 'At least one time interval (weeks, days, hours, minutes, or seconds) must be specified.'
+        self.message = message or _l('At least one time interval (weeks, days, hours, minutes, or seconds) must be specified.')
 
     def __call__(self, form, field):
         if not validate_time_between_check_has_values(field.form):
@@ -243,11 +248,11 @@ class RequiredTimeInterval(object):
 
 
 class TimeBetweenCheckForm(Form):
-    weeks = IntegerField('Weeks', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
-    days = IntegerField('Days', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
-    hours = IntegerField('Hours', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
-    minutes = IntegerField('Minutes', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
-    seconds = IntegerField('Seconds', validators=[validators.Optional(), validators.NumberRange(min=0, message="Should contain zero or more seconds")])
+    weeks = IntegerField(_l('Weeks'), validators=[validators.Optional(), validators.NumberRange(min=0, message=_l("Should contain zero or more seconds"))])
+    days = IntegerField(_l('Days'), validators=[validators.Optional(), validators.NumberRange(min=0, message=_l("Should contain zero or more seconds"))])
+    hours = IntegerField(_l('Hours'), validators=[validators.Optional(), validators.NumberRange(min=0, message=_l("Should contain zero or more seconds"))])
+    minutes = IntegerField(_l('Minutes'), validators=[validators.Optional(), validators.NumberRange(min=0, message=_l("Should contain zero or more seconds"))])
+    seconds = IntegerField(_l('Seconds'), validators=[validators.Optional(), validators.NumberRange(min=0, message=_l("Should contain zero or more seconds"))])
     # @todo add total seconds minimum validatior = minimum_seconds_recheck_time
 
     def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
@@ -717,18 +722,16 @@ class ValidateStartsWithRegex(object):
             if not stripped:
                 if self.allow_empty:
                     continue
-                raise ValidationError(self.message or "Empty value not allowed.")
+                raise ValidationError(self.message or _l("Empty value not allowed."))
             if not self.pattern.match(stripped):
-                raise ValidationError(self.message or "Invalid value.")
+                raise ValidationError(self.message or _l("Invalid value."))
 
 class quickWatchForm(Form):
-    from . import processors
-
     url = fields.URLField('URL', validators=[validateURL()])
     tags = StringTagUUID('Group tag', [validators.Optional()])
-    watch_submit_button = SubmitField('Watch', render_kw={"class": "pure-button pure-button-primary"})
-    processor = RadioField(u'Processor', choices=processors.available_processors(), default="text_json_diff")
-    edit_and_watch_submit_button = SubmitField('Edit > Watch', render_kw={"class": "pure-button pure-button-primary"})
+    watch_submit_button = SubmitField(_l('Watch'), render_kw={"class": "pure-button pure-button-primary"})
+    processor = RadioField(_l('Processor'), choices=lambda: processors.available_processors(), default="text_json_diff")
+    edit_and_watch_submit_button = SubmitField(_l('Edit > Watch'), render_kw={"class": "pure-button pure-button-primary"})
 
 
 # Common to a single watch and the global settings
@@ -741,14 +744,14 @@ class commonSettingsForm(Form):
         self.notification_title.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
         self.notification_urls.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
 
-    fetch_backend = RadioField(u'Fetch Method', choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
-    notification_body = TextAreaField('Notification Body', default='{{ watch_url }} had a change.', validators=[validators.Optional(), ValidateJinja2Template()])
-    notification_format = SelectField('Notification format', choices=list(valid_notification_formats.items()))
-    notification_title = StringField('Notification Title', default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
-    notification_urls = StringListField('Notification URL List', validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
-    processor = RadioField( label=u"Processor - What do you want to achieve?", choices=processors.available_processors(), default="text_json_diff")
-    scheduler_timezone_default = StringField("Default timezone for watch check scheduler", render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
-    webdriver_delay = IntegerField('Wait seconds before extracting text', validators=[validators.Optional(), validators.NumberRange(min=1, message="Should contain one or more seconds")])
+    fetch_backend = RadioField(_l('Fetch Method'), choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+    notification_body = TextAreaField(_l('Notification Body'), default='{{ watch_url }} had a change.', validators=[validators.Optional(), ValidateJinja2Template()])
+    notification_format = SelectField(_l('Notification format'), choices=list(valid_notification_formats.items()))
+    notification_title = StringField(_l('Notification Title'), default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
+    notification_urls = StringListField(_l('Notification URL List'), validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
+    processor = RadioField( label=_l("Processor - What do you want to achieve?"), choices=lambda: processors.available_processors(), default="text_json_diff")
+    scheduler_timezone_default = StringField(_l("Default timezone for watch check scheduler"), render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
+    webdriver_delay = IntegerField(_l('Wait seconds before extracting text'), validators=[validators.Optional(), validators.NumberRange(min=1, message=_l("Should contain one or more seconds"))])
 
 # Not true anymore but keep the validate_ hook for future use, we convert color tags
 #    def validate_notification_urls(self, field):
@@ -760,27 +763,26 @@ class commonSettingsForm(Form):
 
 
 class importForm(Form):
-    from . import processors
-    processor = RadioField(u'Processor', choices=processors.available_processors(), default="text_json_diff")
-    urls = TextAreaField('URLs')
-    xlsx_file = FileField('Upload .xlsx file', validators=[FileAllowed(['xlsx'], 'Must be .xlsx file!')])
-    file_mapping = SelectField('File mapping', [validators.DataRequired()], choices={('wachete', 'Wachete mapping'), ('custom','Custom mapping')})
+    processor = RadioField(_l('Processor'), choices=lambda: processors.available_processors(), default="text_json_diff")
+    urls = TextAreaField(_l('URLs'))
+    xlsx_file = FileField(_l('Upload .xlsx file'), validators=[FileAllowed(['xlsx'], _l('Must be .xlsx file!'))])
+    file_mapping = SelectField(_l('File mapping'), [validators.DataRequired()], choices={('wachete', 'Wachete mapping'), ('custom','Custom mapping')})
 
 class SingleBrowserStep(Form):
 
-    operation = SelectField('Operation', [validators.Optional()], choices=browser_step_ui_config.keys())
+    operation = SelectField(_l('Operation'), [validators.Optional()], choices=browser_step_ui_config.keys())
 
     # maybe better to set some <script>var..
-    selector = StringField('Selector', [validators.Optional()], render_kw={"placeholder": "CSS or xPath selector"})
-    optional_value = StringField('value', [validators.Optional()], render_kw={"placeholder": "Value"})
+    selector = StringField(_l('Selector'), [validators.Optional()], render_kw={"placeholder": "CSS or xPath selector"})
+    optional_value = StringField(_l('value'), [validators.Optional()], render_kw={"placeholder": "Value"})
 #   @todo move to JS? ajax fetch new field?
-#    remove_button = SubmitField('-', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Remove'})
-#    add_button = SubmitField('+', render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Add new step after'})
+#    remove_button = SubmitField(_l('-'), render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Remove'})
+#    add_button = SubmitField(_l('+'), render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Add new step after'})
 
 class processor_text_json_diff_form(commonSettingsForm):
 
-    url = fields.URLField('URL', validators=[validateURL()])
-    tags = StringTagUUID('Group tag', [validators.Optional()], default='')
+    url = fields.URLField('Web Page URL', validators=[validateURL()])
+    tags = StringTagUUID('Group Tag', [validators.Optional()], default='')
 
     time_between_check = EnhancedFormField(
         TimeBetweenCheckForm,
@@ -791,49 +793,48 @@ class processor_text_json_diff_form(commonSettingsForm):
 
     time_schedule_limit = FormField(ScheduleLimitForm)
 
-    time_between_check_use_default = BooleanField('Use global settings for time between check and scheduler.', default=False)
+    time_between_check_use_default = BooleanField(_l('Use global settings for time between check and scheduler.'), default=False)
 
-    include_filters = StringListField('CSS/JSONPath/JQ/XPath Filters', [ValidateCSSJSONXPATHInput()], default='')
+    include_filters = StringListField(_l('CSS/JSONPath/JQ/XPath Filters'), [ValidateCSSJSONXPATHInput()], default='')
 
-    subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_json=False)])
+    subtractive_selectors = StringListField(_l('Remove elements'), [ValidateCSSJSONXPATHInput(allow_json=False)])
 
-    extract_text = StringListField('Extract text', [ValidateListRegex()])
+    extract_text = StringListField(_l('Extract text'), [ValidateListRegex()])
 
-    title = StringField('Title', default='')
+    title = StringField(_l('Title'), default='')
 
-    ignore_text = StringListField('Ignore lines containing', [ValidateListRegex()])
+    ignore_text = StringListField(_l('Ignore lines containing'), [ValidateListRegex()])
     headers = StringDictKeyValue('Request headers')
-    body = TextAreaField('Request body', [validators.Optional()])
-    method = SelectField('Request method', choices=valid_method, default=default_method)
-    ignore_status_codes = BooleanField('Ignore status codes (process non-2xx status codes as normal)', default=False)
-    check_unique_lines = BooleanField('Only trigger when unique lines appear in all history', default=False)
-    remove_duplicate_lines = BooleanField('Remove duplicate lines of text', default=False)
-    sort_text_alphabetically =  BooleanField('Sort text alphabetically', default=False)
-    strip_ignored_lines = TernaryNoneBooleanField('Strip ignored lines', default=None)
-    trim_text_whitespace = BooleanField('Trim whitespace before and after text', default=False)
+    body = TextAreaField(_l('Request body'), [validators.Optional()])
+    method = SelectField(_l('Request method'), choices=valid_method, default=default_method)
+    ignore_status_codes = BooleanField(_l('Ignore status codes (process non-2xx status codes as normal)'), default=False)
+    check_unique_lines = BooleanField(_l('Only trigger when unique lines appear in all history'), default=False)
+    remove_duplicate_lines = BooleanField(_l('Remove duplicate lines of text'), default=False)
+    sort_text_alphabetically =  BooleanField(_l('Sort text alphabetically'), default=False)
+    strip_ignored_lines = TernaryNoneBooleanField(_l('Strip ignored lines'), default=None)
+    trim_text_whitespace = BooleanField(_l('Trim whitespace before and after text'), default=False)
 
-    filter_text_added = BooleanField('Added lines', default=True)
-    filter_text_replaced = BooleanField('Replaced/changed lines', default=True)
-    filter_text_removed = BooleanField('Removed lines', default=True)
+    filter_text_added = BooleanField(_l('Added lines'), default=True)
+    filter_text_replaced = BooleanField(_l('Replaced/changed lines'), default=True)
+    filter_text_removed = BooleanField(_l('Removed lines'), default=True)
 
-    trigger_text = StringListField('Keyword triggers - Trigger/wait for text', [validators.Optional(), ValidateListRegex()])
+    trigger_text = StringListField(_l('Keyword triggers - Trigger/wait for text'), [validators.Optional(), ValidateListRegex()])
     if os.getenv("PLAYWRIGHT_DRIVER_URL"):
         browser_steps = FieldList(FormField(SingleBrowserStep), min_entries=10)
-    text_should_not_be_present = StringListField('Block change-detection while text matches', [validators.Optional(), ValidateListRegex()])
-    webdriver_js_execute_code = TextAreaField('Execute JavaScript before change detection', render_kw={"rows": "5"}, validators=[validators.Optional()])
+    text_should_not_be_present = StringListField(_l('Block change-detection while text matches'), [validators.Optional(), ValidateListRegex()])
+    webdriver_js_execute_code = TextAreaField(_l('Execute JavaScript before change detection'), render_kw={"rows": "5"}, validators=[validators.Optional()])
 
-    save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
+    save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
 
-    proxy = RadioField('Proxy')
+    proxy = RadioField(_l('Proxy'))
     # filter_failure_notification_send @todo make ternary
-    filter_failure_notification_send = BooleanField(
-        'Send a notification when the filter can no longer be found on the page', default=False)
-    notification_muted = TernaryNoneBooleanField('Notifications', default=None, yes_text="Muted", no_text="On")
-    notification_screenshot = BooleanField('Attach screenshot to notification (where possible)', default=False)
+    filter_failure_notification_send = BooleanField(_l('Send a notification when the filter can no longer be found on the page'), default=False)
+    notification_muted = TernaryNoneBooleanField(_l('Notifications'), default=None, yes_text=_l("Muted"), no_text=_l("On"))
+    notification_screenshot = BooleanField(_l('Attach screenshot to notification (where possible)'), default=False)
 
-    conditions_match_logic = RadioField(u'Match', choices=[('ALL', 'Match all of the following'),('ANY', 'Match any of the following')], default='ALL')
+    conditions_match_logic = RadioField(_l('Match'), choices=[('ALL', _l('Match all of the following')),('ANY', _l('Match any of the following'))], default='ALL')
     conditions = FieldList(FormField(ConditionFormRow), min_entries=1)  # Add rule logic here
-    use_page_title_in_list = TernaryNoneBooleanField('Use page <title> in list', default=None)
+    use_page_title_in_list = TernaryNoneBooleanField(_l('Use page <title> in list'), default=None)
 
     def extra_tab_content(self):
         return None
@@ -850,7 +851,7 @@ class processor_text_json_diff_form(commonSettingsForm):
 
         # Fail form validation when a body is set for a GET
         if self.method.data == 'GET' and self.body.data:
-            self.body.errors.append('Body must be empty when Request Method is set to GET')
+            self.body.errors.append(gettext('Body must be empty when Request Method is set to GET'))
             result = False
 
         # Attempt to validate jinja2 templates in the URL
@@ -859,11 +860,11 @@ class processor_text_json_diff_form(commonSettingsForm):
         except ModuleNotFoundError as e:
             # incase jinja2_time or others is missing
             logger.error(e)
-            self.url.errors.append(f'Invalid template syntax configuration: {e}')
+            self.url.errors.append(gettext('Invalid template syntax configuration: %(error)s') % {'error': e})
             result = False
         except Exception as e:
             logger.error(e)
-            self.url.errors.append(f'Invalid template syntax: {e}')
+            self.url.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
             result = False
 
         # Attempt to validate jinja2 templates in the body
@@ -873,11 +874,11 @@ class processor_text_json_diff_form(commonSettingsForm):
             except ModuleNotFoundError as e:
                 # incase jinja2_time or others is missing
                 logger.error(e)
-                self.body.errors.append(f'Invalid template syntax configuration: {e}')
+                self.body.errors.append(gettext('Invalid template syntax configuration: %(error)s') % {'error': e})
                 result = False
             except Exception as e:
                 logger.error(e)
-                self.body.errors.append(f'Invalid template syntax: {e}')
+                self.body.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
                 result = False
 
         # Attempt to validate jinja2 templates in the headers
@@ -888,11 +889,11 @@ class processor_text_json_diff_form(commonSettingsForm):
             except ModuleNotFoundError as e:
                 # incase jinja2_time or others is missing
                 logger.error(e)
-                self.headers.errors.append(f'Invalid template syntax configuration: {e}')
+                self.headers.errors.append(gettext('Invalid template syntax configuration: %(error)s') % {'error': e})
                 result = False
             except Exception as e:
                 logger.error(e)
-                self.headers.errors.append(f'Invalid template syntax in "{header}" header: {e}')
+                self.headers.errors.append(gettext('Invalid template syntax in \"%(header)s\" header: %(error)s') % {'header': header, 'error': e})
                 result = False
 
         return result
@@ -916,110 +917,122 @@ class processor_text_json_diff_form(commonSettingsForm):
 
 class SingleExtraProxy(Form):
     # maybe better to set some <script>var..
-    proxy_name = StringField('Name', [validators.Optional()], render_kw={"placeholder": "Name"})
-    proxy_url = StringField('Proxy URL', [
+    proxy_name = StringField(_l('Name'), [validators.Optional()], render_kw={"placeholder": "Name"})
+    proxy_url = StringField(_l('Proxy URL'), [
         validators.Optional(),
         ValidateStartsWithRegex(
             regex=r'^(https?|socks5)://',  # ✅ main pattern
             flags=re.IGNORECASE,  # ✅ makes it case-insensitive
-            message='Proxy URLs must start with http://, https:// or socks5://',
+            message=_l('Proxy URLs must start with http://, https:// or socks5://'),
         ),
         ValidateSimpleURL()
     ], render_kw={"placeholder": "socks5:// or regular proxy http://user:pass@...:3128", "size":50})
 
 class SingleExtraBrowser(Form):
-    browser_name = StringField('Name', [validators.Optional()], render_kw={"placeholder": "Name"})
-    browser_connection_url = StringField('Browser connection URL', [
+    browser_name = StringField(_l('Name'), [validators.Optional()], render_kw={"placeholder": "Name"})
+    browser_connection_url = StringField(_l('Browser connection URL'), [
         validators.Optional(),
         ValidateStartsWithRegex(
             regex=r'^(wss?|ws)://',
             flags=re.IGNORECASE,
-            message='Browser URLs must start with wss:// or ws://'
+            message=_l('Browser URLs must start with wss:// or ws://')
         ),
         ValidateSimpleURL()
     ], render_kw={"placeholder": "wss://brightdata... wss://oxylabs etc", "size":50})
 
 class DefaultUAInputForm(Form):
-    html_requests = StringField('Plaintext requests', validators=[validators.Optional()], render_kw={"placeholder": "<default>"})
+    html_requests = StringField(_l('Plaintext requests'), validators=[validators.Optional()], render_kw={"placeholder": "<default>"})
     if os.getenv("PLAYWRIGHT_DRIVER_URL") or os.getenv("WEBDRIVER_URL"):
-        html_webdriver = StringField('Chrome requests', validators=[validators.Optional()], render_kw={"placeholder": "<default>"})
+        html_webdriver = StringField(_l('Chrome requests'), validators=[validators.Optional()], render_kw={"placeholder": "<default>"})
 
 # datastore.data['settings']['requests']..
 class globalSettingsRequestForm(Form):
     time_between_check = RequiredFormField(TimeBetweenCheckForm)
     time_schedule_limit = FormField(ScheduleLimitForm)
-    proxy = RadioField('Default proxy')
-    jitter_seconds = IntegerField('Random jitter seconds ± check',
+    proxy = RadioField(_l('Default proxy'))
+    jitter_seconds = IntegerField(_l('Random jitter seconds ± check'),
                                   render_kw={"style": "width: 5em;"},
-                                  validators=[validators.NumberRange(min=0, message="Should contain zero or more seconds")])
+                                  validators=[validators.NumberRange(min=0, message=_l("Should contain zero or more seconds"))])
     
-    workers = IntegerField('Number of fetch workers',
+    workers = IntegerField(_l('Number of fetch workers'),
                           render_kw={"style": "width: 5em;"},
                           validators=[validators.NumberRange(min=1, max=50,
-                                                             message="Should be between 1 and 50")])
+                                                             message=_l("Should be between 1 and 50"))])
 
-    timeout = IntegerField('Requests timeout in seconds',
+    timeout = IntegerField(_l('Requests timeout in seconds'),
                            render_kw={"style": "width: 5em;"},
                            validators=[validators.NumberRange(min=1, max=999,
-                                                              message="Should be between 1 and 999")])
+                                                              message=_l("Should be between 1 and 999"))])
 
     extra_proxies = FieldList(FormField(SingleExtraProxy), min_entries=5)
     extra_browsers = FieldList(FormField(SingleExtraBrowser), min_entries=5)
 
-    default_ua = FormField(DefaultUAInputForm, label="Default User-Agent overrides")
+    default_ua = FormField(DefaultUAInputForm, label=_l("Default User-Agent overrides"))
 
     def validate_extra_proxies(self, extra_validators=None):
         for e in self.data['extra_proxies']:
             if e.get('proxy_name') or e.get('proxy_url'):
                 if not e.get('proxy_name','').strip() or not e.get('proxy_url','').strip():
-                    self.extra_proxies.errors.append('Both a name, and a Proxy URL is required.')
+                    self.extra_proxies.errors.append(gettext('Both a name, and a Proxy URL is required.'))
                     return False
 
 class globalSettingsApplicationUIForm(Form):
-    open_diff_in_new_tab = BooleanField("Open 'History' page in a new tab", default=True, validators=[validators.Optional()])
-    socket_io_enabled = BooleanField('Realtime UI Updates Enabled', default=True, validators=[validators.Optional()])
-    favicons_enabled = BooleanField('Favicons Enabled', default=True, validators=[validators.Optional()])
-    use_page_title_in_list = BooleanField('Use page <title> in watch overview list') #BooleanField=True
+    open_diff_in_new_tab = BooleanField(_l("Open 'History' page in a new tab"), default=True, validators=[validators.Optional()])
+    socket_io_enabled = BooleanField(_l('Realtime UI Updates Enabled'), default=True, validators=[validators.Optional()])
+    favicons_enabled = BooleanField(_l('Favicons Enabled'), default=True, validators=[validators.Optional()])
+    use_page_title_in_list = BooleanField(_l('Use page <title> in watch overview list')) #BooleanField=True
 
 # datastore.data['settings']['application']..
 class globalSettingsApplicationForm(commonSettingsForm):
 
-    api_access_token_enabled = BooleanField('API access token security check enabled', default=True, validators=[validators.Optional()])
-    base_url = StringField('Notification base URL override',
+    api_access_token_enabled = BooleanField(_l('API access token security check enabled'), default=True, validators=[validators.Optional()])
+    base_url = StringField(_l('Notification base URL override'),
                            validators=[validators.Optional()],
                            render_kw={"placeholder": os.getenv('BASE_URL', 'Not set')}
                            )
-    empty_pages_are_a_change =  BooleanField('Treat empty pages as a change?', default=False)
-    fetch_backend = RadioField('Fetch Method', default="html_requests", choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
-    global_ignore_text = StringListField('Ignore Text', [ValidateListRegex()])
-    global_subtractive_selectors = StringListField('Remove elements', [ValidateCSSJSONXPATHInput(allow_json=False)])
-    ignore_whitespace = BooleanField('Ignore whitespace')
+    empty_pages_are_a_change =  BooleanField(_l('Treat empty pages as a change?'), default=False)
+    fetch_backend = RadioField(_l('Fetch Method'), default="html_requests", choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+    global_ignore_text = StringListField(_l('Ignore Text'), [ValidateListRegex()])
+    global_subtractive_selectors = StringListField(_l('Remove elements'), [ValidateCSSJSONXPATHInput(allow_json=False)])
+    ignore_whitespace = BooleanField(_l('Ignore whitespace'))
+
+    # Screenshot comparison settings
+    min_change_percentage = FloatField(
+        'Screenshot: Minimum Change Percentage',
+        validators=[
+            validators.Optional(),
+            validators.NumberRange(min=0.0, max=100.0, message=_l('Must be between 0 and 100'))
+        ],
+        default=0.1,
+        render_kw={"placeholder": "0.1", "style": "width: 8em;"}
+    )
+
     password = SaltyPasswordField()
-    pager_size = IntegerField('Pager size',
+    pager_size = IntegerField(_l('Pager size'),
                               render_kw={"style": "width: 5em;"},
                               validators=[validators.NumberRange(min=0,
-                                                                 message="Should be atleast zero (disabled)")])
+                                                                 message=_l("Should be atleast zero (disabled)"))])
 
-    rss_content_format = SelectField('RSS Content format', choices=list(RSS_FORMAT_TYPES.items()))
-    rss_template_type = SelectField('RSS <description> body built from', choices=list(RSS_TEMPLATE_TYPE_OPTIONS.items()))
-    rss_template_override = TextAreaField('RSS "System default" template override', render_kw={"rows": "5", "placeholder": RSS_TEMPLATE_HTML_DEFAULT}, validators=[validators.Optional(), ValidateJinja2Template()])
+    rss_content_format = SelectField(_l('RSS Content format'), choices=list(RSS_FORMAT_TYPES.items()))
+    rss_template_type = SelectField(_l('RSS <description> body built from'), choices=list(RSS_TEMPLATE_TYPE_OPTIONS.items()))
+    rss_template_override = TextAreaField(_l('RSS "System default" template override'), render_kw={"rows": "5", "placeholder": RSS_TEMPLATE_HTML_DEFAULT}, validators=[validators.Optional(), ValidateJinja2Template()])
 
-    removepassword_button = SubmitField('Remove password', render_kw={"class": "pure-button pure-button-primary"})
-    render_anchor_tag_content = BooleanField('Render anchor tag content', default=False)
-    shared_diff_access = BooleanField('Allow anonymous access to watch history page when password is enabled', default=False, validators=[validators.Optional()])
-    strip_ignored_lines = BooleanField('Strip ignored lines')
-    rss_hide_muted_watches = BooleanField('Hide muted watches from RSS feed', default=True,
+    removepassword_button = SubmitField(_l('Remove password'), render_kw={"class": "pure-button pure-button-primary"})
+    render_anchor_tag_content = BooleanField(_l('Render anchor tag content'), default=False)
+    shared_diff_access = BooleanField(_l('Allow anonymous access to watch history page when password is enabled'), default=False, validators=[validators.Optional()])
+    strip_ignored_lines = BooleanField(_l('Strip ignored lines'))
+    rss_hide_muted_watches = BooleanField(_l('Hide muted watches from RSS feed'), default=True,
                                       validators=[validators.Optional()])
 
-    rss_reader_mode = BooleanField('Enable RSS reader mode ', default=False, validators=[validators.Optional()])
-    rss_diff_length = IntegerField(label='Number of changes to show in watch RSS feed',
+    rss_reader_mode = BooleanField(_l('Enable RSS reader mode '), default=False, validators=[validators.Optional()])
+    rss_diff_length = IntegerField(label=_l('Number of changes to show in watch RSS feed'),
                                    render_kw={"style": "width: 5em;"},
-                                   validators=[validators.NumberRange(min=0, message="Should contain zero or more attempts")])
+                                   validators=[validators.NumberRange(min=0, message=_l("Should contain zero or more attempts"))])
 
-    filter_failure_notification_threshold_attempts = IntegerField('Number of times the filter can be missing before sending a notification',
+    filter_failure_notification_threshold_attempts = IntegerField(_l('Number of times the filter can be missing before sending a notification'),
                                                                   render_kw={"style": "width: 5em;"},
                                                                   validators=[validators.NumberRange(min=0,
-                                                                                                     message="Should contain zero or more attempts")])
+                                                                                                     message=_l("Should contain zero or more attempts"))])
     ui = FormField(globalSettingsApplicationUIForm)
 
 
@@ -1035,9 +1048,9 @@ class globalSettingsForm(Form):
 
     requests = FormField(globalSettingsRequestForm)
     application = FormField(globalSettingsApplicationForm)
-    save_button = SubmitField('Save', render_kw={"class": "pure-button pure-button-primary"})
+    save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
 
 
 class extractDataForm(Form):
-    extract_regex = StringField('RegEx to extract', validators=[validators.DataRequired(), ValidateSinglePythonRegexString()])
-    extract_submit_button = SubmitField('Extract as CSV', render_kw={"class": "pure-button pure-button-primary"})
+    extract_regex = StringField(_l('RegEx to extract'), validators=[validators.DataRequired(), ValidateSinglePythonRegexString()])
+    extract_submit_button = SubmitField(_l('Extract as CSV'), render_kw={"class": "pure-button pure-button-primary"})

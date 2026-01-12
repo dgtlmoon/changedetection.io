@@ -1,0 +1,167 @@
+// Hamburger Menu for Mobile Navigation
+@use "../settings" as *;
+
+.hamburger-menu {
+  display: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  z-index: 10001;
+  position: relative;
+
+  @media only screen and (max-width: $desktop-wide-breakpoint) {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+.hamburger-icon {
+  width: 24px;
+  height: 20px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  span {
+    display: block;
+    height: 3px;
+    width: 100%;
+    background: var(--color-text);
+    border-radius: 2px;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    transform-origin: center;
+  }
+}
+
+.hamburger-menu.active {
+  .hamburger-icon span:nth-child(1) {
+    transform: translateY(8.5px) rotate(45deg);
+  }
+
+  .hamburger-icon span:nth-child(2) {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+
+  .hamburger-icon span:nth-child(3) {
+    transform: translateY(-8.5px) rotate(-45deg);
+  }
+}
+
+// Mobile menu overlay
+.mobile-menu-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+
+  &.active {
+    display: block;
+    opacity: 1;
+  }
+}
+
+// Mobile menu drawer
+.mobile-menu-drawer {
+  position: fixed;
+  top: 0;
+  right: -280px;
+  width: 280px;
+  height: 100%;
+  background: var(--color-background);
+  opacity: 1;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+  z-index: 10000;
+  transition: right 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  overflow-y: auto;
+  padding-top: 60px;
+
+  &.active {
+    right: 0;
+  }
+
+  .mobile-menu-items {
+    list-style: none;
+    padding: 1rem 0;
+    margin: 0;
+
+    li {
+      border-bottom: 1px solid var(--color-border-table-cell);
+
+      >* {
+        display: block;
+        padding: 1rem 1.5rem;
+        color: var(--color-text);
+        text-decoration: none;
+        font-weight: 500;
+        transition: background 0.2s ease;
+
+        &:hover {
+          background: var(--color-background-menu-link-hover);
+        }
+      }
+    }
+  }
+}
+
+// Logo styling
+.logo-cdio {
+  font-weight: bold;
+  font-size: 1.1rem;
+
+  .logo-cd {
+    color: var(--color-grey-500);
+  }
+
+  .logo-io {
+    color: var(--color-text);
+  }
+}
+
+// Always visible items container
+.menu-always-visible {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+// Hide regular menu items on mobile (but not in mobile drawer)
+@media only screen and (max-width: $desktop-wide-breakpoint) {
+  #top-right-menu .menu-collapsible {
+    display: none !important;
+  }
+
+  .pure-menu-horizontal {
+    overflow-x: visible !important;
+  }
+
+  #nav-menu {
+    overflow-x: visible !important;
+  }
+}
+
+// Desktop - hide mobile menu elements
+@media only screen and (min-width: 1025px) {
+  .hamburger-menu,
+  .mobile-menu-drawer,
+  .mobile-menu-overlay {
+    display: none !important;
+  }
+}
+
+html[data-darkmode=true] {
+  .mobile-menu-drawer {
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.4);
+  }
+}

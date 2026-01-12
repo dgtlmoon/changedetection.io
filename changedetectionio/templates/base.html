@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-darkmode="{{ get_darkmode_state() }}">
+<html lang="{{ get_locale() }}" data-darkmode="{{ get_darkmode_state() }}">
 
   <head>
     <meta charset="utf-8" >
@@ -16,6 +16,7 @@
         {%- endif -%}
     {%- endif -%}
     <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='pure-min.css')}}" >
+    <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='flag-icons.min.css')}}" >
     <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='styles.css')}}?v={{ get_css_version() }}" >
     {% if extra_stylesheets %}
       {% for m in extra_stylesheets %}
@@ -48,14 +49,14 @@
 
   <body class="{{extra_classes}}">
     <div class="header">
-    <div class="pure-menu-fixed" style="width: 100%;">
+    <div {% if pure_menu_fixed != False %}class="pure-menu-fixed"{% endif %} style="width: 100%;">
       <div class="home-menu pure-menu pure-menu-horizontal" id="nav-menu">
 
         {% if has_password and not current_user.is_authenticated %}
-          <a class="pure-menu-heading" href="https://changedetection.io" rel="noopener">
+          <a id="cdio-logo" class="pure-menu-heading" href="https://changedetection.io" rel="noopener">
             <strong>Change</strong>Detection.io</a>
         {% else %}
-          <a class="pure-menu-heading" href="{{url_for('watchlist.index')}}">
+          <a  id="cdio-logo" class="pure-menu-heading" href="{{url_for('watchlist.index')}}">
             <strong>Change</strong>Detection.io</a>
         {% endif %}
         {% if current_diff_url and is_safe_valid_url(current_diff_url) %}
@@ -70,59 +71,20 @@
         {% endif %}
 
         <ul class="pure-menu-list" id="top-right-menu">
+          <!-- Collapsible menu items (hidden on mobile, shown in drawer) -->
+          {% include "menu.html" %}
+
           {% if current_user.is_authenticated or not has_password %}
-            {% if not
-            current_diff_url %}
-              <li class="pure-menu-item">
-                <a href="{{ url_for('tags.tags_overview_page')}}" class="pure-menu-link">GROUPS</a>
+            {% if not current_diff_url %}
+              <li class="pure-menu-item  menu-collapsible">
+                <button class="toggle-button" id="open-search-modal" type="button" title="{{ _('Search, or Use Alt+S Key') }}">
+                  {% include "svgs/search-icon.svg" %}
+                </button>
               </li>
-              <li class="pure-menu-item">
-                <a href="{{ url_for('settings.settings_page')}}" class="pure-menu-link">SETTINGS</a>
-              </li>
-              <li class="pure-menu-item">
-                <a href="{{ url_for('imports.import_page')}}" class="pure-menu-link">IMPORT</a>
-              </li>
-              <li class="pure-menu-item">
-                <a href="{{ url_for('backups.index')}}" class="pure-menu-link">BACKUPS</a>
-              </li>
-            {% else %}
-              <li class="pure-menu-item">
-                <a href="{{ url_for('ui.ui_edit.edit_page', uuid=uuid, next='diff') }}" class="pure-menu-link">EDIT</a>
-              </li>
+
             {% endif %}
-          {% else %}
-            <li class="pure-menu-item">
-              <a class="pure-menu-link" href="https://changedetection.io">Website Change Detection and Notification.</a>
-            </li>
           {% endif %}
-          {% if current_user.is_authenticated %}
-            <li class="pure-menu-item">
-              <a href="{{url_for('logout')}}" class="pure-menu-link">LOG OUT</a>
-            </li>
-          {% endif %}
-          {% if current_user.is_authenticated or not has_password %}
-          <li class="pure-menu-item pure-form" id="search-menu-item">
-            <!-- We use GET here so it offers people a chance to set bookmarks etc -->
-            <form name="searchForm" action="" method="GET">
-              <input id="search-q" class="" name="q" placeholder="URL or Title {% if active_tag_uuid %}in '{{ active_tag.title }}'{% endif %}" required="" type="text" value="">
-              <input name="tags" type="hidden" value="{% if active_tag_uuid %}{{active_tag_uuid}}{% endif %}">
-              <button class="toggle-button " id="toggle-search" type="button" title="Search, or Use Alt+S Key" >
-                {% include "svgs/search-icon.svg" %}
-              </button>
-            </form>
-          </li>
-          {% endif %}
-          <li class="pure-menu-item">
-            <button class="toggle-button" id ="toggle-light-mode" type="button" title="Toggle Light/Dark Mode">
-              <span class="visually-hidden">Toggle light/dark mode</span>
-              <span class="icon-light">
-                {% include "svgs/light-mode-toggle-icon.svg" %}
-              </span>
-              <span class="icon-dark">
-                {% include "svgs/dark-mode-toggle-icon.svg" %}
-              </span>
-            </button>
-          </li>
+
           <li class="pure-menu-item" id="heart-us">
                 <svg
                    fill="#ff0000"
@@ -132,24 +94,37 @@
                    id="svg-heart"
                    xmlns="http://www.w3.org/2000/svg"
                    >
-                  <path id="heartpath" d="M 5.338316,0.50302766 C 0.71136983,0.50647126 -3.9576371,7.2707777 8.5004254,15.503028 23.833425,5.3700277 13.220206,-2.5384409 8.6762066,1.6475589 c -0.060791,0.054322 -0.11943,0.1110064 -0.1757812,0.1699219 -0.057,-0.059 -0.1157813,-0.116875 -0.1757812,-0.171875 C 7.4724566,0.86129334 6.4060729,0.50223298 5.338316,0.50302766 Z"
-                     style="fill:var(--color-background);fill-opacity:1;stroke:#ff0000;stroke-opacity:1" />
+                  <path id="heartpath" d="M 5.338316,0.50302766 C 0.71136983,0.50647126 -3.9576371,7.2707777 8.5004254,15.503028 23.833425,5.3700277 13.220206,-2.5384409 8.6762066,1.6475589 c -0.060791,0.054322 -0.11943,0.1110064 -0.1757812,0.1699219 -0.057,-0.059 -0.1157813,-0.116875 -0.1757812,-0.171875 C 7.4724566,0.86129334 6.4060729,0.50223298 5.338316,0.50302766 Z" style="fill:var(--color-background);fill-opacity:1;stroke:#ff0000;stroke-opacity:1" />
                 </svg>
-
           </li>
+          <!-- Hamburger menu button (mobile only) -->
           <li class="pure-menu-item">
-            <a class="github-link" href="https://github.com/dgtlmoon/changedetection.io">
-              {% include "svgs/github.svg" %}
-            </a>
+            <button class="hamburger-menu" id="hamburger-toggle" aria-label="Toggle menu">
+              <div class="hamburger-icon">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </button>
           </li>
+        </ul>
+      </div>
+
+      <!-- Mobile menu drawer -->
+      <div class="mobile-menu-overlay" id="mobile-menu-overlay"></div>
+      <div class="mobile-menu-drawer" id="mobile-menu-drawer">
+        <ul class="mobile-menu-items">
+          {% include "menu.html" %}
+            <li class="pure-menu-item menu-collapsible">
+                {%- if right_sticky -%}<div>{{ right_sticky }}</div>{%- endif -%}
+                <a href="https://changedetection.io/?ref={{ guid }}">Let us host your instance!</a><br>
+            </li>
         </ul>
       </div>
       <div id="pure-menu-horizontal-spinner"></div>
       </div>
 
     </div>
-
-
     {% if hosted_sticky %}
       <div class="sticky-tab" id="hosted-sticky">
         <a href="https://changedetection.io/?ref={{guid}}">Let us host your instance!</a>
@@ -157,8 +132,6 @@
     {% endif %}
     {% if left_sticky %}
       <div class="sticky-tab" id="left-sticky">
-        <a href="{{url_for('ui.ui_views.preview_page', uuid=uuid)}}">Show current snapshot</a><br>
-          Visualise <strong>triggers</strong> and <strong>ignored text</strong>
       </div>
     {% endif %}
     {% if right_sticky %}
@@ -214,35 +187,190 @@
                 </p>
             </div>
         </div>
-        <header>
-        {% block header %}{% endblock %}
-      </header>
 
-      {% with messages = get_flashed_messages(with_categories = true) %}
-      {% if
-      messages %}
-        <ul class="messages">
-          {% for category, message in messages %}
-            <li class="{{ category }}">{{ message }}</li>
-          {% endfor %}
-        </ul>
-      {% endif %}
-      {% endwith %}
-      {% if session['share-link'] %}
-        <ul class="messages with-share-link">
-          <li class="message">
-            Share this link:
-            <span id="share-link">{{ session['share-link'] }}</span>
-            <img style="height: 1em; display: inline-block" src="{{url_for('static_content', group='images', filename='copy.svg')}}" >
-          </li>
-        </ul>
-      {% endif %}
-      {% block content %}{% endblock %}
+        <div class="content-wrapper">
+{#
+          {% if current_user.is_authenticated or not has_password %}
+          <aside class="action-sidebar">
+            <a href="{{ url_for('watchlist.index') }}" class="action-sidebar-item {% if request.endpoint.startswith('watchlist.') or request.endpoint.startswith('ui.') %}active{% endif %}" title="{{ _('Watch List') }}">
+              <svg class="action-icon" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v6l4 2"/>
+              </svg>
+              <span class="action-label">{{ _('Watches') }}</span>
+            </a>
+            <a href="{{ url_for('queue_status') }}" class="action-sidebar-item {% if request.endpoint == 'queue_status' %}active{% endif %}" id="queue-action-item" title="{{ _('Queue Status') }}">
+              <svg class="action-icon" viewBox="0 0 24 24">
+                <line x1="8" y1="6" x2="21" y2="6"/>
+                <line x1="8" y1="12" x2="21" y2="12"/>
+                <line x1="8" y1="18" x2="21" y2="18"/>
+                <line x1="3" y1="6" x2="3.01" y2="6"/>
+                <line x1="3" y1="12" x2="3.01" y2="12"/>
+                <line x1="3" y1="18" x2="3.01" y2="18"/>
+              </svg>
+              <span class="action-label">{{ _('Queue') }}</span>
+              <span class="notification-bubble blue-bubble" id="queue-bubble" data-count="0"></span>
+            </a>
+          </aside>
+          {% endif %}
+#}
+          <div class="content-main">
+            <header>
+              {% block header %}{% endblock %}
+            </header>
+
+            {% with messages = get_flashed_messages(with_categories = true) %}
+            {% if messages %}
+              <ul class="messages">
+                {% for category, message in messages %}
+                  <li class="{{ category }}">{{ message }}</li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+            {% endwith %}
+            {% if session['share-link'] %}
+              <ul class="messages with-share-link">
+                <li class="message">
+                  Share this link:
+                  <span id="share-link">{{ session['share-link'] }}</span>
+                  <img style="height: 1em; display: inline-block" src="{{url_for('static_content', group='images', filename='copy.svg')}}" >
+                </li>
+              </ul>
+            {% endif %}
+            {% block content %}{% endblock %}
+          </div>
+        </div>
     </section>
     <script src="{{url_for('static_content', group='js', filename='toggle-theme.js')}}" defer></script>
+    <script src="{{url_for('static_content', group='js', filename='hamburger-menu.js')}}" defer></script>
 
-    <div id="checking-now-fixed-tab" style="display: none;"><span class="spinner"></span><span>&nbsp;Checking now</span></div>
-    <div id="realtime-conn-error" style="display:none">Real-time updates offline</div>
+    <div id="checking-now-fixed-tab" style="display: none;"><span class="spinner"></span><span class="status-text">&nbsp;{{ _('Checking now') }}</span></div>
+    <div id="realtime-conn-error" style="display:none">{{ _('Real-time updates offline') }}</div>
+    {% if bottom_horizontal_offscreen_contents %}
+        <div id="bottom-horizontal-offscreen" style="display:none">
+            {{ bottom_horizontal_offscreen_contents|safe }}
+        </div>
+    {% endif %}
+
+    <!-- Language Selection Modal -->
+    <dialog id="language-modal" class="modal-dialog" aria-labelledby="language-modal-title">
+      <div class="modal-header">
+        <h2 class="modal-title" id="language-modal-title">{{ _('Select Language') }}</h2>
+      </div>
+      <div class="modal-body">
+        <div class="language-list">
+          {% for locale, lang_data in available_languages.items()|sort %}
+          <a href="{{ url_for('set_language', locale=locale, redirect=request.path) }}" class="language-option" data-locale="{{ locale }}">
+            <span class="lang-option {{ lang_data.flag }}"></span> <span class="language-name">{{ lang_data.name }}</span>
+          </a>
+          {% endfor %}
+        </div>
+        <div>
+            {{ _('Language support is in beta, please help us improve by opening a PR on GitHub with any updates.') }}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="pure-button" id="close-language-modal">{{ _('Cancel') }}</button>
+      </div>
+    </dialog>
+
+    <!-- Search Modal -->
+    {% if current_user.is_authenticated or not has_password %}
+    <dialog id="search-modal" class="modal-dialog" aria-labelledby="search-modal-title">
+      <div class="modal-header">
+        <h2 class="modal-title" id="search-modal-title">{{ _('Search') }}</h2>
+      </div>
+      <div class="modal-body">
+        <form id="search-form" method="GET">
+          <div class="pure-control-group">
+            <label for="search-modal-input">{{ _('URL or Title') }}{% if active_tag_uuid %} {{ _('in') }} '{{ active_tag.title }}'{% endif %}</label>
+            <input id="search-modal-input" class="m-d" name="q" placeholder="{{ _('Enter search term...') }}" required type="text" value="" autofocus>
+            <input name="tags" type="hidden" value="{% if active_tag_uuid %}{{active_tag_uuid}}{% endif %}">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="pure-button button-cancel" id="close-search-modal">{{ _('Cancel') }}</button>
+        <button type="submit" form="search-form" class="pure-button pure-button-primary">{{ _('Search') }}</button>
+      </div>
+    </dialog>
+    {% endif %}
+
+
+  <script>
+  (function() {
+      /* AUTOMATIC TAB COLUMN-IZER FOR WHEN TABS WRAP */
+    // Exit early if no tabs on page
+    if (!document.querySelector('.tab')) return;
+
+    const cache = new Map();
+
+    function checkWrapping(ul) {
+      const tabs = ul.querySelectorAll('.tab');
+      if (tabs.length < 2) return false;
+
+      // Init cache on first run
+      if (!cache.has(ul)) {
+        ul.style.setProperty('--tab-width', '');
+        void ul.offsetHeight;
+        let max = 0;
+        tabs.forEach(t => max = Math.max(max, t.offsetWidth));
+        cache.set(ul, max);
+      }
+
+      // Temporarily use flex wrap to check if wrapping occurs
+      ul.style.display = 'flex';
+      ul.style.flexWrap = 'wrap';
+      void ul.offsetHeight;
+
+      const top = tabs[0].offsetTop;
+      const wrapped = Array.from(tabs).some((t, i) => i > 0 && t.offsetTop !== top);
+
+      // Reset display to use CSS grid
+      ul.style.display = '';
+      ul.style.flexWrap = '';
+
+      // Set CSS variable for wrapped mode
+      if (wrapped) {
+        ul.style.setProperty('--tab-width', `${cache.get(ul) + 10}px`);
+      } else {
+        ul.style.setProperty('--tab-width', '');
+      }
+
+      return wrapped;
+    }
+
+    function check() {
+      let any = false;
+      document.querySelectorAll('ul').forEach(ul => {
+        if (ul.querySelector('.tab') && checkWrapping(ul)) any = true;
+      });
+      document.body.classList.toggle('wrapped-tabs', any);
+    }
+
+    check();
+    let timer;
+    window.addEventListener('resize', () => {
+      clearTimeout(timer);
+      timer = setTimeout(check, 100);
+    });
+
+    // Re-check wrapping when tabs are switched via anchors
+    window.addEventListener('hashchange', () => {
+      clearTimeout(timer);
+      // Use requestAnimationFrame + setTimeout to ensure DOM has settled
+      requestAnimationFrame(() => {
+        timer = setTimeout(check, 0);
+      });
+    });
+  })();
+  </script>
+
+
+    <script src="{{url_for('static_content', group='js', filename='language-selector.js')}}" defer></script>
+    <script src="{{url_for('static_content', group='js', filename='search-modal.js')}}" defer></script>
+    <script src="{{url_for('static_content', group='js', filename='toast.js')}}"></script>
+    <script src="{{url_for('static_content', group='js', filename='flask-toast-bridge.js')}}" defer></script>
   </body>
 
 </html>

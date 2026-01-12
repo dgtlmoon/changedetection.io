@@ -2,22 +2,23 @@
 {% block content %}
 {% from '_helpers.html' import render_simple_field, render_field %}
 <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
+<script src="{{url_for('static_content', group='js', filename='modal.js')}}"></script>
 
 <div class="box">
     <form class="pure-form" action="{{ url_for('tags.form_tag_add') }}" method="POST" id="new-watch-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
         <fieldset>
-            <legend>Add a new organisational tag</legend>
+            <legend>{{ _('Add a new organisational tag') }}</legend>
             <div id="watch-add-wrapper-zone">
                 <div>
-                    {{ render_simple_field(form.name, placeholder="Watch group / tag") }}
+                    {{ render_simple_field(form.name, placeholder=_("Watch group / tag")) }}
                 </div>
                 <div>
-                    {{ render_simple_field(form.save_button, title="Save" ) }}
+                    {{ render_simple_field(form.save_button, title=_("Save") ) }}
                 </div>
             </div>
             <br>
-            <div style="color: #fff;">Groups allows you to manage filters and notifications for multiple watches under a single organisational tag.</div>
+            <div style="color: #fff;">{{ _('Groups allows you to manage filters and notifications for multiple watches under a single organisational tag.') }}</div>
         </fieldset>
     </form>
     <!-- @todo maybe some overview matrix, 'tick' with which has notification, filter rules etc -->
@@ -27,8 +28,8 @@
             <thead>
             <tr>
                 <th></th>
-                <th># Watches</th>
-                <th>Tag / Label name</th>
+                <th>{{ _('# Watches') }}</th>
+                <th>{{ _('Tag / Label name') }}</th>
                 <th></th>
             </tr>
             </thead>
@@ -38,7 +39,7 @@
             --->
             {% if not available_tags|length %}
             <tr>
-                <td colspan="3">No website organisational tags/groups configured</td>
+                <td colspan="3">{{ _('No website organisational tags/groups configured') }}</td>
             </tr>
             {% endif %}
             {% for uuid, tag in available_tags  %}
@@ -49,10 +50,24 @@
                 <td>{{ "{:,}".format(tag_count[uuid]) if uuid in tag_count else 0 }}</td>
                 <td class="title-col inline"> <a href="{{url_for('watchlist.index', tag=uuid) }}">{{ tag.title }}</a></td>
                 <td>
-                    <a class="pure-button pure-button-primary" href="{{ url_for('tags.form_tag_edit', uuid=uuid) }}">Edit</a>&nbsp;
-                    <a class="pure-button pure-button-primary" href="{{ url_for('tags.delete', uuid=uuid) }}" title="Deletes and removes tag">Delete</a>
-                    <a class="pure-button pure-button-primary" href="{{ url_for('tags.unlink', uuid=uuid) }}" title="Keep the tag but unlink any watches">Unlink</a>
-                    <a href="{{ url_for('rss.rss_tag_feed', tag_uuid=uuid, token=app_rss_token)}}"><img alt="RSS Feed for this watch" style="padding-left: 1em;" src="{{url_for('static_content', group='images', filename='generic_feed-icon.svg')}}" height="15"></a>
+                    <a class="pure-button pure-button-primary" href="{{ url_for('tags.form_tag_edit', uuid=uuid) }}">{{ _('Edit') }}</a>&nbsp;
+                    <a class="pure-button button-error"
+                       href="{{ url_for('tags.delete', uuid=uuid) }}"
+                       data-requires-confirm
+                       data-confirm-type="danger"
+                       data-confirm-title="{{ _('Delete Group?') }}"
+                       data-confirm-message="{{ _('<p>Are you sure you want to delete group <strong>%(title)s</strong>?</p><p>This action cannot be undone.</p>', title=tag.title) }}"
+                       data-confirm-button="{{ _('Delete') }}"
+                       title="{{ _('Deletes and removes tag') }}">{{ _('Delete') }}</a>
+                    <a class="pure-button button-warning"
+                       href="{{ url_for('tags.unlink', uuid=uuid) }}"
+                       data-requires-confirm
+                       data-confirm-type="warning"
+                       data-confirm-title="{{ _('Unlink Group?') }}"
+                       data-confirm-message="{{ _('<p>Are you sure you want to unlink all watches from group <strong>%(title)s</strong>?</p><p>The tag will be kept but watches will be removed from it.</p>', title=tag.title) }}"
+                       data-confirm-button="{{ _('Unlink') }}"
+                       title="{{ _('Keep the tag but unlink any watches') }}">{{ _('Unlink') }}</a>
+                    <a href="{{ url_for('rss.rss_tag_feed', tag_uuid=uuid, token=app_rss_token)}}"><img alt="{{ _('RSS Feed for this watch') }}" style="padding-left: 1em;" src="{{url_for('static_content', group='images', filename='generic_feed-icon.svg')}}" height="15"></a>
                 </td>
             </tr>
             {% endfor %}

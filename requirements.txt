@@ -11,18 +11,17 @@ flask_cors # For the Chrome extension to operate
 janus # Thread-safe async/sync queue bridge
 flask_wtf~=1.2
 flask~=3.1
-flask-socketio~=5.5.1
-python-socketio~=5.14.3
-python-engineio~=4.12.3
+flask-socketio~=5.6.0
+python-socketio~=5.16.0
+python-engineio~=4.13.0
 inscriptis~=2.2
 pytz
 timeago~=1.0
 validators~=0.35
 
-
 # Set these versions together to avoid a RequestsDependencyWarning
 # >= 2.26 also adds Brotli support if brotli is installed
-brotli~=1.1
+brotli~=1.2
 requests[socks]
 requests-file
 
@@ -45,6 +44,8 @@ orjson~=3.11
 # Notification library
 apprise==1.9.5
 
+diff_match_patch
+
 # Lightweight URL linkifier for notifications
 linkify-it-py
 
@@ -52,24 +53,30 @@ linkify-it-py
 # - Requires extra wheel for rPi, adds build time for arm/v8 which is not in piwheels
 # Pinned to 43.0.1 for ARM compatibility (45.x may not have pre-built ARM wheels)
 # Also pinned because dependabot wants specific versions
-cryptography==44.0.1
+cryptography==46.0.3
 
 # apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
 # use any version other than 2.0.x due to https://github.com/eclipse/paho.mqtt.python/issues/814
 paho-mqtt!=2.0.*
 
 # Used for CSS filtering, JSON extraction from HTML
-beautifulsoup4>=4.0.0,<=4.14.2
+beautifulsoup4>=4.0.0,<=4.14.3
 
 # XPath filtering, lxml is required by bs4 anyway, but put it here to be safe.
 # #2328 - 5.2.0 and 5.2.1 had extra CPU flag CFLAGS set which was not compatible on older hardware
 #         It could be advantageous to run its own pypi package here with those performance flags set
 #         https://bugs.launchpad.net/lxml/+bug/2059910/comments/16
-lxml >=4.8.0,<6,!=5.2.0,!=5.2.1
+lxml >=4.8.0,!=5.2.0,!=5.2.1,<7
 
 # XPath 2.0-3.1 support - 4.2.0 had issues, 4.1.5 stable
 # Consider updating to latest stable version periodically
 elementpath==5.0.4
+
+# For fast image comparison in screenshot change detection
+# opencv-python-headless is OPTIONAL (excluded from requirements.txt)
+# - Installed conditionally via Dockerfile (skipped on arm/v7 and arm/v8 due to long build times)
+# - Pixelmatch is used as fallback when OpenCV is unavailable
+# - To install manually: pip install opencv-python-headless>=4.8.0.76
 
 selenium~=4.31.0
 
@@ -85,16 +92,15 @@ jq~=1.3; python_version >= "3.8" and sys_platform == "linux"
 # playwright is installed at Dockerfile build time because it's not available on all platforms
 
 pyppeteer-ng==2.0.0rc10
-
 pyppeteerstealth>=0.0.4
 
 # Include pytest, so if theres a support issue we can ask them to run these tests on their setup
-pytest ~=7.2
+pytest ~=9.0
 pytest-flask ~=1.3
 pytest-mock ~=3.15
 
 # Anything 4.0 and up but not 5.0
-jsonschema ~= 4.0
+jsonschema ~= 4.25
 
 # OpenAPI validation support
 openapi-core[flask] >= 0.19.0
@@ -107,6 +113,8 @@ extruct
 
 # For cleaning up unknown currency formats
 babel
+# For internationalization (i18n) support
+Flask-Babel>=4.0.0
 
 levenshtein
 
@@ -137,15 +145,16 @@ tzdata
 
 #typing_extensions ==4.8.0
 
-pluggy ~= 1.5
+pluggy ~= 1.6
 
 # Needed for testing, cross-platform for process and system monitoring
-psutil==7.1.0
+psutil==7.2.1
 
 ruff >= 0.11.2
 pre_commit >= 4.2.0
 
 # For events between checking and socketio updates
 blinker
-
 pytest-xdist
+
+

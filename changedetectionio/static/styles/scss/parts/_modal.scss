@@ -1,0 +1,203 @@
+/**
+ * Modal dialog styles using HTML5 <dialog> element
+ * Provides modern, accessible confirmation dialogs
+ */
+
+.modal-dialog {
+  border: none;
+  border-radius: 10px;
+  padding: 0;
+  background: var(--color-background);
+  color: var(--color-text);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  width: 90%;
+
+  &::backdrop {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(3px);
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  &[open] {
+    animation: slideIn 0.25s ease-out;
+  }
+
+  .modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--color-border-table-cell);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .modal-icon {
+      font-size: 2rem;
+      line-height: 1;
+      flex-shrink: 0;
+
+      &.warning {
+        color: var(--color-warning);
+      }
+
+      &.danger {
+        color: var(--color-background-button-error);
+      }
+
+      &.info {
+        color: var(--color-background-button-primary);
+      }
+    }
+
+    .modal-title {
+      font-size: 1.3rem;
+      font-weight: bold;
+      margin: 0;
+      color: var(--color-text);
+    }
+  }
+
+  .modal-body {
+    padding: 1.5rem;
+    line-height: 1.6;
+
+    p {
+      margin: 0 0 1rem 0;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    strong {
+      color: var(--color-text);
+      font-weight: 600;
+    }
+  }
+
+  .modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--color-border-table-cell);
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    background: var(--color-grey-900);
+
+    button {
+      padding: 0.6rem 1.5rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      font-size: 0.95rem;
+
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+
+      &.modal-btn-cancel {
+        background: var(--color-background-button-cancel);
+        color: var(--color-grey-200);
+
+        &:hover {
+          background: var(--color-grey-700);
+        }
+      }
+
+      &.modal-btn-confirm {
+        background: var(--color-background-button-primary);
+        color: var(--color-white);
+
+        &:hover {
+          opacity: 0.9;
+        }
+      }
+
+      &.modal-btn-danger {
+        background: var(--color-background-button-error);
+        color: var(--color-white);
+
+        &:hover {
+          background: var(--color-dark-red);
+        }
+      }
+
+      &.modal-btn-warning {
+        background: var(--color-background-button-warning);
+        color: var(--color-white);
+
+        &:hover {
+          opacity: 0.9;
+        }
+      }
+    }
+  }
+}
+
+// Dark mode adjustments
+html[data-darkmode="true"] {
+  .modal-dialog {
+    box-shadow: 0 5px 30px rgba(0, 0, 0, 0.7);
+
+    .modal-footer {
+      background: var(--color-grey-200);
+    }
+  }
+}
+
+// Animations
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+// Mobile responsive
+@media only screen and (max-width: 760px) {
+  .modal-dialog {
+    width: 95%;
+    max-width: none;
+
+    .modal-header {
+      padding: 1rem;
+
+      .modal-title {
+        font-size: 1.1rem;
+      }
+    }
+
+    .modal-body {
+      padding: 1rem;
+      font-size: 0.95rem;
+    }
+
+    .modal-footer {
+      padding: 0.75rem 1rem;
+      flex-wrap: wrap;
+
+      button {
+        flex: 1;
+        min-width: 120px;
+      }
+    }
+  }
+}

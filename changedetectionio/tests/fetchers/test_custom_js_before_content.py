@@ -42,7 +42,7 @@ def test_execute_custom_js(client, live_server, measure_memory_usage, datastore_
 
     # Check HTML conversion detected and workd
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid=uuid),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
     assert b"This text should be removed" not in res.data

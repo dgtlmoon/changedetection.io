@@ -51,6 +51,7 @@ class Fetcher():
     favicon_blob = None
     instock_data = None
     instock_data_js = ""
+    screenshot_format = None
     status_code = None
     webdriver_js_execute_code = None
     xpath_data = None
@@ -63,6 +64,35 @@ class Fetcher():
 
     # Time ONTOP of the system defined env minimum time
     render_extract_delay = 0
+
+    # Fetcher capability flags - subclasses should override these
+    # These indicate what features the fetcher supports
+    supports_browser_steps = False      # Can execute browser automation steps
+    supports_screenshots = False        # Can capture page screenshots
+    supports_xpath_element_data = False # Can extract xpath element positions/data for visual selector
+
+    def __init__(self, **kwargs):
+        if kwargs and 'screenshot_format' in kwargs:
+            self.screenshot_format = kwargs.get('screenshot_format')
+
+
+    @classmethod
+    def get_status_icon_data(cls):
+        """Return data for status icon to display in the watch overview.
+
+        This method can be overridden by subclasses to provide custom status icons.
+
+        Returns:
+            dict or None: Dictionary with icon data:
+                {
+                    'filename': 'icon-name.svg',  # Icon filename
+                    'alt': 'Alt text',            # Alt attribute
+                    'title': 'Tooltip text',      # Title attribute
+                    'style': 'height: 1em;'       # Optional inline CSS
+                }
+                Or None if no icon
+        """
+        return None
 
     def clear_content(self):
         """
@@ -92,12 +122,13 @@ class Fetcher():
                   request_method=None,
                   timeout=None,
                   url=None,
+                  watch_uuid=None,
                   ):
         # Should set self.error, self.status_code and self.content
         pass
 
     @abstractmethod
-    def quit(self, watch=None):
+    async def quit(self, watch=None):
         return
 
     @abstractmethod
