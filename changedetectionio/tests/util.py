@@ -164,11 +164,12 @@ def wait_for_all_checks(client=None):
         if q_length == 0 and not any_workers_busy:
             if empty_since is None:
                 empty_since = time.time()
-            elif time.time() - empty_since >= 0.15:  # Shorter wait
+            # Longer stabilization period to ensure async workers have finished all updates
+            elif time.time() - empty_since >= 0.5:  # Increased from 0.15 to 0.5
                 break
         else:
             empty_since = None
-        
+
         attempt += 1
         time.sleep(0.3)
 
