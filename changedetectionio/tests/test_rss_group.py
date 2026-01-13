@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, get_UUID_for_tag_name, delete_all_watches
+from .util import live_server_setup, wait_for_all_checks, wait_for_watch_history, extract_rss_token_from_UI, get_UUID_for_tag_name, delete_all_watches
 import os
 
 
@@ -87,12 +87,18 @@ def test_rss_group(client, live_server, measure_memory_usage, datastore_path):
     # Wait for initial checks to complete
     wait_for_all_checks(client)
 
+    # Ensure initial snapshots are saved
+    assert wait_for_watch_history(client, min_history_count=1, timeout=10), "Watches did not save initial snapshots"
+
     # Trigger a change
     set_modified_response(datastore_path=datastore_path)
 
     # Recheck all watches
     res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
+
+    # Ensure all watches have sufficient history for RSS generation
+    assert wait_for_watch_history(client, min_history_count=2, timeout=10), "Watches did not accumulate sufficient history"
 
     # Get RSS token
     rss_token = extract_rss_token_from_UI(client)
@@ -216,11 +222,13 @@ def test_rss_group_only_unviewed(client, live_server, measure_memory_usage, data
     assert b"Watch added" in res.data
 
     wait_for_all_checks(client)
+    assert wait_for_watch_history(client, min_history_count=1, timeout=10), "Initial snapshots not saved"
 
     # Trigger changes
     set_modified_response(datastore_path=datastore_path)
     res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
+    assert wait_for_watch_history(client, min_history_count=2, timeout=10), "History not accumulated"
 
     # Get RSS token
     rss_token = extract_rss_token_from_UI(client)
