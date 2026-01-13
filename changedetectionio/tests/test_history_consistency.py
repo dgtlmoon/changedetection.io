@@ -4,23 +4,33 @@ import time
 import os
 import json
 from flask import url_for
+
+from build.lib.changedetectionio.strtobool import strtobool
 from .util import wait_for_all_checks, delete_all_watches
 from urllib.parse import urlparse, parse_qs
 
+
 def test_consistent_history(client, live_server, measure_memory_usage, datastore_path):
-   #  live_server_setup(live_server) # Setup on conftest per function
+    #  live_server_setup(live_server) # Setup on conftest per function
     workers = int(os.getenv("FETCH_WORKERS", 10))
-    r = range(1, 10+workers)
+    r = range(1, 10 + workers)
+    uuids = set()
 
+    import brotli
     for one in r:
-        test_url = url_for('test_endpoint', content_type="text/html", content=str(one), _external=True)
-        res = client.post(
-            url_for("imports.import_page"),
-            data={"urls": test_url},
-            follow_redirects=True
-        )
+        if strtobool(os.getenv("TEST_WITH_BROTLI")):
+            # A very long string that WILL trigger Brotli compression of the snapshot
+            # BROTLI_COMPRESS_SIZE_THRESHOLD should be set to say 200
+            from ..model.Watch import BROTLI_COMPRESS_SIZE_THRESHOLD
+            content = str(one) + " " + str(one) * (BROTLI_COMPRESS_SIZE_THRESHOLD + 10)
+        else:
+            # Just enough to test datastore
+            content = str(one)
 
-        assert b"1 Imported" in res.data
+        test_url = url_for('test_endpoint', content_type="text/html", content=content, _external=True)
+        uuids.add(client.application.config.get('DATASTORE').add_watch(url=test_url, extras={'title': str(one)}))
+
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -45,12 +55,16 @@ def test_consistent_history(client, live_server, measure_memory_usage, datastore
 
     # assert the right amount of watches was found in the JSON
     assert len(json_obj['watching']) == len(r), "Correct number of watches was found in the JSON"
-    i=0
+
+    i = 0
     # each one should have a history.txt containing just one line
     for w in json_obj['watching'].keys():
-        i+=1
+        i += 1
         history_txt_index_file = os.path.join(live_server.app.config['DATASTORE'].datastore_path, w, 'history.txt')
         assert os.path.isfile(history_txt_index_file), f"History.txt should exist where I expect it at {history_txt_index_file}"
+
+        # Should be no errors (could be from brotli etc)
+        assert not live_server.app.config['DATASTORE'].data['watching'][w].get('last_error')
 
         # Same like in model.Watch
         with open(history_txt_index_file, "r") as f:
@@ -63,15 +77,21 @@ def test_consistent_history(client, live_server, measure_memory_usage, datastore
         # Find the snapshot one
         for fname in files_in_watch_dir:
             if fname != 'history.txt' and 'html' not in fname:
+                if strtobool(os.getenv("TEST_WITH_BROTLI")):
+                    assert fname.endswith('.br'), "Forced TEST_WITH_BROTLI then it should be a .br filename"
+
+                full_snapshot_history_path = os.path.join(live_server.app.config['DATASTORE'].datastore_path, w, fname)
                 # contents should match what we requested as content returned from the test url
-                with open(os.path.join(live_server.app.config['DATASTORE'].datastore_path, w, fname), 'r') as snapshot_f:
-                    contents = snapshot_f.read()
-                    watch_url = json_obj['watching'][w]['url']
-                    u = urlparse(watch_url)
-                    q = parse_qs(u[4])
-                    assert q['content'][0] == contents.strip(), f"Snapshot file {fname} should contain {q['content'][0]}"
+                if fname.endswith('.br'):
+                    with open(full_snapshot_history_path, 'rb') as f:
+                        contents = brotli.decompress(f.read()).decode('utf-8')
+                else:
+                    with open(full_snapshot_history_path, 'r') as snapshot_f:
+                        contents = snapshot_f.read()
 
-
+                watch_title = json_obj['watching'][w]['title']
+                assert json_obj['watching'][w]['title'], "Watch should have a title set"
+                assert contents.startswith(watch_title + " "), f"Snapshot file {fname} should start with '{watch_title} '"
 
         assert len(files_in_watch_dir) == 3, "Should be just three files in the dir, html.br snapshot, history.txt and the extracted text snapshot"
 

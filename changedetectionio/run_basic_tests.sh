@@ -105,4 +105,5 @@ echo "Hello world" > /tmp/test-file.txt
 ALLOW_FILE_URI=yes pytest -vv -s  tests/test_security.py
 
 
-
+# Run it again so that brotli kicks in
+TEST_WITH_BROTLI=1 SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD=100 pytest tests/test_history_consistency.py -vv -l -s
