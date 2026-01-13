@@ -10,9 +10,13 @@ from pathlib import Path
 from loguru import logger
 
 from .. import jinja2_custom as safe_jinja
-from ..diff import ADDED_PLACEMARKER_OPEN
 from ..html_tools import TRANSLATE_WHITESPACE_TABLE
 
+FAVICON_RESAVE_THRESHOLD_SECONDS=86400
+BROTLI_COMPRESS_SIZE_THRESHOLD = int(os.getenv('SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD', 1024))
+
+minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
+mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
 
 def _brotli_compress_worker(conn, filepath, mode=None):
     """
@@ -29,6 +33,7 @@ def _brotli_compress_worker(conn, filepath, mode=None):
     try:
         # Receive data from parent process via pipe (avoids pickle overhead)
         contents = conn.recv()
+        logger.debug(f"Starting brotli compression of {len(contents)} bytes.")
 
         if mode is not None:
             compressed_data = brotli.compress(contents, mode=mode)
@@ -40,9 +45,10 @@ def _brotli_compress_worker(conn, filepath, mode=None):
 
         # Send success status back
         conn.send(True)
+        logger.debug(f"Finished brotli compression - From {len(contents)} to {len(compressed_data)} bytes.")
         # No need for explicit cleanup - process exit frees all memory
     except Exception as e:
-        logger.error(f"Brotli compression worker failed: {e}")
+        logger.critical(f"Brotli compression worker failed: {e}")
         conn.send(False)
     finally:
         conn.close()
@@ -66,7 +72,6 @@ def _brotli_subprocess_save(contents, filepath, mode=None, timeout=30, fallback_
     Raises:
         Exception: if compression fails and fallback_uncompressed is False
     """
-    import brotli
     import multiprocessing
     import sys
 
@@ -144,11 +149,6 @@ def _brotli_subprocess_save(contents, filepath, mode=None, timeout=30, fallback_
     else:
         raise Exception(f"Brotli compression subprocess failed for {filepath}")
 
-FAVICON_RESAVE_THRESHOLD_SECONDS=86400
-
-
-minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
-mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
 
 class model(watch_base):
     __newest_history_key = None
@@ -492,7 +492,6 @@ class model(watch_base):
 
         self.ensure_data_dir_exists()
 
-        threshold = int(os.getenv('SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD', 1024))
         skip_brotli = strtobool(os.getenv('DISABLE_BROTLI_TEXT_SNAPSHOT', 'False'))
 
         # Binary data - detect file type and save without compression
@@ -516,7 +515,7 @@ class model(watch_base):
 
         # Text data - use brotli compression if enabled and above threshold
         else:
-            if not skip_brotli and len(contents) > threshold:
+            if not skip_brotli and len(contents) > BROTLI_COMPRESS_SIZE_THRESHOLD:
                 # Compressed text
                 import brotli
                 snapshot_fname = f"{snapshot_id}.txt.br"

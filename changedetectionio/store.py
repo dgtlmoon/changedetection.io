@@ -186,7 +186,7 @@ class ChangeDetectionStore:
         # Finally start the thread that will manage periodic data saves to JSON
         # Only start if thread is not already running (reload_state might be called multiple times)
         if not self.save_data_thread or not self.save_data_thread.is_alive():
-            self.save_data_thread = threading.Thread(target=self.save_datastore)
+            self.save_data_thread = threading.Thread(target=self.save_datastore, daemon=True, name="DatastoreSaver")
             self.save_data_thread.start()
 
     def rehydrate_entity(self, uuid, entity, processor_override=None):

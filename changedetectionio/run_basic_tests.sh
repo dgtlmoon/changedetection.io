@@ -98,11 +98,12 @@ pytest -vv -s --maxfail=1 tests/test_rss.py
 pytest -vv -s --maxfail=1 tests/test_unique_lines.py
 
 # Try high concurrency
-FETCH_WORKERS=130 pytest  tests/test_history_consistency.py -v -l
+FETCH_WORKERS=50 pytest  tests/test_history_consistency.py -vv -l -s
 
 # Check file:// will pickup a file when enabled
 echo "Hello world" > /tmp/test-file.txt
 ALLOW_FILE_URI=yes pytest -vv -s  tests/test_security.py
 
 
-
+# Run it again so that brotli kicks in
+TEST_WITH_BROTLI=1 SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD=100 FETCH_WORKERS=20 pytest tests/test_history_consistency.py -vv -l -s

@@ -86,6 +86,7 @@ class RecheckPriorityQueue:
     
     def get(self, block: bool = True, timeout: Optional[float] = None):
         """Thread-safe sync get with priority ordering"""
+        import queue
         try:
             # Wait for notification
             self.sync_q.get(block=block, timeout=timeout)
@@ -103,8 +104,11 @@ class RecheckPriorityQueue:
             logger.debug(f"Successfully retrieved item: {self._get_item_uuid(item)}")
             return item
 
+        except queue.Empty:
+            # Queue is empty with timeout - expected behavior, re-raise without logging
+            raise
         except Exception as e:
-            logger.critical(f"CRITICAL: Failed to get item from queue: {str(e)}")
+            # Re-raise without logging - caller (worker) will handle and log appropriately
             raise
     
     # ASYNC INTERFACE (for workers)

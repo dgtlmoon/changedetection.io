@@ -164,13 +164,44 @@ def wait_for_all_checks(client=None):
         if q_length == 0 and not any_workers_busy:
             if empty_since is None:
                 empty_since = time.time()
-            elif time.time() - empty_since >= 0.15:  # Shorter wait
+            # Brief stabilization period for async workers
+            elif time.time() - empty_since >= 0.3:
                 break
         else:
             empty_since = None
-        
+
         attempt += 1
         time.sleep(0.3)
+
+def wait_for_watch_history(client, min_history_count=2, timeout=10):
+    """
+    Wait for watches to have sufficient history entries.
+    Useful after wait_for_all_checks() when you need to ensure history is populated.
+
+    Args:
+        client: Test client with access to datastore
+        min_history_count: Minimum number of history entries required
+        timeout: Maximum time to wait in seconds
+    """
+    datastore = client.application.config.get('DATASTORE')
+    start_time = time.time()
+
+    while time.time() - start_time < timeout:
+        all_have_history = True
+        for uuid, watch in datastore.data['watching'].items():
+            history_count = len(watch.history.keys())
+            if history_count < min_history_count:
+                all_have_history = False
+                break
+
+        if all_have_history:
+            return True
+
+        time.sleep(0.2)
+
+    # Timeout - return False
+    return False
+
 
 # Replaced by new_live_server_setup and calling per function scope in conftest.py
 def  live_server_setup(live_server):
@@ -189,6 +220,8 @@ def new_live_server_setup(live_server):
 
     @live_server.app.route('/test-endpoint')
     def test_endpoint():
+        from loguru import logger
+        logger.debug(f"/test-endpoint hit {request}")
         ctype = request.args.get('content_type')
         status_code = request.args.get('status_code')
         content = request.args.get('content') or None
