@@ -18,9 +18,6 @@ worker_threads = []  # List of WorkerThread objects
 # Track currently processing UUIDs for async workers - maps {uuid: worker_id}
 currently_processing_uuids = {}
 
-# Track worker states - maps {worker_id: state} where state is 'waiting', 'processing', etc.
-worker_states = {}
-
 # Configuration - async workers only
 USE_ASYNC_WORKERS = True
 
@@ -107,11 +104,10 @@ class WorkerThread:
 
 def start_async_workers(n_workers, update_q, notification_q, app, datastore):
     """Start async workers, each with its own thread and event loop for isolation"""
-    global worker_threads, currently_processing_uuids, worker_states
+    global worker_threads, currently_processing_uuids
 
     # Clear any stale state
     currently_processing_uuids.clear()
-    worker_states.clear()
 
     # Start each worker in its own thread with its own event loop
     logger.info(f"Starting {n_workers} async workers (isolated threads)")
@@ -211,25 +207,6 @@ def set_uuid_processing(uuid, worker_id=None, processing=True):
     else:
         currently_processing_uuids.pop(uuid, None)
         logger.debug(f"Worker {worker_id} finished processing UUID: {uuid}")
-
-
-def set_worker_state(worker_id, state):
-    """Set the current state of a worker ('waiting', 'processing', etc.)"""
-    global worker_states
-    try:
-        worker_states[worker_id] = state
-        logger.trace(f"Worker {worker_id} state: {state}")
-    except Exception as e:
-        # Fallback in case logger.trace isn't available
-        logger.debug(f"Worker {worker_id} state: {state}")
-
-
-def are_all_workers_idle():
-    """Check if all workers are in 'waiting' state (idle and waiting for queue items)"""
-    # Must have states for all workers, otherwise they haven't started yet
-    if len(worker_states) != len(worker_threads):
-        return False
-    return all(state == 'waiting' for state in worker_states.values())
 
 
 def is_watch_running(watch_uuid):
