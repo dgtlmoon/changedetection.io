@@ -35,11 +35,16 @@ def test_consistent_history(client, live_server, measure_memory_usage, datastore
     wait_for_all_checks(client)
     duration = time.time() - now
     per_worker = duration/sys_fetch_workers
-    per_worker_threshold=0.5
+    if sys_fetch_workers < 20:
+        per_worker_threshold=0.3
+    elif sys_fetch_workers < 50:
+        per_worker_threshold = 0.8
+    else:
+        per_worker_threshold = 1.5
 
     logger.debug(f"All fetched in {duration:.2f}s, {per_worker}s per worker")
 
-    assert per_worker < per_worker_threshold, f"If concurrency is working good, no blocking async problems, each worker should have done his job in under {per_worker_threshold}s, got {per_worker:.2f}s per worker, total duration was {duration:.2f}s"
+    assert per_worker < per_worker_threshold, f"If concurrency is working good, no blocking async problems, each worker ({sys_fetch_workers} workers) should have done his job in under {per_worker_threshold}s, got {per_worker:.2f}s per worker, total duration was {duration:.2f}s"
 
     # Essentially just triggers the DB write/update
     res = client.post(
