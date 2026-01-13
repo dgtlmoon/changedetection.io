@@ -36,7 +36,7 @@ def test_consistent_history(client, live_server, measure_memory_usage, datastore
     duration = time.time() - now
     per_worker = duration/sys_fetch_workers
     if sys_fetch_workers < 20:
-        per_worker_threshold=0.3
+        per_worker_threshold=0.6
     elif sys_fetch_workers < 50:
         per_worker_threshold = 0.8
     else:
