@@ -84,6 +84,21 @@ app.config['NEW_VERSION_AVAILABLE'] = False
 if os.getenv('FLASK_SERVER_NAME'):
     app.config['SERVER_NAME'] = os.getenv('FLASK_SERVER_NAME')
 
+
+def is_oidc_enabled():
+    """
+    Check if OIDC authentication is configured via environment variables.
+
+    Returns:
+        bool: True if all required OIDC environment variables are set.
+    """
+    return bool(
+        os.getenv('OIDC_PROVIDER_URL') and
+        os.getenv('OIDC_CLIENT_ID') and
+        os.getenv('OIDC_CLIENT_SECRET')
+    )
+
+
 #app.config["EXPLAIN_TEMPLATE_LOADING"] = True
 
 
@@ -321,7 +336,8 @@ from changedetectionio.auth_decorator import login_optionally_required
 
 # When nobody is logged in Flask-Login's current_user is set to an AnonymousUser object.
 class User(flask_login.UserMixin):
-    id=None
+    id = None
+    oidc_authenticated = False  # Track if user authenticated via OIDC
 
     def set_password(self, password):
         return True
@@ -417,9 +433,18 @@ def changedetection_app(config=None, datastore_o=None):
     # Set up a request hook to check authentication for all routes
     @app.before_request
     def check_authentication():
-        has_password_enabled = datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False)
+        # Check if OIDC is enabled - when enabled, password auth is disabled
+        oidc_enabled = is_oidc_enabled()
 
-        if has_password_enabled and not flask_login.current_user.is_authenticated:
+        # Determine if authentication is required
+        if oidc_enabled:
+            # OIDC mode: always require authentication (password settings ignored)
+            requires_auth = True
+        else:
+            # Password mode: require auth only if password is set
+            requires_auth = datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False)
+
+        if requires_auth and not flask_login.current_user.is_authenticated:
             # Permitted
             if request.endpoint and request.endpoint == 'static_content' and request.view_args:
                 # Handled by static_content handler
@@ -430,8 +455,11 @@ def changedetection_app(config=None, datastore_o=None):
             # Permitted - language selection should work on login page
             elif request.endpoint and request.endpoint == 'set_language':
                 return None
-            # Permitted
+            # Permitted - login and OIDC routes
             elif request.endpoint and 'login' in request.endpoint:
+                return None
+            # Permitted - OIDC callback route
+            elif request.endpoint and request.endpoint.startswith('oidc.'):
                 return None
             elif request.endpoint and 'diff_history_page' in request.endpoint and datastore.data['settings']['application'].get('shared_diff_access'):
                 return None
@@ -503,6 +531,10 @@ def changedetection_app(config=None, datastore_o=None):
 
     @app.route('/logout')
     def logout():
+        # If OIDC session exists, delegate to OIDC logout
+        if is_oidc_enabled() and session.get('oidc_userinfo'):
+            return redirect(url_for('oidc.logout'))
+
         flask_login.logout_user()
 
         # Check if there's a redirect parameter to return to after re-login
@@ -547,13 +579,20 @@ def changedetection_app(config=None, datastore_o=None):
         else:
             validated_redirect = url_for('watchlist.index')
 
+        # If OIDC is enabled, redirect to OIDC login
+        oidc_enabled = is_oidc_enabled()
+        if oidc_enabled:
+            # For GET requests, redirect to OIDC provider
+            # For POST requests (someone trying password auth), also redirect to OIDC
+            return redirect(url_for('oidc.login', redirect=validated_redirect))
+
         if request.method == 'GET':
             if flask_login.current_user.is_authenticated:
                 # Already logged in - redirect immediately to the target
                 flash(gettext("Already logged in"))
                 return redirect(validated_redirect)
             flash(gettext("You must be logged in, please log in."), 'error')
-            output = render_template("login.html", redirect_url=validated_redirect)
+            output = render_template("login.html", redirect_url=validated_redirect, oidc_enabled=False)
             return output
 
         user = User()
@@ -762,6 +801,15 @@ def changedetection_app(config=None, datastore_o=None):
 
     import changedetectionio.blueprint.watchlist as watchlist
     app.register_blueprint(watchlist.construct_blueprint(datastore=datastore, update_q=update_q, queuedWatchMetaData=queuedWatchMetaData), url_prefix='')
+
+    # Register OIDC blueprint if configured
+    if is_oidc_enabled():
+        import changedetectionio.oidc as oidc
+        oidc_blueprint, oauth = oidc.construct_blueprint(datastore)
+        if oauth:
+            oauth.init_app(app)
+        app.register_blueprint(oidc_blueprint, url_prefix='/oidc')
+        logger.info("OIDC authentication enabled")
 
     # Initialize Socket.IO server conditionally based on settings
     socket_io_enabled = datastore.data['settings']['application']['ui'].get('socket_io_enabled', True)
