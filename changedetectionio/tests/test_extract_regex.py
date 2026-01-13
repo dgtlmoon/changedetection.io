@@ -206,11 +206,10 @@ def test_regex_error_handling(client, live_server, measure_memory_usage, datasto
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
-
+    time.sleep(0.2)
     ### test regex error handling
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={"extract_text": '/something bad\d{3/XYZ',
               "url": test_url,
               "fetch_backend": "html_requests",
