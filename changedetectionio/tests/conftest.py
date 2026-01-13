@@ -272,46 +272,4 @@ def app(request, datastore_path):
     yield app
 
 
-@pytest.fixture(scope='session')
-def live_server(app):
-    """Create a live server with explicit threading enabled.
 
-    While pytest-flask's default uses threaded=True, using Werkzeug's
-    make_server directly with threading appears to be faster for
-    concurrent test requests, likely due to avoiding multiprocessing overhead.
-    """
-    from werkzeug.serving import make_server
-    import socket
-
-    # Find a free port
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(('', 0))
-        s.listen(1)
-        port = s.getsockname()[1]
-
-    # Save original SERVER_NAME and set it to include the port
-    # This is critical for url_for(..., _external=True) to work correctly
-    original_server_name = app.config.get("SERVER_NAME") or "localhost"
-    app.config["SERVER_NAME"] = f"127.0.0.1:{port}"
-
-    # Create threaded server
-    server = make_server('127.0.0.1', port, app, threaded=True)
-    thread = Thread(target=server.serve_forever, daemon=True)
-    thread.start()
-
-    # Add attributes for compatibility with pytest-flask's LiveServer
-    server.url = lambda url='': f'http://127.0.0.1:{port}{url}'
-    server.app = app
-    server.host = '127.0.0.1'
-    server.port = port
-
-    # Add dummy start() method since server is already started
-    # (called by new_live_server_setup in util.py:338)
-    server.start = lambda: None
-
-    yield server
-
-    server.shutdown()
-
-    # Restore original SERVER_NAME
-    app.config["SERVER_NAME"] = original_server_name
