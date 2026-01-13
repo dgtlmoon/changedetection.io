@@ -5,7 +5,7 @@ import os
 import json
 from flask import url_for
 from loguru import logger
-from build.lib.changedetectionio.strtobool import strtobool
+from .. import strtobool
 from .util import wait_for_all_checks, delete_all_watches
 import brotli
 
