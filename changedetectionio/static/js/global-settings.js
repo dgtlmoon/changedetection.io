@@ -24,6 +24,19 @@ $(document).ready(function () {
         $(target).toggle();
     });
 
+    // Handle processor radio button changes - update body class
+    $('input[name="processor"]').on('change', function() {
+        var selectedProcessor = $(this).val();
+
+        // Remove any existing processor-* classes from body
+        $('body').removeClass(function(index, className) {
+            return (className.match(/\bprocessor-\S+/g) || []).join(' ');
+        });
+
+        // Add the new processor class
+        $('body').addClass('processor-' + selectedProcessor);
+    });
+
     // Time zone config related
     $(".local-time").each(function (e) {
         $(this).text(new Date($(this).data("utc")).toLocaleString());

@@ -130,6 +130,11 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
     assert b'has-unread-changes' not in res.data
     assert b'/test-endpoint' in res.data
 
+
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid="first"))
+    # nothing ignored because none of the text matched
+    assert b'ignored_line_numbers = []' in res.data
+
     #  Make a change
     set_modified_ignore_response(datastore_path=datastore_path)
 
@@ -153,12 +158,14 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' in res.data
 
-    res = client.get(url_for("ui.ui_views.preview_page", uuid="first"))
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid="first"))
 
     # SHOULD BE be in the preview, it was added in set_modified_original_ignore_response()
     # and we have "new ignore stuff" in ignore_text
     # it is only ignored, it is not removed (it will be highlighted too)
     assert b'new ignore stuff' in res.data
+    # Data for the highlighting is present (this is done in JS for now)
+    assert b'ignored_line_numbers = [8]' in res.data
 
     delete_all_watches(client)
 

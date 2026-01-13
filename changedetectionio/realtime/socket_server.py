@@ -1,5 +1,6 @@
 import timeago
 from flask_socketio import SocketIO
+from flask_babel import gettext, get_locale
 
 import time
 import os
@@ -7,6 +8,7 @@ from loguru import logger
 from blinker import signal
 
 from changedetectionio import strtobool
+from changedetectionio.languages import get_timeago_locale
 
 
 class SignalHandler:
@@ -32,10 +34,30 @@ class SignalHandler:
         watch_favicon_bumped_signal = signal('watch_favicon_bump')
         watch_favicon_bumped_signal.connect(self.handle_watch_bumped_favicon_signal, weak=False)
 
+        watch_small_status_comment_signal = signal('watch_small_status_comment')
+        watch_small_status_comment_signal.connect(self.handle_watch_small_status_update, weak=False)
+
         # Connect to the notification_event signal
         notification_event_signal = signal('notification_event')
         notification_event_signal.connect(self.handle_notification_event, weak=False)
         logger.info("SignalHandler: Connected to notification_event signal")
+
+
+    def handle_watch_small_status_update(self, *args, **kwargs):
+        """Small simple status update, for example 'Connecting...'"""
+        watch_uuid = kwargs.get('watch_uuid')
+        status = kwargs.get('status')
+
+        if watch_uuid and status:
+            logger.debug(f"Socket.IO: Received watch small status update '{status}' for UUID {watch_uuid}")
+            # Emit the status update to all connected clients
+            self.socketio_instance.emit("watch_small_status_comment", {
+                "uuid": watch_uuid,
+                "status": status,
+                "event_timestamp": time.time()
+            })
+
+
 
     def handle_signal(self, *args, **kwargs):
         logger.trace(f"SignalHandler: Signal received with {len(args)} args and {len(kwargs)} kwargs")
@@ -146,7 +168,7 @@ def handle_watch_update(socketio, **kwargs):
             'has_error': True if error_texts else False,
             'has_favicon': True if watch.get_favicon_filename() else False,
             'history_n': watch.history_n,
-            'last_changed_text': timeago.format(int(watch.last_changed), time.time()) if watch.history_n >= 2 and int(watch.last_changed) > 0 else 'Not yet',
+            'last_changed_text': timeago.format(int(watch.last_changed), time.time(), get_timeago_locale(str(get_locale()))) if watch.history_n >= 2 and int(watch.last_changed) > 0 else gettext('Not yet'),
             'last_checked': watch.get('last_checked'),
             'last_checked_text': _jinja2_filter_datetime(watch),
             'notification_muted': True if watch.get('notification_muted') else False,

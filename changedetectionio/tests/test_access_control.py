@@ -19,16 +19,12 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         )
 
         assert b"1 Imported" in res.data
-        time.sleep(3)
         # causes a 'Popped wrong request context.' error when client. is accessed?
-        #wait_for_all_checks(client)
+        wait_for_all_checks(client)
 
         res = c.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
         assert b'Queued 1 watch for rechecking.' in res.data
-
-        time.sleep(3)
-        # causes a 'Popped wrong request context.' error when client. is accessed?
-        #wait_for_all_checks(client)
+        wait_for_all_checks(client)
 
 
         # Enable password check and diff page access bypass
@@ -49,7 +45,7 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         assert b"Login" in res.data
 
         # The diff page should return something valid when logged out
-        res = c.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
+        res = c.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
         assert b'Random content' in res.data
 
         # access to assets should work (check_authentication)
@@ -186,5 +182,5 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         assert res.status_code == 403
 
         # The diff page should return something valid when logged out
-        res = c.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
+        res = c.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
         assert b'Random content' not in res.data

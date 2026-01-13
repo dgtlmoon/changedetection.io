@@ -5,7 +5,7 @@ import re
 from flask import url_for
 from loguru import logger
 
-from .util import set_original_response, set_modified_response, set_more_modified_response, live_server_setup, wait_for_all_checks
+from .util import set_original_response, set_modified_response, set_more_modified_response, live_server_setup, wait_for_all_checks, wait_for_notification_endpoint_output
 from . util import  extract_UUID_from_client
 import logging
 import base64
@@ -83,7 +83,9 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
 
 
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
-    with open(os.path.join(datastore_path, str(uuid), 'last-screenshot.png'), 'wb') as f:
+    screenshot_dir = os.path.join(datastore_path, str(uuid))
+    os.makedirs(screenshot_dir, exist_ok=True)
+    with open(os.path.join(screenshot_dir, 'last-screenshot.png'), 'wb') as f:
         f.write(base64.b64decode(testimage_png))
 
     # Goto the edit page, add our ignore text
@@ -142,7 +144,7 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-    time.sleep(3)
+    wait_for_notification_endpoint_output(datastore_path=datastore_path)
 
     # Check no errors were recorded
     res = client.get(url_for("watchlist.index"))
@@ -198,7 +200,8 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
     # This should insert the {current_snapshot}
     set_more_modified_response(datastore_path=datastore_path)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
-    time.sleep(3)
+    wait_for_all_checks(client)
+    wait_for_notification_endpoint_output(datastore_path=datastore_path)
     # Verify what was sent as a notification, this file should exist
     with open(os.path.join(datastore_path, "notification.txt"), "r") as f:
         notification_submission = f.read()
@@ -239,7 +242,8 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
     )
     assert b"Updated watch." in res.data
 
-    time.sleep(2)
+    wait_for_all_checks(client)
+    wait_for_notification_endpoint_output(datastore_path=datastore_path)
 
     # Verify what was sent as a notification, this file should exist
     with open(os.path.join(datastore_path, "notification.txt"), "r") as f:
@@ -324,7 +328,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
-    time.sleep(2) # plus extra delay for notifications to fire
+    wait_for_notification_endpoint_output(datastore_path=datastore_path)
 
 
     # Check no errors were recorded, because we asked for 204 which is slightly uncommon but is still OK
@@ -442,7 +446,7 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
     assert res.status_code != 500
 
     # Give apprise time to fire
-    time.sleep(4)
+    wait_for_notification_endpoint_output(datastore_path=datastore_path)
 
     with open(os.path.join(datastore_path, "notification.txt"), 'r') as f:
         x = f.read()
@@ -499,7 +503,7 @@ def test_single_send_test_notification_on_watch(client, live_server, measure_mem
 
     test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')+"?xxx={{ watch_url }}&+custom-header=123"
     # 1995 UTF-8 content should be encoded
-    test_body = 'change detection is cool 网站监测 内容更新了 - {{diff_full}}'
+    test_body = 'change detection is cool 网站监测 内容更新了 - {{diff_full}}\n\nCurrent snapshot: {{current_snapshot}}'
     ######### Test global/system settings
     res = client.post(
         url_for("ui.ui_notification.ajax_callback_send_notification_test")+f"/{uuid}",
@@ -524,7 +528,8 @@ def test_single_send_test_notification_on_watch(client, live_server, measure_mem
             assert 'title="Changed into">Example text:' not in x
             assert 'span' not in x
             assert 'Example text:' in x
-
+        #3720 current_snapshot check, was working but lets test it exactly.
+        assert 'Current snapshot: Example text: example test' in x
     os.unlink(os.path.join(datastore_path, "notification.txt"))
 
 def _test_color_notifications(client, notification_body_token, datastore_path):
@@ -571,13 +576,12 @@ def _test_color_notifications(client, notification_body_token, datastore_path):
     assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)
-    time.sleep(3)
+    wait_for_notification_endpoint_output(datastore_path=datastore_path)
 
     with open(os.path.join(datastore_path, "notification.txt"), 'r') as f:
         x = f.read()
-        s =  f'<span style="{HTML_CHANGED_STYLE}" role="note" aria-label="Changed text" title="Changed text">Which is across multiple lines'
+        s = f'<span style="{HTML_CHANGED_STYLE}" role="note" aria-label="Changed text" title="Changed text">Which is across multiple lines</span><br>'
         assert s in x
-
 
     client.get(
         url_for("ui.form_delete", uuid="all"),

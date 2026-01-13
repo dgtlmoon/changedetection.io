@@ -1,5 +1,6 @@
 
 import time
+import re
 import apprise
 from apprise import NotifyFormat
 from loguru import logger
@@ -11,11 +12,10 @@ from ..diff import HTML_REMOVED_STYLE, REMOVED_PLACEMARKER_OPEN, REMOVED_PLACEMA
     CHANGED_PLACEMARKER_CLOSED, HTML_CHANGED_STYLE, HTML_CHANGED_INTO_STYLE
 import re
 
-from ..notification_service import NotificationContextData
+from ..notification_service import NotificationContextData, add_rendered_diff_to_notification_vars
 from .exceptions import AppriseNotificationException
 
 newline_re = re.compile(r'\r\n|\r|\n')
-
 
 def markup_text_links_to_html(body):
     """
@@ -79,6 +79,24 @@ def notification_format_align_with_apprise(n_format : str):
         n_format = NotifyFormat.TEXT.value
 
     return n_format
+
+
+def apply_html_color_to_body(n_body: str):
+    # https://github.com/dgtlmoon/changedetection.io/issues/821#issuecomment-1241837050
+    n_body = n_body.replace(REMOVED_PLACEMARKER_OPEN,
+                            f'<span style="{HTML_REMOVED_STYLE}" role="deletion" aria-label="Removed text" title="Removed text">')
+    n_body = n_body.replace(REMOVED_PLACEMARKER_CLOSED, f'</span>')
+    n_body = n_body.replace(ADDED_PLACEMARKER_OPEN,
+                            f'<span style="{HTML_ADDED_STYLE}" role="insertion" aria-label="Added text" title="Added text">')
+    n_body = n_body.replace(ADDED_PLACEMARKER_CLOSED, f'</span>')
+    # Handle changed/replaced lines (old → new)
+    n_body = n_body.replace(CHANGED_PLACEMARKER_OPEN,
+                            f'<span style="{HTML_CHANGED_STYLE}" role="note" aria-label="Changed text" title="Changed text">')
+    n_body = n_body.replace(CHANGED_PLACEMARKER_CLOSED, f'</span>')
+    n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_OPEN,
+                            f'<span style="{HTML_CHANGED_INTO_STYLE}" role="note" aria-label="Changed into" title="Changed into">')
+    n_body = n_body.replace(CHANGED_INTO_PLACEMARKER_CLOSED, f'</span>')
+    return n_body
 
 def apply_discord_markdown_to_body(n_body):
     """
@@ -333,6 +351,16 @@ def process_notification(n_object: NotificationContextData, datastore):
 
     if not n_object.get('notification_urls'):
         return None
+
+    n_object.update(add_rendered_diff_to_notification_vars(
+        notification_scan_text=n_object.get('notification_body', '')+n_object.get('notification_title', ''),
+        current_snapshot=n_object.get('current_snapshot'),
+        prev_snapshot=n_object.get('prev_snapshot'),
+        # Should always be false for 'text' mode or its too hard to read
+        # But otherwise, this could be some setting
+        word_diff=False if requested_output_format_original == 'text' else True,
+        )
+    )
 
     with (apprise.LogCapture(level=apprise.logging.DEBUG) as logs):
         for url in n_object['notification_urls']:

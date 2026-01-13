@@ -1,0 +1,54 @@
+{# Menu items template - used for both desktop and mobile menus #}
+{# CSS media queries handle which version displays - no need for conditional classes #}
+
+
+{% if current_user.is_authenticated or not has_password %}
+{% if not current_diff_url %}
+    <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('tags.') %}active{% endif %}">
+        <a href="{{ url_for('tags.tags_overview_page') }}" class="pure-menu-link">{{ _('GROUPS') }}</a>
+    </li>
+    <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('settings.') %}active{% endif %}">
+        <a href="{{ url_for('settings.settings_page') }}" class="pure-menu-link">{{ _('SETTINGS') }}</a>
+    </li>
+    <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('imports.') %}active{% endif %}">
+        <a href="{{ url_for('imports.import_page') }}" class="pure-menu-link">{{ _('IMPORT') }}</a>
+    </li>
+    <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('backups.') %}active{% endif %}">
+        <a href="{{ url_for('backups.index') }}" class="pure-menu-link">{{ _('BACKUPS') }}</a>
+    </li>
+{% else %}
+    <li class="pure-menu-item menu-collapsible">
+        <a href="{{ url_for('ui.ui_edit.edit_page', uuid=uuid, next='diff') }}"
+           class="pure-menu-link">{{ _('EDIT') }}</a>
+    </li>
+{% endif %}
+{%- if current_user.is_authenticated -%}
+    <li class="pure-menu-item menu-collapsible">
+        <a href="{{ url_for('logout', redirect=request.path) }}" class="pure-menu-link">{{ _('LOG OUT') }}</a>
+    </li>
+{%- endif -%}
+
+{% else %}
+    <li class="pure-menu-item menu-collapsible">
+        <a class="pure-menu-link" href="https://changedetection.io">Website Change Detection and Notification.</a>
+    </li>
+{% endif %}
+    <li class="pure-menu-item menu-collapsible" id="inline-menu-extras-group">
+        <button class="toggle-button toggle-light-mode " type="button" title="{{ _('Toggle Light/Dark Mode') }}">
+            <span class="visually-hidden">{{ _('Toggle light/dark mode') }}</span>
+            <span class="icon-light">
+            {% include "svgs/light-mode-toggle-icon.svg" %}
+          </span>
+            <span class="icon-dark">
+            {% include "svgs/dark-mode-toggle-icon.svg" %}
+          </span>
+        </button>
+        <button class="toggle-button language-selector" type="button" title="{{ _('Change Language') }}">
+            <span class="visually-hidden">{{ _('Change language') }}</span>
+            <span class="{{ get_flag_for_locale(get_locale()) }}" id="language-selector-flag"></span>
+        </button>
+        <a class="github-link" href="https://github.com/dgtlmoon/changedetection.io">
+            {% include "svgs/github.svg" %}
+        </a>
+    </li>
+

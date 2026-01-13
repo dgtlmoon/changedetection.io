@@ -15,6 +15,7 @@ on:
   push:
     branches:
       - master
+      - dev
 
 jobs:
   metadata:
@@ -46,7 +47,7 @@ jobs:
           python-version: 3.11
 
       - name: Cache pip packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
@@ -92,10 +93,10 @@ jobs:
           version: latest
           driver-opts: image=moby/buildkit:master
 
-      # master branch -> :dev container tag
+      # dev branch -> :dev container tag
       - name: Build and push :dev
         id: docker_build
-        if: ${{ github.ref }} == "refs/heads/master"
+        if: ${{ github.ref == 'refs/heads/dev' }}
         uses: docker/build-push-action@v6
         with:
           context: ./

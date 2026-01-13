@@ -28,7 +28,7 @@ info:
     
     For example: `x-api-key: YOUR_API_KEY`
     
-  version: 0.1.3
+  version: 0.1.4
   contact:
     name: ChangeDetection.io
     url: https://github.com/dgtlmoon/changedetection.io
@@ -756,6 +756,236 @@ paths:
                 type: string
         '404':
           description: Snapshot not found
+
+  /watch/{uuid}/difference/{from_timestamp}/{to_timestamp}:
+    get:
+      operationId: getWatchHistoryDiff
+      tags: [Watch History]
+      summary: Get the difference between two snapshots
+      description: |
+        Generate a difference (comparison) between two historical snapshots of a web page change monitor (watch).
+
+        This endpoint compares content between two points in time and returns the differences in your chosen format.
+        Perfect for reviewing what changed between specific versions or comparing recent changes.
+
+        **Timestamp Keywords:**
+        - Use `'latest'` for the most recent snapshot (to_timestamp)
+        - Use `'previous'` for the second-most-recent snapshot (from_timestamp)
+        - Or use specific Unix timestamps from the watch history
+
+        **Format Options:**
+        - `text` (default): Plain text with (removed) and (added) prefixes
+        - `html`: HTML format with (removed) and (added) text
+        - `htmlcolor`: Rich HTML with colored highlights (green for additions, red for deletions)
+
+        **Word-Level Diffing:**
+        - Enable word-level granularity with `word_diff=true` for detailed inline comparisons
+        - Disable with `word_diff=false` for line-level comparisons only (default false/off, line-level mode by default)
+
+        **Raw Diff Output:**
+        - Use `no_markup=true` to get raw diff content without any formatting applied
+        - Returns content with placeholders for opening/closing tags of changes
+        - Allows you to implement your own custom colorisation or formatting
+        - Skips all HTML color application and service tweaks (added text, html color tags, etc)
+
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            # Compare previous snapshot to latest with colored HTML
+            curl -X GET "http://localhost:5000/api/v1/watch/095be615-a8ad-4c33-8e9c-c7612fbf6c9f/difference/previous/latest?format=htmlcolor" \
+              -H "x-api-key: YOUR_API_KEY"
+
+            # Compare two specific timestamps in plain text with word-level diff
+            curl -X GET "http://localhost:5000/api/v1/watch/095be615-a8ad-4c33-8e9c-c7612fbf6c9f/difference/1640995200/1640998800?format=text&word_diff=true" \
+              -H "x-api-key: YOUR_API_KEY"
+
+            # Show only additions (hide removed/replaced content), ignore whitespace
+            curl -X GET "http://localhost:5000/api/v1/watch/095be615-a8ad-4c33-8e9c-c7612fbf6c9f/difference/previous/latest?format=htmlcolor&removed=false&replaced=false&ignoreWhitespace=true" \
+              -H "x-api-key: YOUR_API_KEY"
+        - lang: 'Python'
+          source: |
+            import requests
+
+            headers = {'x-api-key': 'YOUR_API_KEY'}
+            uuid = '095be615-a8ad-4c33-8e9c-c7612fbf6c9f'
+
+            # Compare previous to latest with colored HTML output
+            response = requests.get(
+                f'http://localhost:5000/api/v1/watch/{uuid}/difference/previous/latest',
+                headers=headers,
+                params={'format': 'htmlcolor'}
+            )
+            print(response.text)
+
+            # Compare specific timestamps with word-level diff
+            from_ts = '1640995200'
+            to_ts = '1640998800'
+            response = requests.get(
+                f'http://localhost:5000/api/v1/watch/{uuid}/difference/{from_ts}/{to_ts}',
+                headers=headers,
+                params={'format': 'text', 'word_diff': 'true'}
+            )
+            print(response.text)
+
+            # Show only additions, ignore whitespace and use word-level diff
+            response = requests.get(
+                f'http://localhost:5000/api/v1/watch/{uuid}/difference/previous/latest',
+                headers=headers,
+                params={
+                    'format': 'htmlcolor',
+                    'type': 'diffWords',
+                    'removed': 'false',
+                    'replaced': 'false',
+                    'ignoreWhitespace': 'true'
+                }
+            )
+            print(response.text)
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: Web page change monitor (watch) unique ID
+          schema:
+            type: string
+            format: uuid
+        - name: from_timestamp
+          in: path
+          required: true
+          description: Starting snapshot timestamp, 'previous' for second-most-recent, or specific Unix timestamp
+          schema:
+            oneOf:
+              - type: integer
+                description: Unix timestamp of the starting snapshot
+              - type: string
+                enum: [previous]
+                description: Use 'previous' to automatically select the second-most-recent snapshot
+          example: previous
+        - name: to_timestamp
+          in: path
+          required: true
+          description: Ending snapshot timestamp, 'latest' for most recent, or specific Unix timestamp
+          schema:
+            oneOf:
+              - type: integer
+                description: Unix timestamp of the ending snapshot
+              - type: string
+                enum: [latest]
+                description: Use 'latest' to automatically select the most recent snapshot
+          example: latest
+        - name: format
+          in: query
+          description: |
+            Output format for the diff:
+            - `text` (default): Plain text with (removed) and (added) prefixes
+            - `html`: Basic HTML format
+            - `htmlcolor`: Rich HTML with colored backgrounds (red for deletions, green for additions)
+            - `markdown`: Markdown format with HTML rendering
+          schema:
+            type: string
+            enum: [text, html, htmlcolor, markdown]
+            default: text
+        - name: word_diff
+          in: query
+          description: |
+            Enable word-level diffing for more granular comparisons.
+            When enabled, changes are highlighted at the word level rather than line level.
+            Default is false (line-level mode).
+            Accepts: true, false, 1, 0, yes, no, on, off
+          schema:
+            type: string
+            enum: ["true", "false", "1", "0", "yes", "no", "on", "off"]
+            default: "false"
+        - name: no_markup
+          in: query
+          description: |
+            When set to true, returns the raw diff content without any markup formatting.
+            The content will include placeholders for opening/closing tags of the changes,
+            allowing you to implement your own custom colorisation or formatting.
+            This skips all HTML color application and service tweaks.
+            Accepts: true, false, 1, 0, yes, no, on, off
+          schema:
+            type: string
+            enum: ["true", "false", "1", "0", "yes", "no", "on", "off"]
+            default: "false"
+        - name: type
+          in: query
+          description: |
+            Diff granularity type:
+            - `diffLines` (default): Line-level comparison, showing which lines changed
+            - `diffWords`: Word-level comparison, showing which words changed within lines
+
+            This parameter is an alternative to `word_diff` for better alignment with the UI.
+            If both are specified, `type=diffWords` will enable word-level diffing.
+          schema:
+            type: string
+            enum: [diffLines, diffWords]
+            default: diffLines
+        - name: changesOnly
+          in: query
+          description: |
+            When enabled, only show lines/content that changed (no surrounding context).
+            When disabled, include unchanged lines for context around changes.
+            Accepts: true, false, 1, 0, yes, no, on, off
+          schema:
+            type: string
+            enum: ["true", "false", "1", "0", "yes", "no", "on", "off"]
+            default: "true"
+        - name: ignoreWhitespace
+          in: query
+          description: |
+            When enabled, ignore whitespace-only changes (spaces, tabs, newlines).
+            Useful for focusing on content changes and ignoring formatting differences.
+            Accepts: true, false, 1, 0, yes, no, on, off
+          schema:
+            type: string
+            enum: ["true", "false", "1", "0", "yes", "no", "on", "off"]
+            default: "false"
+        - name: removed
+          in: query
+          description: |
+            Include removed/deleted content in the diff output.
+            When disabled, content that was deleted will not appear in the diff.
+            Accepts: true, false, 1, 0, yes, no, on, off
+          schema:
+            type: string
+            enum: ["true", "false", "1", "0", "yes", "no", "on", "off"]
+            default: "true"
+        - name: added
+          in: query
+          description: |
+            Include added/new content in the diff output.
+            When disabled, content that was added will not appear in the diff.
+            Accepts: true, false, 1, 0, yes, no, on, off
+          schema:
+            type: string
+            enum: ["true", "false", "1", "0", "yes", "no", "on", "off"]
+            default: "true"
+        - name: replaced
+          in: query
+          description: |
+            Include replaced/modified content in the diff output.
+            When disabled, content that was modified (changed from one value to another) will not appear in the diff.
+            Accepts: true, false, 1, 0, yes, no, on, off
+          schema:
+            type: string
+            enum: ["true", "false", "1", "0", "yes", "no", "on", "off"]
+            default: "true"
+      responses:
+        '200':
+          description: Formatted diff between the two snapshots
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Plain text diff with change markers
+            text/html:
+              schema:
+                type: string
+                description: HTML formatted diff with styling
+        '400':
+          description: Invalid format parameter or invalid request
+        '404':
+          description: Watch not found, timestamps not found, or insufficient history
 
   /watch/{uuid}/favicon:
     get:

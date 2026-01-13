@@ -6,34 +6,35 @@ from wtforms import (
 from wtforms.fields.choices import RadioField
 from wtforms.fields.form import FormField
 from wtforms.form import Form
+from flask_babel import lazy_gettext as _l
 
 from changedetectionio.forms import processor_text_json_diff_form
 
 
 class RestockSettingsForm(Form):
-    in_stock_processing = RadioField(label='Re-stock detection', choices=[
-        ('in_stock_only', "In Stock only (Out Of Stock -> In Stock only)"),
-        ('all_changes', "Any availability changes"),
-        ('off', "Off, don't follow availability/restock"),
+    in_stock_processing = RadioField(label=_l('Re-stock detection'), choices=[
+        ('in_stock_only', _l("In Stock only (Out Of Stock -> In Stock only)")),
+        ('all_changes', _l("Any availability changes")),
+        ('off', _l("Off, don't follow availability/restock")),
     ], default="in_stock_only")
 
-    price_change_min = FloatField('Below price to trigger notification', [validators.Optional()],
-                                  render_kw={"placeholder": "No limit", "size": "10"})
-    price_change_max = FloatField('Above price to trigger notification', [validators.Optional()],
-                                  render_kw={"placeholder": "No limit", "size": "10"})
-    price_change_threshold_percent = FloatField('Threshold in % for price changes since the original price', validators=[
+    price_change_min = FloatField(_l('Below price to trigger notification'), [validators.Optional()],
+                                  render_kw={"placeholder": _l("No limit"), "size": "10"})
+    price_change_max = FloatField(_l('Above price to trigger notification'), [validators.Optional()],
+                                  render_kw={"placeholder": _l("No limit"), "size": "10"})
+    price_change_threshold_percent = FloatField(_l('Threshold in %% for price changes since the original price'), validators=[
 
         validators.Optional(),
-        validators.NumberRange(min=0, max=100, message="Should be between 0 and 100"),
+        validators.NumberRange(min=0, max=100, message=_l("Should be between 0 and 100")),
     ], render_kw={"placeholder": "0%", "size": "5"})
 
-    follow_price_changes = BooleanField('Follow price changes', default=True)
+    follow_price_changes = BooleanField(_l('Follow price changes'), default=True)
 
 class processor_settings_form(processor_text_json_diff_form):
     restock_settings = FormField(RestockSettingsForm)
 
     def extra_tab_content(self):
-        return 'Restock & Price Detection'
+        return _l('Restock & Price Detection')
 
     def extra_form_content(self):
         output = ""
