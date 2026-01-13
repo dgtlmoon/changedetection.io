@@ -9,6 +9,7 @@ import asyncio
 import os
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from loguru import logger
 
 # Global worker state - each worker has its own thread and event loop
@@ -19,6 +20,12 @@ currently_processing_uuids = {}
 
 # Configuration - async workers only
 USE_ASYNC_WORKERS = True
+
+# Custom ThreadPoolExecutor for queue operations with named threads
+queue_executor = ThreadPoolExecutor(
+    max_workers=50,  # Generous limit for concurrent queue operations
+    thread_name_prefix="QueueGetter-"
+)
 
 
 class WorkerThread:
@@ -48,7 +55,8 @@ class WorkerThread:
                     self.update_q,
                     self.notification_q,
                     self.app,
-                    self.datastore
+                    self.datastore,
+                    queue_executor
                 )
             )
         except asyncio.CancelledError:
@@ -112,17 +120,17 @@ def start_async_workers(n_workers, update_q, notification_q, app, datastore):
             continue
 
 
-async def start_single_async_worker(worker_id, update_q, notification_q, app, datastore):
+async def start_single_async_worker(worker_id, update_q, notification_q, app, datastore, executor=None):
     """Start a single async worker with auto-restart capability"""
     from changedetectionio.async_update_worker import async_update_worker
-    
+
     # Check if we're in pytest environment - if so, be more gentle with logging
     import os
     in_pytest = "pytest" in os.sys.modules or "PYTEST_CURRENT_TEST" in os.environ
-    
+
     while not app.config.exit.is_set():
         try:
-            await async_update_worker(worker_id, update_q, notification_q, app, datastore)
+            await async_update_worker(worker_id, update_q, notification_q, app, datastore, executor)
             # If we reach here, worker exited cleanly
             if not in_pytest:
                 logger.info(f"Async worker {worker_id} exited cleanly")

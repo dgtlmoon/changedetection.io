@@ -17,16 +17,17 @@ from loguru import logger
 # Async version of update_worker
 # Processes jobs from AsyncSignalPriorityQueue instead of threaded queue
 
-async def async_update_worker(worker_id, q, notification_q, app, datastore):
+async def async_update_worker(worker_id, q, notification_q, app, datastore, executor=None):
     """
     Async worker function that processes watch check jobs from the queue.
-    
+
     Args:
         worker_id: Unique identifier for this worker
         q: AsyncSignalPriorityQueue containing jobs to process
         notification_q: Standard queue for notifications
         app: Flask application instance
         datastore: Application datastore
+        executor: ThreadPoolExecutor for queue operations (optional)
     """
     # Set a descriptive name for this task
     task = asyncio.current_task()
@@ -43,7 +44,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
             # Use sync interface via run_in_executor since each worker has its own event loop
             loop = asyncio.get_event_loop()
             queued_item_data = await asyncio.wait_for(
-                loop.run_in_executor(None, q.get, True, 1.0),  # block=True, timeout=1.0
+                loop.run_in_executor(executor, q.get, True, 1.0),  # block=True, timeout=1.0
                 timeout=1.5
             )
 
