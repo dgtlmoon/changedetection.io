@@ -189,6 +189,8 @@ def new_live_server_setup(live_server):
 
     @live_server.app.route('/test-endpoint')
     def test_endpoint():
+        from loguru import logger
+        logger.debug(f"/test-endpoint hit {request}")
         ctype = request.args.get('content_type')
         status_code = request.args.get('status_code')
         content = request.args.get('content') or None

@@ -4,28 +4,27 @@ import time
 import os
 import json
 from flask import url_for
-
+from loguru import logger
 from build.lib.changedetectionio.strtobool import strtobool
 from .util import wait_for_all_checks, delete_all_watches
-from urllib.parse import urlparse, parse_qs
+import brotli
 
 
 def test_consistent_history(client, live_server, measure_memory_usage, datastore_path):
-    #  live_server_setup(live_server) # Setup on conftest per function
-    workers = int(os.getenv("FETCH_WORKERS", 10))
-    r = range(1, 10 + workers)
-    uuids = set()
 
-    import brotli
-    for one in r:
+    uuids = set()
+    workers = range(1, int(os.getenv("FETCH_WORKERS", 10)))
+    now = time.time()
+
+    for one in workers:
         if strtobool(os.getenv("TEST_WITH_BROTLI")):
             # A very long string that WILL trigger Brotli compression of the snapshot
             # BROTLI_COMPRESS_SIZE_THRESHOLD should be set to say 200
             from ..model.Watch import BROTLI_COMPRESS_SIZE_THRESHOLD
-            content = str(one) + " " + str(one) * (BROTLI_COMPRESS_SIZE_THRESHOLD + 10)
+            content = str(one) + "x" + str(one) * (BROTLI_COMPRESS_SIZE_THRESHOLD + 10)
         else:
             # Just enough to test datastore
-            content = str(one)
+            content = str(one)+'x'
 
         test_url = url_for('test_endpoint', content_type="text/html", content=content, _external=True)
         uuids.add(client.application.config.get('DATASTORE').add_watch(url=test_url, extras={'title': str(one)}))
@@ -33,6 +32,9 @@ def test_consistent_history(client, live_server, measure_memory_usage, datastore
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
+    logger.debug(f"All fetched in {time.time() - now:.2f}s")
+
+    assert time.time() - now < 10, "Time to fetch all the items should be less than 10 sec, or it could mean something is blocking async workers or other."
 
     # Essentially just triggers the DB write/update
     res = client.post(
@@ -44,7 +46,7 @@ def test_consistent_history(client, live_server, measure_memory_usage, datastore
     )
     assert b"Settings updated." in res.data
 
-
+    # Wait for the sync DB save to happen
     time.sleep(2)
 
     json_db_file = os.path.join(live_server.app.config['DATASTORE'].datastore_path, 'url-watches.json')
@@ -54,7 +56,7 @@ def test_consistent_history(client, live_server, measure_memory_usage, datastore
         json_obj = json.load(f)
 
     # assert the right amount of watches was found in the JSON
-    assert len(json_obj['watching']) == len(r), "Correct number of watches was found in the JSON"
+    assert len(json_obj['watching']) == len(workers), "Correct number of watches was found in the JSON"
 
     i = 0
     # each one should have a history.txt containing just one line
@@ -91,7 +93,7 @@ def test_consistent_history(client, live_server, measure_memory_usage, datastore
 
                 watch_title = json_obj['watching'][w]['title']
                 assert json_obj['watching'][w]['title'], "Watch should have a title set"
-                assert contents.startswith(watch_title + " "), f"Snapshot file {fname} should start with '{watch_title} '"
+                assert contents.startswith(watch_title + "x"), f"Snapshot contents in file {fname} should start with '{watch_title}x', got '{contents}'"
 
         assert len(files_in_watch_dir) == 3, "Should be just three files in the dir, html.br snapshot, history.txt and the extracted text snapshot"
 

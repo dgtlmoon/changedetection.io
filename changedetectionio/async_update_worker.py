@@ -32,21 +32,32 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
     task = asyncio.current_task()
     if task:
         task.set_name(f"async-worker-{worker_id}")
-    
+
     logger.info(f"Starting async worker {worker_id}")
-    
+
     while not app.config.exit.is_set():
         update_handler = None
         watch = None
 
         try:
-            # Use native janus async interface - no threads needed!
-            queued_item_data = await asyncio.wait_for(q.async_get(), timeout=1.0)
+            # Use sync interface via run_in_executor since each worker has its own event loop
+            loop = asyncio.get_event_loop()
+            queued_item_data = await asyncio.wait_for(
+                loop.run_in_executor(None, q.get, True, 1.0),  # block=True, timeout=1.0
+                timeout=1.5
+            )
 
         except asyncio.TimeoutError:
             # No jobs available, continue loop
             continue
         except Exception as e:
+            # Handle expected Empty exception from queue timeout
+            import queue
+            if isinstance(e, queue.Empty):
+                # Queue is empty, normal behavior - just continue
+                continue
+
+            # Unexpected exception - log as critical
             logger.critical(f"CRITICAL: Worker {worker_id} failed to get queue item: {type(e).__name__}: {e}")
 
             # Log queue health for debugging
