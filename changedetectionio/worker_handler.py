@@ -72,7 +72,11 @@ class WorkerThread:
 
     def start(self):
         """Start the worker thread"""
-        self.thread = threading.Thread(target=self.run, daemon=True, name=f"Worker-{self.worker_id}")
+        self.thread = threading.Thread(
+            target=self.run,
+            daemon=True,
+            name=f"PageFetchAsyncUpdateWorker-{self.worker_id}"
+        )
         self.thread.start()
 
     def stop(self):
