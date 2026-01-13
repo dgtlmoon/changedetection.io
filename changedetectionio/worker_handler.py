@@ -22,8 +22,10 @@ currently_processing_uuids = {}
 USE_ASYNC_WORKERS = True
 
 # Custom ThreadPoolExecutor for queue operations with named threads
+# Scale executor threads with FETCH_WORKERS to avoid bottleneck at high concurrency
+_max_executor_workers = max(50, int(os.getenv("FETCH_WORKERS", "10")))
 queue_executor = ThreadPoolExecutor(
-    max_workers=50,  # Generous limit for concurrent queue operations
+    max_workers=_max_executor_workers,
     thread_name_prefix="QueueGetter-"
 )
 

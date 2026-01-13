@@ -426,14 +426,13 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                 datastore.update_watch(uuid=uuid, update_obj={'last_error': f"Worker error: {str(e)}"})
         
         finally:
-
-            try:
-                await update_handler.fetcher.quit(watch=watch)
-            except Exception as e:
-                logger.error(f"Exception while cleaning/quit after calling browser: {e}")
-
             # Always cleanup - this runs whether there was an exception or not
             if uuid:
+                try:
+                    if update_handler and hasattr(update_handler, 'fetcher') and update_handler.fetcher:
+                        await update_handler.fetcher.quit(watch=watch)
+                except Exception as e:
+                    logger.error(f"Exception while cleaning/quit after calling browser: {e}")
                 try:
                     # Mark UUID as no longer being processed by this worker
                     worker_handler.set_uuid_processing(uuid, worker_id=worker_id, processing=False)
@@ -472,7 +471,9 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     logger.debug(f"Worker {worker_id} completed watch {uuid} in {time.time()-fetch_start_time:.2f}s")
                 except Exception as cleanup_error:
                     logger.error(f"Worker {worker_id} error during cleanup: {cleanup_error}")
-            
+
+            del(uuid)
+
             # Brief pause before continuing to avoid tight error loops (only on error)
             if 'e' in locals():
                 await asyncio.sleep(1.0)
