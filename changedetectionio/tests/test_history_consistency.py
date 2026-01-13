@@ -13,7 +13,8 @@ import brotli
 def test_consistent_history(client, live_server, measure_memory_usage, datastore_path):
 
     uuids = set()
-    workers = range(1, int(os.getenv("FETCH_WORKERS", 10)))
+    sys_fetch_workers = int(os.getenv("FETCH_WORKERS", 10))
+    workers = range(1, sys_fetch_workers)
     now = time.time()
 
     for one in workers:
@@ -32,9 +33,13 @@ def test_consistent_history(client, live_server, measure_memory_usage, datastore
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
-    logger.debug(f"All fetched in {time.time() - now:.2f}s")
+    duration = time.time() - now
+    per_worker = duration/sys_fetch_workers
+    per_worker_threshold=0.5
 
-    assert time.time() - now < 10, "Time to fetch all the items should be less than 10 sec, or it could mean something is blocking async workers or other."
+    logger.debug(f"All fetched in {duration:.2f}s, {per_worker}s per worker")
+
+    assert per_worker < per_worker_threshold, f"If concurrency is working good, no blocking async problems, each worker should have done his job in under {per_worker_threshold}s, got {per_worker:.2f}s per worker, total duration was {duration:.2f}s"
 
     # Essentially just triggers the DB write/update
     res = client.post(
