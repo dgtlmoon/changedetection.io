@@ -1,6 +1,4 @@
 from blinker import signal
-from flask_babel import gettext
-
 from .processors.exceptions import ProcessorException
 import changedetectionio.content_fetchers.exceptions as content_fetchers_exceptions
 from changedetectionio.processors.text_json_diff.processor import FilterNotFoundInResponse
@@ -10,7 +8,6 @@ from changedetectionio.flask_app import watch_check_update
 import asyncio
 import importlib
 import os
-import queue
 import time
 
 from loguru import logger
