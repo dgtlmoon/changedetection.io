@@ -332,8 +332,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                     'url': url_for('rss.rss_single_watch', uuid=watch['uuid'], token=app_rss_token)
                 },
                 'settings_application': datastore.data['settings']['application'],
-                'system_has_playwright_configured': os.getenv('PLAYWRIGHT_DRIVER_URL'),
-                'system_has_webdriver_configured': os.getenv('WEBDRIVER_URL'),
                 'ui_edit_stats_extras': collect_ui_edit_stats_extras(watch),
                 'visual_selector_data_ready': datastore.visualselector_data_is_ready(watch_uuid=uuid),
                 'timezone_default_config': datastore.data['settings']['application'].get('scheduler_timezone_default'),

@@ -15,7 +15,7 @@ class fetcher(Fetcher):
     proxy_url = None
 
     # Capability flags
-    supports_browser_steps = True
+    supports_browser_steps = False
     supports_screenshots = True
     supports_xpath_element_data = True
 
