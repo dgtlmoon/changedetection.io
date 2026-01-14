@@ -1,3 +1,4 @@
+import gc
 import json
 import os
 from urllib.parse import urlparse
@@ -185,20 +186,33 @@ class fetcher(Fetcher):
         super().screenshot_step(step_n=step_n)
         screenshot = await capture_full_page_async(page=self.page, screenshot_format=self.screenshot_format)
 
+        # Request GC immediately after screenshot to free memory
+        # Screenshots can be large and browser steps take many of them
+        await self.page.request_gc()
 
         if self.browser_steps_screenshot_path is not None:
             destination = os.path.join(self.browser_steps_screenshot_path, 'step_{}.jpeg'.format(step_n))
             logger.debug(f"Saving step screenshot to {destination}")
             with open(destination, 'wb') as f:
                 f.write(screenshot)
+            # Clear local reference to allow screenshot bytes to be collected
+            del screenshot
+            gc.collect()
 
     async def save_step_html(self, step_n):
         super().save_step_html(step_n=step_n)
         content = await self.page.content()
+
+        # Request GC after getting page content
+        await self.page.request_gc()
+
         destination = os.path.join(self.browser_steps_screenshot_path, 'step_{}.html'.format(step_n))
         logger.debug(f"Saving step HTML to {destination}")
         with open(destination, 'w', encoding='utf-8') as f:
             f.write(content)
+        # Clear local reference
+        del content
+        gc.collect()
 
     async def run(self,
                   fetch_favicon=True,
@@ -305,6 +319,12 @@ class fetcher(Fetcher):
 
             if self.status_code != 200 and not ignore_status_codes:
                 screenshot = await capture_full_page_async(self.page, screenshot_format=self.screenshot_format)
+                # Cleanup before raising to prevent memory leak
+                await self.page.close()
+                await context.close()
+                await browser.close()
+                # Force garbage collection to release Playwright resources immediately
+                gc.collect()
                 raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=screenshot)
 
             if not empty_pages_are_a_change and len((await self.page.content()).strip()) == 0:
@@ -313,48 +333,52 @@ class fetcher(Fetcher):
                 await browser.close()
                 raise EmptyReply(url=url, status_code=response.status)
 
-            # Run Browser Steps here
-            if self.browser_steps_get_valid_steps():
-                await self.iterate_browser_steps(start_url=url)
-
-            await self.page.wait_for_timeout(extra_wait * 1000)
-
-            now = time.time()
-            # So we can find an element on the page where its selector was entered manually (maybe not xPath etc)
-            if current_include_filters is not None:
-                await self.page.evaluate("var include_filters={}".format(json.dumps(current_include_filters)))
-            else:
-                await self.page.evaluate("var include_filters=''")
-            await self.page.request_gc()
-
-            # request_gc before and after evaluate to free up memory
-            # @todo browsersteps etc
-            MAX_TOTAL_HEIGHT = int(os.getenv("SCREENSHOT_MAX_HEIGHT", SCREENSHOT_MAX_HEIGHT_DEFAULT))
-            self.xpath_data = await self.page.evaluate(XPATH_ELEMENT_JS, {
-                "visualselector_xpath_selectors": visualselector_xpath_selectors,
-                "max_height": MAX_TOTAL_HEIGHT
-            })
-            await self.page.request_gc()
-
-            self.instock_data = await self.page.evaluate(INSTOCK_DATA_JS)
-            await self.page.request_gc()
-
-            self.content = await self.page.content()
-            await self.page.request_gc()
-            logger.debug(f"Scrape xPath element data in browser done in {time.time() - now:.2f}s")
-
-
-            # Bug 3 in Playwright screenshot handling
-            # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
-            # JPEG is better here because the screenshots can be very very large
-
-            # Screenshots also travel via the ws:// (websocket) meaning that the binary data is base64 encoded
-            # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
-            # acceptable screenshot quality here
+            # Wrap remaining operations in try/finally to ensure cleanup
             try:
+                # Run Browser Steps here
+                if self.browser_steps_get_valid_steps():
+                    await self.iterate_browser_steps(start_url=url)
+
+                    await self.page.wait_for_timeout(extra_wait * 1000)
+
+                now = time.time()
+                # So we can find an element on the page where its selector was entered manually (maybe not xPath etc)
+                if current_include_filters is not None:
+                    await self.page.evaluate("var include_filters={}".format(json.dumps(current_include_filters)))
+                else:
+                    await self.page.evaluate("var include_filters=''")
+                await self.page.request_gc()
+
+                # request_gc before and after evaluate to free up memory
+                # @todo browsersteps etc
+                MAX_TOTAL_HEIGHT = int(os.getenv("SCREENSHOT_MAX_HEIGHT", SCREENSHOT_MAX_HEIGHT_DEFAULT))
+                self.xpath_data = await self.page.evaluate(XPATH_ELEMENT_JS, {
+                    "visualselector_xpath_selectors": visualselector_xpath_selectors,
+                    "max_height": MAX_TOTAL_HEIGHT
+                })
+                await self.page.request_gc()
+
+                self.instock_data = await self.page.evaluate(INSTOCK_DATA_JS)
+                await self.page.request_gc()
+
+                self.content = await self.page.content()
+                await self.page.request_gc()
+                logger.debug(f"Scrape xPath element data in browser done in {time.time() - now:.2f}s")
+
+
+                # Bug 3 in Playwright screenshot handling
+                # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
+                # JPEG is better here because the screenshots can be very very large
+
+                # Screenshots also travel via the ws:// (websocket) meaning that the binary data is base64 encoded
+                # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
+                # acceptable screenshot quality here
                 # The actual screenshot - this always base64 and needs decoding! horrible! huge CPU usage
                 self.screenshot = await capture_full_page_async(page=self.page, screenshot_format=self.screenshot_format)
 
+            except ScreenshotUnavailable:
+                # Re-raise screenshot unavailable exceptions
+                raise
             except Exception as e:
                 # It's likely the screenshot was too long/big and something crashed
                 raise ScreenshotUnavailable(url=url, status_code=self.status_code)
@@ -388,6 +412,10 @@ class fetcher(Fetcher):
                 except:
                     pass
                 browser = None
+
+                # Force Python GC to release Playwright resources immediately
+                # Playwright objects can have circular references that delay cleanup
+                gc.collect()
 
 
 # Plugin registration for built-in fetcher
