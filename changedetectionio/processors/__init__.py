@@ -17,9 +17,11 @@ def find_sub_packages(package_name):
     return [name for _, name, is_pkg in pkgutil.iter_modules(package.__path__) if is_pkg]
 
 
+@lru_cache(maxsize=1)
 def find_processors():
     """
     Find all subclasses of DifferenceDetectionProcessor in the specified package.
+    Results are cached to avoid repeated discovery.
 
     :param package_name: The name of the package to scan for processor modules.
     :return: A list of (module, class) tuples.
@@ -45,6 +47,22 @@ def find_processors():
                     break  # Only need one processor per module
         except (ModuleNotFoundError, ImportError) as e:
             logger.warning(f"Failed to import module {module_name}: {e} (find_processors())")
+
+    # Discover plugin processors via pluggy
+    try:
+        from changedetectionio.pluggy_interface import plugin_manager
+        plugin_results = plugin_manager.hook.register_processor()
+
+        for result in plugin_results:
+            if result and isinstance(result, dict):
+                processor_module = result.get('processor_module')
+                processor_name = result.get('processor_name')
+
+                if processor_module and processor_name:
+                    processors.append((processor_module, processor_name))
+                    logger.info(f"Registered plugin processor: {processor_name}")
+    except Exception as e:
+        logger.warning(f"Error loading plugin processors: {e}")
 
     return processors
 
@@ -97,54 +115,137 @@ def find_processor_module(processor_name):
     return None
 
 
+def get_processor_module(processor_name):
+    """
+    Get the actual processor module (with perform_site_check class) by name.
+    Works for both built-in and plugin processors.
+
+    Args:
+        processor_name: Processor machine name (e.g., 'text_json_diff', 'osint_recon')
+
+    Returns:
+        module: The processor module containing perform_site_check, or None if not found
+    """
+    processor_classes = find_processors()
+    processor_tuple = next((tpl for tpl in processor_classes if tpl[1] == processor_name), None)
+
+    if processor_tuple:
+        # Return the actual processor module (first element of tuple)
+        return processor_tuple[0]
+
+    return None
+
+
+def get_processor_submodule(processor_name, submodule_name):
+    """
+    Get an optional submodule from a processor (e.g., 'difference', 'extract', 'preview').
+    Works for both built-in and plugin processors.
+
+    Args:
+        processor_name: Processor machine name (e.g., 'text_json_diff', 'osint_recon')
+        submodule_name: Name of the submodule (e.g., 'difference', 'extract', 'preview')
+
+    Returns:
+        module: The submodule if it exists, or None if not found
+    """
+    processor_classes = find_processors()
+    processor_tuple = next((tpl for tpl in processor_classes if tpl[1] == processor_name), None)
+
+    if not processor_tuple:
+        return None
+
+    processor_module = processor_tuple[0]
+    parent_module = get_parent_module(processor_module)
+
+    if not parent_module:
+        return None
+
+    # Try to import the submodule
+    try:
+        # For built-in processors: changedetectionio.processors.text_json_diff.difference
+        # For plugin processors: changedetectionio_osint.difference
+        parent_module_name = parent_module.__name__
+        submodule_full_name = f"{parent_module_name}.{submodule_name}"
+        return importlib.import_module(submodule_full_name)
+    except (ModuleNotFoundError, ImportError):
+        return None
+
+
+@lru_cache(maxsize=1)
+def get_plugin_processor_metadata():
+    """Get metadata from plugin processors."""
+    metadata = {}
+    try:
+        from changedetectionio.pluggy_interface import plugin_manager
+        plugin_results = plugin_manager.hook.register_processor()
+
+        for result in plugin_results:
+            if result and isinstance(result, dict):
+                processor_name = result.get('processor_name')
+                meta = result.get('metadata', {})
+                if processor_name:
+                    metadata[processor_name] = meta
+    except Exception as e:
+        logger.warning(f"Error getting plugin processor metadata: {e}")
+    return metadata
+
+
 def available_processors():
     """
     Get a list of processors by name and description for the UI elements.
-    Can be filtered via ALLOWED_PROCESSORS environment variable (comma-separated list).
+    Can be filtered via DISABLED_PROCESSORS environment variable (comma-separated list).
     :return: A list :)
     """
 
     processor_classes = find_processors()
 
-    # Check if ALLOWED_PROCESSORS env var is set
-    # For now we disable it, need to make a deploy with lots of new code and this will be an overload
-    allowed_processors_env = os.getenv('ALLOWED_PROCESSORS', 'text_json_diff, restock_diff').strip()
-    allowed_processors = None
-    if allowed_processors_env:
+    # Check if DISABLED_PROCESSORS env var is set
+    disabled_processors_env = os.getenv('DISABLED_PROCESSORS', 'image_ssim_diff').strip()
+    disabled_processors = []
+    if disabled_processors_env:
         # Parse comma-separated list and strip whitespace
-        allowed_processors = [p.strip() for p in allowed_processors_env.split(',') if p.strip()]
-        logger.info(f"ALLOWED_PROCESSORS set, filtering to: {allowed_processors}")
+        disabled_processors = [p.strip() for p in disabled_processors_env.split(',') if p.strip()]
+        logger.info(f"DISABLED_PROCESSORS set, disabling: {disabled_processors}")
 
     available = []
+    plugin_metadata = get_plugin_processor_metadata()
+
     for module, sub_package_name in processor_classes:
-        # Filter by allowed processors if set
-        if allowed_processors and sub_package_name not in allowed_processors:
-            logger.debug(f"Skipping processor '{sub_package_name}' (not in ALLOWED_PROCESSORS)")
+        # Skip disabled processors
+        if sub_package_name in disabled_processors:
+            logger.debug(f"Skipping processor '{sub_package_name}' (in DISABLED_PROCESSORS)")
             continue
 
-        # Try to get the 'name' attribute from the processor module first
-        if hasattr(module, 'name'):
-            description = gettext(module.name)
+        # Check if this is a plugin processor
+        if sub_package_name in plugin_metadata:
+            meta = plugin_metadata[sub_package_name]
+            description = gettext(meta.get('name', sub_package_name))
+            # Plugin processors start from weight 10 to separate them from built-in processors
+            weight = 100 + meta.get('processor_weight', 0)
         else:
-            # Fall back to processor_description from parent module's __init__.py
-            parent_module = get_parent_module(module)
-            if parent_module and hasattr(parent_module, 'processor_description'):
-                description = gettext(parent_module.processor_description)
+            # Try to get the 'name' attribute from the processor module first
+            if hasattr(module, 'name'):
+                description = gettext(module.name)
             else:
-                # Final fallback to a readable name
-                description = sub_package_name.replace('_', ' ').title()
+                # Fall back to processor_description from parent module's __init__.py
+                parent_module = get_parent_module(module)
+                if parent_module and hasattr(parent_module, 'processor_description'):
+                    description = gettext(parent_module.processor_description)
+                else:
+                    # Final fallback to a readable name
+                    description = sub_package_name.replace('_', ' ').title()
 
-        # Get weight for sorting (lower weight = higher in list)
-        weight = 0  # Default weight for processors without explicit weight
+            # Get weight for sorting (lower weight = higher in list)
+            weight = 0  # Default weight for processors without explicit weight
 
-        # Check processor module itself first
-        if hasattr(module, 'processor_weight'):
-            weight = module.processor_weight
-        else:
-            # Fall back to parent module (package __init__.py)
-            parent_module = get_parent_module(module)
-            if parent_module and hasattr(parent_module, 'processor_weight'):
-                weight = parent_module.processor_weight
+            # Check processor module itself first
+            if hasattr(module, 'processor_weight'):
+                weight = module.processor_weight
+            else:
+                # Fall back to parent module (package __init__.py)
+                parent_module = get_parent_module(module)
+                if parent_module and hasattr(parent_module, 'processor_weight'):
+                    weight = parent_module.processor_weight
 
         available.append((sub_package_name, description, weight))
 
