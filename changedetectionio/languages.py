@@ -29,6 +29,7 @@ def get_timeago_locale(flask_locale):
     """
     locale_map = {
         'zh': 'zh_CN',      # Chinese Simplified
+        'zh_Hant_TW': 'zh_TW',  # Flask-Babel normalizes zh_TW to zh_Hant_TW
         'pt': 'pt_PT',      # Portuguese (Portugal)
         'sv': 'sv_SE',      # Swedish
         'no': 'nb_NO',      # Norwegian Bokmål
