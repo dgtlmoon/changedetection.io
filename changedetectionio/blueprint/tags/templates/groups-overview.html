@@ -50,7 +50,8 @@
                 <td>{{ "{:,}".format(tag_count[uuid]) if uuid in tag_count else 0 }}</td>
                 <td class="title-col inline"> <a href="{{url_for('watchlist.index', tag=uuid) }}">{{ tag.title }}</a></td>
                 <td>
-                    <a class="pure-button pure-button-primary" href="{{ url_for('tags.form_tag_edit', uuid=uuid) }}">{{ _('Edit') }}</a>&nbsp;
+                    <a class="pure-button pure-button-primary" href="{{ url_for('tags.form_tag_edit', uuid=uuid) }}">{{ _('Edit') }}</a>
+                    <a href="{{ url_for('ui.form_watch_checknow', tag=uuid) }}" class="pure-button pure-button-primary" >{{ _('Recheck') }}</a>
                     <a class="pure-button button-error"
                        href="{{ url_for('tags.delete', uuid=uuid) }}"
                        data-requires-confirm
