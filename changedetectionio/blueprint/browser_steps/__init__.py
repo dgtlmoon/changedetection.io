@@ -21,31 +21,154 @@ from changedetectionio.flask_app import login_optionally_required
 from loguru import logger
 
 browsersteps_sessions = {}
+browsersteps_watch_to_session = {}  # Maps watch_uuid -> browsersteps_session_id
 io_interface_context = None
 import json
 import hashlib
 from flask import Response
 import asyncio
 import threading
+import time
 
-def run_async_in_browser_loop(coro):
-    """Run async coroutine using the existing async worker event loop"""
-    from changedetectionio import worker_handler
-    
-    # Use the existing async worker event loop instead of creating a new one
-    if worker_handler.USE_ASYNC_WORKERS and worker_handler.async_loop and not worker_handler.async_loop.is_closed():
-        logger.debug("Browser steps using existing async worker event loop")
-        future = asyncio.run_coroutine_threadsafe(coro, worker_handler.async_loop)
-        return future.result()
-    else:
-        # Fallback: create a new event loop (for sync workers or if async loop not available)
-        logger.debug("Browser steps creating temporary event loop")
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+# Dedicated event loop for ALL browser steps sessions
+_browser_steps_loop = None
+_browser_steps_thread = None
+_browser_steps_loop_lock = threading.Lock()
+
+def _start_browser_steps_loop():
+    """Start a dedicated event loop for browser steps in its own thread"""
+    global _browser_steps_loop
+
+    # Create and set the event loop for this thread
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    _browser_steps_loop = loop
+
+    logger.debug("Browser steps event loop started")
+
+    try:
+        # Run the loop forever - handles all browsersteps sessions
+        loop.run_forever()
+    except Exception as e:
+        logger.error(f"Browser steps event loop error: {e}")
+    finally:
         try:
-            return loop.run_until_complete(coro)
+            # Cancel all remaining tasks
+            pending = asyncio.all_tasks(loop)
+            for task in pending:
+                task.cancel()
+
+            # Wait for tasks to finish cancellation
+            if pending:
+                loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+        except Exception as e:
+            logger.debug(f"Error during browser steps loop cleanup: {e}")
         finally:
             loop.close()
+            logger.debug("Browser steps event loop closed")
+
+def _ensure_browser_steps_loop():
+    """Ensure the browser steps event loop is running"""
+    global _browser_steps_loop, _browser_steps_thread
+
+    with _browser_steps_loop_lock:
+        if _browser_steps_thread is None or not _browser_steps_thread.is_alive():
+            logger.debug("Starting browser steps event loop thread")
+            _browser_steps_thread = threading.Thread(
+                target=_start_browser_steps_loop,
+                daemon=True,
+                name="BrowserStepsEventLoop"
+            )
+            _browser_steps_thread.start()
+
+            # Wait for the loop to be ready
+            timeout = 5.0
+            start_time = time.time()
+            while _browser_steps_loop is None:
+                if time.time() - start_time > timeout:
+                    raise RuntimeError("Browser steps event loop failed to start")
+                time.sleep(0.01)
+
+            logger.debug("Browser steps event loop thread started and ready")
+
+def run_async_in_browser_loop(coro):
+    """Run async coroutine using the dedicated browser steps event loop"""
+    _ensure_browser_steps_loop()
+
+    if _browser_steps_loop and not _browser_steps_loop.is_closed():
+        logger.debug("Browser steps using dedicated event loop")
+        future = asyncio.run_coroutine_threadsafe(coro, _browser_steps_loop)
+        return future.result()
+    else:
+        raise RuntimeError("Browser steps event loop is not available")
+
+def cleanup_expired_sessions():
+    """Remove expired browsersteps sessions and cleanup their resources"""
+    global browsersteps_sessions, browsersteps_watch_to_session
+
+    expired_session_ids = []
+
+    # Find expired sessions
+    for session_id, session_data in browsersteps_sessions.items():
+        browserstepper = session_data.get('browserstepper')
+        if browserstepper and browserstepper.has_expired:
+            expired_session_ids.append(session_id)
+
+    # Cleanup expired sessions
+    for session_id in expired_session_ids:
+        logger.debug(f"Cleaning up expired browsersteps session {session_id}")
+        session_data = browsersteps_sessions[session_id]
+
+        # Cleanup playwright resources asynchronously
+        browserstepper = session_data.get('browserstepper')
+        if browserstepper:
+            try:
+                run_async_in_browser_loop(browserstepper.cleanup())
+            except Exception as e:
+                logger.error(f"Error cleaning up session {session_id}: {e}")
+
+        # Remove from sessions dict
+        del browsersteps_sessions[session_id]
+
+        # Remove from watch mapping
+        for watch_uuid, mapped_session_id in list(browsersteps_watch_to_session.items()):
+            if mapped_session_id == session_id:
+                del browsersteps_watch_to_session[watch_uuid]
+                break
+
+    if expired_session_ids:
+        logger.info(f"Cleaned up {len(expired_session_ids)} expired browsersteps session(s)")
+
+def cleanup_session_for_watch(watch_uuid):
+    """Cleanup a specific browsersteps session for a watch UUID"""
+    global browsersteps_sessions, browsersteps_watch_to_session
+
+    session_id = browsersteps_watch_to_session.get(watch_uuid)
+    if not session_id:
+        logger.debug(f"No browsersteps session found for watch {watch_uuid}")
+        return
+
+    logger.debug(f"Cleaning up browsersteps session {session_id} for watch {watch_uuid}")
+
+    session_data = browsersteps_sessions.get(session_id)
+    if session_data:
+        browserstepper = session_data.get('browserstepper')
+        if browserstepper:
+            try:
+                run_async_in_browser_loop(browserstepper.cleanup())
+            except Exception as e:
+                logger.error(f"Error cleaning up session {session_id} for watch {watch_uuid}: {e}")
+
+        # Remove from sessions dict
+        del browsersteps_sessions[session_id]
+
+    # Remove from watch mapping
+    del browsersteps_watch_to_session[watch_uuid]
+
+    logger.debug(f"Cleaned up session for watch {watch_uuid}")
+
+    # Opportunistically cleanup any other expired sessions
+    cleanup_expired_sessions()
 
 def construct_blueprint(datastore: ChangeDetectionStore):
     browser_steps_blueprint = Blueprint('browser_steps', __name__, template_folder="templates")
@@ -123,6 +246,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         if not watch_uuid:
             return make_response('No Watch UUID specified', 500)
 
+        # Cleanup any existing session for this watch
+        cleanup_session_for_watch(watch_uuid)
+
         logger.debug("Starting connection with playwright")
         logger.debug("browser_steps.py connecting")
 
@@ -131,6 +257,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             browsersteps_sessions[browsersteps_session_id] = run_async_in_browser_loop(
                 start_browsersteps_session(watch_uuid)
             )
+
+            # Store the mapping of watch_uuid -> browsersteps_session_id
+            browsersteps_watch_to_session[watch_uuid] = browsersteps_session_id
+
         except Exception as e:
             if 'ECONNREFUSED' in str(e):
                 return make_response('Unable to start the Playwright Browser session, is sockpuppetbrowser running? Network configuration is OK?', 401)

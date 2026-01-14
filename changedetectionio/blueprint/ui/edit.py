@@ -238,6 +238,13 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             datastore.data['watching'][uuid] = watch_class(datastore_path=datastore.datastore_path, default=datastore.data['watching'][uuid])
             flash(gettext("Updated watch - unpaused!") if request.args.get('unpause_on_save') else gettext("Updated watch."))
 
+            # Cleanup any browsersteps session for this watch
+            try:
+                from changedetectionio.blueprint.browser_steps import cleanup_session_for_watch
+                cleanup_session_for_watch(uuid)
+            except Exception as e:
+                logger.debug(f"Error cleaning up browsersteps session: {e}")
+
             # Re #286 - We wait for syncing new data to disk in another thread every 60 seconds
             # But in the case something is added we should save straight away
             datastore.needs_write_urgent = True
