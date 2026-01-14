@@ -94,8 +94,12 @@ SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD=5 pytest -n 30 --dist load -vv -s --maxfai
 
 
 # Try high concurrency
-FETCH_WORKERS=130 pytest  tests/test_history_consistency.py -v -l
+FETCH_WORKERS=50 pytest  tests/test_history_consistency.py -vv -l -s
 
 # Check file:// will pickup a file when enabled
 echo "Hello world" > /tmp/test-file.txt
 ALLOW_FILE_URI=yes pytest -vv -s  tests/test_security.py
+
+
+# Run it again so that brotli kicks in
+TEST_WITH_BROTLI=1 SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD=100 FETCH_WORKERS=20 pytest tests/test_history_consistency.py -vv -l -s

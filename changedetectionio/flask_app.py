@@ -889,12 +889,12 @@ def changedetection_app(config=None, datastore_o=None):
     threading.Thread(target=start_huey_consumer_with_watchdog, args=(app,), daemon=True).start()
 
     # @todo handle ctrl break
-    ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
+    ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks, daemon=True, name="TickerThread-ScheduleChecker").start()
 
     in_pytest = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
     # Check for new release version, but not when running in test/build or pytest
     if not os.getenv("GITHUB_REF", False) and not strtobool(os.getenv('DISABLE_VERSION_CHECK', 'no')) and not in_pytest:
-        threading.Thread(target=check_for_new_version).start()
+        threading.Thread(target=check_for_new_version, daemon=True, name="VersionChecker").start()
 
     # Return the Flask app - the Socket.IO will be attached to it but initialized separately
     # This avoids circular dependencies

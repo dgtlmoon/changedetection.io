@@ -92,7 +92,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         # Be sure we're written fresh
         datastore.sync_to_json()
-        zip_thread = threading.Thread(target=create_backup, args=(datastore.datastore_path, datastore.data.get("watching")))
+        zip_thread = threading.Thread(
+            target=create_backup,
+            args=(datastore.datastore_path, datastore.data.get("watching")),
+            daemon=True,
+            name="BackupCreator"
+        )
         zip_thread.start()
         backup_threads.append(zip_thread)
         flash(gettext("Backup building in background, check back in a few minutes."))

@@ -17,36 +17,48 @@ from loguru import logger
 # Async version of update_worker
 # Processes jobs from AsyncSignalPriorityQueue instead of threaded queue
 
-async def async_update_worker(worker_id, q, notification_q, app, datastore):
+async def async_update_worker(worker_id, q, notification_q, app, datastore, executor=None):
     """
     Async worker function that processes watch check jobs from the queue.
-    
+
     Args:
         worker_id: Unique identifier for this worker
         q: AsyncSignalPriorityQueue containing jobs to process
         notification_q: Standard queue for notifications
         app: Flask application instance
         datastore: Application datastore
+        executor: ThreadPoolExecutor for queue operations (optional)
     """
     # Set a descriptive name for this task
     task = asyncio.current_task()
     if task:
         task.set_name(f"async-worker-{worker_id}")
-    
+
     logger.info(f"Starting async worker {worker_id}")
-    
+
     while not app.config.exit.is_set():
         update_handler = None
         watch = None
 
         try:
-            # Use native janus async interface - no threads needed!
-            queued_item_data = await asyncio.wait_for(q.async_get(), timeout=1.0)
+            # Use sync interface via run_in_executor since each worker has its own event loop
+            loop = asyncio.get_event_loop()
+            queued_item_data = await asyncio.wait_for(
+                loop.run_in_executor(executor, q.get, True, 1.0),  # block=True, timeout=1.0
+                timeout=1.5
+            )
 
         except asyncio.TimeoutError:
             # No jobs available, continue loop
             continue
         except Exception as e:
+            # Handle expected Empty exception from queue timeout
+            import queue
+            if isinstance(e, queue.Empty):
+                # Queue is empty, normal behavior - just continue
+                continue
+
+            # Unexpected exception - log as critical
             logger.critical(f"CRITICAL: Worker {worker_id} failed to get queue item: {type(e).__name__}: {e}")
 
             # Log queue health for debugging
@@ -414,14 +426,13 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                 datastore.update_watch(uuid=uuid, update_obj={'last_error': f"Worker error: {str(e)}"})
         
         finally:
-
-            try:
-                await update_handler.fetcher.quit(watch=watch)
-            except Exception as e:
-                logger.error(f"Exception while cleaning/quit after calling browser: {e}")
-
             # Always cleanup - this runs whether there was an exception or not
             if uuid:
+                try:
+                    if update_handler and hasattr(update_handler, 'fetcher') and update_handler.fetcher:
+                        await update_handler.fetcher.quit(watch=watch)
+                except Exception as e:
+                    logger.error(f"Exception while cleaning/quit after calling browser: {e}")
                 try:
                     # Mark UUID as no longer being processed by this worker
                     worker_handler.set_uuid_processing(uuid, worker_id=worker_id, processing=False)
@@ -460,7 +471,9 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore):
                     logger.debug(f"Worker {worker_id} completed watch {uuid} in {time.time()-fetch_start_time:.2f}s")
                 except Exception as cleanup_error:
                     logger.error(f"Worker {worker_id} error during cleanup: {cleanup_error}")
-            
+
+            del(uuid)
+
             # Brief pause before continuing to avoid tight error loops (only on error)
             if 'e' in locals():
                 await asyncio.sleep(1.0)
