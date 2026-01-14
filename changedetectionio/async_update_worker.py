@@ -1,4 +1,5 @@
 from blinker import signal
+from flask_babel import gettext
 
 from .processors.exceptions import ProcessorException
 import changedetectionio.content_fetchers.exceptions as content_fetchers_exceptions
@@ -126,7 +127,10 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                                                                          watch_uuid=uuid)
 
                     update_signal = signal('watch_small_status_comment')
-                    update_signal.send(watch_uuid=uuid, status="Fetching page..")
+                    # Translate status message in app context for internationalization
+                    with app.app_context():
+                        status_message = gettext("Fetching page..")
+                    update_signal.send(watch_uuid=uuid, status=status_message)
 
                     # All fetchers are now async, so call directly
                     await update_handler.call_browser()
