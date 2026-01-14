@@ -66,8 +66,13 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         processor_name = datastore.data['watching'][uuid].get('processor', '')
         processor_classes = next((tpl for tpl in processors.find_processors() if tpl[1] == processor_name), None)
         if not processor_classes:
-            flash(gettext("Cannot load the edit form for processor/plugin '{}', plugin missing?").format(processor_classes[1]), 'error')
-            return redirect(url_for('watchlist.index'))
+            flash(gettext("Could not load '{}' processor, processor plugin might be missing. Please select a different processor.").format(processor_name), 'error')
+            # Fall back to default processor so user can still edit and change processor
+            processor_classes = next((tpl for tpl in processors.find_processors() if tpl[1] == 'text_json_diff'), None)
+            if not processor_classes:
+                # If even text_json_diff is missing, something is very wrong
+                flash(gettext("Could not load '{}' processor, processor plugin might be missing.").format(processor_name), 'error')
+                return redirect(url_for('watchlist.index'))
 
         parent_module = processors.get_parent_module(processor_classes[0])
 
