@@ -144,58 +144,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
             extra_update_obj['time_between_check'] = form.time_between_check.data
 
-             # Handle processor-config-* fields separately (save to JSON, not datastore)
-            processor_config_data = {}
-            fields_to_remove = []
-            for field_name, field_value in form.data.items():
-                if field_name.startswith('processor_config_'):
-                    config_key = field_name.replace('processor_config_', '')
-                    if field_value:  # Only save non-empty values
-                        processor_config_data[config_key] = field_value
-                    fields_to_remove.append(field_name)
-
-            # Save processor config to JSON file if any config data exists
-            if processor_config_data:
-                try:
-                    processor_name = form.data.get('processor')
-                    # Create a processor instance to access config methods
-                    processor_instance = processors.difference_detection_processor(datastore, uuid)
-                    # Use processor name as filename so each processor keeps its own config
-                    config_filename = f'{processor_name}.json'
-                    processor_instance.update_extra_watch_config(config_filename, processor_config_data)
-                    logger.debug(f"Saved processor config to {config_filename}: {processor_config_data}")
-
-                    # Call optional edit_hook if processor has one
-                    try:
-                        # Try to import the edit_hook module from the processor package
-                        import importlib
-                        edit_hook_module_name = f'changedetectionio.processors.{processor_name}.edit_hook'
-
-                        try:
-                            edit_hook = importlib.import_module(edit_hook_module_name)
-                            logger.debug(f"Found edit_hook module for {processor_name}")
-
-                            if hasattr(edit_hook, 'on_config_save'):
-                                logger.info(f"Calling edit_hook.on_config_save for {processor_name}")
-                                watch_obj = datastore.data['watching'][uuid]
-                                # Call hook and get updated config
-                                updated_config = edit_hook.on_config_save(watch_obj, processor_config_data, datastore)
-                                # Save updated config back to file
-                                processor_instance.update_extra_watch_config(config_filename, updated_config)
-                                logger.info(f"Edit hook updated config: {updated_config}")
-                            else:
-                                logger.debug(f"Edit hook module found but no on_config_save function")
-                        except ModuleNotFoundError:
-                            logger.debug(f"No edit_hook module for processor {processor_name} (this is normal)")
-                    except Exception as hook_error:
-                        logger.error(f"Edit hook error (non-fatal): {hook_error}", exc_info=True)
-
-                except Exception as e:
-                    logger.error(f"Failed to save processor config: {e}")
-
-            # Remove processor-config-* fields from form.data before updating datastore
-            for field_name in fields_to_remove:
-                form.data.pop(field_name, None)
+            # Handle processor-config-* fields separately (save to JSON, not datastore)
+            # IMPORTANT: These must NOT be saved to url-watches.json, only to the processor-specific JSON file
+            processor_config_data = processors.extract_processor_config_from_form_data(form.data)
+            processors.save_processor_config(datastore, uuid, processor_config_data)
 
             # Ignore text
             form_ignore_text = form.ignore_text.data

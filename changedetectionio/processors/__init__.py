@@ -380,3 +380,76 @@ def get_processor_badge_css():
 
     return '\n\n'.join(css_rules)
 
+
+def save_processor_config(datastore, watch_uuid, config_data):
+    """
+    Save processor-specific configuration to JSON file.
+
+    This is a shared helper function used by both the UI edit form and API endpoints
+    to consistently handle processor configuration storage.
+
+    Args:
+        datastore: The application datastore instance
+        watch_uuid: UUID of the watch
+        config_data: Dictionary of configuration data to save (with processor_config_* prefix removed)
+
+    Returns:
+        bool: True if saved successfully, False otherwise
+    """
+    if not config_data:
+        return True
+
+    try:
+        from changedetectionio.processors.base import difference_detection_processor
+
+        # Get processor name from watch
+        watch = datastore.data['watching'].get(watch_uuid)
+        if not watch:
+            logger.error(f"Cannot save processor config: watch {watch_uuid} not found")
+            return False
+
+        processor_name = watch.get('processor', 'text_json_diff')
+
+        # Create a processor instance to access config methods
+        processor_instance = difference_detection_processor(datastore, watch_uuid)
+
+        # Use processor name as filename so each processor keeps its own config
+        config_filename = f'{processor_name}.json'
+        processor_instance.update_extra_watch_config(config_filename, config_data)
+
+        logger.debug(f"Saved processor config to {config_filename}: {config_data}")
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to save processor config: {e}")
+        return False
+
+
+def extract_processor_config_from_form_data(form_data):
+    """
+    Extract processor_config_* fields from form data and return separate dicts.
+
+    This is a shared helper function used by both the UI edit form and API endpoints
+    to consistently handle processor configuration extraction.
+
+    IMPORTANT: This function modifies form_data in-place by removing processor_config_* fields.
+
+    Args:
+        form_data: Dictionary of form data (will be modified in-place)
+
+    Returns:
+        dict: Dictionary of processor config data (with processor_config_* prefix removed)
+    """
+    processor_config_data = {}
+
+    # Use list() to create a copy of keys since we're modifying the dict
+    for field_name in list(form_data.keys()):
+        if field_name.startswith('processor_config_'):
+            config_key = field_name.replace('processor_config_', '')
+            # Save all values (including empty strings) to allow explicit clearing of settings
+            processor_config_data[config_key] = form_data[field_name]
+            # Remove from form_data to prevent it from reaching datastore
+            del form_data[field_name]
+
+    return processor_config_data
+

@@ -139,58 +139,18 @@ class Watch(Resource):
 
         # Handle processor-config-* fields separately (save to JSON, not datastore)
         from changedetectionio import processors
-        processor_config_data = {}
-        regular_data = {}
 
-        for key, value in request.json.items():
-            if key.startswith('processor_config_'):
-                config_key = key.replace('processor_config_', '')
-                if value:  # Only save non-empty values
-                    processor_config_data[config_key] = value
-            else:
-                regular_data[key] = value
+        # Make a mutable copy of request.json for modification
+        json_data = dict(request.json)
+
+        # Extract and remove processor config fields from json_data
+        processor_config_data = processors.extract_processor_config_from_form_data(json_data)
 
         # Update watch with regular (non-processor-config) fields
-        watch.update(regular_data)
+        watch.update(json_data)
 
-        # Save processor config to JSON file if any config data exists
-        if processor_config_data:
-            try:
-                processor_name = request.json.get('processor', watch.get('processor'))
-                if processor_name:
-                    # Create a processor instance to access config methods
-                    from changedetectionio.processors import difference_detection_processor
-                    processor_instance = difference_detection_processor(self.datastore, uuid)
-                    # Use processor name as filename so each processor keeps its own config
-                    config_filename = f'{processor_name}.json'
-                    processor_instance.update_extra_watch_config(config_filename, processor_config_data)
-                    logger.debug(f"API: Saved processor config to {config_filename}: {processor_config_data}")
-
-                    # Call optional edit_hook if processor has one
-                    try:
-                        import importlib
-                        edit_hook_module_name = f'changedetectionio.processors.{processor_name}.edit_hook'
-
-                        try:
-                            edit_hook = importlib.import_module(edit_hook_module_name)
-                            logger.debug(f"API: Found edit_hook module for {processor_name}")
-
-                            if hasattr(edit_hook, 'on_config_save'):
-                                logger.info(f"API: Calling edit_hook.on_config_save for {processor_name}")
-                                # Call hook and get updated config
-                                updated_config = edit_hook.on_config_save(watch, processor_config_data, self.datastore)
-                                # Save updated config back to file
-                                processor_instance.update_extra_watch_config(config_filename, updated_config)
-                                logger.info(f"API: Edit hook updated config: {updated_config}")
-                            else:
-                                logger.debug(f"API: Edit hook module found but no on_config_save function")
-                        except ModuleNotFoundError:
-                            logger.debug(f"API: No edit_hook module for processor {processor_name} (this is normal)")
-                    except Exception as hook_error:
-                        logger.error(f"API: Edit hook error (non-fatal): {hook_error}", exc_info=True)
-
-            except Exception as e:
-                logger.error(f"API: Failed to save processor config: {e}")
+        # Save processor config to JSON file
+        processors.save_processor_config(self.datastore, uuid, processor_config_data)
 
         return "OK", 200
 
