@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-14 12:45+0100\n"
+"POT-Creation-Date: 2026-01-14 12:52+0100\n"
 "PO-Revision-Date: 2026-01-02 11:40+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ko\n"
@@ -18,577 +18,1079 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: async_update_worker.py:132
+#: changedetectionio/async_update_worker.py:132
 msgid "Fetching page.."
 msgstr "페이지 가져오는 중.."
 
-#: blueprint/watchlist/templates/watch-overview.html:268 flask_app.py:214
-#: flask_app.py:226 flask_app.py:247 realtime/socket_server.py:171
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:268
+#: changedetectionio/flask_app.py:214 changedetectionio/flask_app.py:226
+#: changedetectionio/flask_app.py:247
+#: changedetectionio/realtime/socket_server.py:171
 msgid "Not yet"
 msgstr "아직 아님"
 
-#: flask_app.py:553
+#: changedetectionio/flask_app.py:553
 msgid "Already logged in"
 msgstr ""
 
-#: flask_app.py:555
+#: changedetectionio/flask_app.py:555
 msgid "You must be logged in, please log in."
 msgstr ""
 
-#: flask_app.py:570
+#: changedetectionio/flask_app.py:570
 #, fuzzy
 msgid "Incorrect password"
 msgstr "비밀번호"
 
-#: forms.py:460
+#: changedetectionio/forms.py:63 changedetectionio/forms.py:243
+msgid ""
+"At least one time interval (weeks, days, hours, minutes, or seconds) must"
+" be specified."
+msgstr ""
+
+#: changedetectionio/forms.py:64
+msgid ""
+"At least one time interval (weeks, days, hours, minutes, or seconds) must"
+" be specified when not using global settings."
+msgstr ""
+
+#: changedetectionio/forms.py:164
+msgid "Invalid time format. Use HH:MM."
+msgstr ""
+
+#: changedetectionio/forms.py:180
+msgid "Not a valid timezone name"
+msgstr ""
+
+#: changedetectionio/forms.py:183
+#, fuzzy
+msgid "not set"
+msgstr "아직 아님"
+
+#: changedetectionio/forms.py:184
+#, fuzzy
+msgid "Start At"
+msgstr "통계"
+
+#: changedetectionio/forms.py:185
+#, fuzzy
+msgid "Run duration"
+msgstr "정보 없음"
+
+#: changedetectionio/forms.py:188
+#, fuzzy
+msgid "Use time scheduler"
+msgstr "시간 스케줄러 사용"
+
+#: changedetectionio/forms.py:198
+msgid "Optional timezone to run in"
+msgstr ""
+
+#: changedetectionio/forms.py:212
+msgid "Monday"
+msgstr ""
+
+#: changedetectionio/forms.py:213
+msgid "Tuesday"
+msgstr ""
+
+#: changedetectionio/forms.py:214
+msgid "Wednesday"
+msgstr ""
+
+#: changedetectionio/forms.py:215
+msgid "Thursday"
+msgstr ""
+
+#: changedetectionio/forms.py:216
+msgid "Friday"
+msgstr ""
+
+#: changedetectionio/forms.py:217
+msgid "Saturday"
+msgstr ""
+
+#: changedetectionio/forms.py:218
+msgid "Sunday"
+msgstr ""
+
+#: changedetectionio/forms.py:251
+#, fuzzy
+msgid "Weeks"
+msgstr "주"
+
+#: changedetectionio/forms.py:251 changedetectionio/forms.py:252
+#: changedetectionio/forms.py:253 changedetectionio/forms.py:254
+#: changedetectionio/forms.py:255 changedetectionio/forms.py:955
+msgid "Should contain zero or more seconds"
+msgstr ""
+
+#: changedetectionio/forms.py:252
+msgid "Days"
+msgstr ""
+
+#: changedetectionio/forms.py:253
+#, fuzzy
+msgid "Hours"
+msgstr "단어"
+
+#: changedetectionio/forms.py:254
+#, fuzzy
+msgid "Minutes"
+msgstr "무음"
+
+#: changedetectionio/forms.py:255
+#, fuzzy
+msgid "Seconds"
+msgstr "초"
+
+#: changedetectionio/forms.py:460
 msgid "Notification Body and Title is required when a Notification URL is used"
 msgstr "알림 URL을 사용하는 경우 알림 본문 및 제목이 필요합니다."
 
-#: forms.py:489
+#: changedetectionio/forms.py:489
 #, python-format
 msgid "'%s' is not a valid AppRise URL."
 msgstr "'%s'은(는) 유효한 AppRise URL이 아닙니다."
 
-#: forms.py:562 forms.py:581
+#: changedetectionio/forms.py:562 changedetectionio/forms.py:581
 #, python-format
 msgid "RegEx '%s' is not a valid regular expression."
 msgstr "RegEx '%s'은(는) 유효한 정규식이 아닙니다."
 
-#: forms.py:622 forms.py:637
+#: changedetectionio/forms.py:622 changedetectionio/forms.py:637
 #, python-format
 msgid "'%s' is not a valid XPath expression. (%s)"
 msgstr "'%s'은(는) 유효한 XPath 표현식이 아닙니다. (%s)"
 
-#: forms.py:657
+#: changedetectionio/forms.py:657
 #, python-format
 msgid "'%s' is not a valid JSONPath expression. (%s)"
 msgstr "'%s'은(는) 유효한 JSONPath 표현식이 아닙니다. (%s)"
 
-#: forms.py:679
+#: changedetectionio/forms.py:679
 #, python-format
 msgid "'%s' is not a valid jq expression. (%s)"
 msgstr "'%s'은(는) 유효한 jq 표현식이 아닙니다. (%s)"
 
-#: forms.py:854
+#: changedetectionio/forms.py:725
+msgid "Empty value not allowed."
+msgstr ""
+
+#: changedetectionio/forms.py:727
+msgid "Invalid value."
+msgstr ""
+
+#: changedetectionio/forms.py:732
+#, fuzzy
+msgid "Watch"
+msgstr "# 모니터"
+
+#: changedetectionio/forms.py:733 changedetectionio/forms.py:766
+msgid "Processor"
+msgstr ""
+
+#: changedetectionio/forms.py:734
+#, fuzzy
+msgid "Edit > Watch"
+msgstr "편집 후 모니터"
+
+#: changedetectionio/forms.py:747 changedetectionio/forms.py:994
+#, fuzzy
+msgid "Fetch Method"
+msgstr "가져오기 방법 설정"
+
+#: changedetectionio/forms.py:748
+#, fuzzy
+msgid "Notification Body"
+msgstr "알림"
+
+#: changedetectionio/forms.py:749
+#, fuzzy
+msgid "Notification format"
+msgstr "알림"
+
+#: changedetectionio/forms.py:750
+#, fuzzy
+msgid "Notification Title"
+msgstr "알림"
+
+#: changedetectionio/forms.py:751
+#, fuzzy
+msgid "Notification URL List"
+msgstr "알림"
+
+#: changedetectionio/forms.py:752
+msgid "Processor - What do you want to achieve?"
+msgstr ""
+
+#: changedetectionio/forms.py:753
+msgid "Default timezone for watch check scheduler"
+msgstr ""
+
+#: changedetectionio/forms.py:754
+#, fuzzy
+msgid "Wait seconds before extracting text"
+msgstr "텍스트를 추출하기 몇 초 전입니다."
+
+#: changedetectionio/forms.py:754
+msgid "Should contain one or more seconds"
+msgstr ""
+
+#: changedetectionio/forms.py:767
+#, fuzzy
+msgid "URLs"
+msgstr "URL"
+
+#: changedetectionio/forms.py:768
+msgid "Upload .xlsx file"
+msgstr ""
+
+#: changedetectionio/forms.py:768
+msgid "Must be .xlsx file!"
+msgstr ""
+
+#: changedetectionio/forms.py:769
+#, fuzzy
+msgid "File mapping"
+msgstr "파일 매핑 유형."
+
+#: changedetectionio/forms.py:773
+#, fuzzy
+msgid "Operation"
+msgstr "UI 옵션"
+
+#: changedetectionio/forms.py:776
+#, fuzzy
+msgid "Selector"
+msgstr "선택 모드:"
+
+#: changedetectionio/forms.py:777
+#, fuzzy
+msgid "value"
+msgstr "정지시키다"
+
+#: changedetectionio/forms.py:796
+msgid "Use global settings for time between check and scheduler."
+msgstr ""
+
+#: changedetectionio/forms.py:798
+#, fuzzy
+msgid "CSS/JSONPath/JQ/XPath Filters"
+msgstr "CSS/xPath 필터"
+
+#: changedetectionio/forms.py:800 changedetectionio/forms.py:996
+#, fuzzy
+msgid "Remove elements"
+msgstr "요소별로 선택"
+
+#: changedetectionio/forms.py:802
+#, fuzzy
+msgid "Extract text"
+msgstr "데이터 추출"
+
+#: changedetectionio/blueprint/imports/templates/import.html:106
+#: changedetectionio/forms.py:804
+msgid "Title"
+msgstr "제목"
+
+#: changedetectionio/forms.py:806
+#, fuzzy
+msgid "Ignore lines containing"
+msgstr "일치하는 줄을 무시하세요."
+
+#: changedetectionio/forms.py:808
+#, fuzzy
+msgid "Request body"
+msgstr "요구"
+
+#: changedetectionio/forms.py:809
+#, fuzzy
+msgid "Request method"
+msgstr "요구"
+
+#: changedetectionio/forms.py:810
+msgid "Ignore status codes (process non-2xx status codes as normal)"
+msgstr ""
+
+#: changedetectionio/forms.py:811
+#, fuzzy
+msgid "Only trigger when unique lines appear in all history"
+msgstr "고유한 줄이 나타날 때만 트리거됩니다."
+
+#: changedetectionio/blueprint/ui/templates/edit.html:336
+#: changedetectionio/forms.py:812
+msgid "Remove duplicate lines of text"
+msgstr "중복된 텍스트 줄 제거"
+
+#: changedetectionio/forms.py:813
+msgid "Sort text alphabetically"
+msgstr ""
+
+#: changedetectionio/forms.py:814 changedetectionio/forms.py:1023
+msgid "Strip ignored lines"
+msgstr ""
+
+#: changedetectionio/forms.py:815
+#, fuzzy
+msgid "Trim whitespace before and after text"
+msgstr "각 텍스트 줄 앞과 뒤의 공백을 제거하세요."
+
+#: changedetectionio/forms.py:817
+#, fuzzy
+msgid "Added lines"
+msgstr "줄"
+
+#: changedetectionio/forms.py:818
+msgid "Replaced/changed lines"
+msgstr ""
+
+#: changedetectionio/forms.py:819
+#, fuzzy
+msgid "Removed lines"
+msgstr "제거됨"
+
+#: changedetectionio/forms.py:821
+msgid "Keyword triggers - Trigger/wait for text"
+msgstr ""
+
+#: changedetectionio/forms.py:824
+#, fuzzy
+msgid "Block change-detection while text matches"
+msgstr "텍스트가 일치하는 동안 변경 감지 차단"
+
+#: changedetectionio/forms.py:825
+msgid "Execute JavaScript before change detection"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html:17
+#: changedetectionio/forms.py:827 changedetectionio/forms.py:1051
+msgid "Save"
+msgstr "구하다"
+
+#: changedetectionio/forms.py:829
+msgid "Proxy"
+msgstr ""
+
+#: changedetectionio/forms.py:831
+msgid "Send a notification when the filter can no longer be found on the page"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html:22
+#: changedetectionio/blueprint/tags/templates/edit-tag.html:32
+#: changedetectionio/blueprint/ui/templates/edit.html:59
+#: changedetectionio/forms.py:832
+msgid "Notifications"
+msgstr "알림"
+
+#: changedetectionio/forms.py:832
+#, fuzzy
+msgid "Muted"
+msgstr "무음"
+
+#: changedetectionio/forms.py:832
+#, fuzzy
+msgid "On"
+msgstr "없음"
+
+#: changedetectionio/forms.py:833
+msgid "Attach screenshot to notification (where possible)"
+msgstr ""
+
+#: changedetectionio/forms.py:835
+msgid "Match"
+msgstr ""
+
+#: changedetectionio/forms.py:835
+msgid "Match all of the following"
+msgstr ""
+
+#: changedetectionio/forms.py:835
+msgid "Match any of the following"
+msgstr ""
+
+#: changedetectionio/forms.py:837
+msgid "Use page <title> in list"
+msgstr ""
+
+#: changedetectionio/forms.py:854
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "요청 방법이 GET으로 설정된 경우 본문이 비어 있어야 합니다."
 
-#: forms.py:863 forms.py:877 forms.py:892
+#: changedetectionio/forms.py:863 changedetectionio/forms.py:877
+#: changedetectionio/forms.py:892
 #, python-format
 msgid "Invalid template syntax configuration: %(error)s"
 msgstr "잘못된 템플릿 구문 구성: %(error)s"
 
-#: forms.py:867 forms.py:881
+#: changedetectionio/forms.py:867 changedetectionio/forms.py:881
 #, python-format
 msgid "Invalid template syntax: %(error)s"
 msgstr "잘못된 템플릿 구문: %(error)s"
 
-#: forms.py:896
+#: changedetectionio/forms.py:896
 #, python-format
 msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
 msgstr ""
 
-#: forms.py:976
+#: changedetectionio/forms.py:920 changedetectionio/forms.py:932
+#, fuzzy
+msgid "Name"
+msgstr "음소거 해제"
+
+#: changedetectionio/forms.py:921
+msgid "Proxy URL"
+msgstr ""
+
+#: changedetectionio/forms.py:926
+msgid "Proxy URLs must start with http://, https:// or socks5://"
+msgstr ""
+
+#: changedetectionio/forms.py:933
+msgid "Browser connection URL"
+msgstr ""
+
+#: changedetectionio/forms.py:938
+msgid "Browser URLs must start with wss:// or ws://"
+msgstr ""
+
+#: changedetectionio/forms.py:944
+msgid "Plaintext requests"
+msgstr ""
+
+#: changedetectionio/forms.py:946
+#, fuzzy
+msgid "Chrome requests"
+msgstr "요구"
+
+#: changedetectionio/forms.py:952
+msgid "Default proxy"
+msgstr ""
+
+#: changedetectionio/forms.py:953
+msgid "Random jitter seconds ± check"
+msgstr ""
+
+#: changedetectionio/forms.py:957
+msgid "Number of fetch workers"
+msgstr ""
+
+#: changedetectionio/forms.py:960
+msgid "Should be between 1 and 50"
+msgstr ""
+
+#: changedetectionio/forms.py:962
+msgid "Requests timeout in seconds"
+msgstr ""
+
+#: changedetectionio/forms.py:965
+msgid "Should be between 1 and 999"
+msgstr ""
+
+#: changedetectionio/forms.py:970
+msgid "Default User-Agent overrides"
+msgstr ""
+
+#: changedetectionio/forms.py:976
 msgid "Both a name, and a Proxy URL is required."
 msgstr "이름과 프록시 URL이 모두 필요합니다."
 
-#: store.py:386
+#: changedetectionio/forms.py:980
+msgid "Open 'History' page in a new tab"
+msgstr ""
+
+#: changedetectionio/forms.py:981
+#, fuzzy
+msgid "Realtime UI Updates Enabled"
+msgstr "실시간 업데이트 오프라인"
+
+#: changedetectionio/forms.py:982
+#, fuzzy
+msgid "Favicons Enabled"
+msgstr "활성화하는 것을 고려해보세요"
+
+#: changedetectionio/forms.py:983
+msgid "Use page <title> in watch overview list"
+msgstr ""
+
+#: changedetectionio/forms.py:988
+msgid "API access token security check enabled"
+msgstr ""
+
+#: changedetectionio/forms.py:989
+#, fuzzy
+msgid "Notification base URL override"
+msgstr "알림 경고 수"
+
+#: changedetectionio/forms.py:993
+msgid "Treat empty pages as a change?"
+msgstr ""
+
+#: changedetectionio/forms.py:995
+#, fuzzy
+msgid "Ignore Text"
+msgstr "오류 텍스트"
+
+#: changedetectionio/forms.py:997
+#, fuzzy
+msgid "Ignore whitespace"
+msgstr "공백 무시"
+
+#: changedetectionio/forms.py:1004
+#: changedetectionio/processors/image_ssim_diff/forms.py:50
+msgid "Must be between 0 and 100"
+msgstr ""
+
+#: changedetectionio/forms.py:1011
+msgid "Pager size"
+msgstr ""
+
+#: changedetectionio/forms.py:1014
+msgid "Should be atleast zero (disabled)"
+msgstr ""
+
+#: changedetectionio/forms.py:1016
+msgid "RSS Content format"
+msgstr ""
+
+#: changedetectionio/forms.py:1017
+msgid "RSS <description> body built from"
+msgstr ""
+
+#: changedetectionio/forms.py:1018
+msgid "RSS \"System default\" template override"
+msgstr ""
+
+#: changedetectionio/forms.py:1020
+#, fuzzy
+msgid "Remove password"
+msgstr "비밀번호"
+
+#: changedetectionio/forms.py:1021
+msgid "Render anchor tag content"
+msgstr ""
+
+#: changedetectionio/forms.py:1022
+msgid "Allow anonymous access to watch history page when password is enabled"
+msgstr ""
+
+#: changedetectionio/forms.py:1024
+msgid "Hide muted watches from RSS feed"
+msgstr ""
+
+#: changedetectionio/forms.py:1027
+msgid "Enable RSS reader mode "
+msgstr ""
+
+#: changedetectionio/forms.py:1028
+msgid "Number of changes to show in watch RSS feed"
+msgstr ""
+
+#: changedetectionio/forms.py:1030 changedetectionio/forms.py:1035
+msgid "Should contain zero or more attempts"
+msgstr ""
+
+#: changedetectionio/forms.py:1032
+msgid "Number of times the filter can be missing before sending a notification"
+msgstr ""
+
+#: changedetectionio/forms.py:1055
+msgid "RegEx to extract"
+msgstr ""
+
+#: changedetectionio/forms.py:1056
+#, fuzzy
+msgid "Extract as CSV"
+msgstr "데이터 추출"
+
+#: changedetectionio/store.py:386
 #, python-brace-format
 msgid "Error fetching metadata for {}"
 msgstr ""
 
-#: store.py:390
+#: changedetectionio/store.py:390
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr ""
 
-#: blueprint/backups/__init__.py:86
+#: changedetectionio/blueprint/backups/__init__.py:86
 msgid "A backup is already running, check back in a few minutes"
 msgstr ""
 
-#: blueprint/backups/__init__.py:90
+#: changedetectionio/blueprint/backups/__init__.py:90
 msgid "Maximum number of backups reached, please remove some"
 msgstr ""
 
-#: blueprint/backups/__init__.py:103
+#: changedetectionio/blueprint/backups/__init__.py:103
 msgid "Backup building in background, check back in a few minutes."
 msgstr ""
 
-#: blueprint/backups/__init__.py:166
+#: changedetectionio/blueprint/backups/__init__.py:166
 msgid "Backups were deleted."
 msgstr ""
 
-#: blueprint/backups/templates/overview.html:6
+#: changedetectionio/blueprint/backups/templates/overview.html:6
 msgid "Backups"
 msgstr "백업"
 
-#: blueprint/backups/templates/overview.html:9
+#: changedetectionio/blueprint/backups/templates/overview.html:9
 msgid "A backup is running!"
 msgstr "백업이 실행 중입니다!"
 
-#: blueprint/backups/templates/overview.html:13
+#: changedetectionio/blueprint/backups/templates/overview.html:13
 msgid ""
 "Here you can download and request a new backup, when a backup is "
 "completed you will see it listed below."
 msgstr ""
 
-#: blueprint/backups/templates/overview.html:19
+#: changedetectionio/blueprint/backups/templates/overview.html:19
 msgid "Mb"
 msgstr "MB"
 
-#: blueprint/backups/templates/overview.html:24
+#: changedetectionio/blueprint/backups/templates/overview.html:24
 msgid "No backups found."
 msgstr "백업을 찾을 수 없습니다."
 
-#: blueprint/backups/templates/overview.html:28
+#: changedetectionio/blueprint/backups/templates/overview.html:28
 msgid "Create backup"
 msgstr "백업 생성"
 
-#: blueprint/backups/templates/overview.html:30
+#: changedetectionio/blueprint/backups/templates/overview.html:30
 msgid "Remove backups"
 msgstr "백업 삭제"
 
-#: blueprint/imports/importer.py:45
+#: changedetectionio/blueprint/imports/importer.py:45
 msgid ""
 "Importing 5,000 of the first URLs from your list, the rest can be "
 "imported again."
 msgstr ""
 
-#: blueprint/imports/importer.py:78
+#: changedetectionio/blueprint/imports/importer.py:78
 #, python-brace-format
 msgid "{} Imported from list in {:.2f}s, {} Skipped."
 msgstr ""
 
-#: blueprint/imports/importer.py:98
+#: changedetectionio/blueprint/imports/importer.py:98
 msgid "Unable to read JSON file, was it broken?"
 msgstr ""
 
-#: blueprint/imports/importer.py:102
+#: changedetectionio/blueprint/imports/importer.py:102
 msgid "JSON structure looks invalid, was it broken?"
 msgstr ""
 
-#: blueprint/imports/importer.py:139
+#: changedetectionio/blueprint/imports/importer.py:139
 #, python-brace-format
 msgid "{} Imported from Distill.io in {:.2f}s, {} Skipped."
 msgstr ""
 
-#: blueprint/imports/importer.py:160 blueprint/imports/importer.py:239
+#: changedetectionio/blueprint/imports/importer.py:160
+#: changedetectionio/blueprint/imports/importer.py:239
 msgid "Unable to read export XLSX file, something wrong with the file?"
 msgstr ""
 
-#: blueprint/imports/importer.py:200 blueprint/imports/importer.py:268
+#: changedetectionio/blueprint/imports/importer.py:200
+#: changedetectionio/blueprint/imports/importer.py:268
 #, python-brace-format
 msgid "Error processing row number {}, URL value was incorrect, row was skipped."
 msgstr ""
 
-#: blueprint/imports/importer.py:214 blueprint/imports/importer.py:297
+#: changedetectionio/blueprint/imports/importer.py:214
+#: changedetectionio/blueprint/imports/importer.py:297
 #, python-brace-format
 msgid ""
 "Error processing row number {}, check all cell data types are correct, "
 "row was skipped."
 msgstr ""
 
-#: blueprint/imports/importer.py:218
+#: changedetectionio/blueprint/imports/importer.py:218
 #, python-brace-format
 msgid "{} imported from Wachete .xlsx in {:.2f}s"
 msgstr ""
 
-#: blueprint/imports/importer.py:301
+#: changedetectionio/blueprint/imports/importer.py:301
 #, python-brace-format
 msgid "{} imported from custom .xlsx in {:.2f}s"
 msgstr ""
 
-#: blueprint/imports/templates/import.html:9
+#: changedetectionio/blueprint/imports/templates/import.html:9
 msgid "URL List"
 msgstr "URL 목록"
 
-#: blueprint/imports/templates/import.html:10
+#: changedetectionio/blueprint/imports/templates/import.html:10
 msgid "Distill.io"
 msgstr "Distill.io"
 
-#: blueprint/imports/templates/import.html:11
+#: changedetectionio/blueprint/imports/templates/import.html:11
 msgid ".XLSX & Wachete"
 msgstr ".XLSX 및 와체테"
 
-#: blueprint/imports/templates/import.html:20
+#: changedetectionio/blueprint/imports/templates/import.html:20
 msgid ""
 "Enter one URL per line, and optionally add tags for each URL after a "
 "space, delineated by comma (,):"
 msgstr ""
 
-#: blueprint/imports/templates/import.html:22
+#: changedetectionio/blueprint/imports/templates/import.html:22
 msgid "Example:"
 msgstr "예:"
 
-#: blueprint/imports/templates/import.html:23
+#: changedetectionio/blueprint/imports/templates/import.html:23
 msgid "URLs which do not pass validation will stay in the textarea."
 msgstr "유효성 검사를 통과하지 못한 URL은 텍스트 영역에 유지됩니다."
 
-#: blueprint/imports/templates/import.html:44
+#: changedetectionio/blueprint/imports/templates/import.html:44
 msgid ""
 "Copy and Paste your Distill.io watch 'export' file, this should be a JSON"
 " file."
 msgstr ""
 
-#: blueprint/imports/templates/import.html:45
+#: changedetectionio/blueprint/imports/templates/import.html:45
 msgid "This is"
 msgstr "이것은"
 
-#: blueprint/imports/templates/import.html:45
+#: changedetectionio/blueprint/imports/templates/import.html:45
 msgid "experimental"
 msgstr "실험적인"
 
-#: blueprint/imports/templates/import.html:45
+#: changedetectionio/blueprint/imports/templates/import.html:45
 msgid "supported fields are"
 msgstr "지원되는 필드는"
 
-#: blueprint/imports/templates/import.html:45
+#: changedetectionio/blueprint/imports/templates/import.html:45
 msgid "the rest (including"
 msgstr "나머지 (포함"
 
-#: blueprint/imports/templates/import.html:45
+#: changedetectionio/blueprint/imports/templates/import.html:45
 msgid "are ignored."
 msgstr "무시됩니다."
 
-#: blueprint/imports/templates/import.html:48
+#: changedetectionio/blueprint/imports/templates/import.html:48
 msgid "How to export?"
 msgstr "수출하는 방법?"
 
-#: blueprint/imports/templates/import.html:49
+#: changedetectionio/blueprint/imports/templates/import.html:49
 msgid "Be sure to set your default fetcher to Chrome if required."
 msgstr "필요한 경우 기본 가져오기 프로그램을 Chrome으로 설정하세요."
 
-#: blueprint/imports/templates/import.html:91
+#: changedetectionio/blueprint/imports/templates/import.html:91
 msgid "Table of custom column and data types mapping for the"
 msgstr "사용자 정의 열 및 데이터 유형 매핑 표"
 
-#: blueprint/imports/templates/import.html:91
+#: changedetectionio/blueprint/imports/templates/import.html:91
 msgid "Custom mapping"
 msgstr "맞춤 매핑"
 
-#: blueprint/imports/templates/import.html:91
+#: changedetectionio/blueprint/imports/templates/import.html:91
 msgid "File mapping type."
 msgstr "파일 매핑 유형."
 
-#: blueprint/imports/templates/import.html:95
+#: changedetectionio/blueprint/imports/templates/import.html:95
 msgid "Column #"
 msgstr "열 #"
 
-#: blueprint/imports/templates/import.html:101
+#: changedetectionio/blueprint/imports/templates/import.html:101
 msgid "Type"
 msgstr "유형"
 
-#: blueprint/imports/templates/import.html:104
+#: changedetectionio/blueprint/imports/templates/import.html:104
 msgid "none"
 msgstr "없음"
 
-#: blueprint/imports/templates/import.html:105
+#: changedetectionio/blueprint/imports/templates/import.html:105
 msgid "URL"
 msgstr "URL"
 
-#: blueprint/imports/templates/import.html:106
-msgid "Title"
-msgstr "제목"
-
-#: blueprint/imports/templates/import.html:107
+#: changedetectionio/blueprint/imports/templates/import.html:107
 msgid "CSS/xPath filter"
 msgstr "CSS/xPath 필터"
 
-#: blueprint/imports/templates/import.html:108
+#: changedetectionio/blueprint/imports/templates/import.html:108
 msgid "Group / Tag name(s)"
 msgstr "감시 그룹/태그"
 
-#: blueprint/imports/templates/import.html:109
+#: changedetectionio/blueprint/imports/templates/import.html:109
 msgid "Recheck time (minutes)"
 msgstr "재확인 시간(분)"
 
-#: blueprint/imports/templates/import.html:116
+#: changedetectionio/blueprint/imports/templates/import.html:116
 msgid "Import"
 msgstr "수입"
 
-#: blueprint/settings/__init__.py:64
+#: changedetectionio/blueprint/settings/__init__.py:64
 msgid "Password protection removed."
 msgstr ""
 
-#: blueprint/settings/__init__.py:98
+#: changedetectionio/blueprint/settings/__init__.py:98
 #, python-brace-format
 msgid "Worker count adjusted: {}"
 msgstr ""
 
-#: blueprint/settings/__init__.py:100
+#: changedetectionio/blueprint/settings/__init__.py:100
 msgid "Dynamic worker adjustment not supported for sync workers"
 msgstr ""
 
-#: blueprint/settings/__init__.py:102
+#: changedetectionio/blueprint/settings/__init__.py:102
 #, python-brace-format
 msgid "Error adjusting workers: {}"
 msgstr ""
 
-#: blueprint/settings/__init__.py:107
+#: changedetectionio/blueprint/settings/__init__.py:107
 msgid "Password protection enabled."
 msgstr ""
 
-#: blueprint/settings/__init__.py:126
+#: changedetectionio/blueprint/settings/__init__.py:126
 #, fuzzy
 msgid "Settings updated."
 msgstr "설정"
 
-#: blueprint/settings/__init__.py:129 blueprint/ui/edit.py:290
-#: processors/extract.py:105
+#: changedetectionio/blueprint/settings/__init__.py:129
+#: changedetectionio/blueprint/ui/edit.py:290
+#: changedetectionio/processors/extract.py:105
 msgid "An error occurred, please see below."
 msgstr ""
 
-#: blueprint/settings/__init__.py:179
+#: changedetectionio/blueprint/settings/__init__.py:179
 msgid "API Key was regenerated."
 msgstr ""
 
-#: blueprint/settings/templates/notification-log.html:7
+#: changedetectionio/blueprint/settings/templates/notification-log.html:7
 msgid "Notification debug log"
 msgstr "알림 디버그 로그"
 
-#: blueprint/settings/templates/settings.html:21
-#: blueprint/tags/templates/edit-tag.html:27
-#: blueprint/ui/templates/edit.html:47
+#: changedetectionio/blueprint/settings/templates/settings.html:21
+#: changedetectionio/blueprint/tags/templates/edit-tag.html:27
+#: changedetectionio/blueprint/ui/templates/edit.html:47
 msgid "General"
 msgstr "일반적인"
 
-#: blueprint/settings/templates/settings.html:22
-#: blueprint/tags/templates/edit-tag.html:32
-#: blueprint/ui/templates/edit.html:59
-msgid "Notifications"
-msgstr "알림"
-
-#: blueprint/settings/templates/settings.html:23
+#: changedetectionio/blueprint/settings/templates/settings.html:23
 msgid "Fetching"
 msgstr "가져오기"
 
-#: blueprint/settings/templates/settings.html:24
+#: changedetectionio/blueprint/settings/templates/settings.html:24
 msgid "Global Filters"
 msgstr "글로벌 필터"
 
-#: blueprint/settings/templates/settings.html:25
+#: changedetectionio/blueprint/settings/templates/settings.html:25
 msgid "UI Options"
 msgstr "UI 옵션"
 
-#: blueprint/settings/templates/settings.html:26
+#: changedetectionio/blueprint/settings/templates/settings.html:26
 msgid "API"
 msgstr "API"
 
-#: blueprint/settings/templates/settings.html:27
+#: changedetectionio/blueprint/settings/templates/settings.html:27
 msgid "RSS"
 msgstr "RSS"
 
-#: blueprint/settings/templates/settings.html:28
+#: changedetectionio/blueprint/settings/templates/settings.html:28
 msgid "Time & Date"
 msgstr "시간 및 날짜"
 
-#: blueprint/settings/templates/settings.html:29
+#: changedetectionio/blueprint/settings/templates/settings.html:29
 msgid "CAPTCHA & Proxies"
 msgstr "보안 문자 및 프록시"
 
-#: blueprint/settings/templates/settings.html:35
+#: changedetectionio/blueprint/settings/templates/settings.html:35
 msgid "Info"
 msgstr "정보"
 
-#: blueprint/settings/templates/settings.html:46
+#: changedetectionio/blueprint/settings/templates/settings.html:46
 msgid "Default recheck time for all watches, current system minimum is"
 msgstr "모든 시계의 기본 재확인 시간, 현재 시스템 최소값은 다음과 같습니다."
 
-#: blueprint/settings/templates/settings.html:46
+#: changedetectionio/blueprint/settings/templates/settings.html:46
 msgid "seconds"
 msgstr "초"
 
-#: blueprint/settings/templates/settings.html:46
+#: changedetectionio/blueprint/settings/templates/settings.html:46
 msgid "more info"
 msgstr "추가 정보"
 
-#: blueprint/settings/templates/settings.html:388
+#: changedetectionio/blueprint/settings/templates/settings.html:388
 msgid "Python version:"
 msgstr "파이썬 버전:"
 
-#: blueprint/settings/templates/settings.html:389
+#: changedetectionio/blueprint/settings/templates/settings.html:389
 msgid "Plugins active:"
 msgstr "활성화된 플러그인:"
 
-#: blueprint/settings/templates/settings.html:397
+#: changedetectionio/blueprint/settings/templates/settings.html:397
 msgid "No plugins active"
 msgstr "활성화된 플러그인이 없습니다."
 
-#: blueprint/settings/templates/settings.html:403
+#: changedetectionio/blueprint/settings/templates/settings.html:403
 msgid "Back"
 msgstr "뒤로"
 
-#: blueprint/settings/templates/settings.html:404
+#: changedetectionio/blueprint/settings/templates/settings.html:404
 msgid "Clear Snapshot History"
 msgstr "기록 지우기/재설정"
 
-#: blueprint/tags/__init__.py:46
+#: changedetectionio/blueprint/tags/__init__.py:46
 #, python-brace-format
 msgid "The tag \"{}\" already exists"
 msgstr ""
 
-#: blueprint/tags/__init__.py:50
+#: changedetectionio/blueprint/tags/__init__.py:50
 #, fuzzy
 msgid "Tag added"
 msgstr "추가됨"
 
-#: blueprint/tags/__init__.py:75
+#: changedetectionio/blueprint/tags/__init__.py:75
 #, python-brace-format
 msgid "Tag deleted and removed from {} watches"
 msgstr ""
 
-#: blueprint/tags/__init__.py:87
+#: changedetectionio/blueprint/tags/__init__.py:87
 #, python-brace-format
 msgid "Tag unlinked removed from {} watches"
 msgstr ""
 
-#: blueprint/tags/__init__.py:97
+#: changedetectionio/blueprint/tags/__init__.py:97
 msgid "All tags deleted"
 msgstr ""
 
-#: blueprint/tags/__init__.py:109
+#: changedetectionio/blueprint/tags/__init__.py:109
 msgid "Tag not found"
 msgstr ""
 
-#: blueprint/tags/__init__.py:184
+#: changedetectionio/blueprint/tags/__init__.py:184
 #, fuzzy
 msgid "Updated"
 msgstr "무음"
 
-#: blueprint/tags/templates/edit-tag.html:28
-#: blueprint/ui/templates/edit.html:56 blueprint/ui/templates/edit.html:386
+#: changedetectionio/blueprint/tags/templates/edit-tag.html:28
+#: changedetectionio/blueprint/ui/templates/edit.html:56
+#: changedetectionio/blueprint/ui/templates/edit.html:386
 msgid "Filters & Triggers"
 msgstr "필터 및 트리거"
 
-#: blueprint/tags/templates/edit-tag.html:50
+#: changedetectionio/blueprint/tags/templates/edit-tag.html:50
 msgid "These settings are"
 msgstr "설정"
 
-#: blueprint/tags/templates/edit-tag.html:50
+#: changedetectionio/blueprint/tags/templates/edit-tag.html:50
 msgid "added"
 msgstr "추가됨"
 
-#: blueprint/tags/templates/edit-tag.html:50
+#: changedetectionio/blueprint/tags/templates/edit-tag.html:50
 msgid "to any existing watch configurations."
 msgstr "기존 시계 구성에 적용됩니다."
 
-#: blueprint/tags/templates/edit-tag.html:53
-#: blueprint/ui/templates/edit.html:321
+#: changedetectionio/blueprint/tags/templates/edit-tag.html:53
+#: changedetectionio/blueprint/ui/templates/edit.html:321
 msgid "Text filtering"
 msgstr "텍스트 필터링"
 
-#: blueprint/tags/templates/edit-tag.html:73
-#: blueprint/ui/templates/edit.html:269
+#: changedetectionio/blueprint/tags/templates/edit-tag.html:73
+#: changedetectionio/blueprint/ui/templates/edit.html:269
 msgid "Use with caution!"
 msgstr "주의해서 사용하세요!"
 
-#: blueprint/tags/templates/edit-tag.html:73
-#: blueprint/ui/templates/edit.html:269
+#: changedetectionio/blueprint/tags/templates/edit-tag.html:73
+#: changedetectionio/blueprint/ui/templates/edit.html:269
 msgid "This will easily fill up your email storage quota or flood other storages."
 msgstr "이로 인해 이메일 저장 할당량이 쉽게 채워지거나 다른 저장 공간이 넘치게 됩니다."
 
-#: blueprint/tags/templates/edit-tag.html:80
-#: blueprint/ui/templates/edit.html:276
+#: changedetectionio/blueprint/tags/templates/edit-tag.html:80
+#: changedetectionio/blueprint/ui/templates/edit.html:276
 msgid "Look out!"
 msgstr "로그아웃"
 
-#: blueprint/tags/templates/edit-tag.html:80
-#: blueprint/ui/templates/edit.html:276
+#: changedetectionio/blueprint/tags/templates/edit-tag.html:80
+#: changedetectionio/blueprint/ui/templates/edit.html:276
 msgid "Lookout!"
 msgstr "로그아웃"
 
-#: blueprint/tags/templates/edit-tag.html:81
-#: blueprint/ui/templates/edit.html:277
+#: changedetectionio/blueprint/tags/templates/edit-tag.html:81
+#: changedetectionio/blueprint/ui/templates/edit.html:277
 msgid "There are"
 msgstr "있다"
 
-#: blueprint/tags/templates/edit-tag.html:81
-#: blueprint/ui/templates/edit.html:277
+#: changedetectionio/blueprint/tags/templates/edit-tag.html:81
+#: changedetectionio/blueprint/ui/templates/edit.html:277
 msgid "system-wide notification URLs enabled"
 msgstr "시스템 전체 알림 URL이 활성화되었습니다."
 
-#: blueprint/tags/templates/edit-tag.html:81
-#: blueprint/ui/templates/edit.html:277
+#: changedetectionio/blueprint/tags/templates/edit-tag.html:81
+#: changedetectionio/blueprint/ui/templates/edit.html:277
 msgid "this form will override notification settings for this watch only"
 msgstr "이 양식은 이 시계에 대해서만 알림 설정을 재정의합니다."
 
-#: blueprint/tags/templates/edit-tag.html:81
-#: blueprint/ui/templates/edit.html:277
+#: changedetectionio/blueprint/tags/templates/edit-tag.html:81
+#: changedetectionio/blueprint/ui/templates/edit.html:277
 msgid "an empty Notification URL list here will still send notifications."
 msgstr "여기의 빈 알림 URL 목록은 여전히 ​​알림을 보냅니다."
 
-#: blueprint/tags/templates/edit-tag.html:84
-#: blueprint/ui/templates/edit.html:280
+#: changedetectionio/blueprint/tags/templates/edit-tag.html:84
+#: changedetectionio/blueprint/ui/templates/edit.html:280
 msgid "Use system defaults"
 msgstr "시스템 기본값 사용"
 
-#: blueprint/tags/templates/groups-overview.html:11
+#: changedetectionio/blueprint/tags/templates/groups-overview.html:11
 msgid "Add a new organisational tag"
 msgstr "새 조직 태그 추가"
 
-#: blueprint/tags/templates/groups-overview.html:14
+#: changedetectionio/blueprint/tags/templates/groups-overview.html:14
 msgid "Watch group / tag"
 msgstr "감시 그룹/태그"
 
-#: blueprint/tags/templates/groups-overview.html:17
-msgid "Save"
-msgstr "구하다"
-
-#: blueprint/tags/templates/groups-overview.html:21
+#: changedetectionio/blueprint/tags/templates/groups-overview.html:21
 msgid ""
 "Groups allows you to manage filters and notifications for multiple "
 "watches under a single organisational tag."
 msgstr ""
 
-#: blueprint/tags/templates/groups-overview.html:31
+#: changedetectionio/blueprint/tags/templates/groups-overview.html:31
 msgid "# Watches"
 msgstr "# 모니터"
 
-#: blueprint/tags/templates/groups-overview.html:32
+#: changedetectionio/blueprint/tags/templates/groups-overview.html:32
 msgid "Tag / Label name"
 msgstr "태그/라벨 이름"
 
-#: blueprint/tags/templates/groups-overview.html:42
+#: changedetectionio/blueprint/tags/templates/groups-overview.html:42
 msgid "No website organisational tags/groups configured"
 msgstr "구성된 웹사이트 조직 태그/그룹이 없습니다."
 
-#: blueprint/tags/templates/groups-overview.html:53
-#: blueprint/watchlist/templates/watch-overview.html:276
+#: changedetectionio/blueprint/tags/templates/groups-overview.html:53
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:276
 msgid "Edit"
 msgstr "편집하다"
 
-#: blueprint/tags/templates/groups-overview.html:54
-#: blueprint/watchlist/templates/watch-overview.html:84
-#: blueprint/watchlist/templates/watch-overview.html:275
+#: changedetectionio/blueprint/tags/templates/groups-overview.html:54
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:84
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:275
 msgid "Recheck"
 msgstr "재확인"
 
-#: blueprint/tags/templates/groups-overview.html:59
+#: changedetectionio/blueprint/tags/templates/groups-overview.html:59
 msgid "Delete Group?"
 msgstr "그룹을 삭제하시겠습니까?"
 
-#: blueprint/tags/templates/groups-overview.html:60
+#: changedetectionio/blueprint/tags/templates/groups-overview.html:60
 #, python-format
 msgid ""
 "<p>Are you sure you want to delete group "
 "<strong>%(title)s</strong>?</p><p>This action cannot be undone.</p>"
 msgstr ""
 
-#: blueprint/tags/templates/groups-overview.html:61
-#: blueprint/tags/templates/groups-overview.html:62
-#: blueprint/ui/templates/edit.html:490
-#: blueprint/watchlist/templates/watch-overview.html:100
+#: changedetectionio/blueprint/tags/templates/groups-overview.html:61
+#: changedetectionio/blueprint/tags/templates/groups-overview.html:62
+#: changedetectionio/blueprint/ui/templates/edit.html:490
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:100
 msgid "Delete"
 msgstr "삭제"
 
-#: blueprint/tags/templates/groups-overview.html:62
+#: changedetectionio/blueprint/tags/templates/groups-overview.html:62
 msgid "Deletes and removes tag"
 msgstr "태그 삭제 및 제거"
 
-#: blueprint/tags/templates/groups-overview.html:67
+#: changedetectionio/blueprint/tags/templates/groups-overview.html:67
 msgid "Unlink Group?"
 msgstr "그룹을 연결 해제하시겠습니까?"
 
-#: blueprint/tags/templates/groups-overview.html:68
+#: changedetectionio/blueprint/tags/templates/groups-overview.html:68
 #, python-format
 msgid ""
 "<p>Are you sure you want to unlink all watches from group "
@@ -596,1266 +1098,1388 @@ msgid ""
 "be removed from it.</p>"
 msgstr ""
 
-#: blueprint/tags/templates/groups-overview.html:69
-#: blueprint/tags/templates/groups-overview.html:70
+#: changedetectionio/blueprint/tags/templates/groups-overview.html:69
+#: changedetectionio/blueprint/tags/templates/groups-overview.html:70
 msgid "Unlink"
 msgstr "풀리다"
 
-#: blueprint/tags/templates/groups-overview.html:70
+#: changedetectionio/blueprint/tags/templates/groups-overview.html:70
 msgid "Keep the tag but unlink any watches"
 msgstr "태그는 유지하되 시계 연결을 해제하세요."
 
-#: blueprint/tags/templates/groups-overview.html:71
-#: blueprint/ui/templates/edit.html:500
+#: changedetectionio/blueprint/tags/templates/groups-overview.html:71
+#: changedetectionio/blueprint/ui/templates/edit.html:500
 msgid "RSS Feed for this watch"
 msgstr "이 시계에 대한 RSS 피드"
 
-#: blueprint/ui/__init__.py:20
+#: changedetectionio/blueprint/ui/__init__.py:20
 #, python-brace-format
 msgid "{} watches deleted"
 msgstr ""
 
-#: blueprint/ui/__init__.py:27
+#: changedetectionio/blueprint/ui/__init__.py:27
 #, fuzzy, python-brace-format
 msgid "{} watches paused"
 msgstr "# 시계"
 
-#: blueprint/ui/__init__.py:34
+#: changedetectionio/blueprint/ui/__init__.py:34
 #, python-brace-format
 msgid "{} watches unpaused"
 msgstr ""
 
-#: blueprint/ui/__init__.py:41
+#: changedetectionio/blueprint/ui/__init__.py:41
 #, python-brace-format
 msgid "{} watches updated"
 msgstr ""
 
-#: blueprint/ui/__init__.py:48
+#: changedetectionio/blueprint/ui/__init__.py:48
 #, fuzzy, python-brace-format
 msgid "{} watches muted"
 msgstr "# 시계"
 
-#: blueprint/ui/__init__.py:55
+#: changedetectionio/blueprint/ui/__init__.py:55
 #, python-brace-format
 msgid "{} watches un-muted"
 msgstr ""
 
-#: blueprint/ui/__init__.py:63
+#: changedetectionio/blueprint/ui/__init__.py:63
 #, python-brace-format
 msgid "{} watches queued for rechecking"
 msgstr ""
 
-#: blueprint/ui/__init__.py:70
+#: changedetectionio/blueprint/ui/__init__.py:70
 #, python-brace-format
 msgid "{} watches errors cleared"
 msgstr ""
 
-#: blueprint/ui/__init__.py:77
+#: changedetectionio/blueprint/ui/__init__.py:77
 #, python-brace-format
 msgid "{} watches cleared/reset."
 msgstr ""
 
-#: blueprint/ui/__init__.py:90
+#: changedetectionio/blueprint/ui/__init__.py:90
 #, fuzzy, python-brace-format
 msgid "{} watches set to use default notification settings"
 msgstr "기본 알림 사용"
 
-#: blueprint/ui/__init__.py:105
+#: changedetectionio/blueprint/ui/__init__.py:105
 #, python-brace-format
 msgid "{} watches were tagged"
 msgstr ""
 
-#: blueprint/ui/__init__.py:142
+#: changedetectionio/blueprint/ui/__init__.py:142
 #, fuzzy
 msgid "Watch not found"
 msgstr "이 URL을 시청하세요!"
 
-#: blueprint/ui/__init__.py:144
+#: changedetectionio/blueprint/ui/__init__.py:144
 #, fuzzy, python-brace-format
 msgid "Cleared snapshot history for watch {}"
 msgstr "기록 지우기/재설정"
 
-#: blueprint/ui/__init__.py:156
+#: changedetectionio/blueprint/ui/__init__.py:156
 #, fuzzy
 msgid "Cleared snapshot history for all watches"
 msgstr "기록 지우기/재설정"
 
-#: blueprint/ui/__init__.py:158
+#: changedetectionio/blueprint/ui/__init__.py:158
 #, fuzzy
 msgid "Incorrect confirmation text."
 msgstr "정보 없음"
 
-#: blueprint/ui/__init__.py:192
+#: changedetectionio/blueprint/ui/__init__.py:192
 #, python-brace-format
 msgid "The watch by UUID {} does not exist."
 msgstr ""
 
-#: blueprint/ui/__init__.py:199
+#: changedetectionio/blueprint/ui/__init__.py:199
 #, fuzzy
 msgid "Deleted."
 msgstr "삭제"
 
-#: blueprint/ui/__init__.py:216
+#: changedetectionio/blueprint/ui/__init__.py:216
 msgid "Cloned, you are editing the new watch."
 msgstr ""
 
-#: blueprint/ui/__init__.py:255
+#: changedetectionio/blueprint/ui/__init__.py:255
 msgid "Queued 1 watch for rechecking."
 msgstr ""
 
-#: blueprint/ui/__init__.py:257
+#: changedetectionio/blueprint/ui/__init__.py:257
 #, python-brace-format
 msgid "Queued {} watches for rechecking."
 msgstr ""
 
-#: blueprint/ui/__init__.py:259
+#: changedetectionio/blueprint/ui/__init__.py:259
 msgid "No watches available to recheck."
 msgstr ""
 
-#: blueprint/ui/__init__.py:330
+#: changedetectionio/blueprint/ui/__init__.py:330
 #, python-brace-format
 msgid ""
 "Could not share, something went wrong while communicating with the share "
 "server - {}"
 msgstr ""
 
-#: blueprint/ui/diff.py:93 blueprint/ui/diff.py:154 blueprint/ui/diff.py:210
-#: blueprint/ui/diff.py:277 blueprint/ui/preview.py:36
-#: blueprint/ui/preview.py:160
+#: changedetectionio/blueprint/ui/diff.py:93
+#: changedetectionio/blueprint/ui/diff.py:154
+#: changedetectionio/blueprint/ui/diff.py:210
+#: changedetectionio/blueprint/ui/diff.py:277
+#: changedetectionio/blueprint/ui/preview.py:36
+#: changedetectionio/blueprint/ui/preview.py:160
 msgid "No history found for the specified link, bad link?"
 msgstr ""
 
-#: blueprint/ui/diff.py:98
+#: changedetectionio/blueprint/ui/diff.py:98
 msgid ""
 "Not enough history (2 snapshots required) to show difference page for "
 "this watch."
 msgstr ""
 
-#: blueprint/ui/edit.py:35
+#: changedetectionio/blueprint/ui/edit.py:35
 msgid "No watches to edit"
 msgstr ""
 
-#: blueprint/ui/edit.py:42
+#: changedetectionio/blueprint/ui/edit.py:42
 #, python-brace-format
 msgid "No watch with the UUID {} found."
 msgstr ""
 
-#: blueprint/ui/edit.py:50
+#: changedetectionio/blueprint/ui/edit.py:50
 #, python-brace-format
 msgid "Switched to mode - {}."
 msgstr ""
 
-#: blueprint/ui/edit.py:69
+#: changedetectionio/blueprint/ui/edit.py:69
 #, python-brace-format
 msgid "Cannot load the edit form for processor/plugin '{}', plugin missing?"
 msgstr ""
 
-#: blueprint/ui/edit.py:239
+#: changedetectionio/blueprint/ui/edit.py:239
 msgid "Updated watch - unpaused!"
 msgstr ""
 
-#: blueprint/ui/edit.py:239
+#: changedetectionio/blueprint/ui/edit.py:239
 #, fuzzy
 msgid "Updated watch."
 msgstr "시계를 삭제하시겠습니까?"
 
-#: blueprint/ui/preview.py:78
+#: changedetectionio/blueprint/ui/preview.py:78
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
 msgstr ""
 
-#: blueprint/ui/views.py:24
+#: changedetectionio/blueprint/ui/views.py:24
 #, python-brace-format
 msgid "Warning, URL {} already exists"
 msgstr ""
 
-#: blueprint/ui/views.py:32
+#: changedetectionio/blueprint/ui/views.py:32
 msgid "Watch added in Paused state, saving will unpause."
 msgstr ""
 
-#: blueprint/ui/views.py:37
+#: changedetectionio/blueprint/ui/views.py:37
 msgid "Watch added."
 msgstr ""
 
-#: blueprint/ui/templates/clear_all_history.html:12
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html:12
 msgid ""
 "This will remove version history (snapshots) for ALL watches, but keep "
 "your list of URLs!"
 msgstr ""
 
-#: blueprint/ui/templates/clear_all_history.html:13
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html:13
 msgid "You may like to use the"
 msgstr "당신은"
 
-#: blueprint/ui/templates/clear_all_history.html:13
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html:13
 msgid "BACKUP"
 msgstr "백업"
 
-#: blueprint/ui/templates/clear_all_history.html:13
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html:13
 msgid "link first."
 msgstr "먼저 링크하세요."
 
-#: blueprint/ui/templates/clear_all_history.html:17
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html:17
 msgid "Confirmation text"
 msgstr "확인 텍스트"
 
-#: blueprint/ui/templates/clear_all_history.html:27
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html:27
 msgid "Type in the word"
 msgstr "단어를 입력하세요"
 
-#: blueprint/ui/templates/clear_all_history.html:27
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html:27
 msgid "clear"
 msgstr "분명한"
 
-#: blueprint/ui/templates/clear_all_history.html:27
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html:27
 msgid "to confirm that you understand."
 msgstr "당신이 이해했는지 확인하기 위해."
 
-#: blueprint/ui/templates/clear_all_history.html:33
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html:33
 msgid "Clear History!"
 msgstr "기록 지우기"
 
-#: blueprint/ui/templates/clear_all_history.html:39 templates/base.html:273
-#: templates/base.html:293
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html:39
+#: changedetectionio/templates/base.html:273
+#: changedetectionio/templates/base.html:293
 msgid "Cancel"
 msgstr "취소"
 
-#: blueprint/ui/templates/diff-offscreen-options.html:3
+#: changedetectionio/blueprint/ui/templates/diff-offscreen-options.html:3
 msgid "Share diff as image"
 msgstr "차이점을 이미지로 공유"
 
-#: blueprint/ui/templates/diff-offscreen-options.html:3
+#: changedetectionio/blueprint/ui/templates/diff-offscreen-options.html:3
 msgid "Share as Image"
 msgstr "이미지로 공유"
 
-#: blueprint/ui/templates/diff-offscreen-options.html:6
+#: changedetectionio/blueprint/ui/templates/diff-offscreen-options.html:6
 msgid "Ignore any lines matching"
 msgstr "일치하는 줄을 무시하세요."
 
-#: blueprint/ui/templates/diff-offscreen-options.html:9
+#: changedetectionio/blueprint/ui/templates/diff-offscreen-options.html:9
 msgid "Ignore any lines matching excluding digits"
 msgstr "숫자를 제외하고 일치하는 줄을 무시합니다."
 
-#: blueprint/ui/templates/diff.html:28
+#: changedetectionio/blueprint/ui/templates/diff.html:28
 msgid "From"
 msgstr "에서"
 
-#: blueprint/ui/templates/diff.html:38
+#: changedetectionio/blueprint/ui/templates/diff.html:38
 msgid "To"
 msgstr "에게"
 
-#: blueprint/ui/templates/diff.html:53
+#: changedetectionio/blueprint/ui/templates/diff.html:53
 msgid "Words"
 msgstr "단어"
 
-#: blueprint/ui/templates/diff.html:57
+#: changedetectionio/blueprint/ui/templates/diff.html:57
 msgid "Lines"
 msgstr "줄"
 
-#: blueprint/ui/templates/diff.html:61
+#: changedetectionio/blueprint/ui/templates/diff.html:61
 msgid "Ignore Whitespace"
 msgstr "공백 무시"
 
-#: blueprint/ui/templates/diff.html:65
+#: changedetectionio/blueprint/ui/templates/diff.html:65
 msgid "Same/non-changed"
 msgstr "동일/변경되지 않음"
 
-#: blueprint/ui/templates/diff.html:69
+#: changedetectionio/blueprint/ui/templates/diff.html:69
 msgid "Removed"
 msgstr "제거됨"
 
-#: blueprint/ui/templates/diff.html:73 blueprint/ui/templates/edit.html:327
+#: changedetectionio/blueprint/ui/templates/diff.html:73
+#: changedetectionio/blueprint/ui/templates/edit.html:327
 msgid "Added"
 msgstr "추가됨"
 
-#: blueprint/ui/templates/diff.html:77 blueprint/ui/templates/edit.html:327
+#: changedetectionio/blueprint/ui/templates/diff.html:77
+#: changedetectionio/blueprint/ui/templates/edit.html:327
 msgid "Replaced"
 msgstr "교체됨"
 
-#: blueprint/ui/templates/diff.html:82 blueprint/ui/templates/preview.html:36
+#: changedetectionio/blueprint/ui/templates/diff.html:82
+#: changedetectionio/blueprint/ui/templates/preview.html:36
 msgid "Keyboard:"
 msgstr "건반:"
 
-#: blueprint/ui/templates/diff.html:83 blueprint/ui/templates/preview.html:37
+#: changedetectionio/blueprint/ui/templates/diff.html:83
+#: changedetectionio/blueprint/ui/templates/preview.html:37
 msgid "Previous"
 msgstr "시사"
 
-#: blueprint/ui/templates/diff.html:84 blueprint/ui/templates/preview.html:38
+#: changedetectionio/blueprint/ui/templates/diff.html:84
+#: changedetectionio/blueprint/ui/templates/preview.html:38
 msgid "Next"
 msgstr "다음"
 
-#: blueprint/ui/templates/diff.html:91
+#: changedetectionio/blueprint/ui/templates/diff.html:91
 msgid "Jump to next difference"
 msgstr "다음 차이점으로 이동"
 
-#: blueprint/ui/templates/diff.html:91
+#: changedetectionio/blueprint/ui/templates/diff.html:91
 msgid "Jump"
 msgstr "도약"
 
-#: blueprint/ui/templates/diff.html:97 blueprint/ui/templates/preview.html:45
+#: changedetectionio/blueprint/ui/templates/diff.html:97
+#: changedetectionio/blueprint/ui/templates/preview.html:45
 msgid "Error Text"
 msgstr "오류 텍스트"
 
-#: blueprint/ui/templates/diff.html:98 blueprint/ui/templates/preview.html:47
+#: changedetectionio/blueprint/ui/templates/diff.html:98
+#: changedetectionio/blueprint/ui/templates/preview.html:47
 msgid "Error Screenshot"
 msgstr "오류 스크린샷"
 
-#: blueprint/ui/templates/diff.html:99 blueprint/ui/templates/preview.html:50
+#: changedetectionio/blueprint/ui/templates/diff.html:99
+#: changedetectionio/blueprint/ui/templates/preview.html:50
 msgid "Text"
 msgstr "텍스트"
 
-#: blueprint/ui/templates/diff.html:100 blueprint/ui/templates/preview.html:51
+#: changedetectionio/blueprint/ui/templates/diff.html:100
+#: changedetectionio/blueprint/ui/templates/preview.html:51
 msgid "Current screenshot"
 msgstr "현재 스크린샷"
 
-#: blueprint/ui/templates/diff.html:101
+#: changedetectionio/blueprint/ui/templates/diff.html:101
 msgid "Extract Data"
 msgstr "데이터 추출"
 
-#: blueprint/ui/templates/diff.html:107
+#: changedetectionio/blueprint/ui/templates/diff.html:107
 msgid "seconds ago."
 msgstr "초 전."
 
-#: blueprint/ui/templates/diff.html:114 blueprint/ui/templates/preview.html:59
-#: blueprint/ui/templates/preview.html:66
+#: changedetectionio/blueprint/ui/templates/diff.html:114
+#: changedetectionio/blueprint/ui/templates/preview.html:59
+#: changedetectionio/blueprint/ui/templates/preview.html:66
 msgid "seconds ago"
 msgstr "초 전"
 
-#: blueprint/ui/templates/diff.html:115
+#: changedetectionio/blueprint/ui/templates/diff.html:115
 msgid "Current error-ing screenshot from most recent request"
 msgstr "가장 최근 요청의 현재 오류 스크린샷"
 
-#: blueprint/ui/templates/diff.html:127
+#: changedetectionio/blueprint/ui/templates/diff.html:127
 msgid "Pro-tip: You can enable"
 msgstr "전문가 팁: 활성화할 수 있습니다."
 
-#: blueprint/ui/templates/diff.html:127
+#: changedetectionio/blueprint/ui/templates/diff.html:127
 msgid "\"share access when password is enabled\""
 msgstr ""
 
-#: blueprint/ui/templates/diff.html:127
+#: changedetectionio/blueprint/ui/templates/diff.html:127
 msgid "from settings."
 msgstr "설정"
 
-#: blueprint/ui/templates/diff.html:133
+#: changedetectionio/blueprint/ui/templates/diff.html:133
 msgid "Goto single snapshot"
 msgstr "단일 스냅샷으로 이동"
 
-#: blueprint/ui/templates/diff.html:138 blueprint/ui/templates/edit.html:125
+#: changedetectionio/blueprint/ui/templates/diff.html:138
+#: changedetectionio/blueprint/ui/templates/edit.html:125
 msgid "Tip:"
 msgstr "팁:"
 
-#: blueprint/ui/templates/diff.html:138
+#: changedetectionio/blueprint/ui/templates/diff.html:138
 msgid "Highlight text to share or add to ignore lists."
 msgstr "공유하거나 무시 목록에 추가할 텍스트를 강조 표시합니다."
 
-#: blueprint/ui/templates/diff.html:144 blueprint/ui/templates/preview.html:80
+#: changedetectionio/blueprint/ui/templates/diff.html:144
+#: changedetectionio/blueprint/ui/templates/preview.html:80
 msgid ""
 "For now, Differences are performed on text, not graphically, only the "
 "latest screenshot is available."
 msgstr ""
 
-#: blueprint/ui/templates/diff.html:149 blueprint/ui/templates/preview.html:86
+#: changedetectionio/blueprint/ui/templates/diff.html:149
+#: changedetectionio/blueprint/ui/templates/preview.html:86
 msgid "Current screenshot from most recent request"
 msgstr "가장 최근 요청의 현재 스크린샷"
 
-#: blueprint/ui/templates/diff.html:151 blueprint/ui/templates/preview.html:88
+#: changedetectionio/blueprint/ui/templates/diff.html:151
+#: changedetectionio/blueprint/ui/templates/preview.html:88
 msgid "No screenshot available just yet! Try rechecking the page."
 msgstr "아직 스크린샷이 없습니다! 페이지를 다시 확인해 보세요."
 
-#: blueprint/ui/templates/diff.html:154
+#: changedetectionio/blueprint/ui/templates/diff.html:154
 msgid "Screenshot requires Playwright/WebDriver enabled"
 msgstr "스크린샷을 찍으려면 Playwright/WebDriver를 활성화해야 합니다."
 
-#: blueprint/ui/templates/edit.html:48
+#: changedetectionio/blueprint/ui/templates/edit.html:48
 msgid "Request"
 msgstr "요구"
 
-#: blueprint/ui/templates/edit.html:52
+#: changedetectionio/blueprint/ui/templates/edit.html:52
 msgid "Browser Steps"
 msgstr "브라우저 단계"
 
-#: blueprint/ui/templates/edit.html:55
+#: changedetectionio/blueprint/ui/templates/edit.html:55
 msgid "Visual Filter Selector"
 msgstr "시각적 필터 선택기"
 
-#: blueprint/ui/templates/edit.html:57
+#: changedetectionio/blueprint/ui/templates/edit.html:57
 msgid "Conditions"
 msgstr "정황"
 
-#: blueprint/ui/templates/edit.html:60
+#: changedetectionio/blueprint/ui/templates/edit.html:60
 msgid "Stats"
 msgstr "통계"
 
-#: blueprint/ui/templates/edit.html:73 blueprint/ui/templates/edit.html:313
+#: changedetectionio/blueprint/ui/templates/edit.html:73
+#: changedetectionio/blueprint/ui/templates/edit.html:313
 msgid "Some sites use JavaScript to create the content, for this you should"
 msgstr "일부 사이트에서는 JavaScript를 사용하여 콘텐츠를 생성합니다."
 
-#: blueprint/ui/templates/edit.html:73 blueprint/ui/templates/edit.html:313
+#: changedetectionio/blueprint/ui/templates/edit.html:73
+#: changedetectionio/blueprint/ui/templates/edit.html:313
 msgid "use the Chrome/WebDriver Fetcher"
 msgstr "Chrome/WebDriver Fetcher를 사용하세요."
 
-#: blueprint/ui/templates/edit.html:74
+#: changedetectionio/blueprint/ui/templates/edit.html:74
 msgid "Variables are supported in the URL"
 msgstr "URL에서 변수가 지원됩니다."
 
-#: blueprint/ui/templates/edit.html:74 blueprint/ui/templates/edit.html:180
-#: blueprint/ui/templates/edit.html:189
+#: changedetectionio/blueprint/ui/templates/edit.html:74
+#: changedetectionio/blueprint/ui/templates/edit.html:180
+#: changedetectionio/blueprint/ui/templates/edit.html:189
 msgid "help and examples here"
 msgstr "여기에 도움말과 예시가 있습니다"
 
-#: blueprint/ui/templates/edit.html:78
+#: changedetectionio/blueprint/ui/templates/edit.html:78
 msgid "Organisational tag/group name used in the main listing page"
 msgstr "기본 목록 페이지에 사용되는 조직 태그/그룹 이름"
 
-#: blueprint/ui/templates/edit.html:85
+#: changedetectionio/blueprint/ui/templates/edit.html:85
 msgid ""
 "Automatically uses the page title if found, you can also use your own "
 "title/description here"
 msgstr ""
 
-#: blueprint/ui/templates/edit.html:95
+#: changedetectionio/blueprint/ui/templates/edit.html:95
 msgid "The interval/amount of time between each check."
 msgstr "각 확인 사이의 간격/시간입니다."
 
-#: blueprint/ui/templates/edit.html:110
+#: changedetectionio/blueprint/ui/templates/edit.html:110
 msgid ""
 "Sends a notification when the filter can no longer be seen on the page, "
 "good for knowing when the page changed and your filter will not work "
 "anymore."
 msgstr ""
 
-#: blueprint/ui/templates/edit.html:123
+#: changedetectionio/blueprint/ui/templates/edit.html:123
 msgid "Use the"
 msgstr "사용"
 
-#: blueprint/ui/templates/edit.html:123
+#: changedetectionio/blueprint/ui/templates/edit.html:123
 msgid "Basic"
 msgstr "기초적인"
 
-#: blueprint/ui/templates/edit.html:123
+#: changedetectionio/blueprint/ui/templates/edit.html:123
 msgid ""
 "method (default) where your watched site doesn't need Javascript to "
 "render."
 msgstr ""
 
-#: blueprint/ui/templates/edit.html:124
+#: changedetectionio/blueprint/ui/templates/edit.html:124
 msgid "The"
 msgstr "그만큼"
 
-#: blueprint/ui/templates/edit.html:124
+#: changedetectionio/blueprint/ui/templates/edit.html:124
 msgid "Chrome/Javascript"
 msgstr "크롬/자바스크립트"
 
-#: blueprint/ui/templates/edit.html:124
+#: changedetectionio/blueprint/ui/templates/edit.html:124
 msgid ""
 "method requires a network connection to a running WebDriver+Chrome "
 "server, set by the ENV var 'WEBDRIVER_URL'."
 msgstr ""
 
-#: blueprint/ui/templates/edit.html:125
+#: changedetectionio/blueprint/ui/templates/edit.html:125
 msgid "Connect using Bright Data and Oxylabs Proxies, find out more here."
 msgstr "Bright Data 및 Oxylabs 프록시를 사용하여 연결하세요. 여기에서 자세한 내용을 알아보세요."
 
-#: blueprint/ui/templates/edit.html:130
+#: changedetectionio/blueprint/ui/templates/edit.html:130
 msgid "Check/Scan all"
 msgstr "모두 다시 확인하세요"
 
-#: blueprint/ui/templates/edit.html:133
+#: changedetectionio/blueprint/ui/templates/edit.html:133
 msgid "Choose a proxy for this watch"
 msgstr "이 시계에 대한 RSS 피드"
 
-#: blueprint/ui/templates/edit.html:143
+#: changedetectionio/blueprint/ui/templates/edit.html:143
 msgid ""
 "If you're having trouble waiting for the page to be fully rendered (text "
 "missing etc), try increasing the 'wait' time here."
 msgstr ""
 
-#: blueprint/ui/templates/edit.html:145
+#: changedetectionio/blueprint/ui/templates/edit.html:145
 msgid "This will wait"
 msgstr "이것은 기다릴 것이다"
 
-#: blueprint/ui/templates/edit.html:145
+#: changedetectionio/blueprint/ui/templates/edit.html:145
 msgid "seconds before extracting the text."
 msgstr "텍스트를 추출하기 몇 초 전입니다."
 
-#: blueprint/ui/templates/edit.html:147
+#: changedetectionio/blueprint/ui/templates/edit.html:147
 msgid "Using the current global default settings"
 msgstr "현재 전역 기본 설정 사용"
 
-#: blueprint/ui/templates/edit.html:152 blueprint/ui/templates/edit.html:165
+#: changedetectionio/blueprint/ui/templates/edit.html:152
+#: changedetectionio/blueprint/ui/templates/edit.html:165
 msgid "Show advanced options"
 msgstr "고급 옵션 표시"
 
-#: blueprint/ui/templates/edit.html:157
+#: changedetectionio/blueprint/ui/templates/edit.html:157
 msgid ""
 "Run this code before performing change detection, handy for filling in "
 "fields and other actions"
 msgstr ""
 
-#: blueprint/ui/templates/edit.html:158
+#: changedetectionio/blueprint/ui/templates/edit.html:158
 msgid "More help and examples here"
 msgstr "여기에 더 많은 도움말과 예시가 있습니다."
 
-#: blueprint/ui/templates/edit.html:180
+#: changedetectionio/blueprint/ui/templates/edit.html:180
 msgid "Variables are supported in the request body"
 msgstr "요청 본문에서 변수가 지원됩니다."
 
-#: blueprint/ui/templates/edit.html:189
+#: changedetectionio/blueprint/ui/templates/edit.html:189
 msgid "Variables are supported in the request header values"
 msgstr "요청 헤더 값에서 변수가 지원됩니다."
 
-#: blueprint/ui/templates/edit.html:192
+#: changedetectionio/blueprint/ui/templates/edit.html:192
 msgid "Alert! Extra headers file found and will be added to this watch!"
 msgstr "알리다! 추가 헤더 파일이 발견되어 이 시계에 추가됩니다!"
 
-#: blueprint/ui/templates/edit.html:194
+#: changedetectionio/blueprint/ui/templates/edit.html:194
 msgid "Headers can be also read from a file in your data-directory"
 msgstr "데이터 디렉터리의 파일에서도 헤더를 읽을 수 있습니다."
 
-#: blueprint/ui/templates/edit.html:194
+#: changedetectionio/blueprint/ui/templates/edit.html:194
 msgid "Read more here"
 msgstr "여기서 더 읽어보세요"
 
-#: blueprint/ui/templates/edit.html:197
+#: changedetectionio/blueprint/ui/templates/edit.html:197
 msgid "Not supported by Selenium browser"
 msgstr "Selenium 브라우저에서는 지원되지 않습니다."
 
-#: blueprint/ui/templates/edit.html:221
+#: changedetectionio/blueprint/ui/templates/edit.html:221
 msgid "Turn on text finder"
 msgstr "텍스트 찾기 켜기"
 
-#: blueprint/ui/templates/edit.html:224
+#: changedetectionio/blueprint/ui/templates/edit.html:224
 msgid "Please wait, first browser step can take a little time to load.."
 msgstr "잠시 기다려 주십시오. 첫 번째 브라우저 단계를 로드하는 데 약간의 시간이 걸릴 수 있습니다."
 
-#: blueprint/ui/templates/edit.html:231
+#: changedetectionio/blueprint/ui/templates/edit.html:231
 msgid "Click here to Start"
 msgstr "시작하려면 여기를 클릭하세요"
 
-#: blueprint/ui/templates/edit.html:233
+#: changedetectionio/blueprint/ui/templates/edit.html:233
 msgid "Please allow 10-15 seconds for the browser to connect."
 msgstr "브라우저가 연결되는 데 10~15초 정도 기다려 주십시오."
 
-#: blueprint/ui/templates/edit.html:242
+#: changedetectionio/blueprint/ui/templates/edit.html:242
 msgid "Press \"Play\" to start."
 msgstr ""
 
-#: blueprint/ui/templates/edit.html:249 blueprint/ui/templates/edit.html:419
+#: changedetectionio/blueprint/ui/templates/edit.html:249
+#: changedetectionio/blueprint/ui/templates/edit.html:419
 msgid "Visual Selector data is not ready, watch needs to be checked atleast once."
 msgstr "시각적 선택기 데이터가 준비되지 않았습니다. 시계를 한 번 이상 확인해야 합니다."
 
-#: blueprint/ui/templates/edit.html:253
+#: changedetectionio/blueprint/ui/templates/edit.html:253
 msgid ""
 "Sorry, this functionality only works with fetchers that support "
 "interactive Javascript (so far only Playwright based fetchers)"
 msgstr ""
 
-#: blueprint/ui/templates/edit.html:254 blueprint/ui/templates/edit.html:424
+#: changedetectionio/blueprint/ui/templates/edit.html:254
+#: changedetectionio/blueprint/ui/templates/edit.html:424
 msgid "You need to"
 msgstr "당신은"
 
-#: blueprint/ui/templates/edit.html:254 blueprint/ui/templates/edit.html:424
+#: changedetectionio/blueprint/ui/templates/edit.html:254
+#: changedetectionio/blueprint/ui/templates/edit.html:424
 msgid "Set the fetch method"
 msgstr "가져오기 방법 설정"
 
-#: blueprint/ui/templates/edit.html:254
+#: changedetectionio/blueprint/ui/templates/edit.html:254
 msgid "to one that supports interactive Javascript."
 msgstr "대화형 Javascript를 지원하는 것입니다."
 
-#: blueprint/ui/templates/edit.html:297
+#: changedetectionio/blueprint/ui/templates/edit.html:297
 msgid ""
 "Use the verify (✓) button to test if a condition passes against the "
 "current snapshot."
 msgstr ""
 
-#: blueprint/ui/templates/edit.html:298
+#: changedetectionio/blueprint/ui/templates/edit.html:298
 msgid "Read a quick tutorial about"
 msgstr "다음에 대한 빠른 튜토리얼을 읽어보세요."
 
-#: blueprint/ui/templates/edit.html:298
+#: changedetectionio/blueprint/ui/templates/edit.html:298
 msgid "using conditional web page changes here"
 msgstr "여기에서 조건부 웹페이지 변경 사항을 사용합니다."
 
-#: blueprint/ui/templates/edit.html:303
+#: changedetectionio/blueprint/ui/templates/edit.html:303
 msgid "Activate preview"
 msgstr "시사"
 
-#: blueprint/ui/templates/edit.html:307
+#: changedetectionio/blueprint/ui/templates/edit.html:307
 msgid "Pro-tips:"
 msgstr "전문가 팁:"
 
-#: blueprint/ui/templates/edit.html:310
+#: changedetectionio/blueprint/ui/templates/edit.html:310
 msgid "Use the preview page to see your filters and triggers highlighted."
 msgstr "미리보기 페이지를 사용하여 강조 표시된 필터와 트리거를 확인하세요."
 
-#: blueprint/ui/templates/edit.html:322
+#: changedetectionio/blueprint/ui/templates/edit.html:322
 msgid "Limit trigger/ignore/block/extract to;"
 msgstr "트리거/무시/차단/추출을 다음으로 제한합니다."
 
-#: blueprint/ui/templates/edit.html:326
+#: changedetectionio/blueprint/ui/templates/edit.html:326
 msgid ""
 "Note: Depending on the length and similarity of the text on each line, "
 "the algorithm may consider an"
 msgstr ""
 
-#: blueprint/ui/templates/edit.html:326 blueprint/ui/templates/edit.html:328
+#: changedetectionio/blueprint/ui/templates/edit.html:326
+#: changedetectionio/blueprint/ui/templates/edit.html:328
 msgid "addition"
 msgstr "덧셈"
 
-#: blueprint/ui/templates/edit.html:326
+#: changedetectionio/blueprint/ui/templates/edit.html:326
 msgid "instead of"
 msgstr "대신에"
 
-#: blueprint/ui/templates/edit.html:326
+#: changedetectionio/blueprint/ui/templates/edit.html:326
 msgid "replacement"
 msgstr "대사"
 
-#: blueprint/ui/templates/edit.html:326
+#: changedetectionio/blueprint/ui/templates/edit.html:326
 msgid "for example."
 msgstr "예를 들어."
 
-#: blueprint/ui/templates/edit.html:327
+#: changedetectionio/blueprint/ui/templates/edit.html:327
 msgid "So it's always better to select"
 msgstr "따라서 항상 선택하는 것이 좋습니다."
 
-#: blueprint/ui/templates/edit.html:327
+#: changedetectionio/blueprint/ui/templates/edit.html:327
 msgid "when you're interested in new content."
 msgstr "새로운 콘텐츠에 관심이 있을 때."
 
-#: blueprint/ui/templates/edit.html:328
+#: changedetectionio/blueprint/ui/templates/edit.html:328
 msgid "When content is merely moved in a list, it will also trigger an"
 msgstr "콘텐츠가 목록에서 단순히 이동되는 경우에도"
 
-#: blueprint/ui/templates/edit.html:328
+#: changedetectionio/blueprint/ui/templates/edit.html:328
 msgid "consider enabling"
 msgstr "활성화하는 것을 고려해보세요"
 
-#: blueprint/ui/templates/edit.html:328
+#: changedetectionio/blueprint/ui/templates/edit.html:328
 msgid "Only trigger when unique lines appear"
 msgstr "고유한 줄이 나타날 때만 트리거됩니다."
 
-#: blueprint/ui/templates/edit.html:332
+#: changedetectionio/blueprint/ui/templates/edit.html:332
 msgid ""
 "Good for websites that just move the content around, and you want to know"
 " when NEW content is added, compares new lines against all history for "
 "this watch."
 msgstr ""
 
-#: blueprint/ui/templates/edit.html:336
-msgid "Remove duplicate lines of text"
-msgstr "중복된 텍스트 줄 제거"
-
-#: blueprint/ui/templates/edit.html:340
+#: changedetectionio/blueprint/ui/templates/edit.html:340
 msgid ""
 "Helps reduce changes detected caused by sites shuffling lines around, "
 "combine with"
 msgstr ""
 
-#: blueprint/ui/templates/edit.html:340
+#: changedetectionio/blueprint/ui/templates/edit.html:340
 msgid "check unique lines"
 msgstr "고유 라인 확인"
 
-#: blueprint/ui/templates/edit.html:340
+#: changedetectionio/blueprint/ui/templates/edit.html:340
 msgid "below."
 msgstr "아래에."
 
-#: blueprint/ui/templates/edit.html:344
+#: changedetectionio/blueprint/ui/templates/edit.html:344
 msgid "Remove any whitespace before and after each line of text"
 msgstr "각 텍스트 줄 앞과 뒤의 공백을 제거하세요."
 
-#: blueprint/ui/templates/edit.html:358 blueprint/ui/templates/edit.html:361
-#: blueprint/ui/templates/edit.html:417
+#: changedetectionio/blueprint/ui/templates/edit.html:358
+#: changedetectionio/blueprint/ui/templates/edit.html:361
+#: changedetectionio/blueprint/ui/templates/edit.html:417
 msgid "Loading..."
 msgstr "로드 중..."
 
-#: blueprint/ui/templates/edit.html:386
+#: changedetectionio/blueprint/ui/templates/edit.html:386
 msgid "The Visual Selector tool lets you select the"
 msgstr "시각적 선택 도구를 사용하면 다음을 선택할 수 있습니다."
 
-#: blueprint/ui/templates/edit.html:386
+#: changedetectionio/blueprint/ui/templates/edit.html:386
 msgid "text"
 msgstr "텍스트"
 
-#: blueprint/ui/templates/edit.html:386
+#: changedetectionio/blueprint/ui/templates/edit.html:386
 msgid ""
 "elements that will be used for the change detection. It automatically "
 "fills-in the filters in the \"CSS/JSONPath/JQ/XPath Filters\" box of the"
 msgstr ""
 
-#: blueprint/ui/templates/edit.html:386
+#: changedetectionio/blueprint/ui/templates/edit.html:386
 msgid "tab. Use"
 msgstr "정지시키다"
 
-#: blueprint/ui/templates/edit.html:386
+#: changedetectionio/blueprint/ui/templates/edit.html:386
 msgid "Shift+Click"
 msgstr "Shift+클릭"
 
-#: blueprint/ui/templates/edit.html:386
+#: changedetectionio/blueprint/ui/templates/edit.html:386
 msgid "to select multiple items."
 msgstr "여러 항목을 선택하려면"
 
-#: blueprint/ui/templates/edit.html:391
+#: changedetectionio/blueprint/ui/templates/edit.html:391
 msgid "Selection Mode:"
 msgstr "선택 모드:"
 
-#: blueprint/ui/templates/edit.html:394
+#: changedetectionio/blueprint/ui/templates/edit.html:394
 msgid "Select by element"
 msgstr "요소별로 선택"
 
-#: blueprint/ui/templates/edit.html:398
+#: changedetectionio/blueprint/ui/templates/edit.html:398
 msgid "Draw area"
 msgstr "그리기 영역"
 
-#: blueprint/ui/templates/edit.html:406
+#: changedetectionio/blueprint/ui/templates/edit.html:406
 msgid "Clear selection"
 msgstr "선택 취소"
 
-#: blueprint/ui/templates/edit.html:408
+#: changedetectionio/blueprint/ui/templates/edit.html:408
 msgid "One moment, fetching screenshot and element information.."
 msgstr "잠시만 기다려 주세요. 스크린샷과 요소 정보를 가져오는 중입니다."
 
-#: blueprint/ui/templates/edit.html:417
+#: changedetectionio/blueprint/ui/templates/edit.html:417
 msgid "Currently:"
 msgstr "현재:"
 
-#: blueprint/ui/templates/edit.html:423
+#: changedetectionio/blueprint/ui/templates/edit.html:423
 msgid ""
 "Sorry, this functionality only works with fetchers that support "
 "Javascript and screenshots (such as playwright etc)."
 msgstr ""
 
-#: blueprint/ui/templates/edit.html:424
+#: changedetectionio/blueprint/ui/templates/edit.html:424
 msgid "to one that supports Javascript and screenshots."
 msgstr "Javascript와 스크린샷을 지원하는 것입니다."
 
-#: blueprint/ui/templates/edit.html:441
+#: changedetectionio/blueprint/ui/templates/edit.html:441
 msgid "Check count"
 msgstr "수표 수"
 
-#: blueprint/ui/templates/edit.html:445
+#: changedetectionio/blueprint/ui/templates/edit.html:445
 msgid "Consecutive filter failures"
 msgstr "연속적인 필터 실패"
 
-#: blueprint/ui/templates/edit.html:449
+#: changedetectionio/blueprint/ui/templates/edit.html:449
 msgid "History length"
 msgstr "역사"
 
-#: blueprint/ui/templates/edit.html:453
+#: changedetectionio/blueprint/ui/templates/edit.html:453
 msgid "Last fetch duration"
 msgstr "마지막 가져오기 기간"
 
-#: blueprint/ui/templates/edit.html:457
+#: changedetectionio/blueprint/ui/templates/edit.html:457
 msgid "Notification alert count"
 msgstr "알림 경고 수"
 
-#: blueprint/ui/templates/edit.html:461
+#: changedetectionio/blueprint/ui/templates/edit.html:461
 msgid "Server type reply"
 msgstr "서버 유형 응답"
 
-#: blueprint/ui/templates/edit.html:475
+#: changedetectionio/blueprint/ui/templates/edit.html:475
 msgid "Download latest HTML snapshot"
 msgstr "최신 HTML 스냅샷 다운로드"
 
-#: blueprint/ui/templates/edit.html:488
+#: changedetectionio/blueprint/ui/templates/edit.html:488
 msgid "Delete Watch?"
 msgstr "시계를 삭제하시겠습니까?"
 
-#: blueprint/ui/templates/edit.html:489
+#: changedetectionio/blueprint/ui/templates/edit.html:489
 msgid "Are you sure you want to delete the watch for:"
 msgstr "정말로 다음의 시계를 삭제하시겠습니까?"
 
-#: blueprint/ui/templates/edit.html:489
+#: changedetectionio/blueprint/ui/templates/edit.html:489
 msgid "This action cannot be undone."
 msgstr "이 작업은 취소할 수 없습니다."
 
-#: blueprint/ui/templates/edit.html:495
+#: changedetectionio/blueprint/ui/templates/edit.html:495
 msgid "Clear History?"
 msgstr "기록 지우기"
 
-#: blueprint/ui/templates/edit.html:496
+#: changedetectionio/blueprint/ui/templates/edit.html:496
 msgid "Are you sure you want to clear all history for:"
 msgstr "정말로 다음의 기록을 모두 지우시겠습니까?"
 
-#: blueprint/ui/templates/edit.html:496
+#: changedetectionio/blueprint/ui/templates/edit.html:496
 msgid ""
 "This will remove all snapshots and previous versions. This action cannot "
 "be undone."
 msgstr ""
 
-#: blueprint/ui/templates/edit.html:497
+#: changedetectionio/blueprint/ui/templates/edit.html:497
 msgid "Clear History"
 msgstr "기록 지우기"
 
-#: blueprint/ui/templates/edit.html:499
+#: changedetectionio/blueprint/ui/templates/edit.html:499
 msgid "Clone & Edit"
 msgstr "복제 및 편집"
 
-#: blueprint/ui/templates/preview.html:22
+#: changedetectionio/blueprint/ui/templates/preview.html:22
 msgid "Select timestamp"
 msgstr "타임스탬프 선택"
 
-#: blueprint/ui/templates/preview.html:31
+#: changedetectionio/blueprint/ui/templates/preview.html:31
 msgid "Go"
 msgstr "가다"
 
-#: blueprint/ui/templates/preview.html:69
+#: changedetectionio/blueprint/ui/templates/preview.html:69
 msgid "Current erroring screenshot from most recent request"
 msgstr "가장 최근 요청의 현재 오류 스크린샷"
 
-#: blueprint/ui/templates/preview.html:91
+#: changedetectionio/blueprint/ui/templates/preview.html:91
 msgid ""
 "Screenshot requires a Content Fetcher ( Sockpuppetbrowser, selenium, etc "
 ") that supports screenshots."
 msgstr ""
 
-#: blueprint/watchlist/templates/watch-overview.html:58
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:58
 msgid "Add a new web page change detection watch"
 msgstr "새로운 웹 페이지 변경 감지 감시 추가"
 
-#: blueprint/watchlist/templates/watch-overview.html:61
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:61
 msgid "Watch this URL!"
 msgstr "이 URL 모니터!"
 
-#: blueprint/watchlist/templates/watch-overview.html:62
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:62
 msgid "Edit first then Watch"
 msgstr "편집 후 모니터"
 
-#: blueprint/watchlist/templates/watch-overview.html:72
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:72
 msgid "Create a shareable link"
 msgstr "공유 가능한 링크 만들기"
 
-#: blueprint/watchlist/templates/watch-overview.html:72
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:72
 msgid "Tip: You can also add 'shared' watches."
 msgstr "팁: '공유' 시계를 추가할 수도 있습니다."
 
-#: blueprint/watchlist/templates/watch-overview.html:72
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:72
 msgid "More info"
 msgstr "추가 정보"
 
-#: blueprint/watchlist/templates/watch-overview.html:80
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:80
 msgid "Pause"
 msgstr "정지시키다"
 
-#: blueprint/watchlist/templates/watch-overview.html:81
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:81
 msgid "UnPause"
 msgstr "일시정지 해제"
 
-#: blueprint/watchlist/templates/watch-overview.html:82
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:82
 msgid "Mute"
 msgstr "무음"
 
-#: blueprint/watchlist/templates/watch-overview.html:83
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:83
 msgid "UnMute"
 msgstr "음소거 해제"
 
-#: blueprint/watchlist/templates/watch-overview.html:85
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:85
 msgid "Tag"
 msgstr "꼬리표"
 
-#: blueprint/watchlist/templates/watch-overview.html:86
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:86
 msgid "Mark viewed"
 msgstr "본 것으로 표시"
 
-#: blueprint/watchlist/templates/watch-overview.html:87
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:87
 msgid "Use default notification"
 msgstr "기본 알림 사용"
 
-#: blueprint/watchlist/templates/watch-overview.html:88
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:88
 msgid "Clear errors"
 msgstr "오류 지우기"
 
-#: blueprint/watchlist/templates/watch-overview.html:92
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:92
 msgid "Clear Histories"
 msgstr "기록 지우기"
 
-#: blueprint/watchlist/templates/watch-overview.html:93
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:93
 msgid ""
 "<p>Are you sure you want to clear history for the selected "
 "items?</p><p>This action cannot be undone.</p>"
 msgstr ""
 
-#: blueprint/watchlist/templates/watch-overview.html:94
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:94
 msgid "OK"
 msgstr "좋아요"
 
-#: blueprint/watchlist/templates/watch-overview.html:94
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:94
 msgid "Clear/reset history"
 msgstr "기록 지우기/재설정"
 
-#: blueprint/watchlist/templates/watch-overview.html:98
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:98
 msgid "Delete Watches?"
 msgstr "시계를 삭제하시겠습니까?"
 
-#: blueprint/watchlist/templates/watch-overview.html:99
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:99
 msgid ""
 "<p>Are you sure you want to delete the selected "
 "watches?</strong></p><p>This action cannot be undone.</p>"
 msgstr ""
 
-#: blueprint/watchlist/templates/watch-overview.html:105
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:105
 msgid "Searching"
 msgstr "수색"
 
-#: blueprint/watchlist/templates/watch-overview.html:107
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:107
 msgid "All"
 msgstr "모두"
 
-#: blueprint/watchlist/templates/watch-overview.html:145
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:145
 msgid "Website"
 msgstr "웹사이트"
 
-#: blueprint/watchlist/templates/watch-overview.html:147
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:147
 msgid "Restock & Price"
 msgstr "재입고 및 가격"
 
-#: blueprint/watchlist/templates/watch-overview.html:149
-#: blueprint/watchlist/templates/watch-overview.html:150
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:149
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:150
 msgid "Last"
 msgstr "마지막"
 
-#: blueprint/watchlist/templates/watch-overview.html:149
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:149
 msgid "Checked"
 msgstr "체크됨"
 
-#: blueprint/watchlist/templates/watch-overview.html:150
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:150
 msgid "Changed"
 msgstr "변경됨"
 
-#: blueprint/watchlist/templates/watch-overview.html:157
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:157
 msgid "No website watches configured, please add a URL in the box above, or"
 msgstr "구성된 웹사이트 시계가 없습니다. 위 상자에 URL을 추가하세요. 또는"
 
-#: blueprint/watchlist/templates/watch-overview.html:157
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:157
 msgid "import a list"
 msgstr "목록 가져오기"
 
-#: blueprint/watchlist/templates/watch-overview.html:240
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:240
 msgid "Detecting restock and price"
 msgstr "재입고 및 가격 감지"
 
-#: blueprint/watchlist/templates/watch-overview.html:242
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:242
 msgid "In stock"
 msgstr "재고 있음"
 
-#: blueprint/watchlist/templates/watch-overview.html:242
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:242
 msgid "Not in stock"
 msgstr "재고가 없습니다"
 
-#: blueprint/watchlist/templates/watch-overview.html:248
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:248
 msgid "Price"
 msgstr "가격"
 
-#: blueprint/watchlist/templates/watch-overview.html:253
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:253
 msgid "No information"
 msgstr "정보 없음"
 
-#: blueprint/watchlist/templates/watch-overview.html:261
-#: templates/base.html:247
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:261
+#: changedetectionio/templates/base.html:247
 msgid "Checking now"
 msgstr "지금 확인 중"
 
-#: blueprint/watchlist/templates/watch-overview.html:274
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:274
 msgid "Queued"
 msgstr "대기 중"
 
-#: blueprint/watchlist/templates/watch-overview.html:277
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:277
 msgid "History"
 msgstr "기록"
 
-#: blueprint/watchlist/templates/watch-overview.html:278
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:278
 msgid "Preview"
 msgstr "시사"
 
-#: blueprint/watchlist/templates/watch-overview.html:287
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:287
 msgid "With errors"
 msgstr "오류가 있음"
 
-#: blueprint/watchlist/templates/watch-overview.html:290
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:290
 msgid "Mark all viewed"
 msgstr "모두 본 것으로 표시"
 
-#: blueprint/watchlist/templates/watch-overview.html:294
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:294
 #, python-format
 msgid "Mark all viewed in '%(title)s'"
 msgstr "'%(title)s'에서 모두 본 것으로 표시"
 
-#: blueprint/watchlist/templates/watch-overview.html:298
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:298
 msgid "Unread"
 msgstr "읽히지 않는"
 
-#: blueprint/watchlist/templates/watch-overview.html:301
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:301
 msgid "Recheck all"
 msgstr "모두 다시 확인하세요"
 
-#: blueprint/watchlist/templates/watch-overview.html:301
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:301
 #, python-format
 msgid "in '%(title)s'"
 msgstr "'%(title)s'에서"
 
-#: processors/extract.py:131
+#: changedetectionio/processors/extract.py:131
 msgid "No matches found while scanning all of the watch history for that RegEx."
 msgstr ""
 
-#: processors/image_ssim_diff/difference.py:328
+#: changedetectionio/processors/image_ssim_diff/difference.py:328
 msgid "Not enough history to compare. Need at least 2 snapshots."
 msgstr ""
 
-#: processors/image_ssim_diff/difference.py:363
+#: changedetectionio/processors/image_ssim_diff/difference.py:363
 #, python-brace-format
 msgid "Failed to load screenshots: {}"
 msgstr ""
 
-#: processors/image_ssim_diff/difference.py:412
+#: changedetectionio/processors/image_ssim_diff/difference.py:412
 #, python-brace-format
 msgid "Failed to calculate diff: {}"
 msgstr ""
 
-#: processors/image_ssim_diff/preview.py:91
+#: changedetectionio/processors/image_ssim_diff/forms.py:19
+#: changedetectionio/processors/image_ssim_diff/forms.py:69
+msgid "Bounding box value is too long"
+msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:23
+msgid "Bounding box must be in format: x,y,width,height (integers only)"
+msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:29
+msgid "Bounding box values must be non-negative"
+msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:31
+msgid "Bounding box values are too large"
+msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:40
+msgid "Selection mode must be either \"element\" or \"draw\""
+msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:47
+msgid "Minimum Change Percentage"
+msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:56
+msgid "Pixel Difference Sensitivity"
+msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:58
+#, fuzzy
+msgid "Use global default"
+msgstr "시스템 기본값 사용"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:66
+msgid "Bounding Box"
+msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:76
+#, fuzzy
+msgid "Selection Mode"
+msgstr "선택 모드:"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:79
+msgid "Selection mode value is too long"
+msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/forms.py:87
+msgid "Screenshot Comparison"
+msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/preview.py:91
 msgid "Preview unavailable - No snapshots captured yet"
 msgstr ""
 
-#: processors/image_ssim_diff/processor.py:21
+#: changedetectionio/processors/image_ssim_diff/processor.py:21
 msgid "Visual / Image screenshot change detection"
 msgstr "시각적/이미지 스크린샷 변경 감지"
 
-#: processors/image_ssim_diff/processor.py:22
+#: changedetectionio/processors/image_ssim_diff/processor.py:22
 msgid "Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM"
 msgstr ""
 
-#: processors/restock_diff/processor.py:13
+#: changedetectionio/processors/restock_diff/forms.py:15
+msgid "Re-stock detection"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/forms.py:16
+msgid "In Stock only (Out Of Stock -> In Stock only)"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/forms.py:17
+msgid "Any availability changes"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/forms.py:18
+msgid "Off, don't follow availability/restock"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/forms.py:21
+msgid "Below price to trigger notification"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/forms.py:22
+#: changedetectionio/processors/restock_diff/forms.py:24
+msgid "No limit"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/forms.py:23
+msgid "Above price to trigger notification"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/forms.py:25
+#, python-format
+msgid "Threshold in %% for price changes since the original price"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/forms.py:28
+msgid "Should be between 0 and 100"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/forms.py:31
+msgid "Follow price changes"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/forms.py:37
+#, fuzzy
+msgid "Restock & Price Detection"
+msgstr "재입고 및 가격"
+
+#: changedetectionio/processors/restock_diff/processor.py:13
 msgid "Re-stock & Price detection for pages with a SINGLE product"
 msgstr "단일 제품이 포함된 페이지의 재입고 및 가격 감지"
 
-#: processors/restock_diff/processor.py:14
+#: changedetectionio/processors/restock_diff/processor.py:14
 msgid "Detects if the product goes back to in-stock"
 msgstr "제품이 다시 재고로 돌아왔는지 감지합니다."
 
-#: processors/text_json_diff/processor.py:22
+#: changedetectionio/processors/text_json_diff/processor.py:22
 msgid "Webpage Text/HTML, JSON and PDF changes"
 msgstr "웹페이지 텍스트/HTML, JSON 및 PDF 변경"
 
-#: processors/text_json_diff/processor.py:23
+#: changedetectionio/processors/text_json_diff/processor.py:23
 msgid "Detects all text changes where possible"
 msgstr "가능한 경우 모든 텍스트 변경 사항을 감지합니다."
 
-#: templates/_helpers.html:25
+#: changedetectionio/templates/_helpers.html:25
 msgid "Entry"
 msgstr ""
 
-#: templates/_helpers.html:153
+#: changedetectionio/templates/_helpers.html:153
 #, fuzzy
 msgid "Actions"
 msgstr "정황"
 
-#: templates/_helpers.html:172
+#: changedetectionio/templates/_helpers.html:172
 msgid "Add a row/rule after"
 msgstr ""
 
-#: templates/_helpers.html:173
+#: changedetectionio/templates/_helpers.html:173
 msgid "Remove this row/rule"
 msgstr ""
 
-#: templates/_helpers.html:174
+#: changedetectionio/templates/_helpers.html:174
 msgid "Verify this rule against current snapshot"
 msgstr ""
 
-#: templates/_helpers.html:184
+#: changedetectionio/templates/_helpers.html:184
 msgid ""
 "Error - This watch needs Chrome (with playwright/sockpuppetbrowser), but "
 "Chrome based fetching is not enabled."
 msgstr ""
 
-#: templates/_helpers.html:184
+#: changedetectionio/templates/_helpers.html:184
 msgid "Alternatively try our"
 msgstr ""
 
-#: templates/_helpers.html:184
+#: changedetectionio/templates/_helpers.html:184
 msgid ""
 "very affordable subscription based service which has all this setup for "
 "you"
 msgstr ""
 
-#: templates/_helpers.html:185
+#: changedetectionio/templates/_helpers.html:185
 #, fuzzy
 msgid "You may need to"
 msgstr "당신은"
 
-#: templates/_helpers.html:185
+#: changedetectionio/templates/_helpers.html:185
 msgid "Enable playwright environment variable"
 msgstr ""
 
-#: templates/_helpers.html:185
+#: changedetectionio/templates/_helpers.html:185
 msgid "and uncomment the"
 msgstr ""
 
-#: templates/_helpers.html:185
+#: changedetectionio/templates/_helpers.html:185
 #, fuzzy
 msgid "in the"
 msgstr "그만큼"
 
-#: templates/_helpers.html:185
+#: changedetectionio/templates/_helpers.html:185
 #, fuzzy
 msgid "file"
 msgstr "제목"
 
-#: templates/_helpers.html:240
+#: changedetectionio/templates/_helpers.html:240
 msgid "Set a hourly/week day schedule"
 msgstr ""
 
-#: templates/_helpers.html:247
+#: changedetectionio/templates/_helpers.html:247
 #, fuzzy
 msgid "Schedule time limits"
 msgstr "재확인 시간(분)"
 
-#: templates/_helpers.html:248
+#: changedetectionio/templates/_helpers.html:248
 msgid "Business hours"
 msgstr ""
 
-#: templates/_helpers.html:249
+#: changedetectionio/templates/_helpers.html:249
 #, fuzzy
 msgid "Weekends"
 msgstr "주"
 
-#: templates/_helpers.html:250
+#: changedetectionio/templates/_helpers.html:250
 #, fuzzy
 msgid "Reset"
 msgstr "요구"
 
-#: templates/_helpers.html:259
+#: changedetectionio/templates/_helpers.html:259
 msgid ""
 "Warning, one or more of your 'days' has a duration that would extend into"
 " the next day."
 msgstr ""
 
-#: templates/_helpers.html:260
+#: changedetectionio/templates/_helpers.html:260
 msgid "This could have unintended consequences."
 msgstr ""
 
-#: templates/_helpers.html:270
+#: changedetectionio/templates/_helpers.html:270
 #, fuzzy
 msgid "More help and examples about using the scheduler"
 msgstr "여기에 더 많은 도움말과 예시가 있습니다."
 
-#: templates/_helpers.html:275
+#: changedetectionio/templates/_helpers.html:275
 #, fuzzy
 msgid "Want to use a time schedule?"
 msgstr "시간 스케줄러 사용"
 
-#: templates/_helpers.html:275
+#: changedetectionio/templates/_helpers.html:275
 msgid "First confirm/save your Time Zone Settings"
 msgstr ""
 
-#: templates/_helpers.html:284
+#: changedetectionio/templates/_helpers.html:284
 msgid ""
 "Triggers a change if this text appears, AND something changed in the "
 "document."
 msgstr ""
 
-#: templates/_helpers.html:284
+#: changedetectionio/templates/_helpers.html:284
 #, fuzzy
 msgid "Triggered text"
 msgstr "오류 텍스트"
 
-#: templates/_helpers.html:285
+#: changedetectionio/templates/_helpers.html:285
 msgid "Ignored for calculating changes, but still shown."
 msgstr ""
 
-#: templates/_helpers.html:285
+#: changedetectionio/templates/_helpers.html:285
 #, fuzzy
 msgid "Ignored text"
 msgstr "오류 텍스트"
 
-#: templates/_helpers.html:286
+#: changedetectionio/templates/_helpers.html:286
 #, fuzzy
 msgid "No change-detection will occur because this text exists."
 msgstr "텍스트가 일치하는 동안 변경 감지 차단"
 
-#: templates/_helpers.html:286
+#: changedetectionio/templates/_helpers.html:286
 #, fuzzy
 msgid "Blocked text"
 msgstr "오류 텍스트"
 
-#: templates/base.html:80
+#: changedetectionio/templates/base.html:80
 msgid "Search, or Use Alt+S Key"
 msgstr "검색 또는 Alt+S 키 사용"
 
-#: templates/base.html:248
+#: changedetectionio/templates/base.html:248
 msgid "Real-time updates offline"
 msgstr "실시간 업데이트 오프라인"
 
-#: templates/base.html:258
+#: changedetectionio/templates/base.html:258
 msgid "Select Language"
 msgstr "언어 선택"
 
-#: templates/base.html:269
+#: changedetectionio/templates/base.html:269
 msgid ""
 "Language support is in beta, please help us improve by opening a PR on "
 "GitHub with any updates."
 msgstr ""
 
-#: templates/base.html:281 templates/base.html:294
+#: changedetectionio/templates/base.html:281
+#: changedetectionio/templates/base.html:294
 #, fuzzy
 msgid "Search"
 msgstr "수색"
 
-#: templates/base.html:286
+#: changedetectionio/templates/base.html:286
 msgid "URL or Title"
 msgstr ""
 
-#: templates/base.html:286
+#: changedetectionio/templates/base.html:286
 #, fuzzy
 msgid "in"
 msgstr "추가 정보"
 
-#: templates/base.html:287
+#: changedetectionio/templates/base.html:287
 msgid "Enter search term..."
 msgstr ""
 
-#: templates/login.html:11
+#: changedetectionio/templates/login.html:11
 msgid "Password"
 msgstr "비밀번호"
 
-#: templates/login.html:17
+#: changedetectionio/templates/login.html:17
 msgid "Login"
 msgstr "로그인"
 
-#: templates/menu.html:8
+#: changedetectionio/templates/menu.html:8
 msgid "GROUPS"
 msgstr "여러 떼"
 
-#: templates/menu.html:11
+#: changedetectionio/templates/menu.html:11
 msgid "SETTINGS"
 msgstr "설정"
 
-#: templates/menu.html:14
+#: changedetectionio/templates/menu.html:14
 msgid "IMPORT"
 msgstr "가져오기"
 
-#: templates/menu.html:17
+#: changedetectionio/templates/menu.html:17
 msgid "BACKUPS"
 msgstr "백업"
 
-#: templates/menu.html:22
+#: changedetectionio/templates/menu.html:22
 msgid "EDIT"
 msgstr "편집하다"
 
-#: templates/menu.html:27
+#: changedetectionio/templates/menu.html:27
 msgid "LOG OUT"
 msgstr "로그아웃"
 
-#: templates/menu.html:37
+#: changedetectionio/templates/menu.html:37
 msgid "Toggle Light/Dark Mode"
 msgstr "밝은/어두운 모드 전환"
 
-#: templates/menu.html:38
+#: changedetectionio/templates/menu.html:38
 msgid "Toggle light/dark mode"
 msgstr "밝은/어두운 모드 전환"
 
-#: templates/menu.html:46
+#: changedetectionio/templates/menu.html:46
 msgid "Change Language"
 msgstr "언어 변경"
 
-#: templates/menu.html:47
+#: changedetectionio/templates/menu.html:47
 msgid "Change language"
 msgstr "언어 변경"
 
