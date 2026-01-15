@@ -41,9 +41,10 @@ from loguru import logger
 #
 # IMPLEMENTATION:
 #   1. Explicit contexts everywhere (primary protection):
-#      - Watch.py: ctx = multiprocessing.get_context('spawn')
 #      - playwright.py: ctx = multiprocessing.get_context('spawn')
 #      - puppeteer.py: ctx = multiprocessing.get_context('spawn')
+#      - isolated_opencv.py: ctx = multiprocessing.get_context('spawn')
+#      - isolated_libvips.py: ctx = multiprocessing.get_context('spawn')
 #
 #   2. Global default (defense-in-depth, below):
 #      - Safety net if future code forgets explicit context
