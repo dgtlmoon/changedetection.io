@@ -5,12 +5,8 @@ from .util import live_server_setup
 
 def test_zh_TW(client, live_server, measure_memory_usage, datastore_path):
 
-    res = client.get(
-        url_for("set_language", locale="zh"), # Simplified chinese
-        follow_redirects=True
-    )
-    assert "选择语言".encode() in res.data
-
+    # Be sure we got a session cookie
+    res = client.get(url_for("watchlist.index"), follow_redirects=True)
 
     res = client.get(
         url_for("set_language", locale="zh_Hant_TW"), # Traditional
@@ -18,8 +14,27 @@ def test_zh_TW(client, live_server, measure_memory_usage, datastore_path):
     )
     # HTML follows BCP 47 language tag rules, not underscore-based locale formats.
     assert b'<html lang="zh-Hant-TW"' in res.data
-
+    assert b'Cannot set language without session cookie' not in res.data
     assert '選擇語言'.encode() in res.data
+
+    # Check second set works
+    res = client.get(
+        url_for("set_language", locale="en_GB"),
+        follow_redirects=True
+    )
+    assert b'Cannot set language without session cookie' not in res.data
+    res = client.get(url_for("watchlist.index"), follow_redirects=True)
+    assert b"Select Language" in res.data, "Second set of language worked"
+
+    # Check arbitration between zh_Hant_TW<->zh
+    res = client.get(
+        url_for("set_language", locale="zh"), # Simplified chinese
+        follow_redirects=True
+    )
+    res = client.get(url_for("watchlist.index"), follow_redirects=True)
+    assert "选择语言".encode() in res.data, "Simplified chinese worked and it means the flask-babel cache worked"
+
+
 
 
 def test_language_switching(client, live_server, measure_memory_usage, datastore_path):
@@ -30,6 +45,9 @@ def test_language_switching(client, live_server, measure_memory_usage, datastore
     2. Verify that Italian text appears on the page
     3. Switch back to English and verify English text appears
     """
+
+    # Establish session cookie
+    client.get(url_for("watchlist.index"), follow_redirects=True)
 
     # Step 1: Set the language to Italian using the /set-language endpoint
     res = client.get(
@@ -79,6 +97,9 @@ def test_invalid_locale(client, live_server, measure_memory_usage, datastore_pat
     The app should ignore invalid locales and continue working.
     """
 
+    # Establish session cookie
+    client.get(url_for("watchlist.index"), follow_redirects=True)
+
     # First set to English
     res = client.get(
         url_for("set_language", locale="en"),
@@ -111,6 +132,9 @@ def test_language_persistence_in_session(client, live_server, measure_memory_usa
     within the same session.
     """
 
+    # Establish session cookie
+    client.get(url_for("watchlist.index"), follow_redirects=True)
+
     # Set language to Italian
     res = client.get(
         url_for("set_language", locale="it"),
@@ -136,6 +160,9 @@ def test_set_language_with_redirect(client, live_server, measure_memory_usage, d
     Example: User is on /settings, changes language, stays on /settings.
     """
     from flask import url_for
+
+    # Establish session cookie
+    client.get(url_for("watchlist.index"), follow_redirects=True)
 
     # Set language with a redirect parameter (simulating language change from /settings)
     res = client.get(
