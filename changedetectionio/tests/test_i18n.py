@@ -3,6 +3,24 @@
 from flask import url_for
 from .util import live_server_setup
 
+def test_zh_TW(client, live_server, measure_memory_usage, datastore_path):
+
+    res = client.get(
+        url_for("set_language", locale="zh"), # Simplified chinese
+        follow_redirects=True
+    )
+    assert "选择语言".encode() in res.data
+
+
+    res = client.get(
+        url_for("set_language", locale="zh_Hant_TW"), # Traditional
+        follow_redirects=True
+    )
+    # HTML follows BCP 47 language tag rules, not underscore-based locale formats.
+    assert b'<html lang="zh-Hant-TW"' in res.data
+
+    assert '選擇語言'.encode() in res.data
+
 
 def test_language_switching(client, live_server, measure_memory_usage, datastore_path):
     """
