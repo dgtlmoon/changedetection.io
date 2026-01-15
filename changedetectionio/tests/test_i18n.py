@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 
 from flask import url_for
-from .util import live_server_setup
+from .util import live_server_setup, wait_for_all_checks
+
 
 def test_zh_TW(client, live_server, measure_memory_usage, datastore_path):
+    import time
+    test_url = url_for('test_endpoint', _external=True)
 
     # Be sure we got a session cookie
     res = client.get(url_for("watchlist.index"), follow_redirects=True)
@@ -35,6 +38,34 @@ def test_zh_TW(client, live_server, measure_memory_usage, datastore_path):
     assert "选择语言".encode() in res.data, "Simplified chinese worked and it means the flask-babel cache worked"
 
 
+# timeago library just hasn't been updated to use the more modern locale naming convention, before BCP 47 / RFC 5646.
+# The Python timeago library (https://github.com/hustcc/timeago) supports 48 locales but uses different naming conventions than Flask-Babel.
+def test_zh_Hant_TW_timeago_integration():
+    """Test that zh_Hant_TW mapping works and timeago renders Traditional Chinese correctly"""
+    import timeago
+    from datetime import datetime, timedelta
+    from changedetectionio.languages import get_timeago_locale
+
+    # 1. Test the mapping
+    mapped_locale = get_timeago_locale('zh_Hant_TW')
+    assert mapped_locale == 'zh_TW', "zh_Hant_TW should map to timeago's zh_TW"
+    assert get_timeago_locale('zh_TW') == 'zh_TW', "zh_TW should also map to zh_TW"
+
+    # 2. Test timeago library renders Traditional Chinese with the mapped locale
+    now = datetime.now()
+
+    # Test various time periods with Traditional Chinese strings
+    result_15s = timeago.format(now - timedelta(seconds=15), now, mapped_locale)
+    assert '秒前' in result_15s, f"Expected '秒前' in '{result_15s}'"
+
+    result_5m = timeago.format(now - timedelta(minutes=5), now, mapped_locale)
+    assert '分鐘前' in result_5m, f"Expected '分鐘前' in '{result_5m}'"
+
+    result_2h = timeago.format(now - timedelta(hours=2), now, mapped_locale)
+    assert '小時前' in result_2h, f"Expected '小時前' in '{result_2h}'"
+
+    result_3d = timeago.format(now - timedelta(days=3), now, mapped_locale)
+    assert '天前' in result_3d, f"Expected '天前' in '{result_3d}'"
 
 
 def test_language_switching(client, live_server, measure_memory_usage, datastore_path):
