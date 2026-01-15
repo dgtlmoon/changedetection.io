@@ -87,6 +87,10 @@
                 <fieldset>
                     {{ render_common_settings_form(form.application.form, emailprefix, settings_application, extra_notification_token_placeholder_info) }}
                 </fieldset>
+                 <fieldset class="pure-group">
+                    {{ render_checkbox_field(form.application.form.notification_html_word_diff_enabled) }}
+                    <span class="pure-form-message-inline">HTML notifications - Use "word by word" difference where possible.</span>
+                </fieldset>
                 <div class="pure-control-group" id="notification-base-url">
                     {{ render_field(form.application.form.base_url, class="m-d") }}
                     <span class="pure-form-message-inline">

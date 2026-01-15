@@ -1,5 +1,5 @@
 
-{% from '_helpers.html' import render_field %}
+{% from '_helpers.html' import render_field, render_checkbox_field %}
 
 {% macro show_token_placeholders(extra_notification_token_placeholder_info, suffix="") %}
 
@@ -8,9 +8,7 @@
             <span class="pure-form-message-inline">
         Body for all notifications &dash; You can use <a target="newwindow" href="https://jinja.palletsprojects.com/en/3.0.x/templates/">Jinja2</a> templating in the notification title, body and URL, and tokens from below.
     </span><br>
-        <div data-target="#notification-tokens-info{{ suffix }}" class="toggle-show pure-button button-tag button-xsmall">Show
-            token/placeholders
-        </div>
+        <div data-target="#notification-tokens-info{{ suffix }}" class="toggle-show pure-button button-tag button-xsmall">Show extra help and tokens</div>
     </div>
     <div class="pure-controls" style="display: none;" id="notification-tokens-info{{ suffix }}">
         <table class="pure-table" id="token-table">
@@ -105,11 +103,30 @@
                 {% endif %}
             </tbody>
         </table>
-
-        <span class="pure-form-message-inline">
+        <br>
+        <div class="pure-form-message-inline">
         Warning: Contents of <code>{{ '{{diff}}' }}</code>, <code>{{ '{{diff_removed}}' }}</code>, and <code>{{ '{{diff_added}}' }}</code> depend on how the difference algorithm perceives the change. <br>
-        For example, an addition or removal could be perceived as a change in some cases. <a target="newwindow" href="https://github.com/dgtlmoon/changedetection.io/wiki/Using-the-%7B%7Bdiff%7D%7D,-%7B%7Bdiff_added%7D%7D,-and-%7B%7Bdiff_removed%7D%7D-notification-tokens">More Here</a> <br>
-        </span>
+        For example, an addition or removal could be perceived as a change in some cases. <a target="newwindow"  href="https://github.com/dgtlmoon/changedetection.io/wiki/Using-the-%7B%7Bdiff%7D%7D,-%7B%7Bdiff_added%7D%7D,-and-%7B%7Bdiff_removed%7D%7D-notification-tokens">More Here</a> <br>
+        </div>
+    <br><br>
+        <div class="pure-form-message-inline">
+            <ul>
+                <li><span class="pure-form-message-inline">
+                For JSON payloads, use <strong>|tojson</strong> without quotes for automatic escaping, for example - <code>{ "name": {{ '{{ watch_title|tojson }}' }} }</code>
+            </span></li>
+                <li><span class="pure-form-message-inline">
+                URL encoding, use <strong>|urlencode</strong>, for example - <code>gets://hook-website.com/test.php?title={{ '{{ watch_title|urlencode }}' }}</code>
+            </span></li>
+                <li><span class="pure-form-message-inline">
+                Regular-expression replace, use <strong>|regex_replace</strong>, for example -   <code>{{ "{{ \"hello world 123\" | regex_replace('[0-9]+', 'no-more-numbers') }}" }}</code>
+            </span></li>
+                <li><span class="pure-form-message-inline">
+                For a complete reference of all Jinja2 built-in filters, users can refer to the <a
+                        href="https://jinja.palletsprojects.com/en/3.1.x/templates/#builtin-filters">https://jinja.palletsprojects.com/en/3.1.x/templates/#builtin-filters</a>
+            </span></li>
+            </ul>
+            <br>
+        </div>
     </div>
 {%  endmacro %}
 
@@ -151,28 +168,11 @@
                                 {{ render_field(form.notification_title, class="m-d notification-title", placeholder=settings_application['notification_title']) }}
                                 <span class="pure-form-message-inline">Title for all notifications</span>
                             </div>
-                            <div class="pure-control-group">
+                            <div>
                                 {{ render_field(form.notification_body , rows=5, class="notification-body", placeholder=settings_application['notification_body']) }}
                                 {{ show_token_placeholders(extra_notification_token_placeholder_info=extra_notification_token_placeholder_info) }}
-                                <div class="pure-form-message-inline">
-                                    <ul>
-                                    <li><span class="pure-form-message-inline">
-                                        For JSON payloads, use <strong>|tojson</strong> without quotes for automatic escaping, for example - <code>{ "name": {{ '{{ watch_title|tojson }}' }} }</code>
-                                    </span></li>
-                                    <li><span class="pure-form-message-inline">
-                                        URL encoding, use <strong>|urlencode</strong>, for example - <code>gets://hook-website.com/test.php?title={{ '{{ watch_title|urlencode }}' }}</code>
-                                    </span></li>
-                                    <li><span class="pure-form-message-inline">
-                                        Regular-expression replace, use <strong>|regex_replace</strong>, for example -   <code>{{ "{{ \"hello world 123\" | regex_replace('[0-9]+', 'no-more-numbers') }}" }}</code>
-                                    </span></li>
-                                    <li><span class="pure-form-message-inline">
-                                        For a complete reference of all Jinja2 built-in filters, users can refer to the <a href="https://jinja.palletsprojects.com/en/3.1.x/templates/#builtin-filters">https://jinja.palletsprojects.com/en/3.1.x/templates/#builtin-filters</a>
-                                    </span></li>
-                                    </ul>
-                                    <br>
-                                </div>
                             </div>
-                            <div class="">
+                            <div>
                                 {{ render_field(form.notification_format , class="notification-format") }}
                                 <span class="pure-form-message-inline">Format for all notifications</span>
                             </div>
