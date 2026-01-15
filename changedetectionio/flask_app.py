@@ -9,6 +9,7 @@ import threading
 import time
 import timeago
 from blinker import signal
+from pathlib import Path
 
 from changedetectionio.strtobool import strtobool
 from threading import Event
@@ -83,6 +84,10 @@ app.config['NEW_VERSION_AVAILABLE'] = False
 
 if os.getenv('FLASK_SERVER_NAME'):
     app.config['SERVER_NAME'] = os.getenv('FLASK_SERVER_NAME')
+
+# Babel/i18n configuration
+app.config['BABEL_TRANSLATION_DIRECTORIES'] = str(Path(__file__).parent / 'translations')
+app.config['BABEL_DEFAULT_LOCALE'] = 'en_GB'
 
 #app.config["EXPLAIN_TEMPLATE_LOADING"] = True
 
@@ -395,13 +400,9 @@ def changedetection_app(config=None, datastore_o=None):
     def get_locale():
         # 1. Try to get locale from session (user explicitly selected)
         if 'locale' in session:
-            locale = session['locale']
-            logger.trace(f"DEBUG: get_locale() returning from session: {locale}")
-            return locale
+            return session['locale']
         # 2. Fall back to Accept-Language header
-        locale = request.accept_languages.best_match(language_codes)
-        logger.trace(f"DEBUG: get_locale() returning from Accept-Language: {locale}")
-        return locale
+        return request.accept_languages.best_match(language_codes)
 
     # Initialize Babel with locale selector
     babel = Babel(app, locale_selector=get_locale)
@@ -518,9 +519,20 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route('/set-language/<locale>')
     def set_language(locale):
         """Set the user's preferred language in the session"""
+        if not request.cookies:
+            logger.error("Cannot set language without session cookie")
+            flash("Cannot set language without session cookie", 'error')
+            return redirect(url_for('watchlist.index'))
+
         # Validate the locale against available languages
         if locale in language_codes:
             session['locale'] = locale
+
+            # CRITICAL: Flask-Babel caches the locale in the request context (ctx.babel_locale)
+            # We must refresh to clear this cache so the new locale takes effect immediately
+            # This is especially important for tests where multiple requests happen rapidly
+            from flask_babel import refresh
+            refresh()
         else:
             logger.error(f"Invalid locale {locale}, available: {language_codes}")
 
