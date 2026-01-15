@@ -29,7 +29,9 @@ def get_timeago_locale(flask_locale):
     """
     locale_map = {
         'zh': 'zh_CN',      # Chinese Simplified
-        'zh_Hant_TW': 'zh_TW',  # Flask-Babel normalizes zh_TW to zh_Hant_TW
+        # timeago library just hasn't been updated to use the more modern locale naming convention, before BCP 47 / RFC 5646.
+        'zh_TW': 'zh_TW',   # Chinese Traditional (timeago uses zh_TW)
+        'zh_Hant_TW': 'zh_TW',  # Flask-Babel normalizes zh_TW to zh_Hant_TW, map back to timeago's zh_TW
         'pt': 'pt_PT',      # Portuguese (Portugal)
         'sv': 'sv_SE',      # Swedish
         'no': 'nb_NO',      # Norwegian Bokmål
@@ -54,7 +56,7 @@ LANGUAGE_DATA = {
     'it': {'flag': 'fi fi-it fis', 'name': 'Italiano'},
     'ja': {'flag': 'fi fi-jp fis', 'name': '日本語'},
     'zh': {'flag': 'fi fi-cn fis', 'name': '中文 (简体)'},
-    'zh_TW': {'flag': 'fi fi-tw fis', 'name': '繁體中文'},
+    'zh_Hant_TW': {'flag': 'fi fi-tw fis', 'name': '繁體中文'},
     'ru': {'flag': 'fi fi-ru fis', 'name': 'Русский'},
     'pl': {'flag': 'fi fi-pl fis', 'name': 'Polski'},
     'nl': {'flag': 'fi fi-nl fis', 'name': 'Nederlands'},

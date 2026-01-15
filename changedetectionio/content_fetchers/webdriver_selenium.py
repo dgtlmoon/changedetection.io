@@ -156,6 +156,9 @@ class fetcher(Fetcher):
                     from PIL import Image
                     import io
                     img = Image.open(io.BytesIO(screenshot_png))
+                    # Convert to RGB if needed (JPEG doesn't support transparency)
+                    if img.mode != 'RGB':
+                        img = img.convert('RGB')
                     jpeg_buffer = io.BytesIO()
                     img.save(jpeg_buffer, format='JPEG', quality=int(os.getenv("SCREENSHOT_QUALITY", 72)))
                     self.screenshot = jpeg_buffer.getvalue()

@@ -91,7 +91,7 @@ jq~=1.3; python_version >= "3.8" and sys_platform == "linux"
 
 # playwright is installed at Dockerfile build time because it's not available on all platforms
 
-pyppeteer-ng==2.0.0rc10
+pyppeteer-ng==2.0.0rc11
 pyppeteerstealth>=0.0.4
 
 # Include pytest, so if theres a support issue we can ask them to run these tests on their setup
@@ -100,7 +100,7 @@ pytest-flask ~=1.3
 pytest-mock ~=3.15
 
 # Anything 4.0 and up but not 5.0
-jsonschema ~= 4.25
+jsonschema ~= 4.26
 
 # OpenAPI validation support
 openapi-core[flask] >= 0.19.0
