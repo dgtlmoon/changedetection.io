@@ -117,7 +117,8 @@ class NotificationContextData(dict):
 
 def timestamp_to_localtime(timestamp):
     # Format the date using locale-aware formatting with timezone
-    dt = datetime.datetime.fromtimestamp(int(timestamp))
+    # Unix timestamps are always UTC, so use utcfromtimestamp to avoid double conversion
+    dt = datetime.datetime.utcfromtimestamp(int(timestamp))
     dt = dt.replace(tzinfo=pytz.UTC)
 
     # Get local timezone-aware datetime
@@ -218,9 +219,10 @@ class NotificationService:
     Standalone notification service that handles all notification functionality
     previously embedded in the update_worker class
     """
-    
-    def __init__(self, datastore, notification_q):
+
+    def __init__(self, datastore, notification_q=None):
         self.datastore = datastore
+        # notification_q is deprecated - now using Huey task queue directly
         self.notification_q = notification_q
     
     def queue_notification_for_watch(self, n_object: NotificationContextData, watch, date_index_from=-2, date_index_to=-1):
@@ -250,7 +252,6 @@ class NotificationService:
         if n_object.get('notification_format') == USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH:
             n_object['notification_format'] = self.datastore.data['settings']['application'].get('notification_format')
 
-
         triggered_text = ''
         if len(trigger_text):
             from . import html_tools
@@ -273,12 +274,11 @@ class NotificationService:
                                                     triggered_text=triggered_text,
                                                     timestamp_changed=dates[date_index_to]))
 
-        if self.notification_q:
-            logger.debug("Queued notification for sending")
-            self.notification_q.put(n_object)
-        else:
-            logger.debug("Not queued, no queue defined. Just returning processed data")
-            return n_object
+        # Queue notification to Huey for processing with retry logic
+        from changedetectionio.notification.task_queue import queue_notification
+        logger.debug("Queuing notification to Huey for sending with retry")
+        queue_notification(n_object)
+        return n_object
 
     def send_content_changed_notification(self, watch_uuid):
         """
@@ -302,22 +302,17 @@ class NotificationService:
 
         # Prefer - Individual watch settings > Tag settings >  Global settings (in that order)
         # this change probably not needed?
-        n_object['notification_urls'] = _check_cascading_vars(self.datastore, 'notification_urls', watch)
+
         n_object['notification_title'] = _check_cascading_vars(self.datastore,'notification_title', watch)
         n_object['notification_body'] = _check_cascading_vars(self.datastore,'notification_body', watch)
-        n_object['notification_format'] = _check_cascading_vars(self.datastore,'notification_format', watch)
+
 
         # (Individual watch) Only prepare to notify if the rules above matched
-        queued = False
-        if n_object and n_object.get('notification_urls'):
-            queued = True
+        count = watch.get('notification_alert_count', 0) + 1
+        self.datastore.update_watch(uuid=watch_uuid, update_obj={'notification_alert_count': count})
+        self.queue_notification_for_watch(n_object=n_object, watch=watch)
 
-            count = watch.get('notification_alert_count', 0) + 1
-            self.datastore.update_watch(uuid=watch_uuid, update_obj={'notification_alert_count': count})
-
-            self.queue_notification_for_watch(n_object=n_object, watch=watch)
-
-        return queued
+        return True
 
     def send_filter_failure_notification(self, watch_uuid):
         """
@@ -361,8 +356,9 @@ Thanks - Your omniscient changedetection.io installation.
                 'uuid': watch_uuid,
                 'screenshot': None
             })
-            self.notification_q.put(n_object)
-            logger.debug(f"Sent filter not found notification for {watch_uuid}")
+            from changedetectionio.notification.task_queue import send_notification_task
+            send_notification_task(n_object)
+            logger.debug(f"Queued filter not found notification for {watch_uuid}")
         else:
             logger.debug(f"NOT sending filter not found notification for {watch_uuid} - no notification URLs")
 
@@ -409,13 +405,18 @@ Thanks - Your omniscient changedetection.io installation.
                 'watch_url': watch['url'],
                 'uuid': watch_uuid
             })
-            self.notification_q.put(n_object)
-            logger.error(f"Sent step not found notification for {watch_uuid}")
+            from changedetectionio.notification.task_queue import send_notification_task
+            send_notification_task(n_object)
+            logger.error(f"Queued step not found notification for {watch_uuid}")
 
 
 # Convenience functions for creating notification service instances
-def create_notification_service(datastore, notification_q):
+def create_notification_service(datastore, notification_q=None):
     """
     Factory function to create a NotificationService instance
+
+    Args:
+        datastore: The ChangeDetectionStore instance
+        notification_q: Deprecated, no longer used (kept for backward compatibility)
     """
     return NotificationService(datastore, notification_q)

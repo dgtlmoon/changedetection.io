@@ -47,7 +47,7 @@
     {% endif %}
   </head>
 
-  <body class="{{extra_classes}}">
+  <body class="{{extra_classes}}{% if get_failed_notifications_count() > 0 %} failed-notifications{% endif %}">
     <div class="header">
     <div {% if pure_menu_fixed != False %}class="pure-menu-fixed"{% endif %} style="width: 100%;">
       <div class="home-menu pure-menu pure-menu-horizontal" id="nav-menu">
@@ -80,6 +80,15 @@
                 <button class="toggle-button" id="open-search-modal" type="button" title="{{ _('Search, or Use Alt+S Key') }}">
                   {% include "svgs/search-icon.svg" %}
                 </button>
+              </li>
+              <li class="pure-menu-item" id="failed-notifications-icon">
+                <a href="{{ url_for('notification_dashboard.dashboard')}}" class="pure-menu-link" title="Notification Queue - pending, retrying, and failed notifications" >
+                  <img src="{{url_for('static_content', group='images', filename='notification-fail.svg')}}" alt="Notification Queue" style="height: 22px;">
+                </a>
+              </li>
+            {% else %}
+              <li class="pure-menu-item">
+                <a href="{{ url_for('ui.ui_edit.edit_page', uuid=uuid, next='diff') }}" class="pure-menu-link">EDIT</a>
               </li>
 
             {% endif %}

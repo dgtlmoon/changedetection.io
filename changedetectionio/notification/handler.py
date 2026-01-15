@@ -13,6 +13,7 @@ from ..diff import HTML_REMOVED_STYLE, REMOVED_PLACEMARKER_OPEN, REMOVED_PLACEMA
 import re
 
 from ..notification_service import NotificationContextData, add_rendered_diff_to_notification_vars
+from .exceptions import AppriseNotificationException
 
 newline_re = re.compile(r'\r\n|\r|\n')
 
@@ -443,8 +444,10 @@ def process_notification(n_object: NotificationContextData, datastore):
                 if not '<pre' in n_body and not '<body' in n_body: # No custom HTML-ish body was setup already
                     n_body = as_monospaced_html_email(content=n_body, title=n_title)
 
+        # Send the notification and capture return value (True if any succeeded, False if all failed)
+        notification_success = True
         if not url.startswith('null://'):
-            apobj.notify(
+            notification_success = apobj.notify(
                 title=n_title,
                 body=n_body,
                 # `body_format` Tell apprise what format the INPUT is in, specify a wrong/bad type and it will force skip conversion in apprise
@@ -457,9 +460,16 @@ def process_notification(n_object: NotificationContextData, datastore):
         # Returns empty string if nothing found, multi-line string otherwise
         log_value = logs.getvalue()
 
-        if log_value and ('WARNING' in log_value or 'ERROR' in log_value):
-            logger.critical(log_value)
-            raise Exception(log_value)
+        # Check both Apprise return value AND log capture for failures
+        if not notification_success:
+            error_msg = f"Apprise notification failed - all notification URLs returned False"
+            if log_value:
+                error_msg += f"\nApprise logs:\n{log_value}"
+            logger.critical(error_msg)
+            raise AppriseNotificationException(error_msg, sent_objs=sent_objs)
+        elif log_value and ('WARNING' in log_value or 'ERROR' in log_value):
+            logger.critical(f"Apprise warning/error detected:\n{log_value}")
+            raise AppriseNotificationException(log_value, sent_objs=sent_objs)
 
     # Return what was sent for better logging - after the for loop
     return sent_objs

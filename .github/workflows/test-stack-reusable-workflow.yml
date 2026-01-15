@@ -124,6 +124,37 @@ jobs:
           name: test-cdio-basic-tests-output-py${{ env.PYTHON_VERSION }}
           path: output-logs
 
+  notification-queue-storage-test:
+    # The notifications are put into a retry queue so they cant be lost.
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 25
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: test-changedetectionio-${{ env.PYTHON_VERSION }}
+          path: /tmp
+
+      - name: Load Docker image
+        run: |
+          docker load -i /tmp/test-changedetectionio.tar
+
+      - name: Test Huey notification backend - SQLite
+        run: |
+          docker network inspect changedet-network >/dev/null 2>&1 || docker network create changedet-network
+          docker run --name notification-basic-tests --rm --network changedet-network test-changedetectionio bash -c 'cd changedetectionio && QUEUE_STORAGE=sqlite pytest tests/test_notifications_huey.py -v'
+
+      - name: Test Huey notification backend - Redis
+        run: |
+          docker network inspect changedet-network >/dev/null 2>&1 || docker network create changedet-network
+          docker run --network changedet-network -d --name redis-test-huey --hostname redis-test-huey -p 127.0.0.1:6379:6379 redis:7          
+          docker run --name notification-basic-tests --rm --network changedet-network test-changedetectionio bash -c 'cd changedetectionio && pip3 install redis && QUEUE_STORAGE=redis REDIS_URL=redis://redis-test-huey:6379/0 pytest tests/test_notifications_huey.py -v'
+
   # Playwright tests
   playwright-tests:
     runs-on: ubuntu-latest

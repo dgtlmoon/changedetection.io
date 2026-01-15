@@ -22,6 +22,7 @@
 @use "parts/socket";
 @use "parts/visualselector";
 @use "parts/widgets";
+@use "parts/notificationsdashboard";
 @use "parts/diff_image";
 @use "parts/modal";
 @use "parts/language";
@@ -32,7 +33,6 @@
 @use "parts/toast";
 @use "parts/login_form";
 @use "parts/tabs";
-
 
 body {
   color: var(--color-text);
@@ -1063,6 +1063,17 @@ ul {
   opacity: 0.8;
 }
 
+#failed-notifications-icon {
+  display: none;
+}
+
+body.failed-notifications {
+  #failed-notifications-icon {
+    display: inline-block;
+    vertical-align: middle;
+  }
+}
+
 #bottom-horizontal-offscreen {
   position: fixed;
   bottom: 0;
@@ -1096,5 +1107,3 @@ ul#highlightSnippetActions {
     display: inline-block;
   }
 }
-
-

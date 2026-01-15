@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="edit-form">
+    <div class="inner notifications-dashboard">
+
+        <h4>Notification Queue Dashboard</h4>
+
+        <!-- Last Successful Notification Reference -->
+        {% if last_success %}
+        <div class="last-success-box">
+            <h5>✅ Most Recent Successful Notification</h5>
+            <div class="details">
+                <div>
+                    <strong>Timestamp:</strong> {{ last_success.timestamp_formatted }}
+                </div>
+                {% if last_success.watch_url %}
+                <div>
+                    <strong>Watch URL:</strong> <a href="{{ last_success.watch_url }}" target="_blank" style="word-break: break-all;">{{ last_success.watch_url }}</a>
+                </div>
+                {% endif %}
+                {% if last_success.notification_urls %}
+                <div>
+                    <strong>Sent via:</strong>
+                    {% for url in last_success.notification_urls %}
+                        <code>{{ url }}</code>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% if last_success.apprise_logs %}
+                <details>
+                    <summary>📋 View Apprise Logs</summary>
+                    <pre>{% for log_line in last_success.apprise_logs %}{{ log_line }}
+{% endfor %}</pre>
+                </details>
+                {% endif %}
+            </div>
+            <p class="note">
+                Use this as reference - this notification was sent successfully with current settings.
+            </p>
+        </div>
+        {% endif %}
+
+        <!-- Action Buttons (shown when there are any notifications) -->
+        {% if (pending_count and pending_count > 0) or failed_notifications|length > 0 %}
+        <div class="dashboard-actions">
+            {% if failed_notifications|length > 0 %}
+            <form method="POST" action="{{ url_for('settings.retry_all_notifications') }}" style="display: inline-block;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="pure-button pure-button-primary retry-all-btn" data-confirm-action data-confirm-message="Retry all {{ failed_notifications|length }} failed notifications?">
+                    <span class="icon-repeat"></span> Retry All ({{ failed_notifications|length }})
+                </button>
+            </form>
+            {% endif %}
+            <form method="POST" action="{{ url_for('settings.clear_all_notifications') }}" style="display: inline-block;" onsubmit="return confirm('⚠️ WARNING: This will DELETE ALL notifications:\n\n- {{ pending_count if pending_count else 0 }} Pending/Retrying\n- {{ failed_notifications|length }} Failed\n- All retry attempts\n\nThis action cannot be undone!\n\nAre you sure?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="pure-button clear-all-btn">
+                    <span class="icon-trash"></span> Clear All
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- Two-Column Dashboard Layout (responsive: stacks on mobile) -->
+        <div class="dashboard-grid">
+
+            <!-- LEFT COLUMN: Pending/Retrying Notifications -->
+            <div class="pending-column">
+                <div class="column-header">
+                    <h5>🔄 Pending / Retrying</h5>
+                    <div class="count-badge">{{ pending_count if pending_count is not none else '?' }}</div>
+                </div>
+                <p class="column-description">Notifications currently queued or being retried</p>
+
+                {% if pending_list %}
+                <div class="notification-cards">
+                    {% for item in pending_list %}
+                    <div class="notification-card pending-card" data-task-id="{{ item.task_id }}">
+                        <div class="card-header">
+                            <span class="status-badge {{ item.status }}">
+                                {% if item.status == 'queued' %}QUEUED{% else %}RETRYING{% if item.retry_number is defined and item.total_retries is defined %} ({{ item.retry_number }}/{{ item.total_retries }}){% endif %}{% endif %}
+                            </span>
+                            {% if item.watch_uuid %}
+                            <a href="/edit/{{ item.watch_uuid }}">Watch: {{ item.watch_uuid[:8] }}...</a>
+                            {% endif %}
+                        </div>
+                        {% if item.task_id %}
+                        <div class="notification-id">ID: {{ item.task_id[:20] }}...</div>
+                        {% endif %}
+                        {% if item.queued_at_formatted %}
+                        <div class="notification-queued-time">Queued: {{ item.queued_at_formatted }}</div>
+                        {% endif %}
+                        {% if item.watch_url %}
+                        <div class="notification-target"><strong>Target:</strong> {{ item.watch_url }}</div>
+                        {% endif %}
+                        {% if item.status == 'retrying' %}
+                        <div class="retry-info">
+                            <span>
+                                ⏰ Next retry: <span class="retry-time" data-timestamp="{{ item.retry_at_timestamp }}">{{ item.retry_at_formatted }}</span>
+                                {% if item.retry_in_seconds > 0 %}
+                                (in {{ item.retry_in_seconds }}s)
+                                {% endif %}
+                            </span>
+                            {% if item.task_id %}
+                            <a href="{{ url_for('settings.send_now', task_id=item.task_id) }}" class="pure-button send-now-btn" title="Send this notification now (cancel scheduled retry)">Send Now</a>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state pending-empty">✅ No pending notifications</div>
+                {% endif %}
+            </div>
+
+            <!-- RIGHT COLUMN: Failed (Dead Letter) Notifications -->
+            <div class="failed-column">
+                <div class="column-header">
+                    <h5>💀 Failed (Dead Letter)</h5>
+                    <div class="count-badge {% if failed_notifications|length == 0 %}no-failures{% else %}has-failures{% endif %}">
+                        {{ failed_notifications|length }}
+                    </div>
+                </div>
+                <p class="column-description">Exhausted all retry attempts</p>
+
+                {% if failed_notifications|length > 0 %}
+                <div class="notification-cards">
+                    {% for notification in failed_notifications %}
+                    <div class="notification-card failed-card" data-task-id="{{ notification.task_id }}">
+                        <div class="card-header">
+                            <span class="status-badge failed">FAILED</span>
+                            {% if notification.notification_data and notification.notification_data.get('uuid') %}
+                            <a href="/edit/{{ notification.notification_data.get('uuid') }}">
+                                Watch: {{ notification.notification_data.get('uuid')[:8] }}...
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% if notification.task_id %}
+                        <div class="notification-id">ID: {{ notification.task_id[:20] }}...</div>
+                        {% endif %}
+                        {% if notification.notification_data and notification.notification_data.get('watch_url') %}
+                        <div class="notification-target"><strong>Target:</strong> {{ notification.notification_data.get('watch_url') }}</div>
+                        {% endif %}
+                        {% if notification.notification_data and notification.notification_data.get('notification_urls') %}
+                        <div class="notification-endpoints">
+                            <strong>Notification endpoints:</strong>
+                            {% for url in notification.notification_data.get('notification_urls') %}
+                            <div class="endpoint-item">• {{ url }}</div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        {% if notification.timestamp %}
+                        <div class="failure-time">
+                            Failed: {{ notification.timestamp_formatted }}
+                            {% if notification.days_ago is defined %}
+                            ({{ notification.days_ago }} day{{ 's' if notification.days_ago != 1 else '' }} ago)
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        <form method="POST" action="{{ url_for('settings.retry_notification', task_id=notification.task_id) }}" class="retry-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="pure-button">
+                                <span class="icon-repeat"></span> Retry This
+                            </button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state failed-empty">✅ No failed notifications</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Last Clicked Notification Log Info -->
+        <div id="last-log-info" style="display: none;" class="log-info-box">
+            <div class="log-header">
+                <h5>📋 Notification Log Details</h5>
+                <button class="close-btn" onclick="document.getElementById('last-log-info').style.display='none'">✕</button>
+            </div>
+            <div class="log-content">
+                <div class="log-meta">
+                    <div><strong>Task ID:</strong> <span id="log-task-id" class="notification-id"></span></div>
+                    <div id="log-watch-url-container" style="display: none;">
+                        <strong>Watch URL:</strong> <span id="log-watch-url"></span>
+                    </div>
+                    <div id="log-notification-urls-container" style="display: none;">
+                        <strong>Notification endpoints:</strong>
+                        <div id="log-notification-urls" class="endpoint-list"></div>
+                    </div>
+                </div>
+                <div class="log-body">
+                    <h6>Apprise Log:</h6>
+                    <pre id="log-apprise-content"></pre>
+                </div>
+                <div id="log-error-container" style="display: none;" class="log-error">
+                    <h6>Error:</h6>
+                    <pre id="log-error-content"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Retry Schedule Information -->
+        <div class="retry-schedule">
+            <h5>Automatic Retry Schedule (Exponential Backoff)</h5>
+            <p>
+                Notifications are automatically retried <strong>{{ retry_config.retry_count }} times</strong> with <strong>exponential backoff</strong> starting at {{ retry_config.retry_delay_seconds }} seconds.
+            </p>
+            <table class="pure-table">
+                <thead>
+                    <tr>
+                        <th>Attempt</th>
+                        <th>Time</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>1st</strong> (initial)</td>
+                        <td>T+0:00</td>
+                        <td>⚠️ Fails (e.g., SMTP server down)</td>
+                    </tr>
+                    {% for i in range(retry_config.retry_count) %}
+                    {% set delay = retry_config.retry_delays[i] %}
+                    {% set cumulative_time = retry_config.retry_delays[:i+1]|sum %}
+                    <tr>
+                        <td><strong>{{ i + 2 }}{{ ['st', 'nd', 'rd'][i + 1] if i + 1 < 3 else 'th' }}</strong> (retry {{ i + 1 }})</td>
+                        <td>T+{{ '%d:%02d' % (cumulative_time // 60, cumulative_time % 60) }}</td>
+                        <td>{% if i < retry_config.retry_count - 1 %}⚠️ Fails → Wait {{ delay }}s ({{ '%d:%02d' % (delay // 60, delay % 60) }}){% else %}⚠️ Fails → Give up{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr style="background: #fff3cd;">
+                        <td><strong>Dead Letter</strong></td>
+                        <td>T+{{ '%d:%02d' % (retry_config.total_time_seconds // 60, retry_config.total_time_seconds % 60) }}</td>
+                        <td>💀 Moved to this failed notifications list</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="note">
+                <strong>Total:</strong> {{ retry_config.total_attempts }} attempts over {{ '%d:%02d' % (retry_config.total_time_seconds // 60, retry_config.total_time_seconds % 60) }} (mm:ss).
+                Failed notifications are kept for 30 days, then automatically deleted.
+            </p>
+        </div>
+
+        <!-- Hidden data elements for JavaScript -->
+        <div id="log-url-template" data-url="{{ url_for('settings.get_notification_log', task_id='TASK_ID') }}" style="display: none;"></div>
+
+        <script src="{{url_for('static_content', group='js', filename='notification-dashboard.js')}}" defer></script>
+
+    </div>
+</div>
+
+{% endblock %}

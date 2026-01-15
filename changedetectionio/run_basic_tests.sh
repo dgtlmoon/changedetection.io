@@ -90,12 +90,8 @@ export HIDE_REFERER=True
 pytest -vv -s --maxfail=1 tests/test_access_control.py
 
 # Re-run a few tests that will trigger brotli based storage
-export SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD=5
-pytest -vv -s --maxfail=1 tests/test_access_control.py
-REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest tests/test_notification.py
-pytest -vv -s --maxfail=1 tests/test_backend.py
-pytest -vv -s --maxfail=1 tests/test_rss.py
-pytest -vv -s --maxfail=1 tests/test_unique_lines.py
+SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD=5 pytest -n 30 --dist load -vv -s --maxfail=1 tests/test_access_control.py tests/test_backend.py tests/test_rss.py tests/test_unique_lines.py
+
 
 # Try high concurrency
 FETCH_WORKERS=50 pytest  tests/test_history_consistency.py -vv -l -s

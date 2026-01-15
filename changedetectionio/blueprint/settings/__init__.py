@@ -4,7 +4,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo, available_timezones
 import secrets
 import flask_login
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_babel import gettext
 
 from changedetectionio.store import ChangeDetectionStore
@@ -84,12 +84,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 # Adjust worker count if it changed
                 if new_worker_count != old_worker_count:
                     from changedetectionio import worker_handler
-                    from changedetectionio.flask_app import update_q, notification_q, app, datastore as ds
-                    
+                    from changedetectionio.flask_app import update_q, app, datastore as ds
+
                     result = worker_handler.adjust_async_worker_count(
                         new_count=new_worker_count,
                         update_q=update_q,
-                        notification_q=notification_q,
+                        notification_q=None,  # Now using Huey task queue
                         app=app,
                         datastore=ds
                     )
@@ -186,5 +186,75 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         output = render_template("notification-log.html",
                                logs=notification_debug_log if len(notification_debug_log) else ["Notification logs are empty - no notifications sent yet."])
         return output
+
+    # Legacy routes - redirect to new notification dashboard blueprint
+    @settings_blueprint.route("/failed-notifications", methods=['GET'])
+    @login_optionally_required
+    def failed_notifications():
+        """Redirect to new notification dashboard"""
+        return redirect(url_for('notification_dashboard.dashboard'))
+
+    @settings_blueprint.route("/notification-log/<task_id>", methods=['GET'])
+    @login_optionally_required
+    def get_notification_log(task_id):
+        """Redirect to new notification dashboard log endpoint"""
+        return redirect(url_for('notification_dashboard.get_notification_log', task_id=task_id))
+
+    @settings_blueprint.route("/retry-notification/<task_id>", methods=['POST'])
+    @login_optionally_required
+    def retry_notification(task_id):
+        """Redirect to new notification dashboard retry endpoint"""
+        return redirect(url_for('notification_dashboard.retry_notification', task_id=task_id), code=307)
+
+    @settings_blueprint.route("/send-now/<task_id>", methods=['GET'])
+    @login_optionally_required
+    def send_now(task_id):
+        """Redirect to new notification dashboard send now endpoint"""
+        return redirect(url_for('notification_dashboard.send_now', task_id=task_id))
+
+    @settings_blueprint.route("/retry-all-notifications", methods=['POST'])
+    @login_optionally_required
+    def retry_all_notifications():
+        """Redirect to new notification dashboard retry all endpoint"""
+        return redirect(url_for('notification_dashboard.retry_all_notifications'), code=307)
+
+    @settings_blueprint.route("/clear-all-notifications", methods=['POST'])
+    @login_optionally_required
+    def clear_all_notifications():
+        """Redirect to new notification dashboard clear all endpoint"""
+        return redirect(url_for('notification_dashboard.clear_all_notifications'), code=307)
+
+    @settings_blueprint.route("/api/v1/notifications/failed", methods=['GET'])
+    @login_optionally_required
+    def api_get_failed_notifications():
+        """API endpoint to get list of failed notifications (dead letter queue)"""
+        from changedetectionio.notification.task_queue import get_failed_notifications
+        from flask import jsonify, request
+
+        limit = request.args.get('limit', default=100, type=int)
+        limit = max(1, min(1000, limit))  # Clamp to 1-1000
+
+        failed = get_failed_notifications(limit=limit)
+
+        return jsonify({
+            'count': len(failed),
+            'limit': limit,
+            'notifications': failed
+        }), 200
+
+    @settings_blueprint.route("/api/v1/notifications/retry-all", methods=['POST'])
+    @login_optionally_required
+    def api_retry_all_notifications():
+        """API endpoint to retry all failed notifications"""
+        from changedetectionio.notification.task_queue import retry_all_failed_notifications
+        from flask import jsonify
+
+        result = retry_all_failed_notifications()
+
+        return jsonify({
+            'status': 'success' if result['failed'] == 0 else 'partial',
+            'message': f"Queued {result['success']} notifications for retry",
+            'details': result
+        }), 200
 
     return settings_blueprint

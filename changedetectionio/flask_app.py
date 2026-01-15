@@ -13,7 +13,7 @@ from pathlib import Path
 
 from changedetectionio.strtobool import strtobool
 from threading import Event
-from changedetectionio.queue_handlers import RecheckPriorityQueue, NotificationQueue
+from changedetectionio.queue_handlers import RecheckPriorityQueue  # NotificationQueue deprecated - now using Huey
 from changedetectionio import worker_handler
 
 from flask import (
@@ -53,9 +53,9 @@ datastore = None
 ticker_thread = None
 extra_stylesheets = []
 
-# Use bulletproof janus-based queues for sync/async reliability  
+# Use bulletproof janus-based queues for sync/async reliability
 update_q = RecheckPriorityQueue()
-notification_q = NotificationQueue()
+# notification_q = NotificationQueue()  # DEPRECATED: Now using Huey task queue
 MAX_QUEUE_SIZE = 2000
 
 app = Flask(__name__,
@@ -200,7 +200,7 @@ def _get_worker_status_info():
     """Get detailed worker status information for display"""
     status = worker_handler.get_worker_status()
     running_uuids = worker_handler.get_running_uuids()
-    
+
     return {
         'count': status['worker_count'],
         'type': status['worker_type'],
@@ -208,6 +208,17 @@ def _get_worker_status_info():
         'processing_watches': running_uuids,
         'loop_running': status.get('async_loop_running', None)
     }
+
+@app.template_global('get_failed_notifications_count')
+def _get_failed_notifications_count():
+    """Check if there are any failed notifications in dead letter queue"""
+    try:
+        from changedetectionio.notification.task_queue import get_failed_notifications
+        failed = get_failed_notifications(limit=1)  # Just check if any exist
+        return len(failed)
+    except Exception as e:
+        logger.debug(f"Unable to get failed notifications count: {e}")
+        return 0
 
 
 # We use the whole watch object from the store/JSON so we can see if there's some related status in terms of a thread
@@ -762,6 +773,9 @@ def changedetection_app(config=None, datastore_o=None):
     import changedetectionio.blueprint.settings as settings
     app.register_blueprint(settings.construct_blueprint(datastore), url_prefix='/settings')
 
+    import changedetectionio.blueprint.notification_dashboard as notification_dashboard
+    app.register_blueprint(notification_dashboard.construct_blueprint(), url_prefix='/notification-dashboard')
+
     import changedetectionio.conditions.blueprint as conditions
     app.register_blueprint(conditions.construct_blueprint(datastore), url_prefix='/conditions')
 
@@ -811,7 +825,7 @@ def changedetection_app(config=None, datastore_o=None):
         health_result = worker_handler.check_worker_health(
             expected_count=expected_workers,
             update_q=update_q,
-            notification_q=notification_q,
+            notification_q=None,  # Now using Huey task queue
             app=app,
             datastore=datastore
         )
@@ -872,11 +886,22 @@ def changedetection_app(config=None, datastore_o=None):
     # Can be overridden by ENV or use the default settings
     n_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
     logger.info(f"Starting {n_workers} workers during app initialization")
-    worker_handler.start_workers(n_workers, update_q, notification_q, app, datastore)
+    # Pass None for notification_q - now using Huey task queue directly
+    worker_handler.start_workers(n_workers, update_q, None, app, datastore)
+
+    # Initialize Huey task queue for notifications
+    from changedetectionio.notification.task_queue import init_huey, init_huey_task, start_huey_consumer_with_watchdog
+    init_huey(datastore.datastore_path)
+    init_huey_task()  # Apply task decorator
+
+    # Start Huey consumer for notification processing (replaces notification_runner)
+    # Watchdog will automatically restart consumer if it crashes
+    # Queued notifications are persistent and won't be lost during crashes
+    # Uses app.config.exit for clean shutdown (same pattern as other threads)
+    threading.Thread(target=start_huey_consumer_with_watchdog, args=(app,), daemon=True).start()
 
     # @todo handle ctrl break
     ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks, daemon=True, name="TickerThread-ScheduleChecker").start()
-    threading.Thread(target=notification_runner, daemon=True, name="NotificationRunner").start()
 
     in_pytest = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
     # Check for new release version, but not when running in test/build or pytest
@@ -916,56 +941,10 @@ def check_for_new_version():
         app.config.exit.wait(86400)
 
 
-def notification_runner():
-    global notification_debug_log
-    from datetime import datetime
-    import json
-    with app.app_context():
-        while not app.config.exit.is_set():
-            try:
-                # At the moment only one thread runs (single runner)
-                n_object = notification_q.get(block=False)
-            except queue.Empty:
-                app.config.exit.wait(1)
-
-            else:
-
-                now = datetime.now()
-                sent_obj = None
-
-                try:
-                    from changedetectionio.notification.handler import process_notification
-
-                    # Fallback to system config if not set
-                    if not n_object.get('notification_body') and datastore.data['settings']['application'].get('notification_body'):
-                        n_object['notification_body'] = datastore.data['settings']['application'].get('notification_body')
-
-                    if not n_object.get('notification_title') and datastore.data['settings']['application'].get('notification_title'):
-                        n_object['notification_title'] = datastore.data['settings']['application'].get('notification_title')
-
-                    if not n_object.get('notification_format') and datastore.data['settings']['application'].get('notification_format'):
-                        n_object['notification_format'] = datastore.data['settings']['application'].get('notification_format')
-                    if n_object.get('notification_urls', {}):
-                        sent_obj = process_notification(n_object, datastore)
-
-                except Exception as e:
-                    logger.error(f"Watch URL: {n_object['watch_url']}  Error {str(e)}")
-
-                    # UUID wont be present when we submit a 'test' from the global settings
-                    if 'uuid' in n_object:
-                        datastore.update_watch(uuid=n_object['uuid'],
-                                               update_obj={'last_notification_error': "Notification error detected, goto notification log."})
-
-                    log_lines = str(e).splitlines()
-                    notification_debug_log += log_lines
-
-                    with app.app_context():
-                        app.config['watch_check_update_SIGNAL'].send(app_context=app, watch_uuid=n_object.get('uuid'))
-
-                # Process notifications
-                notification_debug_log+= ["{} - SENDING - {}".format(now.strftime("%c"), json.dumps(sent_obj))]
-                # Trim the log length
-                notification_debug_log = notification_debug_log[-100:]
+# DEPRECATED: notification_runner has been replaced by Huey task queue
+# All logic from this function has been moved to changedetectionio/notification/task_queue.py
+# in the send_notification_task() function with automatic retry logic and persistent queuing
+# See: changedetectionio/notification/task_queue.py - send_notification_task()
 
 
 
@@ -989,7 +968,7 @@ def ticker_thread_check_time_launch_checks():
             health_result = worker_handler.check_worker_health(
                 expected_count=expected_workers,
                 update_q=update_q,
-                notification_q=notification_q,
+                notification_q=None,  # Now using Huey task queue
                 app=app,
                 datastore=datastore
             )

@@ -3,6 +3,12 @@ import time
 from flask import url_for
 from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
 import logging
+import pytest
+
+# Set environment variable at module level to disable retries for dead-letter test
+# This must be done BEFORE the Flask app/Huey is initialized
+_original_retry_count = os.environ.get('NOTIFICATION_RETRY_COUNT')
+os.environ['NOTIFICATION_RETRY_COUNT'] = '0'
 
 def test_check_notification_error_handling(client, live_server, measure_memory_usage, datastore_path):
 

@@ -9,6 +9,7 @@ flask_expects_json~=1.7
 flask_restful
 flask_cors # For the Chrome extension to operate
 janus # Thread-safe async/sync queue bridge
+huey ~= 2.5  # Task queue for notification retries with FileHuey/SqliteHuey/RedisHuey support
 flask_wtf~=1.2
 flask~=3.1
 flask-socketio~=5.6.0

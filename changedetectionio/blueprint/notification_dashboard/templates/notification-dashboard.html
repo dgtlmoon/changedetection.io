@@ -1,0 +1,398 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="edit-form">
+    <div class="inner notifications-dashboard-split">
+
+        <h4>Notification Events</h4>
+
+        <!-- Summary Stats -->
+        <div class="event-summary">
+            <a href="{{ url_for('notification_dashboard.dashboard', filter='delivered') }}"
+               class="stat-item stat-filter-link {% if active_filter == 'delivered' %}stat-filter-active{% endif %}"
+               title="Show only delivered notifications">
+                <span class="stat-badge stat-delivered">{{ status_counts.delivered }}</span> Delivered
+            </a>
+            <a href="{{ url_for('notification_dashboard.dashboard', filter='queued') }}"
+               class="stat-item stat-filter-link {% if active_filter == 'queued' %}stat-filter-active{% endif %}"
+               title="Show only queued notifications">
+                <span class="stat-badge stat-queued">{{ status_counts.queued }}</span> Queued
+            </a>
+            <a href="{{ url_for('notification_dashboard.dashboard', filter='retrying') }}"
+               class="stat-item stat-filter-link {% if active_filter == 'retrying' %}stat-filter-active{% endif %}"
+               title="Show only retrying notifications">
+                <span class="stat-badge stat-retrying">{{ status_counts.retrying }}</span> Retrying
+            </a>
+            <a href="{{ url_for('notification_dashboard.dashboard', filter='failed') }}"
+               class="stat-item stat-filter-link {% if active_filter == 'failed' %}stat-filter-active{% endif %}"
+               title="Show only failed notifications">
+                <span class="stat-badge stat-failed">{{ status_counts.failed }}</span> Failed
+            </a>
+            {% if active_filter %}
+            <a href="{{ url_for('notification_dashboard.dashboard') }}"
+               class="stat-item stat-clear-filter"
+               title="Clear filter and show all notifications">
+                <svg width="14" height="14" viewBox="0 0 16 16" style="vertical-align: middle; margin-right: 4px;">
+                    <path d="M4 4l8 8m0-8l-8 8" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                Clear Filter
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="dashboard-actions">
+            {% if status_counts.failed > 0 %}
+            <form method="POST" action="{{ url_for('notification_dashboard.retry_all_notifications') }}" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="pure-button button-small retry-all-btn">
+                    <svg width="14" height="14" viewBox="0 0 16 16" style="vertical-align: middle; margin-right: 4px;">
+                        <path d="M13.5 8a5.5 5.5 0 1 1-1.65-3.95" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                        <path d="M13.5 2v4h-4" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                    </svg>
+                    Retry All Failed ({{ status_counts.failed }})
+                </button>
+            </form>
+            <form method="POST" action="{{ url_for('notification_dashboard.clear_failed_notifications') }}" style="display: inline;" onsubmit="return confirm('Clear all {{ status_counts.failed }} failed notification(s)?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="pure-button button-small clear-failed-btn">
+                    <svg width="14" height="14" viewBox="0 0 16 16" style="vertical-align: middle; margin-right: 4px;">
+                        <path d="M4 4l8 8m0-8l-8 8" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    Clear Failed ({{ status_counts.failed }})
+                </button>
+            </form>
+            {% endif %}
+            {% if events|length > 0 %}
+            <form method="POST" action="{{ url_for('notification_dashboard.clear_all_notifications') }}" style="display: inline;" onsubmit="return confirm('Clear all notifications (delivered, queued, retrying, and failed)?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="pure-button button-small clear-all-btn">Clear All ({{ events|length }})</button>
+            </form>
+            {% endif %}
+        </div>
+
+        <!-- Two-Column Layout -->
+        <div class="split-view">
+
+            <!-- LEFT COLUMN: Event List -->
+            <div class="event-list">
+                {% if events %}
+                    {% for event in events %}
+                    <div class="event-item {% if loop.first %}event-item-selected{% endif %}"
+                         data-event-id="{{ event.id }}"
+                         data-event-json='{{ event|tojson }}'>
+
+                        <!-- Status Badge -->
+                        <span class="event-badge event-badge-{{ event.status }}">
+                            {% if event.status == 'delivered' %}
+                                <svg width="14" height="14" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M12.28 5.22a.75.75 0 0 1 0 1.06l-4.75 4.75a.75.75 0 0 1-1.06 0l-2.5-2.5a.75.75 0 0 1 1.06-1.06L7 9.44l4.22-4.22a.75.75 0 0 1 1.06 0Z"></path>
+                                </svg>
+                                DELIVERED
+                            {% elif event.status == 'queued' %}
+                                <svg width="14" height="14" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                                    <path d="M8 4v4l3 3" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                                </svg>
+                                QUEUED
+                            {% elif event.status == 'retrying' %}
+                                <svg width="14" height="14" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M13.5 8a5.5 5.5 0 1 1-1.65-3.95" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                                    <path d="M13.5 2v4h-4" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                                </svg>
+                                RETRYING {% if event.retry_number %}({{ event.retry_number }}/{{ event.total_retries }}){% endif %}
+                            {% else %}
+                                <svg width="14" height="14" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M4 4l8 8m0-8l-8 8" stroke="currentColor" stroke-width="2"/>
+                                </svg>
+                                FAILED
+                            {% endif %}
+                        </span>
+
+                        <!-- Watch Title -->
+                        <span class="event-title" title="{{ event.watch_url }}">
+                            {{ event.watch_title }}
+                        </span>
+
+                        <!-- Timestamp -->
+                        <span class="event-time">
+                            <span class="time-display" data-timestamp="{{ event.timestamp }}">
+                                {{ event.timestamp_formatted if event.timestamp_formatted else 'N/A' }}
+                            </span>
+                        </span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <p>No notification events yet</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- RIGHT COLUMN: Event Details -->
+            <div class="event-details">
+                <div id="event-details-content">
+                    {% if events %}
+                    <!-- Initial content will be loaded by JavaScript from first event -->
+                    <div class="loading">Select an event to view details</div>
+                    {% else %}
+                    <div class="empty-details">No events to display</div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Retry Schedule Information (Collapsed by default) -->
+        <details class="retry-schedule-details">
+            <summary>ℹ️ Automatic Retry Configuration</summary>
+            <div class="retry-schedule">
+                <p>
+                    Notifications are automatically retried <strong>{{ retry_config.retry_count }} times</strong> with <strong>exponential backoff</strong> starting at {{ retry_config.retry_delay_seconds }} seconds.
+                </p>
+                <table class="pure-table">
+                    <thead>
+                        <tr>
+                            <th>Attempt</th>
+                            <th>Time</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>1st</strong> (initial)</td>
+                            <td>T+0:00</td>
+                            <td>⚠️ Fails (e.g., SMTP server down)</td>
+                        </tr>
+                        {% for i in range(retry_config.retry_count) %}
+                        {% set delay = retry_config.retry_delays[i] %}
+                        {% set cumulative_time = retry_config.retry_delays[:i+1]|sum %}
+                        <tr>
+                            <td><strong>{{ i + 2 }}{{ ['st', 'nd', 'rd'][i + 1] if i + 1 < 3 else 'th' }}</strong> (retry {{ i + 1 }})</td>
+                            <td>T+{{ '%d:%02d' % (cumulative_time // 60, cumulative_time % 60) }}</td>
+                            <td>{% if i < retry_config.retry_count - 1 %}⚠️ Fails → Wait {{ delay }}s{% else %}⚠️ Fails → Give up{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </details>
+
+    </div>
+</div>
+
+<script src="{{ url_for('static_content', group='js', filename='notification-dashboard.js') }}"></script>
+<script>
+// Event selection and detail display
+$(function() {
+    let currentSelectedId = null;
+
+    // Time displays now show actual date/time from backend instead of relative format
+    // Note: All user-controlled content is HTML-escaped on the backend for security
+
+    // Function to render event details
+    function renderEventDetails(event) {
+        if (!event) {
+            return '<div class="empty-details">No event data available</div>';
+        }
+
+        let html = '<div class="detail-container">';
+
+        // Header with resend button
+        html += '<div class="detail-header">';
+        html += `<h5>Event Details</h5>`;
+        if (event.status === 'failed') {
+            const retryUrl = '/notification-dashboard/retry/' + event.id;
+            html += `<form method="POST" action="${retryUrl}" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="pure-button button-small resend-btn">
+                    <svg width="14" height="14" viewBox="0 0 16 16" style="vertical-align: middle; margin-right: 4px;">
+                        <path d="M13.5 8a5.5 5.5 0 1 1-1.65-3.95" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                        <path d="M13.5 2v4h-4" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                    </svg>
+                    Retry
+                </button>
+            </form>`;
+        } else if (event.status === 'retrying') {
+            const sendNowUrl = '/notification-dashboard/send-now/' + event.id;
+            html += `<a href="${sendNowUrl}" class="pure-button button-small resend-btn">Send Now</a>`;
+        }
+        html += '</div>';
+
+        // Status section
+        html += '<div class="detail-section">';
+        html += '<div class="detail-row"><span class="detail-label">Status:</span>';
+        let statusClass = 'status-' + (event.status || 'unknown');
+        let statusText = (event.status || 'unknown').toUpperCase();
+        if (event.status === 'retrying' && event.retry_number) {
+            statusText += ` (Attempt ${event.retry_number}/${event.total_retries})`;
+        }
+        html += `<span class="detail-value"><span class="status-pill ${statusClass}">${statusText}</span></span></div>`;
+
+        // Timestamp (converted to browser's local timezone)
+        if (event.timestamp) {
+            html += '<div class="detail-row"><span class="detail-label">Timestamp:</span>';
+            html += `<span class="detail-value">${window.formatTimestampLocal(event.timestamp)}</span></div>`;
+        }
+
+        // Retry time (for retrying status, converted to browser's local timezone)
+        if (event.status === 'retrying' && event.retry_at) {
+            html += '<div class="detail-row"><span class="detail-label">Next Retry:</span>';
+            html += `<span class="detail-value">${window.formatTimestampLocal(event.retry_at)}</span></div>`;
+        }
+
+        // Task ID
+        if (event.id) {
+            html += '<div class="detail-row"><span class="detail-label">Task ID:</span>';
+            html += `<span class="detail-value"><code>${event.id}</code></span></div>`;
+        }
+        html += '</div>';
+
+        // Watch section
+        if (event.watch_url || event.watch_uuid || event.watch_title) {
+            html += '<div class="detail-section">';
+            html += '<h6>Watch</h6>';
+            if (event.watch_url) {
+                html += '<div class="detail-row"><span class="detail-label">URL:</span>';
+                html += `<span class="detail-value"><a href="${event.watch_url}" target="_blank">${event.watch_url}</a></span></div>`;
+            }
+            if (event.watch_uuid) {
+                html += '<div class="detail-row"><span class="detail-label">UUID:</span>';
+                html += `<span class="detail-value"><code>${event.watch_uuid}</code> `;
+                html += `<a href="/edit/${event.watch_uuid}" class="button-link">Edit</a></span></div>`;
+            }
+            html += '</div>';
+        }
+
+        // Notification endpoints
+        if (event.notification_urls && event.notification_urls.length > 0) {
+            html += '<div class="detail-section">';
+            html += '<h6>Notification Endpoints</h6>';
+            event.notification_urls.forEach(url => {
+                html += `<div class="endpoint-item"><code>${url}</code></div>`;
+            });
+            html += '</div>';
+        }
+
+        // Payload (what was sent)
+        if (event.payload) {
+            html += '<div class="detail-section">';
+            html += '<h6>Payload</h6>';
+
+            if (event.payload.notification_title) {
+                html += '<div class="detail-row"><span class="detail-label">Title:</span>';
+                html += `<span class="detail-value"><code>${event.payload.notification_title}</code></span></div>`;
+            }
+
+            if (event.payload.notification_body) {
+                html += '<div class="detail-row"><span class="detail-label">Body:</span>';
+                html += `<span class="detail-value"><pre class="payload-content">${event.payload.notification_body}</pre></span></div>`;
+            }
+
+            if (event.payload.notification_format) {
+                html += '<div class="detail-row"><span class="detail-label">Format:</span>';
+                html += `<span class="detail-value"><code>${event.payload.notification_format}</code></span></div>`;
+            }
+
+            html += '</div>';
+        }
+
+        // Apprise logs
+        if (event.apprise_logs) {
+            html += '<div class="detail-section">';
+            html += '<h6>Apprise Logs</h6>';
+            html += `<pre class="log-content">${event.apprise_logs}</pre>`;
+            html += '</div>';
+        }
+
+        // Error details
+        if (event.error) {
+            html += '<div class="detail-section detail-error">';
+            html += '<h6>Error</h6>';
+            html += `<pre class="error-content">${event.error}</pre>`;
+            html += '</div>';
+        }
+
+        // Retry attempts timeline (for retrying and failed notifications)
+        if ((event.status === 'retrying' || event.status === 'failed') && event.retry_attempts && event.retry_attempts.length > 0) {
+            html += '<div class="detail-section retry-timeline">';
+            html += '<h6>Retry Attempts History</h6>';
+            html += '<div class="timeline">';
+
+            // Sort by attempt number to ensure chronological order
+            const attempts = [...event.retry_attempts].sort((a, b) => a.attempt_number - b.attempt_number);
+
+            attempts.forEach((attempt, index) => {
+                html += '<div class="timeline-item">';
+                html += `<div class="timeline-marker">${attempt.attempt_number}</div>`;
+                html += '<div class="timeline-content">';
+                html += `<div class="timeline-header">`;
+                html += `<strong>Attempt #${attempt.attempt_number}</strong>`;
+                if (attempt.timestamp) {
+                    html += ` <span class="timeline-time">${window.formatTimestampLocal(attempt.timestamp)}</span>`;
+                }
+                html += `</div>`;
+
+                if (attempt.error || attempt.error_message) {
+                    html += `<div class="timeline-error">⚠️ ${attempt.error || attempt.error_message}</div>`;
+                }
+
+                html += '</div>';
+                html += '</div>';
+            });
+
+            // Add current status indicator
+            if (event.status === 'retrying' && event.retry_at) {
+                html += '<div class="timeline-item timeline-future">';
+                html += `<div class="timeline-marker">⏰</div>`;
+                html += '<div class="timeline-content">';
+                html += `<div class="timeline-header">`;
+                html += `<strong>Next Retry</strong>`;
+                html += ` <span class="timeline-time">${window.formatTimestampLocal(event.retry_at)}</span>`;
+                html += `</div>`;
+                html += `<div class="timeline-status">Scheduled (Attempt ${event.retry_number + 1}/${event.total_retries})</div>`;
+                html += '</div>';
+                html += '</div>';
+            } else if (event.status === 'failed') {
+                html += '<div class="timeline-item timeline-end">';
+                html += `<div class="timeline-marker">✖</div>`;
+                html += '<div class="timeline-content">';
+                html += `<div class="timeline-header"><strong>Exhausted Retries</strong></div>`;
+                html += `<div class="timeline-status">All ${attempts.length} retry attempts failed</div>`;
+                html += '</div>';
+                html += '</div>';
+            }
+
+            html += '</div>'; // Close timeline
+            html += '</div>'; // Close detail-section
+        }
+
+        html += '</div>';
+
+        return html;
+    }
+
+    // Handle event item click
+    $('.event-item').click(function(e) {
+        e.preventDefault();
+
+        // Update selection state
+        $('.event-item').removeClass('event-item-selected');
+        $(this).addClass('event-item-selected');
+
+        // Get event data
+        const eventData = $(this).data('event-json');
+        currentSelectedId = eventData.id;
+
+        // Render details
+        $('#event-details-content').html(renderEventDetails(eventData));
+    });
+
+    // Auto-select first event on load
+    if ($('.event-item').length > 0) {
+        $('.event-item').first().click();
+    }
+});
+</script>
+
+{% endblock %}
