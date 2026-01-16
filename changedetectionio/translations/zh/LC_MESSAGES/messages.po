@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-01-03 14:31+0100\n"
-"PO-Revision-Date: 2026-01-16 06:40+0800\n"
+"PO-Revision-Date: 2026-01-16 17:40+0800\n"
 "Last-Translator: 吾爱分享 <admin@wuaishare.cn>\n"
 "Language-Team: zh <LL@li.org>\n"
 "Language: zh\n"
@@ -218,7 +218,7 @@ msgstr "应为 1 秒或以上"
 
 #: changedetectionio/forms.py:767
 msgid "URLs"
-msgstr "URL"
+msgstr "URL 列表"
 
 #: changedetectionio/forms.py:768
 msgid "Upload .xlsx file"
@@ -521,7 +521,7 @@ msgstr "移除密码"
 
 #: changedetectionio/forms.py:1021
 msgid "Render anchor tag content"
-msgstr "渲染 a 标签内容"
+msgstr "渲染 <a> 标签内容"
 
 #: changedetectionio/forms.py:1022
 msgid "Allow anonymous access to watch history page when password is enabled"
@@ -1243,7 +1243,7 @@ msgstr "确认文本"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:27
 msgid "Type in the word"
-msgstr "请输入"
+msgstr "请输入单词"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:27
 msgid "clear"
@@ -1745,7 +1745,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html:386
 msgid "tab. Use"
-msgstr "使用"
+msgstr "选项卡中。使用"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:386
 msgid "Shift+Click"
