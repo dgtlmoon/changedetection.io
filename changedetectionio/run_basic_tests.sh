@@ -88,10 +88,8 @@ REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest -vv -s --maxfail=1 tests/test_notif
 
 
 # Re-run a few tests that will trigger brotli based storage
-export SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD=5
-pytest -vv -s --maxfail=1 tests/test_access_control.py
-
-pytest -vv -s --maxfail=1 --dist=load tests/test_backend.py tests/test_rss.py tests/test_unique_lines.py tests/test_notification.py
+# And again with brotli+screenshot attachment
+SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD=5 REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest -vv -s --maxfail=1 --dist=load tests/test_backend.py tests/test_rss.py tests/test_unique_lines.py tests/test_notification.py  tests/test_access_control.py
 
 # Try high concurrency
 FETCH_WORKERS=50 pytest  tests/test_history_consistency.py -vv -l -s
