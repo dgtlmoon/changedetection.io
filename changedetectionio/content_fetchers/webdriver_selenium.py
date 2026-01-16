@@ -157,7 +157,17 @@ class fetcher(Fetcher):
                     import io
                     img = Image.open(io.BytesIO(screenshot_png))
                     # Convert to RGB if needed (JPEG doesn't support transparency)
-                    if img.mode != 'RGB':
+                    # Always convert non-RGB modes to RGB to ensure JPEG compatibility
+                    if img.mode in ('RGBA', 'LA', 'P', 'PA'):
+                        # Handle transparency by compositing onto white background
+                        if img.mode == 'P':
+                            img = img.convert('RGBA')
+                        background = Image.new('RGB', img.size, (255, 255, 255))
+                        if img.mode in ('RGBA', 'LA', 'PA'):
+                            background.paste(img, mask=img.split()[-1])  # Use alpha channel as mask
+                        img = background
+                    elif img.mode != 'RGB':
+                        # For other modes, direct conversion
                         img = img.convert('RGB')
                     jpeg_buffer = io.BytesIO()
                     img.save(jpeg_buffer, format='JPEG', quality=int(os.getenv("SCREENSHOT_QUALITY", 72)))
