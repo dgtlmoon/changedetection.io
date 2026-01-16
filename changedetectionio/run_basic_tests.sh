@@ -82,20 +82,16 @@ echo "RUNNING WITH BASE_URL SET"
 # Re #65 - Ability to include a link back to the installation, in the notification.
 export BASE_URL="https://really-unique-domain.io"
 
-REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest -vv -s --maxfail=1 tests/test_notification.py
-
-
 # Re-run with HIDE_REFERER set - could affect login
 export HIDE_REFERER=True
-pytest -vv -s --maxfail=1 tests/test_access_control.py
+REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest -vv -s --maxfail=1 tests/test_notification.py tests/test_access_control.py
+
 
 # Re-run a few tests that will trigger brotli based storage
 export SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD=5
 pytest -vv -s --maxfail=1 tests/test_access_control.py
-REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest tests/test_notification.py
-pytest -vv -s --maxfail=1 tests/test_backend.py
-pytest -vv -s --maxfail=1 tests/test_rss.py
-pytest -vv -s --maxfail=1 tests/test_unique_lines.py
+
+pytest -vv -s --maxfail=1 --dist=load tests/test_backend.py tests/test_rss.py tests/test_unique_lines.py pytest tests/test_notification.py
 
 # Try high concurrency
 FETCH_WORKERS=50 pytest  tests/test_history_consistency.py -vv -l -s
