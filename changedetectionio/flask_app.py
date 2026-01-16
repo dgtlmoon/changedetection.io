@@ -27,9 +27,7 @@ from flask import (
     session,
     url_for,
 )
-from urllib.parse import urlparse
 from flask_compress import Compress as FlaskCompress
-from flask_login import current_user
 from flask_restful import abort, Api
 from flask_cors import CORS
 
@@ -46,6 +44,7 @@ from changedetectionio.api import Watch, WatchHistory, WatchSingleHistory, Watch
 from changedetectionio.api.Search import Search
 from .time_handler import is_within_schedule
 from changedetectionio.languages import get_available_languages, get_language_codes, get_flag_for_locale, get_timeago_locale
+IN_PYTEST = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
 
 datastore = None
 
@@ -979,6 +978,10 @@ def ticker_thread_check_time_launch_checks():
     logger.debug(f"System env MINIMUM_SECONDS_RECHECK_TIME {recheck_time_minimum_seconds}")
 
     # Workers are now started during app initialization, not here
+    WAIT_TIME_BETWEEN_LOOP = 1.0 if not IN_PYTEST else 0.0001
+    if IN_PYTEST:
+        # The time between loops should be less than the first .sleep/wait in def wait_for_all_checks() of tests/util.py
+        logger.warning(f"Looks like we're in PYTEST! Setting time between searching for items to add to the queue to {WAIT_TIME_BETWEEN_LOOP}s")
 
     while not app.config.exit.is_set():
 
@@ -1120,4 +1123,4 @@ def ticker_thread_check_time_launch_checks():
                     watch.jitter_seconds = 0
 
         # Should be low so we can break this out in testing
-        app.config.exit.wait(1)
+        app.config.exit.wait(WAIT_TIME_BETWEEN_LOOP)
