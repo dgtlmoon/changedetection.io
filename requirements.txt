@@ -70,7 +70,7 @@ lxml >=4.8.0,!=5.2.0,!=5.2.1,<7
 
 # XPath 2.0-3.1 support - 4.2.0 had issues, 4.1.5 stable
 # Consider updating to latest stable version periodically
-elementpath==5.0.4
+elementpath==5.1.0
 
 # For fast image comparison in screenshot change detection
 # opencv-python-headless is OPTIONAL (excluded from requirements.txt)
