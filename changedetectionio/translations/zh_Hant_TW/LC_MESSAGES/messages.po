@@ -1992,7 +1992,7 @@ msgid "Changed"
 msgstr "變更"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:130
-msgid "No website watches configured, please add a URL in the box above, or"
+msgid "No web page change detection watches configured, please add a URL in the box above, or"
 msgstr "未設定網站監測任務，請在上方欄位新增 URL，或"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:130

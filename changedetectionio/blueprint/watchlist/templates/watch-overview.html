@@ -159,7 +159,7 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
             <tbody>
             {%- if not watches|length -%}
             <tr>
-                <td colspan="{{ cols_required }}" style="text-wrap: wrap;">{{ _('No website watches configured, please add a URL in the box above, or') }} <a href="{{ url_for('imports.import_page')}}" >{{ _('import a list') }}</a>.</td>
+                <td colspan="{{ cols_required }}" style="text-wrap: wrap;">{{ _('No web page change detection watches configured, please add a URL in the box above, or') }} <a href="{{ url_for('imports.import_page')}}" >{{ _('import a list') }}</a>.</td>
             </tr>
             {%- endif -%}
 
