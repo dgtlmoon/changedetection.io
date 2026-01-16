@@ -91,7 +91,7 @@ REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest -vv -s --maxfail=1 tests/test_notif
 export SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD=5
 pytest -vv -s --maxfail=1 tests/test_access_control.py
 
-pytest -vv -s --maxfail=1 --dist=load tests/test_backend.py tests/test_rss.py tests/test_unique_lines.py pytest tests/test_notification.py
+pytest -vv -s --maxfail=1 --dist=load tests/test_backend.py tests/test_rss.py tests/test_unique_lines.py tests/test_notification.py
 
 # Try high concurrency
 FETCH_WORKERS=50 pytest  tests/test_history_consistency.py -vv -l -s
