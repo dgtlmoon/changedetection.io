@@ -978,7 +978,7 @@ def ticker_thread_check_time_launch_checks():
     logger.debug(f"System env MINIMUM_SECONDS_RECHECK_TIME {recheck_time_minimum_seconds}")
 
     # Workers are now started during app initialization, not here
-    WAIT_TIME_BETWEEN_LOOP = 1.0 if not IN_PYTEST else 0.0001
+    WAIT_TIME_BETWEEN_LOOP = 1.0 if not IN_PYTEST else 0.01
     if IN_PYTEST:
         # The time between loops should be less than the first .sleep/wait in def wait_for_all_checks() of tests/util.py
         logger.warning(f"Looks like we're in PYTEST! Setting time between searching for items to add to the queue to {WAIT_TIME_BETWEEN_LOOP}s")
