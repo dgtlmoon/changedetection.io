@@ -2036,7 +2036,7 @@ msgid "Changed"
 msgstr "변경됨"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:130
-msgid "No website watches configured, please add a URL in the box above, or"
+msgid "No web page change detection watches configured, please add a URL in the box above, or"
 msgstr "구성된 웹사이트 시계가 없습니다. 위 상자에 URL을 추가하세요. 또는"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:130
