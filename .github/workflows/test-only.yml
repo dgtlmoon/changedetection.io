@@ -53,3 +53,12 @@ jobs:
     with:
       python-version: '3.13'
       skip-pypuppeteer: true
+
+
+  test-application-3-14:
+    #if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: lint-code
+    uses: ./.github/workflows/test-stack-reusable-workflow.yml
+    with:
+      python-version: '3.14'
+      skip-pypuppeteer: false
