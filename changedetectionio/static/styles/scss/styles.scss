@@ -33,6 +33,31 @@
 @use "parts/login_form";
 @use "parts/tabs";
 
+// Smooth transitions for theme switching
+body,
+.pure-table,
+.pure-table thead,
+.pure-table td,
+.pure-table th,
+.pure-form input,
+.pure-form textarea,
+.pure-form select,
+.edit-form .inner,
+.pure-menu-horizontal,
+footer,
+.sticky-tab,
+#diff-jump,
+.button-tag,
+#new-watch-form,
+#new-watch-form input:not(.pure-button),
+code,
+.messages li,
+#checkbox-operations,
+.inline-warning,
+a,
+.watch-controls img {
+  transition: color 0.4s ease, background-color 0.4s ease, background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+}
 
 body {
   color: var(--color-text);
