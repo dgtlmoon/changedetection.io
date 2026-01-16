@@ -2229,7 +2229,7 @@ msgstr "Über dem Preis, um eine Benachrichtigung auszulösen"
 #: changedetectionio/processors/restock_diff/forms.py:25
 #, python-format
 msgid "Threshold in %% for price changes since the original price"
-msgstr "Schwellenwert in % für Preisänderungen seit dem ursprünglichen Preis"
+msgstr "Schwellenwert in %% für Preisänderungen seit dem ursprünglichen Preis"
 
 #: changedetectionio/processors/restock_diff/forms.py:28
 msgid "Should be between 0 and 100"
