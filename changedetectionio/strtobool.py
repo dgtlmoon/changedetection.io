@@ -17,6 +17,8 @@ _MAP = {
 
 
 def strtobool(value):
+    if not value:
+        return False
     try:
         return _MAP[str(value).lower()]
     except KeyError:

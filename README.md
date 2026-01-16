@@ -183,6 +183,9 @@ docker compose pull && docker compose up -d
 
 See the wiki for more information https://github.com/dgtlmoon/changedetection.io/wiki
 
+## Different browser viewport sizes (mobile, desktop etc)
+
+If you are using the recommended `sockpuppetbrowser` (which is in the docker-compose.yml as a setting to be uncommented) you can easily set different viewport sizes for your web page change detection, [see more information here about setting up different viewport sizes](https://github.com/dgtlmoon/sockpuppetbrowser?tab=readme-ov-file#setting-viewport-size).
 
 ## Filters
 

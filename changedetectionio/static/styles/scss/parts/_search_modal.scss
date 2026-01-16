@@ -1,0 +1,55 @@
+// Search Modal Styles
+
+#search-modal {
+  .modal-body {
+    padding: 2rem 1.5rem;
+
+    .pure-control-group {
+      padding-bottom: 0;
+
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--color-text);
+      }
+
+      #search-modal-input {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        padding: 0.6rem 0.8rem;
+        font-size: 1rem;
+        border: 1px solid var(--color-border-input);
+        border-radius: 4px;
+        background-color: var(--color-background-input);
+        color: var(--color-text-input);
+        box-shadow: inset 0 1px 3px var(--color-shadow-input);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+        &:focus {
+          outline: none;
+          border-color: var(--color-link);
+          box-shadow: 0 0 0 3px rgba(27, 152, 248, 0.1);
+        }
+
+        &::placeholder {
+          color: var(--color-text-input-placeholder);
+          opacity: 0.7;
+        }
+      }
+    }
+  }
+}
+
+// Dark mode adjustments
+html[data-darkmode=true] {
+  #search-modal {
+    #search-modal-input {
+      &:focus {
+        box-shadow: 0 0 0 3px rgba(89, 189, 251, 0.15);
+      }
+    }
+  }
+}

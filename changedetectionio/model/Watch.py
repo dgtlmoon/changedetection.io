@@ -10,14 +10,69 @@ from pathlib import Path
 from loguru import logger
 
 from .. import jinja2_custom as safe_jinja
-from ..diff import ADDED_PLACEMARKER_OPEN
 from ..html_tools import TRANSLATE_WHITESPACE_TABLE
 
 FAVICON_RESAVE_THRESHOLD_SECONDS=86400
-
+BROTLI_COMPRESS_SIZE_THRESHOLD = int(os.getenv('SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD', 1024))
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
+
+def _brotli_save(contents, filepath, mode=None, fallback_uncompressed=False):
+    """
+    Save compressed data using native brotli.
+    Testing shows no memory leak when using gc.collect() after compression.
+
+    Args:
+        contents: data to compress (str or bytes)
+        filepath: destination file path
+        mode: brotli compression mode (e.g., brotli.MODE_TEXT)
+        fallback_uncompressed: if True, save uncompressed on failure; if False, raise exception
+
+    Returns:
+        str: actual filepath saved (may differ from input if fallback used)
+
+    Raises:
+        Exception: if compression fails and fallback_uncompressed is False
+    """
+    import brotli
+    import gc
+
+    # Ensure contents are bytes
+    if isinstance(contents, str):
+        contents = contents.encode('utf-8')
+
+    try:
+        logger.debug(f"Starting brotli compression of {len(contents)} bytes.")
+
+        if mode is not None:
+            compressed_data = brotli.compress(contents, mode=mode)
+        else:
+            compressed_data = brotli.compress(contents)
+
+        with open(filepath, 'wb') as f:
+            f.write(compressed_data)
+
+        logger.debug(f"Finished brotli compression - From {len(contents)} to {len(compressed_data)} bytes.")
+
+        # Force garbage collection to prevent memory buildup
+        gc.collect()
+
+        return filepath
+
+    except Exception as e:
+        logger.error(f"Brotli compression error: {e}")
+
+        # Compression failed
+        if fallback_uncompressed:
+            logger.warning(f"Brotli compression failed for {filepath}, saving uncompressed")
+            fallback_path = filepath.replace('.br', '')
+            with open(fallback_path, 'wb') as f:
+                f.write(contents)
+            return fallback_path
+        else:
+            raise Exception(f"Brotli compression failed for {filepath}: {e}")
+
 
 class model(watch_base):
     __newest_history_key = None
@@ -93,11 +148,29 @@ class model(watch_base):
         domain = parsed.hostname
         return domain
 
+    @property
+    def history_index_filename(self):
+        # So that you dont try to view different histories in different 'diff' setups, can confuse cdio.
+        processor = self.get('processor')
+        if not processor or self.get('processor') == 'text_json_diff':
+            return 'history.txt'
+        else:
+            return f'history-{processor}.txt'
+
     def clear_watch(self):
         import pathlib
 
+        # Get list of processor config files to preserve
+        from changedetectionio.processors import find_processors
+        processor_names = [name for cls, name in find_processors()]
+        processor_config_files = {f"{name}.json" for name in processor_names}
+
         # JSON Data, Screenshots, Textfiles (history index and snapshots), HTML in the future etc
+        # But preserve processor config files (they're configuration, not history data)
         for item in pathlib.Path(str(self.watch_data_dir)).rglob("*.*"):
+            # Skip processor config files
+            if item.name in processor_config_files:
+                continue
             os.unlink(item)
 
         # Force the attr to recalculate
@@ -185,7 +258,7 @@ class model(watch_base):
             return []
 
         # Read the history file as a dict
-        fname = os.path.join(self.watch_data_dir, "history.txt")
+        fname = os.path.join(self.watch_data_dir, self.history_index_filename)
         if os.path.isfile(fname):
             logger.debug(f"Reading watch history index for {self.get('uuid')}")
             with open(fname, "r", encoding='utf-8') as f:
@@ -195,12 +268,15 @@ class model(watch_base):
 
                         # The index history could contain a relative path, so we need to make the fullpath
                         # so that python can read it
-                        if not '/' in v and not '\'' in v:
+                        # Cross-platform: check for any path separator (works on Windows and Unix)
+                        if os.sep not in v and '/' not in v and '\\' not in v:
+                            # Relative filename only, no path separators
                             v = os.path.join(self.watch_data_dir, v)
                         else:
                             # It's possible that they moved the datadir on older versions
                             # So the snapshot exists but is in a different path
-                            snapshot_fname = v.split('/')[-1]
+                            # Cross-platform: use os.path.basename instead of split('/')
+                            snapshot_fname = os.path.basename(v)
                             proposed_new_path = os.path.join(self.watch_data_dir, snapshot_fname)
                             if not os.path.exists(v) and os.path.exists(proposed_new_path):
                                 v = proposed_new_path
@@ -218,7 +294,7 @@ class model(watch_base):
 
     @property
     def has_history(self):
-        fname = os.path.join(self.watch_data_dir, "history.txt")
+        fname = os.path.join(self.watch_data_dir, self.history_index_filename)
         return os.path.isfile(fname)
 
     @property
@@ -288,61 +364,108 @@ class model(watch_base):
         if not filepath:
             filepath = self.history[timestamp]
 
-        # See if a brotli versions exists and switch to that
-        if not filepath.endswith('.br') and os.path.isfile(f"{filepath}.br"):
-            filepath = f"{filepath}.br"
+        # Check if binary file (image, PDF, etc.)
+        # Binary files are NEVER saved with .br compression, only text files are
+        binary_extensions = ('.png', '.jpg', '.jpeg', '.gif', '.webp', '.pdf', '.bin', '.jfif')
+        is_binary = any(filepath.endswith(ext) for ext in binary_extensions)
 
-        # OR in the backup case that the .br does not exist, but the plain one does
-        if filepath.endswith('.br') and not os.path.isfile(filepath):
-            if os.path.isfile(filepath.replace('.br', '')):
-                filepath = filepath.replace('.br', '')
+        # Only look for .br versions for text files
+        if not is_binary:
+            # See if a brotli version exists and switch to that (text files only)
+            if not filepath.endswith('.br') and os.path.isfile(f"{filepath}.br"):
+                filepath = f"{filepath}.br"
 
+            # OR in the backup case that the .br does not exist, but the plain one does
+            if filepath.endswith('.br') and not os.path.isfile(filepath):
+                if os.path.isfile(filepath.replace('.br', '')):
+                    filepath = filepath.replace('.br', '')
+
+        # Handle .br compressed text files
         if filepath.endswith('.br'):
             # Brotli doesnt have a fileheader to detect it, so we rely on filename
             # https://www.rfc-editor.org/rfc/rfc7932
+            # Note: .br should ONLY exist for text files, never binary
             with open(filepath, 'rb') as f:
-                return(brotli.decompress(f.read()).decode('utf-8'))
+                return brotli.decompress(f.read()).decode('utf-8')
 
+        # Binary file - return raw bytes
+        if is_binary:
+            with open(filepath, 'rb') as f:
+                return f.read()
+
+        # Text file - decode to string
         with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
             return f.read()
 
-   # Save some text file to the appropriate path and bump the history
-    # result_obj from fetch_site_status.run()
-    def save_history_text(self, contents, timestamp, snapshot_id):
-        import brotli
-        import tempfile
-        logger.trace(f"{self.get('uuid')} - Updating history.txt with timestamp {timestamp}")
-
-        self.ensure_data_dir_exists()
-
-        threshold = int(os.getenv('SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD', 1024))
-        skip_brotli = strtobool(os.getenv('DISABLE_BROTLI_TEXT_SNAPSHOT', 'False'))
-
-        # Decide on snapshot filename and destination path
-        if not skip_brotli and len(contents) > threshold:
-            snapshot_fname = f"{snapshot_id}.txt.br"
-            encoded_data = brotli.compress(contents.encode('utf-8'), mode=brotli.MODE_TEXT)
-        else:
-            snapshot_fname = f"{snapshot_id}.txt"
-            encoded_data = contents.encode('utf-8')
-
-        dest = os.path.join(self.watch_data_dir, snapshot_fname)
-
-        # Write snapshot file atomically if it doesn't exist
+    def _write_atomic(self, dest, data):
+        """Write data atomically to dest using a temp file"""
         if not os.path.exists(dest):
+            import tempfile
             with tempfile.NamedTemporaryFile('wb', delete=False, dir=self.watch_data_dir) as tmp:
-                tmp.write(encoded_data)
+                tmp.write(data)
                 tmp.flush()
                 os.fsync(tmp.fileno())
                 tmp_path = tmp.name
-            os.rename(tmp_path, dest)
+            os.replace(tmp_path, dest)
+
+    # Save some text file to the appropriate path and bump the history
+    # result_obj from fetch_site_status.run()
+    def save_history_blob(self, contents, timestamp, snapshot_id):
+
+        logger.trace(f"{self.get('uuid')} - Updating {self.history_index_filename} with timestamp {timestamp}")
+
+        self.ensure_data_dir_exists()
+
+        skip_brotli = strtobool(os.getenv('DISABLE_BROTLI_TEXT_SNAPSHOT', 'False'))
+
+        # Binary data - detect file type and save without compression
+        if isinstance(contents, bytes):
+            try:
+                import puremagic
+                detections = puremagic.magic_string(contents[:2048])
+                ext = detections[0].extension if detections else 'bin'
+                # Strip leading dot if present (puremagic returns extensions like '.jfif')
+                ext = ext.lstrip('.')
+                if detections:
+                    logger.trace(f"Detected file type: {detections[0].mime_type} -> extension: {ext}")
+            except Exception as e:
+                logger.warning(f"puremagic detection failed: {e}, using 'bin' extension")
+                ext = 'bin'
+
+            snapshot_fname = f"{snapshot_id}.{ext}"
+            dest = os.path.join(self.watch_data_dir, snapshot_fname)
+            self._write_atomic(dest, contents)
+            logger.trace(f"Saved binary snapshot as {snapshot_fname} ({len(contents)} bytes)")
+
+        # Text data - use brotli compression if enabled and above threshold
+        else:
+            if not skip_brotli and len(contents) > BROTLI_COMPRESS_SIZE_THRESHOLD:
+                # Compressed text
+                import brotli
+                snapshot_fname = f"{snapshot_id}.txt.br"
+                dest = os.path.join(self.watch_data_dir, snapshot_fname)
+
+                if not os.path.exists(dest):
+                    try:
+                        actual_dest = _brotli_save(contents, dest, mode=brotli.MODE_TEXT, fallback_uncompressed=True)
+                        if actual_dest != dest:
+                            snapshot_fname = os.path.basename(actual_dest)
+                    except Exception as e:
+                        logger.error(f"{self.get('uuid')} - Brotli compression failed: {e}")
+                        # Fallback to uncompressed
+                        snapshot_fname = f"{snapshot_id}.txt"
+                        dest = os.path.join(self.watch_data_dir, snapshot_fname)
+                        self._write_atomic(dest, contents.encode('utf-8'))
+            else:
+                # Plain text
+                snapshot_fname = f"{snapshot_id}.txt"
+                dest = os.path.join(self.watch_data_dir, snapshot_fname)
+                self._write_atomic(dest, contents.encode('utf-8'))
 
         # Append to history.txt atomically
-        index_fname = os.path.join(self.watch_data_dir, "history.txt")
+        index_fname = os.path.join(self.watch_data_dir, self.history_index_filename)
         index_line = f"{timestamp},{snapshot_fname}\n"
 
-        # Lets try force flush here since it's usually a very small file
-        # If this still fails in the future then try reading all to memory first, re-writing etc
         with open(index_fname, 'a', encoding='utf-8') as f:
             f.write(index_line)
             f.flush()
@@ -750,25 +873,13 @@ class model(watch_base):
     def save_last_text_fetched_before_filters(self, contents):
         import brotli
         filepath = os.path.join(self.watch_data_dir, 'last-fetched.br')
-        with open(filepath, 'wb') as f:
-            f.write(brotli.compress(contents, mode=brotli.MODE_TEXT))
+        _brotli_save(contents, filepath, mode=brotli.MODE_TEXT, fallback_uncompressed=False)
 
     def save_last_fetched_html(self, timestamp, contents):
-        import brotli
-
         self.ensure_data_dir_exists()
         snapshot_fname = f"{timestamp}.html.br"
         filepath = os.path.join(self.watch_data_dir, snapshot_fname)
-
-        with open(filepath, 'wb') as f:
-            contents = contents.encode('utf-8') if isinstance(contents, str) else contents
-            try:
-                f.write(brotli.compress(contents))
-            except Exception as e:
-                logger.warning(f"{self.get('uuid')} - Unable to compress snapshot, saving as raw data to {filepath}")
-                logger.warning(e)
-                f.write(contents)
-
+        _brotli_save(contents, filepath, mode=None, fallback_uncompressed=True)
         self._prune_last_fetched_html_snapshots()
 
     def get_fetched_html(self, timestamp):
@@ -826,6 +937,7 @@ class model(watch_base):
         # has app+request context, we can use url_for()
         if has_app_context:
             if last_error:
+                last_error = safe_jinja.render_fully_escaped(last_error)
                 if '403' in last_error:
                     if has_proxies:
                         output.append(str(Markup(f"{last_error} - <a href=\"{url_for('settings.settings_page', uuid=self.get('uuid'))}\">Try other proxies/location</a>&nbsp;'")))
@@ -835,7 +947,9 @@ class model(watch_base):
                     output.append(str(Markup(last_error)))
 
             if self.get('last_notification_error'):
-                output.append(str(Markup(f"<div class=\"notification-error\"><a href=\"{url_for('settings.notification_logs')}\">{ self.get('last_notification_error') }</a></div>")))
+                txt = safe_jinja.render_fully_escaped(self.get('last_notification_error'))
+                result = f'<div class="notification-error"><a href="{url_for("settings.notification_logs")}">{txt}</a></div>'
+                output.append(result)
 
         else:
             # Lo_Fi version - no app context, cant rely on Jinja2 Markup

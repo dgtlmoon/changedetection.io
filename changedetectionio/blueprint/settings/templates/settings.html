@@ -18,15 +18,21 @@
 <div class="edit-form">
     <div class="tabs collapsable">
         <ul>
-            <li class="tab" id=""><a href="#general">General</a></li>
-            <li class="tab"><a href="#notifications">Notifications</a></li>
-            <li class="tab"><a href="#fetching">Fetching</a></li>
-            <li class="tab"><a href="#filters">Global Filters</a></li>
-            <li class="tab"><a href="#ui-options">UI Options</a></li>
-            <li class="tab"><a href="#api">API</a></li>
-            <li class="tab"><a href="#rss">RSS</a></li>
-            <li class="tab"><a href="#timedate">Time &amp Date</a></li>
-            <li class="tab"><a href="#proxies">CAPTCHA &amp; Proxies</a></li>
+            <li class="tab" id=""><a href="#general">{{ _('General') }}</a></li>
+            <li class="tab"><a href="#notifications">{{ _('Notifications') }}</a></li>
+            <li class="tab"><a href="#fetching">{{ _('Fetching') }}</a></li>
+            <li class="tab"><a href="#filters">{{ _('Global Filters') }}</a></li>
+            <li class="tab"><a href="#ui-options">{{ _('UI Options') }}</a></li>
+            <li class="tab"><a href="#api">{{ _('API') }}</a></li>
+            <li class="tab"><a href="#rss">{{ _('RSS') }}</a></li>
+            <li class="tab"><a href="#timedate">{{ _('Time & Date') }}</a></li>
+            <li class="tab"><a href="#proxies">{{ _('CAPTCHA & Proxies') }}</a></li>
+            {% if plugin_tabs %}
+                {% for tab in plugin_tabs %}
+            <li class="tab"><a href="#plugin-{{ tab.plugin_id }}">{{ tab.tab_label }}</a></li>
+                {% endfor %}
+            {% endif %}
+            <li class="tab"><a href="#info">{{ _('Info') }}</a></li>
         </ul>
     </div>
     <div class="box-wrap inner">
@@ -36,11 +42,12 @@
                 <fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.requests.form.time_between_check, class="time-check-widget") }}
-                        <span class="pure-form-message-inline">Default recheck time for all watches, current system minimum is <i>{{min_system_recheck_seconds}}</i> seconds (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Misc-system-settings#enviroment-variables">more info</a>).</span>
+
+                        <span class="pure-form-message-inline">{{ _('Default recheck time for all watches, current system minimum is') }} <i>{{min_system_recheck_seconds}}</i> {{ _('seconds') }} (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Misc-system-settings#enviroment-variables">{{ _('more info') }}</a>).</span>
                             <div id="time-between-check-schedule">
-                                <!-- Start Time and End Time -->
+                                <!-- Start Time and End Time {{ timezone_default_config }} -->
                                 <div id="limit-between-time">
-                                    {{ render_time_schedule_form(form.requests, available_timezones, timezone_default_config) }}
+                                   {{ render_time_schedule_form(form.requests, available_timezones, timezone_default_config) }}
                                 </div>
                         </div>
                     </div>
@@ -78,9 +85,7 @@
 
             <div class="tab-pane-inner" id="notifications">
                 <fieldset>
-                    <div class="field-group">
-                        {{ render_common_settings_form(form.application.form, emailprefix, settings_application, extra_notification_token_placeholder_info) }}
-                    </div>
+                    {{ render_common_settings_form(form.application.form, emailprefix, settings_application, extra_notification_token_placeholder_info) }}
                 </fieldset>
                 <div class="pure-control-group" id="notification-base-url">
                     {{ render_field(form.application.form.base_url, class="m-d") }}
@@ -121,7 +126,7 @@
                 </div>
                 <div class="pure-control-group">
                     {{ render_field(form.requests.form.timeout) }}
-                    <span class="pure-form-message-inline">For regular plain requests (not chrome based), maximum number of seconds until timeout, 1-999.<br>
+                    <span class="pure-form-message-inline">For regular plain requests (not chrome based), maximum number of seconds until timeout, 1-999.</span><br>
                 </div>
                 <div class="pure-control-group inline-radio">
                     {{ render_field(form.requests.form.default_ua) }}
@@ -212,7 +217,7 @@ nav
                         <a id="chrome-extension-link"
                            title="Try our new Chrome Extension!"
                            href="https://chromewebstore.google.com/detail/changedetectionio-website/kefcfmgmlhmankjmnbijimhofdjekbop">
-                            <img alt="Chrome store icon" src="{{ url_for('static_content', group='images', filename='google-chrome-icon.png') }}" alt="Chrome">
+                            <img alt="Chrome store icon" src="{{ url_for('static_content', group='images', filename='google-chrome-icon.png') }}" >
                             Chrome Webstore
                         </a>
                     </p>
@@ -253,14 +258,14 @@ nav
                     Ensure the settings below are correct, they are used to manage the time schedule for checking your web page watches.
                 </div>
                 <div class="pure-control-group">
-                    <p><strong>UTC Time &amp Date from Server:</strong> <span id="utc-time" >{{ utc_time }}</span></p>
-                    <p><strong>Local Time &amp Date in Browser:</strong> <span class="local-time" data-utc="{{ utc_time }}"></span></p>
-                    <p>
+                    <p><strong>UTC Time &amp; Date from Server:</strong> <span id="utc-time" >{{ utc_time }}</span></p>
+                    <p><strong>Local Time &amp; Date in Browser:</strong> <span class="local-time" data-utc="{{ utc_time }}"></span></p>
+                    <div>
                        {{ render_field(form.application.form.scheduler_timezone_default) }}
                         <datalist id="timezones" style="display: none;">
                             {%- for timezone in available_timezones -%}<option value="{{ timezone }}">{{ timezone }}</option>{%- endfor -%}
                         </datalist>
-                    </p>
+                    </div>
                 </div>
             </div>
             <div class="tab-pane-inner" id="ui-options">
@@ -329,7 +334,7 @@ nav
                     </div>
                 </div>
 
-               <p><strong>Tip</strong>: "Residential" and "Mobile" proxy type can be more successfull than "Data Center" for blocked websites.
+                <p><strong>Tip</strong>: "Residential" and "Mobile" proxy type can be more successfull than "Data Center" for blocked websites.</p>
 
                 <div class="pure-control-group" id="extra-proxies-setting">
                 {{ render_fieldlist_with_inline_errors(form.requests.form.extra_proxies) }}
@@ -352,13 +357,51 @@ nav
                     </p>
                     {{ render_fieldlist_with_inline_errors(form.requests.form.extra_browsers) }}
                 </div>
-            
+            </div>
+            {% if plugin_tabs %}
+                {% for tab in plugin_tabs %}
+            <div class="tab-pane-inner" id="plugin-{{ tab.plugin_id }}">
+                {% set plugin_form = plugin_forms[tab.plugin_id] %}
+                {% if tab.template_path %}
+                    {# Plugin provides custom template - include it directly (no separate form) #}
+                    {% include tab.template_path with context %}
+                {% else %}
+                    {# Default form rendering - fields only, no submit button #}
+                    <fieldset>
+                        {% for field in plugin_form %}
+                            {% if field.type != 'CSRFToken' and field.type != 'SubmitField' %}
+                        <div class="pure-control-group">
+                                {% if field.type == 'BooleanField' %}
+                            {{ render_checkbox_field(field) }}
+                                {% else %}
+                            {{ render_field(field) }}
+                                {% endif %}
+                        </div>
+                            {% endif %}
+                        {% endfor %}
+                    </fieldset>
+                {% endif %}
+            </div>
+                {% endfor %}
+            {% endif %}
+            <div class="tab-pane-inner" id="info">
+                <p><strong>{{ _('Python version:') }}</strong> {{ python_version }}</p>
+                <p><strong>{{ _('Plugins active:') }}</strong></p>
+                {% if active_plugins %}
+                <ul>
+                    {% for plugin in active_plugins %}
+                    <li><strong>{{ plugin.name }}</strong> - {{ plugin.description }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p>{{ _('No plugins active') }}</p>
+                {% endif %}
             </div>
             <div id="actions">
                 <div class="pure-control-group">
                     {{ render_button(form.save_button) }}
-                    <a href="{{url_for('watchlist.index')}}" class="pure-button button-cancel">Back</a>
-                    <a href="{{url_for('ui.clear_all_history')}}" class="pure-button button-error">Clear Snapshot History</a>
+                    <a href="{{url_for('watchlist.index')}}" class="pure-button button-cancel">{{ _('Back') }}</a>
+                    <a href="{{url_for('ui.clear_all_history')}}" class="pure-button button-error">{{ _('Clear Snapshot History') }}</a>
                 </div>
             </div>
         </form>

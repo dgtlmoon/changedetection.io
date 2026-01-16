@@ -47,7 +47,7 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
     assert live_server.app.config['DATASTORE'].data['watching'][uuid].history_n >= 1, "Watch history had atleast 1 (everything fetched OK)"
 
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid=uuid),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
     assert b"testheader: yes" in res.data
@@ -131,7 +131,7 @@ def test_basic_browserstep(client, live_server, measure_memory_usage, datastore_
 
     # Check HTML conversion detected and workd
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid=uuid),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
     assert b"This text should be removed" not in res.data
@@ -143,7 +143,6 @@ def test_basic_browserstep(client, live_server, measure_memory_usage, datastore_
     assert b"user-agent: mycustomagent" in res.data
 
 def test_non_200_errors_report_browsersteps(client, live_server, measure_memory_usage, datastore_path):
-
 
     four_o_four_url =  url_for('test_endpoint', status_code=404, _external=True)
     four_o_four_url = four_o_four_url.replace('localhost.localdomain', 'cdio')
@@ -182,6 +181,68 @@ def test_non_200_errors_report_browsersteps(client, live_server, measure_memory_
 
     assert b'Error - 404' in res.data
 
+    client.get(
+        url_for("ui.form_delete", uuid="all"),
+        follow_redirects=True
+    )
+
+def test_browsersteps_edit_UI_startsession(client, live_server, measure_memory_usage, datastore_path):
+
+    assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
+
+    # Add a watch first
+    test_url = url_for('test_interactive_html_endpoint', _external=True)
+    test_url = test_url.replace('localhost.localdomain', 'cdio')
+    test_url = test_url.replace('localhost', 'cdio')
+
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, extras={'fetch_backend': 'html_webdriver', 'paused': True})
+
+    # Test starting a browsersteps session
+    res = client.get(
+        url_for("browser_steps.browsersteps_start_session", uuid=uuid),
+        follow_redirects=True
+    )
+
+    assert res.status_code == 200
+    assert res.is_json
+    json_data = res.get_json()
+    assert 'browsersteps_session_id' in json_data
+    assert json_data['browsersteps_session_id']  # Not empty
+
+    browsersteps_session_id = json_data['browsersteps_session_id']
+
+    # Verify the session exists in browsersteps_sessions
+    from changedetectionio.blueprint.browser_steps import browsersteps_sessions, browsersteps_watch_to_session
+    assert browsersteps_session_id in browsersteps_sessions
+    assert uuid in browsersteps_watch_to_session
+    assert browsersteps_watch_to_session[uuid] == browsersteps_session_id
+
+    # Verify browsersteps UI shows up on edit page
+    res = client.get(url_for("ui.ui_edit.edit_page", uuid=uuid))
+    assert b'browsersteps-click-start' in res.data, "Browsersteps manual UI shows up"
+
+    # Session should still exist after GET (not cleaned up yet)
+    assert browsersteps_session_id in browsersteps_sessions
+    assert uuid in browsersteps_watch_to_session
+
+    # Test cleanup happens on save (POST)
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        data={
+            "url": test_url,
+            "tags": "",
+            'fetch_backend': "html_webdriver",
+            "time_between_check_use_default": "y",
+        },
+        follow_redirects=True
+    )
+    assert b"Updated watch" in res.data
+
+    # NOW verify the session was cleaned up after save
+    assert browsersteps_session_id not in browsersteps_sessions
+    assert uuid not in browsersteps_watch_to_session
+
+    # Cleanup
     client.get(
         url_for("ui.form_delete", uuid="all"),
         follow_redirects=True

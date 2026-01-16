@@ -2,10 +2,10 @@ import os
 import time
 
 from flask import Blueprint, request, make_response, render_template, redirect, url_for, flash, session
-from flask_login import current_user
 from flask_paginate import Pagination, get_page_parameter
 
 from changedetectionio import forms
+from changedetectionio import processors
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
 
@@ -84,12 +84,18 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             app_rss_token=datastore.data['settings']['application'].get('rss_access_token'),
             datastore=datastore,
             errored_count=errored_count,
+            extra_classes='has-queue' if len(update_q.queue) else '',
             form=form,
+            generate_tag_colors=processors.generate_processor_badge_colors,
             guid=datastore.data['app_guid'],
             has_proxies=datastore.proxy_list,
             hosted_sticky=os.getenv("SALTED_PASS", False) == False,
             now_time_server=round(time.time()),
             pagination=pagination,
+            processor_badge_css=processors.get_processor_badge_css(),
+            processor_badge_texts=processors.get_processor_badge_texts(),
+            processor_descriptions=processors.get_processor_descriptions(),
+            queue_size=len(update_q.queue),
             queued_uuids=[q_uuid.item['uuid'] for q_uuid in update_q.queue],
             search_q=request.args.get('q', '').strip(),
             sort_attribute=request.args.get('sort') if request.args.get('sort') else request.cookies.get('sort'),

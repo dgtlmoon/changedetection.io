@@ -29,24 +29,54 @@ $(document).ready(function () {
 
         $('#checkbox-operations button').on('click.socketHandlerNamespace', function (e) {
             e.preventDefault();
-            const op = $(this).val();
+            const $button = $(this);
+            const op = $button.val();
             const checkedUuids = $('input[name="uuids"]:checked').map(function () {
                 return this.value.trim();
             }).get();
-            console.log(`Socket.IO: Sending watch operation '${op}' for UUIDs:`, checkedUuids);
-            socket.emit('checkbox-operation', {
-                op: op,
-                uuids: checkedUuids,
-                extra_data: $('#op_extradata').val() // Set by the alert() handler
-            });
-            $('input[name="uuids"]:checked').prop('checked', false);
-            $('#check-all:checked').prop('checked', false);
+
+            // Check if this button requires confirmation
+            console.log('Button clicked, op:', op, 'requires-confirm:', $button.is('[data-requires-confirm]'));
+            if ($button.is('[data-requires-confirm]')) {
+                console.log('Showing modal confirmation for operation:', op);
+                const config = {
+                    type: $button.data('confirm-type') || 'danger',
+                    title: $button.data('confirm-title') || 'Confirm Action',
+                    message: $button.data('confirm-message') || '<p>Are you sure you want to proceed?</p>',
+                    confirmText: $button.data('confirm-button') || 'Confirm',
+                    cancelText: $button.data('cancel-button') || 'Cancel',
+                    onConfirm: function() {
+                        console.log(`Socket.IO: Sending watch operation '${op}' for UUIDs:`, checkedUuids);
+                        socket.emit('checkbox-operation', {
+                            op: op,
+                            uuids: checkedUuids,
+                            extra_data: $('#op_extradata').val()
+                        });
+                        $('input[name="uuids"]:checked').prop('checked', false);
+                        $('#check-all:checked').prop('checked', false);
+                    }
+                };
+                ModalDialog.confirm(config);
+            } else {
+                console.log(`Socket.IO: Sending watch operation '${op}' for UUIDs:`, checkedUuids);
+                socket.emit('checkbox-operation', {
+                    op: op,
+                    uuids: checkedUuids,
+                    extra_data: $('#op_extradata').val()
+                });
+                $('input[name="uuids"]:checked').prop('checked', false);
+                $('#check-all:checked').prop('checked', false);
+            }
+
             return false;
         });
 
     }
 
 
+    // Cache DOM elements for performance
+    const queueBubble = document.getElementById('queue-bubble');
+    const queueSizePagerInfoText = document.getElementById('queue-size-int');
     // Only try to connect if authentication isn't required or user is authenticated
     // The 'is_authenticated' variable will be set in the template
     if (typeof is_authenticated !== 'undefined' ? is_authenticated : true) {
@@ -88,7 +118,44 @@ $(document).ready(function () {
 
             socket.on('queue_size', function (data) {
                 console.log(`${data.event_timestamp} - Queue size update: ${data.q_length}`);
-                // Update queue size display if implemented in the UI
+                if(queueSizePagerInfoText) {
+                    queueSizePagerInfoText.textContent = parseInt(data.q_length).toLocaleString() || 'None';
+                }
+                document.body.classList.toggle('has-queue', parseInt(data.q_length) > 0);
+
+                // Update queue bubble in action sidebar
+                //if (queueBubble) {
+                if (0) {
+                    const count = parseInt(data.q_length) || 0;
+                    const oldCount = parseInt(queueBubble.getAttribute('data-count')) || 0;
+
+                    if (count > 0) {
+                        // Format number according to browser locale
+                        const formatter = new Intl.NumberFormat(navigator.language);
+                        queueBubble.textContent = formatter.format(count);
+                        queueBubble.setAttribute('data-count', count);
+                        queueBubble.classList.add('visible');
+
+                        // Add large-number class for numbers > 999
+                        if (count > 999) {
+                            queueBubble.classList.add('large-number');
+                        } else {
+                            queueBubble.classList.remove('large-number');
+                        }
+
+                        // Pulse animation if count changed
+                        if (count !== oldCount) {
+                            queueBubble.classList.remove('pulse');
+                            // Force reflow to restart animation
+                            void queueBubble.offsetWidth;
+                            queueBubble.classList.add('pulse');
+                        }
+                    } else {
+                        // Hide bubble when queue is empty
+                        queueBubble.classList.remove('visible', 'pulse', 'large-number');
+                        queueBubble.setAttribute('data-count', '0');
+                    }
+                }
             })
 
             // Listen for operation results
@@ -99,6 +166,11 @@ $(document).ready(function () {
                     console.error(`Socket.IO: Operation failed: ${data.error}`);
                     alert("There was a problem processing the request: " + data.error);
                 }
+            });
+
+            socket.on('watch_small_status_comment', function (data) {
+                console.log(`Socket.IO: Operation  watch_small_status_comment'${data.uuid}' status ${data.status}`);
+                $('tr[data-watch-uuid="' + data.uuid + '"] td.last-checked .status-text').html("&nbsp;").text(data.status);
             });
 
             socket.on('notification_event', function (data) {

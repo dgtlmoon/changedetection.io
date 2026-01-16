@@ -47,9 +47,6 @@ def construct_single_watch_routes(rss_blueprint, datastore):
         if len(dates) < 2:
             return f"Watch {uuid} does not have enough history snapshots to show changes (need at least 2)", 400
 
-        # Add uuid to watch for proper functioning
-        watch['uuid'] = uuid
-
         # Get the number of diffs to include (default: 5)
         rss_diff_length = datastore.data['settings']['application'].get('rss_diff_length', 5)
 
@@ -101,7 +98,7 @@ def construct_single_watch_routes(rss_blueprint, datastore):
                                      date_index_from, date_index_to)
 
             # Create and populate feed entry
-            guid = f"{watch['uuid']}/{timestamp_to}"
+            guid = f"{uuid}/{timestamp_to}"
             fe = fg.add_entry()
             title_suffix = f"Change @ {res['original_context']['change_datetime']}"
             populate_feed_entry(fe, watch, res.get('body', ''), guid, timestamp_to,

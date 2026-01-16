@@ -2,10 +2,11 @@
 
 # Read more https://github.com/dgtlmoon/changedetection.io/wiki
 # Semver means never use .01, or 00. Should be .1.
-__version__ = '0.51.4'
+__version__ = '0.52.6'
 
 from changedetectionio.strtobool import strtobool
 from json.decoder import JSONDecodeError
+import logging
 import os
 import getopt
 import platform
@@ -18,6 +19,58 @@ import sys
 from changedetectionio import store
 from changedetectionio.flask_app import changedetection_app
 from loguru import logger
+
+# ==============================================================================
+# Multiprocessing Configuration - CRITICAL for Thread Safety
+# ==============================================================================
+#
+# PROBLEM: Python 3.12+ warns about fork() with multi-threaded processes:
+#   "This process is multi-threaded, use of fork() may lead to deadlocks"
+#
+# WHY IT'S DANGEROUS:
+#   1. This Flask app has multiple threads (HTTP handlers, workers, SocketIO)
+#   2. fork() copies ONLY the calling thread to the child process
+#   3. BUT fork() also copies all locks/mutexes in their current state
+#   4. If another thread held a lock during fork() → child has locked lock with no owner
+#   5. Result: PERMANENT DEADLOCK if child tries to acquire that lock
+#
+# SOLUTION: Use 'spawn' instead of 'fork'
+#   - spawn starts a fresh Python interpreter (no inherited threads or locks)
+#   - Slower (~200ms vs ~1ms) but safe with multi-threaded parent
+#   - Consistent across all platforms (Windows already uses spawn by default)
+#
+# IMPLEMENTATION:
+#   1. Explicit contexts everywhere (primary protection):
+#      - playwright.py: ctx = multiprocessing.get_context('spawn')
+#      - puppeteer.py: ctx = multiprocessing.get_context('spawn')
+#      - isolated_opencv.py: ctx = multiprocessing.get_context('spawn')
+#      - isolated_libvips.py: ctx = multiprocessing.get_context('spawn')
+#
+#   2. Global default (defense-in-depth, below):
+#      - Safety net if future code forgets explicit context
+#      - Protects against third-party libraries using Process()
+#      - Costs nothing (explicit contexts always override it)
+#
+# WHY BOTH?
+#   - Explicit contexts: Clear, self-documenting, always works
+#   - Global default: Safety net for forgotten contexts or library code
+#   - If someone writes "Process()" instead of "ctx.Process()", still safe!
+#
+# See: https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
+# ==============================================================================
+
+import multiprocessing
+import sys
+
+# Set spawn as global default (safety net - all our code uses explicit contexts anyway)
+# Skip in tests to avoid breaking pytest-flask's LiveServer fixture (uses unpicklable local functions)
+if 'pytest' not in sys.modules:
+    try:
+        if multiprocessing.get_start_method(allow_none=True) is None:
+            multiprocessing.set_start_method('spawn', force=False)
+            logger.debug("Set multiprocessing default to 'spawn' for thread safety (explicit contexts used everywhere)")
+    except RuntimeError:
+        logger.debug(f"Multiprocessing start method already set: {multiprocessing.get_start_method()}")
 
 # Only global so we can access it in the signal handler
 app = None
@@ -165,6 +218,11 @@ def main():
               " WARNING, ERROR, CRITICAL")
         sys.exit(2)
 
+    # Disable verbose pyppeteer logging to prevent memory leaks from large CDP messages
+    # Set both parent and child loggers since pyppeteer hardcodes DEBUG level
+    logging.getLogger('pyppeteer.connection').setLevel(logging.WARNING)
+    logging.getLogger('pyppeteer.connection.Connection').setLevel(logging.WARNING)
+
     # isnt there some @thingy to attach to each route to tell it, that this route needs a datastore
     app_config = {'datastore_path': datastore_path}
 
@@ -186,6 +244,10 @@ def main():
         logger.critical(f"ERROR: JSON DB or Proxy List JSON at '{app_config['datastore_path']}' appears to be corrupt, aborting.")
         logger.critical(str(e))
         return
+
+    # Inject datastore into plugins that need access to settings
+    from changedetectionio.pluggy_interface import inject_datastore_into_plugins
+    inject_datastore_into_plugins(datastore)
 
     if default_url:
         datastore.add_watch(url = default_url)

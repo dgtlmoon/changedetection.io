@@ -11,6 +11,7 @@ recursive-include changedetectionio/realtime *
 recursive-include changedetectionio/static *
 recursive-include changedetectionio/templates *
 recursive-include changedetectionio/tests *
+recursive-include changedetectionio/translations *
 recursive-include changedetectionio/widgets *
 prune changedetectionio/static/package-lock.json
 prune changedetectionio/static/styles/node_modules

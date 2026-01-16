@@ -63,11 +63,8 @@ def construct_tag_routes(rss_blueprint, datastore):
 
             # Only include unviewed watches
             if not watch.viewed:
-                # Add uuid to watch for proper functioning
-                watch['uuid'] = uuid
-
-                # Include a link to the diff page
-                diff_link = {'href': url_for('ui.ui_views.diff_history_page', uuid=watch['uuid'], _external=True)}
+                # Include a link to the diff page (use uuid from loop, don't modify watch dict)
+                diff_link = {'href': url_for('ui.ui_diff.diff_history_page', uuid=uuid, _external=True)}
 
                 # Get watch label
                 watch_label = get_watch_label(datastore, watch)

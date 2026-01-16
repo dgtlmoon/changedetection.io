@@ -192,7 +192,7 @@ def test_element_removal_full(client, live_server, measure_memory_usage, datasto
     wait_for_all_checks(client)
 
     # so that we set the state to 'has-unread-changes' after all the edits
-    client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
+    client.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
 
     #  Make a change to header/footer/nav
     set_modified_response(datastore_path=datastore_path)
@@ -239,7 +239,7 @@ body > table > tr:nth-child(3) > td:nth-child(3)""",
         wait_for_all_checks(client)
 
         res = client.get(
-            url_for("ui.ui_views.preview_page", uuid="first"),
+            url_for("ui.ui_preview.preview_page", uuid="first"),
             follow_redirects=True
         )
 

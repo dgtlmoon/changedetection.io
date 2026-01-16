@@ -25,12 +25,13 @@ def test_content_filter_live_preview(client, live_server, measure_memory_usage, 
 
     test_url = url_for('test_endpoint', _external=True)
 
-    res = client.post(
-        url_for("ui.ui_views.form_quick_watch_add"),
-        data={"url": test_url, "tags": ''},
-        follow_redirects=True
-    )
-    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
+
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
+   
+    wait_for_all_checks(client)
+
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={

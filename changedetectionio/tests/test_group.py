@@ -94,7 +94,7 @@ def test_setup_group_tag(client, live_server, measure_memory_usage, datastore_pa
     assert b'Warning, no filters were found' not in res.data
 
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
     assert b'Should be only this' in res.data
@@ -145,7 +145,8 @@ def test_tag_import_singular(client, live_server, measure_memory_usage, datastor
         follow_redirects=True
     )
     # Should be only 1 tag because they both had the same
-    assert res.data.count(b'test-tag') == 1
+    assert len(live_server.app.config['DATASTORE'].data['settings']['application'].get('tags')) ==1
+
     delete_all_watches(client)
 
 def test_tag_add_in_ui(client, live_server, measure_memory_usage, datastore_path):
@@ -209,6 +210,8 @@ def test_group_tag_notification(client, live_server, measure_memory_usage, datas
 
     set_modified_response(datastore_path=datastore_path)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
     time.sleep(3)
 
     assert os.path.isfile(os.path.join(datastore_path, "notification.txt"))
@@ -419,7 +422,7 @@ def test_order_of_filters_tag_filter_and_watch_filter(client, live_server, measu
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 

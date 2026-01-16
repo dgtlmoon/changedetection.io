@@ -81,7 +81,7 @@ def construct_main_feed_routes(rss_blueprint, datastore):
                 timestamp_from = dates[-2]
                 guid = generate_watch_guid(watch, timestamp_to)
                 # Because we are called via whatever web server, flask should figure out the right path
-                diff_link = {'href': url_for('ui.ui_views.diff_history_page', uuid=watch['uuid'], _external=True)}
+                diff_link = {'href': url_for('ui.ui_diff.diff_history_page', uuid=watch['uuid'], _external=True)}
 
                 # Get template and build notification context
                 n_body_template = get_rss_template(datastore, watch, rss_content_format,

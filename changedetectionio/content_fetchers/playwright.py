@@ -1,3 +1,4 @@
+import gc
 import json
 import os
 from urllib.parse import urlparse
@@ -9,10 +10,10 @@ from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, vi
 from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable
 
-async def capture_full_page_async(page):
+async def capture_full_page_async(page, screenshot_format='JPEG'):
     import os
     import time
-    from multiprocessing import Process, Pipe
+    import multiprocessing
 
     start = time.time()
 
@@ -26,8 +27,20 @@ async def capture_full_page_async(page):
     step_size = SCREENSHOT_SIZE_STITCH_THRESHOLD # Size that won't cause GPU to overflow
     screenshot_chunks = []
     y = 0
+    elements_locked = False
 
     if page_height > page.viewport_size['height']:
+
+        # Lock all element dimensions BEFORE screenshot to prevent CSS media queries from resizing
+        # capture_full_page_async() changes viewport height which triggers @media (min-height) rules
+        lock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'lock-elements-sizing.js')
+        with open(lock_elements_js_path, 'r') as f:
+            lock_elements_js = f.read()
+        await page.evaluate(lock_elements_js)
+        elements_locked = True
+
+        logger.debug("Element dimensions locked before screenshot capture")
+
         if page_height < step_size:
             step_size = page_height # Incase page is bigger than default viewport but smaller than proposed step size
         logger.debug(f"Setting bigger viewport to step through large page width W{page.viewport_size['width']}xH{step_size} because page_height > viewport_size")
@@ -35,36 +48,68 @@ async def capture_full_page_async(page):
         await page.set_viewport_size({'width': page.viewport_size['width'], 'height': step_size})
 
     # Capture screenshots in chunks up to the max total height
+    # Use PNG for better quality (no compression artifacts), JPEG for smaller size
+    screenshot_type = screenshot_format.lower() if screenshot_format else 'jpeg'
+    # PNG should use quality 100, JPEG uses configurable quality
+    screenshot_quality = 100 if screenshot_type == 'png' else int(os.getenv("SCREENSHOT_QUALITY", 72))
+
     while y < min(page_height, SCREENSHOT_MAX_TOTAL_HEIGHT):
+        # Only scroll if not at the top (y > 0)
+        if y > 0:
+            await page.evaluate(f"window.scrollTo(0, {y})")
+
+        # Request GC only before screenshot (not 3x per chunk)
         await page.request_gc()
-        await page.evaluate(f"window.scrollTo(0, {y})")
-        await page.request_gc()
-        screenshot_chunks.append(await page.screenshot(
-            type="jpeg",
-            full_page=False,
-            quality=int(os.getenv("SCREENSHOT_QUALITY", 72))
-        ))
+
+        screenshot_kwargs = {
+            'type': screenshot_type,
+            'full_page': False
+        }
+        # Only pass quality parameter for jpeg (PNG doesn't support it in Playwright)
+        if screenshot_type == 'jpeg':
+            screenshot_kwargs['quality'] = screenshot_quality
+
+        screenshot_chunks.append(await page.screenshot(**screenshot_kwargs))
         y += step_size
-        await page.request_gc()
 
     # Restore original viewport size
     await page.set_viewport_size({'width': original_viewport['width'], 'height': original_viewport['height']})
 
+    # Unlock element dimensions if they were locked
+    if elements_locked:
+        unlock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'unlock-elements-sizing.js')
+        with open(unlock_elements_js_path, 'r') as f:
+            unlock_elements_js = f.read()
+        await page.evaluate(unlock_elements_js)
+        logger.debug("Element dimensions unlocked after screenshot capture")
+
     # If we have multiple chunks, stitch them together
     if len(screenshot_chunks) > 1:
-        from changedetectionio.content_fetchers.screenshot_handler import stitch_images_worker
         logger.debug(f"Screenshot stitching {len(screenshot_chunks)} chunks together")
-        parent_conn, child_conn = Pipe()
-        p = Process(target=stitch_images_worker, args=(child_conn, screenshot_chunks, page_height, SCREENSHOT_MAX_TOTAL_HEIGHT))
-        p.start()
-        screenshot = parent_conn.recv_bytes()
-        p.join()
+
+        # For small number of chunks (2-3), stitch inline to avoid multiprocessing overhead
+        # Only use separate process for many chunks (4+) to avoid blocking the event loop
+        if len(screenshot_chunks) <= 3:
+            from changedetectionio.content_fetchers.screenshot_handler import stitch_images_inline
+            screenshot = stitch_images_inline(screenshot_chunks, page_height, SCREENSHOT_MAX_TOTAL_HEIGHT)
+        else:
+            # Use separate process for many chunks to avoid blocking
+            # Always use spawn for thread safety - consistent behavior in tests and production
+            from changedetectionio.content_fetchers.screenshot_handler import stitch_images_worker
+            ctx = multiprocessing.get_context('spawn')
+            parent_conn, child_conn = ctx.Pipe()
+            p = ctx.Process(target=stitch_images_worker, args=(child_conn, screenshot_chunks, page_height, SCREENSHOT_MAX_TOTAL_HEIGHT))
+            p.start()
+            screenshot = parent_conn.recv_bytes()
+            p.join()
+            # Explicit cleanup
+            del p
+            del parent_conn, child_conn
+
         logger.debug(
             f"Screenshot (chunked/stitched) - Page height: {page_height} Capture height: {SCREENSHOT_MAX_TOTAL_HEIGHT} - Stitched together in {time.time() - start:.2f}s")
         # Explicit cleanup
         del screenshot_chunks
-        del p
-        del parent_conn, child_conn
         screenshot_chunks = None
         return screenshot
 
@@ -89,8 +134,22 @@ class fetcher(Fetcher):
 
     proxy = None
 
-    def __init__(self, proxy_override=None, custom_browser_connection_url=None):
-        super().__init__()
+    # Capability flags
+    supports_browser_steps = True
+    supports_screenshots = True
+    supports_xpath_element_data = True
+
+    @classmethod
+    def get_status_icon_data(cls):
+        """Return Chrome browser icon data for Playwright fetcher."""
+        return {
+            'filename': 'google-chrome-icon.png',
+            'alt': 'Using a Chrome browser',
+            'title': 'Using a Chrome browser'
+        }
+
+    def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
+        super().__init__(**kwargs)
 
         self.browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
 
@@ -125,22 +184,35 @@ class fetcher(Fetcher):
 
     async def screenshot_step(self, step_n=''):
         super().screenshot_step(step_n=step_n)
-        screenshot = await capture_full_page_async(page=self.page)
+        screenshot = await capture_full_page_async(page=self.page, screenshot_format=self.screenshot_format)
 
+        # Request GC immediately after screenshot to free memory
+        # Screenshots can be large and browser steps take many of them
+        await self.page.request_gc()
 
         if self.browser_steps_screenshot_path is not None:
             destination = os.path.join(self.browser_steps_screenshot_path, 'step_{}.jpeg'.format(step_n))
             logger.debug(f"Saving step screenshot to {destination}")
             with open(destination, 'wb') as f:
                 f.write(screenshot)
+            # Clear local reference to allow screenshot bytes to be collected
+            del screenshot
+            gc.collect()
 
     async def save_step_html(self, step_n):
         super().save_step_html(step_n=step_n)
         content = await self.page.content()
+
+        # Request GC after getting page content
+        await self.page.request_gc()
+
         destination = os.path.join(self.browser_steps_screenshot_path, 'step_{}.html'.format(step_n))
         logger.debug(f"Saving step HTML to {destination}")
         with open(destination, 'w', encoding='utf-8') as f:
             f.write(content)
+        # Clear local reference
+        del content
+        gc.collect()
 
     async def run(self,
                   fetch_favicon=True,
@@ -151,8 +223,10 @@ class fetcher(Fetcher):
                   request_body=None,
                   request_headers=None,
                   request_method=None,
+                  screenshot_format=None,
                   timeout=None,
                   url=None,
+                  watch_uuid=None,
                   ):
 
         from playwright.async_api import async_playwright
@@ -244,7 +318,13 @@ class fetcher(Fetcher):
                     logger.error(f"Error fetching FavIcon info {str(e)}, continuing.")
 
             if self.status_code != 200 and not ignore_status_codes:
-                screenshot = await capture_full_page_async(self.page)
+                screenshot = await capture_full_page_async(self.page, screenshot_format=self.screenshot_format)
+                # Cleanup before raising to prevent memory leak
+                await self.page.close()
+                await context.close()
+                await browser.close()
+                # Force garbage collection to release Playwright resources immediately
+                gc.collect()
                 raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=screenshot)
 
             if not empty_pages_are_a_change and len((await self.page.content()).strip()) == 0:
@@ -253,48 +333,52 @@ class fetcher(Fetcher):
                 await browser.close()
                 raise EmptyReply(url=url, status_code=response.status)
 
-            # Run Browser Steps here
-            if self.browser_steps_get_valid_steps():
-                await self.iterate_browser_steps(start_url=url)
-
-            await self.page.wait_for_timeout(extra_wait * 1000)
-
-            now = time.time()
-            # So we can find an element on the page where its selector was entered manually (maybe not xPath etc)
-            if current_include_filters is not None:
-                await self.page.evaluate("var include_filters={}".format(json.dumps(current_include_filters)))
-            else:
-                await self.page.evaluate("var include_filters=''")
-            await self.page.request_gc()
-
-            # request_gc before and after evaluate to free up memory
-            # @todo browsersteps etc
-            MAX_TOTAL_HEIGHT = int(os.getenv("SCREENSHOT_MAX_HEIGHT", SCREENSHOT_MAX_HEIGHT_DEFAULT))
-            self.xpath_data = await self.page.evaluate(XPATH_ELEMENT_JS, {
-                "visualselector_xpath_selectors": visualselector_xpath_selectors,
-                "max_height": MAX_TOTAL_HEIGHT
-            })
-            await self.page.request_gc()
-
-            self.instock_data = await self.page.evaluate(INSTOCK_DATA_JS)
-            await self.page.request_gc()
-
-            self.content = await self.page.content()
-            await self.page.request_gc()
-            logger.debug(f"Scrape xPath element data in browser done in {time.time() - now:.2f}s")
-
-
-            # Bug 3 in Playwright screenshot handling
-            # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
-            # JPEG is better here because the screenshots can be very very large
-
-            # Screenshots also travel via the ws:// (websocket) meaning that the binary data is base64 encoded
-            # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
-            # acceptable screenshot quality here
+            # Wrap remaining operations in try/finally to ensure cleanup
             try:
-                # The actual screenshot - this always base64 and needs decoding! horrible! huge CPU usage
-                self.screenshot = await capture_full_page_async(page=self.page)
+                # Run Browser Steps here
+                if self.browser_steps_get_valid_steps():
+                    await self.iterate_browser_steps(start_url=url)
 
+                    await self.page.wait_for_timeout(extra_wait * 1000)
+
+                now = time.time()
+                # So we can find an element on the page where its selector was entered manually (maybe not xPath etc)
+                if current_include_filters is not None:
+                    await self.page.evaluate("var include_filters={}".format(json.dumps(current_include_filters)))
+                else:
+                    await self.page.evaluate("var include_filters=''")
+                await self.page.request_gc()
+
+                # request_gc before and after evaluate to free up memory
+                # @todo browsersteps etc
+                MAX_TOTAL_HEIGHT = int(os.getenv("SCREENSHOT_MAX_HEIGHT", SCREENSHOT_MAX_HEIGHT_DEFAULT))
+                self.xpath_data = await self.page.evaluate(XPATH_ELEMENT_JS, {
+                    "visualselector_xpath_selectors": visualselector_xpath_selectors,
+                    "max_height": MAX_TOTAL_HEIGHT
+                })
+                await self.page.request_gc()
+
+                self.instock_data = await self.page.evaluate(INSTOCK_DATA_JS)
+                await self.page.request_gc()
+
+                self.content = await self.page.content()
+                await self.page.request_gc()
+                logger.debug(f"Scrape xPath element data in browser done in {time.time() - now:.2f}s")
+
+
+                # Bug 3 in Playwright screenshot handling
+                # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
+                # JPEG is better here because the screenshots can be very very large
+
+                # Screenshots also travel via the ws:// (websocket) meaning that the binary data is base64 encoded
+                # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
+                # acceptable screenshot quality here
+                # The actual screenshot - this always base64 and needs decoding! horrible! huge CPU usage
+                self.screenshot = await capture_full_page_async(page=self.page, screenshot_format=self.screenshot_format)
+
+            except ScreenshotUnavailable:
+                # Re-raise screenshot unavailable exceptions
+                raise
             except Exception as e:
                 # It's likely the screenshot was too long/big and something crashed
                 raise ScreenshotUnavailable(url=url, status_code=self.status_code)
@@ -328,6 +412,23 @@ class fetcher(Fetcher):
                 except:
                     pass
                 browser = None
+
+                # Force Python GC to release Playwright resources immediately
+                # Playwright objects can have circular references that delay cleanup
+                gc.collect()
+
+
+# Plugin registration for built-in fetcher
+class PlaywrightFetcherPlugin:
+    """Plugin class that registers the Playwright fetcher as a built-in plugin."""
+
+    def register_content_fetcher(self):
+        """Register the Playwright fetcher"""
+        return ('html_webdriver', fetcher)
+
+
+# Create module-level instance for plugin registration
+playwright_plugin = PlaywrightFetcherPlugin()
 
 
 
