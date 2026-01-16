@@ -227,12 +227,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
 
         i = 0
 
-        running_uuids = worker_handler.get_running_uuids()
-
         if uuid:
-            if uuid not in running_uuids:
-                worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
-                i += 1
+            worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+            i += 1
 
         else:
             # Recheck all, including muted
@@ -241,7 +238,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
                 watch_uuid = k[0]
                 watch = k[1]
                 if not watch['paused']:
-                    if watch_uuid not in running_uuids:
+                    if watch_uuid:
                         if with_errors and not watch.get('last_error'):
                             continue
 
