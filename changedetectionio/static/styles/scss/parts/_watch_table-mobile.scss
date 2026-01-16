@@ -125,6 +125,11 @@ $grid-gap: 0.5rem;
           border-bottom: none;
         }
 
+        // Empty state message - span full width on mobile
+        > td[colspan] {
+          grid-column: 1 / -1;
+        }
+
         > td.title-col {
           grid-column: 1 / -1;
           grid-row: 1;
