@@ -52,7 +52,13 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                     redirect(url_for('ui_edit.edit_page', uuid=uuid))
 
         # be sure we update with a copy instead of accidently editing the live object by reference
-        default = deepcopy(datastore.data['watching'][uuid])
+        default = None
+        while not default:
+            try:
+                default = deepcopy(datastore.data['watching'][uuid])
+            except RuntimeError as e:
+                # Dictionary changed
+                continue
 
         # Defaults for proxy choice
         if datastore.proxy_list is not None:  # When enabled
