@@ -1,4 +1,5 @@
 import os
+import threading
 
 from changedetectionio.validate_url import is_safe_valid_url
 
@@ -469,8 +470,23 @@ class CreateWatch(Resource):
             }
 
         if request.args.get('recheck_all'):
-            for uuid in self.datastore.data['watching'].keys():
-                worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
-            return {'status': "OK"}, 200
+            # Queue all watches in background thread to avoid blocking API response
+            def queue_all_watches_background():
+                """Background thread to queue all watches - discarded after completion."""
+                queued_count = 0
+                try:
+                    for uuid in self.datastore.data['watching'].keys():
+                        worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+                        queued_count += 1
+
+                    logger.info(f"Background queueing complete: {queued_count} watches queued")
+                except Exception as e:
+                    logger.error(f"Error in background queueing all watches: {e}")
+
+            # Start background thread and return immediately
+            thread = threading.Thread(target=queue_all_watches_background, daemon=True)
+            thread.start()
+
+            return {'status': "OK, queueing watches in background"}, 202
 
         return list, 200

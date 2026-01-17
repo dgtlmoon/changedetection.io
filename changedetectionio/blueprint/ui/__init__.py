@@ -241,35 +241,41 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
         uuid = request.args.get('uuid')
         with_errors = request.args.get('with_errors') == "1"
 
-        i = 0
-
         if uuid:
+            # Single watch - queue immediately
             worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
-            i += 1
-
-        else:
-            # Recheck all, including muted
-            # Get most overdue first
-            for k in sorted(datastore.data['watching'].items(), key=lambda item: item[1].get('last_checked', 0)):
-                watch_uuid = k[0]
-                watch = k[1]
-                if not watch['paused']:
-                    if watch_uuid:
-                        if with_errors and not watch.get('last_error'):
-                            continue
-
-                        if tag != None and tag not in watch['tags']:
-                            continue
-
-                        worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
-                        i += 1
-
-        if i == 1:
             flash(gettext("Queued 1 watch for rechecking."))
-        if i > 1:
-            flash(gettext("Queued {} watches for rechecking.").format(i))
-        if i == 0:
-            flash(gettext("No watches available to recheck."))
+        else:
+            # Multiple watches - queue in background thread to avoid blocking HTTP response
+            def queue_watches_background():
+                """Background thread to queue watches - discarded after completion."""
+                queued_count = 0
+                try:
+                    # Get most overdue first
+                    for k in sorted(datastore.data['watching'].items(), key=lambda item: item[1].get('last_checked', 0)):
+                        watch_uuid = k[0]
+                        watch = k[1]
+                        if not watch['paused']:
+                            if watch_uuid:
+                                if with_errors and not watch.get('last_error'):
+                                    continue
+
+                                if tag != None and tag not in watch['tags']:
+                                    continue
+
+                                worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
+                                queued_count += 1
+
+                    logger.info(f"Background queueing complete: {queued_count} watches queued")
+                except Exception as e:
+                    logger.error(f"Error in background queueing: {e}")
+
+            # Start background thread and return immediately
+            thread = threading.Thread(target=queue_watches_background, daemon=True)
+            thread.start()
+
+            # Return immediately with approximate message
+            flash(gettext("Queueing watches for rechecking in background..."))
 
         return redirect(url_for('watchlist.index', **({'tag': tag} if tag else {})))
 

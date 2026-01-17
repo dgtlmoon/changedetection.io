@@ -2,7 +2,9 @@ from changedetectionio import queuedWatchMetaData
 from changedetectionio import worker_handler
 from flask_expects_json import expects_json
 from flask_restful import abort, Resource
+from loguru import logger
 
+import threading
 from flask import request
 from . import auth
 
@@ -29,17 +31,29 @@ class Tag(Resource):
 
         if request.args.get('recheck'):
             # Recheck all, including muted
-            # Get most overdue first
-            i=0
-            for k in sorted(self.datastore.data['watching'].items(), key=lambda item: item[1].get('last_checked', 0)):
-                watch_uuid = k[0]
-                watch = k[1]
-                if not watch['paused'] and tag['uuid'] not in watch['tags']:
-                    continue
-                worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
-                i+=1
+            # Queue watches in background thread to avoid blocking API response
+            def queue_watches_background():
+                """Background thread to queue watches - discarded after completion."""
+                queued_count = 0
+                try:
+                    # Get most overdue first
+                    for k in sorted(self.datastore.data['watching'].items(), key=lambda item: item[1].get('last_checked', 0)):
+                        watch_uuid = k[0]
+                        watch = k[1]
+                        if not watch['paused'] and tag['uuid'] not in watch['tags']:
+                            continue
+                        worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
+                        queued_count += 1
 
-            return f"OK, {i} watches queued", 200
+                    logger.info(f"Background queueing complete for tag {tag['uuid']}: {queued_count} watches queued")
+                except Exception as e:
+                    logger.error(f"Error in background queueing for tag {tag['uuid']}: {e}")
+
+            # Start background thread and return immediately
+            thread = threading.Thread(target=queue_watches_background, daemon=True)
+            thread.start()
+
+            return "OK, queueing watches in background", 202
 
         if request.args.get('muted', '') == 'muted':
             self.datastore.data['settings']['application']['tags'][uuid]['notification_muted'] = True
