@@ -8,12 +8,16 @@ from changedetectionio.flask_app import watch_check_update
 import asyncio
 import importlib
 import os
+import sys
 import time
 
 from loguru import logger
 
 # Async version of update_worker
 # Processes jobs from AsyncSignalPriorityQueue instead of threaded queue
+
+IN_PYTEST = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
+DEFER_SLEEP_TIME_ALREADY_QUEUED = 0.3 if IN_PYTEST else 10.0
 
 async def async_update_worker(worker_id, q, notification_q, app, datastore, executor=None):
     """
@@ -78,7 +82,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
         if worker_handler.is_watch_running_by_another_worker(uuid, worker_id):
             logger.trace(f"Worker {worker_id} detected UUID {uuid} already being processed by another worker - deferring")
             # Sleep to avoid tight loop and give the other worker time to finish
-            await asyncio.sleep(10.0)
+            await asyncio.sleep(DEFER_SLEEP_TIME_ALREADY_QUEUED)
 
             # Re-queue with lower priority so it gets checked again after current processing finishes
             deferred_priority = max(1000, queued_item_data.priority * 10)

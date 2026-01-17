@@ -438,7 +438,8 @@ class CreateWatch(Resource):
 
         new_uuid = self.datastore.add_watch(url=url, extras=extras, tag=tags)
         if new_uuid:
-            worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))
+# Dont queue because the scheduler will check that it hasnt been checked before anyway
+#            worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))
             return {'uuid': new_uuid}, 201
         else:
             return "Invalid or unsupported URL", 400

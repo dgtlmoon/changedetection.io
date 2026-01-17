@@ -27,9 +27,7 @@ from flask import (
     session,
     url_for,
 )
-from urllib.parse import urlparse
 from flask_compress import Compress as FlaskCompress
-from flask_login import current_user
 from flask_restful import abort, Api
 from flask_cors import CORS
 
@@ -46,6 +44,7 @@ from changedetectionio.api import Watch, WatchHistory, WatchSingleHistory, Watch
 from changedetectionio.api.Search import Search
 from .time_handler import is_within_schedule
 from changedetectionio.languages import get_available_languages, get_language_codes, get_flag_for_locale, get_timeago_locale
+IN_PYTEST = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
 
 datastore = None
 
@@ -56,7 +55,7 @@ extra_stylesheets = []
 # Use bulletproof janus-based queues for sync/async reliability  
 update_q = RecheckPriorityQueue()
 notification_q = NotificationQueue()
-MAX_QUEUE_SIZE = 2000
+MAX_QUEUE_SIZE = 5000
 
 app = Flask(__name__,
             static_url_path="",
@@ -979,6 +978,10 @@ def ticker_thread_check_time_launch_checks():
     logger.debug(f"System env MINIMUM_SECONDS_RECHECK_TIME {recheck_time_minimum_seconds}")
 
     # Workers are now started during app initialization, not here
+    WAIT_TIME_BETWEEN_LOOP = 1.0 if not IN_PYTEST else 0.01
+    if IN_PYTEST:
+        # The time between loops should be less than the first .sleep/wait in def wait_for_all_checks() of tests/util.py
+        logger.warning(f"Looks like we're in PYTEST! Setting time between searching for items to add to the queue to {WAIT_TIME_BETWEEN_LOOP}s")
 
     while not app.config.exit.is_set():
 
@@ -1002,6 +1005,9 @@ def ticker_thread_check_time_launch_checks():
         # Get a list of watches by UUID that are currently fetching data
         running_uuids = worker_handler.get_running_uuids()
 
+        # Build set of queued UUIDs once for O(1) lookup instead of O(n) per watch
+        queued_uuids = {q_item.item['uuid'] for q_item in update_q.queue}
+
         # Re #232 - Deepcopy the data incase it changes while we're iterating through it all
         watch_uuid_list = []
         while True:
@@ -1018,16 +1024,17 @@ def ticker_thread_check_time_launch_checks():
             else:
                 break
 
-        # Re #438 - Don't place more watches in the queue to be checked if the queue is already large
-        while update_q.qsize() >= 2000:
-            logger.warning(f"Recheck watches queue size limit reached ({MAX_QUEUE_SIZE}), skipping adding more items")
-            app.config.exit.wait(10.0)
-
-
         recheck_time_system_seconds = int(datastore.threshold_seconds)
 
         # Check for watches outside of the time threshold to put in the thread queue.
-        for uuid in watch_uuid_list:
+        for watch_index, uuid in enumerate(watch_uuid_list):
+            # Re #438 - Check queue size every 100 watches for CPU efficiency (not every watch)
+            if watch_index % 100 == 0:
+                current_queue_size = update_q.qsize()
+                if current_queue_size >= MAX_QUEUE_SIZE:
+                    logger.debug(f"Queue size limit reached ({current_queue_size}/{MAX_QUEUE_SIZE}), stopping scheduler this iteration.")
+                    break
+
             now = time.time()
             watch = datastore.data['watching'].get(uuid)
             if not watch:
@@ -1077,7 +1084,7 @@ def ticker_thread_check_time_launch_checks():
             seconds_since_last_recheck = now - watch['last_checked']
 
             if seconds_since_last_recheck >= (threshold + watch.jitter_seconds) and seconds_since_last_recheck >= recheck_time_minimum_seconds:
-                if not uuid in running_uuids and uuid not in [q_uuid.item['uuid'] for q_uuid in update_q.queue]:
+                if not uuid in running_uuids and uuid not in queued_uuids:
 
                     # Proxies can be set to have a limit on seconds between which they can be called
                     watch_proxy = datastore.get_preferred_proxy_for_watch(uuid=uuid)
@@ -1120,4 +1127,4 @@ def ticker_thread_check_time_launch_checks():
                     watch.jitter_seconds = 0
 
         # Should be low so we can break this out in testing
-        app.config.exit.wait(1)
+        app.config.exit.wait(WAIT_TIME_BETWEEN_LOOP)
