@@ -776,7 +776,12 @@ msgstr "Importa"
 msgid "Password protection removed."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/__init__.py:98
+#: changedetectionio/blueprint/settings/__init__.py:92
+#, python-brace-format
+msgid "Warning: Worker count ({}) is close to or exceeds available CPU cores ({})"
+msgstr "Avviso: Il numero di worker ({}) si avvicina o supera i core CPU disponibili ({})"
+
+#: changedetectionio/blueprint/settings/__init__.py:104
 #, python-brace-format
 msgid "Worker count adjusted: {}"
 msgstr ""

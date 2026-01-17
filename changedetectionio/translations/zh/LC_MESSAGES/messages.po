@@ -757,12 +757,17 @@ msgstr "导入"
 msgid "Password protection removed."
 msgstr "已移除密码保护。"
 
-#: changedetectionio/blueprint/settings/__init__.py:98
+#: changedetectionio/blueprint/settings/__init__.py:92
+#, python-brace-format
+msgid "Warning: Worker count ({}) is close to or exceeds available CPU cores ({})"
+msgstr "警告：工作线程数（{}）接近或超过可用CPU核心数（{}）"
+
+#: changedetectionio/blueprint/settings/__init__.py:104
 #, python-brace-format
 msgid "Worker count adjusted: {}"
 msgstr "工作线程数已调整：{}"
 
-#: changedetectionio/blueprint/settings/__init__.py:100
+#: changedetectionio/blueprint/settings/__init__.py:106
 msgid "Dynamic worker adjustment not supported for sync workers"
 msgstr "同步工作线程不支持动态调整"
 

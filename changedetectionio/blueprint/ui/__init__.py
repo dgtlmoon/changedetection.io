@@ -185,18 +185,32 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
         # Save the current newest history as the most recently viewed
         with_errors = request.args.get('with_errors') == "1"
         tag_limit = request.args.get('tag')
-        logger.debug(f"Limiting to tag {tag_limit}")
         now = int(time.time())
-        for watch_uuid, watch in datastore.data['watching'].items():
-            if with_errors and not watch.get('last_error'):
-                continue
 
-            if tag_limit and ( not watch.get('tags') or tag_limit not in watch['tags'] ):
-                logger.debug(f"Skipping watch {watch_uuid}")
-                continue
+        # Mark watches as viewed in background thread to avoid blocking
+        def mark_viewed_background():
+            """Background thread to mark watches as viewed - discarded after completion."""
+            marked_count = 0
+            try:
+                for watch_uuid, watch in datastore.data['watching'].items():
+                    if with_errors and not watch.get('last_error'):
+                        continue
 
-            datastore.set_last_viewed(watch_uuid, now)
+                    if tag_limit and (not watch.get('tags') or tag_limit not in watch['tags']):
+                        continue
 
+                    datastore.set_last_viewed(watch_uuid, now)
+                    marked_count += 1
+
+                logger.info(f"Background marking complete: {marked_count} watches marked as viewed")
+            except Exception as e:
+                logger.error(f"Error in background mark as viewed: {e}")
+
+        # Start background thread and return immediately
+        thread = threading.Thread(target=mark_viewed_background, daemon=True)
+        thread.start()
+
+        flash(gettext("Marking watches as viewed in background..."))
         return redirect(url_for('watchlist.index', tag=tag_limit))
 
     @ui_blueprint.route("/delete", methods=['GET'])

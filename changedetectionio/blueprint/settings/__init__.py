@@ -78,14 +78,20 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 # Handle dynamic worker count adjustment
                 old_worker_count = datastore.data['settings']['requests'].get('workers', 1)
                 new_worker_count = form.data['requests'].get('workers', 1)
-                
+
                 datastore.data['settings']['requests'].update(form.data['requests'])
-                
+
                 # Adjust worker count if it changed
                 if new_worker_count != old_worker_count:
                     from changedetectionio import worker_handler
                     from changedetectionio.flask_app import update_q, notification_q, app, datastore as ds
-                    
+
+                    # Check CPU core availability and warn if worker count is high
+                    cpu_count = os.cpu_count()
+                    if cpu_count and new_worker_count >= (cpu_count * 0.9):
+                        flash(gettext("Warning: Worker count ({}) is close to or exceeds available CPU cores ({})").format(
+                            new_worker_count, cpu_count), 'warning')
+
                     result = worker_handler.adjust_async_worker_count(
                         new_count=new_worker_count,
                         update_q=update_q,
@@ -93,7 +99,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                         app=app,
                         datastore=ds
                     )
-                    
+
                     if result['status'] == 'success':
                         flash(gettext("Worker count adjusted: {}").format(result['message']), 'notice')
                     elif result['status'] == 'not_supported':

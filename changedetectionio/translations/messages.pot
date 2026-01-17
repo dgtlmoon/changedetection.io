@@ -770,12 +770,17 @@ msgstr ""
 msgid "Password protection removed."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/__init__.py:98
+#: changedetectionio/blueprint/settings/__init__.py:92
+#, python-brace-format
+msgid "Warning: Worker count ({}) is close to or exceeds available CPU cores ({})"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/__init__.py:104
 #, python-brace-format
 msgid "Worker count adjusted: {}"
 msgstr ""
 
-#: changedetectionio/blueprint/settings/__init__.py:100
+#: changedetectionio/blueprint/settings/__init__.py:106
 msgid "Dynamic worker adjustment not supported for sync workers"
 msgstr ""
 
