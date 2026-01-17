@@ -185,18 +185,32 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
         # Save the current newest history as the most recently viewed
         with_errors = request.args.get('with_errors') == "1"
         tag_limit = request.args.get('tag')
-        logger.debug(f"Limiting to tag {tag_limit}")
         now = int(time.time())
-        for watch_uuid, watch in datastore.data['watching'].items():
-            if with_errors and not watch.get('last_error'):
-                continue
 
-            if tag_limit and ( not watch.get('tags') or tag_limit not in watch['tags'] ):
-                logger.debug(f"Skipping watch {watch_uuid}")
-                continue
+        # Mark watches as viewed in background thread to avoid blocking
+        def mark_viewed_background():
+            """Background thread to mark watches as viewed - discarded after completion."""
+            marked_count = 0
+            try:
+                for watch_uuid, watch in datastore.data['watching'].items():
+                    if with_errors and not watch.get('last_error'):
+                        continue
 
-            datastore.set_last_viewed(watch_uuid, now)
+                    if tag_limit and (not watch.get('tags') or tag_limit not in watch['tags']):
+                        continue
 
+                    datastore.set_last_viewed(watch_uuid, now)
+                    marked_count += 1
+
+                logger.info(f"Background marking complete: {marked_count} watches marked as viewed")
+            except Exception as e:
+                logger.error(f"Error in background mark as viewed: {e}")
+
+        # Start background thread and return immediately
+        thread = threading.Thread(target=mark_viewed_background, daemon=True)
+        thread.start()
+
+        flash(gettext("Marking watches as viewed in background..."))
         return redirect(url_for('watchlist.index', tag=tag_limit))
 
     @ui_blueprint.route("/delete", methods=['GET'])
@@ -241,35 +255,49 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
         uuid = request.args.get('uuid')
         with_errors = request.args.get('with_errors') == "1"
 
-        i = 0
-
         if uuid:
+            # Single watch - queue immediately
             worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
-            i += 1
-
+            flash(gettext("Queued 1 watch for rechecking."))
         else:
-            # Recheck all, including muted
-            # Get most overdue first
+            # Multiple watches - first count how many need to be queued
+            watches_to_queue = []
             for k in sorted(datastore.data['watching'].items(), key=lambda item: item[1].get('last_checked', 0)):
                 watch_uuid = k[0]
                 watch = k[1]
-                if not watch['paused']:
-                    if watch_uuid:
-                        if with_errors and not watch.get('last_error'):
-                            continue
+                if not watch['paused'] and watch_uuid:
+                    if with_errors and not watch.get('last_error'):
+                        continue
+                    if tag != None and tag not in watch['tags']:
+                        continue
+                    watches_to_queue.append(watch_uuid)
 
-                        if tag != None and tag not in watch['tags']:
-                            continue
+            # If less than 20 watches, queue synchronously for immediate feedback
+            if len(watches_to_queue) < 20:
+                for watch_uuid in watches_to_queue:
+                    worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
 
-                        worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
-                        i += 1
+                if len(watches_to_queue) == 1:
+                    flash(gettext("Queued 1 watch for rechecking."))
+                else:
+                    flash(gettext("Queued {} watches for rechecking.").format(len(watches_to_queue)))
+            else:
+                # 20+ watches - queue in background thread to avoid blocking HTTP response
+                def queue_watches_background():
+                    """Background thread to queue watches - discarded after completion."""
+                    try:
+                        for watch_uuid in watches_to_queue:
+                            worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
+                        logger.info(f"Background queueing complete: {len(watches_to_queue)} watches queued")
+                    except Exception as e:
+                        logger.error(f"Error in background queueing: {e}")
 
-        if i == 1:
-            flash(gettext("Queued 1 watch for rechecking."))
-        if i > 1:
-            flash(gettext("Queued {} watches for rechecking.").format(i))
-        if i == 0:
-            flash(gettext("No watches available to recheck."))
+                # Start background thread and return immediately
+                thread = threading.Thread(target=queue_watches_background, daemon=True, name="QueueWatches-Background")
+                thread.start()
+
+                # Return immediately with approximate message
+                flash(gettext("Queueing watches for rechecking in background..."))
 
         return redirect(url_for('watchlist.index', **({'tag': tag} if tag else {})))
 

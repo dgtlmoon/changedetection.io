@@ -792,12 +792,17 @@ msgstr "수입"
 msgid "Password protection removed."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/__init__.py:98
+#: changedetectionio/blueprint/settings/__init__.py:92
+#, python-brace-format
+msgid "Warning: Worker count ({}) is close to or exceeds available CPU cores ({})"
+msgstr "경고: 워커 수({})가 사용 가능한 CPU 코어 수({})에 근접하거나 초과합니다"
+
+#: changedetectionio/blueprint/settings/__init__.py:104
 #, python-brace-format
 msgid "Worker count adjusted: {}"
 msgstr ""
 
-#: changedetectionio/blueprint/settings/__init__.py:100
+#: changedetectionio/blueprint/settings/__init__.py:106
 msgid "Dynamic worker adjustment not supported for sync workers"
 msgstr ""
 
@@ -1165,10 +1170,10 @@ msgstr ""
 msgid "Queued 1 watch for rechecking."
 msgstr ""
 
-#: changedetectionio/blueprint/ui/__init__.py:257
+#: changedetectionio/blueprint/ui/__init__.py:283
 #, python-brace-format
 msgid "Queued {} watches for rechecking."
-msgstr ""
+msgstr "{}개의 감시 항목을 재확인 대기열에 추가했습니다."
 
 #: changedetectionio/blueprint/ui/__init__.py:259
 msgid "No watches available to recheck."

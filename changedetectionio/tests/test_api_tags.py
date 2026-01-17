@@ -125,10 +125,12 @@ def test_api_tags_listing(client, live_server, measure_memory_usage, datastore_p
        url_for("tag", uuid=new_tag_uuid) + "?recheck=true",
        headers={'x-api-key': api_key}
     )
-    wait_for_all_checks()
-    assert res.status_code == 200
-    assert b'OK, 1 watches' in res.data
 
+    assert res.status_code == 200
+    assert b'OK, queued 1 watches for rechecking' in res.data
+
+
+    wait_for_all_checks()
     after_check_time = live_server.app.config['DATASTORE'].data['watching'][watch_uuid].get('last_checked')
 
     assert before_check_time != after_check_time

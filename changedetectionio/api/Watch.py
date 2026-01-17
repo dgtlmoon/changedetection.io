@@ -1,4 +1,5 @@
 import os
+import threading
 
 from changedetectionio.validate_url import is_safe_valid_url
 
@@ -469,8 +470,29 @@ class CreateWatch(Resource):
             }
 
         if request.args.get('recheck_all'):
-            for uuid in self.datastore.data['watching'].keys():
-                worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
-            return {'status': "OK"}, 200
+            # Collect all watches to queue
+            watches_to_queue = self.datastore.data['watching'].keys()
+
+            # If less than 20 watches, queue synchronously for immediate feedback
+            if len(watches_to_queue) < 20:
+                for uuid in watches_to_queue:
+                    worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+                return {'status': f'OK, queued {len(watches_to_queue)} watches for rechecking'}, 200
+            else:
+                # 20+ watches - queue in background thread to avoid blocking API response
+                def queue_all_watches_background():
+                    """Background thread to queue all watches - discarded after completion."""
+                    try:
+                        for uuid in watches_to_queue:
+                            worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+                        logger.info(f"Background queueing complete: {len(watches_to_queue)} watches queued")
+                    except Exception as e:
+                        logger.error(f"Error in background queueing all watches: {e}")
+
+                # Start background thread and return immediately
+                thread = threading.Thread(target=queue_all_watches_background, daemon=True, name="QueueAllWatches-Background")
+                thread.start()
+
+                return {'status': f'OK, queueing {len(watches_to_queue)} watches in background'}, 202
 
         return list, 200

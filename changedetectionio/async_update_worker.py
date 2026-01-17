@@ -132,8 +132,14 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     # All fetchers are now async, so call directly
                     await update_handler.call_browser()
 
-                    # Run change detection (this is synchronous)
-                    changed_detected, update_obj, contents = update_handler.run_changedetection(watch=watch)
+                    # Run change detection in executor to avoid blocking event loop
+                    # This includes CPU-intensive operations like HTML parsing (lxml/inscriptis)
+                    # which can take 2-10ms and cause GIL contention across workers
+                    loop = asyncio.get_event_loop()
+                    changed_detected, update_obj, contents = await loop.run_in_executor(
+                        executor,
+                        lambda: update_handler.run_changedetection(watch=watch)
+                    )
 
                 except PermissionError as e:
                     logger.critical(f"File permission error updating file, watch: {uuid}")

@@ -776,7 +776,12 @@ msgstr "Importa"
 msgid "Password protection removed."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/__init__.py:98
+#: changedetectionio/blueprint/settings/__init__.py:92
+#, python-brace-format
+msgid "Warning: Worker count ({}) is close to or exceeds available CPU cores ({})"
+msgstr "Avviso: Il numero di worker ({}) si avvicina o supera i core CPU disponibili ({})"
+
+#: changedetectionio/blueprint/settings/__init__.py:104
 #, python-brace-format
 msgid "Worker count adjusted: {}"
 msgstr ""
@@ -1142,10 +1147,10 @@ msgstr ""
 msgid "Queued 1 watch for rechecking."
 msgstr ""
 
-#: changedetectionio/blueprint/ui/__init__.py:257
+#: changedetectionio/blueprint/ui/__init__.py:283
 #, python-brace-format
 msgid "Queued {} watches for rechecking."
-msgstr ""
+msgstr "{} monitoraggi accodati per la riverifica."
 
 #: changedetectionio/blueprint/ui/__init__.py:259
 msgid "No watches available to recheck."

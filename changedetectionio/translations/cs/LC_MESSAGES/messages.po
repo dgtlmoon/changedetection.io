@@ -757,12 +757,17 @@ msgstr "IMPORTOVAT"
 msgid "Password protection removed."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/__init__.py:98
+#: changedetectionio/blueprint/settings/__init__.py:92
+#, python-brace-format
+msgid "Warning: Worker count ({}) is close to or exceeds available CPU cores ({})"
+msgstr "Upozornění: Počet workerů ({}) se blíží nebo překračuje dostupné CPU jádra ({})"
+
+#: changedetectionio/blueprint/settings/__init__.py:104
 #, python-brace-format
 msgid "Worker count adjusted: {}"
 msgstr ""
 
-#: changedetectionio/blueprint/settings/__init__.py:100
+#: changedetectionio/blueprint/settings/__init__.py:106
 msgid "Dynamic worker adjustment not supported for sync workers"
 msgstr ""
 
@@ -1123,10 +1128,10 @@ msgstr ""
 msgid "Queued 1 watch for rechecking."
 msgstr ""
 
-#: changedetectionio/blueprint/ui/__init__.py:257
+#: changedetectionio/blueprint/ui/__init__.py:283
 #, python-brace-format
 msgid "Queued {} watches for rechecking."
-msgstr ""
+msgstr "Do fronty přidáno {} sledování k opětovné kontrole."
 
 #: changedetectionio/blueprint/ui/__init__.py:259
 msgid "No watches available to recheck."
