@@ -25,9 +25,7 @@
             <li class="tab"><a href="#ui-options">{{ _('UI Options') }}</a></li>
             <li class="tab"><a href="#api">{{ _('API') }}</a></li>
             <li class="tab"><a href="#rss">{{ _('RSS') }}</a></li>
-            <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('backups.') %}active{% endif %}">
-                <a href="{{ url_for('backups.index') }}" class="pure-menu-link">{{ _('Backups') }}</a>
-            </li>
+            <li class="tab"><a href="{{ url_for('backups.index') }}" class="pure-menu-link">{{ _('Backups') }}</a></li>
             <li class="tab"><a href="#timedate">{{ _('Time & Date') }}</a></li>
             <li class="tab"><a href="#proxies">{{ _('CAPTCHA & Proxies') }}</a></li>
             {% if plugin_tabs %}
@@ -56,9 +54,9 @@
                     </div>
                     <div class="pure-control-group">
                         {{ render_field(form.application.form.filter_failure_notification_threshold_attempts, class="filter_failure_notification_threshold_attempts") }}
-                        <span class="pure-form-message-inline">After this many consecutive times that the CSS/xPath filter is missing, send a notification
+                        <span class="pure-form-message-inline">{{ _('After this many consecutive times that the CSS/xPath filter is missing, send a notification') }}
                             <br>
-                        Set to <strong>0</strong> to disable
+                        {{ _('Set to') }} <strong>0</strong> {{ _('to disable') }}
                         </span>
                     </div>
                     <div class="pure-control-group">
@@ -67,21 +65,20 @@
                                 {{ render_button(form.application.form.removepassword_button) }}
                             {% else %}
                             {{ render_field(form.application.form.password) }}
-                            <span class="pure-form-message-inline">Password protection for your changedetection.io application.</span>
+                            <span class="pure-form-message-inline">{{ _('Password protection for your changedetection.io application.') }}</span>
                             {% endif %}
                         {% else %}
-                            <span class="pure-form-message-inline">Password is locked.</span>
+                            <span class="pure-form-message-inline">{{ _('Password is locked.') }}</span>
                         {% endif %}
                     </div>
 
                     <div class="pure-control-group">
                         {{ render_checkbox_field(form.application.form.shared_diff_access, class="shared_diff_access") }}
-                        <span class="pure-form-message-inline">Allow access to the watch change history page when password is enabled (Good for sharing the diff page)
-                        </span>
+                        <span class="pure-form-message-inline">{{ _('Allow access to the watch change history page when password is enabled (Good for sharing the diff page)') }}</span>
                     </div>
                     <div class="pure-control-group">
                         {{ render_checkbox_field(form.application.form.empty_pages_are_a_change) }}
-                        <span class="pure-form-message-inline">When a request returns no content, or the HTML does not contain any text, is this considered a change?</span>
+                        <span class="pure-form-message-inline">{{ _('When a request returns no content, or the HTML does not contain any text, is this considered a change?') }}</span>
                     </div>
                 </fieldset>
             </div>
@@ -93,8 +90,8 @@
                 <div class="pure-control-group" id="notification-base-url">
                     {{ render_field(form.application.form.base_url, class="m-d") }}
                     <span class="pure-form-message-inline">
-                        Base URL used for the <code>{{ '{{ base_url }}' }}</code> token in notification links.<br>
-                        Default value is the system environment variable '<code>BASE_URL</code>' - <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Configurable-BASE_URL-setting">read more here</a>.
+                        {{ _('Base URL used for the') }} <code>{{ '{{ base_url }}' }}</code> {{ _('token in notification links.') }}<br>
+                        {{ _('Default value is the system environment variable') }} '<code>BASE_URL</code>' - <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Configurable-BASE_URL-setting">{{ _('read more here') }}</a>.
                     </span>
                 </div>
             </div>
@@ -103,15 +100,15 @@
                 <div class="pure-control-group inline-radio">
                     {{ render_field(form.application.form.fetch_backend, class="fetch-backend") }}
                     <span class="pure-form-message-inline">
-                        <p>Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render.</p>
-                        <p>The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'. </p>
+                        <p>{{ _('Use the') }} <strong>{{ _('Basic') }}</strong> {{ _('method (default) where your watched sites don\'t need Javascript to render.') }}</p>
+                        <p>{{ _('The') }} <strong>{{ _('Chrome/Javascript') }}</strong> {{ _('method requires a network connection to a running WebDriver+Chrome server, set by the ENV var') }} 'WEBDRIVER_URL'. </p>
                     </span>
                 </div>
                 <fieldset class="pure-group" id="webdriver-override-options" data-visible-for="application-fetch_backend=html_webdriver">
                     <div class="pure-form-message-inline">
-                        <strong>If you're having trouble waiting for the page to be fully rendered (text missing etc), try increasing the 'wait' time here.</strong>
+                        <strong>{{ _('If you\'re having trouble waiting for the page to be fully rendered (text missing etc), try increasing the \'wait\' time here.') }}</strong>
                         <br>
-                        This will wait <i>n</i> seconds before extracting the text.
+                        {{ _('This will wait') }} <i>n</i> {{ _('seconds before extracting the text.') }}
                     </div>
                     <div class="pure-control-group">
                         {{ render_field(form.application.form.webdriver_delay) }}
@@ -120,27 +117,27 @@
                 <div class="pure-control-group">
                     {{ render_field(form.requests.form.workers) }}
                     {% set worker_info = get_worker_status_info() %}
-                    <span class="pure-form-message-inline">Number of concurrent workers to process watches. More workers = faster processing but higher memory usage.<br>
-                    Currently running: <strong>{{ worker_info.count }}</strong> operational {{ worker_info.type }} workers{% if worker_info.active_workers > 0 %} ({{ worker_info.active_workers }} actively processing){% endif %}.</span>
+                    <span class="pure-form-message-inline">{{ _('Number of concurrent workers to process watches. More workers = faster processing but higher memory usage.') }}<br>
+                    {{ _('Currently running:') }} <strong>{{ worker_info.count }}</strong> {{ _('operational') }} {{ worker_info.type }} {{ _('workers') }}{% if worker_info.active_workers > 0 %} ({{ worker_info.active_workers }} {{ _('actively processing') }}){% endif %}.</span>
                 </div>
                 <div class="pure-control-group">
                     {{ render_field(form.requests.form.jitter_seconds, class="jitter_seconds") }}
-                    <span class="pure-form-message-inline">Example - 3 seconds random jitter could trigger up to 3 seconds earlier or up to 3 seconds later</span>
+                    <span class="pure-form-message-inline">{{ _('Example - 3 seconds random jitter could trigger up to 3 seconds earlier or up to 3 seconds later') }}</span>
                 </div>
                 <div class="pure-control-group">
                     {{ render_field(form.requests.form.timeout) }}
-                    <span class="pure-form-message-inline">For regular plain requests (not chrome based), maximum number of seconds until timeout, 1-999.</span><br>
+                    <span class="pure-form-message-inline">{{ _('For regular plain requests (not chrome based), maximum number of seconds until timeout, 1-999.') }}</span><br>
                 </div>
                 <div class="pure-control-group inline-radio">
                     {{ render_field(form.requests.form.default_ua) }}
                     <span class="pure-form-message-inline">
-                        Applied to all requests.<br><br>
-                        Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it's important to consider <a href="https://changedetection.io/tutorial/what-are-main-types-anti-robot-mechanisms">all of the ways that the browser is detected</a>.
+                        {{ _('Applied to all requests.') }}<br><br>
+                        {{ _('Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it\'s important to consider') }} <a href="https://changedetection.io/tutorial/what-are-main-types-anti-robot-mechanisms">{{ _('all of the ways that the browser is detected') }}</a>.
                     </span>
                 </div>
                 <div class="pure-control-group">
                                         <br>
-                    Tip: <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#brightdata-proxy-support">Connect using Bright Data and Oxylabs Proxies, find out more here.</a>
+                    {{ _('Tip:') }} <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#brightdata-proxy-support">{{ _('Connect using Bright Data and Oxylabs Proxies, find out more here.') }}</a>
 
                 </div>
             </div>
@@ -149,15 +146,15 @@
 
                     <fieldset class="pure-group">
                     {{ render_checkbox_field(form.application.form.ignore_whitespace) }}
-                    <span class="pure-form-message-inline">Ignore whitespace, tabs and new-lines/line-feeds when considering if a change was detected.<br>
-                    <i>Note:</i> Changing this will change the status of your existing watches, possibly trigger alerts etc.
+                    <span class="pure-form-message-inline">{{ _('Ignore whitespace, tabs and new-lines/line-feeds when considering if a change was detected.') }}<br>
+                    <i>{{ _('Note:') }}</i> {{ _('Changing this will change the status of your existing watches, possibly trigger alerts etc.') }}
                     </span>
                     </fieldset>
                 <fieldset class="pure-group">
                     {{ render_checkbox_field(form.application.form.render_anchor_tag_content) }}
-                    <span class="pure-form-message-inline">Render anchor tag content, default disabled, when enabled renders links as <code>(link text)[https://somesite.com]</code>
+                    <span class="pure-form-message-inline">{{ _('Render anchor tag content, default disabled, when enabled renders links as') }} <code>(link text)[https://somesite.com]</code>
                         <br>
-                    <i>Note:</i> Changing this could affect the content of your existing watches, possibly trigger alerts etc.
+                    <i>{{ _('Note:') }}</i> {{ _('Changing this could affect the content of your existing watches, possibly trigger alerts etc.') }}
                     </span>
                     </fieldset>
                     <fieldset class="pure-group">
@@ -168,9 +165,9 @@ nav
 //*[contains(text(), 'Advertisement')]") }}
                       <span class="pure-form-message-inline">
                         <ul>
-                          <li> Remove HTML element(s) by CSS and XPath selectors before text conversion. </li>
-                          <li> Don't paste HTML here, use only CSS and XPath selectors </li>
-                          <li> Add multiple elements, CSS or XPath selectors per line to ignore multiple parts of the HTML. </li>
+                          <li> {{ _('Remove HTML element(s) by CSS and XPath selectors before text conversion.') }} </li>
+                          <li> {{ _('Don\'t paste HTML here, use only CSS and XPath selectors') }} </li>
+                          <li> {{ _('Add multiple elements, CSS or XPath selectors per line to ignore multiple parts of the HTML.') }} </li>
                         </ul>
                       </span>
                     </fieldset>
@@ -178,50 +175,50 @@ nav
                     {{ render_field(form.application.form.global_ignore_text, rows=5, placeholder="Some text to ignore in a line
 /some.regex\d{2}/ for case-INsensitive regex
                     ") }}
-                    <span class="pure-form-message-inline">Note: This is applied globally in addition to the per-watch rules.</span><br>
+                    <span class="pure-form-message-inline">{{ _('Note: This is applied globally in addition to the per-watch rules.') }}</span><br>
                     <span class="pure-form-message-inline">
                         <ul>
-                            <li>Matching text will be <strong>ignored</strong> in the text snapshot (you can still see it but it wont trigger a change)</li>
-                            <li>Note: This is applied globally in addition to the per-watch rules.</li>
-                            <li>Each line processed separately, any line matching will be ignored (removed before creating the checksum)</li>
-                            <li>Regular Expression support, wrap the entire line in forward slash <code>/regex/</code></li>
-                            <li>Changing this will affect the comparison checksum which may trigger an alert</li>
+                            <li>{{ _('Matching text will be') }} <strong>{{ _('ignored') }}</strong> {{ _('in the text snapshot (you can still see it but it wont trigger a change)') }}</li>
+                            <li>{{ _('Note: This is applied globally in addition to the per-watch rules.') }}</li>
+                            <li>{{ _('Each line processed separately, any line matching will be ignored (removed before creating the checksum)') }}</li>
+                            <li>{{ _('Regular Expression support, wrap the entire line in forward slash') }} <code>/regex/</code></li>
+                            <li>{{ _('Changing this will affect the comparison checksum which may trigger an alert') }}</li>
                         </ul>
                      </span>
                     </fieldset>
                     <fieldset class="pure-group">
                         {{ render_checkbox_field(form.application.form.strip_ignored_lines) }}
-                        <span class="pure-form-message-inline">Remove any text that appears in the "Ignore text" from the output (otherwise its just ignored for change-detection)<br>
-                        <i>Note:</i> Changing this will change the status of your existing watches, possibly trigger alerts etc.
+                        <span class="pure-form-message-inline">{{ _('Remove any text that appears in the "Ignore text" from the output (otherwise its just ignored for change-detection)') }}<br>
+                        <i>{{ _('Note:') }}</i> {{ _('Changing this will change the status of your existing watches, possibly trigger alerts etc.') }}
                         </span>
                     </fieldset>
            </div>
 
             <div class="tab-pane-inner" id="api">
-                <h4>API Access</h4>
-                <p>Drive your changedetection.io via API, More about <a href="https://changedetection.io/docs/api_v1/index.html">API access and examples here</a>.</p>
+                <h4>{{ _('API Access') }}</h4>
+                <p>{{ _('Drive your changedetection.io via API, More about') }} <a href="https://changedetection.io/docs/api_v1/index.html">{{ _('API access and examples here') }}</a>.</p>
 
                 <div class="pure-control-group">
                     {{ render_checkbox_field(form.application.form.api_access_token_enabled) }}
-                    <div class="pure-form-message-inline">Restrict API access limit by using <code>x-api-key</code> header - required for the Chrome Extension to work</div><br>
-                    <div class="pure-form-message-inline"><br>API Key <span id="api-key">{{api_key}}</span>
-                        <span style="display:none;" id="api-key-copy" >copy</span>
+                    <div class="pure-form-message-inline">{{ _('Restrict API access limit by using') }} <code>x-api-key</code> {{ _('header - required for the Chrome Extension to work') }}</div><br>
+                    <div class="pure-form-message-inline"><br>{{ _('API Key') }} <span id="api-key">{{api_key}}</span>
+                        <span style="display:none;" id="api-key-copy" >{{ _('copy') }}</span>
                     </div>
                 </div>
                 <div class="pure-control-group">
-                    <a href="{{url_for('settings.settings_reset_api_key')}}" class="pure-button button-small button-cancel">Regenerate API key</a>
+                    <a href="{{url_for('settings.settings_reset_api_key')}}" class="pure-button button-small button-cancel">{{ _('Regenerate API key') }}</a>
                 </div>
                 <div class="pure-control-group">
-                    <h4>Chrome Extension</h4>
-                    <p>Easily add any web-page to your changedetection.io installation from within Chrome.</p>
-                    <strong>Step 1</strong> Install the extension, <strong>Step 2</strong> Navigate to this page,
-                    <strong>Step 3</strong> Open the extension from the toolbar and click "<i>Sync API Access</i>"
+                    <h4>{{ _('Chrome Extension') }}</h4>
+                    <p>{{ _('Easily add any web-page to your changedetection.io installation from within Chrome.') }}</p>
+                    <strong>{{ _('Step 1') }}</strong> {{ _('Install the extension,') }} <strong>{{ _('Step 2') }}</strong> {{ _('Navigate to this page,') }}
+                    <strong>{{ _('Step 3') }}</strong> {{ _('Open the extension from the toolbar and click') }} "<i>{{ _('Sync API Access') }}</i>"
                     <p>
                         <a id="chrome-extension-link"
-                           title="Try our new Chrome Extension!"
+                           title="{{ _('Try our new Chrome Extension!') }}"
                            href="https://chromewebstore.google.com/detail/changedetectionio-website/kefcfmgmlhmankjmnbijimhofdjekbop">
-                            <img alt="Chrome store icon" src="{{ url_for('static_content', group='images', filename='google-chrome-icon.png') }}" >
-                            Chrome Webstore
+                            <img alt="{{ _('Chrome store icon') }}" src="{{ url_for('static_content', group='images', filename='google-chrome-icon.png') }}" >
+                            {{ _('Chrome Webstore') }}
                         </a>
                     </p>
                 </div>
@@ -232,20 +229,20 @@ nav
                 </div>
                 <div class="pure-control-group">
                     {{ render_field(form.application.form.rss_diff_length) }}
-                    <span class="pure-form-message-inline">Maximum number of history snapshots to include in the watch specific RSS feed.</span>
+                    <span class="pure-form-message-inline">{{ _('Maximum number of history snapshots to include in the watch specific RSS feed.') }}</span>
                 </div>
                 <div class="pure-control-group">
                     {{ render_checkbox_field(form.application.form.rss_reader_mode) }}
-                    <span class="pure-form-message-inline">For watching other RSS feeds - When watching RSS/Atom feeds, convert them into clean text for better change detection.</span>
+                    <span class="pure-form-message-inline">{{ _('For watching other RSS feeds - When watching RSS/Atom feeds, convert them into clean text for better change detection.') }}</span>
                 </div>
                 <div class="pure-control-group grey-form-border">
                     <div class="pure-control-group">
                         {{ render_field(form.application.form.rss_content_format) }}
-                        <span class="pure-form-message-inline">Does your reader support HTML? Set it here</span>
+                        <span class="pure-form-message-inline">{{ _('Does your reader support HTML? Set it here') }}</span>
                     </div>
                     <div class="pure-control-group">
                         {{ render_field(form.application.form.rss_template_type) }}
-                        <span class="pure-form-message-inline">'System default' for the same template for all items, or re-use your "Notification Body" as the template.</span>
+                        <span class="pure-form-message-inline">{{ _('\'System default\' for the same template for all items, or re-use your "Notification Body" as the template.') }}</span>
                     </div>
                     <div>
                        {{ render_field(form.application.form.rss_template_override) }}
@@ -258,11 +255,11 @@ nav
             </div>
                 <div class="tab-pane-inner" id="timedate">
                 <div class="pure-control-group">
-                    Ensure the settings below are correct, they are used to manage the time schedule for checking your web page watches.
+                    {{ _('Ensure the settings below are correct, they are used to manage the time schedule for checking your web page watches.') }}
                 </div>
                 <div class="pure-control-group">
-                    <p><strong>UTC Time &amp; Date from Server:</strong> <span id="utc-time" >{{ utc_time }}</span></p>
-                    <p><strong>Local Time &amp; Date in Browser:</strong> <span class="local-time" data-utc="{{ utc_time }}"></span></p>
+                    <p><strong>{{ _('UTC Time & Date from Server:') }}</strong> <span id="utc-time" >{{ utc_time }}</span></p>
+                    <p><strong>{{ _('Local Time & Date in Browser:') }}</strong> <span class="local-time" data-utc="{{ utc_time }}"></span></p>
                     <div>
                        {{ render_field(form.application.form.scheduler_timezone_default) }}
                         <datalist id="timezones" style="display: none;">
@@ -274,22 +271,22 @@ nav
             <div class="tab-pane-inner" id="ui-options">
                 <div class="pure-control-group">
                     {{ render_checkbox_field(form.application.form.ui.form.open_diff_in_new_tab, class="open_diff_in_new_tab") }}
-                    <span class="pure-form-message-inline">Enable this setting to open the diff page in a new tab. If disabled, the diff page will open in the current tab.</span>
+                    <span class="pure-form-message-inline">{{ _('Enable this setting to open the diff page in a new tab. If disabled, the diff page will open in the current tab.') }}</span>
                 </div>
                 <div class="pure-control-group">
                     {{ render_checkbox_field(form.application.form.ui.form.socket_io_enabled, class="socket_io_enabled") }}
-                    <span class="pure-form-message-inline">Realtime UI Updates Enabled - (Restart required if this is changed)</span>
+                    <span class="pure-form-message-inline">{{ _('Realtime UI Updates Enabled - (Restart required if this is changed)') }}</span>
                 </div>
                 <div class="pure-control-group">
                     {{ render_checkbox_field(form.application.form.ui.form.favicons_enabled, class="") }}
-                    <span class="pure-form-message-inline">Enable or Disable Favicons next to the watch list</span>
+                    <span class="pure-form-message-inline">{{ _('Enable or Disable Favicons next to the watch list') }}</span>
                 </div>
                 <div class="pure-control-group">
                     {{ render_checkbox_field(form.application.form.ui.use_page_title_in_list) }}
                 </div>
                 <div class="pure-control-group">
                     {{ render_field(form.application.form.pager_size) }}
-                    <span class="pure-form-message-inline">Number of items per page in the watch overview list, 0 to disable.</span>
+                    <span class="pure-form-message-inline">{{ _('Number of items per page in the watch overview list, 0 to disable.') }}</span>
                 </div>
 
             </div>
@@ -337,18 +334,18 @@ nav
                     </div>
                 </div>
 
-                <p><strong>Tip</strong>: "Residential" and "Mobile" proxy type can be more successfull than "Data Center" for blocked websites.</p>
+                <p><strong>{{ _('Tip') }}</strong>: {{ _('"Residential" and "Mobile" proxy type can be more successfull than "Data Center" for blocked websites.') }}</p>
 
                 <div class="pure-control-group" id="extra-proxies-setting">
                 {{ render_fieldlist_with_inline_errors(form.requests.form.extra_proxies) }}
-                <span class="pure-form-message-inline">"Name" will be used for selecting the proxy in the Watch Edit settings</span><br>
-                <span class="pure-form-message-inline">SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should whitelist the IP access instead</span>
+                <span class="pure-form-message-inline">{{ _('"Name" will be used for selecting the proxy in the Watch Edit settings') }}</span><br>
+                <span class="pure-form-message-inline">{{ _('SOCKS5 proxies with authentication are only supported with \'plain requests\' fetcher, for other fetchers you should whitelist the IP access instead') }}</span>
                 {% if form.requests.proxy %}
                 <div>
                 <br>
                     <div class="inline-radio">
                         {{ render_field(form.requests.form.proxy, class="fetch-backend-proxy") }}
-                        <span class="pure-form-message-inline">Choose a default proxy for all watches</span>
+                        <span class="pure-form-message-inline">{{ _('Choose a default proxy for all watches') }}</span>
                     </div>
                 </div>
                 {% endif %}

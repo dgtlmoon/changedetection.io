@@ -1,5 +1,5 @@
 {% macro render_field(field) %}
-    <div {% if field.errors or field.top_errors %} class="error" {% endif %}><label for="{{ field.id }}">{{ field.label.text | string | forceescape }}</label></div>
+    <div {% if field.errors or field.top_errors %} class="error" {% endif %}><label for="{{ field.id }}">{{ _(field.label.text | string) | forceescape }}</label></div>
     <div {% if field.errors or field.top_errors %} class="error" {% endif %}>{{ field(**kwargs)|safe }}
         {% if field.top_errors %}
             top
@@ -46,7 +46,7 @@
 
 {% macro render_checkbox_field(field) %}
   <div class="checkbox {% if field.errors %} error {% endif %}">
-  {{ field(**kwargs)|safe }} <label for="{{ field.id }}">{{ field.label.text | string | forceescape }}</label>
+  {{ field(**kwargs)|safe }} <label for="{{ field.id }}">{{ _(field.label.text | string) | forceescape }}</label>
   {% if field.errors %}
     <ul class=errors>
     {% for error in field.errors %}
@@ -59,10 +59,10 @@
 
 {% macro render_ternary_field(field, BooleanField=false) %}
   {% if BooleanField %}
-    {% set _ = field.__setattr__('boolean_mode', true) %}
+    {% set dummy = field.__setattr__('boolean_mode', true) %}
   {% endif %}
   <div class="ternary-field {% if field.errors %} error {% endif %}">
-    <div class="ternary-field-label"><label for="{{ field.id }}">{{ field.label.text | string | forceescape }}</label></div>
+    <div class="ternary-field-label"><label for="{{ field.id }}">{{ _(field.label.text | string) | forceescape }}</label></div>
     <div class="ternary-field-widget">{{ field(**kwargs)|safe }}</div>
     {% if field.errors %}
       <ul class=errors>
@@ -76,7 +76,7 @@
 
 
 {% macro render_simple_field(field) %}
-  <span class="label {% if field.errors %}error{% endif %}"><label for="{{ field.id }}">{{ field.label.text | string | forceescape }}</label></span>
+  <span class="label {% if field.errors %}error{% endif %}"><label for="{{ field.id }}">{{ _(field.label.text | string) | forceescape }}</label></span>
   <span {% if field.errors %} class="error" {% endif %}>{{ field(**kwargs)|safe }}
   {% if field.errors %}
     <ul class=errors>
@@ -113,17 +113,17 @@
 
 {% macro render_fieldlist_with_inline_errors(fieldlist) %}
   {# Specialized macro for FieldList(FormField(...)) that renders errors inline with each field #}
-  <div {% if fieldlist.errors %} class="error" {% endif %}>{{ fieldlist.label }}</div>
+  <div {% if fieldlist.errors %} class="error" {% endif %}>{{ _(fieldlist.label.text | string) }}</div>
   <div {% if fieldlist.errors %} class="error" {% endif %}>
     <ul id="{{ fieldlist.id }}">
       {% for entry in fieldlist %}
         <li {% if entry.errors %} class="error" {% endif %}>
-          <label for="{{ entry.id }}" {% if entry.errors %} class="error" {% endif %}>{{ fieldlist.label.text }}-{{ loop.index0 }}</label>
+          <label for="{{ entry.id }}" {% if entry.errors %} class="error" {% endif %}>{{ _(fieldlist.label.text | string) }}-{{ loop.index0 }}</label>
           <table id="{{ entry.id }}" {% if entry.errors %} class="error" {% endif %}>
             <tbody>
               {% for subfield in entry %}
                 <tr {% if subfield.errors %} class="error" {% endif %}>
-                  <th {% if subfield.errors %} class="error" {% endif %}><label for="{{ subfield.id }}" {% if subfield.errors %} class="error" {% endif %}>{{ subfield.label.text }}</label></th>
+                  <th {% if subfield.errors %} class="error" {% endif %}><label for="{{ subfield.id }}" {% if subfield.errors %} class="error" {% endif %}>{{ _(subfield.label.text | string) }}</label></th>
                   <td {% if subfield.errors %} class="error" {% endif %}>
                     {{ subfield(**kwargs)|safe }}
                     {% if subfield.errors %}
@@ -148,7 +148,7 @@
   <div class="fieldlist_formfields" id="{{ table_id }}">
     <div class="fieldlist-header">
       {% for subfield in fieldlist[0] %}
-        <div class="fieldlist-header-cell">{{ subfield.label }}</div>
+        <div class="fieldlist-header-cell">{{ _(subfield.label.text | string) }}</div>
       {% endfor %}
       <div class="fieldlist-header-cell">{{ _('Actions') }}</div>
     </div>

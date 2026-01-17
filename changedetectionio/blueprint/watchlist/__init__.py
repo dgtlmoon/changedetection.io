@@ -3,6 +3,7 @@ import time
 
 from flask import Blueprint, request, make_response, render_template, redirect, url_for, flash, session
 from flask_paginate import Pagination, get_page_parameter
+from flask_babel import gettext as _
 
 from changedetectionio import forms
 from changedetectionio import processors
@@ -73,7 +74,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         pagination = Pagination(page=page,
                                 total=total_count,
-                                per_page=datastore.data['settings']['application'].get('pager_size', 50), css_framework="semantic")
+                                per_page=datastore.data['settings']['application'].get('pager_size', 50),
+                                css_framework="semantic",
+                                display_msg=_('displaying <b>{start} - {end}</b> {record_name} in total <b>{total}</b>'),
+                                record_name=_('records'))
 
         sorted_tags = sorted(datastore.data['settings']['application'].get('tags').items(), key=lambda x: x[1]['title'])
 
