@@ -5,13 +5,13 @@
 
 import hashlib
 import threading
+import unittest
 from queue import Queue
-import pytest
 
 from changedetectionio.html_tools import html_to_text
 
 
-class TestHtmlToText:
+class TestHtmlToText(unittest.TestCase):
     """Test html_to_text function for correctness and thread-safety."""
 
     def test_basic_text_extraction(self):
@@ -110,9 +110,9 @@ class TestHtmlToText:
         """
         Test that html_to_text produces deterministic output under high concurrency.
 
-        This is the critical test for the lxml threading bug fix.
-        Without the thread-local parser fix, this test would occasionally fail
-        under high concurrency when multiple threads share the global parser.
+        This verifies that lxml's default parser (used by inscriptis.get_text)
+        is thread-safe and produces consistent results when called from multiple
+        threads simultaneously.
         """
         html = '''
         <html>
@@ -170,56 +170,36 @@ class TestHtmlToText:
 
         print(f"✓ Thread-safety test passed: {len(md5_values)} conversions, all identical")
 
-    def test_thread_local_parser_exists(self):
-        """Verify that thread-local storage is properly initialized."""
-        # Call html_to_text at least once to initialize thread-local storage
-        html_to_text('<html><body>Test</body></html>')
+    def test_thread_safety_basic(self):
+        """Verify basic thread safety - multiple threads can call html_to_text simultaneously."""
+        results = []
+        errors = []
 
-        # Check that thread-local storage attribute exists
-        assert hasattr(html_to_text, '_thread_local'), (
-            "html_to_text should have _thread_local attribute for thread-safe parsers"
-        )
+        def worker():
+            """Worker that converts HTML to text."""
+            try:
+                html = '<html><body><h1>Test</h1><p>Content</p></body></html>'
+                text = html_to_text(html)
+                results.append(text)
+            except Exception as e:
+                errors.append(e)
 
-    def test_different_threads_get_different_parsers(self):
-        """Verify that different threads CAN get different parser instances."""
-        parser_ids = Queue()
-
-        def get_parser_id():
-            """Get the parser ID in this thread."""
-            # Trigger parser creation
-            html_to_text('<html><body>Test</body></html>')
-
-            # Get the parser instance for this thread
-            if hasattr(html_to_text._thread_local, 'parser'):
-                parser = html_to_text._thread_local.parser
-                parser_ids.put(id(parser))
-
-        # Launch multiple threads
-        threads = []
-        for _ in range(5):
-            t = threading.Thread(target=get_parser_id)
-            threads.append(t)
+        # Launch 10 threads simultaneously
+        threads = [threading.Thread(target=worker) for _ in range(10)]
+        for t in threads:
             t.start()
-
         for t in threads:
             t.join()
 
-        # Collect all parser IDs
-        ids = []
-        while not parser_ids.empty():
-            ids.append(parser_ids.get())
+        # Should have no errors
+        assert len(errors) == 0, f"Thread-safety errors occurred: {errors}"
 
-        # We should have at least 2 different parser instances
-        # (threads can reuse IDs after completion, so not necessarily all unique)
-        unique_ids = set(ids)
-        assert len(unique_ids) >= 2, (
-            f"Expected at least 2 unique parsers, but got {len(unique_ids)}. "
-            "Thread-local storage may not be working correctly."
-        )
+        # All results should be identical
+        assert len(set(results)) == 1, "All threads should produce identical output"
 
-        print(f"✓ Parser isolation test passed: {len(ids)} threads, {len(unique_ids)} unique parsers")
+        print(f"✓ Basic thread-safety test passed: {len(results)} threads, no errors")
 
 
 if __name__ == '__main__':
     # Can run this file directly for quick testing
-    pytest.main([__file__, '-v'])
+    unittest.main()
