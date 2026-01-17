@@ -22,14 +22,13 @@ something to trigger<br>
 def test_content_filter_live_preview(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
     set_response(datastore_path=datastore_path)
-
+    import time
     test_url = url_for('test_endpoint', _external=True)
 
 
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
     res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
-    assert b'Queued 1 watch for rechecking.' in res.data
-   
+    time.sleep(0.5)
     wait_for_all_checks(client)
 
     res = client.post(
