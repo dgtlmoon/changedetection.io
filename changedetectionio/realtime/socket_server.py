@@ -150,11 +150,8 @@ def handle_watch_update(socketio, **kwargs):
         # Get list of watches that are currently running
         running_uuids = worker_handler.get_running_uuids()
 
-        # Get list of watches in the queue
-        queue_list = []
-        for q_item in update_q.queue:
-            if hasattr(q_item, 'item') and 'uuid' in q_item.item:
-                queue_list.append(q_item.item['uuid'])
+        # Get list of watches in the queue (efficient single-lock method)
+        queue_list = update_q.get_queued_uuids()
 
         # Get the error texts from the watch
         error_texts = watch.compile_error_texts()
@@ -254,21 +251,32 @@ def init_socketio(app, datastore):
         from changedetectionio import queuedWatchMetaData
         from changedetectionio import worker_handler
         from changedetectionio.flask_app import update_q, watch_check_update
+        import threading
+
         logger.trace(f"Got checkbox operations event: {data}")
 
         datastore = socketio.datastore
 
-        _handle_operations(
-            op=data.get('op'),
-            uuids=data.get('uuids'),
-            datastore=datastore,
-            extra_data=data.get('extra_data'),
-            worker_handler=worker_handler,
-            update_q=update_q,
-            queuedWatchMetaData=queuedWatchMetaData,
-            watch_check_update=watch_check_update,
-            emit_flash=False
-        )
+        def run_operation():
+            """Run the operation in a background thread to avoid blocking the socket.io event loop"""
+            try:
+                _handle_operations(
+                    op=data.get('op'),
+                    uuids=data.get('uuids'),
+                    datastore=datastore,
+                    extra_data=data.get('extra_data'),
+                    worker_handler=worker_handler,
+                    update_q=update_q,
+                    queuedWatchMetaData=queuedWatchMetaData,
+                    watch_check_update=watch_check_update,
+                    emit_flash=False
+                )
+            except Exception as e:
+                logger.error(f"Error in checkbox operation thread: {e}")
+
+        # Start operation in a disposable daemon thread
+        thread = threading.Thread(target=run_operation, daemon=True, name=f"checkbox-op-{data.get('op')}")
+        thread.start()
 
     @socketio.on('connect')
     def handle_connect():

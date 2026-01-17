@@ -109,18 +109,17 @@ def test_api_simple(client, live_server, measure_memory_usage, datastore_path):
         headers={'x-api-key': api_key}
     )
     assert len(res.json) == 0
-    time.sleep(1)
+    time.sleep(2)
     wait_for_all_checks(client)
-
     set_modified_response(datastore_path=datastore_path)
     # Trigger recheck of all ?recheck_all=1
-    client.get(
+    res = client.get(
         url_for("createwatch", recheck_all='1'),
         headers={'x-api-key': api_key},
     )
     wait_for_all_checks(client)
 
-    time.sleep(1)
+    time.sleep(2)
     # Did the recheck fire?
     res = client.get(
         url_for("createwatch"),

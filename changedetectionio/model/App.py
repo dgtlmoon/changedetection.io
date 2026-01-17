@@ -37,6 +37,8 @@ class model(dict):
                 },
                 'application': {
                     # Custom notification content
+                    'all_paused': False,
+                    'all_muted': False,
                     'api_access_token_enabled': True,
                     'base_url' : None,
                     'empty_pages_are_a_change': False,

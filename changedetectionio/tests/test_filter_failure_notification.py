@@ -45,7 +45,7 @@ def run_filter_test(client, live_server, content_filter, app_notification_format
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
     res = client.get(url_for("watchlist.index"))
 
-    assert b'No website watches configured' not in res.data
+    assert b'No web page change detection watches configured' not in res.data
 
 
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)

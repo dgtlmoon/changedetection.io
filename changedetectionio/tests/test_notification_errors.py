@@ -42,6 +42,9 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
     )
     assert b"Updated watch." in res.data
 
+
+    wait_for_all_checks(client)
+
     found=False
     for i in range(1, 10):
 

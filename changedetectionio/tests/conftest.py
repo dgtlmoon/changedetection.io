@@ -159,6 +159,14 @@ def prepare_test_function(live_server, datastore_path):
     # CRITICAL: Get datastore and stop it from writing stale data
     datastore = live_server.app.config.get('DATASTORE')
 
+    # Clear the queue before starting the test to prevent state leakage
+    from changedetectionio.flask_app import update_q
+    while not update_q.empty():
+        try:
+            update_q.get_nowait()
+        except:
+            break
+
     # Prevent background thread from writing during cleanup/reload
     datastore.needs_write = False
     datastore.needs_write_urgent = False
@@ -183,8 +191,17 @@ def prepare_test_function(live_server, datastore_path):
 
     yield
 
-    # Cleanup: Clear watches again after test
+    # Cleanup: Clear watches and queue after test
     try:
+        from changedetectionio.flask_app import update_q
+
+        # Clear the queue to prevent leakage to next test
+        while not update_q.empty():
+            try:
+                update_q.get_nowait()
+            except:
+                break
+
         datastore.data['watching'] = {}
         datastore.needs_write = True
     except Exception as e:
@@ -238,17 +255,20 @@ def app(request, datastore_path):
     app.config['TEST_DATASTORE_PATH'] = datastore_path
 
     def teardown():
+        import threading
+        import time
+
         # Stop all threads and services
         datastore.stop_thread = True
         app.config.exit.set()
-        
+
         # Shutdown workers gracefully before loguru cleanup
         try:
             from changedetectionio import worker_handler
             worker_handler.shutdown_workers()
         except Exception:
             pass
-            
+
         # Stop socket server threads
         try:
             from changedetectionio.flask_app import socketio_server
@@ -256,14 +276,35 @@ def app(request, datastore_path):
                 socketio_server.shutdown()
         except Exception:
             pass
-        
-        # Give threads a moment to finish their shutdown
-        import time
-        time.sleep(0.1)
-        
+
+        # Get all active threads before cleanup
+        main_thread = threading.main_thread()
+        active_threads = [t for t in threading.enumerate() if t != main_thread and t.is_alive()]
+
+        # Wait for non-daemon threads to finish (with timeout)
+        timeout = 2.0  # 2 seconds max wait
+        start_time = time.time()
+
+        for thread in active_threads:
+            if not thread.daemon:
+                remaining_time = timeout - (time.time() - start_time)
+                if remaining_time > 0:
+                    logger.debug(f"Waiting for non-daemon thread to finish: {thread.name}")
+                    thread.join(timeout=remaining_time)
+                    if thread.is_alive():
+                        logger.warning(f"Thread {thread.name} did not finish in time")
+
+        # Give daemon threads a moment to finish their current work
+        time.sleep(0.2)
+
+        # Log any threads still running
+        remaining_threads = [t for t in threading.enumerate() if t != main_thread and t.is_alive()]
+        if remaining_threads:
+            logger.debug(f"Threads still running after teardown: {[t.name for t in remaining_threads]}")
+
         # Remove all loguru handlers to prevent "closed file" errors
         logger.remove()
-        
+
         # Cleanup files
         cleanup(app_config['datastore_path'])
 

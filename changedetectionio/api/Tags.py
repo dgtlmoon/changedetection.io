@@ -2,7 +2,9 @@ from changedetectionio import queuedWatchMetaData
 from changedetectionio import worker_handler
 from flask_expects_json import expects_json
 from flask_restful import abort, Resource
+from loguru import logger
 
+import threading
 from flask import request
 from . import auth
 
@@ -28,18 +30,36 @@ class Tag(Resource):
             abort(404, message=f'No tag exists with the UUID of {uuid}')
 
         if request.args.get('recheck'):
-            # Recheck all, including muted
-            # Get most overdue first
-            i=0
+            # Recheck all watches with this tag, including muted
+            # First collect watches to queue
+            watches_to_queue = []
             for k in sorted(self.datastore.data['watching'].items(), key=lambda item: item[1].get('last_checked', 0)):
                 watch_uuid = k[0]
                 watch = k[1]
-                if not watch['paused'] and tag['uuid'] not in watch['tags']:
-                    continue
-                worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
-                i+=1
+                if not watch['paused'] and tag['uuid'] in watch['tags']:
+                    watches_to_queue.append(watch_uuid)
 
-            return f"OK, {i} watches queued", 200
+            # If less than 20 watches, queue synchronously for immediate feedback
+            if len(watches_to_queue) < 20:
+                for watch_uuid in watches_to_queue:
+                    worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
+                return {'status': f'OK, queued {len(watches_to_queue)} watches for rechecking'}, 200
+            else:
+                # 20+ watches - queue in background thread to avoid blocking API response
+                def queue_watches_background():
+                    """Background thread to queue watches - discarded after completion."""
+                    try:
+                        for watch_uuid in watches_to_queue:
+                            worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
+                        logger.info(f"Background queueing complete for tag {tag['uuid']}: {len(watches_to_queue)} watches queued")
+                    except Exception as e:
+                        logger.error(f"Error in background queueing for tag {tag['uuid']}: {e}")
+
+                # Start background thread and return immediately
+                thread = threading.Thread(target=queue_watches_background, daemon=True, name=f"QueueTag-{tag['uuid'][:8]}")
+                thread.start()
+
+                return {'status': f'OK, queueing {len(watches_to_queue)} watches in background'}, 202
 
         if request.args.get('muted', '') == 'muted':
             self.datastore.data['settings']['application']['tags'][uuid]['notification_muted'] = True

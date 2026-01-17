@@ -8,12 +8,16 @@ from changedetectionio.flask_app import watch_check_update
 import asyncio
 import importlib
 import os
+import sys
 import time
 
 from loguru import logger
 
 # Async version of update_worker
 # Processes jobs from AsyncSignalPriorityQueue instead of threaded queue
+
+IN_PYTEST = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
+DEFER_SLEEP_TIME_ALREADY_QUEUED = 0.3 if IN_PYTEST else 10.0
 
 async def async_update_worker(worker_id, q, notification_q, app, datastore, executor=None):
     """
@@ -71,14 +75,13 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
             continue
 
         uuid = queued_item_data.item.get('uuid')
-
         # RACE CONDITION FIX: Check if this UUID is already being processed by another worker
         from changedetectionio import worker_handler
         from changedetectionio.queuedWatchMetaData import PrioritizedItem
         if worker_handler.is_watch_running_by_another_worker(uuid, worker_id):
             logger.trace(f"Worker {worker_id} detected UUID {uuid} already being processed by another worker - deferring")
             # Sleep to avoid tight loop and give the other worker time to finish
-            await asyncio.sleep(10.0)
+            await asyncio.sleep(DEFER_SLEEP_TIME_ALREADY_QUEUED)
 
             # Re-queue with lower priority so it gets checked again after current processing finishes
             deferred_priority = max(1000, queued_item_data.priority * 10)
@@ -132,8 +135,14 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     # All fetchers are now async, so call directly
                     await update_handler.call_browser()
 
-                    # Run change detection (this is synchronous)
-                    changed_detected, update_obj, contents = update_handler.run_changedetection(watch=watch)
+                    # Run change detection in executor to avoid blocking event loop
+                    # This includes CPU-intensive operations like HTML parsing (lxml/inscriptis)
+                    # which can take 2-10ms and cause GIL contention across workers
+                    loop = asyncio.get_event_loop()
+                    changed_detected, update_obj, contents = await loop.run_in_executor(
+                        executor,
+                        lambda: update_handler.run_changedetection(watch=watch)
+                    )
 
                 except PermissionError as e:
                     logger.critical(f"File permission error updating file, watch: {uuid}")

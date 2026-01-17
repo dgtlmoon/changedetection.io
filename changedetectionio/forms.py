@@ -727,8 +727,8 @@ class ValidateStartsWithRegex(object):
                 raise ValidationError(self.message or _l("Invalid value."))
 
 class quickWatchForm(Form):
-    url = fields.URLField('URL', validators=[validateURL()])
-    tags = StringTagUUID('Group tag', [validators.Optional()])
+    url = fields.URLField(_l('URL'), validators=[validateURL()])
+    tags = StringTagUUID(_l('Group tag'), validators=[validators.Optional()])
     watch_submit_button = SubmitField(_l('Watch'), render_kw={"class": "pure-button pure-button-primary"})
     processor = RadioField(_l('Processor'), choices=lambda: processors.available_processors(), default="text_json_diff")
     edit_and_watch_submit_button = SubmitField(_l('Edit > Watch'), render_kw={"class": "pure-button pure-button-primary"})
@@ -786,6 +786,7 @@ class processor_text_json_diff_form(commonSettingsForm):
 
     time_between_check = EnhancedFormField(
         TimeBetweenCheckForm,
+        label=_l('Time Between Check'),
         conditional_field='time_between_check_use_default',
         conditional_message=REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT,
         conditional_test_function=validate_time_between_check_has_values
@@ -947,7 +948,7 @@ class DefaultUAInputForm(Form):
 
 # datastore.data['settings']['requests']..
 class globalSettingsRequestForm(Form):
-    time_between_check = RequiredFormField(TimeBetweenCheckForm)
+    time_between_check = RequiredFormField(TimeBetweenCheckForm, label=_l('Time Between Check'))
     time_schedule_limit = FormField(ScheduleLimitForm)
     proxy = RadioField(_l('Default proxy'))
     jitter_seconds = IntegerField(_l('Random jitter seconds ± check'),
@@ -1007,7 +1008,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
         render_kw={"placeholder": "0.1", "style": "width: 8em;"}
     )
 
-    password = SaltyPasswordField()
+    password = SaltyPasswordField(_l('Password'))
     pager_size = IntegerField(_l('Pager size'),
                               render_kw={"style": "width: 5em;"},
                               validators=[validators.NumberRange(min=0,
