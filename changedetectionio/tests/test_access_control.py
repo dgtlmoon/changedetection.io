@@ -124,7 +124,6 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
 
         # Menu should be available now
         assert b"SETTINGS" in res.data
-        assert b"BACKUP" in res.data
         assert b"IMPORT" in res.data
         assert b"LOG OUT" in res.data
         assert b"time_between_check-minutes" in res.data

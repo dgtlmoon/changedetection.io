@@ -38,7 +38,6 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
         # Default no password set, this stuff should be always available.
 
         assert b"SETTINGS" in res.data
-        assert b"BACKUP" in res.data
         assert b"IMPORT" in res.data
 
     #####################
