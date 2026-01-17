@@ -49,6 +49,7 @@ class model(dict):
                     'ssim_threshold': '0.96',  # Default SSIM threshold for screenshot comparison
                     'notification_body': default_notification_body,
                     'notification_format': default_notification_format,
+                    'notification_html_word_diff': True,
                     'notification_title': default_notification_title,
                     'notification_urls': [], # Apprise URL list
                     'pager_size': 50,

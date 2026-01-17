@@ -532,7 +532,7 @@ def test_single_send_test_notification_on_watch(client, live_server, measure_mem
         assert 'Current snapshot: Example text: example test' in x
     os.unlink(os.path.join(datastore_path, "notification.txt"))
 
-def _test_color_notifications(client, notification_body_token, datastore_path):
+def _test_color_notifications(client, notification_body_token, datastore_path, word_diff_enabled = True):
 
     set_original_response(datastore_path=datastore_path)
 
@@ -551,6 +551,7 @@ def _test_color_notifications(client, notification_body_token, datastore_path):
             "application-minutes_between_check": 180,
             "application-notification_body": notification_body_token,
             "application-notification_format": "htmlcolor",
+            "application-notification_html_word_diff_enabled": 'y' if word_diff_enabled else '',
             "application-notification_urls": test_notification_url,
             "application-notification_title": "New ChangeDetection.io Notification - {{ watch_url }}",
         },
@@ -559,17 +560,13 @@ def _test_color_notifications(client, notification_body_token, datastore_path):
     assert b'Settings updated' in res.data
 
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("ui.ui_views.form_quick_watch_add"),
-        data={"url": test_url, "tags": 'nice one'},
-        follow_redirects=True
-    )
-
-    assert b"Watch added" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)
-
-    set_modified_response(datastore_path=datastore_path)
+    extras='XXX ' if word_diff_enabled else ''
+    set_modified_response(datastore_path=datastore_path, extras=extras)
 
 
     res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -579,9 +576,13 @@ def _test_color_notifications(client, notification_body_token, datastore_path):
     wait_for_notification_endpoint_output(datastore_path=datastore_path)
 
     with open(os.path.join(datastore_path, "notification.txt"), 'r') as f:
-        x = f.read()
+        contents = f.read()
         s = f'<span style="{HTML_CHANGED_STYLE}" role="note" aria-label="Changed text" title="Changed text">Which is across multiple lines</span><br>'
-        assert s in x
+        assert s in contents
+        if word_diff_enabled:
+            assert '>XXX</span>' in contents
+        else:
+            assert '>XXX</span>' not in contents
 
     client.get(
         url_for("ui.form_delete", uuid="all"),
@@ -590,6 +591,12 @@ def _test_color_notifications(client, notification_body_token, datastore_path):
 
 # Just checks the format of the colour notifications was correct
 def test_html_color_notifications(client, live_server, measure_memory_usage, datastore_path):
-    _test_color_notifications(client, '{{diff}}',datastore_path=datastore_path)
-    _test_color_notifications(client, '{{diff_full}}',datastore_path=datastore_path)
+    # Word-level diff only triggers when difflib.SequenceMatcher identifies a single-line to single-line replacement.
+    # If you have multiple changed lines close together, you need at least 1 unchanged content line (not empty) between them to
+    # prevent them from being grouped into a multi-line replacement that falls back to line-level diff.
 
+    _test_color_notifications(client, '{{diff}}',datastore_path=datastore_path, word_diff_enabled = True)
+    _test_color_notifications(client, '{{diff_full}}',datastore_path=datastore_path, word_diff_enabled = True)
+
+    _test_color_notifications(client, '{{diff}}',datastore_path=datastore_path, word_diff_enabled = False)
+    _test_color_notifications(client, '{{diff_full}}',datastore_path=datastore_path, word_diff_enabled = False)

@@ -309,6 +309,9 @@ def process_notification(n_object: NotificationContextData, datastore):
     if not isinstance(n_object, NotificationContextData):
         raise TypeError(f"Expected NotificationContextData, got {type(n_object)}")
 
+    if not n_object.get('notification_urls'):
+        return None
+
     now = time.time()
     if n_object.get('notification_timestamp'):
         logger.trace(f"Time since queued {now-n_object['notification_timestamp']:.3f}s")
@@ -348,16 +351,15 @@ def process_notification(n_object: NotificationContextData, datastore):
     apprise.plugins.N_MGR.remove('discord')
     apprise.plugins.N_MGR.add(NotifyDiscordCustom, schemas='discord')
 
-    if not n_object.get('notification_urls'):
-        return None
+    # Should always be false for 'text' mode or its too hard to read, otherwise it's a setting (for html style).
+    word_diff_enable = requested_output_format_original == 'text' or (
+                n_object.get('notification_html_word_diff_enabled', True) and requested_output_format_original.startswith('html'))
 
     n_object.update(add_rendered_diff_to_notification_vars(
         notification_scan_text=n_object.get('notification_body', '')+n_object.get('notification_title', ''),
         current_snapshot=n_object.get('current_snapshot'),
         prev_snapshot=n_object.get('prev_snapshot'),
-        # Should always be false for 'text' mode or its too hard to read
-        # But otherwise, this could be some setting
-        word_diff=False if requested_output_format_original == 'text' else True,
+        word_diff=word_diff_enable
         )
     )
 

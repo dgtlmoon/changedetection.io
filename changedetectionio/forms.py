@@ -991,6 +991,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
                            render_kw={"placeholder": os.getenv('BASE_URL', 'Not set')}
                            )
     empty_pages_are_a_change =  BooleanField(_l('Treat empty pages as a change?'), default=False)
+    notification_html_word_diff_enabled = BooleanField(_l('Notification HTML as word-by-word difference'), default=True, validators=[validators.Optional()])
     fetch_backend = RadioField(_l('Fetch Method'), default="html_requests", choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     global_ignore_text = StringListField(_l('Ignore Text'), [ValidateListRegex()])
     global_subtractive_selectors = StringListField(_l('Remove elements'), [ValidateCSSJSONXPATHInput(allow_json=False)])

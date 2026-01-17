@@ -7,7 +7,7 @@ import logging
 import time
 import os
 
-def set_original_response(datastore_path, extra_title=''):
+def set_original_response(datastore_path, extra_title='', extras=''):
     test_return_data = f"""<html>
     <head><title>head title{extra_title}</title></head>
     <body>
@@ -15,6 +15,9 @@ def set_original_response(datastore_path, extra_title=''):
      <p>Which is across multiple lines</p>
      <br>
      So let's see what happens.  <br>
+     with more text that helps word-diff if needed<br>
+     and more text that helps word-diff if needed<br>
+     and even more text {extras}that helps word-diff if needed<br>     
      <span class="foobar-detection" style='display:none'></span>
      </body>
      </html>
@@ -24,14 +27,17 @@ def set_original_response(datastore_path, extra_title=''):
         f.write(test_return_data)
     return None
 
-def set_modified_response(datastore_path):
-    test_return_data = """<html>
+def set_modified_response(datastore_path, extras=''):
+    test_return_data =f"""<html>
     <head><title>modified head title</title></head>
     <body>
      Some initial text<br>
      <p>which has this one new line</p>
      <br>
      So let's see what happens.  <br>
+     with more text that helps word-diff if needed<br>
+     and more text that helps word-diff if needed<br>
+     and even more text {extras}that helps word-diff if needed<br>     
      </body>
      </html>
     """
@@ -92,8 +98,8 @@ def wait_for_notification_endpoint_output(datastore_path):
     #@todo - could check the apprise object directly instead of looking for this file
     from os.path import isfile
     notification_file = os.path.join(datastore_path, "notification.txt")
-    for i in range(1, 20):
-        time.sleep(1)
+    for i in range(1, 100):
+        time.sleep(0.3)
         if isfile(notification_file):
             return True
 

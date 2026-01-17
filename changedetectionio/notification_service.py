@@ -250,6 +250,7 @@ class NotificationService:
         if n_object.get('notification_format') == USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH:
             n_object['notification_format'] = self.datastore.data['settings']['application'].get('notification_format')
 
+        n_object['notification_html_word_diff_enabled'] = self.datastore.data['settings']['application'].get('notification_html_word_diff_enabled', True)
 
         triggered_text = ''
         if len(trigger_text):
