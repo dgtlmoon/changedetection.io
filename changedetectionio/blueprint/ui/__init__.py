@@ -1,4 +1,5 @@
 import time
+import threading
 from flask import Blueprint, request, redirect, url_for, flash, render_template, session
 from flask_babel import gettext
 from loguru import logger
@@ -151,9 +152,24 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
             confirmtext = request.form.get('confirmtext')
 
             if confirmtext == 'clear':
-                for uuid in datastore.data['watching'].keys():
-                    datastore.clear_watch_history(uuid)
-                flash(gettext("Cleared snapshot history for all watches"))
+                # Run in background thread to avoid blocking
+                def clear_history_background():
+                    # Capture UUIDs first to avoid race conditions
+                    watch_uuids = list(datastore.data['watching'].keys())
+                    logger.info(f"Background: Clearing history for {len(watch_uuids)} watches")
+
+                    for uuid in watch_uuids:
+                        try:
+                            datastore.clear_watch_history(uuid)
+                        except Exception as e:
+                            logger.error(f"Error clearing history for watch {uuid}: {e}")
+
+                    logger.info("Background: Completed clearing history")
+
+                # Start daemon thread
+                threading.Thread(target=clear_history_background, daemon=True).start()
+
+                flash(gettext("History clearing started in background"))
             else:
                 flash(gettext('Incorrect confirmation text.'), 'error')
 
