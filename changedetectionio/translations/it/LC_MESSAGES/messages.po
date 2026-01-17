@@ -58,19 +58,16 @@ msgid "Not a valid timezone name"
 msgstr "Nome fuso orario non valido"
 
 #: changedetectionio/forms.py:183
-#, fuzzy
 msgid "not set"
-msgstr "Non ancora"
+msgstr "non impostato"
 
 #: changedetectionio/forms.py:184
-#, fuzzy
 msgid "Start At"
-msgstr "Statistiche"
+msgstr "Inizio"
 
 #: changedetectionio/forms.py:185
-#, fuzzy
 msgid "Run duration"
-msgstr "Nessuna informazione"
+msgstr "Durata esecuzione"
 
 #: changedetectionio/forms.py:188
 msgid "Use time scheduler"
@@ -127,14 +124,12 @@ msgid "Hours"
 msgstr "Ore"
 
 #: changedetectionio/forms.py:254
-#, fuzzy
 msgid "Minutes"
-msgstr "Silenzia"
+msgstr "Minuti"
 
 #: changedetectionio/forms.py:255
-#, fuzzy
 msgid "Seconds"
-msgstr "secondi"
+msgstr "Secondi"
 
 #: changedetectionio/forms.py:460
 msgid "Notification Body and Title is required when a Notification URL is used"
@@ -199,24 +194,20 @@ msgid "Fetch Method"
 msgstr "Metodo di recupero"
 
 #: changedetectionio/forms.py:748
-#, fuzzy
 msgid "Notification Body"
-msgstr "Notifiche"
+msgstr "Corpo notifica"
 
 #: changedetectionio/forms.py:749
-#, fuzzy
 msgid "Notification format"
-msgstr "Notifiche"
+msgstr "Formato notifica"
 
 #: changedetectionio/forms.py:750
-#, fuzzy
 msgid "Notification Title"
-msgstr "Notifiche"
+msgstr "Titolo notifica"
 
 #: changedetectionio/forms.py:751
-#, fuzzy
 msgid "Notification URL List"
-msgstr "Notifiche"
+msgstr "Lista URL notifiche"
 
 #: changedetectionio/forms.py:752
 msgid "Processor - What do you want to achieve?"
@@ -235,7 +226,6 @@ msgid "Should contain one or more seconds"
 msgstr "Deve contenere uno o più secondi"
 
 #: changedetectionio/forms.py:767
-#, fuzzy
 msgid "URLs"
 msgstr "URL"
 
@@ -252,31 +242,28 @@ msgid "File mapping"
 msgstr "Mappatura file"
 
 #: changedetectionio/forms.py:773
-#, fuzzy
 msgid "Operation"
-msgstr "Opzioni interfaccia"
+msgstr "Operazione"
 
 #: changedetectionio/forms.py:776
 msgid "Selector"
 msgstr "Selettore"
 
 #: changedetectionio/forms.py:777
-#, fuzzy
 msgid "value"
-msgstr "Pausa"
+msgstr "valore"
 
 #: changedetectionio/forms.py:789 changedetectionio/forms.py:951
 msgid "Time Between Check"
-msgstr ""
+msgstr "Intervallo tra controlli"
 
 #: changedetectionio/forms.py:797
 msgid "Use global settings for time between check and scheduler."
 msgstr "Usa impostazioni globali per intervallo controlli e pianificazione."
 
 #: changedetectionio/forms.py:799
-#, fuzzy
 msgid "CSS/JSONPath/JQ/XPath Filters"
-msgstr "Filtro CSS/xPath"
+msgstr "Filtri CSS/JSONPath/JQ/XPath"
 
 #: changedetectionio/forms.py:801 changedetectionio/forms.py:997
 msgid "Remove elements"
@@ -296,14 +283,12 @@ msgid "Ignore lines containing"
 msgstr "Ignora righe contenenti"
 
 #: changedetectionio/forms.py:809
-#, fuzzy
 msgid "Request body"
-msgstr "Richiesta"
+msgstr "Corpo richiesta"
 
 #: changedetectionio/forms.py:810
-#, fuzzy
 msgid "Request method"
-msgstr "Richiesta"
+msgstr "Metodo richiesta"
 
 #: changedetectionio/forms.py:811
 msgid "Ignore status codes (process non-2xx status codes as normal)"
@@ -331,18 +316,16 @@ msgid "Trim whitespace before and after text"
 msgstr "Rimuovi spazi prima e dopo il testo"
 
 #: changedetectionio/forms.py:818
-#, fuzzy
 msgid "Added lines"
-msgstr "Aggiunto"
+msgstr "Righe aggiunte"
 
 #: changedetectionio/forms.py:819
 msgid "Replaced/changed lines"
 msgstr "Righe sostituite/modificate"
 
 #: changedetectionio/forms.py:820
-#, fuzzy
 msgid "Removed lines"
-msgstr "Rimosso"
+msgstr "Righe rimosse"
 
 #: changedetectionio/forms.py:822
 msgid "Keyword triggers - Trigger/wait for text"
@@ -377,9 +360,8 @@ msgid "Notifications"
 msgstr "Notifiche"
 
 #: changedetectionio/forms.py:833
-#, fuzzy
 msgid "Muted"
-msgstr "Silenzia"
+msgstr "Disattivato"
 
 #: changedetectionio/forms.py:833
 msgid "On"
@@ -551,9 +533,8 @@ msgid "RSS \"System default\" template override"
 msgstr ""
 
 #: changedetectionio/forms.py:1021
-#, fuzzy
 msgid "Remove password"
-msgstr "Password"
+msgstr "Rimuovi password"
 
 #: changedetectionio/forms.py:1022
 msgid "Render anchor tag content"
@@ -860,14 +841,12 @@ msgid "Automatic scheduling resumed - checks will be queued normally."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/__init__.py:218
-#, fuzzy
 msgid "All notifications muted."
-msgstr "Notifiche"
+msgstr "Tutte le notifiche disattivate."
 
 #: changedetectionio/blueprint/settings/__init__.py:220
-#, fuzzy
 msgid "All notifications unmuted."
-msgstr "Notifiche"
+msgstr "Tutte le notifiche attivate."
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html:7
 msgid "Notification debug log"
@@ -924,11 +903,10 @@ msgid "more info"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:57
-#, fuzzy
 msgid ""
 "After this many consecutive times that the CSS/xPath filter is missing, "
 "send a notification"
-msgstr "Numero di volte che il filtro può mancare prima di inviare notifica"
+msgstr "Numero di volte consecutive in cui il filtro CSS/xPath manca prima di inviare notifica"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:59
 msgid "Set to"
@@ -947,11 +925,10 @@ msgid "Password is locked."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:77
-#, fuzzy
 msgid ""
 "Allow access to the watch change history page when password is enabled "
 "(Good for sharing the diff page)"
-msgstr "Consenti accesso anonimo alla cronologia quando la password è attiva"
+msgstr "Consenti accesso alla pagina cronologia quando la password è attiva (utile per condividere la pagina diff)"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:81
 msgid ""
@@ -964,9 +941,8 @@ msgid "Base URL used for the"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:93
-#, fuzzy
 msgid "token in notification links."
-msgstr "Notifiche"
+msgstr "token nei link di notifica."
 
 #: changedetectionio/blueprint/settings/templates/settings.html:94
 msgid "Default value is the system environment variable"
@@ -1035,19 +1011,16 @@ msgid "Currently running:"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:121
-#, fuzzy
 msgid "operational"
-msgstr "Opzioni interfaccia"
+msgstr "operativo"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:121
-#, fuzzy
 msgid "workers"
-msgstr "Parole"
+msgstr "workers"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:121
-#, fuzzy
 msgid "actively processing"
-msgstr "Processore"
+msgstr "in elaborazione"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:125
 msgid ""
@@ -1096,9 +1069,8 @@ msgstr ""
 #: changedetectionio/blueprint/settings/templates/settings.html:150
 #: changedetectionio/blueprint/settings/templates/settings.html:157
 #: changedetectionio/blueprint/settings/templates/settings.html:192
-#, fuzzy
 msgid "Note:"
-msgstr "Non ancora"
+msgstr "Nota:"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:150
 #: changedetectionio/blueprint/settings/templates/settings.html:192
@@ -1141,9 +1113,8 @@ msgid "Matching text will be"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:181
-#, fuzzy
 msgid "ignored"
-msgstr "Ignora testo"
+msgstr "ignorato"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:181
 msgid "in the text snapshot (you can still see it but it wont trigger a change)"
@@ -1195,9 +1166,8 @@ msgid "header - required for the Chrome Extension to work"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:204
-#, fuzzy
 msgid "API Key"
-msgstr "API"
+msgstr "Chiave API"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:205
 msgid "copy"
@@ -1208,9 +1178,8 @@ msgid "Regenerate API key"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:212
-#, fuzzy
 msgid "Chrome Extension"
-msgstr "Richieste Chrome"
+msgstr "Estensione Chrome"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:213
 msgid ""
@@ -1255,9 +1224,8 @@ msgid "Chrome store icon"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:221
-#, fuzzy
 msgid "Chrome Webstore"
-msgstr "Richieste Chrome"
+msgstr "Chrome Webstore"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:232
 msgid ""
@@ -1640,9 +1608,8 @@ msgid "Queued 1 watch for rechecking."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py:297
-#, fuzzy, python-brace-format
 msgid "Queued {} watches for rechecking ({} already queued or running)."
-msgstr "{} monitoraggi accodati per la riverifica."
+msgstr "{} monitor in coda ({} già in coda o in esecuzione)."
 
 #: changedetectionio/blueprint/ui/__init__.py:303
 #, python-brace-format
@@ -1650,9 +1617,8 @@ msgid "Queued {} watches for rechecking."
 msgstr "{} monitoraggi accodati per la riverifica."
 
 #: changedetectionio/blueprint/ui/__init__.py:332
-#, fuzzy
 msgid "Queueing watches for rechecking in background..."
-msgstr "{} monitoraggi accodati per la riverifica."
+msgstr "Accodamento monitor per riverifica in background..."
 
 #: changedetectionio/blueprint/ui/__init__.py:403
 #, python-brace-format
@@ -2341,7 +2307,6 @@ msgstr ""
 "<b>{total}</b>"
 
 #: changedetectionio/blueprint/watchlist/__init__.py:80
-#, fuzzy
 msgid "records"
 msgstr "record"
 
@@ -2430,9 +2395,8 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:105
-#, fuzzy
 msgid "Queued size"
-msgstr "In coda"
+msgstr "Dimensione coda"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:110
 msgid "Searching"
@@ -2588,9 +2552,8 @@ msgid "Pixel Difference Sensitivity"
 msgstr "Sensibilità differenza pixel"
 
 #: changedetectionio/processors/image_ssim_diff/forms.py:58
-#, fuzzy
 msgid "Use global default"
-msgstr "Filtri globali"
+msgstr "Usa predefinito globale"
 
 #: changedetectionio/processors/image_ssim_diff/forms.py:66
 msgid "Bounding Box"
@@ -2685,9 +2648,8 @@ msgid "Detects all text changes where possible"
 msgstr "Rileva tutte le modifiche di testo possibili"
 
 #: changedetectionio/templates/_common_fields.html:9
-#, fuzzy
 msgid "Body for all notifications — You can use"
-msgstr "Usa notifica predefinita"
+msgstr "Corpo per tutte le notifiche — Puoi usare"
 
 #: changedetectionio/templates/_common_fields.html:9
 msgid "templating in the notification title, body and URL, and tokens from below."
@@ -2714,9 +2676,8 @@ msgid "The URL being watched."
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:33
-#, fuzzy
 msgid "The UUID of the watch."
-msgstr "Modifica > Monitora"
+msgstr "L'UUID del monitor."
 
 #: changedetectionio/templates/_common_fields.html:37
 msgid "The page title of the watch, uses <title> if not set, falls back to URL"
@@ -2792,9 +2753,8 @@ msgid "Warning: Contents of"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:109
-#, fuzzy
 msgid "and"
-msgstr "Modifica"
+msgstr "e"
 
 #: changedetectionio/templates/_common_fields.html:109
 msgid "depend on how the difference algorithm perceives the change."
@@ -2812,14 +2772,12 @@ msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:126
 #: changedetectionio/templates/edit/text-options.html:62
-#, fuzzy
 msgid "Use"
-msgstr "Pausa"
+msgstr "Usa"
 
 #: changedetectionio/templates/_common_fields.html:126
-#, fuzzy
 msgid "AppRise Notification URLs"
-msgstr "Notifiche"
+msgstr "URL di notifica AppRise"
 
 #: changedetectionio/templates/_common_fields.html:126
 msgid "for notification to just about any service!"
@@ -2848,9 +2806,8 @@ msgid "2,000 characters"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:130
-#, fuzzy
 msgid "of notification text, including the title."
-msgstr "Notifiche"
+msgstr "del testo di notifica, incluso il titolo."
 
 #: changedetectionio/templates/_common_fields.html:131
 msgid ""
@@ -2887,9 +2844,8 @@ msgid "placeholders listed below"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:138
-#, fuzzy
 msgid "Send test notification"
-msgstr "Usa notifica predefinita"
+msgstr "Invia notifica di test"
 
 #: changedetectionio/templates/_common_fields.html:140
 msgid "Add email"
@@ -2900,19 +2856,16 @@ msgid "Add an email address"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:142
-#, fuzzy
 msgid "Notification debug logs"
-msgstr "Notifiche"
+msgstr "Log di debug delle notifiche"
 
 #: changedetectionio/templates/_common_fields.html:144
-#, fuzzy
 msgid "Processing.."
-msgstr "Processore"
+msgstr "Elaborazione.."
 
 #: changedetectionio/templates/_common_fields.html:151
-#, fuzzy
 msgid "Title for all notifications"
-msgstr "Usa notifica predefinita"
+msgstr "Titolo per tutte le notifiche"
 
 #: changedetectionio/templates/_common_fields.html:159
 msgid "For JSON payloads, use"
@@ -2928,9 +2881,8 @@ msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:162
 #: changedetectionio/templates/_common_fields.html:165
-#, fuzzy
 msgid "for example -"
-msgstr "Esempio:"
+msgstr "per esempio -"
 
 #: changedetectionio/templates/_common_fields.html:165
 msgid "Regular-expression replace, use"
@@ -2943,18 +2895,16 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:176
-#, fuzzy
 msgid "Format for all notifications"
-msgstr "Usa notifica predefinita"
+msgstr "Formato per tutte le notifiche"
 
 #: changedetectionio/templates/_helpers.html:25
 msgid "Entry"
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:153
-#, fuzzy
 msgid "Actions"
-msgstr "Condizioni"
+msgstr "Azioni"
 
 #: changedetectionio/templates/_helpers.html:172
 msgid "Add a row/rule after"
@@ -2997,37 +2947,32 @@ msgid "and uncomment the"
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:185
-#, fuzzy
 msgid "in the"
-msgstr "Silenzia"
+msgstr "nel"
 
 #: changedetectionio/templates/_helpers.html:185
-#, fuzzy
 msgid "file"
-msgstr "Titolo"
+msgstr "file"
 
 #: changedetectionio/templates/_helpers.html:240
 msgid "Set a hourly/week day schedule"
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:247
-#, fuzzy
 msgid "Schedule time limits"
-msgstr "Tempo di ricontrollo (minuti)"
+msgstr "Limiti orari"
 
 #: changedetectionio/templates/_helpers.html:248
 msgid "Business hours"
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:249
-#, fuzzy
 msgid "Weekends"
-msgstr "Settimane"
+msgstr "Fine settimana"
 
 #: changedetectionio/templates/_helpers.html:250
-#, fuzzy
 msgid "Reset"
-msgstr "Richiesta"
+msgstr "Ripristina"
 
 #: changedetectionio/templates/_helpers.html:259
 msgid ""
@@ -3044,9 +2989,8 @@ msgid "More help and examples about using the scheduler"
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:275
-#, fuzzy
 msgid "Want to use a time schedule?"
-msgstr "Usa pianificazione oraria"
+msgstr "Vuoi usare una pianificazione oraria?"
 
 #: changedetectionio/templates/_helpers.html:275
 msgid "First confirm/save your Time Zone Settings"
@@ -3059,28 +3003,24 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:284
-#, fuzzy
 msgid "Triggered text"
-msgstr "Ignora testo"
+msgstr "Testo trigger"
 
 #: changedetectionio/templates/_helpers.html:285
 msgid "Ignored for calculating changes, but still shown."
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:285
-#, fuzzy
 msgid "Ignored text"
-msgstr "Ignora testo"
+msgstr "Testo ignorato"
 
 #: changedetectionio/templates/_helpers.html:286
-#, fuzzy
 msgid "No change-detection will occur because this text exists."
-msgstr "Blocca rilevamento modifiche quando il testo corrisponde"
+msgstr "Nessuna rilevazione se questo testo esiste."
 
 #: changedetectionio/templates/_helpers.html:286
-#, fuzzy
 msgid "Blocked text"
-msgstr "Ignora testo"
+msgstr "Testo bloccato"
 
 #: changedetectionio/templates/base.html:80
 msgid "Search, or Use Alt+S Key"
@@ -3104,18 +3044,16 @@ msgstr ""
 
 #: changedetectionio/templates/base.html:281
 #: changedetectionio/templates/base.html:294
-#, fuzzy
 msgid "Search"
-msgstr "Ricerca in corso"
+msgstr "Cerca"
 
 #: changedetectionio/templates/base.html:286
 msgid "URL or Title"
 msgstr ""
 
 #: changedetectionio/templates/base.html:286
-#, fuzzy
 msgid "in"
-msgstr "Info"
+msgstr "in"
 
 #: changedetectionio/templates/base.html:287
 msgid "Enter search term..."
@@ -3150,14 +3088,12 @@ msgid "Scheduling is paused - click to resume"
 msgstr ""
 
 #: changedetectionio/templates/menu.html:20
-#, fuzzy
 msgid "Unmute notifications"
-msgstr "Notifiche"
+msgstr "Riattiva notifiche"
 
 #: changedetectionio/templates/menu.html:20
-#, fuzzy
 msgid "Mute notifications"
-msgstr "Notifiche"
+msgstr "Disattiva notifiche"
 
 #: changedetectionio/templates/menu.html:20
 msgid "Notifications are muted - click to unmute"
@@ -3254,9 +3190,8 @@ msgid "type flags (more"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html:62
-#, fuzzy
 msgid "information here"
-msgstr "Nessuna informazione"
+msgstr "informazioni qui"
 
 #: changedetectionio/templates/edit/text-options.html:63
 msgid "Keyword example - example"

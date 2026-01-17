@@ -255,7 +255,7 @@ msgstr "Pauza"
 
 #: changedetectionio/forms.py:789 changedetectionio/forms.py:951
 msgid "Time Between Check"
-msgstr ""
+msgstr "Interval mezi kontrolami"
 
 #: changedetectionio/forms.py:797
 msgid "Use global settings for time between check and scheduler."
@@ -839,14 +839,12 @@ msgid "Automatic scheduling resumed - checks will be queued normally."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/__init__.py:218
-#, fuzzy
 msgid "All notifications muted."
-msgstr "Název oznámení"
+msgstr "Všechna oznámení ztlumena."
 
 #: changedetectionio/blueprint/settings/__init__.py:220
-#, fuzzy
 msgid "All notifications unmuted."
-msgstr "Název oznámení"
+msgstr "Všechna oznámení odtlumena."
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html:7
 msgid "Notification debug log"
@@ -905,16 +903,14 @@ msgid "more info"
 msgstr "Více informací"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:57
-#, fuzzy
 msgid ""
 "After this many consecutive times that the CSS/xPath filter is missing, "
 "send a notification"
-msgstr "Kolikrát může filtr chybět před odesláním upozornění"
+msgstr "Po tolika po sobě jdoucích případech, kdy CSS/xPath filtr chybí, odeslat oznámení"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:59
-#, fuzzy
 msgid "Set to"
-msgstr "Použijte"
+msgstr "Nastavit na"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:59
 msgid "to disable"
@@ -929,11 +925,10 @@ msgid "Password is locked."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:77
-#, fuzzy
 msgid ""
 "Allow access to the watch change history page when password is enabled "
 "(Good for sharing the diff page)"
-msgstr ""
+msgstr "Povolit přístup na stránku historie změn monitoru, když je povoleno heslo (Vhodné pro sdílení stránky rozdílů)"
 "Povolit anonymní přístup na stránku historie sledování, když je povoleno "
 "heslo"
 
@@ -948,9 +943,8 @@ msgid "Base URL used for the"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:93
-#, fuzzy
 msgid "token in notification links."
-msgstr "Seznam URL oznámení"
+msgstr "token v odkazech oznámení."
 
 #: changedetectionio/blueprint/settings/templates/settings.html:94
 msgid "Default value is the system environment variable"
@@ -958,9 +952,8 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:94
 #: changedetectionio/templates/_common_fields.html:132
-#, fuzzy
 msgid "read more here"
-msgstr "Přečtěte si více zde"
+msgstr "přečtěte si více zde"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:103
 #: changedetectionio/blueprint/ui/templates/edit.html:123
@@ -1016,24 +1009,20 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:121
-#, fuzzy
 msgid "Currently running:"
-msgstr "V současné době:"
+msgstr "Aktuálně běží:"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:121
-#, fuzzy
 msgid "operational"
-msgstr "Možnosti uživatelského rozhraní"
+msgstr "funkční"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:121
-#, fuzzy
 msgid "workers"
-msgstr "Slova"
+msgstr "pracovníci"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:121
-#, fuzzy
 msgid "actively processing"
-msgstr "Zpracovává se.."
+msgstr "aktivně zpracovává"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:125
 msgid ""
@@ -1082,9 +1071,8 @@ msgstr ""
 #: changedetectionio/blueprint/settings/templates/settings.html:150
 #: changedetectionio/blueprint/settings/templates/settings.html:157
 #: changedetectionio/blueprint/settings/templates/settings.html:192
-#, fuzzy
 msgid "Note:"
-msgstr "Ještě ne"
+msgstr "Poznámka:"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:150
 #: changedetectionio/blueprint/settings/templates/settings.html:192
@@ -1127,9 +1115,8 @@ msgid "Matching text will be"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:181
-#, fuzzy
 msgid "ignored"
-msgstr "jsou ignorovány."
+msgstr "ignorováno"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:181
 msgid "in the text snapshot (you can still see it but it wont trigger a change)"
@@ -1169,9 +1156,8 @@ msgid "Drive your changedetection.io via API, More about"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:199
-#, fuzzy
 msgid "API access and examples here"
-msgstr "nápověda a příklady zde"
+msgstr "Přístup k API a příklady zde"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:203
 msgid "Restrict API access limit by using"
@@ -1182,9 +1168,8 @@ msgid "header - required for the Chrome Extension to work"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:204
-#, fuzzy
 msgid "API Key"
-msgstr "API"
+msgstr "API klíč"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:205
 msgid "copy"
@@ -1195,9 +1180,8 @@ msgid "Regenerate API key"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:212
-#, fuzzy
 msgid "Chrome Extension"
-msgstr "Chrome požadavky"
+msgstr "Rozšíření pro Chrome"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:213
 msgid ""
@@ -1242,9 +1226,8 @@ msgid "Chrome store icon"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:221
-#, fuzzy
 msgid "Chrome Webstore"
-msgstr "Chrome požadavky"
+msgstr "Chrome Webstore"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:232
 msgid ""
@@ -1301,9 +1284,8 @@ msgid "Number of items per page in the watch overview list, 0 to disable."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:337
-#, fuzzy
 msgid "Tip"
-msgstr "Tip:"
+msgstr "Tip"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:337
 msgid ""
@@ -1323,9 +1305,8 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:348
-#, fuzzy
 msgid "Choose a default proxy for all watches"
-msgstr "RSS kanál pro tyto monitory"
+msgstr "Vyberte výchozí proxy pro všechny monitory"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:388
 msgid "Python version:"
@@ -1538,9 +1519,9 @@ msgid "{} watches deleted"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py:28
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "{} watches paused"
-msgstr "# monitory"
+msgstr "{} monitorů pozastaveno"
 
 #: changedetectionio/blueprint/ui/__init__.py:35
 #, python-brace-format
@@ -1553,9 +1534,9 @@ msgid "{} watches updated"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py:49
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "{} watches muted"
-msgstr "# monitory"
+msgstr "{} monitorů ztlumeno"
 
 #: changedetectionio/blueprint/ui/__init__.py:56
 #, python-brace-format
@@ -1578,9 +1559,9 @@ msgid "{} watches cleared/reset."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py:91
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "{} watches set to use default notification settings"
-msgstr "Použít výchozí oznámení"
+msgstr "{} monitorů nastaveno na použití výchozího nastavení oznámení"
 
 #: changedetectionio/blueprint/ui/__init__.py:106
 #, python-brace-format
@@ -1592,7 +1573,7 @@ msgid "Watch not found"
 msgstr "Sledujte tuto adresu URL!"
 
 #: changedetectionio/blueprint/ui/__init__.py:145
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Cleared snapshot history for watch {}"
 msgstr "Historie snímků vymazána pro monitor {}"
 
@@ -1631,9 +1612,9 @@ msgid "Queued 1 watch for rechecking."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py:297
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Queued {} watches for rechecking ({} already queued or running)."
-msgstr "Do fronty přidáno {} sledování k opětovné kontrole."
+msgstr "Do fronty přidáno {} monitorů k opětovné kontrole ({} již ve frontě nebo běží)."
 
 #: changedetectionio/blueprint/ui/__init__.py:303
 #, python-brace-format
@@ -1641,9 +1622,8 @@ msgid "Queued {} watches for rechecking."
 msgstr "Do fronty přidáno {} sledování k opětovné kontrole."
 
 #: changedetectionio/blueprint/ui/__init__.py:332
-#, fuzzy
 msgid "Queueing watches for rechecking in background..."
-msgstr "Do fronty přidáno {} sledování k opětovné kontrole."
+msgstr "Přidávání monitorů do fronty pro opětovnou kontrolu na pozadí..."
 
 #: changedetectionio/blueprint/ui/__init__.py:403
 #, python-brace-format
@@ -2336,9 +2316,8 @@ msgid "displaying <b>{start} - {end}</b> {record_name} in total <b>{total}</b>"
 msgstr "zobrazeno <b>{start} - {end}</b> {record_name} z celkem <b>{total}</b>"
 
 #: changedetectionio/blueprint/watchlist/__init__.py:80
-#, fuzzy
 msgid "records"
-msgstr "záznamů"
+msgstr "záznamy"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:58
 msgid "Add a new web page change detection watch"
@@ -2425,9 +2404,8 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:105
-#, fuzzy
 msgid "Queued size"
-msgstr "Ve frontě"
+msgstr "Velikost fronty"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:110
 msgid "Searching"
@@ -2677,9 +2655,8 @@ msgid "Detects all text changes where possible"
 msgstr "Detekuje všechny změny textu, kde je to možné"
 
 #: changedetectionio/templates/_common_fields.html:9
-#, fuzzy
 msgid "Body for all notifications — You can use"
-msgstr "Formát pro všechna oznámení"
+msgstr "Tělo pro všechna oznámení — Můžete použít"
 
 #: changedetectionio/templates/_common_fields.html:9
 msgid "templating in the notification title, body and URL, and tokens from below."
@@ -2706,18 +2683,16 @@ msgid "The URL being watched."
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:33
-#, fuzzy
 msgid "The UUID of the watch."
-msgstr "Upravit a monitorovat"
+msgstr "UUID monitoru."
 
 #: changedetectionio/templates/_common_fields.html:37
 msgid "The page title of the watch, uses <title> if not set, falls back to URL"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:41
-#, fuzzy
 msgid "The watch group / tag"
-msgstr "Skupina / Značka"
+msgstr "Skupina / značka monitoru"
 
 #: changedetectionio/templates/_common_fields.html:45
 msgid "The URL of the preview page generated by changedetection.io."
@@ -2785,9 +2760,8 @@ msgid "Warning: Contents of"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:109
-#, fuzzy
 msgid "and"
-msgstr "Změněno"
+msgstr "a"
 
 #: changedetectionio/templates/_common_fields.html:109
 msgid "depend on how the difference algorithm perceives the change."
@@ -2800,20 +2774,17 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:110
-#, fuzzy
 msgid "More Here"
-msgstr "Přečtěte si více zde"
+msgstr "Více zde"
 
 #: changedetectionio/templates/_common_fields.html:126
 #: changedetectionio/templates/edit/text-options.html:62
-#, fuzzy
 msgid "Use"
-msgstr "Pauza"
+msgstr "Použít"
 
 #: changedetectionio/templates/_common_fields.html:126
-#, fuzzy
 msgid "AppRise Notification URLs"
-msgstr "Seznam URL oznámení"
+msgstr "URL pro AppRise oznámení"
 
 #: changedetectionio/templates/_common_fields.html:126
 msgid "for notification to just about any service!"
@@ -2842,9 +2813,8 @@ msgid "2,000 characters"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:130
-#, fuzzy
 msgid "of notification text, including the title."
-msgstr "Název oznámení"
+msgstr "textu oznámení včetně názvu."
 
 #: changedetectionio/templates/_common_fields.html:131
 msgid ""
@@ -2869,9 +2839,8 @@ msgid "for non-SSL ie"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:133
-#, fuzzy
 msgid "more help here"
-msgstr "Další nápověda a příklady zde"
+msgstr "další nápověda zde"
 
 #: changedetectionio/templates/_common_fields.html:134
 msgid "Accepts the"
@@ -2919,9 +2888,8 @@ msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:162
 #: changedetectionio/templates/_common_fields.html:165
-#, fuzzy
 msgid "for example -"
-msgstr "například."
+msgstr "například -"
 
 #: changedetectionio/templates/_common_fields.html:165
 msgid "Regular-expression replace, use"
@@ -2942,9 +2910,8 @@ msgid "Entry"
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:153
-#, fuzzy
 msgid "Actions"
-msgstr "Podmínky"
+msgstr "Akce"
 
 #: changedetectionio/templates/_helpers.html:172
 msgid "Add a row/rule after"
@@ -2975,9 +2942,8 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:185
-#, fuzzy
 msgid "You may need to"
-msgstr "musíte"
+msgstr "Možná budete muset"
 
 #: changedetectionio/templates/_helpers.html:185
 msgid "Enable playwright environment variable"
@@ -2988,37 +2954,32 @@ msgid "and uncomment the"
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:185
-#, fuzzy
 msgid "in the"
-msgstr "The"
+msgstr "v"
 
 #: changedetectionio/templates/_helpers.html:185
-#, fuzzy
 msgid "file"
-msgstr "Titul"
+msgstr "soubor"
 
 #: changedetectionio/templates/_helpers.html:240
 msgid "Set a hourly/week day schedule"
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:247
-#, fuzzy
 msgid "Schedule time limits"
-msgstr "Znovu zkontrolovat čas (minuty)"
+msgstr "Časové limity plánu"
 
 #: changedetectionio/templates/_helpers.html:248
 msgid "Business hours"
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:249
-#, fuzzy
 msgid "Weekends"
-msgstr "týdny"
+msgstr "Víkendy"
 
 #: changedetectionio/templates/_helpers.html:250
-#, fuzzy
 msgid "Reset"
-msgstr "Žádost"
+msgstr "Resetovat"
 
 #: changedetectionio/templates/_helpers.html:259
 msgid ""
@@ -3031,14 +2992,12 @@ msgid "This could have unintended consequences."
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:270
-#, fuzzy
 msgid "More help and examples about using the scheduler"
-msgstr "Další nápověda a příklady zde"
+msgstr "Další nápověda a příklady použití plánovače"
 
 #: changedetectionio/templates/_helpers.html:275
-#, fuzzy
 msgid "Want to use a time schedule?"
-msgstr "Použijte časový plánovač"
+msgstr "Chcete použít časový plán?"
 
 #: changedetectionio/templates/_helpers.html:275
 msgid "First confirm/save your Time Zone Settings"
@@ -3051,28 +3010,24 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:284
-#, fuzzy
 msgid "Triggered text"
-msgstr "Text chyby"
+msgstr "Spouštěcí text"
 
 #: changedetectionio/templates/_helpers.html:285
 msgid "Ignored for calculating changes, but still shown."
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:285
-#, fuzzy
 msgid "Ignored text"
-msgstr "Text chyby"
+msgstr "Ignorovaný text"
 
 #: changedetectionio/templates/_helpers.html:286
-#, fuzzy
 msgid "No change-detection will occur because this text exists."
-msgstr "Blokovat detekci změn, když se text shoduje"
+msgstr "Nedojde k detekci změn, protože tento text existuje."
 
 #: changedetectionio/templates/_helpers.html:286
-#, fuzzy
 msgid "Blocked text"
-msgstr "Text chyby"
+msgstr "Blokovaný text"
 
 #: changedetectionio/templates/base.html:80
 msgid "Search, or Use Alt+S Key"
@@ -3094,18 +3049,16 @@ msgstr ""
 
 #: changedetectionio/templates/base.html:281
 #: changedetectionio/templates/base.html:294
-#, fuzzy
 msgid "Search"
-msgstr "Hledání"
+msgstr "Hledat"
 
 #: changedetectionio/templates/base.html:286
 msgid "URL or Title"
 msgstr ""
 
 #: changedetectionio/templates/base.html:286
-#, fuzzy
 msgid "in"
-msgstr "Info"
+msgstr "v"
 
 #: changedetectionio/templates/base.html:287
 msgid "Enter search term..."
@@ -3140,19 +3093,16 @@ msgid "Scheduling is paused - click to resume"
 msgstr ""
 
 #: changedetectionio/templates/menu.html:20
-#, fuzzy
 msgid "Unmute notifications"
-msgstr "Oznámení"
+msgstr "Odtlumit oznámení"
 
 #: changedetectionio/templates/menu.html:20
-#, fuzzy
 msgid "Mute notifications"
-msgstr "Oznámení"
+msgstr "Ztlumit oznámení"
 
 #: changedetectionio/templates/menu.html:20
-#, fuzzy
 msgid "Notifications are muted - click to unmute"
-msgstr "Počet upozornění na upozornění"
+msgstr "Oznámení jsou ztlumena - klikněte pro odtlumení"
 
 #: changedetectionio/templates/menu.html:25
 msgid "EDIT"
@@ -3245,9 +3195,8 @@ msgid "type flags (more"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html:62
-#, fuzzy
 msgid "information here"
-msgstr "Žádné informace"
+msgstr "informace zde"
 
 #: changedetectionio/templates/edit/text-options.html:63
 msgid "Keyword example - example"

@@ -34,9 +34,8 @@ msgid "You must be logged in, please log in."
 msgstr ""
 
 #: changedetectionio/flask_app.py:584
-#, fuzzy
 msgid "Incorrect password"
-msgstr "비밀번호"
+msgstr "잘못된 비밀번호"
 
 #: changedetectionio/forms.py:63 changedetectionio/forms.py:243
 msgid ""
@@ -59,19 +58,16 @@ msgid "Not a valid timezone name"
 msgstr "유효한 시간대 이름이 아닙니다."
 
 #: changedetectionio/forms.py:183
-#, fuzzy
 msgid "not set"
-msgstr "아직 아님"
+msgstr "설정 안 됨"
 
 #: changedetectionio/forms.py:184
-#, fuzzy
 msgid "Start At"
-msgstr "통계"
+msgstr "시작 시간"
 
 #: changedetectionio/forms.py:185
-#, fuzzy
 msgid "Run duration"
-msgstr "정보 없음"
+msgstr "실행 시간"
 
 #: changedetectionio/forms.py:188
 msgid "Use time scheduler"
@@ -124,17 +120,14 @@ msgid "Days"
 msgstr "날"
 
 #: changedetectionio/forms.py:253
-#, fuzzy
 msgid "Hours"
-msgstr "목요일"
+msgstr "시간"
 
 #: changedetectionio/forms.py:254
-#, fuzzy
 msgid "Minutes"
-msgstr "무음"
+msgstr "분"
 
 #: changedetectionio/forms.py:255
-#, fuzzy
 msgid "Seconds"
 msgstr "초"
 
@@ -197,29 +190,24 @@ msgid "Edit > Watch"
 msgstr "편집 > 모니터"
 
 #: changedetectionio/forms.py:747 changedetectionio/forms.py:995
-#, fuzzy
 msgid "Fetch Method"
-msgstr "가져오기 방법 설정"
+msgstr "가져오기 방법"
 
 #: changedetectionio/forms.py:748
-#, fuzzy
 msgid "Notification Body"
-msgstr "알림"
+msgstr "알림 본문"
 
 #: changedetectionio/forms.py:749
-#, fuzzy
 msgid "Notification format"
-msgstr "알림"
+msgstr "알림 형식"
 
 #: changedetectionio/forms.py:750
-#, fuzzy
 msgid "Notification Title"
-msgstr "알림"
+msgstr "알림 제목"
 
 #: changedetectionio/forms.py:751
-#, fuzzy
 msgid "Notification URL List"
-msgstr "알림 디버그 로그"
+msgstr "알림 URL 목록"
 
 #: changedetectionio/forms.py:752
 msgid "Processor - What do you want to achieve?"
@@ -230,16 +218,14 @@ msgid "Default timezone for watch check scheduler"
 msgstr "시계 확인 스케줄러의 기본 시간대"
 
 #: changedetectionio/forms.py:754
-#, fuzzy
 msgid "Wait seconds before extracting text"
-msgstr "텍스트를 추출하기 몇 초 전입니다."
+msgstr "텍스트 추출 전 대기 시간(초)"
 
 #: changedetectionio/forms.py:754
 msgid "Should contain one or more seconds"
 msgstr "1초 이상을 포함해야 합니다."
 
 #: changedetectionio/forms.py:767
-#, fuzzy
 msgid "URLs"
 msgstr "URL"
 
@@ -252,47 +238,40 @@ msgid "Must be .xlsx file!"
 msgstr ".xlsx 파일이어야 합니다!"
 
 #: changedetectionio/forms.py:769
-#, fuzzy
 msgid "File mapping"
-msgstr "파일 매핑 유형."
+msgstr "파일 매핑"
 
 #: changedetectionio/forms.py:773
-#, fuzzy
 msgid "Operation"
-msgstr "UI 옵션"
+msgstr "작업"
 
 #: changedetectionio/forms.py:776
-#, fuzzy
 msgid "Selector"
-msgstr "선택 모드:"
+msgstr "선택자"
 
 #: changedetectionio/forms.py:777
-#, fuzzy
 msgid "value"
-msgstr "정지시키다"
+msgstr "값"
 
 #: changedetectionio/forms.py:789 changedetectionio/forms.py:951
 msgid "Time Between Check"
-msgstr ""
+msgstr "확인 간격"
 
 #: changedetectionio/forms.py:797
 msgid "Use global settings for time between check and scheduler."
 msgstr "확인과 스케줄러 사이의 시간에 대한 전역 설정을 사용합니다."
 
 #: changedetectionio/forms.py:799
-#, fuzzy
 msgid "CSS/JSONPath/JQ/XPath Filters"
-msgstr "CSS/xPath 필터"
+msgstr "CSS/JSONPath/JQ/XPath 필터"
 
 #: changedetectionio/forms.py:801 changedetectionio/forms.py:997
-#, fuzzy
 msgid "Remove elements"
-msgstr "요소별로 선택"
+msgstr "요소 제거"
 
 #: changedetectionio/forms.py:803
-#, fuzzy
 msgid "Extract text"
-msgstr "데이터 추출"
+msgstr "텍스트 추출"
 
 #: changedetectionio/blueprint/imports/templates/import.html:106
 #: changedetectionio/forms.py:805
@@ -300,28 +279,24 @@ msgid "Title"
 msgstr "제목"
 
 #: changedetectionio/forms.py:807
-#, fuzzy
 msgid "Ignore lines containing"
-msgstr "일치하는 줄을 무시하세요."
+msgstr "포함된 줄 무시"
 
 #: changedetectionio/forms.py:809
-#, fuzzy
 msgid "Request body"
-msgstr "요구"
+msgstr "요청 본문"
 
 #: changedetectionio/forms.py:810
-#, fuzzy
 msgid "Request method"
-msgstr "요구"
+msgstr "요청 방법"
 
 #: changedetectionio/forms.py:811
 msgid "Ignore status codes (process non-2xx status codes as normal)"
 msgstr "상태 코드 무시(2xx가 아닌 상태 코드를 정상적으로 처리)"
 
 #: changedetectionio/forms.py:812
-#, fuzzy
 msgid "Only trigger when unique lines appear in all history"
-msgstr "고유한 줄이 나타날 때만 트리거됩니다."
+msgstr "모든 기록에서 고유한 줄이 나타날 때만 트리거"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:336
 #: changedetectionio/forms.py:813
@@ -337,23 +312,20 @@ msgid "Strip ignored lines"
 msgstr "무시된 줄 제거"
 
 #: changedetectionio/forms.py:816
-#, fuzzy
 msgid "Trim whitespace before and after text"
-msgstr "각 텍스트 줄 앞과 뒤의 공백을 제거하세요."
+msgstr "텍스트 앞뒤 공백 제거"
 
 #: changedetectionio/forms.py:818
-#, fuzzy
 msgid "Added lines"
-msgstr "줄"
+msgstr "추가된 줄"
 
 #: changedetectionio/forms.py:819
 msgid "Replaced/changed lines"
 msgstr "교체/변경된 라인"
 
 #: changedetectionio/forms.py:820
-#, fuzzy
 msgid "Removed lines"
-msgstr "제거됨"
+msgstr "삭제된 줄"
 
 #: changedetectionio/forms.py:822
 msgid "Keyword triggers - Trigger/wait for text"
@@ -388,9 +360,8 @@ msgid "Notifications"
 msgstr "알림"
 
 #: changedetectionio/forms.py:833
-#, fuzzy
 msgid "Muted"
-msgstr "무음"
+msgstr "음소거됨"
 
 #: changedetectionio/forms.py:833
 msgid "On"
@@ -501,14 +472,12 @@ msgid "Open 'History' page in a new tab"
 msgstr "새 탭에서 '기록' 페이지 열기"
 
 #: changedetectionio/forms.py:982
-#, fuzzy
 msgid "Realtime UI Updates Enabled"
-msgstr "실시간 업데이트 오프라인"
+msgstr "실시간 UI 업데이트 활성화됨"
 
 #: changedetectionio/forms.py:983
-#, fuzzy
 msgid "Favicons Enabled"
-msgstr "활성화하는 것을 고려해보세요"
+msgstr "파비콘 활성화됨"
 
 #: changedetectionio/forms.py:984
 msgid "Use page <title> in watch overview list"
@@ -527,12 +496,10 @@ msgid "Treat empty pages as a change?"
 msgstr "빈 페이지를 변경 사항으로 처리하시겠습니까?"
 
 #: changedetectionio/forms.py:996
-#, fuzzy
 msgid "Ignore Text"
-msgstr "무시됩니다."
+msgstr "텍스트 무시"
 
 #: changedetectionio/forms.py:998
-#, fuzzy
 msgid "Ignore whitespace"
 msgstr "공백 무시"
 
@@ -566,9 +533,8 @@ msgid "RSS \"System default\" template override"
 msgstr ""
 
 #: changedetectionio/forms.py:1021
-#, fuzzy
 msgid "Remove password"
-msgstr "비밀번호"
+msgstr "비밀번호 제거"
 
 #: changedetectionio/forms.py:1022
 msgid "Render anchor tag content"
@@ -603,9 +569,8 @@ msgid "RegEx to extract"
 msgstr "추출할 RegEx"
 
 #: changedetectionio/forms.py:1057
-#, fuzzy
 msgid "Extract as CSV"
-msgstr "데이터 추출"
+msgstr "CSV로 추출"
 
 #: changedetectionio/store.py:386
 #, python-brace-format
@@ -844,9 +809,8 @@ msgid "Password protection enabled."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/__init__.py:132
-#, fuzzy
 msgid "Settings updated."
-msgstr "설정"
+msgstr "설정이 업데이트되었습니다."
 
 #: changedetectionio/blueprint/settings/__init__.py:135
 #: changedetectionio/blueprint/ui/edit.py:296
@@ -867,14 +831,12 @@ msgid "Automatic scheduling resumed - checks will be queued normally."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/__init__.py:218
-#, fuzzy
 msgid "All notifications muted."
-msgstr "정보 없음"
+msgstr "모든 알림 음소거됨."
 
 #: changedetectionio/blueprint/settings/__init__.py:220
-#, fuzzy
 msgid "All notifications unmuted."
-msgstr "정보 없음"
+msgstr "모든 알림 음소거 해제됨."
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html:7
 msgid "Notification debug log"
@@ -931,16 +893,14 @@ msgid "more info"
 msgstr "추가 정보"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:57
-#, fuzzy
 msgid ""
 "After this many consecutive times that the CSS/xPath filter is missing, "
 "send a notification"
-msgstr "알림을 보내기 전에 필터가 누락될 수 있는 횟수"
+msgstr "CSS/xPath 필터가 이만큼 연속으로 누락되면 알림 전송"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:59
-#, fuzzy
 msgid "Set to"
-msgstr "사용"
+msgstr "설정:"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:59
 msgid "to disable"
@@ -955,11 +915,10 @@ msgid "Password is locked."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:77
-#, fuzzy
 msgid ""
 "Allow access to the watch change history page when password is enabled "
 "(Good for sharing the diff page)"
-msgstr "비밀번호가 활성화되면 시청 기록 페이지에 대한 익명 액세스를 허용합니다."
+msgstr "비밀번호 활성화 시 변경 기록 페이지 액세스 허용 (diff 페이지 공유에 유용)"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:81
 msgid ""
@@ -972,9 +931,8 @@ msgid "Base URL used for the"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:93
-#, fuzzy
 msgid "token in notification links."
-msgstr "정보 없음"
+msgstr "알림 링크의 토큰."
 
 #: changedetectionio/blueprint/settings/templates/settings.html:94
 msgid "Default value is the system environment variable"
@@ -982,9 +940,8 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:94
 #: changedetectionio/templates/_common_fields.html:132
-#, fuzzy
 msgid "read more here"
-msgstr "여기서 더 읽어보세요"
+msgstr "여기서 더 읽기"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:103
 #: changedetectionio/blueprint/ui/templates/edit.html:123
@@ -1040,24 +997,20 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:121
-#, fuzzy
 msgid "Currently running:"
-msgstr "현재:"
+msgstr "현재 실행 중:"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:121
-#, fuzzy
 msgid "operational"
-msgstr "UI 옵션"
+msgstr "작동 중"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:121
-#, fuzzy
 msgid "workers"
-msgstr "단어"
+msgstr "워커"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:121
-#, fuzzy
 msgid "actively processing"
-msgstr "프로세서"
+msgstr "활발히 처리 중"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:125
 msgid ""
@@ -1106,9 +1059,8 @@ msgstr ""
 #: changedetectionio/blueprint/settings/templates/settings.html:150
 #: changedetectionio/blueprint/settings/templates/settings.html:157
 #: changedetectionio/blueprint/settings/templates/settings.html:192
-#, fuzzy
 msgid "Note:"
-msgstr "아직 아님"
+msgstr "참고:"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:150
 #: changedetectionio/blueprint/settings/templates/settings.html:192
@@ -1151,9 +1103,8 @@ msgid "Matching text will be"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:181
-#, fuzzy
 msgid "ignored"
-msgstr "무시됩니다."
+msgstr "무시됨"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:181
 msgid "in the text snapshot (you can still see it but it wont trigger a change)"
@@ -1193,9 +1144,8 @@ msgid "Drive your changedetection.io via API, More about"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:199
-#, fuzzy
 msgid "API access and examples here"
-msgstr "여기에 도움말과 예시가 있습니다"
+msgstr "API 액세스 및 예제"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:203
 msgid "Restrict API access limit by using"
@@ -1206,9 +1156,8 @@ msgid "header - required for the Chrome Extension to work"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:204
-#, fuzzy
 msgid "API Key"
-msgstr "API"
+msgstr "API 키"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:205
 msgid "copy"
@@ -1219,9 +1168,8 @@ msgid "Regenerate API key"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:212
-#, fuzzy
 msgid "Chrome Extension"
-msgstr "Chrome 요청"
+msgstr "Chrome 확장 프로그램"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:213
 msgid ""
@@ -1266,9 +1214,8 @@ msgid "Chrome store icon"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:221
-#, fuzzy
 msgid "Chrome Webstore"
-msgstr "Chrome 요청"
+msgstr "Chrome 웹스토어"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:232
 msgid ""
@@ -1325,9 +1272,8 @@ msgid "Number of items per page in the watch overview list, 0 to disable."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:337
-#, fuzzy
 msgid "Tip"
-msgstr "팁:"
+msgstr "팁"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:337
 msgid ""
@@ -1347,9 +1293,8 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:348
-#, fuzzy
 msgid "Choose a default proxy for all watches"
-msgstr "이 시계에 대한 RSS 피드"
+msgstr "모든 모니터의 기본 프록시 선택"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:388
 msgid "Python version:"
@@ -1377,9 +1322,8 @@ msgid "The tag \"{}\" already exists"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/__init__.py:52
-#, fuzzy
 msgid "Tag added"
-msgstr "추가됨"
+msgstr "태그 추가됨"
 
 #: changedetectionio/blueprint/tags/__init__.py:87
 msgid "Tag deleted, removing from watches in background"
@@ -1398,9 +1342,8 @@ msgid "Tag not found"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/__init__.py:220
-#, fuzzy
 msgid "Updated"
-msgstr "무음"
+msgstr "업데이트됨"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html:28
 #: changedetectionio/blueprint/ui/templates/edit.html:56
@@ -1562,9 +1505,8 @@ msgid "{} watches deleted"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py:28
-#, fuzzy, python-brace-format
 msgid "{} watches paused"
-msgstr "# 시계"
+msgstr "{}개 모니터 일시정지됨"
 
 #: changedetectionio/blueprint/ui/__init__.py:35
 #, python-brace-format
@@ -1577,9 +1519,8 @@ msgid "{} watches updated"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py:49
-#, fuzzy, python-brace-format
 msgid "{} watches muted"
-msgstr "# 시계"
+msgstr "{}개 모니터 음소거됨"
 
 #: changedetectionio/blueprint/ui/__init__.py:56
 #, python-brace-format
@@ -1602,9 +1543,8 @@ msgid "{} watches cleared/reset."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py:91
-#, fuzzy, python-brace-format
 msgid "{} watches set to use default notification settings"
-msgstr "기본 알림 사용"
+msgstr "{}개 모니터가 기본 알림 설정 사용"
 
 #: changedetectionio/blueprint/ui/__init__.py:106
 #, python-brace-format
@@ -1612,23 +1552,20 @@ msgid "{} watches were tagged"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py:143
-#, fuzzy
 msgid "Watch not found"
-msgstr "이 URL을 시청하세요!"
+msgstr "모니터를 찾을 수 없음"
 
 #: changedetectionio/blueprint/ui/__init__.py:145
-#, fuzzy, python-brace-format
 msgid "Cleared snapshot history for watch {}"
-msgstr "기록 지우기/재설정"
+msgstr "모니터 {} 스냅샷 기록 삭제됨"
 
 #: changedetectionio/blueprint/ui/__init__.py:172
 msgid "History clearing started in background"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py:174
-#, fuzzy
 msgid "Incorrect confirmation text."
-msgstr "정보 없음"
+msgstr "잘못된 확인 텍스트."
 
 #: changedetectionio/blueprint/ui/__init__.py:213
 msgid "Marking watches as viewed in background..."
@@ -1640,9 +1577,8 @@ msgid "The watch by UUID {} does not exist."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py:229
-#, fuzzy
 msgid "Deleted."
-msgstr "삭제"
+msgstr "삭제됨."
 
 #: changedetectionio/blueprint/ui/__init__.py:246
 msgid "Cloned, you are editing the new watch."
@@ -1658,9 +1594,8 @@ msgid "Queued 1 watch for rechecking."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py:297
-#, fuzzy, python-brace-format
 msgid "Queued {} watches for rechecking ({} already queued or running)."
-msgstr "{}개의 감시 항목을 재확인 대기열에 추가했습니다."
+msgstr "{}개 모니터 대기열 추가 ({}개 이미 대기 중)."
 
 #: changedetectionio/blueprint/ui/__init__.py:303
 #, python-brace-format
@@ -1668,9 +1603,8 @@ msgid "Queued {} watches for rechecking."
 msgstr "{}개의 감시 항목을 재확인 대기열에 추가했습니다."
 
 #: changedetectionio/blueprint/ui/__init__.py:332
-#, fuzzy
 msgid "Queueing watches for rechecking in background..."
-msgstr "{}개의 감시 항목을 재확인 대기열에 추가했습니다."
+msgstr "백그라운드에서 모니터 재확인 대기열 추가 중..."
 
 #: changedetectionio/blueprint/ui/__init__.py:403
 #, python-brace-format
@@ -1718,9 +1652,8 @@ msgid "Updated watch - unpaused!"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/edit.py:245
-#, fuzzy
 msgid "Updated watch."
-msgstr "시계를 삭제하시겠습니까?"
+msgstr "모니터가 업데이트되었습니다."
 
 #: changedetectionio/blueprint/ui/preview.py:78
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
@@ -2358,9 +2291,8 @@ msgid "displaying <b>{start} - {end}</b> {record_name} in total <b>{total}</b>"
 msgstr "총 <b>{total}</b>개 중 <b>{start} - {end}</b>개 {record_name} 표시"
 
 #: changedetectionio/blueprint/watchlist/__init__.py:80
-#, fuzzy
 msgid "records"
-msgstr "항목"
+msgstr "기록"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:58
 msgid "Add a new web page change detection watch"
@@ -2447,9 +2379,8 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:105
-#, fuzzy
 msgid "Queued size"
-msgstr "대기 중"
+msgstr "대기열 크기"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:110
 msgid "Searching"
@@ -2601,18 +2532,16 @@ msgid "Pixel Difference Sensitivity"
 msgstr "픽셀 차이 감도"
 
 #: changedetectionio/processors/image_ssim_diff/forms.py:58
-#, fuzzy
 msgid "Use global default"
-msgstr "시스템 기본값 사용"
+msgstr "전역 기본값 사용"
 
 #: changedetectionio/processors/image_ssim_diff/forms.py:66
 msgid "Bounding Box"
 msgstr "경계 상자"
 
 #: changedetectionio/processors/image_ssim_diff/forms.py:76
-#, fuzzy
 msgid "Selection Mode"
-msgstr "선택 모드:"
+msgstr "선택 모드"
 
 #: changedetectionio/processors/image_ssim_diff/forms.py:79
 msgid "Selection mode value is too long"
@@ -2677,9 +2606,8 @@ msgid "Follow price changes"
 msgstr "가격 변동을 따르세요"
 
 #: changedetectionio/processors/restock_diff/forms.py:37
-#, fuzzy
 msgid "Restock & Price Detection"
-msgstr "재입고 감지"
+msgstr "재입고 및 가격 감지"
 
 #: changedetectionio/processors/restock_diff/processor.py:13
 msgid "Re-stock & Price detection for pages with a SINGLE product"
@@ -2698,9 +2626,8 @@ msgid "Detects all text changes where possible"
 msgstr "가능한 경우 모든 텍스트 변경 사항을 감지합니다."
 
 #: changedetectionio/templates/_common_fields.html:9
-#, fuzzy
 msgid "Body for all notifications — You can use"
-msgstr "기본 알림 사용"
+msgstr "모든 알림 본문 — 사용 가능:"
 
 #: changedetectionio/templates/_common_fields.html:9
 msgid "templating in the notification title, body and URL, and tokens from below."
@@ -2715,9 +2642,8 @@ msgid "Token"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:19
-#, fuzzy
 msgid "Description"
-msgstr "덧셈"
+msgstr "설명"
 
 #: changedetectionio/templates/_common_fields.html:25
 msgid "The URL of the changedetection.io instance you are running."
@@ -2728,18 +2654,16 @@ msgid "The URL being watched."
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:33
-#, fuzzy
 msgid "The UUID of the watch."
-msgstr "편집 후 모니터"
+msgstr "모니터의 UUID."
 
 #: changedetectionio/templates/_common_fields.html:37
 msgid "The page title of the watch, uses <title> if not set, falls back to URL"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:41
-#, fuzzy
 msgid "The watch group / tag"
-msgstr "그룹 / 태그"
+msgstr "모니터 그룹 / 태그"
 
 #: changedetectionio/templates/_common_fields.html:45
 msgid "The URL of the preview page generated by changedetection.io."
@@ -2807,9 +2731,8 @@ msgid "Warning: Contents of"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:109
-#, fuzzy
 msgid "and"
-msgstr "변경됨"
+msgstr "및"
 
 #: changedetectionio/templates/_common_fields.html:109
 msgid "depend on how the difference algorithm perceives the change."
@@ -2822,20 +2745,17 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:110
-#, fuzzy
 msgid "More Here"
-msgstr "여기서 더 읽어보세요"
+msgstr "더보기"
 
 #: changedetectionio/templates/_common_fields.html:126
 #: changedetectionio/templates/edit/text-options.html:62
-#, fuzzy
 msgid "Use"
-msgstr "정지시키다"
+msgstr "사용"
 
 #: changedetectionio/templates/_common_fields.html:126
-#, fuzzy
 msgid "AppRise Notification URLs"
-msgstr "정보 없음"
+msgstr "AppRise 알림 URL"
 
 #: changedetectionio/templates/_common_fields.html:126
 msgid "for notification to just about any service!"
@@ -2848,9 +2768,8 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:128
-#, fuzzy
 msgid "Show advanced help and tips"
-msgstr "고급 옵션 표시"
+msgstr "고급 도움말 표시"
 
 #: changedetectionio/templates/_common_fields.html:130
 msgid "(or"
@@ -2865,9 +2784,8 @@ msgid "2,000 characters"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:130
-#, fuzzy
 msgid "of notification text, including the title."
-msgstr "정보 없음"
+msgstr "제목 포함 알림 텍스트."
 
 #: changedetectionio/templates/_common_fields.html:131
 msgid ""
@@ -2892,9 +2810,8 @@ msgid "for non-SSL ie"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:133
-#, fuzzy
 msgid "more help here"
-msgstr "여기에 더 많은 도움말과 예시가 있습니다."
+msgstr "더 많은 도움말"
 
 #: changedetectionio/templates/_common_fields.html:134
 msgid "Accepts the"
@@ -2905,9 +2822,8 @@ msgid "placeholders listed below"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:138
-#, fuzzy
 msgid "Send test notification"
-msgstr "기본 알림 사용"
+msgstr "테스트 알림 보내기"
 
 #: changedetectionio/templates/_common_fields.html:140
 msgid "Add email"
@@ -2918,19 +2834,16 @@ msgid "Add an email address"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:142
-#, fuzzy
 msgid "Notification debug logs"
 msgstr "알림 디버그 로그"
 
 #: changedetectionio/templates/_common_fields.html:144
-#, fuzzy
 msgid "Processing.."
-msgstr "프로세서"
+msgstr "처리 중.."
 
 #: changedetectionio/templates/_common_fields.html:151
-#, fuzzy
 msgid "Title for all notifications"
-msgstr "기본 알림 사용"
+msgstr "모든 알림 제목"
 
 #: changedetectionio/templates/_common_fields.html:159
 msgid "For JSON payloads, use"
@@ -2946,9 +2859,8 @@ msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:162
 #: changedetectionio/templates/_common_fields.html:165
-#, fuzzy
 msgid "for example -"
-msgstr "예를 들어."
+msgstr "예 -"
 
 #: changedetectionio/templates/_common_fields.html:165
 msgid "Regular-expression replace, use"
@@ -2961,18 +2873,16 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:176
-#, fuzzy
 msgid "Format for all notifications"
-msgstr "기본 알림 사용"
+msgstr "모든 알림 형식"
 
 #: changedetectionio/templates/_helpers.html:25
 msgid "Entry"
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:153
-#, fuzzy
 msgid "Actions"
-msgstr "정황"
+msgstr "작업"
 
 #: changedetectionio/templates/_helpers.html:172
 msgid "Add a row/rule after"
@@ -3003,9 +2913,8 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:185
-#, fuzzy
 msgid "You may need to"
-msgstr "당신은"
+msgstr "필요할 수 있음:"
 
 #: changedetectionio/templates/_helpers.html:185
 msgid "Enable playwright environment variable"
@@ -3016,37 +2925,32 @@ msgid "and uncomment the"
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:185
-#, fuzzy
 msgid "in the"
-msgstr "그만큼"
+msgstr "에서"
 
 #: changedetectionio/templates/_helpers.html:185
-#, fuzzy
 msgid "file"
-msgstr "제목"
+msgstr "파일"
 
 #: changedetectionio/templates/_helpers.html:240
 msgid "Set a hourly/week day schedule"
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:247
-#, fuzzy
 msgid "Schedule time limits"
-msgstr "재확인 시간(분)"
+msgstr "일정 시간 제한"
 
 #: changedetectionio/templates/_helpers.html:248
 msgid "Business hours"
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:249
-#, fuzzy
 msgid "Weekends"
-msgstr "주"
+msgstr "주말"
 
 #: changedetectionio/templates/_helpers.html:250
-#, fuzzy
 msgid "Reset"
-msgstr "요구"
+msgstr "재설정"
 
 #: changedetectionio/templates/_helpers.html:259
 msgid ""
@@ -3059,14 +2963,12 @@ msgid "This could have unintended consequences."
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:270
-#, fuzzy
 msgid "More help and examples about using the scheduler"
-msgstr "여기에 더 많은 도움말과 예시가 있습니다."
+msgstr "스케줄러 사용 도움말"
 
 #: changedetectionio/templates/_helpers.html:275
-#, fuzzy
 msgid "Want to use a time schedule?"
-msgstr "시간 스케줄러 사용"
+msgstr "시간 스케줄을 사용하시겠습니까?"
 
 #: changedetectionio/templates/_helpers.html:275
 msgid "First confirm/save your Time Zone Settings"
@@ -3087,14 +2989,12 @@ msgid "Ignored for calculating changes, but still shown."
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:285
-#, fuzzy
 msgid "Ignored text"
-msgstr "무시됩니다."
+msgstr "무시된 텍스트"
 
 #: changedetectionio/templates/_helpers.html:286
-#, fuzzy
 msgid "No change-detection will occur because this text exists."
-msgstr "텍스트가 일치하는 동안 변경 감지 차단"
+msgstr "이 텍스트 존재 시 변경 감지 안 함."
 
 #: changedetectionio/templates/_helpers.html:286
 msgid "Blocked text"
@@ -3120,18 +3020,16 @@ msgstr ""
 
 #: changedetectionio/templates/base.html:281
 #: changedetectionio/templates/base.html:294
-#, fuzzy
 msgid "Search"
-msgstr "수색"
+msgstr "검색"
 
 #: changedetectionio/templates/base.html:286
 msgid "URL or Title"
 msgstr ""
 
 #: changedetectionio/templates/base.html:286
-#, fuzzy
 msgid "in"
-msgstr "정보"
+msgstr "내"
 
 #: changedetectionio/templates/base.html:287
 msgid "Enter search term..."
@@ -3166,19 +3064,16 @@ msgid "Scheduling is paused - click to resume"
 msgstr ""
 
 #: changedetectionio/templates/menu.html:20
-#, fuzzy
 msgid "Unmute notifications"
-msgstr "알림"
+msgstr "알림 음소거 해제"
 
 #: changedetectionio/templates/menu.html:20
-#, fuzzy
 msgid "Mute notifications"
-msgstr "알림"
+msgstr "알림 음소거"
 
 #: changedetectionio/templates/menu.html:20
-#, fuzzy
 msgid "Notifications are muted - click to unmute"
-msgstr "알림 경고 수"
+msgstr "알림 음소거됨 - 클릭하여 해제"
 
 #: changedetectionio/templates/menu.html:25
 msgid "EDIT"
@@ -3271,9 +3166,8 @@ msgid "type flags (more"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html:62
-#, fuzzy
 msgid "information here"
-msgstr "정보 없음"
+msgstr "여기 정보"
 
 #: changedetectionio/templates/edit/text-options.html:63
 msgid "Keyword example - example"

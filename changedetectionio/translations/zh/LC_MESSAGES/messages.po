@@ -255,7 +255,7 @@ msgstr "值"
 
 #: changedetectionio/forms.py:789 changedetectionio/forms.py:951
 msgid "Time Between Check"
-msgstr ""
+msgstr "检查间隔"
 
 #: changedetectionio/forms.py:797
 msgid "Use global settings for time between check and scheduler."
@@ -831,14 +831,12 @@ msgid "Automatic scheduling resumed - checks will be queued normally."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/__init__.py:218
-#, fuzzy
 msgid "All notifications muted."
-msgstr "通知标题"
+msgstr "所有通知已静音。"
 
 #: changedetectionio/blueprint/settings/__init__.py:220
-#, fuzzy
 msgid "All notifications unmuted."
-msgstr "通知标题"
+msgstr "所有通知已取消静音。"
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html:7
 msgid "Notification debug log"
@@ -895,16 +893,14 @@ msgid "more info"
 msgstr "更多信息"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:57
-#, fuzzy
 msgid ""
 "After this many consecutive times that the CSS/xPath filter is missing, "
 "send a notification"
-msgstr "过滤器缺失达到多少次后发送通知"
+msgstr "CSS/xPath 过滤器连续缺失此次数后发送通知"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:59
-#, fuzzy
 msgid "Set to"
-msgstr "使用"
+msgstr "设置为"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:59
 msgid "to disable"
@@ -919,11 +915,10 @@ msgid "Password is locked."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:77
-#, fuzzy
 msgid ""
 "Allow access to the watch change history page when password is enabled "
 "(Good for sharing the diff page)"
-msgstr "启用密码时允许匿名访问监控历史页面"
+msgstr "启用密码时允许访问监视器更改历史页面(便于共享差异页面)"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:81
 msgid ""
@@ -936,9 +931,8 @@ msgid "Base URL used for the"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:93
-#, fuzzy
 msgid "token in notification links."
-msgstr "通知 URL 列表"
+msgstr "通知链接中的令牌。"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:94
 msgid "Default value is the system environment variable"
@@ -946,9 +940,8 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:94
 #: changedetectionio/templates/_common_fields.html:132
-#, fuzzy
 msgid "read more here"
-msgstr "在此了解更多"
+msgstr "在此阅读更多"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:103
 #: changedetectionio/blueprint/ui/templates/edit.html:123
@@ -961,9 +954,8 @@ msgid "Basic"
 msgstr "基础"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:103
-#, fuzzy
 msgid "method (default) where your watched sites don't need Javascript to render."
-msgstr "方式（默认），适用于无需 JavaScript 渲染的网站。"
+msgstr "方法(默认)，适用于无需 JavaScript 渲染的监视网站。"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:104
 #: changedetectionio/blueprint/ui/templates/edit.html:124
@@ -976,11 +968,10 @@ msgid "Chrome/Javascript"
 msgstr "Chrome/JavaScript"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:104
-#, fuzzy
 msgid ""
 "method requires a network connection to a running WebDriver+Chrome "
 "server, set by the ENV var"
-msgstr "方式需要连接正在运行的 WebDriver+Chrome 服务器，通过环境变量 'WEBDRIVER_URL' 设置。"
+msgstr "方法需要连接到运行中的 WebDriver+Chrome 服务器，通过环境变量设置"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:109
 #: changedetectionio/blueprint/ui/templates/edit.html:143
@@ -1006,24 +997,20 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:121
-#, fuzzy
 msgid "Currently running:"
-msgstr "当前："
+msgstr "当前运行:"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:121
-#, fuzzy
 msgid "operational"
-msgstr "操作"
+msgstr "运行中"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:121
-#, fuzzy
 msgid "workers"
-msgstr "单词"
+msgstr "工作进程"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:121
-#, fuzzy
 msgid "actively processing"
-msgstr "处理器"
+msgstr "活跃处理中"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:125
 msgid ""
@@ -1072,9 +1059,8 @@ msgstr ""
 #: changedetectionio/blueprint/settings/templates/settings.html:150
 #: changedetectionio/blueprint/settings/templates/settings.html:157
 #: changedetectionio/blueprint/settings/templates/settings.html:192
-#, fuzzy
 msgid "Note:"
-msgstr "尚未"
+msgstr "注意:"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:150
 #: changedetectionio/blueprint/settings/templates/settings.html:192
@@ -1117,9 +1103,8 @@ msgid "Matching text will be"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:181
-#, fuzzy
 msgid "ignored"
-msgstr "）将被忽略。"
+msgstr "已忽略"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:181
 msgid "in the text snapshot (you can still see it but it wont trigger a change)"
@@ -1159,9 +1144,8 @@ msgid "Drive your changedetection.io via API, More about"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:199
-#, fuzzy
 msgid "API access and examples here"
-msgstr "帮助与示例在此"
+msgstr "API访问和示例"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:203
 msgid "Restrict API access limit by using"
@@ -1172,9 +1156,8 @@ msgid "header - required for the Chrome Extension to work"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:204
-#, fuzzy
 msgid "API Key"
-msgstr "API"
+msgstr "API密钥"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:205
 msgid "copy"
@@ -1185,9 +1168,8 @@ msgid "Regenerate API key"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:212
-#, fuzzy
 msgid "Chrome Extension"
-msgstr "Chrome 请求"
+msgstr "Chrome 扩展程序"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:213
 msgid ""
@@ -1232,9 +1214,8 @@ msgid "Chrome store icon"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:221
-#, fuzzy
 msgid "Chrome Webstore"
-msgstr "Chrome 请求"
+msgstr "Chrome网上应用店"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:232
 msgid ""
@@ -1291,9 +1272,8 @@ msgid "Number of items per page in the watch overview list, 0 to disable."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:337
-#, fuzzy
 msgid "Tip"
-msgstr "提示："
+msgstr "提示"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:337
 msgid ""
@@ -1313,9 +1293,8 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:348
-#, fuzzy
 msgid "Choose a default proxy for all watches"
-msgstr "为此监控项选择代理"
+msgstr "为所有监视器选择默认代理"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:388
 msgid "Python version:"
@@ -1347,9 +1326,8 @@ msgid "Tag added"
 msgstr "标签已添加"
 
 #: changedetectionio/blueprint/tags/__init__.py:87
-#, fuzzy
 msgid "Tag deleted, removing from watches in background"
-msgstr "标签已删除，并从 {} 个监控项中移除"
+msgstr "标签已删除，正在后台从监视器中移除"
 
 #: changedetectionio/blueprint/tags/__init__.py:109
 msgid "Unlinking tag from watches in background"
@@ -1613,9 +1591,8 @@ msgid "Cloned, you are editing the new watch."
 msgstr "已克隆，正在编辑新的监控项。"
 
 #: changedetectionio/blueprint/ui/__init__.py:261
-#, fuzzy
 msgid "Watch is already queued or being checked."
-msgstr "已将 {} 个监控项加入重新检查队列"
+msgstr "监视器已在队列中或正在检查。"
 
 #: changedetectionio/blueprint/ui/__init__.py:264
 #: changedetectionio/blueprint/ui/__init__.py:301
@@ -1623,9 +1600,8 @@ msgid "Queued 1 watch for rechecking."
 msgstr "已将 1 个监控项加入重新检查队列。"
 
 #: changedetectionio/blueprint/ui/__init__.py:297
-#, fuzzy, python-brace-format
 msgid "Queued {} watches for rechecking ({} already queued or running)."
-msgstr "已将 {} 个监控项加入重新检查队列。"
+msgstr "{}个监视器已加入队列({}个已在队列中)。"
 
 #: changedetectionio/blueprint/ui/__init__.py:303
 #, python-brace-format
@@ -1633,9 +1609,8 @@ msgid "Queued {} watches for rechecking."
 msgstr "已将 {} 个监控项加入重新检查队列。"
 
 #: changedetectionio/blueprint/ui/__init__.py:332
-#, fuzzy
 msgid "Queueing watches for rechecking in background..."
-msgstr "已将 {} 个监控项加入重新检查队列。"
+msgstr "后台将监视器加入重新检查队列..."
 
 #: changedetectionio/blueprint/ui/__init__.py:403
 #, python-brace-format
@@ -2322,7 +2297,6 @@ msgid "displaying <b>{start} - {end}</b> {record_name} in total <b>{total}</b>"
 msgstr "显示第 <b>{start} - {end}</b> 条{record_name}，共 <b>{total}</b> 条"
 
 #: changedetectionio/blueprint/watchlist/__init__.py:80
-#, fuzzy
 msgid "records"
 msgstr "记录"
 
@@ -2411,9 +2385,8 @@ msgid ""
 msgstr "<p>确定要删除所选监控项吗？</p><p>此操作不可撤销。</p>"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:105
-#, fuzzy
 msgid "Queued size"
-msgstr "队列中"
+msgstr "队列大小"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:110
 msgid "Searching"
@@ -2659,9 +2632,8 @@ msgid "Detects all text changes where possible"
 msgstr "尽可能检测所有文本变更"
 
 #: changedetectionio/templates/_common_fields.html:9
-#, fuzzy
 msgid "Body for all notifications — You can use"
-msgstr "使用默认通知"
+msgstr "所有通知的正文 — 您可以使用"
 
 #: changedetectionio/templates/_common_fields.html:9
 msgid "templating in the notification title, body and URL, and tokens from below."
@@ -2676,9 +2648,8 @@ msgid "Token"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:19
-#, fuzzy
 msgid "Description"
-msgstr "新增"
+msgstr "描述"
 
 #: changedetectionio/templates/_common_fields.html:25
 msgid "The URL of the changedetection.io instance you are running."
@@ -2689,18 +2660,16 @@ msgid "The URL being watched."
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:33
-#, fuzzy
 msgid "The UUID of the watch."
-msgstr "先编辑，再监控"
+msgstr "监视器的UUID。"
 
 #: changedetectionio/templates/_common_fields.html:37
 msgid "The page title of the watch, uses <title> if not set, falls back to URL"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:41
-#, fuzzy
 msgid "The watch group / tag"
-msgstr "分组 / 标签"
+msgstr "监视器组/标签"
 
 #: changedetectionio/templates/_common_fields.html:45
 msgid "The URL of the preview page generated by changedetection.io."
@@ -2768,9 +2737,8 @@ msgid "Warning: Contents of"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:109
-#, fuzzy
 msgid "and"
-msgstr "变更"
+msgstr "和"
 
 #: changedetectionio/templates/_common_fields.html:109
 msgid "depend on how the difference algorithm perceives the change."
@@ -2783,20 +2751,17 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:110
-#, fuzzy
 msgid "More Here"
-msgstr "在此了解更多"
+msgstr "更多信息"
 
 #: changedetectionio/templates/_common_fields.html:126
 #: changedetectionio/templates/edit/text-options.html:62
-#, fuzzy
 msgid "Use"
-msgstr "暂停"
+msgstr "使用"
 
 #: changedetectionio/templates/_common_fields.html:126
-#, fuzzy
 msgid "AppRise Notification URLs"
-msgstr "通知 URL 列表"
+msgstr "AppRise通知URL"
 
 #: changedetectionio/templates/_common_fields.html:126
 msgid "for notification to just about any service!"
@@ -2809,9 +2774,8 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:128
-#, fuzzy
 msgid "Show advanced help and tips"
-msgstr "显示高级选项"
+msgstr "显示高级帮助和提示"
 
 #: changedetectionio/templates/_common_fields.html:130
 msgid "(or"
@@ -2826,9 +2790,8 @@ msgid "2,000 characters"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:130
-#, fuzzy
 msgid "of notification text, including the title."
-msgstr "通知标题"
+msgstr "通知文本,包括标题。"
 
 #: changedetectionio/templates/_common_fields.html:131
 msgid ""
@@ -2853,9 +2816,8 @@ msgid "for non-SSL ie"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:133
-#, fuzzy
 msgid "more help here"
-msgstr "更多帮助与示例请见此处"
+msgstr "更多帮助"
 
 #: changedetectionio/templates/_common_fields.html:134
 msgid "Accepts the"
@@ -2866,9 +2828,8 @@ msgid "placeholders listed below"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:138
-#, fuzzy
 msgid "Send test notification"
-msgstr "使用默认通知"
+msgstr "发送测试通知"
 
 #: changedetectionio/templates/_common_fields.html:140
 msgid "Add email"
@@ -2879,19 +2840,16 @@ msgid "Add an email address"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:142
-#, fuzzy
 msgid "Notification debug logs"
 msgstr "通知调试日志"
 
 #: changedetectionio/templates/_common_fields.html:144
-#, fuzzy
 msgid "Processing.."
-msgstr "处理器"
+msgstr "处理中.."
 
 #: changedetectionio/templates/_common_fields.html:151
-#, fuzzy
 msgid "Title for all notifications"
-msgstr "使用默认通知"
+msgstr "所有通知的标题"
 
 #: changedetectionio/templates/_common_fields.html:159
 msgid "For JSON payloads, use"
@@ -2907,9 +2865,8 @@ msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:162
 #: changedetectionio/templates/_common_fields.html:165
-#, fuzzy
 msgid "for example -"
-msgstr "例如。"
+msgstr "例如 -"
 
 #: changedetectionio/templates/_common_fields.html:165
 msgid "Regular-expression replace, use"
@@ -2922,18 +2879,16 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:176
-#, fuzzy
 msgid "Format for all notifications"
-msgstr "使用默认通知"
+msgstr "所有通知的格式"
 
 #: changedetectionio/templates/_helpers.html:25
 msgid "Entry"
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:153
-#, fuzzy
 msgid "Actions"
-msgstr "条件"
+msgstr "操作"
 
 #: changedetectionio/templates/_helpers.html:172
 msgid "Add a row/rule after"
@@ -2964,9 +2919,8 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:185
-#, fuzzy
 msgid "You may need to"
-msgstr "你需要"
+msgstr "您可能需要"
 
 #: changedetectionio/templates/_helpers.html:185
 msgid "Enable playwright environment variable"
@@ -2977,37 +2931,32 @@ msgid "and uncomment the"
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:185
-#, fuzzy
 msgid "in the"
-msgstr "该"
+msgstr "在"
 
 #: changedetectionio/templates/_helpers.html:185
-#, fuzzy
 msgid "file"
-msgstr "标题"
+msgstr "文件"
 
 #: changedetectionio/templates/_helpers.html:240
 msgid "Set a hourly/week day schedule"
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:247
-#, fuzzy
 msgid "Schedule time limits"
-msgstr "复检间隔（分钟）"
+msgstr "计划时间限制"
 
 #: changedetectionio/templates/_helpers.html:248
 msgid "Business hours"
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:249
-#, fuzzy
 msgid "Weekends"
-msgstr "周"
+msgstr "周末"
 
 #: changedetectionio/templates/_helpers.html:250
-#, fuzzy
 msgid "Reset"
-msgstr "请求"
+msgstr "重置"
 
 #: changedetectionio/templates/_helpers.html:259
 msgid ""
@@ -3020,14 +2969,12 @@ msgid "This could have unintended consequences."
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:270
-#, fuzzy
 msgid "More help and examples about using the scheduler"
-msgstr "更多帮助与示例请见此处"
+msgstr "有关使用调度器的更多帮助"
 
 #: changedetectionio/templates/_helpers.html:275
-#, fuzzy
 msgid "Want to use a time schedule?"
-msgstr "使用时间调度"
+msgstr "想要使用时间计划吗?"
 
 #: changedetectionio/templates/_helpers.html:275
 msgid "First confirm/save your Time Zone Settings"
@@ -3040,28 +2987,24 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:284
-#, fuzzy
 msgid "Triggered text"
-msgstr "忽略文本"
+msgstr "触发文本"
 
 #: changedetectionio/templates/_helpers.html:285
 msgid "Ignored for calculating changes, but still shown."
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:285
-#, fuzzy
 msgid "Ignored text"
 msgstr "忽略文本"
 
 #: changedetectionio/templates/_helpers.html:286
-#, fuzzy
 msgid "No change-detection will occur because this text exists."
-msgstr "文本匹配时阻止变更检测"
+msgstr "此文本存在时将不会进行变更检测。"
 
 #: changedetectionio/templates/_helpers.html:286
-#, fuzzy
 msgid "Blocked text"
-msgstr "忽略文本"
+msgstr "阻止文本"
 
 #: changedetectionio/templates/base.html:80
 msgid "Search, or Use Alt+S Key"
@@ -3083,18 +3026,16 @@ msgstr "语言支持仍在测试阶段，欢迎在 GitHub 提交 PR 帮助改进
 
 #: changedetectionio/templates/base.html:281
 #: changedetectionio/templates/base.html:294
-#, fuzzy
 msgid "Search"
-msgstr "搜索中"
+msgstr "搜索"
 
 #: changedetectionio/templates/base.html:286
 msgid "URL or Title"
 msgstr ""
 
 #: changedetectionio/templates/base.html:286
-#, fuzzy
 msgid "in"
-msgstr "信息"
+msgstr "在"
 
 #: changedetectionio/templates/base.html:287
 msgid "Enter search term..."
@@ -3129,19 +3070,16 @@ msgid "Scheduling is paused - click to resume"
 msgstr ""
 
 #: changedetectionio/templates/menu.html:20
-#, fuzzy
 msgid "Unmute notifications"
-msgstr "通知"
+msgstr "取消静音通知"
 
 #: changedetectionio/templates/menu.html:20
-#, fuzzy
 msgid "Mute notifications"
-msgstr "通知"
+msgstr "静音通知"
 
 #: changedetectionio/templates/menu.html:20
-#, fuzzy
 msgid "Notifications are muted - click to unmute"
-msgstr "通知告警次数"
+msgstr "通知已静音 - 点击取消静音"
 
 #: changedetectionio/templates/menu.html:25
 msgid "EDIT"
@@ -3234,9 +3172,8 @@ msgid "type flags (more"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html:62
-#, fuzzy
 msgid "information here"
-msgstr "暂无信息"
+msgstr "此处信息"
 
 #: changedetectionio/templates/edit/text-options.html:63
 msgid "Keyword example - example"
