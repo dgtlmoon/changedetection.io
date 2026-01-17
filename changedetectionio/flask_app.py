@@ -55,7 +55,7 @@ extra_stylesheets = []
 # Use bulletproof janus-based queues for sync/async reliability  
 update_q = RecheckPriorityQueue()
 notification_q = NotificationQueue()
-MAX_QUEUE_SIZE = 2000
+MAX_QUEUE_SIZE = 5000
 
 app = Flask(__name__,
             static_url_path="",
@@ -1005,6 +1005,9 @@ def ticker_thread_check_time_launch_checks():
         # Get a list of watches by UUID that are currently fetching data
         running_uuids = worker_handler.get_running_uuids()
 
+        # Build set of queued UUIDs once for O(1) lookup instead of O(n) per watch
+        queued_uuids = {q_item.item['uuid'] for q_item in update_q.queue}
+
         # Re #232 - Deepcopy the data incase it changes while we're iterating through it all
         watch_uuid_list = []
         while True:
@@ -1081,7 +1084,7 @@ def ticker_thread_check_time_launch_checks():
             seconds_since_last_recheck = now - watch['last_checked']
 
             if seconds_since_last_recheck >= (threshold + watch.jitter_seconds) and seconds_since_last_recheck >= recheck_time_minimum_seconds:
-                if not uuid in running_uuids and uuid not in [q_uuid.item['uuid'] for q_uuid in update_q.queue]:
+                if not uuid in running_uuids and uuid not in queued_uuids:
 
                     # Proxies can be set to have a limit on seconds between which they can be called
                     watch_proxy = datastore.get_preferred_proxy_for_watch(uuid=uuid)

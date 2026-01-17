@@ -176,7 +176,16 @@ class RecheckPriorityQueue:
     def empty(self) -> bool:
         """Check if queue is empty"""
         return self.qsize() == 0
-    
+
+    def get_queued_uuids(self) -> list:
+        """Get list of all queued UUIDs efficiently with single lock"""
+        try:
+            with self._lock:
+                return [item.item['uuid'] for item in self._priority_items if hasattr(item, 'item') and 'uuid' in item.item]
+        except Exception as e:
+            logger.critical(f"CRITICAL: Failed to get queued UUIDs: {str(e)}")
+            return []
+
     def close(self):
         """Close the janus queue"""
         try:
