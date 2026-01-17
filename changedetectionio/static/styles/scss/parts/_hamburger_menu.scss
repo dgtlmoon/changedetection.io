@@ -110,6 +110,9 @@
           background: var(--color-background-menu-link-hover);
         }
       }
+      &#menu-pause, &#menu-mute {
+        display: none;
+      }
     }
   }
 }

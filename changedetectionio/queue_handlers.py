@@ -361,21 +361,31 @@ class NotificationQueue:
     Simple wrapper around janus with bulletproof error handling.
     """
     
-    def __init__(self, maxsize: int = 0):
+    def __init__(self, maxsize: int = 0, datastore=None):
         try:
             self._janus_queue = janus.Queue(maxsize=maxsize)
             # BOTH interfaces required - see class docstring for why
             self.sync_q = self._janus_queue.sync_q   # Flask routes, threads
             self.async_q = self._janus_queue.async_q # Async workers
             self.notification_event_signal = signal('notification_event')
+            self.datastore = datastore  # For checking all_muted setting
             logger.debug("NotificationQueue initialized successfully")
         except Exception as e:
             logger.critical(f"CRITICAL: Failed to initialize NotificationQueue: {str(e)}")
             raise
+
+    def set_datastore(self, datastore):
+        """Set datastore reference after initialization (for circular dependency handling)"""
+        self.datastore = datastore
     
     def put(self, item: Dict[str, Any], block: bool = True, timeout: Optional[float] = None):
         """Thread-safe sync put with signal emission"""
         try:
+            # Check if all notifications are muted
+            if self.datastore and self.datastore.data['settings']['application'].get('all_muted', False):
+                logger.debug(f"Notification blocked - all notifications are muted: {item.get('uuid', 'unknown')}")
+                return False
+
             self.sync_q.put(item, block=block, timeout=timeout)
             self._emit_notification_signal(item)
             logger.debug(f"Successfully queued notification: {item.get('uuid', 'unknown')}")
@@ -387,6 +397,11 @@ class NotificationQueue:
     async def async_put(self, item: Dict[str, Any]):
         """Pure async put with signal emission"""
         try:
+            # Check if all notifications are muted
+            if self.datastore and self.datastore.data['settings']['application'].get('all_muted', False):
+                logger.debug(f"Notification blocked - all notifications are muted: {item.get('uuid', 'unknown')}")
+                return False
+
             await self.async_q.put(item)
             self._emit_notification_signal(item)
             logger.debug(f"Successfully async queued notification: {item.get('uuid', 'unknown')}")

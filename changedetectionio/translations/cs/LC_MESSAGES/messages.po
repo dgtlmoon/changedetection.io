@@ -2153,8 +2153,8 @@ msgid "IMPORT"
 msgstr "IMPORTOVAT"
 
 #: changedetectionio/templates/base.html:86
-msgid "BACKUPS"
-msgstr "BACKUPS"
+msgid "Backups"
+msgstr "Backups"
 
 #: changedetectionio/templates/base.html:90
 msgid "EDIT"

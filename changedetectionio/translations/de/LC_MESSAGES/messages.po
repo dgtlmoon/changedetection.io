@@ -579,7 +579,7 @@ msgstr "Backups wurden gelöscht."
 
 #: changedetectionio/blueprint/backups/templates/overview.html:6
 msgid "Backups"
-msgstr "BACKUPS"
+msgstr "Backups"
 
 #: changedetectionio/blueprint/backups/templates/overview.html:9
 msgid "A backup is running!"
@@ -1210,7 +1210,7 @@ msgstr "Möglicherweise möchten Sie die verwenden"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:13
 msgid "BACKUP"
-msgstr "BACKUPS"
+msgstr "Backups"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:13
 msgid "link first."
@@ -2154,8 +2154,8 @@ msgid "IMPORT"
 msgstr "IMPORTIEREN"
 
 #: changedetectionio/templates/base.html:86
-msgid "BACKUPS"
-msgstr "BACKUPS"
+msgid "Backups"
+msgstr "Backups"
 
 #: changedetectionio/templates/base.html:90
 msgid "EDIT"

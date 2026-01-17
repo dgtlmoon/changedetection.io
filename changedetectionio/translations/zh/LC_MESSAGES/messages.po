@@ -2153,7 +2153,7 @@ msgid "IMPORT"
 msgstr "导入"
 
 #: changedetectionio/templates/base.html:86
-msgid "BACKUPS"
+msgid "Backups"
 msgstr "备份"
 
 #: changedetectionio/templates/base.html:90

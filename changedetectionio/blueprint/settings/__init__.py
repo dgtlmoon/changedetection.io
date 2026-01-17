@@ -193,4 +193,32 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                logs=notification_debug_log if len(notification_debug_log) else ["Notification logs are empty - no notifications sent yet."])
         return output
 
+    @settings_blueprint.route("/toggle-all-paused", methods=['GET'])
+    @login_optionally_required
+    def toggle_all_paused():
+        current_state = datastore.data['settings']['application'].get('all_paused', False)
+        datastore.data['settings']['application']['all_paused'] = not current_state
+        datastore.needs_write_urgent = True
+
+        if datastore.data['settings']['application']['all_paused']:
+            flash(gettext("Automatic scheduling paused - checks will not be queued."), 'notice')
+        else:
+            flash(gettext("Automatic scheduling resumed - checks will be queued normally."), 'notice')
+
+        return redirect(url_for('watchlist.index'))
+
+    @settings_blueprint.route("/toggle-all-muted", methods=['GET'])
+    @login_optionally_required
+    def toggle_all_muted():
+        current_state = datastore.data['settings']['application'].get('all_muted', False)
+        datastore.data['settings']['application']['all_muted'] = not current_state
+        datastore.needs_write_urgent = True
+
+        if datastore.data['settings']['application']['all_muted']:
+            flash(gettext("All notifications muted."), 'notice')
+        else:
+            flash(gettext("All notifications unmuted."), 'notice')
+
+        return redirect(url_for('watchlist.index'))
+
     return settings_blueprint

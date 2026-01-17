@@ -2216,10 +2216,6 @@ msgstr ""
 msgid "IMPORT"
 msgstr ""
 
-#: changedetectionio/templates/base.html:86
-msgid "BACKUPS"
-msgstr ""
-
 #: changedetectionio/templates/base.html:90
 msgid "EDIT"
 msgstr ""

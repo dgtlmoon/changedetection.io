@@ -184,24 +184,24 @@ html[data-darkmode=true] {
 // Mobile adjustments
 @media only screen and (max-width: 768px) {
   .toast-container {
-    left: 10px !important;
-    right: 10px !important;
-    top: 10px !important;
-    transform: none !important;
-    align-items: stretch;
+    left: 50% !important;
+    right: auto !important;
+    top: 80px !important;
+    transform: translateX(-50%) !important;
+    align-items: center;
 
     &.toast-bottom-right,
     &.toast-bottom-center,
     &.toast-bottom-left {
       top: auto !important;
-      bottom: 10px !important;
+      bottom: 80px !important;
     }
   }
 
   .toast {
     min-width: auto;
     max-width: none;
-    width: 100%;
+    width: 80vw;
     transform: translateY(-100px);
 
     &.toast-show {
