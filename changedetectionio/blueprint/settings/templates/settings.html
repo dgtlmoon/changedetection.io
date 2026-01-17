@@ -25,6 +25,9 @@
             <li class="tab"><a href="#ui-options">{{ _('UI Options') }}</a></li>
             <li class="tab"><a href="#api">{{ _('API') }}</a></li>
             <li class="tab"><a href="#rss">{{ _('RSS') }}</a></li>
+            <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('backups.') %}active{% endif %}">
+                <a href="{{ url_for('backups.index') }}" class="pure-menu-link">{{ _('Backups') }}</a>
+            </li>
             <li class="tab"><a href="#timedate">{{ _('Time & Date') }}</a></li>
             <li class="tab"><a href="#proxies">{{ _('CAPTCHA & Proxies') }}</a></li>
             {% if plugin_tabs %}

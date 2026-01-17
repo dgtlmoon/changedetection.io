@@ -374,6 +374,9 @@ def changedetection_app(config=None, datastore_o=None):
     global datastore, socketio_server
     datastore = datastore_o
 
+    # Set datastore reference in notification queue for all_muted checking
+    notification_q.set_datastore(datastore)
+
     # Import and create a wrapper for is_safe_url that has access to app
     from changedetectionio.is_safe_url import is_safe_url as _is_safe_url
 
@@ -999,8 +1002,13 @@ def ticker_thread_check_time_launch_checks():
             
             if health_result['status'] != 'healthy':
                 logger.warning(f"Worker health check: {health_result['message']}")
-                
+
             last_health_check = now
+
+        # Check if all checks are paused
+        if datastore.data['settings']['application'].get('all_paused', False):
+            app.config.exit.wait(1)
+            continue
 
         # Get a list of watches by UUID that are currently fetching data
         running_uuids = worker_handler.get_running_uuids()

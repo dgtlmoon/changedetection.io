@@ -2,6 +2,13 @@
   padding: 0.5rem 1em;
   line-height: 1.2rem;
 }
+#menu-mute, #menu-pause {
+  padding-left: 0.3rem;
+  padding-right: 0.3rem;
+  img {
+    height: 1.2rem;
+  }
+}
 
 .pure-menu-item {
   svg {
