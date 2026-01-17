@@ -1,6 +1,6 @@
 from wtforms import Field
-from wtforms import widgets
 from markupsafe import Markup
+from flask_babel import lazy_gettext as _l
 
 class TernaryNoneBooleanWidget:
     """
@@ -14,9 +14,9 @@ class TernaryNoneBooleanWidget:
         boolean_mode = getattr(field, 'boolean_mode', False)
         
         # Get custom text or use defaults
-        yes_text = getattr(field, 'yes_text', 'Yes')
-        no_text = getattr(field, 'no_text', 'No')
-        none_text = getattr(field, 'none_text', 'Main settings')
+        yes_text = getattr(field, 'yes_text', _l('Yes'))
+        no_text = getattr(field, 'no_text', _l('No'))
+        none_text = getattr(field, 'none_text', _l('Main settings'))
         
         # True option
         checked_true = ' checked' if field.data is True else ''
@@ -63,14 +63,14 @@ class TernaryNoneBooleanField(Field):
     """
     widget = TernaryNoneBooleanWidget()
     
-    def __init__(self, label=None, validators=None, false_values=None, boolean_mode=False, 
-                 yes_text="Yes", no_text="No", none_text="Main settings", **kwargs):
+    def __init__(self, label=None, validators=None, false_values=None, boolean_mode=False,
+                 yes_text=None, no_text=None, none_text=None, **kwargs):
         super(TernaryNoneBooleanField, self).__init__(label, validators, **kwargs)
         
         self.boolean_mode = boolean_mode
-        self.yes_text = yes_text
-        self.no_text = no_text
-        self.none_text = none_text
+        self.yes_text = yes_text if yes_text is not None else _l('Yes')
+        self.no_text = no_text if no_text is not None else _l('No')
+        self.none_text = none_text if none_text is not None else _l('Main settings')
         
         if false_values is None:
             self.false_values = {'false', ''}
