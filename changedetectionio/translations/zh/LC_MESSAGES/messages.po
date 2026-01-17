@@ -2214,6 +2214,147 @@ msgstr "否"
 msgid "Main settings"
 msgstr "主设置"
 
+#: changedetectionio/templates/_common_fields.html:11
+msgid "Show token/placeholders"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html:18
+msgid "Token"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html:19
+#, fuzzy
+msgid "Description"
+msgstr "新增"
+
+#: changedetectionio/templates/_common_fields.html:128
+#, fuzzy
+msgid "Show advanced help and tips"
+msgstr "显示高级选项"
+
+#: changedetectionio/templates/_common_fields.html:138
+#, fuzzy
+msgid "Send test notification"
+msgstr "使用默认通知"
+
+#: changedetectionio/templates/_common_fields.html:140
+msgid "Add email"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html:140
+msgid "Add an email address"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html:142
+#, fuzzy
+msgid "Notification debug logs"
+msgstr "通知调试日志"
+
+#: changedetectionio/templates/_common_fields.html:144
+#, fuzzy
+msgid "Processing.."
+msgstr "处理器"
+
+#: changedetectionio/templates/_common_fields.html:151
+#, fuzzy
+msgid "Title for all notifications"
+msgstr "使用默认通知"
+
+#: changedetectionio/templates/_common_fields.html:176
+#, fuzzy
+msgid "Format for all notifications"
+msgstr "使用默认通知"
+
+#: changedetectionio/templates/edit/text-options.html:9
+msgid "Text to wait for before triggering a change/notification, all text and regex are tested case-insensitive."
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html:10
+msgid "Trigger text is processed from the result-text that comes out of any CSS/JSON Filters for this monitor"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html:11
+msgid "Each line is processed separately (think of each line as \"OR\")"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html:12
+msgid "Note: Wrap in forward slash / to use regex example:"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html:23
+msgid "Matching text will be ignored in the text snapshot (you can still see it but it wont trigger a change)"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html:24
+msgid "Each line processed separately, any line matching will be ignored (removed before creating the checksum)"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html:25
+msgid "Regular Expression support, wrap the entire line in forward slash"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html:26
+msgid "Changing this will affect the comparison checksum which may trigger an alert"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html:43
+msgid "Block change-detection while this text is on the page, all text and regex are tested case-insensitive, good for waiting for when a product is available again"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html:44
+msgid "Block text is processed from the result-text that comes out of any CSS/JSON Filters for this monitor"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html:45
+msgid "All lines here must not exist (think of each line as \"OR\")"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html:58
+msgid "Extracts text in the final output (line by line) after other filters using regular expressions or string match:"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html:60
+msgid "Regular expression - example"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html:61
+msgid "Don't forget to consider the white-space at the start of a line"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html:62
+#, fuzzy
+msgid "Use"
+msgstr "暂停"
+
+#: changedetectionio/templates/edit/text-options.html:62
+msgid "type flags (more"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html:62
+#, fuzzy
+msgid "information here"
+msgstr "暂无信息"
+
+#: changedetectionio/templates/edit/text-options.html:63
+msgid "Keyword example - example"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html:64
+msgid "Use groups to extract just that text - example"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html:64
+msgid "returns a list of years only"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html:65
+msgid "Example - match lines containing a keyword"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html:68
+msgid "One line per regular-expression/string match"
+msgstr ""
+
 #~ msgid "Entry"
 #~ msgstr "条目"
 

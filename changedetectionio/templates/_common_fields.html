@@ -8,16 +8,15 @@
             <span class="pure-form-message-inline">
         Body for all notifications &dash; You can use <a target="newwindow" href="https://jinja.palletsprojects.com/en/3.0.x/templates/">Jinja2</a> templating in the notification title, body and URL, and tokens from below.
     </span><br>
-        <div data-target="#notification-tokens-info{{ suffix }}" class="toggle-show pure-button button-tag button-xsmall">Show
-            token/placeholders
+        <div data-target="#notification-tokens-info{{ suffix }}" class="toggle-show pure-button button-tag button-xsmall">{{ _('Show token/placeholders') }}
         </div>
     </div>
     <div class="pure-controls" style="display: none;" id="notification-tokens-info{{ suffix }}">
         <table class="pure-table" id="token-table">
             <thead>
             <tr>
-                <th>Token</th>
-                <th>Description</th>
+                <th>{{ _('Token') }}</th>
+                <th>{{ _('Description') }}</th>
             </tr>
             </thead>
             <tbody>
@@ -126,7 +125,7 @@
                                 <p>
                                 <strong>Tip:</strong> Use <a target="newwindow" href="https://github.com/caronc/apprise">AppRise Notification URLs</a> for notification to just about any service! <i><a target="newwindow" href="https://github.com/dgtlmoon/changedetection.io/wiki/Notification-configuration-notes">Please read the notification services wiki here for important configuration notes</a></i>.<br>
 </p>
-                                <div data-target="#advanced-help-notifications" class="toggle-show pure-button button-tag button-xsmall">Show advanced help and tips</div>
+                                <div data-target="#advanced-help-notifications" class="toggle-show pure-button button-tag button-xsmall">{{ _('Show advanced help and tips') }}</div>
                                 <ul style="display: none" id="advanced-help-notifications">
                                 <li><code><a target="newwindow" href="https://github.com/caronc/apprise/wiki/Notify_discord">discord://</a></code> (or <code>https://discord.com/api/webhooks...</code>)) only supports a maximum <strong>2,000 characters</strong> of notification text, including the title.</li>
                                 <li><code><a target="newwindow" href="https://github.com/caronc/apprise/wiki/Notify_telegram">tgram://</a></code> bots can't send messages to other bots, so you should specify chat ID of non-bot user.</li>
@@ -136,20 +135,20 @@
                               </ul>
                             </div>
                             <div class="notifications-wrapper">
-                              <a id="send-test-notification" class="pure-button button-secondary button-xsmall" >Send test notification</a> <div class="spinner"  style="display: none;"></div>
+                              <a id="send-test-notification" class="pure-button button-secondary button-xsmall" >{{ _('Send test notification') }}</a> <div class="spinner"  style="display: none;"></div>
                             {% if emailprefix %}
-                              <a id="add-email-helper" class="pure-button button-secondary button-xsmall" >Add email <img style="height: 1em; display: inline-block" src="{{url_for('static_content', group='images', filename='email.svg')}}" alt="Add an email address"> </a>
+                              <a id="add-email-helper" class="pure-button button-secondary button-xsmall" >{{ _('Add email') }} <img style="height: 1em; display: inline-block" src="{{url_for('static_content', group='images', filename='email.svg')}}" alt="{{ _('Add an email address') }}"> </a>
                             {% endif %}
-                              <a href="{{url_for('settings.notification_logs')}}" class="pure-button button-secondary button-xsmall" >Notification debug logs</a>
+                              <a href="{{url_for('settings.notification_logs')}}" class="pure-button button-secondary button-xsmall" >{{ _('Notification debug logs') }}</a>
                               <br>
-                                <div id="notification-test-log" style="display: none;"><span class="pure-form-message-inline">Processing..</span></div>
+                                <div id="notification-test-log" style="display: none;"><span class="pure-form-message-inline">{{ _('Processing..') }}</span></div>
                             </div>
                         </div>
 
                         <div class="pure-control-group grey-form-border">
                             <div class="pure-control-group">
                                 {{ render_field(form.notification_title, class="m-d notification-title", placeholder=settings_application['notification_title']) }}
-                                <span class="pure-form-message-inline">Title for all notifications</span>
+                                <span class="pure-form-message-inline">{{ _('Title for all notifications') }}</span>
                             </div>
                             <div class="pure-control-group">
                                 {{ render_field(form.notification_body , rows=5, class="notification-body", placeholder=settings_application['notification_body']) }}
@@ -174,7 +173,7 @@
                             </div>
                             <div class="">
                                 {{ render_field(form.notification_format , class="notification-format") }}
-                                <span class="pure-form-message-inline">Format for all notifications</span>
+                                <span class="pure-form-message-inline">{{ _('Format for all notifications') }}</span>
                             </div>
                         </div>
 {% endmacro %}
