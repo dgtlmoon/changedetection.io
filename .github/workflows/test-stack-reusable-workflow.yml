@@ -84,6 +84,7 @@ jobs:
           docker run test-changedetectionio bash -c 'python3 -m unittest changedetectionio.tests.unit.test_watch_model'
           docker run test-changedetectionio bash -c 'python3 -m unittest changedetectionio.tests.unit.test_jinja2_security'
           docker run test-changedetectionio bash -c 'python3 -m unittest changedetectionio.tests.unit.test_semver'
+          docker run test-changedetectionio bash -c 'python3 -m unittest changedetectionio.tests.unit.test_html_to_text'
 
   # Basic pytest tests with ancillary services
   basic-tests:

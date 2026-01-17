@@ -75,7 +75,6 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
             continue
 
         uuid = queued_item_data.item.get('uuid')
-
         # RACE CONDITION FIX: Check if this UUID is already being processed by another worker
         from changedetectionio import worker_handler
         from changedetectionio.queuedWatchMetaData import PrioritizedItem
