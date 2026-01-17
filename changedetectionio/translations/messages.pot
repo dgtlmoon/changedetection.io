@@ -2265,3 +2265,18 @@ msgstr ""
 msgid "Login"
 msgstr ""
 
+#: changedetectionio/widgets/ternary_boolean.py:18
+#: changedetectionio/widgets/ternary_boolean.py:72
+msgid "Yes"
+msgstr ""
+
+#: changedetectionio/widgets/ternary_boolean.py:19
+#: changedetectionio/widgets/ternary_boolean.py:73
+msgid "No"
+msgstr ""
+
+#: changedetectionio/widgets/ternary_boolean.py:20
+#: changedetectionio/widgets/ternary_boolean.py:74
+msgid "Main settings"
+msgstr ""
+

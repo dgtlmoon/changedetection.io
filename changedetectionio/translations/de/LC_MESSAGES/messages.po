@@ -7,34 +7,33 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-03 14:31+0100\n"
+"POT-Creation-Date: 2026-01-02 16:07+0100\n"
 "PO-Revision-Date: 2026-01-14 03:57+0100\n"
 "Last-Translator: \n"
-"Language-Team: de <LL@li.org>\n"
 "Language: de\n"
+"Language-Team: de <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.17.0\n"
-"X-Generator: Poedit 3.8\n"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:241
-#: changedetectionio/flask_app.py:214 changedetectionio/flask_app.py:226
-#: changedetectionio/flask_app.py:247
+#: changedetectionio/flask_app.py:213 changedetectionio/flask_app.py:225
+#: changedetectionio/flask_app.py:246
 #: changedetectionio/realtime/socket_server.py:171
 msgid "Not yet"
 msgstr "Noch nicht"
 
-#: changedetectionio/flask_app.py:534
-msgid "Already logged in"
-msgstr "Bereits angemeldet"
-
-#: changedetectionio/flask_app.py:536
+#: changedetectionio/flask_app.py:468
 msgid "You must be logged in, please log in."
 msgstr "Sie müssen angemeldet sein, bitte melden Sie sich an."
 
-#: changedetectionio/flask_app.py:551
+#: changedetectionio/flask_app.py:495
+msgid "Already logged in"
+msgstr "Bereits angemeldet"
+
+#: changedetectionio/flask_app.py:522
 msgid "Incorrect password"
 msgstr "Falsches Passwort"
 
@@ -579,8 +578,6 @@ msgid "Backups were deleted."
 msgstr "Backups wurden gelöscht."
 
 #: changedetectionio/blueprint/backups/templates/overview.html:6
-#: changedetectionio/templates/base.html:282
-#: changedetectionio/templates/base.html:290
 msgid "Backups"
 msgstr "BACKUPS"
 
@@ -1235,8 +1232,7 @@ msgid "Clear History!"
 msgstr "Verlauf löschen!"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:39
-#: changedetectionio/templates/base.html:379
-#: changedetectionio/templates/base.html:399
+#: changedetectionio/templates/base.html:274
 msgid "Cancel"
 msgstr "Abbrechen"
 
@@ -1957,7 +1953,7 @@ msgid "No information"
 msgstr "Keine Informationen"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:234
-#: changedetectionio/templates/base.html:353
+#: changedetectionio/templates/base.html:248
 msgid "Checking now"
 msgstr "Jetzt prüfen"
 
@@ -2140,235 +2136,199 @@ msgstr "Änderungen an Webseitentext/HTML, JSON und PDF"
 msgid "Detects all text changes where possible"
 msgstr "Erkennt nach Möglichkeit alle Textänderungen"
 
-#: changedetectionio/templates/_helpers.html:25
-msgid "Entry"
-msgstr "Eintrag"
-
-#: changedetectionio/templates/_helpers.html:153
-msgid "Actions"
-msgstr "Maßnahmen"
-
-#: changedetectionio/templates/_helpers.html:172
-msgid "Add a row/rule after"
-msgstr "Füge eine Zeile/Regel nach"
-
-#: changedetectionio/templates/_helpers.html:173
-msgid "Remove this row/rule"
-msgstr "Diese Zeile/Regel entfernen"
-
-#: changedetectionio/templates/_helpers.html:174
-msgid "Verify this rule against current snapshot"
-msgstr "Überprüfen Sie diese Regel anhand des aktuellen Snapshots."
-
-#: changedetectionio/templates/_helpers.html:184
-msgid "Error - This watch needs Chrome (with playwright/sockpuppetbrowser), but Chrome based fetching is not enabled."
-msgstr "Fehler – Diese Überwachung benötigt Chrome (mit Playwright/Sockpuppetbrowser), aber das Abrufen über Chrome ist nicht aktiviert."
-
-#: changedetectionio/templates/_helpers.html:184
-msgid "Alternatively try our"
-msgstr "Alternativ können Sie auch unser"
-
-#: changedetectionio/templates/_helpers.html:184
-msgid "very affordable subscription based service which has all this setup for you"
-msgstr "ein sehr günstiges Abonnement-basiertes Angebot, das all diese Einstellungen für Sie übernimmt"
-
-#: changedetectionio/templates/_helpers.html:185
-msgid "You may need to"
-msgstr "Das musst du"
-
-#: changedetectionio/templates/_helpers.html:185
-msgid "Enable playwright environment variable"
-msgstr "Aktivieren der Umgebungsvariable „Playwright“"
-
-#: changedetectionio/templates/_helpers.html:185
-msgid "and uncomment the"
-msgstr "und entferne den Kommentar von"
-
-#: changedetectionio/templates/_helpers.html:185
-msgid "in the"
-msgstr "Der"
-
-#: changedetectionio/templates/_helpers.html:185
-msgid "file"
-msgstr "Titel"
-
-#: changedetectionio/templates/_helpers.html:240
-msgid "Set a hourly/week day schedule"
-msgstr "Legen Sie einen Stunden-/Wochenplan fest."
-
-#: changedetectionio/templates/_helpers.html:247
-msgid "Schedule time limits"
-msgstr "Zeitlimits festlegen"
-
-#: changedetectionio/templates/_helpers.html:248
-msgid "Business hours"
-msgstr "Geschäftszeiten"
-
-#: changedetectionio/templates/_helpers.html:249
-msgid "Weekends"
-msgstr "Wochenenden"
-
-#: changedetectionio/templates/_helpers.html:250
-msgid "Reset"
-msgstr "Zurücksetzen"
-
-#: changedetectionio/templates/_helpers.html:259
-msgid "Warning, one or more of your 'days' has a duration that would extend into the next day."
-msgstr "Achtung, einer oder mehrere Ihrer „Tage“ haben eine Dauer, die sich bis in den nächsten Tag erstreckt."
-
-#: changedetectionio/templates/_helpers.html:260
-msgid "This could have unintended consequences."
-msgstr "Dies könnte unbeabsichtigte Folgen haben."
-
-#: changedetectionio/templates/_helpers.html:270
-msgid "More help and examples about using the scheduler"
-msgstr "Weitere Hilfe und Beispiele finden Sie hier"
-
-#: changedetectionio/templates/_helpers.html:275
-msgid "Want to use a time schedule?"
-msgstr "Möchten Sie einen Zeitplan verwenden?"
-
-#: changedetectionio/templates/_helpers.html:275
-msgid "First confirm/save your Time Zone Settings"
-msgstr "Bestätigen/speichern Sie zunächst Ihre Einstellungen für die Zeitzone."
-
-#: changedetectionio/templates/_helpers.html:284
-msgid "Triggers a change if this text appears, AND something changed in the document."
-msgstr "Löst eine Änderung aus, wenn dieser Text erscheint UND sich etwas im Dokument geändert hat."
-
-#: changedetectionio/templates/_helpers.html:284
-msgid "Triggered text"
-msgstr "Fehlertext"
-
-#: changedetectionio/templates/_helpers.html:285
-msgid "Ignored for calculating changes, but still shown."
-msgstr "Wird für die Berechnung von Änderungen ignoriert, aber dennoch angezeigt."
-
-#: changedetectionio/templates/_helpers.html:285
-msgid "Ignored text"
-msgstr "Fehlertext"
-
-#: changedetectionio/templates/_helpers.html:286
-msgid "No change-detection will occur because this text exists."
-msgstr "Blockieren Sie die Änderungserkennung, während der Text übereinstimmt"
-
-#: changedetectionio/templates/_helpers.html:286
-msgid "Blocked text"
-msgstr "Fehlertext"
-
-#: changedetectionio/templates/base.html:78
-#: changedetectionio/templates/base.html:168
+#: changedetectionio/templates/base.html:77
 msgid "GROUPS"
 msgstr "GRUPPEN"
 
-#: changedetectionio/templates/base.html:81
-#: changedetectionio/templates/base.html:169
+#: changedetectionio/templates/base.html:80
 msgid "SETTINGS"
 msgstr "EINSTELLUNGEN"
 
-#: changedetectionio/templates/base.html:84
-#: changedetectionio/templates/base.html:170
+#: changedetectionio/templates/base.html:83
 msgid "IMPORT"
 msgstr "IMPORTIEREN"
 
-#: changedetectionio/templates/base.html:87
-#: changedetectionio/templates/base.html:171
+#: changedetectionio/templates/base.html:86
 msgid "BACKUPS"
 msgstr "BACKUPS"
 
-#: changedetectionio/templates/base.html:91
-#: changedetectionio/templates/base.html:173
+#: changedetectionio/templates/base.html:90
 msgid "EDIT"
 msgstr "BEARBEITEN"
 
-#: changedetectionio/templates/base.html:101
-#: changedetectionio/templates/base.html:177
+#: changedetectionio/templates/base.html:100
 msgid "LOG OUT"
 msgstr "ABMELDEN"
 
-#: changedetectionio/templates/base.html:108
+#: changedetectionio/templates/base.html:109
 msgid "Search, or Use Alt+S Key"
 msgstr "Suchen oder Alt+S-Taste verwenden"
 
-#: changedetectionio/templates/base.html:114
+#: changedetectionio/templates/base.html:116
 msgid "Toggle Light/Dark Mode"
 msgstr "Hell-/Dunkelmodus umschalten"
 
-#: changedetectionio/templates/base.html:115
+#: changedetectionio/templates/base.html:117
 msgid "Toggle light/dark mode"
 msgstr "Hell-/Dunkelmodus umschalten"
 
-#: changedetectionio/templates/base.html:125
+#: changedetectionio/templates/base.html:127
 msgid "Change Language"
 msgstr "Sprache ändern"
 
-#: changedetectionio/templates/base.html:126
+#: changedetectionio/templates/base.html:128
 msgid "Change language"
 msgstr "Sprache ändern"
 
-#: changedetectionio/templates/base.html:253
-msgid "Watch List"
-msgstr "Überwachungsliste"
-
-#: changedetectionio/templates/base.html:258
-msgid "Watches"
-msgstr "Überwachungen"
-
-#: changedetectionio/templates/base.html:261
-msgid "Queue Status"
-msgstr "Warteschlangenstatus"
-
-#: changedetectionio/templates/base.html:270
-msgid "Queue"
-msgstr "Wartend"
-
-#: changedetectionio/templates/base.html:274
-#: changedetectionio/templates/base.html:279
-msgid "Settings"
-msgstr "EINSTELLUNGEN"
-
-#: changedetectionio/templates/base.html:293
-msgid "Sitemap Crawler"
-msgstr "Sitemap Crawler"
-
-#: changedetectionio/templates/base.html:318
-msgid "Sitemap"
-msgstr "Sitemap"
-
-#: changedetectionio/templates/base.html:354
+#: changedetectionio/templates/base.html:249
 msgid "Real-time updates offline"
 msgstr "Echtzeit-Updates offline"
 
-#: changedetectionio/templates/base.html:364
+#: changedetectionio/templates/base.html:259
 msgid "Select Language"
 msgstr "Wählen Sie Sprache aus"
 
-#: changedetectionio/templates/base.html:375
+#: changedetectionio/templates/base.html:270
 msgid "Language support is in beta, please help us improve by opening a PR on GitHub with any updates."
 msgstr "Die Sprachunterstützung befindet sich in der Beta-Phase. Bitte helfen Sie uns bei der Verbesserung, indem Sie auf GitHub einen PR mit Updates öffnen."
 
-#: changedetectionio/templates/base.html:387
-#: changedetectionio/templates/base.html:400
-msgid "Search"
-msgstr "Suchen"
-
-#: changedetectionio/templates/base.html:392
-msgid "URL or Title"
-msgstr "URL oder Titel"
-
-#: changedetectionio/templates/base.html:392
-msgid "in"
-msgstr "Weitere Informationen"
-
-#: changedetectionio/templates/base.html:393
-msgid "Enter search term..."
-msgstr "Suchbegriff eingeben..."
-
-#: changedetectionio/templates/login.html:11
+#: changedetectionio/templates/login.html:10
 msgid "Password"
 msgstr "Passwort"
 
-#: changedetectionio/templates/login.html:17
+#: changedetectionio/templates/login.html:16
 msgid "Login"
 msgstr "Login"
+
+#: changedetectionio/widgets/ternary_boolean.py:18
+#: changedetectionio/widgets/ternary_boolean.py:72
+msgid "Yes"
+msgstr "Ja"
+
+#: changedetectionio/widgets/ternary_boolean.py:19
+#: changedetectionio/widgets/ternary_boolean.py:73
+msgid "No"
+msgstr "Nein"
+
+#: changedetectionio/widgets/ternary_boolean.py:20
+#: changedetectionio/widgets/ternary_boolean.py:74
+msgid "Main settings"
+msgstr "Haupteinstellungen"
+
+#~ msgid "Entry"
+#~ msgstr "Eintrag"
+
+#~ msgid "Actions"
+#~ msgstr "Maßnahmen"
+
+#~ msgid "Add a row/rule after"
+#~ msgstr "Füge eine Zeile/Regel nach"
+
+#~ msgid "Remove this row/rule"
+#~ msgstr "Diese Zeile/Regel entfernen"
+
+#~ msgid "Verify this rule against current snapshot"
+#~ msgstr "Überprüfen Sie diese Regel anhand des aktuellen Snapshots."
+
+#~ msgid "Error - This watch needs Chrome (with playwright/sockpuppetbrowser), but Chrome based fetching is not enabled."
+#~ msgstr "Fehler – Diese Überwachung benötigt Chrome (mit Playwright/Sockpuppetbrowser), aber das Abrufen über Chrome ist nicht aktiviert."
+
+#~ msgid "Alternatively try our"
+#~ msgstr "Alternativ können Sie auch unser"
+
+#~ msgid "very affordable subscription based service which has all this setup for you"
+#~ msgstr "ein sehr günstiges Abonnement-basiertes Angebot, das all diese Einstellungen für Sie übernimmt"
+
+#~ msgid "You may need to"
+#~ msgstr "Das musst du"
+
+#~ msgid "Enable playwright environment variable"
+#~ msgstr "Aktivieren der Umgebungsvariable „Playwright“"
+
+#~ msgid "and uncomment the"
+#~ msgstr "und entferne den Kommentar von"
+
+#~ msgid "in the"
+#~ msgstr "Der"
+
+#~ msgid "file"
+#~ msgstr "Titel"
+
+#~ msgid "Set a hourly/week day schedule"
+#~ msgstr "Legen Sie einen Stunden-/Wochenplan fest."
+
+#~ msgid "Schedule time limits"
+#~ msgstr "Zeitlimits festlegen"
+
+#~ msgid "Business hours"
+#~ msgstr "Geschäftszeiten"
+
+#~ msgid "Weekends"
+#~ msgstr "Wochenenden"
+
+#~ msgid "Reset"
+#~ msgstr "Zurücksetzen"
+
+#~ msgid "Warning, one or more of your 'days' has a duration that would extend into the next day."
+#~ msgstr "Achtung, einer oder mehrere Ihrer „Tage“ haben eine Dauer, die sich bis in den nächsten Tag erstreckt."
+
+#~ msgid "This could have unintended consequences."
+#~ msgstr "Dies könnte unbeabsichtigte Folgen haben."
+
+#~ msgid "More help and examples about using the scheduler"
+#~ msgstr "Weitere Hilfe und Beispiele finden Sie hier"
+
+#~ msgid "Want to use a time schedule?"
+#~ msgstr "Möchten Sie einen Zeitplan verwenden?"
+
+#~ msgid "First confirm/save your Time Zone Settings"
+#~ msgstr "Bestätigen/speichern Sie zunächst Ihre Einstellungen für die Zeitzone."
+
+#~ msgid "Triggers a change if this text appears, AND something changed in the document."
+#~ msgstr "Löst eine Änderung aus, wenn dieser Text erscheint UND sich etwas im Dokument geändert hat."
+
+#~ msgid "Triggered text"
+#~ msgstr "Fehlertext"
+
+#~ msgid "Ignored for calculating changes, but still shown."
+#~ msgstr "Wird für die Berechnung von Änderungen ignoriert, aber dennoch angezeigt."
+
+#~ msgid "Ignored text"
+#~ msgstr "Fehlertext"
+
+#~ msgid "No change-detection will occur because this text exists."
+#~ msgstr "Blockieren Sie die Änderungserkennung, während der Text übereinstimmt"
+
+#~ msgid "Blocked text"
+#~ msgstr "Fehlertext"
+
+#~ msgid "Watch List"
+#~ msgstr "Überwachungsliste"
+
+#~ msgid "Watches"
+#~ msgstr "Überwachungen"
+
+#~ msgid "Queue Status"
+#~ msgstr "Warteschlangenstatus"
+
+#~ msgid "Queue"
+#~ msgstr "Wartend"
+
+#~ msgid "Sitemap Crawler"
+#~ msgstr "Sitemap Crawler"
+
+#~ msgid "Sitemap"
+#~ msgstr "Sitemap"
+
+#~ msgid "Search"
+#~ msgstr "Suchen"
+
+#~ msgid "URL or Title"
+#~ msgstr "URL oder Titel"
+
+#~ msgid "in"
+#~ msgstr "Weitere Informationen"
+
+#~ msgid "Enter search term..."
+#~ msgstr "Suchbegriff eingeben..."
 
