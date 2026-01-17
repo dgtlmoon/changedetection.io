@@ -1021,16 +1021,17 @@ def ticker_thread_check_time_launch_checks():
             else:
                 break
 
-        # Re #438 - Don't place more watches in the queue to be checked if the queue is already large
-        while update_q.qsize() >= 2000:
-            logger.warning(f"Recheck watches queue size limit reached ({MAX_QUEUE_SIZE}), skipping adding more items")
-            app.config.exit.wait(10.0)
-
-
         recheck_time_system_seconds = int(datastore.threshold_seconds)
 
         # Check for watches outside of the time threshold to put in the thread queue.
-        for uuid in watch_uuid_list:
+        for watch_index, uuid in enumerate(watch_uuid_list):
+            # Re #438 - Check queue size every 100 watches for CPU efficiency (not every watch)
+            if watch_index % 100 == 0:
+                current_queue_size = update_q.qsize()
+                if current_queue_size >= MAX_QUEUE_SIZE:
+                    logger.debug(f"Queue size limit reached ({current_queue_size}/{MAX_QUEUE_SIZE}), stopping scheduler this iteration.")
+                    break
+
             now = time.time()
             watch = datastore.data['watching'].get(uuid)
             if not watch:
