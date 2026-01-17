@@ -1170,10 +1170,10 @@ msgstr ""
 msgid "Queued 1 watch for rechecking."
 msgstr ""
 
-#: changedetectionio/blueprint/ui/__init__.py:257
+#: changedetectionio/blueprint/ui/__init__.py:283
 #, python-brace-format
 msgid "Queued {} watches for rechecking."
-msgstr ""
+msgstr "{}개의 감시 항목을 재확인 대기열에 추가했습니다."
 
 #: changedetectionio/blueprint/ui/__init__.py:259
 msgid "No watches available to recheck."

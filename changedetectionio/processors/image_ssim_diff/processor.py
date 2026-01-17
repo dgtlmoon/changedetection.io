@@ -204,7 +204,7 @@ class perform_site_check(difference_detection_processor):
                 except Exception as e:
                     exception_container[0] = e
 
-            thread = threading.Thread(target=thread_target)
+            thread = threading.Thread(target=thread_target, daemon=True, name="ImageDiff-Processor")
             thread.start()
             thread.join(timeout=60)
 

@@ -1128,7 +1128,7 @@ msgstr "已克隆，正在编辑新的监控项。"
 msgid "Queued 1 watch for rechecking."
 msgstr "已将 1 个监控项加入重新检查队列。"
 
-#: changedetectionio/blueprint/ui/__init__.py:257
+#: changedetectionio/blueprint/ui/__init__.py:283
 #, python-brace-format
 msgid "Queued {} watches for rechecking."
 msgstr "已将 {} 个监控项加入重新检查队列。"

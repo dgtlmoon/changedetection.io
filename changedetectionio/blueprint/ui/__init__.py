@@ -260,36 +260,44 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
             worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
             flash(gettext("Queued 1 watch for rechecking."))
         else:
-            # Multiple watches - queue in background thread to avoid blocking HTTP response
-            def queue_watches_background():
-                """Background thread to queue watches - discarded after completion."""
-                queued_count = 0
-                try:
-                    # Get most overdue first
-                    for k in sorted(datastore.data['watching'].items(), key=lambda item: item[1].get('last_checked', 0)):
-                        watch_uuid = k[0]
-                        watch = k[1]
-                        if not watch['paused']:
-                            if watch_uuid:
-                                if with_errors and not watch.get('last_error'):
-                                    continue
+            # Multiple watches - first count how many need to be queued
+            watches_to_queue = []
+            for k in sorted(datastore.data['watching'].items(), key=lambda item: item[1].get('last_checked', 0)):
+                watch_uuid = k[0]
+                watch = k[1]
+                if not watch['paused'] and watch_uuid:
+                    if with_errors and not watch.get('last_error'):
+                        continue
+                    if tag != None and tag not in watch['tags']:
+                        continue
+                    watches_to_queue.append(watch_uuid)
 
-                                if tag != None and tag not in watch['tags']:
-                                    continue
+            # If less than 20 watches, queue synchronously for immediate feedback
+            if len(watches_to_queue) < 20:
+                for watch_uuid in watches_to_queue:
+                    worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
 
-                                worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
-                                queued_count += 1
+                if len(watches_to_queue) == 1:
+                    flash(gettext("Queued 1 watch for rechecking."))
+                else:
+                    flash(gettext("Queued {} watches for rechecking.").format(len(watches_to_queue)))
+            else:
+                # 20+ watches - queue in background thread to avoid blocking HTTP response
+                def queue_watches_background():
+                    """Background thread to queue watches - discarded after completion."""
+                    try:
+                        for watch_uuid in watches_to_queue:
+                            worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
+                        logger.info(f"Background queueing complete: {len(watches_to_queue)} watches queued")
+                    except Exception as e:
+                        logger.error(f"Error in background queueing: {e}")
 
-                    logger.info(f"Background queueing complete: {queued_count} watches queued")
-                except Exception as e:
-                    logger.error(f"Error in background queueing: {e}")
+                # Start background thread and return immediately
+                thread = threading.Thread(target=queue_watches_background, daemon=True, name="QueueWatches-Background")
+                thread.start()
 
-            # Start background thread and return immediately
-            thread = threading.Thread(target=queue_watches_background, daemon=True)
-            thread.start()
-
-            # Return immediately with approximate message
-            flash(gettext("Queueing watches for rechecking in background..."))
+                # Return immediately with approximate message
+                flash(gettext("Queueing watches for rechecking in background..."))
 
         return redirect(url_for('watchlist.index', **({'tag': tag} if tag else {})))
 

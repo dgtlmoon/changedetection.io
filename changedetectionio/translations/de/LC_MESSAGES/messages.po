@@ -1129,7 +1129,7 @@ msgstr "Geklont, Sie bearbeiten die neue Beobachtung."
 msgid "Queued 1 watch for rechecking."
 msgstr "1 Überwachung zur erneuten Überprüfung in Warteschlange gestellt."
 
-#: changedetectionio/blueprint/ui/__init__.py:257
+#: changedetectionio/blueprint/ui/__init__.py:283
 #, python-brace-format
 msgid "Queued {} watches for rechecking."
 msgstr "In der Warteschlange {} zur erneuten Überprüfung."
