@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-17 20:38+0100\n"
+"POT-Creation-Date: 2026-01-17 21:02+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1417,6 +1417,7 @@ msgid "Add a new organisational tag"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:14
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:65
 msgid "Watch group / tag"
 msgstr ""
 

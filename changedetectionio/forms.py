@@ -728,7 +728,7 @@ class ValidateStartsWithRegex(object):
 
 class quickWatchForm(Form):
     url = fields.URLField(_l('URL'), validators=[validateURL()])
-    tags = StringTagUUID(_l('Group tag'), [validators.Optional()])
+    tags = StringTagUUID(_l('Group tag'), validators=[validators.Optional()])
     watch_submit_button = SubmitField(_l('Watch'), render_kw={"class": "pure-button pure-button-primary"})
     processor = RadioField(_l('Processor'), choices=lambda: processors.available_processors(), default="text_json_diff")
     edit_and_watch_submit_button = SubmitField(_l('Edit > Watch'), render_kw={"class": "pure-button pure-button-primary"})

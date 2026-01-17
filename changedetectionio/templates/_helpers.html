@@ -1,5 +1,5 @@
 {% macro render_field(field) %}
-    <div {% if field.errors or field.top_errors %} class="error" {% endif %}><label for="{{ field.id }}">{{ _(field.label.text | string) | forceescape }}</label></div>
+    <div {% if field.errors or field.top_errors %} class="error" {% endif %}>{{ field.label }}</div>
     <div {% if field.errors or field.top_errors %} class="error" {% endif %}>{{ field(**kwargs)|safe }}
         {% if field.top_errors %}
             top
@@ -46,7 +46,7 @@
 
 {% macro render_checkbox_field(field) %}
   <div class="checkbox {% if field.errors %} error {% endif %}">
-  {{ field(**kwargs)|safe }} <label for="{{ field.id }}">{{ _(field.label.text | string) | forceescape }}</label>
+  {{ field(**kwargs)|safe }} <label for="{{ field.id }}">{{ field.label.text | string | forceescape }}</label>
   {% if field.errors %}
     <ul class=errors>
     {% for error in field.errors %}
@@ -62,7 +62,7 @@
     {% set dummy = field.__setattr__('boolean_mode', true) %}
   {% endif %}
   <div class="ternary-field {% if field.errors %} error {% endif %}">
-    <div class="ternary-field-label"><label for="{{ field.id }}">{{ _(field.label.text | string) | forceescape }}</label></div>
+    <div class="ternary-field-label"><label for="{{ field.id }}">{{ field.label.text | string | forceescape }}</label></div>
     <div class="ternary-field-widget">{{ field(**kwargs)|safe }}</div>
     {% if field.errors %}
       <ul class=errors>
@@ -76,7 +76,7 @@
 
 
 {% macro render_simple_field(field) %}
-  <span class="label {% if field.errors %}error{% endif %}"><label for="{{ field.id }}">{{ _(field.label.text | string) | forceescape }}</label></span>
+  <span class="label {% if field.errors %}error{% endif %}"><label for="{{ field.id }}">{{ field.label.text | string | forceescape }}</label></span>
   <span {% if field.errors %} class="error" {% endif %}>{{ field(**kwargs)|safe }}
   {% if field.errors %}
     <ul class=errors>
@@ -123,7 +123,7 @@
             <tbody>
               {% for subfield in entry %}
                 <tr {% if subfield.errors %} class="error" {% endif %}>
-                  <th {% if subfield.errors %} class="error" {% endif %}><label for="{{ subfield.id }}" {% if subfield.errors %} class="error" {% endif %}>{{ _(subfield.label.text | string) }}</label></th>
+                  <th {% if subfield.errors %} class="error" {% endif %}><label for="{{ subfield.id }}" {% if subfield.errors %} class="error" {% endif %}>{{ subfield.label.text | string }}</label></th>
                   <td {% if subfield.errors %} class="error" {% endif %}>
                     {{ subfield(**kwargs)|safe }}
                     {% if subfield.errors %}
@@ -148,7 +148,7 @@
   <div class="fieldlist_formfields" id="{{ table_id }}">
     <div class="fieldlist-header">
       {% for subfield in fieldlist[0] %}
-        <div class="fieldlist-header-cell">{{ _(subfield.label.text | string) }}</div>
+        <div class="fieldlist-header-cell">{{ subfield.label.text | string }}</div>
       {% endfor %}
       <div class="fieldlist-header-cell">{{ _('Actions') }}</div>
     </div>

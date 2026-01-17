@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-17 20:38+0100\n"
+"POT-Creation-Date: 2026-01-17 20:59+0100\n"
 "PO-Revision-Date: 2026-01-02 11:40+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: cs\n"
@@ -39,14 +39,14 @@ msgstr "Nesprávné heslo"
 
 #: changedetectionio/forms.py:63 changedetectionio/forms.py:243
 msgid ""
-"At least one time interval (weeks, days, hours, minutes, or seconds) must be "
-"specified."
+"At least one time interval (weeks, days, hours, minutes, or seconds) must"
+" be specified."
 msgstr ""
 
 #: changedetectionio/forms.py:64
 msgid ""
-"At least one time interval (weeks, days, hours, minutes, or seconds) must be "
-"specified when not using global settings."
+"At least one time interval (weeks, days, hours, minutes, or seconds) must"
+" be specified when not using global settings."
 msgstr ""
 
 #: changedetectionio/forms.py:164
@@ -174,7 +174,6 @@ msgid "URL"
 msgstr "URL"
 
 #: changedetectionio/forms.py:731
-#, fuzzy
 msgid "Group tag"
 msgstr "Skupina / Značka"
 
@@ -293,8 +292,7 @@ msgstr "Žádost"
 
 #: changedetectionio/forms.py:811
 msgid "Ignore status codes (process non-2xx status codes as normal)"
-msgstr ""
-"Ignorovat stavové kódy (zpracovat stavové kódy jiné než 2xx jako normálně)"
+msgstr "Ignorovat stavové kódy (zpracovat stavové kódy jiné než 2xx jako normálně)"
 
 #: changedetectionio/forms.py:812
 msgid "Only trigger when unique lines appear in all history"
@@ -612,8 +610,8 @@ msgstr "A backup is running!"
 
 #: changedetectionio/blueprint/backups/templates/overview.html:13
 msgid ""
-"Here you can download and request a new backup, when a backup is completed "
-"you will see it listed below."
+"Here you can download and request a new backup, when a backup is "
+"completed you will see it listed below."
 msgstr ""
 
 #: changedetectionio/blueprint/backups/templates/overview.html:19
@@ -634,8 +632,8 @@ msgstr "Odstranit zálohy"
 
 #: changedetectionio/blueprint/imports/importer.py:45
 msgid ""
-"Importing 5,000 of the first URLs from your list, the rest can be imported "
-"again."
+"Importing 5,000 of the first URLs from your list, the rest can be "
+"imported again."
 msgstr ""
 
 #: changedetectionio/blueprint/imports/importer.py:78
@@ -664,16 +662,15 @@ msgstr ""
 #: changedetectionio/blueprint/imports/importer.py:200
 #: changedetectionio/blueprint/imports/importer.py:268
 #, python-brace-format
-msgid ""
-"Error processing row number {}, URL value was incorrect, row was skipped."
+msgid "Error processing row number {}, URL value was incorrect, row was skipped."
 msgstr ""
 
 #: changedetectionio/blueprint/imports/importer.py:214
 #: changedetectionio/blueprint/imports/importer.py:297
 #, python-brace-format
 msgid ""
-"Error processing row number {}, check all cell data types are correct, row "
-"was skipped."
+"Error processing row number {}, check all cell data types are correct, "
+"row was skipped."
 msgstr ""
 
 #: changedetectionio/blueprint/imports/importer.py:218
@@ -700,8 +697,8 @@ msgstr ".XLSX a Wachete"
 
 #: changedetectionio/blueprint/imports/templates/import.html:20
 msgid ""
-"Enter one URL per line, and optionally add tags for each URL after a space, "
-"delineated by comma (,):"
+"Enter one URL per line, and optionally add tags for each URL after a "
+"space, delineated by comma (,):"
 msgstr ""
 
 #: changedetectionio/blueprint/imports/templates/import.html:22
@@ -714,8 +711,8 @@ msgstr "URL, které neprojdou validací, zůstanou v textové oblasti."
 
 #: changedetectionio/blueprint/imports/templates/import.html:44
 msgid ""
-"Copy and Paste your Distill.io watch 'export' file, this should be a JSON "
-"file."
+"Copy and Paste your Distill.io watch 'export' file, this should be a JSON"
+" file."
 msgstr ""
 
 #: changedetectionio/blueprint/imports/templates/import.html:45
@@ -746,8 +743,9 @@ msgstr "Jak exportovat?"
 msgid "Be sure to set your default fetcher to Chrome if required."
 msgstr ""
 "V případě potřeby nezapomeňte nastavit výchozí nástroj pro načítání na "
-"Chrome.V případě potřeby nezapomeňte nastavit výchozí načítání na Chrome.V "
-"případě potřeby nezapomeňte nastavit výchozí nástroj pro načítání na Chrome."
+"Chrome.V případě potřeby nezapomeňte nastavit výchozí načítání na "
+"Chrome.V případě potřeby nezapomeňte nastavit výchozí nástroj pro "
+"načítání na Chrome."
 
 #: changedetectionio/blueprint/imports/templates/import.html:91
 msgid "Table of custom column and data types mapping for the"
@@ -795,11 +793,10 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/__init__.py:92
 #, python-brace-format
-msgid ""
-"Warning: Worker count ({}) is close to or exceeds available CPU cores ({})"
+msgid "Warning: Worker count ({}) is close to or exceeds available CPU cores ({})"
 msgstr ""
-"Upozornění: Počet workerů ({}) se blíží nebo překračuje dostupné CPU jádra "
-"({})"
+"Upozornění: Počet workerů ({}) se blíží nebo překračuje dostupné CPU "
+"jádra ({})"
 
 #: changedetectionio/blueprint/settings/__init__.py:104
 #, python-brace-format
@@ -910,8 +907,8 @@ msgstr "Více informací"
 #: changedetectionio/blueprint/settings/templates/settings.html:57
 #, fuzzy
 msgid ""
-"After this many consecutive times that the CSS/xPath filter is missing, send "
-"a notification"
+"After this many consecutive times that the CSS/xPath filter is missing, "
+"send a notification"
 msgstr "Kolikrát může filtr chybět před odesláním upozornění"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:59
@@ -934,16 +931,16 @@ msgstr ""
 #: changedetectionio/blueprint/settings/templates/settings.html:77
 #, fuzzy
 msgid ""
-"Allow access to the watch change history page when password is enabled (Good "
-"for sharing the diff page)"
+"Allow access to the watch change history page when password is enabled "
+"(Good for sharing the diff page)"
 msgstr ""
 "Povolit anonymní přístup na stránku historie sledování, když je povoleno "
 "heslo"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:81
 msgid ""
-"When a request returns no content, or the HTML does not contain any text, is "
-"this considered a change?"
+"When a request returns no content, or the HTML does not contain any text,"
+" is this considered a change?"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:93
@@ -976,8 +973,7 @@ msgid "Basic"
 msgstr "Základní"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:103
-msgid ""
-"method (default) where your watched sites don't need Javascript to render."
+msgid "method (default) where your watched sites don't need Javascript to render."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:104
@@ -992,8 +988,8 @@ msgstr "Chrome/Javascript"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:104
 msgid ""
-"method requires a network connection to a running WebDriver+Chrome server, "
-"set by the ENV var"
+"method requires a network connection to a running WebDriver+Chrome "
+"server, set by the ENV var"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:109
@@ -1041,8 +1037,8 @@ msgstr "Zpracovává se.."
 
 #: changedetectionio/blueprint/settings/templates/settings.html:125
 msgid ""
-"Example - 3 seconds random jitter could trigger up to 3 seconds earlier or "
-"up to 3 seconds later"
+"Example - 3 seconds random jitter could trigger up to 3 seconds earlier "
+"or up to 3 seconds later"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:129
@@ -1098,19 +1094,17 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:155
-msgid ""
-"Render anchor tag content, default disabled, when enabled renders links as"
+msgid "Render anchor tag content, default disabled, when enabled renders links as"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:157
 msgid ""
-"Changing this could affect the content of your existing watches, possibly "
-"trigger alerts etc."
+"Changing this could affect the content of your existing watches, possibly"
+" trigger alerts etc."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:168
-msgid ""
-"Remove HTML element(s) by CSS and XPath selectors before text conversion."
+msgid "Remove HTML element(s) by CSS and XPath selectors before text conversion."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:169
@@ -1119,8 +1113,8 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:170
 msgid ""
-"Add multiple elements, CSS or XPath selectors per line to ignore multiple "
-"parts of the HTML."
+"Add multiple elements, CSS or XPath selectors per line to ignore multiple"
+" parts of the HTML."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:178
@@ -1138,15 +1132,14 @@ msgid "ignored"
 msgstr "jsou ignorovány."
 
 #: changedetectionio/blueprint/settings/templates/settings.html:181
-msgid ""
-"in the text snapshot (you can still see it but it wont trigger a change)"
+msgid "in the text snapshot (you can still see it but it wont trigger a change)"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:183
 #: changedetectionio/templates/edit/text-options.html:24
 msgid ""
-"Each line processed separately, any line matching will be ignored (removed "
-"before creating the checksum)"
+"Each line processed separately, any line matching will be ignored "
+"(removed before creating the checksum)"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:184
@@ -1157,7 +1150,8 @@ msgstr ""
 #: changedetectionio/blueprint/settings/templates/settings.html:185
 #: changedetectionio/templates/edit/text-options.html:26
 msgid ""
-"Changing this will affect the comparison checksum which may trigger an alert"
+"Changing this will affect the comparison checksum which may trigger an "
+"alert"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:191
@@ -1207,8 +1201,8 @@ msgstr "Chrome požadavky"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:213
 msgid ""
-"Easily add any web-page to your changedetection.io installation from within "
-"Chrome."
+"Easily add any web-page to your changedetection.io installation from "
+"within Chrome."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:214
@@ -1260,8 +1254,8 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:236
 msgid ""
-"For watching other RSS feeds - When watching RSS/Atom feeds, convert them "
-"into clean text for better change detection."
+"For watching other RSS feeds - When watching RSS/Atom feeds, convert them"
+" into clean text for better change detection."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:241
@@ -1318,14 +1312,14 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:341
-msgid ""
-"\"Name\" will be used for selecting the proxy in the Watch Edit settings"
+msgid "\"Name\" will be used for selecting the proxy in the Watch Edit settings"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:342
 msgid ""
-"SOCKS5 proxies with authentication are only supported with 'plain requests' "
-"fetcher, for other fetchers you should whitelist the IP access instead"
+"SOCKS5 proxies with authentication are only supported with 'plain "
+"requests' fetcher, for other fetchers you should whitelist the IP access "
+"instead"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html:348
@@ -1351,7 +1345,7 @@ msgstr "Zpět"
 
 #: changedetectionio/blueprint/settings/templates/settings.html:404
 msgid "Clear Snapshot History"
-msgstr "Vymazat/resetovat historii"
+msgstr "Vymazat historii snímků"
 
 #: changedetectionio/blueprint/tags/__init__.py:48
 #, python-brace-format
@@ -1412,10 +1406,10 @@ msgstr "Používejte opatrně!"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html:73
 #: changedetectionio/blueprint/ui/templates/edit.html:269
-msgid ""
-"This will easily fill up your email storage quota or flood other storages."
+msgid "This will easily fill up your email storage quota or flood other storages."
 msgstr ""
-"Snadno tak zaplníte kvótu e-mailového úložiště nebo zahltíte další úložiště."
+"Snadno tak zaplníte kvótu e-mailového úložiště nebo zahltíte další "
+"úložiště."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html:80
 #: changedetectionio/blueprint/ui/templates/edit.html:276
@@ -1445,8 +1439,7 @@ msgstr "tento formulář přepíše nastavení oznámení pouze pro tyto monitor
 #: changedetectionio/blueprint/tags/templates/edit-tag.html:81
 #: changedetectionio/blueprint/ui/templates/edit.html:277
 msgid "an empty Notification URL list here will still send notifications."
-msgstr ""
-"prázdný seznam adres URL upozornění zde bude stále odesílat upozornění."
+msgstr "prázdný seznam adres URL upozornění zde bude stále odesílat upozornění."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html:84
 #: changedetectionio/blueprint/ui/templates/edit.html:280
@@ -1458,13 +1451,14 @@ msgid "Add a new organisational tag"
 msgstr "Přidejte novou značku organizace"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:14
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:65
 msgid "Watch group / tag"
 msgstr "Skupina / Značka"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:21
 msgid ""
-"Groups allows you to manage filters and notifications for multiple watches "
-"under a single organisational tag."
+"Groups allows you to manage filters and notifications for multiple "
+"watches under a single organisational tag."
 msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:31
@@ -1497,8 +1491,8 @@ msgstr "Smazat skupinu?"
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:60
 #, python-format
 msgid ""
-"<p>Are you sure you want to delete group <strong>%(title)s</strong>?</"
-"p><p>This action cannot be undone.</p>"
+"<p>Are you sure you want to delete group "
+"<strong>%(title)s</strong>?</p><p>This action cannot be undone.</p>"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:61
@@ -1519,8 +1513,9 @@ msgstr "Odpojit skupinu?"
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:68
 #, python-format
 msgid ""
-"<p>Are you sure you want to unlink all watches from group <strong>%(title)s</"
-"strong>?</p><p>The tag will be kept but watches will be removed from it.</p>"
+"<p>Are you sure you want to unlink all watches from group "
+"<strong>%(title)s</strong>?</p><p>The tag will be kept but watches will "
+"be removed from it.</p>"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:69
@@ -1599,7 +1594,7 @@ msgstr "Sledujte tuto adresu URL!"
 #: changedetectionio/blueprint/ui/__init__.py:145
 #, fuzzy, python-brace-format
 msgid "Cleared snapshot history for watch {}"
-msgstr "Vymazat/resetovat historii"
+msgstr "Historie snímků vymazána pro monitor {}"
 
 #: changedetectionio/blueprint/ui/__init__.py:172
 msgid "History clearing started in background"
@@ -1668,8 +1663,8 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/diff.py:98
 msgid ""
-"Not enough history (2 snapshots required) to show difference page for this "
-"watch."
+"Not enough history (2 snapshots required) to show difference page for "
+"this watch."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/edit.py:35
@@ -1718,8 +1713,8 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:12
 msgid ""
-"This will remove version history (snapshots) for ALL watches, but keep your "
-"list of URLs!"
+"This will remove version history (snapshots) for ALL watches, but keep "
+"your list of URLs!"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:13
@@ -1752,7 +1747,7 @@ msgstr "potvrdit, že rozumíte."
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:33
 msgid "Clear History!"
-msgstr "Jasné historie"
+msgstr "Vymazat historii!"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html:39
 #: changedetectionio/templates/base.html:273
@@ -1893,14 +1888,13 @@ msgstr "Přejít na jeden snímek"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:138
 msgid "Highlight text to share or add to ignore lists."
-msgstr ""
-"Zvýrazněte text, který chcete sdílet nebo přidat do seznamů ignorovaných."
+msgstr "Zvýrazněte text, který chcete sdílet nebo přidat do seznamů ignorovaných."
 
 #: changedetectionio/blueprint/ui/templates/diff.html:144
 #: changedetectionio/blueprint/ui/templates/preview.html:80
 msgid ""
-"For now, Differences are performed on text, not graphically, only the latest "
-"screenshot is available."
+"For now, Differences are performed on text, not graphically, only the "
+"latest screenshot is available."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/diff.html:149
@@ -1942,8 +1936,7 @@ msgstr "Statistiky"
 #: changedetectionio/blueprint/ui/templates/edit.html:73
 #: changedetectionio/blueprint/ui/templates/edit.html:313
 msgid "Some sites use JavaScript to create the content, for this you should"
-msgstr ""
-"Některé stránky používají k vytváření obsahu JavaScript, proto byste měli"
+msgstr "Některé stránky používají k vytváření obsahu JavaScript, proto byste měli"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:73
 #: changedetectionio/blueprint/ui/templates/edit.html:313
@@ -1966,8 +1959,8 @@ msgstr "Název skupiny/značky"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:85
 msgid ""
-"Automatically uses the page title if found, you can also use your own title/"
-"description here"
+"Automatically uses the page title if found, you can also use your own "
+"title/description here"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html:95
@@ -1976,19 +1969,21 @@ msgstr "Interval/doba mezi jednotlivými kontrolami."
 
 #: changedetectionio/blueprint/ui/templates/edit.html:110
 msgid ""
-"Sends a notification when the filter can no longer be seen on the page, good "
-"for knowing when the page changed and your filter will not work anymore."
+"Sends a notification when the filter can no longer be seen on the page, "
+"good for knowing when the page changed and your filter will not work "
+"anymore."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html:123
 msgid ""
-"method (default) where your watched site doesn't need Javascript to render."
+"method (default) where your watched site doesn't need Javascript to "
+"render."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html:124
 msgid ""
-"method requires a network connection to a running WebDriver+Chrome server, "
-"set by the ENV var 'WEBDRIVER_URL'."
+"method requires a network connection to a running WebDriver+Chrome "
+"server, set by the ENV var 'WEBDRIVER_URL'."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html:130
@@ -2066,16 +2061,15 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html:249
 #: changedetectionio/blueprint/ui/templates/edit.html:419
-msgid ""
-"Visual Selector data is not ready, watch needs to be checked atleast once."
+msgid "Visual Selector data is not ready, watch needs to be checked atleast once."
 msgstr ""
 "Data Visual Selector nejsou připravena, monitory je třeba alespoň jednou "
 "zkontrolovat."
 
 #: changedetectionio/blueprint/ui/templates/edit.html:253
 msgid ""
-"Sorry, this functionality only works with fetchers that support interactive "
-"Javascript (so far only Playwright based fetchers)"
+"Sorry, this functionality only works with fetchers that support "
+"interactive Javascript (so far only Playwright based fetchers)"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html:254
@@ -2094,8 +2088,8 @@ msgstr "na ten, který podporuje interaktivní Javascript."
 
 #: changedetectionio/blueprint/ui/templates/edit.html:297
 msgid ""
-"Use the verify (✓) button to test if a condition passes against the current "
-"snapshot."
+"Use the verify (✓) button to test if a condition passes against the "
+"current snapshot."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html:298
@@ -2124,8 +2118,8 @@ msgstr "Omezit spouštění/ignorovat/blokovat/extrahovat na;"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:326
 msgid ""
-"Note: Depending on the length and similarity of the text on each line, the "
-"algorithm may consider an"
+"Note: Depending on the length and similarity of the text on each line, "
+"the algorithm may consider an"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html:326
@@ -2167,9 +2161,9 @@ msgstr "Spustit pouze tehdy, když se objeví jedinečné čáry"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:332
 msgid ""
-"Good for websites that just move the content around, and you want to know "
-"when NEW content is added, compares new lines against all history for this "
-"watch."
+"Good for websites that just move the content around, and you want to know"
+" when NEW content is added, compares new lines against all history for "
+"this watch."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html:340
@@ -2206,8 +2200,8 @@ msgstr "text"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:386
 msgid ""
-"elements that will be used for the change detection. It automatically fills-"
-"in the filters in the \"CSS/JSONPath/JQ/XPath Filters\" box of the"
+"elements that will be used for the change detection. It automatically "
+"fills-in the filters in the \"CSS/JSONPath/JQ/XPath Filters\" box of the"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html:386
@@ -2248,8 +2242,8 @@ msgstr "V současné době:"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:423
 msgid ""
-"Sorry, this functionality only works with fetchers that support Javascript "
-"and screenshots (such as playwright etc)."
+"Sorry, this functionality only works with fetchers that support "
+"Javascript and screenshots (such as playwright etc)."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html:424
@@ -2298,7 +2292,7 @@ msgstr "Tuto akci nelze vrátit zpět."
 
 #: changedetectionio/blueprint/ui/templates/edit.html:495
 msgid "Clear History?"
-msgstr "Jasné historie"
+msgstr "Vymazat historii?"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:496
 msgid "Are you sure you want to clear all history for:"
@@ -2306,13 +2300,13 @@ msgstr "Opravdu chcete vymazat celou historii pro:"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:496
 msgid ""
-"This will remove all snapshots and previous versions. This action cannot be "
-"undone."
+"This will remove all snapshots and previous versions. This action cannot "
+"be undone."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html:497
 msgid "Clear History"
-msgstr "Jasné historie"
+msgstr "Vymazat historii"
 
 #: changedetectionio/blueprint/ui/templates/edit.html:499
 msgid "Clone & Edit"
@@ -2332,8 +2326,8 @@ msgstr "Aktuální chybový snímek obrazovky z posledního požadavku"
 
 #: changedetectionio/blueprint/ui/templates/preview.html:91
 msgid ""
-"Screenshot requires a Content Fetcher ( Sockpuppetbrowser, selenium, etc ) "
-"that supports screenshots."
+"Screenshot requires a Content Fetcher ( Sockpuppetbrowser, selenium, etc "
+") that supports screenshots."
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/__init__.py:79
@@ -2404,12 +2398,12 @@ msgstr "Vymazat chyby"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:92
 msgid "Clear Histories"
-msgstr "Jasné historie"
+msgstr "Vymazat historie"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:93
 msgid ""
-"<p>Are you sure you want to clear history for the selected items?</p><p>This "
-"action cannot be undone.</p>"
+"<p>Are you sure you want to clear history for the selected "
+"items?</p><p>This action cannot be undone.</p>"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:94
@@ -2426,8 +2420,8 @@ msgstr "Smazat monitory?"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:99
 msgid ""
-"<p>Are you sure you want to delete the selected watches?</strong></p><p>This "
-"action cannot be undone.</p>"
+"<p>Are you sure you want to delete the selected "
+"watches?</strong></p><p>This action cannot be undone.</p>"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:105
@@ -2466,11 +2460,11 @@ msgstr "Změněno"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:162
 msgid ""
-"No web page change detection watches configured, please add a URL in the box "
-"above, or"
+"No web page change detection watches configured, please add a URL in the "
+"box above, or"
 msgstr ""
-"Nejsou nakonfigurována žádná sledování webových stránek, do výše uvedeného "
-"pole přidejte adresu URL nebo"
+"Nejsou nakonfigurována žádná sledování webových stránek, do výše "
+"uvedeného pole přidejte adresu URL nebo"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:162
 msgid "import a list"
@@ -2540,8 +2534,7 @@ msgid "in '%(title)s'"
 msgstr "v '%(title)s'"
 
 #: changedetectionio/processors/extract.py:131
-msgid ""
-"No matches found while scanning all of the watch history for that RegEx."
+msgid "No matches found while scanning all of the watch history for that RegEx."
 msgstr ""
 
 #: changedetectionio/processors/image_ssim_diff/difference.py:328
@@ -2566,7 +2559,8 @@ msgstr "Hodnota ohraničujícího rámečku je příliš dlouhá"
 #: changedetectionio/processors/image_ssim_diff/forms.py:23
 msgid "Bounding box must be in format: x,y,width,height (integers only)"
 msgstr ""
-"Ohraničovací rámeček musí být ve formátu: x,y,šířka,výška (pouze celá čísla)"
+"Ohraničovací rámeček musí být ve formátu: x,y,šířka,výška (pouze celá "
+"čísla)"
 
 #: changedetectionio/processors/image_ssim_diff/forms.py:29
 msgid "Bounding box values must be non-negative"
@@ -2615,6 +2609,10 @@ msgstr ""
 #: changedetectionio/processors/image_ssim_diff/processor.py:21
 msgid "Visual / Image screenshot change detection"
 msgstr "Vizuální / Obrazová detekce změny snímku obrazovky"
+
+#: changedetectionio/processors/image_ssim_diff/processor.py:22
+msgid "Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM"
+msgstr ""
 
 #: changedetectionio/processors/restock_diff/forms.py:15
 msgid "Re-stock detection"
@@ -2684,8 +2682,7 @@ msgid "Body for all notifications — You can use"
 msgstr "Formát pro všechna oznámení"
 
 #: changedetectionio/templates/_common_fields.html:9
-msgid ""
-"templating in the notification title, body and URL, and tokens from below."
+msgid "templating in the notification title, body and URL, and tokens from below."
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:11
@@ -2775,8 +2772,8 @@ msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:90
 msgid ""
-"The current snapshot text contents value, useful when combined with JSON or "
-"CSS filters"
+"The current snapshot text contents value, useful when combined with JSON "
+"or CSS filters"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:95
@@ -2798,8 +2795,8 @@ msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:110
 msgid ""
-"For example, an addition or removal could be perceived as a change in some "
-"cases."
+"For example, an addition or removal could be perceived as a change in "
+"some cases."
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:110
@@ -2824,8 +2821,8 @@ msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:126
 msgid ""
-"Please read the notification services wiki here for important configuration "
-"notes"
+"Please read the notification services wiki here for important "
+"configuration notes"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:128
@@ -2851,8 +2848,8 @@ msgstr "Název oznámení"
 
 #: changedetectionio/templates/_common_fields.html:131
 msgid ""
-"bots can't send messages to other bots, so you should specify chat ID of non-"
-"bot user."
+"bots can't send messages to other bots, so you should specify chat ID of "
+"non-bot user."
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:132
@@ -2932,8 +2929,8 @@ msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:168
 msgid ""
-"For a complete reference of all Jinja2 built-in filters, users can refer to "
-"the"
+"For a complete reference of all Jinja2 built-in filters, users can refer "
+"to the"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html:176
@@ -2943,6 +2940,11 @@ msgstr "Formát pro všechna oznámení"
 #: changedetectionio/templates/_helpers.html:25
 msgid "Entry"
 msgstr ""
+
+#: changedetectionio/templates/_helpers.html:153
+#, fuzzy
+msgid "Actions"
+msgstr "Podmínky"
 
 #: changedetectionio/templates/_helpers.html:172
 msgid "Add a row/rule after"
@@ -2968,8 +2970,14 @@ msgstr ""
 
 #: changedetectionio/templates/_helpers.html:184
 msgid ""
-"very affordable subscription based service which has all this setup for you"
+"very affordable subscription based service which has all this setup for "
+"you"
 msgstr ""
+
+#: changedetectionio/templates/_helpers.html:185
+#, fuzzy
+msgid "You may need to"
+msgstr "musíte"
 
 #: changedetectionio/templates/_helpers.html:185
 msgid "Enable playwright environment variable"
@@ -2979,23 +2987,58 @@ msgstr ""
 msgid "and uncomment the"
 msgstr ""
 
+#: changedetectionio/templates/_helpers.html:185
+#, fuzzy
+msgid "in the"
+msgstr "The"
+
+#: changedetectionio/templates/_helpers.html:185
+#, fuzzy
+msgid "file"
+msgstr "Titul"
+
 #: changedetectionio/templates/_helpers.html:240
 msgid "Set a hourly/week day schedule"
 msgstr ""
+
+#: changedetectionio/templates/_helpers.html:247
+#, fuzzy
+msgid "Schedule time limits"
+msgstr "Znovu zkontrolovat čas (minuty)"
 
 #: changedetectionio/templates/_helpers.html:248
 msgid "Business hours"
 msgstr ""
 
+#: changedetectionio/templates/_helpers.html:249
+#, fuzzy
+msgid "Weekends"
+msgstr "týdny"
+
+#: changedetectionio/templates/_helpers.html:250
+#, fuzzy
+msgid "Reset"
+msgstr "Žádost"
+
 #: changedetectionio/templates/_helpers.html:259
 msgid ""
-"Warning, one or more of your 'days' has a duration that would extend into "
-"the next day."
+"Warning, one or more of your 'days' has a duration that would extend into"
+" the next day."
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html:260
 msgid "This could have unintended consequences."
 msgstr ""
+
+#: changedetectionio/templates/_helpers.html:270
+#, fuzzy
+msgid "More help and examples about using the scheduler"
+msgstr "Další nápověda a příklady zde"
+
+#: changedetectionio/templates/_helpers.html:275
+#, fuzzy
+msgid "Want to use a time schedule?"
+msgstr "Použijte časový plánovač"
 
 #: changedetectionio/templates/_helpers.html:275
 msgid "First confirm/save your Time Zone Settings"
@@ -3007,9 +3050,29 @@ msgid ""
 "document."
 msgstr ""
 
+#: changedetectionio/templates/_helpers.html:284
+#, fuzzy
+msgid "Triggered text"
+msgstr "Text chyby"
+
 #: changedetectionio/templates/_helpers.html:285
 msgid "Ignored for calculating changes, but still shown."
 msgstr ""
+
+#: changedetectionio/templates/_helpers.html:285
+#, fuzzy
+msgid "Ignored text"
+msgstr "Text chyby"
+
+#: changedetectionio/templates/_helpers.html:286
+#, fuzzy
+msgid "No change-detection will occur because this text exists."
+msgstr "Blokovat detekci změn, když se text shoduje"
+
+#: changedetectionio/templates/_helpers.html:286
+#, fuzzy
+msgid "Blocked text"
+msgstr "Text chyby"
 
 #: changedetectionio/templates/base.html:80
 msgid "Search, or Use Alt+S Key"
@@ -3029,9 +3092,20 @@ msgid ""
 "GitHub with any updates."
 msgstr ""
 
+#: changedetectionio/templates/base.html:281
+#: changedetectionio/templates/base.html:294
+#, fuzzy
+msgid "Search"
+msgstr "Hledání"
+
 #: changedetectionio/templates/base.html:286
 msgid "URL or Title"
 msgstr ""
+
+#: changedetectionio/templates/base.html:286
+#, fuzzy
+msgid "in"
+msgstr "Info"
 
 #: changedetectionio/templates/base.html:287
 msgid "Enter search term..."
@@ -3110,14 +3184,14 @@ msgstr "Změnit jazyk"
 
 #: changedetectionio/templates/edit/text-options.html:9
 msgid ""
-"Text to wait for before triggering a change/notification, all text and regex "
-"are tested case-insensitive."
+"Text to wait for before triggering a change/notification, all text and "
+"regex are tested case-insensitive."
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html:10
 msgid ""
-"Trigger text is processed from the result-text that comes out of any CSS/"
-"JSON Filters for this monitor"
+"Trigger text is processed from the result-text that comes out of any "
+"CSS/JSON Filters for this monitor"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html:11
@@ -3131,21 +3205,21 @@ msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html:23
 msgid ""
-"Matching text will be ignored in the text snapshot (you can still see it but "
-"it wont trigger a change)"
+"Matching text will be ignored in the text snapshot (you can still see it "
+"but it wont trigger a change)"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html:43
 msgid ""
-"Block change-detection while this text is on the page, all text and regex "
-"are tested case-insensitive, good for waiting for when a product is "
+"Block change-detection while this text is on the page, all text and regex"
+" are tested case-insensitive, good for waiting for when a product is "
 "available again"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html:44
 msgid ""
-"Block text is processed from the result-text that comes out of any CSS/JSON "
-"Filters for this monitor"
+"Block text is processed from the result-text that comes out of any "
+"CSS/JSON Filters for this monitor"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html:45
@@ -3154,8 +3228,8 @@ msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html:58
 msgid ""
-"Extracts text in the final output (line by line) after other filters using "
-"regular expressions or string match:"
+"Extracts text in the final output (line by line) after other filters "
+"using regular expressions or string match:"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html:60
@@ -3211,10 +3285,12 @@ msgid "Main settings"
 msgstr "Hlavní nastavení"
 
 #~ msgid ""
-#~ "Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM"
+#~ "Compares screenshots using fast OpenCV "
+#~ "algorithm, 10-100x faster than SSIM"
 #~ msgstr ""
-#~ "Porovnává snímky obrazovky pomocí rychlého algoritmu OpenCV, 10-100x "
-#~ "rychlejší než SSIM"
+#~ "Porovnává snímky obrazovky pomocí rychlého "
+#~ "algoritmu OpenCV, 10-100x rychlejší než "
+#~ "SSIM"
 
 #~ msgid "Actions"
 #~ msgstr "Podmínky"
@@ -3278,3 +3354,4 @@ msgstr "Hlavní nastavení"
 
 #~ msgid "Cleared snapshot history for all watches"
 #~ msgstr "Vymazat/resetovat historii"
+
