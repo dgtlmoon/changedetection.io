@@ -400,11 +400,27 @@ def changedetection_app(config=None, datastore_o=None):
     language_codes = get_language_codes()
 
     def get_locale():
+        # Locale aliases: map browser language codes to translation directory names
+        # This handles cases where browsers send standard codes (e.g., zh-TW)
+        # but our translations use more specific codes (e.g., zh_Hant_TW)
+        locale_aliases = {
+            'zh-TW': 'zh_Hant_TW',  # Traditional Chinese: browser sends zh-TW, we use zh_Hant_TW
+            'zh_TW': 'zh_Hant_TW',  # Also handle underscore variant
+        }
+
         # 1. Try to get locale from session (user explicitly selected)
         if 'locale' in session:
             return session['locale']
+
         # 2. Fall back to Accept-Language header
-        return request.accept_languages.best_match(language_codes)
+        # Get the best match from browser's Accept-Language header
+        browser_locale = request.accept_languages.best_match(language_codes + list(locale_aliases.keys()))
+
+        # 3. Check if we need to map the browser locale to our internal locale
+        if browser_locale in locale_aliases:
+            return locale_aliases[browser_locale]
+
+        return browser_locale
 
     # Initialize Babel with locale selector
     babel = Babel(app, locale_selector=get_locale)

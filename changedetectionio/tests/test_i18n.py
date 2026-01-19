@@ -325,3 +325,167 @@ def test_time_unit_translations(client, live_server, measure_memory_usage, datas
     assert b"Time Between Check" not in res.data, "Should not have English 'Time Between Check'"
     assert "Chrome 請求".encode() not in res.data, "Should not have incorrect 'Chrome 請求' (Chrome requests)"
     assert "使用預設通知".encode() not in res.data, "Should not have incorrect '使用預設通知' (Use default notification)"
+
+
+def test_accept_language_header_zh_tw(client, live_server, measure_memory_usage, datastore_path):
+    """
+    Test that browsers sending zh-TW in Accept-Language header get Traditional Chinese.
+    This tests the locale alias mapping for issue #3779.
+    """
+    from flask import url_for
+
+    # Clear any session data to simulate a fresh visitor
+    with client.session_transaction() as sess:
+        sess.clear()
+
+    # Request the index page with zh-TW in Accept-Language header (what browsers send)
+    res = client.get(
+        url_for("watchlist.index"),
+        headers={'Accept-Language': 'zh-TW,zh;q=0.9,en;q=0.8'},
+        follow_redirects=True
+    )
+
+    assert res.status_code == 200
+
+    # Should get Traditional Chinese content, not Simplified Chinese
+    # Traditional: 選擇語言, Simplified: 选择语言
+    assert '選擇語言'.encode() in res.data, "Expected Traditional Chinese '選擇語言' (Select Language)"
+    assert '选择语言'.encode() not in res.data, "Should not get Simplified Chinese '选择语言'"
+
+    # Check HTML lang attribute uses BCP 47 format
+    assert b'<html lang="zh-Hant-TW"' in res.data, "Expected BCP 47 language tag zh-Hant-TW in HTML"
+
+    # Verify we're getting Traditional Chinese text throughout the page
+    res = client.get(
+        url_for("settings.settings_page"),
+        headers={'Accept-Language': 'zh-TW,zh;q=0.9,en;q=0.8'},
+        follow_redirects=True
+    )
+
+    assert res.status_code == 200
+
+    # Check Traditional Chinese translations (not English)
+    assert "小時".encode() in res.data, "Expected Traditional Chinese '小時' for Hours"
+    assert "分鐘".encode() in res.data, "Expected Traditional Chinese '分鐘' for Minutes"
+    assert b"Hours" not in res.data or "小時".encode() in res.data, "Should have Traditional Chinese, not English"
+
+
+def test_accept_language_header_en_variants(client, live_server, measure_memory_usage, datastore_path):
+    """
+    Test that browsers sending en-GB and en-US in Accept-Language header get the correct English variant.
+    This ensures the locale selector works properly for English variants.
+    """
+    from flask import url_for
+
+    # Test 1: British English (en-GB)
+    with client.session_transaction() as sess:
+        sess.clear()
+
+    res = client.get(
+        url_for("watchlist.index"),
+        headers={'Accept-Language': 'en-GB,en;q=0.9'},
+        follow_redirects=True
+    )
+
+    assert res.status_code == 200
+
+    # Should get English content
+    assert b"Select Language" in res.data, "Expected English text 'Select Language'"
+
+    # Check HTML lang attribute uses BCP 47 format with hyphen
+    assert b'<html lang="en-GB"' in res.data, "Expected BCP 47 language tag en-GB in HTML"
+
+    # Test 2: American English (en-US)
+    with client.session_transaction() as sess:
+        sess.clear()
+
+    res = client.get(
+        url_for("watchlist.index"),
+        headers={'Accept-Language': 'en-US,en;q=0.9'},
+        follow_redirects=True
+    )
+
+    assert res.status_code == 200
+
+    # Should get English content
+    assert b"Select Language" in res.data, "Expected English text 'Select Language'"
+
+    # Check HTML lang attribute uses BCP 47 format with hyphen
+    assert b'<html lang="en-US"' in res.data, "Expected BCP 47 language tag en-US in HTML"
+
+    # Test 3: Generic 'en' should fall back to one of the English variants
+    with client.session_transaction() as sess:
+        sess.clear()
+
+    res = client.get(
+        url_for("watchlist.index"),
+        headers={'Accept-Language': 'en'},
+        follow_redirects=True
+    )
+
+    assert res.status_code == 200
+
+    # Should get English content (either variant is fine)
+    assert b"Select Language" in res.data, "Expected English text 'Select Language'"
+
+
+def test_accept_language_header_zh_simplified(client, live_server, measure_memory_usage, datastore_path):
+    """
+    Test that browsers sending zh or zh-CN in Accept-Language header get Simplified Chinese.
+    This ensures Simplified Chinese still works correctly and doesn't get confused with Traditional.
+    """
+    from flask import url_for
+
+    # Test 1: Generic 'zh' should get Simplified Chinese
+    with client.session_transaction() as sess:
+        sess.clear()
+
+    res = client.get(
+        url_for("watchlist.index"),
+        headers={'Accept-Language': 'zh,en;q=0.9'},
+        follow_redirects=True
+    )
+
+    assert res.status_code == 200
+
+    # Should get Simplified Chinese content, not Traditional Chinese
+    # Simplified: 选择语言, Traditional: 選擇語言
+    assert '选择语言'.encode() in res.data, "Expected Simplified Chinese '选择语言' (Select Language)"
+    assert '選擇語言'.encode() not in res.data, "Should not get Traditional Chinese '選擇語言'"
+
+    # Check HTML lang attribute
+    assert b'<html lang="zh"' in res.data, "Expected language tag zh in HTML"
+
+    # Test 2: 'zh-CN' should also get Simplified Chinese
+    with client.session_transaction() as sess:
+        sess.clear()
+
+    res = client.get(
+        url_for("watchlist.index"),
+        headers={'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8'},
+        follow_redirects=True
+    )
+
+    assert res.status_code == 200
+
+    # Should get Simplified Chinese content
+    assert '选择语言'.encode() in res.data, "Expected Simplified Chinese '选择语言' with zh-CN header"
+    assert '選擇語言'.encode() not in res.data, "Should not get Traditional Chinese with zh-CN header"
+
+    # Verify Simplified Chinese in settings page
+    res = client.get(
+        url_for("settings.settings_page"),
+        headers={'Accept-Language': 'zh,en;q=0.9'},
+        follow_redirects=True
+    )
+
+    assert res.status_code == 200
+
+    # Check Simplified Chinese translations (not Traditional or English)
+    # Simplified: 小时, Traditional: 小時
+    assert "小时".encode() in res.data, "Expected Simplified Chinese '小时' for Hours"
+    assert "分钟".encode() in res.data, "Expected Simplified Chinese '分钟' for Minutes"
+    assert "秒".encode() in res.data, "Expected Simplified Chinese '秒' for Seconds"
+    # Make sure it's not Traditional Chinese
+    assert "小時".encode() not in res.data, "Should not have Traditional Chinese '小時'"
+    assert "分鐘".encode() not in res.data, "Should not have Traditional Chinese '分鐘'"
