@@ -183,15 +183,30 @@ components:
           properties:
             weeks:
               type: integer
+              minimum: 0
+              maximum: 52000
+              nullable: true
             days:
               type: integer
+              minimum: 0
+              maximum: 365000
+              nullable: true
             hours:
               type: integer
+              minimum: 0
+              maximum: 8760000
+              nullable: true
             minutes:
               type: integer
+              minimum: 0
+              maximum: 525600000
+              nullable: true
             seconds:
               type: integer
-          description: Time intervals between checks
+              minimum: 0
+              maximum: 31536000000
+              nullable: true
+          description: Time intervals between checks. All fields must be non-negative. At least one non-zero value required when not using default settings.
         time_between_check_use_default:
           type: boolean
           default: true
@@ -200,7 +215,9 @@ components:
           type: array
           items:
             type: string
-          description: Notification URLs for this web page change monitor (watch)
+            maxLength: 1000
+          maxItems: 100
+          description: Notification URLs for this web page change monitor (watch). Maximum 100 URLs.
         notification_title:
           type: string
           description: Custom notification title
@@ -224,14 +241,19 @@ components:
               operation:
                 type: string
                 maxLength: 5000
+                nullable: true
               selector:
                 type: string
                 maxLength: 5000
+                nullable: true
               optional_value:
                 type: string
                 maxLength: 5000
+                nullable: true
             required: [operation, selector, optional_value]
-          description: Browser automation steps
+            additionalProperties: false
+          maxItems: 100
+          description: Browser automation steps. Maximum 100 steps allowed.
         processor:
           type: string
           enum: [restock_diff, text_json_diff]

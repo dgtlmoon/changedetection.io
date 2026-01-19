@@ -544,7 +544,8 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
                 r = requests.request(method="GET",
                                      url=url,
                                      # So we know to return the JSON instead of the human-friendly "help" page
-                                     headers={'App-Guid': self.__data['app_guid']})
+                                     headers={'App-Guid': self.__data['app_guid']},
+                                     timeout=5.0)  # 5 second timeout to prevent blocking
                 res = r.json()
 
                 # List of permissible attributes we accept from the wild internet

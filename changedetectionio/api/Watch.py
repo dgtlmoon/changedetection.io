@@ -68,13 +68,17 @@ class Watch(Resource):
         import time
         from copy import deepcopy
         watch = None
-        for _ in range(20):
+        # Retry up to 20 times if dict is being modified
+        # With sleep(0), this is fast: ~200µs best case, ~20ms worst case under heavy load
+        for attempt in range(20):
             try:
                 watch = deepcopy(self.datastore.data['watching'].get(uuid))
                 break
             except RuntimeError:
-                # Incase dict changed, try again
-                time.sleep(0.01)
+                # Dict changed during deepcopy, retry after yielding to scheduler
+                # sleep(0) releases GIL and yields - no fixed delay, just lets other threads run
+                if attempt < 19:  # Don't yield on last attempt
+                    time.sleep(0)  # Yield to scheduler (microseconds, not milliseconds)
 
         if not watch:
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
@@ -126,17 +130,31 @@ class Watch(Resource):
 
         if request.json.get('proxy'):
             plist = self.datastore.proxy_list
-            if not request.json.get('proxy') in plist:
-                return "Invalid proxy choice, currently supported proxies are '{}'".format(', '.join(plist)), 400
+            if not plist or request.json.get('proxy') not in plist:
+                proxy_list_str = ', '.join(plist) if plist else 'none configured'
+                return f"Invalid proxy choice, currently supported proxies are '{proxy_list_str}'", 400
 
         # Validate time_between_check when not using defaults
         validation_error = validate_time_between_check_required(request.json)
         if validation_error:
             return validation_error, 400
 
-        # XSS etc protection
-        if request.json.get('url') and not is_safe_valid_url(request.json.get('url')):
-            return "Invalid URL", 400
+        # XSS etc protection - validate URL if it's being updated
+        if 'url' in request.json:
+            new_url = request.json.get('url')
+
+            # URL must be a non-empty string
+            if new_url is None:
+                return "URL cannot be null", 400
+
+            if not isinstance(new_url, str):
+                return "URL must be a string", 400
+
+            if not new_url.strip():
+                return "URL cannot be empty or whitespace only", 400
+
+            if not is_safe_valid_url(new_url.strip()):
+                return "Invalid or unsupported URL format. URL must use http://, https://, or ftp:// protocol", 400
 
         # Handle processor-config-* fields separately (save to JSON, not datastore)
         from changedetectionio import processors
@@ -231,6 +249,10 @@ class WatchSingleHistory(Resource):
 
         if timestamp == 'latest':
             timestamp = list(watch.history.keys())[-1]
+
+        # Validate that the timestamp exists in history
+        if timestamp not in watch.history:
+            abort(404, message=f"No history snapshot found for timestamp '{timestamp}'")
 
         if request.args.get('html'):
             content = watch.get_fetched_html(timestamp)
@@ -419,8 +441,9 @@ class CreateWatch(Resource):
 
         if json_data.get('proxy'):
             plist = self.datastore.proxy_list
-            if not json_data.get('proxy') in plist:
-                return "Invalid proxy choice, currently supported proxies are '{}'".format(', '.join(plist)), 400
+            if not plist or json_data.get('proxy') not in plist:
+                proxy_list_str = ', '.join(plist) if plist else 'none configured'
+                return f"Invalid proxy choice, currently supported proxies are '{proxy_list_str}'", 400
 
         # Validate time_between_check when not using defaults
         validation_error = validate_time_between_check_required(json_data)
