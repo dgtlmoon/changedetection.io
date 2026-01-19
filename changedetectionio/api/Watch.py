@@ -126,8 +126,9 @@ class Watch(Resource):
 
         if request.json.get('proxy'):
             plist = self.datastore.proxy_list
-            if not request.json.get('proxy') in plist:
-                return "Invalid proxy choice, currently supported proxies are '{}'".format(', '.join(plist)), 400
+            if not plist or request.json.get('proxy') not in plist:
+                proxy_list_str = ', '.join(plist) if plist else 'none configured'
+                return f"Invalid proxy choice, currently supported proxies are '{proxy_list_str}'", 400
 
         # Validate time_between_check when not using defaults
         validation_error = validate_time_between_check_required(request.json)
@@ -244,6 +245,10 @@ class WatchSingleHistory(Resource):
 
         if timestamp == 'latest':
             timestamp = list(watch.history.keys())[-1]
+
+        # Validate that the timestamp exists in history
+        if timestamp not in watch.history:
+            abort(404, message=f"No history snapshot found for timestamp '{timestamp}'")
 
         if request.args.get('html'):
             content = watch.get_fetched_html(timestamp)
@@ -432,8 +437,9 @@ class CreateWatch(Resource):
 
         if json_data.get('proxy'):
             plist = self.datastore.proxy_list
-            if not json_data.get('proxy') in plist:
-                return "Invalid proxy choice, currently supported proxies are '{}'".format(', '.join(plist)), 400
+            if not plist or json_data.get('proxy') not in plist:
+                proxy_list_str = ', '.join(plist) if plist else 'none configured'
+                return f"Invalid proxy choice, currently supported proxies are '{proxy_list_str}'", 400
 
         # Validate time_between_check when not using defaults
         validation_error = validate_time_between_check_required(json_data)
