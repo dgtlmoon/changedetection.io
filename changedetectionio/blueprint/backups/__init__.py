@@ -27,11 +27,23 @@ def create_backup(datastore_path, watches: dict):
                          compression=zipfile.ZIP_DEFLATED,
                          compresslevel=8) as zipObj:
 
-        # Add the index
-        zipObj.write(os.path.join(datastore_path, "url-watches.json"), arcname="url-watches.json")
+        # Add the settings file (supports both formats)
+        # New format: changedetection.json
+        changedetection_json = os.path.join(datastore_path, "changedetection.json")
+        if os.path.isfile(changedetection_json):
+            zipObj.write(changedetection_json, arcname="changedetection.json")
+            logger.debug("Added changedetection.json to backup")
 
-        # Add the flask app secret
-        zipObj.write(os.path.join(datastore_path, "secret.txt"), arcname="secret.txt")
+        # Legacy format: url-watches.json (for backward compatibility)
+        url_watches_json = os.path.join(datastore_path, "url-watches.json")
+        if os.path.isfile(url_watches_json):
+            zipObj.write(url_watches_json, arcname="url-watches.json")
+            logger.debug("Added url-watches.json to backup")
+
+        # Add the flask app secret (if it exists)
+        secret_file = os.path.join(datastore_path, "secret.txt")
+        if os.path.isfile(secret_file):
+            zipObj.write(secret_file, arcname="secret.txt")
 
         # Add any data in the watch data directory.
         for uuid, w in watches.items():
@@ -90,8 +102,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             flash(gettext("Maximum number of backups reached, please remove some"), "error")
             return redirect(url_for('backups.index'))
 
-        # Be sure we're written fresh
-        datastore.sync_to_json()
+        # Be sure we're written fresh - force immediate save using abstract method
+        datastore.force_save_all()
         zip_thread = threading.Thread(
             target=create_backup,
             args=(datastore.datastore_path, datastore.data.get("watching")),

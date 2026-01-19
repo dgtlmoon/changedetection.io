@@ -142,10 +142,14 @@ def test_body_in_request(client, live_server, measure_memory_usage, datastore_pa
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     watches_with_body = 0
-    with open(os.path.join(datastore_path, 'url-watches.json'), encoding='utf-8') as f:
-        app_struct = json.load(f)
-        for uuid in app_struct['watching']:
-            if app_struct['watching'][uuid]['body']==body_value:
+
+    # Read individual watch.json files
+    for uuid in client.application.config.get('DATASTORE').data['watching'].keys():
+        watch_json_file = os.path.join(datastore_path, uuid, 'watch.json')
+        assert os.path.exists(watch_json_file), f"watch.json should exist at {watch_json_file}"
+        with open(watch_json_file, 'r', encoding='utf-8') as f:
+            watch_data = json.load(f)
+            if watch_data.get('body') == body_value:
                 watches_with_body += 1
 
     # Should be only one with body set
@@ -225,10 +229,14 @@ def test_method_in_request(client, live_server, measure_memory_usage, datastore_
     wait_for_all_checks(client)
 
     watches_with_method = 0
-    with open(os.path.join(datastore_path, 'url-watches.json'), encoding='utf-8') as f:
-        app_struct = json.load(f)
-        for uuid in app_struct['watching']:
-            if app_struct['watching'][uuid]['method'] == 'PATCH':
+
+    # Read individual watch.json files
+    for uuid in client.application.config.get('DATASTORE').data['watching'].keys():
+        watch_json_file = os.path.join(datastore_path, uuid, 'watch.json')
+        assert os.path.exists(watch_json_file), f"watch.json should exist at {watch_json_file}"
+        with open(watch_json_file, 'r', encoding='utf-8') as f:
+            watch_data = json.load(f)
+            if watch_data.get('method') == 'PATCH':
                 watches_with_method += 1
 
     # Should be only one with method set to PATCH

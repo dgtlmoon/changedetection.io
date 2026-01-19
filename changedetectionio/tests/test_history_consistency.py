@@ -59,11 +59,29 @@ def test_consistent_history(client, live_server, measure_memory_usage, datastore
     # Wait for the sync DB save to happen
     time.sleep(2)
 
-    json_db_file = os.path.join(live_server.app.config['DATASTORE'].datastore_path, 'url-watches.json')
+    # Check which format is being used
+    datastore_path = live_server.app.config['DATASTORE'].datastore_path
+    changedetection_json = os.path.join(datastore_path, 'changedetection.json')
+    url_watches_json = os.path.join(datastore_path, 'url-watches.json')
 
-    json_obj = None
-    with open(json_db_file, 'r', encoding='utf-8') as f:
-        json_obj = json.load(f)
+    json_obj = {'watching': {}}
+
+    if os.path.exists(changedetection_json):
+        # New format: individual watch.json files
+        logger.info("Testing with new format (changedetection.json + individual watch.json)")
+
+        # Load each watch.json file
+        for uuid in live_server.app.config['DATASTORE'].data['watching'].keys():
+            watch_json_file = os.path.join(datastore_path, uuid, 'watch.json')
+            assert os.path.isfile(watch_json_file), f"watch.json should exist at {watch_json_file}"
+
+            with open(watch_json_file, 'r', encoding='utf-8') as f:
+                json_obj['watching'][uuid] = json.load(f)
+    else:
+        # Legacy format: url-watches.json
+        logger.info("Testing with legacy format (url-watches.json)")
+        with open(url_watches_json, 'r', encoding='utf-8') as f:
+            json_obj = json.load(f)
 
     # assert the right amount of watches was found in the JSON
     assert len(json_obj['watching']) == len(workers), "Correct number of watches was found in the JSON"
@@ -88,7 +106,7 @@ def test_consistent_history(client, live_server, measure_memory_usage, datastore
 
         # Find the snapshot one
         for fname in files_in_watch_dir:
-            if fname != 'history.txt' and 'html' not in fname:
+            if fname != 'history.txt' and fname != 'watch.json' and 'html' not in fname:
                 if strtobool(os.getenv("TEST_WITH_BROTLI")):
                     assert fname.endswith('.br'), "Forced TEST_WITH_BROTLI then it should be a .br filename"
 
@@ -105,11 +123,23 @@ def test_consistent_history(client, live_server, measure_memory_usage, datastore
                 assert json_obj['watching'][w]['title'], "Watch should have a title set"
                 assert contents.startswith(watch_title + "x"), f"Snapshot contents in file {fname} should start with '{watch_title}x', got '{contents}'"
 
-        assert len(files_in_watch_dir) == 3, "Should be just three files in the dir, html.br snapshot, history.txt and the extracted text snapshot"
+        # With new format, we also have watch.json, so 4 files total
+        if os.path.exists(changedetection_json):
+            assert len(files_in_watch_dir) == 4, "Should be four files in the dir with new format: watch.json, html.br snapshot, history.txt and the extracted text snapshot"
+        else:
+            assert len(files_in_watch_dir) == 3, "Should be just three files in the dir with legacy format: html.br snapshot, history.txt and the extracted text snapshot"
 
-    json_db_file = os.path.join(live_server.app.config['DATASTORE'].datastore_path, 'url-watches.json')
-    with open(json_db_file, 'r', encoding='utf-8') as f:
-        assert '"default"' not in f.read(), "'default' probably shouldnt be here, it came from when the 'default' Watch vars were accidently being saved"
+    # Check that 'default' Watch vars aren't accidentally being saved
+    if os.path.exists(changedetection_json):
+        # New format: check all individual watch.json files
+        for uuid in json_obj['watching'].keys():
+            watch_json_file = os.path.join(datastore_path, uuid, 'watch.json')
+            with open(watch_json_file, 'r', encoding='utf-8') as f:
+                assert '"default"' not in f.read(), f"'default' probably shouldnt be here in {watch_json_file}, it came from when the 'default' Watch vars were accidently being saved"
+    else:
+        # Legacy format: check url-watches.json
+        with open(url_watches_json, 'r', encoding='utf-8') as f:
+            assert '"default"' not in f.read(), "'default' probably shouldnt be here, it came from when the 'default' Watch vars were accidently being saved"
 
 
 def test_check_text_history_view(client, live_server, measure_memory_usage, datastore_path):
