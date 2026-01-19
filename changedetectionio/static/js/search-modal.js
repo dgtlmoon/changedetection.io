@@ -69,6 +69,19 @@
       }
     });
 
+    // Handle Enter key in search input
+    if (searchInput) {
+      searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (searchForm) {
+            // Trigger form submission programmatically
+            searchForm.dispatchEvent(new Event('submit'));
+          }
+        }
+      });
+    }
+
     // Handle form submission
     if (searchForm) {
       searchForm.addEventListener('submit', function(e) {
@@ -88,8 +101,8 @@
           params.append('tags', tags);
         }
 
-        // Navigate to search results
-        window.location.href = '?' + params.toString();
+        // Navigate to search results (always redirect to watchlist home)
+        window.location.href = '/?' + params.toString();
       });
     }
   });
