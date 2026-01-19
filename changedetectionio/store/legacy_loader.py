@@ -17,31 +17,6 @@ except ImportError:
     HAS_ORJSON = False
 
 
-def detect_format(datastore_path):
-    """
-    Detect which datastore format is in use.
-
-    Returns:
-    - 'new': changedetection.json exists (new format)
-    - 'empty': No changedetection.json (first run or needs migration)
-
-    Note: Legacy url-watches.json detection is handled by update_26 during migration.
-    Runtime only distinguishes between 'new' (already migrated) and 'empty' (needs setup/migration).
-
-    Args:
-        datastore_path: Path to datastore directory
-
-    Returns:
-        str: 'new' or 'empty'
-    """
-    changedetection_json = os.path.join(datastore_path, "changedetection.json")
-
-    if os.path.exists(changedetection_json):
-        return 'new'
-    else:
-        return 'empty'
-
-
 def has_legacy_datastore(datastore_path):
     """
     Check if a legacy url-watches.json file exists.

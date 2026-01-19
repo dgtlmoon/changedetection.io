@@ -40,7 +40,7 @@ from ..processors.restock_diff import Restock
 # Import the base class and helpers
 from .file_saving_datastore import FileSavingDataStore, load_all_watches, save_watch_atomic, save_json_atomic
 from .updates import DatastoreUpdatesMixin
-from .legacy_loader import detect_format, has_legacy_datastore
+from .legacy_loader import has_legacy_datastore
 
 # Because the server will run as a daemon and wont know the URL for notification links when firing off a notification
 BASE_URL_NOT_SET_TEXT = '("Base URL" not set - see settings - notifications)'
@@ -178,13 +178,12 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
             with open('changedetectionio/source.txt') as f:
                 self.__data['build_sha'] = f.read()
 
-        # Detect which format to load
-        format_type = detect_format(self.datastore_path)
-        logger.info(f"Detected datastore format: {format_type}")
+        # Check if datastore already exists
+        changedetection_json = os.path.join(self.datastore_path, "changedetection.json")
 
-        if format_type == 'new':
-            # Load from new format (changedetection.json + watch.json files)
-            logger.info("Loading from new format (changedetection.json + individual watch.json)")
+        if os.path.exists(changedetection_json):
+            # Load existing datastore (changedetection.json + watch.json files)
+            logger.info("Loading existing datastore")
             try:
                 self._load_state()
             except Exception as e:
@@ -195,7 +194,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
             self.run_updates()
 
         else:
-            # Empty - check if this is a fresh install or migration needed
+            # No datastore yet - check if this is a fresh install or legacy migration
             # Generate app_guid FIRST (required for all operations)
             if "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ:
                 self.__data['app_guid'] = "test-" + str(uuid_builder.uuid4())
