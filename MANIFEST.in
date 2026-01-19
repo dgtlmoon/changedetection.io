@@ -9,6 +9,7 @@ recursive-include changedetectionio/notification *
 recursive-include changedetectionio/processors *
 recursive-include changedetectionio/realtime *
 recursive-include changedetectionio/static *
+recursive-include changedetectionio/store *
 recursive-include changedetectionio/templates *
 recursive-include changedetectionio/tests *
 recursive-include changedetectionio/translations *
