@@ -68,13 +68,17 @@ class Watch(Resource):
         import time
         from copy import deepcopy
         watch = None
-        for _ in range(20):
+        # Retry up to 20 times if dict is being modified
+        # With sleep(0), this is fast: ~200µs best case, ~20ms worst case under heavy load
+        for attempt in range(20):
             try:
                 watch = deepcopy(self.datastore.data['watching'].get(uuid))
                 break
             except RuntimeError:
-                # Incase dict changed, try again
-                time.sleep(0.01)
+                # Dict changed during deepcopy, retry after yielding to scheduler
+                # sleep(0) releases GIL and yields - no fixed delay, just lets other threads run
+                if attempt < 19:  # Don't yield on last attempt
+                    time.sleep(0)  # Yield to scheduler (microseconds, not milliseconds)
 
         if not watch:
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
