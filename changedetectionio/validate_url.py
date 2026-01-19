@@ -64,6 +64,19 @@ def is_safe_valid_url(test_url):
     import re
     import validators
 
+    # Validate input type first - must be a non-empty string
+    if test_url is None:
+        logger.warning('URL validation failed: URL is None')
+        return False
+
+    if not isinstance(test_url, str):
+        logger.warning(f'URL validation failed: URL must be a string, got {type(test_url).__name__}')
+        return False
+
+    if not test_url.strip():
+        logger.warning('URL validation failed: URL is empty or whitespace only')
+        return False
+
     allow_file_access = strtobool(os.getenv('ALLOW_FILE_URI', 'false'))
     safe_protocol_regex = '^(http|https|ftp|file):' if allow_file_access else '^(http|https|ftp):'
 

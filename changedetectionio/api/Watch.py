@@ -134,9 +134,22 @@ class Watch(Resource):
         if validation_error:
             return validation_error, 400
 
-        # XSS etc protection
-        if request.json.get('url') and not is_safe_valid_url(request.json.get('url')):
-            return "Invalid URL", 400
+        # XSS etc protection - validate URL if it's being updated
+        if 'url' in request.json:
+            new_url = request.json.get('url')
+
+            # URL must be a non-empty string
+            if new_url is None:
+                return "URL cannot be null", 400
+
+            if not isinstance(new_url, str):
+                return "URL must be a string", 400
+
+            if not new_url.strip():
+                return "URL cannot be empty or whitespace only", 400
+
+            if not is_safe_valid_url(new_url.strip()):
+                return "Invalid or unsupported URL format. URL must use http://, https://, or ftp:// protocol", 400
 
         # Handle processor-config-* fields separately (save to JSON, not datastore)
         from changedetectionio import processors
