@@ -41,13 +41,15 @@ msgstr "Mot de passe incorrect"
 msgid ""
 "At least one time interval (weeks, days, hours, minutes, or seconds) must"
 " be specified."
-msgstr ""
+msgstr "Au moins une période doit être spécifiée (semaines, jours, heures,"
+" minutes, ou secondes)."
 
 #: changedetectionio/forms.py:64
 msgid ""
 "At least one time interval (weeks, days, hours, minutes, or seconds) must"
 " be specified when not using global settings."
-msgstr ""
+msgstr "Au moins une période doit être spécifiée (semaines, jours, heures,"
+" minutes, ou secondes) quand les paramètres généraux ne sont pas utilisés."
 
 #: changedetectionio/forms.py:164
 msgid "Invalid time format. Use HH:MM."
@@ -63,7 +65,7 @@ msgstr "non défini"
 
 #: changedetectionio/forms.py:184
 msgid "Start At"
-msgstr "Démarre à"
+msgstr "Débute à"
 
 #: changedetectionio/forms.py:185
 msgid "Run duration"
@@ -71,7 +73,7 @@ msgstr "Durée d'exécution"
 
 #: changedetectionio/forms.py:188
 msgid "Use time scheduler"
-msgstr "Utiliser le planificateur de temps"
+msgstr "Utiliser le programmateur"
 
 #: changedetectionio/forms.py:198
 msgid "Optional timezone to run in"
@@ -266,7 +268,7 @@ msgstr "Intervalle de vérification"
 msgid "Use global settings for time between check and scheduler."
 msgstr ""
 "Utilisez les paramètres globaux pour le temps entre la vérification et le"
-" planificateur."
+" programmateur."
 
 #: changedetectionio/forms.py:799
 msgid "CSS/JSONPath/JQ/XPath Filters"
@@ -326,7 +328,7 @@ msgstr "Supprimez tout espace avant et après chaque ligne de texte"
 
 #: changedetectionio/forms.py:818
 msgid "Added lines"
-msgstr "Se connecter"
+msgstr "Lignes ajoutées"
 
 #: changedetectionio/forms.py:819
 msgid "Replaced/changed lines"
@@ -334,7 +336,7 @@ msgstr "Lignes remplacées/modifiées"
 
 #: changedetectionio/forms.py:820
 msgid "Removed lines"
-msgstr "Supprimé"
+msgstr "Lignes supprimées"
 
 #: changedetectionio/forms.py:822
 msgid "Keyword triggers - Trigger/wait for text"
@@ -346,7 +348,7 @@ msgstr "Bloquer la détection des modifications lorsque le texte correspond"
 
 #: changedetectionio/forms.py:826
 msgid "Execute JavaScript before change detection"
-msgstr "Exécutez JavaScript avant la détection des modifications"
+msgstr "Exécuter JavaScript avant la détection des modifications"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html:17
 #: changedetectionio/forms.py:828 changedetectionio/forms.py:1052
@@ -486,7 +488,7 @@ msgstr "Mises à jour en temps réel hors ligne"
 
 #: changedetectionio/forms.py:983
 msgid "Favicons Enabled"
-msgstr "envisager d'activer"
+msgstr "Favicons Activés"
 
 #: changedetectionio/forms.py:984
 msgid "Use page <title> in watch overview list"
@@ -506,7 +508,7 @@ msgstr "Considérer les pages vides comme un changement ?"
 
 #: changedetectionio/forms.py:996
 msgid "Ignore Text"
-msgstr "Texte d'erreur"
+msgstr "Ignorer le texte"
 
 #: changedetectionio/forms.py:998
 msgid "Ignore whitespace"
@@ -523,7 +525,7 @@ msgstr "Mot de passe"
 
 #: changedetectionio/forms.py:1012
 msgid "Pager size"
-msgstr "Taille du téléavertisseur"
+msgstr "Taille de la mémoire"
 
 #: changedetectionio/forms.py:1015
 msgid "Should be atleast zero (disabled)"
@@ -539,11 +541,11 @@ msgstr "RSS <description> corps construit à partir de"
 
 #: changedetectionio/forms.py:1019
 msgid "RSS \"System default\" template override"
-msgstr ""
+msgstr "Ecraser le template RSS par défaut"
 
 #: changedetectionio/forms.py:1021
 msgid "Remove password"
-msgstr "Mot de passe"
+msgstr "Enlever le mot de passe"
 
 #: changedetectionio/forms.py:1022
 msgid "Render anchor tag content"
@@ -2470,7 +2472,7 @@ msgstr "Dernier"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:154
 msgid "Checked"
-msgstr "À carreaux"
+msgstr "Vérification"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html:155
 msgid "Changed"
