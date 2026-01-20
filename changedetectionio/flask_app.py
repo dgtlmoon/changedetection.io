@@ -44,6 +44,8 @@ from changedetectionio.api import Watch, WatchHistory, WatchSingleHistory, Watch
 from changedetectionio.api.Search import Search
 from .time_handler import is_within_schedule
 from changedetectionio.languages import get_available_languages, get_language_codes, get_flag_for_locale, get_timeago_locale
+from changedetectionio.favicon_utils import get_favicon_mime_type
+
 IN_PYTEST = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
 
 datastore = None
@@ -682,16 +684,9 @@ def changedetection_app(config=None, datastore_o=None):
 
             favicon_filename = watch.get_favicon_filename()
             if favicon_filename:
-                try:
-                    import magic
-                    mime = magic.from_file(
-                        os.path.join(watch.watch_data_dir, favicon_filename),
-                        mime=True
-                    )
-                except ImportError:
-                    # Fallback, no python-magic
-                    import mimetypes
-                    mime, encoding = mimetypes.guess_type(favicon_filename)
+                # Use cached MIME type detection
+                filepath = os.path.join(watch.watch_data_dir, favicon_filename)
+                mime = get_favicon_mime_type(filepath)
 
                 response = make_response(send_from_directory(watch.watch_data_dir, favicon_filename))
                 response.headers['Content-type'] = mime

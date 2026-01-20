@@ -69,7 +69,7 @@ class RecheckPriorityQueue:
             # Emit signals
             self._emit_put_signals(item)
             
-            logger.debug(f"Successfully queued item: {self._get_item_uuid(item)}")
+            logger.trace(f"Successfully queued item: {self._get_item_uuid(item)}")
             return True
             
         except Exception as e:

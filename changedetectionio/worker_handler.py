@@ -132,11 +132,19 @@ async def start_single_async_worker(worker_id, update_q, notification_q, app, da
 
     while not app.config.exit.is_set():
         try:
-            await async_update_worker(worker_id, update_q, notification_q, app, datastore, executor)
-            # If we reach here, worker exited cleanly
-            if not in_pytest:
-                logger.info(f"Async worker {worker_id} exited cleanly")
-            break
+            result = await async_update_worker(worker_id, update_q, notification_q, app, datastore, executor)
+
+            if result == "restart":
+                # Worker requested restart - immediately loop back and restart
+                if not in_pytest:
+                    logger.debug(f"Async worker {worker_id} restarting")
+                continue
+            else:
+                # Worker exited cleanly (shutdown)
+                if not in_pytest:
+                    logger.info(f"Async worker {worker_id} exited cleanly")
+                break
+
         except asyncio.CancelledError:
             # Task was cancelled (normal shutdown)
             if not in_pytest:
@@ -147,7 +155,7 @@ async def start_single_async_worker(worker_id, update_q, notification_q, app, da
             if not in_pytest:
                 logger.info(f"Restarting async worker {worker_id} in 5 seconds...")
             await asyncio.sleep(5)
-    
+
     if not in_pytest:
         logger.info(f"Async worker {worker_id} shutdown complete")
 
@@ -161,7 +169,11 @@ def add_worker(update_q, notification_q, app, datastore):
     """Add a new async worker (for dynamic scaling)"""
     global worker_threads
 
-    worker_id = len(worker_threads)
+    # Reuse lowest available ID to prevent unbounded growth over time
+    used_ids = {w.worker_id for w in worker_threads}
+    worker_id = 0
+    while worker_id in used_ids:
+        worker_id += 1
     logger.info(f"Adding async worker {worker_id}")
 
     try:
@@ -251,7 +263,7 @@ def queue_item_async_safe(update_q, item, silent=False):
             return False
 
         if not silent:
-            logger.debug(f"Successfully queued item: {item_uuid}")
+            logger.trace(f"Successfully queued item: {item_uuid}")
         return True
         
     except Exception as e:

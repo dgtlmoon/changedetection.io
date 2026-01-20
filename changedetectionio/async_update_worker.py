@@ -30,13 +30,23 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
         app: Flask application instance
         datastore: Application datastore
         executor: ThreadPoolExecutor for queue operations (optional)
+
+    Returns:
+        "restart" if worker should restart, "shutdown" for clean exit
     """
     # Set a descriptive name for this task
     task = asyncio.current_task()
     if task:
         task.set_name(f"async-worker-{worker_id}")
 
-    logger.info(f"Starting async worker {worker_id}")
+    # Read restart policy from environment
+    max_jobs = int(os.getenv("WORKER_MAX_JOBS", "10"))
+    max_runtime_seconds = int(os.getenv("WORKER_MAX_RUNTIME", "3600"))  # 1 hour default
+
+    jobs_processed = 0
+    start_time = time.time()
+
+    logger.info(f"Starting async worker {worker_id} (max_jobs={max_jobs}, max_runtime={max_runtime_seconds}s)")
 
     while not app.config.exit.is_set():
         update_handler = None
@@ -51,7 +61,11 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
             )
 
         except asyncio.TimeoutError:
-            # No jobs available, continue loop
+            # No jobs available - check if we should restart based on time while idle
+            runtime = time.time() - start_time
+            if runtime >= max_runtime_seconds:
+                logger.info(f"Worker {worker_id} idle and reached max runtime ({runtime:.0f}s), restarting")
+                return "restart"
             continue
         except Exception as e:
             # Handle expected Empty exception from queue timeout
@@ -488,6 +502,19 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                 # Small yield for normal completion
                 await asyncio.sleep(0.01)
 
+            # Job completed - increment counter and check restart conditions
+            jobs_processed += 1
+            runtime = time.time() - start_time
+
+            # Check if we should restart (only when idle, between jobs)
+            should_restart_jobs = jobs_processed >= max_jobs
+            should_restart_time = runtime >= max_runtime_seconds
+
+            if should_restart_jobs or should_restart_time:
+                reason = f"{jobs_processed} jobs" if should_restart_jobs else f"{runtime:.0f}s runtime"
+                logger.info(f"Worker {worker_id} restarting after {reason} ({jobs_processed} jobs, {runtime:.0f}s runtime)")
+                return "restart"
+
         # Check if we should exit
         if app.config.exit.is_set():
             break
@@ -495,9 +522,11 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
     # Check if we're in pytest environment - if so, be more gentle with logging
     import sys
     in_pytest = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
-    
+
     if not in_pytest:
         logger.info(f"Worker {worker_id} shutting down")
+
+    return "shutdown"
 
 
 def cleanup_error_artifacts(uuid, datastore):

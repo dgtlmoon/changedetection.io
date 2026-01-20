@@ -1,3 +1,4 @@
+import gc
 import shutil
 
 from changedetectionio.strtobool import strtobool
@@ -124,6 +125,10 @@ class ChangeDetectionStore:
 
                 if 'application' in from_disk['settings']:
                     self.__data['settings']['application'].update(from_disk['settings']['application'])
+
+            # from_disk no longer needed - free memory immediately
+            del from_disk
+            gc.collect()
 
             # Convert each existing watch back to the Watch.model object
             for uuid, watch in self.__data['watching'].items():
@@ -450,7 +455,7 @@ class ChangeDetectionStore:
             data = deepcopy(self.__data)
         except RuntimeError as e:
             # Try again in 15 seconds
-            time.sleep(15)
+            time.sleep(1)
             logger.error(f"! Data changed when writing to JSON, trying again.. {str(e)}")
             self.sync_to_json()
             return
