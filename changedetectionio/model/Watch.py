@@ -252,7 +252,6 @@ class model(watch_base):
 
         """
         tmp_history = {}
-        return tmp_history
 
         # In the case we are only using the watch for processing without history
         if not self.watch_data_dir:
