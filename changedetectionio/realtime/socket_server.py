@@ -240,7 +240,10 @@ def init_socketio(app, datastore):
                         async_mode=async_mode,
                         cors_allowed_origins=cors_origins,  # None means same-origin only
                         logger=strtobool(os.getenv('SOCKETIO_LOGGING', 'False')),
-                        engineio_logger=strtobool(os.getenv('SOCKETIO_LOGGING', 'False')))
+                        engineio_logger=strtobool(os.getenv('SOCKETIO_LOGGING', 'False')),
+                        # Disable WebSocket compression to prevent memory accumulation
+                        # Flask-Compress already handles HTTP response compression
+                        engineio_options={'http_compression': False, 'compression_threshold': 0})
 
     # Set up event handlers
     logger.info("Socket.IO: Registering connect event handler")

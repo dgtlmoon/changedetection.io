@@ -71,9 +71,13 @@ socketio_server = None
 CORS(app)
 
 # Super handy for compressing large BrowserSteps responses and others
-FlaskCompress(app)
-app.config['COMPRESS_MIN_SIZE'] = 4096
+# Flask-Compress handles HTTP compression, Socket.IO compression disabled to prevent memory leak
+compress = FlaskCompress()
+app.config['COMPRESS_MIN_SIZE'] = 2096
 app.config['COMPRESS_MIMETYPES'] = ['text/html', 'text/css', 'text/javascript', 'application/json', 'application/javascript', 'image/svg+xml']
+# Use gzip only - smaller memory footprint than zstd/brotli (4-8KB vs 200-500KB contexts)
+app.config['COMPRESS_ALGORITHM'] = ['gzip']
+compress.init_app(app)
 app.config['TEMPLATES_AUTO_RELOAD'] = False
 
 
