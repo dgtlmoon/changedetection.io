@@ -1,0 +1,12 @@
+# TicketWatch Additional Requirements
+# Install with: pip install -r tasks/requirements.txt
+
+# PostgreSQL async driver (recommended)
+asyncpg>=0.29.0
+
+# PostgreSQL sync driver (fallback)
+psycopg2-binary>=2.9.9
+
+# Testing dependencies
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
