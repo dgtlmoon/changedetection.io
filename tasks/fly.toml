@@ -4,10 +4,18 @@
 # Prerequisites:
 # 1. Install flyctl: https://fly.io/docs/hands-on/install-flyctl/
 # 2. Login: fly auth login
-# 3. Set secrets (see US-006):
-#    fly secrets set DATABASE_URL="postgresql://..."
-#    fly secrets set SLACK_WEBHOOK_URL="https://hooks.slack.com/..."
-#    fly secrets set SALTED_PASS="your-password-hash"
+# 3. Create volume: fly volumes create ticketwatch_data --region ord --size 1
+# 4. Set secrets (see FLY_SECRETS_SETUP.md for detailed instructions):
+#
+#    Required:
+#    fly secrets set DATABASE_URL="postgresql://user:pass@host/db?sslmode=require"
+#    fly secrets set SLACK_WEBHOOK_URL="https://hooks.slack.com/services/..."
+#
+#    Optional:
+#    fly secrets set PROXY_LIST_PATH="/datastore/proxies.txt"
+#    fly secrets set SALTED_PASS="sha256-hash-of-password"
+#
+# 5. Deploy: fly deploy --config tasks/fly.toml
 
 app = "changedetection-io-z08mj"
 primary_region = "ord"
