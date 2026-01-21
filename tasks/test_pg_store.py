@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from unittest.mock import patch, MagicMock
 
 # Import the module under test
-from pg_store import (
+from tasks.pg_store import (
     PostgreSQLStore,
     WatchRecord,
     SnapshotRecord,

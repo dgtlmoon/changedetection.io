@@ -13,7 +13,7 @@ import json
 from unittest.mock import patch, MagicMock
 from datetime import datetime
 
-from notification import (
+from tasks.notification import (
     format_slack_link,
     format_price,
     format_price_range,
