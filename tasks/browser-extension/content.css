@@ -1,0 +1,40 @@
+/**
+ * ChangeDetection.io Browser Extension - Content Styles
+ *
+ * Styles for CSS selector highlighting on the active page.
+ */
+
+/* Highlight style for matched elements */
+.cdio-selector-highlight {
+  outline: 3px solid #007bff !important;
+  outline-offset: 2px !important;
+  background-color: rgba(0, 123, 255, 0.1) !important;
+  box-shadow: 0 0 10px rgba(0, 123, 255, 0.4) !important;
+  transition: outline-color 0.3s ease, background-color 0.3s ease !important;
+}
+
+/* Hover effect on highlighted elements */
+.cdio-selector-highlight:hover {
+  outline-color: #0056b3 !important;
+  background-color: rgba(0, 123, 255, 0.2) !important;
+}
+
+/* Animation for newly highlighted elements */
+@keyframes cdio-highlight-pulse {
+  0% {
+    outline-width: 3px;
+    outline-offset: 2px;
+  }
+  50% {
+    outline-width: 5px;
+    outline-offset: 4px;
+  }
+  100% {
+    outline-width: 3px;
+    outline-offset: 2px;
+  }
+}
+
+.cdio-selector-highlight {
+  animation: cdio-highlight-pulse 0.5s ease-out !important;
+}

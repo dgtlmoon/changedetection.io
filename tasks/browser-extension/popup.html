@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChangeDetection.io Quick Add</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>ChangeDetection.io</h1>
+      <span class="connection-status" id="connectionStatus"></span>
+    </header>
+
+    <!-- Settings Tab -->
+    <div id="settingsTab" class="tab-content">
+      <h2>Configuration</h2>
+      <form id="settingsForm">
+        <div class="form-group">
+          <label for="apiEndpoint">API Endpoint URL</label>
+          <input type="url" id="apiEndpoint" placeholder="https://your-instance.com" required>
+          <small>Your self-hosted ChangeDetection.io URL (without /api/v1)</small>
+        </div>
+        <div class="form-group">
+          <label for="apiKey">API Key</label>
+          <input type="password" id="apiKey" placeholder="Enter your API key">
+          <small>Found in Settings &gt; API Access</small>
+        </div>
+        <div class="button-group">
+          <button type="button" id="testConnection" class="btn btn-secondary">Test Connection</button>
+          <button type="submit" class="btn btn-primary">Save Settings</button>
+        </div>
+      </form>
+      <div id="settingsMessage" class="message"></div>
+    </div>
+
+    <!-- Quick Add Tab -->
+    <div id="quickAddTab" class="tab-content hidden">
+      <h2>Quick Add to Watchlist</h2>
+      <form id="quickAddForm">
+        <div class="form-group">
+          <label for="watchUrl">URL to Watch</label>
+          <input type="url" id="watchUrl" required>
+          <button type="button" id="useCurrentUrl" class="btn btn-small">Use Current Page</button>
+        </div>
+        <div class="form-group">
+          <label for="watchTitle">Title (optional)</label>
+          <input type="text" id="watchTitle" placeholder="Auto-detected from page">
+        </div>
+        <div class="form-group">
+          <label for="watchTag">Tag/Group (optional)</label>
+          <input type="text" id="watchTag" placeholder="e.g., tickets, shopping">
+        </div>
+        <div class="form-group">
+          <label for="cssFilter">CSS Selector Filter (optional)</label>
+          <input type="text" id="cssFilter" placeholder="e.g., .price, #availability">
+          <button type="button" id="testSelector" class="btn btn-small">Test Selector</button>
+        </div>
+        <div class="form-group">
+          <label for="processor">Processor</label>
+          <select id="processor">
+            <option value="text_json_diff">Text/JSON Diff (Default)</option>
+            <option value="restock_diff">Restock Detection</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">Add to Watchlist</button>
+      </form>
+      <div id="quickAddMessage" class="message"></div>
+    </div>
+
+    <!-- Selector Test Tab -->
+    <div id="selectorTab" class="tab-content hidden">
+      <h2>CSS Selector Tester</h2>
+      <div class="form-group">
+        <label for="testCssSelector">CSS Selector</label>
+        <input type="text" id="testCssSelector" placeholder="e.g., .price, #availability, [data-price]">
+      </div>
+      <div class="button-group">
+        <button type="button" id="highlightSelector" class="btn btn-secondary">Highlight on Page</button>
+        <button type="button" id="clearHighlight" class="btn btn-secondary">Clear Highlights</button>
+      </div>
+      <div id="selectorResults" class="results-box">
+        <p class="placeholder">Enter a selector and click "Highlight on Page" to see matches</p>
+      </div>
+      <button type="button" id="useSelectorForWatch" class="btn btn-primary btn-full" disabled>Use This Selector for Watch</button>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="tab-nav">
+      <button type="button" class="tab-btn active" data-tab="settingsTab">Settings</button>
+      <button type="button" class="tab-btn" data-tab="quickAddTab">Quick Add</button>
+      <button type="button" class="tab-btn" data-tab="selectorTab">Selector Test</button>
+    </nav>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

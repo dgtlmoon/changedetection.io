@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#007bff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0056b3;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="60" fill="url(#bg)"/>
+  <!-- Eye symbol representing "watch/detect" -->
+  <ellipse cx="64" cy="64" rx="35" ry="22" fill="none" stroke="white" stroke-width="6"/>
+  <circle cx="64" cy="64" r="12" fill="white"/>
+  <circle cx="68" cy="60" r="4" fill="#007bff"/>
+  <!-- Plus sign for "add" -->
+  <circle cx="96" cy="96" r="20" fill="#28a745"/>
+  <rect x="90" y="88" width="12" height="16" fill="white" rx="1"/>
+  <rect x="88" y="90" width="16" height="12" fill="white" rx="1"/>
+</svg>

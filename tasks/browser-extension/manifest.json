@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "ChangeDetection.io Quick Add",
+  "version": "1.0.0",
+  "description": "Quickly add URLs to your self-hosted ChangeDetection.io instance and test CSS selectors",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icons/icon.svg"
+  },
+  "icons": {
+    "128": "icons/icon.svg"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_end"
+    }
+  ]
+}
