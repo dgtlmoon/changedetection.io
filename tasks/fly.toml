@@ -1,0 +1,62 @@
+# Fly.io Configuration for TicketWatch
+# Deploy with: fly launch --config tasks/fly.toml
+#
+# Prerequisites:
+# 1. Install flyctl: https://fly.io/docs/hands-on/install-flyctl/
+# 2. Login: fly auth login
+# 3. Create app: fly apps create ticketwatch
+# 4. Set secrets:
+#    fly secrets set DATABASE_URL="postgresql://..."
+#    fly secrets set SLACK_WEBHOOK_URL="https://hooks.slack.com/..."
+#    fly secrets set SALTED_PASS="your-password-hash"
+
+app = "ticketwatch"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+  # Build context is the parent directory (project root)
+
+[env]
+  PORT = "5000"
+  LISTEN_HOST = "0.0.0.0"
+  FETCH_WORKERS = "5"
+  PLAYWRIGHT_BROWSERS_PATH = "/ms-playwright"
+  # Reduce memory usage for Playwright
+  PLAYWRIGHT_CHROMIUM_SANDBOX = "false"
+
+[http_service]
+  internal_port = 5000
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+[[http_service.checks]]
+  grace_period = "60s"
+  interval = "30s"
+  method = "GET"
+  timeout = "10s"
+  path = "/"
+
+# Persistent volume for datastore
+# Create with: fly volumes create ticketwatch_data --region iad --size 1
+[[mounts]]
+  source = "ticketwatch_data"
+  destination = "/datastore"
+  initial_size = "1gb"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+
+# For Playwright browser support, you may need more memory:
+# [[vm]]
+#   size = "shared-cpu-1x"
+#   memory = "1gb"
