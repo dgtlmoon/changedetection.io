@@ -133,7 +133,7 @@ ENV PYTHONPATH=/usr/local
 
 # Install Playwright browsers in final image
 # We do this here to ensure the browser binaries are in the final image
-RUN playwright install chromium && playwright install-deps chromium
+RUN python -m playwright install chromium && python -m playwright install-deps chromium
 
 # Copy application code
 COPY changedetectionio /app/changedetectionio

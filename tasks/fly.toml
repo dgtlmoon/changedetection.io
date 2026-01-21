@@ -27,7 +27,7 @@ primary_region = "ord"
 [env]
   PORT = "5000"
   LISTEN_HOST = "0.0.0.0"
-  FETCH_WORKERS = "5"
+  FETCH_WORKERS = "1"
   PLAYWRIGHT_BROWSERS_PATH = "/ms-playwright"
   # Reduce memory usage for Playwright
   PLAYWRIGHT_CHROMIUM_SANDBOX = "false"
@@ -46,10 +46,10 @@ primary_region = "ord"
     soft_limit = 20
 
 [[http_service.checks]]
-  grace_period = "60s"
+  grace_period = "120s"
   interval = "30s"
   method = "GET"
-  timeout = "10s"
+  timeout = "20s"
   path = "/"
 
 # Persistent volume for datastore
