@@ -314,7 +314,7 @@ class TestSlackNotificationHandler:
     def test_handler_without_webhook_logs_warning(self):
         """Test handler logs warning when no webhook URL."""
         with patch.dict('os.environ', {}, clear=True):
-            with patch('notification.logger') as mock_logger:
+            with patch('tasks.notification.logger') as mock_logger:
                 handler = SlackNotificationHandler(webhook_url=None)
                 # Should have logged a warning
                 mock_logger.warning.assert_called()
@@ -422,10 +422,10 @@ class TestSlackNotificationHandler:
 class TestConvenienceFunctions:
     """Tests for module-level convenience functions."""
 
-    @patch('notification.SlackNotificationHandler.send_ticket_alert')
-    def test_send_ticket_alert_function(self, mock_send):
+    @patch('tasks.notification.requests.post')
+    def test_send_ticket_alert_function(self, mock_post):
         """Test the send_ticket_alert convenience function."""
-        mock_send.return_value = True
+        mock_post.return_value = MagicMock(status_code=200)
 
         result = send_ticket_alert(
             event_name="Test Event",
@@ -433,7 +433,8 @@ class TestConvenienceFunctions:
         )
 
         # The function creates a handler and calls send_ticket_alert
-        assert mock_send.called or result is False  # False if no real webhook
+        assert result is True
+        mock_post.assert_called_once()
 
     def test_format_changedetection_notification(self):
         """Test changedetection.io notification formatting."""
