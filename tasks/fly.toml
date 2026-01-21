@@ -1,17 +1,16 @@
 # Fly.io Configuration for TicketWatch
-# Deploy with: fly launch --config tasks/fly.toml
+# Deploy with: fly deploy --config tasks/fly.toml
 #
 # Prerequisites:
 # 1. Install flyctl: https://fly.io/docs/hands-on/install-flyctl/
 # 2. Login: fly auth login
-# 3. Create app: fly apps create ticketwatch
-# 4. Set secrets:
+# 3. Set secrets (see US-006):
 #    fly secrets set DATABASE_URL="postgresql://..."
 #    fly secrets set SLACK_WEBHOOK_URL="https://hooks.slack.com/..."
 #    fly secrets set SALTED_PASS="your-password-hash"
 
-app = "ticketwatch"
-primary_region = "iad"
+app = "changedetection-io-z08mj"
+primary_region = "ord"
 
 [build]
   dockerfile = "Dockerfile"
@@ -46,17 +45,12 @@ primary_region = "iad"
   path = "/"
 
 # Persistent volume for datastore
-# Create with: fly volumes create ticketwatch_data --region iad --size 1
+# Create with: fly volumes create ticketwatch_data --region ord --size 1
 [[mounts]]
   source = "ticketwatch_data"
   destination = "/datastore"
   initial_size = "1gb"
 
 [[vm]]
-  size = "shared-cpu-1x"
-  memory = "512mb"
-
-# For Playwright browser support, you may need more memory:
-# [[vm]]
-#   size = "shared-cpu-1x"
-#   memory = "1gb"
+  size = "shared-cpu-2x"
+  memory = "2048mb"
