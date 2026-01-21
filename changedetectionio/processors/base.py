@@ -85,13 +85,31 @@ class difference_detection_processor():
             fetcher_obj = getattr(content_fetchers, "html_requests")
 
         proxy_url = None
-        if preferred_proxy_id:
-            # Custom browser endpoints should NOT have a proxy added
-            if not prefer_fetch_backend.startswith('extra_browser_'):
-                proxy_url = self.datastore.proxy_list.get(preferred_proxy_id).get('url')
-                logger.debug(f"Selected proxy key '{preferred_proxy_id}' as proxy URL '{proxy_url}' for {url}")
-            else:
-                logger.debug("Skipping adding proxy data when custom Browser endpoint is specified. ")
+        # Custom browser endpoints should NOT have a proxy added
+        if prefer_fetch_backend.startswith('extra_browser_'):
+            logger.debug("Skipping adding proxy data when custom Browser endpoint is specified.")
+        elif preferred_proxy_id:
+            # Use the specifically configured proxy for this watch
+            proxy_url = self.datastore.proxy_list.get(preferred_proxy_id).get('url')
+            logger.debug(f"Selected proxy key '{preferred_proxy_id}' as proxy URL '{proxy_url}' for {url}")
+        else:
+            # No specific proxy configured - use proxy rotation if available
+            try:
+                # Try changedetectionio package first, then tasks folder
+                try:
+                    from changedetectionio.proxy_rotator import get_rotated_proxy
+                except ImportError:
+                    from tasks.proxy_rotator import get_rotated_proxy
+
+                rotated_proxy = get_rotated_proxy(watch_uuid=self.watch.get('uuid'))
+                if rotated_proxy:
+                    proxy_url = rotated_proxy
+                    logger.debug(f"Using rotated proxy for {url}")
+            except ImportError:
+                # Proxy rotator module not available, continue without rotation
+                pass
+            except Exception as e:
+                logger.warning(f"Error getting rotated proxy: {e}")
 
         logger.debug(f"Using proxy '{proxy_url}' for {self.watch['uuid']}")
 
