@@ -1818,7 +1818,7 @@ msgstr "Ignorieren Sie alle übereinstimmenden Zeilen mit Ausnahme von Ziffern"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:28
 msgid "From"
-msgstr "Aus"
+msgstr "Von"
 
 #: changedetectionio/blueprint/ui/templates/diff.html:38
 msgid "To"
