@@ -191,7 +191,9 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
                 raise
 
             # Run schema updates if needed
-            self.run_updates()
+            # Pass current schema version from loaded datastore (defaults to 0 if not set)
+            current_schema = self.__data['settings']['application'].get('schema_version', 0)
+            self.run_updates(current_schema_version=current_schema)
 
         else:
             # No datastore yet - check if this is a fresh install or legacy migration
@@ -213,12 +215,24 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
                 logger.critical(f"Legacy datastore detected at {self.datastore_path}/url-watches.json")
                 logger.critical("Migration will be triggered via update_26")
 
-                # Set schema version to 0 to trigger ALL updates including update_26
-                self.__data['settings']['application']['schema_version'] = 0
+                # Load the legacy datastore to get its schema_version
+                from .legacy_loader import load_legacy_format
+                legacy_path = os.path.join(self.datastore_path, "url-watches.json")
+                legacy_data = load_legacy_format(legacy_path)
 
-                # update_26 will load the legacy data and migrate to new format
-                # Data will be loaded into memory during update_26, no need to add default watches
-                self.run_updates()
+                if not legacy_data:
+                    raise Exception("Failed to load legacy datastore from url-watches.json")
+
+                # Get the schema version from legacy datastore (defaults to 0 if not present)
+                legacy_schema_version = legacy_data.get('settings', {}).get('application', {}).get('schema_version', 0)
+                logger.info(f"Legacy datastore schema version: {legacy_schema_version}")
+
+                # Set our schema version to match the legacy one
+                self.__data['settings']['application']['schema_version'] = legacy_schema_version
+
+                # update_26 will load the legacy data again and migrate to new format
+                # Only run updates AFTER the legacy schema version (e.g., if legacy is at 25, only run 26+)
+                self.run_updates(current_schema_version=legacy_schema_version)
 
             else:
                 # Fresh install - create new datastore

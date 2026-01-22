@@ -4,7 +4,8 @@ File-based datastore with individual watch persistence and dirty tracking.
 This module provides the FileSavingDataStore abstract class that implements:
 - Individual watch.json file persistence
 - Hash-based change detection (only save what changed)
-- Background save thread with dirty tracking
+- Periodic audit scan (catches unmarked changes)
+- Background save thread with batched parallel saves
 - Atomic file writes safe for NFS/NAS
 """
 
@@ -35,7 +36,15 @@ FORCE_FSYNC_DATA_IS_CRITICAL = bool(strtobool(os.getenv('FORCE_FSYNC_DATA_IS_CRI
 
 # Save interval configuration: How often the background thread saves dirty items
 # Default 10 seconds - increase for less frequent saves, decrease for more frequent
-DATASTORE_SAVE_INTERVAL_SECONDS = int(os.getenv('DATASTORE_SAVE_INTERVAL_SECONDS', '10'))
+DATASTORE_SCAN_DIRTY_SAVE_INTERVAL_SECONDS = int(os.getenv('DATASTORE_SCAN_DIRTY_SAVE_INTERVAL_SECONDS', '10'))
+
+# Rolling audit configuration: Scans a fraction of watches each cycle
+# Default: Run audit every 10s, split into 5 shards
+# Full audit completes every 50s (10s × 5 shards)
+# With 56k watches: 56k / 5 = ~11k watches per cycle (~60ms vs 316ms for all)
+# Handles dynamic watch count - recalculates shard boundaries each cycle
+DATASTORE_AUDIT_INTERVAL_SECONDS = int(os.getenv('DATASTORE_AUDIT_INTERVAL_SECONDS', '10'))
+DATASTORE_AUDIT_SHARDS = int(os.getenv('DATASTORE_AUDIT_SHARDS', '5'))
 
 
 # ============================================================================
@@ -135,15 +144,15 @@ def save_json_atomic(file_path, data_dict, label="file", max_size_mb=10):
                 pass
 
         # Log timing breakdown for slow saves
-        total_ms = serialize_ms + write_ms + file_fsync_ms + rename_ms + dir_fsync_ms
-        if total_ms:  # Log if save took more than 10ms
-            file_status = "new" if not file_exists else "update"
-            logger.debug(
-                f"Save timing breakdown ({total_ms:.1f}ms total, {file_status}): "
-                f"serialize={serialize_ms:.1f}ms, write={write_ms:.1f}ms, "
-                f"file_fsync={file_fsync_ms:.1f}ms, rename={rename_ms:.1f}ms, "
-                f"dir_fsync={dir_fsync_ms:.1f}ms, using_orjson={HAS_ORJSON}"
-            )
+#        total_ms = serialize_ms + write_ms + file_fsync_ms + rename_ms + dir_fsync_ms
+#        if total_ms:  # Log if save took more than 10ms
+#            file_status = "new" if not file_exists else "update"
+#            logger.trace(
+#                f"Save timing breakdown ({total_ms:.1f}ms total, {file_status}): "
+#                f"serialize={serialize_ms:.1f}ms, write={write_ms:.1f}ms, "
+#                f"file_fsync={file_fsync_ms:.1f}ms, rename={rename_ms:.1f}ms, "
+#                f"dir_fsync={dir_fsync_ms:.1f}ms, using_orjson={HAS_ORJSON}"
+#            )
 
     except OSError as e:
         # Cleanup temp file
@@ -232,6 +241,11 @@ def load_watch_from_file(watch_json, uuid, rehydrate_entity_func):
         else:
             with open(watch_json, 'r', encoding='utf-8') as f:
                 watch_data = json.load(f)
+
+        if watch_data.get('time_schedule_limit'):
+            del watch_data['time_schedule_limit']
+        if watch_data.get('time_between_check'):
+            del watch_data['time_between_check']
 
         # Return both the raw data and the rehydrated watch
         # Raw data is needed to compute hash before rehydration changes anything
@@ -363,33 +377,20 @@ class FileSavingDataStore(DataStore):
 
     # Health monitoring
     _last_save_time = 0         # Timestamp of last successful save
+    _last_audit_time = 0        # Timestamp of last audit scan
     _save_cycle_count = 0       # Number of save cycles completed
     _total_saves = 0            # Total watches saved (lifetime)
     _save_errors = 0            # Total save errors (lifetime)
+    _audit_count = 0            # Number of audit scans completed
+    _audit_found_changes = 0    # Total unmarked changes found by audits
+    _audit_shard_index = 0      # Current shard being audited (rolling audit)
 
     def __init__(self):
         super().__init__()
         self.save_data_thread = None
         self._last_save_time = time.time()
+        self._last_audit_time = time.time()
 
-    def _compute_hash(self, watch_dict):
-        """
-        Compute SHA256 hash of watch for change detection.
-
-        Args:
-            watch_dict: Dictionary representation of watch
-
-        Returns:
-            Hex string of SHA256 hash
-        """
-        # Use orjson for deterministic serialization if available
-        if HAS_ORJSON:
-            json_bytes = orjson.dumps(watch_dict, option=orjson.OPT_SORT_KEYS)
-        else:
-            json_str = json.dumps(watch_dict, sort_keys=True, ensure_ascii=False)
-            json_bytes = json_str.encode('utf-8')
-
-        return hashlib.sha256(json_bytes).hexdigest()
 
     def mark_watch_dirty(self, uuid):
         """
@@ -423,20 +424,34 @@ class FileSavingDataStore(DataStore):
             self._dirty_settings = True
         self.needs_write = True
 
+    def _compute_hash(self, watch_dict):
+        """
+        Compute SHA256 hash of watch for change detection.
+
+        Args:
+            watch_dict: Dictionary representation of watch
+
+        Returns:
+            Hex string of SHA256 hash
+        """
+        # Use orjson for deterministic serialization if available
+        if HAS_ORJSON:
+            json_bytes = orjson.dumps(watch_dict, option=orjson.OPT_SORT_KEYS)
+        else:
+            json_str = json.dumps(watch_dict, sort_keys=True, ensure_ascii=False)
+            json_bytes = json_str.encode('utf-8')
+
+        return hashlib.sha256(json_bytes).hexdigest()
+
     def save_watch(self, uuid, force=False, watch_dict=None, current_hash=None):
         """
         Save a single watch if it has changed (polymorphic method).
 
-        This is the high-level save method that handles:
-        - Hash computation and change detection
-        - Calling the backend-specific save implementation
-        - Updating the hash cache
-
         Args:
             uuid: Watch UUID
             force: If True, skip hash check and save anyway
-            watch_dict: Pre-computed watch dictionary (optimization to avoid redundant serialization)
-            current_hash: Pre-computed hash (optimization to avoid redundant hashing)
+            watch_dict: Pre-computed watch dictionary (optimization)
+            current_hash: Pre-computed hash (optimization)
 
         Returns:
             True if saved, False if skipped (unchanged)
@@ -445,15 +460,16 @@ class FileSavingDataStore(DataStore):
             logger.warning(f"Cannot save watch {uuid} - does not exist")
             return False
 
-        # Use pre-computed values if provided (avoids redundant work)
+        # Get watch dict if not provided
         if watch_dict is None:
             watch_dict = self._get_watch_dict(uuid)
+
+        # Compute hash if not provided
         if current_hash is None:
             current_hash = self._compute_hash(watch_dict)
 
         # Skip save if unchanged (unless forced)
         if not force and current_hash == self._watch_hashes.get(uuid):
-            #logger.debug(f"Watch {uuid} unchanged, skipping save")
             return False
 
         try:
@@ -520,7 +536,7 @@ class FileSavingDataStore(DataStore):
 
     def _save_dirty_items(self):
         """
-        Save only items that have changed.
+        Save dirty watches and settings.
 
         This is the core optimization: instead of saving the entire datastore,
         we only save watches that were marked dirty and settings if changed.
@@ -537,7 +553,7 @@ class FileSavingDataStore(DataStore):
         if not dirty_watches and not dirty_settings:
             return
 
-        logger.trace(f"Verifying {len(dirty_watches)} watches for changes (hash comparison), settings_dirty={dirty_settings}")
+        logger.trace(f"Saving {len(dirty_watches)} dirty watches, settings_dirty={dirty_settings}")
 
         # Save each dirty watch using the polymorphic save method
         saved_count = 0
@@ -581,7 +597,7 @@ class FileSavingDataStore(DataStore):
             total_batches = (len(dirty_watches) + BATCH_SIZE - 1) // BATCH_SIZE
 
             if len(dirty_watches) > BATCH_SIZE:
-                logger.trace(f"Hash verification batch {batch_num}/{total_batches} ({len(batch)} watches)")
+                logger.trace(f"Save batch {batch_num}/{total_batches} ({len(batch)} watches)")
 
             # Use thread pool to save watches in parallel
             with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
@@ -665,12 +681,109 @@ class FileSavingDataStore(DataStore):
         """
         raise NotImplementedError("Subclass must implement _get_watch_dict")
 
+    def _audit_all_watches(self):
+        """
+        Rolling audit: Scans a fraction of watches to detect unmarked changes.
+
+        Instead of scanning ALL watches at once, this scans 1/N shards per cycle.
+        The shard rotates each cycle, completing a full audit every N cycles.
+
+        Handles dynamic watch count - recalculates shard boundaries each cycle,
+        so newly added watches will be audited in subsequent cycles.
+
+        Benefits:
+        - Lower CPU per cycle (56k / 5 = ~11k watches vs all 56k)
+        - More frequent audits overall (every 50s vs every 10s)
+        - Spreads load evenly across time
+        """
+        audit_start = time.time()
+
+        # Get list of all watch UUIDs (read-only, no lock needed)
+        try:
+            all_uuids = list(self.data['watching'].keys())
+        except (KeyError, AttributeError, RuntimeError):
+            # Data structure not ready or being modified
+            return
+
+        if not all_uuids:
+            return
+
+        total_watches = len(all_uuids)
+
+        # Calculate this cycle's shard boundaries
+        # Example: 56,278 watches / 5 shards = 11,255 watches per shard
+        # Shard 0: [0:11255], Shard 1: [11255:22510], etc.
+        shard_size = (total_watches + DATASTORE_AUDIT_SHARDS - 1) // DATASTORE_AUDIT_SHARDS
+        start_idx = self._audit_shard_index * shard_size
+        end_idx = min(start_idx + shard_size, total_watches)
+
+        # Handle wrap-around (shouldn't happen normally, but defensive)
+        if start_idx >= total_watches:
+            self._audit_shard_index = 0
+            start_idx = 0
+            end_idx = min(shard_size, total_watches)
+
+        # Audit only this shard's watches
+        shard_uuids = all_uuids[start_idx:end_idx]
+
+        changes_found = 0
+        errors = 0
+
+        for uuid in shard_uuids:
+            try:
+                # Get current watch dict and compute hash
+                watch_dict = self._get_watch_dict(uuid)
+                current_hash = self._compute_hash(watch_dict)
+                stored_hash = self._watch_hashes.get(uuid)
+
+                # If hash changed and not already marked dirty, mark it
+                if current_hash != stored_hash:
+                    with self.lock:
+                        if uuid not in self._dirty_watches:
+                            self._dirty_watches.add(uuid)
+                            changes_found += 1
+                            logger.warning(
+                                f"Audit detected unmarked change in watch {uuid[:8]}... "
+                                f"(hash changed but not marked dirty)"
+                            )
+                            self.needs_write = True
+            except Exception as e:
+                errors += 1
+                logger.trace(f"Audit error for watch {uuid[:8]}...: {e}")
+
+        audit_elapsed = (time.time() - audit_start) * 1000  # milliseconds
+
+        # Advance to next shard (wrap around after last shard)
+        self._audit_shard_index = (self._audit_shard_index + 1) % DATASTORE_AUDIT_SHARDS
+
+        # Update metrics
+        self._audit_count += 1
+        self._audit_found_changes += changes_found
+        self._last_audit_time = time.time()
+
+        if changes_found > 0:
+            logger.warning(
+                f"Audit shard {self._audit_shard_index}/{DATASTORE_AUDIT_SHARDS} found {changes_found} "
+                f"unmarked changes in {len(shard_uuids)}/{total_watches} watches ({audit_elapsed:.1f}ms)"
+            )
+        else:
+            logger.trace(
+                f"Audit shard {self._audit_shard_index}/{DATASTORE_AUDIT_SHARDS}: "
+                f"{len(shard_uuids)}/{total_watches} watches checked, 0 changes ({audit_elapsed:.1f}ms)"
+            )
+
     def save_datastore(self):
         """
-        Background thread that periodically saves dirty items.
+        Background thread that periodically saves dirty items and audits watches.
 
-        Runs every DATASTORE_SAVE_INTERVAL_SECONDS (default 10s) with 0.5s sleep intervals
-        for responsiveness, or immediately when needs_write_urgent is set.
+        Runs two independent cycles:
+        1. Save dirty items every DATASTORE_SCAN_DIRTY_SAVE_INTERVAL_SECONDS (default 10s)
+        2. Rolling audit: every DATASTORE_AUDIT_INTERVAL_SECONDS (default 10s)
+           - Scans 1/DATASTORE_AUDIT_SHARDS watches per cycle (default 1/5)
+           - Full audit completes every 50s (10s × 5 shards)
+           - Automatically handles new/deleted watches
+
+        Uses 0.5s sleep intervals for responsiveness to urgent saves.
         """
         while True:
             if self.stop_thread:
@@ -686,6 +799,14 @@ class FileSavingDataStore(DataStore):
                     logger.info("Datastore save thread stopping - no dirty items")
                 return
 
+            # Check if it's time to run audit scan (every N seconds)
+            if time.time() - self._last_audit_time >= DATASTORE_AUDIT_INTERVAL_SECONDS:
+                try:
+                    self._audit_all_watches()
+                except Exception as e:
+                    logger.error(f"Error in audit cycle: {e}")
+
+            # Save dirty items if needed
             if self.needs_write or self.needs_write_urgent:
                 try:
                     self._save_dirty_items()
@@ -693,8 +814,8 @@ class FileSavingDataStore(DataStore):
                     logger.error(f"Error in save cycle: {e}")
 
             # Timer with early break for urgent saves
-            # Each iteration is 0.5 seconds, so iterations = DATASTORE_SAVE_INTERVAL_SECONDS * 2
-            for i in range(DATASTORE_SAVE_INTERVAL_SECONDS * 2):
+            # Each iteration is 0.5 seconds, so iterations = DATASTORE_SCAN_DIRTY_SAVE_INTERVAL_SECONDS * 2
+            for i in range(DATASTORE_SCAN_DIRTY_SAVE_INTERVAL_SECONDS * 2):
                 time.sleep(0.5)
                 if self.stop_thread or self.needs_write_urgent:
                     break

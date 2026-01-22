@@ -129,9 +129,15 @@ class DatastoreUpdatesMixin:
 
         return updates_available
 
-    def run_updates(self):
+    def run_updates(self, current_schema_version=None):
         """
         Run all pending schema updates sequentially.
+
+        Args:
+            current_schema_version: Optional current schema version. If provided, only run updates
+                                   greater than this version. If None, uses the schema version from
+                                   the datastore. If no schema version exists in datastore and it appears
+                                   to be a fresh install, sets to latest update number (no updates needed).
 
         IMPORTANT: Each update could be run even when they have a new install and the schema is correct.
         Therefore - each `update_n` should be very careful about checking if it needs to actually run.
@@ -147,10 +153,34 @@ class DatastoreUpdatesMixin:
         4. Save all changes immediately
         """
         updates_available = self.get_updates_available()
+
+        # Determine current schema version
+        if current_schema_version is None:
+            # Check if schema_version exists in datastore
+            current_schema_version = self.data['settings']['application'].get('schema_version')
+
+            if current_schema_version is None:
+                # No schema version found - could be a fresh install or very old datastore
+                # If this is a fresh/new config with no watches, assume it's up-to-date
+                # and set to latest update number (no updates needed)
+                if len(self.data['watching']) == 0:
+                    # Get the highest update number from available update methods
+                    latest_update = updates_available[-1] if updates_available else 0
+                    logger.info(f"No schema version found and no watches exist - assuming fresh install, setting schema_version to {latest_update}")
+                    self.data['settings']['application']['schema_version'] = latest_update
+                    self.mark_settings_dirty()
+                    return  # No updates needed for fresh install
+                else:
+                    # Has watches but no schema version - likely old datastore, run all updates
+                    logger.warning("No schema version found but watches exist - running all updates from version 0")
+                    current_schema_version = 0
+
+        logger.info(f"Current schema version: {current_schema_version}")
+
         updates_ran = []
 
         for update_n in updates_available:
-            if update_n > self.data['settings']['application']['schema_version']:
+            if update_n > current_schema_version:
                 logger.critical(f"Applying update_{update_n}")
 
                 # Create tarball backup of entire datastore structure
@@ -176,22 +206,22 @@ class DatastoreUpdatesMixin:
                     # CRITICAL: Mark all watches as dirty so changes are persisted
                     # Most updates modify watches, and in the new individual watch.json structure,
                     # we need to ensure those changes are saved
-                    logger.info(f"Marking all {len(self.data['watching'])} watches as dirty after update_{update_n}")
+                    logger.info(f"Marking all {len(self.data['watching'])} watches as dirty after update_{update_n} (so that it saves them to disk)")
                     for uuid in self.data['watching'].keys():
                         self.mark_watch_dirty(uuid)
 
+                    # Save changes immediately after each update (more resilient than batching)
+                    logger.critical(f"Saving all changes after update_{update_n}")
+                    try:
+                        self._save_dirty_items()
+                        logger.success(f"Update {update_n} changes saved successfully")
+                    except Exception as e:
+                        logger.error(f"Failed to save update_{update_n} changes: {e}")
+                        # Don't raise - update already ran, but changes might not be persisted
+                        # The update will try to run again on next startup
+
                     # Track which updates ran
                     updates_ran.append(update_n)
-
-        # If any updates ran, save all changes immediately
-        if updates_ran:
-            logger.critical(f"Saving all changes after running {len(updates_ran)} update(s): {updates_ran}")
-            try:
-                self._save_dirty_items()
-                logger.success("All update changes saved successfully")
-            except Exception as e:
-                logger.error(f"Failed to save updates: {e}")
-                # Don't raise - updates already ran, just log the error
 
     # ============================================================================
     # Individual Update Methods
