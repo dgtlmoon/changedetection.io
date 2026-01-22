@@ -1,0 +1,354 @@
+{
+  "name": "TicketWatch - Custom Ticket Monitoring Platform",
+  "branchName": "feature/ticketwatch-mvp",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Fork and Local Setup",
+      "description": "As a developer, I want to fork changedetection.io and set up a local development environment so that I can customize the application for ticket monitoring.",
+      "acceptanceCriteria": [
+        "Repository is forked from changedetection.io",
+        "Local development environment runs successfully",
+        "Existing architecture and data flow is documented/understood"
+      ],
+      "priority": 1,
+      "passes": true,
+      "dependsOn": [],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-002",
+      "title": "Create Neon.tech Database",
+      "description": "As a developer, I want to create a Neon.tech PostgreSQL project and database so that I have a cloud database ready for the application.",
+      "acceptanceCriteria": [
+        "Neon.tech project created",
+        "Database instance provisioned",
+        "Connection string available for use"
+      ],
+      "priority": 1,
+      "passes": true,
+      "dependsOn": [
+        "US-001"
+      ],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-003",
+      "title": "Implement PostgreSQL Storage Adapter",
+      "description": "As a developer, I want to replace the file-based storage with a PostgreSQL adapter so that watch configurations and snapshots are stored in Neon.tech.",
+      "acceptanceCriteria": [
+        "PostgreSQL adapter implemented in store.py",
+        "Watches table created with id, url, title, tag, check_interval, last_checked, last_changed, paused, created_at fields",
+        "Snapshots table created with id, watch_id, content_hash, captured_at, extracted_prices, extracted_availability fields",
+        "Data persistence tested and working"
+      ],
+      "priority": 1,
+      "passes": true,
+      "dependsOn": [
+        "US-002"
+      ],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-004",
+      "title": "Create Fly.io Dockerfile",
+      "description": "As a developer, I want to create a Dockerfile optimized for Fly.io so that the application can be containerized and deployed.",
+      "acceptanceCriteria": [
+        "Dockerfile created with Playwright browser support",
+        "PLAYWRIGHT_BROWSERS_PATH configured",
+        "Application builds successfully in container",
+        "Container runs on port 5000"
+      ],
+      "priority": 1,
+      "passes": true,
+      "dependsOn": [
+        "US-001"
+      ],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-005",
+      "title": "Configure Fly.io Deployment",
+      "description": "As a developer, I want to configure fly.toml with proper resources so that the application can be deployed to Fly.io.",
+      "acceptanceCriteria": [
+        "fly.toml created for app changedetection-io-z08mj",
+        "Primary region set to ord (Chicago)",
+        "VM configured with 2 shared CPUs and 2048MB memory",
+        "HTTP service configured on internal port 5000 with force_https"
+      ],
+      "priority": 1,
+      "passes": true,
+      "dependsOn": [
+        "US-004"
+      ],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-006",
+      "title": "Set Up Fly.io Secrets",
+      "description": "As a developer, I want to configure Fly.io secrets for database and Slack credentials so that sensitive information is securely stored.",
+      "acceptanceCriteria": [
+        "DATABASE_URL secret configured",
+        "SLACK_WEBHOOK_URL secret configured",
+        "PROXY_LIST_PATH secret configured",
+        "Optional SALTED_PASS for UI auth configured"
+      ],
+      "priority": 1,
+      "passes": true,
+      "dependsOn": [
+        "US-005"
+      ],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-007",
+      "title": "Deploy to Fly.io",
+      "description": "As a developer, I want to deploy the application to Fly.io so that it is accessible and running in the cloud.",
+      "acceptanceCriteria": [
+        "Application deployed successfully to Fly.io",
+        "Web UI accessible via Fly.io URL",
+        "Health checks passing",
+        "Database connection verified"
+      ],
+      "priority": 1,
+      "passes": true,
+      "dependsOn": [
+        "US-003",
+        "US-006"
+      ],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-008",
+      "title": "Implement Proxy Rotation Middleware",
+      "description": "As a user, I want the application to rotate through my proxy list for requests so that I can avoid being blocked by ticketing sites.",
+      "acceptanceCriteria": [
+        "Proxy rotation middleware implemented in fetch_site_status.py",
+        "Proxies loaded from mounted file or environment variable",
+        "Rotation happens per-request",
+        "Support for residential and datacenter proxy lists"
+      ],
+      "priority": 1,
+      "passes": true,
+      "dependsOn": [
+        "US-007"
+      ],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-009",
+      "title": "Add Proxy Health Checking",
+      "description": "As a user, I want dead proxies to be marked and skipped so that requests don't fail unnecessarily.",
+      "acceptanceCriteria": [
+        "Proxy health status tracked",
+        "Failed proxies marked as dead",
+        "Dead proxies skipped in rotation",
+        "Proxies can recover after timeout period"
+      ],
+      "priority": 2,
+      "passes": true,
+      "dependsOn": [
+        "US-008"
+      ],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-010",
+      "title": "Create Custom Slack Notification Handler",
+      "description": "As a user, I want custom Slack notification formatting so that alerts are clear and contain relevant ticket information.",
+      "acceptanceCriteria": [
+        "Custom notification handler created in notification.py",
+        "Messages include event name, venue, prices, and URL",
+        "Rich formatting with separators and emojis",
+        "Links formatted as Slack link markup"
+      ],
+      "priority": 1,
+      "passes": true,
+      "dependsOn": [
+        "US-007"
+      ],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-011",
+      "title": "Implement Slack Message Templates",
+      "description": "As a user, I want different message templates for different alert types so that I can quickly understand what changed.",
+      "acceptanceCriteria": [
+        "Template for new listing alerts",
+        "Template for price change alerts with old/new prices",
+        "Template for sellout alerts",
+        "Templates use consistent formatting"
+      ],
+      "priority": 2,
+      "passes": true,
+      "dependsOn": [
+        "US-010"
+      ],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-012",
+      "title": "Extract Price Data from Pages",
+      "description": "As a user, I want the application to extract visible price text and price ranges from ticketing pages so that I can track pricing changes.",
+      "acceptanceCriteria": [
+        "Price extraction logic added to processors",
+        "Single prices extracted correctly (e.g., $25)",
+        "Price ranges extracted correctly (e.g., $25 - $75)",
+        "Extracted prices stored as structured JSON in snapshots table"
+      ],
+      "priority": 1,
+      "passes": true,
+      "dependsOn": [
+        "US-003"
+      ],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-013",
+      "title": "Detect Sold Out States",
+      "description": "As a user, I want the application to detect 'Sold Out' or 'Unavailable' states so that I am alerted when tickets sell out.",
+      "acceptanceCriteria": [
+        "Common sold out text patterns detected",
+        "Availability status stored in extracted_availability field",
+        "Sellout triggers appropriate Slack alert",
+        "Works across different ticketing platforms"
+      ],
+      "priority": 1,
+      "passes": true,
+      "dependsOn": [
+        "US-012"
+      ],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-014",
+      "title": "Add Extracted Price Data to Slack Messages",
+      "description": "As a user, I want Slack alerts to include the extracted price data so that I can see pricing without clicking through.",
+      "acceptanceCriteria": [
+        "Previous price shown in change alerts",
+        "Current price shown in all alerts",
+        "Price ranges displayed when available",
+        "Availability status included in message"
+      ],
+      "priority": 1,
+      "passes": true,
+      "dependsOn": [
+        "US-011",
+        "US-012"
+      ],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-015",
+      "title": "Configure Browser Extension for Self-Hosted",
+      "description": "As a user, I want to configure the browser extension to work with my self-hosted instance so that I can quickly add URLs to monitor.",
+      "acceptanceCriteria": [
+        "Extension can be configured with custom API endpoint URL",
+        "API key authentication supported",
+        "Quick-add current page to watchlist works",
+        "CSS selector testing/preview works"
+      ],
+      "priority": 2,
+      "passes": true,
+      "dependsOn": [
+        "US-007"
+      ],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-016",
+      "title": "Test Against metrotixchicago.com",
+      "description": "As a user, I want to verify monitoring works on metrotixchicago.com so that I can track Metro Tix events.",
+      "acceptanceCriteria": [
+        "Watch can be added for metrotixchicago.com event pages",
+        "JavaScript-rendered content loads via Playwright",
+        "Price extraction works correctly",
+        "Changes trigger Slack alerts"
+      ],
+      "priority": 1,
+      "passes": true,
+      "dependsOn": [
+        "US-008",
+        "US-014"
+      ],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-017",
+      "title": "Test Against thaliahall.com",
+      "description": "As a user, I want to verify monitoring works on thaliahall.com so that I can track Thalia Hall events.",
+      "acceptanceCriteria": [
+        "Watch can be added for thaliahall.com event pages",
+        "Content loads correctly",
+        "Price extraction works correctly",
+        "Changes trigger Slack alerts"
+      ],
+      "priority": 1,
+      "passes": true,
+      "dependsOn": [
+        "US-008",
+        "US-014"
+      ],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-018",
+      "title": "Test Against Third Ticketing Site",
+      "description": "As a user, I want to verify monitoring works on a third ticketing site (Etix, Prekindle, or TicketWeb) so that I have confidence in cross-platform support.",
+      "acceptanceCriteria": [
+        "Watch can be added for third site event pages",
+        "Content loads correctly (with proxy rotation if needed)",
+        "Price extraction works correctly",
+        "Changes trigger Slack alerts"
+      ],
+      "priority": 1,
+      "passes": true,
+      "dependsOn": [
+        "US-008",
+        "US-014"
+      ],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-019",
+      "title": "Document Site-Specific Issues",
+      "description": "As a developer, I want to document any site-specific challenges and workarounds so that future maintenance is easier.",
+      "acceptanceCriteria": [
+        "Known issues documented for each tested site",
+        "Workarounds or special configurations noted",
+        "Anti-bot escalation recommendations documented",
+        "CSS selectors that work documented per site"
+      ],
+      "priority": 2,
+      "passes": true,
+      "dependsOn": [
+        "US-016",
+        "US-017",
+        "US-018"
+      ],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-020",
+      "title": "Verify Stable Operation for 1 Week",
+      "description": "As a user, I want the application to run stably on Fly.io for 1 week without intervention so that I can trust it for ongoing monitoring.",
+      "acceptanceCriteria": [
+        "Application runs for 1 week without crashes",
+        "Auto-restart on failure works correctly",
+        "Database connection remains stable",
+        "Alerts continue to fire correctly"
+      ],
+      "priority": 1,
+      "passes": true,
+      "dependsOn": [
+        "US-016",
+        "US-017",
+        "US-018"
+      ],
+      "completionNotes": "Completed by agent"
+    }
+  ],
+  "metadata": {
+    "updatedAt": "2026-01-21T09:24:22.553Z"
+  }
+}
