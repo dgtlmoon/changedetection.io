@@ -94,6 +94,14 @@ if os.getenv('FLASK_SERVER_NAME'):
 app.config['BABEL_TRANSLATION_DIRECTORIES'] = str(Path(__file__).parent / 'translations')
 app.config['BABEL_DEFAULT_LOCALE'] = 'en_GB'
 
+# Session configuration
+# NOTE: Flask session (for locale, etc.) is separate from Flask-Login's remember-me cookie
+# - Flask session stores data like session['locale'] in a signed cookie
+# - Flask-Login's remember=True creates a separate authentication cookie
+# - Setting PERMANENT_SESSION_LIFETIME controls how long the Flask session cookie lasts
+from datetime import timedelta
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=3650)  # ~10 years (effectively unlimited)
+
 #app.config["EXPLAIN_TEMPLATE_LOADING"] = True
 
 
@@ -550,6 +558,9 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Validate the locale against available languages
         if locale in language_codes:
+            # Make session permanent so language preference persists across browser sessions
+            # NOTE: This is the Flask session cookie (separate from Flask-Login's remember-me auth cookie)
+            session.permanent = True
             session['locale'] = locale
 
             # CRITICAL: Flask-Babel caches the locale in the request context (ctx.babel_locale)
