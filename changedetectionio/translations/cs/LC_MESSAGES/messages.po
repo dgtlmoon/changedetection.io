@@ -2814,7 +2814,7 @@ msgstr "Vyberte Jazyk"
 
 #: changedetectionio/templates/base.html
 msgid "Auto-detect from browser"
-msgstr ""
+msgstr "Automaticky zjistit z prohlížeče"
 
 #: changedetectionio/templates/base.html
 msgid "Language support is in beta, please help us improve by opening a PR on GitHub with any updates."

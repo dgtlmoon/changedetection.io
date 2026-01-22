@@ -2820,7 +2820,7 @@ msgstr "Sélectionnez la langue"
 
 #: changedetectionio/templates/base.html
 msgid "Auto-detect from browser"
-msgstr ""
+msgstr "Détecter automatiquement depuis le navigateur"
 
 #: changedetectionio/templates/base.html
 msgid "Language support is in beta, please help us improve by opening a PR on GitHub with any updates."

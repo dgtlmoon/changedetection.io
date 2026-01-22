@@ -2861,7 +2861,7 @@ msgstr "Wählen Sie Sprache aus"
 
 #: changedetectionio/templates/base.html
 msgid "Auto-detect from browser"
-msgstr ""
+msgstr "Automatisch vom Browser erkennen"
 
 #: changedetectionio/templates/base.html
 msgid "Language support is in beta, please help us improve by opening a PR on GitHub with any updates."
