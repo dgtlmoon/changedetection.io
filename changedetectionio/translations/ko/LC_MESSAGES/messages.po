@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-22 06:10+0100\n"
+"POT-Creation-Date: 2026-01-22 06:12+0100\n"
 "PO-Revision-Date: 2026-01-02 11:40+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ko\n"
@@ -962,6 +962,10 @@ msgstr "백그라운드에서 모니터 재확인 대기열 추가 중..."
 msgid "Could not share, something went wrong while communicating with the share server - {}"
 msgstr ""
 
+#: changedetectionio/blueprint/ui/__init__.py:415
+msgid "Language set to auto-detect from browser"
+msgstr "브라우저 자동 감지로 언어 설정"
+
 #: changedetectionio/blueprint/ui/diff.py:93 changedetectionio/blueprint/ui/diff.py:154
 #: changedetectionio/blueprint/ui/diff.py:210 changedetectionio/blueprint/ui/diff.py:277
 #: changedetectionio/blueprint/ui/preview.py:36 changedetectionio/blueprint/ui/preview.py:160
@@ -1039,8 +1043,8 @@ msgstr "당신이 이해했는지 확인하기 위해."
 msgid "Clear History!"
 msgstr "기록 지우기"
 
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html:39 changedetectionio/templates/base.html:273
-#: changedetectionio/templates/base.html:293
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html:39 changedetectionio/templates/base.html:278
+#: changedetectionio/templates/base.html:298
 msgid "Cancel"
 msgstr "취소"
 
@@ -1772,20 +1776,20 @@ msgstr "모두 다시 확인하세요"
 msgid "in '%(title)s'"
 msgstr "'%(title)s'에서"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:273 changedetectionio/flask_app.py:224
-#: changedetectionio/flask_app.py:236 changedetectionio/flask_app.py:257 changedetectionio/realtime/socket_server.py:168
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:273 changedetectionio/flask_app.py:232
+#: changedetectionio/flask_app.py:244 changedetectionio/flask_app.py:265 changedetectionio/realtime/socket_server.py:168
 msgid "Not yet"
 msgstr "아직 아님"
 
-#: changedetectionio/flask_app.py:589
+#: changedetectionio/flask_app.py:600
 msgid "Already logged in"
 msgstr ""
 
-#: changedetectionio/flask_app.py:591
+#: changedetectionio/flask_app.py:602
 msgid "You must be logged in, please log in."
 msgstr ""
 
-#: changedetectionio/flask_app.py:606
+#: changedetectionio/flask_app.py:617
 msgid "Incorrect password"
 msgstr "잘못된 비밀번호"
 
@@ -2826,23 +2830,27 @@ msgstr "실시간 업데이트 오프라인"
 msgid "Select Language"
 msgstr "언어 선택"
 
-#: changedetectionio/templates/base.html:269
+#: changedetectionio/templates/base.html:270
+msgid "Auto-detect from browser"
+msgstr ""
+
+#: changedetectionio/templates/base.html:274
 msgid "Language support is in beta, please help us improve by opening a PR on GitHub with any updates."
 msgstr ""
 
-#: changedetectionio/templates/base.html:281 changedetectionio/templates/base.html:294
+#: changedetectionio/templates/base.html:286 changedetectionio/templates/base.html:299
 msgid "Search"
 msgstr "검색"
 
-#: changedetectionio/templates/base.html:286
+#: changedetectionio/templates/base.html:291
 msgid "URL or Title"
 msgstr ""
 
-#: changedetectionio/templates/base.html:286
+#: changedetectionio/templates/base.html:291
 msgid "in"
 msgstr "내"
 
-#: changedetectionio/templates/base.html:287
+#: changedetectionio/templates/base.html:292
 msgid "Enter search term..."
 msgstr ""
 

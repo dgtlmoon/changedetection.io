@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-22 06:10+0100\n"
+"POT-Creation-Date: 2026-01-22 06:12+0100\n"
 "PO-Revision-Date: 2026-01-15 12:00+0800\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh_Hant_TW\n"
@@ -962,6 +962,10 @@ msgstr "背景將監測任務排入複查佇列..."
 msgid "Could not share, something went wrong while communicating with the share server - {}"
 msgstr "無法分享，與分享伺服器通訊時發生錯誤 - {}"
 
+#: changedetectionio/blueprint/ui/__init__.py:415
+msgid "Language set to auto-detect from browser"
+msgstr "已設定為從瀏覽器自動偵測語言"
+
 #: changedetectionio/blueprint/ui/diff.py:93 changedetectionio/blueprint/ui/diff.py:154
 #: changedetectionio/blueprint/ui/diff.py:210 changedetectionio/blueprint/ui/diff.py:277
 #: changedetectionio/blueprint/ui/preview.py:36 changedetectionio/blueprint/ui/preview.py:160
@@ -1039,8 +1043,8 @@ msgstr "以確認您已了解。"
 msgid "Clear History!"
 msgstr "清除歷史記錄！"
 
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html:39 changedetectionio/templates/base.html:273
-#: changedetectionio/templates/base.html:293
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html:39 changedetectionio/templates/base.html:278
+#: changedetectionio/templates/base.html:298
 msgid "Cancel"
 msgstr "取消"
 
@@ -1772,20 +1776,20 @@ msgstr "複查全部"
 msgid "in '%(title)s'"
 msgstr "於 '%(title)s'"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:273 changedetectionio/flask_app.py:224
-#: changedetectionio/flask_app.py:236 changedetectionio/flask_app.py:257 changedetectionio/realtime/socket_server.py:168
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:273 changedetectionio/flask_app.py:232
+#: changedetectionio/flask_app.py:244 changedetectionio/flask_app.py:265 changedetectionio/realtime/socket_server.py:168
 msgid "Not yet"
 msgstr "還沒有"
 
-#: changedetectionio/flask_app.py:589
+#: changedetectionio/flask_app.py:600
 msgid "Already logged in"
 msgstr "已經登入"
 
-#: changedetectionio/flask_app.py:591
+#: changedetectionio/flask_app.py:602
 msgid "You must be logged in, please log in."
 msgstr "您必須先登入，請登入。"
 
-#: changedetectionio/flask_app.py:606
+#: changedetectionio/flask_app.py:617
 msgid "Incorrect password"
 msgstr "密碼錯誤"
 
@@ -2826,23 +2830,27 @@ msgstr "離線即時更新"
 msgid "Select Language"
 msgstr "選擇語言"
 
-#: changedetectionio/templates/base.html:269
+#: changedetectionio/templates/base.html:270
+msgid "Auto-detect from browser"
+msgstr ""
+
+#: changedetectionio/templates/base.html:274
 msgid "Language support is in beta, please help us improve by opening a PR on GitHub with any updates."
 msgstr "語言支援尚在 Beta 階段，請在 GitHub 上提交 PR 以協助我們改進。"
 
-#: changedetectionio/templates/base.html:281 changedetectionio/templates/base.html:294
+#: changedetectionio/templates/base.html:286 changedetectionio/templates/base.html:299
 msgid "Search"
 msgstr "搜尋"
 
-#: changedetectionio/templates/base.html:286
+#: changedetectionio/templates/base.html:291
 msgid "URL or Title"
 msgstr ""
 
-#: changedetectionio/templates/base.html:286
+#: changedetectionio/templates/base.html:291
 msgid "in"
 msgstr "在"
 
-#: changedetectionio/templates/base.html:287
+#: changedetectionio/templates/base.html:292
 msgid "Enter search term..."
 msgstr ""
 
