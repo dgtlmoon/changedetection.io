@@ -8,11 +8,14 @@ This module provides the FileSavingDataStore abstract class that implements:
 - Atomic file writes safe for NFS/NAS
 """
 
+import glob
 import hashlib
 import json
 import os
 import tempfile
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from distutils.util import strtobool
 from threading import Thread
 from loguru import logger
 
@@ -25,6 +28,11 @@ try:
 except ImportError:
     HAS_ORJSON = False
 
+# Fsync configuration: Force file data to disk for crash safety
+# Default False to match legacy behavior (write-and-rename without fsync)
+# Set to True for mission-critical deployments requiring crash consistency
+FORCE_FSYNC_DATA_IS_CRITICAL = bool(strtobool(os.getenv('FORCE_FSYNC_DATA_IS_CRITICAL', 'False')))
+
 
 # ============================================================================
 # Helper Functions for Atomic File Operations
@@ -36,7 +44,7 @@ def save_json_atomic(file_path, data_dict, label="file", max_size_mb=10):
 
     Generic helper for saving any JSON data (settings, watches, etc.) with:
     - Atomic write (temp file + rename)
-    - Directory fsync for crash consistency
+    - Directory fsync for crash consistency (only for new files)
     - Size validation
     - Proper error handling
 
@@ -50,6 +58,10 @@ def save_json_atomic(file_path, data_dict, label="file", max_size_mb=10):
         ValueError: If serialized data exceeds max_size_mb
         OSError: If disk is full (ENOSPC) or other I/O error
     """
+    # Check if file already exists (before we start writing)
+    # Directory fsync only needed for NEW files to persist the filename
+    file_exists = os.path.exists(file_path)
+
     # Ensure parent directory exists
     parent_dir = os.path.dirname(file_path)
     os.makedirs(parent_dir, exist_ok=True)
@@ -65,10 +77,12 @@ def save_json_atomic(file_path, data_dict, label="file", max_size_mb=10):
     fd_closed = False
     try:
         # Serialize data
+        t0 = time.time()
         if HAS_ORJSON:
             data = orjson.dumps(data_dict, option=orjson.OPT_INDENT_2)
         else:
             data = json.dumps(data_dict, indent=2, ensure_ascii=False).encode('utf-8')
+        serialize_ms = (time.time() - t0) * 1000
 
         # Safety check: validate size
         MAX_SIZE = max_size_mb * 1024 * 1024
@@ -80,24 +94,52 @@ def save_json_atomic(file_path, data_dict, label="file", max_size_mb=10):
             )
 
         # Write to temp file
+        t1 = time.time()
         os.write(fd, data)
-        os.fsync(fd)  # Force file data to disk
+        write_ms = (time.time() - t1) * 1000
+
+        # Optional fsync: Force file data to disk for crash safety
+        # Only if FORCE_FSYNC_DATA_IS_CRITICAL=True (default: False, matches legacy behavior)
+        t2 = time.time()
+        if FORCE_FSYNC_DATA_IS_CRITICAL:
+            os.fsync(fd)
+        file_fsync_ms = (time.time() - t2) * 1000
+
         os.close(fd)
         fd_closed = True
 
         # Atomic rename
+        t3 = time.time()
         os.replace(temp_path, file_path)
+        rename_ms = (time.time() - t3) * 1000
 
         # Sync directory to ensure filename metadata is durable
-        try:
-            dir_fd = os.open(parent_dir, os.O_RDONLY)
+        # OPTIMIZATION: Only needed for NEW files. Existing files already have
+        # directory entry persisted, so we only need file fsync for data durability.
+        dir_fsync_ms = 0
+        if not file_exists:
             try:
-                os.fsync(dir_fd)
-            finally:
-                os.close(dir_fd)
-        except (OSError, AttributeError):
-            # Windows doesn't support fsync on directories
-            pass
+                dir_fd = os.open(parent_dir, os.O_RDONLY)
+                try:
+                    t4 = time.time()
+                    os.fsync(dir_fd)
+                    dir_fsync_ms = (time.time() - t4) * 1000
+                finally:
+                    os.close(dir_fd)
+            except (OSError, AttributeError):
+                # Windows doesn't support fsync on directories
+                pass
+
+        # Log timing breakdown for slow saves
+        total_ms = serialize_ms + write_ms + file_fsync_ms + rename_ms + dir_fsync_ms
+        if total_ms:  # Log if save took more than 10ms
+            file_status = "new" if not file_exists else "update"
+            logger.debug(
+                f"Save timing breakdown ({total_ms:.1f}ms total, {file_status}): "
+                f"serialize={serialize_ms:.1f}ms, write={write_ms:.1f}ms, "
+                f"file_fsync={file_fsync_ms:.1f}ms, rename={rename_ms:.1f}ms, "
+                f"dir_fsync={dir_fsync_ms:.1f}ms, using_orjson={HAS_ORJSON}"
+            )
 
     except OSError as e:
         # Cleanup temp file
@@ -236,42 +278,29 @@ def load_all_watches(datastore_path, rehydrate_entity_func, compute_hash_func):
         - watching_dict: uuid -> Watch object
         - hashes_dict: uuid -> hash string (computed from raw data)
     """
+    start_time = time.time()
     logger.info("Loading watches from individual watch.json files...")
 
     watching = {}
     watch_hashes = {}
 
-    # Find all UUID directories
     if not os.path.exists(datastore_path):
         return watching, watch_hashes
 
-    # Get all directories that look like UUIDs
-    try:
-        all_items = os.listdir(datastore_path)
-    except Exception as e:
-        logger.error(f"Failed to list datastore directory: {e}")
-        return watching, watch_hashes
+    # Find all watch.json files using glob (faster than manual directory traversal)
+    glob_start = time.time()
+    watch_files = glob.glob(os.path.join(datastore_path, "*", "watch.json"))
+    glob_time = time.time() - glob_start
 
-    uuid_dirs = [
-        d for d in all_items
-        if os.path.isdir(os.path.join(datastore_path, d))
-        and not d.startswith('.')  # Skip hidden dirs
-        and d not in ['__pycache__']  # Skip Python cache dirs
-    ]
+    total = len(watch_files)
+    logger.debug(f"Found {total} watch.json files in {glob_time:.3f}s")
 
-    # First pass: count directories with watch.json files
-    watch_dirs = []
-    for uuid_dir in uuid_dirs:
-        watch_json = os.path.join(datastore_path, uuid_dir, "watch.json")
-        if os.path.isfile(watch_json):
-            watch_dirs.append(uuid_dir)
-
-    total = len(watch_dirs)
     loaded = 0
     failed = 0
 
-    for uuid_dir in watch_dirs:
-        watch_json = os.path.join(datastore_path, uuid_dir, "watch.json")
+    for watch_json in watch_files:
+        # Extract UUID from path: /datastore/{uuid}/watch.json
+        uuid_dir = os.path.basename(os.path.dirname(watch_json))
         watch, raw_data = load_watch_from_file(watch_json, uuid_dir, rehydrate_entity_func)
         if watch and raw_data:
             watching[uuid_dir] = watch
@@ -285,13 +314,16 @@ def load_all_watches(datastore_path, rehydrate_entity_func, compute_hash_func):
             # load_watch_from_file already logged the specific error
             failed += 1
 
+    elapsed = time.time() - start_time
+
     if failed > 0:
         logger.critical(
             f"LOAD COMPLETE: {loaded} watches loaded successfully, "
-            f"{failed} watches FAILED to load (corrupted or invalid)"
+            f"{failed} watches FAILED to load (corrupted or invalid) "
+            f"in {elapsed:.2f}s ({loaded/elapsed:.0f} watches/sec)"
         )
     else:
-        logger.info(f"Loaded {loaded} watches from disk")
+        logger.info(f"Loaded {loaded} watches from disk in {elapsed:.2f}s ({loaded/elapsed:.0f} watches/sec)")
 
     return watching, watch_hashes
 
@@ -387,7 +419,7 @@ class FileSavingDataStore(DataStore):
             self._dirty_settings = True
         self.needs_write = True
 
-    def save_watch(self, uuid, force=False):
+    def save_watch(self, uuid, force=False, watch_dict=None, current_hash=None):
         """
         Save a single watch if it has changed (polymorphic method).
 
@@ -399,6 +431,8 @@ class FileSavingDataStore(DataStore):
         Args:
             uuid: Watch UUID
             force: If True, skip hash check and save anyway
+            watch_dict: Pre-computed watch dictionary (optimization to avoid redundant serialization)
+            current_hash: Pre-computed hash (optimization to avoid redundant hashing)
 
         Returns:
             True if saved, False if skipped (unchanged)
@@ -407,8 +441,11 @@ class FileSavingDataStore(DataStore):
             logger.warning(f"Cannot save watch {uuid} - does not exist")
             return False
 
-        watch_dict = self._get_watch_dict(uuid)
-        current_hash = self._compute_hash(watch_dict)
+        # Use pre-computed values if provided (avoids redundant work)
+        if watch_dict is None:
+            watch_dict = self._get_watch_dict(uuid)
+        if current_hash is None:
+            current_hash = self._compute_hash(watch_dict)
 
         # Skip save if unchanged (unless forced)
         if not force and current_hash == self._watch_hashes.get(uuid):
@@ -503,30 +540,65 @@ class FileSavingDataStore(DataStore):
         error_count = 0
         skipped_unchanged = 0
 
-        for uuid in dirty_watches:
-            # Check if watch still exists (might have been deleted)
-            if not self._watch_exists(uuid):
-                # Watch was deleted, remove hash
-                self._watch_hashes.pop(uuid, None)
-                continue
+        # Process in batches of 50, using thread pool for parallel saves
+        BATCH_SIZE = 50
+        MAX_WORKERS = 20  # Number of parallel save threads
 
-            # Pre-check hash to avoid unnecessary save_watch() calls
-            watch_dict = self._get_watch_dict(uuid)
-            current_hash = self._compute_hash(watch_dict)
-
-            if current_hash == self._watch_hashes.get(uuid):
-                # Watch hasn't actually changed, skip
-                skipped_unchanged += 1
-                continue
-
+        def save_single_watch(uuid):
+            """Helper function for thread pool execution."""
             try:
-                if self.save_watch(uuid, force=True):  # force=True since we already checked hash
-                    saved_count += 1
+                # Check if watch still exists (might have been deleted)
+                if not self._watch_exists(uuid):
+                    # Watch was deleted, remove hash
+                    self._watch_hashes.pop(uuid, None)
+                    return {'status': 'deleted', 'uuid': uuid}
+
+                # Pre-check hash to avoid unnecessary save_watch() calls
+                watch_dict = self._get_watch_dict(uuid)
+                current_hash = self._compute_hash(watch_dict)
+
+                if current_hash == self._watch_hashes.get(uuid):
+                    # Watch hasn't actually changed, skip
+                    return {'status': 'unchanged', 'uuid': uuid}
+
+                # Pass pre-computed values to avoid redundant serialization/hashing
+                if self.save_watch(uuid, force=True, watch_dict=watch_dict, current_hash=current_hash):
+                    return {'status': 'saved', 'uuid': uuid}
+                else:
+                    return {'status': 'skipped', 'uuid': uuid}
             except Exception as e:
-                error_count += 1
-                # Re-mark for retry
-                with self.lock:
-                    self._dirty_watches.add(uuid)
+                logger.error(f"Error saving watch {uuid}: {e}")
+                return {'status': 'error', 'uuid': uuid, 'error': e}
+
+        # Process dirty watches in batches
+        for batch_start in range(0, len(dirty_watches), BATCH_SIZE):
+            batch = dirty_watches[batch_start:batch_start + BATCH_SIZE]
+            batch_num = (batch_start // BATCH_SIZE) + 1
+            total_batches = (len(dirty_watches) + BATCH_SIZE - 1) // BATCH_SIZE
+
+            if len(dirty_watches) > BATCH_SIZE:
+                logger.debug(f"Processing batch {batch_num}/{total_batches} ({len(batch)} watches)")
+
+            # Use thread pool to save watches in parallel
+            with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+                # Submit all save tasks
+                future_to_uuid = {executor.submit(save_single_watch, uuid): uuid for uuid in batch}
+
+                # Collect results as they complete
+                for future in as_completed(future_to_uuid):
+                    result = future.result()
+                    status = result['status']
+
+                    if status == 'saved':
+                        saved_count += 1
+                    elif status == 'unchanged':
+                        skipped_unchanged += 1
+                    elif status == 'error':
+                        error_count += 1
+                        # Re-mark for retry
+                        with self.lock:
+                            self._dirty_watches.add(result['uuid'])
+                    # 'deleted' and 'skipped' don't need special handling
 
         # Save settings if changed
         if dirty_settings:
@@ -550,9 +622,10 @@ class FileSavingDataStore(DataStore):
         if saved_count > 0:
             avg_time_per_watch = (elapsed / saved_count) * 1000  # milliseconds
             skipped_msg = f", {skipped_unchanged} unchanged" if skipped_unchanged > 0 else ""
+            parallel_msg = f" [parallel: {MAX_WORKERS} workers]" if saved_count > 1 else ""
             logger.info(
                 f"Successfully saved {saved_count} watches in {elapsed:.2f}s "
-                f"(avg {avg_time_per_watch:.1f}ms per watch{skipped_msg}). "
+                f"(avg {avg_time_per_watch:.1f}ms per watch{skipped_msg}){parallel_msg}. "
                 f"Total: {self._total_saves} saves, {self._save_errors} errors (lifetime)"
             )
         elif skipped_unchanged > 0:
