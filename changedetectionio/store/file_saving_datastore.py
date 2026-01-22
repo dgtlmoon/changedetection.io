@@ -34,7 +34,7 @@ except ImportError:
 FORCE_FSYNC_DATA_IS_CRITICAL = bool(strtobool(os.getenv('FORCE_FSYNC_DATA_IS_CRITICAL', 'False')))
 
 # Save interval configuration: How often the background thread saves dirty items
-# Default 60 seconds - increase for less frequent saves, decrease for more frequent
+# Default 10 seconds - increase for less frequent saves, decrease for more frequent
 DATASTORE_SAVE_INTERVAL_SECONDS = int(os.getenv('DATASTORE_SAVE_INTERVAL_SECONDS', '10'))
 
 
@@ -537,7 +537,7 @@ class FileSavingDataStore(DataStore):
         if not dirty_watches and not dirty_settings:
             return
 
-        logger.debug(f"Checking {len(dirty_watches)} dirty watches, settings_dirty={dirty_settings}")
+        logger.trace(f"Verifying {len(dirty_watches)} watches for changes (hash comparison), settings_dirty={dirty_settings}")
 
         # Save each dirty watch using the polymorphic save method
         saved_count = 0
@@ -581,7 +581,7 @@ class FileSavingDataStore(DataStore):
             total_batches = (len(dirty_watches) + BATCH_SIZE - 1) // BATCH_SIZE
 
             if len(dirty_watches) > BATCH_SIZE:
-                logger.debug(f"Processing batch {batch_num}/{total_batches} ({len(batch)} watches)")
+                logger.trace(f"Hash verification batch {batch_num}/{total_batches} ({len(batch)} watches)")
 
             # Use thread pool to save watches in parallel
             with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
@@ -633,7 +633,7 @@ class FileSavingDataStore(DataStore):
                 f"Total: {self._total_saves} saves, {self._save_errors} errors (lifetime)"
             )
         elif skipped_unchanged > 0:
-            logger.debug(f"Save cycle: {skipped_unchanged} watches unchanged, nothing saved")
+            logger.debug(f"Save cycle: {skipped_unchanged} watches verified unchanged (hash match), nothing saved")
 
         if error_count > 0:
             logger.error(f"Save cycle completed with {error_count} errors")
@@ -669,8 +669,8 @@ class FileSavingDataStore(DataStore):
         """
         Background thread that periodically saves dirty items.
 
-        Runs every 60 seconds (with 0.5s sleep intervals for responsiveness),
-        or immediately when needs_write_urgent is set.
+        Runs every DATASTORE_SAVE_INTERVAL_SECONDS (default 10s) with 0.5s sleep intervals
+        for responsiveness, or immediately when needs_write_urgent is set.
         """
         while True:
             if self.stop_thread:
@@ -692,8 +692,9 @@ class FileSavingDataStore(DataStore):
                 except Exception as e:
                     logger.error(f"Error in save cycle: {e}")
 
-            # 60 second timer with early break for urgent saves
-            for i in range(120):
+            # Timer with early break for urgent saves
+            # Each iteration is 0.5 seconds, so iterations = DATASTORE_SAVE_INTERVAL_SECONDS * 2
+            for i in range(DATASTORE_SAVE_INTERVAL_SECONDS * 2):
                 time.sleep(0.5)
                 if self.stop_thread or self.needs_write_urgent:
                     break
