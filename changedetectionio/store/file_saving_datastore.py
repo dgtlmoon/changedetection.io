@@ -33,6 +33,10 @@ except ImportError:
 # Set to True for mission-critical deployments requiring crash consistency
 FORCE_FSYNC_DATA_IS_CRITICAL = bool(strtobool(os.getenv('FORCE_FSYNC_DATA_IS_CRITICAL', 'False')))
 
+# Save interval configuration: How often the background thread saves dirty items
+# Default 60 seconds - increase for less frequent saves, decrease for more frequent
+DATASTORE_SAVE_INTERVAL_SECONDS = int(os.getenv('DATASTORE_SAVE_INTERVAL_SECONDS', '10'))
+
 
 # ============================================================================
 # Helper Functions for Atomic File Operations
