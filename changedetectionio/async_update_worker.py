@@ -163,8 +163,10 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                 except ProcessorException as e:
                     if e.screenshot:
                         watch.save_screenshot(screenshot=e.screenshot)
+                        e.screenshot = None  # Free memory immediately
                     if e.xpath_data:
                         watch.save_xpath_data(data=e.xpath_data)
+                        e.xpath_data = None  # Free memory immediately
                     datastore.update_watch(uuid=uuid, update_obj={'last_error': e.message})
                     process_changedetection_results = False
 
@@ -184,9 +186,11 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
 
                     if e.screenshot:
                         watch.save_screenshot(screenshot=e.screenshot, as_error=True)
+                        e.screenshot = None  # Free memory immediately
 
                     if e.xpath_data:
                         watch.save_xpath_data(data=e.xpath_data)
+                        e.xpath_data = None  # Free memory immediately
                         
                     process_changedetection_results = False
 
@@ -205,8 +209,10 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
 
                     if e.screenshot:
                         watch.save_screenshot(screenshot=e.screenshot, as_error=True)
+                        e.screenshot = None  # Free memory immediately
                     if e.xpath_data:
                         watch.save_xpath_data(data=e.xpath_data, as_error=True)
+                        e.xpath_data = None  # Free memory immediately
                     if e.page_text:
                         watch.save_error_text(contents=e.page_text)
 
@@ -223,9 +229,11 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     # Filter wasnt found, but we should still update the visual selector so that they can have a chance to set it up again
                     if e.screenshot:
                         watch.save_screenshot(screenshot=e.screenshot)
+                        e.screenshot = None  # Free memory immediately
 
                     if e.xpath_data:
                         watch.save_xpath_data(data=e.xpath_data)
+                        e.xpath_data = None  # Free memory immediately
 
                     # Only when enabled, send the notification
                     if watch.get('filter_failure_notification_send', False):
@@ -317,6 +325,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     err_text = "Error running JS Actions - Page request - "+e.message
                     if e.screenshot:
                         watch.save_screenshot(screenshot=e.screenshot, as_error=True)
+                        e.screenshot = None  # Free memory immediately
                     datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                 'last_check_status': e.status_code})
                     process_changedetection_results = False
@@ -328,6 +337,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
 
                     if e.screenshot:
                         watch.save_screenshot(screenshot=e.screenshot, as_error=True)
+                        e.screenshot = None  # Free memory immediately
 
                     datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
                                                                 'last_check_status': e.status_code,
@@ -369,9 +379,17 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                         if changed_detected or not watch.history_n:
                             if update_handler.screenshot:
                                 watch.save_screenshot(screenshot=update_handler.screenshot)
+                                # Free screenshot memory immediately after saving
+                                update_handler.screenshot = None
+                                if hasattr(update_handler, 'fetcher') and hasattr(update_handler.fetcher, 'screenshot'):
+                                    update_handler.fetcher.screenshot = None
 
                             if update_handler.xpath_data:
                                 watch.save_xpath_data(data=update_handler.xpath_data)
+                                # Free xpath data memory
+                                update_handler.xpath_data = None
+                                if hasattr(update_handler, 'fetcher') and hasattr(update_handler.fetcher, 'xpath_data'):
+                                    update_handler.fetcher.xpath_data = None
 
                             # Ensure unique timestamp for history
                             if watch.newest_history_key and int(fetch_start_time) == int(watch.newest_history_key):
@@ -437,6 +455,20 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                 if update_handler and hasattr(update_handler, 'fetcher') and update_handler.fetcher:
                     update_handler.fetcher.clear_content()
                     logger.debug(f"Cleared fetcher content for UUID {uuid}")
+
+                # Explicitly delete update_handler to free all references
+                if update_handler:
+                    del update_handler
+                    update_handler = None
+
+                # Force aggressive memory cleanup after clearing
+                import gc
+                gc.collect()
+                try:
+                    import ctypes
+                    ctypes.CDLL('libc.so.6').malloc_trim(0)
+                except Exception:
+                    pass
 
         except Exception as e:
             logger.error(f"Worker {worker_id} unexpected error processing {uuid}: {e}")
