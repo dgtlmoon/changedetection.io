@@ -1,6 +1,6 @@
 import time
 import threading
-from flask import Blueprint, request, redirect, url_for, flash, render_template, session
+from flask import Blueprint, request, redirect, url_for, flash, render_template, session, current_app
 from flask_babel import gettext
 from loguru import logger
 
@@ -419,7 +419,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
 
         # If redirect is provided and safe, use it
         from changedetectionio.is_safe_url import is_safe_url
-        if redirect_url and is_safe_url(redirect_url):
+        if redirect_url and is_safe_url(redirect_url, current_app):
             return redirect(redirect_url)
 
         # Otherwise redirect to watchlist

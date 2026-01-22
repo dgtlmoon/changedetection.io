@@ -266,9 +266,7 @@
           {% endfor %}
         </div>
         <div>
-            <a href="{{ url_for('ui.delete_locale_language_session_var_if_it_exists', redirect=request.path) }}" class="language-option" style="margin-top: 1em; display: block;">
-              <span class="lang-option">🌐</span> <span class="language-name">{{ _('Auto-detect from browser') }}</span>
-            </a>
+            <a href="{{ url_for('ui.delete_locale_language_session_var_if_it_exists', redirect=request.path) }}" >{{ _('Auto-detect from browser') }}</a>
         </div>
         <div>
             {{ _('Language support is in beta, please help us improve by opening a PR on GitHub with any updates.') }}

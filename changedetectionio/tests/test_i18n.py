@@ -195,6 +195,8 @@ def test_language_persistence_in_session(client, live_server, measure_memory_usa
     )
 
     assert res.status_code == 200
+    # Verify the flash message appears (in English since we cleared the locale)
+    assert b"Language set to auto-detect from browser" in res.data, "Should show flash message"
 
     # Verify locale was removed from session
     with client.session_transaction() as sess:
