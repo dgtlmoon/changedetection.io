@@ -160,7 +160,7 @@ def test_invalid_locale(client, live_server, measure_memory_usage, datastore_pat
 def test_language_persistence_in_session(client, live_server, measure_memory_usage, datastore_path):
     """
     Test that the language preference persists across multiple requests
-    within the same session.
+    within the same session, and that auto-detect properly clears the preference.
     """
 
     # Establish session cookie
@@ -183,6 +183,34 @@ def test_language_persistence_in_session(client, live_server, measure_memory_usa
 
         assert res.status_code == 200
         assert b"Annulla" in res.data, "Italian text should persist across requests"
+
+    # Verify locale is in session
+    with client.session_transaction() as sess:
+        assert sess.get('locale') == 'it', "Locale should be set in session"
+
+    # Call auto-detect to clear the locale
+    res = client.get(
+        url_for("ui.delete_locale_language_session_var_if_it_exists"),
+        follow_redirects=True
+    )
+
+    assert res.status_code == 200
+    # Verify the flash message appears (in English since we cleared the locale)
+    assert b"Language set to auto-detect from browser" in res.data, "Should show flash message"
+
+    # Verify locale was removed from session
+    with client.session_transaction() as sess:
+        assert 'locale' not in sess, "Locale should be removed from session after auto-detect"
+
+    # Now requests should use browser default (English in test environment)
+    res = client.get(
+        url_for("watchlist.index"),
+        follow_redirects=True
+    )
+
+    assert res.status_code == 200
+    assert b"Cancel" in res.data, "Should show English after auto-detect clears Italian"
+    assert b"Annulla" not in res.data, "Should not show Italian after auto-detect"
 
 
 def test_set_language_with_redirect(client, live_server, measure_memory_usage, datastore_path):

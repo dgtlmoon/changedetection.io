@@ -7,3205 +7,2982 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-17 20:59+0100\n"
+"POT-Creation-Date: 2026-01-22 06:19+0100\n"
 "PO-Revision-Date: 2026-01-18 21:31+0800\n"
 "Last-Translator: 吾爱分享 <admin@wuaishare.cn>\n"
-"Language-Team: zh <LL@li.org>\n"
 "Language: zh\n"
+"Language-Team: zh <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.17.0\n"
-"X-Generator: Poedit 3.8\n"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:273
-#: changedetectionio/flask_app.py:218 changedetectionio/flask_app.py:230
-#: changedetectionio/flask_app.py:251
-#: changedetectionio/realtime/socket_server.py:168
-msgid "Not yet"
-msgstr "尚未"
-
-#: changedetectionio/flask_app.py:567
-msgid "Already logged in"
-msgstr "已登录"
-
-#: changedetectionio/flask_app.py:569
-msgid "You must be logged in, please log in."
-msgstr "需要登录，请先登录。"
-
-#: changedetectionio/flask_app.py:584
-msgid "Incorrect password"
-msgstr "密码错误"
-
-#: changedetectionio/forms.py:63 changedetectionio/forms.py:243
-msgid ""
-"At least one time interval (weeks, days, hours, minutes, or seconds) must be "
-"specified."
-msgstr "必须指定至少一个时间间隔（周、天、小时、分钟或秒）。"
-
-#: changedetectionio/forms.py:64
-msgid ""
-"At least one time interval (weeks, days, hours, minutes, or seconds) must be "
-"specified when not using global settings."
-msgstr "未使用全局设置时，必须指定至少一个时间间隔（周、天、小时、分钟或秒）。"
-
-#: changedetectionio/forms.py:164
-msgid "Invalid time format. Use HH:MM."
-msgstr "时间格式无效，请使用 HH:MM。"
-
-#: changedetectionio/forms.py:180
-msgid "Not a valid timezone name"
-msgstr "不是有效的时区名称"
-
-#: changedetectionio/forms.py:183
-msgid "not set"
-msgstr "未设置"
-
-#: changedetectionio/forms.py:184
-msgid "Start At"
-msgstr "开始时间"
-
-#: changedetectionio/forms.py:185
-msgid "Run duration"
-msgstr "运行时长"
-
-#: changedetectionio/forms.py:188
-msgid "Use time scheduler"
-msgstr "使用时间调度"
-
-#: changedetectionio/forms.py:198
-msgid "Optional timezone to run in"
-msgstr "运行时使用的可选时区"
-
-#: changedetectionio/forms.py:212
-msgid "Monday"
-msgstr "周一"
-
-#: changedetectionio/forms.py:213
-msgid "Tuesday"
-msgstr "周二"
-
-#: changedetectionio/forms.py:214
-msgid "Wednesday"
-msgstr "周三"
-
-#: changedetectionio/forms.py:215
-msgid "Thursday"
-msgstr "周四"
-
-#: changedetectionio/forms.py:216
-msgid "Friday"
-msgstr "周五"
-
-#: changedetectionio/forms.py:217
-msgid "Saturday"
-msgstr "周六"
-
-#: changedetectionio/forms.py:218
-msgid "Sunday"
-msgstr "周日"
-
-#: changedetectionio/forms.py:251
-msgid "Weeks"
-msgstr "周"
-
-#: changedetectionio/forms.py:251 changedetectionio/forms.py:252
-#: changedetectionio/forms.py:253 changedetectionio/forms.py:254
-#: changedetectionio/forms.py:255 changedetectionio/forms.py:956
-msgid "Should contain zero or more seconds"
-msgstr "应为 0 或更多秒"
-
-#: changedetectionio/forms.py:252
-msgid "Days"
-msgstr "天"
-
-#: changedetectionio/forms.py:253
-msgid "Hours"
-msgstr "小时"
-
-#: changedetectionio/forms.py:254
-msgid "Minutes"
-msgstr "分钟"
-
-#: changedetectionio/forms.py:255
-msgid "Seconds"
-msgstr "秒"
-
-#: changedetectionio/forms.py:460
-msgid "Notification Body and Title is required when a Notification URL is used"
-msgstr "使用通知 URL 时，必须填写通知正文和标题"
-
-#: changedetectionio/forms.py:489
-#, python-format
-msgid "'%s' is not a valid AppRise URL."
-msgstr "“%s”不是有效的 AppRise URL。"
-
-#: changedetectionio/forms.py:562 changedetectionio/forms.py:581
-#, python-format
-msgid "RegEx '%s' is not a valid regular expression."
-msgstr "正则表达式“%s”无效。"
-
-#: changedetectionio/forms.py:622 changedetectionio/forms.py:637
-#, python-format
-msgid "'%s' is not a valid XPath expression. (%s)"
-msgstr "“%s”不是有效的 XPath 表达式。（%s）"
-
-#: changedetectionio/forms.py:657
-#, python-format
-msgid "'%s' is not a valid JSONPath expression. (%s)"
-msgstr "“%s”不是有效的 JSONPath 表达式。（%s）"
-
-#: changedetectionio/forms.py:679
-#, python-format
-msgid "'%s' is not a valid jq expression. (%s)"
-msgstr "“%s”不是有效的 jq 表达式。（%s）"
-
-#: changedetectionio/forms.py:725
-msgid "Empty value not allowed."
-msgstr "不允许为空。"
-
-#: changedetectionio/forms.py:727
-msgid "Invalid value."
-msgstr "值无效。"
-
-#: changedetectionio/blueprint/imports/templates/import.html:105
-#: changedetectionio/forms.py:730
-msgid "URL"
-msgstr "URL"
-
-#: changedetectionio/forms.py:731
-msgid "Group tag"
-msgstr "分组 / 标签"
-
-#: changedetectionio/forms.py:732
-msgid "Watch"
-msgstr "监控项"
-
-#: changedetectionio/forms.py:733 changedetectionio/forms.py:766
-msgid "Processor"
-msgstr "处理器"
-
-#: changedetectionio/forms.py:734
-msgid "Edit > Watch"
-msgstr "编辑 > 监控项"
-
-#: changedetectionio/forms.py:747 changedetectionio/forms.py:995
-msgid "Fetch Method"
-msgstr "抓取方式"
-
-#: changedetectionio/forms.py:748
-msgid "Notification Body"
-msgstr "通知正文"
-
-#: changedetectionio/forms.py:749
-msgid "Notification format"
-msgstr "通知格式"
-
-#: changedetectionio/forms.py:750
-msgid "Notification Title"
-msgstr "通知标题"
-
-#: changedetectionio/forms.py:751
-msgid "Notification URL List"
-msgstr "通知 URL 列表"
-
-#: changedetectionio/forms.py:752
-msgid "Processor - What do you want to achieve?"
-msgstr "处理器 - 您想实现什么？"
-
-#: changedetectionio/forms.py:753
-msgid "Default timezone for watch check scheduler"
-msgstr "监控检查调度器的默认时区"
-
-#: changedetectionio/forms.py:754
-msgid "Wait seconds before extracting text"
-msgstr "提取文本前等待秒数"
-
-#: changedetectionio/forms.py:754
-msgid "Should contain one or more seconds"
-msgstr "应为 1 秒或以上"
-
-#: changedetectionio/forms.py:767
-msgid "URLs"
-msgstr "URL 列表"
-
-#: changedetectionio/forms.py:768
-msgid "Upload .xlsx file"
-msgstr "上传 .xlsx 文件"
-
-#: changedetectionio/forms.py:768
-msgid "Must be .xlsx file!"
-msgstr "必须是 .xlsx 文件！"
-
-#: changedetectionio/forms.py:769
-msgid "File mapping"
-msgstr "文件映射"
-
-#: changedetectionio/forms.py:773
-msgid "Operation"
-msgstr "操作"
-
-#: changedetectionio/forms.py:776
-msgid "Selector"
-msgstr "选择器"
-
-#: changedetectionio/forms.py:777
-msgid "value"
-msgstr "值"
-
-#: changedetectionio/forms.py:789 changedetectionio/forms.py:951
-msgid "Time Between Check"
-msgstr "检查间隔"
-
-#: changedetectionio/forms.py:797
-msgid "Use global settings for time between check and scheduler."
-msgstr "检查间隔与调度时间使用全局设置。"
-
-#: changedetectionio/forms.py:799
-msgid "CSS/JSONPath/JQ/XPath Filters"
-msgstr "CSS/JSONPath/JQ/XPath 过滤器"
-
-#: changedetectionio/forms.py:801 changedetectionio/forms.py:997
-msgid "Remove elements"
-msgstr "移除元素"
-
-#: changedetectionio/forms.py:803
-msgid "Extract text"
-msgstr "提取文本"
-
-#: changedetectionio/blueprint/imports/templates/import.html:106
-#: changedetectionio/forms.py:805
-msgid "Title"
-msgstr "标题"
-
-#: changedetectionio/forms.py:807
-msgid "Ignore lines containing"
-msgstr "忽略包含以下内容的行"
-
-#: changedetectionio/forms.py:809
-msgid "Request body"
-msgstr "请求正文"
-
-#: changedetectionio/forms.py:810
-msgid "Request method"
-msgstr "请求方法"
-
-#: changedetectionio/forms.py:811
-msgid "Ignore status codes (process non-2xx status codes as normal)"
-msgstr "忽略状态代码（正常处理非 2xx 状态码）"
-
-#: changedetectionio/forms.py:812
-msgid "Only trigger when unique lines appear in all history"
-msgstr "仅当全历史中出现新的唯一行时触发"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:336
-#: changedetectionio/forms.py:813
-msgid "Remove duplicate lines of text"
-msgstr "删除重复的文本行"
-
-#: changedetectionio/forms.py:814
-msgid "Sort text alphabetically"
-msgstr "按字母顺序排序文本"
-
-#: changedetectionio/forms.py:815 changedetectionio/forms.py:1024
-msgid "Strip ignored lines"
-msgstr "去除忽略的行"
-
-#: changedetectionio/forms.py:816
-msgid "Trim whitespace before and after text"
-msgstr "去除文本前后空白"
-
-#: changedetectionio/forms.py:818
-msgid "Added lines"
-msgstr "新增行"
-
-#: changedetectionio/forms.py:819
-msgid "Replaced/changed lines"
-msgstr "替换/更改的行"
-
-#: changedetectionio/forms.py:820
-msgid "Removed lines"
-msgstr "删除的行"
-
-#: changedetectionio/forms.py:822
-msgid "Keyword triggers - Trigger/wait for text"
-msgstr "关键字触发器 - 触发/等待文本"
-
-#: changedetectionio/forms.py:825
-msgid "Block change-detection while text matches"
-msgstr "文本匹配时阻止变更检测"
-
-#: changedetectionio/forms.py:826
-msgid "Execute JavaScript before change detection"
-msgstr "在变更检测前执行 JavaScript"
-
-#: changedetectionio/blueprint/tags/templates/groups-overview.html:17
-#: changedetectionio/forms.py:828 changedetectionio/forms.py:1052
-msgid "Save"
-msgstr "保存"
-
-#: changedetectionio/forms.py:830
-msgid "Proxy"
-msgstr "代理"
-
-#: changedetectionio/forms.py:832
-msgid "Send a notification when the filter can no longer be found on the page"
-msgstr "当页面上找不到该过滤器时发送通知"
-
-#: changedetectionio/blueprint/settings/templates/settings.html:22
-#: changedetectionio/blueprint/tags/templates/edit-tag.html:32
-#: changedetectionio/blueprint/ui/templates/edit.html:59
-#: changedetectionio/forms.py:833
-msgid "Notifications"
-msgstr "通知"
-
-#: changedetectionio/forms.py:833
-msgid "Muted"
-msgstr "静音"
-
-#: changedetectionio/forms.py:833
-msgid "On"
-msgstr "开启"
-
-#: changedetectionio/forms.py:834
-msgid "Attach screenshot to notification (where possible)"
-msgstr "（如可用）在通知中附加截图"
-
-#: changedetectionio/forms.py:836
-msgid "Match"
-msgstr "匹配"
-
-#: changedetectionio/forms.py:836
-msgid "Match all of the following"
-msgstr "匹配以下全部"
-
-#: changedetectionio/forms.py:836
-msgid "Match any of the following"
-msgstr "匹配以下任意"
-
-#: changedetectionio/forms.py:838
-msgid "Use page <title> in list"
-msgstr "列表中使用页面 <title>"
-
-#: changedetectionio/forms.py:855
-msgid "Body must be empty when Request Method is set to GET"
-msgstr "当请求方法为 GET 时，请求正文必须为空"
-
-#: changedetectionio/forms.py:864 changedetectionio/forms.py:878
-#: changedetectionio/forms.py:893
-#, python-format
-msgid "Invalid template syntax configuration: %(error)s"
-msgstr "模板语法配置无效：%(error)s"
-
-#: changedetectionio/forms.py:868 changedetectionio/forms.py:882
-#, python-format
-msgid "Invalid template syntax: %(error)s"
-msgstr "模板语法无效：%(error)s"
-
-#: changedetectionio/forms.py:897
-#, python-format
-msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
-msgstr "“%(header)s”请求头中的模板语法无效：%(error)s"
-
-#: changedetectionio/forms.py:921 changedetectionio/forms.py:933
-msgid "Name"
-msgstr "名称"
-
-#: changedetectionio/forms.py:922
-msgid "Proxy URL"
-msgstr "代理 URL"
-
-#: changedetectionio/forms.py:927
-msgid "Proxy URLs must start with http://, https:// or socks5://"
-msgstr "代理 URL 必须以 http://、https:// 或 socks5:// 开头"
-
-#: changedetectionio/forms.py:934
-msgid "Browser connection URL"
-msgstr "浏览器连接 URL"
-
-#: changedetectionio/forms.py:939
-msgid "Browser URLs must start with wss:// or ws://"
-msgstr "浏览器 URL 必须以 wss:// 或 ws:// 开头"
-
-#: changedetectionio/forms.py:945
-msgid "Plaintext requests"
-msgstr "纯文本请求"
-
-#: changedetectionio/forms.py:947
-msgid "Chrome requests"
-msgstr "Chrome 请求"
-
-#: changedetectionio/forms.py:953
-msgid "Default proxy"
-msgstr "默认代理"
-
-#: changedetectionio/forms.py:954
-msgid "Random jitter seconds ± check"
-msgstr "检查间隔随机抖动秒数 ±"
-
-#: changedetectionio/forms.py:958
-msgid "Number of fetch workers"
-msgstr "抓取工作线程数"
-
-#: changedetectionio/forms.py:961
-msgid "Should be between 1 and 50"
-msgstr "应介于 1 到 50 之间"
-
-#: changedetectionio/forms.py:963
-msgid "Requests timeout in seconds"
-msgstr "请求超时（秒）"
-
-#: changedetectionio/forms.py:966
-msgid "Should be between 1 and 999"
-msgstr "应介于 1 到 999 之间"
-
-#: changedetectionio/forms.py:971
-msgid "Default User-Agent overrides"
-msgstr "默认 User-Agent 覆盖"
-
-#: changedetectionio/forms.py:977
-msgid "Both a name, and a Proxy URL is required."
-msgstr "名称和代理 URL 都是必填项。"
-
-#: changedetectionio/forms.py:981
-msgid "Open 'History' page in a new tab"
-msgstr "在新标签页中打开“历史记录”"
-
-#: changedetectionio/forms.py:982
-msgid "Realtime UI Updates Enabled"
-msgstr "启用实时界面更新"
-
-#: changedetectionio/forms.py:983
-msgid "Favicons Enabled"
-msgstr "启用站点图标"
-
-#: changedetectionio/forms.py:984
-msgid "Use page <title> in watch overview list"
-msgstr "在监控概览列表中使用页面 <title>"
-
-#: changedetectionio/forms.py:989
-msgid "API access token security check enabled"
-msgstr "已启用 API 访问令牌安全检查"
-
-#: changedetectionio/forms.py:990
-msgid "Notification base URL override"
-msgstr "通知基础 URL 覆盖"
-
-#: changedetectionio/forms.py:994
-msgid "Treat empty pages as a change?"
-msgstr "将空页面视为变更？"
-
-#: changedetectionio/forms.py:996
-msgid "Ignore Text"
-msgstr "忽略文本"
-
-#: changedetectionio/forms.py:998
-msgid "Ignore whitespace"
-msgstr "忽略空白"
-
-#: changedetectionio/forms.py:1005
-#: changedetectionio/processors/image_ssim_diff/forms.py:50
-msgid "Must be between 0 and 100"
-msgstr "必须介于 0 到 100 之间"
-
-#: changedetectionio/forms.py:1011 changedetectionio/templates/login.html:11
-msgid "Password"
-msgstr "密码"
-
-#: changedetectionio/forms.py:1012
-msgid "Pager size"
-msgstr "分页大小"
-
-#: changedetectionio/forms.py:1015
-msgid "Should be atleast zero (disabled)"
-msgstr "应至少为 0（表示禁用）"
-
-#: changedetectionio/forms.py:1017
-msgid "RSS Content format"
-msgstr "RSS 内容格式"
-
-#: changedetectionio/forms.py:1018
-msgid "RSS <description> body built from"
-msgstr "RSS <description> 内容来源"
-
-#: changedetectionio/forms.py:1019
-msgid "RSS \"System default\" template override"
-msgstr "RSS “系统默认”模板覆盖"
-
-#: changedetectionio/forms.py:1021
-msgid "Remove password"
-msgstr "移除密码"
-
-#: changedetectionio/forms.py:1022
-msgid "Render anchor tag content"
-msgstr "渲染 <a> 标签内容"
-
-#: changedetectionio/forms.py:1023
-msgid "Allow anonymous access to watch history page when password is enabled"
-msgstr "启用密码时允许匿名访问监控历史页面"
-
-#: changedetectionio/forms.py:1025
-msgid "Hide muted watches from RSS feed"
-msgstr "在 RSS 中隐藏静音的监控项"
-
-#: changedetectionio/forms.py:1028
-msgid "Enable RSS reader mode "
-msgstr "启用 RSS 阅读模式"
-
-#: changedetectionio/forms.py:1029
-msgid "Number of changes to show in watch RSS feed"
-msgstr "监控项 RSS 中显示的变更数量"
-
-#: changedetectionio/forms.py:1031 changedetectionio/forms.py:1036
-msgid "Should contain zero or more attempts"
-msgstr "应为 0 或更多次"
-
-#: changedetectionio/forms.py:1033
-msgid "Number of times the filter can be missing before sending a notification"
-msgstr "过滤器缺失达到多少次后发送通知"
-
-#: changedetectionio/forms.py:1056
-msgid "RegEx to extract"
-msgstr "用于提取的正则表达式"
-
-#: changedetectionio/forms.py:1057
-msgid "Extract as CSV"
-msgstr "提取为 CSV"
-
-#: changedetectionio/store.py:386
-#, python-brace-format
-msgid "Error fetching metadata for {}"
-msgstr "获取 {} 的元数据失败"
-
-#: changedetectionio/store.py:390
-msgid "Watch protocol is not permitted or invalid URL format"
-msgstr "监控协议不允许或 URL 格式无效"
-
-#: changedetectionio/blueprint/backups/__init__.py:86
+#: changedetectionio/blueprint/backups/__init__.py
 msgid "A backup is already running, check back in a few minutes"
 msgstr "备份正在进行中，请几分钟后再查看"
 
-#: changedetectionio/blueprint/backups/__init__.py:90
+#: changedetectionio/blueprint/backups/__init__.py
 msgid "Maximum number of backups reached, please remove some"
 msgstr "备份数量已达上限，请先删除部分备份"
 
-#: changedetectionio/blueprint/backups/__init__.py:103
+#: changedetectionio/blueprint/backups/__init__.py
 msgid "Backup building in background, check back in a few minutes."
 msgstr "备份正在后台生成，请几分钟后再查看。"
 
-#: changedetectionio/blueprint/backups/__init__.py:166
+#: changedetectionio/blueprint/backups/__init__.py
 msgid "Backups were deleted."
 msgstr "备份已删除。"
 
-#: changedetectionio/blueprint/backups/templates/overview.html:6
-#: changedetectionio/blueprint/settings/templates/settings.html:28
+#: changedetectionio/blueprint/backups/templates/overview.html changedetectionio/blueprint/settings/templates/settings.html
 msgid "Backups"
 msgstr "备份"
 
-#: changedetectionio/blueprint/backups/templates/overview.html:9
+#: changedetectionio/blueprint/backups/templates/overview.html
 msgid "A backup is running!"
 msgstr "备份正在运行！"
 
-#: changedetectionio/blueprint/backups/templates/overview.html:13
-msgid ""
-"Here you can download and request a new backup, when a backup is completed you "
-"will see it listed below."
+#: changedetectionio/blueprint/backups/templates/overview.html
+msgid "Here you can download and request a new backup, when a backup is completed you will see it listed below."
 msgstr "在此可下载并请求新的备份，备份完成后会在下方列表中显示。"
 
-#: changedetectionio/blueprint/backups/templates/overview.html:19
+#: changedetectionio/blueprint/backups/templates/overview.html
 msgid "Mb"
 msgstr "MB"
 
-#: changedetectionio/blueprint/backups/templates/overview.html:24
+#: changedetectionio/blueprint/backups/templates/overview.html
 msgid "No backups found."
 msgstr "未找到备份。"
 
-#: changedetectionio/blueprint/backups/templates/overview.html:28
+#: changedetectionio/blueprint/backups/templates/overview.html
 msgid "Create backup"
 msgstr "创建备份"
 
-#: changedetectionio/blueprint/backups/templates/overview.html:30
+#: changedetectionio/blueprint/backups/templates/overview.html
 msgid "Remove backups"
 msgstr "删除备份"
 
-#: changedetectionio/blueprint/imports/importer.py:45
-msgid ""
-"Importing 5,000 of the first URLs from your list, the rest can be imported "
-"again."
+#: changedetectionio/blueprint/imports/importer.py
+msgid "Importing 5,000 of the first URLs from your list, the rest can be imported again."
 msgstr "仅导入列表前 5,000 个 URL，其余可稍后继续导入。"
 
-#: changedetectionio/blueprint/imports/importer.py:78
+#: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
 msgid "{} Imported from list in {:.2f}s, {} Skipped."
 msgstr "从列表导入 {} 条，用时 {:.2f} 秒，跳过 {} 条。"
 
-#: changedetectionio/blueprint/imports/importer.py:98
+#: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read JSON file, was it broken?"
 msgstr "无法读取 JSON 文件，文件是否损坏？"
 
-#: changedetectionio/blueprint/imports/importer.py:102
+#: changedetectionio/blueprint/imports/importer.py
 msgid "JSON structure looks invalid, was it broken?"
 msgstr "JSON 结构无效，文件是否损坏？"
 
-#: changedetectionio/blueprint/imports/importer.py:139
+#: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
 msgid "{} Imported from Distill.io in {:.2f}s, {} Skipped."
 msgstr "从 Distill.io 导入 {} 条，用时 {:.2f} 秒，跳过 {} 条。"
 
-#: changedetectionio/blueprint/imports/importer.py:160
-#: changedetectionio/blueprint/imports/importer.py:239
+#: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read export XLSX file, something wrong with the file?"
 msgstr "无法读取导出的 XLSX 文件，文件是否有问题？"
 
-#: changedetectionio/blueprint/imports/importer.py:200
-#: changedetectionio/blueprint/imports/importer.py:268
+#: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
 msgid "Error processing row number {}, URL value was incorrect, row was skipped."
 msgstr "处理第 {} 行时出错，URL 值不正确，已跳过该行。"
 
-#: changedetectionio/blueprint/imports/importer.py:214
-#: changedetectionio/blueprint/imports/importer.py:297
+#: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid ""
-"Error processing row number {}, check all cell data types are correct, row was "
-"skipped."
+msgid "Error processing row number {}, check all cell data types are correct, row was skipped."
 msgstr "处理第 {} 行时出错，请检查单元格数据类型是否正确，已跳过该行。"
 
-#: changedetectionio/blueprint/imports/importer.py:218
+#: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
 msgid "{} imported from Wachete .xlsx in {:.2f}s"
 msgstr "从 Wachete .xlsx 导入 {} 条，用时 {:.2f} 秒"
 
-#: changedetectionio/blueprint/imports/importer.py:301
+#: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
 msgid "{} imported from custom .xlsx in {:.2f}s"
 msgstr "从自定义 .xlsx 导入 {} 条，用时 {:.2f} 秒"
 
-#: changedetectionio/blueprint/imports/templates/import.html:9
+#: changedetectionio/blueprint/imports/templates/import.html
 msgid "URL List"
 msgstr "URL 列表"
 
-#: changedetectionio/blueprint/imports/templates/import.html:10
+#: changedetectionio/blueprint/imports/templates/import.html
 msgid "Distill.io"
 msgstr "Distill.io"
 
-#: changedetectionio/blueprint/imports/templates/import.html:11
+#: changedetectionio/blueprint/imports/templates/import.html
 msgid ".XLSX & Wachete"
 msgstr ".XLSX 与 Wachete"
 
-#: changedetectionio/blueprint/imports/templates/import.html:20
-msgid ""
-"Enter one URL per line, and optionally add tags for each URL after a space, "
-"delineated by comma (,):"
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "Enter one URL per line, and optionally add tags for each URL after a space, delineated by comma (,):"
 msgstr "每行输入一个 URL，可在 URL 后用空格追加标签，标签以逗号 (,) 分隔："
 
-#: changedetectionio/blueprint/imports/templates/import.html:22
+#: changedetectionio/blueprint/imports/templates/import.html
 msgid "Example:"
 msgstr "示例："
 
-#: changedetectionio/blueprint/imports/templates/import.html:23
+#: changedetectionio/blueprint/imports/templates/import.html
 msgid "URLs which do not pass validation will stay in the textarea."
 msgstr "未通过验证的 URL 会保留在文本框中。"
 
-#: changedetectionio/blueprint/imports/templates/import.html:44
-msgid ""
-"Copy and Paste your Distill.io watch 'export' file, this should be a JSON file."
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "Copy and Paste your Distill.io watch 'export' file, this should be a JSON file."
 msgstr "复制并粘贴 Distill.io 监控的“导出”文件（JSON）。"
 
-#: changedetectionio/blueprint/imports/templates/import.html:45
+#: changedetectionio/blueprint/imports/templates/import.html
 msgid "This is"
 msgstr "这项功能为"
 
-#: changedetectionio/blueprint/imports/templates/import.html:45
+#: changedetectionio/blueprint/imports/templates/import.html
 msgid "experimental"
 msgstr "实验性"
 
-#: changedetectionio/blueprint/imports/templates/import.html:45
+#: changedetectionio/blueprint/imports/templates/import.html
 msgid "supported fields are"
 msgstr "，支持的字段有"
 
-#: changedetectionio/blueprint/imports/templates/import.html:45
+#: changedetectionio/blueprint/imports/templates/import.html
 msgid "the rest (including"
 msgstr "其余字段（包括"
 
-#: changedetectionio/blueprint/imports/templates/import.html:45
+#: changedetectionio/blueprint/imports/templates/import.html
 msgid "are ignored."
 msgstr "）将被忽略。"
 
-#: changedetectionio/blueprint/imports/templates/import.html:48
+#: changedetectionio/blueprint/imports/templates/import.html
 msgid "How to export?"
 msgstr "如何导出？"
 
-#: changedetectionio/blueprint/imports/templates/import.html:49
+#: changedetectionio/blueprint/imports/templates/import.html
 msgid "Be sure to set your default fetcher to Chrome if required."
 msgstr "如有需要，请将默认抓取器设置为 Chrome。"
 
-#: changedetectionio/blueprint/imports/templates/import.html:91
+#: changedetectionio/blueprint/imports/templates/import.html
 msgid "Table of custom column and data types mapping for the"
 msgstr "用于以下内容的自定义列与数据类型映射表"
 
-#: changedetectionio/blueprint/imports/templates/import.html:91
+#: changedetectionio/blueprint/imports/templates/import.html
 msgid "Custom mapping"
 msgstr "自定义映射"
 
-#: changedetectionio/blueprint/imports/templates/import.html:91
+#: changedetectionio/blueprint/imports/templates/import.html
 msgid "File mapping type."
 msgstr "文件映射类型。"
 
-#: changedetectionio/blueprint/imports/templates/import.html:95
+#: changedetectionio/blueprint/imports/templates/import.html
 msgid "Column #"
 msgstr "列 #"
 
-#: changedetectionio/blueprint/imports/templates/import.html:101
+#: changedetectionio/blueprint/imports/templates/import.html
 msgid "Type"
 msgstr "类型"
 
-#: changedetectionio/blueprint/imports/templates/import.html:104
+#: changedetectionio/blueprint/imports/templates/import.html
 msgid "none"
 msgstr "无"
 
-#: changedetectionio/blueprint/imports/templates/import.html:107
+#: changedetectionio/blueprint/imports/templates/import.html
 msgid "CSS/xPath filter"
 msgstr "CSS/XPath 过滤器"
 
-#: changedetectionio/blueprint/imports/templates/import.html:108
+#: changedetectionio/blueprint/imports/templates/import.html
 msgid "Group / Tag name(s)"
 msgstr "分组/标签名称"
 
-#: changedetectionio/blueprint/imports/templates/import.html:109
+#: changedetectionio/blueprint/imports/templates/import.html
 msgid "Recheck time (minutes)"
 msgstr "复检间隔（分钟）"
 
-#: changedetectionio/blueprint/imports/templates/import.html:116
+#: changedetectionio/blueprint/imports/templates/import.html
 msgid "Import"
 msgstr "导入"
 
-#: changedetectionio/blueprint/settings/__init__.py:64
+#: changedetectionio/blueprint/settings/__init__.py
 msgid "Password protection removed."
 msgstr "已移除密码保护。"
 
-#: changedetectionio/blueprint/settings/__init__.py:92
+#: changedetectionio/blueprint/settings/__init__.py
 #, python-brace-format
 msgid "Warning: Worker count ({}) is close to or exceeds available CPU cores ({})"
 msgstr "警告：工作线程数（{}）接近或超过可用CPU核心数（{}）"
 
-#: changedetectionio/blueprint/settings/__init__.py:104
+#: changedetectionio/blueprint/settings/__init__.py
 #, python-brace-format
 msgid "Worker count adjusted: {}"
 msgstr "工作线程数已调整：{}"
 
-#: changedetectionio/blueprint/settings/__init__.py:106
+#: changedetectionio/blueprint/settings/__init__.py
 msgid "Dynamic worker adjustment not supported for sync workers"
 msgstr "同步工作线程不支持动态调整"
 
-#: changedetectionio/blueprint/settings/__init__.py:108
+#: changedetectionio/blueprint/settings/__init__.py
 #, python-brace-format
 msgid "Error adjusting workers: {}"
 msgstr "调整工作线程时出错：{}"
 
-#: changedetectionio/blueprint/settings/__init__.py:113
+#: changedetectionio/blueprint/settings/__init__.py
 msgid "Password protection enabled."
 msgstr "已启用密码保护。"
 
-#: changedetectionio/blueprint/settings/__init__.py:132
+#: changedetectionio/blueprint/settings/__init__.py
 msgid "Settings updated."
 msgstr "设置已更新。"
 
-#: changedetectionio/blueprint/settings/__init__.py:135
-#: changedetectionio/blueprint/ui/edit.py:296
-#: changedetectionio/processors/extract.py:105
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/processors/extract.py
 msgid "An error occurred, please see below."
 msgstr "发生错误，请查看下方详情。"
 
-#: changedetectionio/blueprint/settings/__init__.py:185
+#: changedetectionio/blueprint/settings/__init__.py
 msgid "API Key was regenerated."
 msgstr "API Key 已重新生成。"
 
-#: changedetectionio/blueprint/settings/__init__.py:204
+#: changedetectionio/blueprint/settings/__init__.py
 msgid "Automatic scheduling paused - checks will not be queued."
 msgstr "自动调度已暂停 - 检查任务不会入队。"
 
-#: changedetectionio/blueprint/settings/__init__.py:206
+#: changedetectionio/blueprint/settings/__init__.py
 msgid "Automatic scheduling resumed - checks will be queued normally."
 msgstr "自动调度已恢复 - 检查任务将正常入队。"
 
-#: changedetectionio/blueprint/settings/__init__.py:218
+#: changedetectionio/blueprint/settings/__init__.py
 msgid "All notifications muted."
 msgstr "所有通知已静音。"
 
-#: changedetectionio/blueprint/settings/__init__.py:220
+#: changedetectionio/blueprint/settings/__init__.py
 msgid "All notifications unmuted."
 msgstr "所有通知已取消静音。"
 
-#: changedetectionio/blueprint/settings/templates/notification-log.html:7
+#: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "Notification debug log"
 msgstr "通知调试日志"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:21
-#: changedetectionio/blueprint/tags/templates/edit-tag.html:27
-#: changedetectionio/blueprint/ui/templates/edit.html:47
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "General"
 msgstr "通用"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:23
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Fetching"
 msgstr "抓取"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:24
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Global Filters"
 msgstr "全局过滤器"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:25
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "UI Options"
 msgstr "界面选项"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:26
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "API"
 msgstr "API"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:27
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "RSS"
 msgstr "RSS"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:29
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Time & Date"
 msgstr "时间与日期"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:30
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "CAPTCHA & Proxies"
 msgstr "验证码与代理"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:36
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Info"
 msgstr "信息"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:47
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default recheck time for all watches, current system minimum is"
 msgstr "所有监控项的默认复检间隔，当前系统最小值为"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:47
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "seconds"
 msgstr "秒"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:47
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "more info"
 msgstr "更多信息"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:57
-msgid ""
-"After this many consecutive times that the CSS/xPath filter is missing, send a "
-"notification"
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "After this many consecutive times that the CSS/xPath filter is missing, send a notification"
 msgstr "CSS/xPath 过滤器连续缺失此次数后发送通知"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:59
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Set to"
 msgstr "设置为"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:59
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "to disable"
 msgstr "以禁用"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:68
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Password protection for your changedetection.io application."
 msgstr "为你的 changedetection.io 应用启用密码保护。"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:71
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Password is locked."
 msgstr "密码已锁定。"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:77
-msgid ""
-"Allow access to the watch change history page when password is enabled (Good "
-"for sharing the diff page)"
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Allow access to the watch change history page when password is enabled (Good for sharing the diff page)"
 msgstr "启用密码时允许访问监视器更改历史页面(便于共享差异页面)"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:81
-msgid ""
-"When a request returns no content, or the HTML does not contain any text, is "
-"this considered a change?"
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "When a request returns no content, or the HTML does not contain any text, is this considered a change?"
 msgstr "当请求无内容返回，或 HTML 不包含任何文本时，是否视为变更？"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:93
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Base URL used for the"
 msgstr "用于通知链接中的"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:93
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "token in notification links."
 msgstr "通知链接中的令牌。"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:94
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default value is the system environment variable"
 msgstr "默认值为系统环境变量"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:94
-#: changedetectionio/templates/_common_fields.html:132
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/_common_fields.html
 msgid "read more here"
 msgstr "在此阅读更多"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:103
-#: changedetectionio/blueprint/ui/templates/edit.html:123
-msgid "Use the"
-msgstr "使用"
-
-#: changedetectionio/blueprint/settings/templates/settings.html:103
-#: changedetectionio/blueprint/ui/templates/edit.html:123
-msgid "Basic"
-msgstr "基础"
-
-#: changedetectionio/blueprint/settings/templates/settings.html:103
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "method (default) where your watched sites don't need Javascript to render."
 msgstr "方法(默认)，适用于无需 JavaScript 渲染的监视网站。"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:104
-#: changedetectionio/blueprint/ui/templates/edit.html:124
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Use the"
+msgstr "使用"
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Basic"
+msgstr "基础"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var"
+msgstr "方法需要连接到运行中的 WebDriver+Chrome 服务器，通过环境变量设置"
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "The"
 msgstr "该"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:104
-#: changedetectionio/blueprint/ui/templates/edit.html:124
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Chrome/Javascript"
 msgstr "Chrome/JavaScript"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:104
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid ""
-"method requires a network connection to a running WebDriver+Chrome server, set "
-"by the ENV var"
-msgstr "方法需要连接到运行中的 WebDriver+Chrome 服务器，通过环境变量设置"
-
-#: changedetectionio/blueprint/settings/templates/settings.html:109
-#: changedetectionio/blueprint/ui/templates/edit.html:143
-msgid ""
-"If you're having trouble waiting for the page to be fully rendered (text "
-"missing etc), try increasing the 'wait' time here."
+"If you're having trouble waiting for the page to be fully rendered (text missing etc), try increasing the 'wait' time"
+" here."
 msgstr "如果页面渲染未完成（缺文本等），可尝试增加这里的等待时间。"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:111
-#: changedetectionio/blueprint/ui/templates/edit.html:145
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "This will wait"
 msgstr "这将等待"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:111
-#: changedetectionio/blueprint/ui/templates/edit.html:145
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "seconds before extracting the text."
 msgstr "秒后再提取文本。"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:120
-msgid ""
-"Number of concurrent workers to process watches. More workers = faster "
-"processing but higher memory usage."
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Number of concurrent workers to process watches. More workers = faster processing but higher memory usage."
 msgstr "用于处理监控项的并发工作线程数。线程越多=处理更快但内存占用更高。"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:121
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Currently running:"
 msgstr "当前运行:"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:121
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "operational"
 msgstr "运行中"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:121
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "workers"
 msgstr "工作进程"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:121
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "actively processing"
 msgstr "活跃处理中"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:125
-msgid ""
-"Example - 3 seconds random jitter could trigger up to 3 seconds earlier or up "
-"to 3 seconds later"
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Example - 3 seconds random jitter could trigger up to 3 seconds earlier or up to 3 seconds later"
 msgstr "示例 - 3 秒随机抖动可能导致提前最多 3 秒或延后最多 3 秒触发"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:129
-msgid ""
-"For regular plain requests (not chrome based), maximum number of seconds until "
-"timeout, 1-999."
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "For regular plain requests (not chrome based), maximum number of seconds until timeout, 1-999."
 msgstr "对于普通明文请求（非 Chrome），超时时间上限为 1-999 秒。"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:134
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Applied to all requests."
 msgstr "适用于所有请求。"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:135
-msgid ""
-"Note: Simply changing the User-Agent often does not defeat anti-robot "
-"technologies, it's important to consider"
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it's important to consider"
 msgstr "注意：仅更换 User-Agent 往往无法绕过反爬虫技术，务必考虑"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:135
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "all of the ways that the browser is detected"
 msgstr "浏览器被识别的各种方式"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:140
-#: changedetectionio/blueprint/ui/templates/diff.html:138
-#: changedetectionio/blueprint/ui/templates/edit.html:125
-#: changedetectionio/templates/_common_fields.html:126
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/diff.html
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/templates/_common_fields.html
 msgid "Tip:"
 msgstr "提示："
 
-#: changedetectionio/blueprint/settings/templates/settings.html:140
-#: changedetectionio/blueprint/ui/templates/edit.html:125
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Connect using Bright Data and Oxylabs Proxies, find out more here."
 msgstr "使用 Bright Data 和 Oxylabs 代理连接，更多信息见此处。"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:149
-msgid ""
-"Ignore whitespace, tabs and new-lines/line-feeds when considering if a change "
-"was detected."
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Ignore whitespace, tabs and new-lines/line-feeds when considering if a change was detected."
 msgstr "判断是否变更时忽略空格、制表符和换行。"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:150
-#: changedetectionio/blueprint/settings/templates/settings.html:157
-#: changedetectionio/blueprint/settings/templates/settings.html:192
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Note:"
 msgstr "注意:"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:150
-#: changedetectionio/blueprint/settings/templates/settings.html:192
-msgid ""
-"Changing this will change the status of your existing watches, possibly trigger "
-"alerts etc."
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Changing this will change the status of your existing watches, possibly trigger alerts etc."
 msgstr "更改此项会改变现有监控项状态，可能触发警报等。"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:155
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Render anchor tag content, default disabled, when enabled renders links as"
 msgstr "渲染 a 标签内容，默认关闭，开启后链接会呈现为"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:157
-msgid ""
-"Changing this could affect the content of your existing watches, possibly "
-"trigger alerts etc."
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Changing this could affect the content of your existing watches, possibly trigger alerts etc."
 msgstr "更改此项可能影响现有监控项内容，可能触发警报等。"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:168
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Remove HTML element(s) by CSS and XPath selectors before text conversion."
 msgstr "在文本转换前通过 CSS 和 XPath 选择器移除 HTML 元素。"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:169
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Don't paste HTML here, use only CSS and XPath selectors"
 msgstr "不要在此粘贴 HTML，仅使用 CSS 和 XPath 选择器"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:170
-msgid ""
-"Add multiple elements, CSS or XPath selectors per line to ignore multiple parts "
-"of the HTML."
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Add multiple elements, CSS or XPath selectors per line to ignore multiple parts of the HTML."
 msgstr "每行添加多个元素、CSS 或 XPath 选择器，用于忽略 HTML 的多个部分。"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:178
-#: changedetectionio/blueprint/settings/templates/settings.html:182
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Note: This is applied globally in addition to the per-watch rules."
 msgstr "注意：除每个监控项规则外，此项还会全局应用。"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:181
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Matching text will be"
 msgstr "匹配的文本将会"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:181
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "ignored"
 msgstr "已忽略"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:181
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "in the text snapshot (you can still see it but it wont trigger a change)"
 msgstr "在文本快照中（仍可见但不会触发变更）"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:183
-#: changedetectionio/templates/edit/text-options.html:24
-msgid ""
-"Each line processed separately, any line matching will be ignored (removed "
-"before creating the checksum)"
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
+msgid "Each line processed separately, any line matching will be ignored (removed before creating the checksum)"
 msgstr "每行单独处理，匹配的行会被忽略（在生成校验和前移除）"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:184
-#: changedetectionio/templates/edit/text-options.html:25
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
 msgid "Regular Expression support, wrap the entire line in forward slash"
 msgstr "支持正则表达式，整行用斜杠 / 包裹"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:185
-#: changedetectionio/templates/edit/text-options.html:26
-msgid ""
-"Changing this will affect the comparison checksum which may trigger an alert"
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
+msgid "Changing this will affect the comparison checksum which may trigger an alert"
 msgstr "更改此项会影响对比校验和，可能触发警报"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:191
-msgid ""
-"Remove any text that appears in the \"Ignore text\" from the output (otherwise "
-"its just ignored for change-detection)"
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Remove any text that appears in the \"Ignore text\" from the output (otherwise its just ignored for change-detection)"
 msgstr "从输出中移除“忽略文本”中的内容（否则仅在变更检测时忽略）"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:198
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "API Access"
 msgstr "API 访问"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:199
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Drive your changedetection.io via API, More about"
 msgstr "通过 API 控制 changedetection.io，更多信息"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:199
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "API access and examples here"
 msgstr "API访问和示例"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:203
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Restrict API access limit by using"
 msgstr "通过以下方式限制 API 访问"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:203
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "header - required for the Chrome Extension to work"
 msgstr "请求头 - Chrome 扩展正常工作所需"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:204
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "API Key"
 msgstr "API密钥"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:205
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "copy"
 msgstr "复制"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:209
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Regenerate API key"
 msgstr "重新生成 API Key"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:212
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Chrome Extension"
 msgstr "Chrome 扩展程序"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:213
-msgid ""
-"Easily add any web-page to your changedetection.io installation from within "
-"Chrome."
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Easily add any web-page to your changedetection.io installation from within Chrome."
 msgstr "可在 Chrome 中轻松将任意网页添加到你的 changedetection.io。"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:214
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Step 1"
 msgstr "步骤 1"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:214
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Install the extension,"
 msgstr "安装扩展，"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:214
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Step 2"
 msgstr "步骤 2"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:214
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Navigate to this page,"
 msgstr "访问此页面，"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:215
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Step 3"
 msgstr "步骤 3"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:215
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Open the extension from the toolbar and click"
 msgstr "从工具栏打开扩展并点击"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:215
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Sync API Access"
 msgstr "同步 API 访问"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:218
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Try our new Chrome Extension!"
 msgstr "试试我们新的 Chrome 扩展！"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:220
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Chrome store icon"
 msgstr "Chrome 商店图标"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:221
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Chrome Webstore"
 msgstr "Chrome网上应用店"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:232
-msgid ""
-"Maximum number of history snapshots to include in the watch specific RSS feed."
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Maximum number of history snapshots to include in the watch specific RSS feed."
 msgstr "监控项 RSS 中包含的历史快照最大数量。"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:236
-msgid ""
-"For watching other RSS feeds - When watching RSS/Atom feeds, convert them into "
-"clean text for better change detection."
-msgstr ""
-"用于监控其他 RSS 源 - 监控 RSS/Atom 源时，将其转换为纯净文本以更好地检测变更。"
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "For watching other RSS feeds - When watching RSS/Atom feeds, convert them into clean text for better change detection."
+msgstr "用于监控其他 RSS 源 - 监控 RSS/Atom 源时，将其转换为纯净文本以更好地检测变更。"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:241
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Does your reader support HTML? Set it here"
 msgstr "你的阅读器支持 HTML 吗？在此设置"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:245
-msgid ""
-"'System default' for the same template for all items, or re-use your "
-"\"Notification Body\" as the template."
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "'System default' for the same template for all items, or re-use your \"Notification Body\" as the template."
 msgstr "“系统默认”用于所有条目使用相同模板，或复用“通知正文”作为模板。"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:258
-msgid ""
-"Ensure the settings below are correct, they are used to manage the time "
-"schedule for checking your web page watches."
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Ensure the settings below are correct, they are used to manage the time schedule for checking your web page watches."
 msgstr "请确认以下设置正确，它们用于管理网页监控的时间调度。"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:261
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "UTC Time & Date from Server:"
 msgstr "服务器 UTC 时间与日期："
 
-#: changedetectionio/blueprint/settings/templates/settings.html:262
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Local Time & Date in Browser:"
 msgstr "浏览器本地时间与日期："
 
-#: changedetectionio/blueprint/settings/templates/settings.html:274
-msgid ""
-"Enable this setting to open the diff page in a new tab. If disabled, the diff "
-"page will open in the current tab."
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Enable this setting to open the diff page in a new tab. If disabled, the diff page will open in the current tab."
 msgstr "启用此设置可在新标签页打开差异页面；若禁用，将在当前标签页打开。"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:278
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Realtime UI Updates Enabled - (Restart required if this is changed)"
 msgstr "启用实时界面更新（更改后需重启）"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:282
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Enable or Disable Favicons next to the watch list"
 msgstr "在监控列表中启用或禁用站点图标"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:289
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Number of items per page in the watch overview list, 0 to disable."
 msgstr "监控概览列表每页数量，0 为禁用。"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:337
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Tip"
 msgstr "提示"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:337
-msgid ""
-"\"Residential\" and \"Mobile\" proxy type can be more successfull than \"Data "
-"Center\" for blocked websites."
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "\"Residential\" and \"Mobile\" proxy type can be more successfull than \"Data Center\" for blocked websites."
 msgstr "对于被封锁的网站，“住宅”和“移动”代理类型可能比“数据中心”更有效。"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:341
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "\"Name\" will be used for selecting the proxy in the Watch Edit settings"
 msgstr "“名称”将用于在监控项编辑设置中选择代理"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:342
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid ""
-"SOCKS5 proxies with authentication are only supported with 'plain requests' "
-"fetcher, for other fetchers you should whitelist the IP access instead"
+"SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should "
+"whitelist the IP access instead"
 msgstr "带认证的 SOCKS5 代理仅支持“明文请求”抓取器，其他抓取器请改为白名单 IP"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:348
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Choose a default proxy for all watches"
 msgstr "为所有监视器选择默认代理"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:388
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Python version:"
 msgstr "Python 版本："
 
-#: changedetectionio/blueprint/settings/templates/settings.html:389
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Plugins active:"
 msgstr "已启用插件："
 
-#: changedetectionio/blueprint/settings/templates/settings.html:397
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "No plugins active"
 msgstr "未启用任何插件"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:403
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Back"
 msgstr "返回"
 
-#: changedetectionio/blueprint/settings/templates/settings.html:404
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Clear Snapshot History"
 msgstr "清除快照历史"
 
-#: changedetectionio/blueprint/tags/__init__.py:48
+#: changedetectionio/blueprint/tags/__init__.py
 #, python-brace-format
 msgid "The tag \"{}\" already exists"
 msgstr "标签“{}”已存在"
 
-#: changedetectionio/blueprint/tags/__init__.py:52
+#: changedetectionio/blueprint/tags/__init__.py
 msgid "Tag added"
 msgstr "标签已添加"
 
-#: changedetectionio/blueprint/tags/__init__.py:87
+#: changedetectionio/blueprint/tags/__init__.py
 msgid "Tag deleted, removing from watches in background"
 msgstr "标签已删除，正在后台从监视器中移除"
 
-#: changedetectionio/blueprint/tags/__init__.py:109
+#: changedetectionio/blueprint/tags/__init__.py
 msgid "Unlinking tag from watches in background"
 msgstr "正在后台从监控项中解绑标签"
 
-#: changedetectionio/blueprint/tags/__init__.py:133
+#: changedetectionio/blueprint/tags/__init__.py
 msgid "All tags deleted, clearing from watches in background"
 msgstr "已删除所有标签，正在后台从监控项中清理"
 
-#: changedetectionio/blueprint/tags/__init__.py:145
+#: changedetectionio/blueprint/tags/__init__.py
 msgid "Tag not found"
 msgstr "未找到标签"
 
-#: changedetectionio/blueprint/tags/__init__.py:220
+#: changedetectionio/blueprint/tags/__init__.py
 msgid "Updated"
 msgstr "已更新"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html:28
-#: changedetectionio/blueprint/ui/templates/edit.html:56
-#: changedetectionio/blueprint/ui/templates/edit.html:386
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Filters & Triggers"
 msgstr "过滤器与触发器"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html:50
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "These settings are"
 msgstr "这些设置会"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html:50
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "added"
 msgstr "应用"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html:50
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "to any existing watch configurations."
 msgstr "到现有的所有监控项配置中。"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html:53
-#: changedetectionio/blueprint/ui/templates/edit.html:321
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Text filtering"
 msgstr "文本过滤"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html:73
-#: changedetectionio/blueprint/ui/templates/edit.html:269
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use with caution!"
 msgstr "谨慎使用！"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html:73
-#: changedetectionio/blueprint/ui/templates/edit.html:269
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "This will easily fill up your email storage quota or flood other storages."
 msgstr "这很容易占满邮件存储配额或淹没其他存储。"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html:80
-#: changedetectionio/blueprint/ui/templates/edit.html:276
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Look out!"
 msgstr "注意！"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html:80
-#: changedetectionio/blueprint/ui/templates/edit.html:276
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Lookout!"
 msgstr "注意！"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html:81
-#: changedetectionio/blueprint/ui/templates/edit.html:277
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "There are"
 msgstr "当前有"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html:81
-#: changedetectionio/blueprint/ui/templates/edit.html:277
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "system-wide notification URLs enabled"
 msgstr "系统级通知 URL 已启用"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html:81
-#: changedetectionio/blueprint/ui/templates/edit.html:277
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "this form will override notification settings for this watch only"
 msgstr "此表单将仅覆盖该监控项的通知设置"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html:81
-#: changedetectionio/blueprint/ui/templates/edit.html:277
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "an empty Notification URL list here will still send notifications."
 msgstr "即使此处通知 URL 列表为空，仍会发送通知。"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html:84
-#: changedetectionio/blueprint/ui/templates/edit.html:280
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use system defaults"
 msgstr "使用系统默认值"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html:11
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Add a new organisational tag"
 msgstr "添加新的组织标签"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html:14
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:65
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Watch group / tag"
 msgstr "分组 / 标签"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html:21
-msgid ""
-"Groups allows you to manage filters and notifications for multiple watches "
-"under a single organisational tag."
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+msgid "Groups allows you to manage filters and notifications for multiple watches under a single organisational tag."
 msgstr "分组可让您在一个组织标签下管理多个监控项的过滤器与通知。"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html:31
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "# Watches"
 msgstr "监控项数量"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html:32
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Tag / Label name"
 msgstr "标签/名称"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html:42
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "No website organisational tags/groups configured"
 msgstr "未配置分组/标签"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html:53
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:281
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Edit"
 msgstr "编辑"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html:54
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:84
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:280
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Recheck"
 msgstr "重新检查"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html:59
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Delete Group?"
 msgstr "删除分组？"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html:60
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
 #, python-format
-msgid ""
-"<p>Are you sure you want to delete group <strong>%(title)s</strong>?</p><p>This "
-"action cannot be undone.</p>"
-msgstr ""
-"<p>确定要删除分组 <strong>%(title)s</strong> 吗？</p><p>此操作不可撤销。</p>"
+msgid "<p>Are you sure you want to delete group <strong>%(title)s</strong>?</p><p>This action cannot be undone.</p>"
+msgstr "<p>确定要删除分组 <strong>%(title)s</strong> 吗？</p><p>此操作不可撤销。</p>"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html:61
-#: changedetectionio/blueprint/tags/templates/groups-overview.html:62
-#: changedetectionio/blueprint/ui/templates/edit.html:490
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:100
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Delete"
 msgstr "删除"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html:62
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Deletes and removes tag"
 msgstr "删除并移除标签"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html:67
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Unlink Group?"
 msgstr "取消分组关联？"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html:68
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
 #, python-format
 msgid ""
-"<p>Are you sure you want to unlink all watches from group <strong>%(title)s</"
-"strong>?</p><p>The tag will be kept but watches will be removed from it.</p>"
-msgstr ""
-"<p>确定要将分组 <strong>%(title)s</strong> 与所有监控项解绑吗？</p><p>标签会保"
-"留，但监控项将从该分组移除。</p>"
+"<p>Are you sure you want to unlink all watches from group <strong>%(title)s</strong>?</p><p>The tag will be kept but "
+"watches will be removed from it.</p>"
+msgstr "<p>确定要将分组 <strong>%(title)s</strong> 与所有监控项解绑吗？</p><p>标签会保留，但监控项将从该分组移除。</p>"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html:69
-#: changedetectionio/blueprint/tags/templates/groups-overview.html:70
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Unlink"
 msgstr "解绑"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html:70
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Keep the tag but unlink any watches"
 msgstr "保留标签但解绑所有监控项"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html:71
-#: changedetectionio/blueprint/ui/templates/edit.html:500
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "RSS Feed for this watch"
 msgstr "该监控项的 RSS 源"
 
-#: changedetectionio/blueprint/ui/__init__.py:21
+#: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "{} watches deleted"
 msgstr "已删除 {} 个监控项"
 
-#: changedetectionio/blueprint/ui/__init__.py:28
+#: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "{} watches paused"
 msgstr "已暂停 {} 个监控项"
 
-#: changedetectionio/blueprint/ui/__init__.py:35
+#: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "{} watches unpaused"
 msgstr "已取消暂停 {} 个监控项"
 
-#: changedetectionio/blueprint/ui/__init__.py:42
+#: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "{} watches updated"
 msgstr "已更新 {} 个监控项"
 
-#: changedetectionio/blueprint/ui/__init__.py:49
+#: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "{} watches muted"
 msgstr "已静音 {} 个监控项"
 
-#: changedetectionio/blueprint/ui/__init__.py:56
+#: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "{} watches un-muted"
 msgstr "已取消静音 {} 个监控项"
 
-#: changedetectionio/blueprint/ui/__init__.py:64
+#: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "{} watches queued for rechecking"
 msgstr "已将 {} 个监控项加入重新检查队列"
 
-#: changedetectionio/blueprint/ui/__init__.py:71
+#: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "{} watches errors cleared"
 msgstr "已清除 {} 个监控项的错误"
 
-#: changedetectionio/blueprint/ui/__init__.py:78
+#: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "{} watches cleared/reset."
 msgstr "已清除/重置 {} 个监控项的历史记录。"
 
-#: changedetectionio/blueprint/ui/__init__.py:91
+#: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "{} watches set to use default notification settings"
 msgstr "已将 {} 个监控项设置为使用默认通知"
 
-#: changedetectionio/blueprint/ui/__init__.py:106
+#: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "{} watches were tagged"
 msgstr "已为 {} 个监控项打标签"
 
-#: changedetectionio/blueprint/ui/__init__.py:143
+#: changedetectionio/blueprint/ui/__init__.py
 msgid "Watch not found"
 msgstr "未找到监控项"
 
-#: changedetectionio/blueprint/ui/__init__.py:145
+#: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "Cleared snapshot history for watch {}"
 msgstr "已清除监控项 {} 的快照历史"
 
-#: changedetectionio/blueprint/ui/__init__.py:172
+#: changedetectionio/blueprint/ui/__init__.py
 msgid "History clearing started in background"
 msgstr "历史清理已在后台开始"
 
-#: changedetectionio/blueprint/ui/__init__.py:174
+#: changedetectionio/blueprint/ui/__init__.py
 msgid "Incorrect confirmation text."
 msgstr "确认文本不正确。"
 
-#: changedetectionio/blueprint/ui/__init__.py:213
+#: changedetectionio/blueprint/ui/__init__.py
 msgid "Marking watches as viewed in background..."
 msgstr "正在后台将监控项标记为已读..."
 
-#: changedetectionio/blueprint/ui/__init__.py:222
+#: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "The watch by UUID {} does not exist."
 msgstr "UUID 为 {} 的监控项不存在。"
 
-#: changedetectionio/blueprint/ui/__init__.py:229
+#: changedetectionio/blueprint/ui/__init__.py
 msgid "Deleted."
 msgstr "已删除。"
 
-#: changedetectionio/blueprint/ui/__init__.py:246
+#: changedetectionio/blueprint/ui/__init__.py
 msgid "Cloned, you are editing the new watch."
 msgstr "已克隆，正在编辑新的监控项。"
 
-#: changedetectionio/blueprint/ui/__init__.py:261
+#: changedetectionio/blueprint/ui/__init__.py
 msgid "Watch is already queued or being checked."
 msgstr "监视器已在队列中或正在检查。"
 
-#: changedetectionio/blueprint/ui/__init__.py:264
-#: changedetectionio/blueprint/ui/__init__.py:301
+#: changedetectionio/blueprint/ui/__init__.py
 msgid "Queued 1 watch for rechecking."
 msgstr "已将 1 个监控项加入重新检查队列。"
 
-#: changedetectionio/blueprint/ui/__init__.py:297
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
 msgid "Queued {} watches for rechecking ({} already queued or running)."
 msgstr "{}个监视器已加入队列({}个已在队列中)。"
 
-#: changedetectionio/blueprint/ui/__init__.py:303
+#: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "Queued {} watches for rechecking."
 msgstr "已将 {} 个监控项加入重新检查队列。"
 
-#: changedetectionio/blueprint/ui/__init__.py:332
+#: changedetectionio/blueprint/ui/__init__.py
 msgid "Queueing watches for rechecking in background..."
 msgstr "后台将监视器加入重新检查队列..."
 
-#: changedetectionio/blueprint/ui/__init__.py:403
+#: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
-msgid ""
-"Could not share, something went wrong while communicating with the share server "
-"- {}"
+msgid "Could not share, something went wrong while communicating with the share server - {}"
 msgstr "无法分享，与分享服务器通信时出错 - {}"
 
-#: changedetectionio/blueprint/ui/diff.py:93
-#: changedetectionio/blueprint/ui/diff.py:154
-#: changedetectionio/blueprint/ui/diff.py:210
-#: changedetectionio/blueprint/ui/diff.py:277
-#: changedetectionio/blueprint/ui/preview.py:36
-#: changedetectionio/blueprint/ui/preview.py:160
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "Language set to auto-detect from browser"
+msgstr "已设置为从浏览器自动检测语言"
+
+#: changedetectionio/blueprint/ui/diff.py changedetectionio/blueprint/ui/preview.py
 msgid "No history found for the specified link, bad link?"
 msgstr "未找到该链接的历史记录，链接是否有误？"
 
-#: changedetectionio/blueprint/ui/diff.py:98
-msgid ""
-"Not enough history (2 snapshots required) to show difference page for this "
-"watch."
+#: changedetectionio/blueprint/ui/diff.py
+msgid "Not enough history (2 snapshots required) to show difference page for this watch."
 msgstr "历史记录不足（需要 2 个快照），无法显示该监控项的差异页。"
 
-#: changedetectionio/blueprint/ui/edit.py:35
+#: changedetectionio/blueprint/ui/edit.py
 msgid "No watches to edit"
 msgstr "没有可编辑的监控项"
 
-#: changedetectionio/blueprint/ui/edit.py:42
+#: changedetectionio/blueprint/ui/edit.py
 #, python-brace-format
 msgid "No watch with the UUID {} found."
 msgstr "未找到 UUID 为 {} 的监控项。"
 
-#: changedetectionio/blueprint/ui/edit.py:50
+#: changedetectionio/blueprint/ui/edit.py
 #, python-brace-format
 msgid "Switched to mode - {}."
 msgstr "已切换到模式 - {}。"
 
-#: changedetectionio/blueprint/ui/edit.py:75
+#: changedetectionio/blueprint/ui/edit.py
 #, python-brace-format
 msgid "Cannot load the edit form for processor/plugin '{}', plugin missing?"
 msgstr "无法加载处理器/插件 '{}' 的编辑表单，插件是否缺失？"
 
-#: changedetectionio/blueprint/ui/edit.py:245
+#: changedetectionio/blueprint/ui/edit.py
 msgid "Updated watch - unpaused!"
 msgstr "监控项已更新并取消暂停！"
 
-#: changedetectionio/blueprint/ui/edit.py:245
+#: changedetectionio/blueprint/ui/edit.py
 msgid "Updated watch."
 msgstr "监控项已更新。"
 
-#: changedetectionio/blueprint/ui/preview.py:78
+#: changedetectionio/blueprint/ui/preview.py
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
 msgstr "无法预览 - 尚未完成抓取/检查或未满足触发条件"
 
-#: changedetectionio/blueprint/ui/views.py:24
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "This will remove version history (snapshots) for ALL watches, but keep your list of URLs!"
+msgstr "这将删除所有监控项的版本历史（快照），但会保留 URL 列表！"
+
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "You may like to use the"
+msgstr "你可能需要先使用"
+
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "BACKUP"
+msgstr "备份"
+
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "link first."
+msgstr "链接。"
+
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "Confirmation text"
+msgstr "确认文本"
+
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "Type in the word"
+msgstr "请输入单词"
+
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "clear"
+msgstr "clear"
+
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "to confirm that you understand."
+msgstr "以确认你已理解。"
+
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "Clear History!"
+msgstr "清除历史记录！"
+
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
+msgid "Cancel"
+msgstr "取消"
+
+#: changedetectionio/blueprint/ui/templates/diff-offscreen-options.html
+msgid "Share diff as image"
+msgstr "将差异分享为图片"
+
+#: changedetectionio/blueprint/ui/templates/diff-offscreen-options.html
+msgid "Share as Image"
+msgstr "分享为图片"
+
+#: changedetectionio/blueprint/ui/templates/diff-offscreen-options.html
+msgid "Ignore any lines matching"
+msgstr "忽略匹配以下内容的行"
+
+#: changedetectionio/blueprint/ui/templates/diff-offscreen-options.html
+msgid "Ignore any lines matching excluding digits"
+msgstr "忽略匹配以下内容的行（排除数字）"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "From"
+msgstr "从"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "To"
+msgstr "到"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Words"
+msgstr "单词"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Lines"
+msgstr "行"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Ignore Whitespace"
+msgstr "忽略空白"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Same/non-changed"
+msgstr "未变化"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Removed"
+msgstr "已删除"
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Added"
+msgstr "新增"
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Replaced"
+msgstr "替换"
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
+msgid "Keyboard:"
+msgstr "快捷键："
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
+msgid "Previous"
+msgstr "上一项"
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
+msgid "Next"
+msgstr "下一项"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Jump to next difference"
+msgstr "跳转到下一个差异"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Jump"
+msgstr "跳转"
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
+msgid "Error Text"
+msgstr "错误文本"
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
+msgid "Error Screenshot"
+msgstr "错误截图"
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
+msgid "Text"
+msgstr "文本"
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
+msgid "Current screenshot"
+msgstr "当前截图"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Extract Data"
+msgstr "提取数据"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "seconds ago."
+msgstr "秒前。"
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
+msgid "seconds ago"
+msgstr "秒前"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Current error-ing screenshot from most recent request"
+msgstr "最近请求的错误截图"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Pro-tip: You can enable"
+msgstr "提示：你可以启用"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "\"share access when password is enabled\""
+msgstr "“启用密码时允许共享访问”"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "from settings."
+msgstr "（设置中）"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Goto single snapshot"
+msgstr "查看单个快照"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Highlight text to share or add to ignore lists."
+msgstr "选中文本以分享或加入忽略列表。"
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
+msgid "For now, Differences are performed on text, not graphically, only the latest screenshot is available."
+msgstr "目前差异仅按文本比较，非图形对比，只提供最新截图。"
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
+msgid "Current screenshot from most recent request"
+msgstr "最近请求的当前截图"
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
+msgid "No screenshot available just yet! Try rechecking the page."
+msgstr "目前还没有截图！请尝试重新检查页面。"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Screenshot requires Playwright/WebDriver enabled"
+msgstr "截图需要启用 Playwright/WebDriver"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Request"
+msgstr "请求"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Browser Steps"
+msgstr "浏览器步骤"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Visual Filter Selector"
+msgstr "可视化过滤器选择器"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Conditions"
+msgstr "条件"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Stats"
+msgstr "统计"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Some sites use JavaScript to create the content, for this you should"
+msgstr "有些网站使用 JavaScript 生成内容，此时你应该"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "use the Chrome/WebDriver Fetcher"
+msgstr "使用 Chrome/WebDriver 抓取器"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Variables are supported in the URL"
+msgstr "URL 支持变量"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "help and examples here"
+msgstr "帮助与示例在此"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Organisational tag/group name used in the main listing page"
+msgstr "分组/标签名称"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Automatically uses the page title if found, you can also use your own title/description here"
+msgstr "若检测到页面标题将自动使用，你也可以在此自定义标题/描述"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "The interval/amount of time between each check."
+msgstr "每次检查之间的时间间隔。"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Sends a notification when the filter can no longer be seen on the page, good for knowing when the page changed and "
+"your filter will not work anymore."
+msgstr "当页面上找不到该过滤器时发送通知，便于知晓页面已变化且过滤器不再适用。"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "method (default) where your watched site doesn't need Javascript to render."
+msgstr "方式（默认），适用于无需 JavaScript 渲染的网站。"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'."
+msgstr "方式需要连接正在运行的 WebDriver+Chrome 服务器，通过环境变量 'WEBDRIVER_URL' 设置。"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Check/Scan all"
+msgstr "检查/扫描全部"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Choose a proxy for this watch"
+msgstr "为此监控项选择代理"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Using the current global default settings"
+msgstr "使用当前全局默认设置"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Show advanced options"
+msgstr "显示高级选项"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Run this code before performing change detection, handy for filling in fields and other actions"
+msgstr "在执行变更检测前运行此代码，便于填写表单等操作"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "More help and examples here"
+msgstr "更多帮助与示例请见此处"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Variables are supported in the request body"
+msgstr "请求正文支持变量"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Variables are supported in the request header values"
+msgstr "请求头的值支持变量"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Alert! Extra headers file found and will be added to this watch!"
+msgstr "警告！发现额外的请求头文件，将添加到此监控项！"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Headers can be also read from a file in your data-directory"
+msgstr "请求头也可从数据目录中的文件读取"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Read more here"
+msgstr "在此了解更多"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Not supported by Selenium browser"
+msgstr "Selenium 浏览器不支持"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Turn on text finder"
+msgstr "开启文本查找器"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Please wait, first browser step can take a little time to load.."
+msgstr "请稍候，首个浏览器步骤可能需要一些时间加载.."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Click here to Start"
+msgstr "点击此处开始"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Please allow 10-15 seconds for the browser to connect."
+msgstr "请等待 10-15 秒让浏览器连接。"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Press \"Play\" to start."
+msgstr "点击“播放”开始。"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Visual Selector data is not ready, watch needs to be checked atleast once."
+msgstr "可视化选择器数据尚未就绪，监控项至少需要检查一次。"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Sorry, this functionality only works with fetchers that support interactive Javascript (so far only Playwright based "
+"fetchers)"
+msgstr "抱歉，此功能仅适用于支持交互式 JavaScript 的抓取器（目前仅 Playwright）。"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "to one that supports interactive Javascript."
+msgstr "为支持交互式 JavaScript 的方式。"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "You need to"
+msgstr "你需要"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Set the fetch method"
+msgstr "设置抓取方式"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Use the verify (✓) button to test if a condition passes against the current snapshot."
+msgstr "使用验证（✓）按钮测试条件是否符合当前快照。"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Read a quick tutorial about"
+msgstr "阅读快速教程"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "using conditional web page changes here"
+msgstr "在此了解如何使用条件式网页变更"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Activate preview"
+msgstr "启用预览"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Pro-tips:"
+msgstr "小贴士："
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Use the preview page to see your filters and triggers highlighted."
+msgstr "在预览页查看高亮的过滤器和触发器。"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Limit trigger/ignore/block/extract to;"
+msgstr "将触发/忽略/阻止/提取限定为;"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Note: Depending on the length and similarity of the text on each line, the algorithm may consider an"
+msgstr "注意：根据每行文本长度与相似度，算法可能把"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "instead of"
+msgstr "视为"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "replacement"
+msgstr "替换"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "for example."
+msgstr "例如。"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "addition"
+msgstr "新增"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "So it's always better to select"
+msgstr "因此当你关注新增内容时，最好选择"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "when you're interested in new content."
+msgstr "。"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "When content is merely moved in a list, it will also trigger an"
+msgstr "当内容仅在列表中移动时，也会触发"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "consider enabling"
+msgstr "建议启用"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Only trigger when unique lines appear"
+msgstr "仅当出现新的唯一行时触发"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Good for websites that just move the content around, and you want to know when NEW content is added, compares new "
+"lines against all history for this watch."
+msgstr "适合仅移动内容的网站，想知道新增内容时使用，会将新行与该监控项的全部历史进行比对。"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with"
+msgstr "有助于减少因行顺序变化导致的变更，可结合"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "check unique lines"
+msgstr "检查唯一行"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "below."
+msgstr "一起使用。"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Remove any whitespace before and after each line of text"
+msgstr "移除每行文本前后的空白"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Loading..."
+msgstr "加载中..."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "The Visual Selector tool lets you select the"
+msgstr "可视化选择器工具可让你选择"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "text"
+msgstr "文本"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"elements that will be used for the change detection. It automatically fills-in the filters in the "
+"\"CSS/JSONPath/JQ/XPath Filters\" box of the"
+msgstr "用于变更检测的元素，并会自动填入“CSS/JSONPath/JQ/XPath 过滤器”选项卡中的过滤器"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "tab. Use"
+msgstr "选项卡中。使用"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Shift+Click"
+msgstr "Shift+点击"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "to select multiple items."
+msgstr "以选择多个项。"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Selection Mode:"
+msgstr "选择模式："
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Select by element"
+msgstr "按元素选择"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Draw area"
+msgstr "框选区域"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Clear selection"
+msgstr "清除选择"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "One moment, fetching screenshot and element information.."
+msgstr "稍等，正在获取截图和元素信息.."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Currently:"
+msgstr "当前："
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Sorry, this functionality only works with fetchers that support Javascript and screenshots (such as playwright etc)."
+msgstr "抱歉，此功能仅适用于支持 JavaScript 和截图的抓取器（如 Playwright 等）。"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "to one that supports Javascript and screenshots."
+msgstr "为支持 JavaScript 和截图的方式。"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Check count"
+msgstr "检查次数"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Consecutive filter failures"
+msgstr "连续过滤失败次数"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "History length"
+msgstr "历史长度"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Last fetch duration"
+msgstr "上次抓取耗时"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Notification alert count"
+msgstr "通知告警次数"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Server type reply"
+msgstr "服务器类型响应"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Download latest HTML snapshot"
+msgstr "下载最新的 HTML 快照"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Delete Watch?"
+msgstr "删除监控项？"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Are you sure you want to delete the watch for:"
+msgstr "确定要删除以下监控项吗："
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "This action cannot be undone."
+msgstr "此操作不可撤销。"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Clear History?"
+msgstr "清除历史记录？"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Are you sure you want to clear all history for:"
+msgstr "确定要清除以下监控项的全部历史记录吗："
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "This will remove all snapshots and previous versions. This action cannot be undone."
+msgstr "这将删除所有快照和历史版本。此操作不可撤销。"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Clear History"
+msgstr "清除历史记录"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Clone & Edit"
+msgstr "克隆并编辑"
+
+#: changedetectionio/blueprint/ui/templates/preview.html
+msgid "Select timestamp"
+msgstr "选择时间戳"
+
+#: changedetectionio/blueprint/ui/templates/preview.html
+msgid "Go"
+msgstr "前往"
+
+#: changedetectionio/blueprint/ui/templates/preview.html
+msgid "Current erroring screenshot from most recent request"
+msgstr "最近请求的错误截图"
+
+#: changedetectionio/blueprint/ui/templates/preview.html
+msgid "Screenshot requires a Content Fetcher ( Sockpuppetbrowser, selenium, etc ) that supports screenshots."
+msgstr "截图需要支持截图的内容抓取器（如 Sockpuppetbrowser、Selenium 等）。"
+
+#: changedetectionio/blueprint/ui/views.py
 #, python-brace-format
 msgid "Warning, URL {} already exists"
 msgstr "警告：URL {} 已存在"
 
-#: changedetectionio/blueprint/ui/views.py:32
+#: changedetectionio/blueprint/ui/views.py
 msgid "Watch added in Paused state, saving will unpause."
 msgstr "监控项已以暂停状态添加，保存后将取消暂停。"
 
-#: changedetectionio/blueprint/ui/views.py:37
+#: changedetectionio/blueprint/ui/views.py
 msgid "Watch added."
 msgstr "监控项已添加。"
 
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html:12
-msgid ""
-"This will remove version history (snapshots) for ALL watches, but keep your "
-"list of URLs!"
-msgstr "这将删除所有监控项的版本历史（快照），但会保留 URL 列表！"
-
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html:13
-msgid "You may like to use the"
-msgstr "你可能需要先使用"
-
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html:13
-msgid "BACKUP"
-msgstr "备份"
-
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html:13
-msgid "link first."
-msgstr "链接。"
-
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html:17
-msgid "Confirmation text"
-msgstr "确认文本"
-
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html:27
-msgid "Type in the word"
-msgstr "请输入单词"
-
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html:27
-msgid "clear"
-msgstr "clear"
-
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html:27
-msgid "to confirm that you understand."
-msgstr "以确认你已理解。"
-
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html:33
-msgid "Clear History!"
-msgstr "清除历史记录！"
-
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html:39
-#: changedetectionio/templates/base.html:273
-#: changedetectionio/templates/base.html:293
-msgid "Cancel"
-msgstr "取消"
-
-#: changedetectionio/blueprint/ui/templates/diff-offscreen-options.html:3
-msgid "Share diff as image"
-msgstr "将差异分享为图片"
-
-#: changedetectionio/blueprint/ui/templates/diff-offscreen-options.html:3
-msgid "Share as Image"
-msgstr "分享为图片"
-
-#: changedetectionio/blueprint/ui/templates/diff-offscreen-options.html:6
-msgid "Ignore any lines matching"
-msgstr "忽略匹配以下内容的行"
-
-#: changedetectionio/blueprint/ui/templates/diff-offscreen-options.html:9
-msgid "Ignore any lines matching excluding digits"
-msgstr "忽略匹配以下内容的行（排除数字）"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:28
-msgid "From"
-msgstr "从"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:38
-msgid "To"
-msgstr "到"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:53
-msgid "Words"
-msgstr "单词"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:57
-msgid "Lines"
-msgstr "行"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:61
-msgid "Ignore Whitespace"
-msgstr "忽略空白"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:65
-msgid "Same/non-changed"
-msgstr "未变化"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:69
-msgid "Removed"
-msgstr "已删除"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:73
-#: changedetectionio/blueprint/ui/templates/edit.html:327
-msgid "Added"
-msgstr "新增"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:77
-#: changedetectionio/blueprint/ui/templates/edit.html:327
-msgid "Replaced"
-msgstr "替换"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:82
-#: changedetectionio/blueprint/ui/templates/preview.html:36
-msgid "Keyboard:"
-msgstr "快捷键："
-
-#: changedetectionio/blueprint/ui/templates/diff.html:83
-#: changedetectionio/blueprint/ui/templates/preview.html:37
-msgid "Previous"
-msgstr "上一项"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:84
-#: changedetectionio/blueprint/ui/templates/preview.html:38
-msgid "Next"
-msgstr "下一项"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:91
-msgid "Jump to next difference"
-msgstr "跳转到下一个差异"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:91
-msgid "Jump"
-msgstr "跳转"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:97
-#: changedetectionio/blueprint/ui/templates/preview.html:45
-msgid "Error Text"
-msgstr "错误文本"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:98
-#: changedetectionio/blueprint/ui/templates/preview.html:47
-msgid "Error Screenshot"
-msgstr "错误截图"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:99
-#: changedetectionio/blueprint/ui/templates/preview.html:50
-msgid "Text"
-msgstr "文本"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:100
-#: changedetectionio/blueprint/ui/templates/preview.html:51
-msgid "Current screenshot"
-msgstr "当前截图"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:101
-msgid "Extract Data"
-msgstr "提取数据"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:107
-msgid "seconds ago."
-msgstr "秒前。"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:114
-#: changedetectionio/blueprint/ui/templates/preview.html:59
-#: changedetectionio/blueprint/ui/templates/preview.html:66
-msgid "seconds ago"
-msgstr "秒前"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:115
-msgid "Current error-ing screenshot from most recent request"
-msgstr "最近请求的错误截图"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:127
-msgid "Pro-tip: You can enable"
-msgstr "提示：你可以启用"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:127
-msgid "\"share access when password is enabled\""
-msgstr "“启用密码时允许共享访问”"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:127
-msgid "from settings."
-msgstr "（设置中）"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:133
-msgid "Goto single snapshot"
-msgstr "查看单个快照"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:138
-msgid "Highlight text to share or add to ignore lists."
-msgstr "选中文本以分享或加入忽略列表。"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:144
-#: changedetectionio/blueprint/ui/templates/preview.html:80
-msgid ""
-"For now, Differences are performed on text, not graphically, only the latest "
-"screenshot is available."
-msgstr "目前差异仅按文本比较，非图形对比，只提供最新截图。"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:149
-#: changedetectionio/blueprint/ui/templates/preview.html:86
-msgid "Current screenshot from most recent request"
-msgstr "最近请求的当前截图"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:151
-#: changedetectionio/blueprint/ui/templates/preview.html:88
-msgid "No screenshot available just yet! Try rechecking the page."
-msgstr "目前还没有截图！请尝试重新检查页面。"
-
-#: changedetectionio/blueprint/ui/templates/diff.html:154
-msgid "Screenshot requires Playwright/WebDriver enabled"
-msgstr "截图需要启用 Playwright/WebDriver"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:48
-msgid "Request"
-msgstr "请求"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:52
-msgid "Browser Steps"
-msgstr "浏览器步骤"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:55
-msgid "Visual Filter Selector"
-msgstr "可视化过滤器选择器"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:57
-msgid "Conditions"
-msgstr "条件"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:60
-msgid "Stats"
-msgstr "统计"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:73
-#: changedetectionio/blueprint/ui/templates/edit.html:313
-msgid "Some sites use JavaScript to create the content, for this you should"
-msgstr "有些网站使用 JavaScript 生成内容，此时你应该"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:73
-#: changedetectionio/blueprint/ui/templates/edit.html:313
-msgid "use the Chrome/WebDriver Fetcher"
-msgstr "使用 Chrome/WebDriver 抓取器"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:74
-msgid "Variables are supported in the URL"
-msgstr "URL 支持变量"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:74
-#: changedetectionio/blueprint/ui/templates/edit.html:180
-#: changedetectionio/blueprint/ui/templates/edit.html:189
-msgid "help and examples here"
-msgstr "帮助与示例在此"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:78
-msgid "Organisational tag/group name used in the main listing page"
-msgstr "分组/标签名称"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:85
-msgid ""
-"Automatically uses the page title if found, you can also use your own title/"
-"description here"
-msgstr "若检测到页面标题将自动使用，你也可以在此自定义标题/描述"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:95
-msgid "The interval/amount of time between each check."
-msgstr "每次检查之间的时间间隔。"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:110
-msgid ""
-"Sends a notification when the filter can no longer be seen on the page, good "
-"for knowing when the page changed and your filter will not work anymore."
-msgstr "当页面上找不到该过滤器时发送通知，便于知晓页面已变化且过滤器不再适用。"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:123
-msgid ""
-"method (default) where your watched site doesn't need Javascript to render."
-msgstr "方式（默认），适用于无需 JavaScript 渲染的网站。"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:124
-msgid ""
-"method requires a network connection to a running WebDriver+Chrome server, set "
-"by the ENV var 'WEBDRIVER_URL'."
-msgstr ""
-"方式需要连接正在运行的 WebDriver+Chrome 服务器，通过环境变量 'WEBDRIVER_URL' 设"
-"置。"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:130
-msgid "Check/Scan all"
-msgstr "检查/扫描全部"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:133
-msgid "Choose a proxy for this watch"
-msgstr "为此监控项选择代理"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:147
-msgid "Using the current global default settings"
-msgstr "使用当前全局默认设置"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:152
-#: changedetectionio/blueprint/ui/templates/edit.html:165
-msgid "Show advanced options"
-msgstr "显示高级选项"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:157
-msgid ""
-"Run this code before performing change detection, handy for filling in fields "
-"and other actions"
-msgstr "在执行变更检测前运行此代码，便于填写表单等操作"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:158
-msgid "More help and examples here"
-msgstr "更多帮助与示例请见此处"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:180
-msgid "Variables are supported in the request body"
-msgstr "请求正文支持变量"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:189
-msgid "Variables are supported in the request header values"
-msgstr "请求头的值支持变量"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:192
-msgid "Alert! Extra headers file found and will be added to this watch!"
-msgstr "警告！发现额外的请求头文件，将添加到此监控项！"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:194
-msgid "Headers can be also read from a file in your data-directory"
-msgstr "请求头也可从数据目录中的文件读取"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:194
-msgid "Read more here"
-msgstr "在此了解更多"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:197
-msgid "Not supported by Selenium browser"
-msgstr "Selenium 浏览器不支持"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:221
-msgid "Turn on text finder"
-msgstr "开启文本查找器"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:224
-msgid "Please wait, first browser step can take a little time to load.."
-msgstr "请稍候，首个浏览器步骤可能需要一些时间加载.."
-
-#: changedetectionio/blueprint/ui/templates/edit.html:231
-msgid "Click here to Start"
-msgstr "点击此处开始"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:233
-msgid "Please allow 10-15 seconds for the browser to connect."
-msgstr "请等待 10-15 秒让浏览器连接。"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:242
-msgid "Press \"Play\" to start."
-msgstr "点击“播放”开始。"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:249
-#: changedetectionio/blueprint/ui/templates/edit.html:419
-msgid "Visual Selector data is not ready, watch needs to be checked atleast once."
-msgstr "可视化选择器数据尚未就绪，监控项至少需要检查一次。"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:253
-msgid ""
-"Sorry, this functionality only works with fetchers that support interactive "
-"Javascript (so far only Playwright based fetchers)"
-msgstr "抱歉，此功能仅适用于支持交互式 JavaScript 的抓取器（目前仅 Playwright）。"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:254
-#: changedetectionio/blueprint/ui/templates/edit.html:424
-msgid "You need to"
-msgstr "你需要"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:254
-#: changedetectionio/blueprint/ui/templates/edit.html:424
-msgid "Set the fetch method"
-msgstr "设置抓取方式"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:254
-msgid "to one that supports interactive Javascript."
-msgstr "为支持交互式 JavaScript 的方式。"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:297
-msgid ""
-"Use the verify (✓) button to test if a condition passes against the current "
-"snapshot."
-msgstr "使用验证（✓）按钮测试条件是否符合当前快照。"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:298
-msgid "Read a quick tutorial about"
-msgstr "阅读快速教程"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:298
-msgid "using conditional web page changes here"
-msgstr "在此了解如何使用条件式网页变更"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:303
-msgid "Activate preview"
-msgstr "启用预览"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:307
-msgid "Pro-tips:"
-msgstr "小贴士："
-
-#: changedetectionio/blueprint/ui/templates/edit.html:310
-msgid "Use the preview page to see your filters and triggers highlighted."
-msgstr "在预览页查看高亮的过滤器和触发器。"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:322
-msgid "Limit trigger/ignore/block/extract to;"
-msgstr "将触发/忽略/阻止/提取限定为;"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:326
-msgid ""
-"Note: Depending on the length and similarity of the text on each line, the "
-"algorithm may consider an"
-msgstr "注意：根据每行文本长度与相似度，算法可能把"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:326
-#: changedetectionio/blueprint/ui/templates/edit.html:328
-msgid "addition"
-msgstr "新增"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:326
-msgid "instead of"
-msgstr "视为"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:326
-msgid "replacement"
-msgstr "替换"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:326
-msgid "for example."
-msgstr "例如。"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:327
-msgid "So it's always better to select"
-msgstr "因此当你关注新增内容时，最好选择"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:327
-msgid "when you're interested in new content."
-msgstr "。"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:328
-msgid "When content is merely moved in a list, it will also trigger an"
-msgstr "当内容仅在列表中移动时，也会触发"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:328
-msgid "consider enabling"
-msgstr "建议启用"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:328
-msgid "Only trigger when unique lines appear"
-msgstr "仅当出现新的唯一行时触发"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:332
-msgid ""
-"Good for websites that just move the content around, and you want to know when "
-"NEW content is added, compares new lines against all history for this watch."
-msgstr ""
-"适合仅移动内容的网站，想知道新增内容时使用，会将新行与该监控项的全部历史进行比"
-"对。"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:340
-msgid ""
-"Helps reduce changes detected caused by sites shuffling lines around, combine "
-"with"
-msgstr "有助于减少因行顺序变化导致的变更，可结合"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:340
-msgid "check unique lines"
-msgstr "检查唯一行"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:340
-msgid "below."
-msgstr "一起使用。"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:344
-msgid "Remove any whitespace before and after each line of text"
-msgstr "移除每行文本前后的空白"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:358
-#: changedetectionio/blueprint/ui/templates/edit.html:361
-#: changedetectionio/blueprint/ui/templates/edit.html:417
-msgid "Loading..."
-msgstr "加载中..."
-
-#: changedetectionio/blueprint/ui/templates/edit.html:386
-msgid "The Visual Selector tool lets you select the"
-msgstr "可视化选择器工具可让你选择"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:386
-msgid "text"
-msgstr "文本"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:386
-msgid ""
-"elements that will be used for the change detection. It automatically fills-in "
-"the filters in the \"CSS/JSONPath/JQ/XPath Filters\" box of the"
-msgstr ""
-"用于变更检测的元素，并会自动填入“CSS/JSONPath/JQ/XPath 过滤器”选项卡中的过滤器"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:386
-msgid "tab. Use"
-msgstr "选项卡中。使用"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:386
-msgid "Shift+Click"
-msgstr "Shift+点击"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:386
-msgid "to select multiple items."
-msgstr "以选择多个项。"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:391
-msgid "Selection Mode:"
-msgstr "选择模式："
-
-#: changedetectionio/blueprint/ui/templates/edit.html:394
-msgid "Select by element"
-msgstr "按元素选择"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:398
-msgid "Draw area"
-msgstr "框选区域"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:406
-msgid "Clear selection"
-msgstr "清除选择"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:408
-msgid "One moment, fetching screenshot and element information.."
-msgstr "稍等，正在获取截图和元素信息.."
-
-#: changedetectionio/blueprint/ui/templates/edit.html:417
-msgid "Currently:"
-msgstr "当前："
-
-#: changedetectionio/blueprint/ui/templates/edit.html:423
-msgid ""
-"Sorry, this functionality only works with fetchers that support Javascript and "
-"screenshots (such as playwright etc)."
-msgstr "抱歉，此功能仅适用于支持 JavaScript 和截图的抓取器（如 Playwright 等）。"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:424
-msgid "to one that supports Javascript and screenshots."
-msgstr "为支持 JavaScript 和截图的方式。"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:441
-msgid "Check count"
-msgstr "检查次数"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:445
-msgid "Consecutive filter failures"
-msgstr "连续过滤失败次数"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:449
-msgid "History length"
-msgstr "历史长度"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:453
-msgid "Last fetch duration"
-msgstr "上次抓取耗时"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:457
-msgid "Notification alert count"
-msgstr "通知告警次数"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:461
-msgid "Server type reply"
-msgstr "服务器类型响应"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:475
-msgid "Download latest HTML snapshot"
-msgstr "下载最新的 HTML 快照"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:488
-msgid "Delete Watch?"
-msgstr "删除监控项？"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:489
-msgid "Are you sure you want to delete the watch for:"
-msgstr "确定要删除以下监控项吗："
-
-#: changedetectionio/blueprint/ui/templates/edit.html:489
-msgid "This action cannot be undone."
-msgstr "此操作不可撤销。"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:495
-msgid "Clear History?"
-msgstr "清除历史记录？"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:496
-msgid "Are you sure you want to clear all history for:"
-msgstr "确定要清除以下监控项的全部历史记录吗："
-
-#: changedetectionio/blueprint/ui/templates/edit.html:496
-msgid ""
-"This will remove all snapshots and previous versions. This action cannot be "
-"undone."
-msgstr "这将删除所有快照和历史版本。此操作不可撤销。"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:497
-msgid "Clear History"
-msgstr "清除历史记录"
-
-#: changedetectionio/blueprint/ui/templates/edit.html:499
-msgid "Clone & Edit"
-msgstr "克隆并编辑"
-
-#: changedetectionio/blueprint/ui/templates/preview.html:22
-msgid "Select timestamp"
-msgstr "选择时间戳"
-
-#: changedetectionio/blueprint/ui/templates/preview.html:31
-msgid "Go"
-msgstr "前往"
-
-#: changedetectionio/blueprint/ui/templates/preview.html:69
-msgid "Current erroring screenshot from most recent request"
-msgstr "最近请求的错误截图"
-
-#: changedetectionio/blueprint/ui/templates/preview.html:91
-msgid ""
-"Screenshot requires a Content Fetcher ( Sockpuppetbrowser, selenium, etc ) that "
-"supports screenshots."
-msgstr "截图需要支持截图的内容抓取器（如 Sockpuppetbrowser、Selenium 等）。"
-
-#: changedetectionio/blueprint/watchlist/__init__.py:79
+#: changedetectionio/blueprint/watchlist/__init__.py
 #, python-brace-format
 msgid "displaying <b>{start} - {end}</b> {record_name} in total <b>{total}</b>"
 msgstr "显示第 <b>{start} - {end}</b> 条{record_name}，共 <b>{total}</b> 条"
 
-#: changedetectionio/blueprint/watchlist/__init__.py:80
+#: changedetectionio/blueprint/watchlist/__init__.py
 msgid "records"
 msgstr "记录"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:58
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Add a new web page change detection watch"
 msgstr "新增网页变更监控"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:61
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Watch this URL!"
 msgstr "监控此 URL！"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:62
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Edit first then Watch"
 msgstr "先编辑，再监控"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:72
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Create a shareable link"
 msgstr "创建可分享链接"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:72
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Tip: You can also add 'shared' watches."
 msgstr "提示：你也可以添加“共享”的监控项。"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:72
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "More info"
 msgstr "更多信息"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:80
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Pause"
 msgstr "暂停"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:81
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "UnPause"
 msgstr "取消暂停"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:82
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Mute"
 msgstr "静音"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:83
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "UnMute"
 msgstr "取消静音"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:85
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Tag"
 msgstr "标签"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:86
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Mark viewed"
 msgstr "标记为已读"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:87
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Use default notification"
 msgstr "使用默认通知"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:88
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Clear errors"
 msgstr "清除错误"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:92
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Clear Histories"
 msgstr "清除历史记录"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:93
-msgid ""
-"<p>Are you sure you want to clear history for the selected items?</p><p>This "
-"action cannot be undone.</p>"
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "<p>Are you sure you want to clear history for the selected items?</p><p>This action cannot be undone.</p>"
 msgstr "<p>确定要清除所选项的历史记录吗？</p><p>此操作不可撤销。</p>"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:94
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "OK"
 msgstr "确定"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:94
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Clear/reset history"
 msgstr "清除/重置历史记录"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:98
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Delete Watches?"
 msgstr "删除监控项？"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:99
-msgid ""
-"<p>Are you sure you want to delete the selected watches?</strong></p><p>This "
-"action cannot be undone.</p>"
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "<p>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>"
 msgstr "<p>确定要删除所选监控项吗？</p><p>此操作不可撤销。</p>"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:105
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Queued size"
 msgstr "队列大小"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:110
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Searching"
 msgstr "搜索中"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:112
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "All"
 msgstr "全部"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:150
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Website"
 msgstr "网站"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:152
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Restock & Price"
 msgstr "补货与价格"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:154
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:155
-msgid "Last"
-msgstr "最近"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:154
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Checked"
 msgstr "检查"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:155
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Last"
+msgstr "最近"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changed"
 msgstr "变更"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:162
-msgid ""
-"No web page change detection watches configured, please add a URL in the box "
-"above, or"
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "No web page change detection watches configured, please add a URL in the box above, or"
 msgstr "尚未配置网站监控项，请在上方输入 URL 或"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:162
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "import a list"
 msgstr "导入列表"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:245
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Detecting restock and price"
 msgstr "检测补货与价格"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:247
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "In stock"
 msgstr "有库存"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:247
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Not in stock"
 msgstr "无库存"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:253
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Price"
 msgstr "价格"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:258
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No information"
 msgstr "暂无信息"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:266
-#: changedetectionio/templates/base.html:247
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
 msgid "Checking now"
 msgstr "正在检查"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:279
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Queued"
 msgstr "队列中"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:282
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "History"
 msgstr "历史"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:283
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Preview"
 msgstr "预览"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:292
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "With errors"
 msgstr "有错误"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:295
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Mark all viewed"
 msgstr "全部标记为已读"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:299
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
 msgid "Mark all viewed in '%(title)s'"
 msgstr "将“%(title)s”中的全部标记为已读"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:303
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Unread"
 msgstr "未读"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:306
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Recheck all"
 msgstr "重新检查全部"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html:306
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
 msgid "in '%(title)s'"
 msgstr "（“%(title)s”中）"
 
-#: changedetectionio/processors/extract.py:131
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/flask_app.py
+#: changedetectionio/realtime/socket_server.py
+msgid "Not yet"
+msgstr "尚未"
+
+#: changedetectionio/flask_app.py
+msgid "Already logged in"
+msgstr "已登录"
+
+#: changedetectionio/flask_app.py
+msgid "You must be logged in, please log in."
+msgstr "需要登录，请先登录。"
+
+#: changedetectionio/flask_app.py
+msgid "Incorrect password"
+msgstr "密码错误"
+
+#: changedetectionio/forms.py
+msgid "At least one time interval (weeks, days, hours, minutes, or seconds) must be specified."
+msgstr "必须指定至少一个时间间隔（周、天、小时、分钟或秒）。"
+
+#: changedetectionio/forms.py
+msgid "At least one time interval (weeks, days, hours, minutes, or seconds) must be specified when not using global settings."
+msgstr "未使用全局设置时，必须指定至少一个时间间隔（周、天、小时、分钟或秒）。"
+
+#: changedetectionio/forms.py
+msgid "Invalid time format. Use HH:MM."
+msgstr "时间格式无效，请使用 HH:MM。"
+
+#: changedetectionio/forms.py
+msgid "Not a valid timezone name"
+msgstr "不是有效的时区名称"
+
+#: changedetectionio/forms.py
+msgid "not set"
+msgstr "未设置"
+
+#: changedetectionio/forms.py
+msgid "Start At"
+msgstr "开始时间"
+
+#: changedetectionio/forms.py
+msgid "Run duration"
+msgstr "运行时长"
+
+#: changedetectionio/forms.py
+msgid "Use time scheduler"
+msgstr "使用时间调度"
+
+#: changedetectionio/forms.py
+msgid "Optional timezone to run in"
+msgstr "运行时使用的可选时区"
+
+#: changedetectionio/forms.py
+msgid "Monday"
+msgstr "周一"
+
+#: changedetectionio/forms.py
+msgid "Tuesday"
+msgstr "周二"
+
+#: changedetectionio/forms.py
+msgid "Wednesday"
+msgstr "周三"
+
+#: changedetectionio/forms.py
+msgid "Thursday"
+msgstr "周四"
+
+#: changedetectionio/forms.py
+msgid "Friday"
+msgstr "周五"
+
+#: changedetectionio/forms.py
+msgid "Saturday"
+msgstr "周六"
+
+#: changedetectionio/forms.py
+msgid "Sunday"
+msgstr "周日"
+
+#: changedetectionio/forms.py
+msgid "Weeks"
+msgstr "周"
+
+#: changedetectionio/forms.py
+msgid "Should contain zero or more seconds"
+msgstr "应为 0 或更多秒"
+
+#: changedetectionio/forms.py
+msgid "Days"
+msgstr "天"
+
+#: changedetectionio/forms.py
+msgid "Hours"
+msgstr "小时"
+
+#: changedetectionio/forms.py
+msgid "Minutes"
+msgstr "分钟"
+
+#: changedetectionio/forms.py
+msgid "Seconds"
+msgstr "秒"
+
+#: changedetectionio/forms.py
+msgid "Notification Body and Title is required when a Notification URL is used"
+msgstr "使用通知 URL 时，必须填写通知正文和标题"
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "'%s' is not a valid AppRise URL."
+msgstr "“%s”不是有效的 AppRise URL。"
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "RegEx '%s' is not a valid regular expression."
+msgstr "正则表达式“%s”无效。"
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "'%s' is not a valid XPath expression. (%s)"
+msgstr "“%s”不是有效的 XPath 表达式。（%s）"
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "'%s' is not a valid JSONPath expression. (%s)"
+msgstr "“%s”不是有效的 JSONPath 表达式。（%s）"
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "'%s' is not a valid jq expression. (%s)"
+msgstr "“%s”不是有效的 jq 表达式。（%s）"
+
+#: changedetectionio/forms.py
+msgid "Empty value not allowed."
+msgstr "不允许为空。"
+
+#: changedetectionio/forms.py
+msgid "Invalid value."
+msgstr "值无效。"
+
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/forms.py
+msgid "URL"
+msgstr "URL"
+
+#: changedetectionio/forms.py
+msgid "Group tag"
+msgstr "分组 / 标签"
+
+#: changedetectionio/forms.py
+msgid "Watch"
+msgstr "监控项"
+
+#: changedetectionio/forms.py
+msgid "Processor"
+msgstr "处理器"
+
+#: changedetectionio/forms.py
+msgid "Edit > Watch"
+msgstr "编辑 > 监控项"
+
+#: changedetectionio/forms.py
+msgid "Fetch Method"
+msgstr "抓取方式"
+
+#: changedetectionio/forms.py
+msgid "Notification Body"
+msgstr "通知正文"
+
+#: changedetectionio/forms.py
+msgid "Notification format"
+msgstr "通知格式"
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
+msgstr "通知标题"
+
+#: changedetectionio/forms.py
+msgid "Notification URL List"
+msgstr "通知 URL 列表"
+
+#: changedetectionio/forms.py
+msgid "Processor - What do you want to achieve?"
+msgstr "处理器 - 您想实现什么？"
+
+#: changedetectionio/forms.py
+msgid "Default timezone for watch check scheduler"
+msgstr "监控检查调度器的默认时区"
+
+#: changedetectionio/forms.py
+msgid "Wait seconds before extracting text"
+msgstr "提取文本前等待秒数"
+
+#: changedetectionio/forms.py
+msgid "Should contain one or more seconds"
+msgstr "应为 1 秒或以上"
+
+#: changedetectionio/forms.py
+msgid "URLs"
+msgstr "URL 列表"
+
+#: changedetectionio/forms.py
+msgid "Upload .xlsx file"
+msgstr "上传 .xlsx 文件"
+
+#: changedetectionio/forms.py
+msgid "Must be .xlsx file!"
+msgstr "必须是 .xlsx 文件！"
+
+#: changedetectionio/forms.py
+msgid "File mapping"
+msgstr "文件映射"
+
+#: changedetectionio/forms.py
+msgid "Operation"
+msgstr "操作"
+
+#: changedetectionio/forms.py
+msgid "Selector"
+msgstr "选择器"
+
+#: changedetectionio/forms.py
+msgid "value"
+msgstr "值"
+
+#: changedetectionio/forms.py
+msgid "Time Between Check"
+msgstr "检查间隔"
+
+#: changedetectionio/forms.py
+msgid "Use global settings for time between check and scheduler."
+msgstr "检查间隔与调度时间使用全局设置。"
+
+#: changedetectionio/forms.py
+msgid "CSS/JSONPath/JQ/XPath Filters"
+msgstr "CSS/JSONPath/JQ/XPath 过滤器"
+
+#: changedetectionio/forms.py
+msgid "Remove elements"
+msgstr "移除元素"
+
+#: changedetectionio/forms.py
+msgid "Extract text"
+msgstr "提取文本"
+
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/forms.py
+msgid "Title"
+msgstr "标题"
+
+#: changedetectionio/forms.py
+msgid "Ignore lines containing"
+msgstr "忽略包含以下内容的行"
+
+#: changedetectionio/forms.py
+msgid "Request body"
+msgstr "请求正文"
+
+#: changedetectionio/forms.py
+msgid "Request method"
+msgstr "请求方法"
+
+#: changedetectionio/forms.py
+msgid "Ignore status codes (process non-2xx status codes as normal)"
+msgstr "忽略状态代码（正常处理非 2xx 状态码）"
+
+#: changedetectionio/forms.py
+msgid "Only trigger when unique lines appear in all history"
+msgstr "仅当全历史中出现新的唯一行时触发"
+
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/forms.py
+msgid "Remove duplicate lines of text"
+msgstr "删除重复的文本行"
+
+#: changedetectionio/forms.py
+msgid "Sort text alphabetically"
+msgstr "按字母顺序排序文本"
+
+#: changedetectionio/forms.py
+msgid "Strip ignored lines"
+msgstr "去除忽略的行"
+
+#: changedetectionio/forms.py
+msgid "Trim whitespace before and after text"
+msgstr "去除文本前后空白"
+
+#: changedetectionio/forms.py
+msgid "Added lines"
+msgstr "新增行"
+
+#: changedetectionio/forms.py
+msgid "Replaced/changed lines"
+msgstr "替换/更改的行"
+
+#: changedetectionio/forms.py
+msgid "Removed lines"
+msgstr "删除的行"
+
+#: changedetectionio/forms.py
+msgid "Keyword triggers - Trigger/wait for text"
+msgstr "关键字触发器 - 触发/等待文本"
+
+#: changedetectionio/forms.py
+msgid "Block change-detection while text matches"
+msgstr "文本匹配时阻止变更检测"
+
+#: changedetectionio/forms.py
+msgid "Execute JavaScript before change detection"
+msgstr "在变更检测前执行 JavaScript"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/forms.py
+msgid "Save"
+msgstr "保存"
+
+#: changedetectionio/forms.py
+msgid "Proxy"
+msgstr "代理"
+
+#: changedetectionio/forms.py
+msgid "Send a notification when the filter can no longer be found on the page"
+msgstr "当页面上找不到该过滤器时发送通知"
+
+#: changedetectionio/forms.py
+msgid "Muted"
+msgstr "静音"
+
+#: changedetectionio/forms.py
+msgid "On"
+msgstr "开启"
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/forms.py
+msgid "Notifications"
+msgstr "通知"
+
+#: changedetectionio/forms.py
+msgid "Attach screenshot to notification (where possible)"
+msgstr "（如可用）在通知中附加截图"
+
+#: changedetectionio/forms.py
+msgid "Match"
+msgstr "匹配"
+
+#: changedetectionio/forms.py
+msgid "Match all of the following"
+msgstr "匹配以下全部"
+
+#: changedetectionio/forms.py
+msgid "Match any of the following"
+msgstr "匹配以下任意"
+
+#: changedetectionio/forms.py
+msgid "Use page <title> in list"
+msgstr "列表中使用页面 <title>"
+
+#: changedetectionio/forms.py
+msgid "Body must be empty when Request Method is set to GET"
+msgstr "当请求方法为 GET 时，请求正文必须为空"
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr "模板语法配置无效：%(error)s"
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr "模板语法无效：%(error)s"
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
+msgstr "“%(header)s”请求头中的模板语法无效：%(error)s"
+
+#: changedetectionio/forms.py
+msgid "Name"
+msgstr "名称"
+
+#: changedetectionio/forms.py
+msgid "Proxy URL"
+msgstr "代理 URL"
+
+#: changedetectionio/forms.py
+msgid "Proxy URLs must start with http://, https:// or socks5://"
+msgstr "代理 URL 必须以 http://、https:// 或 socks5:// 开头"
+
+#: changedetectionio/forms.py
+msgid "Browser connection URL"
+msgstr "浏览器连接 URL"
+
+#: changedetectionio/forms.py
+msgid "Browser URLs must start with wss:// or ws://"
+msgstr "浏览器 URL 必须以 wss:// 或 ws:// 开头"
+
+#: changedetectionio/forms.py
+msgid "Plaintext requests"
+msgstr "纯文本请求"
+
+#: changedetectionio/forms.py
+msgid "Chrome requests"
+msgstr "Chrome 请求"
+
+#: changedetectionio/forms.py
+msgid "Default proxy"
+msgstr "默认代理"
+
+#: changedetectionio/forms.py
+msgid "Random jitter seconds ± check"
+msgstr "检查间隔随机抖动秒数 ±"
+
+#: changedetectionio/forms.py
+msgid "Number of fetch workers"
+msgstr "抓取工作线程数"
+
+#: changedetectionio/forms.py
+msgid "Should be between 1 and 50"
+msgstr "应介于 1 到 50 之间"
+
+#: changedetectionio/forms.py
+msgid "Requests timeout in seconds"
+msgstr "请求超时（秒）"
+
+#: changedetectionio/forms.py
+msgid "Should be between 1 and 999"
+msgstr "应介于 1 到 999 之间"
+
+#: changedetectionio/forms.py
+msgid "Default User-Agent overrides"
+msgstr "默认 User-Agent 覆盖"
+
+#: changedetectionio/forms.py
+msgid "Both a name, and a Proxy URL is required."
+msgstr "名称和代理 URL 都是必填项。"
+
+#: changedetectionio/forms.py
+msgid "Open 'History' page in a new tab"
+msgstr "在新标签页中打开“历史记录”"
+
+#: changedetectionio/forms.py
+msgid "Realtime UI Updates Enabled"
+msgstr "启用实时界面更新"
+
+#: changedetectionio/forms.py
+msgid "Favicons Enabled"
+msgstr "启用站点图标"
+
+#: changedetectionio/forms.py
+msgid "Use page <title> in watch overview list"
+msgstr "在监控概览列表中使用页面 <title>"
+
+#: changedetectionio/forms.py
+msgid "API access token security check enabled"
+msgstr "已启用 API 访问令牌安全检查"
+
+#: changedetectionio/forms.py
+msgid "Notification base URL override"
+msgstr "通知基础 URL 覆盖"
+
+#: changedetectionio/forms.py
+msgid "Treat empty pages as a change?"
+msgstr "将空页面视为变更？"
+
+#: changedetectionio/forms.py
+msgid "Ignore Text"
+msgstr "忽略文本"
+
+#: changedetectionio/forms.py
+msgid "Ignore whitespace"
+msgstr "忽略空白"
+
+#: changedetectionio/forms.py changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Must be between 0 and 100"
+msgstr "必须介于 0 到 100 之间"
+
+#: changedetectionio/forms.py changedetectionio/templates/login.html
+msgid "Password"
+msgstr "密码"
+
+#: changedetectionio/forms.py
+msgid "Pager size"
+msgstr "分页大小"
+
+#: changedetectionio/forms.py
+msgid "Should be atleast zero (disabled)"
+msgstr "应至少为 0（表示禁用）"
+
+#: changedetectionio/forms.py
+msgid "RSS Content format"
+msgstr "RSS 内容格式"
+
+#: changedetectionio/forms.py
+msgid "RSS <description> body built from"
+msgstr "RSS <description> 内容来源"
+
+#: changedetectionio/forms.py
+msgid "RSS \"System default\" template override"
+msgstr "RSS “系统默认”模板覆盖"
+
+#: changedetectionio/forms.py
+msgid "Remove password"
+msgstr "移除密码"
+
+#: changedetectionio/forms.py
+msgid "Render anchor tag content"
+msgstr "渲染 <a> 标签内容"
+
+#: changedetectionio/forms.py
+msgid "Allow anonymous access to watch history page when password is enabled"
+msgstr "启用密码时允许匿名访问监控历史页面"
+
+#: changedetectionio/forms.py
+msgid "Hide muted watches from RSS feed"
+msgstr "在 RSS 中隐藏静音的监控项"
+
+#: changedetectionio/forms.py
+msgid "Enable RSS reader mode "
+msgstr "启用 RSS 阅读模式"
+
+#: changedetectionio/forms.py
+msgid "Number of changes to show in watch RSS feed"
+msgstr "监控项 RSS 中显示的变更数量"
+
+#: changedetectionio/forms.py
+msgid "Should contain zero or more attempts"
+msgstr "应为 0 或更多次"
+
+#: changedetectionio/forms.py
+msgid "Number of times the filter can be missing before sending a notification"
+msgstr "过滤器缺失达到多少次后发送通知"
+
+#: changedetectionio/forms.py
+msgid "RegEx to extract"
+msgstr "用于提取的正则表达式"
+
+#: changedetectionio/forms.py
+msgid "Extract as CSV"
+msgstr "提取为 CSV"
+
+#: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."
 msgstr "扫描全部监控历史未找到匹配该正则的内容。"
 
-#: changedetectionio/processors/image_ssim_diff/difference.py:328
+#: changedetectionio/processors/image_ssim_diff/difference.py
 msgid "Not enough history to compare. Need at least 2 snapshots."
 msgstr "历史记录不足以比较，至少需要 2 个快照。"
 
-#: changedetectionio/processors/image_ssim_diff/difference.py:363
+#: changedetectionio/processors/image_ssim_diff/difference.py
 #, python-brace-format
 msgid "Failed to load screenshots: {}"
 msgstr "加载截图失败：{}"
 
-#: changedetectionio/processors/image_ssim_diff/difference.py:412
+#: changedetectionio/processors/image_ssim_diff/difference.py
 #, python-brace-format
 msgid "Failed to calculate diff: {}"
 msgstr "计算差异失败：{}"
 
-#: changedetectionio/processors/image_ssim_diff/forms.py:19
-#: changedetectionio/processors/image_ssim_diff/forms.py:69
+#: changedetectionio/processors/image_ssim_diff/forms.py
 msgid "Bounding box value is too long"
 msgstr "边界框值过长"
 
-#: changedetectionio/processors/image_ssim_diff/forms.py:23
+#: changedetectionio/processors/image_ssim_diff/forms.py
 msgid "Bounding box must be in format: x,y,width,height (integers only)"
 msgstr "边界框格式必须为：x,y,width,height（仅限整数）"
 
-#: changedetectionio/processors/image_ssim_diff/forms.py:29
+#: changedetectionio/processors/image_ssim_diff/forms.py
 msgid "Bounding box values must be non-negative"
 msgstr "边界框值必须为非负数"
 
-#: changedetectionio/processors/image_ssim_diff/forms.py:31
+#: changedetectionio/processors/image_ssim_diff/forms.py
 msgid "Bounding box values are too large"
 msgstr "边界框值过大"
 
-#: changedetectionio/processors/image_ssim_diff/forms.py:40
+#: changedetectionio/processors/image_ssim_diff/forms.py
 msgid "Selection mode must be either \"element\" or \"draw\""
 msgstr "选择模式必须为 “element” 或 “draw”"
 
-#: changedetectionio/processors/image_ssim_diff/forms.py:47
+#: changedetectionio/processors/image_ssim_diff/forms.py
 msgid "Minimum Change Percentage"
 msgstr "最小变化百分比"
 
-#: changedetectionio/processors/image_ssim_diff/forms.py:56
+#: changedetectionio/processors/image_ssim_diff/forms.py
 msgid "Pixel Difference Sensitivity"
 msgstr "像素差异灵敏度"
 
-#: changedetectionio/processors/image_ssim_diff/forms.py:58
+#: changedetectionio/processors/image_ssim_diff/forms.py
 msgid "Use global default"
 msgstr "使用全局默认"
 
-#: changedetectionio/processors/image_ssim_diff/forms.py:66
+#: changedetectionio/processors/image_ssim_diff/forms.py
 msgid "Bounding Box"
 msgstr "边界框"
 
-#: changedetectionio/processors/image_ssim_diff/forms.py:76
+#: changedetectionio/processors/image_ssim_diff/forms.py
 msgid "Selection Mode"
 msgstr "选择模式"
 
-#: changedetectionio/processors/image_ssim_diff/forms.py:79
+#: changedetectionio/processors/image_ssim_diff/forms.py
 msgid "Selection mode value is too long"
 msgstr "选择模式值过长"
 
-#: changedetectionio/processors/image_ssim_diff/forms.py:87
+#: changedetectionio/processors/image_ssim_diff/forms.py
 msgid "Screenshot Comparison"
 msgstr "截图对比"
 
-#: changedetectionio/processors/image_ssim_diff/preview.py:91
+#: changedetectionio/processors/image_ssim_diff/preview.py
 msgid "Preview unavailable - No snapshots captured yet"
 msgstr "无法预览 - 仍未捕获任何快照"
 
-#: changedetectionio/processors/image_ssim_diff/processor.py:21
+#: changedetectionio/processors/image_ssim_diff/processor.py
 msgid "Visual / Image screenshot change detection"
 msgstr "视觉/截图变更检测"
 
-#: changedetectionio/processors/image_ssim_diff/processor.py:22
+#: changedetectionio/processors/image_ssim_diff/processor.py
 msgid "Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM"
 msgstr "使用快速的 OpenCV 算法对比截图，比 SSIM 快 10-100 倍"
 
-#: changedetectionio/processors/restock_diff/forms.py:15
+#: changedetectionio/processors/restock_diff/forms.py
 msgid "Re-stock detection"
 msgstr "补货检测"
 
-#: changedetectionio/processors/restock_diff/forms.py:16
+#: changedetectionio/processors/restock_diff/forms.py
 msgid "In Stock only (Out Of Stock -> In Stock only)"
 msgstr "仅有库存（缺货 -> 有库存）"
 
-#: changedetectionio/processors/restock_diff/forms.py:17
+#: changedetectionio/processors/restock_diff/forms.py
 msgid "Any availability changes"
 msgstr "任何库存变化"
 
-#: changedetectionio/processors/restock_diff/forms.py:18
+#: changedetectionio/processors/restock_diff/forms.py
 msgid "Off, don't follow availability/restock"
 msgstr "关闭，不跟踪库存/补货"
 
-#: changedetectionio/processors/restock_diff/forms.py:21
+#: changedetectionio/processors/restock_diff/forms.py
 msgid "Below price to trigger notification"
 msgstr "低于该价格时触发通知"
 
-#: changedetectionio/processors/restock_diff/forms.py:22
-#: changedetectionio/processors/restock_diff/forms.py:24
+#: changedetectionio/processors/restock_diff/forms.py
 msgid "No limit"
 msgstr "不限"
 
-#: changedetectionio/processors/restock_diff/forms.py:23
+#: changedetectionio/processors/restock_diff/forms.py
 msgid "Above price to trigger notification"
 msgstr "高于该价格时触发通知"
 
-#: changedetectionio/processors/restock_diff/forms.py:25
+#: changedetectionio/processors/restock_diff/forms.py
 #, python-format
 msgid "Threshold in %% for price changes since the original price"
 msgstr "相对原始价格的变动阈值（百分比）"
 
-#: changedetectionio/processors/restock_diff/forms.py:28
+#: changedetectionio/processors/restock_diff/forms.py
 msgid "Should be between 0 and 100"
 msgstr "应介于 0 到 100 之间"
 
-#: changedetectionio/processors/restock_diff/forms.py:31
+#: changedetectionio/processors/restock_diff/forms.py
 msgid "Follow price changes"
 msgstr "跟踪价格变化"
 
-#: changedetectionio/processors/restock_diff/forms.py:37
+#: changedetectionio/processors/restock_diff/forms.py
 msgid "Restock & Price Detection"
 msgstr "补货与价格检测"
 
-#: changedetectionio/processors/restock_diff/processor.py:13
+#: changedetectionio/processors/restock_diff/processor.py
 msgid "Re-stock & Price detection for pages with a SINGLE product"
 msgstr "适用于单一商品页面的补货与价格检测"
 
-#: changedetectionio/processors/restock_diff/processor.py:14
+#: changedetectionio/processors/restock_diff/processor.py
 msgid "Detects if the product goes back to in-stock"
 msgstr "检测商品是否恢复有库存"
 
-#: changedetectionio/processors/text_json_diff/processor.py:22
+#: changedetectionio/processors/text_json_diff/processor.py
 msgid "Webpage Text/HTML, JSON and PDF changes"
 msgstr "网页文本/HTML、JSON 和 PDF 变更"
 
-#: changedetectionio/processors/text_json_diff/processor.py:23
+#: changedetectionio/processors/text_json_diff/processor.py
 msgid "Detects all text changes where possible"
 msgstr "尽可能检测所有文本变更"
 
-#: changedetectionio/templates/_common_fields.html:9
+#: changedetectionio/store.py
+#, python-brace-format
+msgid "Error fetching metadata for {}"
+msgstr "获取 {} 的元数据失败"
+
+#: changedetectionio/store.py
+msgid "Watch protocol is not permitted or invalid URL format"
+msgstr "监控协议不允许或 URL 格式无效"
+
+#: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
 msgstr "所有通知的正文 — 您可以使用"
 
-#: changedetectionio/templates/_common_fields.html:9
+#: changedetectionio/templates/_common_fields.html
 msgid "templating in the notification title, body and URL, and tokens from below."
 msgstr "可在通知标题、正文和 URL 中使用模板，并使用下方的令牌/占位符。"
 
-#: changedetectionio/templates/_common_fields.html:11
+#: changedetectionio/templates/_common_fields.html
 msgid "Show token/placeholders"
 msgstr "显示令牌/占位符"
 
-#: changedetectionio/templates/_common_fields.html:18
+#: changedetectionio/templates/_common_fields.html
 msgid "Token"
 msgstr "令牌"
 
-#: changedetectionio/templates/_common_fields.html:19
+#: changedetectionio/templates/_common_fields.html
 msgid "Description"
 msgstr "描述"
 
-#: changedetectionio/templates/_common_fields.html:25
+#: changedetectionio/templates/_common_fields.html
 msgid "The URL of the changedetection.io instance you are running."
 msgstr "你正在运行的 changedetection.io 实例的 URL。"
 
-#: changedetectionio/templates/_common_fields.html:29
+#: changedetectionio/templates/_common_fields.html
 msgid "The URL being watched."
 msgstr "被监控的 URL。"
 
-#: changedetectionio/templates/_common_fields.html:33
+#: changedetectionio/templates/_common_fields.html
 msgid "The UUID of the watch."
 msgstr "监视器的UUID。"
 
-#: changedetectionio/templates/_common_fields.html:37
+#: changedetectionio/templates/_common_fields.html
 msgid "The page title of the watch, uses <title> if not set, falls back to URL"
 msgstr "监控项的页面标题，未设置时使用 <title>，否则回退为 URL"
 
-#: changedetectionio/templates/_common_fields.html:41
+#: changedetectionio/templates/_common_fields.html
 msgid "The watch group / tag"
 msgstr "监视器组/标签"
 
-#: changedetectionio/templates/_common_fields.html:45
+#: changedetectionio/templates/_common_fields.html
 msgid "The URL of the preview page generated by changedetection.io."
 msgstr "changedetection.io 生成的预览页面 URL。"
 
-#: changedetectionio/templates/_common_fields.html:49
+#: changedetectionio/templates/_common_fields.html
 msgid "The URL of the diff output for the watch."
 msgstr "该监控项的差异输出 URL。"
 
-#: changedetectionio/templates/_common_fields.html:53
+#: changedetectionio/templates/_common_fields.html
 msgid "The diff output - only changes, additions, and removals"
 msgstr "差异输出 - 仅包含更改、新增与删除"
 
-#: changedetectionio/templates/_common_fields.html:57
+#: changedetectionio/templates/_common_fields.html
 msgid "The diff output - only changes, additions, and removals —"
 msgstr "差异输出 - 仅包含更改、新增与删除 —"
 
-#: changedetectionio/templates/_common_fields.html:57
-#: changedetectionio/templates/_common_fields.html:66
-#: changedetectionio/templates/_common_fields.html:74
-#: changedetectionio/templates/_common_fields.html:82
+#: changedetectionio/templates/_common_fields.html
 msgid "Without (added) prefix or colors"
 msgstr "不含（added）前缀或颜色"
 
-#: changedetectionio/templates/_common_fields.html:62
+#: changedetectionio/templates/_common_fields.html
 msgid "The diff output - only changes and additions"
 msgstr "差异输出 - 仅包含更改与新增"
 
-#: changedetectionio/templates/_common_fields.html:66
+#: changedetectionio/templates/_common_fields.html
 msgid "The diff output - only changes and additions —"
 msgstr "差异输出 - 仅包含更改与新增 —"
 
-#: changedetectionio/templates/_common_fields.html:70
+#: changedetectionio/templates/_common_fields.html
 msgid "The diff output - only changes and removals"
 msgstr "差异输出 - 仅包含更改与删除"
 
-#: changedetectionio/templates/_common_fields.html:74
+#: changedetectionio/templates/_common_fields.html
 msgid "The diff output - only changes and removals —"
 msgstr "差异输出 - 仅包含更改与删除 —"
 
-#: changedetectionio/templates/_common_fields.html:78
+#: changedetectionio/templates/_common_fields.html
 msgid "The diff output - full difference output"
 msgstr "差异输出 - 完整差异内容"
 
-#: changedetectionio/templates/_common_fields.html:82
+#: changedetectionio/templates/_common_fields.html
 msgid "The diff output - full difference output —"
 msgstr "差异输出 - 完整差异内容 —"
 
-#: changedetectionio/templates/_common_fields.html:86
+#: changedetectionio/templates/_common_fields.html
 msgid "The diff output - patch in unified format"
 msgstr "差异输出 - 统一格式补丁"
 
-#: changedetectionio/templates/_common_fields.html:90
-msgid ""
-"The current snapshot text contents value, useful when combined with JSON or CSS "
-"filters"
+#: changedetectionio/templates/_common_fields.html
+msgid "The current snapshot text contents value, useful when combined with JSON or CSS filters"
 msgstr "当前快照的文本内容值，与 JSON 或 CSS 过滤器结合使用时很有用"
 
-#: changedetectionio/templates/_common_fields.html:95
+#: changedetectionio/templates/_common_fields.html
 msgid "Text that tripped the trigger from filters"
 msgstr "由过滤器触发的文本"
 
-#: changedetectionio/templates/_common_fields.html:109
+#: changedetectionio/templates/_common_fields.html
 msgid "Warning: Contents of"
 msgstr "警告：以下内容"
 
-#: changedetectionio/templates/_common_fields.html:109
+#: changedetectionio/templates/_common_fields.html
 msgid "and"
 msgstr "和"
 
-#: changedetectionio/templates/_common_fields.html:109
+#: changedetectionio/templates/_common_fields.html
 msgid "depend on how the difference algorithm perceives the change."
 msgstr "取决于差异算法对变更的判断。"
 
-#: changedetectionio/templates/_common_fields.html:110
-msgid ""
-"For example, an addition or removal could be perceived as a change in some "
-"cases."
+#: changedetectionio/templates/_common_fields.html
+msgid "For example, an addition or removal could be perceived as a change in some cases."
 msgstr "例如，在某些情况下，新增或删除可能被视为变更。"
 
-#: changedetectionio/templates/_common_fields.html:110
+#: changedetectionio/templates/_common_fields.html
 msgid "More Here"
 msgstr "更多信息"
 
-#: changedetectionio/templates/_common_fields.html:126
-#: changedetectionio/templates/edit/text-options.html:62
-msgid "Use"
-msgstr "使用"
-
-#: changedetectionio/templates/_common_fields.html:126
+#: changedetectionio/templates/_common_fields.html
 msgid "AppRise Notification URLs"
 msgstr "AppRise通知URL"
 
-#: changedetectionio/templates/_common_fields.html:126
+#: changedetectionio/templates/_common_fields.html
 msgid "for notification to just about any service!"
 msgstr "用于向几乎任何服务发送通知！"
 
-#: changedetectionio/templates/_common_fields.html:126
-msgid ""
-"Please read the notification services wiki here for important configuration "
-"notes"
+#: changedetectionio/templates/_common_fields.html
+msgid "Please read the notification services wiki here for important configuration notes"
 msgstr "请阅读通知服务 Wiki 以了解重要配置说明"
 
-#: changedetectionio/templates/_common_fields.html:128
+#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/text-options.html
+msgid "Use"
+msgstr "使用"
+
+#: changedetectionio/templates/_common_fields.html
 msgid "Show advanced help and tips"
 msgstr "显示高级帮助和提示"
 
-#: changedetectionio/templates/_common_fields.html:130
+#: changedetectionio/templates/_common_fields.html
 msgid "(or"
 msgstr "（或"
 
-#: changedetectionio/templates/_common_fields.html:130
+#: changedetectionio/templates/_common_fields.html
 msgid "only supports a maximum"
 msgstr "最多仅支持"
 
-#: changedetectionio/templates/_common_fields.html:130
+#: changedetectionio/templates/_common_fields.html
 msgid "2,000 characters"
 msgstr "2,000 个字符"
 
-#: changedetectionio/templates/_common_fields.html:130
+#: changedetectionio/templates/_common_fields.html
 msgid "of notification text, including the title."
 msgstr "通知文本,包括标题。"
 
-#: changedetectionio/templates/_common_fields.html:131
-msgid ""
-"bots can't send messages to other bots, so you should specify chat ID of non-"
-"bot user."
+#: changedetectionio/templates/_common_fields.html
+msgid "bots can't send messages to other bots, so you should specify chat ID of non-bot user."
 msgstr "机器人无法向其他机器人发送消息，因此应指定非机器人用户的聊天 ID。"
 
-#: changedetectionio/templates/_common_fields.html:132
+#: changedetectionio/templates/_common_fields.html
 msgid "only supports very limited HTML and can fail when extra tags are sent,"
 msgstr "仅支持非常有限的 HTML，发送额外标签可能失败，"
 
-#: changedetectionio/templates/_common_fields.html:132
+#: changedetectionio/templates/_common_fields.html
 msgid "(or use plaintext/markdown format)"
 msgstr "（或使用纯文本/Markdown 格式）"
 
-#: changedetectionio/templates/_common_fields.html:133
+#: changedetectionio/templates/_common_fields.html
 msgid "for direct API calls (or omit the"
 msgstr "用于直接 API 调用（或省略"
 
-#: changedetectionio/templates/_common_fields.html:133
+#: changedetectionio/templates/_common_fields.html
 msgid "for non-SSL ie"
 msgstr "用于非 SSL，例如"
 
-#: changedetectionio/templates/_common_fields.html:133
+#: changedetectionio/templates/_common_fields.html
 msgid "more help here"
 msgstr "更多帮助"
 
-#: changedetectionio/templates/_common_fields.html:134
+#: changedetectionio/templates/_common_fields.html
 msgid "Accepts the"
 msgstr "接受以下"
 
-#: changedetectionio/templates/_common_fields.html:134
+#: changedetectionio/templates/_common_fields.html
 msgid "placeholders listed below"
 msgstr "下方列出的占位符"
 
-#: changedetectionio/templates/_common_fields.html:138
+#: changedetectionio/templates/_common_fields.html
 msgid "Send test notification"
 msgstr "发送测试通知"
 
-#: changedetectionio/templates/_common_fields.html:140
+#: changedetectionio/templates/_common_fields.html
 msgid "Add email"
 msgstr "添加邮箱"
 
-#: changedetectionio/templates/_common_fields.html:140
+#: changedetectionio/templates/_common_fields.html
 msgid "Add an email address"
 msgstr "添加邮箱地址"
 
-#: changedetectionio/templates/_common_fields.html:142
+#: changedetectionio/templates/_common_fields.html
 msgid "Notification debug logs"
 msgstr "通知调试日志"
 
-#: changedetectionio/templates/_common_fields.html:144
+#: changedetectionio/templates/_common_fields.html
 msgid "Processing.."
 msgstr "处理中.."
 
-#: changedetectionio/templates/_common_fields.html:151
+#: changedetectionio/templates/_common_fields.html
 msgid "Title for all notifications"
 msgstr "所有通知的标题"
 
-#: changedetectionio/templates/_common_fields.html:159
+#: changedetectionio/templates/_common_fields.html
 msgid "For JSON payloads, use"
 msgstr "对于 JSON 负载，使用"
 
-#: changedetectionio/templates/_common_fields.html:159
+#: changedetectionio/templates/_common_fields.html
 msgid "without quotes for automatic escaping, for example -"
 msgstr "无需引号以自动转义，例如 -"
 
-#: changedetectionio/templates/_common_fields.html:162
+#: changedetectionio/templates/_common_fields.html
 msgid "URL encoding, use"
 msgstr "URL 编码使用"
 
-#: changedetectionio/templates/_common_fields.html:162
-#: changedetectionio/templates/_common_fields.html:165
+#: changedetectionio/templates/_common_fields.html
 msgid "for example -"
 msgstr "例如 -"
 
-#: changedetectionio/templates/_common_fields.html:165
+#: changedetectionio/templates/_common_fields.html
 msgid "Regular-expression replace, use"
 msgstr "正则替换使用"
 
-#: changedetectionio/templates/_common_fields.html:168
-msgid ""
-"For a complete reference of all Jinja2 built-in filters, users can refer to the"
+#: changedetectionio/templates/_common_fields.html
+msgid "For a complete reference of all Jinja2 built-in filters, users can refer to the"
 msgstr "关于 Jinja2 内置过滤器的完整参考，请见"
 
-#: changedetectionio/templates/_common_fields.html:176
+#: changedetectionio/templates/_common_fields.html
 msgid "Format for all notifications"
 msgstr "所有通知的格式"
 
-#: changedetectionio/templates/_helpers.html:25
+#: changedetectionio/templates/_helpers.html
 msgid "Entry"
 msgstr "条目"
 
-#: changedetectionio/templates/_helpers.html:153
+#: changedetectionio/templates/_helpers.html
 msgid "Actions"
 msgstr "操作"
 
-#: changedetectionio/templates/_helpers.html:172
+#: changedetectionio/templates/_helpers.html
 msgid "Add a row/rule after"
 msgstr "在后面添加一行/规则"
 
-#: changedetectionio/templates/_helpers.html:173
+#: changedetectionio/templates/_helpers.html
 msgid "Remove this row/rule"
 msgstr "移除此行/规则"
 
-#: changedetectionio/templates/_helpers.html:174
+#: changedetectionio/templates/_helpers.html
 msgid "Verify this rule against current snapshot"
 msgstr "使用当前快照验证此规则"
 
-#: changedetectionio/templates/_helpers.html:184
-msgid ""
-"Error - This watch needs Chrome (with playwright/sockpuppetbrowser), but Chrome "
-"based fetching is not enabled."
-msgstr ""
-"错误 - 该监控项需要 Chrome（playwright/sockpuppetbrowser），但未启用基于 Chrome "
-"的抓取。"
+#: changedetectionio/templates/_helpers.html
+msgid "Error - This watch needs Chrome (with playwright/sockpuppetbrowser), but Chrome based fetching is not enabled."
+msgstr "错误 - 该监控项需要 Chrome（playwright/sockpuppetbrowser），但未启用基于 Chrome 的抓取。"
 
-#: changedetectionio/templates/_helpers.html:184
+#: changedetectionio/templates/_helpers.html
 msgid "Alternatively try our"
 msgstr "也可以试试我们的"
 
-#: changedetectionio/templates/_helpers.html:184
-msgid ""
-"very affordable subscription based service which has all this setup for you"
+#: changedetectionio/templates/_helpers.html
+msgid "very affordable subscription based service which has all this setup for you"
 msgstr "价格实惠的订阅服务，已为你完成全部配置"
 
-#: changedetectionio/templates/_helpers.html:185
+#: changedetectionio/templates/_helpers.html
 msgid "You may need to"
 msgstr "您可能需要"
 
-#: changedetectionio/templates/_helpers.html:185
+#: changedetectionio/templates/_helpers.html
 msgid "Enable playwright environment variable"
 msgstr "启用 Playwright 环境变量"
 
-#: changedetectionio/templates/_helpers.html:185
+#: changedetectionio/templates/_helpers.html
 msgid "and uncomment the"
 msgstr "并取消注释"
 
-#: changedetectionio/templates/_helpers.html:185
+#: changedetectionio/templates/_helpers.html
 msgid "in the"
 msgstr "在"
 
-#: changedetectionio/templates/_helpers.html:185
+#: changedetectionio/templates/_helpers.html
 msgid "file"
 msgstr "文件"
 
-#: changedetectionio/templates/_helpers.html:240
+#: changedetectionio/templates/_helpers.html
 msgid "Set a hourly/week day schedule"
 msgstr "设置按小时/工作日计划"
 
-#: changedetectionio/templates/_helpers.html:247
+#: changedetectionio/templates/_helpers.html
 msgid "Schedule time limits"
 msgstr "计划时间限制"
 
-#: changedetectionio/templates/_helpers.html:248
+#: changedetectionio/templates/_helpers.html
 msgid "Business hours"
 msgstr "工作时间"
 
-#: changedetectionio/templates/_helpers.html:249
+#: changedetectionio/templates/_helpers.html
 msgid "Weekends"
 msgstr "周末"
 
-#: changedetectionio/templates/_helpers.html:250
+#: changedetectionio/templates/_helpers.html
 msgid "Reset"
 msgstr "重置"
 
-#: changedetectionio/templates/_helpers.html:259
-msgid ""
-"Warning, one or more of your 'days' has a duration that would extend into the "
-"next day."
+#: changedetectionio/templates/_helpers.html
+msgid "Warning, one or more of your 'days' has a duration that would extend into the next day."
 msgstr "警告：一个或多个“天”的时长会延续到次日。"
 
-#: changedetectionio/templates/_helpers.html:260
+#: changedetectionio/templates/_helpers.html
 msgid "This could have unintended consequences."
 msgstr "这可能导致意外结果。"
 
-#: changedetectionio/templates/_helpers.html:270
+#: changedetectionio/templates/_helpers.html
 msgid "More help and examples about using the scheduler"
 msgstr "有关使用调度器的更多帮助"
 
-#: changedetectionio/templates/_helpers.html:275
+#: changedetectionio/templates/_helpers.html
 msgid "Want to use a time schedule?"
 msgstr "想要使用时间计划吗?"
 
-#: changedetectionio/templates/_helpers.html:275
+#: changedetectionio/templates/_helpers.html
 msgid "First confirm/save your Time Zone Settings"
 msgstr "请先确认/保存你的时区设置"
 
-#: changedetectionio/templates/_helpers.html:284
-msgid ""
-"Triggers a change if this text appears, AND something changed in the document."
+#: changedetectionio/templates/_helpers.html
+msgid "Triggers a change if this text appears, AND something changed in the document."
 msgstr "当该文本出现且文档发生变化时触发变更。"
 
-#: changedetectionio/templates/_helpers.html:284
+#: changedetectionio/templates/_helpers.html
 msgid "Triggered text"
 msgstr "触发文本"
 
-#: changedetectionio/templates/_helpers.html:285
+#: changedetectionio/templates/_helpers.html
 msgid "Ignored for calculating changes, but still shown."
 msgstr "计算变更时忽略，但仍会显示。"
 
-#: changedetectionio/templates/_helpers.html:285
+#: changedetectionio/templates/_helpers.html
 msgid "Ignored text"
 msgstr "忽略文本"
 
-#: changedetectionio/templates/_helpers.html:286
+#: changedetectionio/templates/_helpers.html
 msgid "No change-detection will occur because this text exists."
 msgstr "此文本存在时将不会进行变更检测。"
 
-#: changedetectionio/templates/_helpers.html:286
+#: changedetectionio/templates/_helpers.html
 msgid "Blocked text"
 msgstr "阻止文本"
 
-#: changedetectionio/templates/base.html:80
+#: changedetectionio/templates/base.html
 msgid "Search, or Use Alt+S Key"
 msgstr "搜索，或使用 Alt+S 快捷键"
 
-#: changedetectionio/templates/base.html:248
+#: changedetectionio/templates/base.html
 msgid "Real-time updates offline"
 msgstr "实时更新离线"
 
-#: changedetectionio/templates/base.html:258
+#: changedetectionio/templates/base.html
 msgid "Select Language"
 msgstr "选择语言"
 
-#: changedetectionio/templates/base.html:269
-msgid ""
-"Language support is in beta, please help us improve by opening a PR on GitHub "
-"with any updates."
+#: changedetectionio/templates/base.html
+msgid "Auto-detect from browser"
+msgstr "从浏览器自动检测"
+
+#: changedetectionio/templates/base.html
+msgid "Language support is in beta, please help us improve by opening a PR on GitHub with any updates."
 msgstr "语言支持仍在测试阶段，欢迎在 GitHub 提交 PR 帮助改进。"
 
-#: changedetectionio/templates/base.html:281
-#: changedetectionio/templates/base.html:294
+#: changedetectionio/templates/base.html
 msgid "Search"
 msgstr "搜索"
 
-#: changedetectionio/templates/base.html:286
+#: changedetectionio/templates/base.html
 msgid "URL or Title"
 msgstr "URL 或标题"
 
-#: changedetectionio/templates/base.html:286
+#: changedetectionio/templates/base.html
 msgid "in"
 msgstr "在"
 
-#: changedetectionio/templates/base.html:287
+#: changedetectionio/templates/base.html
 msgid "Enter search term..."
 msgstr "输入搜索关键词..."
 
-#: changedetectionio/templates/login.html:17
-msgid "Login"
-msgstr "登录"
-
-#: changedetectionio/templates/menu.html:8
-msgid "GROUPS"
-msgstr "分组"
-
-#: changedetectionio/templates/menu.html:11
-msgid "SETTINGS"
-msgstr "设置"
-
-#: changedetectionio/templates/menu.html:14
-msgid "IMPORT"
-msgstr "导入"
-
-#: changedetectionio/templates/menu.html:17
-msgid "Resume automatic scheduling"
-msgstr "恢复自动调度"
-
-#: changedetectionio/templates/menu.html:17
-msgid "Pause auto-queue scheduling of watches"
-msgstr "暂停监控项自动入队"
-
-#: changedetectionio/templates/menu.html:17
-msgid "Scheduling is paused - click to resume"
-msgstr "调度已暂停 - 点击恢复"
-
-#: changedetectionio/templates/menu.html:20
-msgid "Unmute notifications"
-msgstr "取消静音通知"
-
-#: changedetectionio/templates/menu.html:20
-msgid "Mute notifications"
-msgstr "静音通知"
-
-#: changedetectionio/templates/menu.html:20
-msgid "Notifications are muted - click to unmute"
-msgstr "通知已静音 - 点击取消静音"
-
-#: changedetectionio/templates/menu.html:25
-msgid "EDIT"
-msgstr "编辑"
-
-#: changedetectionio/templates/menu.html:30
-msgid "LOG OUT"
-msgstr "退出登录"
-
-#: changedetectionio/templates/menu.html:36
-msgid "Website Change Detection and Notification."
-msgstr "网站变更检测与通知。"
-
-#: changedetectionio/templates/menu.html:40
-msgid "Toggle Light/Dark Mode"
-msgstr "切换亮/暗模式"
-
-#: changedetectionio/templates/menu.html:41
-msgid "Toggle light/dark mode"
-msgstr "切换亮/暗模式"
-
-#: changedetectionio/templates/menu.html:49
-msgid "Change Language"
-msgstr "切换语言"
-
-#: changedetectionio/templates/menu.html:50
-msgid "Change language"
-msgstr "切换语言"
-
-#: changedetectionio/templates/edit/text-options.html:9
-msgid ""
-"Text to wait for before triggering a change/notification, all text and regex "
-"are tested case-insensitive."
+#: changedetectionio/templates/edit/text-options.html
+msgid "Text to wait for before triggering a change/notification, all text and regex are tested case-insensitive."
 msgstr "触发变更/通知前等待的文本，所有文本和正则均不区分大小写。"
 
-#: changedetectionio/templates/edit/text-options.html:10
-msgid ""
-"Trigger text is processed from the result-text that comes out of any CSS/JSON "
-"Filters for this monitor"
+#: changedetectionio/templates/edit/text-options.html
+msgid "Trigger text is processed from the result-text that comes out of any CSS/JSON Filters for this monitor"
 msgstr "触发文本来自该监控项的 CSS/JSON 过滤结果"
 
-#: changedetectionio/templates/edit/text-options.html:11
+#: changedetectionio/templates/edit/text-options.html
 msgid "Each line is processed separately (think of each line as \"OR\")"
 msgstr "每行单独处理（可理解为每行都是“或”）"
 
-#: changedetectionio/templates/edit/text-options.html:12
-#: changedetectionio/templates/edit/text-options.html:46
+#: changedetectionio/templates/edit/text-options.html
 msgid "Note: Wrap in forward slash / to use regex example:"
 msgstr "注意：使用正则时请用斜杠 / 包裹，例如："
 
-#: changedetectionio/templates/edit/text-options.html:23
-msgid ""
-"Matching text will be ignored in the text snapshot (you can still see it but it "
-"wont trigger a change)"
+#: changedetectionio/templates/edit/text-options.html
+msgid "Matching text will be ignored in the text snapshot (you can still see it but it wont trigger a change)"
 msgstr "匹配的文本会在文本快照中被忽略（仍可见但不会触发变更）"
 
-#: changedetectionio/templates/edit/text-options.html:43
+#: changedetectionio/templates/edit/text-options.html
 msgid ""
-"Block change-detection while this text is on the page, all text and regex are "
-"tested case-insensitive, good for waiting for when a product is available again"
-msgstr ""
-"当页面出现这些文本时阻止变更检测，所有文本和正则均不区分大小写，适合等待商品重新"
-"上架"
+"Block change-detection while this text is on the page, all text and regex are tested case-insensitive, good for "
+"waiting for when a product is available again"
+msgstr "当页面出现这些文本时阻止变更检测，所有文本和正则均不区分大小写，适合等待商品重新上架"
 
-#: changedetectionio/templates/edit/text-options.html:44
-msgid ""
-"Block text is processed from the result-text that comes out of any CSS/JSON "
-"Filters for this monitor"
+#: changedetectionio/templates/edit/text-options.html
+msgid "Block text is processed from the result-text that comes out of any CSS/JSON Filters for this monitor"
 msgstr "阻止文本来自该监控项的 CSS/JSON 过滤结果"
 
-#: changedetectionio/templates/edit/text-options.html:45
+#: changedetectionio/templates/edit/text-options.html
 msgid "All lines here must not exist (think of each line as \"OR\")"
 msgstr "此处所有行必须不存在（每行视为“或”）"
 
-#: changedetectionio/templates/edit/text-options.html:58
-msgid ""
-"Extracts text in the final output (line by line) after other filters using "
-"regular expressions or string match:"
+#: changedetectionio/templates/edit/text-options.html
+msgid "Extracts text in the final output (line by line) after other filters using regular expressions or string match:"
 msgstr "在其他过滤器之后，按行从最终输出中提取文本（使用正则或字符串匹配）："
 
-#: changedetectionio/templates/edit/text-options.html:60
+#: changedetectionio/templates/edit/text-options.html
 msgid "Regular expression - example"
 msgstr "正则表达式 - 示例"
 
-#: changedetectionio/templates/edit/text-options.html:61
+#: changedetectionio/templates/edit/text-options.html
 msgid "Don't forget to consider the white-space at the start of a line"
 msgstr "别忘了考虑行首空白"
 
-#: changedetectionio/templates/edit/text-options.html:62
+#: changedetectionio/templates/edit/text-options.html
 msgid "type flags (more"
 msgstr "类型标志（更多"
 
-#: changedetectionio/templates/edit/text-options.html:62
+#: changedetectionio/templates/edit/text-options.html
 msgid "information here"
 msgstr "此处信息"
 
-#: changedetectionio/templates/edit/text-options.html:63
+#: changedetectionio/templates/edit/text-options.html
 msgid "Keyword example - example"
 msgstr "关键字示例 - 示例"
 
-#: changedetectionio/templates/edit/text-options.html:64
+#: changedetectionio/templates/edit/text-options.html
 msgid "Use groups to extract just that text - example"
 msgstr "使用分组仅提取该文本 - 示例"
 
-#: changedetectionio/templates/edit/text-options.html:64
+#: changedetectionio/templates/edit/text-options.html
 msgid "returns a list of years only"
 msgstr "仅返回年份列表"
 
-#: changedetectionio/templates/edit/text-options.html:65
+#: changedetectionio/templates/edit/text-options.html
 msgid "Example - match lines containing a keyword"
 msgstr "示例 - 匹配包含关键字的行"
 
-#: changedetectionio/templates/edit/text-options.html:68
+#: changedetectionio/templates/edit/text-options.html
 msgid "One line per regular-expression/string match"
 msgstr "每行一个正则/字符串匹配规则"
 
-#: changedetectionio/widgets/ternary_boolean.py:17
-#: changedetectionio/widgets/ternary_boolean.py:71
+#: changedetectionio/templates/login.html
+msgid "Login"
+msgstr "登录"
+
+#: changedetectionio/templates/menu.html
+msgid "GROUPS"
+msgstr "分组"
+
+#: changedetectionio/templates/menu.html
+msgid "SETTINGS"
+msgstr "设置"
+
+#: changedetectionio/templates/menu.html
+msgid "IMPORT"
+msgstr "导入"
+
+#: changedetectionio/templates/menu.html
+msgid "Resume automatic scheduling"
+msgstr "恢复自动调度"
+
+#: changedetectionio/templates/menu.html
+msgid "Pause auto-queue scheduling of watches"
+msgstr "暂停监控项自动入队"
+
+#: changedetectionio/templates/menu.html
+msgid "Scheduling is paused - click to resume"
+msgstr "调度已暂停 - 点击恢复"
+
+#: changedetectionio/templates/menu.html
+msgid "Unmute notifications"
+msgstr "取消静音通知"
+
+#: changedetectionio/templates/menu.html
+msgid "Mute notifications"
+msgstr "静音通知"
+
+#: changedetectionio/templates/menu.html
+msgid "Notifications are muted - click to unmute"
+msgstr "通知已静音 - 点击取消静音"
+
+#: changedetectionio/templates/menu.html
+msgid "EDIT"
+msgstr "编辑"
+
+#: changedetectionio/templates/menu.html
+msgid "LOG OUT"
+msgstr "退出登录"
+
+#: changedetectionio/templates/menu.html
+msgid "Website Change Detection and Notification."
+msgstr "网站变更检测与通知。"
+
+#: changedetectionio/templates/menu.html
+msgid "Toggle Light/Dark Mode"
+msgstr "切换亮/暗模式"
+
+#: changedetectionio/templates/menu.html
+msgid "Toggle light/dark mode"
+msgstr "切换亮/暗模式"
+
+#: changedetectionio/templates/menu.html
+msgid "Change Language"
+msgstr "切换语言"
+
+#: changedetectionio/templates/menu.html
+msgid "Change language"
+msgstr "切换语言"
+
+#: changedetectionio/widgets/ternary_boolean.py
 msgid "Yes"
 msgstr "是"
 
-#: changedetectionio/widgets/ternary_boolean.py:18
-#: changedetectionio/widgets/ternary_boolean.py:72
+#: changedetectionio/widgets/ternary_boolean.py
 msgid "No"
 msgstr "否"
 
-#: changedetectionio/widgets/ternary_boolean.py:19
-#: changedetectionio/widgets/ternary_boolean.py:73
+#: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"
 msgstr "主设置"
+

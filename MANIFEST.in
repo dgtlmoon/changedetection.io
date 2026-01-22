@@ -17,6 +17,7 @@ recursive-include changedetectionio/widgets *
 prune changedetectionio/static/package-lock.json
 prune changedetectionio/static/styles/node_modules
 prune changedetectionio/static/styles/package-lock.json
+include changedetectionio/favicon_utils.py
 include changedetection.py
 include requirements.txt
 include README-pip.md

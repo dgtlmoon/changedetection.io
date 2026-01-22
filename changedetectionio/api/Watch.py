@@ -2,6 +2,7 @@ import os
 import threading
 
 from changedetectionio.validate_url import is_safe_valid_url
+from changedetectionio.favicon_utils import get_favicon_mime_type
 
 from . import auth
 from changedetectionio import queuedWatchMetaData, strtobool
@@ -402,16 +403,9 @@ class WatchFavicon(Resource):
 
         favicon_filename = watch.get_favicon_filename()
         if favicon_filename:
-            try:
-                import magic
-                mime = magic.from_file(
-                    os.path.join(watch.watch_data_dir, favicon_filename),
-                    mime=True
-                )
-            except ImportError:
-                # Fallback, no python-magic
-                import mimetypes
-                mime, encoding = mimetypes.guess_type(favicon_filename)
+            # Use cached MIME type detection
+            filepath = os.path.join(watch.watch_data_dir, favicon_filename)
+            mime = get_favicon_mime_type(filepath)
 
             response = make_response(send_from_directory(watch.watch_data_dir, favicon_filename))
             response.headers['Content-type'] = mime

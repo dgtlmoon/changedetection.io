@@ -78,6 +78,12 @@ RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
 # Final image stage
 FROM python:${PYTHON_VERSION}-slim-bookworm
 LABEL org.opencontainers.image.source="https://github.com/dgtlmoon/changedetection.io"
+LABEL org.opencontainers.image.url="https://changedetection.io"
+LABEL org.opencontainers.image.documentation="https://changedetection.io/tutorials"
+LABEL org.opencontainers.image.title="changedetection.io"
+LABEL org.opencontainers.image.description="Self-hosted web page change monitoring and notification service"
+LABEL org.opencontainers.image.licenses="Apache-2.0"
+LABEL org.opencontainers.image.vendor="changedetection.io"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libxslt1.1 \
