@@ -164,5 +164,7 @@ ENV PORT=5000
 ENV LISTEN_HOST=0.0.0.0
 ENV FETCH_WORKERS=5
 
-# Start the application
-CMD ["python", "./changedetection.py", "-d", "/datastore", "-p", "5000", "-host", "0.0.0.0"]
+# Start the application with gunicorn for production deployment
+# Using gevent worker for async support with Socket.IO
+# Note: The app must be started through changedetection.py to initialize the datastore
+CMD ["sh", "-c", "sleep 2 && python ./changedetection.py -d /datastore -p 5000 -h 0.0.0.0"]

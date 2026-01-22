@@ -315,19 +315,40 @@ def main():
 
 
     # SocketIO instance is already initialized in flask_app.py
-    if socketio_server:
-        if ssl_mode:
-            logger.success(f"SSL mode enabled, attempting to start with '{ssl_cert_file}' and '{ssl_privkey_file}' in {os.getcwd()}")
-            socketio.run(app, host=host, port=int(port), debug=False,
-                         ssl_context=(ssl_cert_file, ssl_privkey_file), allow_unsafe_werkzeug=True)
+    # Pre-flight check: verify socket binding works before starting server
+    import socket
+    logger.info(f"Pre-flight: Verifying socket binding to {host}:{port}...")
+    try:
+        test_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        test_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        test_sock.bind((host, int(port)))
+        test_sock.close()
+        logger.success(f"Pre-flight: Socket binding test passed for {host}:{port}")
+    except socket.error as e:
+        logger.critical(f"Pre-flight FAILED: Cannot bind to {host}:{port} - {e}")
+        logger.critical("This usually means the port is already in use or the host is invalid")
+        sys.exit(1)
+
+    try:
+        if socketio_server:
+            if ssl_mode:
+                logger.success(f"SSL mode enabled, attempting to start with '{ssl_cert_file}' and '{ssl_privkey_file}' in {os.getcwd()}")
+                socketio.run(app, host=host, port=int(port), debug=False,
+                             ssl_context=(ssl_cert_file, ssl_privkey_file), allow_unsafe_werkzeug=True)
+            else:
+                logger.info(f"Starting Socket.IO server on {host}:{port}")
+                socketio.run(app, host=host, port=int(port), debug=False, allow_unsafe_werkzeug=True)
         else:
-            socketio.run(app, host=host, port=int(port), debug=False, allow_unsafe_werkzeug=True)
-    else:
-        # Run Flask app without Socket.IO if disabled
-        logger.info("Starting Flask app without Socket.IO server")
-        if ssl_mode:
-            logger.success(f"SSL mode enabled, attempting to start with '{ssl_cert_file}' and '{ssl_privkey_file}' in {os.getcwd()}")
-            app.run(host=host, port=int(port), debug=False,
-                    ssl_context=(ssl_cert_file, ssl_privkey_file))
-        else:
-            app.run(host=host, port=int(port), debug=False)
+            # Run Flask app without Socket.IO if disabled
+            logger.info("Starting Flask app without Socket.IO server")
+            if ssl_mode:
+                logger.success(f"SSL mode enabled, attempting to start with '{ssl_cert_file}' and '{ssl_privkey_file}' in {os.getcwd()}")
+                app.run(host=host, port=int(port), debug=False,
+                        ssl_context=(ssl_cert_file, ssl_privkey_file))
+            else:
+                app.run(host=host, port=int(port), debug=False)
+    except Exception as e:
+        import traceback
+        logger.critical(f"FATAL: Server startup failed: {type(e).__name__}: {e}")
+        logger.critical(f"Full traceback:\n{traceback.format_exc()}")
+        raise

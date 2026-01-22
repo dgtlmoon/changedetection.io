@@ -17,7 +17,7 @@
 #
 # 5. Deploy: fly deploy --config tasks/fly.toml
 
-app = "changedetection-io-z08mj"
+app = "changedetection-io-z08mjw"
 primary_region = "ord"
 
 [build]
@@ -27,10 +27,14 @@ primary_region = "ord"
 [env]
   PORT = "5000"
   LISTEN_HOST = "0.0.0.0"
-  FETCH_WORKERS = "1"
+  FETCH_WORKERS = "0"
   PLAYWRIGHT_BROWSERS_PATH = "/ms-playwright"
-  # Reduce memory usage for Playwright
   PLAYWRIGHT_CHROMIUM_SANDBOX = "false"
+  DISABLE_VERSION_CHECK = "true"
+  DEFAULT_FETCH_BACKEND = "html_requests"
+  LOGGER_LEVEL = "DEBUG"
+  # Skip default demo watches on fresh install
+  INCLUDE_DEFAULT_WATCHES = "false"
 
 [http_service]
   internal_port = 5000
@@ -45,12 +49,13 @@ primary_region = "ord"
     hard_limit = 25
     soft_limit = 20
 
-[[http_service.checks]]
-  grace_period = "120s"
-  interval = "30s"
-  method = "GET"
-  timeout = "20s"
-  path = "/"
+# Health check temporarily disabled while debugging startup issues
+# [[http_service.checks]]
+#   grace_period = "60s"
+#   interval = "30s"
+#   method = "GET"
+#   timeout = "20s"
+#   path = "/"
 
 # Persistent volume for datastore
 # Create with: fly volumes create ticketwatch_data --region ord --size 1

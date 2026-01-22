@@ -1,6 +1,10 @@
 # TicketWatch Additional Requirements
 # Install with: pip install -r tasks/requirements.txt
 
+# Production WSGI server (for Fly.io deployment)
+gunicorn>=21.0.0
+gevent>=23.0.0
+
 # PostgreSQL async driver (recommended)
 asyncpg>=0.29.0
 
