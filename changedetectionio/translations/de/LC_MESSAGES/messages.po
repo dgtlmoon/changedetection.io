@@ -2857,7 +2857,7 @@ msgstr "Echtzeit-Updates offline"
 
 #: changedetectionio/templates/base.html
 msgid "Select Language"
-msgstr "Wählen Sie Sprache aus"
+msgstr "Wählen Sie eine Sprache aus"
 
 #: changedetectionio/templates/base.html
 msgid "Auto-detect from browser"
