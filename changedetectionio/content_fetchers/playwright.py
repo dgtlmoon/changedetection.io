@@ -13,7 +13,6 @@ from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200
 async def capture_full_page_async(page, screenshot_format='JPEG', watch_uuid=None, lock_viewport_elements=False):
     import os
     import time
-    import multiprocessing
 
     start = time.time()
     watch_info = f"[{watch_uuid}] " if watch_uuid else ""
@@ -105,24 +104,29 @@ async def capture_full_page_async(page, screenshot_format='JPEG', watch_uuid=Non
         stitch_start = time.time()
         logger.debug(f"{watch_info}Starting stitching of {len(screenshot_chunks)} chunks")
 
-        # For small number of chunks (2-3), stitch inline to avoid multiprocessing overhead
-        # Only use separate process for many chunks (4+) to avoid blocking the event loop
-        if len(screenshot_chunks) <= 3:
-            from changedetectionio.content_fetchers.screenshot_handler import stitch_images_inline
-            screenshot = stitch_images_inline(screenshot_chunks, page_height, SCREENSHOT_MAX_TOTAL_HEIGHT)
-        else:
-            # Use separate process for many chunks to avoid blocking
-            # Always use spawn for thread safety - consistent behavior in tests and production
-            from changedetectionio.content_fetchers.screenshot_handler import stitch_images_worker
-            ctx = multiprocessing.get_context('spawn')
-            parent_conn, child_conn = ctx.Pipe()
-            p = ctx.Process(target=stitch_images_worker, args=(child_conn, screenshot_chunks, page_height, SCREENSHOT_MAX_TOTAL_HEIGHT))
-            p.start()
-            screenshot = parent_conn.recv_bytes()
-            p.join()
-            # Explicit cleanup
-            del p
-            del parent_conn, child_conn
+        # Always use spawn subprocess for ANY stitching (2+ chunks)
+        # PIL allocates at C level and Python GC never releases it - subprocess exit forces OS to reclaim
+        # Trade-off: 35MB resource_tracker vs 500MB+ PIL leak in main process
+        from changedetectionio.content_fetchers.screenshot_handler import stitch_images_worker_raw_bytes
+        import multiprocessing
+        import struct
+
+        ctx = multiprocessing.get_context('spawn')
+        parent_conn, child_conn = ctx.Pipe()
+        p = ctx.Process(target=stitch_images_worker_raw_bytes, args=(child_conn, page_height, SCREENSHOT_MAX_TOTAL_HEIGHT))
+        p.start()
+
+        # Send via raw bytes (no pickle)
+        parent_conn.send_bytes(struct.pack('I', len(screenshot_chunks)))
+        for chunk in screenshot_chunks:
+            parent_conn.send_bytes(chunk)
+
+        screenshot = parent_conn.recv_bytes()
+        p.join()
+
+        parent_conn.close()
+        child_conn.close()
+        del p, parent_conn, child_conn
 
         stitch_time = time.time() - stitch_start
         total_time = time.time() - start
@@ -130,9 +134,6 @@ async def capture_full_page_async(page, screenshot_format='JPEG', watch_uuid=Non
         logger.debug(
             f"{watch_info}Screenshot complete - Page height: {page_height}px, Capture height: {SCREENSHOT_MAX_TOTAL_HEIGHT}px | "
             f"Setup: {setup_time:.2f}s, Capture: {capture_time:.2f}s, Stitching: {stitch_time:.2f}s, Total: {total_time:.2f}s")
-        # Explicit cleanup
-        del screenshot_chunks
-        screenshot_chunks = None
         return screenshot
 
     total_time = time.time() - start
@@ -402,6 +403,16 @@ class fetcher(Fetcher):
                 # acceptable screenshot quality here
                 # The actual screenshot - this always base64 and needs decoding! horrible! huge CPU usage
                 self.screenshot = await capture_full_page_async(page=self.page, screenshot_format=self.screenshot_format, watch_uuid=watch_uuid, lock_viewport_elements=self.lock_viewport_elements)
+
+                # Force aggressive memory cleanup - screenshots are large and base64 decode creates temporary buffers
+                await self.page.request_gc()
+                gc.collect()
+                # Release C-level memory from base64 decode back to OS
+                try:
+                    import ctypes
+                    ctypes.CDLL('libc.so.6').malloc_trim(0)
+                except Exception:
+                    pass
 
             except ScreenshotUnavailable:
                 # Re-raise screenshot unavailable exceptions

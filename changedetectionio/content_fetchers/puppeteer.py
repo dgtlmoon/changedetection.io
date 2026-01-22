@@ -23,7 +23,6 @@ from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200
 async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, lock_viewport_elements=False):
     import os
     import time
-    import multiprocessing
 
     start = time.time()
     watch_info = f"[{watch_uuid}] " if watch_uuid else ""
@@ -122,24 +121,39 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
     logger.debug(f"{watch_info}All {len(screenshot_chunks)} chunks captured in {capture_time:.2f}s (total chunk time: {total_capture_time:.2f}s)")
 
     if len(screenshot_chunks) > 1:
-        # Always use spawn for thread safety - consistent behavior in tests and production
-        from changedetectionio.content_fetchers.screenshot_handler import stitch_images_worker
         stitch_start = time.time()
         logger.debug(f"{watch_info}Starting stitching of {len(screenshot_chunks)} chunks")
+
+        # Always use spawn subprocess for ANY stitching (2+ chunks)
+        # PIL allocates at C level and Python GC never releases it - subprocess exit forces OS to reclaim
+        # Trade-off: 35MB resource_tracker vs 500MB+ PIL leak in main process
+        from changedetectionio.content_fetchers.screenshot_handler import stitch_images_worker_raw_bytes
+        import multiprocessing
+        import struct
+
         ctx = multiprocessing.get_context('spawn')
         parent_conn, child_conn = ctx.Pipe()
-        p = ctx.Process(target=stitch_images_worker, args=(child_conn, screenshot_chunks, page_height, SCREENSHOT_MAX_TOTAL_HEIGHT))
+        p = ctx.Process(target=stitch_images_worker_raw_bytes, args=(child_conn, page_height, SCREENSHOT_MAX_TOTAL_HEIGHT))
         p.start()
+
+        # Send via raw bytes (no pickle)
+        parent_conn.send_bytes(struct.pack('I', len(screenshot_chunks)))
+        for chunk in screenshot_chunks:
+            parent_conn.send_bytes(chunk)
+
         screenshot = parent_conn.recv_bytes()
         p.join()
+
+        parent_conn.close()
+        child_conn.close()
+        del p, parent_conn, child_conn
+
         stitch_time = time.time() - stitch_start
         total_time = time.time() - start
         setup_time = total_time - capture_time - stitch_time
         logger.debug(
             f"{watch_info}Screenshot complete - Page height: {page_height}px, Capture height: {SCREENSHOT_MAX_TOTAL_HEIGHT}px | "
             f"Setup: {setup_time:.2f}s, Capture: {capture_time:.2f}s, Stitching: {stitch_time:.2f}s, Total: {total_time:.2f}s")
-
-        screenshot_chunks = None
         return screenshot
 
     total_time = time.time() - start
@@ -422,6 +436,16 @@ class fetcher(Fetcher):
         # Now take screenshot (scrolling may trigger layout changes, but measurements are already captured)
         logger.debug(f"Screenshot format {self.screenshot_format}")
         self.screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format, watch_uuid=watch_uuid, lock_viewport_elements=self.lock_viewport_elements)
+
+        # Force aggressive memory cleanup - pyppeteer base64 decode creates temporary buffers
+        import gc
+        gc.collect()
+        # Release C-level memory from base64 decode back to OS
+        try:
+            import ctypes
+            ctypes.CDLL('libc.so.6').malloc_trim(0)
+        except Exception:
+            pass
         self.xpath_data = await self.page.evaluate(XPATH_ELEMENT_JS, {
             "visualselector_xpath_selectors": visualselector_xpath_selectors,
             "max_height": MAX_TOTAL_HEIGHT
