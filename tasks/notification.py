@@ -24,17 +24,18 @@ Usage:
 """
 
 import os
-import json
-import requests
-from datetime import datetime
-from typing import Optional, List, Dict, Any, Union
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
+
+import requests
 
 # Try to use loguru if available
 try:
     from loguru import logger
 except ImportError:
     import logging
+
     logger = logging.getLogger(__name__)
 
 
@@ -42,7 +43,8 @@ except ImportError:
 # Slack Message Formatting Utilities
 # =============================================================================
 
-def format_slack_link(url: str, text: Optional[str] = None) -> str:
+
+def format_slack_link(url: str, text: str | None = None) -> str:
     """
     Format a URL using Slack's link markup.
 
@@ -64,7 +66,7 @@ def format_slack_link(url: str, text: Optional[str] = None) -> str:
     return f"<{url}>"
 
 
-def format_price(price: Union[float, int, str], currency: str = "USD") -> str:
+def format_price(price: float | int | str, currency: str = "USD") -> str:
     """
     Format a price value with currency symbol.
 
@@ -86,12 +88,12 @@ def format_price(price: Union[float, int, str], currency: str = "USD") -> str:
 
     symbol = currency_symbols.get(currency.upper(), currency + " ")
 
-    if isinstance(price, (int, float)):
+    if isinstance(price, int | float):
         return f"{symbol}{price:.2f}"
     return f"{symbol}{price}"
 
 
-def format_price_range(prices: List[Dict[str, Any]]) -> str:
+def format_price_range(prices: list[dict[str, Any]]) -> str:
     """
     Format a list of prices into a readable range.
 
@@ -116,7 +118,7 @@ def format_price_range(prices: List[Dict[str, Any]]) -> str:
                     price_values.append(float(val))
                 except (ValueError, TypeError):
                     pass
-        elif isinstance(p, (int, float)):
+        elif isinstance(p, int | float):
             price_values.append(float(p))
 
     if not price_values:
@@ -135,54 +137,56 @@ def format_price_range(prices: List[Dict[str, Any]]) -> str:
 # Alert Type Configuration
 # =============================================================================
 
+
 @dataclass
 class AlertConfig:
     """Configuration for different alert types."""
+
     emoji: str
     header: str
     color: str
 
 
-ALERT_TYPES: Dict[str, AlertConfig] = {
+ALERT_TYPES: dict[str, AlertConfig] = {
     "new": AlertConfig(
         emoji=":ticket:",
         header="New Listing",
-        color="#36a64f"  # Green
+        color="#36a64f",  # Green
     ),
     "price_change": AlertConfig(
         emoji=":moneybag:",
         header="Price Change",
-        color="#FFA500"  # Orange
+        color="#FFA500",  # Orange
     ),
     "price_drop": AlertConfig(
         emoji=":chart_with_downwards_trend:",
         header="Price Drop",
-        color="#00FF00"  # Bright green
+        color="#00FF00",  # Bright green
     ),
     "price_increase": AlertConfig(
         emoji=":chart_with_upwards_trend:",
         header="Price Increase",
-        color="#FF6B6B"  # Light red
+        color="#FF6B6B",  # Light red
     ),
     "sellout": AlertConfig(
         emoji=":x:",
         header="SOLD OUT",
-        color="#FF0000"  # Red
+        color="#FF0000",  # Red
     ),
     "restock": AlertConfig(
-        emoji=":tada:",
-        header="Back in Stock!",
-        color="#00FF00"  # Green
+        emoji=":rotating_light:",
+        header="RESTOCK ALERT",
+        color="#00FF00",  # Bright green - high visibility
     ),
     "limited": AlertConfig(
         emoji=":warning:",
         header="Limited Availability",
-        color="#FFFF00"  # Yellow
+        color="#FFFF00",  # Yellow
     ),
     "update": AlertConfig(
         emoji=":bell:",
         header="Listing Updated",
-        color="#808080"  # Gray
+        color="#808080",  # Gray
     ),
 }
 
@@ -190,6 +194,7 @@ ALERT_TYPES: Dict[str, AlertConfig] = {
 # =============================================================================
 # Message Builder
 # =============================================================================
+
 
 class TicketAlertMessage:
     """
@@ -199,25 +204,23 @@ class TicketAlertMessage:
     """
 
     def __init__(self):
-        self.event_name: Optional[str] = None
-        self.venue: Optional[str] = None
-        self.prices: List[Dict[str, Any]] = []
-        self.old_prices: List[Dict[str, Any]] = []
-        self.url: Optional[str] = None
-        self.availability: Optional[str] = None
+        self.event_name: str | None = None
+        self.venue: str | None = None
+        self.prices: list[dict[str, Any]] = []
+        self.old_prices: list[dict[str, Any]] = []
+        self.url: str | None = None
+        self.availability: str | None = None
         self.change_type: str = "update"
-        self.additional_info: Dict[str, str] = {}
+        self.additional_info: dict[str, str] = {}
 
-    def set_event(self, name: str, venue: Optional[str] = None) -> 'TicketAlertMessage':
+    def set_event(self, name: str, venue: str | None = None) -> 'TicketAlertMessage':
         """Set event name and optional venue."""
         self.event_name = name
         self.venue = venue
         return self
 
     def set_prices(
-        self,
-        prices: List[Dict[str, Any]],
-        old_prices: Optional[List[Dict[str, Any]]] = None
+        self, prices: list[dict[str, Any]], old_prices: list[dict[str, Any]] | None = None
     ) -> 'TicketAlertMessage':
         """Set current and optionally previous prices."""
         self.prices = prices or []
@@ -275,8 +278,7 @@ class TicketAlertMessage:
                 "unknown": (":question:", "Unknown"),
             }
             emoji, text = availability_info.get(
-                self.availability.lower(),
-                (":question:", self.availability)
+                self.availability.lower(), (":question:", self.availability)
             )
             lines.append(f"{emoji} *Status:* {text}")
 
@@ -286,7 +288,11 @@ class TicketAlertMessage:
             lines.append(":money_with_wings: *Prices:*")
 
             # Show price change if we have old prices
-            if self.old_prices and self.change_type in ("price_change", "price_drop", "price_increase"):
+            if self.old_prices and self.change_type in (
+                "price_change",
+                "price_drop",
+                "price_increase",
+            ):
                 old_range = format_price_range(self.old_prices)
                 new_range = format_price_range(self.prices)
                 lines.append(f"  ~{old_range}~ → *{new_range}*")
@@ -321,7 +327,7 @@ class TicketAlertMessage:
 
         return "\n".join(lines)
 
-    def build_blocks(self) -> List[Dict[str, Any]]:
+    def build_blocks(self) -> list[dict[str, Any]]:
         """
         Build Slack Block Kit blocks for rich formatting.
 
@@ -336,14 +342,9 @@ class TicketAlertMessage:
         if self.event_name:
             header_text += f": {self.event_name[:100]}"
 
-        blocks.append({
-            "type": "header",
-            "text": {
-                "type": "plain_text",
-                "text": header_text,
-                "emoji": True
-            }
-        })
+        blocks.append(
+            {"type": "header", "text": {"type": "plain_text", "text": header_text, "emoji": True}}
+        )
 
         # Divider
         blocks.append({"type": "divider"})
@@ -352,10 +353,7 @@ class TicketAlertMessage:
         fields = []
 
         if self.venue:
-            fields.append({
-                "type": "mrkdwn",
-                "text": f":round_pushpin: *Venue:*\n{self.venue}"
-            })
+            fields.append({"type": "mrkdwn", "text": f":round_pushpin: *Venue:*\n{self.venue}"})
 
         if self.availability:
             availability_info = {
@@ -365,25 +363,22 @@ class TicketAlertMessage:
                 "unknown": (":question:", "Unknown"),
             }
             emoji, text = availability_info.get(
-                self.availability.lower(),
-                (":question:", self.availability)
+                self.availability.lower(), (":question:", self.availability)
             )
-            fields.append({
-                "type": "mrkdwn",
-                "text": f"{emoji} *Status:*\n{text}"
-            })
+            fields.append({"type": "mrkdwn", "text": f"{emoji} *Status:*\n{text}"})
 
         if fields:
-            blocks.append({
-                "type": "section",
-                "fields": fields
-            })
+            blocks.append({"type": "section", "fields": fields})
 
         # Prices section
         if self.prices:
             price_text = ":money_with_wings: *Prices:*\n"
 
-            if self.old_prices and self.change_type in ("price_change", "price_drop", "price_increase"):
+            if self.old_prices and self.change_type in (
+                "price_change",
+                "price_drop",
+                "price_increase",
+            ):
                 old_range = format_price_range(self.old_prices)
                 new_range = format_price_range(self.prices)
                 price_text += f"~{old_range}~ → *{new_range}*"
@@ -405,59 +400,56 @@ class TicketAlertMessage:
 
                 price_text += "\n".join(price_lines)
 
-            blocks.append({
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": price_text
-                }
-            })
+            blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": price_text}})
 
         # Additional info
         for key, value in self.additional_info.items():
-            blocks.append({
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": f":information_source: *{key}:* {value}"
+            blocks.append(
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": f":information_source: *{key}:* {value}"},
                 }
-            })
+            )
 
         # Divider before actions
         blocks.append({"type": "divider"})
 
         # URL button
         if self.url:
-            blocks.append({
-                "type": "actions",
-                "elements": [
-                    {
-                        "type": "button",
-                        "text": {
-                            "type": "plain_text",
-                            "text": ":link: View Tickets",
-                            "emoji": True
-                        },
-                        "url": self.url,
-                        "style": "primary"
-                    }
-                ]
-            })
+            blocks.append(
+                {
+                    "type": "actions",
+                    "elements": [
+                        {
+                            "type": "button",
+                            "text": {
+                                "type": "plain_text",
+                                "text": ":link: View Tickets",
+                                "emoji": True,
+                            },
+                            "url": self.url,
+                            "style": "primary",
+                        }
+                    ],
+                }
+            )
 
         # Context footer
-        blocks.append({
-            "type": "context",
-            "elements": [
-                {
-                    "type": "mrkdwn",
-                    "text": f":robot_face: TicketWatch | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-                }
-            ]
-        })
+        blocks.append(
+            {
+                "type": "context",
+                "elements": [
+                    {
+                        "type": "mrkdwn",
+                        "text": f":robot_face: TicketWatch | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+                    }
+                ],
+            }
+        )
 
         return blocks
 
-    def build_attachment(self) -> Dict[str, Any]:
+    def build_attachment(self) -> dict[str, Any]:
         """
         Build a Slack attachment (for color-coded messages).
 
@@ -469,13 +461,14 @@ class TicketAlertMessage:
         return {
             "color": alert_config.color,
             "fallback": self.build_text(),
-            "blocks": self.build_blocks()
+            "blocks": self.build_blocks(),
         }
 
 
 # =============================================================================
 # Slack Notification Handler
 # =============================================================================
+
 
 class SlackNotificationHandler:
     """
@@ -490,9 +483,9 @@ class SlackNotificationHandler:
 
     def __init__(
         self,
-        webhook_url: Optional[str] = None,
-        default_channel: Optional[str] = None,
-        use_blocks: bool = True
+        webhook_url: str | None = None,
+        default_channel: str | None = None,
+        use_blocks: bool = True,
     ):
         """
         Initialize the Slack notification handler.
@@ -512,13 +505,13 @@ class SlackNotificationHandler:
     def send_ticket_alert(
         self,
         event_name: str,
-        venue: Optional[str] = None,
-        prices: Optional[List[Dict[str, Any]]] = None,
-        old_prices: Optional[List[Dict[str, Any]]] = None,
-        url: Optional[str] = None,
-        availability: Optional[str] = None,
+        venue: str | None = None,
+        prices: list[dict[str, Any]] | None = None,
+        old_prices: list[dict[str, Any]] | None = None,
+        url: str | None = None,
+        availability: str | None = None,
         change_type: str = "update",
-        additional_info: Optional[Dict[str, str]] = None
+        additional_info: dict[str, str] | None = None,
     ) -> bool:
         """
         Send a ticket alert notification to Slack.
@@ -554,20 +547,16 @@ class SlackNotificationHandler:
 
         # Build payload
         if self.use_blocks:
-            payload = {
-                "blocks": builder.build_blocks()
-            }
+            payload = {"blocks": builder.build_blocks()}
         else:
-            payload = {
-                "text": builder.build_text()
-            }
+            payload = {"text": builder.build_text()}
 
         if self.default_channel:
             payload["channel"] = self.default_channel
 
         return self._send_webhook(payload)
 
-    def send_raw_message(self, text: str, blocks: Optional[List[Dict]] = None) -> bool:
+    def send_raw_message(self, text: str, blocks: list[dict] | None = None) -> bool:
         """
         Send a raw message to Slack.
 
@@ -588,7 +577,7 @@ class SlackNotificationHandler:
 
         return self._send_webhook(payload)
 
-    def _send_webhook(self, payload: Dict[str, Any]) -> bool:
+    def _send_webhook(self, payload: dict[str, Any]) -> bool:
         """
         Send a payload to the Slack webhook.
 
@@ -603,11 +592,11 @@ class SlackNotificationHandler:
                 self.webhook_url,
                 json=payload,
                 headers={"Content-Type": "application/json"},
-                timeout=30
+                timeout=30,
             )
 
             if response.status_code == 200:
-                logger.debug(f"Slack notification sent successfully")
+                logger.debug("Slack notification sent successfully")
                 return True
             else:
                 logger.error(f"Slack webhook returned {response.status_code}: {response.text}")
@@ -625,14 +614,15 @@ class SlackNotificationHandler:
 # Convenience Functions
 # =============================================================================
 
+
 def send_ticket_alert(
     event_name: str,
-    venue: Optional[str] = None,
-    prices: Optional[List[Dict[str, Any]]] = None,
-    url: Optional[str] = None,
-    availability: Optional[str] = None,
+    venue: str | None = None,
+    prices: list[dict[str, Any]] | None = None,
+    url: str | None = None,
+    availability: str | None = None,
     change_type: str = "update",
-    webhook_url: Optional[str] = None
+    webhook_url: str | None = None,
 ) -> bool:
     """
     Convenience function to send a ticket alert.
@@ -666,17 +656,17 @@ def send_ticket_alert(
         prices=prices,
         url=url,
         availability=availability,
-        change_type=change_type
+        change_type=change_type,
     )
 
 
 def format_changedetection_notification(
     watch_url: str,
-    watch_title: Optional[str] = None,
-    diff: Optional[str] = None,
-    extracted_prices: Optional[List[Dict[str, Any]]] = None,
-    extracted_availability: Optional[str] = None,
-    change_type: str = "update"
+    watch_title: str | None = None,
+    diff: str | None = None,
+    extracted_prices: list[dict[str, Any]] | None = None,
+    extracted_availability: str | None = None,
+    change_type: str = "update",
 ) -> str:
     """
     Format a changedetection.io notification for Slack.
@@ -750,10 +740,7 @@ if __name__ == "__main__":
             url="https://example.com/tickets/test-event",
             availability="in_stock",
             change_type="new",
-            additional_info={
-                "Date": "2025-03-15 8:00 PM",
-                "Age": "21+"
-            }
+            additional_info={"Date": "2025-03-15 8:00 PM", "Age": "21+"},
         )
 
         if success:
