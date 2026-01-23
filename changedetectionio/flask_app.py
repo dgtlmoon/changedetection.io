@@ -550,6 +550,105 @@ def changedetection_app(config=None, datastore_o=None):
         # Otherwise just go to watchlist
         return redirect(url_for('watchlist.index'))
 
+    # User Management Routes (Admin Only)
+    @app.route('/users')
+    @login_optionally_required
+    def user_management():
+        """User management page - admin only."""
+        # Check if user is admin (has is_admin method from FlaskUser)
+        if not hasattr(flask_login.current_user, 'is_admin') or not flask_login.current_user.is_admin():
+            flash(gettext('Admin access required'), 'error')
+            return redirect(url_for('watchlist.index'))
+
+        import asyncio
+        from tasks.auth import get_auth_service
+
+        auth = get_auth_service()
+
+        # Get all users
+        loop = asyncio.new_event_loop()
+        try:
+            loop.run_until_complete(auth.initialize())
+            users = loop.run_until_complete(auth.get_all_users())
+        finally:
+            loop.close()
+
+        return render_template(
+            'user_management.html',
+            users=users,
+            current_user_id=str(flask_login.current_user.id) if hasattr(flask_login.current_user, 'id') else None,
+        )
+
+    @app.route('/users/create', methods=['POST'])
+    @login_optionally_required
+    def create_user():
+        """Create a new user - admin only."""
+        if not hasattr(flask_login.current_user, 'is_admin') or not flask_login.current_user.is_admin():
+            flash(gettext('Admin access required'), 'error')
+            return redirect(url_for('watchlist.index'))
+
+        import asyncio
+        from tasks.auth import get_auth_service
+
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
+        role = request.form.get('role', 'viewer')
+
+        if not email or not password:
+            flash(gettext('Email and password are required'), 'error')
+            return redirect(url_for('user_management'))
+
+        auth = get_auth_service()
+
+        loop = asyncio.new_event_loop()
+        try:
+            loop.run_until_complete(auth.initialize())
+            result = loop.run_until_complete(auth.register_user(
+                email=email,
+                password=password,
+                role=role,
+                admin_user=flask_login.current_user,
+            ))
+        finally:
+            loop.close()
+
+        if result['success']:
+            flash(gettext('User created successfully'), 'success')
+        else:
+            flash(result.get('error', gettext('Failed to create user')), 'error')
+
+        return redirect(url_for('user_management'))
+
+    @app.route('/users/<user_id>/delete', methods=['POST'])
+    @login_optionally_required
+    def delete_user(user_id):
+        """Delete a user - admin only."""
+        if not hasattr(flask_login.current_user, 'is_admin') or not flask_login.current_user.is_admin():
+            flash(gettext('Admin access required'), 'error')
+            return redirect(url_for('watchlist.index'))
+
+        import asyncio
+        from tasks.auth import get_auth_service
+
+        auth = get_auth_service()
+
+        loop = asyncio.new_event_loop()
+        try:
+            loop.run_until_complete(auth.initialize())
+            result = loop.run_until_complete(auth.delete_user(
+                user_id=user_id,
+                admin_user=flask_login.current_user,
+            ))
+        finally:
+            loop.close()
+
+        if result['success']:
+            flash(gettext('User deleted successfully'), 'success')
+        else:
+            flash(result.get('error', gettext('Failed to delete user')), 'error')
+
+        return redirect(url_for('user_management'))
+
     @app.route('/set-language/<locale>')
     def set_language(locale):
         """Set the user's preferred language in the session"""
@@ -584,6 +683,9 @@ def changedetection_app(config=None, datastore_o=None):
     # You can divide up the stuff like this
     @app.route('/login', methods=['GET', 'POST'])
     def login():
+        import asyncio
+        from tasks.auth import get_auth_service, FlaskUser
+
         # Extract and validate the redirect parameter
         redirect_url = request.args.get('redirect') or request.form.get('redirect')
 
@@ -593,29 +695,92 @@ def changedetection_app(config=None, datastore_o=None):
         else:
             validated_redirect = url_for('watchlist.index')
 
+        error_message = None
+        is_rate_limited = False
+        email = ''
+
         if request.method == 'GET':
             if flask_login.current_user.is_authenticated:
                 # Already logged in - redirect immediately to the target
                 flash(gettext("Already logged in"))
                 return redirect(validated_redirect)
-            flash(gettext("You must be logged in, please log in."), 'error')
-            output = render_template("login.html", redirect_url=validated_redirect)
-            return output
+            # Don't show "must be logged in" message on GET - just show the form
+            return render_template("login.html", redirect_url=validated_redirect)
 
-        user = User()
-        user.id = "defaultuser@changedetection.io"
+        # POST - handle login attempt
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
 
-        password = request.form.get('password')
+        if not email or not password:
+            error_message = gettext('Email and password are required')
+            return render_template(
+                "login.html",
+                redirect_url=validated_redirect,
+                error_message=error_message,
+                email=email,
+            )
 
-        if (user.check_password(password)):
-            flask_login.login_user(user, remember=True)
-            # Redirect to the validated URL after successful login
+        # Try new multi-user auth system first
+        auth = get_auth_service()
+
+        # Get client IP for rate limiting
+        forwarded = request.headers.get('X-Forwarded-For')
+        if forwarded:
+            client_ip = forwarded.split(',')[0].strip()
+        else:
+            client_ip = request.remote_addr or 'unknown'
+
+        loop = asyncio.new_event_loop()
+        try:
+            loop.run_until_complete(auth.initialize())
+            result = loop.run_until_complete(auth.login(
+                email=email,
+                password=password,
+                client_ip=client_ip,
+            ))
+        finally:
+            loop.close()
+
+        if result.get('rate_limited'):
+            error_message = gettext('Too many login attempts. Please wait before trying again.')
+            is_rate_limited = True
+            return render_template(
+                "login.html",
+                redirect_url=validated_redirect,
+                error_message=error_message,
+                is_rate_limited=is_rate_limited,
+                email=email,
+            )
+
+        if result['success']:
+            # Get full user for Flask-Login session
+            loop = asyncio.new_event_loop()
+            try:
+                user = loop.run_until_complete(auth.get_user_for_login(email))
+            finally:
+                loop.close()
+
+            if user:
+                flask_user = FlaskUser(user)
+                flask_login.login_user(flask_user, remember=True)
+                return redirect(validated_redirect)
+
+        # Login failed - try legacy single-user mode for backward compatibility
+        legacy_user = User()
+        legacy_user.id = "defaultuser@changedetection.io"
+
+        if legacy_user.check_password(password):
+            flask_login.login_user(legacy_user, remember=True)
             return redirect(validated_redirect)
 
-        else:
-            flash(gettext('Incorrect password'), 'error')
-
-        return redirect(url_for('login', redirect=redirect_url if redirect_url else None))
+        # All authentication methods failed
+        error_message = gettext('Invalid email or password')
+        return render_template(
+            "login.html",
+            redirect_url=validated_redirect,
+            error_message=error_message,
+            email=email,
+        )
 
     @app.before_request
     def before_request_handle_cookie_x_settings():

@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="box">
+    <div class="edit-form">
+        <div class="inner">
+            <h1>{{ _('User Management') }}</h1>
+
+            {% if error_message %}
+            <div class="alert alert-error">
+                {{ error_message }}
+            </div>
+            {% endif %}
+
+            {% if success_message %}
+            <div class="alert alert-success">
+                {{ success_message }}
+            </div>
+            {% endif %}
+
+            <!-- Create User Form -->
+            <div class="user-form-section">
+                <h2>{{ _('Create New User') }}</h2>
+                <form class="pure-form pure-form-stacked" method="POST" action="{{ url_for('create_user') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <fieldset>
+                        <div class="pure-control-group">
+                            <label for="new_email">{{ _('Email') }}</label>
+                            <input type="email" id="new_email" name="email" required
+                                   placeholder="{{ _('user@example.com') }}" />
+                        </div>
+                        <div class="pure-control-group">
+                            <label for="new_password">{{ _('Password') }}</label>
+                            <input type="password" id="new_password" name="password" required
+                                   minlength="8" placeholder="{{ _('Minimum 8 characters') }}" />
+                        </div>
+                        <div class="pure-control-group">
+                            <label for="new_role">{{ _('Role') }}</label>
+                            <select id="new_role" name="role">
+                                <option value="viewer">{{ _('Viewer') }}</option>
+                                <option value="admin">{{ _('Admin') }}</option>
+                            </select>
+                        </div>
+                        <div class="pure-control-group">
+                            <button type="submit" class="pure-button pure-button-primary">
+                                {{ _('Create User') }}
+                            </button>
+                        </div>
+                    </fieldset>
+                </form>
+            </div>
+
+            <!-- User List -->
+            <div class="user-list-section">
+                <h2>{{ _('All Users') }}</h2>
+                <table class="pure-table pure-table-striped user-table">
+                    <thead>
+                        <tr>
+                            <th>{{ _('Email') }}</th>
+                            <th>{{ _('Role') }}</th>
+                            <th>{{ _('Status') }}</th>
+                            <th>{{ _('Created') }}</th>
+                            <th>{{ _('Last Login') }}</th>
+                            <th>{{ _('Actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr class="{% if user.id == current_user_id %}current-user-row{% endif %}">
+                            <td>
+                                {{ user.email }}
+                                {% if user.id == current_user_id %}
+                                <span class="badge badge-you">{{ _('You') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge badge-role badge-{{ user.role }}">
+                                    {{ user.role|capitalize }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if user.is_active %}
+                                <span class="badge badge-active">{{ _('Active') }}</span>
+                                {% else %}
+                                <span class="badge badge-inactive">{{ _('Inactive') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.created_at[:10] if user.created_at else '-' }}</td>
+                            <td>{{ user.last_login[:10] if user.last_login else _('Never') }}</td>
+                            <td class="actions-cell">
+                                {% if user.id != current_user_id %}
+                                <form method="POST" action="{{ url_for('delete_user', user_id=user.id) }}"
+                                      class="delete-user-form"
+                                      onsubmit="return confirm('{{ _('Are you sure you want to delete this user?') }}');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="pure-button button-error button-small">
+                                        {{ _('Delete') }}
+                                    </button>
+                                </form>
+                                {% else %}
+                                <span class="no-delete-hint">{{ _('Cannot delete yourself') }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="empty-state">{{ _('No users found') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* User Management Page Styles */
+.user-form-section {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--color-border-table-cell);
+}
+
+.user-form-section h2,
+.user-list-section h2 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    color: var(--color-text);
+}
+
+.user-table {
+    width: 100%;
+    font-size: 0.9rem;
+}
+
+.user-table th,
+.user-table td {
+    padding: 0.75rem;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.current-user-row {
+    background-color: rgba(27, 152, 248, 0.1) !important;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge-you {
+    background: var(--color-link);
+    color: #fff;
+    margin-left: 0.5rem;
+}
+
+.badge-role {
+    color: #fff;
+}
+
+.badge-admin {
+    background: #8b5cf6;
+}
+
+.badge-viewer {
+    background: #6b7280;
+}
+
+.badge-active {
+    background: #10b981;
+    color: #fff;
+}
+
+.badge-inactive {
+    background: #ef4444;
+    color: #fff;
+}
+
+.actions-cell {
+    white-space: nowrap;
+}
+
+.delete-user-form {
+    display: inline;
+}
+
+.no-delete-hint {
+    color: var(--color-grey-500);
+    font-size: 0.8rem;
+    font-style: italic;
+}
+
+.empty-state {
+    text-align: center;
+    color: var(--color-grey-500);
+    padding: 2rem !important;
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+
+.alert-error {
+    background: #fee;
+    border: 1px solid #ef4444;
+    color: #991b1b;
+}
+
+.alert-success {
+    background: #f0fdf4;
+    border: 1px solid #10b981;
+    color: #166534;
+}
+
+/* Dark mode */
+html[data-darkmode="true"] .alert-error {
+    background: #4a1d1d;
+    color: #fca5a5;
+}
+
+html[data-darkmode="true"] .alert-success {
+    background: #1a3a2a;
+    color: #86efac;
+}
+
+html[data-darkmode="true"] .current-user-row {
+    background-color: rgba(89, 189, 251, 0.15) !important;
+}
+
+/* Mobile responsive */
+@media only screen and (max-width: 768px) {
+    .user-table {
+        display: block;
+        overflow-x: auto;
+    }
+
+    .user-table th:nth-child(4),
+    .user-table td:nth-child(4),
+    .user-table th:nth-child(5),
+    .user-table td:nth-child(5) {
+        display: none;
+    }
+}
+</style>
+{% endblock %}

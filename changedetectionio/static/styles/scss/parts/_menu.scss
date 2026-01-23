@@ -48,3 +48,33 @@
     display: inline-block;
   }
 }
+
+// Current user indicator in navigation
+.user-indicator {
+  .current-user-email {
+    display: inline-block;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.8rem;
+    color: var(--color-text-menu-link);
+    background: var(--color-background-tab);
+    border-radius: 4px;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+}
+
+// Mobile adjustments for user indicator
+@media only screen and (max-width: 980px) {
+  .user-indicator {
+    .current-user-email {
+      max-width: 100%;
+      display: block;
+      padding: 0.5rem 1rem;
+      border-radius: 0;
+      background: transparent;
+    }
+  }
+}

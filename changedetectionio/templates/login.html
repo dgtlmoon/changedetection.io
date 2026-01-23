@@ -3,18 +3,31 @@
 {% block content %}
 <div class="login-form">
  <div class="inner">
+    <h2 class="login-title">{{ _('Sign In') }}</h2>
+    {% if error_message %}
+    <div class="login-error {% if is_rate_limited %}rate-limited{% endif %}">
+        {% if is_rate_limited %}
+        <span class="error-icon">&#9888;</span>
+        {% endif %}
+        {{ error_message }}
+    </div>
+    {% endif %}
     <form class="pure-form pure-form-stacked" action="{{url_for('login')}}" method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" id="redirect" name="redirect" value="{{ redirect_url }}">
         <fieldset>
             <div class="pure-control-group">
-                <label for="password">{{ _('Password') }}</label>
-                <input type="password" id="password" required="" name="password" value=""
-                       size="15" autofocus />
-                <input type="hidden" id="email" name="email" value="defaultuser@changedetection.io" >
+                <label for="email">{{ _('Email') }}</label>
+                <input type="email" id="email" required name="email" value="{{ email|default('', true) }}"
+                       placeholder="{{ _('Enter your email') }}" autocomplete="email" autofocus />
             </div>
             <div class="pure-control-group">
-                <button type="submit" class="pure-button pure-button-primary">{{ _('Login') }}</button>
+                <label for="password">{{ _('Password') }}</label>
+                <input type="password" id="password" required name="password" value=""
+                       placeholder="{{ _('Enter your password') }}" autocomplete="current-password" />
+            </div>
+            <div class="pure-control-group">
+                <button type="submit" class="pure-button pure-button-primary">{{ _('Sign In') }}</button>
             </div>
         </fieldset>
     </form>

@@ -26,6 +26,14 @@
     </li>
 {% endif %}
 {%- if current_user.is_authenticated -%}
+    {% if current_user.is_admin is defined and current_user.is_admin() %}
+    <li class="pure-menu-item menu-collapsible {% if request.endpoint == 'user_management' %}active{% endif %}">
+        <a href="{{ url_for('user_management') }}" class="pure-menu-link">{{ _('USERS') }}</a>
+    </li>
+    {% endif %}
+    <li class="pure-menu-item menu-collapsible user-indicator">
+        <span class="current-user-email" title="{{ current_user.email }}">{{ current_user.email }}</span>
+    </li>
     <li class="pure-menu-item menu-collapsible">
         <a href="{{ url_for('logout', redirect=request.path) }}" class="pure-menu-link">{{ _('LOG OUT') }}</a>
     </li>

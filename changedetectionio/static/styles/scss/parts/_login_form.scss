@@ -56,6 +56,36 @@
     letter-spacing: 0.01em;
   }
 
+  .login-title {
+    text-align: center;
+    margin: 0 0 2rem 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+
+  .login-error {
+    background: #fee;
+    border: 2px solid #ef4444;
+    color: #991b1b;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+
+    &.rate-limited {
+      background: #fff7ed;
+      border-color: #f59e0b;
+      color: #92400e;
+    }
+
+    .error-icon {
+      margin-right: 0.5rem;
+    }
+  }
+
+  input[type="email"],
   input[type="password"] {
     width: 100%;
     padding: 0.875rem 1rem;
@@ -175,11 +205,24 @@ html[data-darkmode="true"] {
       }
     }
 
+    input[type="email"],
     input[type="password"] {
       border-color: var(--color-grey-400);
 
       &:focus {
         border-color: var(--color-link);
+      }
+    }
+
+    .login-error {
+      background: #4a1d1d;
+      border-color: #ef4444;
+      color: #fca5a5;
+
+      &.rate-limited {
+        background: #4a3728;
+        border-color: #f59e0b;
+        color: #fcd34d;
       }
     }
   }
