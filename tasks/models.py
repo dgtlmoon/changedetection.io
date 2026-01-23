@@ -980,6 +980,44 @@ class PriceHistory(Base):
         )
         return result.scalar_one_or_none()
 
+    @classmethod
+    async def cleanup_old_records(
+        cls, session: AsyncSession, retention_days: int = 90
+    ) -> int:
+        """
+        Delete price history records older than retention_days.
+
+        Args:
+            session: Database session
+            retention_days: Number of days to retain history (default: 90)
+
+        Returns:
+            Number of records deleted
+        """
+        from datetime import timedelta
+
+        cutoff_date = datetime.now() - timedelta(days=retention_days)
+
+        # Count records to delete for return value
+        count_result = await session.execute(
+            select(func.count(cls.id)).where(cls.recorded_at < cutoff_date)
+        )
+        count = count_result.scalar() or 0
+
+        # Delete old records
+        from sqlalchemy import delete as sa_delete
+
+        await session.execute(sa_delete(cls).where(cls.recorded_at < cutoff_date))
+        await session.commit()
+
+        return count
+
+    @classmethod
+    async def get_history_count(cls, session: AsyncSession) -> int:
+        """Get total count of price history records"""
+        result = await session.execute(select(func.count(cls.id)))
+        return result.scalar() or 0
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         return {

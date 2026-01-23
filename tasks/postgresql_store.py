@@ -1099,6 +1099,82 @@ class PostgreSQLStore:
             }
 
     # -------------------------------------------------------------------------
+    # Price History Operations (US-009)
+    # -------------------------------------------------------------------------
+
+    async def get_price_history(
+        self,
+        event_uuid: str,
+        limit: int = 100,
+        ticket_type: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """
+        Get price history for an event.
+
+        Args:
+            event_uuid: UUID of the event
+            limit: Maximum number of records to return (default: 100)
+            ticket_type: Optional filter by ticket type
+
+        Returns:
+            List of price history records as dicts, most recent first
+        """
+        async with self.session() as session:
+            try:
+                event_id = uuid_builder.UUID(event_uuid)
+            except ValueError:
+                logger.error(f"Invalid event UUID: {event_uuid}")
+                return []
+
+            from sqlalchemy import select as sa_select
+
+            query = sa_select(PriceHistory).where(PriceHistory.event_id == event_id)
+
+            if ticket_type:
+                query = query.where(PriceHistory.ticket_type == ticket_type)
+
+            query = query.order_by(PriceHistory.recorded_at.desc()).limit(limit)
+
+            result = await session.execute(query)
+            records = result.scalars().all()
+
+            return [record.to_dict() for record in records]
+
+    async def cleanup_old_price_history(
+        self,
+        retention_days: int = 90,
+    ) -> dict[str, int]:
+        """
+        Delete price history records older than retention_days.
+
+        This method should be called periodically by a background job
+        to maintain database size and performance.
+
+        Args:
+            retention_days: Number of days to retain history (default: 90)
+
+        Returns:
+            Dict with 'deleted_count' indicating how many records were removed
+        """
+        async with self.session() as session:
+            deleted_count = await PriceHistory.cleanup_old_records(
+                session, retention_days=retention_days
+            )
+            logger.info(f"Price history cleanup: deleted {deleted_count} records older than {retention_days} days")
+            return {'deleted_count': deleted_count}
+
+    async def get_price_history_stats(self) -> dict[str, Any]:
+        """
+        Get statistics about price history storage.
+
+        Returns:
+            Dict with total_records count
+        """
+        async with self.session() as session:
+            count = await PriceHistory.get_history_count(session)
+            return {'total_records': count}
+
+    # -------------------------------------------------------------------------
     # Search and Query Operations
     # -------------------------------------------------------------------------
 
