@@ -6,19 +6,20 @@ __version__ = '0.52.9'
 
 from changedetectionio.strtobool import strtobool
 from json.decoder import JSONDecodeError
+
+from loguru import logger
+import getopt
 import logging
 import os
-import getopt
 import platform
 import signal
-
-import sys
+import threading
+import time
 
 # Eventlet completely removed - using threading mode for SocketIO
 # This provides better Python 3.12+ compatibility and eliminates eventlet/asyncio conflicts
-from changedetectionio import store
-from changedetectionio.flask_app import changedetection_app
-from loguru import logger
+# Note: store and changedetection_app are imported inside main() to avoid
+# initialization before argument parsing (allows --help to work without loading everything)
 
 # ==============================================================================
 # Multiprocessing Configuration - CRITICAL for Thread Safety
@@ -136,10 +137,47 @@ def main():
     global datastore
     global app
 
+    # Early help/version check before any initialization
+    if '--help' in sys.argv or '-help' in sys.argv:
+        print('Usage: changedetection.py [options]')
+        print('')
+        print('Standard options:')
+        print('  -s                SSL enable')
+        print('  -h HOST           Listen host (default: 0.0.0.0)')
+        print('  -p PORT           Listen port (default: 5000)')
+        print('  -d PATH           Datastore path')
+        print('  -l LEVEL          Log level (TRACE, DEBUG, INFO, SUCCESS, WARNING, ERROR, CRITICAL)')
+        print('  -c                Cleanup unused snapshots')
+        print('  -C                Create datastore directory if it doesn\'t exist')
+        print('')
+        print('Add URLs on startup:')
+        print('  -u URL            Add URL to watch (can be used multiple times)')
+        print('  -u0 \'JSON\'        Set options for first -u URL (e.g. \'{"processor":"text_json_diff"}\')')
+        print('  -u1 \'JSON\'        Set options for second -u URL (0-indexed)')
+        print('  -u2 \'JSON\'        Set options for third -u URL, etc.')
+        print('                    Available options: processor, fetch_backend, headers, method, etc.')
+        print('                    See model/Watch.py for all available options')
+        print('')
+        print('Recheck on startup:')
+        print('  -r all            Queue all watches for recheck on startup')
+        print('  -r UUID,...       Queue specific watches (comma-separated UUIDs)')
+        print('')
+        print('Batch mode:')
+        print('  -b                Run in batch mode (process queue then exit)')
+        print('                    Useful for CI/CD, cron jobs, or one-time checks')
+        print('')
+        sys.exit(0)
+
+    if '--version' in sys.argv or '-v' in sys.argv:
+        print(f'changedetection.io {__version__}')
+        sys.exit(0)
+
+    # Import heavy modules after help/version checks to keep startup fast for those flags
+    from changedetectionio import store
+    from changedetectionio.flask_app import changedetection_app
+
     datastore_path = None
     do_cleanup = False
-    # Optional URL to watch since start
-    default_url = None
     # Set a default logger level
     logger_level = 'DEBUG'
     include_default_watches = True
@@ -147,6 +185,12 @@ def main():
     host = os.environ.get("LISTEN_HOST", "0.0.0.0").strip()
     port = int(os.environ.get('PORT', 5000))
     ssl_mode = False
+
+    # Lists for multiple URLs and their options
+    urls_to_add = []
+    url_options = {}  # Key: index (0-based), Value: dict of options
+    recheck_watches = None  # None, 'all', or list of UUIDs
+    batch_mode = False  # Run once then exit when queue is empty
 
     # On Windows, create and use a default path.
     if os.name == 'nt':
@@ -156,10 +200,85 @@ def main():
         # Must be absolute so that send_from_directory doesnt try to make it relative to backend/
         datastore_path = os.path.join(os.getcwd(), "../datastore")
 
+    # Pre-process arguments to extract -u, -u<N>, and -r options before getopt
+    # This allows unlimited -u0, -u1, -u2, ... options without predefining them
+    cleaned_argv = ['changedetection.py']  # Start with program name
+    i = 1
+    while i < len(sys.argv):
+        arg = sys.argv[i]
+
+        # Handle -u (add URL)
+        if arg == '-u' and i + 1 < len(sys.argv):
+            urls_to_add.append(sys.argv[i + 1])
+            i += 2
+            continue
+
+        # Handle -u<N> (set options for URL at index N)
+        if arg.startswith('-u') and len(arg) > 2 and arg[2:].isdigit():
+            idx = int(arg[2:])
+            if i + 1 < len(sys.argv):
+                try:
+                    import json
+                    url_options[idx] = json.loads(sys.argv[i + 1])
+                except json.JSONDecodeError as e:
+                    print(f'Error: Invalid JSON for {arg}: {sys.argv[i + 1]}')
+                    print(f'JSON decode error: {e}')
+                    sys.exit(2)
+                i += 2
+                continue
+
+        # Handle -r (recheck watches)
+        if arg == '-r' and i + 1 < len(sys.argv):
+            recheck_arg = sys.argv[i + 1]
+            if recheck_arg.lower() == 'all':
+                recheck_watches = 'all'
+            else:
+                # Parse comma-separated list of UUIDs
+                recheck_watches = [uuid.strip() for uuid in recheck_arg.split(',') if uuid.strip()]
+            i += 2
+            continue
+
+        # Handle -b (batch mode - run once and exit)
+        if arg == '-b':
+            batch_mode = True
+            i += 1
+            continue
+
+        # Keep other arguments for getopt
+        cleaned_argv.append(arg)
+        i += 1
+
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "6Ccsd:h:p:l:u:", "port")
-    except getopt.GetoptError:
-        print('backend.py -s SSL enable -h [host] -p [port] -d [datastore path] -u [default URL to watch] -l [debug level - TRACE, DEBUG(default), INFO, SUCCESS, WARNING, ERROR, CRITICAL]')
+        opts, args = getopt.getopt(cleaned_argv[1:], "6Ccsd:h:p:l:", "port")
+    except getopt.GetoptError as e:
+        print('Usage: changedetection.py [options]')
+        print('')
+        print('Standard options:')
+        print('  -s                SSL enable')
+        print('  -h HOST           Listen host (default: 0.0.0.0)')
+        print('  -p PORT           Listen port (default: 5000)')
+        print('  -d PATH           Datastore path')
+        print('  -l LEVEL          Log level (TRACE, DEBUG, INFO, SUCCESS, WARNING, ERROR, CRITICAL)')
+        print('  -c                Cleanup unused snapshots')
+        print('  -C                Create datastore directory if it doesn\'t exist')
+        print('')
+        print('Add URLs on startup:')
+        print('  -u URL            Add URL to watch (can be used multiple times)')
+        print('  -u0 \'JSON\'        Set options for first -u URL (e.g. \'{"processor":"text_json_diff"}\')')
+        print('  -u1 \'JSON\'        Set options for second -u URL (0-indexed)')
+        print('  -u2 \'JSON\'        Set options for third -u URL, etc.')
+        print('                    Available options: processor, fetch_backend, headers, method, etc.')
+        print('                    See model/Watch.py for all available options')
+        print('')
+        print('Recheck on startup:')
+        print('  -r all            Queue all watches for recheck on startup')
+        print('  -r UUID,...       Queue specific watches (comma-separated UUIDs)')
+        print('')
+        print('Batch mode:')
+        print('  -b                Run in batch mode (process queue then exit)')
+        print('                    Useful for CI/CD, cron jobs, or one-time checks')
+        print('')
+        print(f'Error: {e}')
         sys.exit(2)
 
     create_datastore_dir = False
@@ -184,10 +303,6 @@ def main():
         if opt == '-d':
             datastore_path = arg
 
-        if opt == '-u':
-            default_url = arg
-            include_default_watches = False
-
         # Cleanup (remove text files that arent in the index)
         if opt == '-c':
             do_cleanup = True
@@ -198,6 +313,10 @@ def main():
 
         if opt == '-l':
             logger_level = int(arg) if arg.isdigit() else arg.upper()
+
+    # If URLs are provided, don't include default watches
+    if urls_to_add:
+        include_default_watches = False
 
 
     logger.success(f"changedetection.io version {get_version()} starting.")
@@ -239,7 +358,7 @@ def main():
 
     if not os.path.isdir(app_config['datastore_path']):
         if create_datastore_dir:
-            os.mkdir(app_config['datastore_path'])
+            os.makedirs(app_config['datastore_path'], exist_ok=True)
         else:
             logger.critical(
                 f"ERROR: Directory path for the datastore '{app_config['datastore_path']}'"
@@ -260,10 +379,125 @@ def main():
     from changedetectionio.pluggy_interface import inject_datastore_into_plugins
     inject_datastore_into_plugins(datastore)
 
-    if default_url:
-        datastore.add_watch(url = default_url)
+    # Step 1: Add URLs with their options (if provided via -u flags)
+    added_watch_uuids = []
+    if urls_to_add:
+        logger.info(f"Adding {len(urls_to_add)} URL(s) from command line")
+        for idx, url in enumerate(urls_to_add):
+            extras = url_options.get(idx, {})
+            if extras:
+                logger.debug(f"Adding watch {idx}: {url} with options: {extras}")
+            else:
+                logger.debug(f"Adding watch {idx}: {url}")
+
+            new_uuid = datastore.add_watch(url=url, extras=extras)
+            if new_uuid:
+                added_watch_uuids.append(new_uuid)
+                logger.success(f"Added watch: {url} (UUID: {new_uuid})")
+            else:
+                logger.error(f"Failed to add watch: {url}")
 
     app = changedetection_app(app_config, datastore)
+
+    # Step 2: Queue newly added watches (if -u was provided in batch mode)
+    # This must happen AFTER app initialization so update_q is available
+    if batch_mode and added_watch_uuids:
+        from changedetectionio.flask_app import update_q
+        from changedetectionio import queuedWatchMetaData, worker_handler
+
+        logger.info(f"Batch mode: Queuing {len(added_watch_uuids)} newly added watches")
+        for watch_uuid in added_watch_uuids:
+            try:
+                worker_handler.queue_item_async_safe(
+                    update_q,
+                    queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid})
+                )
+                logger.debug(f"Queued newly added watch: {watch_uuid}")
+            except Exception as e:
+                logger.error(f"Failed to queue watch {watch_uuid}: {e}")
+
+    # Step 3: Queue watches for recheck (if -r was provided)
+    # This must happen AFTER app initialization so update_q is available
+    if recheck_watches is not None:
+        from changedetectionio.flask_app import update_q
+        from changedetectionio import queuedWatchMetaData, worker_handler
+
+        watches_to_queue = []
+        if recheck_watches == 'all':
+            # Queue all watches
+            watches_to_queue = list(datastore.data['watching'].keys())
+            logger.info(f"Queuing all {len(watches_to_queue)} watches for recheck")
+        else:
+            # Queue specific UUIDs
+            watches_to_queue = recheck_watches
+            logger.info(f"Queuing {len(watches_to_queue)} specific watches for recheck")
+
+        queued_count = 0
+        for watch_uuid in watches_to_queue:
+            if watch_uuid in datastore.data['watching']:
+                try:
+                    worker_handler.queue_item_async_safe(
+                        update_q,
+                        queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid})
+                    )
+                    queued_count += 1
+                    logger.debug(f"Queued watch for recheck: {watch_uuid}")
+                except Exception as e:
+                    logger.error(f"Failed to queue watch {watch_uuid}: {e}")
+            else:
+                logger.warning(f"Watch UUID not found in datastore: {watch_uuid}")
+
+        logger.success(f"Successfully queued {queued_count} watches for recheck")
+
+    # Step 4: Setup batch mode monitor (if -b was provided)
+    if batch_mode:
+        from changedetectionio.flask_app import update_q
+
+        def batch_mode_monitor():
+            """Monitor queue and workers, shutdown when all work is complete"""
+            import time
+
+            logger.info("Batch mode: Waiting for all queued items to complete...")
+
+            # Wait a bit for workers to start processing
+            time.sleep(3)
+
+            idle_start = None
+            idle_threshold = 3  # Seconds to wait after queue is empty
+
+            while True:
+                try:
+                    queue_size = update_q.qsize()
+                    running_uuids = worker_handler.get_running_uuids()
+                    running_count = len(running_uuids)
+
+                    logger.info(f"Batch mode: Queue size: {queue_size}, Running workers: {running_count}, Running UUIDs: {running_uuids}")
+
+                    if queue_size == 0 and running_count == 0:
+                        if idle_start is None:
+                            idle_start = time.time()
+                            logger.info(f"Batch mode: Queue empty and workers idle, waiting {idle_threshold}s before shutdown...")
+                        elif time.time() - idle_start >= idle_threshold:
+                            logger.success("Batch mode: All work completed, initiating shutdown")
+                            # Trigger shutdown
+                            import os, signal
+                            os.kill(os.getpid(), signal.SIGTERM)
+                            return
+                    else:
+                        if idle_start is not None:
+                            logger.info(f"Batch mode: Activity detected (queue: {queue_size}, running: {running_count})")
+                        idle_start = None
+
+                    time.sleep(2)
+
+                except Exception as e:
+                    logger.error(f"Batch mode monitor error: {e}")
+                    time.sleep(2)
+
+        # Start monitor in background thread
+        monitor_thread = threading.Thread(target=batch_mode_monitor, daemon=True, name="BatchModeMonitor")
+        monitor_thread.start()
+        logger.info("Batch mode enabled: Will exit after all queued items are processed")
 
     # Get the SocketIO instance from the Flask app (created in flask_app.py)
     from changedetectionio.flask_app import socketio_server
@@ -325,20 +559,33 @@ def main():
         app.wsgi_app = ProxyFix(app.wsgi_app, x_prefix=1, x_host=1)
 
 
-    # SocketIO instance is already initialized in flask_app.py
-    if socketio_server:
-        if ssl_mode:
-            logger.success(f"SSL mode enabled, attempting to start with '{ssl_cert_file}' and '{ssl_privkey_file}' in {os.getcwd()}")
-            socketio.run(app, host=host, port=int(port), debug=False,
-                         ssl_context=(ssl_cert_file, ssl_privkey_file), allow_unsafe_werkzeug=True)
-        else:
-            socketio.run(app, host=host, port=int(port), debug=False, allow_unsafe_werkzeug=True)
+    # In batch mode, skip starting the HTTP server - just keep workers running
+    if batch_mode:
+        logger.info("Batch mode: Skipping HTTP server startup, workers will process queue")
+        logger.info("Batch mode: Main thread will wait for shutdown signal")
+        # Keep main thread alive until batch monitor triggers shutdown
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            logger.info("Batch mode: Keyboard interrupt received")
+            pass
     else:
-        # Run Flask app without Socket.IO if disabled
-        logger.info("Starting Flask app without Socket.IO server")
-        if ssl_mode:
-            logger.success(f"SSL mode enabled, attempting to start with '{ssl_cert_file}' and '{ssl_privkey_file}' in {os.getcwd()}")
-            app.run(host=host, port=int(port), debug=False,
-                    ssl_context=(ssl_cert_file, ssl_privkey_file))
+        # Normal mode: Start HTTP server
+        # SocketIO instance is already initialized in flask_app.py
+        if socketio_server:
+            if ssl_mode:
+                logger.success(f"SSL mode enabled, attempting to start with '{ssl_cert_file}' and '{ssl_privkey_file}' in {os.getcwd()}")
+                socketio.run(app, host=host, port=int(port), debug=False,
+                             ssl_context=(ssl_cert_file, ssl_privkey_file), allow_unsafe_werkzeug=True)
+            else:
+                socketio.run(app, host=host, port=int(port), debug=False, allow_unsafe_werkzeug=True)
         else:
-            app.run(host=host, port=int(port), debug=False)
+            # Run Flask app without Socket.IO if disabled
+            logger.info("Starting Flask app without Socket.IO server")
+            if ssl_mode:
+                logger.success(f"SSL mode enabled, attempting to start with '{ssl_cert_file}' and '{ssl_privkey_file}' in {os.getcwd()}")
+                app.run(host=host, port=int(port), debug=False,
+                        ssl_context=(ssl_cert_file, ssl_privkey_file))
+            else:
+                app.run(host=host, port=int(port), debug=False)
