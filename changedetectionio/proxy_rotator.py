@@ -5,19 +5,34 @@ This module provides per-request proxy rotation functionality for the TicketWatc
 ticket monitoring platform. It supports loading proxies from files or environment
 variables, and supports separate pools for residential and datacenter proxies.
 
+Features:
+- Load proxies from environment variables or files
+- Separate residential and datacenter proxy pools
+- Round-robin and random proxy selection
+- Dead proxy detection and automatic skipping
+- Proxy recovery after configurable timeout period
+- Comprehensive logging of proxy usage and failures
+
 Usage:
     from changedetectionio.proxy_rotator import ProxyRotator
 
     rotator = ProxyRotator()
     proxy_url = rotator.get_next_proxy()  # Returns next proxy in rotation
+
+    # Report proxy failures for dead detection
+    rotator.report_proxy_failure(proxy_url)
+
+    # Report successes to reset failure counters
+    rotator.report_proxy_success(proxy_url)
 """
 
 import os
 import random
 import threading
-from typing import Optional, List, Dict, Any
+import time
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any, Optional
 
 # Try to import loguru, fall back to standard logging if not available
 try:
@@ -35,45 +50,161 @@ class ProxyType(Enum):
     MIXED = "mixed"  # For combined pools
 
 
+class ProxyHealth(Enum):
+    """Health status of a proxy."""
+    HEALTHY = "healthy"
+    DEAD = "dead"
+
+
+# Default recovery timeout in seconds (5 minutes)
+DEFAULT_RECOVERY_TIMEOUT = 300
+
+
 @dataclass
 class Proxy:
-    """Represents a single proxy configuration."""
+    """Represents a single proxy configuration with health tracking."""
     url: str
     proxy_type: ProxyType = ProxyType.MIXED
     label: str = ""
+    health: ProxyHealth = ProxyHealth.HEALTHY
+    failure_count: int = 0
+    last_failure_time: float = 0.0
+    consecutive_failures: int = 0
 
     def __post_init__(self):
         if not self.label:
             self.label = self.url.split('@')[-1] if '@' in self.url else self.url
 
+    def mark_failed(self):
+        """Mark this proxy as having failed a request."""
+        self.failure_count += 1
+        self.consecutive_failures += 1
+        self.last_failure_time = time.time()
+        logger.debug(
+            f"Proxy failure: {self.label} "
+            f"(consecutive: {self.consecutive_failures}, total: {self.failure_count})"
+        )
+
+    def mark_success(self):
+        """Mark this proxy as having succeeded. Resets consecutive failure count."""
+        self.consecutive_failures = 0
+        self.health = ProxyHealth.HEALTHY
+
+    def mark_dead(self):
+        """Mark this proxy as dead (should be skipped in rotation)."""
+        self.health = ProxyHealth.DEAD
+        self.last_failure_time = time.time()
+        logger.warning(f"Proxy marked as dead: {self.label}")
+
+    def is_healthy(self, recovery_timeout: float = DEFAULT_RECOVERY_TIMEOUT) -> bool:
+        """
+        Check if proxy is healthy and can be used.
+
+        Dead proxies can recover after the recovery timeout period.
+
+        Args:
+            recovery_timeout: Seconds after which a dead proxy can be retried
+
+        Returns:
+            True if proxy is healthy or has recovered, False otherwise
+        """
+        if self.health == ProxyHealth.HEALTHY:
+            return True
+
+        # Check if proxy can recover (enough time has passed)
+        if self.health == ProxyHealth.DEAD:
+            time_since_failure = time.time() - self.last_failure_time
+            if time_since_failure >= recovery_timeout:
+                logger.info(f"Proxy recovered after timeout: {self.label}")
+                self.health = ProxyHealth.HEALTHY
+                self.consecutive_failures = 0
+                return True
+
+        return False
+
 
 @dataclass
 class ProxyPool:
-    """A pool of proxies with rotation support."""
+    """A pool of proxies with rotation support and health tracking."""
     name: str
-    proxies: List[Proxy] = field(default_factory=list)
+    proxies: list = field(default_factory=list)
     current_index: int = 0
+    recovery_timeout: float = DEFAULT_RECOVERY_TIMEOUT
     _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     def add_proxy(self, proxy: Proxy):
         """Add a proxy to the pool."""
         self.proxies.append(proxy)
 
-    def get_next(self) -> Optional[Proxy]:
-        """Get the next proxy in round-robin rotation (thread-safe)."""
+    def get_next(self, skip_dead: bool = True) -> Optional[Proxy]:
+        """
+        Get the next proxy in round-robin rotation (thread-safe).
+
+        Args:
+            skip_dead: If True, skip proxies marked as dead (unless recovered)
+
+        Returns:
+            Next healthy proxy, or None if no healthy proxies available
+        """
         if not self.proxies:
             return None
 
         with self._lock:
-            proxy = self.proxies[self.current_index]
-            self.current_index = (self.current_index + 1) % len(self.proxies)
-            return proxy
+            if not skip_dead:
+                proxy = self.proxies[self.current_index]
+                self.current_index = (self.current_index + 1) % len(self.proxies)
+                return proxy
 
-    def get_random(self) -> Optional[Proxy]:
-        """Get a random proxy from the pool."""
+            # Try to find a healthy proxy, checking at most len(proxies) times
+            for _ in range(len(self.proxies)):
+                proxy = self.proxies[self.current_index]
+                self.current_index = (self.current_index + 1) % len(self.proxies)
+
+                if proxy.is_healthy(self.recovery_timeout):
+                    return proxy
+
+            # No healthy proxies found - return None
+            logger.warning(f"No healthy proxies available in {self.name} pool")
+            return None
+
+    def get_random(self, skip_dead: bool = True) -> Optional[Proxy]:
+        """
+        Get a random proxy from the pool.
+
+        Args:
+            skip_dead: If True, only select from healthy proxies
+
+        Returns:
+            A random healthy proxy, or None if no healthy proxies available
+        """
         if not self.proxies:
             return None
-        return random.choice(self.proxies)
+
+        if not skip_dead:
+            return random.choice(self.proxies)
+
+        # Filter to healthy proxies
+        healthy_proxies = [p for p in self.proxies if p.is_healthy(self.recovery_timeout)]
+        if not healthy_proxies:
+            logger.warning(f"No healthy proxies available in {self.name} pool for random selection")
+            return None
+
+        return random.choice(healthy_proxies)
+
+    def get_proxy_by_url(self, url: str) -> Optional[Proxy]:
+        """Find a proxy in this pool by its URL."""
+        for proxy in self.proxies:
+            if proxy.url == url:
+                return proxy
+        return None
+
+    def get_healthy_count(self) -> int:
+        """Get count of healthy proxies in this pool."""
+        return sum(1 for p in self.proxies if p.is_healthy(self.recovery_timeout))
+
+    def get_dead_count(self) -> int:
+        """Get count of dead proxies in this pool."""
+        return sum(1 for p in self.proxies if p.health == ProxyHealth.DEAD)
 
     def __len__(self):
         return len(self.proxies)
@@ -82,7 +213,7 @@ class ProxyPool:
 class ProxyRotator:
     """
     Proxy rotation middleware that manages multiple proxy pools and provides
-    per-request proxy rotation.
+    per-request proxy rotation with dead proxy detection and recovery.
 
     Supports loading proxies from:
     - Environment variables (PROXY_LIST, RESIDENTIAL_PROXIES, DATACENTER_PROXIES)
@@ -94,6 +225,24 @@ class ProxyRotator:
     - Format: protocol://[user:pass@]host:port
     - Example: http://user:pass@proxy.example.com:8080
     - Example: socks5://192.168.1.1:1080
+
+    Dead Proxy Detection:
+    - Report failures with report_proxy_failure()
+    - After N consecutive failures, proxy is marked dead
+    - Dead proxies are skipped during rotation
+    - Dead proxies automatically recover after recovery_timeout
+
+    Example:
+        rotator = ProxyRotator()
+
+        # Get a proxy for a request
+        proxy_url = rotator.get_next_proxy()
+
+        try:
+            response = requests.get(url, proxies={'http': proxy_url, 'https': proxy_url})
+            rotator.report_proxy_success(proxy_url)
+        except RequestException:
+            rotator.report_proxy_failure(proxy_url, mark_dead_after=3)
     """
 
     _instance: Optional['ProxyRotator'] = None
@@ -114,7 +263,7 @@ class ProxyRotator:
             return
 
         self._initialized = True
-        self.pools: Dict[str, ProxyPool] = {
+        self.pools: dict[str, ProxyPool] = {
             'default': ProxyPool(name='default'),
             'residential': ProxyPool(name='residential'),
             'datacenter': ProxyPool(name='datacenter'),
@@ -187,7 +336,7 @@ class ProxyRotator:
     def _load_from_file(self, file_path: str, pool: ProxyPool, proxy_type: ProxyType):
         """Load proxies from a file."""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
                 self._parse_proxy_list(content, pool, proxy_type)
             logger.info(f"Loaded {len(pool)} proxies from {file_path}")
@@ -245,6 +394,7 @@ class ProxyRotator:
                 self.pools[pool_name].add_proxy(proxy)
             else:
                 self.pools['default'].add_proxy(proxy)
+            logger.debug(f"Added proxy to {pool_name} pool: {proxy.label}")
 
     def get_next_proxy(self, pool_name: str = 'default') -> Optional[str]:
         """
@@ -305,16 +455,20 @@ class ProxyRotator:
         """
         proxy_url = self.get_next_proxy()
         if proxy_url and watch_uuid:
-            logger.debug(f"Assigned proxy for watch {watch_uuid}: {proxy_url.split('@')[-1] if '@' in proxy_url else proxy_url}")
+            label = proxy_url.split('@')[-1] if '@' in proxy_url else proxy_url
+            logger.debug(f"Assigned proxy for watch {watch_uuid}: {label}")
         return proxy_url
 
-    def get_pool_stats(self) -> Dict[str, Any]:
-        """Get statistics about proxy pools."""
+    def get_pool_stats(self) -> dict[str, Any]:
+        """Get statistics about proxy pools including health information."""
         stats = {}
         for name, pool in self.pools.items():
             stats[name] = {
                 'count': len(pool),
                 'current_index': pool.current_index,
+                'healthy_count': pool.get_healthy_count(),
+                'dead_count': pool.get_dead_count(),
+                'recovery_timeout': pool.recovery_timeout,
             }
         return stats
 
@@ -325,6 +479,138 @@ class ProxyRotator:
             pool.proxies.clear()
             pool.current_index = 0
         self._load_proxies()
+
+    def report_proxy_failure(
+        self,
+        proxy_url: str,
+        mark_dead_after: int = 3,
+        pool_name: str = 'default'
+    ) -> bool:
+        """
+        Report a proxy failure and potentially mark it as dead.
+
+        Args:
+            proxy_url: The URL of the proxy that failed
+            mark_dead_after: Number of consecutive failures before marking dead
+            pool_name: Name of the pool containing the proxy
+
+        Returns:
+            True if proxy was marked as dead, False otherwise
+        """
+        pool = self.pools.get(pool_name, self.pools['default'])
+        proxy = pool.get_proxy_by_url(proxy_url)
+
+        if not proxy:
+            # Try to find in default pool if not in specified pool
+            if pool_name != 'default':
+                proxy = self.pools['default'].get_proxy_by_url(proxy_url)
+
+        if not proxy:
+            logger.warning(f"Could not find proxy to report failure: {proxy_url}")
+            return False
+
+        proxy.mark_failed()
+
+        if proxy.consecutive_failures >= mark_dead_after:
+            proxy.mark_dead()
+            logger.warning(
+                f"Proxy marked dead after {mark_dead_after} consecutive failures: {proxy.label}"
+            )
+            return True
+
+        logger.debug(
+            f"Proxy failure recorded: {proxy.label} "
+            f"(consecutive failures: {proxy.consecutive_failures}/{mark_dead_after})"
+        )
+        return False
+
+    def report_proxy_success(self, proxy_url: str, pool_name: str = 'default'):
+        """
+        Report a successful proxy request, resetting failure counts.
+
+        Args:
+            proxy_url: The URL of the proxy that succeeded
+            pool_name: Name of the pool containing the proxy
+        """
+        pool = self.pools.get(pool_name, self.pools['default'])
+        proxy = pool.get_proxy_by_url(proxy_url)
+
+        if not proxy:
+            # Try to find in default pool if not in specified pool
+            if pool_name != 'default':
+                proxy = self.pools['default'].get_proxy_by_url(proxy_url)
+
+        if proxy:
+            proxy.mark_success()
+            logger.debug(f"Proxy success recorded: {proxy.label}")
+
+    def mark_proxy_dead(self, proxy_url: str, pool_name: str = 'default') -> bool:
+        """
+        Explicitly mark a proxy as dead.
+
+        Args:
+            proxy_url: The URL of the proxy to mark as dead
+            pool_name: Name of the pool containing the proxy
+
+        Returns:
+            True if proxy was found and marked dead, False otherwise
+        """
+        pool = self.pools.get(pool_name, self.pools['default'])
+        proxy = pool.get_proxy_by_url(proxy_url)
+
+        if not proxy:
+            if pool_name != 'default':
+                proxy = self.pools['default'].get_proxy_by_url(proxy_url)
+
+        if proxy:
+            proxy.mark_dead()
+            return True
+
+        logger.warning(f"Could not find proxy to mark as dead: {proxy_url}")
+        return False
+
+    def set_recovery_timeout(self, timeout_seconds: float, pool_name: str = None):
+        """
+        Set the recovery timeout for dead proxies.
+
+        Args:
+            timeout_seconds: Seconds after which dead proxies can be retried
+            pool_name: Name of pool to set timeout for, or None for all pools
+        """
+        if pool_name:
+            if pool_name in self.pools:
+                self.pools[pool_name].recovery_timeout = timeout_seconds
+        else:
+            for pool in self.pools.values():
+                pool.recovery_timeout = timeout_seconds
+
+        logger.info(f"Set proxy recovery timeout to {timeout_seconds}s")
+
+    def get_healthy_proxy_count(self, pool_name: str = 'default') -> int:
+        """Get the number of healthy proxies in a pool."""
+        pool = self.pools.get(pool_name, self.pools['default'])
+        return pool.get_healthy_count()
+
+    def get_dead_proxies(self, pool_name: str = 'default') -> list[str]:
+        """Get list of dead proxy URLs in a pool."""
+        pool = self.pools.get(pool_name, self.pools['default'])
+        return [p.url for p in pool.proxies if p.health == ProxyHealth.DEAD]
+
+    def revive_all_proxies(self, pool_name: str = None):
+        """
+        Reset all proxies to healthy status.
+
+        Args:
+            pool_name: Name of pool to revive, or None for all pools
+        """
+        pools_to_revive = [self.pools[pool_name]] if pool_name else self.pools.values()
+
+        for pool in pools_to_revive:
+            for proxy in pool.proxies:
+                proxy.health = ProxyHealth.HEALTHY
+                proxy.consecutive_failures = 0
+
+        logger.info(f"Revived all proxies in {'all pools' if not pool_name else pool_name}")
 
     @property
     def has_proxies(self) -> bool:
