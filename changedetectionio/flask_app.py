@@ -401,7 +401,10 @@ def changedetection_app(config=None, datastore_o=None):
     # so far just for read-only via tests, but this will be moved eventually to be the main source
     # (instead of the global var)
     app.config['DATASTORE'] = datastore_o
-    
+
+    # Store batch mode flag to skip background threads when running in batch mode
+    app.config['batch_mode'] = config.get('batch_mode', False) if config else False
+
     # Store the signal in the app config to ensure it's accessible everywhere
     app.config['watch_check_update_SIGNAL'] = watch_check_update
 
@@ -902,14 +905,19 @@ def changedetection_app(config=None, datastore_o=None):
     logger.info(f"Starting {n_workers} workers during app initialization")
     worker_handler.start_workers(n_workers, update_q, notification_q, app, datastore)
 
-    # @todo handle ctrl break
-    ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks, daemon=True, name="TickerThread-ScheduleChecker").start()
-    threading.Thread(target=notification_runner, daemon=True, name="NotificationRunner").start()
+    # Skip background threads in batch mode (just process queue and exit)
+    batch_mode = app.config.get('batch_mode', False)
+    if not batch_mode:
+        # @todo handle ctrl break
+        ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks, daemon=True, name="TickerThread-ScheduleChecker").start()
+        threading.Thread(target=notification_runner, daemon=True, name="NotificationRunner").start()
 
-    in_pytest = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
-    # Check for new release version, but not when running in test/build or pytest
-    if not os.getenv("GITHUB_REF", False) and not strtobool(os.getenv('DISABLE_VERSION_CHECK', 'no')) and not in_pytest:
-        threading.Thread(target=check_for_new_version, daemon=True, name="VersionChecker").start()
+        in_pytest = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
+        # Check for new release version, but not when running in test/build or pytest
+        if not os.getenv("GITHUB_REF", False) and not strtobool(os.getenv('DISABLE_VERSION_CHECK', 'no')) and not in_pytest:
+            threading.Thread(target=check_for_new_version, daemon=True, name="VersionChecker").start()
+    else:
+        logger.info("Batch mode: Skipping ticker thread, notification runner, and version checker")
 
     # Return the Flask app - the Socket.IO will be attached to it but initialized separately
     # This avoids circular dependencies

@@ -354,7 +354,10 @@ def main():
     logging.getLogger('pyppeteer.connection.Connection').setLevel(logging.WARNING)
 
     # isnt there some @thingy to attach to each route to tell it, that this route needs a datastore
-    app_config = {'datastore_path': datastore_path}
+    app_config = {
+        'datastore_path': datastore_path,
+        'batch_mode': batch_mode
+    }
 
     if not os.path.isdir(app_config['datastore_path']):
         if create_datastore_dir:
@@ -424,9 +427,15 @@ def main():
 
         watches_to_queue = []
         if recheck_watches == 'all':
-            # Queue all watches
-            watches_to_queue = list(datastore.data['watching'].keys())
-            logger.info(f"Queuing all {len(watches_to_queue)} watches for recheck")
+            # Queue all watches, excluding those already queued in batch mode
+            all_watches = list(datastore.data['watching'].keys())
+            if batch_mode and added_watch_uuids:
+                # Exclude newly added watches that were already queued in batch mode
+                watches_to_queue = [uuid for uuid in all_watches if uuid not in added_watch_uuids]
+                logger.info(f"Queuing {len(watches_to_queue)} existing watches for recheck ({len(added_watch_uuids)} newly added watches already queued)")
+            else:
+                watches_to_queue = all_watches
+                logger.info(f"Queuing all {len(watches_to_queue)} watches for recheck")
         else:
             # Queue specific UUIDs
             watches_to_queue = recheck_watches
