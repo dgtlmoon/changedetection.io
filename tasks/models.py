@@ -707,6 +707,184 @@ class Event(Base):
         self.last_checked = datetime.now()
         await session.commit()
 
+    async def update_event_data(
+        self,
+        session: AsyncSession,
+        event_name: str | None = None,
+        artist: str | None = None,
+        venue: str | None = None,
+        event_date: date | None = None,
+        event_time: time | None = None,
+        current_price_low: Decimal | None = None,
+        current_price_high: Decimal | None = None,
+        is_sold_out: bool | None = None,
+        record_history: bool = True,
+    ) -> dict[str, bool]:
+        """
+        Update extracted event data fields.
+
+        This method updates the event's extracted data fields and optionally
+        records price/availability history when changes are detected.
+
+        Args:
+            session: Database session
+            event_name: Extracted event name
+            artist: Extracted artist/performer name
+            venue: Extracted venue name
+            event_date: Extracted event date
+            event_time: Extracted event time
+            current_price_low: Extracted lowest price
+            current_price_high: Extracted highest price
+            is_sold_out: Extracted sold out status
+            record_history: Whether to record changes to history tables
+
+        Returns:
+            Dict indicating what changed:
+            - 'data_changed': True if any data field changed
+            - 'price_changed': True if prices changed
+            - 'availability_changed': True if sold out status changed
+        """
+        changes = {
+            'data_changed': False,
+            'price_changed': False,
+            'availability_changed': False,
+        }
+
+        # Track if basic data fields changed
+        if event_name is not None and event_name != self.event_name:
+            self.event_name = event_name
+            changes['data_changed'] = True
+
+        if artist is not None and artist != self.artist:
+            self.artist = artist
+            changes['data_changed'] = True
+
+        if venue is not None and venue != self.venue:
+            self.venue = venue
+            changes['data_changed'] = True
+
+        if event_date is not None and event_date != self.event_date:
+            self.event_date = event_date
+            changes['data_changed'] = True
+
+        if event_time is not None and event_time != self.event_time:
+            self.event_time = event_time
+            changes['data_changed'] = True
+
+        # Track price changes
+        price_changed = False
+        if current_price_low is not None and current_price_low != self.current_price_low:
+            price_changed = True
+        if current_price_high is not None and current_price_high != self.current_price_high:
+            price_changed = True
+
+        if price_changed:
+            changes['price_changed'] = True
+            changes['data_changed'] = True
+
+            if record_history:
+                await self.record_price_change(
+                    session,
+                    price_low=current_price_low,
+                    price_high=current_price_high,
+                )
+            else:
+                if current_price_low is not None:
+                    self.current_price_low = current_price_low
+                if current_price_high is not None:
+                    self.current_price_high = current_price_high
+
+        # Track availability changes
+        if is_sold_out is not None and is_sold_out != self.is_sold_out:
+            changes['availability_changed'] = True
+            changes['data_changed'] = True
+
+            if record_history:
+                await self.record_availability_change(session, is_sold_out)
+            else:
+                self.is_sold_out = is_sold_out
+
+        # Mark as checked
+        self.last_checked = datetime.now()
+
+        if changes['data_changed']:
+            self.last_changed = datetime.now()
+
+        await session.commit()
+        return changes
+
+    def set_css_selectors(self, css_selectors: dict[str, str]) -> None:
+        """
+        Set CSS selectors for field extraction.
+
+        Args:
+            css_selectors: Dict mapping field names to CSS selectors.
+                          Valid field names: event_name, artist, venue,
+                          event_date, event_time, current_price_low,
+                          current_price_high, is_sold_out
+        """
+        valid_fields = {
+            'event_name',
+            'artist',
+            'venue',
+            'event_date',
+            'event_time',
+            'current_price_low',
+            'current_price_high',
+            'is_sold_out',
+        }
+
+        # Filter to only valid fields
+        filtered = {k: v for k, v in css_selectors.items() if k in valid_fields}
+        self.css_selectors = filtered
+
+    def set_manual_override(self, field_name: str, value: Any) -> None:
+        """
+        Set a manual override for an extracted field.
+
+        Manual overrides take precedence over CSS-extracted values.
+
+        Args:
+            field_name: Name of the field to override
+            value: Override value (or None to clear the override)
+        """
+        valid_fields = {
+            'event_name',
+            'artist',
+            'venue',
+            'event_date',
+            'event_time',
+            'current_price_low',
+            'current_price_high',
+            'is_sold_out',
+        }
+
+        if field_name not in valid_fields:
+            return
+
+        if self.extra_config is None:
+            self.extra_config = {}
+
+        if 'manual_overrides' not in self.extra_config:
+            self.extra_config['manual_overrides'] = {}
+
+        if value is None:
+            # Clear the override
+            self.extra_config['manual_overrides'].pop(field_name, None)
+        else:
+            self.extra_config['manual_overrides'][field_name] = value
+
+    def get_manual_overrides(self) -> dict[str, Any]:
+        """
+        Get all manual overrides for this event.
+
+        Returns:
+            Dict of field_name -> override_value
+        """
+        if self.extra_config and 'manual_overrides' in self.extra_config:
+            return self.extra_config['manual_overrides']
+        return {}
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         return {

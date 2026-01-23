@@ -90,6 +90,14 @@ from tasks.models import (
     validate_slack_webhook_url,
 )
 
+# Import event extractor (US-007)
+try:
+    from tasks.event_extractor import EventDataExtractor, ExtractionResult
+
+    HAS_EVENT_EXTRACTOR = True
+except ImportError:
+    HAS_EVENT_EXTRACTOR = False
+
 # =============================================================================
 # Constants
 # =============================================================================
@@ -894,6 +902,201 @@ class PostgreSQLStore:
                 }
                 for tag in tags
             ]
+
+    # -------------------------------------------------------------------------
+    # Event Data Extraction Operations (US-007)
+    # -------------------------------------------------------------------------
+
+    async def extract_and_update_event(
+        self,
+        event_uuid: str,
+        html_content: str,
+        record_history: bool = True,
+    ) -> dict[str, Any]:
+        """
+        Extract event data from HTML and update the event record.
+
+        This method uses CSS selectors configured on the event to extract
+        structured data (event_name, artist, venue, date, time, prices,
+        availability) from HTML content and updates the event record.
+
+        If manual overrides are configured in extra_config, they take
+        precedence over extracted values.
+
+        Args:
+            event_uuid: UUID of the event to update
+            html_content: Raw HTML content to extract data from
+            record_history: Whether to record price/availability changes to history
+
+        Returns:
+            Dict with:
+            - 'success': True if extraction succeeded
+            - 'data_changed': True if any data was updated
+            - 'price_changed': True if prices changed
+            - 'availability_changed': True if availability changed
+            - 'extracted_data': Dict of extracted values
+            - 'errors': Dict of any extraction errors
+
+        Raises:
+            RuntimeError: If EventDataExtractor is not available
+
+        Example:
+            >>> result = await store.extract_and_update_event(
+            ...     event_uuid="123...",
+            ...     html_content="<html>...</html>",
+            ... )
+            >>> if result['price_changed']:
+            ...     send_price_notification(event_uuid)
+        """
+        if not HAS_EVENT_EXTRACTOR:
+            raise RuntimeError(
+                "EventDataExtractor not available. "
+                "Install beautifulsoup4: pip install beautifulsoup4"
+            )
+
+        async with self.session() as session:
+            try:
+                event_id = uuid_builder.UUID(event_uuid)
+            except ValueError:
+                return {
+                    'success': False,
+                    'data_changed': False,
+                    'price_changed': False,
+                    'availability_changed': False,
+                    'extracted_data': {},
+                    'errors': {'_general': f'Invalid event UUID: {event_uuid}'},
+                }
+
+            event = await session.get(Event, event_id)
+            if not event:
+                return {
+                    'success': False,
+                    'data_changed': False,
+                    'price_changed': False,
+                    'availability_changed': False,
+                    'extracted_data': {},
+                    'errors': {'_general': f'Event not found: {event_uuid}'},
+                }
+
+            # Create extractor and extract data
+            extractor = EventDataExtractor()
+            result = extractor.extract_from_event(
+                html_content=html_content,
+                event_css_selectors=event.css_selectors,
+                event_extra_config=event.extra_config,
+            )
+
+            # Update event with extracted data
+            changes = await event.update_event_data(
+                session,
+                event_name=result.event_name,
+                artist=result.artist,
+                venue=result.venue,
+                event_date=result.event_date,
+                event_time=result.event_time,
+                current_price_low=result.current_price_low,
+                current_price_high=result.current_price_high,
+                is_sold_out=result.is_sold_out,
+                record_history=record_history,
+            )
+
+            return {
+                'success': True,
+                'data_changed': changes['data_changed'],
+                'price_changed': changes['price_changed'],
+                'availability_changed': changes['availability_changed'],
+                'extracted_data': result.to_dict(),
+                'errors': result.extraction_errors,
+            }
+
+    async def update_event_css_selectors(
+        self,
+        event_uuid: str,
+        css_selectors: dict[str, str],
+    ) -> bool:
+        """
+        Update CSS selectors for an event.
+
+        Args:
+            event_uuid: UUID of the event
+            css_selectors: Dict mapping field names to CSS selectors
+
+        Returns:
+            True if update succeeded, False otherwise
+        """
+        async with self.session() as session:
+            try:
+                event_id = uuid_builder.UUID(event_uuid)
+            except ValueError:
+                return False
+
+            event = await session.get(Event, event_id)
+            if not event:
+                return False
+
+            event.set_css_selectors(css_selectors)
+            await session.commit()
+            return True
+
+    async def update_event_manual_override(
+        self,
+        event_uuid: str,
+        field_name: str,
+        value: Any,
+    ) -> bool:
+        """
+        Set a manual override for an event field.
+
+        Manual overrides take precedence over CSS-extracted values.
+
+        Args:
+            event_uuid: UUID of the event
+            field_name: Name of the field to override
+            value: Override value (or None to clear)
+
+        Returns:
+            True if update succeeded, False otherwise
+        """
+        async with self.session() as session:
+            try:
+                event_id = uuid_builder.UUID(event_uuid)
+            except ValueError:
+                return False
+
+            event = await session.get(Event, event_id)
+            if not event:
+                return False
+
+            event.set_manual_override(field_name, value)
+            await session.commit()
+            return True
+
+    async def get_event_extraction_config(
+        self, event_uuid: str
+    ) -> dict[str, Any] | None:
+        """
+        Get the extraction configuration for an event.
+
+        Args:
+            event_uuid: UUID of the event
+
+        Returns:
+            Dict with 'css_selectors' and 'manual_overrides', or None if not found
+        """
+        async with self.session() as session:
+            try:
+                event_id = uuid_builder.UUID(event_uuid)
+            except ValueError:
+                return None
+
+            event = await session.get(Event, event_id)
+            if not event:
+                return None
+
+            return {
+                'css_selectors': event.css_selectors or {},
+                'manual_overrides': event.get_manual_overrides(),
+            }
 
     # -------------------------------------------------------------------------
     # Search and Query Operations

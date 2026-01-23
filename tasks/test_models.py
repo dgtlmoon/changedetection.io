@@ -677,6 +677,218 @@ class TestEventModel:
         assert data['current_price_low'] == 25.0
         assert data['current_price_high'] == 75.0
 
+    # -------------------------------------------------------------------------
+    # Event Data Extraction Tests (US-007)
+    # -------------------------------------------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_set_css_selectors(self, session: AsyncSession, test_event: Event):
+        """Test setting CSS selectors for extraction"""
+        css_selectors = {
+            'event_name': 'h1.title',
+            'artist': 'span.artist',
+            'venue': 'div.venue',
+            'event_date': 'span.date',
+            'event_time': 'span.time',
+            'current_price_low': 'span.price-min',
+            'current_price_high': 'span.price-max',
+            'is_sold_out': 'div.sold-out',
+        }
+
+        test_event.set_css_selectors(css_selectors)
+        await session.flush()
+
+        assert test_event.css_selectors == css_selectors
+
+    @pytest.mark.asyncio
+    async def test_set_css_selectors_filters_invalid_fields(
+        self, session: AsyncSession, test_event: Event
+    ):
+        """Test that invalid field names are filtered from CSS selectors"""
+        css_selectors = {
+            'event_name': 'h1.title',
+            'invalid_field': 'div.invalid',
+            'another_bad_field': 'span.bad',
+        }
+
+        test_event.set_css_selectors(css_selectors)
+        await session.flush()
+
+        assert 'event_name' in test_event.css_selectors
+        assert 'invalid_field' not in test_event.css_selectors
+        assert 'another_bad_field' not in test_event.css_selectors
+
+    @pytest.mark.asyncio
+    async def test_set_manual_override(self, session: AsyncSession, test_event: Event):
+        """Test setting manual override for a field"""
+        test_event.set_manual_override('event_name', 'Manual Event Name')
+        await session.flush()
+
+        assert test_event.extra_config is not None
+        assert 'manual_overrides' in test_event.extra_config
+        assert test_event.extra_config['manual_overrides']['event_name'] == 'Manual Event Name'
+
+    @pytest.mark.asyncio
+    async def test_set_manual_override_multiple_fields(
+        self, session: AsyncSession, test_event: Event
+    ):
+        """Test setting multiple manual overrides"""
+        test_event.set_manual_override('event_name', 'Override Name')
+        test_event.set_manual_override('venue', 'Override Venue')
+        test_event.set_manual_override('artist', 'Override Artist')
+        await session.flush()
+
+        overrides = test_event.get_manual_overrides()
+        assert overrides['event_name'] == 'Override Name'
+        assert overrides['venue'] == 'Override Venue'
+        assert overrides['artist'] == 'Override Artist'
+
+    @pytest.mark.asyncio
+    async def test_set_manual_override_clear(self, session: AsyncSession, test_event: Event):
+        """Test clearing a manual override by setting to None"""
+        test_event.set_manual_override('event_name', 'Override Name')
+        await session.flush()
+
+        # Verify it was set
+        assert test_event.get_manual_overrides()['event_name'] == 'Override Name'
+
+        # Clear it
+        test_event.set_manual_override('event_name', None)
+        await session.flush()
+
+        assert 'event_name' not in test_event.get_manual_overrides()
+
+    @pytest.mark.asyncio
+    async def test_set_manual_override_invalid_field_ignored(
+        self, session: AsyncSession, test_event: Event
+    ):
+        """Test that invalid field names are ignored for manual overrides"""
+        test_event.set_manual_override('invalid_field', 'Some Value')
+        await session.flush()
+
+        overrides = test_event.get_manual_overrides()
+        assert 'invalid_field' not in overrides
+
+    @pytest.mark.asyncio
+    async def test_get_manual_overrides_empty(self, session: AsyncSession, test_event: Event):
+        """Test get_manual_overrides returns empty dict when no overrides set"""
+        overrides = test_event.get_manual_overrides()
+        assert overrides == {}
+
+    @pytest.mark.asyncio
+    async def test_update_event_data_basic(self, session: AsyncSession, test_event: Event):
+        """Test updating event data fields"""
+        changes = await test_event.update_event_data(
+            session,
+            event_name='New Event Name',
+            artist='New Artist',
+            venue='New Venue',
+            record_history=False,
+        )
+
+        assert changes['data_changed'] is True
+        assert changes['price_changed'] is False
+        assert changes['availability_changed'] is False
+        assert test_event.event_name == 'New Event Name'
+        assert test_event.artist == 'New Artist'
+        assert test_event.venue == 'New Venue'
+
+    @pytest.mark.asyncio
+    async def test_update_event_data_with_price_change(
+        self, session: AsyncSession, test_event: Event
+    ):
+        """Test updating event data with price change records history"""
+        original_price_low = test_event.current_price_low
+
+        changes = await test_event.update_event_data(
+            session,
+            current_price_low=Decimal("50.00"),
+            current_price_high=Decimal("150.00"),
+            record_history=True,
+        )
+
+        assert changes['data_changed'] is True
+        assert changes['price_changed'] is True
+        assert test_event.current_price_low == Decimal("50.00")
+        assert test_event.current_price_high == Decimal("150.00")
+
+        # Verify history was recorded
+        histories = await PriceHistory.get_history_for_event(session, test_event.id)
+        assert len(histories) >= 1
+        latest = histories[0]
+        assert latest.price_low == Decimal("50.00")
+
+    @pytest.mark.asyncio
+    async def test_update_event_data_with_availability_change(
+        self, session: AsyncSession, test_event: Event
+    ):
+        """Test updating event data with availability change records history"""
+        assert test_event.is_sold_out is False
+
+        changes = await test_event.update_event_data(
+            session,
+            is_sold_out=True,
+            record_history=True,
+        )
+
+        assert changes['data_changed'] is True
+        assert changes['availability_changed'] is True
+        assert test_event.is_sold_out is True
+
+        # Verify history was recorded
+        histories = await AvailabilityHistory.get_history_for_event(session, test_event.id)
+        assert len(histories) >= 1
+        latest = histories[0]
+        assert latest.is_sold_out is True
+
+    @pytest.mark.asyncio
+    async def test_update_event_data_no_changes(self, session: AsyncSession, test_event: Event):
+        """Test that no changes result in data_changed=False"""
+        original_name = test_event.event_name
+        original_artist = test_event.artist
+
+        changes = await test_event.update_event_data(
+            session,
+            event_name=original_name,
+            artist=original_artist,
+            record_history=False,
+        )
+
+        assert changes['data_changed'] is False
+        assert changes['price_changed'] is False
+        assert changes['availability_changed'] is False
+
+    @pytest.mark.asyncio
+    async def test_update_event_data_with_dates(self, session: AsyncSession, test_event: Event):
+        """Test updating event date and time"""
+        new_date = date(2026, 12, 25)
+        new_time = time(20, 30)
+
+        changes = await test_event.update_event_data(
+            session,
+            event_date=new_date,
+            event_time=new_time,
+            record_history=False,
+        )
+
+        assert changes['data_changed'] is True
+        assert test_event.event_date == new_date
+        assert test_event.event_time == new_time
+
+    @pytest.mark.asyncio
+    async def test_update_event_data_marks_checked(self, session: AsyncSession, test_event: Event):
+        """Test that update_event_data updates last_checked timestamp"""
+        test_event.last_checked = None
+        await session.flush()
+
+        await test_event.update_event_data(
+            session,
+            event_name='Updated Name',
+            record_history=False,
+        )
+
+        assert test_event.last_checked is not None
+
 
 # =============================================================================
 # PriceHistory Model Tests
