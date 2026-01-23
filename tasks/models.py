@@ -777,7 +777,7 @@ class NotificationLog(Base):
     success: Mapped[bool] = mapped_column(Boolean, default=False)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=func.now())
-    metadata: Mapped[dict | None] = mapped_column(JSONB, default=dict)
+    extra_metadata: Mapped[dict | None] = mapped_column('metadata', JSONB, default=dict)
 
     # Relationships
     event: Mapped[Optional["Event"]] = relationship("Event", back_populates="notification_logs")
@@ -865,7 +865,7 @@ class NotificationLog(Base):
             response_body=response_body,
             success=success,
             error_message=error_message,
-            metadata=metadata or {},
+            extra_metadata=metadata or {},
         )
         session.add(log)
         await session.commit()
@@ -885,7 +885,7 @@ class NotificationLog(Base):
             'success': self.success,
             'error_message': self.error_message,
             'sent_at': self.sent_at.isoformat() if self.sent_at else None,
-            'metadata': self.metadata,
+            'metadata': self.extra_metadata,
         }
 
 
