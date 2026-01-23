@@ -60,6 +60,7 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
                     {{ render_nolabel_field(form.url, placeholder="https://...", required=true) }}
                     {{ render_nolabel_field(form.watch_submit_button, title=_("Watch this URL!") ) }}
                     {{ render_nolabel_field(form.edit_and_watch_submit_button, title=_("Edit first then Watch") ) }}
+                    <a href="{{ url_for('quick_event.quick_entry_page') }}" class="pure-button button-secondary" title="{{ _('Use Quick Event Entry form with more options') }}">{{ _('Quick Event') }}</a>
             </div>
             <div id="watch-group-tag">
                {{ render_field(form.tags, value=active_tag.title if active_tag_uuid else '', placeholder=_("Watch group / tag"), class="transparent-field") }}

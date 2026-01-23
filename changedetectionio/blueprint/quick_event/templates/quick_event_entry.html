@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% from '_helpers.html' import render_field, render_nolabel_field, render_checkbox_field %}
+{% set extra_title = " - Quick Event Entry" %}
+
+{% block content %}
+<div class="quick-event-container">
+    <h1>{{ _('Quick Event Entry') }}</h1>
+    <p class="quick-event-description">{{ _('Quickly add events to your watchlist.') }}</p>
+
+    <form class="pure-form pure-form-stacked quick-event-form" action="{{ url_for('quick_event.form_quick_event_add') }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- URL Input (Required) -->
+        <fieldset class="quick-event-fieldset">
+            <legend>{{ _('Event URL') }}</legend>
+            <div class="pure-control-group">
+                {{ render_field(form.url, placeholder="https://ticketmaster.com/event/...", required=true, class="quick-event-url-input") }}
+                <span class="pure-form-message-inline">{{ _('Enter the URL of the event page to monitor') }}</span>
+            </div>
+        </fieldset>
+
+        <!-- Tag Selection -->
+        <fieldset class="quick-event-fieldset">
+            <legend>{{ _('Tags') }}</legend>
+            <div class="pure-control-group">
+                <label for="tags-select">{{ _('Select Tags') }}</label>
+                <select id="tags-select" name="tags" multiple class="quick-event-tags-select">
+                    {% for uuid, title in tags_list %}
+                    <option value="{{ uuid }}">{{ title }}</option>
+                    {% endfor %}
+                </select>
+                <span class="pure-form-message-inline">{{ _('Hold Ctrl/Cmd to select multiple tags') }}</span>
+            </div>
+        </fieldset>
+
+        <!-- Options -->
+        <fieldset class="quick-event-fieldset">
+            <legend>{{ _('Options') }}</legend>
+            <div class="pure-control-group">
+                {{ render_checkbox_field(form.auto_extract) }}
+                <span class="pure-form-message-inline">{{ _('Automatically extract event details (name, artist, venue, date, time) from the page on first check') }}</span>
+            </div>
+        </fieldset>
+
+        <!-- Manual Entry (Collapsible) -->
+        <fieldset class="quick-event-fieldset manual-entry-fieldset">
+            <legend>
+                <button type="button" class="toggle-manual-entry pure-button button-xsmall">{{ _('Manual Entry (Optional)') }}</button>
+            </legend>
+            <div class="manual-entry-fields" style="display: none;">
+                <p class="manual-entry-hint">{{ _('Manually enter event details if you prefer not to use auto-extraction.') }}</p>
+
+                <div class="pure-control-group">
+                    {{ render_field(form.event_name, placeholder="Concert Name / Show Title") }}
+                </div>
+
+                <div class="pure-control-group">
+                    {{ render_field(form.artist, placeholder="Artist / Performer") }}
+                </div>
+
+                <div class="pure-control-group">
+                    {{ render_field(form.venue, placeholder="Venue Name") }}
+                </div>
+
+                <div class="pure-g">
+                    <div class="pure-u-1 pure-u-md-1-2">
+                        <div class="pure-control-group">
+                            {{ render_field(form.event_date, placeholder="YYYY-MM-DD", type="date") }}
+                        </div>
+                    </div>
+                    <div class="pure-u-1 pure-u-md-1-2">
+                        <div class="pure-control-group">
+                            {{ render_field(form.event_time, placeholder="HH:MM", type="time") }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- Action Buttons -->
+        <div class="quick-event-actions">
+            {{ render_nolabel_field(form.add_event_button, title=_("Create event and trigger first check")) }}
+            {{ render_nolabel_field(form.add_and_open_settings, title=_("Create event and open full edit page")) }}
+        </div>
+    </form>
+</div>
+
+<script>
+(function() {
+    // Toggle manual entry fields
+    const toggleBtn = document.querySelector('.toggle-manual-entry');
+    const manualFields = document.querySelector('.manual-entry-fields');
+    const autoExtractCheckbox = document.getElementById('auto_extract');
+
+    if (toggleBtn && manualFields) {
+        toggleBtn.addEventListener('click', function() {
+            const isHidden = manualFields.style.display === 'none';
+            manualFields.style.display = isHidden ? 'block' : 'none';
+            toggleBtn.textContent = isHidden ? '{{ _("Hide Manual Entry") }}' : '{{ _("Manual Entry (Optional)") }}';
+        });
+    }
+
+    // Handle multi-select for tags
+    const tagsSelect = document.getElementById('tags-select');
+    if (tagsSelect) {
+        // Convert selected options to comma-separated value for form submission
+        tagsSelect.addEventListener('change', function() {
+            const selected = Array.from(this.selectedOptions).map(opt => opt.value);
+            // The form will send multiple values which the backend handles
+        });
+    }
+})();
+</script>
+{% endblock %}

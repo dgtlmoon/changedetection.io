@@ -1,0 +1,217 @@
+// Quick Event Entry Form Styles
+
+.quick-event-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1rem;
+
+  h1 {
+    margin-bottom: 0.5rem;
+    color: var(--heading-color, #333);
+  }
+
+  .quick-event-description {
+    color: var(--text-muted, #666);
+    margin-bottom: 1.5rem;
+  }
+}
+
+.quick-event-form {
+  background: var(--box-bg, #fff);
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.quick-event-fieldset {
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+
+  legend {
+    font-weight: bold;
+    padding: 0 0.5rem;
+    color: var(--heading-color, #333);
+  }
+}
+
+.quick-event-url-input {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border-radius: 4px;
+}
+
+.quick-event-tags-select {
+  width: 100%;
+  min-height: 100px;
+  padding: 0.5rem;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 4px;
+  background: var(--input-bg, #fff);
+
+  option {
+    padding: 0.5rem;
+  }
+
+  option:checked {
+    background: var(--accent-color, #1f8dd6);
+    color: white;
+  }
+}
+
+.manual-entry-fieldset {
+  legend {
+    padding: 0;
+  }
+}
+
+.toggle-manual-entry {
+  font-size: 0.9rem;
+  background: transparent;
+  border: 1px dashed var(--border-color, #ddd);
+  color: var(--link-color, #1f8dd6);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--hover-bg, #f5f5f5);
+  }
+}
+
+.manual-entry-fields {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color, #ddd);
+}
+
+.manual-entry-hint {
+  color: var(--text-muted, #666);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.quick-event-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color, #ddd);
+
+  .pure-button {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  .pure-button-primary {
+    background: var(--accent-color, #1f8dd6);
+  }
+}
+
+// Dashboard header with quick add button
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+
+  h1 {
+    margin: 0;
+  }
+
+  .quick-add-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    svg {
+      vertical-align: middle;
+    }
+  }
+}
+
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+  .quick-event-container {
+    h1 {
+      color: var(--heading-color-dark, #e0e0e0);
+    }
+
+    .quick-event-description {
+      color: var(--text-muted-dark, #aaa);
+    }
+  }
+
+  .quick-event-form {
+    background: var(--box-bg-dark, #2a2a2a);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .quick-event-fieldset {
+    border-color: var(--border-color-dark, #444);
+
+    legend {
+      color: var(--heading-color-dark, #e0e0e0);
+    }
+  }
+
+  .quick-event-tags-select {
+    background: var(--input-bg-dark, #333);
+    border-color: var(--border-color-dark, #444);
+    color: var(--text-color-dark, #e0e0e0);
+  }
+
+  .toggle-manual-entry {
+    border-color: var(--border-color-dark, #444);
+    color: var(--link-color-dark, #6db3f2);
+
+    &:hover {
+      background: var(--hover-bg-dark, #333);
+    }
+  }
+
+  .manual-entry-fields {
+    border-top-color: var(--border-color-dark, #444);
+  }
+
+  .manual-entry-hint {
+    color: var(--text-muted-dark, #aaa);
+  }
+
+  .quick-event-actions {
+    border-top-color: var(--border-color-dark, #444);
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .quick-event-container {
+    padding: 0.5rem;
+  }
+
+  .quick-event-form {
+    padding: 1rem;
+  }
+
+  .quick-event-actions {
+    flex-direction: column;
+
+    .pure-button {
+      width: 100%;
+    }
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    gap: 1rem;
+
+    h1 {
+      text-align: center;
+    }
+
+    .quick-add-btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}

@@ -734,6 +734,20 @@ class quickWatchForm(Form):
     edit_and_watch_submit_button = SubmitField(_l('Edit > Watch'), render_kw={"class": "pure-button pure-button-primary"})
 
 
+class QuickEventForm(Form):
+    """Quick Event Entry Form for rapid event creation."""
+    url = fields.URLField(_l('URL'), validators=[validateURL()])
+    tags = StringTagUUID(_l('Tags'), validators=[validators.Optional()])
+    auto_extract = BooleanField(_l('Auto-extract fields on first check'), default=True)
+    event_name = StringField(_l('Event Name'), validators=[validators.Optional()])
+    artist = StringField(_l('Artist'), validators=[validators.Optional()])
+    venue = StringField(_l('Venue'), validators=[validators.Optional()])
+    event_date = StringField(_l('Event Date'), validators=[validators.Optional()])
+    event_time = StringField(_l('Event Time'), validators=[validators.Optional()])
+    add_event_button = SubmitField(_l('Add Event'), render_kw={"class": "pure-button pure-button-primary"})
+    add_and_open_settings = SubmitField(_l('Add & Open Settings'), render_kw={"class": "pure-button button-secondary"})
+
+
 # Common to a single watch and the global settings
 class commonSettingsForm(Form):
     from . import processors

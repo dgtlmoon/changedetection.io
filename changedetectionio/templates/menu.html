@@ -7,6 +7,9 @@
     <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('dashboard.') %}active{% endif %}">
         <a href="{{ url_for('dashboard.dashboard_page') }}" class="pure-menu-link">{{ _('DASHBOARD') }}</a>
     </li>
+    <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('quick_event.') %}active{% endif %}">
+        <a href="{{ url_for('quick_event.quick_entry_page') }}" class="pure-menu-link">{{ _('ADD EVENT') }}</a>
+    </li>
     <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('tags.') %}active{% endif %}">
         <a href="{{ url_for('tags.tags_overview_page') }}" class="pure-menu-link">{{ _('GROUPS') }}</a>
     </li>
