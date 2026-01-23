@@ -83,11 +83,22 @@ def get_version():
 def sigshutdown_handler(_signo, _stack_frame):
     name = signal.Signals(_signo).name
     logger.critical(f'Shutdown: Got Signal - {name} ({_signo}), Fast shutdown initiated')
-    
+
     # Set exit flag immediately to stop all loops
     app.config.exit.set()
     datastore.stop_thread = True
-    
+
+    # Log memory consumption before shutting down workers (cross-platform)
+    try:
+        import psutil
+        process = psutil.Process()
+        mem_info = process.memory_info()
+        rss_mb = mem_info.rss / 1024 / 1024
+        vms_mb = mem_info.vms / 1024 / 1024
+        logger.info(f"Memory consumption before worker shutdown: RSS={rss_mb:,.2f} MB, VMS={vms_mb:,.2f} MB")
+    except Exception as e:
+        logger.warning(f"Could not retrieve memory stats: {str(e)}")
+
     # Shutdown workers and queues immediately
     try:
         from changedetectionio import worker_handler
