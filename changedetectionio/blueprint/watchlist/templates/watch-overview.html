@@ -99,6 +99,7 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
                        data-confirm-title="{{ _('Delete Watches?') }}"
                        data-confirm-message="{{ _('<p>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>') }}"
                        data-confirm-button="{{ _('Delete') }}"><i data-feather="trash" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('Delete') }}</button>
+        <button class="pure-button button-secondary button-xsmall" style="background: #2196f3;" name="op" value="export" formaction="{{ url_for('bulk_operations.export_selected_csv') }}"><i data-feather="download" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('Export CSV') }}</button>
     </div>
 
     <div id="stats_row">

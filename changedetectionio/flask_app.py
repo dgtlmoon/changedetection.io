@@ -973,6 +973,9 @@ def changedetection_app(config=None, datastore_o=None):
     import changedetectionio.blueprint.quick_event as quick_event
     app.register_blueprint(quick_event.construct_blueprint(datastore, update_q, queuedWatchMetaData), url_prefix='/quick-event')
 
+    from changedetectionio.blueprint.bulk_operations import construct_blueprint as construct_bulk_ops_blueprint
+    app.register_blueprint(construct_bulk_ops_blueprint(datastore, update_q, queuedWatchMetaData), url_prefix='/bulk')
+
     # Initialize Socket.IO server conditionally based on settings
     socket_io_enabled = datastore.data['settings']['application']['ui'].get('socket_io_enabled', True)
     if socket_io_enabled:
