@@ -81,6 +81,7 @@ from sqlalchemy import delete, func, or_, select
 from tasks.models import (
     AvailabilityHistory,
     Event,
+    NotificationLog,
     PriceHistory,
     SlackWebhookValidationError,
     Snapshot,
@@ -1276,6 +1277,256 @@ class PostgreSQLStore:
             )
             count = result.scalar() or 0
             return {'total_records': count}
+
+    # -------------------------------------------------------------------------
+    # Notification Log Operations (US-023)
+    # -------------------------------------------------------------------------
+
+    async def get_notification_logs(
+        self,
+        limit: int = 50,
+        offset: int = 0,
+        notification_type: str | None = None,
+        event_uuid: str | None = None,
+        tag_uuid: str | None = None,
+        success: bool | None = None,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """
+        Get notification logs with filtering and pagination.
+
+        Args:
+            limit: Maximum number of records to return
+            offset: Number of records to skip
+            notification_type: Filter by type (restock, price_change, sold_out, new_event, error)
+            event_uuid: Filter by event UUID
+            tag_uuid: Filter by tag UUID
+            success: Filter by success status
+
+        Returns:
+            Tuple of (list of notification logs as dicts, total count)
+        """
+        async with self.session() as session:
+            from sqlalchemy import select as sa_select
+
+            # Build base query
+            query = sa_select(NotificationLog)
+
+            # Apply filters
+            if notification_type:
+                query = query.where(NotificationLog.notification_type == notification_type)
+
+            if event_uuid:
+                try:
+                    event_id = uuid_builder.UUID(event_uuid)
+                    query = query.where(NotificationLog.event_id == event_id)
+                except ValueError:
+                    logger.error(f"Invalid event UUID: {event_uuid}")
+
+            if tag_uuid:
+                try:
+                    tag_id = uuid_builder.UUID(tag_uuid)
+                    query = query.where(NotificationLog.tag_id == tag_id)
+                except ValueError:
+                    logger.error(f"Invalid tag UUID: {tag_uuid}")
+
+            if success is not None:
+                query = query.where(NotificationLog.success == success)
+
+            # Get total count
+            count_query = select(func.count()).select_from(query.subquery())
+            count_result = await session.execute(count_query)
+            total_count = count_result.scalar() or 0
+
+            # Apply ordering and pagination
+            query = query.order_by(NotificationLog.sent_at.desc())
+            query = query.offset(offset).limit(limit)
+
+            result = await session.execute(query)
+            records = result.scalars().all()
+
+            # Enrich with event and tag names
+            logs = []
+            for record in records:
+                log_dict = record.to_dict()
+
+                # Get event name if available
+                if record.event_id:
+                    event = await session.get(Event, record.event_id)
+                    if event:
+                        log_dict['event_name'] = event.event_name or event.url
+                    else:
+                        log_dict['event_name'] = None
+                else:
+                    log_dict['event_name'] = None
+
+                # Get tag name if available
+                if record.tag_id:
+                    tag = await session.get(Tag, record.tag_id)
+                    if tag:
+                        log_dict['tag_name'] = tag.name
+                    else:
+                        log_dict['tag_name'] = None
+                else:
+                    log_dict['tag_name'] = None
+
+                logs.append(log_dict)
+
+            return logs, total_count
+
+    async def get_notification_log_by_id(
+        self, log_id: str
+    ) -> dict[str, Any] | None:
+        """
+        Get a single notification log by ID.
+
+        Args:
+            log_id: UUID of the notification log
+
+        Returns:
+            Notification log as dict, or None if not found
+        """
+        async with self.session() as session:
+            try:
+                log_uuid = uuid_builder.UUID(log_id)
+            except ValueError:
+                logger.error(f"Invalid log UUID: {log_id}")
+                return None
+
+            log = await session.get(NotificationLog, log_uuid)
+            if not log:
+                return None
+
+            log_dict = log.to_dict()
+
+            # Get event name if available
+            if log.event_id:
+                event = await session.get(Event, log.event_id)
+                if event:
+                    log_dict['event_name'] = event.event_name or event.url
+                else:
+                    log_dict['event_name'] = None
+            else:
+                log_dict['event_name'] = None
+
+            # Get tag name if available
+            if log.tag_id:
+                tag = await session.get(Tag, log.tag_id)
+                if tag:
+                    log_dict['tag_name'] = tag.name
+                else:
+                    log_dict['tag_name'] = None
+            else:
+                log_dict['tag_name'] = None
+
+            return log_dict
+
+    async def log_notification(
+        self,
+        notification_type: str,
+        event_uuid: str | None = None,
+        tag_uuid: str | None = None,
+        webhook_url: str | None = None,
+        payload: dict | None = None,
+        response_status: int | None = None,
+        response_body: str | None = None,
+        success: bool = False,
+        error_message: str | None = None,
+        metadata: dict | None = None,
+    ) -> str | None:
+        """
+        Log a notification to the database.
+
+        Args:
+            notification_type: Type of notification (restock, price_change, sold_out, new_event, error)
+            event_uuid: UUID of related event
+            tag_uuid: UUID of related tag
+            webhook_url: Webhook URL the notification was sent to
+            payload: Notification payload
+            response_status: HTTP response status code
+            response_body: HTTP response body
+            success: Whether notification was successful
+            error_message: Error message if failed
+            metadata: Additional metadata
+
+        Returns:
+            UUID of created log entry, or None on failure
+        """
+        async with self.session() as session:
+            event_id = None
+            tag_id = None
+
+            if event_uuid:
+                try:
+                    event_id = uuid_builder.UUID(event_uuid)
+                except ValueError:
+                    logger.error(f"Invalid event UUID: {event_uuid}")
+
+            if tag_uuid:
+                try:
+                    tag_id = uuid_builder.UUID(tag_uuid)
+                except ValueError:
+                    logger.error(f"Invalid tag UUID: {tag_uuid}")
+
+            try:
+                log = await NotificationLog.log_notification(
+                    session=session,
+                    notification_type=notification_type,
+                    event_id=event_id,
+                    tag_id=tag_id,
+                    webhook_url=webhook_url,
+                    payload=payload,
+                    response_status=response_status,
+                    response_body=response_body,
+                    success=success,
+                    error_message=error_message,
+                    metadata=metadata,
+                )
+                return str(log.id)
+            except Exception as e:
+                logger.error(f"Failed to log notification: {e}")
+                return None
+
+    async def get_notification_log_stats(self) -> dict[str, Any]:
+        """
+        Get statistics about notification logs.
+
+        Returns:
+            Dict with total_count, success_count, failure_count, and counts by type
+        """
+        async with self.session() as session:
+            # Total count
+            total_result = await session.execute(
+                select(func.count(NotificationLog.id))
+            )
+            total_count = total_result.scalar() or 0
+
+            # Success count
+            success_result = await session.execute(
+                select(func.count(NotificationLog.id)).where(
+                    NotificationLog.success.is_(True)
+                )
+            )
+            success_count = success_result.scalar() or 0
+
+            # Failure count
+            failure_count = total_count - success_count
+
+            # Counts by type
+            type_counts = {}
+            for ntype in ['restock', 'price_change', 'sold_out', 'new_event', 'error']:
+                type_result = await session.execute(
+                    select(func.count(NotificationLog.id)).where(
+                        NotificationLog.notification_type == ntype
+                    )
+                )
+                type_counts[ntype] = type_result.scalar() or 0
+
+            return {
+                'total_count': total_count,
+                'success_count': success_count,
+                'failure_count': failure_count,
+                'by_type': type_counts,
+            }
 
     # -------------------------------------------------------------------------
     # Search and Query Operations

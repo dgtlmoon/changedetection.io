@@ -1,0 +1,433 @@
+{% extends 'base.html' %}
+{% set extra_title = " - Alert History" %}
+
+{% block content %}
+<div class="alert-history-container">
+    <div class="alert-history-header">
+        <h1>{{ _('Alert History') }}</h1>
+        <p class="header-description">{{ _('View and debug sent notifications') }}</p>
+    </div>
+
+    <!-- Filters -->
+    <div class="alert-history-filters">
+        <form method="GET" action="{{ url_for('alert_history.alert_history_page') }}" class="filters-form">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="type-filter">{{ _('Alert Type') }}</label>
+                    <select name="type" id="type-filter" class="filter-select">
+                        <option value="">{{ _('All Types') }}</option>
+                        {% for ntype in notification_types %}
+                        <option value="{{ ntype.value }}" {% if current_type == ntype.value %}selected{% endif %}>
+                            {{ ntype.label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="event-filter">{{ _('Event') }}</label>
+                    <select name="event" id="event-filter" class="filter-select">
+                        <option value="">{{ _('All Events') }}</option>
+                        {% for event in events %}
+                        <option value="{{ event.uuid }}" {% if current_event == event.uuid %}selected{% endif %}>
+                            {{ event.title|truncate(40) }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="tag-filter">{{ _('Tag') }}</label>
+                    <select name="tag" id="tag-filter" class="filter-select">
+                        <option value="">{{ _('All Tags') }}</option>
+                        {% for tag in tags %}
+                        <option value="{{ tag.uuid }}" {% if current_tag == tag.uuid %}selected{% endif %}>
+                            {{ tag.title }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="status-filter">{{ _('Status') }}</label>
+                    <select name="status" id="status-filter" class="filter-select">
+                        <option value="all" {% if current_status == 'all' %}selected{% endif %}>{{ _('All') }}</option>
+                        <option value="success" {% if current_status == 'success' %}selected{% endif %}>{{ _('Success') }}</option>
+                        <option value="failed" {% if current_status == 'failed' %}selected{% endif %}>{{ _('Failed') }}</option>
+                    </select>
+                </div>
+
+                <div class="filter-group filter-actions">
+                    <button type="submit" class="pure-button pure-button-primary">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="M21 21l-4.35-4.35"/>
+                        </svg>
+                        {{ _('Filter') }}
+                    </button>
+                    <a href="{{ url_for('alert_history.alert_history_page') }}" class="pure-button">
+                        {{ _('Clear') }}
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results summary -->
+    <div class="results-summary">
+        <span class="results-count">
+            {% set start_num = ((page - 1) * per_page + 1) if total_count > 0 else 0 %}
+            {% set end_num = page * per_page %}
+            {% if end_num > total_count %}{% set end_num = total_count %}{% endif %}
+            {{ _('Showing %(start)s-%(end)s of %(total)s notifications',
+                start=start_num,
+                end=end_num,
+                total=total_count) }}
+        </span>
+        <div class="per-page-selector">
+            <label for="per-page">{{ _('Per page:') }}</label>
+            <select id="per-page" onchange="changePerPage(this.value)">
+                <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
+                <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+                <option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Alerts table -->
+    <div class="alert-history-table-wrapper">
+        {% if logs %}
+        <table class="pure-table pure-table-bordered alert-history-table">
+            <thead>
+                <tr>
+                    <th class="col-timestamp">{{ _('Timestamp') }}</th>
+                    <th class="col-event">{{ _('Event') }}</th>
+                    <th class="col-type">{{ _('Type') }}</th>
+                    <th class="col-webhook">{{ _('Webhook') }}</th>
+                    <th class="col-status">{{ _('Status') }}</th>
+                    <th class="col-actions">{{ _('Actions') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr class="log-row {% if not log.success %}log-failed{% endif %}">
+                    <td class="col-timestamp">
+                        <span class="timestamp" title="{{ log.sent_at }}">
+                            {{ log.sent_at[:19] if log.sent_at else '-' }}
+                        </span>
+                    </td>
+                    <td class="col-event">
+                        {% if log.event_name %}
+                        <a href="{{ url_for('ui.ui_edit.edit_page', uuid=log.event_id) }}" class="event-link" title="{{ log.event_name }}">
+                            {{ log.event_name|truncate(35) }}
+                        </a>
+                        {% elif log.tag_name %}
+                        <span class="tag-indicator" title="{{ _('Tag notification') }}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                                <line x1="7" y1="7" x2="7.01" y2="7"/>
+                            </svg>
+                            {{ log.tag_name }}
+                        </span>
+                        {% else %}
+                        <span class="no-event">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="col-type">
+                        <span class="alert-type alert-type-{{ log.notification_type }}">
+                            {% if log.notification_type == 'restock' %}
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                <polyline points="22 4 12 14.01 9 11.01"/>
+                            </svg>
+                            {{ _('Restock') }}
+                            {% elif log.notification_type == 'price_change' %}
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                <line x1="12" y1="1" x2="12" y2="23"/>
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            </svg>
+                            {{ _('Price Change') }}
+                            {% elif log.notification_type == 'sold_out' %}
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+                            </svg>
+                            {{ _('Sold Out') }}
+                            {% elif log.notification_type == 'new_event' %}
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="12" y1="8" x2="12" y2="16"/>
+                                <line x1="8" y1="12" x2="16" y2="12"/>
+                            </svg>
+                            {{ _('New Event') }}
+                            {% elif log.notification_type == 'error' %}
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="12" y1="8" x2="12" y2="12"/>
+                                <line x1="12" y1="16" x2="12.01" y2="16"/>
+                            </svg>
+                            {{ _('Error') }}
+                            {% else %}
+                            {{ log.notification_type }}
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td class="col-webhook">
+                        {% if log.webhook_url %}
+                        <span class="webhook-url" title="{{ log.webhook_url }}">
+                            {{ log.webhook_url|truncate(35) }}
+                        </span>
+                        {% else %}
+                        <span class="no-webhook">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="col-status">
+                        {% if log.success %}
+                        <span class="status-badge status-success">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            {{ _('Success') }}
+                            {% if log.response_status %}
+                            <span class="status-code">({{ log.response_status }})</span>
+                            {% endif %}
+                        </span>
+                        {% else %}
+                        <span class="status-badge status-failed">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                <line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                            {{ _('Failed') }}
+                            {% if log.response_status %}
+                            <span class="status-code">({{ log.response_status }})</span>
+                            {% endif %}
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="col-actions">
+                        <button type="button" class="pure-button pure-button-small view-payload-btn"
+                                data-log-id="{{ log.id }}"
+                                title="{{ _('View Payload') }}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                            {{ _('View') }}
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            <h3>{{ _('No notifications found') }}</h3>
+            <p>{{ _('There are no notification logs matching your filters.') }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <div class="pagination">
+        {% if page > 1 %}
+        <a href="{{ url_for('alert_history.alert_history_page', type=current_type, event=current_event, tag=current_tag, status=current_status, page=1, per_page=per_page) }}"
+           class="pagination-link" title="{{ _('First') }}">
+            &laquo;
+        </a>
+        <a href="{{ url_for('alert_history.alert_history_page', type=current_type, event=current_event, tag=current_tag, status=current_status, page=page-1, per_page=per_page) }}"
+           class="pagination-link" title="{{ _('Previous') }}">
+            &lsaquo;
+        </a>
+        {% endif %}
+
+        {% set start_page = [1, page - 2]|max %}
+        {% set end_page = [total_pages, page + 2]|min %}
+
+        {% for p in range(start_page, end_page + 1) %}
+        <a href="{{ url_for('alert_history.alert_history_page', type=current_type, event=current_event, tag=current_tag, status=current_status, page=p, per_page=per_page) }}"
+           class="pagination-link {% if p == page %}active{% endif %}">
+            {{ p }}
+        </a>
+        {% endfor %}
+
+        {% if page < total_pages %}
+        <a href="{{ url_for('alert_history.alert_history_page', type=current_type, event=current_event, tag=current_tag, status=current_status, page=page+1, per_page=per_page) }}"
+           class="pagination-link" title="{{ _('Next') }}">
+            &rsaquo;
+        </a>
+        <a href="{{ url_for('alert_history.alert_history_page', type=current_type, event=current_event, tag=current_tag, status=current_status, page=total_pages, per_page=per_page) }}"
+           class="pagination-link" title="{{ _('Last') }}">
+            &raquo;
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Payload Modal -->
+<div id="payload-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>{{ _('Notification Details') }}</h2>
+            <button type="button" class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="modal-loading" class="modal-loading">
+                <span class="spinner"></span>
+                {{ _('Loading...') }}
+            </div>
+            <div id="modal-content" style="display: none;">
+                <div class="detail-section">
+                    <h3>{{ _('General') }}</h3>
+                    <dl class="detail-list">
+                        <dt>{{ _('Timestamp') }}</dt>
+                        <dd id="detail-timestamp">-</dd>
+                        <dt>{{ _('Type') }}</dt>
+                        <dd id="detail-type">-</dd>
+                        <dt>{{ _('Status') }}</dt>
+                        <dd id="detail-status">-</dd>
+                        <dt>{{ _('Event') }}</dt>
+                        <dd id="detail-event">-</dd>
+                        <dt>{{ _('Tag') }}</dt>
+                        <dd id="detail-tag">-</dd>
+                        <dt>{{ _('Webhook URL') }}</dt>
+                        <dd id="detail-webhook">-</dd>
+                    </dl>
+                </div>
+
+                <div class="detail-section" id="error-section" style="display: none;">
+                    <h3>{{ _('Error') }}</h3>
+                    <pre id="detail-error" class="error-message"></pre>
+                </div>
+
+                <div class="detail-section">
+                    <h3>{{ _('Payload') }}</h3>
+                    <pre id="detail-payload" class="payload-json"></pre>
+                </div>
+
+                <div class="detail-section" id="response-section" style="display: none;">
+                    <h3>{{ _('Response') }}</h3>
+                    <dl class="detail-list">
+                        <dt>{{ _('Status Code') }}</dt>
+                        <dd id="detail-response-status">-</dd>
+                    </dl>
+                    <pre id="detail-response-body" class="response-body"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    // View payload button handlers
+    document.querySelectorAll('.view-payload-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var logId = this.dataset.logId;
+            openModal(logId);
+        });
+    });
+
+    // Close modal on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });
+
+    // Close modal on backdrop click
+    document.getElementById('payload-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
+        }
+    });
+})();
+
+function openModal(logId) {
+    var modal = document.getElementById('payload-modal');
+    var loading = document.getElementById('modal-loading');
+    var content = document.getElementById('modal-content');
+
+    modal.style.display = 'flex';
+    loading.style.display = 'flex';
+    content.style.display = 'none';
+
+    fetch('{{ url_for("alert_history.alert_history_page") }}' + logId, {
+        headers: {
+            'X-CSRFToken': csrftoken
+        }
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+        if (data.success) {
+            populateModal(data.log);
+            loading.style.display = 'none';
+            content.style.display = 'block';
+        } else {
+            alert('Error: ' + data.error);
+            closeModal();
+        }
+    })
+    .catch(function(error) {
+        alert('Error loading notification details: ' + error);
+        closeModal();
+    });
+}
+
+function closeModal() {
+    document.getElementById('payload-modal').style.display = 'none';
+}
+
+function populateModal(log) {
+    document.getElementById('detail-timestamp').textContent = log.sent_at || '-';
+    document.getElementById('detail-type').textContent = log.notification_type || '-';
+    document.getElementById('detail-status').textContent = log.success ? 'Success' : 'Failed';
+    document.getElementById('detail-event').textContent = log.event_name || '-';
+    document.getElementById('detail-tag').textContent = log.tag_name || '-';
+    document.getElementById('detail-webhook').textContent = log.webhook_url || '-';
+
+    // Payload
+    var payloadEl = document.getElementById('detail-payload');
+    if (log.payload) {
+        payloadEl.textContent = JSON.stringify(log.payload, null, 2);
+    } else {
+        payloadEl.textContent = '-';
+    }
+
+    // Error section
+    var errorSection = document.getElementById('error-section');
+    var errorEl = document.getElementById('detail-error');
+    if (log.error_message) {
+        errorSection.style.display = 'block';
+        errorEl.textContent = log.error_message;
+    } else {
+        errorSection.style.display = 'none';
+    }
+
+    // Response section
+    var responseSection = document.getElementById('response-section');
+    var responseStatusEl = document.getElementById('detail-response-status');
+    var responseBodyEl = document.getElementById('detail-response-body');
+    if (log.response_status || log.response_body) {
+        responseSection.style.display = 'block';
+        responseStatusEl.textContent = log.response_status || '-';
+        responseBodyEl.textContent = log.response_body || '-';
+    } else {
+        responseSection.style.display = 'none';
+    }
+}
+
+function changePerPage(value) {
+    var url = new URL(window.location.href);
+    url.searchParams.set('per_page', value);
+    url.searchParams.set('page', '1');
+    window.location.href = url.toString();
+}
+</script>
+{% endblock %}

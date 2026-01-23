@@ -36,6 +36,7 @@
 @use "parts/quick_event";
 @use "parts/event_filter";
 @use "parts/price_history";
+@use "parts/alert_history";
 
 // Smooth transitions for theme switching
 body,
