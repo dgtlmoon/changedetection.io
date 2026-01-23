@@ -4,6 +4,7 @@
 {% from '_common_fields.html' import render_common_settings_form %}
 <script>
     const notification_base_url="{{url_for('ui.ui_notification.ajax_callback_send_notification_test', mode="group-settings")}}";
+    const slack_webhook_test_url="{{url_for('tags.test_slack_webhook', uuid=data.uuid)}}";
 </script>
 
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
@@ -19,12 +20,80 @@
 
 <script src="{{url_for('static_content', group='js', filename='watch-settings.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='slack-webhook.js')}}" defer></script>
+
+<style>
+    .webhook-url-display {
+        font-family: monospace;
+        background: var(--color-background-code);
+        padding: 0.5em;
+        border-radius: 4px;
+        display: inline-block;
+        margin-bottom: 0.5em;
+    }
+    .webhook-url-masked {
+        color: var(--color-grey-500);
+    }
+    .webhook-url-visible {
+        color: var(--color-text);
+    }
+    .slack-webhook-section {
+        border: 1px solid var(--color-border-notification);
+        padding: 1rem;
+        border-radius: 5px;
+        margin-bottom: 1rem;
+    }
+    .slack-webhook-section h4 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        color: var(--color-text);
+    }
+    #slack-test-result {
+        margin-top: 1rem;
+        padding: 0.75rem;
+        border-radius: 4px;
+        display: none;
+    }
+    #slack-test-result.success {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid #10b981;
+        color: #10b981;
+    }
+    #slack-test-result.error {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid #ef4444;
+        color: #ef4444;
+    }
+    .tag-color-preview {
+        display: inline-block;
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        vertical-align: middle;
+        margin-left: 0.5em;
+        border: 1px solid var(--color-border-input);
+    }
+    .color-picker-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .color-picker-wrapper input[type="color"] {
+        width: 50px;
+        height: 35px;
+        padding: 0;
+        border: 1px solid var(--color-border-input);
+        border-radius: 4px;
+        cursor: pointer;
+    }
+</style>
 
 <div class="edit-form monospaced-textarea">
 
     <div class="tabs collapsable">
         <ul>
             <li class="tab" id=""><a href="#general">{{ _('General') }}</a></li>
+            <li class="tab"><a href="#slack-webhook">{{ _('Slack Webhook') }}</a></li>
             <li class="tab"><a href="#filters-and-triggers">{{ _('Filters & Triggers') }}</a></li>
             {% if extra_tab_content %}
             <li class="tab"><a href="#extras_tab">{{ extra_tab_content }}</a></li>
@@ -41,7 +110,78 @@
             <div class="tab-pane-inner" id="general">
                 <fieldset>
                     <div class="pure-control-group">
-                        {{ render_field(form.title, placeholder="https://...", required=true, class="m-d") }}
+                        {{ render_field(form.title, placeholder="Tag name", required=true, class="m-d") }}
+                    </div>
+                    <div class="pure-control-group">
+                        <label for="tag_color">{{ _('Tag Color') }}</label>
+                        <div class="color-picker-wrapper">
+                            <input type="color"
+                                   id="tag_color"
+                                   name="tag_color"
+                                   value="{{ data.tag_color or '#3B82F6' }}"
+                                   class="tag-color-picker">
+                            <span class="pure-form-message-inline">{{ _('Choose a color for UI organization') }}</span>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+
+            <div class="tab-pane-inner" id="slack-webhook">
+                <fieldset>
+                    <div class="slack-webhook-section">
+                        <h4>{{ _('Slack Webhook Configuration') }}</h4>
+                        <p class="pure-form-message-inline" style="margin-bottom: 1rem;">
+                            {{ _('Configure a Slack webhook URL to route notifications for this tag to a specific Slack channel.') }}
+                        </p>
+
+                        <div class="pure-control-group">
+                            <label for="slack_webhook_url">{{ _('Slack Webhook URL') }}</label>
+                            {% if data.slack_webhook_url %}
+                            <div class="webhook-url-display">
+                                <span class="webhook-url-masked">{{ '•' * 50 }}</span><span class="webhook-url-visible">{{ data.slack_webhook_url[-8:] if data.slack_webhook_url else '' }}</span>
+                            </div>
+                            <br>
+                            {% endif %}
+                            <input type="text"
+                                   id="slack_webhook_url"
+                                   name="slack_webhook_url"
+                                   value="{{ data.slack_webhook_url or '' }}"
+                                   placeholder="https://hooks.slack.com/services/T.../B.../..."
+                                   class="m-d slack-webhook-url">
+                            <span class="pure-form-message-inline">
+                                {{ _('Get your webhook URL from') }} <a href="https://api.slack.com/messaging/webhooks" target="_blank">{{ _('Slack API') }}</a>
+                            </span>
+                            {% if form.slack_webhook_url.errors %}
+                            <ul class="errors">
+                                {% for error in form.slack_webhook_url.errors %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+                        </div>
+
+                        <div class="pure-control-group">
+                            {{ render_checkbox_field(form.slack_notification_muted) }}
+                            <span class="pure-form-message-inline">
+                                {{ _('When enabled, Slack notifications will be suppressed for this tag') }}
+                            </span>
+                        </div>
+
+                        <div class="pure-control-group">
+                            <button type="button"
+                                    id="test-slack-webhook"
+                                    class="pure-button button-secondary">
+                                <span class="spinner" style="display: none;"></span>
+                                {{ _('Test Webhook') }}
+                            </button>
+                            <span class="pure-form-message-inline">
+                                {{ _('Send a test message to verify your webhook configuration') }}
+                            </span>
+                        </div>
+
+                        <div id="slack-test-result">
+                            <span id="slack-test-message"></span>
+                        </div>
                     </div>
                 </fieldset>
             </div>
