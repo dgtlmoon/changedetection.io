@@ -1034,6 +1034,54 @@ class globalSettingsApplicationUIForm(Form):
     favicons_enabled = BooleanField(_l('Favicons Enabled'), default=True, validators=[validators.Optional()])
     use_page_title_in_list = BooleanField(_l('Use page <title> in watch overview list')) #BooleanField=True
 
+
+class LLMExtractionForm(Form):
+    """Form for LLM extraction settings (US-026)."""
+    enabled = BooleanField(_l('Enable AI Extraction'), default=False, validators=[validators.Optional()])
+    provider = SelectField(
+        _l('Provider'),
+        choices=[
+            ('', _l('-- Select Provider --')),
+            ('openai', 'OpenAI'),
+            ('anthropic', 'Anthropic'),
+            ('ollama', 'Ollama (Local)'),
+        ],
+        default='',
+        validators=[validators.Optional()]
+    )
+    api_key = StringField(
+        _l('API Key'),
+        validators=[validators.Optional()],
+        render_kw={"type": "password", "placeholder": "Enter API key...", "autocomplete": "new-password"}
+    )
+    model = SelectField(
+        _l('Model'),
+        choices=[('', _l('-- Select Provider First --'))],
+        default='',
+        validators=[validators.Optional()]
+    )
+    api_base_url = StringField(
+        _l('Custom API URL'),
+        validators=[validators.Optional()],
+        render_kw={"placeholder": "Optional: Custom API endpoint URL"}
+    )
+    prompt_template = TextAreaField(
+        _l('Custom Extraction Prompt'),
+        validators=[validators.Optional()],
+        render_kw={"rows": "8", "placeholder": "Leave empty to use default prompt..."}
+    )
+    timeout = IntegerField(
+        _l('Request Timeout (seconds)'),
+        default=30,
+        validators=[validators.Optional(), validators.NumberRange(min=5, max=300, message=_l("Should be between 5 and 300 seconds"))]
+    )
+    fallback_to_css = BooleanField(_l('Fall back to CSS selectors if AI extraction fails'), default=True, validators=[validators.Optional()])
+    max_html_chars = IntegerField(
+        _l('Maximum HTML Characters'),
+        default=50000,
+        validators=[validators.Optional(), validators.NumberRange(min=1000, max=200000, message=_l("Should be between 1000 and 200000"))]
+    )
+
 # datastore.data['settings']['application']..
 class globalSettingsApplicationForm(commonSettingsForm):
 
@@ -1086,6 +1134,9 @@ class globalSettingsApplicationForm(commonSettingsForm):
                                                                   validators=[validators.NumberRange(min=0,
                                                                                                      message=_l("Should contain zero or more attempts"))])
     ui = FormField(globalSettingsApplicationUIForm)
+
+    # LLM Extraction settings (US-026)
+    llm_extraction = FormField(LLMExtractionForm)
 
 
 class globalSettingsForm(Form):

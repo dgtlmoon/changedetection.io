@@ -15,6 +15,7 @@
 <script src="{{url_for('static_content', group='js', filename='vis.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='global-settings.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='scheduler.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='llm-settings.js')}}" defer></script>
 <div class="edit-form">
     <div class="tabs collapsable">
         <ul>
@@ -28,6 +29,7 @@
             <li class="tab"><a href="{{ url_for('backups.index') }}" class="pure-menu-link">{{ _('Backups') }}</a></li>
             <li class="tab"><a href="#timedate">{{ _('Time & Date') }}</a></li>
             <li class="tab"><a href="#proxies">{{ _('CAPTCHA & Proxies') }}</a></li>
+            <li class="tab"><a href="#ai-extraction">{{ _('AI Extraction') }}</a></li>
             {% if plugin_tabs %}
                 {% for tab in plugin_tabs %}
             <li class="tab"><a href="#plugin-{{ tab.plugin_id }}">{{ tab.tab_label }}</a></li>
@@ -357,6 +359,112 @@ nav
                     </p>
                     {{ render_fieldlist_with_inline_errors(form.requests.form.extra_browsers) }}
                 </div>
+            </div>
+            <div class="tab-pane-inner" id="ai-extraction">
+                <h4>{{ _('AI-Powered Event Extraction') }}</h4>
+                <p>{{ _('Use AI language models to automatically extract event information from web pages. Supports OpenAI, Anthropic Claude, and local Ollama models.') }}</p>
+
+                <fieldset>
+                    <div class="pure-control-group">
+                        {{ render_checkbox_field(form.application.form.llm_extraction.form.enabled) }}
+                        <span class="pure-form-message-inline">{{ _('Enable AI extraction for event data (prices, dates, availability, etc.)') }}</span>
+                    </div>
+                </fieldset>
+
+                <fieldset id="llm-provider-settings" class="grey-form-border">
+                    <legend>{{ _('Provider Settings') }}</legend>
+                    <div class="pure-control-group">
+                        {{ render_field(form.application.form.llm_extraction.form.provider) }}
+                        <span class="pure-form-message-inline">{{ _('Select your LLM provider. OpenAI and Anthropic require API keys. Ollama is free and runs locally.') }}</span>
+                    </div>
+
+                    <div class="pure-control-group" id="llm-api-key-group">
+                        {{ render_field(form.application.form.llm_extraction.form.api_key) }}
+                        <span class="pure-form-message-inline">{{ _('Your API key (stored securely). Leave empty to use environment variable.') }}</span>
+                    </div>
+
+                    <div class="pure-control-group">
+                        {{ render_field(form.application.form.llm_extraction.form.model) }}
+                        <span class="pure-form-message-inline">{{ _('Select the model to use. Smaller models are cheaper and faster.') }}</span>
+                    </div>
+
+                    <div class="pure-control-group">
+                        {{ render_field(form.application.form.llm_extraction.form.api_base_url) }}
+                        <span class="pure-form-message-inline">{{ _('Optional: Custom API endpoint URL for proxies, Azure OpenAI, or self-hosted Ollama.') }}</span>
+                    </div>
+                </fieldset>
+
+                <fieldset id="llm-advanced-settings" class="grey-form-border">
+                    <legend>{{ _('Advanced Settings') }}</legend>
+                    <div class="pure-control-group">
+                        {{ render_field(form.application.form.llm_extraction.form.prompt_template) }}
+                        <span class="pure-form-message-inline">{{ _('Custom extraction prompt. Leave empty to use the default prompt. Use {html_content} placeholder for the page content.') }}</span>
+                    </div>
+
+                    <div class="pure-control-group">
+                        {{ render_field(form.application.form.llm_extraction.form.timeout) }}
+                        <span class="pure-form-message-inline">{{ _('Request timeout in seconds. Increase for slower models or larger pages.') }}</span>
+                    </div>
+
+                    <div class="pure-control-group">
+                        {{ render_field(form.application.form.llm_extraction.form.max_html_chars) }}
+                        <span class="pure-form-message-inline">{{ _('Maximum HTML characters to send to the LLM. Larger values cost more but capture more context.') }}</span>
+                    </div>
+
+                    <div class="pure-control-group">
+                        {{ render_checkbox_field(form.application.form.llm_extraction.form.fallback_to_css) }}
+                        <span class="pure-form-message-inline">{{ _('If AI extraction fails, attempt extraction using CSS selectors as a fallback.') }}</span>
+                    </div>
+                </fieldset>
+
+                <fieldset id="llm-test-section" class="grey-form-border">
+                    <legend>{{ _('Test Extraction') }}</legend>
+                    <div class="pure-control-group">
+                        <label for="llm-test-url">{{ _('Test URL') }}</label>
+                        <input type="url" id="llm-test-url" placeholder="https://example.com/event-page" style="width: 400px;">
+                        <button type="button" id="llm-test-button" class="pure-button">{{ _('Test Extraction') }}</button>
+                    </div>
+                    <div id="llm-test-result" style="display: none; margin-top: 10px;">
+                        <h5>{{ _('Extraction Result') }}</h5>
+                        <pre id="llm-test-output" style="background: #f5f5f5; padding: 10px; border-radius: 4px; max-height: 300px; overflow-y: auto;"></pre>
+                    </div>
+                </fieldset>
+
+                <fieldset id="llm-cost-tracking" class="grey-form-border">
+                    <legend>{{ _('Cost Tracking') }}</legend>
+                    <div class="pure-control-group">
+                        <p><strong>{{ _('Total Cost:') }}</strong> <span id="llm-total-cost">${{ llm_cost_summary.total_cost_usd|default('0.00', true) }}</span></p>
+                        <p><strong>{{ _('Total Tokens:') }}</strong> <span id="llm-total-tokens">{{ llm_cost_summary.total_input_tokens|default(0, true) }} {{ _('input') }} / {{ llm_cost_summary.total_output_tokens|default(0, true) }} {{ _('output') }}</span></p>
+                        <p><strong>{{ _('API Calls:') }}</strong> <span id="llm-call-count">{{ llm_cost_summary.call_count|default(0, true) }}</span></p>
+                        {% if llm_cost_summary.last_reset %}
+                        <p><strong>{{ _('Last Reset:') }}</strong> {{ llm_cost_summary.last_reset }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="pure-control-group">
+                        <a href="{{ url_for('settings.reset_llm_costs') }}" class="pure-button button-small" onclick="return confirm('{{ _('Reset all LLM cost tracking data?') }}');">{{ _('Reset Cost Tracking') }}</a>
+                    </div>
+
+                    <div class="pure-control-group" style="margin-top: 15px;">
+                        <h5>{{ _('Estimated Cost per Extraction') }}</h5>
+                        <table class="pure-table pure-table-bordered" style="font-size: 0.9em;">
+                            <thead>
+                                <tr>
+                                    <th>{{ _('Provider') }}</th>
+                                    <th>{{ _('Model') }}</th>
+                                    <th>{{ _('Est. Cost/Page') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>OpenAI</td><td>gpt-4o-mini</td><td>~$0.001</td></tr>
+                                <tr><td>OpenAI</td><td>gpt-4o</td><td>~$0.01</td></tr>
+                                <tr><td>Anthropic</td><td>claude-3-5-haiku</td><td>~$0.002</td></tr>
+                                <tr><td>Anthropic</td><td>claude-3-5-sonnet</td><td>~$0.01</td></tr>
+                                <tr><td>Ollama</td><td>Any</td><td>Free (local)</td></tr>
+                            </tbody>
+                        </table>
+                        <span class="pure-form-message-inline">{{ _('Estimates based on typical event pages (~10KB HTML). Actual costs vary by page size.') }}</span>
+                    </div>
+                </fieldset>
             </div>
             {% if plugin_tabs %}
                 {% for tab in plugin_tabs %}

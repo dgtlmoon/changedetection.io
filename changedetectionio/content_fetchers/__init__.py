@@ -109,3 +109,32 @@ else:
 from changedetectionio.pluggy_interface import register_builtin_fetchers
 register_builtin_fetchers()
 
+
+def fetch_html_content_simple(url: str, timeout: int = 30) -> str | None:
+    """
+    Simple helper to fetch HTML content from a URL using requests.
+    Used for LLM extraction testing (US-026).
+
+    Args:
+        url: URL to fetch
+        timeout: Request timeout in seconds
+
+    Returns:
+        HTML content as string, or None if failed
+    """
+    import requests
+
+    try:
+        response = requests.get(
+            url,
+            timeout=timeout,
+            headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            },
+            verify=False
+        )
+        response.raise_for_status()
+        return response.text
+    except Exception as e:
+        logger.error(f"Failed to fetch URL {url}: {e}")
+        return None

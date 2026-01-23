@@ -157,6 +157,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             # Instantiate the form with existing settings
             plugin_forms[plugin_id] = form_class(data=settings)
 
+        # Get LLM cost summary for the AI Extraction tab (US-026)
+        from changedetectionio.llm_extractors.service import get_llm_extraction_service
+        llm_service = get_llm_extraction_service(datastore)
+        llm_cost_summary = llm_service.get_cost_summary()
+
         output = render_template("settings.html",
                                 active_plugins=active_plugins,
                                 api_key=datastore.data['settings']['application'].get('api_access_token'),
@@ -172,6 +177,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                 utc_time=utc_time,
                                 plugin_tabs=plugin_tabs,
                                 plugin_forms=plugin_forms,
+                                llm_cost_summary=llm_cost_summary,
                                 )
 
         return output
@@ -220,5 +226,119 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             flash(gettext("All notifications unmuted."), 'notice')
 
         return redirect(url_for('watchlist.index'))
+
+    @settings_blueprint.route("/reset-llm-costs", methods=['GET'])
+    @login_optionally_required
+    def reset_llm_costs():
+        """Reset LLM cost tracking counters (US-026)."""
+        from changedetectionio.llm_extractors.service import get_llm_extraction_service
+
+        service = get_llm_extraction_service(datastore)
+        service.reset_cost_tracking()
+        datastore.needs_write_urgent = True
+
+        flash(gettext("LLM cost tracking has been reset."), 'notice')
+        return redirect(url_for('settings.settings_page') + '#ai-extraction')
+
+    @settings_blueprint.route("/test-llm-extraction", methods=['POST'])
+    @login_optionally_required
+    def test_llm_extraction():
+        """Test LLM extraction with a URL (US-026)."""
+        import asyncio
+        from flask import jsonify
+
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+
+        test_url = data.get('url', '').strip()
+        if not test_url:
+            return jsonify({'success': False, 'error': 'URL is required'}), 400
+
+        provider = data.get('provider', '').strip()
+        if not provider:
+            return jsonify({'success': False, 'error': 'Provider is required'}), 400
+
+        model = data.get('model', '').strip()
+        api_key = data.get('api_key', '').strip()
+        api_base_url = data.get('api_base_url', '').strip()
+        prompt_template = data.get('prompt_template', '').strip() or None
+        timeout = data.get('timeout', 30)
+
+        try:
+            # Fetch the page content
+            from changedetectionio.content_fetchers import fetch_html_content_simple
+
+            html_content = fetch_html_content_simple(test_url, timeout=30)
+            if not html_content:
+                return jsonify({'success': False, 'error': 'Failed to fetch page content'}), 400
+
+            # Create the LLM extractor
+            from changedetectionio.llm_extractors.factory import create_llm_extractor
+
+            extractor = create_llm_extractor(
+                provider=provider,
+                api_key=api_key if api_key else None,
+                model=model if model else None,
+                api_base_url=api_base_url if api_base_url else None,
+                timeout=timeout
+            )
+
+            if not extractor.is_configured():
+                error_msg = f"LLM provider '{provider}' is not properly configured."
+                if provider in ['openai', 'anthropic']:
+                    error_msg += " Please provide an API key."
+                return jsonify({'success': False, 'error': error_msg}), 400
+
+            # Run the extraction asynchronously
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                result = loop.run_until_complete(
+                    extractor.extract(html_content, prompt_template)
+                )
+            finally:
+                loop.close()
+
+            if result.success:
+                return jsonify({
+                    'success': True,
+                    'result': result.to_dict(),
+                    'cost': {
+                        'input_tokens': result.input_tokens,
+                        'output_tokens': result.output_tokens,
+                        'cost_usd': str(result.cost_usd)
+                    }
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': result.error or 'Extraction failed'
+                }), 400
+
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @settings_blueprint.route("/llm-provider-models/<provider>", methods=['GET'])
+    @login_optionally_required
+    def get_llm_provider_models(provider):
+        """Get available models for a LLM provider (US-026)."""
+        from flask import jsonify
+        from changedetectionio.llm_extractors.factory import get_provider_models, get_available_providers
+
+        # Validate provider
+        providers = {p['id']: p for p in get_available_providers()}
+        if provider not in providers:
+            return jsonify({'success': False, 'error': f'Unknown provider: {provider}'}), 400
+
+        models = get_provider_models(provider)
+        provider_info = providers[provider]
+
+        return jsonify({
+            'success': True,
+            'provider': provider_info,
+            'models': models,
+            'default_model': provider_info.get('default_model')
+        })
 
     return settings_blueprint
