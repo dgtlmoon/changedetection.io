@@ -17,6 +17,7 @@ Usage:
 """
 
 import os
+import re
 import uuid
 from datetime import date, datetime, time
 from decimal import Decimal
@@ -64,6 +65,63 @@ class NotificationType(str, Enum):
     SOLD_OUT = "sold_out"
     NEW_EVENT = "new_event"
     ERROR = "error"
+
+
+# =============================================================================
+# Slack Webhook URL Validation
+# =============================================================================
+
+# Slack webhook URL pattern: https://hooks.slack.com/services/T.../B.../...
+SLACK_WEBHOOK_PATTERN = re.compile(
+    r'^https://hooks\.slack\.com/services/T[A-Z0-9]+/B[A-Z0-9]+/[A-Za-z0-9]+$'
+)
+
+
+class SlackWebhookValidationError(ValueError):
+    """Raised when a Slack webhook URL is invalid."""
+
+    pass
+
+
+def validate_slack_webhook_url(url: str | None) -> str | None:
+    """
+    Validate a Slack webhook URL.
+
+    Slack webhook URLs follow the pattern:
+    https://hooks.slack.com/services/T<TEAM_ID>/B<BOT_ID>/<TOKEN>
+
+    Args:
+        url: The webhook URL to validate. None or empty string is allowed
+             (for clearing the webhook).
+
+    Returns:
+        The validated URL (stripped of whitespace), or None if empty.
+
+    Raises:
+        SlackWebhookValidationError: If the URL is not a valid Slack webhook URL.
+
+    Examples:
+        >>> validate_slack_webhook_url("https://hooks.slack.com/services/T123/B456/abc123")
+        'https://hooks.slack.com/services/T123/B456/abc123'
+        >>> validate_slack_webhook_url(None)
+        None
+        >>> validate_slack_webhook_url("")
+        None
+        >>> validate_slack_webhook_url("https://example.com")
+        SlackWebhookValidationError: Invalid Slack webhook URL format
+    """
+    if url is None or url.strip() == '':
+        return None
+
+    url = url.strip()
+
+    if not SLACK_WEBHOOK_PATTERN.match(url):
+        raise SlackWebhookValidationError(
+            f"Invalid Slack webhook URL format. Expected: "
+            f"https://hooks.slack.com/services/T<TEAM_ID>/B<BOT_ID>/<TOKEN>"
+        )
+
+    return url
 
 
 # =============================================================================
@@ -282,6 +340,18 @@ class Tag(Base):
         """Check if tag can send notifications (has webhook and not muted)"""
         return self.has_webhook() and not self.notification_muted
 
+    def set_webhook_url(self, url: str | None) -> None:
+        """
+        Set the Slack webhook URL with validation.
+
+        Args:
+            url: The webhook URL to set, or None to clear.
+
+        Raises:
+            SlackWebhookValidationError: If the URL is not a valid Slack webhook URL.
+        """
+        self.slack_webhook_url = validate_slack_webhook_url(url)
+
     # -------------------------------------------------------------------------
     # Class methods for common queries
     # -------------------------------------------------------------------------
@@ -317,6 +387,99 @@ class Tag(Base):
         """Get all tags"""
         result = await session.execute(select(cls).order_by(cls.name))
         return list(result.scalars().all())
+
+    @classmethod
+    async def update_tag(
+        cls,
+        session: AsyncSession,
+        tag_id: uuid.UUID,
+        slack_webhook_url: str | None = None,
+        notification_muted: bool | None = None,
+        color: str | None = None,
+        name: str | None = None,
+    ) -> Optional["Tag"]:
+        """
+        Update a tag's properties with validation.
+
+        Args:
+            session: Database session
+            tag_id: UUID of the tag to update
+            slack_webhook_url: New webhook URL (validated) or None to clear
+            notification_muted: Whether to mute notifications
+            color: New color (hex format)
+            name: New tag name
+
+        Returns:
+            Updated Tag object, or None if tag not found.
+
+        Raises:
+            SlackWebhookValidationError: If the webhook URL is invalid.
+        """
+        tag = await cls.get_by_id(session, tag_id)
+        if not tag:
+            return None
+
+        if slack_webhook_url is not None or slack_webhook_url == '':
+            # Validate and set the webhook URL (None or '' clears it)
+            tag.set_webhook_url(slack_webhook_url if slack_webhook_url != '' else None)
+
+        if notification_muted is not None:
+            tag.notification_muted = notification_muted
+
+        if color is not None:
+            tag.color = color
+
+        if name is not None and name.strip():
+            tag.name = name.strip()
+
+        await session.commit()
+        await session.refresh(tag)
+        return tag
+
+    @classmethod
+    async def get_webhooks_for_event(
+        cls, session: AsyncSession, event_id: uuid.UUID
+    ) -> list[dict[str, Any]]:
+        """
+        Get all active webhook URLs for an event's tags.
+
+        Returns webhooks from tags that:
+        - Have a slack_webhook_url configured
+        - Are not muted (notification_muted=False)
+
+        Args:
+            session: Database session
+            event_id: UUID of the event
+
+        Returns:
+            List of dicts with 'tag_id', 'tag_name', and 'webhook_url' for each
+            active webhook. Events with multiple tags will return multiple webhooks.
+        """
+        # Import here to avoid circular import
+        from tasks.models import event_tags as event_tags_table
+
+        result = await session.execute(
+            select(cls)
+            .join(event_tags_table, event_tags_table.c.tag_id == cls.id)
+            .where(
+                and_(
+                    event_tags_table.c.event_id == event_id,
+                    cls.slack_webhook_url.isnot(None),
+                    cls.slack_webhook_url != '',
+                    cls.notification_muted.is_(False),
+                )
+            )
+        )
+        tags = result.scalars().all()
+
+        return [
+            {
+                'tag_id': str(tag.id),
+                'tag_name': tag.name,
+                'webhook_url': tag.slack_webhook_url,
+            }
+            for tag in tags
+        ]
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""

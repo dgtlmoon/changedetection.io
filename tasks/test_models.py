@@ -35,12 +35,14 @@ from tasks.models import (
     NotificationLog,
     NotificationType,
     PriceHistory,
+    SlackWebhookValidationError,
     Snapshot,
     Tag,
     User,
     UserRole,
     async_session_factory,
     create_async_engine_from_url,
+    validate_slack_webhook_url,
 )
 
 # =============================================================================
@@ -314,6 +316,225 @@ class TestTagModel:
         assert data['id'] == str(test_tag.id)
         assert data['name'] == test_tag.name
         assert data['slack_webhook_url'] == test_tag.slack_webhook_url
+
+
+# =============================================================================
+# Slack Webhook URL Validation Tests (US-004)
+# =============================================================================
+
+
+class TestSlackWebhookValidation:
+    """Tests for Slack webhook URL validation"""
+
+    def test_valid_slack_webhook_url(self):
+        """Test that valid Slack webhook URLs pass validation"""
+        valid_urls = [
+            "https://hooks.slack.com/services/T12345678/B12345678/abcdefghijklmnop",
+            "https://hooks.slack.com/services/TABCDEFGH/BABCDEFGH/AbCdEfGhIjKlMnOp123",
+            "https://hooks.slack.com/services/T0123456789/B0123456789/a1b2c3d4e5f6g7h8",
+        ]
+        for url in valid_urls:
+            result = validate_slack_webhook_url(url)
+            assert result == url, f"Valid URL should pass: {url}"
+
+    def test_invalid_slack_webhook_url_wrong_host(self):
+        """Test that non-Slack URLs are rejected"""
+        invalid_urls = [
+            "https://example.com/webhook",
+            "https://hooks.example.com/services/T123/B456/abc",
+            "http://hooks.slack.com/services/T123/B456/abc",  # Must be https
+            "https://slack.com/services/T123/B456/abc",
+        ]
+        for url in invalid_urls:
+            with pytest.raises(SlackWebhookValidationError):
+                validate_slack_webhook_url(url)
+
+    def test_invalid_slack_webhook_url_wrong_format(self):
+        """Test that incorrectly formatted URLs are rejected"""
+        invalid_urls = [
+            "https://hooks.slack.com/services/123/456/abc",  # Missing T and B prefixes
+            "https://hooks.slack.com/services/T123",  # Incomplete path
+            "https://hooks.slack.com/T123/B456/abc",  # Missing 'services'
+            "https://hooks.slack.com/services/T123/B456/",  # Empty token
+        ]
+        for url in invalid_urls:
+            with pytest.raises(SlackWebhookValidationError):
+                validate_slack_webhook_url(url)
+
+    def test_none_url_returns_none(self):
+        """Test that None URL returns None (allows clearing)"""
+        assert validate_slack_webhook_url(None) is None
+
+    def test_empty_string_returns_none(self):
+        """Test that empty string returns None (allows clearing)"""
+        assert validate_slack_webhook_url("") is None
+        assert validate_slack_webhook_url("   ") is None
+
+    def test_url_is_trimmed(self):
+        """Test that whitespace is trimmed from URL"""
+        url = "  https://hooks.slack.com/services/T12345678/B12345678/abc123  "
+        result = validate_slack_webhook_url(url)
+        assert result == url.strip()
+
+
+class TestTagWebhookMethods:
+    """Tests for Tag webhook methods (US-004)"""
+
+    @pytest.mark.asyncio
+    async def test_set_webhook_url_valid(self, session: AsyncSession):
+        """Test setting a valid webhook URL on a tag"""
+        tag = Tag(name=f"test_webhook_{uuid.uuid4().hex[:8]}")
+        session.add(tag)
+        await session.flush()
+
+        valid_url = "https://hooks.slack.com/services/T12345678/B12345678/abc123"
+        tag.set_webhook_url(valid_url)
+        assert tag.slack_webhook_url == valid_url
+
+    @pytest.mark.asyncio
+    async def test_set_webhook_url_invalid(self, session: AsyncSession):
+        """Test that setting an invalid webhook URL raises an error"""
+        tag = Tag(name=f"test_webhook_{uuid.uuid4().hex[:8]}")
+        session.add(tag)
+        await session.flush()
+
+        with pytest.raises(SlackWebhookValidationError):
+            tag.set_webhook_url("https://example.com/webhook")
+
+    @pytest.mark.asyncio
+    async def test_set_webhook_url_clear(self, session: AsyncSession):
+        """Test clearing a webhook URL"""
+        tag = Tag(
+            name=f"test_webhook_{uuid.uuid4().hex[:8]}",
+            slack_webhook_url="https://hooks.slack.com/services/T12345678/B12345678/abc123",
+        )
+        session.add(tag)
+        await session.flush()
+
+        tag.set_webhook_url(None)
+        assert tag.slack_webhook_url is None
+
+        # Also test with empty string
+        tag.slack_webhook_url = "https://hooks.slack.com/services/T12345678/B12345678/abc123"
+        tag.set_webhook_url("")
+        assert tag.slack_webhook_url is None
+
+    @pytest.mark.asyncio
+    async def test_update_tag_with_valid_webhook(self, session: AsyncSession):
+        """Test updating a tag with a valid webhook URL"""
+        tag = Tag(name=f"update_test_{uuid.uuid4().hex[:8]}")
+        session.add(tag)
+        await session.flush()
+
+        valid_url = "https://hooks.slack.com/services/T12345678/B12345678/xyz789"
+        updated = await Tag.update_tag(
+            session, tag.id, slack_webhook_url=valid_url, notification_muted=True
+        )
+
+        assert updated is not None
+        assert updated.slack_webhook_url == valid_url
+        assert updated.notification_muted is True
+
+    @pytest.mark.asyncio
+    async def test_update_tag_with_invalid_webhook(self, session: AsyncSession):
+        """Test that updating a tag with invalid webhook URL raises error"""
+        tag = Tag(name=f"update_test_{uuid.uuid4().hex[:8]}")
+        session.add(tag)
+        await session.flush()
+
+        with pytest.raises(SlackWebhookValidationError):
+            await Tag.update_tag(
+                session, tag.id, slack_webhook_url="https://example.com/invalid"
+            )
+
+    @pytest.mark.asyncio
+    async def test_update_tag_clear_webhook(self, session: AsyncSession):
+        """Test clearing a webhook URL via update_tag"""
+        tag = Tag(
+            name=f"update_test_{uuid.uuid4().hex[:8]}",
+            slack_webhook_url="https://hooks.slack.com/services/T12345678/B12345678/abc123",
+        )
+        session.add(tag)
+        await session.flush()
+
+        updated = await Tag.update_tag(session, tag.id, slack_webhook_url="")
+        assert updated is not None
+        assert updated.slack_webhook_url is None
+
+    @pytest.mark.asyncio
+    async def test_update_tag_not_found(self, session: AsyncSession):
+        """Test updating a non-existent tag returns None"""
+        fake_id = uuid.uuid4()
+        result = await Tag.update_tag(session, fake_id, notification_muted=True)
+        assert result is None
+
+
+class TestTagWebhooksForEvent:
+    """Tests for getting webhooks for an event (US-004)"""
+
+    @pytest.mark.asyncio
+    async def test_get_webhooks_for_event_with_tags(self, session: AsyncSession):
+        """Test getting webhooks for an event with multiple tagged webhooks"""
+        # Create tags with webhooks
+        tag1 = Tag(
+            name=f"webhook_tag1_{uuid.uuid4().hex[:8]}",
+            slack_webhook_url="https://hooks.slack.com/services/T11111111/B11111111/abc111",
+            notification_muted=False,
+        )
+        tag2 = Tag(
+            name=f"webhook_tag2_{uuid.uuid4().hex[:8]}",
+            slack_webhook_url="https://hooks.slack.com/services/T22222222/B22222222/abc222",
+            notification_muted=False,
+        )
+        tag3 = Tag(
+            name=f"no_webhook_tag_{uuid.uuid4().hex[:8]}",
+            slack_webhook_url=None,  # No webhook
+        )
+        tag4 = Tag(
+            name=f"muted_tag_{uuid.uuid4().hex[:8]}",
+            slack_webhook_url="https://hooks.slack.com/services/T44444444/B44444444/abc444",
+            notification_muted=True,  # Muted
+        )
+
+        session.add_all([tag1, tag2, tag3, tag4])
+        await session.flush()
+
+        # Create event with multiple tags
+        event = Event(url=f"https://example.com/event/{uuid.uuid4().hex[:8]}")
+        session.add(event)
+        await session.flush()
+
+        # Add tags to event
+        event.tags.extend([tag1, tag2, tag3, tag4])
+        await session.flush()
+
+        # Get webhooks for event
+        webhooks = await Tag.get_webhooks_for_event(session, event.id)
+
+        # Should only return active webhooks (not muted, has URL)
+        assert len(webhooks) == 2
+
+        webhook_urls = [w['webhook_url'] for w in webhooks]
+        assert tag1.slack_webhook_url in webhook_urls
+        assert tag2.slack_webhook_url in webhook_urls
+        assert tag4.slack_webhook_url not in webhook_urls  # Muted
+
+    @pytest.mark.asyncio
+    async def test_get_webhooks_for_event_no_tags(self, session: AsyncSession):
+        """Test getting webhooks for an event with no tags"""
+        event = Event(url=f"https://example.com/event/{uuid.uuid4().hex[:8]}")
+        session.add(event)
+        await session.flush()
+
+        webhooks = await Tag.get_webhooks_for_event(session, event.id)
+        assert webhooks == []
+
+    @pytest.mark.asyncio
+    async def test_get_webhooks_for_nonexistent_event(self, session: AsyncSession):
+        """Test getting webhooks for a non-existent event"""
+        fake_id = uuid.uuid4()
+        webhooks = await Tag.get_webhooks_for_event(session, fake_id)
+        assert webhooks == []
 
 
 # =============================================================================

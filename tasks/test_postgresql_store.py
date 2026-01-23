@@ -31,6 +31,7 @@ from tasks.postgresql_store import (
     JSONToPostgreSQLMigrator,
     PostgreSQLStore,
 )
+from tasks.models import SlackWebhookValidationError
 
 # =============================================================================
 # Test Fixtures
@@ -771,6 +772,202 @@ class TestIntegrationScenarios:
             # Delete watch
             await store.delete(watch_uuid)
             mock_session_instance.delete.assert_called()
+
+
+# =============================================================================
+# Tag Webhook Operations Tests (US-004)
+# =============================================================================
+
+
+class TestTagWebhookOperations:
+    """Test tag webhook CRUD operations."""
+
+    async def test_update_tag_with_valid_webhook(self, database_url, temp_datastore):
+        """Test updating a tag with a valid webhook URL."""
+        store = PostgreSQLStore(database_url=database_url, datastore_path=temp_datastore)
+
+        with patch.object(store, 'session') as mock_session:
+            mock_session_instance = AsyncMock()
+            mock_session.return_value.__aenter__ = AsyncMock(return_value=mock_session_instance)
+            mock_session.return_value.__aexit__ = AsyncMock(return_value=None)
+
+            # Mock the Tag.update_tag class method
+            mock_tag = MagicMock()
+            mock_tag.id = uuid.uuid4()
+            mock_tag.name = 'test_tag'
+            mock_tag.slack_webhook_url = 'https://hooks.slack.com/services/T12345678/B12345678/abc123'
+            mock_tag.notification_muted = False
+            mock_tag.color = '#3B82F6'
+            mock_tag.created_at = datetime.now(timezone.utc)
+
+            store._initialized = True
+
+            with patch('tasks.models.Tag.update_tag', new_callable=AsyncMock) as mock_update:
+                mock_update.return_value = mock_tag
+
+                result = await store.update_tag(
+                    tag_uuid=str(mock_tag.id),
+                    slack_webhook_url='https://hooks.slack.com/services/T12345678/B12345678/abc123',
+                    notification_muted=False,
+                )
+
+                assert result is not None
+                assert result['slack_webhook_url'] == mock_tag.slack_webhook_url
+                assert result['notification_muted'] is False
+
+    async def test_update_tag_invalid_uuid(self, database_url, temp_datastore):
+        """Test that updating with an invalid UUID returns None."""
+        store = PostgreSQLStore(database_url=database_url, datastore_path=temp_datastore)
+
+        with patch.object(store, 'session') as mock_session:
+            mock_session_instance = AsyncMock()
+            mock_session.return_value.__aenter__ = AsyncMock(return_value=mock_session_instance)
+            mock_session.return_value.__aexit__ = AsyncMock(return_value=None)
+
+            store._initialized = True
+
+            result = await store.update_tag(
+                tag_uuid='not-a-valid-uuid',
+                slack_webhook_url='https://hooks.slack.com/services/T12345678/B12345678/abc123',
+            )
+
+            assert result is None
+
+    async def test_update_tag_with_invalid_webhook_raises_error(
+        self, database_url, temp_datastore
+    ):
+        """Test that updating with an invalid webhook URL raises an error."""
+        store = PostgreSQLStore(database_url=database_url, datastore_path=temp_datastore)
+
+        with patch.object(store, 'session') as mock_session:
+            mock_session_instance = AsyncMock()
+            mock_session.return_value.__aenter__ = AsyncMock(return_value=mock_session_instance)
+            mock_session.return_value.__aexit__ = AsyncMock(return_value=None)
+
+            store._initialized = True
+
+            with patch(
+                'tasks.models.Tag.update_tag', new_callable=AsyncMock
+            ) as mock_update:
+                mock_update.side_effect = SlackWebhookValidationError(
+                    "Invalid Slack webhook URL format"
+                )
+
+                with pytest.raises(SlackWebhookValidationError):
+                    await store.update_tag(
+                        tag_uuid=str(uuid.uuid4()),
+                        slack_webhook_url='https://example.com/invalid',
+                    )
+
+    async def test_get_webhooks_for_event(self, database_url, temp_datastore):
+        """Test getting webhooks for an event."""
+        store = PostgreSQLStore(database_url=database_url, datastore_path=temp_datastore)
+
+        with patch.object(store, 'session') as mock_session:
+            mock_session_instance = AsyncMock()
+            mock_session.return_value.__aenter__ = AsyncMock(return_value=mock_session_instance)
+            mock_session.return_value.__aexit__ = AsyncMock(return_value=None)
+
+            store._initialized = True
+
+            expected_webhooks = [
+                {
+                    'tag_id': str(uuid.uuid4()),
+                    'tag_name': 'concerts',
+                    'webhook_url': 'https://hooks.slack.com/services/T11111111/B11111111/abc111',
+                },
+                {
+                    'tag_id': str(uuid.uuid4()),
+                    'tag_name': 'vip',
+                    'webhook_url': 'https://hooks.slack.com/services/T22222222/B22222222/abc222',
+                },
+            ]
+
+            with patch(
+                'tasks.models.Tag.get_webhooks_for_event', new_callable=AsyncMock
+            ) as mock_get:
+                mock_get.return_value = expected_webhooks
+
+                event_uuid = str(uuid.uuid4())
+                webhooks = await store.get_webhooks_for_event(event_uuid)
+
+                assert len(webhooks) == 2
+                assert webhooks[0]['webhook_url'] == expected_webhooks[0]['webhook_url']
+                assert webhooks[1]['tag_name'] == 'vip'
+
+    async def test_get_webhooks_for_event_invalid_uuid(self, database_url, temp_datastore):
+        """Test that invalid event UUID returns empty list."""
+        store = PostgreSQLStore(database_url=database_url, datastore_path=temp_datastore)
+
+        with patch.object(store, 'session') as mock_session:
+            mock_session_instance = AsyncMock()
+            mock_session.return_value.__aenter__ = AsyncMock(return_value=mock_session_instance)
+            mock_session.return_value.__aexit__ = AsyncMock(return_value=None)
+
+            store._initialized = True
+
+            webhooks = await store.get_webhooks_for_event('not-a-valid-uuid')
+            assert webhooks == []
+
+    async def test_get_tag(self, database_url, temp_datastore):
+        """Test getting a tag by UUID."""
+        store = PostgreSQLStore(database_url=database_url, datastore_path=temp_datastore)
+
+        with patch.object(store, 'session') as mock_session:
+            mock_session_instance = AsyncMock()
+            mock_session.return_value.__aenter__ = AsyncMock(return_value=mock_session_instance)
+            mock_session.return_value.__aexit__ = AsyncMock(return_value=None)
+
+            mock_tag = MagicMock()
+            mock_tag.id = uuid.uuid4()
+            mock_tag.name = 'concerts'
+            mock_tag.slack_webhook_url = 'https://hooks.slack.com/services/T12345678/B12345678/abc123'
+            mock_tag.notification_muted = False
+            mock_tag.color = '#EF4444'
+            mock_tag.created_at = datetime.now(timezone.utc)
+
+            store._initialized = True
+
+            with patch('tasks.models.Tag.get_by_id', new_callable=AsyncMock) as mock_get:
+                mock_get.return_value = mock_tag
+
+                result = await store.get_tag(str(mock_tag.id))
+
+                assert result is not None
+                assert result['title'] == 'concerts'
+                assert result['slack_webhook_url'] == mock_tag.slack_webhook_url
+
+    async def test_get_all_tags(self, database_url, temp_datastore):
+        """Test getting all tags."""
+        store = PostgreSQLStore(database_url=database_url, datastore_path=temp_datastore)
+
+        with patch.object(store, 'session') as mock_session:
+            mock_session_instance = AsyncMock()
+            mock_session.return_value.__aenter__ = AsyncMock(return_value=mock_session_instance)
+            mock_session.return_value.__aexit__ = AsyncMock(return_value=None)
+
+            mock_tags = []
+            for i, name in enumerate(['concerts', 'sports', 'comedy']):
+                tag = MagicMock()
+                tag.id = uuid.uuid4()
+                tag.name = name
+                tag.slack_webhook_url = f'https://hooks.slack.com/services/T{i:08d}/B{i:08d}/abc{i:03d}'
+                tag.notification_muted = False
+                tag.color = '#3B82F6'
+                tag.created_at = datetime.now(timezone.utc)
+                mock_tags.append(tag)
+
+            store._initialized = True
+
+            with patch('tasks.models.Tag.get_all', new_callable=AsyncMock) as mock_get:
+                mock_get.return_value = mock_tags
+
+                result = await store.get_all_tags()
+
+                assert len(result) == 3
+                assert result[0]['title'] == 'concerts'
+                assert result[1]['title'] == 'sports'
+                assert result[2]['title'] == 'comedy'
 
 
 # =============================================================================

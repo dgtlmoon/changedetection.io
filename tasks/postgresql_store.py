@@ -82,10 +82,12 @@ from tasks.models import (
     AvailabilityHistory,
     Event,
     PriceHistory,
+    SlackWebhookValidationError,
     Snapshot,
     Tag,
     async_session_factory,
     create_async_engine_from_url,
+    validate_slack_webhook_url,
 )
 
 # =============================================================================
@@ -731,6 +733,167 @@ class PostgreSQLStore:
                     }
 
         return result
+
+    async def update_tag(
+        self,
+        tag_uuid: str,
+        slack_webhook_url: str | None = None,
+        notification_muted: bool | None = None,
+        color: str | None = None,
+        name: str | None = None,
+    ) -> dict[str, Any] | None:
+        """
+        Update a tag's properties.
+
+        This is the primary API endpoint for updating tag Slack webhook configuration.
+        The webhook URL is validated to ensure it matches the Slack webhook format.
+
+        Args:
+            tag_uuid: UUID of the tag to update
+            slack_webhook_url: New Slack webhook URL, or None/empty string to clear.
+                              Must match format: https://hooks.slack.com/services/T.../B.../...
+            notification_muted: Whether to mute notifications for this tag
+            color: New display color (hex format)
+            name: New tag name
+
+        Returns:
+            Updated tag dict with all properties, or None if tag not found.
+
+        Raises:
+            SlackWebhookValidationError: If the webhook URL format is invalid.
+
+        Example:
+            >>> store = PostgreSQLStore(database_url=os.getenv('DATABASE_URL'))
+            >>> await store.initialize()
+            >>> result = await store.update_tag(
+            ...     tag_uuid="b0000000-0000-0000-0000-000000000001",
+            ...     slack_webhook_url="https://hooks.slack.com/services/T123/B456/abc123",
+            ...     notification_muted=False
+            ... )
+            >>> print(result)
+            {'uuid': '...', 'title': 'concerts', 'slack_webhook_url': 'https://...', ...}
+        """
+        async with self.session() as session:
+            try:
+                tag_id = uuid_builder.UUID(tag_uuid)
+            except ValueError:
+                logger.error(f"Invalid tag UUID: {tag_uuid}")
+                return None
+
+            # Use the Tag model's update method which includes validation
+            tag = await Tag.update_tag(
+                session,
+                tag_id,
+                slack_webhook_url=slack_webhook_url,
+                notification_muted=notification_muted,
+                color=color,
+                name=name,
+            )
+
+            if tag:
+                # Update settings cache
+                self._settings_cache['application']['tags'][str(tag.id)] = {
+                    'uuid': str(tag.id),
+                    'title': tag.name,
+                    'date_created': int(tag.created_at.timestamp()) if tag.created_at else None,
+                    'slack_webhook_url': tag.slack_webhook_url,
+                    'notification_muted': tag.notification_muted,
+                    'color': tag.color,
+                }
+
+                logger.debug(f"Updated tag {tag_uuid}: webhook_url={tag.slack_webhook_url}, muted={tag.notification_muted}")
+
+                return {
+                    'uuid': str(tag.id),
+                    'title': tag.name,
+                    'slack_webhook_url': tag.slack_webhook_url,
+                    'notification_muted': tag.notification_muted,
+                    'color': tag.color,
+                    'date_created': int(tag.created_at.timestamp()) if tag.created_at else None,
+                }
+
+        return None
+
+    async def get_webhooks_for_event(self, event_uuid: str) -> list[dict[str, Any]]:
+        """
+        Get all active Slack webhook URLs for an event's tags.
+
+        This method returns webhook URLs from all tags associated with an event
+        that have webhooks configured and are not muted. This enables sending
+        notifications to multiple Slack channels when an event has multiple tags.
+
+        Args:
+            event_uuid: UUID of the event
+
+        Returns:
+            List of dicts containing:
+            - tag_id: UUID of the tag
+            - tag_name: Name of the tag
+            - webhook_url: Slack webhook URL
+
+        Example:
+            >>> webhooks = await store.get_webhooks_for_event(event_uuid)
+            >>> for webhook in webhooks:
+            ...     send_notification(webhook['webhook_url'], message)
+        """
+        async with self.session() as session:
+            try:
+                event_id = uuid_builder.UUID(event_uuid)
+            except ValueError:
+                logger.error(f"Invalid event UUID: {event_uuid}")
+                return []
+
+            return await Tag.get_webhooks_for_event(session, event_id)
+
+    async def get_tag(self, tag_uuid: str) -> dict[str, Any] | None:
+        """
+        Get a tag by UUID.
+
+        Args:
+            tag_uuid: UUID of the tag
+
+        Returns:
+            Tag dict with all properties, or None if not found.
+        """
+        async with self.session() as session:
+            try:
+                tag_id = uuid_builder.UUID(tag_uuid)
+            except ValueError:
+                return None
+
+            tag = await Tag.get_by_id(session, tag_id)
+            if tag:
+                return {
+                    'uuid': str(tag.id),
+                    'title': tag.name,
+                    'slack_webhook_url': tag.slack_webhook_url,
+                    'notification_muted': tag.notification_muted,
+                    'color': tag.color,
+                    'date_created': int(tag.created_at.timestamp()) if tag.created_at else None,
+                }
+
+        return None
+
+    async def get_all_tags(self) -> list[dict[str, Any]]:
+        """
+        Get all tags.
+
+        Returns:
+            List of tag dicts with all properties.
+        """
+        async with self.session() as session:
+            tags = await Tag.get_all(session)
+            return [
+                {
+                    'uuid': str(tag.id),
+                    'title': tag.name,
+                    'slack_webhook_url': tag.slack_webhook_url,
+                    'notification_muted': tag.notification_muted,
+                    'color': tag.color,
+                    'date_created': int(tag.created_at.timestamp()) if tag.created_at else None,
+                }
+                for tag in tags
+            ]
 
     # -------------------------------------------------------------------------
     # Search and Query Operations
