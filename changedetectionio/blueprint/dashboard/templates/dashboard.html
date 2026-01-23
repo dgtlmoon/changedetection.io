@@ -1,0 +1,331 @@
+{% extends 'base.html' %}
+{% set extra_title = " - Dashboard" %}
+
+{% block content %}
+<div class="dashboard-container">
+    <h1>{{ _('Dashboard') }}</h1>
+
+    <!-- Key Metrics Cards -->
+    <div class="metrics-grid">
+        <div class="metric-card metric-card-primary">
+            <div class="metric-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6v6l4 2"/>
+                </svg>
+            </div>
+            <div class="metric-content">
+                <div class="metric-value" id="metric-total-events">{{ metrics.total_events }}</div>
+                <div class="metric-label">{{ _('Total Events') }}</div>
+            </div>
+        </div>
+
+        <div class="metric-card metric-card-danger">
+            <div class="metric-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+                </svg>
+            </div>
+            <div class="metric-content">
+                <div class="metric-value" id="metric-sold-out-today">{{ metrics.events_sold_out_today }}</div>
+                <div class="metric-label">{{ _('Sold Out Today') }}</div>
+            </div>
+        </div>
+
+        <div class="metric-card metric-card-success">
+            <div class="metric-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+            </div>
+            <div class="metric-content">
+                <div class="metric-value" id="metric-restocked-today">{{ metrics.events_restocked_today }}</div>
+                <div class="metric-label">{{ _('Restocked Today') }}</div>
+            </div>
+        </div>
+
+        <div class="metric-card metric-card-info">
+            <div class="metric-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+            </div>
+            <div class="metric-content">
+                <div class="metric-value" id="metric-alerts-today">{{ metrics.alerts_sent_today }}</div>
+                <div class="metric-label">{{ _('Alerts Sent Today') }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secondary Metrics -->
+    <div class="secondary-metrics">
+        <div class="secondary-metric">
+            <span class="secondary-metric-value" id="metric-active">{{ metrics.active_events }}</span>
+            <span class="secondary-metric-label">{{ _('Active') }}</span>
+        </div>
+        <div class="secondary-metric">
+            <span class="secondary-metric-value" id="metric-paused">{{ metrics.paused_events }}</span>
+            <span class="secondary-metric-label">{{ _('Paused') }}</span>
+        </div>
+        <div class="secondary-metric">
+            <span class="secondary-metric-value" id="metric-errored">{{ metrics.errored_events }}</span>
+            <span class="secondary-metric-label">{{ _('Errored') }}</span>
+        </div>
+    </div>
+
+    <!-- Charts and Activity Row -->
+    <div class="dashboard-row">
+        <!-- Tag Breakdown Chart -->
+        <div class="dashboard-card dashboard-card-chart">
+            <h2>{{ _('Events by Tag') }}</h2>
+            <div class="tag-chart-container" id="tag-chart">
+                {% if tag_breakdown %}
+                <div class="tag-bars">
+                    {% for tag in tag_breakdown %}
+                    <div class="tag-bar-row">
+                        <div class="tag-bar-label">
+                            <span class="tag-color-dot" style="background-color: {{ tag.color }}"></span>
+                            {{ tag.tag_name }}
+                        </div>
+                        <div class="tag-bar-wrapper">
+                            <div class="tag-bar" style="width: {{ (tag.count / metrics.total_events * 100)|round(1) if metrics.total_events > 0 else 0 }}%; background-color: {{ tag.color }}"></div>
+                        </div>
+                        <div class="tag-bar-count">{{ tag.count }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <p>{{ _('No tags configured yet.') }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Activity Feed -->
+        <div class="dashboard-card dashboard-card-activity">
+            <h2>{{ _('Recent Activity') }}</h2>
+            <div class="activity-feed" id="activity-feed">
+                {% if recent_activity %}
+                <ul class="activity-list">
+                    {% for activity in recent_activity %}
+                    <li class="activity-item activity-{{ activity.change_type }}">
+                        <div class="activity-icon">
+                            {% if activity.change_type == 'sold_out' %}
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+                            </svg>
+                            {% elif activity.change_type == 'restock' %}
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                <polyline points="22 4 12 14.01 9 11.01"/>
+                            </svg>
+                            {% elif activity.change_type == 'price_change' %}
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="1" x2="12" y2="23"/>
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            </svg>
+                            {% else %}
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                            </svg>
+                            {% endif %}
+                        </div>
+                        <div class="activity-content">
+                            <a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=activity.uuid) }}" class="activity-title">
+                                {{ activity.title|truncate(50) }}
+                            </a>
+                            <div class="activity-meta">
+                                <span class="activity-type">{{ activity.change_type|replace('_', ' ')|title }}</span>
+                                <span class="activity-time">{{ activity.last_changed_human }}</span>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="empty-state">
+                    <p>{{ _('No recent activity.') }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Auto-refresh indicator -->
+    <div class="refresh-indicator" id="refresh-indicator">
+        <span class="refresh-spinner"></span>
+        <span class="refresh-text">{{ _('Refreshing...') }}</span>
+    </div>
+
+    <!-- Last updated timestamp -->
+    <div class="last-updated" id="last-updated">
+        {{ _('Last updated:') }} <span id="last-updated-time">{{ _('Just now') }}</span>
+    </div>
+</div>
+
+<script>
+(function() {
+    const REFRESH_INTERVAL = 30000; // 30 seconds
+    let refreshTimer = null;
+
+    function formatNumber(num) {
+        return num.toLocaleString();
+    }
+
+    function updateMetrics(data) {
+        // Update primary metrics
+        document.getElementById('metric-total-events').textContent = formatNumber(data.metrics.total_events);
+        document.getElementById('metric-sold-out-today').textContent = formatNumber(data.metrics.events_sold_out_today);
+        document.getElementById('metric-restocked-today').textContent = formatNumber(data.metrics.events_restocked_today);
+        document.getElementById('metric-alerts-today').textContent = formatNumber(data.metrics.alerts_sent_today);
+
+        // Update secondary metrics
+        document.getElementById('metric-active').textContent = formatNumber(data.metrics.active_events);
+        document.getElementById('metric-paused').textContent = formatNumber(data.metrics.paused_events);
+        document.getElementById('metric-errored').textContent = formatNumber(data.metrics.errored_events);
+
+        // Update timestamp
+        document.getElementById('last-updated-time').textContent = new Date().toLocaleTimeString();
+    }
+
+    function updateTagChart(tagBreakdown, totalEvents) {
+        const container = document.getElementById('tag-chart');
+        if (!tagBreakdown || tagBreakdown.length === 0) {
+            container.innerHTML = '<div class="empty-state"><p>{{ _("No tags configured yet.") }}</p></div>';
+            return;
+        }
+
+        let html = '<div class="tag-bars">';
+        tagBreakdown.forEach(tag => {
+            const percentage = totalEvents > 0 ? (tag.count / totalEvents * 100).toFixed(1) : 0;
+            html += `
+                <div class="tag-bar-row">
+                    <div class="tag-bar-label">
+                        <span class="tag-color-dot" style="background-color: ${tag.color}"></span>
+                        ${tag.tag_name}
+                    </div>
+                    <div class="tag-bar-wrapper">
+                        <div class="tag-bar" style="width: ${percentage}%; background-color: ${tag.color}"></div>
+                    </div>
+                    <div class="tag-bar-count">${tag.count}</div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    function updateActivityFeed(activities) {
+        const container = document.getElementById('activity-feed');
+        if (!activities || activities.length === 0) {
+            container.innerHTML = '<div class="empty-state"><p>{{ _("No recent activity.") }}</p></div>';
+            return;
+        }
+
+        const getIcon = (type) => {
+            switch(type) {
+                case 'sold_out':
+                    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>';
+                case 'restock':
+                    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+                case 'price_change':
+                    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>';
+                default:
+                    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>';
+            }
+        };
+
+        let html = '<ul class="activity-list">';
+        activities.forEach(activity => {
+            const title = activity.title.length > 50 ? activity.title.substring(0, 50) + '...' : activity.title;
+            const typeLabel = activity.change_type.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
+            html += `
+                <li class="activity-item activity-${activity.change_type}">
+                    <div class="activity-icon">${getIcon(activity.change_type)}</div>
+                    <div class="activity-content">
+                        <a href="/diff/${activity.uuid}" class="activity-title">${title}</a>
+                        <div class="activity-meta">
+                            <span class="activity-type">${typeLabel}</span>
+                            <span class="activity-time">${activity.last_changed_human}</span>
+                        </div>
+                    </div>
+                </li>
+            `;
+        });
+        html += '</ul>';
+        container.innerHTML = html;
+    }
+
+    function showRefreshIndicator() {
+        document.getElementById('refresh-indicator').classList.add('active');
+    }
+
+    function hideRefreshIndicator() {
+        document.getElementById('refresh-indicator').classList.remove('active');
+    }
+
+    async function refreshDashboard() {
+        showRefreshIndicator();
+        try {
+            const response = await fetch('{{ url_for("dashboard.api_metrics") }}', {
+                headers: {
+                    'X-CSRFToken': csrftoken
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const data = await response.json();
+            if (data.success) {
+                updateMetrics(data);
+                updateTagChart(data.tag_breakdown, data.metrics.total_events);
+                updateActivityFeed(data.recent_activity);
+            }
+        } catch (error) {
+            console.error('Failed to refresh dashboard:', error);
+        } finally {
+            hideRefreshIndicator();
+        }
+    }
+
+    function startAutoRefresh() {
+        if (refreshTimer) {
+            clearInterval(refreshTimer);
+        }
+        refreshTimer = setInterval(refreshDashboard, REFRESH_INTERVAL);
+    }
+
+    function stopAutoRefresh() {
+        if (refreshTimer) {
+            clearInterval(refreshTimer);
+            refreshTimer = null;
+        }
+    }
+
+    // Start auto-refresh when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        startAutoRefresh();
+    });
+
+    // Stop auto-refresh when page is hidden, resume when visible
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            stopAutoRefresh();
+        } else {
+            refreshDashboard(); // Refresh immediately when returning
+            startAutoRefresh();
+        }
+    });
+})();
+</script>
+{% endblock %}

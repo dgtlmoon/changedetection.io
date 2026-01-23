@@ -967,6 +967,9 @@ def changedetection_app(config=None, datastore_o=None):
     import changedetectionio.blueprint.watchlist as watchlist
     app.register_blueprint(watchlist.construct_blueprint(datastore=datastore, update_q=update_q, queuedWatchMetaData=queuedWatchMetaData), url_prefix='')
 
+    import changedetectionio.blueprint.dashboard as dashboard
+    app.register_blueprint(dashboard.construct_blueprint(datastore), url_prefix='/dashboard')
+
     # Initialize Socket.IO server conditionally based on settings
     socket_io_enabled = datastore.data['settings']['application']['ui'].get('socket_io_enabled', True)
     if socket_io_enabled:
