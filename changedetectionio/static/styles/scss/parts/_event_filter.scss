@@ -1,0 +1,225 @@
+// US-021: Event List Filter Panel Styles
+
+.filter-panel {
+  margin-bottom: 1em;
+}
+
+.filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--color-background-button-secondary);
+  color: var(--color-text-button);
+  border: none;
+  border-radius: 4px;
+  padding: 0.5em 1em;
+  cursor: pointer;
+  font-size: 0.85rem;
+
+  &:hover {
+    opacity: 0.9;
+  }
+
+  &.active {
+    background: var(--color-background-button-primary);
+  }
+
+  .filter-active-badge {
+    color: #4caf50;
+    font-size: 0.75rem;
+    margin-left: 0.25rem;
+  }
+}
+
+.filter-controls {
+  background: var(--color-background);
+  border: 1px solid var(--color-border-table-cell);
+  border-radius: 8px;
+  padding: 1em;
+  margin-top: 0.5em;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1em;
+  margin-bottom: 1em;
+  align-items: flex-end;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 140px;
+
+  label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  input[type="text"],
+  input[type="date"],
+  select {
+    padding: 0.4em 0.6em;
+    border: 1px solid var(--color-border-table-cell);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    background: var(--color-background-input);
+    color: var(--color-text-input);
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-background-button-primary);
+      box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+    }
+  }
+
+  input[type="text"] {
+    min-width: 200px;
+  }
+
+  input[type="date"] {
+    min-width: 140px;
+  }
+}
+
+.filter-tags-multiselect {
+  flex: 1;
+  min-width: 100%;
+
+  .tag-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5em;
+    max-height: 100px;
+    overflow-y: auto;
+    padding: 0.5em;
+    border: 1px solid var(--color-border-table-cell);
+    border-radius: 4px;
+    background: var(--color-background-input);
+  }
+
+  .tag-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25em 0.5em;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+
+    input[type="checkbox"] {
+      margin: 0;
+      cursor: pointer;
+    }
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+}
+
+.filter-actions {
+  display: flex;
+  gap: 0.5em;
+  align-items: center;
+
+  .pure-button {
+    padding: 0.5em 1em;
+  }
+}
+
+// Tag filter bar (quick tag buttons)
+.tag-filter-bar {
+  margin-bottom: 0.5em;
+}
+
+// Event date column in table
+.event-date {
+  white-space: nowrap;
+  font-size: 0.85rem;
+
+  .event-date-value {
+    display: block;
+    font-weight: 500;
+  }
+
+  .event-time-value {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--color-text-watch-last-checked);
+  }
+
+  .no-event-date {
+    color: var(--color-text-watch-last-checked);
+    opacity: 0.5;
+  }
+}
+
+// Responsive adjustments
+@media only screen and (max-width: 760px) {
+  .filter-row {
+    flex-direction: column;
+    gap: 0.75em;
+  }
+
+  .filter-group {
+    width: 100%;
+    min-width: 100%;
+
+    input[type="text"],
+    input[type="date"],
+    select {
+      width: 100%;
+    }
+  }
+
+  .filter-tags-multiselect {
+    .tag-checkboxes {
+      max-height: 80px;
+    }
+  }
+
+  .filter-actions {
+    width: 100%;
+    justify-content: space-between;
+
+    .pure-button {
+      flex: 1;
+    }
+  }
+
+  // Hide event date column on mobile
+  .event-date {
+    display: none;
+  }
+
+  th:nth-last-child(2) {
+    // Hide event date header on mobile
+    &:has(a[href*="sort=event_date"]) {
+      display: none;
+    }
+  }
+}
+
+// Dark mode adjustments
+html[data-darkmode="true"] {
+  .filter-controls {
+    background: var(--color-background);
+    border-color: var(--color-border-table-cell);
+  }
+
+  .filter-toggle {
+    .filter-active-badge {
+      color: #81c784;
+    }
+  }
+}

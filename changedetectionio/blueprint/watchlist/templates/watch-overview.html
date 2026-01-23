@@ -110,7 +110,97 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
 
 
     {%- if search_q -%}<div id="search-result-info">{{ _('Searching') }} "<strong><i>{{search_q}}</i></strong>"</div>{%- endif -%}
-    <div>
+
+    <!-- US-021: Advanced Filter Panel -->
+    <div id="filter-panel" class="filter-panel">
+        <button type="button" id="filter-toggle" class="pure-button button-small filter-toggle">
+            <i data-feather="filter" style="width: 14px; height: 14px; margin-right: 4px;"></i>{{ _('Filters') }}
+            {%- if filter_tags or stock_status != 'all' or filter_form.date_from.data or filter_form.date_to.data -%}
+            <span class="filter-active-badge">●</span>
+            {%- endif -%}
+        </button>
+        <div id="filter-controls" class="filter-controls" style="display: none;">
+            <form id="filter-form" method="GET" action="{{ url_for('watchlist.index') }}">
+                {%- if active_tag_uuid -%}
+                <input type="hidden" name="tag" value="{{ active_tag_uuid }}">
+                {%- endif -%}
+
+                <div class="filter-row">
+                    <!-- Search -->
+                    <div class="filter-group">
+                        <label for="filter-search">{{ _('Search') }}</label>
+                        <input type="text" id="filter-search" name="q" value="{{ search_q or '' }}" placeholder="{{ _('Event name or artist...') }}">
+                    </div>
+
+                    <!-- Stock Status -->
+                    <div class="filter-group">
+                        <label for="filter-stock">{{ _('Availability') }}</label>
+                        <select id="filter-stock" name="stock_status">
+                            <option value="all" {{ 'selected' if stock_status == 'all' }}>{{ _('All') }}</option>
+                            <option value="available" {{ 'selected' if stock_status == 'available' }}>{{ _('Available') }}</option>
+                            <option value="sold_out" {{ 'selected' if stock_status == 'sold_out' }}>{{ _('Sold Out') }}</option>
+                        </select>
+                    </div>
+
+                    <!-- Date Range -->
+                    <div class="filter-group">
+                        <label for="filter-date-from">{{ _('Event Date From') }}</label>
+                        <input type="date" id="filter-date-from" name="date_from" value="{{ filter_form.date_from.data or '' }}">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-date-to">{{ _('To') }}</label>
+                        <input type="date" id="filter-date-to" name="date_to" value="{{ filter_form.date_to.data or '' }}">
+                    </div>
+                </div>
+
+                <div class="filter-row">
+                    <!-- Multi-Tag Filter -->
+                    <div class="filter-group filter-tags-multiselect">
+                        <label>{{ _('Filter by Tags') }}</label>
+                        <div class="tag-checkboxes">
+                            {%- for uuid, tag in tags -%}
+                            {%- if tag and tag.title -%}
+                            <label class="tag-checkbox tag-{{ tag.title|sanitize_tag_class }}">
+                                <input type="checkbox" name="tags[]" value="{{ uuid }}" {{ 'checked' if uuid in filter_tags }}>
+                                {{ tag.title }}
+                            </label>
+                            {%- endif -%}
+                            {%- endfor -%}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filter-row">
+                    <!-- Sort Options -->
+                    <div class="filter-group">
+                        <label for="filter-sort">{{ _('Sort By') }}</label>
+                        <select id="filter-sort" name="sort">
+                            <option value="last_changed" {{ 'selected' if sort_attribute == 'last_changed' }}>{{ _('Last Changed') }}</option>
+                            <option value="last_checked" {{ 'selected' if sort_attribute == 'last_checked' }}>{{ _('Last Checked') }}</option>
+                            <option value="date_created" {{ 'selected' if sort_attribute == 'date_created' }}>{{ _('Created Date') }}</option>
+                            <option value="event_date" {{ 'selected' if sort_attribute == 'event_date' }}>{{ _('Event Date') }}</option>
+                            <option value="label" {{ 'selected' if sort_attribute == 'label' }}>{{ _('Name') }}</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="filter-order">{{ _('Order') }}</label>
+                        <select id="filter-order" name="order">
+                            <option value="desc" {{ 'selected' if sort_order == 'desc' }}>{{ _('Newest First') }}</option>
+                            <option value="asc" {{ 'selected' if sort_order == 'asc' }}>{{ _('Oldest First') }}</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-actions">
+                        <button type="submit" class="pure-button pure-button-primary button-small">{{ _('Apply Filters') }}</button>
+                        <a href="{{ url_for('watchlist.index', tag=active_tag_uuid) }}" class="pure-button button-small">{{ _('Clear') }}</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="tag-filter-bar">
         <a href="{{url_for('watchlist.index')}}" class="pure-button button-tag {{'active' if not active_tag_uuid }}">{{ _('All') }}</a>
 
     <!-- tag list -->
@@ -124,7 +214,7 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
     {%- set sort_order = sort_order or 'asc' -%}
     {%- set sort_attribute = sort_attribute or 'last_changed'  -%}
     {%- set pagination_page = request.args.get('page', 0) -%}
-    {%- set cols_required = 6 -%}
+    {%- set cols_required = 7 -%}
     {%- set any_has_restock_price_processor = datastore.any_watches_have_processor_by_name("restock_diff") -%}
     {%- if any_has_restock_price_processor -%}
         {%- set cols_required = cols_required + 1 -%}
@@ -155,6 +245,7 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
              {%- endif -%}
                 <th><a class="{{ 'active '+link_order if sort_attribute == 'last_checked' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_checked', order=link_order, tag=active_tag_uuid)}}"><span class="hide-on-mobile">{{ _('Last') }}</span> {{ _('Checked') }} <span class='arrow {{link_order}}'></span></a></th>
                 <th><a class="{{ 'active '+link_order if sort_attribute == 'last_changed' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_changed', order=link_order, tag=active_tag_uuid)}}"><span class="hide-on-mobile">{{ _('Last') }}</span> {{ _('Changed') }} <span class='arrow {{link_order}}'></span></a></th>
+                <th><a class="{{ 'active '+link_order if sort_attribute == 'event_date' else 'inactive' }}" href="{{url_for('watchlist.index', sort='event_date', order=link_order, tag=active_tag_uuid)}}">{{ _('Event') }} <span class='arrow {{link_order}}'></span></a></th>
                 <th class="empty-cell"></th>
             </tr>
             </thead>
@@ -275,6 +366,16 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
                     {{ _('Not yet') }}
                     {%- endif -%}
                 </td>
+                <td class="event-date">
+                    {%- if watch.get('event_date') -%}
+                    <span class="event-date-value">{{ watch.get('event_date') }}</span>
+                    {%- if watch.get('event_time') -%}
+                    <span class="event-time-value">{{ watch.get('event_time') }}</span>
+                    {%- endif -%}
+                    {%- else -%}
+                    <span class="no-event-date">-</span>
+                    {%- endif -%}
+                </td>
                 <td class="buttons">
                     <div>
                     {%- set target_attr = ' target="' ~ watch.uuid ~ '"' if datastore.data['settings']['application']['ui'].get('open_diff_in_new_tab') else '' -%}
@@ -315,4 +416,29 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
     </div>
     </form>
 </div>
+<script>
+// US-021: Filter panel toggle
+document.addEventListener('DOMContentLoaded', function() {
+    var filterToggle = document.getElementById('filter-toggle');
+    var filterControls = document.getElementById('filter-controls');
+
+    if (filterToggle && filterControls) {
+        // Check if there are active filters - if so, show the panel
+        var hasActiveFilters = {{ 'true' if filter_tags or stock_status != 'all' or filter_form.date_from.data or filter_form.date_to.data else 'false' }};
+        if (hasActiveFilters) {
+            filterControls.style.display = 'block';
+        }
+
+        filterToggle.addEventListener('click', function() {
+            if (filterControls.style.display === 'none') {
+                filterControls.style.display = 'block';
+                filterToggle.classList.add('active');
+            } else {
+                filterControls.style.display = 'none';
+                filterToggle.classList.remove('active');
+            }
+        });
+    }
+});
+</script>
 {%- endblock -%}

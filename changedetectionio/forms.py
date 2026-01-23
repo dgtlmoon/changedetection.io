@@ -748,6 +748,43 @@ class QuickEventForm(Form):
     add_and_open_settings = SubmitField(_l('Add & Open Settings'), render_kw={"class": "pure-button button-secondary"})
 
 
+class EventFilterForm(Form):
+    """Filter form for event list filtering and sorting (US-021)."""
+    # Text search - searches event name and artist
+    q = StringField(_l('Search'), validators=[validators.Optional()], render_kw={"placeholder": "Search by name or artist..."})
+
+    # Tag filter - multiselect handled via multiple tag params in URL
+    # Tags are handled separately in the template via checkboxes
+
+    # Sold out status filter
+    STOCK_STATUS_CHOICES = [
+        ('all', _l('All')),
+        ('available', _l('Available')),
+        ('sold_out', _l('Sold Out')),
+    ]
+    stock_status = SelectField(_l('Stock Status'), choices=STOCK_STATUS_CHOICES, default='all')
+
+    # Date range filters
+    date_from = StringField(_l('From Date'), validators=[validators.Optional()], render_kw={"type": "date"})
+    date_to = StringField(_l('To Date'), validators=[validators.Optional()], render_kw={"type": "date"})
+
+    # Sort options
+    SORT_CHOICES = [
+        ('last_changed', _l('Last Changed')),
+        ('last_checked', _l('Last Checked')),
+        ('date_created', _l('Created Date')),
+        ('event_date', _l('Event Date')),
+        ('label', _l('Name')),
+    ]
+    sort = SelectField(_l('Sort By'), choices=SORT_CHOICES, default='last_changed')
+
+    ORDER_CHOICES = [
+        ('desc', _l('Newest First')),
+        ('asc', _l('Oldest First')),
+    ]
+    order = SelectField(_l('Order'), choices=ORDER_CHOICES, default='desc')
+
+
 # Common to a single watch and the global settings
 class commonSettingsForm(Form):
     from . import processors
