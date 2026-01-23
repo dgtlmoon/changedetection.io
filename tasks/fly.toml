@@ -1,33 +1,38 @@
-# Fly.io Configuration for TicketWatch
+# Fly.io Configuration for TicketWatch (atc-page-monitor)
 # Deploy with: fly deploy --config tasks/fly.toml
 #
 # Prerequisites:
 # 1. Install flyctl: https://fly.io/docs/hands-on/install-flyctl/
 # 2. Login: fly auth login
 # 3. Create volume: fly volumes create ticketwatch_data --region ord --size 1
-# 4. Set secrets (see FLY_SECRETS_SETUP.md for detailed instructions):
+# 4. Set secrets (required):
 #
-#    Required:
 #    fly secrets set DATABASE_URL="postgresql://user:pass@host/db?sslmode=require"
-#    fly secrets set SLACK_WEBHOOK_URL="https://hooks.slack.com/services/..."
+#    fly secrets set DEFAULT_SLACK_WEBHOOK="https://hooks.slack.com/services/..."
+#    fly secrets set SECRET_KEY="your-secure-random-key-here"
 #
 #    Optional:
 #    fly secrets set PROXY_LIST_PATH="/datastore/proxies.txt"
 #    fly secrets set SALTED_PASS="sha256-hash-of-password"
 #
 # 5. Deploy: fly deploy --config tasks/fly.toml
+#
+# Secrets Summary:
+#   - DATABASE_URL: PostgreSQL connection string for event/alert data
+#   - DEFAULT_SLACK_WEBHOOK: Slack webhook URL for notifications
+#   - SECRET_KEY: Flask session secret key for security
 
-app = "changedetection-io-z08mjw"
+app = "atc-page-monitor"
 primary_region = "ord"
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = "tasks/Dockerfile"
   # Build context is the parent directory (project root)
 
 [env]
   PORT = "5000"
   LISTEN_HOST = "0.0.0.0"
-  FETCH_WORKERS = "0"
+  FETCH_WORKERS = "5"
   PLAYWRIGHT_BROWSERS_PATH = "/ms-playwright"
   PLAYWRIGHT_CHROMIUM_SANDBOX = "false"
   DISABLE_VERSION_CHECK = "true"
@@ -49,13 +54,13 @@ primary_region = "ord"
     hard_limit = 25
     soft_limit = 20
 
-# Health check temporarily disabled while debugging startup issues
-# [[http_service.checks]]
-#   grace_period = "60s"
-#   interval = "30s"
-#   method = "GET"
-#   timeout = "20s"
-#   path = "/"
+# Health check endpoint
+[[http_service.checks]]
+  grace_period = "60s"
+  interval = "30s"
+  method = "GET"
+  timeout = "20s"
+  path = "/"
 
 # Persistent volume for datastore
 # Create with: fly volumes create ticketwatch_data --region ord --size 1
@@ -67,3 +72,8 @@ primary_region = "ord"
 [[vm]]
   size = "shared-cpu-2x"
   memory = "2048mb"
+
+# Auto-restart on failure
+[restart]
+  policy = "always"
+  retries = 5
