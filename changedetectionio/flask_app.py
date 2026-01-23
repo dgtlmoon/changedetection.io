@@ -43,6 +43,7 @@ from changedetectionio import queuedWatchMetaData
 from changedetectionio.api import Watch, WatchHistory, WatchSingleHistory, WatchHistoryDiff, CreateWatch, Import, SystemInfo, Tag, Tags, Notifications, WatchFavicon
 from changedetectionio.api.Search import Search
 from changedetectionio.api.price_history import WatchPriceHistory
+from changedetectionio.api.availability_history import WatchAvailabilityHistory
 from .time_handler import is_within_schedule
 from changedetectionio.languages import get_available_languages, get_language_codes, get_flag_for_locale, get_timeago_locale
 from changedetectionio.favicon_utils import get_favicon_mime_type
@@ -493,6 +494,10 @@ def changedetection_app(config=None, datastore_o=None):
 
     watch_api.add_resource(WatchPriceHistory,
                            '/api/v1/watch/<string:uuid>/price-history',
+                           resource_class_kwargs={'datastore': datastore})
+
+    watch_api.add_resource(WatchAvailabilityHistory,
+                           '/api/v1/watch/<string:uuid>/availability-history',
                            resource_class_kwargs={'datastore': datastore})
 
     watch_api.add_resource(CreateWatch, '/api/v1/watch',

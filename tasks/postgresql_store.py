@@ -1175,6 +1175,109 @@ class PostgreSQLStore:
             return {'total_records': count}
 
     # -------------------------------------------------------------------------
+    # Availability History Operations (US-010)
+    # -------------------------------------------------------------------------
+
+    async def get_availability_history(
+        self,
+        event_uuid: str,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
+        """
+        Get availability history for an event.
+
+        Records when events become sold out or available again (restocked).
+        Used by dashboard to show 'sold out at' and 'restocked at' times.
+
+        Args:
+            event_uuid: UUID of the event
+            limit: Maximum number of records to return (default: 100)
+
+        Returns:
+            List of availability history records as dicts, most recent first.
+            Each record contains:
+            - id: UUID of the record
+            - event_id: UUID of the event
+            - is_sold_out: Boolean indicating sold out status at this point
+            - recorded_at: ISO timestamp when recorded
+        """
+        async with self.session() as session:
+            try:
+                event_id = uuid_builder.UUID(event_uuid)
+            except ValueError:
+                logger.error(f"Invalid event UUID: {event_uuid}")
+                return []
+
+            from sqlalchemy import select as sa_select
+
+            query = sa_select(AvailabilityHistory).where(
+                AvailabilityHistory.event_id == event_id
+            )
+            query = query.order_by(AvailabilityHistory.recorded_at.desc()).limit(limit)
+
+            result = await session.execute(query)
+            records = result.scalars().all()
+
+            return [record.to_dict() for record in records]
+
+    async def cleanup_old_availability_history(
+        self,
+        retention_days: int = 90,
+    ) -> dict[str, int]:
+        """
+        Delete availability history records older than retention_days.
+
+        This method should be called periodically by a background job
+        to maintain database size and performance.
+
+        Args:
+            retention_days: Number of days to retain history (default: 90)
+
+        Returns:
+            Dict with 'deleted_count' indicating how many records were removed
+        """
+        from datetime import timedelta
+
+        async with self.session() as session:
+            cutoff_date = datetime.now(timezone.utc) - timedelta(days=retention_days)
+
+            # Count records to delete
+            count_result = await session.execute(
+                select(func.count(AvailabilityHistory.id)).where(
+                    AvailabilityHistory.recorded_at < cutoff_date
+                )
+            )
+            count = count_result.scalar() or 0
+
+            # Delete old records
+            await session.execute(
+                delete(AvailabilityHistory).where(
+                    AvailabilityHistory.recorded_at < cutoff_date
+                )
+            )
+            await session.commit()
+
+            logger.info(
+                f"Availability history cleanup: deleted {count} records "
+                f"older than {retention_days} days"
+            )
+            return {'deleted_count': count}
+
+    async def get_availability_history_stats(self) -> dict[str, Any]:
+        """
+        Get statistics about availability history storage.
+
+        Returns:
+            Dict with total_records count
+        """
+        async with self.session() as session:
+            result = await session.execute(
+                select(func.count(AvailabilityHistory.id))
+            )
+            count = result.scalar() or 0
+            return {'total_records': count}
+
+    # -------------------------------------------------------------------------
     # Search and Query Operations
     # -------------------------------------------------------------------------
 
