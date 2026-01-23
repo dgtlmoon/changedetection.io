@@ -976,6 +976,9 @@ def changedetection_app(config=None, datastore_o=None):
     from changedetectionio.blueprint.bulk_operations import construct_blueprint as construct_bulk_ops_blueprint
     app.register_blueprint(construct_bulk_ops_blueprint(datastore, update_q, queuedWatchMetaData), url_prefix='/bulk')
 
+    import changedetectionio.blueprint.price_history as price_history
+    app.register_blueprint(price_history.construct_blueprint(datastore), url_prefix='/price-history')
+
     # Initialize Socket.IO server conditionally based on settings
     socket_io_enabled = datastore.data['settings']['application']['ui'].get('socket_io_enabled', True)
     if socket_io_enabled:

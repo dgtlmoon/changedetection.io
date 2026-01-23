@@ -1,0 +1,287 @@
+/**
+ * Price History Chart Styles (US-022)
+ *
+ * Styles for the price history visualization feature including:
+ * - Chart container and wrapper
+ * - Time range selector buttons
+ * - Custom legend
+ * - Stats cards
+ * - Loading and error states
+ */
+
+.price-history-container {
+    max-width: 1200px;
+    width: 95%;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.price-history-error {
+    text-align: center;
+    padding: 2rem;
+    background: var(--color-background);
+    border-radius: 8px;
+
+    h2 {
+        color: var(--color-error);
+        margin-bottom: 1rem;
+    }
+
+    p {
+        margin-bottom: 1.5rem;
+        color: var(--color-text);
+    }
+}
+
+.price-history-header {
+    background: var(--color-background);
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+
+    h2 {
+        margin: 0;
+        font-size: 1.25rem;
+
+        a {
+            color: var(--color-text);
+            text-decoration: none;
+
+            &:hover {
+                color: var(--color-link);
+            }
+        }
+    }
+}
+
+.price-history-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.time-range-selector {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.time-range-label {
+    font-weight: bold;
+    color: var(--color-text);
+}
+
+.time-range-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+
+    .pure-button {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        border-radius: 4px;
+        transition: background-color 0.2s ease, color 0.2s ease;
+    }
+}
+
+.price-history-chart-wrapper {
+    background: var(--color-background);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    min-height: 400px;
+    position: relative;
+
+    canvas {
+        max-height: 450px;
+    }
+}
+
+.chart-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    color: var(--color-text);
+
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid var(--color-border-table-cell);
+        border-top-color: var(--color-link);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.price-history-legend {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: var(--color-background);
+    border-radius: 8px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-text);
+    font-size: 0.875rem;
+}
+
+.legend-color {
+    width: 20px;
+    height: 4px;
+    border-radius: 2px;
+
+    &.legend-price-low {
+        background-color: #22c55e;
+    }
+
+    &.legend-price-high {
+        background-color: #3b82f6;
+    }
+
+    &.legend-sold-out {
+        background-color: rgba(255, 99, 132, 0.4);
+        height: 12px;
+        width: 24px;
+        border: 1px solid rgba(255, 99, 132, 0.6);
+    }
+}
+
+.price-history-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.stat-card {
+    background: var(--color-background);
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    text-align: center;
+    min-width: 140px;
+    flex: 1;
+    max-width: 200px;
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: var(--color-text-input-description);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--color-text);
+    }
+}
+
+.price-history-no-data {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: var(--color-background);
+    border-radius: 8px;
+    color: var(--color-text);
+
+    p {
+        margin: 0.5rem 0;
+
+        &:first-child {
+            font-weight: bold;
+        }
+    }
+}
+
+// Price chart link button in edit page
+.price-chart-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    svg {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+    .price-history-container {
+        padding: 0.5rem;
+    }
+
+    .price-history-header {
+        padding: 1rem;
+    }
+
+    .price-history-title-row {
+        flex-direction: column;
+        align-items: flex-start;
+
+        h2 {
+            font-size: 1.1rem;
+            word-break: break-word;
+        }
+    }
+
+    .time-range-selector {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+    }
+
+    .time-range-buttons {
+        width: 100%;
+
+        .pure-button {
+            flex: 1;
+            text-align: center;
+        }
+    }
+
+    .price-history-chart-wrapper {
+        padding: 1rem;
+        min-height: 300px;
+
+        canvas {
+            max-height: 350px;
+        }
+    }
+
+    .price-history-legend {
+        gap: 1rem;
+    }
+
+    .stat-card {
+        min-width: 100px;
+        padding: 0.75rem 1rem;
+
+        .stat-value {
+            font-size: 1.25rem;
+        }
+    }
+}

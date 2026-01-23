@@ -1,0 +1,376 @@
+{% extends 'base.html' %}
+{% block content %}
+{% set extra_title = " - Price History - " ~ (watch.title or watch.url if watch else "Unknown") %}
+
+<div class="price-history-container">
+    {% if error %}
+    <div class="price-history-error">
+        <h2>{{ _('Error') }}</h2>
+        <p>{{ error }}</p>
+        <a href="{{ url_for('watchlist.index') }}" class="pure-button">{{ _('Back to Watch List') }}</a>
+    </div>
+    {% else %}
+    <div class="price-history-header">
+        <div class="price-history-title-row">
+            <h2>
+                <a href="{{ url_for('ui.ui_edit.edit_page', uuid=uuid) }}" title="{{ _('Edit') }}">
+                    {{ watch.title or watch.url }}
+                </a>
+            </h2>
+            <a href="{{ url_for('watchlist.index') }}" class="pure-button button-secondary button-small">
+                {{ _('Back to Watch List') }}
+            </a>
+        </div>
+
+        <div class="time-range-selector">
+            <span class="time-range-label">{{ _('Time Range:') }}</span>
+            <div class="time-range-buttons">
+                <a href="{{ url_for('price_history.price_history_chart', uuid=uuid, range='7d') }}"
+                   class="pure-button {% if time_range == '7d' %}pure-button-primary{% else %}button-secondary{% endif %}">
+                    7 {{ _('days') }}
+                </a>
+                <a href="{{ url_for('price_history.price_history_chart', uuid=uuid, range='30d') }}"
+                   class="pure-button {% if time_range == '30d' %}pure-button-primary{% else %}button-secondary{% endif %}">
+                    30 {{ _('days') }}
+                </a>
+                <a href="{{ url_for('price_history.price_history_chart', uuid=uuid, range='90d') }}"
+                   class="pure-button {% if time_range == '90d' %}pure-button-primary{% else %}button-secondary{% endif %}">
+                    90 {{ _('days') }}
+                </a>
+                <a href="{{ url_for('price_history.price_history_chart', uuid=uuid, range='all') }}"
+                   class="pure-button {% if time_range == 'all' %}pure-button-primary{% else %}button-secondary{% endif %}">
+                    {{ _('All') }}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="price-history-chart-wrapper">
+        <div class="chart-loading" id="chart-loading">
+            <div class="spinner"></div>
+            <span>{{ _('Loading chart data...') }}</span>
+        </div>
+        <canvas id="price-history-chart"></canvas>
+    </div>
+
+    <div class="price-history-legend">
+        <div class="legend-item">
+            <span class="legend-color legend-price-low"></span>
+            <span>{{ _('Low Price') }}</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-color legend-price-high"></span>
+            <span>{{ _('High Price') }}</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-color legend-sold-out"></span>
+            <span>{{ _('Sold Out Period') }}</span>
+        </div>
+    </div>
+
+    <div class="price-history-stats" id="price-history-stats" style="display: none;">
+        <div class="stat-card">
+            <div class="stat-label">{{ _('Current Low') }}</div>
+            <div class="stat-value" id="stat-current-low">-</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">{{ _('Current High') }}</div>
+            <div class="stat-value" id="stat-current-high">-</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">{{ _('Lowest (Period)') }}</div>
+            <div class="stat-value" id="stat-period-low">-</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">{{ _('Highest (Period)') }}</div>
+            <div class="stat-value" id="stat-period-high">-</div>
+        </div>
+    </div>
+
+    <div class="price-history-no-data" id="no-data-message" style="display: none;">
+        <p>{{ _('No price history data available for this event in the selected time range.') }}</p>
+        <p>{{ _('Price history is recorded when the event is checked and price information is found.') }}</p>
+    </div>
+    {% endif %}
+</div>
+
+<script src="{{url_for('static_content', group='js', filename='chart.min.js')}}"></script>
+<script src="{{url_for('static_content', group='js', filename='chartjs-adapter-date-fns.min.js')}}"></script>
+<script>
+(function() {
+    const uuid = "{{ uuid }}";
+    const timeRange = "{{ time_range }}";
+    const dataUrl = "{{ url_for('price_history.price_history_data', uuid=uuid) }}?range=" + timeRange;
+
+    let priceChart = null;
+
+    // Fetch chart data
+    fetch(dataUrl)
+        .then(response => response.json())
+        .then(data => {
+            const loadingEl = document.getElementById('chart-loading');
+            const noDataEl = document.getElementById('no-data-message');
+            const statsEl = document.getElementById('price-history-stats');
+
+            loadingEl.style.display = 'none';
+
+            if (!data.success) {
+                noDataEl.innerHTML = '<p>Error: ' + (data.error || 'Unknown error') + '</p>';
+                noDataEl.style.display = 'block';
+                return;
+            }
+
+            if (!data.price_history || data.price_history.length === 0) {
+                noDataEl.style.display = 'block';
+                return;
+            }
+
+            // Show stats section
+            statsEl.style.display = 'flex';
+
+            // Calculate and display stats
+            updateStats(data.price_history);
+
+            // Create chart
+            createPriceChart(data);
+        })
+        .catch(error => {
+            console.error('Error fetching price history:', error);
+            document.getElementById('chart-loading').style.display = 'none';
+            document.getElementById('no-data-message').innerHTML =
+                '<p>Error loading chart data. Please try again.</p>';
+            document.getElementById('no-data-message').style.display = 'block';
+        });
+
+    function updateStats(priceHistory) {
+        if (priceHistory.length === 0) return;
+
+        // Get latest prices
+        const latest = priceHistory[priceHistory.length - 1];
+        const currentLow = latest.price_low;
+        const currentHigh = latest.price_high;
+
+        // Calculate min/max for period
+        let periodLow = Infinity;
+        let periodHigh = -Infinity;
+
+        priceHistory.forEach(record => {
+            if (record.price_low > 0 && record.price_low < periodLow) {
+                periodLow = record.price_low;
+            }
+            if (record.price_high > 0 && record.price_high > periodHigh) {
+                periodHigh = record.price_high;
+            }
+            // Also consider price_low for high if price_high is not available
+            if (record.price_low > periodHigh) {
+                periodHigh = record.price_low;
+            }
+        });
+
+        // Format and display
+        const formatPrice = (value) => {
+            if (value === 0 || value === Infinity || value === -Infinity) return '-';
+            return '$' + value.toFixed(2);
+        };
+
+        document.getElementById('stat-current-low').textContent = formatPrice(currentLow);
+        document.getElementById('stat-current-high').textContent = formatPrice(currentHigh);
+        document.getElementById('stat-period-low').textContent = formatPrice(periodLow);
+        document.getElementById('stat-period-high').textContent = formatPrice(periodHigh);
+    }
+
+    function createPriceChart(data) {
+        const ctx = document.getElementById('price-history-chart').getContext('2d');
+
+        // Prepare data for price_low and price_high lines
+        const priceLowData = data.price_history.map(record => ({
+            x: new Date(record.x),
+            y: record.price_low || null
+        })).filter(d => d.y !== null && d.y > 0);
+
+        const priceHighData = data.price_history.map(record => ({
+            x: new Date(record.x),
+            y: record.price_high || null
+        })).filter(d => d.y !== null && d.y > 0);
+
+        // Create annotation boxes for sold-out regions
+        const annotations = {};
+        if (data.sold_out_regions && data.sold_out_regions.length > 0) {
+            data.sold_out_regions.forEach((region, index) => {
+                annotations['soldOut' + index] = {
+                    type: 'box',
+                    xMin: new Date(region.start),
+                    xMax: new Date(region.end),
+                    backgroundColor: 'rgba(255, 99, 132, 0.15)',
+                    borderColor: 'rgba(255, 99, 132, 0.3)',
+                    borderWidth: 1,
+                    label: {
+                        display: false
+                    }
+                };
+            });
+        }
+
+        // Check if we're in dark mode
+        const isDarkMode = document.documentElement.getAttribute('data-darkmode') === 'true';
+        const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+        const textColor = isDarkMode ? '#e0e0e0' : '#666';
+
+        const chartConfig = {
+            type: 'line',
+            data: {
+                datasets: [
+                    {
+                        label: '{{ _("Low Price") }}',
+                        data: priceLowData,
+                        borderColor: '#22c55e',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        fill: false,
+                        tension: 0.1,
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
+                        borderWidth: 2,
+                    },
+                    {
+                        label: '{{ _("High Price") }}',
+                        data: priceHighData,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: false,
+                        tension: 0.1,
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
+                        borderWidth: 2,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: {
+                        display: false  // We use custom legend
+                    },
+                    tooltip: {
+                        enabled: true,
+                        backgroundColor: isDarkMode ? '#333' : '#fff',
+                        titleColor: isDarkMode ? '#fff' : '#333',
+                        bodyColor: isDarkMode ? '#e0e0e0' : '#666',
+                        borderColor: isDarkMode ? '#555' : '#ddd',
+                        borderWidth: 1,
+                        padding: 12,
+                        displayColors: true,
+                        callbacks: {
+                            title: function(context) {
+                                const date = new Date(context[0].parsed.x);
+                                return date.toLocaleString();
+                            },
+                            label: function(context) {
+                                const value = context.parsed.y;
+                                return context.dataset.label + ': $' + value.toFixed(2);
+                            }
+                        }
+                    },
+                    annotation: Object.keys(annotations).length > 0 ? {
+                        annotations: annotations
+                    } : undefined
+                },
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            displayFormats: {
+                                hour: 'MMM d, HH:mm',
+                                day: 'MMM d',
+                                week: 'MMM d',
+                                month: 'MMM yyyy'
+                            },
+                            tooltipFormat: 'MMM d, yyyy HH:mm'
+                        },
+                        grid: {
+                            color: gridColor
+                        },
+                        ticks: {
+                            color: textColor,
+                            maxRotation: 45,
+                            minRotation: 0
+                        },
+                        title: {
+                            display: true,
+                            text: '{{ _("Date") }}',
+                            color: textColor
+                        }
+                    },
+                    y: {
+                        beginAtZero: false,
+                        grid: {
+                            color: gridColor
+                        },
+                        ticks: {
+                            color: textColor,
+                            callback: function(value) {
+                                return '$' + value.toFixed(0);
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: '{{ _("Price") }}',
+                            color: textColor
+                        }
+                    }
+                }
+            }
+        };
+
+        // Load annotation plugin if we have sold-out regions
+        if (Object.keys(annotations).length > 0) {
+            // Annotation plugin will be loaded dynamically if needed
+            // For now, we'll skip annotations if the plugin isn't available
+            if (typeof Chart !== 'undefined' && Chart.registry && Chart.registry.plugins) {
+                // Plugin available
+            } else {
+                delete chartConfig.options.plugins.annotation;
+            }
+        }
+
+        priceChart = new Chart(ctx, chartConfig);
+
+        // Update chart colors when theme changes
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.attributeName === 'data-darkmode') {
+                    const isDark = document.documentElement.getAttribute('data-darkmode') === 'true';
+                    updateChartTheme(isDark);
+                }
+            });
+        });
+        observer.observe(document.documentElement, { attributes: true });
+    }
+
+    function updateChartTheme(isDarkMode) {
+        if (!priceChart) return;
+
+        const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+        const textColor = isDarkMode ? '#e0e0e0' : '#666';
+
+        priceChart.options.scales.x.grid.color = gridColor;
+        priceChart.options.scales.x.ticks.color = textColor;
+        priceChart.options.scales.x.title.color = textColor;
+        priceChart.options.scales.y.grid.color = gridColor;
+        priceChart.options.scales.y.ticks.color = textColor;
+        priceChart.options.scales.y.title.color = textColor;
+
+        priceChart.options.plugins.tooltip.backgroundColor = isDarkMode ? '#333' : '#fff';
+        priceChart.options.plugins.tooltip.titleColor = isDarkMode ? '#fff' : '#333';
+        priceChart.options.plugins.tooltip.bodyColor = isDarkMode ? '#e0e0e0' : '#666';
+        priceChart.options.plugins.tooltip.borderColor = isDarkMode ? '#555' : '#ddd';
+
+        priceChart.update();
+    }
+})();
+</script>
+{% endblock %}
