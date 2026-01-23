@@ -9,6 +9,8 @@ from changedetectionio.notification import (
     default_notification_title,
 )
 
+from changedetectionio.llm_extractors.base import DEFAULT_EXTRACTION_PROMPT
+
 # Equal to or greater than this number of FilterNotFoundInResponse exceptions will trigger a filter-not-found notification
 _FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT = 6
 DEFAULT_SETTINGS_HEADERS_USERAGENT='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36'
@@ -74,6 +76,27 @@ class model(dict):
                         'open_diff_in_new_tab': True,
                         'socket_io_enabled': True,
                         'favicons_enabled': True
+                    },
+                    # LLM Extraction Settings (disabled by default)
+                    'llm_extraction': {
+                        'enabled': False,  # Master switch - LLM extraction disabled by default
+                        'provider': None,  # 'openai', 'anthropic', or 'ollama'
+                        'api_key': None,   # API key (encrypted in storage)
+                        'model': None,     # Model name (e.g., 'gpt-4o-mini', 'claude-3-5-haiku')
+                        'api_base_url': None,  # Custom API URL (for proxies or self-hosted)
+                        'prompt_template': DEFAULT_EXTRACTION_PROMPT,  # Configurable extraction prompt
+                        'timeout': 30,     # Request timeout in seconds
+                        'fallback_to_css': True,  # Fall back to CSS selectors if LLM fails
+                        'max_html_chars': 50000,  # Maximum HTML characters to send to LLM
+                    },
+                    # LLM Cost Tracking
+                    'llm_cost_tracking': {
+                        'enabled': True,   # Track costs per API call
+                        'total_cost_usd': '0',  # Total cost accumulated (as string decimal)
+                        'total_input_tokens': 0,
+                        'total_output_tokens': 0,
+                        'call_count': 0,   # Number of API calls made
+                        'last_reset': None,  # Timestamp of last cost reset
                     },
                 }
             }
