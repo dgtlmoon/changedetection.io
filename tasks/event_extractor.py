@@ -233,20 +233,30 @@ class EventDataExtractor:
         """
         result = ExtractionResult()
 
+        # Log extraction start
+        active_selectors = {k: v for k, v in css_selectors.items() if v}
+        logger.debug(
+            f"Starting extraction with {len(active_selectors)} active selectors: "
+            f"{list(active_selectors.keys())}"
+        )
+
         if not html_content:
             result.extraction_errors['_general'] = 'Empty HTML content'
+            logger.warning("Extraction failed: Empty HTML content")
             return result
 
         try:
             soup = BeautifulSoup(html_content, 'html.parser')
         except Exception as e:
             result.extraction_errors['_general'] = f'HTML parsing error: {e}'
+            logger.error(f"HTML parsing error: {e}")
             return result
 
         # Extract each field using its CSS selector
         for field_name, field_type in self.FIELD_TYPES.items():
             selector = css_selectors.get(field_name)
             if not selector:
+                logger.debug(f"No selector configured for {field_name}, skipping")
                 continue
 
             try:
@@ -255,13 +265,31 @@ class EventDataExtractor:
                     result.raw_values[field_name] = raw_value
                     converted_value = self._convert_value(raw_value, field_type)
                     setattr(result, field_name, converted_value)
+                    logger.debug(
+                        f"Extracted {field_name}: '{raw_value}' -> {converted_value} "
+                        f"(selector: {selector})"
+                    )
+                else:
+                    logger.debug(
+                        f"No content found for {field_name} with selector: {selector}"
+                    )
             except Exception as e:
                 result.extraction_errors[field_name] = str(e)
-                logger.debug(f"Extraction error for {field_name}: {e}")
+                logger.warning(f"Extraction error for {field_name}: {e} (selector: {selector})")
 
         # Apply manual overrides
         if overrides:
+            logger.debug(f"Applying {len(overrides)} manual overrides: {list(overrides.keys())}")
             result = self.apply_overrides(result, overrides)
+
+        # Log extraction summary
+        extracted_fields = [k for k, v in result.to_dict().items() if v is not None]
+        logger.info(
+            f"Extraction complete: {len(extracted_fields)} fields extracted, "
+            f"{len(result.extraction_errors)} errors"
+        )
+        if result.extraction_errors:
+            logger.debug(f"Extraction errors: {result.extraction_errors}")
 
         return result
 
@@ -534,6 +562,11 @@ class EventDataExtractor:
             manual_overrides = event_extra_config.get('manual_overrides', {})
             if isinstance(manual_overrides, dict):
                 overrides = manual_overrides
+
+        logger.debug(
+            f"extract_from_event: {len(css_selectors)} selectors configured, "
+            f"{len(overrides)} manual overrides"
+        )
 
         return self.extract(html_content, css_selectors, overrides)
 
