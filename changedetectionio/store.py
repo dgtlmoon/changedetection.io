@@ -338,7 +338,6 @@ class ChangeDetectionStore:
         self.needs_write_urgent = True
 
     def add_watch(self, url, tag='', extras=None, tag_uuids=None, write_to_disk_now=True):
-        import requests
 
         if extras is None:
             extras = {}
@@ -349,6 +348,8 @@ class ChangeDetectionStore:
 
         # Was it a share link? try to fetch the data
         if (url.startswith("https://changedetection.io/share/")):
+            import requests
+
             try:
                 r = requests.request(method="GET",
                                      url=url,
