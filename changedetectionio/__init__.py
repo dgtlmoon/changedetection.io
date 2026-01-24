@@ -167,6 +167,8 @@ def main():
         print('Batch mode:')
         print('  -b                Run in batch mode (process queue then exit)')
         print('                    Useful for CI/CD, cron jobs, or one-time checks')
+        print('                    NOTE: Batch mode checks if Flask is running and aborts if port is in use')
+        print('                    Use -p PORT to specify a different port if needed')
         print('')
         sys.exit(0)
 
@@ -291,6 +293,8 @@ def main():
         print('Batch mode:')
         print('  -b                Run in batch mode (process queue then exit)')
         print('                    Useful for CI/CD, cron jobs, or one-time checks')
+        print('                    NOTE: Batch mode checks if Flask is running and aborts if port is in use')
+        print('                    Use -p PORT to specify a different port if needed')
         print('')
         print(f'Error: {e}')
         sys.exit(2)
@@ -477,6 +481,32 @@ def main():
     # Step 4: Setup batch mode monitor (if -b was provided)
     if batch_mode:
         from changedetectionio.flask_app import update_q
+
+        # Safety check: Ensure Flask app is not already running on this port
+        # Batch mode should never run alongside the web server
+        import socket
+        test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        try:
+            # Try to bind to the configured host:port (no SO_REUSEADDR - strict check)
+            test_socket.bind((host, port))
+            test_socket.close()
+            logger.debug(f"Batch mode: Port {port} is available (Flask app not running)")
+        except OSError as e:
+            test_socket.close()
+            # errno 98 = EADDRINUSE (Linux)
+            # errno 48 = EADDRINUSE (macOS)
+            # errno 10048 = WSAEADDRINUSE (Windows)
+            if e.errno in (48, 98, 10048) or "Address already in use" in str(e) or "already in use" in str(e).lower():
+                logger.critical(f"ERROR: Batch mode cannot run - port {port} is already in use")
+                logger.critical(f"The Flask web server appears to be running on {host}:{port}")
+                logger.critical(f"Batch mode is designed for standalone operation (CI/CD, cron jobs, etc.)")
+                logger.critical(f"Please either stop the Flask web server, or use a different port with -p PORT")
+                sys.exit(1)
+            else:
+                # Some other socket error - log but continue (might be network configuration issue)
+                logger.warning(f"Port availability check failed with unexpected error: {e}")
+                logger.warning(f"Continuing with batch mode anyway - be aware of potential conflicts")
 
         def queue_watches_for_recheck(datastore, iteration):
             """Helper function to queue watches for recheck"""
