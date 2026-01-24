@@ -161,6 +161,8 @@ def main():
         print('Recheck on startup:')
         print('  -r all            Queue all watches for recheck on startup')
         print('  -r UUID,...       Queue specific watches (comma-separated UUIDs)')
+        print('  -r all N          Queue all watches, wait for completion, repeat N times')
+        print('  -r UUID,... N     Queue specific watches, wait for completion, repeat N times')
         print('')
         print('Batch mode:')
         print('  -b                Run in batch mode (process queue then exit)')
@@ -190,6 +192,7 @@ def main():
     urls_to_add = []
     url_options = {}  # Key: index (0-based), Value: dict of options
     recheck_watches = None  # None, 'all', or list of UUIDs
+    recheck_repeat_count = 1  # Number of times to repeat recheck cycle
     batch_mode = False  # Run once then exit when queue is empty
 
     # On Windows, create and use a default path.
@@ -235,7 +238,16 @@ def main():
             else:
                 # Parse comma-separated list of UUIDs
                 recheck_watches = [uuid.strip() for uuid in recheck_arg.split(',') if uuid.strip()]
-            i += 2
+
+            # Check for optional repeat count as third argument
+            if i + 2 < len(sys.argv) and sys.argv[i + 2].isdigit():
+                recheck_repeat_count = int(sys.argv[i + 2])
+                if recheck_repeat_count < 1:
+                    print(f'Error: Repeat count must be at least 1, got {recheck_repeat_count}')
+                    sys.exit(2)
+                i += 3
+            else:
+                i += 2
             continue
 
         # Handle -b (batch mode - run once and exit)
@@ -273,6 +285,8 @@ def main():
         print('Recheck on startup:')
         print('  -r all            Queue all watches for recheck on startup')
         print('  -r UUID,...       Queue specific watches (comma-separated UUIDs)')
+        print('  -r all N          Queue all watches, wait for completion, repeat N times')
+        print('  -r UUID,... N     Queue specific watches, wait for completion, repeat N times')
         print('')
         print('Batch mode:')
         print('  -b                Run in batch mode (process queue then exit)')
@@ -356,7 +370,9 @@ def main():
     # isnt there some @thingy to attach to each route to tell it, that this route needs a datastore
     app_config = {
         'datastore_path': datastore_path,
-        'batch_mode': batch_mode
+        'batch_mode': batch_mode,
+        'recheck_watches': recheck_watches,
+        'recheck_repeat_count': recheck_repeat_count
     }
 
     if not os.path.isdir(app_config['datastore_path']):
@@ -462,46 +478,88 @@ def main():
     if batch_mode:
         from changedetectionio.flask_app import update_q
 
+        def queue_watches_for_recheck(datastore, iteration):
+            """Helper function to queue watches for recheck"""
+            watches_to_queue = []
+            if recheck_watches == 'all':
+                all_watches = list(datastore.data['watching'].keys())
+                if batch_mode and added_watch_uuids and iteration == 1:
+                    # Only exclude newly added watches on first iteration
+                    watches_to_queue = [uuid for uuid in all_watches if uuid not in added_watch_uuids]
+                else:
+                    watches_to_queue = all_watches
+                logger.info(f"Batch mode (iteration {iteration}): Queuing all {len(watches_to_queue)} watches")
+            elif recheck_watches:
+                watches_to_queue = recheck_watches
+                logger.info(f"Batch mode (iteration {iteration}): Queuing {len(watches_to_queue)} specific watches")
+
+            queued_count = 0
+            for watch_uuid in watches_to_queue:
+                if watch_uuid in datastore.data['watching']:
+                    try:
+                        worker_handler.queue_item_async_safe(
+                            update_q,
+                            queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid})
+                        )
+                        queued_count += 1
+                    except Exception as e:
+                        logger.error(f"Failed to queue watch {watch_uuid}: {e}")
+                else:
+                    logger.warning(f"Watch UUID not found in datastore: {watch_uuid}")
+            logger.success(f"Batch mode (iteration {iteration}): Successfully queued {queued_count} watches")
+            return queued_count
+
         def batch_mode_monitor():
-            """Monitor queue and workers, shutdown when all work is complete"""
+            """Monitor queue and workers, shutdown or repeat when work is complete"""
             import time
 
-            logger.info("Batch mode: Waiting for all queued items to complete...")
+            # Track iterations if repeat mode is enabled
+            current_iteration = 1
+            total_iterations = recheck_repeat_count if recheck_watches and recheck_repeat_count > 1 else 1
+
+            if total_iterations > 1:
+                logger.info(f"Batch mode: Will repeat recheck {total_iterations} times")
+            else:
+                logger.info("Batch mode: Waiting for all queued items to complete...")
 
             # Wait a bit for workers to start processing
             time.sleep(3)
 
-            idle_start = None
-            idle_threshold = 3  # Seconds to wait after queue is empty
+            try:
+                while current_iteration <= total_iterations:
+                    logger.info(f"Batch mode: Waiting for iteration {current_iteration}/{total_iterations} to complete...")
 
-            while True:
-                try:
-                    queue_size = update_q.qsize()
-                    running_uuids = worker_handler.get_running_uuids()
-                    running_count = len(running_uuids)
+                    # Use the shared wait_for_all_checks function
+                    completed = worker_handler.wait_for_all_checks(update_q, timeout=300)
 
-                    logger.info(f"Batch mode: Queue size: {queue_size}, Running workers: {running_count}, Running UUIDs: {running_uuids}")
+                    if not completed:
+                        logger.warning(f"Batch mode: Iteration {current_iteration} timed out after 300 seconds")
 
-                    if queue_size == 0 and running_count == 0:
-                        if idle_start is None:
-                            idle_start = time.time()
-                            logger.info(f"Batch mode: Queue empty and workers idle, waiting {idle_threshold}s before shutdown...")
-                        elif time.time() - idle_start >= idle_threshold:
-                            logger.success("Batch mode: All work completed, initiating shutdown")
-                            # Trigger shutdown
-                            import os, signal
-                            os.kill(os.getpid(), signal.SIGTERM)
-                            return
+                    logger.success(f"Batch mode: Iteration {current_iteration}/{total_iterations} completed")
+
+                    # Check if we need to repeat
+                    if current_iteration < total_iterations:
+                        logger.info(f"Batch mode: Starting iteration {current_iteration + 1}...")
+                        current_iteration += 1
+
+                        # Re-queue watches for next iteration
+                        queue_watches_for_recheck(datastore, current_iteration)
+
+                        # Brief pause before continuing
+                        time.sleep(2)
                     else:
-                        if idle_start is not None:
-                            logger.info(f"Batch mode: Activity detected (queue: {queue_size}, running: {running_count})")
-                        idle_start = None
+                        # All iterations complete
+                        logger.success(f"Batch mode: All {total_iterations} iterations completed, initiating shutdown")
+                        # Trigger shutdown
+                        import os, signal
+                        os.kill(os.getpid(), signal.SIGTERM)
+                        return
 
-                    time.sleep(2)
-
-                except Exception as e:
-                    logger.error(f"Batch mode monitor error: {e}")
-                    time.sleep(2)
+            except Exception as e:
+                logger.error(f"Batch mode monitor error: {e}")
+                logger.error(f"Initiating emergency shutdown")
+                import os, signal
+                os.kill(os.getpid(), signal.SIGTERM)
 
         # Start monitor in background thread
         monitor_thread = threading.Thread(target=batch_mode_monitor, daemon=True, name="BatchModeMonitor")

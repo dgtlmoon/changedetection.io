@@ -431,6 +431,53 @@ def get_worker_status():
     }
 
 
+def wait_for_all_checks(update_q, timeout=150):
+    """
+    Wait for queue to be empty and all workers to be idle.
+
+    Args:
+        update_q: The update queue to monitor
+        timeout: Maximum wait time in seconds (default 150 = 150 iterations * 0.2-0.8s)
+
+    Returns:
+        bool: True if all checks completed, False if timeout
+    """
+    import time
+    empty_since = None
+    attempt = 0
+    max_attempts = timeout
+
+    while attempt < max_attempts:
+        # Adaptive sleep - start fast, slow down if needed
+        if attempt < 10:
+            sleep_time = 0.2  # Very fast initial checks
+        elif attempt < 30:
+            sleep_time = 0.4  # Medium speed
+        else:
+            sleep_time = 0.8  # Slower for persistent issues
+
+        time.sleep(sleep_time)
+
+        q_length = update_q.qsize()
+        running_uuids = get_running_uuids()
+        any_workers_busy = len(running_uuids) > 0
+
+        if q_length == 0 and not any_workers_busy:
+            if empty_since is None:
+                empty_since = time.time()
+            # Brief stabilization period for async workers
+            elif time.time() - empty_since >= 0.3:
+                # Add small buffer for filesystem operations to complete
+                time.sleep(0.2)
+                return True
+        else:
+            empty_since = None
+
+        attempt += 1
+
+    return False  # Timeout
+
+
 def check_worker_health(expected_count, update_q=None, notification_q=None, app=None, datastore=None):
     """
     Check if the expected number of async workers are running and restart any missing ones.

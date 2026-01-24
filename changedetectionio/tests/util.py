@@ -140,40 +140,13 @@ def delete_all_watches(client=None):
 def wait_for_all_checks(client=None):
     """
     Waits until the queue is empty and workers are idle.
-    Much faster than the original with adaptive timing.
+    Delegates to worker_handler.wait_for_all_checks for shared logic.
     """
     from changedetectionio.flask_app import update_q as global_update_q
     from changedetectionio import worker_handler
-    empty_since = None
-    attempt = 0
-    max_attempts = 150  # Still reasonable upper bound
 
-    while attempt < max_attempts:
-        # Start with fast checks, slow down if needed
-        if attempt < 10:
-            time.sleep(0.2)  # Very fast initial checks
-        elif attempt < 30:
-            time.sleep(0.4)  # Medium speed
-        else:
-            time.sleep(0.8)  # Slower for persistent issues
-
-        q_length = global_update_q.qsize()
-        running_uuids = worker_handler.get_running_uuids()
-        any_workers_busy = len(running_uuids) > 0
-
-        if q_length == 0 and not any_workers_busy:
-            if empty_since is None:
-                empty_since = time.time()
-            # Brief stabilization period for async workers
-            elif time.time() - empty_since >= 0.3:
-                # Add small buffer for filesystem operations to complete
-                # This ensures history blobs and HTML snapshots are fully written
-                time.sleep(0.2)
-                break
-        else:
-            empty_since = None
-
-        attempt += 1
+    # Use the shared wait logic from worker_handler
+    return worker_handler.wait_for_all_checks(global_update_q, timeout=150)
 
 def wait_for_watch_history(client, min_history_count=2, timeout=10):
     """
