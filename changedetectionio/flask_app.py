@@ -808,6 +808,8 @@ def changedetection_app(config=None, datastore_o=None):
 
     # Initialize Socket.IO server conditionally based on settings
     socket_io_enabled = datastore.data['settings']['application']['ui'].get('socket_io_enabled', True)
+    if socket_io_enabled and app.config.get('batch_mode'):
+        socket_io_enabled = False
     if socket_io_enabled:
         from changedetectionio.realtime.socket_server import init_socketio
         global socketio_server
