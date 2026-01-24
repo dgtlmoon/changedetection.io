@@ -166,12 +166,14 @@ def wait_for_all_checks(client=None):
                 empty_since = time.time()
             # Brief stabilization period for async workers
             elif time.time() - empty_since >= 0.3:
+                # Add small buffer for filesystem operations to complete
+                # This ensures history blobs and HTML snapshots are fully written
+                time.sleep(0.2)
                 break
         else:
             empty_since = None
 
         attempt += 1
-        time.sleep(0.3)
 
 def wait_for_watch_history(client, min_history_count=2, timeout=10):
     """
