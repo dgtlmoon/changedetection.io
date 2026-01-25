@@ -147,6 +147,10 @@ socks5://192.168.1.1:1080
         assert rotator._normalize_proxy_url("") is None
         assert rotator._normalize_proxy_url("   ") is None
 
+        # Test host:port:user:pass format
+        assert rotator._normalize_proxy_url("proxy.com:8080:myuser:mypass") == "http://myuser:mypass@proxy.com:8080"
+        assert rotator._normalize_proxy_url("192.168.1.1:3128:admin:secret123") == "http://admin:secret123@192.168.1.1:3128"
+
     def test_add_proxy_manually(self):
         """Test manually adding proxies."""
         with patch.dict(os.environ, {}, clear=True):
@@ -346,6 +350,37 @@ http://valid2.com:8080
 
                 # Should only have the 2 valid proxies
                 assert rotator.total_proxy_count == 2
+        finally:
+            os.unlink(temp_path)
+
+    def test_load_host_port_user_pass_format_from_file(self):
+        """Test loading proxies in host:port:user:pass format from file."""
+        proxy_content = """# Proxies in host:port:user:pass format
+proxy1.example.com:8080:user1:pass1
+proxy2.example.com:3128:user2:pass2
+192.168.1.100:8888:admin:secret
+"""
+
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+            f.write(proxy_content)
+            temp_path = f.name
+
+        try:
+            with patch.dict(os.environ, {'PROXY_LIST_PATH': temp_path}, clear=True):
+                ProxyRotator._instance = None
+                rotator = ProxyRotator()
+
+                assert rotator.has_proxies
+                assert rotator.total_proxy_count == 3
+
+                # Verify proxies are converted to correct format
+                proxy1 = rotator.get_next_proxy()
+                proxy2 = rotator.get_next_proxy()
+                proxy3 = rotator.get_next_proxy()
+
+                assert proxy1 == "http://user1:pass1@proxy1.example.com:8080"
+                assert proxy2 == "http://user2:pass2@proxy2.example.com:3128"
+                assert proxy3 == "http://admin:secret@192.168.1.100:8888"
         finally:
             os.unlink(temp_path)
 

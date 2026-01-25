@@ -223,8 +223,10 @@ class ProxyRotator:
     Proxy format in files/env vars:
     - One proxy per line
     - Format: protocol://[user:pass@]host:port
+    - Format: host:port:user:pass (auto-converts to http://user:pass@host:port)
     - Example: http://user:pass@proxy.example.com:8080
     - Example: socks5://192.168.1.1:1080
+    - Example: proxy.example.com:8080:myuser:mypass
 
     Dead Proxy Detection:
     - Report failures with report_proxy_failure()
@@ -286,7 +288,8 @@ class ProxyRotator:
             env_var='PROXY_LIST',
             path_env_var='PROXY_LIST_PATH',
             pool_name='default',
-            proxy_type=ProxyType.MIXED
+            proxy_type=ProxyType.MIXED,
+            default_file='proxy_list.txt'
         )
 
         # Load from residential proxy list
@@ -317,12 +320,13 @@ class ProxyRotator:
         env_var: str,
         path_env_var: str,
         pool_name: str,
-        proxy_type: ProxyType
+        proxy_type: ProxyType,
+        default_file: str = None
     ):
         """Load proxies from environment variable or file."""
         pool = self.pools[pool_name]
 
-        # First try to load from file path
+        # First try to load from file path environment variable
         file_path = os.getenv(path_env_var)
         if file_path and os.path.isfile(file_path):
             self._load_from_file(file_path, pool, proxy_type)
@@ -332,6 +336,11 @@ class ProxyRotator:
         proxy_list_str = os.getenv(env_var)
         if proxy_list_str:
             self._parse_proxy_list(proxy_list_str, pool, proxy_type)
+            return
+
+        # Finally, check for default file in working directory
+        if default_file and os.path.isfile(default_file):
+            self._load_from_file(default_file, pool, proxy_type)
 
     def _load_from_file(self, file_path: str, pool: ProxyPool, proxy_type: ProxyType):
         """Load proxies from a file."""
@@ -368,14 +377,31 @@ class ProxyRotator:
         - http://user:pass@host:port
         - host:port (assumes http://)
         - user:pass@host:port (assumes http://)
+        - host:port:user:pass (assumes http://, converts to user:pass@host:port)
         - socks5://host:port
         """
         proxy_str = proxy_str.strip()
         if not proxy_str:
             return None
 
+        # Check if it already has a protocol
+        has_protocol = any(proxy_str.startswith(p) for p in ['http://', 'https://', 'socks4://', 'socks5://'])
+
+        # If no protocol and no @ symbol, check for host:port:user:pass format
+        if not has_protocol and '@' not in proxy_str:
+            parts = proxy_str.split(':')
+            # host:port:user:pass format (4 parts)
+            if len(parts) == 4:
+                host, port, user, password = parts
+                proxy_str = f'http://{user}:{password}@{host}:{port}'
+                return proxy_str
+            # host:port format (2 parts) - no auth
+            elif len(parts) == 2:
+                proxy_str = f'http://{proxy_str}'
+                return proxy_str
+
         # If no protocol specified, assume http://
-        if not any(proxy_str.startswith(p) for p in ['http://', 'https://', 'socks4://', 'socks5://']):
+        if not has_protocol:
             proxy_str = f'http://{proxy_str}'
 
         return proxy_str
