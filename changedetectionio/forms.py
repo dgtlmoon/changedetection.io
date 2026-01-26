@@ -740,10 +740,10 @@ class QuickEventForm(Form):
     tags = StringTagUUID(_l('Tags'), validators=[validators.Optional()])
     auto_extract = BooleanField(_l('Auto-extract fields on first check'), default=True)
     event_name = StringField(_l('Event Name'), validators=[validators.Optional()])
-    artist = StringField(_l('Artist'), validators=[validators.Optional()])
-    venue = StringField(_l('Venue'), validators=[validators.Optional()])
-    event_date = StringField(_l('Event Date'), validators=[validators.Optional()])
-    event_time = StringField(_l('Event Time'), validators=[validators.Optional()])
+    artist = StringField(_l('Artist'), validators=[validators.Optional(), validators.Length(max=500)])
+    venue = StringField(_l('Venue'), validators=[validators.Optional(), validators.Length(max=500)])
+    event_date = StringField(_l('Event Date'), validators=[validators.Optional(), validators.Length(max=100)])
+    event_time = StringField(_l('Event Time'), validators=[validators.Optional(), validators.Length(max=100)])
     add_event_button = SubmitField(_l('Add Event'), render_kw={"class": "pure-button pure-button-primary"})
     add_and_open_settings = SubmitField(_l('Add & Open Settings'), render_kw={"class": "pure-button button-secondary"})
 
@@ -888,9 +888,9 @@ class processor_text_json_diff_form(commonSettingsForm):
     )
 
     # Event metadata
-    artist = StringField(_l('Artist'), [validators.Optional()])
-    venue = StringField(_l('Venue'), [validators.Optional()])
-    event_date = StringField(_l('Event Date'), [validators.Optional()], render_kw={"placeholder": "Jan 15, 2026"})
+    artist = StringField(_l('Artist'), [validators.Optional(), validators.Length(max=500)])
+    venue = StringField(_l('Venue'), [validators.Optional(), validators.Length(max=500)])
+    event_date = StringField(_l('Event Date'), [validators.Optional(), validators.Length(max=100)], render_kw={"placeholder": "Jan 15, 2026"})
 
     webdriver_js_execute_code = TextAreaField(_l('Execute JavaScript before change detection'), render_kw={"rows": "5"}, validators=[validators.Optional()])
 

@@ -1,1 +1,57 @@
 #diff-form{background:rgba(0,0,0,.05);padding:1em;border-radius:10px;margin-bottom:1em;color:#fff;font-size:.9rem;text-align:center}#diff-form label.from-to-label{width:4rem;text-decoration:none;padding:.5rem}#diff-form label.from-to-label#change-from{color:#b30000;background:#fadad7}#diff-form label.from-to-label#change-to{background:#eaf2c2;color:#406619}#diff-form #diff-style>span{display:inline-block;padding:.3em}#diff-form #diff-style>span label{font-weight:normal}#diff-form *{vertical-align:middle}body.difference-page section.content{padding-top:40px}#diff-ui{background:var(--color-background);padding:1rem;border-radius:5px}@media(min-width: 767px){#diff-ui{min-width:50%}}#diff-ui #text{font-size:11px}#diff-ui pre{white-space:break-spaces}#diff-ui h1{display:inline;font-size:100%}#diff-ui #result{white-space:pre-wrap;word-break:break-word;overflow-wrap:break-word}#diff-ui .source{position:absolute;right:1%;top:.2em}@-moz-document url-prefix(){#diff-ui body{height:99%}}#diff-ui td#diff-col div{text-align:justify;white-space:pre-wrap}#diff-ui .ignored{background-color:#ccc;opacity:.7}#diff-ui .triggered{background-color:#1b98f8}#diff-ui .ignored.triggered{background-color:red}#diff-ui .tab-pane-inner#screenshot{text-align:center}#diff-ui .tab-pane-inner#screenshot img{max-width:99%}#diff-ui .pure-form button.reset-margin{margin:0px}#diff-ui .diff-fieldset{display:flex;align-items:center;gap:4px;flex-wrap:wrap}#diff-ui ul#highlightSnippetActions{list-style-type:none;display:flex;align-items:center;justify-content:center;gap:1.5rem;flex-wrap:wrap;padding:0;margin:0}#diff-ui ul#highlightSnippetActions li{display:flex;flex-direction:column;align-items:center;text-align:center;padding:.5rem;gap:.3rem}#diff-ui ul#highlightSnippetActions li button,#diff-ui ul#highlightSnippetActions li a{white-space:nowrap}#diff-ui ul#highlightSnippetActions span{font-size:.8rem;color:var(--color-text-input-description)}#diff-ui #cell-diff-jump-visualiser{display:flex;flex-direction:row;gap:1px;background:var(--color-background);border-radius:3px;overflow-x:hidden;position:sticky;top:0;z-index:10;padding-top:1rem;padding-bottom:1rem;justify-content:center}#diff-ui #cell-diff-jump-visualiser>div{flex:1;min-width:1px;max-width:10px;height:10px;background:var(--color-background-button-cancel);opacity:.3;border-radius:1px;transition:opacity .2s;position:relative}#diff-ui #cell-diff-jump-visualiser>div.deletion{background:#b30000;opacity:1}#diff-ui #cell-diff-jump-visualiser>div.insertion{background:#406619;opacity:1}#diff-ui #cell-diff-jump-visualiser>div.note{background:#406619;opacity:1}#diff-ui #cell-diff-jump-visualiser>div.mixed{background:linear-gradient(to right, #b30000 50%, #406619 50%);opacity:1}#diff-ui #cell-diff-jump-visualiser>div.current-position::after{content:"";position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:4px solid rgba(0,0,0,0);border-right:4px solid rgba(0,0,0,0);border-bottom:4px solid var(--color-text)}#diff-ui #cell-diff-jump-visualiser>div:hover{opacity:.8;cursor:pointer}#text-diff-heading-area .snapshot-age{padding:4px;margin:.5rem 0;background-color:var(--color-background-snapshot-age);border-radius:3px;font-weight:bold;margin-bottom:4px}#text-diff-heading-area .snapshot-age.error{background-color:var(--color-error-background-snapshot-age);color:var(--color-error-text-snapshot-age)}#text-diff-heading-area .snapshot-age>*{padding-right:1rem}
+
+/* Watch Info Header - Event details and watch words display */
+.watch-info-header {
+  background: var(--color-background-tab, #f5f5f5);
+  padding: 12px 15px;
+  margin-bottom: 15px;
+  border-radius: 5px;
+  border-left: 4px solid var(--color-accent, #5c6bc0);
+}
+
+.watch-info-header .event-details {
+  margin-bottom: 10px;
+}
+
+.watch-info-header .event-label {
+  font-size: 1.1em;
+}
+
+.watch-info-header .event-value {
+  margin-left: 15px;
+}
+
+.watch-info-header .watch-words-display {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.watch-info-header .block-words,
+.watch-info-header .trigger-words {
+  flex: 1;
+  min-width: 200px;
+}
+
+.watch-info-header .block-words strong {
+  color: var(--color-error, #d32f2f);
+}
+
+.watch-info-header .trigger-words strong {
+  color: var(--color-success, #388e3c);
+}
+
+.watch-info-header .word-list {
+  font-family: monospace;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-left: 5px;
+}
+
+.watch-info-header .block-words .word-list {
+  background: rgba(211, 47, 47, 0.1);
+}
+
+.watch-info-header .trigger-words .word-list {
+  background: rgba(56, 142, 60, 0.1);
+}

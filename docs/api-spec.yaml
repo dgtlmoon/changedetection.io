@@ -259,6 +259,33 @@ components:
           enum: [restock_diff, text_json_diff]
           default: text_json_diff
           description: Optional processor mode to use for change detection. Defaults to `text_json_diff` if not specified.
+        block_words:
+          type: array
+          items:
+            type: string
+          description: List of words/phrases that block notifications while present (restock alerts). Notify when these words DISAPPEAR from the page. Supports regex with /pattern/ format.
+          example: ["Sold Out", "Not Available", "Off Sale"]
+        trigger_words:
+          type: array
+          items:
+            type: string
+          description: List of words/phrases that must appear before notifications are sent. Notify when these words APPEAR on the page. Supports regex with /pattern/ format.
+          example: ["Tickets Available", "On Sale Now", "Buy Now"]
+        artist:
+          type: string
+          description: Artist or performer name for event tracking
+          maxLength: 500
+          example: "Taylor Swift"
+        venue:
+          type: string
+          description: Venue or location for event tracking
+          maxLength: 500
+          example: "Madison Square Garden"
+        event_date:
+          type: string
+          description: Date of the event (free-form text)
+          maxLength: 100
+          example: "Jan 15, 2026"
 
     Watch:
       allOf:
