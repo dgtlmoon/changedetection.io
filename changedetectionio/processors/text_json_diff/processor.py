@@ -101,6 +101,16 @@ class FilterConfig:
         return self._get_merged_rules('text_should_not_be_present')
 
     @property
+    def block_words(self):
+        """Words that block notifications while present (restock alerts)."""
+        return self._get_merged_rules('block_words')
+
+    @property
+    def trigger_words(self):
+        """Words that must appear before notifications are sent."""
+        return self._get_merged_rules('trigger_words')
+
+    @property
     def has_include_filters(self):
         return bool(self.include_filters) and bool(self.include_filters[0].strip())
 
@@ -203,6 +213,50 @@ class RuleEngine:
         )
         # Block if forbidden text was found
         return bool(result)
+
+    @staticmethod
+    def evaluate_block_words(content, patterns):
+        """
+        Check if block_words are present. If found, block the change.
+
+        Semantics: "Notify when these words DISAPPEAR"
+        - Block while words ARE present on page
+        - Allow (unblock) when words are NOT present
+
+        Returns True if blocked, False if allowed.
+        """
+        if not patterns:
+            return False
+
+        result = html_tools.strip_ignore_text(
+            content=str(content),
+            wordlist=patterns,
+            mode="line numbers"
+        )
+        # Block if words ARE found (waiting for them to disappear)
+        return bool(result)
+
+    @staticmethod
+    def evaluate_trigger_words(content, patterns):
+        """
+        Check if trigger_words are present. If NOT found, block the change.
+
+        Semantics: "Notify when these words APPEAR"
+        - Block while words are NOT present on page
+        - Allow (unblock) when words ARE present
+
+        Returns True if blocked, False if allowed.
+        """
+        if not patterns:
+            return False
+
+        result = html_tools.strip_ignore_text(
+            content=str(content),
+            wordlist=patterns,
+            mode="line numbers"
+        )
+        # Block if words NOT found (waiting for them to appear)
+        return not bool(result)
 
     @staticmethod
     def evaluate_conditions(watch, datastore, content):
@@ -526,6 +580,14 @@ class perform_site_check(difference_detection_processor):
 
         # Check text_should_not_be_present
         if rule_engine.evaluate_text_should_not_be_present(stripped_text, filter_config.text_should_not_be_present):
+            blocked = True
+
+        # Check block_words (notify when words DISAPPEAR)
+        if rule_engine.evaluate_block_words(stripped_text, filter_config.block_words):
+            blocked = True
+
+        # Check trigger_words (notify when words APPEAR)
+        if rule_engine.evaluate_trigger_words(stripped_text, filter_config.trigger_words):
             blocked = True
 
         # Check custom conditions

@@ -73,6 +73,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         triggered_line_numbers = []
         ignored_line_numbers = []
         blocked_line_numbers = []
+        block_words_line_numbers = []
+        trigger_words_line_numbers = []
 
         if datastore.data['watching'][uuid].history_n == 0 and (watch.get_error_text() or watch.get_error_snapshot()):
             flash(gettext("Preview unavailable - No fetch/check completed or triggers not reached"), "error")
@@ -100,6 +102,15 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                                                       wordlist=watch.get("text_should_not_be_present"),
                                                                       mode='line numbers'
                                                                       )
+                # Watch words highlighting
+                block_words_line_numbers = html_tools.strip_ignore_text(content=content,
+                                                                      wordlist=watch.get('block_words'),
+                                                                      mode='line numbers'
+                                                                      )
+                trigger_words_line_numbers = html_tools.strip_ignore_text(content=content,
+                                                                      wordlist=watch.get('trigger_words'),
+                                                                      mode='line numbers'
+                                                                      )
             except Exception as e:
                 content.append({'line': f"File doesnt exist or unable to read timestamp {timestamp}", 'classes': ''})
 
@@ -116,6 +127,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                  highlight_ignored_line_numbers=ignored_line_numbers,
                                  highlight_triggered_line_numbers=triggered_line_numbers,
                                  highlight_blocked_line_numbers=blocked_line_numbers,
+                                 highlight_block_words_line_numbers=block_words_line_numbers,
+                                 highlight_trigger_words_line_numbers=trigger_words_line_numbers,
                                  history_n=watch.history_n,
                                  is_html_webdriver=is_html_webdriver,
                                  last_error=watch['last_error'],
