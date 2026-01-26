@@ -653,7 +653,14 @@ def main():
     if os.getenv('USE_X_SETTINGS'):
         logger.info("USE_X_SETTINGS is ENABLED")
         from werkzeug.middleware.proxy_fix import ProxyFix
-        app.wsgi_app = ProxyFix(app.wsgi_app, x_prefix=1, x_host=1)
+        app.wsgi_app = ProxyFix(
+            app.wsgi_app,
+            x_for=1,      # X-Forwarded-For (client IP)
+            x_proto=1,    # X-Forwarded-Proto (http/https)
+            x_host=1,     # X-Forwarded-Host (original host)
+            x_port=1,     # X-Forwarded-Port (original port)
+            x_prefix=1    # X-Forwarded-Prefix (URL prefix)
+        )
 
 
     # In batch mode, skip starting the HTTP server - just keep workers running
