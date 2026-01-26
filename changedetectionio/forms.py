@@ -874,6 +874,24 @@ class processor_text_json_diff_form(commonSettingsForm):
     if os.getenv("PLAYWRIGHT_DRIVER_URL"):
         browser_steps = FieldList(FormField(SingleBrowserStep), min_entries=10)
     text_should_not_be_present = StringListField(_l('Block change-detection while text matches'), [validators.Optional(), ValidateListRegex()])
+
+    # Watch words - simplified text matching for restock/sold-out alerts
+    block_words = StringListField(
+        _l('Notify when DISAPPEARS'),
+        [validators.Optional(), ValidateListRegex()],
+        render_kw={"placeholder": "Sold Out\nNot Available\nOff Sale"}
+    )
+    trigger_words = StringListField(
+        _l('Notify when APPEARS'),
+        [validators.Optional(), ValidateListRegex()],
+        render_kw={"placeholder": "Tickets Available\nOn Sale Now"}
+    )
+
+    # Event metadata
+    artist = StringField(_l('Artist'), [validators.Optional()])
+    venue = StringField(_l('Venue'), [validators.Optional()])
+    event_date = StringField(_l('Event Date'), [validators.Optional()], render_kw={"placeholder": "Jan 15, 2026"})
+
     webdriver_js_execute_code = TextAreaField(_l('Execute JavaScript before change detection'), render_kw={"rows": "5"}, validators=[validators.Optional()])
 
     save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})

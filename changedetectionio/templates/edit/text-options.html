@@ -48,6 +48,49 @@ Unavailable") }}
                         </span>
                     </div>
                 </fieldset>
+
+                <!-- Watch Words Section -->
+                <fieldset class="border-fieldset">
+                    <legend>{{ _('Watch Words') }}</legend>
+                    <div class="pure-control-group">
+                        {{ render_field(form.block_words, rows=4) }}
+                        <span class="pure-form-message-inline">
+                            <ul>
+                                <li>{{ _('Enter words/phrases (one per line). You will be notified when these DISAPPEAR from the page.') }}</li>
+                                <li>{{ _('Example: "Sold Out" disappearing means tickets are available again (restock alert).') }}</li>
+                                <li>{{ _('Case-insensitive. Use') }} <code>/regex/</code> {{ _('for pattern matching.') }}</li>
+                            </ul>
+                        </span>
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.trigger_words, rows=4) }}
+                        <span class="pure-form-message-inline">
+                            <ul>
+                                <li>{{ _('Enter words/phrases (one per line). You will be notified when these APPEAR on the page.') }}</li>
+                                <li>{{ _('Example: "Tickets Available" appearing means you can buy now.') }}</li>
+                                <li>{{ _('Case-insensitive. Use') }} <code>/regex/</code> {{ _('for pattern matching.') }}</li>
+                            </ul>
+                        </span>
+                    </div>
+                </fieldset>
+
+                <!-- Event Details Section -->
+                <fieldset class="border-fieldset">
+                    <legend>{{ _('Event Details (Optional)') }}</legend>
+                    <div class="pure-control-group">
+                        {{ render_field(form.artist) }}
+                        <span class="pure-form-message-inline">{{ _('Artist or performer name for this event') }}</span>
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.venue) }}
+                        <span class="pure-form-message-inline">{{ _('Venue or location for this event') }}</span>
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.event_date) }}
+                        <span class="pure-form-message-inline">{{ _('Date of the event (e.g., Jan 15, 2026)') }}</span>
+                    </div>
+                </fieldset>
+
                 <fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.extract_text, rows=5, placeholder="/.+?\d+ comments.+?/

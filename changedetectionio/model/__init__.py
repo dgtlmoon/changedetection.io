@@ -63,6 +63,13 @@ class watch_base(dict):
             'tag': '',  # Old system of text name for a tag, to be removed
             'tags': [],  # list of UUIDs to App.Tags
             'text_should_not_be_present': [],  # Text that should not present
+            # Watch words - simplified text matching
+            'block_words': [],      # Notify when these words DISAPPEAR (restock alerts)
+            'trigger_words': [],    # Notify when these words APPEAR (sold out alerts)
+            # Event metadata
+            'artist': None,
+            'venue': None,
+            'event_date': None,
             'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None},
             'time_between_check_use_default': True,
             "time_schedule_limit": {
