@@ -123,6 +123,19 @@ class ContentTransformer:
         return '\n'.join(line.strip() for line in text.replace("\n\n", "\n").splitlines())
 
     @staticmethod
+    def format_json_output_if_possible(text):
+        """Pretty-print JSON if the entire text is valid JSON."""
+        try:
+            parsed = json.loads(text)
+        except Exception:
+            return text
+
+        try:
+            return json.dumps(parsed, indent=4, ensure_ascii=False)
+        except Exception:
+            return text
+
+    @staticmethod
     def remove_duplicate_lines(text):
         """Remove duplicate lines while preserving order."""
         return '\n'.join(dict.fromkeys(line for line in text.replace("\n\n", "\n").splitlines()))
@@ -457,6 +470,10 @@ class perform_site_check(difference_detection_processor):
                 stripped_text = html_content
 
         # === TEXT TRANSFORMATIONS ===
+        # If JSON/jq filters are used on embedded JSON, reformat output JSON before any text filtering/transformations
+        if filter_config.has_include_json_filters:
+            stripped_text = transformer.format_json_output_if_possible(stripped_text)
+
         if watch.get('trim_text_whitespace'):
             stripped_text = transformer.trim_whitespace(stripped_text)
 
