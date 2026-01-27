@@ -8,7 +8,9 @@ from loguru import logger
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, visualselector_xpath_selectors, \
     SCREENSHOT_SIZE_STITCH_THRESHOLD, SCREENSHOT_MAX_TOTAL_HEIGHT, XPATH_ELEMENT_JS, INSTOCK_DATA_JS, FAVICON_FETCHER_JS
 from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
-from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable
+from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable, \
+    BrowserStepsStepException
+
 
 async def capture_full_page_async(page, screenshot_format='JPEG', watch_uuid=None, lock_viewport_elements=False):
     import os
@@ -365,7 +367,16 @@ class fetcher(Fetcher):
             try:
                 # Run Browser Steps here
                 if self.browser_steps_get_valid_steps():
-                    await self.iterate_browser_steps(start_url=url)
+                    try:
+                        await self.iterate_browser_steps(start_url=url)
+                    except BrowserStepsStepException:
+                        try:
+                            await context.close()
+                            await browser.close()
+                        except Exception as e:
+                            # Fine, could be messy situation
+                            pass
+                        raise
 
                     await self.page.wait_for_timeout(extra_wait * 1000)
 
@@ -407,19 +418,11 @@ class fetcher(Fetcher):
                 # Force aggressive memory cleanup - screenshots are large and base64 decode creates temporary buffers
                 await self.page.request_gc()
                 gc.collect()
-                # Release C-level memory from base64 decode back to OS
-                try:
-                    import ctypes
-                    ctypes.CDLL('libc.so.6').malloc_trim(0)
-                except Exception:
-                    pass
 
             except ScreenshotUnavailable:
                 # Re-raise screenshot unavailable exceptions
-                raise
-            except Exception as e:
-                # It's likely the screenshot was too long/big and something crashed
                 raise ScreenshotUnavailable(url=url, status_code=self.status_code)
+
             finally:
                 # Request garbage collection one more time before closing
                 try:
