@@ -422,11 +422,7 @@ class fetcher(Fetcher):
             except ScreenshotUnavailable:
                 # Re-raise screenshot unavailable exceptions
                 raise ScreenshotUnavailable(url=url, status_code=self.status_code)
-            except BrowserStepsStepException:
-                raise
-            except Exception:
-                # It's likely the screenshot was too long/big and something crashed
-                raise
+
             finally:
                 # Request garbage collection one more time before closing
                 try:
