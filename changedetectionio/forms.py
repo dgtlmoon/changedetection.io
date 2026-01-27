@@ -811,6 +811,7 @@ class processor_text_json_diff_form(commonSettingsForm):
     ignore_status_codes = BooleanField(_l('Ignore status codes (process non-2xx status codes as normal)'), default=False)
     check_unique_lines = BooleanField(_l('Only trigger when unique lines appear in all history'), default=False)
     remove_duplicate_lines = BooleanField(_l('Remove duplicate lines of text'), default=False)
+    sort_keys_alphabetically =  BooleanField(_l('Sort JSON keys alphabetically'), default=False)
     sort_text_alphabetically =  BooleanField(_l('Sort text alphabetically'), default=False)
     strip_ignored_lines = TernaryNoneBooleanField(_l('Strip ignored lines'), default=None)
     trim_text_whitespace = BooleanField(_l('Trim whitespace before and after text'), default=False)

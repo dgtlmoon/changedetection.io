@@ -27,6 +27,15 @@ list_badge_text = "Text"
 
 JSON_FILTER_PREFIXES = ['json:', 'jq:', 'jqraw:']
 
+
+def sort_json_keys(value):
+    """Recursively sort JSON object keys while preserving array order."""
+    if isinstance(value, dict):
+        return {key: sort_json_keys(value[key]) for key in sorted(value.keys())}
+    if isinstance(value, list):
+        return [sort_json_keys(item) for item in value]
+    return value
+
 # Assume it's this type if the server says nothing on content-type
 DEFAULT_WHEN_NO_CONTENT_TYPE_HEADER = 'text/html'
 
@@ -131,7 +140,20 @@ class ContentTransformer:
             return text
 
         try:
-            return json.dumps(parsed, indent=4, ensure_ascii=False)
+            return json.dumps(parsed, indent=2, ensure_ascii=False)
+        except Exception:
+            return text
+
+    @staticmethod
+    def sort_json_keys_if_possible(text, indent=2):
+        """Sort JSON object keys recursively if the entire text is valid JSON."""
+        try:
+            parsed = json.loads(text)
+        except Exception:
+            return text
+
+        try:
+            return json.dumps(sort_json_keys(parsed), indent=indent, ensure_ascii=False)
         except Exception:
             return text
 
@@ -295,9 +317,12 @@ class ContentProcessor:
         # Then we re-format it, else it does have filters (later on) which will reformat it anyway
         content = html_tools.extract_json_as_string(content=raw_content, json_filter="json:$")
 
-        # Sort JSON to avoid false alerts from reordering
+        # Format JSON, optionally sorting keys to avoid false alerts from reordering
         try:
-            content = json.dumps(json.loads(content), sort_keys=True, indent=2, ensure_ascii=False)
+            parsed = json.loads(content)
+            if self.watch.get('sort_keys_alphabetically'):
+                parsed = sort_json_keys(parsed)
+            content = json.dumps(parsed, indent=2, ensure_ascii=False)
         except Exception:
             # Might be malformed JSON, continue anyway
             pass
@@ -473,6 +498,8 @@ class perform_site_check(difference_detection_processor):
         # If JSON/jq filters are used on embedded JSON, reformat output JSON before any text filtering/transformations
         if filter_config.has_include_json_filters:
             stripped_text = transformer.format_json_output_if_possible(stripped_text)
+            if watch.get('sort_keys_alphabetically'):
+                stripped_text = transformer.sort_json_keys_if_possible(stripped_text)
 
         if watch.get('trim_text_whitespace'):
             stripped_text = transformer.trim_whitespace(stripped_text)
