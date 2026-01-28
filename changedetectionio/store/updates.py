@@ -534,7 +534,7 @@ class DatastoreUpdatesMixin:
                     logger.debug(f"Renaming history index {old_history_txt} to {new_history_txt}...")
                     shutil.move(old_history_txt, new_history_txt)
 
-    def update_26(self):
+    def migrate_legacy_db_format(self):
         """
         Migration: Individual watch persistence (COPY-based, safe rollback).
 
@@ -578,25 +578,6 @@ class DatastoreUpdatesMixin:
 
         # Populate settings from legacy data
         logger.info("Populating settings from legacy data...")
-        if 'settings' in legacy_data:
-            self.data['settings'] = legacy_data['settings']
-        if 'app_guid' in legacy_data:
-            self.data['app_guid'] = legacy_data['app_guid']
-        if 'build_sha' in legacy_data:
-            self.data['build_sha'] = legacy_data['build_sha']
-        if 'version_tag' in legacy_data:
-            self.data['version_tag'] = legacy_data['version_tag']
-
-        # Rehydrate watches from legacy data
-        logger.info("Rehydrating watches from legacy data...")
-        self.data['watching'] = {}
-        for uuid, watch_data in legacy_data.get('watching', {}).items():
-            try:
-                self.data['watching'][uuid] = self.rehydrate_entity(uuid, watch_data)
-            except Exception as e:
-                logger.error(f"Failed to rehydrate watch {uuid}: {e}")
-                raise Exception(f"Migration failed: Could not rehydrate watch {uuid}. Error: {e}")
-
         watch_count = len(self.data['watching'])
         logger.success(f"Loaded {watch_count} watches from legacy format")
 
@@ -669,7 +650,8 @@ class DatastoreUpdatesMixin:
         logger.critical("Reloading datastore from new format...")
         self._load_state()
         logger.success("Datastore reloaded from new format successfully")
-
+        self._load_watches()
+        logger.success("Reloading watches")
         logger.critical("=" * 80)
         logger.critical("MIGRATION COMPLETED SUCCESSFULLY!")
         logger.critical("=" * 80)

@@ -218,21 +218,16 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
                 # Load the legacy datastore to get its schema_version
                 from .legacy_loader import load_legacy_format
                 legacy_path = os.path.join(self.datastore_path, "url-watches.json")
-                legacy_data = load_legacy_format(legacy_path)
+                with open(legacy_path) as f:
+                    self.__data = json.load(f)
 
-                if not legacy_data:
+                if not self.__data:
                     raise Exception("Failed to load legacy datastore from url-watches.json")
-
-                # Get the schema version from legacy datastore (defaults to 0 if not present)
-                legacy_schema_version = legacy_data.get('settings', {}).get('application', {}).get('schema_version', 0)
-                logger.info(f"Legacy datastore schema version: {legacy_schema_version}")
-
-                # Set our schema version to match the legacy one
-                self.__data['settings']['application']['schema_version'] = legacy_schema_version
 
                 # update_26 will load the legacy data again and migrate to new format
                 # Only run updates AFTER the legacy schema version (e.g., if legacy is at 25, only run 26+)
-                self.run_updates(current_schema_version=legacy_schema_version)
+                self.migrate_legacy_db_format()
+
 
             else:
                 # Fresh install - create new datastore
