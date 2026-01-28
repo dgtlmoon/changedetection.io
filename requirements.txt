@@ -78,7 +78,7 @@ elementpath==5.1.0
 # - Pixelmatch is used as fallback when OpenCV is unavailable
 # - To install manually: pip install opencv-python-headless>=4.8.0.76
 
-selenium~=4.31.0
+selenium~=4.40.0
 
 # Templating, so far just in the URLs but in the future can be for the notifications also
 jinja2~=3.1
