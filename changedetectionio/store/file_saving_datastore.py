@@ -16,11 +16,11 @@ import os
 import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from distutils.util import strtobool
 from threading import Thread
 from loguru import logger
 
 from .base import DataStore
+from .. import strtobool
 
 # Try to import orjson for faster JSON serialization
 try:
