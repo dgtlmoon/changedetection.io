@@ -105,6 +105,30 @@ class ChangeDetectionSpec:
         """
         pass
 
+    @hookspec
+    def register_processor(self):
+        """Register an external processor plugin.
+
+        External packages can implement this hook to register custom processors
+        that will be discovered alongside built-in processors.
+
+        Returns:
+            dict or None: Dictionary with processor information:
+                {
+                    'processor_name': str,      # Machine name (e.g., 'osint_recon')
+                    'processor_module': module, # Module containing processor.py
+                    'processor_class': class,   # The perform_site_check class
+                    'metadata': {               # Optional metadata
+                        'name': str,            # Display name
+                        'description': str,     # Description
+                        'processor_weight': int,# Sort weight (lower = higher priority)
+                        'list_badge_text': str, # Badge text for UI
+                    }
+                }
+                Return None if this plugin doesn't provide a processor
+        """
+        pass
+
 
 # Set up Plugin Manager
 plugin_manager = pluggy.PluginManager(PLUGIN_NAMESPACE)
