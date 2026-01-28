@@ -534,7 +534,7 @@ class DatastoreUpdatesMixin:
                     logger.debug(f"Renaming history index {old_history_txt} to {new_history_txt}...")
                     shutil.move(old_history_txt, new_history_txt)
 
-    def update_26(self):
+    def migrate_legacy_db_format(self):
         """
         Migration: Individual watch persistence (COPY-based, safe rollback).
 
@@ -578,25 +578,6 @@ class DatastoreUpdatesMixin:
 
         # Populate settings from legacy data
         logger.info("Populating settings from legacy data...")
-        if 'settings' in legacy_data:
-            self.data['settings'] = legacy_data['settings']
-        if 'app_guid' in legacy_data:
-            self.data['app_guid'] = legacy_data['app_guid']
-        if 'build_sha' in legacy_data:
-            self.data['build_sha'] = legacy_data['build_sha']
-        if 'version_tag' in legacy_data:
-            self.data['version_tag'] = legacy_data['version_tag']
-
-        # Rehydrate watches from legacy data
-        logger.info("Rehydrating watches from legacy data...")
-        self.data['watching'] = {}
-        for uuid, watch_data in legacy_data.get('watching', {}).items():
-            try:
-                self.data['watching'][uuid] = self.rehydrate_entity(uuid, watch_data)
-            except Exception as e:
-                logger.error(f"Failed to rehydrate watch {uuid}: {e}")
-                raise Exception(f"Migration failed: Could not rehydrate watch {uuid}. Error: {e}")
-
         watch_count = len(self.data['watching'])
         logger.success(f"Loaded {watch_count} watches from legacy format")
 
@@ -609,12 +590,10 @@ class DatastoreUpdatesMixin:
                 watch_dict = dict(watch)
                 watch_dir = os.path.join(self.datastore_path, uuid)
                 save_watch_atomic(watch_dir, uuid, watch_dict)
-                # Initialize hash
-                self._watch_hashes[uuid] = self._compute_hash(watch_dict)
                 saved_count += 1
 
                 if saved_count % 100 == 0:
-                    logger.info(f"  Progress: {saved_count}/{watch_count} watches saved...")
+                    logger.info(f"  Progress: {saved_count}/{watch_count} watches migrated...")
 
             except Exception as e:
                 logger.error(f"Failed to save watch {uuid}: {e}")
@@ -667,8 +646,24 @@ class DatastoreUpdatesMixin:
 
         # Success! Now reload from new format
         logger.critical("Reloading datastore from new format...")
-        self._load_state()
+        self._load_state() # Includes load_watches
         logger.success("Datastore reloaded from new format successfully")
+
+
+        # Verify all watches have hashes after migration
+        missing_hashes = [uuid for uuid in self.data['watching'].keys() if uuid not in self._watch_hashes]
+        if missing_hashes:
+            logger.error(f"WARNING: {len(missing_hashes)} watches missing hashes after migration: {missing_hashes[:5]}")
+        else:
+            logger.success(f"All {len(self.data['watching'])} watches have valid hashes after migration")
+
+        # Set schema version to latest available update
+        # This prevents re-running updates and re-marking all watches as dirty
+        updates_available = self.get_updates_available()
+        latest_schema = updates_available[-1] if updates_available else 26
+        self.data['settings']['application']['schema_version'] = latest_schema
+        self.mark_settings_dirty()
+        logger.info(f"Set schema_version to {latest_schema} (migration complete, all watches already saved)")
 
         logger.critical("=" * 80)
         logger.critical("MIGRATION COMPLETED SUCCESSFULLY!")
@@ -687,4 +682,5 @@ class DatastoreUpdatesMixin:
         logger.info(f"  - rm {os.path.join(self.datastore_path, 'url-watches.json')}")
         logger.info("")
 
-        # Schema version will be updated by run_updates()
+    def update_26(self):
+        self.migrate_legacy_db_format()

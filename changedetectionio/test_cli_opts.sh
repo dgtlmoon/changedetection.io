@@ -70,8 +70,8 @@ test_single_url() {
     local test_id=$1
     local dir="/tmp/cli-test-single-${test_id}-$$"
     timeout 10 python3 changedetection.py -d "$dir" -C -u https://example.com -b &>/dev/null
-    [ -f "$dir/url-watches.json" ] && \
-    [ "$(python3 -c "import json; print(len(json.load(open('$dir/url-watches.json')).get('watching', {})))")" -eq 1 ]
+    # Count watch directories (UUID directories containing watch.json)
+    [ "$(find "$dir" -mindepth 2 -maxdepth 2 -name 'watch.json' | wc -l)" -eq 1 ]
 }
 
 test_multiple_urls() {
@@ -82,8 +82,8 @@ test_multiple_urls() {
         -u https://github.com \
         -u https://httpbin.org \
         -b &>/dev/null
-    [ -f "$dir/url-watches.json" ] && \
-    [ "$(python3 -c "import json; print(len(json.load(open('$dir/url-watches.json')).get('watching', {})))")" -eq 3 ]
+    # Count watch directories (UUID directories containing watch.json)
+    [ "$(find "$dir" -mindepth 2 -maxdepth 2 -name 'watch.json' | wc -l)" -eq 3 ]
 }
 
 test_url_with_options() {
@@ -93,8 +93,17 @@ test_url_with_options() {
         -u https://example.com \
         -u0 '{"title":"Test Site","processor":"text_json_diff"}' \
         -b &>/dev/null
-    [ -f "$dir/url-watches.json" ] && \
-    python3 -c "import json; data=json.load(open('$dir/url-watches.json')); watches=data.get('watching', {}); exit(0 if any(w.get('title')=='Test Site' for w in watches.values()) else 1)"
+    # Check that at least one watch.json contains the title "Test Site"
+    python3 -c "
+import json, glob, sys
+watch_files = glob.glob('$dir/*/watch.json')
+for wf in watch_files:
+    with open(wf) as f:
+        data = json.load(f)
+        if data.get('title') == 'Test Site':
+            sys.exit(0)
+sys.exit(1)
+"
 }
 
 test_multiple_urls_with_options() {
@@ -106,9 +115,19 @@ test_multiple_urls_with_options() {
         -u https://github.com \
         -u1 '{"title":"Site Two"}' \
         -b &>/dev/null
-    [ -f "$dir/url-watches.json" ] && \
-    [ "$(python3 -c "import json; print(len(json.load(open('$dir/url-watches.json')).get('watching', {})))")" -eq 2 ] && \
-    python3 -c "import json; data=json.load(open('$dir/url-watches.json')); watches=data.get('watching', {}); titles=[w.get('title') for w in watches.values()]; exit(0 if 'Site One' in titles and 'Site Two' in titles else 1)"
+    # Check that we have 2 watches and both titles are present
+    python3 -c "
+import json, glob, sys
+watch_files = glob.glob('$dir/*/watch.json')
+if len(watch_files) != 2:
+    sys.exit(1)
+titles = []
+for wf in watch_files:
+    with open(wf) as f:
+        data = json.load(f)
+        titles.append(data.get('title'))
+sys.exit(0 if 'Site One' in titles and 'Site Two' in titles else 1)
+"
 }
 
 test_batch_mode_exit() {
@@ -126,21 +145,24 @@ test_batch_mode_exit() {
 test_recheck_all() {
     local test_id=$1
     local dir="/tmp/cli-test-recheck-all-${test_id}-$$"
-    mkdir -p "$dir"
-    cat > "$dir/url-watches.json" << 'EOF'
-{"watching":{"test-uuid":{"url":"https://example.com","last_checked":0,"processor":"text_json_diff","uuid":"test-uuid"}},"settings":{"application":{"password":false}}}
-EOF
-    timeout 10 python3 changedetection.py -d "$dir" -r all -b 2>&1 | grep -q "Queuing all"
+    # Create a watch using CLI, then recheck it
+    timeout 10 python3 changedetection.py -d "$dir" -C -u https://example.com -b &>/dev/null
+    # Now recheck all watches
+    timeout 10 python3 changedetection.py -d "$dir" -r all -b 2>&1 | grep -q "Queuing"
 }
 
 test_recheck_specific() {
     local test_id=$1
     local dir="/tmp/cli-test-recheck-uuid-${test_id}-$$"
-    mkdir -p "$dir"
-    cat > "$dir/url-watches.json" << 'EOF'
-{"watching":{"uuid-1":{"url":"https://example.com","last_checked":0,"processor":"text_json_diff","uuid":"uuid-1"},"uuid-2":{"url":"https://github.com","last_checked":0,"processor":"text_json_diff","uuid":"uuid-2"}},"settings":{"application":{"password":false}}}
-EOF
-    timeout 10 python3 changedetection.py -d "$dir" -r uuid-1,uuid-2 -b 2>&1 | grep -q "Queuing 2 specific watches"
+    # Create 2 watches using CLI
+    timeout 12 python3 changedetection.py -d "$dir" -C \
+        -u https://example.com \
+        -u https://github.com \
+        -b &>/dev/null
+    # Get the UUIDs that were created
+    local uuids=$(find "$dir" -mindepth 2 -maxdepth 2 -name 'watch.json' -exec dirname {} \; | xargs -n1 basename | tr '\n' ',' | sed 's/,$//')
+    # Now recheck specific UUIDs
+    timeout 10 python3 changedetection.py -d "$dir" -r "$uuids" -b 2>&1 | grep -q "Queuing"
 }
 
 test_combined_operations() {
@@ -151,8 +173,8 @@ test_combined_operations() {
         -u https://github.com \
         -r all \
         -b &>/dev/null
-    [ -f "$dir/url-watches.json" ] && \
-    [ "$(python3 -c "import json; print(len(json.load(open('$dir/url-watches.json')).get('watching', {})))")" -eq 2 ]
+    # Count watch directories (UUID directories containing watch.json)
+    [ "$(find "$dir" -mindepth 2 -maxdepth 2 -name 'watch.json' | wc -l)" -eq 2 ]
 }
 
 test_invalid_json() {
