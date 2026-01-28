@@ -1401,6 +1401,10 @@ msgid ""
 msgstr "適用於內容僅會移動的網站，且您想知道何時新增了「新」內容，此功能會將新行與此監測任務的所有歷史記錄進行比較。"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Helps reduce changes detected caused by inconsistent JSON formatting"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with"
 msgstr "有助於減少因網站重新排列行而檢測到的變更，結合"
 

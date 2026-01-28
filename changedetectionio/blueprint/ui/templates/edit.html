@@ -336,6 +336,10 @@ Math: {{ 1 + 1 }}") }}
                     <span class="pure-form-message-inline">{{ _('Remove duplicate lines of text') }}</span>
                 </fieldset>
                 <fieldset class="pure-control-group">
+                    {{ render_checkbox_field(form.sort_keys_alphabetically) }}
+                    <span class="pure-form-message-inline">{{ _('Helps reduce changes detected caused by inconsistent JSON formatting') }}</span>
+                </fieldset>
+                <fieldset class="pure-control-group">
                     {{ render_checkbox_field(form.sort_text_alphabetically) }}
                     <span class="pure-form-message-inline">{{ _('Helps reduce changes detected caused by sites shuffling lines around, combine with') }} <i>{{ _('check unique lines') }}</i> {{ _('below.') }}</span>
                 </fieldset>
