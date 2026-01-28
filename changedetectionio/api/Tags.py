@@ -96,6 +96,18 @@ class Tag(Resource):
         if not tag:
             abort(404, message='No tag exists with the UUID of {}'.format(uuid))
 
+        # Validate notification_urls if provided
+        if 'notification_urls' in request.json:
+            from wtforms import ValidationError
+            from changedetectionio.api.Notifications import validate_notification_urls
+            try:
+                notification_urls = request.json.get('notification_urls', [])
+                if not isinstance(notification_urls, list):
+                    return "notification_urls must be a list", 400
+                validate_notification_urls(notification_urls)
+            except ValidationError as e:
+                return str(e), 400
+
         tag.update(request.json)
         self.datastore.needs_write_urgent = True
 

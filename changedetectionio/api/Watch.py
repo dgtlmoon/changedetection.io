@@ -140,6 +140,18 @@ class Watch(Resource):
         if validation_error:
             return validation_error, 400
 
+        # Validate notification_urls if provided
+        if 'notification_urls' in request.json:
+            from wtforms import ValidationError
+            from changedetectionio.api.Notifications import validate_notification_urls
+            try:
+                notification_urls = request.json.get('notification_urls', [])
+                if not isinstance(notification_urls, list):
+                    return "notification_urls must be a list", 400
+                validate_notification_urls(notification_urls)
+            except ValidationError as e:
+                return str(e), 400
+
         # XSS etc protection - validate URL if it's being updated
         if 'url' in request.json:
             new_url = request.json.get('url')
@@ -443,6 +455,18 @@ class CreateWatch(Resource):
         validation_error = validate_time_between_check_required(json_data)
         if validation_error:
             return validation_error, 400
+
+        # Validate notification_urls if provided
+        if 'notification_urls' in json_data:
+            from wtforms import ValidationError
+            from changedetectionio.api.Notifications import validate_notification_urls
+            try:
+                notification_urls = json_data.get('notification_urls', [])
+                if not isinstance(notification_urls, list):
+                    return "notification_urls must be a list", 400
+                validate_notification_urls(notification_urls)
+            except ValidationError as e:
+                return str(e), 400
 
         extras = copy.deepcopy(json_data)
 
