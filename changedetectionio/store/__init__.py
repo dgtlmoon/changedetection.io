@@ -226,7 +226,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
                 # update_26 will load the legacy data again and migrate to new format
                 # Only run updates AFTER the legacy schema version (e.g., if legacy is at 25, only run 26+)
-                self.migrate_legacy_db_format()
+                self.run_updates()
 
 
             else:
@@ -302,7 +302,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         else:
             watch_class = get_custom_watch_obj_for_processor(entity.get('processor'))
 
-        if entity.get('uuid') != 'text_json_diff':
+        if entity.get('processor') != 'text_json_diff':
             logger.trace(f"Loading Watch object '{watch_class.__module__}.{watch_class.__name__}' for UUID {uuid}")
 
         entity = watch_class(datastore_path=self.datastore_path, default=entity)
@@ -367,6 +367,13 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         # Store loaded data
         self.__data['watching'] = watching
         self._watch_hashes = watch_hashes
+
+        # Verify all watches have hashes
+        missing_hashes = [uuid for uuid in watching.keys() if uuid not in watch_hashes]
+        if missing_hashes:
+            logger.error(f"WARNING: {len(missing_hashes)} watches missing hashes after load: {missing_hashes[:5]}")
+        else:
+            logger.debug(f"All {len(watching)} watches have valid hashes")
 
     def _delete_watch(self, uuid):
         """

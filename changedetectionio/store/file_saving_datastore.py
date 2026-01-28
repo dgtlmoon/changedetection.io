@@ -322,8 +322,9 @@ def load_all_watches(datastore_path, rehydrate_entity_func, compute_hash_func):
         watch, raw_data = load_watch_from_file(watch_json, uuid_dir, rehydrate_entity_func)
         if watch and raw_data:
             watching[uuid_dir] = watch
-            # Compute hash from raw data BEFORE rehydration to match saved hash
-            watch_hashes[uuid_dir] = compute_hash_func(raw_data)
+            # Compute hash from rehydrated Watch object (as dict) to match how we compute on save
+            # This ensures hash matches what audit will compute from dict(watch)
+            watch_hashes[uuid_dir] = compute_hash_func(dict(watch))
             loaded += 1
 
             if loaded % 100 == 0:
@@ -743,7 +744,7 @@ class FileSavingDataStore(DataStore):
                             self._dirty_watches.add(uuid)
                             changes_found += 1
                             logger.warning(
-                                f"Audit detected unmarked change in watch {uuid[:8]}... "
+                                f"Audit detected unmarked change in watch {uuid[:8]}... current {current_hash:8} stored hash {stored_hash[:8]}"
                                 f"(hash changed but not marked dirty)"
                             )
                             self.needs_write = True
