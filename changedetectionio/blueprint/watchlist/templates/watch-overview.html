@@ -223,7 +223,7 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
                                 <span class="processor-badge processor-badge-{{ watch['processor'] }}" title="{{ processor_descriptions.get(watch['processor'], watch['processor']) }}">{{ processor_badge_texts[watch['processor']] }}</span>
                             {%- endif -%}
                             {%- for watch_tag_uuid, watch_tag in datastore.get_all_tags_for_watch(watch['uuid']).items() -%}
-                              <span class="watch-tag-list tag-{{ watch_tag.title|sanitize_tag_class }}">{{ watch_tag.title }}</span>
+                              <a href="{{url_for('watchlist.index', tag=watch_tag_uuid) }}" class="watch-tag-list tag-{{ watch_tag.title|sanitize_tag_class }}">{{ watch_tag.title }}</a>
                             {%- endfor -%}
                         </div>
                     <div class="status-icons">
