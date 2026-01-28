@@ -133,43 +133,48 @@ def sigshutdown_handler(_signo, _stack_frame):
     
     sys.exit()
 
+def print_help():
+    """Print help text for command line options"""
+    print('Usage: changedetection.py [options]')
+    print('')
+    print('Standard options:')
+    print('  -s                SSL enable')
+    print('  -h HOST           Listen host (default: 0.0.0.0)')
+    print('  -p PORT           Listen port (default: 5000)')
+    print('  -d PATH           Datastore path')
+    print('  -l LEVEL          Log level (TRACE, DEBUG, INFO, SUCCESS, WARNING, ERROR, CRITICAL)')
+    print('  -c                Cleanup unused snapshots')
+    print('  -C                Create datastore directory if it doesn\'t exist')
+    print('  -P true/false     Set all watches paused (true) or active (false)')
+    print('')
+    print('Add URLs on startup:')
+    print('  -u URL            Add URL to watch (can be used multiple times)')
+    print('  -u0 \'JSON\'        Set options for first -u URL (e.g. \'{"processor":"text_json_diff"}\')')
+    print('  -u1 \'JSON\'        Set options for second -u URL (0-indexed)')
+    print('  -u2 \'JSON\'        Set options for third -u URL, etc.')
+    print('                    Available options: processor, fetch_backend, headers, method, etc.')
+    print('                    See model/Watch.py for all available options')
+    print('')
+    print('Recheck on startup:')
+    print('  -r all            Queue all watches for recheck on startup')
+    print('  -r UUID,...       Queue specific watches (comma-separated UUIDs)')
+    print('  -r all N          Queue all watches, wait for completion, repeat N times')
+    print('  -r UUID,... N     Queue specific watches, wait for completion, repeat N times')
+    print('')
+    print('Batch mode:')
+    print('  -b                Run in batch mode (process queue then exit)')
+    print('                    Useful for CI/CD, cron jobs, or one-time checks')
+    print('                    NOTE: Batch mode checks if Flask is running and aborts if port is in use')
+    print('                    Use -p PORT to specify a different port if needed')
+    print('')
+
 def main():
     global datastore
     global app
 
     # Early help/version check before any initialization
     if '--help' in sys.argv or '-help' in sys.argv:
-        print('Usage: changedetection.py [options]')
-        print('')
-        print('Standard options:')
-        print('  -s                SSL enable')
-        print('  -h HOST           Listen host (default: 0.0.0.0)')
-        print('  -p PORT           Listen port (default: 5000)')
-        print('  -d PATH           Datastore path')
-        print('  -l LEVEL          Log level (TRACE, DEBUG, INFO, SUCCESS, WARNING, ERROR, CRITICAL)')
-        print('  -c                Cleanup unused snapshots')
-        print('  -C                Create datastore directory if it doesn\'t exist')
-        print('')
-        print('Add URLs on startup:')
-        print('  -u URL            Add URL to watch (can be used multiple times)')
-        print('  -u0 \'JSON\'        Set options for first -u URL (e.g. \'{"processor":"text_json_diff"}\')')
-        print('  -u1 \'JSON\'        Set options for second -u URL (0-indexed)')
-        print('  -u2 \'JSON\'        Set options for third -u URL, etc.')
-        print('                    Available options: processor, fetch_backend, headers, method, etc.')
-        print('                    See model/Watch.py for all available options')
-        print('')
-        print('Recheck on startup:')
-        print('  -r all            Queue all watches for recheck on startup')
-        print('  -r UUID,...       Queue specific watches (comma-separated UUIDs)')
-        print('  -r all N          Queue all watches, wait for completion, repeat N times')
-        print('  -r UUID,... N     Queue specific watches, wait for completion, repeat N times')
-        print('')
-        print('Batch mode:')
-        print('  -b                Run in batch mode (process queue then exit)')
-        print('                    Useful for CI/CD, cron jobs, or one-time checks')
-        print('                    NOTE: Batch mode checks if Flask is running and aborts if port is in use')
-        print('                    Use -p PORT to specify a different port if needed')
-        print('')
+        print_help()
         sys.exit(0)
 
     if '--version' in sys.argv or '-v' in sys.argv:
@@ -185,6 +190,7 @@ def main():
     # Set a default logger level
     logger_level = 'DEBUG'
     include_default_watches = True
+    all_paused = None  # None means don't change, True/False to set
 
     host = os.environ.get("LISTEN_HOST", "0.0.0.0").strip()
     port = int(os.environ.get('PORT', 5000))
@@ -263,39 +269,9 @@ def main():
         i += 1
 
     try:
-        opts, args = getopt.getopt(cleaned_argv[1:], "6Ccsd:h:p:l:", "port")
+        opts, args = getopt.getopt(cleaned_argv[1:], "6Ccsd:h:p:l:P:", "port")
     except getopt.GetoptError as e:
-        print('Usage: changedetection.py [options]')
-        print('')
-        print('Standard options:')
-        print('  -s                SSL enable')
-        print('  -h HOST           Listen host (default: 0.0.0.0)')
-        print('  -p PORT           Listen port (default: 5000)')
-        print('  -d PATH           Datastore path')
-        print('  -l LEVEL          Log level (TRACE, DEBUG, INFO, SUCCESS, WARNING, ERROR, CRITICAL)')
-        print('  -c                Cleanup unused snapshots')
-        print('  -C                Create datastore directory if it doesn\'t exist')
-        print('')
-        print('Add URLs on startup:')
-        print('  -u URL            Add URL to watch (can be used multiple times)')
-        print('  -u0 \'JSON\'        Set options for first -u URL (e.g. \'{"processor":"text_json_diff"}\')')
-        print('  -u1 \'JSON\'        Set options for second -u URL (0-indexed)')
-        print('  -u2 \'JSON\'        Set options for third -u URL, etc.')
-        print('                    Available options: processor, fetch_backend, headers, method, etc.')
-        print('                    See model/Watch.py for all available options')
-        print('')
-        print('Recheck on startup:')
-        print('  -r all            Queue all watches for recheck on startup')
-        print('  -r UUID,...       Queue specific watches (comma-separated UUIDs)')
-        print('  -r all N          Queue all watches, wait for completion, repeat N times')
-        print('  -r UUID,... N     Queue specific watches, wait for completion, repeat N times')
-        print('')
-        print('Batch mode:')
-        print('  -b                Run in batch mode (process queue then exit)')
-        print('                    Useful for CI/CD, cron jobs, or one-time checks')
-        print('                    NOTE: Batch mode checks if Flask is running and aborts if port is in use')
-        print('                    Use -p PORT to specify a different port if needed')
-        print('')
+        print_help()
         print(f'Error: {e}')
         sys.exit(2)
 
@@ -331,6 +307,14 @@ def main():
 
         if opt == '-l':
             logger_level = int(arg) if arg.isdigit() else arg.upper()
+
+        if opt == '-P':
+            try:
+                all_paused = bool(strtobool(arg))
+            except ValueError:
+                print(f'Error: Invalid value for -P option: {arg}')
+                print('Expected: true, false, yes, no, 1, or 0')
+                sys.exit(2)
 
     # If URLs are provided, don't include default watches
     if urls_to_add:
@@ -397,6 +381,11 @@ def main():
         logger.critical(f"ERROR: JSON DB or Proxy List JSON at '{app_config['datastore_path']}' appears to be corrupt, aborting.")
         logger.critical(str(e))
         return
+
+    # Apply all_paused setting if specified via CLI
+    if all_paused is not None:
+        datastore.data['settings']['application']['all_paused'] = all_paused
+        logger.info(f"Setting all watches paused: {all_paused}")
 
     # Inject datastore into plugins that need access to settings
     from changedetectionio.pluggy_interface import inject_datastore_into_plugins
