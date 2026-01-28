@@ -144,7 +144,7 @@ def wait_for_all_checks(client=None):
     """
     from changedetectionio.flask_app import update_q as global_update_q
     from changedetectionio import worker_handler
-
+    time.sleep(0.05)
     # Use the shared wait logic from worker_handler
     return worker_handler.wait_for_all_checks(global_update_q, timeout=150)
 
