@@ -542,7 +542,6 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         self.needs_write_urgent = True
 
     def add_watch(self, url, tag='', extras=None, tag_uuids=None, save_immediately=True):
-        import requests
 
         if extras is None:
             extras = {}
@@ -553,6 +552,8 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
         # Was it a share link? try to fetch the data
         if (url.startswith("https://changedetection.io/share/")):
+            import requests
+
             try:
                 r = requests.request(method="GET",
                                      url=url,

@@ -89,11 +89,16 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
             continue
 
         uuid = queued_item_data.item.get('uuid')
-        # RACE CONDITION FIX: Check if this UUID is already being processed by another worker
+
+        # RACE CONDITION FIX: Atomically claim this UUID for processing
         from changedetectionio import worker_handler
         from changedetectionio.queuedWatchMetaData import PrioritizedItem
-        if worker_handler.is_watch_running_by_another_worker(uuid, worker_id):
-            logger.trace(f"Worker {worker_id} detected UUID {uuid} already being processed by another worker - deferring")
+
+        # Try to claim the UUID atomically - prevents duplicate processing
+        if not worker_handler.claim_uuid_for_processing(uuid, worker_id):
+            # Already being processed by another worker
+            logger.trace(f"Worker {worker_id} detected UUID {uuid} already being processed - deferring")
+
             # Sleep to avoid tight loop and give the other worker time to finish
             await asyncio.sleep(DEFER_SLEEP_TIME_ALREADY_QUEUED)
 
@@ -105,9 +110,6 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
             continue
 
         fetch_start_time = round(time.time())
-
-        # Mark this UUID as being processed by this worker
-        worker_handler.set_uuid_processing(uuid, worker_id=worker_id, processing=True)
         
         try:
             if uuid in list(datastore.data['watching'].keys()) and datastore.data['watching'][uuid].get('url'):
@@ -487,8 +489,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                 except Exception as e:
                     logger.error(f"Exception while cleaning/quit after calling browser: {e}")
                 try:
-                    # Mark UUID as no longer being processed by this worker
-                    worker_handler.set_uuid_processing(uuid, worker_id=worker_id, processing=False)
+                    # Release UUID from processing (thread-safe)
+                    worker_handler.release_uuid_from_processing(uuid, worker_id=worker_id)
                     
                     # Send completion signal
                     if watch:

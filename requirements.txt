@@ -42,7 +42,7 @@ orjson~=3.11
 # jq not available on Windows so must be installed manually
 
 # Notification library
-apprise==1.9.6
+apprise==1.9.7
 
 diff_match_patch
 
