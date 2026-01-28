@@ -100,14 +100,14 @@ def test_watch_notification_urls_validation(client, live_server, measure_memory_
     assert res.status_code == 400, "Should reject https:// notification URLs on watch update"
     assert b"is not a valid AppRise URL" in res.data, "Should provide AppRise validation error message"
 
-    # Test 5: Update watch with non-list notification_urls
+    # Test 5: Update watch with non-list notification_urls (caught by OpenAPI schema validation)
     res = client.put(
         url_for("watch", uuid=watch_uuid),
         data=json.dumps({"notification_urls": "not-a-list"}),
         headers={'content-type': 'application/json', 'x-api-key': api_key}
     )
     assert res.status_code == 400, "Should reject non-list notification_urls"
-    assert b"notification_urls must be a list" in res.data
+    assert b"OpenAPI validation failed" in res.data or b"Request body validation error" in res.data
 
     # Test 6: Verify original URLs are preserved after failed update
     res = client.get(
@@ -152,14 +152,14 @@ def test_tag_notification_urls_validation(client, live_server, measure_memory_us
     assert res.status_code == 400, "Should reject https:// notification URLs on tag update"
     assert b"is not a valid AppRise URL" in res.data, "Should provide AppRise validation error message"
 
-    # Test 3: Update tag with non-list notification_urls
+    # Test 3: Update tag with non-list notification_urls (caught by OpenAPI schema validation)
     res = client.put(
         url_for("tag", uuid=tag_uuid),
         data=json.dumps({"notification_urls": "not-a-list"}),
         headers={'content-type': 'application/json', 'x-api-key': api_key}
     )
     assert res.status_code == 400, "Should reject non-list notification_urls"
-    assert b"notification_urls must be a list" in res.data
+    assert b"OpenAPI validation failed" in res.data or b"Request body validation error" in res.data
 
     # Test 4: Verify original URLs are preserved after failed update
     tag = datastore.data['settings']['application']['tags'][tag_uuid]
