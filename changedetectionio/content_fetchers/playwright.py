@@ -290,6 +290,15 @@ class fetcher(Fetcher):
 
             self.page = await context.new_page()
 
+            # Block image requests to improve performance and reduce bandwidth
+            async def handle_route(route):
+                if route.request.resource_type in ('image', 'media', 'font'):
+                    await route.abort()
+                else:
+                    await route.continue_()
+            
+            await self.page.route("**/*", handle_route)
+
             # Listen for all console events and handle errors
             self.page.on("console", lambda msg: logger.debug(f"Playwright console: Watch URL: {url} {msg.type}: {msg.text} {msg.args}"))
 
