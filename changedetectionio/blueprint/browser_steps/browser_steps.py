@@ -358,6 +358,15 @@ class browsersteps_live_ui(steppable_browser_interface):
 
         self.page = await self.context.new_page()
 
+        # Block image requests to improve performance and reduce bandwidth
+        async def handle_route(route):
+            if route.request.resource_type in ('image', 'media', 'font'):
+                await route.abort()
+            else:
+                await route.continue_()
+        
+        await self.page.route("**/*", handle_route)
+
         # self.page.set_default_navigation_timeout(keep_open)
         self.page.set_default_timeout(keep_open)
         # Set event handlers
