@@ -341,6 +341,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 'visual_selector_data_ready': datastore.visualselector_data_is_ready(watch_uuid=uuid),
                 'timezone_default_config': datastore.data['settings']['application'].get('scheduler_timezone_default'),
                 'using_global_webdriver_wait': not default['webdriver_delay'],
+                'using_global_webdriver_block_assets': not default['webdriver_block_assets'],
                 'uuid': uuid,
                 'watch': watch,
                 'capabilities': capabilities

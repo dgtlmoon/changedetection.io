@@ -121,6 +121,10 @@
                         {{ _('This will wait') }} <i>n</i> {{ _('seconds before extracting the text.') }}
                     </div>
                     <div class="pure-control-group">
+                        {{ render_field(form.application.form.webdriver_block_assets) }}
+                        <span class="pure-form-message-inline">{{ _('Block retrieving images, fonts, and media files to improve performance and reduce bandwidth usage. Set to 1 to enable, 0 to disable.') }}</span>
+                    </div>
+                    <div class="pure-control-group">
                         {{ render_field(form.application.form.webdriver_delay) }}
                     </div>
                 </fieldset>
