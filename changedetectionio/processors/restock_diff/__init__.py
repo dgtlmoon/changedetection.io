@@ -72,6 +72,7 @@ class Watch(BaseWatch):
     def extra_notification_token_values(self):
         values = super().extra_notification_token_values()
         values['restock'] = self.get('restock', {})
+        values['restock_settings'] = self.get('restock_settings', {})
         return values
 
     def extra_notification_token_placeholder_info(self):
@@ -79,6 +80,9 @@ class Watch(BaseWatch):
 
         values.append(('restock.price', "Price detected"))
         values.append(('restock.original_price', "Original price at first check"))
+        values.append(('restock_settings.price_change_min', "Minimum price threshold"))
+        values.append(('restock_settings.price_change_max', "Maximum price threshold"))
+        values.append(('restock_settings.price_change_threshold_percent', "Price change percentage threshold"))
 
         return values
 

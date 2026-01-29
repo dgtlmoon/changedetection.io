@@ -189,6 +189,7 @@ class perform_site_check(difference_detection_processor):
             if tag.get('overrides_watch'):
                 restock_settings = tag.get('restock_settings', {})
                 logger.info(f"Watch {watch.get('uuid')} - Tag '{tag.get('title')}' selected for restock settings override")
+                watch['restock_settings'] = restock_settings
                 break
 
 
