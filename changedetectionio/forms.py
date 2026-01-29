@@ -751,6 +751,7 @@ class commonSettingsForm(Form):
     notification_urls = StringListField(_l('Notification URL List'), validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
     processor = RadioField( label=_l("Processor - What do you want to achieve?"), choices=lambda: processors.available_processors(), default="text_json_diff")
     scheduler_timezone_default = StringField(_l("Default timezone for watch check scheduler"), render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
+    webdriver_block_assets = IntegerField(_l('Block retrieving images/fonts/media'), validators=[validators.Optional(), validators.NumberRange(min=0, max=1, message=_l("Should be either 0 (disabled) or 1 (enabled)"))])
     webdriver_delay = IntegerField(_l('Wait seconds before extracting text'), validators=[validators.Optional(), validators.NumberRange(min=1, message=_l("Should contain one or more seconds"))])
 
 # Not true anymore but keep the validate_ hook for future use, we convert color tags
