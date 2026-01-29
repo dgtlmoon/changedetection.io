@@ -115,14 +115,14 @@
                     </span>
                 </div>
                 <fieldset class="pure-group" id="webdriver-override-options" data-visible-for="application-fetch_backend=html_webdriver">
+                    <div class="pure-control-group">
+                        {{ render_field(form.application.form.webdriver_block_assets) }}
+                        <span class="pure-form-message-inline">{{ _('Block retrieving images, fonts, and media files to improve performance and reduce bandwidth usage.') }}</span>
+                    </div>
                     <div class="pure-form-message-inline">
                         <strong>{{ _('If you\'re having trouble waiting for the page to be fully rendered (text missing etc), try increasing the \'wait\' time here.') }}</strong>
                         <br>
                         {{ _('This will wait') }} <i>n</i> {{ _('seconds before extracting the text.') }}
-                    </div>
-                    <div class="pure-control-group">
-                        {{ render_field(form.application.form.webdriver_block_assets) }}
-                        <span class="pure-form-message-inline">{{ _('Block retrieving images, fonts, and media files to improve performance and reduce bandwidth usage.') }}</span>
                     </div>
                     <div class="pure-control-group">
                         {{ render_field(form.application.form.webdriver_delay) }}
