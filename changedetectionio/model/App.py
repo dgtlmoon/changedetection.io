@@ -68,7 +68,7 @@ class model(dict):
                     'shared_diff_access': False,
                     'strip_ignored_lines': False,
                     'tags': {}, #@todo use Tag.model initialisers
-                    'webdriver_block_assets': None, # Block images/fonts/media during webdriver fetch
+                    'webdriver_block_assets': False, # Block images/fonts/media during webdriver fetch
                     'webdriver_delay': None , # Extra delay in seconds before extracting text
                     'ui': {
                         'use_page_title_in_list': True,

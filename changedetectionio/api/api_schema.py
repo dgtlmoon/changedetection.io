@@ -119,7 +119,7 @@ def build_watch_json_schema(d):
         del schema['properties'][v]
 
     schema['properties']['webdriver_delay']['anyOf'].append({'type': 'integer'})
-    schema['properties']['webdriver_block_assets']['anyOf'].append({'type': 'integer'})
+    schema['properties']['webdriver_block_assets']['anyOf'].append({'type': 'boolean'})
 
     schema['properties']['time_between_check'] = build_time_between_check_json_schema()
 

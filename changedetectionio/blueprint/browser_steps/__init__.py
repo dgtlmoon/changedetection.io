@@ -217,13 +217,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         # Get webdriver_block_assets setting from watch or global settings
         watch_data = datastore.data['watching'][watch_uuid]
-        system_webdriver_block_assets = datastore.data['settings']['application'].get('webdriver_block_assets', None)
+        system_webdriver_block_assets = datastore.data['settings']['application'].get('webdriver_block_assets', False)
         webdriver_block_assets = False
         
         if watch_data.get('webdriver_block_assets'):
-            webdriver_block_assets = bool(watch_data.get('webdriver_block_assets'))
-        elif system_webdriver_block_assets is not None:
-            webdriver_block_assets = bool(system_webdriver_block_assets)
+            webdriver_block_assets = watch_data.get('webdriver_block_assets')
+        else:
+            webdriver_block_assets = system_webdriver_block_assets
 
         # Tell Playwright to connect to Chrome and setup a new session via our stepper interface
         browserstepper = browser_steps.browsersteps_live_ui(
