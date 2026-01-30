@@ -324,14 +324,14 @@ class browsersteps_live_ui(steppable_browser_interface):
 
     browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
 
-    def __init__(self, playwright_browser, proxy=None, headers=None, start_url=None, webdriver_block_assets=False):
+    def __init__(self, playwright_browser, proxy=None, headers=None, start_url=None, block_assets=False):
         self.headers = headers or {}
         self.age_start = time.time()
         self.playwright_browser = playwright_browser
         self.start_url = start_url
         self._is_cleaned_up = False
         self.proxy = proxy
-        self.webdriver_block_assets = webdriver_block_assets
+        self.block_assets = block_assets
         # Note: connect() is now async and must be called separately
 
     def __del__(self):
@@ -360,7 +360,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         self.page = await self.context.new_page()
 
         # Block image requests to improve performance and reduce bandwidth (if enabled)
-        if getattr(self, 'webdriver_block_assets', False):
+        if getattr(self, 'block_assets', False):
             async def handle_route(route):
                 if route.request.resource_type in ('image', 'media', 'font'):
                     await route.abort()

@@ -125,6 +125,15 @@
                             {{ _('Tip:') }} <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#brightdata-proxy-support">{{ _('Connect using Bright Data and Oxylabs Proxies, find out more here.') }}</a>
                         </span>
                     </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.block_assets) }}
+                        <div class="pure-form-message-inline">
+                            {{ _('Block retrieving images, fonts, and media files to improve performance and reduce bandwidth usage.') }}
+                            {% if using_global_block_assets %}
+                            <br><strong>{{ _('Using the current global default settings') }}</strong>
+                            {% endif %}
+                        </div>
+                    </div>
                 {% if form.proxy %}
                     <div class="pure-control-group inline-radio">
                           <div>{{ form.proxy.label }} <a href="" id="check-all-proxies" class="pure-button button-secondary button-xsmall" >{{ _('Check/Scan all') }}</a></div>
@@ -137,15 +146,6 @@
 
                 <!-- webdriver always -->
                 <fieldset data-visible-for="fetch_backend=html_webdriver"  style="display: none;">
-                    <div class="pure-control-group">
-                        {{ render_field(form.webdriver_block_assets) }}
-                        <div class="pure-form-message-inline">
-                            {{ _('Block retrieving images, fonts, and media files to improve performance and reduce bandwidth usage.') }}
-                            {% if using_global_webdriver_block_assets %}
-                            <br><strong>{{ _('Using the current global default settings') }}</strong>
-                            {% endif %}
-                        </div>
-                    </div>
                     <div class="pure-control-group">
                         {{ render_field(form.webdriver_delay) }}
                         <div class="pure-form-message-inline">

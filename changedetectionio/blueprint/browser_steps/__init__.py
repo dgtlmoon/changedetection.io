@@ -215,15 +215,15 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
                 logger.debug(f"Browser Steps: UUID {watch_uuid} selected proxy {proxy_url}")
 
-        # Get webdriver_block_assets setting from watch or global settings
+        # Get block_assets setting from watch or global settings
         watch_data = datastore.data['watching'][watch_uuid]
-        system_webdriver_block_assets = datastore.data['settings']['application'].get('webdriver_block_assets', False)
-        webdriver_block_assets = False
+        system_block_assets = datastore.data['settings']['application'].get('block_assets', False)
+        block_assets = False
         
-        if watch_data.get('webdriver_block_assets'):
-            webdriver_block_assets = watch_data.get('webdriver_block_assets')
+        if watch_data.get('block_assets'):
+            block_assets = watch_data.get('block_assets')
         else:
-            webdriver_block_assets = system_webdriver_block_assets
+            block_assets = system_block_assets
 
         # Tell Playwright to connect to Chrome and setup a new session via our stepper interface
         browserstepper = browser_steps.browsersteps_live_ui(
@@ -231,7 +231,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             proxy=proxy,
             start_url=datastore.data['watching'][watch_uuid].link,
             headers=datastore.data['watching'][watch_uuid].get('headers'),
-            webdriver_block_assets=webdriver_block_assets
+            block_assets=block_assets
         )
         
         # Initialize the async connection
