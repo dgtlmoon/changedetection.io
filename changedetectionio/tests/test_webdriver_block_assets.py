@@ -2,15 +2,16 @@
 
 import os
 import time
+import pytest
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
 
 
+@pytest.mark.skipif(os.getenv('PLAYWRIGHT_DRIVER_URL') is None, reason="Needs PLAYWRIGHT_DRIVER_URL set for this test")
 def test_webdriver_block_assets_global_setting(client, live_server, measure_memory_usage, datastore_path):
     """Test that webdriver_block_assets works as a global setting"""
     
     # live_server_setup(live_server) # Setup on conftest per function
-    assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
 
     test_url = url_for('test_block_assets_endpoint', _external=True)
     test_url = test_url.replace('localhost.localdomain', 'cdio')
@@ -50,11 +51,11 @@ def test_webdriver_block_assets_global_setting(client, live_server, measure_memo
     assert b'Test page with images' in res.data
 
 
+@pytest.mark.skipif(os.getenv('PLAYWRIGHT_DRIVER_URL') is None, reason="Needs PLAYWRIGHT_DRIVER_URL set for this test")
 def test_webdriver_block_assets_per_watch_setting(client, live_server, measure_memory_usage, datastore_path):
     """Test that webdriver_block_assets works as a per-watch override"""
     
-    # live_server_setup(live_server) # Setup on conftest per function  
-    assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
+    # live_server_setup(live_server) # Setup on conftest per function
 
     test_url = url_for('test_block_assets_endpoint', _external=True)
     test_url = test_url.replace('localhost.localdomain', 'cdio')
@@ -108,11 +109,11 @@ def test_webdriver_block_assets_per_watch_setting(client, live_server, measure_m
     assert b'Test page with images' in res.data
 
 
+@pytest.mark.skipif(os.getenv('PLAYWRIGHT_DRIVER_URL') is None, reason="Needs PLAYWRIGHT_DRIVER_URL set for this test")
 def test_webdriver_block_assets_disabled_by_default(client, live_server, measure_memory_usage, datastore_path):
     """Test that webdriver_block_assets is disabled by default"""
     
     # live_server_setup(live_server) # Setup on conftest per function
-    assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
 
     test_url = url_for('test_block_assets_endpoint', _external=True)
     test_url = test_url.replace('localhost.localdomain', 'cdio')
