@@ -419,4 +419,27 @@ def new_live_server_setup(live_server):
         resp.headers['Content-Type'] = 'text/html'
         return resp
 
+    @live_server.app.route('/test-block-assets-endpoint')  
+    def test_block_assets_endpoint():
+        resp = make_response("""
+        <html>
+          <head>
+            <title>Test page with images</title>
+          </head>
+          <body>
+            <h1>Test page with images</h1>
+            <p>This page contains images for testing webdriver_block_assets functionality.</p>
+            
+            <!-- Images for testing webdriver_block_assets functionality -->
+            <img id="test-image-1" src="https://cdn0.woolworths.media/content/wowproductimages/large/155536.jpg" alt="Test image 1" width="100" height="100">
+            <img id="test-image-2" src="https://cdn.mos.cms.futurecdn.net/RCGfdf3yhQ9W3MHbTRT6yk-1280-80.jpg" alt="Test image 2" width="50" height="50">
+            <img id="test-image-3" src="https://cdn0.woolworths.media/content/wowproductimages/large/155536.jpg" alt="Test image 3" class="test-image">
+            
+            <div id="image-count">Images: 3</div>
+            <p>Some text content for verification</p>
+          </body>
+        </html>""", 200)
+        resp.headers['Content-Type'] = 'text/html'
+        return resp
+
     live_server.start()
