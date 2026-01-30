@@ -13,6 +13,7 @@ class fetcher(Fetcher):
 
     proxy = None
     proxy_url = None
+    webdriver_block_assets = False  # Set by processor based on watch settings
 
     # Capability flags
     supports_browser_steps = False
@@ -83,6 +84,13 @@ class fetcher(Fetcher):
             # request_body, request_method unused for now, until some magic in the future happens.
 
             options = ChromeOptions()
+
+            # Block images if webdriver_block_assets is enabled
+            if getattr(self, 'webdriver_block_assets', False):
+                options.add_experimental_option("prefs",
+                    {"profile.managed_default_content_settings.images": 2}
+                )
+                options.add_argument('--blink-settings=imagesEnabled=false')
 
             # Load Chrome options from env
             CHROME_OPTIONS = [

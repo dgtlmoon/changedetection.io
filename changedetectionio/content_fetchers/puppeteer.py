@@ -175,6 +175,7 @@ class fetcher(Fetcher):
     browser_type = ''
     command_executor = ''
     proxy = None
+    webdriver_block_assets = False  # Set by processor based on watch settings
 
     # Capability flags
     supports_browser_steps = True
@@ -275,6 +276,18 @@ class fetcher(Fetcher):
 
         # more reliable is to just request a new page
         self.page = await self.browser.newPage()
+        
+        # Block image requests to improve performance and reduce bandwidth (if enabled)
+        if getattr(self, 'webdriver_block_assets', False):
+            await self.page.setRequestInterception(True)
+            
+            async def handle_request(request):
+                if request.resourceType in ('image', 'media', 'font'):
+                    await request.abort()
+                else:
+                    await request.continue_()
+            
+            self.page.on('request', lambda req: asyncio.create_task(handle_request(req)))
         
         # Add console handler to capture console.log from favicon fetcher
         #self.page.on('console', lambda msg: logger.debug(f"Browser console [{msg.type}]: {msg.text}"))
