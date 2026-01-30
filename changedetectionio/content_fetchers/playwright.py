@@ -166,7 +166,7 @@ class fetcher(Fetcher):
     supports_browser_steps = True
     supports_screenshots = True
     supports_xpath_element_data = True
-    webdriver_block_assets = False  # Set by processor based on watch settings
+    block_assets = False  # Set by processor based on watch settings
 
     @classmethod
     def get_status_icon_data(cls):
@@ -292,7 +292,7 @@ class fetcher(Fetcher):
             self.page = await context.new_page()
 
             # Block image requests to improve performance and reduce bandwidth (if enabled)
-            if getattr(self, 'webdriver_block_assets', False):
+            if getattr(self, 'block_assets', False):
                 async def handle_route(route):
                     if route.request.resource_type in ('image', 'media', 'font'):
                         await route.abort()

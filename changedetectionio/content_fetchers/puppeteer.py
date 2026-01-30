@@ -175,7 +175,7 @@ class fetcher(Fetcher):
     browser_type = ''
     command_executor = ''
     proxy = None
-    webdriver_block_assets = False  # Set by processor based on watch settings
+    block_assets = False  # Set by processor based on watch settings
 
     # Capability flags
     supports_browser_steps = True
@@ -278,7 +278,7 @@ class fetcher(Fetcher):
         self.page = await self.browser.newPage()
         
         # Block image requests to improve performance and reduce bandwidth (if enabled)
-        if getattr(self, 'webdriver_block_assets', False):
+        if getattr(self, 'block_assets', False):
             await self.page.setRequestInterception(True)
             
             async def handle_request(request):

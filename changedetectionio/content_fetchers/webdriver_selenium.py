@@ -13,7 +13,7 @@ class fetcher(Fetcher):
 
     proxy = None
     proxy_url = None
-    webdriver_block_assets = False  # Set by processor based on watch settings
+    block_assets = False  # Set by processor based on watch settings
 
     # Capability flags
     supports_browser_steps = False
@@ -85,8 +85,8 @@ class fetcher(Fetcher):
 
             options = ChromeOptions()
 
-            # Block images if webdriver_block_assets is enabled
-            if getattr(self, 'webdriver_block_assets', False):
+            # Block images if block_assets is enabled
+            if getattr(self, 'block_assets', False):
                 options.add_experimental_option("prefs",
                     {"profile.managed_default_content_settings.images": 2}
                 )

@@ -146,12 +146,12 @@ class difference_detection_processor():
         if self.watch.get('webdriver_js_execute_code') is not None and self.watch.get('webdriver_js_execute_code').strip():
             self.fetcher.webdriver_js_execute_code = self.watch.get('webdriver_js_execute_code')
 
-        webdriver_block_assets = self.datastore.data['settings']['application'].get('webdriver_block_assets', False)
-        if hasattr(self.fetcher, 'webdriver_block_assets'):
-            if self.watch.get('webdriver_block_assets'):
-                self.fetcher.webdriver_block_assets = self.watch.get('webdriver_block_assets')
+        block_assets = self.datastore.data['settings']['application'].get('block_assets', False)
+        if hasattr(self.fetcher, 'block_assets'):
+            if self.watch.get('block_assets'):
+                self.fetcher.block_assets = self.watch.get('block_assets')
             else:
-                self.fetcher.webdriver_block_assets = webdriver_block_assets
+                self.fetcher.block_assets = block_assets
 
         # Requests for PDF's, images etc should be passwd the is_binary flag
         is_binary = self.watch.is_pdf
