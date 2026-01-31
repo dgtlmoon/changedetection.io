@@ -176,4 +176,127 @@ def test_api_tags_listing(client, live_server, measure_memory_usage, datastore_p
     assert res.status_code == 204
 
 
+def test_api_tags_extended_properties(client, live_server, measure_memory_usage, datastore_path):
+    """Test restock-specific tag properties including restock_settings and overrides_watch."""
+    api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
+    
+    # Test creating a tag with extended properties
+    extended_tag_data = {
+        "title": "Extended Test Tag",
+        "overrides_watch": True,
+        "restock_settings": {
+            "in_stock_processing": "in_stock_only",
+            "follow_price_changes": True,
+            "price_change_min": 10.50,
+            "price_change_max": 100.00,
+            "price_change_threshold_percent": 5.0
+        }
+    }
+    
+    res = client.post(
+        url_for("tag"),
+        data=json.dumps(extended_tag_data),
+        headers={'content-type': 'application/json', 'x-api-key': api_key}
+    )
+    assert res.status_code == 201
+    new_tag_uuid = res.json.get('uuid')
+    
+    # Verify all properties were set correctly
+    res = client.get(
+        url_for("tag", uuid=new_tag_uuid),
+        headers={'x-api-key': api_key}
+    )
+    assert res.status_code == 200
+    tag_data = res.json
+    
+    assert tag_data['title'] == "Extended Test Tag"
+    assert tag_data['overrides_watch'] == True
+    
+    # Check restock_settings
+    restock = tag_data['restock_settings']
+    assert restock['in_stock_processing'] == "in_stock_only"
+    assert restock['follow_price_changes'] == True
+    assert restock['price_change_min'] == 10.50
+    assert restock['price_change_max'] == 100.00
+    assert restock['price_change_threshold_percent'] == 5.0
+    
+    # Test updating individual properties
+    update_data = {
+        "restock_settings": {
+            "in_stock_processing": "all_changes",
+            "follow_price_changes": False,
+            "price_change_min": 5.00,
+            "price_change_max": None,  # Test null value
+            "price_change_threshold_percent": 10.0
+        },
+        "overrides_watch": False
+    }
+    
+    res = client.put(
+        url_for("tag", uuid=new_tag_uuid),
+        data=json.dumps(update_data),
+        headers={'content-type': 'application/json', 'x-api-key': api_key}
+    )
+    assert res.status_code == 200
+    
+    # Verify updates
+    res = client.get(
+        url_for("tag", uuid=new_tag_uuid),
+        headers={'x-api-key': api_key}
+    )
+    assert res.status_code == 200
+    updated_data = res.json
+    
+    assert updated_data['restock_settings']['in_stock_processing'] == "all_changes"
+    assert updated_data['restock_settings']['follow_price_changes'] == False
+    assert updated_data['restock_settings']['price_change_min'] == 5.00
+    assert updated_data['restock_settings']['price_change_max'] is None
+    assert updated_data['restock_settings']['price_change_threshold_percent'] == 10.0
+    assert updated_data['overrides_watch'] == False
+    
+    # Test validation errors
+    # Invalid in_stock_processing
+    invalid_data = {"restock_settings": {"in_stock_processing": "invalid_mode"}}
+    res = client.put(
+        url_for("tag", uuid=new_tag_uuid),
+        data=json.dumps(invalid_data),
+        headers={'content-type': 'application/json', 'x-api-key': api_key}
+    )
+    assert res.status_code == 400
+    assert b"Invalid in_stock_processing value" in res.data
+    
+    # Invalid price_change_threshold_percent
+    invalid_data = {"restock_settings": {"price_change_threshold_percent": 150}}
+    res = client.put(
+        url_for("tag", uuid=new_tag_uuid),
+        data=json.dumps(invalid_data),
+        headers={'content-type': 'application/json', 'x-api-key': api_key}
+    )
+    assert res.status_code == 400
+    assert b"must be between 0 and 100" in res.data
+    
+
+    
+    # Test tags listing includes new properties
+    res = client.get(
+        url_for("tags"),
+        headers={'x-api-key': api_key}
+    )
+    assert res.status_code == 200
+    tags_list = res.json
+    assert new_tag_uuid in tags_list
+    tag_in_list = tags_list[new_tag_uuid]
+    
+    # Verify all properties are included in listing
+    assert 'overrides_watch' in tag_in_list
+    assert 'restock_settings' in tag_in_list
+    
+    # Clean up
+    res = client.delete(
+        url_for("tag", uuid=new_tag_uuid),
+        headers={'x-api-key': api_key}
+    )
+    assert res.status_code == 204
+
+
 

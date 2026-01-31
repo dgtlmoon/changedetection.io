@@ -329,6 +329,37 @@ components:
         notification_muted:
           type: boolean
           description: Whether notifications are muted for this tag
+        overrides_watch:
+          type: boolean
+          description: Whether this tag overrides individual watch settings (used for restock & price detection)
+          default: false
+        restock_settings:
+          type: object
+          description: Restock and price detection settings
+          properties:
+            in_stock_processing:
+              type: string
+              enum: [in_stock_only, all_changes, "off"]
+              description: "Stock detection mode: in_stock_only (Out Of Stock -> In Stock only), all_changes (Any availability changes), off (Don't follow availability/restock)"
+              default: in_stock_only
+            follow_price_changes:
+              type: boolean
+              description: Whether to follow price changes
+              default: true
+            price_change_min:
+              type: number
+              description: Below price threshold to trigger notification (minimum amount)
+              nullable: true
+            price_change_max:
+              type: number
+              description: Above price threshold to trigger notification (maximum amount)
+              nullable: true
+            price_change_threshold_percent:
+              type: number
+              description: Threshold in percentage for price changes since the original price (0-100)
+              minimum: 0
+              maximum: 100
+              nullable: true
 
     CreateTag:
       allOf:
