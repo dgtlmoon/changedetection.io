@@ -144,6 +144,7 @@ class Tag(Resource):
 
     @auth.check_token
     @validate_openapi_request('createTag')
+    @expects_json(schema_create_tag)
     def post(self):
         """Create a single tag/group."""
         json_data = request.get_json()
