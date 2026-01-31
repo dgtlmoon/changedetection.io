@@ -23,6 +23,46 @@ schema_create_tag['required'] = ['title']
 schema_update_tag = copy.deepcopy(schema_tag)
 schema_update_tag['additionalProperties'] = False
 
+# Add restock-specific properties to tag schema
+schema_update_tag['properties']['overrides_watch'] = {
+    "type": "boolean"
+}
+schema_update_tag['properties']['restock_settings'] = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "in_stock_processing": {
+            "type": "string",
+            "enum": ["in_stock_only", "all_changes", "off"]
+        },
+        "follow_price_changes": {
+            "type": "boolean"
+        },
+        "price_change_min": {
+            "anyOf": [
+                {"type": "number"},
+                {"type": "null"}
+            ]
+        },
+        "price_change_max": {
+            "anyOf": [
+                {"type": "number"},
+                {"type": "null"}
+            ]
+        },
+        "price_change_threshold_percent": {
+            "anyOf": [
+                {"type": "number", "minimum": 0, "maximum": 100},
+                {"type": "null"}
+            ]
+        }
+    }
+}
+
+# Add the same properties to create schema
+schema_create_tag['properties']['overrides_watch'] = schema_update_tag['properties']['overrides_watch']
+schema_create_tag['properties']['restock_settings'] = schema_update_tag['properties']['restock_settings']
+
 schema_notification_urls = copy.deepcopy(schema)
 schema_create_notification_urls = copy.deepcopy(schema_notification_urls)
 schema_create_notification_urls['required'] = ['notification_urls']
