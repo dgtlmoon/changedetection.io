@@ -154,7 +154,6 @@ class Tag(Resource):
 
     @auth.check_token
     @validate_openapi_request('createTag')
-    @expects_json(schema_create_tag)
     def post(self):
         """Create a single tag/group."""
         json_data = request.get_json()
@@ -163,6 +162,17 @@ class Tag(Resource):
         # Validate required title field
         if not title:
             return "Title is required", 400
+
+        # Perform the same validations as in put()
+        # Validate notification_urls if provided
+        if 'notification_urls' in json_data:
+            from wtforms import ValidationError
+            from changedetectionio.api.Notifications import validate_notification_urls
+            try:
+                notification_urls = json_data.get('notification_urls', [])
+                validate_notification_urls(notification_urls)
+            except ValidationError as e:
+                return str(e), 400
 
         # Validate restock_settings if provided
         if 'restock_settings' in json_data:
@@ -221,6 +231,7 @@ class Tags(Resource):
             result[uuid] = {
                 'date_created': tag.get('date_created', 0),
                 'notification_muted': tag.get('notification_muted', False),
+                'notification_urls': tag.get('notification_urls', []),
                 'title': tag.get('title', ''),
                 'uuid': tag.get('uuid'),
                 'overrides_watch': tag.get('overrides_watch', False),
