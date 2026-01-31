@@ -106,6 +106,33 @@ class Tag(Resource):
             except ValidationError as e:
                 return str(e), 400
 
+        # Validate restock_settings if provided
+        if 'restock_settings' in request.json:
+            restock_settings = request.json.get('restock_settings', {})
+            
+            # Validate in_stock_processing values
+            if 'in_stock_processing' in restock_settings:
+                valid_processing_modes = ['in_stock_only', 'all_changes', 'off']
+                if restock_settings['in_stock_processing'] not in valid_processing_modes:
+                    return f"Invalid in_stock_processing value. Must be one of: {valid_processing_modes}", 400
+            
+            # Validate price thresholds are numbers if provided
+            for price_field in ['price_change_min', 'price_change_max']:
+                if price_field in restock_settings and restock_settings[price_field] is not None:
+                    try:
+                        float(restock_settings[price_field])
+                    except (ValueError, TypeError):
+                        return f"Invalid {price_field} value. Must be a number or null.", 400
+            
+            # Validate price_change_threshold_percent
+            if 'price_change_threshold_percent' in restock_settings and restock_settings['price_change_threshold_percent'] is not None:
+                try:
+                    threshold = float(restock_settings['price_change_threshold_percent'])
+                    if threshold < 0 or threshold > 100:
+                        return "price_change_threshold_percent must be between 0 and 100", 400
+                except (ValueError, TypeError):
+                    return "Invalid price_change_threshold_percent value. Must be a number between 0 and 100 or null.", 400
+
         tag.update(request.json)
         self.datastore.needs_write_urgent = True
 
@@ -114,16 +141,65 @@ class Tag(Resource):
 
     @auth.check_token
     @validate_openapi_request('createTag')
-    # Only cares for {'title': 'xxxx'}
     def post(self):
         """Create a single tag/group."""
-
         json_data = request.get_json()
         title = json_data.get("title",'').strip()
 
+        # Validate required title field
+        if not title:
+            return "Title is required", 400
 
+        # Perform the same validations as in put()
+        # Validate notification_urls if provided
+        if 'notification_urls' in json_data:
+            from wtforms import ValidationError
+            from changedetectionio.api.Notifications import validate_notification_urls
+            try:
+                notification_urls = json_data.get('notification_urls', [])
+                validate_notification_urls(notification_urls)
+            except ValidationError as e:
+                return str(e), 400
+
+        # Validate restock_settings if provided
+        if 'restock_settings' in json_data:
+            restock_settings = json_data.get('restock_settings', {})
+            
+            # Validate in_stock_processing values
+            if 'in_stock_processing' in restock_settings:
+                valid_processing_modes = ['in_stock_only', 'all_changes', 'off']
+                if restock_settings['in_stock_processing'] not in valid_processing_modes:
+                    return f"Invalid in_stock_processing value. Must be one of: {valid_processing_modes}", 400
+            
+            # Validate price thresholds are numbers if provided
+            for price_field in ['price_change_min', 'price_change_max']:
+                if price_field in restock_settings and restock_settings[price_field] is not None:
+                    try:
+                        float(restock_settings[price_field])
+                    except (ValueError, TypeError):
+                        return f"Invalid {price_field} value. Must be a number or null.", 400
+            
+            # Validate price_change_threshold_percent
+            if 'price_change_threshold_percent' in restock_settings and restock_settings['price_change_threshold_percent'] is not None:
+                try:
+                    threshold = float(restock_settings['price_change_threshold_percent'])
+                    if threshold < 0 or threshold > 100:
+                        return "price_change_threshold_percent must be between 0 and 100", 400
+                except (ValueError, TypeError):
+                    return "Invalid price_change_threshold_percent value. Must be a number between 0 and 100 or null.", 400
+
+        # Create the new tag with basic properties
         new_uuid = self.datastore.add_tag(title=title)
         if new_uuid:
+            # If additional properties were provided, update the tag with them
+            tag = self.datastore.data['settings']['application']['tags'][new_uuid]
+            
+            # Update with all provided properties (excluding title which was already set)
+            update_data = {k: v for k, v in json_data.items() if k != 'title'}
+            if update_data:
+                tag.update(update_data)
+                self.datastore.needs_write_urgent = True
+                
             return {'uuid': new_uuid}, 201
         else:
             return "Invalid or unsupported tag", 400
@@ -142,8 +218,11 @@ class Tags(Resource):
             result[uuid] = {
                 'date_created': tag.get('date_created', 0),
                 'notification_muted': tag.get('notification_muted', False),
+                'notification_urls': tag.get('notification_urls', []),
                 'title': tag.get('title', ''),
-                'uuid': tag.get('uuid')
+                'uuid': tag.get('uuid'),
+                'overrides_watch': tag.get('overrides_watch', False),
+                'restock_settings': tag.get('restock_settings', {})
             }
 
         return result, 200
