@@ -263,7 +263,7 @@ def test_api_tags_extended_properties(client, live_server, measure_memory_usage,
         headers={'content-type': 'application/json', 'x-api-key': api_key}
     )
     assert res.status_code == 400
-    assert b"Invalid in_stock_processing value" in res.data
+    assert b"is not one of" in res.data and b"invalid_mode" in res.data
     
     # Invalid price_change_threshold_percent
     invalid_data = {"restock_settings": {"price_change_threshold_percent": 150}}
@@ -273,7 +273,7 @@ def test_api_tags_extended_properties(client, live_server, measure_memory_usage,
         headers={'content-type': 'application/json', 'x-api-key': api_key}
     )
     assert res.status_code == 400
-    assert b"must be between 0 and 100" in res.data
+    assert b"150 is greater than the maximum of 100" in res.data
     
 
     
