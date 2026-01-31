@@ -232,7 +232,7 @@ def test_api_tags_extended_properties(client, live_server, measure_memory_usage,
         "overrides_watch": False
     }
     
-    res = client.put(
+    res = client.post(
         url_for("tag", uuid=new_tag_uuid),
         data=json.dumps(update_data),
         headers={'content-type': 'application/json', 'x-api-key': api_key}
@@ -257,7 +257,7 @@ def test_api_tags_extended_properties(client, live_server, measure_memory_usage,
     # Test validation errors
     # Invalid in_stock_processing
     invalid_data = {"restock_settings": {"in_stock_processing": "invalid_mode"}}
-    res = client.put(
+    res = client.post(
         url_for("tag", uuid=new_tag_uuid),
         data=json.dumps(invalid_data),
         headers={'content-type': 'application/json', 'x-api-key': api_key}
@@ -267,7 +267,7 @@ def test_api_tags_extended_properties(client, live_server, measure_memory_usage,
     
     # Invalid price_change_threshold_percent
     invalid_data = {"restock_settings": {"price_change_threshold_percent": 150}}
-    res = client.put(
+    res = client.post(
         url_for("tag", uuid=new_tag_uuid),
         data=json.dumps(invalid_data),
         headers={'content-type': 'application/json', 'x-api-key': api_key}
