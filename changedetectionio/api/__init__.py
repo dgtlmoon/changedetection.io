@@ -71,6 +71,17 @@ schema_update_tag['properties']['restock_settings'] = {
 schema_create_tag['properties']['overrides_watch'] = schema_update_tag['properties']['overrides_watch']
 schema_create_tag['properties']['restock_settings'] = schema_update_tag['properties']['restock_settings']
 
+# Add notification_urls property to tag schemas (was originally there)
+notification_urls_property = {
+    "type": "array",
+    "items": {
+        "type": "string",
+        "maxLength": 1000
+    }
+}
+schema_update_tag['properties']['notification_urls'] = notification_urls_property
+schema_create_tag['properties']['notification_urls'] = notification_urls_property
+
 schema_notification_urls = copy.deepcopy(schema)
 schema_create_notification_urls = copy.deepcopy(schema_notification_urls)
 schema_create_notification_urls['required'] = ['notification_urls']
