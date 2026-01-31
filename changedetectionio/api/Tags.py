@@ -96,6 +96,16 @@ class Tag(Resource):
         if not tag:
             abort(404, message='No tag exists with the UUID of {}'.format(uuid))
 
+        # Validate notification_urls if provided
+        if 'notification_urls' in request.json:
+            from wtforms import ValidationError
+            from changedetectionio.api.Notifications import validate_notification_urls
+            try:
+                notification_urls = request.json.get('notification_urls', [])
+                validate_notification_urls(notification_urls)
+            except ValidationError as e:
+                return str(e), 400
+
         # Validate restock_settings if provided
         if 'restock_settings' in request.json:
             restock_settings = request.json.get('restock_settings', {})
