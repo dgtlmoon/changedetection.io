@@ -223,7 +223,7 @@ def test_api_tags_extended_properties(client, live_server, measure_memory_usage,
     }
     
     res = client.post(
-        url_for("tag", uuid=new_tag_uuid),
+        url_for("tag"),
         data=json.dumps(update_data),
         headers={'content-type': 'application/json', 'x-api-key': api_key}
     )
@@ -248,7 +248,7 @@ def test_api_tags_extended_properties(client, live_server, measure_memory_usage,
     # Invalid in_stock_processing
     invalid_data = {"restock_settings": {"in_stock_processing": "invalid_mode"}}
     res = client.post(
-        url_for("tag", uuid=new_tag_uuid),
+        url_for("tag"),
         data=json.dumps(invalid_data),
         headers={'content-type': 'application/json', 'x-api-key': api_key}
     )
@@ -258,7 +258,7 @@ def test_api_tags_extended_properties(client, live_server, measure_memory_usage,
     # Invalid price_change_threshold_percent
     invalid_data = {"restock_settings": {"price_change_threshold_percent": 150}}
     res = client.post(
-        url_for("tag", uuid=new_tag_uuid),
+        url_for("tag"),
         data=json.dumps(invalid_data),
         headers={'content-type': 'application/json', 'x-api-key': api_key}
     )
