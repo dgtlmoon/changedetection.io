@@ -24,6 +24,41 @@ def build_time_between_check_json_schema():
 
     return schema_properties_time_between_check
 
+def build_restock_settings_json_schema():
+    # Setup restock settings schema
+    schema_properties_restock_settings = {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "in_stock_processing": {
+                "type": "string",
+                "enum": ["in_stock_only", "all_changes", "off"]
+            },
+            "follow_price_changes": {
+                "type": "boolean"
+            },
+            "price_change_min": {
+                "anyOf": [
+                    {"type": "number"},
+                    {"type": "null"}
+                ]
+            },
+            "price_change_max": {
+                "anyOf": [
+                    {"type": "number"},
+                    {"type": "null"}
+                ]
+            },
+            "price_change_threshold_percent": {
+                "anyOf": [
+                    {"type": "number", "minimum": 0, "maximum": 100},
+                    {"type": "null"}
+                ]
+            }
+        }
+    }
+    return schema_properties_restock_settings
+
 def build_watch_json_schema(d):
     # Base JSON schema
     schema = {
@@ -121,6 +156,12 @@ def build_watch_json_schema(d):
     schema['properties']['webdriver_delay']['anyOf'].append({'type': 'integer'})
 
     schema['properties']['time_between_check'] = build_time_between_check_json_schema()
+
+    schema['properties']['restock_settings'] = build_restock_settings_json_schema()
+
+    schema['properties']['overrides_watch'] = {
+        "type": "boolean"
+    }
 
     schema['properties']['time_between_check_use_default'] = {
         "type": "boolean",
