@@ -13,7 +13,6 @@ class fetcher(Fetcher):
 
     proxy = None
     proxy_url = None
-    block_assets = False  # Set by processor based on watch settings
 
     # Capability flags
     supports_browser_steps = False

@@ -175,7 +175,6 @@ class fetcher(Fetcher):
     browser_type = ''
     command_executor = ''
     proxy = None
-    block_assets = False  # Set by processor based on watch settings
 
     # Capability flags
     supports_browser_steps = True
