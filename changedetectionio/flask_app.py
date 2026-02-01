@@ -912,7 +912,17 @@ def changedetection_app(config=None, datastore_o=None):
     if not batch_mode:
         # @todo handle ctrl break
         ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks, daemon=True, name="TickerThread-ScheduleChecker").start()
-        threading.Thread(target=notification_runner, daemon=True, name="NotificationRunner").start()
+
+        # Start configurable number of notification workers (default 1)
+        notification_workers = int(os.getenv("NOTIFICATION_WORKERS", "1"))
+        for i in range(notification_workers):
+            threading.Thread(
+                target=notification_runner,
+                args=(i,),
+                daemon=True,
+                name=f"NotificationRunner-{i}"
+            ).start()
+        logger.info(f"Started {notification_workers} notification worker(s)")
 
         in_pytest = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
         # Check for new release version, but not when running in test/build or pytest
@@ -954,14 +964,14 @@ def check_for_new_version():
         app.config.exit.wait(86400)
 
 
-def notification_runner():
+def notification_runner(worker_id=0):
     global notification_debug_log
     from datetime import datetime
     import json
     with app.app_context():
         while not app.config.exit.is_set():
             try:
-                # At the moment only one thread runs (single runner)
+                # Multiple workers can run concurrently (configurable via NOTIFICATION_WORKERS)
                 n_object = notification_q.get(block=False)
             except queue.Empty:
                 app.config.exit.wait(1)
@@ -987,7 +997,7 @@ def notification_runner():
                         sent_obj = process_notification(n_object, datastore)
 
                 except Exception as e:
-                    logger.error(f"Watch URL: {n_object['watch_url']}  Error {str(e)}")
+                    logger.error(f"Notification worker {worker_id} - Watch URL: {n_object['watch_url']}  Error {str(e)}")
 
                     # UUID wont be present when we submit a 'test' from the global settings
                     if 'uuid' in n_object:

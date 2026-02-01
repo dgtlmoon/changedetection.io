@@ -53,11 +53,11 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
         watch = None
 
         try:
-            # Use sync interface via run_in_executor since each worker has its own event loop
-            loop = asyncio.get_event_loop()
+            # Use async interface with custom executor to avoid thread pool exhaustion
+            # With 30+ workers, we need executor sized to match (see worker_handler.py)
             queued_item_data = await asyncio.wait_for(
-                loop.run_in_executor(executor, q.get, True, 1.0),  # block=True, timeout=1.0
-                timeout=1.5
+                q.async_get(executor=executor),
+                timeout=1.0
             )
 
         except asyncio.TimeoutError:

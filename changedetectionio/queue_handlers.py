@@ -5,51 +5,52 @@ import heapq
 import queue
 import threading
 
-try:
-    import janus
-except ImportError:
-    logger.critical(f"CRITICAL: janus library is required. Install with: pip install janus")
-    raise
+# Janus is no longer required - we use pure threading.Queue for multi-loop support
+# try:
+#     import janus
+# except ImportError:
+#     pass  # Not needed anymore
 
 
 class RecheckPriorityQueue:
     """
-    Ultra-reliable priority queue using janus for async/sync bridging.
-    
-    CRITICAL DESIGN NOTE: Both sync_q and async_q are required because:
-    - sync_q: Used by Flask routes, ticker threads, and other synchronous code
-    - async_q: Used by async workers (the actual fetchers/processors) and coroutines
-    
-    DO NOT REMOVE EITHER INTERFACE - they bridge different execution contexts:
-    - Synchronous code (Flask, threads) cannot use async methods without blocking
-    - Async code cannot use sync methods without blocking the event loop
-    - janus provides the only safe bridge between these two worlds
-    
-    Attempting to unify to async-only would require:
-    - Converting all Flask routes to async (major breaking change)
-    - Using asyncio.run() in sync contexts (causes deadlocks)
-    - Thread-pool wrapping (adds complexity and overhead)
-    
-    Minimal implementation focused on reliability:
-    - Pure janus for sync/async bridge
-    - Thread-safe priority ordering  
-    - Bulletproof error handling with critical logging
+    Thread-safe priority queue supporting multiple async event loops.
+
+    ARCHITECTURE:
+    - Multiple async workers, each with its own event loop in its own thread
+    - One shared queue accessed safely via threading primitives
+    - Workers use run_in_executor to access queue without blocking their event loop
+
+    IMPLEMENTATION:
+    - Pure threading.Queue for notifications (no event loop binding)
+    - Heapq-based priority storage (thread-safe with RLock)
+    - Async methods wrap sync methods via run_in_executor
+    - Supports both sync and async access patterns
+
+    WHY NOT JANUS:
+    - Janus binds to ONE event loop at creation time
+    - Our architecture has 15+ workers, each with separate event loops
+    - Workers in different threads/loops cannot share janus async interface
+    - Pure threading approach works across all event loops
     """
     
     def __init__(self, maxsize: int = 0):
         try:
-            self._janus_queue = janus.Queue(maxsize=maxsize)
-            # BOTH interfaces required - see class docstring for why
-            self.sync_q = self._janus_queue.sync_q   # Flask routes, ticker thread
-            self.async_q = self._janus_queue.async_q # Async workers
-            
+            # Use pure threading.Queue for notification - no janus needed
+            # This avoids event loop binding issues with multiple worker threads
+            import asyncio
+            self._notification_queue = queue.Queue(maxsize=maxsize if maxsize > 0 else 0)
+
             # Priority storage - thread-safe
             self._priority_items = []
             self._lock = threading.RLock()
-            
+
+            # Condition variable for async wait support
+            self._condition = threading.Condition(self._lock)
+
             # Signals for UI updates
             self.queue_length_signal = signal('queue_length')
-            
+
             logger.debug("RecheckPriorityQueue initialized successfully")
         except Exception as e:
             logger.critical(f"CRITICAL: Failed to initialize RecheckPriorityQueue: {str(e)}")
@@ -59,24 +60,23 @@ class RecheckPriorityQueue:
     def put(self, item, block: bool = True, timeout: Optional[float] = None):
         """Thread-safe sync put with priority ordering"""
         try:
-            # Add to priority storage
-            with self._lock:
+            # Add to priority storage and notify waiters
+            with self._condition:
                 heapq.heappush(self._priority_items, item)
-            
-            # Notify via janus sync queue
-            self.sync_q.put(True, block=block, timeout=timeout)
-            
+                self._notification_queue.put(True, block=False)  # Notification only
+                self._condition.notify_all()  # Wake up any async waiters
+
             # Emit signals
             self._emit_put_signals(item)
-            
+
             logger.trace(f"Successfully queued item: {self._get_item_uuid(item)}")
             return True
-            
+
         except Exception as e:
             logger.critical(f"CRITICAL: Failed to put item {self._get_item_uuid(item)}: {str(e)}")
-            # Remove from priority storage if janus put failed
+            # Remove from priority storage if put failed
             try:
-                with self._lock:
+                with self._condition:
                     if item in self._priority_items:
                         self._priority_items.remove(item)
                         heapq.heapify(self._priority_items)
@@ -86,10 +86,10 @@ class RecheckPriorityQueue:
     
     def get(self, block: bool = True, timeout: Optional[float] = None):
         """Thread-safe sync get with priority ordering"""
-        import queue
+        import queue as queue_module
         try:
-            # Wait for notification
-            self.sync_q.get(block=block, timeout=timeout)
+            # Wait for notification (this doesn't return the actual item, just signals availability)
+            self._notification_queue.get(block=block, timeout=timeout)
 
             # Get highest priority item
             with self._lock:
@@ -104,7 +104,7 @@ class RecheckPriorityQueue:
             logger.debug(f"Successfully retrieved item: {self._get_item_uuid(item)}")
             return item
 
-        except queue.Empty:
+        except queue_module.Empty:
             # Queue is empty with timeout - expected behavior, re-raise without logging
             raise
         except Exception as e:
@@ -112,49 +112,45 @@ class RecheckPriorityQueue:
             raise
     
     # ASYNC INTERFACE (for workers)
-    async def async_put(self, item):
-        """Pure async put with priority ordering"""
+    async def async_put(self, item, executor=None):
+        """Async put with priority ordering - uses thread pool to avoid blocking
+
+        Args:
+            item: Item to add to queue
+            executor: Optional ThreadPoolExecutor. If None, uses default pool.
+        """
+        import asyncio
         try:
-            # Add to priority storage
-            with self._lock:
-                heapq.heappush(self._priority_items, item)
-            
-            # Notify via janus async queue
-            await self.async_q.put(True)
-            
-            # Emit signals
-            self._emit_put_signals(item)
-            
+            # Use run_in_executor to call sync put without blocking event loop
+            loop = asyncio.get_event_loop()
+            result = await loop.run_in_executor(
+                executor,  # Use provided executor or default
+                lambda: self.put(item, block=True, timeout=5.0)
+            )
+
             logger.debug(f"Successfully async queued item: {self._get_item_uuid(item)}")
-            return True
-            
+            return result
+
         except Exception as e:
             logger.critical(f"CRITICAL: Failed to async put item {self._get_item_uuid(item)}: {str(e)}")
-            # Remove from priority storage if janus put failed
-            try:
-                with self._lock:
-                    if item in self._priority_items:
-                        self._priority_items.remove(item)
-                        heapq.heapify(self._priority_items)
-            except Exception as cleanup_e:
-                logger.critical(f"CRITICAL: Failed to cleanup after async put failure: {str(e)}")
             return False
     
-    async def async_get(self):
-        """Pure async get with priority ordering"""
+    async def async_get(self, executor=None):
+        """Async get with priority ordering - uses thread pool to avoid blocking
+
+        Args:
+            executor: Optional ThreadPoolExecutor. If None, uses default pool.
+                     With many workers (30+), pass custom executor scaled to worker count.
+        """
+        import asyncio
         try:
-            # Wait for notification
-            await self.async_q.get()
-
-            # Get highest priority item
-            with self._lock:
-                if not self._priority_items:
-                    logger.critical(f"CRITICAL: Async queue notification received but no priority items available")
-                    raise Exception("Priority queue inconsistency")
-                item = heapq.heappop(self._priority_items)
-
-            # Emit signals
-            self._emit_get_signals()
+            # Use run_in_executor to call sync get without blocking event loop
+            # This works across multiple event loops since it uses threading
+            loop = asyncio.get_event_loop()
+            item = await loop.run_in_executor(
+                executor,  # Use provided executor (scales with FETCH_WORKERS) or default
+                lambda: self.get(block=True, timeout=1.0)
+            )
 
             logger.debug(f"Successfully async retrieved item: {self._get_item_uuid(item)}")
             return item
@@ -187,9 +183,9 @@ class RecheckPriorityQueue:
             return []
 
     def close(self):
-        """Close the janus queue"""
+        """Close the queue"""
         try:
-            self._janus_queue.close()
+            # Nothing to close for threading.Queue
             logger.debug("RecheckPriorityQueue closed successfully")
         except Exception as e:
             logger.critical(f"CRITICAL: Failed to close RecheckPriorityQueue: {str(e)}")
@@ -363,12 +359,11 @@ class NotificationQueue:
     
     def __init__(self, maxsize: int = 0, datastore=None):
         try:
-            self._janus_queue = janus.Queue(maxsize=maxsize)
-            # BOTH interfaces required - see class docstring for why
-            self.sync_q = self._janus_queue.sync_q   # Flask routes, threads
-            self.async_q = self._janus_queue.async_q # Async workers
+            # Use pure threading.Queue to avoid event loop binding issues
+            self._notification_queue = queue.Queue(maxsize=maxsize if maxsize > 0 else 0)
             self.notification_event_signal = signal('notification_event')
             self.datastore = datastore  # For checking all_muted setting
+            self._lock = threading.RLock()
             logger.debug("NotificationQueue initialized successfully")
         except Exception as e:
             logger.critical(f"CRITICAL: Failed to initialize NotificationQueue: {str(e)}")
@@ -386,7 +381,8 @@ class NotificationQueue:
                 logger.debug(f"Notification blocked - all notifications are muted: {item.get('uuid', 'unknown')}")
                 return False
 
-            self.sync_q.put(item, block=block, timeout=timeout)
+            with self._lock:
+                self._notification_queue.put(item, block=block, timeout=timeout)
             self._emit_notification_signal(item)
             logger.debug(f"Successfully queued notification: {item.get('uuid', 'unknown')}")
             return True
@@ -394,36 +390,49 @@ class NotificationQueue:
             logger.critical(f"CRITICAL: Failed to put notification {item.get('uuid', 'unknown')}: {str(e)}")
             return False
     
-    async def async_put(self, item: Dict[str, Any]):
-        """Pure async put with signal emission"""
+    async def async_put(self, item: Dict[str, Any], executor=None):
+        """Async put with signal emission - uses thread pool
+
+        Args:
+            item: Notification item to queue
+            executor: Optional ThreadPoolExecutor
+        """
+        import asyncio
         try:
             # Check if all notifications are muted
             if self.datastore and self.datastore.data['settings']['application'].get('all_muted', False):
                 logger.debug(f"Notification blocked - all notifications are muted: {item.get('uuid', 'unknown')}")
                 return False
 
-            await self.async_q.put(item)
-            self._emit_notification_signal(item)
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(executor, lambda: self.put(item, block=True, timeout=5.0))
             logger.debug(f"Successfully async queued notification: {item.get('uuid', 'unknown')}")
             return True
         except Exception as e:
             logger.critical(f"CRITICAL: Failed to async put notification {item.get('uuid', 'unknown')}: {str(e)}")
             return False
-    
+
     def get(self, block: bool = True, timeout: Optional[float] = None):
         """Thread-safe sync get"""
         try:
-            return self.sync_q.get(block=block, timeout=timeout)
+            with self._lock:
+                return self._notification_queue.get(block=block, timeout=timeout)
         except queue.Empty as e:
             raise e
         except Exception as e:
             logger.critical(f"CRITICAL: Failed to get notification: {str(e)}")
             raise e
-    
-    async def async_get(self):
-        """Pure async get"""
+
+    async def async_get(self, executor=None):
+        """Async get - uses thread pool
+
+        Args:
+            executor: Optional ThreadPoolExecutor
+        """
+        import asyncio
         try:
-            return await self.async_q.get()
+            loop = asyncio.get_event_loop()
+            return await loop.run_in_executor(executor, lambda: self.get(block=True, timeout=1.0))
         except queue.Empty as e:
             raise e
         except Exception as e:
@@ -433,19 +442,20 @@ class NotificationQueue:
     def qsize(self) -> int:
         """Get current queue size"""
         try:
-            return self.sync_q.qsize()
+            with self._lock:
+                return self._notification_queue.qsize()
         except Exception as e:
             logger.critical(f"CRITICAL: Failed to get notification queue size: {str(e)}")
             return 0
-    
+
     def empty(self) -> bool:
         """Check if queue is empty"""
         return self.qsize() == 0
-    
+
     def close(self):
-        """Close the janus queue"""
+        """Close the queue"""
         try:
-            self._janus_queue.close()
+            # Nothing to close for threading.Queue
             logger.debug("NotificationQueue closed successfully")
         except Exception as e:
             logger.critical(f"CRITICAL: Failed to close NotificationQueue: {str(e)}")
