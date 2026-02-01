@@ -32,11 +32,7 @@ def test_proxy_noconnect_custom(client, live_server, measure_memory_usage, datas
     assert b"Settings updated." in res.data
 
     test_url = "https://changedetection.io"
-    res = client.post(
-        url_for("ui.ui_views.form_quick_watch_add"),
-        data={"url": test_url, "tags": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
-        follow_redirects=True
-    )
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, extras={'paused': True})
 
     assert b"Watch added in Paused state, saving will unpause" in res.data
 

@@ -31,12 +31,7 @@ def test_socks5_from_proxiesjson_file(client, live_server, measure_memory_usage,
     res = client.get(url_for("settings.settings_page"))
     assert b'name="requests-proxy" type="radio" value="socks5proxy"' in res.data
 
-    res = client.post(
-        url_for("ui.ui_views.form_quick_watch_add"),
-        data={"url": test_url, "tags": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
-        follow_redirects=True
-    )
-    assert b"Watch added in Paused state, saving will unpause" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, extras={'paused': True})
 
     res = client.get(
         url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),

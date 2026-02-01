@@ -10,12 +10,7 @@ def test_preferred_proxy(client, live_server, measure_memory_usage, datastore_pa
     url = "http://chosen.changedetection.io"
 
 
-    res = client.post(
-        url_for("ui.ui_views.form_quick_watch_add"),
-        data={"url": url, "tags": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
-        follow_redirects=True
-    )
-    assert b"Watch added in Paused state, saving will unpause" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=url, extras={'paused': True})
 
     wait_for_all_checks(client)
     res = client.post(

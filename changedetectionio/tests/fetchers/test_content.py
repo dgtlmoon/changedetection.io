@@ -24,15 +24,8 @@ def test_fetch_webdriver_content(client, live_server, measure_memory_usage, data
     )
 
     assert b"Settings updated." in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url="https://changedetection.io/ci-test.html")
 
-    # Add our URL to the import page
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": "https://changedetection.io/ci-test.html"},
-        follow_redirects=True
-    )
-
-    assert b"1 Imported" in res.data
     wait_for_all_checks(client)
 
     res = client.get(

@@ -377,13 +377,7 @@ def test_check_notification_email_formats_default_Text_override_HTML(client, liv
 
     # Add a watch and trigger a HTTP POST
     test_url = url_for('test_endpoint',content_type="text/html", _external=True)
-    res = client.post(
-        url_for("ui.ui_views.form_quick_watch_add"),
-        data={"url": test_url, "tags": 'nice one'},
-        follow_redirects=True
-    )
-
-    assert b"Watch added" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, tag='nice one')
 
     #################################### FIRST SITUATION, PLAIN TEXT NOTIFICATION IS WANTED BUT WE HAVE HTML IN OUR TEMPLATE AND CONTENT ##########
     wait_for_all_checks(client)

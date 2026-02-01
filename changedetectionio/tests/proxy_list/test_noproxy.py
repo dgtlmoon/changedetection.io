@@ -11,6 +11,9 @@ def test_noproxy_option(client, live_server, measure_memory_usage, datastore_pat
     # Call this URL then scan the containers that it never went through them
     url = "http://noproxy.changedetection.io"
 
+
+    uuid = client.application.config.get('DATASTORE').add_watch(url=url, extras={'paused': True})
+
     # Should only be available when a proxy is setup
     res = client.get(
         url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1))
