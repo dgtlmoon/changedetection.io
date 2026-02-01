@@ -227,6 +227,8 @@ def test_api_tags_extended_properties(client, live_server, measure_memory_usage,
         data=json.dumps(update_data),
         headers={'content-type': 'application/json', 'x-api-key': api_key}
     )
+
+    wait_for_all_checks(client)
     assert res.status_code == 200
     
     # Verify updates
@@ -234,6 +236,7 @@ def test_api_tags_extended_properties(client, live_server, measure_memory_usage,
         url_for("tag", uuid=new_tag_uuid),
         headers={'x-api-key': api_key}
     )
+    wait_for_all_checks(client)
     assert res.status_code == 200
     updated_data = res.json
     
@@ -252,6 +255,7 @@ def test_api_tags_extended_properties(client, live_server, measure_memory_usage,
         data=json.dumps(invalid_data),
         headers={'content-type': 'application/json', 'x-api-key': api_key}
     )
+    wait_for_all_checks(client)
     assert res.status_code == 400
     assert b"is not one of" in res.data and b"invalid_mode" in res.data
     
@@ -262,6 +266,7 @@ def test_api_tags_extended_properties(client, live_server, measure_memory_usage,
         data=json.dumps(invalid_data),
         headers={'content-type': 'application/json', 'x-api-key': api_key}
     )
+    wait_for_all_checks(client)
     assert res.status_code == 400
     assert b"150 is greater than the maximum of 100" in res.data
     
@@ -272,6 +277,7 @@ def test_api_tags_extended_properties(client, live_server, measure_memory_usage,
         url_for("tags"),
         headers={'x-api-key': api_key}
     )
+    wait_for_all_checks(client)
     assert res.status_code == 200
     tags_list = res.json
     assert new_tag_uuid in tags_list
@@ -286,6 +292,7 @@ def test_api_tags_extended_properties(client, live_server, measure_memory_usage,
         url_for("tag", uuid=new_tag_uuid),
         headers={'x-api-key': api_key}
     )
+    wait_for_all_checks(client)
     assert res.status_code == 204
 
 
