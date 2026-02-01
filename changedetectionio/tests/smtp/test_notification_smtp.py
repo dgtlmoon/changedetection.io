@@ -416,7 +416,7 @@ def test_check_notification_email_formats_default_Text_override_HTML(client, liv
 
     # Now override as HTML format
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
             "url": test_url,
             "notification_format": 'html',

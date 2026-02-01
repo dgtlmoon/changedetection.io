@@ -65,13 +65,13 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
     data.update(scheduler_data)
     time.sleep(1)
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data=data,
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
 
-    res = client.get(url_for("ui.ui_edit.edit_page", uuid="first"))
+    res = client.get(url_for("ui.ui_edit.edit_page", uuid=uuid))
     assert b"Pacific/Kiritimati" in res.data, "Should be Pacific/Kiritimati in placeholder data"
 
     # "Edit" should not trigger a check because it's not enabled in the schedule.
@@ -143,13 +143,13 @@ def test_check_basic_global_scheduler_functionality(client, live_server, measure
 
     # UI Sanity check
 
-    res = client.get(url_for("ui.ui_edit.edit_page", uuid="first"))
+    res = client.get(url_for("ui.ui_edit.edit_page", uuid=uuid))
     assert b"Pacific/Kiritimati" in res.data, "Should be Pacific/Kiritimati in placeholder data"
 
     #### HITTING SAVE SHOULD NOT TRIGGER A CHECK
     last_check = live_server.app.config['DATASTORE'].data['watching'][uuid]['last_checked']
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
             "url": test_url,
             "fetch_backend": "html_requests",
@@ -179,7 +179,7 @@ def test_validation_time_interval_field(client, live_server, measure_memory_usag
 
 
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={"trigger_text": 'The golden line',
               "url": test_url,
               'fetch_backend': "html_requests",
@@ -194,7 +194,7 @@ def test_validation_time_interval_field(client, live_server, measure_memory_usag
     # Now set atleast something
 
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={"trigger_text": 'The golden line',
               "url": test_url,
               'fetch_backend': "html_requests",

@@ -77,7 +77,7 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
     # Some options should be enabled
     # @todo - in the future, the visibility should be toggled by JS from the request type setting
     res = client.get(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         follow_redirects=True
     )
     assert b'notification_screenshot' in res.data
@@ -103,7 +103,7 @@ def test_basic_browserstep(client, live_server, measure_memory_usage, datastore_
     assert b"Watch added in Paused state, saving will unpause" in res.data
 
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first", unpause_on_save=1),
+        url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
         data={
             "url": test_url,
             "tags": "",

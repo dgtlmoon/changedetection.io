@@ -26,18 +26,14 @@ def set_original_response(datastore_path):
 
 def test_bad_access(client, live_server, measure_memory_usage, datastore_path):
 
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": 'https://localhost'},
-        follow_redirects=True
-    )
 
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url='https://localhost')
+
     wait_for_all_checks(client)
 
     # Attempt to add a body with a GET method
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
               "url": 'javascript:alert(document.domain)',
               "tags": "",
@@ -85,11 +81,9 @@ def test_bad_access(client, live_server, measure_memory_usage, datastore_path):
 
 def _runner_test_various_file_slash(client, file_uri):
 
-    client.post(
-        url_for("ui.ui_views.form_quick_watch_add"),
-        data={"url": file_uri, "tags": ''},
-        follow_redirects=True
-    )
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = client.application.config.get('DATASTORE').add_watch(url=file_uri)
+
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
 
@@ -101,7 +95,7 @@ def _runner_test_various_file_slash(client, file_uri):
         if file_uri.startswith('file:///'):
             # This one should be the full qualified path to the file and should get the contents of this file
             res = client.get(
-                url_for("ui.ui_preview.preview_page", uuid="first"),
+                url_for("ui.ui_preview.preview_page", uuid=uuid),
                 follow_redirects=True
             )
             assert b'_runner_test_various_file_slash' in res.data
@@ -164,18 +158,11 @@ def test_xss(client, live_server, measure_memory_usage, datastore_path):
 
 def test_xss_watch_last_error(client, live_server, measure_memory_usage, datastore_path):
     set_original_response(datastore_path=datastore_path)
-    # Add our URL to the import page
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": url_for('test_endpoint', _external=True)},
-        follow_redirects=True
-    )
-
-    assert b"1 Imported" in res.data
-
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
     wait_for_all_checks(client)
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
             "include_filters": '<a href="https://foobar"></a><script>alert(123);</script>',
             "url": url_for('test_endpoint', _external=True),
@@ -360,13 +347,8 @@ def test_login_redirect_from_protected_page(client, live_server, measure_memory_
 
     # Add a watch first
     set_original_response(datastore_path=datastore_path)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": url_for('test_endpoint', _external=True)},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
-    wait_for_all_checks(client)
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
 
     # Set a password
     password = "test123"
@@ -380,7 +362,7 @@ def test_login_redirect_from_protected_page(client, live_server, measure_memory_
 
     # Try to access a protected page (edit page for first watch)
     res = client.get(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         follow_redirects=False
     )
 
@@ -397,7 +379,7 @@ def test_login_redirect_from_protected_page(client, live_server, measure_memory_
     # The redirect parameter should be preserved in the login form
     # It should contain the edit page URL
     assert b'name="redirect"' in res.data
-    assert b'value="/edit/first"' in res.data or b'value="%2Fedit%2Ffirst"' in res.data
+    assert f'value="/edit/{uuid}'.encode('utf8') in res.data or f'value="%2Fedit%2F{uuid}'.encode('utf-8') in res.data
 
     # Now login with correct password and the redirect parameter
     res = client.post(

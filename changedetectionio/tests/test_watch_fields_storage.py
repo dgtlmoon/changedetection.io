@@ -16,7 +16,7 @@ def test_check_watch_field_storage(client, live_server, measure_memory_usage, da
 
 
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={ "notification_urls": "json://127.0.0.1:30000\r\njson://128.0.0.1\r\n",
                "time_between_check-minutes": 126,
                "include_filters" : ".fooclass",
@@ -33,7 +33,7 @@ def test_check_watch_field_storage(client, live_server, measure_memory_usage, da
     assert b"Updated watch." in res.data
 
     res = client.get(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         follow_redirects=True
     )
     # checks that we dont get an error when using blank lines in the field value

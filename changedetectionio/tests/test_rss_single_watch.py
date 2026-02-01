@@ -6,7 +6,8 @@ import xml.etree.ElementTree as ET
 from flask import url_for
 
 from .restock.test_restock import set_original_response
-from .util import live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, extract_UUID_from_client, delete_all_watches, set_modified_response
+from .util import live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, extract_UUID_from_client, delete_all_watches, \
+    set_modified_response, get_UUID_for_tag_name
 from ..notification import default_notification_format
 
 
@@ -290,6 +291,8 @@ def test_rss_single_watch_follow_notification_body(client, live_server, measure_
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, tag="RSS-Custom")
+    tag_uuid = get_UUID_for_tag_name(client=client, name="rss-custom")
+
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
@@ -316,7 +319,7 @@ def test_rss_single_watch_follow_notification_body(client, live_server, measure_
 
     ## Edit the tag notification_body, it should cascade up and become the RSS output
     res = client.post(
-        url_for("tags.form_tag_edit_submit", uuid="first"),
+        url_for("tags.form_tag_edit_submit", uuid=tag_uuid),
         data={"name": "rss-custom",
               "notification_body": 'Hello from the group/tag level'},
         follow_redirects=True

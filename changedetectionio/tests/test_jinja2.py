@@ -20,17 +20,13 @@ def test_jinja2_in_url_query(client, live_server, measure_memory_usage, datastor
     # because url_for() will URL-encode the var, but we dont here
     full_url = "{}?{}".format(test_url,
                               "date={% now 'Europe/Berlin', '%Y' %}.{% now 'Europe/Berlin', '%m' %}.{% now 'Europe/Berlin', '%d' %}", )
-    res = client.post(
-        url_for("ui.ui_views.form_quick_watch_add"),
-        data={"url": full_url, "tags": "test"},
-        follow_redirects=True
-    )
-    assert b"Watch added" in res.data
+
+    uuid = client.application.config.get('DATASTORE').add_watch(url=full_url)
     wait_for_all_checks(client)
 
     # It should report nothing found (no new 'has-unread-changes' class)
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
     assert b'date=2' in res.data
@@ -46,17 +42,13 @@ def test_jinja2_time_offset_in_url_query(client, live_server, measure_memory_usa
     # This should work now with our custom TimeExtension
     full_url = "{}?{}".format(test_url,
                               "timestamp={% now 'utc' - 'minutes=11', '%Y-%m-%d %H:%M' %}", )
-    res = client.post(
-        url_for("ui.ui_views.form_quick_watch_add"),
-        data={"url": full_url, "tags": "test"},
-        follow_redirects=True
-    )
-    assert b"Watch added" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=full_url)
+
     wait_for_all_checks(client)
 
     # Verify the URL was processed correctly (should not have errors)
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
     # Should have a valid timestamp in the response

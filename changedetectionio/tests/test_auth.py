@@ -18,7 +18,7 @@ def test_basic_auth(client, live_server, measure_memory_usage, datastore_path):
     time.sleep(1)
     # Check form validation
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={"include_filters": "", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
@@ -26,7 +26,7 @@ def test_basic_auth(client, live_server, measure_memory_usage, datastore_path):
 
     wait_for_all_checks(client)
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
 

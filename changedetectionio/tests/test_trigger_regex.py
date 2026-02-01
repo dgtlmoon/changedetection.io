@@ -43,7 +43,7 @@ def test_trigger_regex_functionality(client, live_server, measure_memory_usage, 
 
     ### test regex
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={"trigger_text": '/something \d{3}/',
               "url": test_url,
               "fetch_backend": "html_requests",
@@ -52,7 +52,7 @@ def test_trigger_regex_functionality(client, live_server, measure_memory_usage, 
     )
     wait_for_all_checks(client)
     # so that we set the state to 'has-unread-changes' after all the edits
-    client.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
+    client.get(url_for("ui.ui_diff.diff_history_page", uuid=uuid))
 
     with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("some new noise")

@@ -338,7 +338,7 @@ def queue_item_async_safe(update_q, item, silent=False):
 
 def shutdown_workers():
     """Shutdown all async workers brutally - no delays, no waiting"""
-    global worker_threads
+    global worker_threads, queue_executor
 
     # Check if we're in pytest environment - if so, be more gentle with logging
     import os
@@ -353,6 +353,17 @@ def shutdown_workers():
 
     # Clear immediately - threads are daemon and will die
     worker_threads.clear()
+
+    # Shutdown the queue executor to prevent "cannot schedule new futures after shutdown" errors
+    # This must happen AFTER workers are stopped to avoid race conditions
+    if queue_executor:
+        try:
+            queue_executor.shutdown(wait=False)
+            if not in_pytest:
+                logger.debug("Queue executor shut down")
+        except Exception as e:
+            if not in_pytest:
+                logger.warning(f"Error shutting down queue executor: {e}")
 
     if not in_pytest:
         logger.info("Async workers brutal shutdown complete")

@@ -162,7 +162,7 @@ def prepare_test_function(live_server, datastore_path):
     CRITICAL for xdist per-test isolation:
     - Reuses the SAME datastore instance (so blueprint references stay valid)
     - Clears all watches and state for a clean slate
-    - First watch will get uuid="first"
+    - First watch will get uuid=uuid
     """
     routes = [rule.rule for rule in live_server.app.url_map.iter_rules()]
     if '/test-random-content-endpoint' not in routes:

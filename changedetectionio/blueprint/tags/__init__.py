@@ -137,8 +137,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @login_optionally_required
     def form_tag_edit(uuid):
         from changedetectionio.blueprint.tags.form import group_restock_settings_form
-        if uuid == 'first':
-            uuid = list(datastore.data['settings']['application']['tags'].keys()).pop()
 
         default = datastore.data['settings']['application']['tags'].get(uuid)
         if not default:
@@ -199,8 +197,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @login_optionally_required
     def form_tag_edit_submit(uuid):
         from changedetectionio.blueprint.tags.form import group_restock_settings_form
-        if uuid == 'first':
-            uuid = list(datastore.data['settings']['application']['tags'].keys()).pop()
 
         default = datastore.data['settings']['application']['tags'].get(uuid)
 

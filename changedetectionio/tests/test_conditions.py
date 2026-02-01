@@ -69,7 +69,7 @@ def test_conditions_with_text_and_number(client, live_server, measure_memory_usa
     # 1. The page filtered text must contain "5" (first digit of value)
     # 2. The extracted number should be >= 20 and <= 100
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
             "url": test_url,
             "fetch_backend": "html_requests",
@@ -230,7 +230,7 @@ def test_wordcount_conditions_plugin(client, live_server, measure_memory_usage, 
 
     # Check it saved
     res = client.get(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
     )
 
     # Assert the word count is counted correctly

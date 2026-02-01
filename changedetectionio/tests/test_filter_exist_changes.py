@@ -51,15 +51,8 @@ def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_se
     # Give the endpoint time to spin up
     time.sleep(1)
     set_response_without_filter(datastore_path=datastore_path)
-
-    # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("ui.ui_views.form_quick_watch_add"),
-        data={"url": test_url, "tags": 'cinema'},
-        follow_redirects=True
-    )
-    assert b"Watch added" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
 
     # Give the thread time to pick up the first version
     time.sleep(3)
@@ -100,7 +93,7 @@ def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_se
         "time_between_check_use_default": "y"})
 
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data=notification_form_data,
         follow_redirects=True
     )

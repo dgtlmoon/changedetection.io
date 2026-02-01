@@ -40,7 +40,7 @@ def test_recheck_time_field_validation_single_watch(client, live_server, measure
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
             "url": test_url,
             'fetch_backend': "html_requests",
@@ -59,7 +59,7 @@ def test_recheck_time_field_validation_single_watch(client, live_server, measure
 
     # Now set some time
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
             "url": test_url,
             'fetch_backend': "html_requests",
@@ -78,7 +78,7 @@ def test_recheck_time_field_validation_single_watch(client, live_server, measure
 
     # Now set to use defaults
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
             "url": test_url,
             'fetch_backend': "html_requests",
@@ -184,14 +184,7 @@ def test_page_title_listing_behaviour(client, live_server, measure_memory_usage,
     assert b"Settings updated." in res.data
 
 
-    # Add our URL to the import page
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": url_for('test_endpoint', _external=True)},
-        follow_redirects=True
-    )
-
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=url_for('test_endpoint', _external=True))
     wait_for_all_checks(client)
 
     # We see the URL only, no title/description was manually entered
@@ -201,7 +194,7 @@ def test_page_title_listing_behaviour(client, live_server, measure_memory_usage,
 
     # Now 'my title' should override
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
         "url": url_for('test_endpoint', _external=True),
         "title": "my title",
@@ -229,7 +222,7 @@ def test_page_title_listing_behaviour(client, live_server, measure_memory_usage,
 
     # Remove page title description override and it should fall back to title
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
         "url": url_for('test_endpoint', _external=True),
         "title": "",
@@ -250,14 +243,9 @@ def test_ui_viewed_unread_flag(client, live_server, measure_memory_usage, datast
 
     set_original_response(datastore_path=datastore_path, extra_title="custom html")
 
-    # Add our URL to the import page
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": url_for('test_endpoint', _external=True)+"\r\n"+url_for('test_endpoint', _external=True)},
-        follow_redirects=True
-    )
+    uuidA = client.application.config.get('DATASTORE').add_watch(url= url_for('test_endpoint', _external=True))
+    uuidB = client.application.config.get('DATASTORE').add_watch(url=url_for('test_endpoint', _external=True))
 
-    assert b"2 Imported" in res.data
     wait_for_all_checks(client)
 
     set_modified_response(datastore_path=datastore_path)
@@ -269,7 +257,7 @@ def test_ui_viewed_unread_flag(client, live_server, measure_memory_usage, datast
     assert res.data.count(b'data-watch-uuid') == 2
 
     # one should now be viewed, but two in total still
-    client.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
+    client.get(url_for("ui.ui_diff.diff_history_page", uuid=uuidA))
     res = client.get(url_for("watchlist.index"))
     assert b'<span id="unread-tab-counter">1</span>' in res.data
     assert res.data.count(b'data-watch-uuid') == 2

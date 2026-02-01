@@ -39,13 +39,13 @@ def test_socks5_from_proxiesjson_file(client, live_server, measure_memory_usage,
     assert b"Watch added in Paused state, saving will unpause" in res.data
 
     res = client.get(
-        url_for("ui.ui_edit.edit_page", uuid="first", unpause_on_save=1),
+        url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
     )
     # check the proxy is offered as expected
     assert b'name="proxy" type="radio" value="socks5proxy"' in res.data
 
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first", unpause_on_save=1),
+        url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
         data={
             "include_filters": "",
             "fetch_backend": 'html_webdriver' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'html_requests',
@@ -61,7 +61,7 @@ def test_socks5_from_proxiesjson_file(client, live_server, measure_memory_usage,
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
 

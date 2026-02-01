@@ -107,7 +107,7 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={"ignore_text": ignore_text, "url": test_url, 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
@@ -115,7 +115,7 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
 
     # Check it saved
     res = client.get(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
     )
     assert bytes(ignore_text.encode('utf-8')) in res.data
 
@@ -131,7 +131,7 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
     assert b'/test-endpoint' in res.data
 
 
-    res = client.get(url_for("ui.ui_preview.preview_page", uuid="first"))
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid=uuid))
     # nothing ignored because none of the text matched
     assert b'ignored_line_numbers = []' in res.data
 
@@ -158,7 +158,7 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' in res.data
 
-    res = client.get(url_for("ui.ui_preview.preview_page", uuid="first"))
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid=uuid))
 
     # SHOULD BE be in the preview, it was added in set_modified_original_ignore_response()
     # and we have "new ignore stuff" in ignore_text
@@ -203,7 +203,7 @@ def _run_test_global_ignore(client, datastore_path, as_source=False, extra_ignor
 
     #Adding some ignore text should not trigger a change
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={"ignore_text": "something irrelevent but just to check", "url": test_url, 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )

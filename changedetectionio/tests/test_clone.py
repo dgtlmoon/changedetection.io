@@ -23,7 +23,7 @@ def test_clone_functionality(client, live_server, measure_memory_usage, datastor
     time.sleep(1)
 
     res = client.get(
-        url_for("ui.form_clone", uuid="first"),
+        url_for("ui.form_clone", uuid=uuid),
         follow_redirects=True
     )
     existing_uuids = set()

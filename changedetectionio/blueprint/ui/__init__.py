@@ -227,9 +227,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
             flash(gettext('The watch by UUID {} does not exist.').format(uuid), 'error')
             return redirect(url_for('watchlist.index'))
 
-        # More for testing, possible to return the first/only
-        if uuid == 'first':
-            uuid = list(datastore.data['watching'].keys()).pop()
         datastore.delete(uuid)
         flash(gettext('Deleted.'))
 
@@ -239,9 +236,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
     @login_optionally_required
     def form_clone():
         uuid = request.args.get('uuid')
-        # More for testing, possible to return the first/only
-        if uuid == 'first':
-            uuid = list(datastore.data['watching'].keys()).pop()
+
 
         new_uuid = datastore.clone(uuid)
 
@@ -367,9 +362,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
         import json
         from copy import deepcopy
 
-        # more for testing
-        if uuid == 'first':
-            uuid = list(datastore.data['watching'].keys()).pop()
 
         # copy it to memory as trim off what we dont need (history)
         watch = deepcopy(datastore.data['watching'].get(uuid))

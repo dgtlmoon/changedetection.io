@@ -34,7 +34,7 @@ def _runner_test_http_errors(client, live_server, http_code, expected_text, data
 
     # Error viewing tabs should appear
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
 
@@ -90,13 +90,8 @@ def test_low_level_errors_clear_correctly(client, live_server, measure_memory_us
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
+    uuidA = client.application.config.get('DATASTORE').add_watch(url="https://dfkjasdkfjaidjfsdajfksdajfksdjfDOESNTEXIST.com")
 
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": "https://dfkjasdkfjaidjfsdajfksdajfksdjfDOESNTEXIST.com"},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
     wait_for_all_checks(client)
 
     # We should see the DNS error
@@ -113,7 +108,7 @@ def test_low_level_errors_clear_correctly(client, live_server, measure_memory_us
 
     # Update with what should work
     client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuidA),
         data={
             "url": test_url,
             "fetch_backend": "html_requests",

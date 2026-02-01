@@ -11,12 +11,7 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
 
     # Set a URL and fetch it, then set a notification URL which is going to give errors
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("ui.ui_views.form_quick_watch_add"),
-        data={"url": test_url, "tags": ''},
-        follow_redirects=True
-    )
-    assert b"Watch added" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
 
     wait_for_all_checks(client)
     set_modified_response(datastore_path=datastore_path)
@@ -25,7 +20,7 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
     broken_notification_url = "jsons://broken-url-xxxxxxxx123/test"
 
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         # A URL with errors should not block the one that is working
         data={"notification_urls": f"{broken_notification_url}\r\n{working_notification_url}",
               "notification_title": "xxx",

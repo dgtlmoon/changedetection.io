@@ -21,7 +21,7 @@ def test_execute_custom_js(client, live_server, measure_memory_usage, datastore_
     assert b"Watch added in Paused state, saving will unpause" in res.data
 
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first", unpause_on_save=1),
+        url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
         data={
             "url": test_url,
             "tags": "",

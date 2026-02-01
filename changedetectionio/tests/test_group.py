@@ -51,31 +51,27 @@ def test_setup_group_tag(client, live_server, measure_memory_usage, datastore_pa
     )
     assert b"Tag added" in res.data
     assert b"test-tag" in res.data
+    tag_uuid = get_UUID_for_tag_name(client, name="test-tag")
 
     res = client.post(
-        url_for("tags.form_tag_edit_submit", uuid="first"),
+        url_for("tags.form_tag_edit_submit", uuid=tag_uuid),
         data={"name": "test-tag",
               "include_filters": '#only-this',
               "subtractive_selectors": '#not-this'},
         follow_redirects=True
     )
     assert b"Updated" in res.data
-    tag_uuid = get_UUID_for_tag_name(client, name="test-tag")
+
     res = client.get(
-        url_for("tags.form_tag_edit", uuid="first")
+        url_for("tags.form_tag_edit", uuid=tag_uuid)
     )
     assert b"#only-this" in res.data
     assert b"#not-this" in res.data
 
     # Tag should be setup and ready, now add a watch
 
-    test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url + "?first-imported=1 test-tag, extra-import-tag"},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    test_url = url_for('test_endpoint', _external=True)+"?first-imported=1"
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, tag="test-tag, extra-import-tag")
 
     res = client.get(url_for("watchlist.index"))
     assert b'import-tag' in res.data
@@ -94,14 +90,14 @@ def test_setup_group_tag(client, live_server, measure_memory_usage, datastore_pa
     assert b'Warning, no filters were found' not in res.data
 
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
     assert b'Should be only this' in res.data
     assert b'And never this' not in res.data
 
     res = client.get(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         follow_redirects=True
     )
     # 2307 the UI notice should appear in the placeholder
@@ -343,17 +339,17 @@ def test_order_of_filters_tag_filter_and_watch_filter(client, live_server, measu
             '#only-this',
             '#only-this',
             ]
-
+    tag_uuid = get_UUID_for_tag_name(client, name="test-tag-keep-order")
     res = client.post(
-        url_for("tags.form_tag_edit_submit", uuid="first"),
+        url_for("tags.form_tag_edit_submit", uuid=tag_uuid),
         data={"name": "test-tag-keep-order",
               "include_filters": '\n'.join(tag_filters) },
         follow_redirects=True
     )
     assert b"Updated" in res.data
-    tag_uuid = get_UUID_for_tag_name(client, name="test-tag-keep-order")
+
     res = client.get(
-        url_for("tags.form_tag_edit", uuid="first")
+        url_for("tags.form_tag_edit", uuid=tag_uuid)
     )
     assert b"#only-this" in res.data
 
@@ -409,7 +405,7 @@ def test_order_of_filters_tag_filter_and_watch_filter(client, live_server, measu
             ]
 
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={"include_filters": '\n'.join(filters),
             "url": test_url,
             "tags": "test-tag-keep-order",
@@ -422,7 +418,7 @@ def test_order_of_filters_tag_filter_and_watch_filter(client, live_server, measu
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
 

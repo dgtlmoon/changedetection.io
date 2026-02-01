@@ -121,7 +121,7 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
         "time_between_check_use_default": "y"})
 
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data=notification_form_data,
         follow_redirects=True
     )
@@ -131,7 +131,7 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
     # Hit the edit page, be sure that we saved it
     # Re #242 - wasnt saving?
     res = client.get(
-        url_for("ui.ui_edit.edit_page", uuid="first"))
+        url_for("ui.ui_edit.edit_page", uuid=uuid))
     assert bytes(notification_url.encode('utf-8')) in res.data
     assert bytes("New ChangeDetection.io Notification".encode('utf-8')) in res.data
 
@@ -227,7 +227,7 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
 
     set_original_response(datastore_path=datastore_path)
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
         "url": test_url,
         "tags": "my tag",

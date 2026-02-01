@@ -85,7 +85,7 @@ def test_check_filter_multiline(client, live_server, measure_memory_usage, datas
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={"include_filters": '',
               # Test a regex and a plaintext
               'extract_text': '/something.+?6 billion.+?lines/si\r\nand this should be',
@@ -107,7 +107,7 @@ def test_check_filter_multiline(client, live_server, measure_memory_usage, datas
     assert b'not at the start of the expression' not in res.data
 
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
     # Plaintext that doesnt look like a regex should match also
@@ -137,7 +137,7 @@ def test_check_filter_and_regex_extract(client, live_server, measure_memory_usag
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={"include_filters": include_filters,
               'extract_text': '/\d+ online/\r\n/\d+ guests/\r\n/somecase insensitive \d+/i\r\n/somecase insensitive (345\d)/i\r\n/issue1828.+?2022/i',
               "url": test_url,
@@ -174,7 +174,7 @@ def test_check_filter_and_regex_extract(client, live_server, measure_memory_usag
 
     # Check HTML conversion detected and workd
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
 

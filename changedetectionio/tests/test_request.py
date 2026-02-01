@@ -31,7 +31,7 @@ def test_headers_in_request(client, live_server, measure_memory_usage, datastore
 
     # Add some headers to a request
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
               "url": test_url,
               "tags": "",
@@ -48,7 +48,7 @@ def test_headers_in_request(client, live_server, measure_memory_usage, datastore
 
     # The service should echo back the request headers
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
 
@@ -92,7 +92,7 @@ def test_body_in_request(client, live_server, measure_memory_usage, datastore_pa
 
     # add the first 'version'
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
               "url": test_url,
               "tags": "",
@@ -110,7 +110,7 @@ def test_body_in_request(client, live_server, measure_memory_usage, datastore_pa
     body_value = 'Test Body Value {{ 1+1 }}'
     body_value_formatted = 'Test Body Value 2'
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
               "url": test_url,
               "tags": "",
@@ -126,7 +126,7 @@ def test_body_in_request(client, live_server, measure_memory_usage, datastore_pa
 
     # The service should echo back the body
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
 
@@ -157,7 +157,7 @@ def test_body_in_request(client, live_server, measure_memory_usage, datastore_pa
 
     # Attempt to add a body with a GET method
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
               "url": test_url,
               "tags": "",
@@ -190,7 +190,7 @@ def test_method_in_request(client, live_server, measure_memory_usage, datastore_
 
     # Attempt to add a method which is not valid
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
             "url": test_url,
             "tags": "",
@@ -203,7 +203,7 @@ def test_method_in_request(client, live_server, measure_memory_usage, datastore_
 
     # Add a properly formatted body
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
             "url": test_url,
             "tags": "",
@@ -219,7 +219,7 @@ def test_method_in_request(client, live_server, measure_memory_usage, datastore_
 
     # The service should echo back the request verb
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
 
@@ -265,7 +265,7 @@ def test_ua_global_override(client, live_server, measure_memory_usage, datastore
 
     wait_for_all_checks(client)
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
 
@@ -276,7 +276,7 @@ def test_ua_global_override(client, live_server, measure_memory_usage, datastore
 
     # Add some headers to a request
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
             "url": test_url,
             "tags": "testtag",
@@ -289,7 +289,7 @@ def test_ua_global_override(client, live_server, measure_memory_usage, datastore
     assert b"Updated watch." in res.data
     wait_for_all_checks(client)
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
     assert b"agent-from-watch" in res.data
@@ -342,7 +342,7 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage, 
 
     # Add some headers to a request
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
             "url": test_url,
             "tags": "testtag",
@@ -375,7 +375,7 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage, 
     if os.getenv('FAST_PUPPETEER_CHROME_FETCHER'):
         time.sleep(6)
 
-    res = client.get(url_for("ui.ui_edit.edit_page", uuid="first"))
+    res = client.get(url_for("ui.ui_edit.edit_page", uuid=uuid))
     assert b"Extra headers file found and will be added to this watch" in res.data
 
     # Not needed anymore
@@ -384,7 +384,7 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage, 
 
     # The service should echo back the request verb
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
 
@@ -414,7 +414,7 @@ def test_headers_validation(client, live_server, measure_memory_usage, datastore
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
             "url": test_url,
             "fetch_backend": 'html_requests',

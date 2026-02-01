@@ -48,7 +48,7 @@ def test_proxy_noconnect_custom(client, live_server, measure_memory_usage, datas
     }
 
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first", unpause_on_save=1),
+        url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
         data=options,
         follow_redirects=True
     )

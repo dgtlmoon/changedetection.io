@@ -35,9 +35,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             flash(gettext("No watches to edit"), "error")
             return redirect(url_for('watchlist.index'))
 
-        if uuid == 'first':
-            uuid = list(datastore.data['watching'].keys()).pop()
-
         if not uuid in datastore.data['watching']:
             flash(gettext("No watch with the UUID {} found.").format(uuid), "error")
             return redirect(url_for('watchlist.index'))

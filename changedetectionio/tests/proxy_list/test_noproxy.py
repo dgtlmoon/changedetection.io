@@ -13,7 +13,7 @@ def test_noproxy_option(client, live_server, measure_memory_usage, datastore_pat
 
     # Should only be available when a proxy is setup
     res = client.get(
-        url_for("ui.ui_edit.edit_page", uuid="first", unpause_on_save=1))
+        url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1))
     assert b'No proxy' not in res.data
 
     # Setup a proxy

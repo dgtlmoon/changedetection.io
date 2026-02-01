@@ -3,7 +3,8 @@ import os
 import time
 
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks, wait_for_notification_endpoint_output, extract_UUID_from_client, delete_all_watches
+from .util import live_server_setup, wait_for_all_checks, wait_for_notification_endpoint_output, extract_UUID_from_client, \
+    delete_all_watches, get_UUID_for_tag_name
 from ..notification import default_notification_format
 
 instock_props = [
@@ -83,11 +84,7 @@ def test_itemprop_price_change(client, live_server, measure_memory_usage, datast
     test_url = url_for('test_endpoint', _external=True)
 
     set_original_response(props_markup=instock_props[0], price="190.95", datastore_path=datastore_path)
-    client.post(
-        url_for("ui.ui_views.form_quick_watch_add"),
-        data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
-        follow_redirects=True
-    )
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, tag='restock tests', extras={'processor': 'restock_diff'})
 
     # A change in price, should trigger a change by default
     wait_for_all_checks(client)
@@ -108,7 +105,7 @@ def test_itemprop_price_change(client, live_server, measure_memory_usage, datast
     # turning off price change trigger, but it should show the new price, with no change notification
     set_original_response(props_markup=instock_props[0], price='120.45', datastore_path=datastore_path)
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={"restock_settings-follow_price_changes": "", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
@@ -129,11 +126,9 @@ def _run_test_minmax_limit(client, extra_watch_edit_form, datastore_path):
     test_url = url_for('test_endpoint', _external=True)
 
     set_original_response(props_markup=instock_props[0], price="950.95", datastore_path=datastore_path)
-    client.post(
-        url_for("ui.ui_views.form_quick_watch_add"),
-        data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
-        follow_redirects=True
-    )
+
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, tag='restock tests', extras={'processor': 'restock_diff'})
+
     wait_for_all_checks(client)
 
     data = {
@@ -146,7 +141,7 @@ def _run_test_minmax_limit(client, extra_watch_edit_form, datastore_path):
     }
     data.update(extra_watch_edit_form)
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data=data,
         follow_redirects=True
     )
@@ -211,18 +206,18 @@ def test_restock_itemprop_minmax(client, live_server, measure_memory_usage, data
     _run_test_minmax_limit(client, extra_watch_edit_form=extras, datastore_path=datastore_path)
 
 def test_restock_itemprop_with_tag(client, live_server, measure_memory_usage, datastore_path):
-    
 
+    tag_name = "test-tag"
     res = client.post(
         url_for("tags.form_tag_add"),
-        data={"name": "test-tag"},
+        data={"name": tag_name},
         follow_redirects=True
     )
     assert b"Tag added" in res.data
-
+    tag_uuid = get_UUID_for_tag_name(client, name=tag_name)
     res = client.post(
-        url_for("tags.form_tag_edit_submit", uuid="first"),
-        data={"name": "test-tag",
+        url_for("tags.form_tag_edit_submit", uuid=tag_uuid),
+        data={"name": tag_name,
               "restock_settings-follow_price_changes": "y",
               "restock_settings-price_change_min": 900.0,
               "restock_settings-price_change_max": 1100.10,
@@ -232,7 +227,7 @@ def test_restock_itemprop_with_tag(client, live_server, measure_memory_usage, da
     )
 
     extras = {
-        "tags": "test-tag"
+        "tags": tag_name
     }
 
     _run_test_minmax_limit(client, extra_watch_edit_form=extras,datastore_path=datastore_path)

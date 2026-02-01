@@ -67,6 +67,17 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                 logger.info(f"Worker {worker_id} idle and reached max runtime ({runtime:.0f}s), restarting")
                 return "restart"
             continue
+        except RuntimeError as e:
+            # Handle executor shutdown gracefully - this is expected during shutdown
+            if "cannot schedule new futures after shutdown" in str(e):
+                # Executor shut down - exit gracefully without logging in pytest
+                if not IN_PYTEST:
+                    logger.debug(f"Worker {worker_id} detected executor shutdown, exiting")
+                break
+            # Other RuntimeError - log and continue
+            logger.error(f"Worker {worker_id} runtime error: {e}")
+            await asyncio.sleep(0.1)
+            continue
         except Exception as e:
             # Handle expected Empty exception from queue timeout
             import queue
