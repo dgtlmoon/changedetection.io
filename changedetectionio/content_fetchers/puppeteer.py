@@ -277,7 +277,7 @@ class fetcher(Fetcher):
         self.page = await self.browser.newPage()
         
         # Block image requests to improve performance and reduce bandwidth (if enabled)
-        if getattr(self, 'block_assets', False):
+        if self.block_assets:
             await self.page.setRequestInterception(True)
             
             async def handle_request(request):

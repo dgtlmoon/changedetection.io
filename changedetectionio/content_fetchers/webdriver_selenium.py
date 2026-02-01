@@ -85,7 +85,7 @@ class fetcher(Fetcher):
             options = ChromeOptions()
 
             # Block images if block_assets is enabled
-            if getattr(self, 'block_assets', False):
+            if self.block_assets:
                 options.add_experimental_option("prefs",
                     {"profile.managed_default_content_settings.images": 2}
                 )
