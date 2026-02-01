@@ -91,7 +91,8 @@ class WorkerThread:
         self.thread.start()
 
     def stop(self):
-        """Stop the worker thread"""
+        """Stop the worker thread brutally - no waiting"""
+        # Try to stop the event loop if it exists
         if self.loop and self.running:
             try:
                 # Signal the loop to stop
@@ -99,8 +100,7 @@ class WorkerThread:
             except RuntimeError:
                 pass
 
-        if self.thread and self.thread.is_alive():
-            self.thread.join(timeout=2.0)
+        # Don't wait - thread is daemon and will die when needed
 
 
 def start_async_workers(n_workers, update_q, notification_q, app, datastore):
@@ -125,7 +125,7 @@ def start_async_workers(n_workers, update_q, notification_q, app, datastore):
 
 async def start_single_async_worker(worker_id, update_q, notification_q, app, datastore, executor=None):
     """Start a single async worker with auto-restart capability"""
-    from changedetectionio.async_update_worker import async_update_worker
+    from changedetectionio.worker import async_update_worker
 
     # Check if we're in pytest environment - if so, be more gentle with logging
     import os
@@ -337,7 +337,7 @@ def queue_item_async_safe(update_q, item, silent=False):
 
 
 def shutdown_workers():
-    """Shutdown all async workers fast and aggressively"""
+    """Shutdown all async workers brutally - no delays, no waiting"""
     global worker_threads
 
     # Check if we're in pytest environment - if so, be more gentle with logging
@@ -345,16 +345,17 @@ def shutdown_workers():
     in_pytest = "pytest" in os.sys.modules or "PYTEST_CURRENT_TEST" in os.environ
 
     if not in_pytest:
-        logger.info("Fast shutdown of async workers initiated...")
+        logger.info("Brutal shutdown of async workers initiated...")
 
-    # Stop all worker threads
+    # Stop all worker event loops
     for worker in worker_threads:
         worker.stop()
 
+    # Clear immediately - threads are daemon and will die
     worker_threads.clear()
 
     if not in_pytest:
-        logger.info("Async workers fast shutdown complete")
+        logger.info("Async workers brutal shutdown complete")
 
 
 

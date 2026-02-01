@@ -102,8 +102,8 @@ def sigshutdown_handler(_signo, _stack_frame):
 
     # Shutdown workers and queues immediately
     try:
-        from changedetectionio import worker_handler
-        worker_handler.shutdown_workers()
+        from changedetectionio import worker_pool
+        worker_pool.shutdown_workers()
     except Exception as e:
         logger.error(f"Error shutting down workers: {str(e)}")
     
@@ -415,12 +415,12 @@ def main():
     # This must happen AFTER app initialization so update_q is available
     if batch_mode and added_watch_uuids:
         from changedetectionio.flask_app import update_q
-        from changedetectionio import queuedWatchMetaData, worker_handler
+        from changedetectionio import queuedWatchMetaData, worker_pool
 
         logger.info(f"Batch mode: Queuing {len(added_watch_uuids)} newly added watches")
         for watch_uuid in added_watch_uuids:
             try:
-                worker_handler.queue_item_async_safe(
+                worker_pool.queue_item_async_safe(
                     update_q,
                     queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid})
                 )
@@ -432,7 +432,7 @@ def main():
     # This must happen AFTER app initialization so update_q is available
     if recheck_watches is not None:
         from changedetectionio.flask_app import update_q
-        from changedetectionio import queuedWatchMetaData, worker_handler
+        from changedetectionio import queuedWatchMetaData, worker_pool
 
         watches_to_queue = []
         if recheck_watches == 'all':
@@ -454,7 +454,7 @@ def main():
         for watch_uuid in watches_to_queue:
             if watch_uuid in datastore.data['watching']:
                 try:
-                    worker_handler.queue_item_async_safe(
+                    worker_pool.queue_item_async_safe(
                         update_q,
                         queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid})
                     )
@@ -516,7 +516,7 @@ def main():
             for watch_uuid in watches_to_queue:
                 if watch_uuid in datastore.data['watching']:
                     try:
-                        worker_handler.queue_item_async_safe(
+                        worker_pool.queue_item_async_safe(
                             update_q,
                             queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid})
                         )
@@ -549,7 +549,7 @@ def main():
                     logger.info(f"Batch mode: Waiting for iteration {current_iteration}/{total_iterations} to complete...")
 
                     # Use the shared wait_for_all_checks function
-                    completed = worker_handler.wait_for_all_checks(update_q, timeout=300)
+                    completed = worker_pool.wait_for_all_checks(update_q, timeout=300)
 
                     if not completed:
                         logger.warning(f"Batch mode: Iteration {current_iteration} timed out after 300 seconds")

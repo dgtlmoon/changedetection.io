@@ -29,6 +29,24 @@ def reportlog(pytestconfig):
     logger.remove(handler_id)
 
 
+@pytest.fixture(scope="session")
+def live_server_options():
+    """Configure live_server to run in threaded mode for concurrent requests.
+
+    CRITICAL: Without threaded=True, the test server is single-threaded and will
+    serialize all requests. This breaks tests that verify concurrent worker behavior.
+
+    With threaded=True:
+    - Multiple workers can fetch from test server concurrently
+    - Test endpoints with time.sleep(delay) don't block other requests
+    - Real concurrency testing is possible
+    """
+    return {
+        'threaded': True,  # Enable multi-threading for concurrent requests
+        'port': 0,         # Use random available port
+    }
+
+
 @pytest.fixture
 def environment(mocker):
     """Mock arrow.now() to return a fixed datetime for testing jinja2 time extension."""
@@ -187,6 +205,54 @@ def prepare_test_function(live_server, datastore_path):
     logger.debug(f"prepare_test_function: Reloaded datastore at {hex(id(datastore))}")
     logger.debug(f"prepare_test_function: Path {datastore.datastore_path}")
 
+    # Add test helper methods to the app for worker management
+    def set_workers(count):
+        """Set the number of workers for testing - brutal shutdown, no delays"""
+        from changedetectionio import worker_pool
+        from changedetectionio.flask_app import update_q, notification_q
+
+        current_count = worker_pool.get_worker_count()
+
+        # Special case: Setting to 0 means shutdown all workers brutally
+        if count == 0:
+            logger.debug(f"Brutally shutting down all {current_count} workers")
+            worker_pool.shutdown_workers()
+            return {
+                'status': 'success',
+                'message': f'Shutdown all {current_count} workers',
+                'previous_count': current_count,
+                'current_count': 0
+            }
+
+        # Adjust worker count (no delays, no verification)
+        result = worker_pool.adjust_async_worker_count(
+            count,
+            update_q=update_q,
+            notification_q=notification_q,
+            app=live_server.app,
+            datastore=datastore
+        )
+
+        return result
+
+    def check_all_workers_alive(expected_count):
+        """Check that all expected workers are alive"""
+        from changedetectionio import worker_pool
+        from changedetectionio.flask_app import update_q, notification_q
+        result = worker_pool.check_worker_health(
+            expected_count,
+            update_q=update_q,
+            notification_q=notification_q,
+            app=live_server.app,
+            datastore=datastore
+        )
+        assert result['status'] == 'healthy', f"Workers not healthy: {result['message']}"
+        return result
+
+    # Attach helper methods to app for easy test access
+    live_server.app.set_workers = set_workers
+    live_server.app.check_all_workers_alive = check_all_workers_alive
+
     yield
 
     # Cleanup: Clear watches and queue after test
@@ -262,8 +328,8 @@ def app(request, datastore_path):
 
         # Shutdown workers gracefully before loguru cleanup
         try:
-            from changedetectionio import worker_handler
-            worker_handler.shutdown_workers()
+            from changedetectionio import worker_pool
+            worker_pool.shutdown_workers()
         except Exception:
             pass
 

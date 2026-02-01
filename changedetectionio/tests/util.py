@@ -140,13 +140,13 @@ def delete_all_watches(client=None):
 def wait_for_all_checks(client=None):
     """
     Waits until the queue is empty and workers are idle.
-    Delegates to worker_handler.wait_for_all_checks for shared logic.
+    Delegates to worker_pool.wait_for_all_checks for shared logic.
     """
     from changedetectionio.flask_app import update_q as global_update_q
-    from changedetectionio import worker_handler
+    from changedetectionio import worker_pool
     time.sleep(0.05)
     # Use the shared wait logic from worker_handler
-    return worker_handler.wait_for_all_checks(global_update_q, timeout=150)
+    return worker_pool.wait_for_all_checks(global_update_q, timeout=150)
 
 def wait_for_watch_history(client, min_history_count=2, timeout=10):
     """

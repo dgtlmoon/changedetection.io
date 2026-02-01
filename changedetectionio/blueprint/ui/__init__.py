@@ -10,7 +10,7 @@ from changedetectionio.blueprint.ui.notification import construct_blueprint as c
 from changedetectionio.blueprint.ui.views import construct_blueprint as construct_views_blueprint
 from changedetectionio.blueprint.ui import diff, preview
 
-def _handle_operations(op, uuids, datastore, worker_handler, update_q, queuedWatchMetaData, watch_check_update, extra_data=None, emit_flash=True):
+def _handle_operations(op, uuids, datastore, worker_pool, update_q, queuedWatchMetaData, watch_check_update, extra_data=None, emit_flash=True):
     from flask import request, flash
 
     if op == 'delete':
@@ -63,7 +63,7 @@ def _handle_operations(op, uuids, datastore, worker_handler, update_q, queuedWat
         for uuid in uuids:
             if datastore.data['watching'].get(uuid):
                 # Recheck and require a full reprocessing
-                worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+                worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
         if emit_flash:
             flash(gettext("{} watches queued for rechecking").format(len(uuids)))
 
@@ -114,7 +114,7 @@ def _handle_operations(op, uuids, datastore, worker_handler, update_q, queuedWat
         for uuid in uuids:
             watch_check_update.send(watch_uuid=uuid)
 
-def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handler, queuedWatchMetaData, watch_check_update):
+def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, queuedWatchMetaData, watch_check_update):
     ui_blueprint = Blueprint('ui', __name__, template_folder="templates")
     
     # Register the edit blueprint
@@ -246,7 +246,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
         new_uuid = datastore.clone(uuid)
 
         if not datastore.data['watching'].get(uuid).get('paused'):
-            worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=5, item={'uuid': new_uuid}))
+            worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=5, item={'uuid': new_uuid}))
 
         flash(gettext('Cloned, you are editing the new watch.'))
 
@@ -262,10 +262,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
 
         if uuid:
             # Single watch - check if already queued or running
-            if worker_handler.is_watch_running(uuid) or uuid in update_q.get_queued_uuids():
+            if worker_pool.is_watch_running(uuid) or uuid in update_q.get_queued_uuids():
                 flash(gettext("Watch is already queued or being checked."))
             else:
-                worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+                worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
                 flash(gettext("Queued 1 watch for rechecking."))
         else:
             # Multiple watches - first count how many need to be queued
@@ -284,7 +284,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
             if len(watches_to_queue) < 20:
                 # Get already queued/running UUIDs once (efficient)
                 queued_uuids = set(update_q.get_queued_uuids())
-                running_uuids = set(worker_handler.get_running_uuids())
+                running_uuids = set(worker_pool.get_running_uuids())
 
                 # Filter out watches that are already queued or running
                 watches_to_queue_filtered = []
@@ -294,7 +294,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
 
                 # Queue only the filtered watches
                 for watch_uuid in watches_to_queue_filtered:
-                    worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
+                    worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
 
                 # Provide feedback about skipped watches
                 skipped_count = len(watches_to_queue) - len(watches_to_queue_filtered)
@@ -310,7 +310,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
                 # 20+ watches - queue in background thread to avoid blocking HTTP response
                 # Capture queued/running state before background thread
                 queued_uuids = set(update_q.get_queued_uuids())
-                running_uuids = set(worker_handler.get_running_uuids())
+                running_uuids = set(worker_pool.get_running_uuids())
 
                 def queue_watches_background():
                     """Background thread to queue watches - discarded after completion."""
@@ -320,7 +320,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
                         for watch_uuid in watches_to_queue:
                             # Check if already queued or running (state captured at start)
                             if watch_uuid not in queued_uuids and watch_uuid not in running_uuids:
-                                worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
+                                worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
                                 queued_count += 1
                             else:
                                 skipped_count += 1
@@ -349,7 +349,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_handle
             extra_data=extra_data,
             queuedWatchMetaData=queuedWatchMetaData,
             uuids=uuids,
-            worker_handler=worker_handler,
+            worker_pool=worker_pool,
             update_q=update_q,
             watch_check_update=watch_check_update,
             op=op,

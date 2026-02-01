@@ -9,7 +9,7 @@ from jinja2 import Environment, FileSystemLoader
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
 from changedetectionio.time_handler import is_within_schedule
-from changedetectionio import worker_handler
+from changedetectionio import worker_pool
 
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData):
     edit_blueprint = Blueprint('ui_edit', __name__, template_folder="../ui/templates")
@@ -283,7 +283,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             #############################
             if not datastore.data['watching'][uuid].get('paused') and is_in_schedule:
                 # Queue the watch for immediate recheck, with a higher priority
-                worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+                worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
 
             # Diff page [edit] link should go back to diff page
             if request.args.get("next") and request.args.get("next") == 'diff':
@@ -314,7 +314,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             app_rss_token = datastore.data['settings']['application'].get('rss_access_token'),
 
             c = [f"processor-{watch.get('processor')}"]
-            if worker_handler.is_watch_running(uuid):
+            if worker_pool.is_watch_running(uuid):
                 c.append('checking-now')
 
             template_args = {

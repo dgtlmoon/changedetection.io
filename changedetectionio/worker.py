@@ -54,7 +54,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
 
         try:
             # Use async interface with custom executor to avoid thread pool exhaustion
-            # With 30+ workers, we need executor sized to match (see worker_handler.py)
+            # With 30+ workers, we need executor sized to match (see worker_pool.py)
             queued_item_data = await asyncio.wait_for(
                 q.async_get(executor=executor),
                 timeout=1.0
@@ -91,11 +91,11 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
         uuid = queued_item_data.item.get('uuid')
 
         # RACE CONDITION FIX: Atomically claim this UUID for processing
-        from changedetectionio import worker_handler
+        from changedetectionio import worker_pool
         from changedetectionio.queuedWatchMetaData import PrioritizedItem
 
         # Try to claim the UUID atomically - prevents duplicate processing
-        if not worker_handler.claim_uuid_for_processing(uuid, worker_id):
+        if not worker_pool.claim_uuid_for_processing(uuid, worker_id):
             # Already being processed by another worker
             logger.trace(f"Worker {worker_id} detected UUID {uuid} already being processed - deferring")
 
@@ -105,7 +105,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
             # Re-queue with lower priority so it gets checked again after current processing finishes
             deferred_priority = max(1000, queued_item_data.priority * 10)
             deferred_item = PrioritizedItem(priority=deferred_priority, item=queued_item_data.item)
-            worker_handler.queue_item_async_safe(q, deferred_item, silent=True)
+            worker_pool.queue_item_async_safe(q, deferred_item, silent=True)
             logger.debug(f"Worker {worker_id} re-queued UUID {uuid} for subsequent check")
             continue
 
@@ -490,7 +490,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     logger.error(f"Exception while cleaning/quit after calling browser: {e}")
                 try:
                     # Release UUID from processing (thread-safe)
-                    worker_handler.release_uuid_from_processing(uuid, worker_id=worker_id)
+                    worker_pool.release_uuid_from_processing(uuid, worker_id=worker_id)
                     
                     # Send completion signal
                     if watch:

@@ -6,7 +6,7 @@ from changedetectionio.favicon_utils import get_favicon_mime_type
 
 from . import auth
 from changedetectionio import queuedWatchMetaData, strtobool
-from changedetectionio import worker_handler
+from changedetectionio import worker_pool
 from flask import request, make_response, send_from_directory
 from flask_expects_json import expects_json
 from flask_restful import abort, Resource
@@ -85,7 +85,7 @@ class Watch(Resource):
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
 
         if request.args.get('recheck'):
-            worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+            worker_pool.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
             return "OK", 200
         if request.args.get('paused', '') == 'paused':
             self.datastore.data['watching'].get(uuid).pause()
@@ -477,7 +477,7 @@ class CreateWatch(Resource):
         new_uuid = self.datastore.add_watch(url=url, extras=extras, tag=tags)
         if new_uuid:
 # Dont queue because the scheduler will check that it hasnt been checked before anyway
-#            worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))
+#            worker_pool.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))
             return {'uuid': new_uuid}, 201
         else:
             return "Invalid or unsupported URL", 400
@@ -514,7 +514,7 @@ class CreateWatch(Resource):
             if len(watches_to_queue) < 20:
                 # Get already queued/running UUIDs once (efficient)
                 queued_uuids = set(self.update_q.get_queued_uuids())
-                running_uuids = set(worker_handler.get_running_uuids())
+                running_uuids = set(worker_pool.get_running_uuids())
 
                 # Filter out watches that are already queued or running
                 watches_to_queue_filtered = [
@@ -524,7 +524,7 @@ class CreateWatch(Resource):
 
                 # Queue only the filtered watches
                 for uuid in watches_to_queue_filtered:
-                    worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+                    worker_pool.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
 
                 # Provide feedback about skipped watches
                 skipped_count = len(watches_to_queue) - len(watches_to_queue_filtered)
@@ -536,7 +536,7 @@ class CreateWatch(Resource):
                 # 20+ watches - queue in background thread to avoid blocking API response
                 # Capture queued/running state before background thread
                 queued_uuids = set(self.update_q.get_queued_uuids())
-                running_uuids = set(worker_handler.get_running_uuids())
+                running_uuids = set(worker_pool.get_running_uuids())
 
                 def queue_all_watches_background():
                     """Background thread to queue all watches - discarded after completion."""
@@ -546,7 +546,7 @@ class CreateWatch(Resource):
                         for uuid in watches_to_queue:
                             # Check if already queued or running (state captured at start)
                             if uuid not in queued_uuids and uuid not in running_uuids:
-                                worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+                                worker_pool.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
                                 queued_count += 1
                             else:
                                 skipped_count += 1

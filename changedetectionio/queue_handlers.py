@@ -106,7 +106,7 @@ class RecheckPriorityQueue:
 
         except queue_module.Empty:
             # Queue is empty with timeout - expected behavior, re-raise without logging
-            raise
+            raise  # noqa
         except Exception as e:
             # Re-raise without logging - caller (worker) will handle and log appropriately
             raise
