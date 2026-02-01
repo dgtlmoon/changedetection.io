@@ -26,11 +26,17 @@ def test_queue_system(client, live_server, measure_memory_usage, datastore_path)
     )
     assert f"{items} Imported".encode('utf-8') in res.data
 
-    # Start 30 workers and verify all are alive
     client.application.set_workers(items)
 
     start = time.time()
     res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    time.sleep(delay/2)
+
+    # Verify all workers are idle (no UUIDs being processed)
+    from changedetectionio import worker_pool
+    running_uuids = worker_pool.get_running_uuids()
+    logger.debug( f"Should be atleast some workers running - {len(running_uuids)} UUIDs still being processed: {running_uuids}")
+    assert len(running_uuids) != 0, f"Should be atleast some workers running - {len(running_uuids)} UUIDs still being processed: {running_uuids}"
 
     wait_for_all_checks(client)
 
@@ -39,3 +45,8 @@ def test_queue_system(client, live_server, measure_memory_usage, datastore_path)
     logger.debug(f"All workers finished {items} items in less than {delay} seconds per job. {total_time}s total")
     # if there was a bug in queue handler not running parallel, this would blow out to items*delay seconds
     assert total_time < delay + 10, f"All workers finished {items} items in less than {delay} seconds per job, total time {total_time}s"
+
+    # Verify all workers are idle (no UUIDs being processed)
+    from changedetectionio import worker_pool
+    running_uuids = worker_pool.get_running_uuids()
+    assert len(running_uuids) == 0, f"Expected all workers to be idle, but {len(running_uuids)} UUIDs still being processed: {running_uuids}"
