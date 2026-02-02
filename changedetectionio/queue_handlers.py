@@ -49,12 +49,9 @@ class RecheckPriorityQueue:
             self._priority_items = []
             self._lock = threading.RLock()
 
-            # Async interface: threading.Event to wake async waiters across multiple event loops
-            # Each worker (in its own thread with own event loop) waits on this shared event
-            # threading.Event works across threads/loops, unlike asyncio.Event (loop-bound)
-            # This allows scaling to 100+ workers without thread pool exhaustion
-            self._async_event = threading.Event()
-            self._async_event_lock = threading.Lock()
+            # No event signaling needed - pure polling approach
+            # Workers check queue every 50ms (latency acceptable: 0-500ms)
+            # Scales to 1000+ workers: each sleeping worker = ~4KB coroutine, not thread
 
             # Signals for UI updates
             self.queue_length_signal = signal('queue_length')
@@ -86,10 +83,6 @@ class RecheckPriorityQueue:
                     self._priority_items.remove(item)
                     heapq.heapify(self._priority_items)
                     raise  # Re-raise to be caught by outer exception handler
-
-            # Signal async waiters (workers) that item is available
-            # This wakes all async workers waiting in async_get() without consuming threads
-            self._signal_async_waiters()
 
             # Signal emission after successful queue - log but don't fail the operation
             # Item is already safely queued, so signal failure shouldn't affect queue state
@@ -165,20 +158,22 @@ class RecheckPriorityQueue:
             logger.critical(f"CRITICAL: Failed to async put item {self._get_item_uuid(item)}: {str(e)}")
             return False
 
-    async def async_get(self, executor=None, timeout=1.0):
+    async def async_get(self, executor=None, timeout=0.9):
         """
-        Truly async get - NO executor threads consumed while waiting!
+        Pure async polling - NO executor threads consumed!
 
-        SCALABILITY: With 200 workers, this approach uses:
-        - 0 threads while waiting (pure coroutine suspension)
-        - vs run_in_executor which would block 200 threads
+        SCALABILITY: With 2000 workers, this approach uses:
+        - 0 threads while waiting (pure coroutine suspension via asyncio.sleep)
+        - vs run_in_executor which would block 2000 threads = executor exhaustion
 
-        MULTI-LOOP SUPPORT: Uses threading.Event which works across
-        multiple event loops (each worker has its own loop in its own thread).
+        POLLING: Checks queue every 50ms (latency: 0-50ms, acceptable for web monitoring)
+
+        MULTI-LOOP SUPPORT: Works across multiple event loops since each worker
+        has its own loop in its own thread. No event signaling = no loop binding issues.
 
         Args:
-            executor: Ignored (kept for API compatibility)
-            timeout: Maximum time to wait in seconds
+            executor: Ignored (kept for API compatibility with old code)
+            timeout: Maximum time to wait in seconds (default 0.9s)
 
         Returns:
             Item from queue
@@ -189,11 +184,10 @@ class RecheckPriorityQueue:
         logger.trace(f"RecheckQueue.async_get() called, timeout={timeout}")
         import asyncio
 
-        start_time = asyncio.get_event_loop().time()
-        end_time = start_time + timeout
+        end_time = asyncio.get_event_loop().time() + timeout
 
         while True:
-            # Try to get item without blocking
+            # Try to get item (non-blocking, thread-safe)
             with self._lock:
                 if self._priority_items:
                     item = heapq.heappop(self._priority_items)
@@ -213,23 +207,16 @@ class RecheckPriorityQueue:
                     logger.trace(f"RecheckQueue.async_get() successfully retrieved item: {self._get_item_uuid(item)}")
                     return item
 
-            # No item available - check if we should continue waiting
+            # No item - check timeout
             remaining = end_time - asyncio.get_event_loop().time()
             if remaining <= 0:
                 logger.trace(f"RecheckQueue.async_get() timed out - queue is empty")
                 raise queue.Empty()
 
-            # Check if event is signaled (non-blocking, thread-safe)
-            # threading.Event.is_set() works across multiple event loops
-            if self._async_event.is_set():
-                # Event signaled - clear it and loop back to check queue
-                self._async_event.clear()
-                continue
-
-            # No signal yet - sleep briefly and check again
-            # Short sleep (10ms) keeps workers responsive without busy-waiting
-            # 200 workers sleeping = 0 threads blocked (pure coroutine suspension)
-            sleep_time = min(0.01, remaining)  # 10ms or remaining time
+            # Sleep before next check (pure coroutine suspension - no thread blocked!)
+            # 50ms poll interval: workers check queue 20 times/sec
+            # With 2000 workers: 2000 × 4KB = 8MB RAM (vs 2000 threads = 16GB)
+            sleep_time = min(0.05, remaining)  # 50ms or remaining timeout
             await asyncio.sleep(sleep_time)
     
     # UTILITY METHODS
@@ -274,9 +261,6 @@ class RecheckPriorityQueue:
 
                 if drained > 0:
                     logger.debug(f"Cleared queue: removed {drained} notifications")
-
-            # Clear the async event
-            self._async_event.clear()
 
             return True
         except Exception as e:
@@ -418,16 +402,6 @@ class RecheckPriorityQueue:
         except Exception:
             pass
         return 'unknown'
-
-    def _signal_async_waiters(self):
-        """
-        Wake all async workers waiting for items (thread-safe).
-
-        Uses threading.Event which works across multiple event loops.
-        All workers (each in their own thread/loop) check is_set() and wake up.
-        """
-        # Set the threading.Event - thread-safe, works across all event loops
-        self._async_event.set()
 
     def _emit_put_signals(self, item):
         """Emit signals when item is added"""

@@ -60,7 +60,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
             # as coroutines (not threads) while waiting for items.
             # Short timeout (0.3s) for fast shutdown with zero performance penalty
             # since workers are coroutines, not threads - timeout just reschedules.
-            queued_item_data = await q.async_get(timeout=0.3)
+            queued_item_data = await q.async_get(timeout=0.9)
 
             # CRITICAL: Claim UUID immediately after getting from queue to prevent race condition
             # in wait_for_all_checks() which checks qsize() and running_uuids separately
