@@ -26,7 +26,8 @@ def test_select_custom(client, live_server, measure_memory_usage, datastore_path
     assert b"Settings updated." in res.data
 
 
-    uuid = client.application.config.get('DATASTORE').add_watch(url='https://changedetection.io/CHANGELOG.txt', extras={'paused': True})
+    uuid = client.application.config.get('DATASTORE').add_watch(url='https://changedetection.io/CHANGELOG.txt')
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.get(url_for("watchlist.index"))
