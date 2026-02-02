@@ -25,16 +25,22 @@ def test_select_custom(client, live_server, measure_memory_usage, datastore_path
 
     assert b"Settings updated." in res.data
 
+    res = client.post(
+        url_for("imports.import_page"),
+        # Because a URL wont show in squid/proxy logs due it being SSLed
+        # Use plain HTTP or a specific domain-name here
+        data={"urls": "https://changedetection.io/CHANGELOG.txt"},
+        follow_redirects=True
+    )
 
-    uuid = client.application.config.get('DATASTORE').add_watch(url='https://changedetection.io/CHANGELOG.txt')
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b"1 Imported" in res.data
     wait_for_all_checks(client)
 
     res = client.get(url_for("watchlist.index"))
     assert b'Proxy Authentication Required' not in res.data
 
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid=uuid),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
     # We should see something via proxy

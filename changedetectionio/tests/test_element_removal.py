@@ -155,15 +155,17 @@ def test_element_removal_full(client, live_server, measure_memory_usage, datasto
 
     # Add our URL to the import page
     test_url = url_for("test_endpoint", _external=True)
-    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-
+    res = client.post(
+        url_for("imports.import_page"), data={"urls": test_url}, follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
     wait_for_all_checks(client)
 
     # Goto the edit page, add the filter data
     # Not sure why \r needs to be added - absent of the #changetext this is not necessary
     subtractive_selectors_data = "header\r\nfooter\r\nnav\r\n#changetext"
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
             "subtractive_selectors": subtractive_selectors_data,
             "url": test_url,
@@ -179,7 +181,7 @@ def test_element_removal_full(client, live_server, measure_memory_usage, datasto
 
     # Check it saved
     res = client.get(
-        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
     )
     assert bytes(subtractive_selectors_data.encode("utf-8")) in res.data
 
@@ -190,7 +192,7 @@ def test_element_removal_full(client, live_server, measure_memory_usage, datasto
     wait_for_all_checks(client)
 
     # so that we set the state to 'has-unread-changes' after all the edits
-    client.get(url_for("ui.ui_diff.diff_history_page", uuid=uuid))
+    client.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
 
     #  Make a change to header/footer/nav
     set_modified_response(datastore_path=datastore_path)
@@ -237,7 +239,7 @@ body > table > tr:nth-child(3) > td:nth-child(3)""",
         wait_for_all_checks(client)
 
         res = client.get(
-            url_for("ui.ui_preview.preview_page", uuid=uuid),
+            url_for("ui.ui_preview.preview_page", uuid="first"),
             follow_redirects=True
         )
 

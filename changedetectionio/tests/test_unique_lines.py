@@ -86,7 +86,7 @@ def test_unique_lines_functionality(client, live_server, measure_memory_usage, d
 
     # Add our URL to the import page
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"check_unique_lines": "y",
               "url": test_url,
               "fetch_backend": "html_requests",
@@ -130,7 +130,7 @@ def test_sort_lines_functionality(client, live_server, measure_memory_usage, dat
 
     # Add our URL to the import page
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"sort_text_alphabetically": "n",
               "url": test_url,
               "fetch_backend": "html_requests",
@@ -152,7 +152,7 @@ def test_sort_lines_functionality(client, live_server, measure_memory_usage, dat
     assert b'has-unread-changes' in res.data
 
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid=uuid),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -176,7 +176,7 @@ def test_extra_filters(client, live_server, measure_memory_usage, datastore_path
 
     # Add our URL to the import page
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"remove_duplicate_lines": "y",
               "trim_text_whitespace": "y",
               "sort_text_alphabetically": "",  # leave this OFF for testing
@@ -195,7 +195,7 @@ def test_extra_filters(client, live_server, measure_memory_usage, datastore_path
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid=uuid)
+        url_for("ui.ui_preview.preview_page", uuid="first")
     )
 
     assert res.data.count(b"see what happens.") == 1

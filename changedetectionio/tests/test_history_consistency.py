@@ -162,7 +162,7 @@ def test_check_text_history_view(client, live_server, measure_memory_usage, data
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
-    res = client.get(url_for("ui.ui_diff.diff_history_page", uuid=uuid))
+    res = client.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
     assert b'test-one' in res.data
     assert b'test-two' in res.data
 
@@ -174,7 +174,7 @@ def test_check_text_history_view(client, live_server, measure_memory_usage, data
     wait_for_all_checks(client)
 
     # It should remember the last viewed time, so the first difference is not shown
-    res = client.get(url_for("ui.ui_diff.diff_history_page", uuid=uuid))
+    res = client.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
     assert b'test-three' in res.data
     assert b'test-two' in res.data
     assert b'test-one' not in res.data

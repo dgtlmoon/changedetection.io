@@ -56,7 +56,7 @@ def test_fetch_pdf(client, live_server, measure_memory_usage, datastore_path):
     # The original checksum should be not be here anymore (cdio adds it to the bottom of the text)
 
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid=uuid),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -64,7 +64,7 @@ def test_fetch_pdf(client, live_server, measure_memory_usage, datastore_path):
     assert changed_md5.encode('utf-8') in res.data
 
     res = client.get(
-        url_for("ui.ui_diff.diff_history_page", uuid=uuid),
+        url_for("ui.ui_diff.diff_history_page", uuid="first"),
         follow_redirects=True
     )
 

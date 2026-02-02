@@ -118,7 +118,7 @@ def test_check_xpath_filter_utf8(client, live_server, measure_memory_usage, data
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": filter, "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
@@ -167,7 +167,7 @@ def test_check_xpath_text_function_utf8(client, live_server, measure_memory_usag
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": filter, "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
@@ -178,7 +178,7 @@ def test_check_xpath_text_function_utf8(client, live_server, measure_memory_usag
 
     # The service should echo back the request headers
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid=uuid),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -204,7 +204,7 @@ def test_check_markup_xpath_filter_restriction(client, live_server, measure_memo
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": xpath_filter, "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
@@ -214,7 +214,7 @@ def test_check_markup_xpath_filter_restriction(client, live_server, measure_memo
     wait_for_all_checks(client)
 
     # view it/reset state back to viewed
-    client.get(url_for("ui.ui_diff.diff_history_page", uuid=uuid), follow_redirects=True)
+    client.get(url_for("ui.ui_diff.diff_history_page", uuid="first"), follow_redirects=True)
 
     #  Make a change
     set_modified_response(datastore_path=datastore_path)
@@ -237,7 +237,7 @@ def test_xpath_validation(client, live_server, measure_memory_usage, datastore_p
     wait_for_all_checks(client)
 
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": "/something horrible", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
@@ -253,7 +253,7 @@ def test_xpath23_prefix_validation(client, live_server, measure_memory_usage, da
     wait_for_all_checks(client)
 
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": "xpath:/something horrible", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
@@ -298,7 +298,7 @@ def test_xpath1_lxml(client, live_server, measure_memory_usage, datastore_path):
     wait_for_all_checks(client)
 
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": "xpath1://title/text()", "url": test_url, "tags": "", "headers": "",
               'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
@@ -310,7 +310,7 @@ def test_xpath1_lxml(client, live_server, measure_memory_usage, datastore_path):
     assert b'_ElementStringResult' not in res.data # tested with 5.1.1 when it was removed and 5.1.0
     assert b'Exception' not in res.data
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid=uuid),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -328,7 +328,7 @@ def test_xpath1_validation(client, live_server, measure_memory_usage, datastore_
     wait_for_all_checks(client)
 
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": "xpath1:/something horrible", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
@@ -349,7 +349,7 @@ def test_check_with_prefix_include_filters(client, live_server, measure_memory_u
     wait_for_all_checks(client)
 
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": "xpath://*[contains(@class, 'sametext')]", "url": test_url, "tags": "", "headers": "",
               'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
@@ -359,7 +359,7 @@ def test_check_with_prefix_include_filters(client, live_server, measure_memory_u
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid=uuid),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -396,7 +396,7 @@ def test_various_rules(client, live_server, measure_memory_usage, datastore_path
 
     for r in ['//div', '//a', 'xpath://div', 'xpath://a']:
         res = client.post(
-            url_for("ui.ui_edit.edit_page", uuid=uuid),
+            url_for("ui.ui_edit.edit_page", uuid="first"),
             data={"include_filters": r,
                   "url": test_url,
                   "tags": "",
@@ -423,7 +423,7 @@ def test_xpath_20(client, live_server, measure_memory_usage, datastore_path):
 
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": "//*[contains(@class, 'sametext')]|//*[contains(@class, 'changetext')]",
               "url": test_url,
               "tags": "",
@@ -437,7 +437,7 @@ def test_xpath_20(client, live_server, measure_memory_usage, datastore_path):
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid=uuid),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -457,7 +457,7 @@ def test_xpath_20_function_count(client, live_server, measure_memory_usage, data
     wait_for_all_checks(client)
 
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": "xpath:count(//div) * 123456789987654321",
               "url": test_url,
               "tags": "",
@@ -471,7 +471,7 @@ def test_xpath_20_function_count(client, live_server, measure_memory_usage, data
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid=uuid),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -490,7 +490,7 @@ def test_xpath_20_function_count2(client, live_server, measure_memory_usage, dat
     wait_for_all_checks(client)
 
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": "/html/body/count(div) * 123456789987654321",
               "url": test_url,
               "tags": "",
@@ -501,10 +501,12 @@ def test_xpath_20_function_count2(client, live_server, measure_memory_usage, dat
     )
 
     assert b"Updated watch." in res.data
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid=uuid),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -551,11 +553,16 @@ def _subtest_xpath_rss(client, datastore_path, content_type='text/html'):
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type=content_type, _external=True)
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
+        follow_redirects=True
+    )
 
-    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, extras={'paused': True})
+    assert b"Watch added in Paused state, saving will unpause" in res.data
 
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
+        url_for("ui.ui_edit.edit_page", uuid="first", unpause_on_save=1),
         data={
             "url": test_url,
             "include_filters": "xpath://item",
@@ -566,10 +573,11 @@ def _subtest_xpath_rss(client, datastore_path, content_type='text/html'):
         follow_redirects=True
     )
 
+    assert b"unpaused" in res.data
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid=uuid),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 

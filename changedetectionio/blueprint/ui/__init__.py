@@ -222,6 +222,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
     @login_optionally_required
     def form_delete():
         uuid = request.args.get('uuid')
+        # More for testing, possible to return the first/only
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
 
         if uuid != 'all' and not uuid in datastore.data['watching'].keys():
             flash(gettext('The watch by UUID {} does not exist.').format(uuid), 'error')
@@ -237,6 +240,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
     def form_clone():
         uuid = request.args.get('uuid')
 
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
 
         new_uuid = datastore.clone(uuid)
 

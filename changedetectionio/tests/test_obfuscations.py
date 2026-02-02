@@ -33,7 +33,7 @@ def test_obfuscations(client, live_server, measure_memory_usage, datastore_path)
 
     # Check HTML conversion detected and workd
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid=uuid),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 

@@ -77,7 +77,7 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
     # Some options should be enabled
     # @todo - in the future, the visibility should be toggled by JS from the request type setting
     res = client.get(
-        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         follow_redirects=True
     )
     assert b'notification_screenshot' in res.data
@@ -93,11 +93,17 @@ def test_basic_browserstep(client, live_server, measure_memory_usage, datastore_
     test_url = url_for('test_interactive_html_endpoint', _external=True)
     test_url = test_url.replace('localhost.localdomain', 'cdio')
     test_url = test_url.replace('localhost', 'cdio')
-    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, tag='nice one', extras={'paused': True})
-
 
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
+        follow_redirects=True
+    )
+
+    assert b"Watch added in Paused state, saving will unpause" in res.data
+
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid="first", unpause_on_save=1),
         data={
             "url": test_url,
             "tags": "",

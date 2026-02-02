@@ -76,7 +76,7 @@ def test_trigger_functionality(client, live_server, measure_memory_usage, datast
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"trigger_text": trigger_text,
               "ignore_text": "and more",
               "url": test_url,
@@ -89,14 +89,14 @@ def test_trigger_functionality(client, live_server, measure_memory_usage, datast
     wait_for_all_checks(client)
     # Check it saved
     res = client.get(
-        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
     )
     assert bytes(trigger_text.encode('utf-8')) in res.data
 
 
     
     # so that we set the state to 'has-unread-changes' after all the edits
-    client.get(url_for("ui.ui_diff.diff_history_page", uuid=uuid))
+    client.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
 
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -129,11 +129,11 @@ def test_trigger_functionality(client, live_server, measure_memory_usage, datast
 
     # https://github.com/dgtlmoon/changedetection.io/issues/616
     # Apparently the actual snapshot that contains the trigger never shows
-    res = client.get(url_for("ui.ui_diff.diff_history_page", uuid=uuid))
+    res = client.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
     assert b'Add to cart' in res.data
 
     # Check the preview/highlighter, we should be able to see what we triggered on, but it should be highlighted
-    res = client.get(url_for("ui.ui_preview.preview_page", uuid=uuid))
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid="first"))
     assert b'ignored_line_numbers = [8]' in res.data
 
     # We should be able to see what we triggered on

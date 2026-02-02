@@ -124,7 +124,7 @@ def test_basic_cdata_rss_markup(client, live_server, measure_memory_usage, datas
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid=uuid),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
     assert b'CDATA' not in res.data
@@ -166,7 +166,7 @@ def test_rss_xpath_filtering(client, live_server, measure_memory_usage, datastor
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid=uuid),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
     assert b'CDATA' not in res.data

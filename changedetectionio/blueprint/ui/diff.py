@@ -83,6 +83,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         If a processor doesn't have a difference module, falls back to text_json_diff.
         """
 
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
 
         try:
             watch = datastore.data['watching'][uuid]
@@ -143,6 +145,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         """
 
 
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
         try:
             watch = datastore.data['watching'][uuid]
         except KeyError:
@@ -196,6 +200,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         If a processor doesn't have an extract module, falls back to text_json_diff.
         """
 
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
 
         try:
             watch = datastore.data['watching'][uuid]
@@ -261,6 +267,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         - /diff/{uuid}/processor-asset/rendered_diff
         """
 
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
 
         try:
             watch = datastore.data['watching'][uuid]

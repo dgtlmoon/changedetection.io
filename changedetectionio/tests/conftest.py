@@ -29,24 +29,6 @@ def reportlog(pytestconfig):
     logger.remove(handler_id)
 
 
-@pytest.fixture(scope="session")
-def live_server_options():
-    """Configure live_server to run in threaded mode for concurrent requests.
-
-    CRITICAL: Without threaded=True, the test server is single-threaded and will
-    serialize all requests. This breaks tests that verify concurrent worker behavior.
-
-    With threaded=True:
-    - Multiple workers can fetch from test server concurrently
-    - Test endpoints with time.sleep(delay) don't block other requests
-    - Real concurrency testing is possible
-    """
-    return {
-        'threaded': True,  # Enable multi-threading for concurrent requests
-        'port': 0,         # Use random available port
-    }
-
-
 @pytest.fixture
 def environment(mocker):
     """Mock arrow.now() to return a fixed datetime for testing jinja2 time extension."""
@@ -162,7 +144,7 @@ def prepare_test_function(live_server, datastore_path):
     CRITICAL for xdist per-test isolation:
     - Reuses the SAME datastore instance (so blueprint references stay valid)
     - Clears all watches and state for a clean slate
-    - First watch will get uuid=uuid
+    - First watch will get uuid="first"
     """
     routes = [rule.rule for rule in live_server.app.url_map.iter_rules()]
     if '/test-random-content-endpoint' not in routes:
@@ -175,59 +157,13 @@ def prepare_test_function(live_server, datastore_path):
     # CRITICAL: Get datastore and stop it from writing stale data
     datastore = live_server.app.config.get('DATASTORE')
 
-    # CRITICAL: Clear ALL global state that persists between tests
-    from changedetectionio.flask_app import update_q, notification_q, notification_debug_log
-
-    # Clear update queue
+    # Clear the queue before starting the test to prevent state leakage
+    from changedetectionio.flask_app import update_q
     while not update_q.empty():
         try:
             update_q.get_nowait()
         except:
             break
-
-    # Clear notification queue (was missing!)
-    while not notification_q.empty():
-        try:
-            notification_q.get_nowait()
-        except:
-            break
-
-    # Clear notification debug log (accumulates across tests!)
-    notification_debug_log.clear()
-
-    # Clear SALTED_PASS env var if set by previous test
-    if 'SALTED_PASS' in os.environ:
-        del os.environ['SALTED_PASS']
-
-    # Stop background thread with longer timeout
-    datastore.stop_thread = True
-    if hasattr(datastore, 'save_data_thread') and datastore.save_data_thread:
-        datastore.save_data_thread.join(timeout=2.0)
-
-    # Prevent background thread from writing during cleanup/reload
-    datastore.needs_write = False
-    datastore.needs_write_urgent = False
-
-    # Reset dirty tracking
-    datastore._dirty_watches = set()
-    datastore._dirty_settings = False
-    datastore._watch_hashes = {}
-
-    # CRITICAL: Clean up any files from previous tests
-    cleanup(datastore_path)
-
-    # Reset stop_thread so reload_state can start new thread
-    datastore.stop_thread = False
-
-    # Reload state with clean data (no default watches)
-    datastore.reload_state(
-        datastore_path=datastore_path,
-        include_default_watches=False,
-        version_tag='0.0.0'
-    )
-    live_server.app.secret_key = init_app_secret(datastore_path)
-    logger.debug(f"prepare_test_function: Reloaded datastore at {hex(id(datastore))}")
-    logger.debug(f"prepare_test_function: Path {datastore.datastore_path}")
 
     # Add test helper methods to the app for worker management
     def set_workers(count):
@@ -237,7 +173,7 @@ def prepare_test_function(live_server, datastore_path):
 
         current_count = worker_pool.get_worker_count()
 
-        # Special case: Setting to 0 means shutdown all workers brutally
+       # Special case: Setting to 0 means shutdown all workers brutally
         if count == 0:
             logger.debug(f"Brutally shutting down all {current_count} workers")
             worker_pool.shutdown_workers()
@@ -276,6 +212,31 @@ def prepare_test_function(live_server, datastore_path):
     # Attach helper methods to app for easy test access
     live_server.app.set_workers = set_workers
     live_server.app.check_all_workers_alive = check_all_workers_alive
+
+
+
+
+    # Prevent background thread from writing during cleanup/reload
+    datastore.needs_write = False
+    datastore.needs_write_urgent = False
+
+    # CRITICAL: Clean up any files from previous tests
+    # This ensures a completely clean directory
+    cleanup(datastore_path)
+
+    # CRITICAL: Reload the EXISTING datastore instead of creating a new one
+    # This keeps blueprint references valid (they capture datastore at construction)
+    # reload_state() completely resets the datastore to a clean state
+
+    # Reload state with clean data (no default watches)
+    datastore.reload_state(
+        datastore_path=datastore_path,
+        include_default_watches=False,
+        version_tag=datastore.data.get('version_tag', '0.0.0')
+    )
+    live_server.app.secret_key = init_app_secret(datastore_path)
+    logger.debug(f"prepare_test_function: Reloaded datastore at {hex(id(datastore))}")
+    logger.debug(f"prepare_test_function: Path {datastore.datastore_path}")
 
     yield
 

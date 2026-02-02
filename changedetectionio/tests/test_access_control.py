@@ -12,7 +12,13 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         assert b"Remove password" not in res.data
 
         # add something that we can hit via diff page later
-        uuid = client.application.config.get('DATASTORE').add_watch(url=url_for('test_random_content_endpoint', _external=True))
+        res = c.post(
+            url_for("imports.import_page"),
+            data={"urls": url_for('test_random_content_endpoint', _external=True)},
+            follow_redirects=True
+        )
+
+        assert b"1 Imported" in res.data
         # causes a 'Popped wrong request context.' error when client. is accessed?
         wait_for_all_checks(client)
 
@@ -39,7 +45,7 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         assert b"Login" in res.data
 
         # The diff page should return something valid when logged out
-        res = c.get(url_for("ui.ui_diff.diff_history_page", uuid=uuid))
+        res = c.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
         assert b'Random content' in res.data
 
         # access to assets should work (check_authentication)
@@ -175,5 +181,5 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         assert res.status_code == 403
 
         # The diff page should return something valid when logged out
-        res = c.get(url_for("ui.ui_diff.diff_history_page", uuid=uuid))
+        res = c.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
         assert b'Random content' not in res.data

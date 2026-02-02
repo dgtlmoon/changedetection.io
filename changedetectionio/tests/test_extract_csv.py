@@ -18,9 +18,15 @@ def test_check_extract_text_from_diff(client, live_server, measure_memory_usage,
    #  live_server_setup(live_server) # Setup on conftest per function
 
     # Add our URL to the import page
-    uuid = client.application.config.get('DATASTORE').add_watch(url=url_for('test_endpoint', _external=True))
+    res = client.post(
+        url_for("imports.import_page"),
+        data={"urls": url_for('test_endpoint', _external=True)},
+        follow_redirects=True
+    )
+
+    assert b"1 Imported" in res.data
     wait_for_all_checks(client)
-    res = client.get(url_for("ui.ui_diff.diff_history_page_extract_GET", uuid=uuid))
+    res = client.get(url_for("ui.ui_diff.diff_history_page_extract_GET", uuid="first"))
     assert res.status_code == 200
     assert b'extract_regex' in res.data
 
@@ -40,7 +46,7 @@ def test_check_extract_text_from_diff(client, live_server, measure_memory_usage,
 
 
     res = client.post(
-        url_for("ui.ui_diff.diff_history_page_extract_POST", uuid=uuid),
+        url_for("ui.ui_diff.diff_history_page_extract_POST", uuid="first"),
         data={"extract_regex": "Now it's ([0-9\.]+)",
               "extract_submit_button": "Extract as CSV"},
         follow_redirects=False

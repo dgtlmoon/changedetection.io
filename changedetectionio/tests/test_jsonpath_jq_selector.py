@@ -208,9 +208,9 @@ def test_check_json_without_filter(client, live_server, measure_memory_usage, da
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
-    time.sleep(1)
+
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid=uuid),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -289,7 +289,7 @@ def check_json_filter_bool_val(json_filter, client, live_server, datastore_path)
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
-    res = client.get(url_for("ui.ui_diff.diff_history_page", uuid=uuid))
+    res = client.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
     # But the change should be there, tho its hard to test the change was detected because it will show old and new versions
     assert b'false' in res.data
 
@@ -353,7 +353,6 @@ def check_json_ext_filter(json_filter, client, live_server, datastore_path):
 
     watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
     dates = list(watch.history.keys())
-    time.sleep(1)
     snapshot_contents = watch.get_history_snapshot(timestamp=dates[0])
 
     assert snapshot_contents[0] == '['
@@ -362,7 +361,7 @@ def check_json_ext_filter(json_filter, client, live_server, datastore_path):
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' in res.data
 
-    res = client.get(url_for("ui.ui_preview.preview_page", uuid=uuid))
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid="first"))
 
     # We should never see 'ForSale' because we are selecting on 'Sold' in the rule,
     # But we should know it triggered ('has-unread-changes' assert above)
@@ -372,7 +371,7 @@ def check_json_ext_filter(json_filter, client, live_server, datastore_path):
 
     # And the difference should have both?
 
-    res = client.get(url_for("ui.ui_diff.diff_history_page", uuid=uuid))
+    res = client.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
     assert b'ForSale' in res.data
     assert b'Sold' in res.data
 
@@ -433,7 +432,7 @@ def test_correct_header_detect(client, live_server, measure_memory_usage, datast
     assert b'No parsable JSON found in this document' not in res.data
 
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid=uuid),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 

@@ -30,6 +30,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         from changedetectionio import processors
         import importlib
 
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
         # More for testing, possible to return the first/only
         if not datastore.data['watching'].keys():
             flash(gettext("No watches to edit"), "error")
@@ -368,6 +370,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         from flask import send_file
         import brotli
 
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
         watch = datastore.data['watching'].get(uuid)
         if watch and watch.history.keys() and os.path.isdir(watch.watch_data_dir):
             latest_filename = list(watch.history.keys())[-1]
@@ -392,6 +396,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
     def watch_get_preview_rendered(uuid):
         '''For when viewing the "preview" of the rendered text from inside of Edit'''
         from flask import jsonify
+
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
         from changedetectionio.processors.text_json_diff import prepare_filter_prevew
         result = prepare_filter_prevew(watch_uuid=uuid, form_data=request.form, datastore=datastore)
         return jsonify(result)

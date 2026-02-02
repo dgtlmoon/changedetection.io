@@ -95,8 +95,8 @@ def test_import_distillio(client, live_server, measure_memory_usage, datastore_p
 
     assert b"Unable to read JSON file, was it broken?" not in res.data
     assert b"1 Imported from Distill.io" in res.data
-    uuids = list(client.application.config.get('DATASTORE').data['watching'])
-    res = client.get( url_for("ui.ui_edit.edit_page", uuid=uuids[0]))
+
+    res = client.get( url_for("ui.ui_edit.edit_page", uuid="first"))
 
     assert b"https://unraid.net/blog" in res.data
     assert b"Unraid | News" in res.data

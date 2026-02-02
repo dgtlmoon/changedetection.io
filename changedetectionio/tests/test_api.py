@@ -253,7 +253,7 @@ def test_api_simple(client, live_server, measure_memory_usage, datastore_path):
 
     assert watch.get('viewed') == False
     # Loading the most recent snapshot should force viewed to become true
-    client.get(url_for("ui.ui_diff.diff_history_page", uuid=watch_uuid), follow_redirects=True)
+    client.get(url_for("ui.ui_diff.diff_history_page", uuid="first"), follow_redirects=True)
 
     time.sleep(3)
     # Fetch the whole watch again, viewed should be true

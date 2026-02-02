@@ -12,11 +12,16 @@ def test_execute_custom_js(client, live_server, measure_memory_usage, datastore_
     test_url = test_url.replace('localhost.localdomain', 'cdio')
     test_url = test_url.replace('localhost', 'cdio')
 
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
+        follow_redirects=True
+    )
 
-    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, extras={'paused': True})
+    assert b"Watch added in Paused state, saving will unpause" in res.data
 
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
+        url_for("ui.ui_edit.edit_page", uuid="first", unpause_on_save=1),
         data={
             "url": test_url,
             "tags": "",

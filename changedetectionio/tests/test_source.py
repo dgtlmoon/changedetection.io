@@ -22,7 +22,7 @@ def test_check_basic_change_detection_functionality_source(client, live_server, 
 
     # Check HTML conversion detected and workd
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid=uuid),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -43,7 +43,7 @@ def test_check_basic_change_detection_functionality_source(client, live_server, 
     assert b'has-unread-changes' in res.data
 
     res = client.get(
-        url_for("ui.ui_diff.diff_history_page", uuid=uuid),
+        url_for("ui.ui_diff.diff_history_page", uuid="first"),
         follow_redirects=True
     )
     # With diff-match-patch, HTML tags are properly tokenized and excluded from diff spans
@@ -67,7 +67,7 @@ def test_check_ignore_elements(client, live_server, measure_memory_usage, datast
     # We want <span> and <p> ONLY, but ignore span with .foobar-detection
 
     client.post(
-        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": 'span,p', "url": test_url, "tags": "", "subtractive_selectors": ".foobar-detection", 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
@@ -75,7 +75,7 @@ def test_check_ignore_elements(client, live_server, measure_memory_usage, datast
     time.sleep(sleep_time_for_fetch_thread)
 
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid=uuid),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
     assert b'foobar-detection' not in res.data
