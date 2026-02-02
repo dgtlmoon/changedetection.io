@@ -408,6 +408,7 @@ def test_data_sanity(client, live_server, measure_memory_usage, datastore_path):
         follow_redirects=True
     )
 
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
@@ -419,6 +420,7 @@ def test_data_sanity(client, live_server, measure_memory_usage, datastore_path):
         data={"url": test_url2, "tags": 'restock tests', 'processor': 'restock_diff'},
         follow_redirects=True
     )
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert str(res.data.decode()).count("950.95") == 1, "Price should only show once (for the watch added, no other watches yet)"

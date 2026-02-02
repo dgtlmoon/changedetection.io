@@ -242,8 +242,11 @@ def new_live_server_setup(live_server):
 
     @live_server.app.route('/test-endpoint')
     def test_endpoint():
-        from loguru import logger
-        logger.debug(f"/test-endpoint hit {request}")
+        # REMOVED: logger.debug() causes file locking between test process and Flask server process
+        # Flask server runs in separate multiprocessing.Process and inherited loguru tries to
+        # write to same log files, causing request handlers to block on file locks
+        # from loguru import logger
+        # logger.debug(f"/test-endpoint hit {request}")
         ctype = request.args.get('content_type')
         status_code = request.args.get('status_code')
         content = request.args.get('content') or None
@@ -275,17 +278,17 @@ def new_live_server_setup(live_server):
                 datastore_path = current_app.config.get('TEST_DATASTORE_PATH', 'test-datastore')
                 filepath = os.path.join(datastore_path, "endpoint-content.txt")
 
-                # Force filesystem sync before reading
-                try:
-                    os.sync()
-                except (AttributeError, PermissionError):
-                    pass
+                # REMOVED: os.sync() was blocking for many seconds during parallel tests
+                # With -n 6+ parallel tests, heavy I/O causes os.sync() to wait for ALL
+                # system writes to complete, causing "Read timed out" errors
+                # File writes from test code are already flushed by the time workers fetch
 
                 try:
                     with open(filepath, "rb") as f:
                         content_data = f.read()
                 except Exception as e:
-                    logger.error(f"Error reading endpoint-content.txt: {e}")
+                    # REMOVED: logger.error() causes file locking in multiprocess context
+                    # Just raise the exception directly for debugging
                     raise
 
             resp = make_response(content_data, status_code)

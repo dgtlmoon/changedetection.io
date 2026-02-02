@@ -62,13 +62,13 @@ class fetcher(Fetcher):
         from requests.adapters import HTTPAdapter
         from urllib3.util.retry import Retry
 
-        max_retries = int(os.getenv("REQUESTS_RETRY_MAX_COUNT", "3"))
+        max_retries = int(os.getenv("REQUESTS_RETRY_MAX_COUNT", "6"))
         retry_strategy = Retry(
             total=max_retries,
             connect=max_retries,  # Retry connection timeouts
             read=max_retries,     # Retry read timeouts
             status=0,             # Don't retry on HTTP status codes
-            backoff_factor=0.3,   # Wait 0.3s, 0.6s, 1.2s between retries
+            backoff_factor=0.5,   # Wait 0.3s, 0.6s, 1.2s between retries
             allowed_methods=["HEAD", "GET", "OPTIONS", "POST"],
             raise_on_status=False
         )

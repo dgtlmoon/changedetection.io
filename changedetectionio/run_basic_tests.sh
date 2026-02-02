@@ -65,14 +65,14 @@ data_sanity_test
 echo "-------------------- Running rest of tests in parallel -------------------------------"
 
 # REMOVE_REQUESTS_OLD_SCREENSHOTS disabled so that we can write a screenshot and send it in test_notifications.py without a real browser
-REMOVE_REQUESTS_OLD_SCREENSHOTS=false \
+FETCH_WORKERS=2 REMOVE_REQUESTS_OLD_SCREENSHOTS=false \
 pytest tests/test_*.py \
-  -n 12 \
+  -n 10 \
   --dist=load \
   -vvv \
   -s \
   --capture=no \
-  --ignore=tests/test_queue_handler.py \
+  -k "not test_queue_system"
   --log-cli-level=DEBUG \
   --log-cli-format="%(asctime)s [%(process)d] [%(levelname)s] %(name)s: %(message)s"
 
