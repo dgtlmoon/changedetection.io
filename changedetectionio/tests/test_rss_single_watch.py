@@ -23,6 +23,7 @@ def test_rss_feed_empty(client, live_server, measure_memory_usage, datastore_pat
     )
     assert res.status_code == 400
     assert b'does not have enough history snapshots to show' in res.data
+    delete_all_watches(client)
 
 def test_rss_single_watch_order(client, live_server, measure_memory_usage, datastore_path):
     """
