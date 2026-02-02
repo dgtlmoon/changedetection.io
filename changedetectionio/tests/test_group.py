@@ -166,7 +166,8 @@ def test_tag_add_in_ui(client, live_server, measure_memory_usage, datastore_path
     delete_all_watches(client)
 
 def test_group_tag_notification(client, live_server, measure_memory_usage, datastore_path):
-    
+    delete_all_watches(client)
+
     set_original_response(datastore_path=datastore_path)
 
     test_url = url_for('test_endpoint', _external=True)

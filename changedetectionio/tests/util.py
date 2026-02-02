@@ -135,7 +135,14 @@ def delete_all_watches(client=None):
     uuids = list(client.application.config.get('DATASTORE').data['watching'])
     for uuid in uuids:
         client.application.config.get('DATASTORE').delete(uuid)
+    from changedetectionio.flask_app import update_q
 
+    # Clear the queue to prevent leakage to next test
+    while not update_q.empty():
+        try:
+            update_q.get_nowait()
+        except:
+            break
 
 def wait_for_all_checks(client=None):
     """

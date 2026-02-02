@@ -224,6 +224,7 @@ def check_json_filter(json_filter, client, live_server, datastore_path):
     set_original_response(datastore_path=datastore_path)
 
 
+    delete_all_watches(client)
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, extras={"include_filters": json_filter.splitlines()})
