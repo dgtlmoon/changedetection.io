@@ -17,12 +17,12 @@ def test_headers_in_request(client, live_server, measure_memory_usage, datastore
         test_url = test_url.replace('localhost', 'changedet')
 
     # Add the test URL twice, we will check
-    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    uuidA = client.application.config.get('DATASTORE').add_watch(url=test_url)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
-    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    uuidB = client.application.config.get('DATASTORE').add_watch(url=test_url)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
@@ -31,7 +31,7 @@ def test_headers_in_request(client, live_server, measure_memory_usage, datastore
 
     # Add some headers to a request
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuidA),
         data={
               "url": test_url,
               "tags": "",
@@ -42,13 +42,14 @@ def test_headers_in_request(client, live_server, measure_memory_usage, datastore
     )
     assert b"Updated watch." in res.data
 
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick up the first version
     wait_for_all_checks(client)
 
     # The service should echo back the request headers
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid=uuidA),
         follow_redirects=True
     )
 
