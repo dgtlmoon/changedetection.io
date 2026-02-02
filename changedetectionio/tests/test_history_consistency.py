@@ -164,7 +164,7 @@ def test_check_text_history_view(client, live_server, measure_memory_usage, data
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
-    res = client.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
+    res = client.get(url_for("ui.ui_diff.diff_history_page", uuid=uuid))
     assert b'test-one' in res.data
     assert b'test-two' in res.data
 

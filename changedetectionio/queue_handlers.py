@@ -59,33 +59,44 @@ class RecheckPriorityQueue:
     # SYNC INTERFACE (for ticker thread)
     def put(self, item, block: bool = True, timeout: Optional[float] = None):
         """Thread-safe sync put with priority ordering"""
+        logger.trace(f"RecheckQueue.put() called for item: {self._get_item_uuid(item)}, block={block}, timeout={timeout}")
         try:
-            # Add to priority storage and notify waiters
+            # CRITICAL: Add to both priority storage AND notification queue atomically
+            # to prevent desynchronization where item exists but no notification
             with self._condition:
                 heapq.heappush(self._priority_items, item)
-                self._notification_queue.put(True, block=False)  # Notification only
-                self._condition.notify_all()  # Wake up any async waiters
 
-            # Emit signals
-            self._emit_put_signals(item)
+                # Add notification - use blocking with timeout for safety
+                # Notification queue is unlimited size, so should never block in practice
+                # but timeout ensures we detect any unexpected issues (deadlock, etc)
+                try:
+                    self._notification_queue.put(True, block=True, timeout=5.0)
+                except Exception as notif_e:
+                    # Notification failed - MUST remove from priority_items to keep in sync
+                    # This prevents "Priority queue inconsistency" errors in get()
+                    logger.critical(f"CRITICAL: Notification queue put failed, removing from priority_items: {notif_e}")
+                    self._priority_items.remove(item)
+                    heapq.heapify(self._priority_items)
+                    raise  # Re-raise to be caught by outer exception handler
+
+            # Signal emission after successful queue - log but don't fail the operation
+            # Item is already safely queued, so signal failure shouldn't affect queue state
+            try:
+                self._emit_put_signals(item)
+            except Exception as signal_e:
+                logger.error(f"Failed to emit put signals but item queued successfully: {signal_e}")
 
             logger.trace(f"Successfully queued item: {self._get_item_uuid(item)}")
             return True
 
         except Exception as e:
-            logger.critical(f"CRITICAL: Failed to put item {self._get_item_uuid(item)}: {str(e)}")
-            # Remove from priority storage if put failed
-            try:
-                with self._condition:
-                    if item in self._priority_items:
-                        self._priority_items.remove(item)
-                        heapq.heapify(self._priority_items)
-            except Exception as cleanup_e:
-                logger.critical(f"CRITICAL: Failed to cleanup after put failure: {str(e)}")
+            logger.critical(f"CRITICAL: Failed to put item {self._get_item_uuid(item)}: {type(e).__name__}: {str(e)}")
+            # Item should have been cleaned up in the inner try/except if notification failed
             return False
     
     def get(self, block: bool = True, timeout: Optional[float] = None):
         """Thread-safe sync get with priority ordering"""
+        logger.trace(f"RecheckQueue.get() called, block={block}, timeout={timeout}")
         import queue as queue_module
         try:
             # Wait for notification (this doesn't return the actual item, just signals availability)
@@ -98,17 +109,23 @@ class RecheckPriorityQueue:
                     raise Exception("Priority queue inconsistency")
                 item = heapq.heappop(self._priority_items)
 
-            # Emit signals
-            self._emit_get_signals()
+            # Signal emission after successful retrieval - log but don't lose the item
+            # Item is already retrieved, so signal failure shouldn't affect queue state
+            try:
+                self._emit_get_signals()
+            except Exception as signal_e:
+                logger.error(f"Failed to emit get signals but item retrieved successfully: {signal_e}")
 
-            logger.debug(f"Successfully retrieved item: {self._get_item_uuid(item)}")
+            logger.trace(f"RecheckQueue.get() successfully retrieved item: {self._get_item_uuid(item)}")
             return item
 
         except queue_module.Empty:
-            # Queue is empty with timeout - expected behavior, re-raise without logging
+            # Queue is empty with timeout - expected behavior
+            logger.trace(f"RecheckQueue.get() timed out - queue is empty (timeout={timeout})")
             raise  # noqa
         except Exception as e:
             # Re-raise without logging - caller (worker) will handle and log appropriately
+            logger.trace(f"RecheckQueue.get() failed with exception: {type(e).__name__}: {str(e)}")
             raise
     
     # ASYNC INTERFACE (for workers)
@@ -119,6 +136,7 @@ class RecheckPriorityQueue:
             item: Item to add to queue
             executor: Optional ThreadPoolExecutor. If None, uses default pool.
         """
+        logger.trace(f"RecheckQueue.async_put() called for item: {self._get_item_uuid(item)}, executor={executor}")
         import asyncio
         try:
             # Use run_in_executor to call sync put without blocking event loop
@@ -128,7 +146,7 @@ class RecheckPriorityQueue:
                 lambda: self.put(item, block=True, timeout=5.0)
             )
 
-            logger.debug(f"Successfully async queued item: {self._get_item_uuid(item)}")
+            logger.trace(f"RecheckQueue.async_put() successfully queued item: {self._get_item_uuid(item)}")
             return result
 
         except Exception as e:
@@ -142,6 +160,7 @@ class RecheckPriorityQueue:
             executor: Optional ThreadPoolExecutor. If None, uses default pool.
                      With many workers (30+), pass custom executor scaled to worker count.
         """
+        logger.trace(f"RecheckQueue.async_get() called, executor={executor}")
         import asyncio
         try:
             # Use run_in_executor to call sync get without blocking event loop
@@ -152,11 +171,14 @@ class RecheckPriorityQueue:
                 lambda: self.get(block=True, timeout=1.0)
             )
 
-            logger.debug(f"Successfully async retrieved item: {self._get_item_uuid(item)}")
+            logger.trace(f"RecheckQueue.async_get() successfully retrieved item: {self._get_item_uuid(item)}")
             return item
 
+        except queue.Empty:
+            logger.trace(f"RecheckQueue.async_get() timed out - queue is empty")
+            raise
         except Exception as e:
-            logger.critical(f"CRITICAL: Failed to async get item from queue: {str(e)}")
+            logger.critical(f"CRITICAL: Failed to async get item from queue: {type(e).__name__}: {str(e)}")
             raise
     
     # UTILITY METHODS
@@ -181,6 +203,31 @@ class RecheckPriorityQueue:
         except Exception as e:
             logger.critical(f"CRITICAL: Failed to get queued UUIDs: {str(e)}")
             return []
+
+    def clear(self):
+        """Clear all items from both priority storage and notification queue"""
+        try:
+            with self._condition:
+                # Clear priority items
+                self._priority_items.clear()
+
+                # Drain all notifications to prevent stale notifications
+                # This is critical for test cleanup to prevent queue desynchronization
+                drained = 0
+                while not self._notification_queue.empty():
+                    try:
+                        self._notification_queue.get_nowait()
+                        drained += 1
+                    except queue.Empty:
+                        break
+
+                if drained > 0:
+                    logger.debug(f"Cleared queue: removed {drained} notifications")
+
+            return True
+        except Exception as e:
+            logger.critical(f"CRITICAL: Failed to clear queue: {str(e)}")
+            return False
 
     def close(self):
         """Close the queue"""
@@ -375,6 +422,7 @@ class NotificationQueue:
     
     def put(self, item: Dict[str, Any], block: bool = True, timeout: Optional[float] = None):
         """Thread-safe sync put with signal emission"""
+        logger.trace(f"NotificationQueue.put() called for item: {item.get('uuid', 'unknown')}, block={block}, timeout={timeout}")
         try:
             # Check if all notifications are muted
             if self.datastore and self.datastore.data['settings']['application'].get('all_muted', False):
@@ -384,7 +432,7 @@ class NotificationQueue:
             with self._lock:
                 self._notification_queue.put(item, block=block, timeout=timeout)
             self._emit_notification_signal(item)
-            logger.debug(f"Successfully queued notification: {item.get('uuid', 'unknown')}")
+            logger.trace(f"NotificationQueue.put() successfully queued notification: {item.get('uuid', 'unknown')}")
             return True
         except Exception as e:
             logger.critical(f"CRITICAL: Failed to put notification {item.get('uuid', 'unknown')}: {str(e)}")
@@ -397,6 +445,7 @@ class NotificationQueue:
             item: Notification item to queue
             executor: Optional ThreadPoolExecutor
         """
+        logger.trace(f"NotificationQueue.async_put() called for item: {item.get('uuid', 'unknown')}, executor={executor}")
         import asyncio
         try:
             # Check if all notifications are muted
@@ -406,7 +455,7 @@ class NotificationQueue:
 
             loop = asyncio.get_event_loop()
             await loop.run_in_executor(executor, lambda: self.put(item, block=True, timeout=5.0))
-            logger.debug(f"Successfully async queued notification: {item.get('uuid', 'unknown')}")
+            logger.trace(f"NotificationQueue.async_put() successfully queued notification: {item.get('uuid', 'unknown')}")
             return True
         except Exception as e:
             logger.critical(f"CRITICAL: Failed to async put notification {item.get('uuid', 'unknown')}: {str(e)}")
@@ -414,13 +463,17 @@ class NotificationQueue:
 
     def get(self, block: bool = True, timeout: Optional[float] = None):
         """Thread-safe sync get"""
+        logger.trace(f"NotificationQueue.get() called, block={block}, timeout={timeout}")
         try:
             with self._lock:
-                return self._notification_queue.get(block=block, timeout=timeout)
+                item = self._notification_queue.get(block=block, timeout=timeout)
+            logger.trace(f"NotificationQueue.get() retrieved item: {item.get('uuid', 'unknown') if isinstance(item, dict) else 'unknown'}")
+            return item
         except queue.Empty as e:
+            logger.trace(f"NotificationQueue.get() timed out - queue is empty (timeout={timeout})")
             raise e
         except Exception as e:
-            logger.critical(f"CRITICAL: Failed to get notification: {str(e)}")
+            logger.critical(f"CRITICAL: Failed to get notification: {type(e).__name__}: {str(e)}")
             raise e
 
     async def async_get(self, executor=None):
@@ -429,14 +482,18 @@ class NotificationQueue:
         Args:
             executor: Optional ThreadPoolExecutor
         """
+        logger.trace(f"NotificationQueue.async_get() called, executor={executor}")
         import asyncio
         try:
             loop = asyncio.get_event_loop()
-            return await loop.run_in_executor(executor, lambda: self.get(block=True, timeout=1.0))
+            item = await loop.run_in_executor(executor, lambda: self.get(block=True, timeout=1.0))
+            logger.trace(f"NotificationQueue.async_get() retrieved item: {item.get('uuid', 'unknown') if isinstance(item, dict) else 'unknown'}")
+            return item
         except queue.Empty as e:
+            logger.trace(f"NotificationQueue.async_get() timed out - queue is empty")
             raise e
         except Exception as e:
-            logger.critical(f"CRITICAL: Failed to async get notification: {str(e)}")
+            logger.critical(f"CRITICAL: Failed to async get notification: {type(e).__name__}: {str(e)}")
             raise e
     
     def qsize(self) -> int:

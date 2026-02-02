@@ -10,6 +10,7 @@
 set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+rm tests/logs/* -f
 
 # Since theres no curl installed lets roll with python3
 check_sanity() {
@@ -66,7 +67,7 @@ echo "-------------------- Running rest of tests in parallel -------------------
 # REMOVE_REQUESTS_OLD_SCREENSHOTS disabled so that we can write a screenshot and send it in test_notifications.py without a real browser
 REMOVE_REQUESTS_OLD_SCREENSHOTS=false \
 pytest tests/test_*.py \
-  -n 16 \
+  -n 30 \
   --dist=load \
   -vvv \
   -s \

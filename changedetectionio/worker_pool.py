@@ -481,12 +481,14 @@ def wait_for_all_checks(update_q, timeout=150):
             elif time.time() - empty_since >= 0.3:
                 # Add small buffer for filesystem operations to complete
                 time.sleep(0.2)
+                logger.trace("wait_for_all_checks: All checks complete (queue empty, workers idle)")
                 return True
         else:
             empty_since = None
 
         attempt += 1
 
+    logger.warning(f"wait_for_all_checks: Timeout after {timeout} attempts")
     return False  # Timeout
 
 

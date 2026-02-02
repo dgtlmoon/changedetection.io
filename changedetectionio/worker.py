@@ -3,7 +3,9 @@ from .processors.exceptions import ProcessorException
 import changedetectionio.content_fetchers.exceptions as content_fetchers_exceptions
 from changedetectionio.processors.text_json_diff.processor import FilterNotFoundInResponse
 from changedetectionio import html_tools
+from changedetectionio import worker_pool
 from changedetectionio.flask_app import watch_check_update
+from changedetectionio.queuedWatchMetaData import PrioritizedItem
 
 import asyncio
 import importlib
@@ -55,10 +57,25 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
         try:
             # Use async interface with custom executor to avoid thread pool exhaustion
             # With 30+ workers, we need executor sized to match (see worker_pool.py)
+            # CRITICAL: Outer timeout MUST be longer than inner get(timeout=1.0) to avoid
+            # double-timeout bug where get() succeeds but asyncio.wait_for() times out
+            # while result propagates through executor. Use 1.5s to give headroom.
             queued_item_data = await asyncio.wait_for(
                 q.async_get(executor=executor),
-                timeout=1.0
+                timeout=1.5
             )
+
+            # CRITICAL: Claim UUID immediately after getting from queue to prevent race condition
+            # in wait_for_all_checks() which checks qsize() and running_uuids separately
+            uuid = queued_item_data.item.get('uuid')
+            if not worker_pool.claim_uuid_for_processing(uuid, worker_id):
+                # Already being processed - re-queue and continue
+                logger.trace(f"Worker {worker_id} detected UUID {uuid} already processing during claim - deferring")
+                await asyncio.sleep(DEFER_SLEEP_TIME_ALREADY_QUEUED)
+                deferred_priority = max(1000, queued_item_data.priority * 10)
+                deferred_item = PrioritizedItem(priority=deferred_priority, item=queued_item_data.item)
+                worker_pool.queue_item_async_safe(q, deferred_item, silent=True)
+                continue
 
         except asyncio.TimeoutError:
             # No jobs available - check if we should restart based on time while idle
@@ -99,26 +116,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
             await asyncio.sleep(0.1)
             continue
 
-        uuid = queued_item_data.item.get('uuid')
-
-        # RACE CONDITION FIX: Atomically claim this UUID for processing
-        from changedetectionio import worker_pool
-        from changedetectionio.queuedWatchMetaData import PrioritizedItem
-
-        # Try to claim the UUID atomically - prevents duplicate processing
-        if not worker_pool.claim_uuid_for_processing(uuid, worker_id):
-            # Already being processed by another worker
-            logger.trace(f"Worker {worker_id} detected UUID {uuid} already being processed - deferring")
-
-            # Sleep to avoid tight loop and give the other worker time to finish
-            await asyncio.sleep(DEFER_SLEEP_TIME_ALREADY_QUEUED)
-
-            # Re-queue with lower priority so it gets checked again after current processing finishes
-            deferred_priority = max(1000, queued_item_data.priority * 10)
-            deferred_item = PrioritizedItem(priority=deferred_priority, item=queued_item_data.item)
-            worker_pool.queue_item_async_safe(q, deferred_item, silent=True)
-            logger.debug(f"Worker {worker_id} re-queued UUID {uuid} for subsequent check")
-            continue
+        # UUID already claimed above immediately after getting from queue
+        # to prevent race condition with wait_for_all_checks()
 
         fetch_start_time = round(time.time())
         
@@ -235,6 +234,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                 except FilterNotFoundInResponse as e:
                     if not datastore.data['watching'].get(uuid):
                         continue
+                    logger.debug(f"Received FilterNotFoundInResponse exception for {uuid}")
 
                     err_text = "Warning, no filters were found, no change detection ran - Did the page change layout? update your Visual Filter if necessary."
                     datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text})
@@ -254,17 +254,19 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                         c += 1
                         # Send notification if we reached the threshold?
                         threshold = datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts', 0)
-                        logger.debug(f"Filter for {uuid} not found, consecutive_filter_failures: {c} of threshold {threshold}")
+                        logger.debug(f"FilterNotFoundInResponse - Filter for {uuid} not found, consecutive_filter_failures: {c} of threshold {threshold}")
                         if c >= threshold:
                             if not watch.get('notification_muted'):
-                                logger.debug(f"Sending filter failed notification for {uuid}")
+                                logger.debug(f"FilterNotFoundInResponse - Sending filter failed notification for {uuid}")
                                 await send_filter_failure_notification(uuid, notification_q, datastore)
                             c = 0
-                            logger.debug(f"Reset filter failure count back to zero")
+                            logger.debug(f"FilterNotFoundInResponse - Reset filter failure count back to zero")
+                        else:
+                            logger.debug(f"FilterNotFoundInResponse - {c} of threshold {threshold}..")
 
                         datastore.update_watch(uuid=uuid, update_obj={'consecutive_filter_failures': c})
                     else:
-                        logger.trace(f"{uuid} - filter_failure_notification_send not enabled, skipping")
+                        logger.trace(f"FilterNotFoundInResponse - {uuid} - filter_failure_notification_send not enabled, skipping")
 
                     process_changedetection_results = False
 
