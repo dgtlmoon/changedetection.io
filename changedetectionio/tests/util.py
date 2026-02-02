@@ -431,15 +431,24 @@ def new_live_server_setup(live_server):
             <p>This page contains images for testing block_assets functionality.</p>
             
             <!-- Images for testing block_assets functionality -->
-            <img id="test-image-1" src="https://cdn0.woolworths.media/content/wowproductimages/large/155536.jpg" alt="Test image 1" width="100" height="100">
-            <img id="test-image-2" src="https://cdn.mos.cms.futurecdn.net/RCGfdf3yhQ9W3MHbTRT6yk-1280-80.jpg" alt="Test image 2" width="50" height="50">
-            <img id="test-image-3" src="https://cdn0.woolworths.media/content/wowproductimages/large/155536.jpg" alt="Test image 3" class="test-image">
+            <img id="test-image-1" src="/test-image.jpg" alt="Test image 1" width="100" height="100">
+            <img id="test-image-2" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/wAA=" alt="Test image 2" width="50" height="50">
             
-            <div id="image-count">Images: 3</div>
+            <div id="image-count">Images: 2</div>
             <p>Some text content for verification</p>
           </body>
         </html>""", 200)
         resp.headers['Content-Type'] = 'text/html'
+        return resp
+
+    @live_server.app.route('/test-image.jpg')
+    def test_image_endpoint():
+        # Return a minimal 1x1 pixel JPEG image as bytes
+        # This is a base64 encoded 1x1 red pixel JPEG
+        import base64
+        jpeg_data = base64.b64decode('/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/wAA=')
+        resp = make_response(jpeg_data, 200)
+        resp.headers['Content-Type'] = 'image/jpeg'
         return resp
 
     live_server.start()
