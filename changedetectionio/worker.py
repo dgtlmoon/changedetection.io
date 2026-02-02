@@ -48,7 +48,10 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
     jobs_processed = 0
     start_time = time.time()
 
-    logger.info(f"Starting async worker {worker_id} (max_jobs={max_jobs}, max_runtime={max_runtime_seconds}s)")
+    # Log thread name for debugging
+    import threading
+    thread_name = threading.current_thread().name
+    logger.info(f"Starting async worker {worker_id} on thread '{thread_name}' (max_jobs={max_jobs}, max_runtime={max_runtime_seconds}s)")
 
     while not app.config.exit.is_set():
         update_handler = None

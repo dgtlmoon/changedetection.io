@@ -23,11 +23,14 @@ _uuid_processing_lock = threading.Lock()  # Protects currently_processing_uuids
 USE_ASYNC_WORKERS = True
 
 # Custom ThreadPoolExecutor for queue operations with named threads
-# Scale executor threads with FETCH_WORKERS to avoid bottleneck at high concurrency
-_max_executor_workers = max(50, int(os.getenv("FETCH_WORKERS", "10")))
+# Scale executor threads to match FETCH_WORKERS (no minimum, no maximum)
+# Thread naming: "QueueGetter-N" for easy debugging in thread dumps/traces
+# With FETCH_WORKERS=10: 10 workers + 10 executor threads = 20 threads total
+# With FETCH_WORKERS=500: 500 workers + 500 executor threads = 1000 threads total (acceptable on modern systems)
+_max_executor_workers = int(os.getenv("FETCH_WORKERS", "10"))
 queue_executor = ThreadPoolExecutor(
     max_workers=_max_executor_workers,
-    thread_name_prefix="QueueGetter-"
+    thread_name_prefix="QueueGetter-"  # Shows in thread dumps as "QueueGetter-0", "QueueGetter-1", etc.
 )
 
 
@@ -82,11 +85,11 @@ class WorkerThread:
             self.loop = None
 
     def start(self):
-        """Start the worker thread"""
+        """Start the worker thread with descriptive name for debugging"""
         self.thread = threading.Thread(
             target=self.run,
             daemon=True,
-            name=f"PageFetchAsyncUpdateWorker-{self.worker_id}"
+            name=f"PageFetchAsyncUpdateWorker-{self.worker_id}"  # Shows in thread dumps with worker ID
         )
         self.thread.start()
 
