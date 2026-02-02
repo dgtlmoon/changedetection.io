@@ -388,9 +388,10 @@ def test_change_with_notification_values(client, live_server, measure_memory_usa
     os.unlink(os.path.join(datastore_path, "notification.txt"))
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     res = client.post(url_for("ui.ui_notification.ajax_callback_send_notification_test", watch_uuid=uuid), data={}, follow_redirects=True)
-    time.sleep(5)
+    wait_for_notification_endpoint_output(datastore_path=datastore_path)
     assert os.path.isfile(os.path.join(datastore_path, "notification.txt")), "Notification received"
 
+    delete_all_watches(client)
 
 def test_data_sanity(client, live_server, measure_memory_usage, datastore_path):
     
