@@ -480,6 +480,16 @@ class CreateWatch(Resource):
 #            worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))
             return {'uuid': new_uuid}, 201
         else:
+            # Check if it was a limit issue
+            page_watch_limit = os.getenv('PAGE_WATCH_LIMIT')
+            if page_watch_limit:
+                try:
+                    page_watch_limit = int(page_watch_limit)
+                    current_watch_count = len(self.datastore.data['watching'])
+                    if current_watch_count >= page_watch_limit:
+                        return f"Watch limit reached ({current_watch_count}/{page_watch_limit} watches). Cannot add more watches.", 429
+                except ValueError:
+                    pass
             return "Invalid or unsupported URL", 400
 
     @auth.check_token
