@@ -236,6 +236,7 @@ def test_restock_itemprop_with_tag(client, live_server, measure_memory_usage, da
     }
 
     _run_test_minmax_limit(client, extra_watch_edit_form=extras,datastore_path=datastore_path)
+    delete_all_watches(client)
 
 
 
@@ -463,3 +464,4 @@ def test_special_prop_examples(client, live_server, measure_memory_usage, datast
             assert b'ception' not in res.data
             assert b'155.55' in res.data
 
+    delete_all_watches(client)
