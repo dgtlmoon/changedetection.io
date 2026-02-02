@@ -29,7 +29,7 @@ class model(dict):
                     'proxy': None, # Preferred proxy connection
                     'time_between_check': {'weeks': None, 'days': None, 'hours': 3, 'minutes': None, 'seconds': None},
                     'timeout': int(getenv("DEFAULT_SETTINGS_REQUESTS_TIMEOUT", "45")),  # Default 45 seconds
-                    'workers': int(getenv("DEFAULT_SETTINGS_REQUESTS_WORKERS", "10")),  # Number of threads, lower is better for slow connections
+                    'workers': int(getenv("DEFAULT_SETTINGS_REQUESTS_WORKERS", "5")),  # Number of threads, lower is better for slow connections
                     'default_ua': {
                         'html_requests': getenv("DEFAULT_SETTINGS_HEADERS_USERAGENT", DEFAULT_SETTINGS_HEADERS_USERAGENT),
                         'html_webdriver': None,

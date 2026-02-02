@@ -3,7 +3,9 @@ from .processors.exceptions import ProcessorException
 import changedetectionio.content_fetchers.exceptions as content_fetchers_exceptions
 from changedetectionio.processors.text_json_diff.processor import FilterNotFoundInResponse
 from changedetectionio import html_tools
+from changedetectionio import worker_pool
 from changedetectionio.flask_app import watch_check_update
+from changedetectionio.queuedWatchMetaData import PrioritizedItem
 
 import asyncio
 import importlib
@@ -46,19 +48,33 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
     jobs_processed = 0
     start_time = time.time()
 
-    logger.info(f"Starting async worker {worker_id} (max_jobs={max_jobs}, max_runtime={max_runtime_seconds}s)")
+    # Log thread name for debugging
+    import threading
+    thread_name = threading.current_thread().name
+    logger.info(f"Starting async worker {worker_id} on thread '{thread_name}' (max_jobs={max_jobs}, max_runtime={max_runtime_seconds}s)")
 
     while not app.config.exit.is_set():
         update_handler = None
         watch = None
 
         try:
-            # Use sync interface via run_in_executor since each worker has its own event loop
-            loop = asyncio.get_event_loop()
-            queued_item_data = await asyncio.wait_for(
-                loop.run_in_executor(executor, q.get, True, 1.0),  # block=True, timeout=1.0
-                timeout=1.5
-            )
+            # Efficient blocking via run_in_executor (no polling overhead!)
+            # Worker blocks in threading.Queue.get() which uses Condition.wait()
+            # Executor must be sized to match worker count (see worker_pool.py: 50 threads default)
+            # Single timeout (no double-timeout wrapper) = no race condition
+            queued_item_data = await q.async_get(executor=executor, timeout=1.0)
+
+            # CRITICAL: Claim UUID immediately after getting from queue to prevent race condition
+            # in wait_for_all_checks() which checks qsize() and running_uuids separately
+            uuid = queued_item_data.item.get('uuid')
+            if not worker_pool.claim_uuid_for_processing(uuid, worker_id):
+                # Already being processed - re-queue and continue
+                logger.trace(f"Worker {worker_id} detected UUID {uuid} already processing during claim - deferring")
+                await asyncio.sleep(DEFER_SLEEP_TIME_ALREADY_QUEUED)
+                deferred_priority = max(1000, queued_item_data.priority * 10)
+                deferred_item = PrioritizedItem(priority=deferred_priority, item=queued_item_data.item)
+                worker_pool.queue_item_async_safe(q, deferred_item, silent=True)
+                continue
 
         except asyncio.TimeoutError:
             # No jobs available - check if we should restart based on time while idle
@@ -66,6 +82,17 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
             if runtime >= max_runtime_seconds:
                 logger.info(f"Worker {worker_id} idle and reached max runtime ({runtime:.0f}s), restarting")
                 return "restart"
+            continue
+        except RuntimeError as e:
+            # Handle executor shutdown gracefully - this is expected during shutdown
+            if "cannot schedule new futures after shutdown" in str(e):
+                # Executor shut down - exit gracefully without logging in pytest
+                if not IN_PYTEST:
+                    logger.debug(f"Worker {worker_id} detected executor shutdown, exiting")
+                break
+            # Other RuntimeError - log and continue
+            logger.error(f"Worker {worker_id} runtime error: {e}")
+            await asyncio.sleep(0.1)
             continue
         except Exception as e:
             # Handle expected Empty exception from queue timeout
@@ -88,26 +115,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
             await asyncio.sleep(0.1)
             continue
 
-        uuid = queued_item_data.item.get('uuid')
-
-        # RACE CONDITION FIX: Atomically claim this UUID for processing
-        from changedetectionio import worker_handler
-        from changedetectionio.queuedWatchMetaData import PrioritizedItem
-
-        # Try to claim the UUID atomically - prevents duplicate processing
-        if not worker_handler.claim_uuid_for_processing(uuid, worker_id):
-            # Already being processed by another worker
-            logger.trace(f"Worker {worker_id} detected UUID {uuid} already being processed - deferring")
-
-            # Sleep to avoid tight loop and give the other worker time to finish
-            await asyncio.sleep(DEFER_SLEEP_TIME_ALREADY_QUEUED)
-
-            # Re-queue with lower priority so it gets checked again after current processing finishes
-            deferred_priority = max(1000, queued_item_data.priority * 10)
-            deferred_item = PrioritizedItem(priority=deferred_priority, item=queued_item_data.item)
-            worker_handler.queue_item_async_safe(q, deferred_item, silent=True)
-            logger.debug(f"Worker {worker_id} re-queued UUID {uuid} for subsequent check")
-            continue
+        # UUID already claimed above immediately after getting from queue
+        # to prevent race condition with wait_for_all_checks()
 
         fetch_start_time = round(time.time())
         
@@ -224,6 +233,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                 except FilterNotFoundInResponse as e:
                     if not datastore.data['watching'].get(uuid):
                         continue
+                    logger.debug(f"Received FilterNotFoundInResponse exception for {uuid}")
 
                     err_text = "Warning, no filters were found, no change detection ran - Did the page change layout? update your Visual Filter if necessary."
                     datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text})
@@ -243,17 +253,19 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                         c += 1
                         # Send notification if we reached the threshold?
                         threshold = datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts', 0)
-                        logger.debug(f"Filter for {uuid} not found, consecutive_filter_failures: {c} of threshold {threshold}")
+                        logger.debug(f"FilterNotFoundInResponse - Filter for {uuid} not found, consecutive_filter_failures: {c} of threshold {threshold}")
                         if c >= threshold:
                             if not watch.get('notification_muted'):
-                                logger.debug(f"Sending filter failed notification for {uuid}")
+                                logger.debug(f"FilterNotFoundInResponse - Sending filter failed notification for {uuid}")
                                 await send_filter_failure_notification(uuid, notification_q, datastore)
                             c = 0
-                            logger.debug(f"Reset filter failure count back to zero")
+                            logger.debug(f"FilterNotFoundInResponse - Reset filter failure count back to zero")
+                        else:
+                            logger.debug(f"FilterNotFoundInResponse - {c} of threshold {threshold}..")
 
                         datastore.update_watch(uuid=uuid, update_obj={'consecutive_filter_failures': c})
                     else:
-                        logger.trace(f"{uuid} - filter_failure_notification_send not enabled, skipping")
+                        logger.trace(f"FilterNotFoundInResponse - {uuid} - filter_failure_notification_send not enabled, skipping")
 
                     process_changedetection_results = False
 
@@ -490,7 +502,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     logger.error(f"Exception while cleaning/quit after calling browser: {e}")
                 try:
                     # Release UUID from processing (thread-safe)
-                    worker_handler.release_uuid_from_processing(uuid, worker_id=worker_id)
+                    worker_pool.release_uuid_from_processing(uuid, worker_id=worker_id)
                     
                     # Send completion signal
                     if watch:

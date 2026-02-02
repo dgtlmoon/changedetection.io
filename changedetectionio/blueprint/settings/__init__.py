@@ -83,7 +83,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
                 # Adjust worker count if it changed
                 if new_worker_count != old_worker_count:
-                    from changedetectionio import worker_handler
+                    from changedetectionio import worker_pool
                     from changedetectionio.flask_app import update_q, notification_q, app, datastore as ds
 
                     # Check CPU core availability and warn if worker count is high
@@ -92,7 +92,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                         flash(gettext("Warning: Worker count ({}) is close to or exceeds available CPU cores ({})").format(
                             new_worker_count, cpu_count), 'warning')
 
-                    result = worker_handler.adjust_async_worker_count(
+                    result = worker_pool.adjust_async_worker_count(
                         new_count=new_worker_count,
                         update_q=update_q,
                         notification_q=notification_q,

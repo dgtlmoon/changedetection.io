@@ -224,6 +224,7 @@ def check_json_filter(json_filter, client, live_server, datastore_path):
     set_original_response(datastore_path=datastore_path)
 
 
+    delete_all_watches(client)
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, extras={"include_filters": json_filter.splitlines()})
@@ -297,14 +298,17 @@ def check_json_filter_bool_val(json_filter, client, live_server, datastore_path)
 
 def test_check_jsonpath_filter_bool_val(client, live_server, measure_memory_usage, datastore_path):
     check_json_filter_bool_val("json:$['available']", client, live_server, datastore_path=datastore_path)
+    delete_all_watches(client)
 
 def test_check_jq_filter_bool_val(client, live_server, measure_memory_usage, datastore_path):
     if jq_support:
         check_json_filter_bool_val("jq:.available", client, live_server, datastore_path=datastore_path)
+    delete_all_watches(client)
 
 def test_check_jqraw_filter_bool_val(client, live_server, measure_memory_usage, datastore_path):
     if jq_support:
         check_json_filter_bool_val("jq:.available", client, live_server, datastore_path=datastore_path)
+    delete_all_watches(client)
 
 # Re #265 - Extended JSON selector test
 # Stuff to consider here
@@ -452,14 +456,17 @@ def test_correct_header_detect(client, live_server, measure_memory_usage, datast
 
 def test_check_jsonpath_ext_filter(client, live_server, measure_memory_usage, datastore_path):
     check_json_ext_filter('json:$[?(@.status==Sold)]', client, live_server, datastore_path=datastore_path)
+    delete_all_watches(client)
 
 def test_check_jq_ext_filter(client, live_server, measure_memory_usage, datastore_path):
     if jq_support:
         check_json_ext_filter('jq:.[] | select(.status | contains("Sold"))', client, live_server, datastore_path=datastore_path)
+    delete_all_watches(client)
 
 def test_check_jqraw_ext_filter(client, live_server, measure_memory_usage, datastore_path):
     if jq_support:
         check_json_ext_filter('jq:.[] | select(.status | contains("Sold"))', client, live_server, datastore_path=datastore_path)
+    delete_all_watches(client)
 
 def test_jsonpath_BOM_utf8(client, live_server, measure_memory_usage, datastore_path):
     from .. import html_tools
@@ -470,5 +477,6 @@ def test_jsonpath_BOM_utf8(client, live_server, measure_memory_usage, datastore_
     # See that we can find the second <script> one, which is not broken, and matches our filter
     text = html_tools.extract_json_as_string(json_str, "json:$.name")
     assert text == '"José"'
+    delete_all_watches(client)
 
     

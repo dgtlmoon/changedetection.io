@@ -366,7 +366,7 @@ def test_check_with_prefix_include_filters(client, live_server, measure_memory_u
     assert b"Some text thats the same" in res.data  # in selector
     assert b"Some text that will change" not in res.data  # not in selector
 
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
 
 def test_various_rules(client, live_server, measure_memory_usage, datastore_path):
@@ -423,7 +423,7 @@ def test_xpath_20(client, live_server, measure_memory_usage, datastore_path):
 
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={"include_filters": "//*[contains(@class, 'sametext')]|//*[contains(@class, 'changetext')]",
               "url": test_url,
               "tags": "",
@@ -437,14 +437,14 @@ def test_xpath_20(client, live_server, measure_memory_usage, datastore_path):
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
 
     assert b"Some text thats the same" in res.data  # in selector
     assert b"Some text that will change" in res.data  # in selector
 
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
 
 def test_xpath_20_function_count(client, live_server, measure_memory_usage, datastore_path):
@@ -477,7 +477,7 @@ def test_xpath_20_function_count(client, live_server, measure_memory_usage, data
 
     assert b"246913579975308642" in res.data  # in selector
 
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
 
 def test_xpath_20_function_count2(client, live_server, measure_memory_usage, datastore_path):
@@ -501,6 +501,8 @@ def test_xpath_20_function_count2(client, live_server, measure_memory_usage, dat
     )
 
     assert b"Updated watch." in res.data
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+
     wait_for_all_checks(client)
 
     res = client.get(
@@ -510,7 +512,7 @@ def test_xpath_20_function_count2(client, live_server, measure_memory_usage, dat
 
     assert b"246913579975308642" in res.data  # in selector
 
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
 
 def test_xpath_20_function_string_join_matches(client, live_server, measure_memory_usage, datastore_path):
@@ -544,7 +546,7 @@ def test_xpath_20_function_string_join_matches(client, live_server, measure_memo
 
     assert b"Some text thats the samespecialconjunctionSome text that will change" in res.data  # in selector
 
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
 
 def _subtest_xpath_rss(client, datastore_path, content_type='text/html'):
@@ -582,7 +584,7 @@ def _subtest_xpath_rss(client, datastore_path, content_type='text/html'):
     assert b"Lets go discount" in res.data, f"When testing for Lets go discount called with content type '{content_type}'"
     assert b"Events and Announcements" not in res.data, f"When testing for Lets go discount called with content type '{content_type}'" # It should not be here because thats not our selector target
 
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
 # Be sure all-in-the-wild types of RSS feeds work with xpath
 def test_rss_xpath(client, live_server, measure_memory_usage, datastore_path):

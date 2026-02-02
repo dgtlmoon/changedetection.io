@@ -82,7 +82,7 @@ def test_import_distillio(client, live_server, measure_memory_usage, datastore_p
 
     # Give the endpoint time to spin up
     time.sleep(1)
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
     res = client.post(
         url_for("imports.import_page"),
         data={

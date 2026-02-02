@@ -166,6 +166,9 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         """
         logger.info(f"Datastore path is '{datastore_path}'")
 
+        # CRITICAL: Update datastore_path (was using old path from __init__)
+        self.datastore_path = datastore_path
+
         # Initialize data structure
         self.__data = App.model()
         self.json_store_path = os.path.join(self.datastore_path, "changedetection.json")

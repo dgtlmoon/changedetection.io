@@ -6,7 +6,7 @@ from .util import (
     set_original_response,
     set_modified_response,
     live_server_setup,
-    wait_for_all_checks
+    wait_for_all_checks, delete_all_watches
 )
 from loguru import logger
 
@@ -104,7 +104,7 @@ def run_socketio_watch_update_test(client, live_server, password_mode="", datast
     assert watch.has_unviewed, "The watch was not marked as unviewed after content change"
 
     # Clean up
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
 def test_everything(live_server, client, measure_memory_usage, datastore_path):
 

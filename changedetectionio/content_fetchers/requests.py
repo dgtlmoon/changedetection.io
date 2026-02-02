@@ -55,6 +55,26 @@ class fetcher(Fetcher):
 
         session = requests.Session()
 
+        # Configure retry adapter for low-level network errors only
+        # Retries connection timeouts, read timeouts, connection resets - not HTTP status codes
+        # Especially helpful in parallel test execution when servers are slow/overloaded
+        # Configurable via REQUESTS_RETRY_MAX_COUNT (default: 3 attempts)
+        from requests.adapters import HTTPAdapter
+        from urllib3.util.retry import Retry
+
+        max_retries = int(os.getenv("REQUESTS_RETRY_MAX_COUNT", "6"))
+        retry_strategy = Retry(
+            total=max_retries,
+            connect=max_retries,  # Retry connection timeouts
+            read=max_retries,     # Retry read timeouts
+            status=0,             # Don't retry on HTTP status codes
+            backoff_factor=0.5,   # Wait 0.3s, 0.6s, 1.2s between retries
+            allowed_methods=["HEAD", "GET", "OPTIONS", "POST"],
+            raise_on_status=False
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
 
         if strtobool(os.getenv('ALLOW_FILE_URI', 'false')) and url.startswith('file://'):
             from requests_file import FileAdapter
@@ -142,10 +162,11 @@ class fetcher(Fetcher):
                   watch_uuid=None,
                   ):
         """Async wrapper that runs the synchronous requests code in a thread pool"""
-        
+
         loop = asyncio.get_event_loop()
-        
+
         # Run the synchronous _run_sync in a thread pool to avoid blocking the event loop
+        # Retry logic is handled by requests' HTTPAdapter (see _run_sync for configuration)
         await loop.run_in_executor(
             None,  # Use default ThreadPoolExecutor
             lambda: self._run_sync(

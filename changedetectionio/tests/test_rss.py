@@ -107,7 +107,7 @@ def test_rss_and_token(client, live_server, measure_memory_usage, datastore_path
     assert b"Access denied, bad token" not in res.data
     assert b"Random content" in res.data
 
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
 def test_basic_cdata_rss_markup(client, live_server, measure_memory_usage, datastore_path):
     
