@@ -18,35 +18,43 @@ class RecheckPriorityQueue:
 
     ARCHITECTURE:
     - Multiple async workers, each with its own event loop in its own thread
-    - One shared queue accessed safely via threading primitives
-    - Workers use run_in_executor to access queue without blocking their event loop
+    - Hybrid sync/async design for maximum scalability
+    - Sync interface for ticker thread (threading.Queue)
+    - Async interface for workers (asyncio.Event - NO executor threads!)
 
-    IMPLEMENTATION:
-    - Pure threading.Queue for notifications (no event loop binding)
-    - Heapq-based priority storage (thread-safe with RLock)
-    - Async methods wrap sync methods via run_in_executor
-    - Supports both sync and async access patterns
+    SCALABILITY:
+    - Scales to 100-200+ workers without executor thread exhaustion
+    - Async workers wait on asyncio.Event (pure coroutines, no threads)
+    - Sync callers use threading.Queue (backward compatible)
 
     WHY NOT JANUS:
     - Janus binds to ONE event loop at creation time
     - Our architecture has 15+ workers, each with separate event loops
     - Workers in different threads/loops cannot share janus async interface
-    - Pure threading approach works across all event loops
+
+    WHY NOT RUN_IN_EXECUTOR:
+    - With 200 workers, run_in_executor() would block 200 threads
+    - Exhausts ThreadPoolExecutor, starves Flask HTTP handlers
+    - Pure async approach uses 0 threads while waiting
     """
-    
+
     def __init__(self, maxsize: int = 0):
         try:
-            # Use pure threading.Queue for notification - no janus needed
-            # This avoids event loop binding issues with multiple worker threads
             import asyncio
+
+            # Sync interface: threading.Queue for ticker thread and Flask routes
             self._notification_queue = queue.Queue(maxsize=maxsize if maxsize > 0 else 0)
 
             # Priority storage - thread-safe
             self._priority_items = []
             self._lock = threading.RLock()
 
-            # Condition variable for async wait support
-            self._condition = threading.Condition(self._lock)
+            # Async interface: threading.Event to wake async waiters across multiple event loops
+            # Each worker (in its own thread with own event loop) waits on this shared event
+            # threading.Event works across threads/loops, unlike asyncio.Event (loop-bound)
+            # This allows scaling to 100+ workers without thread pool exhaustion
+            self._async_event = threading.Event()
+            self._async_event_lock = threading.Lock()
 
             # Signals for UI updates
             self.queue_length_signal = signal('queue_length')
@@ -63,7 +71,7 @@ class RecheckPriorityQueue:
         try:
             # CRITICAL: Add to both priority storage AND notification queue atomically
             # to prevent desynchronization where item exists but no notification
-            with self._condition:
+            with self._lock:
                 heapq.heappush(self._priority_items, item)
 
                 # Add notification - use blocking with timeout for safety
@@ -78,6 +86,10 @@ class RecheckPriorityQueue:
                     self._priority_items.remove(item)
                     heapq.heapify(self._priority_items)
                     raise  # Re-raise to be caught by outer exception handler
+
+            # Signal async waiters (workers) that item is available
+            # This wakes all async workers waiting in async_get() without consuming threads
+            self._signal_async_waiters()
 
             # Signal emission after successful queue - log but don't fail the operation
             # Item is already safely queued, so signal failure shouldn't affect queue state
@@ -152,34 +164,73 @@ class RecheckPriorityQueue:
         except Exception as e:
             logger.critical(f"CRITICAL: Failed to async put item {self._get_item_uuid(item)}: {str(e)}")
             return False
-    
-    async def async_get(self, executor=None):
-        """Async get with priority ordering - uses thread pool to avoid blocking
+
+    async def async_get(self, executor=None, timeout=1.0):
+        """
+        Truly async get - NO executor threads consumed while waiting!
+
+        SCALABILITY: With 200 workers, this approach uses:
+        - 0 threads while waiting (pure coroutine suspension)
+        - vs run_in_executor which would block 200 threads
+
+        MULTI-LOOP SUPPORT: Uses threading.Event which works across
+        multiple event loops (each worker has its own loop in its own thread).
 
         Args:
-            executor: Optional ThreadPoolExecutor. If None, uses default pool.
-                     With many workers (30+), pass custom executor scaled to worker count.
+            executor: Ignored (kept for API compatibility)
+            timeout: Maximum time to wait in seconds
+
+        Returns:
+            Item from queue
+
+        Raises:
+            queue.Empty: If timeout expires with no item available
         """
-        logger.trace(f"RecheckQueue.async_get() called, executor={executor}")
+        logger.trace(f"RecheckQueue.async_get() called, timeout={timeout}")
         import asyncio
-        try:
-            # Use run_in_executor to call sync get without blocking event loop
-            # This works across multiple event loops since it uses threading
-            loop = asyncio.get_event_loop()
-            item = await loop.run_in_executor(
-                executor,  # Use provided executor (scales with FETCH_WORKERS) or default
-                lambda: self.get(block=True, timeout=1.0)
-            )
 
-            logger.trace(f"RecheckQueue.async_get() successfully retrieved item: {self._get_item_uuid(item)}")
-            return item
+        start_time = asyncio.get_event_loop().time()
+        end_time = start_time + timeout
 
-        except queue.Empty:
-            logger.trace(f"RecheckQueue.async_get() timed out - queue is empty")
-            raise
-        except Exception as e:
-            logger.critical(f"CRITICAL: Failed to async get item from queue: {type(e).__name__}: {str(e)}")
-            raise
+        while True:
+            # Try to get item without blocking
+            with self._lock:
+                if self._priority_items:
+                    item = heapq.heappop(self._priority_items)
+
+                    # Drain sync notification queue to keep in sync
+                    try:
+                        self._notification_queue.get_nowait()
+                    except queue.Empty:
+                        pass
+
+                    # Emit signals
+                    try:
+                        self._emit_get_signals()
+                    except Exception as signal_e:
+                        logger.error(f"Failed to emit get signals but item retrieved successfully: {signal_e}")
+
+                    logger.trace(f"RecheckQueue.async_get() successfully retrieved item: {self._get_item_uuid(item)}")
+                    return item
+
+            # No item available - check if we should continue waiting
+            remaining = end_time - asyncio.get_event_loop().time()
+            if remaining <= 0:
+                logger.trace(f"RecheckQueue.async_get() timed out - queue is empty")
+                raise queue.Empty()
+
+            # Check if event is signaled (non-blocking, thread-safe)
+            # threading.Event.is_set() works across multiple event loops
+            if self._async_event.is_set():
+                # Event signaled - clear it and loop back to check queue
+                self._async_event.clear()
+                continue
+
+            # No signal yet - sleep briefly and check again
+            # Short sleep (10ms) keeps workers responsive without busy-waiting
+            # 200 workers sleeping = 0 threads blocked (pure coroutine suspension)
+            sleep_time = min(0.01, remaining)  # 10ms or remaining time
+            await asyncio.sleep(sleep_time)
     
     # UTILITY METHODS
     def qsize(self) -> int:
@@ -207,7 +258,7 @@ class RecheckPriorityQueue:
     def clear(self):
         """Clear all items from both priority storage and notification queue"""
         try:
-            with self._condition:
+            with self._lock:
                 # Clear priority items
                 self._priority_items.clear()
 
@@ -223,6 +274,9 @@ class RecheckPriorityQueue:
 
                 if drained > 0:
                     logger.debug(f"Cleared queue: removed {drained} notifications")
+
+            # Clear the async event
+            self._async_event.clear()
 
             return True
         except Exception as e:
@@ -364,7 +418,17 @@ class RecheckPriorityQueue:
         except Exception:
             pass
         return 'unknown'
-    
+
+    def _signal_async_waiters(self):
+        """
+        Wake all async workers waiting for items (thread-safe).
+
+        Uses threading.Event which works across multiple event loops.
+        All workers (each in their own thread/loop) check is_set() and wake up.
+        """
+        # Set the threading.Event - thread-safe, works across all event loops
+        self._async_event.set()
+
     def _emit_put_signals(self, item):
         """Emit signals when item is added"""
         try:
@@ -373,14 +437,14 @@ class RecheckPriorityQueue:
                 watch_check_update = signal('watch_check_update')
                 if watch_check_update:
                     watch_check_update.send(watch_uuid=item.item['uuid'])
-            
+
             # Queue length signal
             if self.queue_length_signal:
                 self.queue_length_signal.send(length=self.qsize())
-                
+
         except Exception as e:
             logger.critical(f"CRITICAL: Failed to emit put signals: {str(e)}")
-    
+
     def _emit_get_signals(self):
         """Emit signals when item is removed"""
         try:

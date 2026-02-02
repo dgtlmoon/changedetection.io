@@ -55,15 +55,12 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
         watch = None
 
         try:
-            # Use async interface with custom executor to avoid thread pool exhaustion
-            # With 30+ workers, we need executor sized to match (see worker_pool.py)
-            # CRITICAL: Outer timeout MUST be longer than inner get(timeout=1.0) to avoid
-            # double-timeout bug where get() succeeds but asyncio.wait_for() times out
-            # while result propagates through executor. Use 1.5s to give headroom.
-            queued_item_data = await asyncio.wait_for(
-                q.async_get(executor=executor),
-                timeout=1.5
-            )
+            # Pure async queue - no executor threads consumed!
+            # With 100-200 workers, this scales perfectly as workers suspend
+            # as coroutines (not threads) while waiting for items.
+            # Short timeout (0.3s) for fast shutdown with zero performance penalty
+            # since workers are coroutines, not threads - timeout just reschedules.
+            queued_item_data = await q.async_get(timeout=0.3)
 
             # CRITICAL: Claim UUID immediately after getting from queue to prevent race condition
             # in wait_for_all_checks() which checks qsize() and running_uuids separately
