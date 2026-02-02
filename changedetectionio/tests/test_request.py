@@ -213,6 +213,7 @@ def test_method_in_request(client, live_server, measure_memory_usage, datastore_
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick up the first version
     wait_for_all_checks(client)

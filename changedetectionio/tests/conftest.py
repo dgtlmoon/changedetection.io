@@ -175,31 +175,55 @@ def prepare_test_function(live_server, datastore_path):
     # CRITICAL: Get datastore and stop it from writing stale data
     datastore = live_server.app.config.get('DATASTORE')
 
-    # Clear the queue before starting the test to prevent state leakage
-    from changedetectionio.flask_app import update_q
+    # CRITICAL: Clear ALL global state that persists between tests
+    from changedetectionio.flask_app import update_q, notification_q, notification_debug_log
+
+    # Clear update queue
     while not update_q.empty():
         try:
             update_q.get_nowait()
         except:
             break
 
+    # Clear notification queue (was missing!)
+    while not notification_q.empty():
+        try:
+            notification_q.get_nowait()
+        except:
+            break
+
+    # Clear notification debug log (accumulates across tests!)
+    notification_debug_log.clear()
+
+    # Clear SALTED_PASS env var if set by previous test
+    if 'SALTED_PASS' in os.environ:
+        del os.environ['SALTED_PASS']
+
+    # Stop background thread with longer timeout
+    datastore.stop_thread = True
+    if hasattr(datastore, 'save_data_thread') and datastore.save_data_thread:
+        datastore.save_data_thread.join(timeout=2.0)
+
     # Prevent background thread from writing during cleanup/reload
     datastore.needs_write = False
     datastore.needs_write_urgent = False
 
+    # Reset dirty tracking
+    datastore._dirty_watches = set()
+    datastore._dirty_settings = False
+    datastore._watch_hashes = {}
+
     # CRITICAL: Clean up any files from previous tests
-    # This ensures a completely clean directory
     cleanup(datastore_path)
 
-    # CRITICAL: Reload the EXISTING datastore instead of creating a new one
-    # This keeps blueprint references valid (they capture datastore at construction)
-    # reload_state() completely resets the datastore to a clean state
+    # Reset stop_thread so reload_state can start new thread
+    datastore.stop_thread = False
 
     # Reload state with clean data (no default watches)
     datastore.reload_state(
         datastore_path=datastore_path,
         include_default_watches=False,
-        version_tag=datastore.data.get('version_tag', '0.0.0')
+        version_tag='0.0.0'
     )
     live_server.app.secret_key = init_app_secret(datastore_path)
     logger.debug(f"prepare_test_function: Reloaded datastore at {hex(id(datastore))}")

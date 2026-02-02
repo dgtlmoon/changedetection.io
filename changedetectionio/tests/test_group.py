@@ -142,7 +142,7 @@ def test_tag_import_singular(client, live_server, measure_memory_usage, datastor
     )
     # Should be only 1 tag because they both had the same
     assert len(live_server.app.config['DATASTORE'].data['settings']['application'].get('tags')) ==1
-
+    wait_for_all_checks()
     delete_all_watches(client)
 
 def test_tag_add_in_ui(client, live_server, measure_memory_usage, datastore_path):
