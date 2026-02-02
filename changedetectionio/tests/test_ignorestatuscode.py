@@ -41,10 +41,6 @@ def set_some_changed_response(datastore_path):
 
 def test_normal_page_check_works_with_ignore_status_code(client, live_server, measure_memory_usage, datastore_path):
 
-
-    # Give the endpoint time to spin up
-    time.sleep(1)
-
     set_original_response(datastore_path=datastore_path)
 
     # Goto the settings page, add our ignore text
@@ -67,11 +63,8 @@ def test_normal_page_check_works_with_ignore_status_code(client, live_server, me
     wait_for_all_checks(client)
 
     set_some_changed_response(datastore_path=datastore_path)
-    wait_for_all_checks(client)
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
-
-    # Give the thread time to pick it up
     wait_for_all_checks(client)
 
     # It should report nothing found (no new 'has-unread-changes' class)

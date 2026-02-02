@@ -92,7 +92,7 @@ def test_body_in_request(client, live_server, measure_memory_usage, datastore_pa
 
     # add the first 'version'
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
               "url": test_url,
               "tags": "",
@@ -110,7 +110,7 @@ def test_body_in_request(client, live_server, measure_memory_usage, datastore_pa
     body_value = 'Test Body Value {{ 1+1 }}'
     body_value_formatted = 'Test Body Value 2'
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
               "url": test_url,
               "tags": "",
@@ -126,7 +126,7 @@ def test_body_in_request(client, live_server, measure_memory_usage, datastore_pa
 
     # The service should echo back the body
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
 
@@ -157,7 +157,7 @@ def test_body_in_request(client, live_server, measure_memory_usage, datastore_pa
 
     # Attempt to add a body with a GET method
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
               "url": test_url,
               "tags": "",

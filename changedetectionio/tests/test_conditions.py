@@ -69,7 +69,7 @@ def test_conditions_with_text_and_number(client, live_server, measure_memory_usa
     # 1. The page filtered text must contain "5" (first digit of value)
     # 2. The extracted number should be >= 20 and <= 100
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
             "url": test_url,
             "fetch_backend": "html_requests",
@@ -110,25 +110,20 @@ def test_conditions_with_text_and_number(client, live_server, measure_memory_usa
 
     wait_for_all_checks(client)
     client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
-    time.sleep(0.2)
-
-    wait_for_all_checks(client)
+    time.sleep(1)
 
     # Case 1
     set_number_in_range_response(datastore_path=datastore_path, number="70.5")
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
-    time.sleep(2)
     # 75 is > 20 and < 100 and contains "5"
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' in res.data
 
-
     # Case 2: Change with one condition violated
     # Number out of range (150) but contains '5'
     client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
-    time.sleep(0.2)
 
     set_number_out_of_range_response(datastore_path=datastore_path, number="150.5")
 
@@ -154,7 +149,6 @@ def test_condition_validate_rule_row(client, live_server, measure_memory_usage, 
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
-    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
 
     # the front end submits the current form state which should override the watch in a temporary copy
     res = client.post(
@@ -195,12 +189,8 @@ def test_condition_validate_rule_row(client, live_server, measure_memory_usage, 
     )
     assert res.status_code == 200
     assert b'false' in res.data
-    # cleanup for the next
-    client.get(
-        url_for("ui.form_delete", uuid="all"),
-        follow_redirects=True
-    )
 
+    delete_all_watches(client)
 
 
 # If there was only a change in the whitespacing, then we shouldnt have a change detected
@@ -230,17 +220,12 @@ def test_wordcount_conditions_plugin(client, live_server, measure_memory_usage, 
 
     # Check it saved
     res = client.get(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
     )
 
     # Assert the word count is counted correctly
     assert b'<td>13</td>' in res.data
-
-    # cleanup for the next
-    client.get(
-        url_for("ui.form_delete", uuid="all"),
-        follow_redirects=True
-    )
+    delete_all_watches(client)
 
 # If there was only a change in the whitespacing, then we shouldnt have a change detected
 def test_lev_conditions_plugin(client, live_server, measure_memory_usage, datastore_path):

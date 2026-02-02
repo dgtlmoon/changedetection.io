@@ -73,3 +73,5 @@ def test_share_watch(client, live_server, measure_memory_usage, datastore_path):
     # Check it saved the URL
     res = client.get(url_for("watchlist.index"))
     assert bytes(test_url.encode('utf-8')) in res.data
+
+    delete_all_watches(client)

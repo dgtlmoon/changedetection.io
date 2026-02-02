@@ -142,6 +142,8 @@ def test_consistent_history(client, live_server, measure_memory_usage, datastore
             assert '"default"' not in f.read(), "'default' probably shouldnt be here, it came from when the 'default' Watch vars were accidently being saved"
 
 
+    delete_all_watches(client)
+
 def test_check_text_history_view(client, live_server, measure_memory_usage, datastore_path):
 
     with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
