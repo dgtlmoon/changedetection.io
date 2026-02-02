@@ -72,10 +72,13 @@ pytest tests/test_*.py \
   -vvv \
   -s \
   --capture=no \
+  --ignore=tests/test_queue_handler.py \
   --log-cli-level=DEBUG \
   --log-cli-format="%(asctime)s [%(process)d] [%(levelname)s] %(name)s: %(message)s"
 
 echo "---------------------------- DONE parallel test ---------------------------------------"
+
+FETCH_WORKERS=20 pytest -vvv -s tests/test_queue_handler.py
 
 echo "RUNNING WITH BASE_URL SET"
 
