@@ -158,22 +158,21 @@ class RecheckPriorityQueue:
             logger.critical(f"CRITICAL: Failed to async put item {self._get_item_uuid(item)}: {str(e)}")
             return False
 
-    async def async_get(self, executor=None, timeout=0.9):
+    async def async_get(self, executor=None, timeout=1.0):
         """
-        Pure async polling - NO executor threads consumed!
+        Efficient async get using executor for blocking call.
 
-        SCALABILITY: With 2000 workers, this approach uses:
-        - 0 threads while waiting (pure coroutine suspension via asyncio.sleep)
-        - vs run_in_executor which would block 2000 threads = executor exhaustion
+        HYBRID APPROACH: Best of both worlds
+        - Uses run_in_executor for efficient blocking (no polling overhead)
+        - Single timeout (no double-timeout race condition)
+        - Scales well: executor sized to match worker count
 
-        POLLING: Checks queue every 50ms (latency: 0-50ms, acceptable for web monitoring)
-
-        MULTI-LOOP SUPPORT: Works across multiple event loops since each worker
-        has its own loop in its own thread. No event signaling = no loop binding issues.
+        With FETCH_WORKERS=10: 10 threads blocked max (acceptable)
+        With FETCH_WORKERS=200: Need executor with 200+ threads (see worker_pool.py)
 
         Args:
-            executor: Ignored (kept for API compatibility with old code)
-            timeout: Maximum time to wait in seconds (default 0.9s)
+            executor: ThreadPoolExecutor (sized to match worker count)
+            timeout: Maximum time to wait in seconds
 
         Returns:
             Item from queue
@@ -183,41 +182,24 @@ class RecheckPriorityQueue:
         """
         logger.trace(f"RecheckQueue.async_get() called, timeout={timeout}")
         import asyncio
+        try:
+            # Use run_in_executor to call sync get efficiently
+            # No outer asyncio.wait_for wrapper = no double timeout issue!
+            loop = asyncio.get_event_loop()
+            item = await loop.run_in_executor(
+                executor,
+                lambda: self.get(block=True, timeout=timeout)
+            )
 
-        end_time = asyncio.get_event_loop().time() + timeout
+            logger.trace(f"RecheckQueue.async_get() successfully retrieved item: {self._get_item_uuid(item)}")
+            return item
 
-        while True:
-            # Try to get item (non-blocking, thread-safe)
-            with self._lock:
-                if self._priority_items:
-                    item = heapq.heappop(self._priority_items)
-
-                    # Drain sync notification queue to keep in sync
-                    try:
-                        self._notification_queue.get_nowait()
-                    except queue.Empty:
-                        pass
-
-                    # Emit signals
-                    try:
-                        self._emit_get_signals()
-                    except Exception as signal_e:
-                        logger.error(f"Failed to emit get signals but item retrieved successfully: {signal_e}")
-
-                    logger.trace(f"RecheckQueue.async_get() successfully retrieved item: {self._get_item_uuid(item)}")
-                    return item
-
-            # No item - check timeout
-            remaining = end_time - asyncio.get_event_loop().time()
-            if remaining <= 0:
-                logger.trace(f"RecheckQueue.async_get() timed out - queue is empty")
-                raise queue.Empty()
-
-            # Sleep before next check (pure coroutine suspension - no thread blocked!)
-            # 50ms poll interval: workers check queue 20 times/sec
-            # With 2000 workers: 2000 × 4KB = 8MB RAM (vs 2000 threads = 16GB)
-            sleep_time = min(0.05, remaining)  # 50ms or remaining timeout
-            await asyncio.sleep(sleep_time)
+        except queue.Empty:
+            logger.trace(f"RecheckQueue.async_get() timed out - queue is empty")
+            raise
+        except Exception as e:
+            logger.critical(f"CRITICAL: Failed to async get item from queue: {type(e).__name__}: {str(e)}")
+            raise
     
     # UTILITY METHODS
     def qsize(self) -> int:

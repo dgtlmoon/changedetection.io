@@ -55,12 +55,11 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
         watch = None
 
         try:
-            # Pure async queue - no executor threads consumed!
-            # With 100-200 workers, this scales perfectly as workers suspend
-            # as coroutines (not threads) while waiting for items.
-            # Short timeout (0.3s) for fast shutdown with zero performance penalty
-            # since workers are coroutines, not threads - timeout just reschedules.
-            queued_item_data = await q.async_get(timeout=0.9)
+            # Efficient blocking via run_in_executor (no polling overhead!)
+            # Worker blocks in threading.Queue.get() which uses Condition.wait()
+            # Executor must be sized to match worker count (see worker_pool.py: 50 threads default)
+            # Single timeout (no double-timeout wrapper) = no race condition
+            queued_item_data = await q.async_get(executor=executor, timeout=1.0)
 
             # CRITICAL: Claim UUID immediately after getting from queue to prevent race condition
             # in wait_for_all_checks() which checks qsize() and running_uuids separately
