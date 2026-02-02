@@ -9,6 +9,11 @@ from changedetectionio import store
 import os
 import sys
 
+# CRITICAL: Set short timeout for tests to prevent 45-second hangs
+# When test server is slow/unresponsive, workers fail fast instead of holding UUIDs for 45s
+# This prevents exponential priority growth from repeated deferrals (priority × 10 each defer)
+os.environ['DEFAULT_SETTINGS_REQUESTS_TIMEOUT'] = '5'
+
 from changedetectionio.flask_app import init_app_secret, changedetection_app
 from changedetectionio.tests.util import live_server_setup, new_live_server_setup
 
