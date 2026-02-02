@@ -604,6 +604,19 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
             return None
 
+        # Check PAGE_WATCH_LIMIT if set
+        page_watch_limit = os.getenv('PAGE_WATCH_LIMIT')
+        if page_watch_limit:
+            try:
+                page_watch_limit = int(page_watch_limit)
+                current_watch_count = len(self.__data['watching'])
+                if current_watch_count >= page_watch_limit:
+                    logger.error(f"Watch limit reached: {current_watch_count}/{page_watch_limit} watches. Cannot add {url}")
+                    flash(gettext("Watch limit reached ({}/{} watches). Cannot add more watches.").format(current_watch_count, page_watch_limit), 'error')
+                    return None
+            except ValueError:
+                logger.warning(f"Invalid PAGE_WATCH_LIMIT value: {page_watch_limit}, ignoring limit check")
+
         if tag and type(tag) == str:
             # Then it's probably a string of the actual tag by name, split and add it
             for t in tag.split(','):
