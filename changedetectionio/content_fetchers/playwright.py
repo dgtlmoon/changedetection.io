@@ -1,3 +1,4 @@
+import asyncio
 import gc
 import json
 import os
@@ -349,12 +350,7 @@ class fetcher(Fetcher):
 
             if self.status_code != 200 and not ignore_status_codes:
                 screenshot = await capture_full_page_async(self.page, screenshot_format=self.screenshot_format, watch_uuid=watch_uuid, lock_viewport_elements=self.lock_viewport_elements)
-                # Cleanup before raising to prevent memory leak
-                await self.page.close()
-                await context.close()
-                await browser.close()
-                # Force garbage collection to release Playwright resources immediately
-                gc.collect()
+                # Finally block will handle cleanup
                 raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=screenshot)
 
             if not empty_pages_are_a_change and len((await self.page.content()).strip()) == 0:
@@ -370,12 +366,7 @@ class fetcher(Fetcher):
                     try:
                         await self.iterate_browser_steps(start_url=url)
                     except BrowserStepsStepException:
-                        try:
-                            await context.close()
-                            await browser.close()
-                        except Exception as e:
-                            # Fine, could be messy situation
-                            pass
+                        # Finally block will handle cleanup
                         raise
 
                     await self.page.wait_for_timeout(extra_wait * 1000)
@@ -424,35 +415,40 @@ class fetcher(Fetcher):
                 raise ScreenshotUnavailable(url=url, status_code=self.status_code)
 
             finally:
-                # Request garbage collection one more time before closing
+                # Clean up resources properly with timeouts to prevent hanging
                 try:
-                    await self.page.request_gc()
-                except:
-                    pass
-                
-                # Clean up resources properly
-                try:
-                    await self.page.request_gc()
-                except:
-                    pass
+                    if hasattr(self, 'page') and self.page:
+                        await self.page.request_gc()
+                        await asyncio.wait_for(self.page.close(), timeout=5.0)
+                        logger.debug(f"Successfully closed page for {url}")
+                except asyncio.TimeoutError:
+                    logger.warning(f"Timed out closing page for {url} (5s)")
+                except Exception as e:
+                    logger.warning(f"Error closing page for {url}: {e}")
+                finally:
+                    self.page = None
 
                 try:
-                    await self.page.close()
-                except:
-                    pass
-                self.page = None
+                    if context:
+                        await asyncio.wait_for(context.close(), timeout=5.0)
+                        logger.debug(f"Successfully closed context for {url}")
+                except asyncio.TimeoutError:
+                    logger.warning(f"Timed out closing context for {url} (5s)")
+                except Exception as e:
+                    logger.warning(f"Error closing context for {url}: {e}")
+                finally:
+                    context = None
 
                 try:
-                    await context.close()
-                except:
-                    pass
-                context = None
-
-                try:
-                    await browser.close()
-                except:
-                    pass
-                browser = None
+                    if browser:
+                        await asyncio.wait_for(browser.close(), timeout=5.0)
+                        logger.debug(f"Successfully closed browser connection for {url}")
+                except asyncio.TimeoutError:
+                    logger.warning(f"Timed out closing browser connection for {url} (5s)")
+                except Exception as e:
+                    logger.warning(f"Error closing browser for {url}: {e}")
+                finally:
+                    browser = None
 
                 # Force Python GC to release Playwright resources immediately
                 # Playwright objects can have circular references that delay cleanup

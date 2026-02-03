@@ -475,14 +475,9 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     del update_handler
                     update_handler = None
 
-                # Force aggressive memory cleanup after clearing
+                # Force garbage collection
                 import gc
                 gc.collect()
-                try:
-                    import ctypes
-                    ctypes.CDLL('libc.so.6').malloc_trim(0)
-                except Exception:
-                    pass
 
         except Exception as e:
             logger.error(f"Worker {worker_id} unexpected error processing {uuid}: {e}")
@@ -495,6 +490,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
         finally:
             # Always cleanup - this runs whether there was an exception or not
             if uuid:
+                # Call quit() as backup (Puppeteer/Playwright have internal cleanup, but this acts as safety net)
                 try:
                     if update_handler and hasattr(update_handler, 'fetcher') and update_handler.fetcher:
                         await update_handler.fetcher.quit(watch=watch)
@@ -503,35 +499,25 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                 try:
                     # Release UUID from processing (thread-safe)
                     worker_pool.release_uuid_from_processing(uuid, worker_id=worker_id)
-                    
+
                     # Send completion signal
                     if watch:
-                        #logger.info(f"Worker {worker_id} sending completion signal for UUID {watch['uuid']}")
                         watch_check_update.send(watch_uuid=watch['uuid'])
 
-                    # Explicitly clean up update_handler and all its references
+                    # Clean up all memory references BEFORE garbage collection
                     if update_handler:
-                        # Clear fetcher content using the proper method
                         if hasattr(update_handler, 'fetcher') and update_handler.fetcher:
                             update_handler.fetcher.clear_content()
-
-                        # Clear processor references
                         if hasattr(update_handler, 'content_processor'):
                             update_handler.content_processor = None
-
+                        del update_handler
                         update_handler = None
 
-                    # Clear local contents variable if it still exists
+                    # Clear large content variables
                     if 'contents' in locals():
                         del contents
 
-                    # Note: We don't set watch = None here because:
-                    # 1. watch is just a local reference to datastore.data['watching'][uuid]
-                    # 2. Setting it to None doesn't affect the datastore
-                    # 3. GC can't collect the object anyway (still referenced by datastore)
-                    # 4. It would just cause confusion
-
-                    # Force garbage collection after cleanup
+                    # Force garbage collection after all references are cleared
                     import gc
                     gc.collect()
 
