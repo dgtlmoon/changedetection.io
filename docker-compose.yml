@@ -19,9 +19,9 @@ services:
   #        Install additional Python packages (processor plugins, etc.)
   #        Packages are installed at container startup and cached to avoid reinstalling on every restart
   #        Example: Install the OSINT reconnaissance processor plugin
-  #      - EXTRA_PACKAGES=changedetection-osint-processor
+  #      - EXTRA_PACKAGES=changedetection.io-osint
   #        Multiple packages can be installed by separating with spaces:
-  #      - EXTRA_PACKAGES=changedetection-osint-processor another-plugin
+  #      - EXTRA_PACKAGES=changedetection.io-osint another-plugin
   #
   #
   #       Uncomment below and the "sockpuppetbrowser" to use a real Chrome browser (It uses the "playwright" protocol)
