@@ -532,11 +532,6 @@ class fetcher(Fetcher):
             )
         except asyncio.TimeoutError:
             raise (BrowserFetchTimedOut(msg=f"Browser connected but was unable to process the page in {max_time} seconds."))
-        finally:
-            # CRITICAL: Always cleanup browser connections regardless of success/failure
-            # This ensures connections are closed even when exceptions occur
-            # Reuse quit() method to avoid code duplication
-            await self.quit(watch={'uuid': watch_uuid} if watch_uuid else None)
 
 
 # Plugin registration for built-in fetcher
