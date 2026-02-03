@@ -309,7 +309,9 @@ Math: {{ 1 + 1 }}") }}
                 <span id="activate-text-preview" class="pure-button pure-button-primary button-xsmall">{{ _('Activate preview') }}</span>
               <div>
               <div id="edit-text-filter">
-                    <div class="pure-control-group" id="pro-tips">
+
+{% if capabilities.supports_text_filters_and_triggers_elements %}
+                        <div class="pure-control-group" id="pro-tips">
                             <strong>{{ _('Pro-tips:') }}</strong><br>
                             <ul>
                                 <li>
@@ -320,8 +322,8 @@ Math: {{ 1 + 1 }}") }}
                                 </li>
                             </ul>
                     </div>
-
 {% include "edit/include_subtract.html" %}
+{% endif %}
                 <div class="text-filtering border-fieldset">
                 <fieldset class="pure-group" id="text-filtering-type-options">
                     <h3>{{ _('Text filtering') }}</h3>

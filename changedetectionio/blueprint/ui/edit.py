@@ -271,6 +271,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             # Add processor capabilities from module
             capabilities['supports_visual_selector'] = getattr(parent_module, 'supports_visual_selector', False)
             capabilities['supports_text_filters_and_triggers'] = getattr(parent_module, 'supports_text_filters_and_triggers', False)
+            capabilities['supports_text_filters_and_triggers_elements'] = getattr(parent_module, 'supports_text_filters_and_triggers_elements', False)
             capabilities['supports_request_type'] = getattr(parent_module, 'supports_request_type', False)
 
             app_rss_token = datastore.data['settings']['application'].get('rss_access_token'),

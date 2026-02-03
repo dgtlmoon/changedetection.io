@@ -15,7 +15,8 @@ processor_weight = 2  # Lower weight = appears at top, heavier weight = appears 
 # Processor capabilities
 supports_visual_selector = True
 supports_browser_steps = True
-supports_text_filters_and_triggers = True
+supports_text_filters_and_triggers = False
+supports_text_filters_and_triggers_elements = False
 supports_request_type = True
 
 PROCESSOR_CONFIG_NAME = f"{Path(__file__).parent.name}.json"
