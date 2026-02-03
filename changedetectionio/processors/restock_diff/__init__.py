@@ -87,7 +87,7 @@ class Watch(BaseWatch):
         values.append(('restock.price', "Price detected"))
         values.append(('restock.original_price', "Original price at first check"))
 
-        # Add restock_setttings descriptions
+        # Add restock_settings descriptions
         values.append(('restock.price_change_max', "Above price change to trigger notification"))
         values.append(('restock.price_change_min', "Below price change to trigger notification"))
         values.append(('restock.price_change_threshold_percent', "Price threshold to trigger notification"))
