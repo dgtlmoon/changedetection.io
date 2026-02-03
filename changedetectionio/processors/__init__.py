@@ -256,6 +256,20 @@ def available_processors():
     return [(name, desc) for name, desc, weight in available]
 
 
+def get_default_processor():
+    """
+    Get the default processor to use when none is specified.
+    Returns the first available processor based on weight (lowest weight = highest priority).
+    This ensures forms auto-select a valid processor even when DISABLED_PROCESSORS filters the list.
+
+    :return: The processor name string (e.g., 'text_json_diff')
+    """
+    available = available_processors()
+    if available:
+        return available[0][0]  # Return the processor name from first tuple
+    return 'text_json_diff'  # Fallback if somehow no processors are available
+
+
 def get_processor_badge_texts():
     """
     Get a dictionary mapping processor names to their list_badge_text values.

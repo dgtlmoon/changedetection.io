@@ -26,8 +26,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             # URL List import
             if request.values.get('urls') and len(request.values.get('urls').strip()):
                 # Import and push into the queue for immediate update check
+                from changedetectionio import processors
                 importer_handler = import_url_list()
-                importer_handler.run(data=request.values.get('urls'), flash=flash, datastore=datastore, processor=request.values.get('processor', 'text_json_diff'))
+                importer_handler.run(data=request.values.get('urls'), flash=flash, datastore=datastore, processor=request.values.get('processor', processors.get_default_processor()))
                 logger.debug(f"Imported {len(importer_handler.new_uuids)} new UUIDs")
                 # Dont' add to queue because scheduler can see that they haven't been checked and will add them to the queue
 #                for uuid in importer_handler.new_uuids:
