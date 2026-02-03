@@ -132,7 +132,7 @@ class watch_base(dict):
             'url': '',
             'use_page_title_in_list': None, # None = use system settings
             'uuid': str(uuid.uuid4()),
-            'block_assets': False,
+            'block_assets': None, #tenary None boolean
             'webdriver_delay': None,
             'webdriver_js_execute_code': None,  # Run before change-detection
         })

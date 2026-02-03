@@ -126,7 +126,8 @@
                         </span>
                     </div>
                     <div class="pure-control-group">
-                        {{ render_field(form.block_assets) }}
+                        <!--{{ render_field(form.block_assets) }}-->
+                        {{ render_ternary_field(form.block_assets) }}
                         <div class="pure-form-message-inline">
                             {{ _('Block retrieving images, fonts, and media files to improve performance and reduce bandwidth usage.') }}
                             {% if using_global_block_assets %}

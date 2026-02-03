@@ -751,7 +751,8 @@ class commonSettingsForm(Form):
     notification_urls = StringListField(_l('Notification URL List'), validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
     processor = RadioField( label=_l("Processor - What do you want to achieve?"), choices=lambda: processors.available_processors(), default="text_json_diff")
     scheduler_timezone_default = StringField(_l("Default timezone for watch check scheduler"), render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
-    block_assets = BooleanField(_l('Block retrieving images/fonts/media'), default=False)
+    #block_assets = BooleanField(_l('Block retrieving images/fonts/media'), default=False)
+    block_assets = TernaryNoneBooleanField(_l('Block retrieving images/fonts/media'), boolean_mode=True, default=None)
     webdriver_delay = IntegerField(_l('Wait seconds before extracting text'), validators=[validators.Optional(), validators.NumberRange(min=1, message=_l("Should contain one or more seconds"))])
 
 # Not true anymore but keep the validate_ hook for future use, we convert color tags
@@ -837,6 +838,9 @@ class processor_text_json_diff_form(commonSettingsForm):
     conditions_match_logic = RadioField(_l('Match'), choices=[('ALL', _l('Match all of the following')),('ANY', _l('Match any of the following'))], default='ALL')
     conditions = FieldList(FormField(ConditionFormRow), min_entries=1)  # Add rule logic here
     use_page_title_in_list = TernaryNoneBooleanField(_l('Use page <title> in list'), default=None)
+
+    #override global setting (add true/false/none instead of just true/false)
+    block_assets = TernaryNoneBooleanField(_l('Block retrieving images/fonts/media'), default=None)
 
     def extra_tab_content(self):
         return None

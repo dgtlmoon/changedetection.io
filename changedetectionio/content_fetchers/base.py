@@ -72,7 +72,7 @@ class Fetcher():
     supports_xpath_element_data = False # Can extract xpath element positions/data for visual selector
 
     # Asset blocking configuration - prevents loading of images, media, fonts etc
-    block_assets = False                # Default: disabled for compatibility 
+    block_assets = None                # Default: None (tenary boolean) 
 
     # Screenshot element locking - prevents layout shifts during screenshot capture
     # Only needed for visual comparison (image_ssim_diff processor)
