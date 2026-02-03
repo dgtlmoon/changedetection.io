@@ -12,6 +12,12 @@ processor_description = "Visual/Screenshot change detection (Fast)"
 processor_name = "image_ssim_diff"
 processor_weight = 2  # Lower weight = appears at top, heavier weight = appears lower (bottom)
 
+# Processor capabilities
+supports_visual_selector = True
+supports_browser_steps = True
+supports_text_filters_and_triggers = True
+supports_request_type = True
+
 PROCESSOR_CONFIG_NAME = f"{Path(__file__).parent.name}.json"
 
 # Subprocess timeout settings
