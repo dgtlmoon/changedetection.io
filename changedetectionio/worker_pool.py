@@ -23,11 +23,14 @@ _uuid_processing_lock = threading.Lock()  # Protects currently_processing_uuids
 USE_ASYNC_WORKERS = True
 
 # Custom ThreadPoolExecutor for queue operations with named threads
-# Scale executor threads with FETCH_WORKERS to avoid bottleneck at high concurrency
-_max_executor_workers = max(50, int(os.getenv("FETCH_WORKERS", "10")))
+# Scale executor threads to match FETCH_WORKERS (no minimum, no maximum)
+# Thread naming: "QueueGetter-N" for easy debugging in thread dumps/traces
+# With FETCH_WORKERS=10: 10 workers + 10 executor threads = 20 threads total
+# With FETCH_WORKERS=500: 500 workers + 500 executor threads = 1000 threads total (acceptable on modern systems)
+_max_executor_workers = int(os.getenv("FETCH_WORKERS", "10"))
 queue_executor = ThreadPoolExecutor(
     max_workers=_max_executor_workers,
-    thread_name_prefix="QueueGetter-"
+    thread_name_prefix="QueueGetter-"  # Shows in thread dumps as "QueueGetter-0", "QueueGetter-1", etc.
 )
 
 
@@ -82,16 +85,17 @@ class WorkerThread:
             self.loop = None
 
     def start(self):
-        """Start the worker thread"""
+        """Start the worker thread with descriptive name for debugging"""
         self.thread = threading.Thread(
             target=self.run,
             daemon=True,
-            name=f"PageFetchAsyncUpdateWorker-{self.worker_id}"
+            name=f"PageFetchAsyncUpdateWorker-{self.worker_id}"  # Shows in thread dumps with worker ID
         )
         self.thread.start()
 
     def stop(self):
-        """Stop the worker thread"""
+        """Stop the worker thread brutally - no waiting"""
+        # Try to stop the event loop if it exists
         if self.loop and self.running:
             try:
                 # Signal the loop to stop
@@ -99,8 +103,7 @@ class WorkerThread:
             except RuntimeError:
                 pass
 
-        if self.thread and self.thread.is_alive():
-            self.thread.join(timeout=2.0)
+        # Don't wait - thread is daemon and will die when needed
 
 
 def start_async_workers(n_workers, update_q, notification_q, app, datastore):
@@ -125,7 +128,7 @@ def start_async_workers(n_workers, update_q, notification_q, app, datastore):
 
 async def start_single_async_worker(worker_id, update_q, notification_q, app, datastore, executor=None):
     """Start a single async worker with auto-restart capability"""
-    from changedetectionio.async_update_worker import async_update_worker
+    from changedetectionio.worker import async_update_worker
 
     # Check if we're in pytest environment - if so, be more gentle with logging
     import os
@@ -337,24 +340,36 @@ def queue_item_async_safe(update_q, item, silent=False):
 
 
 def shutdown_workers():
-    """Shutdown all async workers fast and aggressively"""
-    global worker_threads
+    """Shutdown all async workers brutally - no delays, no waiting"""
+    global worker_threads, queue_executor
 
     # Check if we're in pytest environment - if so, be more gentle with logging
     import os
     in_pytest = "pytest" in os.sys.modules or "PYTEST_CURRENT_TEST" in os.environ
 
     if not in_pytest:
-        logger.info("Fast shutdown of async workers initiated...")
+        logger.info("Brutal shutdown of async workers initiated...")
 
-    # Stop all worker threads
+    # Stop all worker event loops
     for worker in worker_threads:
         worker.stop()
 
+    # Clear immediately - threads are daemon and will die
     worker_threads.clear()
 
+    # Shutdown the queue executor to prevent "cannot schedule new futures after shutdown" errors
+    # This must happen AFTER workers are stopped to avoid race conditions
+    if queue_executor:
+        try:
+            queue_executor.shutdown(wait=False)
+            if not in_pytest:
+                logger.debug("Queue executor shut down")
+        except Exception as e:
+            if not in_pytest:
+                logger.warning(f"Error shutting down queue executor: {e}")
+
     if not in_pytest:
-        logger.info("Async workers fast shutdown complete")
+        logger.info("Async workers brutal shutdown complete")
 
 
 
@@ -469,12 +484,14 @@ def wait_for_all_checks(update_q, timeout=150):
             elif time.time() - empty_since >= 0.3:
                 # Add small buffer for filesystem operations to complete
                 time.sleep(0.2)
+                logger.trace("wait_for_all_checks: All checks complete (queue empty, workers idle)")
                 return True
         else:
             empty_since = None
 
         attempt += 1
 
+    logger.warning(f"wait_for_all_checks: Timeout after {timeout} attempts")
     return False  # Timeout
 
 

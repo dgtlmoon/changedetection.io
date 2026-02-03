@@ -166,6 +166,9 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         """
         logger.info(f"Datastore path is '{datastore_path}'")
 
+        # CRITICAL: Update datastore_path (was using old path from __init__)
+        self.datastore_path = datastore_path
+
         # Initialize data structure
         self.__data = App.model()
         self.json_store_path = os.path.join(self.datastore_path, "changedetection.json")
@@ -603,6 +606,19 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
             flash(gettext('Watch protocol is not permitted or invalid URL format'), 'error')
 
             return None
+
+        # Check PAGE_WATCH_LIMIT if set
+        page_watch_limit = os.getenv('PAGE_WATCH_LIMIT')
+        if page_watch_limit:
+            try:
+                page_watch_limit = int(page_watch_limit)
+                current_watch_count = len(self.__data['watching'])
+                if current_watch_count >= page_watch_limit:
+                    logger.error(f"Watch limit reached: {current_watch_count}/{page_watch_limit} watches. Cannot add {url}")
+                    flash(gettext("Watch limit reached ({}/{} watches). Cannot add more watches.").format(current_watch_count, page_watch_limit), 'error')
+                    return None
+            except ValueError:
+                logger.warning(f"Invalid PAGE_WATCH_LIMIT value: {page_watch_limit}, ignoring limit check")
 
         if tag and type(tag) == str:
             # Then it's probably a string of the actual tag by name, split and add it

@@ -9,7 +9,7 @@ from jinja2 import Environment, FileSystemLoader
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
 from changedetectionio.time_handler import is_within_schedule
-from changedetectionio import worker_handler
+from changedetectionio import worker_pool
 
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData):
     edit_blueprint = Blueprint('ui_edit', __name__, template_folder="../ui/templates")
@@ -30,13 +30,12 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         from changedetectionio import processors
         import importlib
 
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
         # More for testing, possible to return the first/only
         if not datastore.data['watching'].keys():
             flash(gettext("No watches to edit"), "error")
             return redirect(url_for('watchlist.index'))
-
-        if uuid == 'first':
-            uuid = list(datastore.data['watching'].keys()).pop()
 
         if not uuid in datastore.data['watching']:
             flash(gettext("No watch with the UUID {} found.").format(uuid), "error")
@@ -283,7 +282,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             #############################
             if not datastore.data['watching'][uuid].get('paused') and is_in_schedule:
                 # Queue the watch for immediate recheck, with a higher priority
-                worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+                worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
 
             # Diff page [edit] link should go back to diff page
             if request.args.get("next") and request.args.get("next") == 'diff':
@@ -314,7 +313,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             app_rss_token = datastore.data['settings']['application'].get('rss_access_token'),
 
             c = [f"processor-{watch.get('processor')}"]
-            if worker_handler.is_watch_running(uuid):
+            if worker_pool.is_watch_running(uuid):
                 c.append('checking-now')
 
             template_args = {
@@ -371,6 +370,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         from flask import send_file
         import brotli
 
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
         watch = datastore.data['watching'].get(uuid)
         if watch and watch.history.keys() and os.path.isdir(watch.watch_data_dir):
             latest_filename = list(watch.history.keys())[-1]
@@ -395,6 +396,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
     def watch_get_preview_rendered(uuid):
         '''For when viewing the "preview" of the rendered text from inside of Edit'''
         from flask import jsonify
+
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
         from changedetectionio.processors.text_json_diff import prepare_filter_prevew
         result = prepare_filter_prevew(watch_uuid=uuid, form_data=request.form, datastore=datastore)
         return jsonify(result)

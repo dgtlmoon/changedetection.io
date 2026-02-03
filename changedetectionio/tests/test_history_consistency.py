@@ -142,6 +142,8 @@ def test_consistent_history(client, live_server, measure_memory_usage, datastore
             assert '"default"' not in f.read(), "'default' probably shouldnt be here, it came from when the 'default' Watch vars were accidently being saved"
 
 
+    delete_all_watches(client)
+
 def test_check_text_history_view(client, live_server, measure_memory_usage, datastore_path):
 
     with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
@@ -162,7 +164,7 @@ def test_check_text_history_view(client, live_server, measure_memory_usage, data
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
-    res = client.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
+    res = client.get(url_for("ui.ui_diff.diff_history_page", uuid=uuid))
     assert b'test-one' in res.data
     assert b'test-two' in res.data
 

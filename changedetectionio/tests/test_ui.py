@@ -25,6 +25,7 @@ def test_recheck_time_field_validation_global_settings(client, live_server, meas
 
 
     assert REQUIRE_ATLEAST_ONE_TIME_PART_MESSAGE_DEFAULT.encode('utf-8') in res.data
+    delete_all_watches(client)
 
 
 def test_recheck_time_field_validation_single_watch(client, live_server, measure_memory_usage, datastore_path):
@@ -94,6 +95,7 @@ def test_recheck_time_field_validation_single_watch(client, live_server, measure
 
     assert b"Updated watch." in res.data
     assert REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT.encode('utf-8') not in res.data
+    delete_all_watches(client)
 
 def test_checkbox_open_diff_in_new_tab(client, live_server, measure_memory_usage, datastore_path):
     
@@ -242,6 +244,7 @@ def test_page_title_listing_behaviour(client, live_server, measure_memory_usage,
     # No page title description, and 'use_page_title_in_list' is on, it should show the <title>
     res = client.get(url_for("watchlist.index"))
     assert b"head titlecustom html" in res.data
+    delete_all_watches(client)
 
 
 def test_ui_viewed_unread_flag(client, live_server, measure_memory_usage, datastore_path):
@@ -284,3 +287,4 @@ def test_ui_viewed_unread_flag(client, live_server, measure_memory_usage, datast
     time.sleep(0.2)
     res = client.get(url_for("watchlist.index"))
     assert b'<span id="unread-tab-counter">0</span>' in res.data
+    delete_all_watches(client)

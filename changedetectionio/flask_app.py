@@ -14,7 +14,7 @@ from pathlib import Path
 from changedetectionio.strtobool import strtobool
 from threading import Event
 from changedetectionio.queue_handlers import RecheckPriorityQueue, NotificationQueue
-from changedetectionio import worker_handler
+from changedetectionio import worker_pool
 
 from flask import (
     Flask,
@@ -195,7 +195,7 @@ def _jinja2_filter_format_number_locale(value: float) -> str:
 
 @app.template_global('is_checking_now')
 def _watch_is_checking_now(watch_obj, format="%Y-%m-%d %H:%M:%S"):
-    return worker_handler.is_watch_running(watch_obj['uuid'])
+    return worker_pool.is_watch_running(watch_obj['uuid'])
 
 @app.template_global('get_watch_queue_position')
 def _get_watch_queue_position(watch_obj):
@@ -206,13 +206,13 @@ def _get_watch_queue_position(watch_obj):
 @app.template_global('get_current_worker_count')
 def _get_current_worker_count():
     """Get the current number of operational workers"""
-    return worker_handler.get_worker_count()
+    return worker_pool.get_worker_count()
 
 @app.template_global('get_worker_status_info')
 def _get_worker_status_info():
     """Get detailed worker status information for display"""
-    status = worker_handler.get_worker_status()
-    running_uuids = worker_handler.get_running_uuids()
+    status = worker_pool.get_worker_status()
+    running_uuids = worker_pool.get_running_uuids()
     
     return {
         'count': status['worker_count'],
@@ -801,7 +801,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     # watchlist UI buttons etc
     import changedetectionio.blueprint.ui as ui
-    app.register_blueprint(ui.construct_blueprint(datastore, update_q, worker_handler, queuedWatchMetaData, watch_check_update))
+    app.register_blueprint(ui.construct_blueprint(datastore, update_q, worker_pool, queuedWatchMetaData, watch_check_update))
 
     import changedetectionio.blueprint.watchlist as watchlist
     app.register_blueprint(watchlist.construct_blueprint(datastore=datastore, update_q=update_q, queuedWatchMetaData=queuedWatchMetaData), url_prefix='')
@@ -838,10 +838,10 @@ def changedetection_app(config=None, datastore_o=None):
         expected_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
         
         # Get basic status
-        status = worker_handler.get_worker_status()
+        status = worker_pool.get_worker_status()
         
         # Perform health check
-        health_result = worker_handler.check_worker_health(
+        health_result = worker_pool.check_worker_health(
             expected_count=expected_workers,
             update_q=update_q,
             notification_q=notification_q,
@@ -905,14 +905,24 @@ def changedetection_app(config=None, datastore_o=None):
     # Can be overridden by ENV or use the default settings
     n_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
     logger.info(f"Starting {n_workers} workers during app initialization")
-    worker_handler.start_workers(n_workers, update_q, notification_q, app, datastore)
+    worker_pool.start_workers(n_workers, update_q, notification_q, app, datastore)
 
     # Skip background threads in batch mode (just process queue and exit)
     batch_mode = app.config.get('batch_mode', False)
     if not batch_mode:
         # @todo handle ctrl break
         ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks, daemon=True, name="TickerThread-ScheduleChecker").start()
-        threading.Thread(target=notification_runner, daemon=True, name="NotificationRunner").start()
+
+        # Start configurable number of notification workers (default 1)
+        notification_workers = int(os.getenv("NOTIFICATION_WORKERS", "1"))
+        for i in range(notification_workers):
+            threading.Thread(
+                target=notification_runner,
+                args=(i,),
+                daemon=True,
+                name=f"NotificationRunner-{i}"
+            ).start()
+        logger.info(f"Started {notification_workers} notification worker(s)")
 
         in_pytest = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
         # Check for new release version, but not when running in test/build or pytest
@@ -954,14 +964,14 @@ def check_for_new_version():
         app.config.exit.wait(86400)
 
 
-def notification_runner():
+def notification_runner(worker_id=0):
     global notification_debug_log
     from datetime import datetime
     import json
     with app.app_context():
         while not app.config.exit.is_set():
             try:
-                # At the moment only one thread runs (single runner)
+                # Multiple workers can run concurrently (configurable via NOTIFICATION_WORKERS)
                 n_object = notification_q.get(block=False)
             except queue.Empty:
                 app.config.exit.wait(1)
@@ -987,7 +997,7 @@ def notification_runner():
                         sent_obj = process_notification(n_object, datastore)
 
                 except Exception as e:
-                    logger.error(f"Watch URL: {n_object['watch_url']}  Error {str(e)}")
+                    logger.error(f"Notification worker {worker_id} - Watch URL: {n_object['watch_url']}  Error {str(e)}")
 
                     # UUID wont be present when we submit a 'test' from the global settings
                     if 'uuid' in n_object:
@@ -1028,7 +1038,7 @@ def ticker_thread_check_time_launch_checks():
         now = time.time()
         if now - last_health_check > 60:
             expected_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
-            health_result = worker_handler.check_worker_health(
+            health_result = worker_pool.check_worker_health(
                 expected_count=expected_workers,
                 update_q=update_q,
                 notification_q=notification_q,
@@ -1047,7 +1057,7 @@ def ticker_thread_check_time_launch_checks():
             continue
 
         # Get a list of watches by UUID that are currently fetching data
-        running_uuids = worker_handler.get_running_uuids()
+        running_uuids = worker_pool.get_running_uuids()
 
         # Build set of queued UUIDs once for O(1) lookup instead of O(n) per watch
         queued_uuids = {q_item.item['uuid'] for q_item in update_q.queue}
@@ -1153,7 +1163,7 @@ def ticker_thread_check_time_launch_checks():
                     priority = int(time.time())
 
                     # Into the queue with you
-                    queued_successfully = worker_handler.queue_item_async_safe(update_q,
+                    queued_successfully = worker_pool.queue_item_async_safe(update_q,
                                                                                queuedWatchMetaData.PrioritizedItem(priority=priority,
                                                                                                                    item={'uuid': uuid})
                                                                                )

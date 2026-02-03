@@ -2,7 +2,7 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup, extract_UUID_from_client, wait_for_all_checks
+from .util import live_server_setup, extract_UUID_from_client, wait_for_all_checks, delete_all_watches
 import os
 
 
@@ -116,7 +116,7 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
     # And not this cause its not the ld-json
     assert b"So let's see what happens" not in res.data
 
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
     ##########################################################################################
     # And we shouldnt see the offer
@@ -131,7 +131,7 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
     assert b'ldjson-price-track-offer' not in res.data
     
     ##########################################################################################
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
 
 def _test_runner_check_bad_format_ignored(live_server, client, has_ldjson_price_data):
@@ -147,7 +147,7 @@ def _test_runner_check_bad_format_ignored(live_server, client, has_ldjson_price_
 
 
     ##########################################################################################
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
 
 def test_bad_ldjson_is_correctly_ignored(client, live_server, measure_memory_usage, datastore_path):

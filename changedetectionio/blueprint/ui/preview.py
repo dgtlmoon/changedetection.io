@@ -26,10 +26,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         Each processor implements processors/{type}/preview.py::render()
         If a processor doesn't have a preview module, falls back to default text preview.
         """
-        # More for testing, possible to return the first/only
+
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
-
         try:
             watch = datastore.data['watching'][uuid]
         except KeyError:
@@ -150,10 +149,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         """
         from flask import make_response
 
-        # More for testing, possible to return the first/only
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
-
         try:
             watch = datastore.data['watching'][uuid]
         except KeyError:

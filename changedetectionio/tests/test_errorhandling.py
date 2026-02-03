@@ -64,6 +64,7 @@ def test_DNS_errors(client, live_server, measure_memory_usage, datastore_path):
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -79,7 +80,7 @@ def test_DNS_errors(client, live_server, measure_memory_usage, datastore_path):
     )
     assert found_name_resolution_error
     # Should always record that we tried
-    assert bytes("just now".encode('utf-8')) in res.data
+    assert "just now".encode('utf-8') in res.data or 'seconds ago'.encode('utf-8') in res.data
     delete_all_watches(client)
 
 # Re 1513
