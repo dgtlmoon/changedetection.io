@@ -313,14 +313,8 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
 
     # Add a watch and trigger a HTTP POST
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("ui.ui_views.form_quick_watch_add"),
-        data={"url": test_url, "tags": 'nice one'},
-        follow_redirects=True
-    )
-
-    assert b"Watch added" in res.data
-    watch_uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
+    watch_uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, tag="nice one")
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
     set_modified_response(datastore_path=datastore_path)

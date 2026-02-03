@@ -9,6 +9,7 @@ recursive-include changedetectionio/notification *
 recursive-include changedetectionio/processors *
 recursive-include changedetectionio/realtime *
 recursive-include changedetectionio/static *
+recursive-include changedetectionio/store *
 recursive-include changedetectionio/templates *
 recursive-include changedetectionio/tests *
 recursive-include changedetectionio/translations *
@@ -16,6 +17,7 @@ recursive-include changedetectionio/widgets *
 prune changedetectionio/static/package-lock.json
 prune changedetectionio/static/styles/node_modules
 prune changedetectionio/static/styles/package-lock.json
+include changedetectionio/favicon_utils.py
 include changedetection.py
 include requirements.txt
 include README-pip.md

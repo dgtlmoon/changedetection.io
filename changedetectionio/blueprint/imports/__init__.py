@@ -14,7 +14,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         from changedetectionio import forms
 #
         if request.method == 'POST':
-#            from changedetectionio import worker_handler
+#            from changedetectionio import worker_pool
 
             from changedetectionio.blueprint.imports.importer import (
                 import_url_list,
@@ -31,7 +31,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 logger.debug(f"Imported {len(importer_handler.new_uuids)} new UUIDs")
                 # Dont' add to queue because scheduler can see that they haven't been checked and will add them to the queue
 #                for uuid in importer_handler.new_uuids:
-#                    worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+#                    worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
 
                 if len(importer_handler.remaining_data) == 0:
                     return redirect(url_for('watchlist.index'))
@@ -45,7 +45,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 d_importer.run(data=request.values.get('distill-io'), flash=flash, datastore=datastore)
                 # Dont' add to queue because scheduler can see that they haven't been checked and will add them to the queue
 #                for uuid in importer_handler.new_uuids:
-#                    worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+#                    worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
 
 
             # XLSX importer
@@ -70,7 +70,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
                 # Dont' add to queue because scheduler can see that they haven't been checked and will add them to the queue
 #                for uuid in importer_handler.new_uuids:
-#                    worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+#                    worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
 
 
         # Could be some remaining, or we could be on GET

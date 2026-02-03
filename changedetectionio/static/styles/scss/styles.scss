@@ -222,6 +222,19 @@ code {
   color: var(--color-white);
   background: var(--color-text-watch-tag-list);
   @extend .inline-tag;
+  
+  /* Remove default anchor styling when used as links */
+  text-decoration: none;
+  
+  &:hover {
+    text-decoration: none;
+    opacity: 0.8;
+    cursor: pointer;
+  }
+  
+  &:visited {
+    color: var(--color-white);
+  }
 }
 
 @media (min-width: 768px) {

@@ -224,7 +224,7 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
                             {%- endif -%}
 
                             {%- for watch_tag_uuid, watch_tag in datastore.get_all_tags_for_watch(watch['uuid']).items() -%}
-                              <span class="watch-tag-list tag-{{ watch_tag.title|sanitize_tag_class }}">{{ watch_tag.title }}</span>
+                              <a href="{{url_for('watchlist.index', tag=watch_tag_uuid) }}" class="watch-tag-list tag-{{ watch_tag.title|sanitize_tag_class }}">{{ watch_tag.title }}</a>
                             {%- endfor -%}
                         </div>
                     <div class="status-icons">

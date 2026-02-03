@@ -8,20 +8,24 @@ from loguru import logger
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, visualselector_xpath_selectors, \
     SCREENSHOT_SIZE_STITCH_THRESHOLD, SCREENSHOT_MAX_TOTAL_HEIGHT, XPATH_ELEMENT_JS, INSTOCK_DATA_JS, FAVICON_FETCHER_JS
 from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
-from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable
+from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable, \
+    BrowserStepsStepException
 
-async def capture_full_page_async(page, screenshot_format='JPEG'):
+
+async def capture_full_page_async(page, screenshot_format='JPEG', watch_uuid=None, lock_viewport_elements=False):
     import os
     import time
-    import multiprocessing
 
     start = time.time()
+    watch_info = f"[{watch_uuid}] " if watch_uuid else ""
 
+    setup_start = time.time()
     page_height = await page.evaluate("document.documentElement.scrollHeight")
     page_width = await page.evaluate("document.documentElement.scrollWidth")
     original_viewport = page.viewport_size
+    dimensions_time = time.time() - setup_start
 
-    logger.debug(f"Playwright viewport size {page.viewport_size} page height {page_height} page width {page_width}")
+    logger.debug(f"{watch_info}Playwright viewport size {page.viewport_size} page height {page_height} page width {page_width} (got dimensions in {dimensions_time:.2f}s)")
 
     # Use an approach similar to puppeteer: set a larger viewport and take screenshots in chunks
     step_size = SCREENSHOT_SIZE_STITCH_THRESHOLD # Size that won't cause GPU to overflow
@@ -29,25 +33,31 @@ async def capture_full_page_async(page, screenshot_format='JPEG'):
     y = 0
     elements_locked = False
 
-    if page_height > page.viewport_size['height']:
-
-        # Lock all element dimensions BEFORE screenshot to prevent CSS media queries from resizing
-        # capture_full_page_async() changes viewport height which triggers @media (min-height) rules
+    # Only lock viewport elements if explicitly enabled (for image_ssim_diff processor)
+    # This prevents headers/ads from resizing when viewport changes
+    if lock_viewport_elements and page_height > page.viewport_size['height']:
+        lock_start = time.time()
         lock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'lock-elements-sizing.js')
         with open(lock_elements_js_path, 'r') as f:
             lock_elements_js = f.read()
         await page.evaluate(lock_elements_js)
         elements_locked = True
+        lock_time = time.time() - lock_start
+        logger.debug(f"{watch_info}Viewport element locking enabled (took {lock_time:.2f}s)")
 
-        logger.debug("Element dimensions locked before screenshot capture")
-
+    if page_height > page.viewport_size['height']:
         if page_height < step_size:
             step_size = page_height # Incase page is bigger than default viewport but smaller than proposed step size
-        logger.debug(f"Setting bigger viewport to step through large page width W{page.viewport_size['width']}xH{step_size} because page_height > viewport_size")
+        viewport_start = time.time()
+        logger.debug(f"{watch_info}Setting bigger viewport to step through large page width W{page.viewport_size['width']}xH{step_size} because page_height > viewport_size")
         # Set viewport to a larger size to capture more content at once
         await page.set_viewport_size({'width': page.viewport_size['width'], 'height': step_size})
+        viewport_time = time.time() - viewport_start
+        logger.debug(f"{watch_info}Viewport changed to {page.viewport_size['width']}x{step_size} (took {viewport_time:.2f}s)")
 
     # Capture screenshots in chunks up to the max total height
+    capture_start = time.time()
+    chunk_times = []
     # Use PNG for better quality (no compression artifacts), JPEG for smaller size
     screenshot_type = screenshot_format.lower() if screenshot_format else 'jpeg'
     # PNG should use quality 100, JPEG uses configurable quality
@@ -69,7 +79,11 @@ async def capture_full_page_async(page, screenshot_format='JPEG'):
         if screenshot_type == 'jpeg':
             screenshot_kwargs['quality'] = screenshot_quality
 
+        chunk_start = time.time()
         screenshot_chunks.append(await page.screenshot(**screenshot_kwargs))
+        chunk_time = time.time() - chunk_start
+        chunk_times.append(chunk_time)
+        logger.debug(f"{watch_info}Chunk {len(screenshot_chunks)} captured in {chunk_time:.2f}s")
         y += step_size
 
     # Restore original viewport size
@@ -81,40 +95,54 @@ async def capture_full_page_async(page, screenshot_format='JPEG'):
         with open(unlock_elements_js_path, 'r') as f:
             unlock_elements_js = f.read()
         await page.evaluate(unlock_elements_js)
-        logger.debug("Element dimensions unlocked after screenshot capture")
+        logger.debug(f"{watch_info}Element dimensions unlocked after screenshot capture")
+
+    capture_time = time.time() - capture_start
+    total_capture_time = sum(chunk_times)
+    logger.debug(f"{watch_info}All {len(screenshot_chunks)} chunks captured in {capture_time:.2f}s (total chunk time: {total_capture_time:.2f}s)")
 
     # If we have multiple chunks, stitch them together
     if len(screenshot_chunks) > 1:
-        logger.debug(f"Screenshot stitching {len(screenshot_chunks)} chunks together")
+        stitch_start = time.time()
+        logger.debug(f"{watch_info}Starting stitching of {len(screenshot_chunks)} chunks")
 
-        # For small number of chunks (2-3), stitch inline to avoid multiprocessing overhead
-        # Only use separate process for many chunks (4+) to avoid blocking the event loop
-        if len(screenshot_chunks) <= 3:
-            from changedetectionio.content_fetchers.screenshot_handler import stitch_images_inline
-            screenshot = stitch_images_inline(screenshot_chunks, page_height, SCREENSHOT_MAX_TOTAL_HEIGHT)
-        else:
-            # Use separate process for many chunks to avoid blocking
-            # Always use spawn for thread safety - consistent behavior in tests and production
-            from changedetectionio.content_fetchers.screenshot_handler import stitch_images_worker
-            ctx = multiprocessing.get_context('spawn')
-            parent_conn, child_conn = ctx.Pipe()
-            p = ctx.Process(target=stitch_images_worker, args=(child_conn, screenshot_chunks, page_height, SCREENSHOT_MAX_TOTAL_HEIGHT))
-            p.start()
-            screenshot = parent_conn.recv_bytes()
-            p.join()
-            # Explicit cleanup
-            del p
-            del parent_conn, child_conn
+        # Always use spawn subprocess for ANY stitching (2+ chunks)
+        # PIL allocates at C level and Python GC never releases it - subprocess exit forces OS to reclaim
+        # Trade-off: 35MB resource_tracker vs 500MB+ PIL leak in main process
+        from changedetectionio.content_fetchers.screenshot_handler import stitch_images_worker_raw_bytes
+        import multiprocessing
+        import struct
 
+        ctx = multiprocessing.get_context('spawn')
+        parent_conn, child_conn = ctx.Pipe()
+        p = ctx.Process(target=stitch_images_worker_raw_bytes, args=(child_conn, page_height, SCREENSHOT_MAX_TOTAL_HEIGHT))
+        p.start()
+
+        # Send via raw bytes (no pickle)
+        parent_conn.send_bytes(struct.pack('I', len(screenshot_chunks)))
+        for chunk in screenshot_chunks:
+            parent_conn.send_bytes(chunk)
+
+        screenshot = parent_conn.recv_bytes()
+        p.join()
+
+        parent_conn.close()
+        child_conn.close()
+        del p, parent_conn, child_conn
+
+        stitch_time = time.time() - stitch_start
+        total_time = time.time() - start
+        setup_time = total_time - capture_time - stitch_time
         logger.debug(
-            f"Screenshot (chunked/stitched) - Page height: {page_height} Capture height: {SCREENSHOT_MAX_TOTAL_HEIGHT} - Stitched together in {time.time() - start:.2f}s")
-        # Explicit cleanup
-        del screenshot_chunks
-        screenshot_chunks = None
+            f"{watch_info}Screenshot complete - Page height: {page_height}px, Capture height: {SCREENSHOT_MAX_TOTAL_HEIGHT}px | "
+            f"Setup: {setup_time:.2f}s, Capture: {capture_time:.2f}s, Stitching: {stitch_time:.2f}s, Total: {total_time:.2f}s")
         return screenshot
 
+    total_time = time.time() - start
+    setup_time = total_time - capture_time
     logger.debug(
-        f"Screenshot Page height: {page_height} Capture height: {SCREENSHOT_MAX_TOTAL_HEIGHT} - Stitched together in {time.time() - start:.2f}s")
+        f"{watch_info}Screenshot complete - Page height: {page_height}px, Capture height: {SCREENSHOT_MAX_TOTAL_HEIGHT}px | "
+        f"Setup: {setup_time:.2f}s, Single chunk: {capture_time:.2f}s, Total: {total_time:.2f}s")
 
     return screenshot_chunks[0]
 
@@ -184,7 +212,8 @@ class fetcher(Fetcher):
 
     async def screenshot_step(self, step_n=''):
         super().screenshot_step(step_n=step_n)
-        screenshot = await capture_full_page_async(page=self.page, screenshot_format=self.screenshot_format)
+        watch_uuid = getattr(self, 'watch_uuid', None)
+        screenshot = await capture_full_page_async(page=self.page, screenshot_format=self.screenshot_format, watch_uuid=watch_uuid, lock_viewport_elements=self.lock_viewport_elements)
 
         # Request GC immediately after screenshot to free memory
         # Screenshots can be large and browser steps take many of them
@@ -233,6 +262,7 @@ class fetcher(Fetcher):
         import playwright._impl._errors
         import time
         self.delete_browser_steps_screenshots()
+        self.watch_uuid = watch_uuid  # Store for use in screenshot_step
         response = None
 
         async with async_playwright() as p:
@@ -318,7 +348,7 @@ class fetcher(Fetcher):
                     logger.error(f"Error fetching FavIcon info {str(e)}, continuing.")
 
             if self.status_code != 200 and not ignore_status_codes:
-                screenshot = await capture_full_page_async(self.page, screenshot_format=self.screenshot_format)
+                screenshot = await capture_full_page_async(self.page, screenshot_format=self.screenshot_format, watch_uuid=watch_uuid, lock_viewport_elements=self.lock_viewport_elements)
                 # Cleanup before raising to prevent memory leak
                 await self.page.close()
                 await context.close()
@@ -337,7 +367,16 @@ class fetcher(Fetcher):
             try:
                 # Run Browser Steps here
                 if self.browser_steps_get_valid_steps():
-                    await self.iterate_browser_steps(start_url=url)
+                    try:
+                        await self.iterate_browser_steps(start_url=url)
+                    except BrowserStepsStepException:
+                        try:
+                            await context.close()
+                            await browser.close()
+                        except Exception as e:
+                            # Fine, could be messy situation
+                            pass
+                        raise
 
                     await self.page.wait_for_timeout(extra_wait * 1000)
 
@@ -374,14 +413,16 @@ class fetcher(Fetcher):
                 # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
                 # acceptable screenshot quality here
                 # The actual screenshot - this always base64 and needs decoding! horrible! huge CPU usage
-                self.screenshot = await capture_full_page_async(page=self.page, screenshot_format=self.screenshot_format)
+                self.screenshot = await capture_full_page_async(page=self.page, screenshot_format=self.screenshot_format, watch_uuid=watch_uuid, lock_viewport_elements=self.lock_viewport_elements)
+
+                # Force aggressive memory cleanup - screenshots are large and base64 decode creates temporary buffers
+                await self.page.request_gc()
+                gc.collect()
 
             except ScreenshotUnavailable:
                 # Re-raise screenshot unavailable exceptions
-                raise
-            except Exception as e:
-                # It's likely the screenshot was too long/big and something crashed
                 raise ScreenshotUnavailable(url=url, status_code=self.status_code)
+
             finally:
                 # Request garbage collection one more time before closing
                 try:

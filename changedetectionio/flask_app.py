@@ -14,7 +14,7 @@ from pathlib import Path
 from changedetectionio.strtobool import strtobool
 from threading import Event
 from changedetectionio.queue_handlers import RecheckPriorityQueue, NotificationQueue
-from changedetectionio import worker_handler
+from changedetectionio import worker_pool
 
 from flask import (
     Flask,
@@ -44,6 +44,8 @@ from changedetectionio.api import Watch, WatchHistory, WatchSingleHistory, Watch
 from changedetectionio.api.Search import Search
 from .time_handler import is_within_schedule
 from changedetectionio.languages import get_available_languages, get_language_codes, get_flag_for_locale, get_timeago_locale
+from changedetectionio.favicon_utils import get_favicon_mime_type
+
 IN_PYTEST = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
 
 datastore = None
@@ -69,9 +71,13 @@ socketio_server = None
 CORS(app)
 
 # Super handy for compressing large BrowserSteps responses and others
-FlaskCompress(app)
-app.config['COMPRESS_MIN_SIZE'] = 4096
+# Flask-Compress handles HTTP compression, Socket.IO compression disabled to prevent memory leak
+compress = FlaskCompress()
+app.config['COMPRESS_MIN_SIZE'] = 2096
 app.config['COMPRESS_MIMETYPES'] = ['text/html', 'text/css', 'text/javascript', 'application/json', 'application/javascript', 'image/svg+xml']
+# Use gzip only - smaller memory footprint than zstd/brotli (4-8KB vs 200-500KB contexts)
+app.config['COMPRESS_ALGORITHM'] = ['gzip']
+compress.init_app(app)
 app.config['TEMPLATES_AUTO_RELOAD'] = False
 
 
@@ -87,6 +93,14 @@ if os.getenv('FLASK_SERVER_NAME'):
 # Babel/i18n configuration
 app.config['BABEL_TRANSLATION_DIRECTORIES'] = str(Path(__file__).parent / 'translations')
 app.config['BABEL_DEFAULT_LOCALE'] = 'en_GB'
+
+# Session configuration
+# NOTE: Flask session (for locale, etc.) is separate from Flask-Login's remember-me cookie
+# - Flask session stores data like session['locale'] in a signed cookie
+# - Flask-Login's remember=True creates a separate authentication cookie
+# - Setting PERMANENT_SESSION_LIFETIME controls how long the Flask session cookie lasts
+from datetime import timedelta
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=3650)  # ~10 years (effectively unlimited)
 
 #app.config["EXPLAIN_TEMPLATE_LOADING"] = True
 
@@ -181,7 +195,7 @@ def _jinja2_filter_format_number_locale(value: float) -> str:
 
 @app.template_global('is_checking_now')
 def _watch_is_checking_now(watch_obj, format="%Y-%m-%d %H:%M:%S"):
-    return worker_handler.is_watch_running(watch_obj['uuid'])
+    return worker_pool.is_watch_running(watch_obj['uuid'])
 
 @app.template_global('get_watch_queue_position')
 def _get_watch_queue_position(watch_obj):
@@ -192,13 +206,13 @@ def _get_watch_queue_position(watch_obj):
 @app.template_global('get_current_worker_count')
 def _get_current_worker_count():
     """Get the current number of operational workers"""
-    return worker_handler.get_worker_count()
+    return worker_pool.get_worker_count()
 
 @app.template_global('get_worker_status_info')
 def _get_worker_status_info():
     """Get detailed worker status information for display"""
-    status = worker_handler.get_worker_status()
-    running_uuids = worker_handler.get_running_uuids()
+    status = worker_pool.get_worker_status()
+    running_uuids = worker_pool.get_running_uuids()
     
     return {
         'count': status['worker_count'],
@@ -387,7 +401,10 @@ def changedetection_app(config=None, datastore_o=None):
     # so far just for read-only via tests, but this will be moved eventually to be the main source
     # (instead of the global var)
     app.config['DATASTORE'] = datastore_o
-    
+
+    # Store batch mode flag to skip background threads when running in batch mode
+    app.config['batch_mode'] = config.get('batch_mode', False) if config else False
+
     # Store the signal in the app config to ensure it's accessible everywhere
     app.config['watch_check_update_SIGNAL'] = watch_check_update
 
@@ -400,11 +417,27 @@ def changedetection_app(config=None, datastore_o=None):
     language_codes = get_language_codes()
 
     def get_locale():
+        # Locale aliases: map browser language codes to translation directory names
+        # This handles cases where browsers send standard codes (e.g., zh-TW)
+        # but our translations use more specific codes (e.g., zh_Hant_TW)
+        locale_aliases = {
+            'zh-TW': 'zh_Hant_TW',  # Traditional Chinese: browser sends zh-TW, we use zh_Hant_TW
+            'zh_TW': 'zh_Hant_TW',  # Also handle underscore variant
+        }
+
         # 1. Try to get locale from session (user explicitly selected)
         if 'locale' in session:
             return session['locale']
+
         # 2. Fall back to Accept-Language header
-        return request.accept_languages.best_match(language_codes)
+        # Get the best match from browser's Accept-Language header
+        browser_locale = request.accept_languages.best_match(language_codes + list(locale_aliases.keys()))
+
+        # 3. Check if we need to map the browser locale to our internal locale
+        if browser_locale in locale_aliases:
+            return locale_aliases[browser_locale]
+
+        return browser_locale
 
     # Initialize Babel with locale selector
     babel = Babel(app, locale_selector=get_locale)
@@ -528,6 +561,9 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Validate the locale against available languages
         if locale in language_codes:
+            # Make session permanent so language preference persists across browser sessions
+            # NOTE: This is the Flask session cookie (separate from Flask-Login's remember-me auth cookie)
+            session.permanent = True
             session['locale'] = locale
 
             # CRITICAL: Flask-Babel caches the locale in the request context (ctx.babel_locale)
@@ -666,16 +702,9 @@ def changedetection_app(config=None, datastore_o=None):
 
             favicon_filename = watch.get_favicon_filename()
             if favicon_filename:
-                try:
-                    import magic
-                    mime = magic.from_file(
-                        os.path.join(watch.watch_data_dir, favicon_filename),
-                        mime=True
-                    )
-                except ImportError:
-                    # Fallback, no python-magic
-                    import mimetypes
-                    mime, encoding = mimetypes.guess_type(favicon_filename)
+                # Use cached MIME type detection
+                filepath = os.path.join(watch.watch_data_dir, favicon_filename)
+                mime = get_favicon_mime_type(filepath)
 
                 response = make_response(send_from_directory(watch.watch_data_dir, favicon_filename))
                 response.headers['Content-type'] = mime
@@ -772,13 +801,15 @@ def changedetection_app(config=None, datastore_o=None):
 
     # watchlist UI buttons etc
     import changedetectionio.blueprint.ui as ui
-    app.register_blueprint(ui.construct_blueprint(datastore, update_q, worker_handler, queuedWatchMetaData, watch_check_update))
+    app.register_blueprint(ui.construct_blueprint(datastore, update_q, worker_pool, queuedWatchMetaData, watch_check_update))
 
     import changedetectionio.blueprint.watchlist as watchlist
     app.register_blueprint(watchlist.construct_blueprint(datastore=datastore, update_q=update_q, queuedWatchMetaData=queuedWatchMetaData), url_prefix='')
 
     # Initialize Socket.IO server conditionally based on settings
     socket_io_enabled = datastore.data['settings']['application']['ui'].get('socket_io_enabled', True)
+    if socket_io_enabled and app.config.get('batch_mode'):
+        socket_io_enabled = False
     if socket_io_enabled:
         from changedetectionio.realtime.socket_server import init_socketio
         global socketio_server
@@ -807,10 +838,10 @@ def changedetection_app(config=None, datastore_o=None):
         expected_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
         
         # Get basic status
-        status = worker_handler.get_worker_status()
+        status = worker_pool.get_worker_status()
         
         # Perform health check
-        health_result = worker_handler.check_worker_health(
+        health_result = worker_pool.check_worker_health(
             expected_count=expected_workers,
             update_q=update_q,
             notification_q=notification_q,
@@ -874,16 +905,31 @@ def changedetection_app(config=None, datastore_o=None):
     # Can be overridden by ENV or use the default settings
     n_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
     logger.info(f"Starting {n_workers} workers during app initialization")
-    worker_handler.start_workers(n_workers, update_q, notification_q, app, datastore)
+    worker_pool.start_workers(n_workers, update_q, notification_q, app, datastore)
 
-    # @todo handle ctrl break
-    ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks, daemon=True, name="TickerThread-ScheduleChecker").start()
-    threading.Thread(target=notification_runner, daemon=True, name="NotificationRunner").start()
+    # Skip background threads in batch mode (just process queue and exit)
+    batch_mode = app.config.get('batch_mode', False)
+    if not batch_mode:
+        # @todo handle ctrl break
+        ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks, daemon=True, name="TickerThread-ScheduleChecker").start()
 
-    in_pytest = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
-    # Check for new release version, but not when running in test/build or pytest
-    if not os.getenv("GITHUB_REF", False) and not strtobool(os.getenv('DISABLE_VERSION_CHECK', 'no')) and not in_pytest:
-        threading.Thread(target=check_for_new_version, daemon=True, name="VersionChecker").start()
+        # Start configurable number of notification workers (default 1)
+        notification_workers = int(os.getenv("NOTIFICATION_WORKERS", "1"))
+        for i in range(notification_workers):
+            threading.Thread(
+                target=notification_runner,
+                args=(i,),
+                daemon=True,
+                name=f"NotificationRunner-{i}"
+            ).start()
+        logger.info(f"Started {notification_workers} notification worker(s)")
+
+        in_pytest = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
+        # Check for new release version, but not when running in test/build or pytest
+        if not os.getenv("GITHUB_REF", False) and not strtobool(os.getenv('DISABLE_VERSION_CHECK', 'no')) and not in_pytest:
+            threading.Thread(target=check_for_new_version, daemon=True, name="VersionChecker").start()
+    else:
+        logger.info("Batch mode: Skipping ticker thread, notification runner, and version checker")
 
     # Return the Flask app - the Socket.IO will be attached to it but initialized separately
     # This avoids circular dependencies
@@ -918,14 +964,14 @@ def check_for_new_version():
         app.config.exit.wait(86400)
 
 
-def notification_runner():
+def notification_runner(worker_id=0):
     global notification_debug_log
     from datetime import datetime
     import json
     with app.app_context():
         while not app.config.exit.is_set():
             try:
-                # At the moment only one thread runs (single runner)
+                # Multiple workers can run concurrently (configurable via NOTIFICATION_WORKERS)
                 n_object = notification_q.get(block=False)
             except queue.Empty:
                 app.config.exit.wait(1)
@@ -951,7 +997,7 @@ def notification_runner():
                         sent_obj = process_notification(n_object, datastore)
 
                 except Exception as e:
-                    logger.error(f"Watch URL: {n_object['watch_url']}  Error {str(e)}")
+                    logger.error(f"Notification worker {worker_id} - Watch URL: {n_object['watch_url']}  Error {str(e)}")
 
                     # UUID wont be present when we submit a 'test' from the global settings
                     if 'uuid' in n_object:
@@ -992,7 +1038,7 @@ def ticker_thread_check_time_launch_checks():
         now = time.time()
         if now - last_health_check > 60:
             expected_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
-            health_result = worker_handler.check_worker_health(
+            health_result = worker_pool.check_worker_health(
                 expected_count=expected_workers,
                 update_q=update_q,
                 notification_q=notification_q,
@@ -1011,7 +1057,7 @@ def ticker_thread_check_time_launch_checks():
             continue
 
         # Get a list of watches by UUID that are currently fetching data
-        running_uuids = worker_handler.get_running_uuids()
+        running_uuids = worker_pool.get_running_uuids()
 
         # Build set of queued UUIDs once for O(1) lookup instead of O(n) per watch
         queued_uuids = {q_item.item['uuid'] for q_item in update_q.queue}
@@ -1117,7 +1163,7 @@ def ticker_thread_check_time_launch_checks():
                     priority = int(time.time())
 
                     # Into the queue with you
-                    queued_successfully = worker_handler.queue_item_async_safe(update_q,
+                    queued_successfully = worker_pool.queue_item_async_safe(update_q,
                                                                                queuedWatchMetaData.PrioritizedItem(priority=priority,
                                                                                                                    item={'uuid': uuid})
                                                                                )

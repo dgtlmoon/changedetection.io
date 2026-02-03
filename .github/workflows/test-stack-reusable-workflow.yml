@@ -37,10 +37,29 @@ jobs:
             ${{ runner.os }}-pip-py${{ env.PYTHON_VERSION }}-
             ${{ runner.os }}-pip-
 
+      - name: Get current date for cache key
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build changedetection.io container for testing under Python ${{ env.PYTHON_VERSION }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ./
+          file: ./Dockerfile
+          build-args: |
+            PYTHON_VERSION=${{ env.PYTHON_VERSION }}
+            LOGGER_LEVEL=TRACE
+          tags: test-changedetectionio
+          load: true
+          cache-from: type=gha,scope=build-${{ github.ref_name }}-py${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt', 'Dockerfile') }}-${{ steps.date.outputs.date }}
+          cache-to: type=gha,mode=max,scope=build-${{ github.ref_name }}-py${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt', 'Dockerfile') }}-${{ steps.date.outputs.date }}
+
+      - name: Verify build
         run: |
-          echo "---- Building for Python ${{ env.PYTHON_VERSION }} -----"
-          docker build --build-arg PYTHON_VERSION=${{ env.PYTHON_VERSION }} --build-arg LOGGER_LEVEL=TRACE -t test-changedetectionio .
+          echo "---- Built for Python ${{ env.PYTHON_VERSION }} -----"
           docker run test-changedetectionio bash -c 'pip list'
 
       - name: We should be Python ${{ env.PYTHON_VERSION }} ...
@@ -111,6 +130,32 @@ jobs:
           docker network inspect changedet-network >/dev/null 2>&1 || docker network create changedet-network
           docker run --name test-cdio-basic-tests --network changedet-network test-changedetectionio bash -c 'cd changedetectionio && ./run_basic_tests.sh'
 
+      - name: Test CLI options
+        run: |
+          docker network inspect changedet-network >/dev/null 2>&1 || docker network create changedet-network
+          docker run --name test-cdio-cli-opts --network changedet-network test-changedetectionio bash -c 'changedetectionio/test_cli_opts.sh' &> cli-opts-output.txt
+          echo "=== CLI Options Test Output ==="
+          cat cli-opts-output.txt
+
+      - name: CLI Memory Test
+        run: |
+          echo "=== Checking CLI batch mode memory usage ==="
+          # Extract RSS memory value from output
+          RSS_MB=$(grep -oP "Memory consumption before worker shutdown: RSS=\K[\d.]+" cli-opts-output.txt | head -1 || echo "0")
+          echo "RSS Memory: ${RSS_MB} MB"
+
+          # Check if RSS is less than 100MB
+          if [ -n "$RSS_MB" ]; then
+            if (( $(echo "$RSS_MB < 100" | bc -l) )); then
+              echo "✓ Memory usage is acceptable: ${RSS_MB} MB < 100 MB"
+            else
+              echo "✗ Memory usage too high: ${RSS_MB} MB >= 100 MB"
+              exit 1
+            fi
+          else
+            echo "⚠ Could not extract memory usage, skipping check"
+          fi
+
       - name: Extract memory report and logs
         if: always()
         uses: ./.github/actions/extract-memory-report
@@ -124,6 +169,13 @@ jobs:
         with:
           name: test-cdio-basic-tests-output-py${{ env.PYTHON_VERSION }}
           path: output-logs
+
+      - name: Store CLI test output
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: test-cdio-cli-opts-output-py${{ env.PYTHON_VERSION }}
+          path: cli-opts-output.txt
 
   # Playwright tests
   playwright-tests:

@@ -15,7 +15,6 @@ on:
   push:
     branches:
       - master
-      - dev
 
 jobs:
   metadata:
@@ -93,17 +92,28 @@ jobs:
           version: latest
           driver-opts: image=moby/buildkit:master
 
-      # dev branch -> :dev container tag
+      # master branch -> :dev container tag
+      - name: Docker meta :dev
+        if: ${{ github.ref == 'refs/heads/master' && github.event_name != 'release' }}
+        uses: docker/metadata-action@v5
+        id: meta_dev
+        with:
+          images: |
+            ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io
+            ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=dev
+
       - name: Build and push :dev
         id: docker_build
-        if: ${{ github.ref == 'refs/heads/dev' }}
+        if: ${{ github.ref == 'refs/heads/master' && github.event_name != 'release' }}
         uses: docker/build-push-action@v6
         with:
           context: ./
           file: ./Dockerfile
           push: true
-          tags: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io:dev,ghcr.io/${{ github.repository }}:dev
+          tags: ${{ steps.meta_dev.outputs.tags }}
+          labels: ${{ steps.meta_dev.outputs.labels }}
           platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v8
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -142,6 +152,7 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v8
           cache-from: type=gha
           cache-to: type=gha,mode=max

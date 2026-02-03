@@ -2,10 +2,11 @@ import os
 import threading
 
 from changedetectionio.validate_url import is_safe_valid_url
+from changedetectionio.favicon_utils import get_favicon_mime_type
 
 from . import auth
 from changedetectionio import queuedWatchMetaData, strtobool
-from changedetectionio import worker_handler
+from changedetectionio import worker_pool
 from flask import request, make_response, send_from_directory
 from flask_expects_json import expects_json
 from flask_restful import abort, Resource
@@ -68,19 +69,23 @@ class Watch(Resource):
         import time
         from copy import deepcopy
         watch = None
-        for _ in range(20):
+        # Retry up to 20 times if dict is being modified
+        # With sleep(0), this is fast: ~200µs best case, ~20ms worst case under heavy load
+        for attempt in range(20):
             try:
                 watch = deepcopy(self.datastore.data['watching'].get(uuid))
                 break
             except RuntimeError:
-                # Incase dict changed, try again
-                time.sleep(0.01)
+                # Dict changed during deepcopy, retry after yielding to scheduler
+                # sleep(0) releases GIL and yields - no fixed delay, just lets other threads run
+                if attempt < 19:  # Don't yield on last attempt
+                    time.sleep(0)  # Yield to scheduler (microseconds, not milliseconds)
 
         if not watch:
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
 
         if request.args.get('recheck'):
-            worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+            worker_pool.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
             return "OK", 200
         if request.args.get('paused', '') == 'paused':
             self.datastore.data['watching'].get(uuid).pause()
@@ -126,17 +131,41 @@ class Watch(Resource):
 
         if request.json.get('proxy'):
             plist = self.datastore.proxy_list
-            if not request.json.get('proxy') in plist:
-                return "Invalid proxy choice, currently supported proxies are '{}'".format(', '.join(plist)), 400
+            if not plist or request.json.get('proxy') not in plist:
+                proxy_list_str = ', '.join(plist) if plist else 'none configured'
+                return f"Invalid proxy choice, currently supported proxies are '{proxy_list_str}'", 400
 
         # Validate time_between_check when not using defaults
         validation_error = validate_time_between_check_required(request.json)
         if validation_error:
             return validation_error, 400
 
-        # XSS etc protection
-        if request.json.get('url') and not is_safe_valid_url(request.json.get('url')):
-            return "Invalid URL", 400
+        # Validate notification_urls if provided
+        if 'notification_urls' in request.json:
+            from wtforms import ValidationError
+            from changedetectionio.api.Notifications import validate_notification_urls
+            try:
+                notification_urls = request.json.get('notification_urls', [])
+                validate_notification_urls(notification_urls)
+            except ValidationError as e:
+                return str(e), 400
+
+        # XSS etc protection - validate URL if it's being updated
+        if 'url' in request.json:
+            new_url = request.json.get('url')
+
+            # URL must be a non-empty string
+            if new_url is None:
+                return "URL cannot be null", 400
+
+            if not isinstance(new_url, str):
+                return "URL must be a string", 400
+
+            if not new_url.strip():
+                return "URL cannot be empty or whitespace only", 400
+
+            if not is_safe_valid_url(new_url.strip()):
+                return "Invalid or unsupported URL format. URL must use http://, https://, or ftp:// protocol", 400
 
         # Handle processor-config-* fields separately (save to JSON, not datastore)
         from changedetectionio import processors
@@ -191,6 +220,10 @@ class WatchSingleHistory(Resource):
 
         if timestamp == 'latest':
             timestamp = list(watch.history.keys())[-1]
+
+        # Validate that the timestamp exists in history
+        if timestamp not in watch.history:
+            abort(404, message=f"No history snapshot found for timestamp '{timestamp}'")
 
         if request.args.get('html'):
             content = watch.get_fetched_html(timestamp)
@@ -340,16 +373,9 @@ class WatchFavicon(Resource):
 
         favicon_filename = watch.get_favicon_filename()
         if favicon_filename:
-            try:
-                import magic
-                mime = magic.from_file(
-                    os.path.join(watch.watch_data_dir, favicon_filename),
-                    mime=True
-                )
-            except ImportError:
-                # Fallback, no python-magic
-                import mimetypes
-                mime, encoding = mimetypes.guess_type(favicon_filename)
+            # Use cached MIME type detection
+            filepath = os.path.join(watch.watch_data_dir, favicon_filename)
+            mime = get_favicon_mime_type(filepath)
 
             response = make_response(send_from_directory(watch.watch_data_dir, favicon_filename))
             response.headers['Content-type'] = mime
@@ -379,13 +405,24 @@ class CreateWatch(Resource):
 
         if json_data.get('proxy'):
             plist = self.datastore.proxy_list
-            if not json_data.get('proxy') in plist:
-                return "Invalid proxy choice, currently supported proxies are '{}'".format(', '.join(plist)), 400
+            if not plist or json_data.get('proxy') not in plist:
+                proxy_list_str = ', '.join(plist) if plist else 'none configured'
+                return f"Invalid proxy choice, currently supported proxies are '{proxy_list_str}'", 400
 
         # Validate time_between_check when not using defaults
         validation_error = validate_time_between_check_required(json_data)
         if validation_error:
             return validation_error, 400
+
+        # Validate notification_urls if provided
+        if 'notification_urls' in json_data:
+            from wtforms import ValidationError
+            from changedetectionio.api.Notifications import validate_notification_urls
+            try:
+                notification_urls = json_data.get('notification_urls', [])
+                validate_notification_urls(notification_urls)
+            except ValidationError as e:
+                return str(e), 400
 
         extras = copy.deepcopy(json_data)
 
@@ -400,9 +437,19 @@ class CreateWatch(Resource):
         new_uuid = self.datastore.add_watch(url=url, extras=extras, tag=tags)
         if new_uuid:
 # Dont queue because the scheduler will check that it hasnt been checked before anyway
-#            worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))
+#            worker_pool.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))
             return {'uuid': new_uuid}, 201
         else:
+            # Check if it was a limit issue
+            page_watch_limit = os.getenv('PAGE_WATCH_LIMIT')
+            if page_watch_limit:
+                try:
+                    page_watch_limit = int(page_watch_limit)
+                    current_watch_count = len(self.datastore.data['watching'])
+                    if current_watch_count >= page_watch_limit:
+                        return f"Watch limit reached ({current_watch_count}/{page_watch_limit} watches). Cannot add more watches.", 429
+                except ValueError:
+                    pass
             return "Invalid or unsupported URL", 400
 
     @auth.check_token
@@ -437,7 +484,7 @@ class CreateWatch(Resource):
             if len(watches_to_queue) < 20:
                 # Get already queued/running UUIDs once (efficient)
                 queued_uuids = set(self.update_q.get_queued_uuids())
-                running_uuids = set(worker_handler.get_running_uuids())
+                running_uuids = set(worker_pool.get_running_uuids())
 
                 # Filter out watches that are already queued or running
                 watches_to_queue_filtered = [
@@ -447,7 +494,7 @@ class CreateWatch(Resource):
 
                 # Queue only the filtered watches
                 for uuid in watches_to_queue_filtered:
-                    worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+                    worker_pool.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
 
                 # Provide feedback about skipped watches
                 skipped_count = len(watches_to_queue) - len(watches_to_queue_filtered)
@@ -459,7 +506,7 @@ class CreateWatch(Resource):
                 # 20+ watches - queue in background thread to avoid blocking API response
                 # Capture queued/running state before background thread
                 queued_uuids = set(self.update_q.get_queued_uuids())
-                running_uuids = set(worker_handler.get_running_uuids())
+                running_uuids = set(worker_pool.get_running_uuids())
 
                 def queue_all_watches_background():
                     """Background thread to queue all watches - discarded after completion."""
@@ -469,7 +516,7 @@ class CreateWatch(Resource):
                         for uuid in watches_to_queue:
                             # Check if already queued or running (state captured at start)
                             if uuid not in queued_uuids and uuid not in running_uuids:
-                                worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+                                worker_pool.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
                                 queued_count += 1
                             else:
                                 skipped_count += 1

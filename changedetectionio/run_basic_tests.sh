@@ -10,6 +10,7 @@
 set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+rm tests/logs/* -f
 
 # Since theres no curl installed lets roll with python3
 check_sanity() {
@@ -64,17 +65,20 @@ data_sanity_test
 echo "-------------------- Running rest of tests in parallel -------------------------------"
 
 # REMOVE_REQUESTS_OLD_SCREENSHOTS disabled so that we can write a screenshot and send it in test_notifications.py without a real browser
-REMOVE_REQUESTS_OLD_SCREENSHOTS=false \
+FETCH_WORKERS=2 REMOVE_REQUESTS_OLD_SCREENSHOTS=false \
 pytest tests/test_*.py \
-  -n 30 \
+  -n 18 \
   --dist=load \
   -vvv \
   -s \
   --capture=no \
+  -k "not test_queue_system" \
   --log-cli-level=DEBUG \
   --log-cli-format="%(asctime)s [%(process)d] [%(levelname)s] %(name)s: %(message)s"
 
 echo "---------------------------- DONE parallel test ---------------------------------------"
+
+FETCH_WORKERS=20 pytest -vvv -s tests/test_queue_handler.py
 
 echo "RUNNING WITH BASE_URL SET"
 
@@ -91,8 +95,8 @@ REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest -vv -s --maxfail=1 tests/test_notif
 # And again with brotli+screenshot attachment
 SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD=5 REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest -vv -s --maxfail=1 --dist=load tests/test_backend.py tests/test_rss.py tests/test_unique_lines.py tests/test_notification.py  tests/test_access_control.py
 
-# Try high concurrency
-FETCH_WORKERS=50 pytest  tests/test_history_consistency.py -vv -l -s
+# Try high concurrency with aggressive worker restarts
+FETCH_WORKERS=50 WORKER_MAX_RUNTIME=2 WORKER_MAX_JOBS=1 pytest  tests/test_history_consistency.py -vv -l -s
 
 # Check file:// will pickup a file when enabled
 echo "Hello world" > /tmp/test-file.txt

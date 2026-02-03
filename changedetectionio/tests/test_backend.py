@@ -414,4 +414,4 @@ def test_plaintext_even_if_xml_content_and_can_apply_filters(client, live_server
     assert b'Abonnementen bijwerken' in res.data
     assert b'&lt;foobar' not in res.data
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    res = delete_all_watches(client)

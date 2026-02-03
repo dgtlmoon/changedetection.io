@@ -8,7 +8,7 @@ flask-paginate
 flask_expects_json~=1.7
 flask_restful
 flask_cors # For the Chrome extension to operate
-janus # Thread-safe async/sync queue bridge
+# janus # No longer needed - using pure threading.Queue for multi-loop support
 flask_wtf~=1.2
 flask~=3.1
 flask-socketio~=5.6.0
@@ -42,7 +42,7 @@ orjson~=3.11
 # jq not available on Windows so must be installed manually
 
 # Notification library
-apprise==1.9.6
+apprise==1.9.7
 
 diff_match_patch
 
@@ -91,7 +91,7 @@ jq~=1.3; python_version >= "3.8" and sys_platform == "linux"
 
 # playwright is installed at Dockerfile build time because it's not available on all platforms
 
-pyppeteer-ng==2.0.0rc11
+pyppeteer-ng==2.0.0rc12
 pyppeteerstealth>=0.0.4
 
 # Include pytest, so if theres a support issue we can ask them to run these tests on their setup

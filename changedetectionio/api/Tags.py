@@ -1,5 +1,5 @@
 from changedetectionio import queuedWatchMetaData
-from changedetectionio import worker_handler
+from changedetectionio import worker_pool
 from flask_expects_json import expects_json
 from flask_restful import abort, Resource
 from loguru import logger
@@ -42,7 +42,7 @@ class Tag(Resource):
             # If less than 20 watches, queue synchronously for immediate feedback
             if len(watches_to_queue) < 20:
                 for watch_uuid in watches_to_queue:
-                    worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
+                    worker_pool.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
                 return {'status': f'OK, queued {len(watches_to_queue)} watches for rechecking'}, 200
             else:
                 # 20+ watches - queue in background thread to avoid blocking API response
@@ -50,7 +50,7 @@ class Tag(Resource):
                     """Background thread to queue watches - discarded after completion."""
                     try:
                         for watch_uuid in watches_to_queue:
-                            worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
+                            worker_pool.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
                         logger.info(f"Background queueing complete for tag {tag['uuid']}: {len(watches_to_queue)} watches queued")
                     except Exception as e:
                         logger.error(f"Error in background queueing for tag {tag['uuid']}: {e}")
@@ -95,6 +95,16 @@ class Tag(Resource):
         tag = self.datastore.data['settings']['application']['tags'].get(uuid)
         if not tag:
             abort(404, message='No tag exists with the UUID of {}'.format(uuid))
+
+        # Validate notification_urls if provided
+        if 'notification_urls' in request.json:
+            from wtforms import ValidationError
+            from changedetectionio.api.Notifications import validate_notification_urls
+            try:
+                notification_urls = request.json.get('notification_urls', [])
+                validate_notification_urls(notification_urls)
+            except ValidationError as e:
+                return str(e), 400
 
         tag.update(request.json)
         self.datastore.needs_write_urgent = True

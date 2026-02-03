@@ -17,12 +17,12 @@ def test_headers_in_request(client, live_server, measure_memory_usage, datastore
         test_url = test_url.replace('localhost', 'changedet')
 
     # Add the test URL twice, we will check
-    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    uuidA = client.application.config.get('DATASTORE').add_watch(url=test_url)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
-    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    uuidB = client.application.config.get('DATASTORE').add_watch(url=test_url)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
@@ -31,7 +31,7 @@ def test_headers_in_request(client, live_server, measure_memory_usage, datastore
 
     # Add some headers to a request
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuidA),
         data={
               "url": test_url,
               "tags": "",
@@ -42,13 +42,14 @@ def test_headers_in_request(client, live_server, measure_memory_usage, datastore
     )
     assert b"Updated watch." in res.data
 
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick up the first version
     wait_for_all_checks(client)
 
     # The service should echo back the request headers
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid=uuidA),
         follow_redirects=True
     )
 
@@ -92,7 +93,7 @@ def test_body_in_request(client, live_server, measure_memory_usage, datastore_pa
 
     # add the first 'version'
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
               "url": test_url,
               "tags": "",
@@ -110,7 +111,7 @@ def test_body_in_request(client, live_server, measure_memory_usage, datastore_pa
     body_value = 'Test Body Value {{ 1+1 }}'
     body_value_formatted = 'Test Body Value 2'
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
               "url": test_url,
               "tags": "",
@@ -126,7 +127,7 @@ def test_body_in_request(client, live_server, measure_memory_usage, datastore_pa
 
     # The service should echo back the body
     res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
 
@@ -142,10 +143,14 @@ def test_body_in_request(client, live_server, measure_memory_usage, datastore_pa
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     watches_with_body = 0
-    with open(os.path.join(datastore_path, 'url-watches.json'), encoding='utf-8') as f:
-        app_struct = json.load(f)
-        for uuid in app_struct['watching']:
-            if app_struct['watching'][uuid]['body']==body_value:
+
+    # Read individual watch.json files
+    for uuid in client.application.config.get('DATASTORE').data['watching'].keys():
+        watch_json_file = os.path.join(datastore_path, uuid, 'watch.json')
+        assert os.path.exists(watch_json_file), f"watch.json should exist at {watch_json_file}"
+        with open(watch_json_file, 'r', encoding='utf-8') as f:
+            watch_data = json.load(f)
+            if watch_data.get('body') == body_value:
                 watches_with_body += 1
 
     # Should be only one with body set
@@ -153,7 +158,7 @@ def test_body_in_request(client, live_server, measure_memory_usage, datastore_pa
 
     # Attempt to add a body with a GET method
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
               "url": test_url,
               "tags": "",
@@ -225,10 +230,14 @@ def test_method_in_request(client, live_server, measure_memory_usage, datastore_
     wait_for_all_checks(client)
 
     watches_with_method = 0
-    with open(os.path.join(datastore_path, 'url-watches.json'), encoding='utf-8') as f:
-        app_struct = json.load(f)
-        for uuid in app_struct['watching']:
-            if app_struct['watching'][uuid]['method'] == 'PATCH':
+
+    # Read individual watch.json files
+    for uuid in client.application.config.get('DATASTORE').data['watching'].keys():
+        watch_json_file = os.path.join(datastore_path, uuid, 'watch.json')
+        assert os.path.exists(watch_json_file), f"watch.json should exist at {watch_json_file}"
+        with open(watch_json_file, 'r', encoding='utf-8') as f:
+            watch_data = json.load(f)
+            if watch_data.get('method') == 'PATCH':
                 watches_with_method += 1
 
     # Should be only one with method set to PATCH

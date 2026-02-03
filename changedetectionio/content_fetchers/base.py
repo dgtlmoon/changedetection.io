@@ -71,9 +71,18 @@ class Fetcher():
     supports_screenshots = False        # Can capture page screenshots
     supports_xpath_element_data = False # Can extract xpath element positions/data for visual selector
 
+    # Screenshot element locking - prevents layout shifts during screenshot capture
+    # Only needed for visual comparison (image_ssim_diff processor)
+    # Locks element dimensions in the first viewport to prevent headers/ads from resizing
+    lock_viewport_elements = False      # Default: disabled for performance
+
     def __init__(self, **kwargs):
         if kwargs and 'screenshot_format' in kwargs:
             self.screenshot_format = kwargs.get('screenshot_format')
+
+        # Allow lock_viewport_elements to be set via kwargs
+        if kwargs and 'lock_viewport_elements' in kwargs:
+            self.lock_viewport_elements = kwargs.get('lock_viewport_elements')
 
 
     @classmethod

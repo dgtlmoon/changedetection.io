@@ -145,10 +145,10 @@ def handle_watch_update(socketio, **kwargs):
         # Emit the watch update to all connected clients
         from changedetectionio.flask_app import update_q
         from changedetectionio.flask_app import _jinja2_filter_datetime
-        from changedetectionio import worker_handler
+        from changedetectionio import worker_pool
 
         # Get list of watches that are currently running
-        running_uuids = worker_handler.get_running_uuids()
+        running_uuids = worker_pool.get_running_uuids()
 
         # Get list of watches in the queue (efficient single-lock method)
         queue_list = update_q.get_queued_uuids()
@@ -240,7 +240,10 @@ def init_socketio(app, datastore):
                         async_mode=async_mode,
                         cors_allowed_origins=cors_origins,  # None means same-origin only
                         logger=strtobool(os.getenv('SOCKETIO_LOGGING', 'False')),
-                        engineio_logger=strtobool(os.getenv('SOCKETIO_LOGGING', 'False')))
+                        engineio_logger=strtobool(os.getenv('SOCKETIO_LOGGING', 'False')),
+                        # Disable WebSocket compression to prevent memory accumulation
+                        # Flask-Compress already handles HTTP response compression
+                        engineio_options={'http_compression': False, 'compression_threshold': 0})
 
     # Set up event handlers
     logger.info("Socket.IO: Registering connect event handler")
@@ -249,7 +252,7 @@ def init_socketio(app, datastore):
     def event_checkbox_operations(data):
         from changedetectionio.blueprint.ui import _handle_operations
         from changedetectionio import queuedWatchMetaData
-        from changedetectionio import worker_handler
+        from changedetectionio import worker_pool
         from changedetectionio.flask_app import update_q, watch_check_update
         import threading
 
@@ -265,7 +268,7 @@ def init_socketio(app, datastore):
                     uuids=data.get('uuids'),
                     datastore=datastore,
                     extra_data=data.get('extra_data'),
-                    worker_handler=worker_handler,
+                    worker_pool=worker_pool,
                     update_q=update_q,
                     queuedWatchMetaData=queuedWatchMetaData,
                     watch_check_update=watch_check_update,
