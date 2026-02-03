@@ -1,4 +1,5 @@
 import asyncio
+import gc
 import json
 import os
 import websockets.exceptions
@@ -221,19 +222,36 @@ class fetcher(Fetcher):
                 self.browser_connection_url += f"{r}--proxy-server={proxy_url}"
 
     async def quit(self, watch=None):
-        try:
-            await self.page.close()
-            del self.page
-        except Exception as e:
-            pass
+        watch_uuid = watch.get('uuid') if watch else 'unknown'
 
+        # Close page
         try:
-            await self.browser.close()
-            del self.browser
+            if hasattr(self, 'page') and self.page:
+                await asyncio.wait_for(self.page.close(), timeout=5.0)
+                logger.debug(f"[{watch_uuid}] Page closed successfully")
+        except asyncio.TimeoutError:
+            logger.warning(f"[{watch_uuid}] Timed out closing page (5s)")
         except Exception as e:
-            pass
+            logger.warning(f"[{watch_uuid}] Error closing page: {e}")
+        finally:
+            self.page = None
 
-        logger.info("Cleanup puppeteer complete.")
+        # Close browser connection
+        try:
+            if hasattr(self, 'browser') and self.browser:
+                await asyncio.wait_for(self.browser.close(), timeout=5.0)
+                logger.debug(f"[{watch_uuid}] Browser closed successfully")
+        except asyncio.TimeoutError:
+            logger.warning(f"[{watch_uuid}] Timed out closing browser (5s)")
+        except Exception as e:
+            logger.warning(f"[{watch_uuid}] Error closing browser: {e}")
+        finally:
+            self.browser = None
+
+        logger.info(f"[{watch_uuid}] Cleanup puppeteer complete")
+
+        # Force garbage collection to release resources
+        gc.collect()
 
     async def fetch_page(self,
                          current_include_filters,
@@ -263,9 +281,11 @@ class fetcher(Fetcher):
         # Connect directly using the specified browser_ws_endpoint
         # @todo timeout
         try:
+            logger.debug(f"[{watch_uuid}] Connecting to browser at {self.browser_connection_url}")
             self.browser = await pyppeteer_instance.connect(browserWSEndpoint=self.browser_connection_url,
                                                             ignoreHTTPSErrors=True
                                                             )
+            logger.debug(f"[{watch_uuid}] Browser connected successfully")
         except websockets.exceptions.InvalidStatusCode as e:
             raise BrowserConnectError(msg=f"Error while trying to connect the browser, Code {e.status_code} (check your access, whitelist IP, password etc)")
         except websockets.exceptions.InvalidURI:
@@ -274,7 +294,18 @@ class fetcher(Fetcher):
             raise BrowserConnectError(msg=f"Error connecting to the browser - Exception '{str(e)}'")
 
         # more reliable is to just request a new page
-        self.page = await self.browser.newPage()
+        try:
+            logger.debug(f"[{watch_uuid}] Creating new page")
+            self.page = await self.browser.newPage()
+            logger.debug(f"[{watch_uuid}] Page created successfully")
+        except Exception as e:
+            logger.error(f"[{watch_uuid}] Failed to create new page: {e}")
+            # Browser is connected but page creation failed - must cleanup browser
+            try:
+                await asyncio.wait_for(self.browser.close(), timeout=3.0)
+            except Exception as cleanup_error:
+                logger.error(f"[{watch_uuid}] Failed to cleanup browser after page creation failure: {cleanup_error}")
+            raise
         
         # Add console handler to capture console.log from favicon fetcher
         #self.page.on('console', lambda msg: logger.debug(f"Browser console [{msg.type}]: {msg.text}"))
@@ -343,6 +374,12 @@ class fetcher(Fetcher):
             w = extra_wait - 2 if extra_wait > 4 else 2
             logger.debug(f"Waiting {w} seconds before calling Page.stopLoading...")
             await asyncio.sleep(w)
+
+            # Check if page still exists (might have been closed due to error during sleep)
+            if not self.page or not hasattr(self.page, '_client'):
+                logger.debug("Page already closed, skipping stopLoading")
+                return
+
             logger.debug("Issuing stopLoading command...")
             await self.page._client.send('Page.stopLoading')
             logger.debug("stopLoading command sent!")
@@ -368,7 +405,9 @@ class fetcher(Fetcher):
             asyncio.create_task(handle_frame_navigation())
             response = await self.page.goto(url, timeout=0)
             await asyncio.sleep(1 + extra_wait)
-            await self.page._client.send('Page.stopLoading')
+            # Check if page still exists before sending command
+            if self.page and hasattr(self.page, '_client'):
+                await self.page._client.send('Page.stopLoading')
 
             if response:
                 break
@@ -437,15 +476,9 @@ class fetcher(Fetcher):
         logger.debug(f"Screenshot format {self.screenshot_format}")
         self.screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format, watch_uuid=watch_uuid, lock_viewport_elements=self.lock_viewport_elements)
 
-        # Force aggressive memory cleanup - pyppeteer base64 decode creates temporary buffers
+        # Force garbage collection - pyppeteer base64 decode creates temporary buffers
         import gc
         gc.collect()
-        # Release C-level memory from base64 decode back to OS
-        try:
-            import ctypes
-            ctypes.CDLL('libc.so.6').malloc_trim(0)
-        except Exception:
-            pass
         self.xpath_data = await self.page.evaluate(XPATH_ELEMENT_JS, {
             "visualselector_xpath_selectors": visualselector_xpath_selectors,
             "max_height": MAX_TOTAL_HEIGHT
@@ -499,6 +532,11 @@ class fetcher(Fetcher):
             )
         except asyncio.TimeoutError:
             raise (BrowserFetchTimedOut(msg=f"Browser connected but was unable to process the page in {max_time} seconds."))
+        finally:
+            # CRITICAL: Always cleanup browser connections regardless of success/failure
+            # This ensures connections are closed even when exceptions occur
+            # Reuse quit() method to avoid code duplication
+            await self.quit(watch={'uuid': watch_uuid} if watch_uuid else None)
 
 
 # Plugin registration for built-in fetcher
