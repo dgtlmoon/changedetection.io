@@ -286,8 +286,12 @@ def test_api_tags_extended_properties(client, live_server, measure_memory_usage,
     )
     wait_for_all_checks(client)
 <<<<<<< HEAD
+<<<<<<< HEAD
     time.sleep(0.5)
 =======
+=======
+    time.sleep(0.5)
+>>>>>>> 42c40ce8 (Fix rest of tests with sleep, as it works for previous tests)
     assert res.status_code == 400
     # Invalid price_change_threshold_percent
     invalid_data = {"restock_settings": {"price_change_threshold_percent": 150}}
@@ -298,9 +302,13 @@ def test_api_tags_extended_properties(client, live_server, measure_memory_usage,
     )
     wait_for_all_checks(client)
 <<<<<<< HEAD
+<<<<<<< HEAD
     time.sleep(0.5)
 =======
 >>>>>>> 601f274c (Added wait_for_all_checks to tests)
+=======
+    time.sleep(0.5)
+>>>>>>> 42c40ce8 (Fix rest of tests with sleep, as it works for previous tests)
     assert res.status_code == 400
 <<<<<<< HEAD
     #assert b"150 is greater than the maximum of 100" in res.data
@@ -310,9 +318,13 @@ def test_api_tags_extended_properties(client, live_server, measure_memory_usage,
     )
     wait_for_all_checks(client)
 <<<<<<< HEAD
+<<<<<<< HEAD
     time.sleep(0.5)
 =======
 >>>>>>> 601f274c (Added wait_for_all_checks to tests)
+=======
+    time.sleep(0.5)
+>>>>>>> 42c40ce8 (Fix rest of tests with sleep, as it works for previous tests)
     assert res.status_code == 200
     tags_list = res.json
     assert new_tag_uuid in tags_list
@@ -329,9 +341,13 @@ def test_api_tags_extended_properties(client, live_server, measure_memory_usage,
     )
     wait_for_all_checks(client)
 <<<<<<< HEAD
+<<<<<<< HEAD
     time.sleep(0.5)
 =======
 >>>>>>> 601f274c (Added wait_for_all_checks to tests)
+=======
+    time.sleep(0.5)
+>>>>>>> 42c40ce8 (Fix rest of tests with sleep, as it works for previous tests)
     assert res.status_code == 204
 
 
