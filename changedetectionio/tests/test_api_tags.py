@@ -240,13 +240,13 @@ def test_api_tags_extended_properties(client, live_server, measure_memory_usage,
     wait_for_all_checks(client)
     time.sleep(0.2)
     assert res.status_code == 200
-    
+
     updated_data = res.json
     time.sleep(0.2)
     assert updated_data['restock_settings']['in_stock_processing'] == "in_stock_only"
     assert updated_data['restock_settings']['follow_price_changes'] == False
     assert updated_data['restock_settings']['price_change_min'] == 5.00
-    assert updated_data['restock_settings']['price_change_max'] is 0
+    assert updated_data['restock_settings']['price_change_max'] == 0
     assert updated_data['restock_settings']['price_change_threshold_percent'] == 10.0
     assert updated_data['overrides_watch'] == True
     
