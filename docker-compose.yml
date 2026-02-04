@@ -19,9 +19,9 @@ services:
   #        Plugins! See https://changedetection.io/plugins for more plugins.
   #        Install additional Python packages (processor plugins, etc.)
   #        Example: Install the OSINT reconnaissance processor plugin
-  #      - EXTRA_PACKAGES=changedetection.io-osint
+  #      - EXTRA_PACKAGES=changedetection.io-osint-processor
   #        Multiple packages can be installed by separating with spaces:
-  #      - EXTRA_PACKAGES=changedetection.io-osint another-plugin
+  #      - EXTRA_PACKAGES=changedetection.io-osint-processor another-plugin
   #
   #
   #       Uncomment below and the "sockpuppetbrowser" to use a real Chrome browser (It uses the "playwright" protocol)
