@@ -395,6 +395,29 @@ jobs:
           cd changedetectionio
           ./run_custom_browser_url_tests.sh
 
+  processor-plugin-tests:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 20
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: test-changedetectionio-${{ env.PYTHON_VERSION }}
+          path: /tmp
+
+      - name: Load Docker image
+        run: |
+          docker load -i /tmp/test-changedetectionio.tar
+
+      - name: Basic processor plugin registration and checks
+        run: |
+          docker run  -e EXTRA_PACKAGES=changedetection.io-osint-processor test-changedetectionio bash -c 'cd changedetectionio;pytest -vvv -s  tests/plugins/test_processor.py::test_check_plugin_processor'
+
   # Container startup tests
   container-tests:
     runs-on: ubuntu-latest

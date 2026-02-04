@@ -38,24 +38,21 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Get the processor type for this watch
         processor_name = watch.get('processor', 'text_json_diff')
 
-        try:
-            # Try to import the processor's preview module
-            import importlib
-            processor_module = importlib.import_module(f'changedetectionio.processors.{processor_name}.preview')
+        # Try to get the processor's preview module (works for both built-in and plugin processors)
+        from changedetectionio.processors import get_processor_submodule
+        processor_module = get_processor_submodule(processor_name, 'preview')
 
-            # Call the processor's render() function
-            if hasattr(processor_module, 'render'):
-                return processor_module.render(
-                    watch=watch,
-                    datastore=datastore,
-                    request=request,
-                    url_for=url_for,
-                    render_template=render_template,
-                    flash=flash,
-                    redirect=redirect
-                )
-        except (ImportError, ModuleNotFoundError) as e:
-            logger.debug(f"Processor {processor_name} does not have a preview module, using default preview: {e}")
+        # Call the processor's render() function
+        if processor_module and hasattr(processor_module, 'render'):
+            return processor_module.render(
+                watch=watch,
+                datastore=datastore,
+                request=request,
+                url_for=url_for,
+                render_template=render_template,
+                flash=flash,
+                redirect=redirect
+            )
 
         # Fallback: if processor doesn't have preview module, use default text preview
         content = []
@@ -160,39 +157,33 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Get the processor type for this watch
         processor_name = watch.get('processor', 'text_json_diff')
 
-        try:
-            # Try to import the processor's preview module
-            import importlib
-            processor_module = importlib.import_module(f'changedetectionio.processors.{processor_name}.preview')
+        # Try to get the processor's preview module (works for both built-in and plugin processors)
+        from changedetectionio.processors import get_processor_submodule
+        processor_module = get_processor_submodule(processor_name, 'preview')
 
-            # Call the processor's get_asset() function
-            if hasattr(processor_module, 'get_asset'):
-                result = processor_module.get_asset(
-                    asset_name=asset_name,
-                    watch=watch,
-                    datastore=datastore,
-                    request=request
-                )
+        # Call the processor's get_asset() function
+        if processor_module and hasattr(processor_module, 'get_asset'):
+            result = processor_module.get_asset(
+                asset_name=asset_name,
+                watch=watch,
+                datastore=datastore,
+                request=request
+            )
 
-                if result is None:
-                    from flask import abort
-                    abort(404, description=f"Asset '{asset_name}' not found")
-
-                binary_data, content_type, cache_control = result
-
-                response = make_response(binary_data)
-                response.headers['Content-Type'] = content_type
-                if cache_control:
-                    response.headers['Cache-Control'] = cache_control
-                return response
-            else:
-                logger.warning(f"Processor {processor_name} does not implement get_asset()")
+            if result is None:
                 from flask import abort
-                abort(404, description=f"Processor '{processor_name}' does not support assets")
+                abort(404, description=f"Asset '{asset_name}' not found")
 
-        except (ImportError, ModuleNotFoundError) as e:
-            logger.warning(f"Processor {processor_name} does not have a preview module: {e}")
+            binary_data, content_type, cache_control = result
+
+            response = make_response(binary_data)
+            response.headers['Content-Type'] = content_type
+            if cache_control:
+                response.headers['Cache-Control'] = cache_control
+            return response
+        else:
+            logger.warning(f"Processor {processor_name} does not implement get_asset()")
             from flask import abort
-            abort(404, description=f"Processor '{processor_name}' not found")
+            abort(404, description=f"Processor '{processor_name}' does not support assets")
 
     return preview_blueprint

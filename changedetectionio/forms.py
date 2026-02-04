@@ -730,7 +730,7 @@ class quickWatchForm(Form):
     url = fields.URLField(_l('URL'), validators=[validateURL()])
     tags = StringTagUUID(_l('Group tag'), validators=[validators.Optional()])
     watch_submit_button = SubmitField(_l('Watch'), render_kw={"class": "pure-button pure-button-primary"})
-    processor = RadioField(_l('Processor'), choices=lambda: processors.available_processors(), default="text_json_diff")
+    processor = RadioField(_l('Processor'), choices=lambda: processors.available_processors(), default=processors.get_default_processor)
     edit_and_watch_submit_button = SubmitField(_l('Edit > Watch'), render_kw={"class": "pure-button pure-button-primary"})
 
 
@@ -749,7 +749,7 @@ class commonSettingsForm(Form):
     notification_format = SelectField(_l('Notification format'), choices=list(valid_notification_formats.items()))
     notification_title = StringField(_l('Notification Title'), default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_urls = StringListField(_l('Notification URL List'), validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
-    processor = RadioField( label=_l("Processor - What do you want to achieve?"), choices=lambda: processors.available_processors(), default="text_json_diff")
+    processor = RadioField( label=_l("Processor - What do you want to achieve?"), choices=lambda: processors.available_processors(), default=processors.get_default_processor)
     scheduler_timezone_default = StringField(_l("Default timezone for watch check scheduler"), render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
     webdriver_delay = IntegerField(_l('Wait seconds before extracting text'), validators=[validators.Optional(), validators.NumberRange(min=1, message=_l("Should contain one or more seconds"))])
 
@@ -763,7 +763,7 @@ class commonSettingsForm(Form):
 
 
 class importForm(Form):
-    processor = RadioField(_l('Processor'), choices=lambda: processors.available_processors(), default="text_json_diff")
+    processor = RadioField(_l('Processor'), choices=lambda: processors.available_processors(), default=processors.get_default_processor)
     urls = TextAreaField(_l('URLs'))
     xlsx_file = FileField(_l('Upload .xlsx file'), validators=[FileAllowed(['xlsx'], _l('Must be .xlsx file!'))])
     file_mapping = SelectField(_l('File mapping'), [validators.DataRequired()], choices={('wachete', 'Wachete mapping'), ('custom','Custom mapping')})
