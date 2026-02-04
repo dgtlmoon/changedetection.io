@@ -60,7 +60,8 @@ def find_processors():
 
                 if processor_module and processor_name:
                     processors.append((processor_module, processor_name))
-                    logger.info(f"Registered plugin processor: {processor_name}")
+                    plugin_path = getattr(processor_module, '__file__', 'unknown location')
+                    logger.info(f"Registered plugin processor: {processor_name} from {plugin_path}")
     except Exception as e:
         logger.warning(f"Error loading plugin processors: {e}")
 

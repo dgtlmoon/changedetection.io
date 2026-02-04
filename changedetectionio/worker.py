@@ -368,8 +368,10 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     logger.error(f"Exception (BrowserStepsInUnsupportedFetcher) reached processing watch UUID: {uuid}")
 
                 except Exception as e:
+                    import traceback
                     logger.error(f"Worker {worker_id} exception processing watch UUID: {uuid}")
                     logger.error(str(e))
+                    logger.error(traceback.format_exc())
                     datastore.update_watch(uuid=uuid, update_obj={'last_error': "Exception: " + str(e)})
                     process_changedetection_results = False
 
@@ -388,8 +390,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                 if not datastore.data['watching'].get(uuid):
                     continue
 
-                logger.debug(f"Processing watch UUID: {uuid} - xpath_data length returned {len(update_handler.xpath_data) if update_handler.xpath_data else 'empty.'}")
-                if process_changedetection_results:
+                logger.debug(f"Processing watch UUID: {uuid} - xpath_data length returned {len(update_handler.xpath_data) if update_handler and update_handler.xpath_data else 'empty.'}")
+                if update_handler and process_changedetection_results:
                     try:
                         datastore.update_watch(uuid=uuid, update_obj=update_obj)
 
@@ -439,44 +441,44 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
 
                 # Always record attempt count
                 count = watch.get('check_count', 0) + 1
+                if update_handler: # Could be none or empty if the processor was not found
+                    # Always record page title (used in notifications, and can change even when the content is the same)
+                    if update_obj.get('content-type') and 'html' in update_obj.get('content-type'):
+                        try:
+                            page_title = html_tools.extract_title(data=update_handler.fetcher.content)
+                            if page_title:
+                                page_title = page_title.strip()[:2000]
+                                logger.debug(f"UUID: {uuid} Page <title> is '{page_title}'")
+                                datastore.update_watch(uuid=uuid, update_obj={'page_title': page_title})
+                        except Exception as e:
+                            logger.warning(f"UUID: {uuid} Exception when extracting <title> - {str(e)}")
 
-                # Always record page title (used in notifications, and can change even when the content is the same)
-                if update_obj.get('content-type') and 'html' in update_obj.get('content-type'):
+                    # Record server header
                     try:
-                        page_title = html_tools.extract_title(data=update_handler.fetcher.content)
-                        if page_title:
-                            page_title = page_title.strip()[:2000]
-                            logger.debug(f"UUID: {uuid} Page <title> is '{page_title}'")
-                            datastore.update_watch(uuid=uuid, update_obj={'page_title': page_title})
+                        server_header = update_handler.fetcher.headers.get('server', '').strip().lower()[:255]
+                        datastore.update_watch(uuid=uuid, update_obj={'remote_server_reply': server_header})
                     except Exception as e:
-                        logger.warning(f"UUID: {uuid} Exception when extracting <title> - {str(e)}")
+                        pass
 
-                # Record server header
-                try:
-                    server_header = update_handler.fetcher.headers.get('server', '').strip().lower()[:255]
-                    datastore.update_watch(uuid=uuid, update_obj={'remote_server_reply': server_header})
-                except Exception as e:
-                    pass
+                    # Store favicon if necessary
+                    if update_handler.fetcher.favicon_blob and update_handler.fetcher.favicon_blob.get('base64'):
+                        watch.bump_favicon(url=update_handler.fetcher.favicon_blob.get('url'),
+                                           favicon_base_64=update_handler.fetcher.favicon_blob.get('base64')
+                                           )
 
-                # Store favicon if necessary
-                if update_handler.fetcher.favicon_blob and update_handler.fetcher.favicon_blob.get('base64'):
-                    watch.bump_favicon(url=update_handler.fetcher.favicon_blob.get('url'),
-                                       favicon_base_64=update_handler.fetcher.favicon_blob.get('base64')
-                                       )
+                    datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - fetch_start_time, 3),
+                                                                   'check_count': count})
 
-                datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - fetch_start_time, 3),
-                                                               'check_count': count})
+                    # NOW clear fetcher content - after all processing is complete
+                    # This is the last point where we need the fetcher data
+                    if update_handler and hasattr(update_handler, 'fetcher') and update_handler.fetcher:
+                        update_handler.fetcher.clear_content()
+                        logger.debug(f"Cleared fetcher content for UUID {uuid}")
 
-                # NOW clear fetcher content - after all processing is complete
-                # This is the last point where we need the fetcher data
-                if update_handler and hasattr(update_handler, 'fetcher') and update_handler.fetcher:
-                    update_handler.fetcher.clear_content()
-                    logger.debug(f"Cleared fetcher content for UUID {uuid}")
-
-                # Explicitly delete update_handler to free all references
-                if update_handler:
-                    del update_handler
-                    update_handler = None
+                    # Explicitly delete update_handler to free all references
+                    if update_handler:
+                        del update_handler
+                        update_handler = None
 
                 # Force aggressive memory cleanup after clearing
                 import gc
@@ -488,6 +490,9 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     pass
 
         except Exception as e:
+            import traceback
+            logger.error(traceback.format_exc())
+
             logger.error(f"Worker {worker_id} unexpected error processing {uuid}: {e}")
             logger.error(f"Worker {worker_id} traceback:", exc_info=True)
             
