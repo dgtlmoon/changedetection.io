@@ -1,3 +1,5 @@
+import time
+
 from flask import url_for
 
 from changedetectionio.tests.util import wait_for_all_checks
@@ -7,8 +9,7 @@ def test_check_plugin_processor(client, live_server, measure_memory_usage, datas
     # requires os-int intelligence plugin installed (first basic one we test with)
 
     res = client.get(url_for("watchlist.index"))
-    assert b'OSINT Reconnaissance' in res.data
-
+    assert b'OSINT Reconnaissance' in res.data, "Must have the OSINT plugin installed at test time"
     assert b'<input checked id="processor-0" name="processor" type="radio" value="text_json_diff">' in res.data, "But the first text_json_diff processor should always be selected by default in quick watch form"
 
     res = client.post(
@@ -28,3 +29,13 @@ def test_check_plugin_processor(client, live_server, measure_memory_usage, datas
 
     assert b'Target: http://127.0.0.1' in res.data
     assert b'DNSKEY Records' in res.data
+    wait_for_all_checks(client)
+
+
+    # Now change it to something that doesnt exist
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
+    live_server.app.config['DATASTORE'].data['watching'][uuid]['processor'] = "now_missing"
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    res = client.get(url_for("watchlist.index"))
+    assert b"Exception: Processor module" in res.data and b'now_missing' in res.data, f'Should register that the plugin is missing for {uuid}'
