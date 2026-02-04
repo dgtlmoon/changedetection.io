@@ -1,5 +1,9 @@
 {%- extends 'base.html' -%}
 {%- block content -%}
+{%- set tips = [
+    _("Changedetection.io can monitor more than just web-pages! See our plugins!") ~ ' <a href="https://changedetection.io/plugins">' ~ _('More info') ~ '</a>',
+    _("You can also add 'shared' watches.") ~ ' <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Sharing-a-Watch">' ~ _('More info') ~ '</a>'
+] -%}
 {%- from '_helpers.html' import render_simple_field, render_field, render_nolabel_field, sort_by_title -%}
 <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
@@ -69,7 +73,9 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
             </div>
 
         </fieldset>
-        <span style="color:#eee; font-size: 80%;"><img alt="{{ _('Create a shareable link') }}" style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread-white.svg')}}" > {{ _("Tip: You can also add 'shared' watches.") }} <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Sharing-a-Watch">{{ _('More info') }}</a></span>
+        <span style="color:#eee; font-size: 80%;">
+            <strong>Tip: </strong> {{ tips | random | safe }}
+        </span>
     </form>
 </div>
 <div class="box">
