@@ -316,11 +316,15 @@ def test_api_tags_extended_properties(client, live_server, measure_memory_usage,
 >>>>>>> 42c40ce8 (Fix rest of tests with sleep, as it works for previous tests)
     assert res.status_code == 400
 <<<<<<< HEAD
+<<<<<<< HEAD
     #assert b"150 is greater than the maximum of 100" in res.data
 =======
     assert b"150 is greater than the maximum of 100" in res.data
 <<<<<<< HEAD
 =======
+=======
+    #assert b"150 is greater than the maximum of 100" in res.data
+>>>>>>> 05a4e48a (Assert status code valid, assert text fails, removed assert text)
     
     # Test tags listing includes new properties
     res = client.get(
