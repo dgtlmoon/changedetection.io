@@ -837,6 +837,8 @@ class processor_text_json_diff_form(commonSettingsForm):
     conditions = FieldList(FormField(ConditionFormRow), min_entries=1)  # Add rule logic here
     use_page_title_in_list = TernaryNoneBooleanField(_l('Use page <title> in list'), default=None)
 
+    history_snapshot_max_length = IntegerField(_l('Number of history items per watch to keep'), render_kw={"style": "width: 5em;"}, validators=[validators.Optional(), validators.NumberRange(min=2)])
+
     def extra_tab_content(self):
         return None
 
@@ -1034,6 +1036,8 @@ class globalSettingsApplicationForm(commonSettingsForm):
                                                                   render_kw={"style": "width: 5em;"},
                                                                   validators=[validators.NumberRange(min=0,
                                                                                                      message=_l("Should contain zero or more attempts"))])
+
+    history_snapshot_max_length = IntegerField(_l('Number of history items per watch to keep'), render_kw={"style": "width: 5em;"}, validators=[validators.Optional(), validators.NumberRange(min=2)])
     ui = FormField(globalSettingsApplicationUIForm)
 
 

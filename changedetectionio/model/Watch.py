@@ -1,3 +1,6 @@
+import gc
+from copy import copy
+
 from blinker import signal
 from changedetectionio.validate_url import is_safe_valid_url
 
@@ -109,8 +112,13 @@ class model(watch_base):
         self.__datastore_path = kw.get('datastore_path')
         if kw.get('datastore_path'):
             del kw['datastore_path']
-            
+
+        self.__datastore=kw.get('__datastore')
+        if kw.get('__datastore'):
+            del kw['__datastore']
+
         super(model, self).__init__(*arg, **kw)
+
         if kw.get('default'):
             self.update(kw['default'])
             del kw['default']
@@ -423,16 +431,49 @@ class model(watch_base):
         with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
             return f.read()
 
-    def _write_atomic(self, dest, data):
+    def _write_atomic(self, dest, data, mode='wb'):
         """Write data atomically to dest using a temp file"""
-        if not os.path.exists(dest):
-            import tempfile
-            with tempfile.NamedTemporaryFile('wb', delete=False, dir=self.watch_data_dir) as tmp:
-                tmp.write(data)
-                tmp.flush()
-                os.fsync(tmp.fileno())
-                tmp_path = tmp.name
-            os.replace(tmp_path, dest)
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode, delete=False, dir=self.watch_data_dir) as tmp:
+            tmp.write(data)
+            tmp.flush()
+            os.fsync(tmp.fileno())
+            tmp_path = tmp.name
+        os.replace(tmp_path, dest)
+
+    def history_trim(self, newest_n_items):
+        from pathlib import Path
+
+        # Sort by timestamp (key)
+        sorted_items = sorted(self.history.items(), key=lambda x: int(x[0]))
+
+        keep_part = dict(sorted_items[-newest_n_items:])
+        delete_part = dict(sorted_items[:-newest_n_items])
+        logger.info( f"[{self.get('uuid')}] Trimming history to most recent {newest_n_items} items, keeping {len(keep_part)} items deleting {len(delete_part)} items.")
+
+        if delete_part:
+            for item in delete_part.items():
+                try:
+                    Path(item[1]).unlink(missing_ok=True)
+                except Exception as e:
+                    logger.critical(f"{str(e)}")
+                finally:
+                    logger.debug(f"[{self.get('uuid')}] Deleted {item[1]} history snapshot")
+        try:
+            dest = os.path.join(self.watch_data_dir, self.history_index_filename)
+            output = "\r\n".join(
+                f"{k},{Path(v).name}"
+                for k, v in keep_part.items()
+            )+"\r\n"
+            self._write_atomic(dest=dest, data=output, mode='w')
+        except Exception as e:
+            logger.critical(f"{str(e)}")
+        finally:
+            logger.debug(f"[{self.get('uuid')}] Updated history index {dest}")
+
+        # reimport
+        bump = self.history
+        gc.collect()
 
     # Save some text file to the appropriate path and bump the history
     # result_obj from fetch_site_status.run()
@@ -441,7 +482,6 @@ class model(watch_base):
         logger.trace(f"{self.get('uuid')} - Updating {self.history_index_filename} with timestamp {timestamp}")
 
         self.ensure_data_dir_exists()
-
         skip_brotli = strtobool(os.getenv('DISABLE_BROTLI_TEXT_SNAPSHOT', 'False'))
 
         # Binary data - detect file type and save without compression
@@ -500,6 +540,16 @@ class model(watch_base):
         # Update internal state
         self.__newest_history_key = timestamp
         self.__history_n += 1
+
+
+        maxlen = (
+                self.get('history_snapshot_max_length')
+                or self.__datastore['settings']['application'].get('history_snapshot_max_length')
+        )
+
+        if self.__history_n > maxlen: # AND history len greater than...
+            self.history_trim(newest_n_items=maxlen)
+
 
         # @todo bump static cache of the last timestamp so we dont need to examine the file to set a proper ''viewed'' status
         return snapshot_fname

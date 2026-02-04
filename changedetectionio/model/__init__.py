@@ -32,6 +32,7 @@ class watch_base(dict):
             'filter_text_replaced': True,
             'follow_price_changes': True,
             'has_ldjson_price_data': None,
+            'history_snapshot_max_length': None,
             'headers': {},  # Extra headers to send
             'ignore_text': [],  # List of text to ignore when calculating the comparison checksum
             'ignore_status_codes': None,
