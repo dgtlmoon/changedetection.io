@@ -416,7 +416,7 @@ jobs:
 
       - name: Basic processor plugin registration and checks
         run: |
-          docker run  -e EXTRA_PACKAGES=changedetection.io-osint-processor test-changedetectionio bash -c 'python3 -m unittest changedetectionio.tests.unit.test_notification_diff'
+          docker run  -e EXTRA_PACKAGES=changedetection.io-osint-processor test-changedetectionio bash -c 'cd changedetectionio;pytest -vvv -s  tests/plugins/test_processor.py'
 
   # Container startup tests
   container-tests:
