@@ -14,6 +14,46 @@
 // Initialize Feather icons after the page loads
 document.addEventListener('DOMContentLoaded', function() {
     feather.replace();
+
+    // Intersection Observer for lazy loading favicons
+    // Only load favicon images when they enter the viewport
+    if ('IntersectionObserver' in window) {
+        const faviconObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    const src = img.getAttribute('data-src');
+
+                    if (src) {
+                        // Load the actual favicon
+                        img.src = src;
+                        img.removeAttribute('data-src');
+                    }
+
+                    // Stop observing this image
+                    observer.unobserve(img);
+                }
+            });
+        }, {
+            // Start loading slightly before the image enters viewport
+            rootMargin: '50px',
+            threshold: 0.01
+        });
+
+        // Observe all lazy favicon images
+        document.querySelectorAll('.lazy-favicon').forEach(img => {
+            faviconObserver.observe(img);
+        });
+    } else {
+        // Fallback for older browsers: load all favicons immediately
+        document.querySelectorAll('.lazy-favicon').forEach(img => {
+            const src = img.getAttribute('data-src');
+            if (src) {
+                img.src = src;
+                img.removeAttribute('data-src');
+            }
+        });
+    }
 });
 </script>
 <style>
@@ -206,8 +246,17 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
                 <td class="title-col inline">
                     <div class="flex-wrapper">
                     {% if 'favicons_enabled' not in ui_settings or ui_settings['favicons_enabled'] %}
-                        <div>{# A page might have hundreds of these images, set IMG options for lazy loading, don't set SRC if we dont have it so it doesnt fetch the placeholder'  #}
-                            <img alt="Favicon thumbnail" class="favicon" loading="lazy" decoding="async" fetchpriority="low" {% if favicon %} src="{{url_for('static_content', group='favicon', filename=watch.uuid)}}" {% else %} src='data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="7.087" height="7.087" viewBox="0 0 7.087 7.087"%3E%3Ccircle cx="3.543" cy="3.543" r="3.279" stroke="%23e1e1e1" stroke-width="0.45" fill="none" opacity="0.74"/%3E%3C/svg%3E' {%  endif %} >
+                        <div>
+                            {# Intersection Observer lazy loading: store real URL in data-src, load only when visible in viewport #}
+                            <img alt="Favicon thumbnail"
+                                 class="favicon lazy-favicon"
+                                 loading="lazy"
+                                 decoding="async"
+                                 fetchpriority="low"
+                                 {% if favicon %}
+                                 data-src="{{url_for('static_content', group='favicon', filename=watch.uuid)}}"
+                                 {% endif %}
+                                 src='data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="7.087" height="7.087" viewBox="0 0 7.087 7.087"%3E%3Ccircle cx="3.543" cy="3.543" r="3.279" stroke="%23e1e1e1" stroke-width="0.45" fill="none" opacity="0.74"/%3E%3C/svg%3E'>
                         </div>
                     {%  endif %}
                         <div>
