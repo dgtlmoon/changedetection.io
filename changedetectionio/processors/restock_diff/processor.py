@@ -193,18 +193,17 @@ class perform_site_check(difference_detection_processor):
 
 
         itemprop_availability = {}
+        multiple_prices_found = False
 
         # Try built-in extraction first, this will scan metadata in the HTML
         try:
             itemprop_availability = get_itemprop_availability(self.fetcher.content)
         except MoreThanOnePriceFound as e:
-            # Add the real data
-            raise ProcessorException(message="Cannot run, more than one price detected, this plugin is only for product pages with ONE product, try the content-change detection mode.",
-                                     url=watch.get('url'),
-                                     status_code=self.fetcher.get_last_status_code(),
-                                     screenshot=self.fetcher.screenshot,
-                                     xpath_data=self.fetcher.xpath_data
-                                     )
+            # Don't raise immediately - let plugins try to handle this case
+            # Plugins might be able to determine which price is correct
+            logger.warning(f"Built-in detection found multiple prices on {watch.get('url')}, will try plugin override")
+            multiple_prices_found = True
+            itemprop_availability = {}
 
         # If built-in extraction didn't get both price AND availability, try plugin override
         # Only check plugin if this watch is using a fetcher that might provide better data
@@ -216,9 +215,21 @@ class perform_site_check(difference_detection_processor):
             from changedetectionio.pluggy_interface import get_itemprop_availability_from_plugin
             fetcher_name = watch.get('fetch_backend', 'html_requests')
 
-            # Only try plugin override if not using system default (which might be anything)
-            if fetcher_name and fetcher_name != 'system':
-                logger.debug("Calling extra plugins for getting item price/availability")
+            # Resolve 'system' to the actual fetcher being used
+            # This allows plugins to work even when watch uses "system settings default"
+            if fetcher_name == 'system':
+                # Get the actual fetcher that was used (from self.fetcher)
+                # Fetcher class name gives us the actual backend (e.g., 'html_requests', 'html_webdriver')
+                actual_fetcher = type(self.fetcher).__name__
+                if 'html_requests' in actual_fetcher.lower():
+                    fetcher_name = 'html_requests'
+                elif 'webdriver' in actual_fetcher.lower() or 'playwright' in actual_fetcher.lower():
+                    fetcher_name = 'html_webdriver'
+                logger.debug(f"Resolved 'system' fetcher to actual fetcher: {fetcher_name}")
+
+            # Try plugin override - plugins can decide if they support this fetcher
+            if fetcher_name:
+                logger.debug(f"Calling extra plugins for getting item price/availability (fetcher: {fetcher_name})")
                 plugin_availability = get_itemprop_availability_from_plugin(self.fetcher.content, fetcher_name, self.fetcher, watch.link)
 
                 if plugin_availability:
@@ -232,6 +243,16 @@ class perform_site_check(difference_detection_processor):
                         logger.info(f"Using plugin-provided availability data for fetcher '{fetcher_name}' (built-in had price={has_price}, availability={has_availability}; plugin has price={plugin_has_price}, availability={plugin_has_availability})")
                 if not plugin_availability:
                     logger.debug("No item price/availability from plugins")
+
+        # If we had multiple prices and plugins also failed, NOW raise the exception
+        if multiple_prices_found and not itemprop_availability.get('price'):
+            raise ProcessorException(
+                message="Cannot run, more than one price detected, this plugin is only for product pages with ONE product, try the content-change detection mode.",
+                url=watch.get('url'),
+                status_code=self.fetcher.get_last_status_code(),
+                screenshot=self.fetcher.screenshot,
+                xpath_data=self.fetcher.xpath_data
+            )
 
         # Something valid in get_itemprop_availability() by scraping metadata ?
         if itemprop_availability.get('price') or itemprop_availability.get('availability'):
