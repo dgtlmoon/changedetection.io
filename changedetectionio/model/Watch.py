@@ -113,7 +113,9 @@ class model(watch_base):
         if kw.get('datastore_path'):
             del kw['datastore_path']
 
-        self.__datastore=kw.get('__datastore')
+        self.__datastore = kw.get('__datastore')
+        if not self.__datastore:
+            raise ValueError("Watch object requires '__datastore' reference - cannot access global settings without it")
         if kw.get('__datastore'):
             del kw['__datastore']
 
@@ -544,7 +546,7 @@ class model(watch_base):
 
         maxlen = (
                 self.get('history_snapshot_max_length')
-                or self.__datastore['settings']['application'].get('history_snapshot_max_length')
+                or (self.__datastore and self.__datastore['settings']['application'].get('history_snapshot_max_length'))
         )
 
         if maxlen and self.__history_n and self.__history_n > maxlen:

@@ -67,7 +67,7 @@ echo "-------------------- Running rest of tests in parallel -------------------
 # REMOVE_REQUESTS_OLD_SCREENSHOTS disabled so that we can write a screenshot and send it in test_notifications.py without a real browser
 FETCH_WORKERS=2 REMOVE_REQUESTS_OLD_SCREENSHOTS=false \
 pytest tests/test_*.py \
-  -n 18 \
+  -n 8 \
   --dist=load \
   -vvv \
   -s \

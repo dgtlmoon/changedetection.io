@@ -169,7 +169,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         self.json_store_path = os.path.join(self.datastore_path, "changedetection.json")
 
         # Base definition for all watchers (deepcopy part of #569)
-        self.generic_definition = deepcopy(Watch.model(datastore_path=datastore_path, default={}))
+        self.generic_definition = deepcopy(Watch.model(datastore_path=datastore_path, __datastore=self.__data, default={}))
 
         # Load build SHA if available (Docker deployments)
         if path.isfile('changedetectionio/source.txt'):
@@ -634,7 +634,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
         # If the processor also has its own Watch implementation
         watch_class = get_custom_watch_obj_for_processor(apply_extras.get('processor'))
-        new_watch = watch_class(datastore_path=self.datastore_path, url=url)
+        new_watch = watch_class(datastore_path=self.datastore_path, __datastore=self.__data, url=url)
 
         new_uuid = new_watch.get('uuid')
 
