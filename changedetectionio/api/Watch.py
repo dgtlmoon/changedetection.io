@@ -66,47 +66,42 @@ class Watch(Resource):
     @validate_openapi_request('getWatch')
     def get(self, uuid):
         """Get information about a single watch, recheck, pause, or mute."""
-        import time
-        from copy import deepcopy
-        watch = None
-        # Retry up to 20 times if dict is being modified
-        # With sleep(0), this is fast: ~200µs best case, ~20ms worst case under heavy load
-        for attempt in range(20):
-            try:
-                watch = deepcopy(self.datastore.data['watching'].get(uuid))
-                break
-            except RuntimeError:
-                # Dict changed during deepcopy, retry after yielding to scheduler
-                # sleep(0) releases GIL and yields - no fixed delay, just lets other threads run
-                if attempt < 19:  # Don't yield on last attempt
-                    time.sleep(0)  # Yield to scheduler (microseconds, not milliseconds)
-
-        if not watch:
+        # Get watch reference first (for pause/mute operations)
+        watch_obj = self.datastore.data['watching'].get(uuid)
+        if not watch_obj:
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
+
+        # Create a dict copy for JSON response (with lock for thread safety)
+        # This is much faster than deepcopy and doesn't copy the datastore reference
+        # WARNING: dict() is a SHALLOW copy - nested dicts are shared with original!
+        # Only safe because we only ADD scalar properties (line 97-101), never modify nested dicts
+        # If you need to modify nested dicts, use: from copy import deepcopy; watch = deepcopy(dict(watch_obj))
+        with self.datastore.lock:
+            watch = dict(watch_obj)
 
         if request.args.get('recheck'):
             worker_pool.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
             return "OK", 200
         if request.args.get('paused', '') == 'paused':
-            self.datastore.data['watching'].get(uuid).pause()
+            watch_obj.pause()
             return "OK", 200
         elif request.args.get('paused', '') == 'unpaused':
-            self.datastore.data['watching'].get(uuid).unpause()
+            watch_obj.unpause()
             return "OK", 200
         if request.args.get('muted', '') == 'muted':
-            self.datastore.data['watching'].get(uuid).mute()
+            watch_obj.mute()
             return "OK", 200
         elif request.args.get('muted', '') == 'unmuted':
-            self.datastore.data['watching'].get(uuid).unmute()
+            watch_obj.unmute()
             return "OK", 200
 
         # Return without history, get that via another API call
         # Properties are not returned as a JSON, so add the required props manually
-        watch['history_n'] = watch.history_n
+        watch['history_n'] = watch_obj.history_n
         # attr .last_changed will check for the last written text snapshot on change
-        watch['last_changed'] = watch.last_changed
-        watch['viewed'] = watch.viewed
-        watch['link'] = watch.link,
+        watch['last_changed'] = watch_obj.last_changed
+        watch['viewed'] = watch_obj.viewed
+        watch['link'] = watch_obj.link,
 
         return watch
 
