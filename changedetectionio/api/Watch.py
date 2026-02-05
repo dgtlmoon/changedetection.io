@@ -73,6 +73,9 @@ class Watch(Resource):
 
         # Create a dict copy for JSON response (with lock for thread safety)
         # This is much faster than deepcopy and doesn't copy the datastore reference
+        # WARNING: dict() is a SHALLOW copy - nested dicts are shared with original!
+        # Only safe because we only ADD scalar properties (line 97-101), never modify nested dicts
+        # If you need to modify nested dicts, use: from copy import deepcopy; watch = deepcopy(dict(watch_obj))
         with self.datastore.lock:
             watch = dict(watch_obj)
 

@@ -541,8 +541,9 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
     # Clone a watch by UUID
     def clone(self, uuid):
         url = self.data['watching'][uuid].get('url')
-        # No need to deepcopy here - add_watch() will deepcopy extras anyway
-        # Just pass the watch object directly (with lock for thread safety)
+        # No need to deepcopy here - add_watch() will deepcopy extras anyway (line 569)
+        # Just pass a dict copy (with lock for thread safety)
+        # NOTE: dict() is shallow copy but safe since add_watch() deepcopies it
         with self.lock:
             extras = dict(self.data['watching'][uuid])
         new_uuid = self.add_watch(url=url, extras=extras)
