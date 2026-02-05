@@ -248,7 +248,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
             else:
                 # Fresh install - create new datastore
-                logger.critical(f"No datastore found, creating new datastore at {self.datastore_path}")
+                logger.warning(f"No datastore found, creating new datastore at {self.datastore_path}")
 
                 # Set schema version to latest (no updates needed)
                 updates_available = self.get_updates_available()
