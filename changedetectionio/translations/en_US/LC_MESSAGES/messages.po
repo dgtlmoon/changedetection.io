@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io\n"
-"POT-Creation-Date: 2026-01-22 06:19+0100\n"
+"POT-Creation-Date: 2026-02-05 17:47+0100\n"
 "PO-Revision-Date: 2026-01-12 16:37+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en_US\n"
@@ -325,6 +325,14 @@ msgstr ""
 msgid "to disable"
 msgstr ""
 
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Limit collection of history snapshots for each watch to this number of history items."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Set to empty to disable / no limit"
+msgstr ""
+
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Password protection for your changedetection.io application."
 msgstr ""
@@ -339,6 +347,10 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "When a request returns no content, or the HTML does not contain any text, is this considered a change?"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Choose a default proxy for all watches"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -648,10 +660,6 @@ msgstr ""
 msgid ""
 "SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should "
 "whitelist the IP access instead"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Choose a default proxy for all watches"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -979,7 +987,12 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/edit.py
 #, python-brace-format
-msgid "Cannot load the edit form for processor/plugin '{}', plugin missing?"
+msgid "Could not load '{}' processor, processor plugin might be missing. Please select a different processor."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/edit.py
+#, python-brace-format
+msgid "Could not load '{}' processor, processor plugin might be missing."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/edit.py
@@ -1226,6 +1239,10 @@ msgstr ""
 msgid ""
 "Sends a notification when the filter can no longer be seen on the page, good for knowing when the page changed and "
 "your filter will not work anymore."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Set to empty to use system settings default"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
@@ -1577,6 +1594,18 @@ msgid "records"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "More info"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "You can also add 'shared' watches."
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Add a new web page change detection watch"
 msgstr ""
 
@@ -1586,18 +1615,6 @@ msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Edit first then Watch"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Create a shareable link"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Tip: You can also add 'shared' watches."
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "More info"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
@@ -2114,6 +2131,10 @@ msgid "Use page <title> in list"
 msgstr ""
 
 #: changedetectionio/forms.py
+msgid "Number of history items per watch to keep"
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "Body must be empty when Request Method is set to GET"
 msgstr ""
 
@@ -2435,13 +2456,18 @@ msgstr ""
 msgid "Detects all text changes where possible"
 msgstr ""
 
-#: changedetectionio/store.py
+#: changedetectionio/store/__init__.py
 #, python-brace-format
 msgid "Error fetching metadata for {}"
 msgstr ""
 
-#: changedetectionio/store.py
+#: changedetectionio/store/__init__.py
 msgid "Watch protocol is not permitted or invalid URL format"
+msgstr ""
+
+#: changedetectionio/store/__init__.py
+#, python-brace-format
+msgid "Watch limit reached ({}/{} watches). Cannot add more watches."
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
@@ -2999,5 +3025,14 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "No watches available to recheck."
+#~ msgstr ""
+
+#~ msgid "Cannot load the edit form for processor/plugin '{}', plugin missing?"
+#~ msgstr ""
+
+#~ msgid "Create a shareable link"
+#~ msgstr ""
+
+#~ msgid "Tip: You can also add 'shared' watches."
 #~ msgstr ""
 

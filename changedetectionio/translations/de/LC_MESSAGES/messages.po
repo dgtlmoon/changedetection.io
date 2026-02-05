@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-22 06:19+0100\n"
+"POT-Creation-Date: 2026-02-05 17:47+0100\n"
 "PO-Revision-Date: 2026-01-14 03:57+0100\n"
 "Last-Translator: \n"
 "Language: de\n"
@@ -333,6 +333,14 @@ msgstr "Setzen auf"
 msgid "to disable"
 msgstr ""
 
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Limit collection of history snapshots for each watch to this number of history items."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Set to empty to disable / no limit"
+msgstr ""
+
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Password protection for your changedetection.io application."
 msgstr ""
@@ -350,6 +358,10 @@ msgstr ""
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "When a request returns no content, or the HTML does not contain any text, is this considered a change?"
 msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Choose a default proxy for all watches"
+msgstr "Wählen Sie einen Standard-Proxy für alle Überwachungen"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Base URL used for the"
@@ -663,10 +675,6 @@ msgid ""
 "SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should "
 "whitelist the IP access instead"
 msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Choose a default proxy for all watches"
-msgstr "Wählen Sie einen Standard-Proxy für alle Überwachungen"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Python version:"
@@ -999,8 +1007,13 @@ msgstr "In den Modus {} gewechselt."
 
 #: changedetectionio/blueprint/ui/edit.py
 #, python-brace-format
-msgid "Cannot load the edit form for processor/plugin '{}', plugin missing?"
-msgstr "Das Bearbeitungsformular für den Prozessor/das Plugin „{}“ kann nicht geladen werden. Fehlt das Plugin?"
+msgid "Could not load '{}' processor, processor plugin might be missing. Please select a different processor."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/edit.py
+#, python-brace-format
+msgid "Could not load '{}' processor, processor plugin might be missing."
+msgstr ""
 
 #: changedetectionio/blueprint/ui/edit.py
 msgid "Updated watch - unpaused!"
@@ -1253,6 +1266,10 @@ msgid ""
 msgstr ""
 "Sendet eine Benachrichtigung, wenn der Filter auf der Seite nicht mehr sichtbar ist. So wissen Sie, wann sich die "
 "Seite geändert hat und Ihr Filter nicht mehr funktioniert."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Set to empty to use system settings default"
+msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "method (default) where your watched site doesn't need Javascript to render."
@@ -1619,6 +1636,18 @@ msgid "records"
 msgstr "Einträge"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "More info"
+msgstr "Weitere Informationen"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "You can also add 'shared' watches."
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Add a new web page change detection watch"
 msgstr "Fügen Sie eine neue Überwachung zur Erkennung von Webseitenänderungen hinzu"
 
@@ -1629,18 +1658,6 @@ msgstr "Diese URL überwachen!"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Edit first then Watch"
 msgstr "Bearbeiten > Überwachen"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Create a shareable link"
-msgstr "Erstellen Sie einen Link zum Teilen"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Tip: You can also add 'shared' watches."
-msgstr "Tipp: Sie können auch „gemeinsame“ Überwachungen hinzufügen."
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "More info"
-msgstr "Weitere Informationen"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Pause"
@@ -2163,6 +2180,10 @@ msgid "Use page <title> in list"
 msgstr "Verwenden Sie Seite <Titel> in der Liste"
 
 #: changedetectionio/forms.py
+msgid "Number of history items per watch to keep"
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "Der Textkörper muss leer sein, wenn die Anforderungsmethode auf GET gesetzt ist"
 
@@ -2486,14 +2507,19 @@ msgstr "Änderungen an Webseitentext/HTML, JSON und PDF"
 msgid "Detects all text changes where possible"
 msgstr "Erkennt nach Möglichkeit alle Textänderungen"
 
-#: changedetectionio/store.py
+#: changedetectionio/store/__init__.py
 #, python-brace-format
 msgid "Error fetching metadata for {}"
 msgstr "Fehler beim Abrufen der Metadaten für {}"
 
-#: changedetectionio/store.py
+#: changedetectionio/store/__init__.py
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "Das Protokoll wird nicht unterstützt oder das URL-Format ist ungültig."
+
+#: changedetectionio/store/__init__.py
+#, python-brace-format
+msgid "Watch limit reached ({}/{} watches). Cannot add more watches."
+msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
@@ -3170,4 +3196,13 @@ msgstr "Haupteinstellungen"
 
 #~ msgid "No watches available to recheck."
 #~ msgstr "Keine Überwachungen verfügbar, um erneut zu überprüfen."
+
+#~ msgid "Cannot load the edit form for processor/plugin '{}', plugin missing?"
+#~ msgstr "Das Bearbeitungsformular für den Prozessor/das Plugin „{}“ kann nicht geladen werden. Fehlt das Plugin?"
+
+#~ msgid "Create a shareable link"
+#~ msgstr "Erstellen Sie einen Link zum Teilen"
+
+#~ msgid "Tip: You can also add 'shared' watches."
+#~ msgstr "Tipp: Sie können auch „gemeinsame“ Überwachungen hinzufügen."
 
