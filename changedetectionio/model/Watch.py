@@ -547,9 +547,8 @@ class model(watch_base):
                 or self.__datastore['settings']['application'].get('history_snapshot_max_length')
         )
 
-        if self.__history_n > maxlen: # AND history len greater than...
+        if maxlen and self.__history_n and self.__history_n > maxlen:
             self.history_trim(newest_n_items=maxlen)
-
 
         # @todo bump static cache of the last timestamp so we dont need to examine the file to set a proper ''viewed'' status
         return snapshot_fname
