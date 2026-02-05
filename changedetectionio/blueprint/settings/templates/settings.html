@@ -60,6 +60,14 @@
                         </span>
                     </div>
                     <div class="pure-control-group">
+                        {{ render_field(form.application.form.history_snapshot_max_length, class="history_snapshot_max_length") }}
+                        <span class="pure-form-message-inline">{{ _('Limit collection of history snapshots for each watch to this number of history items.') }}
+                            <br>
+                        {{ _('Set to empty to disable / no limit') }}
+                        </span>
+                    </div>
+
+                    <div class="pure-control-group">
                         {% if not hide_remove_pass %}
                             {% if current_user.is_authenticated %}
                                 {{ render_button(form.application.form.removepassword_button) }}

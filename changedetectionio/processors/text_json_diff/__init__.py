@@ -64,7 +64,7 @@ def prepare_filter_prevew(datastore, watch_uuid, form_data):
         # Only update vars that came in via the AJAX post
         p = {k: v for k, v in form.data.items() if k in form_data.keys()}
         tmp_watch.update(p)
-        blank_watch_no_filters = watch_model()
+        blank_watch_no_filters = watch_model(datastore_path=datastore.datastore_path, __datastore=datastore.data)
         blank_watch_no_filters['url'] = tmp_watch.get('url')
 
         latest_filename = next(reversed(tmp_watch.history))

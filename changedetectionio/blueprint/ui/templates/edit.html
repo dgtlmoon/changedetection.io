@@ -116,6 +116,13 @@
                         </span>
                     </div>
                     <div class="pure-control-group">
+                        {{ render_field(form.history_snapshot_max_length, class="history_snapshot_max_length") }}
+                        <span class="pure-form-message-inline">{{ _('Limit collection of history snapshots for each watch to this number of history items.') }}
+                        <br>
+                        {{ _('Set to empty to use system settings default') }}
+                        </span>
+                    </div>
+                    <div class="pure-control-group">
                         {{ render_ternary_field(form.use_page_title_in_list) }}
                     </div>
                 </fieldset>

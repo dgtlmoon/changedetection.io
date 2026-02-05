@@ -9,18 +9,14 @@ from flask import (
 )
 from flask_babel import gettext
 
-from ..blueprint.rss import RSS_CONTENT_FORMAT_DEFAULT
-from ..html_tools import TRANSLATE_WHITESPACE_TABLE
-from ..model import App, Watch, USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
-from copy import deepcopy, copy
+from ..model import App, Watch
+from copy import deepcopy
 from os import path, unlink
-from threading import Lock
 import json
 import os
 import re
 import secrets
 import sys
-import threading
 import time
 import uuid as uuid_builder
 from loguru import logger
@@ -35,7 +31,6 @@ except ImportError:
     HAS_ORJSON = False
 
 from ..processors import get_custom_watch_obj_for_processor
-from ..processors.restock_diff import Restock
 
 # Import the base class and helpers
 from .file_saving_datastore import FileSavingDataStore, load_all_watches, save_watch_atomic, save_json_atomic
@@ -174,7 +169,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         self.json_store_path = os.path.join(self.datastore_path, "changedetection.json")
 
         # Base definition for all watchers (deepcopy part of #569)
-        self.generic_definition = deepcopy(Watch.model(datastore_path=datastore_path, default={}))
+        self.generic_definition = deepcopy(Watch.model(datastore_path=datastore_path, __datastore=self.__data, default={}))
 
         # Load build SHA if available (Docker deployments)
         if path.isfile('changedetectionio/source.txt'):
@@ -308,7 +303,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         if entity.get('processor') != 'text_json_diff':
             logger.trace(f"Loading Watch object '{watch_class.__module__}.{watch_class.__name__}' for UUID {uuid}")
 
-        entity = watch_class(datastore_path=self.datastore_path, default=entity)
+        entity = watch_class(datastore_path=self.datastore_path, __datastore=self.__data, default=entity)
         return entity
 
     # ============================================================================
@@ -639,7 +634,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
         # If the processor also has its own Watch implementation
         watch_class = get_custom_watch_obj_for_processor(apply_extras.get('processor'))
-        new_watch = watch_class(datastore_path=self.datastore_path, url=url)
+        new_watch = watch_class(datastore_path=self.datastore_path, __datastore=self.__data, url=url)
 
         new_uuid = new_watch.get('uuid')
 
