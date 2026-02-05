@@ -876,10 +876,14 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         # So we use the same model as a Watch
         with self.lock:
             from ..model import Tag
-            new_tag = Tag.model(datastore_path=self.datastore_path, default={
-                'title': title.strip(),
-                'date_created': int(time.time())
-            })
+            new_tag = Tag.model(
+                datastore_path=self.datastore_path,
+                __datastore=self.__data,
+                default={
+                    'title': title.strip(),
+                    'date_created': int(time.time())
+                }
+            )
 
             new_uuid = new_tag.get('uuid')
 
