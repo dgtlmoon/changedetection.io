@@ -613,6 +613,11 @@ class model(watch_base):
                 try:
                     with open(fname, 'wb') as f:
                         f.write(decoded)
+
+                    # Invalidate favicon filename cache
+                    if hasattr(self, '_favicon_filename_cache'):
+                        delattr(self, '_favicon_filename_cache')
+
                     # A signal that could trigger the socket server to update the browser also
                     watch_check_update = signal('watch_favicon_bump')
                     if watch_check_update:
@@ -629,20 +634,32 @@ class model(watch_base):
         Find any favicon.* file in the current working directory
         and return the contents of the newest one.
 
+        MEMORY LEAK FIX: Cache the result to avoid repeated glob.glob() operations.
+        glob.glob() causes millions of fnmatch allocations when called for every watch on page load.
+
         Returns:
-            bytes: Contents of the newest favicon file, or None if not found.
+            str: Basename of the newest favicon file, or None if not found.
         """
+        # Check cache first (prevents 26M+ allocations from repeated glob operations)
+        cache_key = '_favicon_filename_cache'
+        if hasattr(self, cache_key):
+            return getattr(self, cache_key)
+
         import glob
 
         # Search for all favicon.* files
         files = glob.glob(os.path.join(self.watch_data_dir, "favicon.*"))
 
         if not files:
-            return None
+            result = None
+        else:
+            # Find the newest by modification time
+            newest_file = max(files, key=os.path.getmtime)
+            result = os.path.basename(newest_file)
 
-        # Find the newest by modification time
-        newest_file = max(files, key=os.path.getmtime)
-        return os.path.basename(newest_file)
+        # Cache the result
+        setattr(self, cache_key, result)
+        return result
 
     def get_screenshot_as_thumbnail(self, max_age=3200):
         """Return path to a square thumbnail of the most recent screenshot.
