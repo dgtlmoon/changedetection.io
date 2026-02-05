@@ -370,8 +370,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                 except Exception as e:
                     import traceback
                     logger.error(f"Worker {worker_id} exception processing watch UUID: {uuid}")
-                    logger.error(str(e))
-                    logger.error(traceback.format_exc())
+                    logger.exception(f"Worker {worker_id} full exception details:")
                     datastore.update_watch(uuid=uuid, update_obj={'last_error': "Exception: " + str(e)})
                     process_changedetection_results = False
 
@@ -435,8 +434,9 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                                     await send_content_changed_notification(uuid, notification_q, datastore)
 
                     except Exception as e:
+
                         logger.critical(f"Worker {worker_id} exception in process_changedetection_results")
-                        logger.critical(str(e))
+                        logger.exception(f"Worker {worker_id} full exception details:")
                         datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
 
                 # Always record attempt count
@@ -451,6 +451,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                                 logger.debug(f"UUID: {uuid} Page <title> is '{page_title}'")
                                 datastore.update_watch(uuid=uuid, update_obj={'page_title': page_title})
                         except Exception as e:
+                            logger.exception(f"Worker {worker_id} full exception details:")
                             logger.warning(f"UUID: {uuid} Exception when extracting <title> - {str(e)}")
 
                     # Record server header
@@ -485,12 +486,10 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                 gc.collect()
 
         except Exception as e:
-            import traceback
-            logger.error(traceback.format_exc())
 
             logger.error(f"Worker {worker_id} unexpected error processing {uuid}: {e}")
-            logger.error(f"Worker {worker_id} traceback:", exc_info=True)
-            
+            logger.exception(f"Worker {worker_id} full exception details:")
+
             # Also update the watch with error information
             if datastore and uuid in datastore.data['watching']:
                 datastore.update_watch(uuid=uuid, update_obj={'last_error': f"Worker error: {str(e)}"})
@@ -504,6 +503,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                         await update_handler.fetcher.quit(watch=watch)
                 except Exception as e:
                     logger.error(f"Exception while cleaning/quit after calling browser: {e}")
+                    logger.exception(f"Worker {worker_id} full exception details:")
+
                 try:
                     # Release UUID from processing (thread-safe)
                     worker_pool.release_uuid_from_processing(uuid, worker_id=worker_id)
@@ -532,6 +533,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     logger.debug(f"Worker {worker_id} completed watch {uuid} in {time.time()-fetch_start_time:.2f}s")
                 except Exception as cleanup_error:
                     logger.error(f"Worker {worker_id} error during cleanup: {cleanup_error}")
+                    logger.exception(f"Worker {worker_id} full exception details:")
 
             del(uuid)
 
