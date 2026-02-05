@@ -131,6 +131,95 @@ class model(watch_base):
         # Be sure the cached timestamp is ready
         bump = self.history
 
+    def __deepcopy__(self, memo):
+        """
+        Custom deepcopy that excludes __datastore to prevent memory leaks.
+
+        CRITICAL FIX: Without this, deepcopy(watch) copies the entire datastore
+        (which contains all other watches), causing exponential memory growth.
+        With 100 watches, this creates 10,000 watch objects in memory (100²).
+
+        This is called by:
+        - api/Watch.py:76 (API endpoint)
+        - processors/base.py:26 (EVERY processor run)
+        - store/__init__.py:544 (clone watch)
+        - And 4+ other locations
+        """
+        from copy import deepcopy
+
+        # Create a new instance without calling __init__ (avoids __datastore requirement)
+        cls = self.__class__
+        new_watch = cls.__new__(cls)
+        memo[id(self)] = new_watch
+
+        # Copy the dict data (all the watch settings)
+        for key, value in self.items():
+            new_watch[key] = deepcopy(value, memo)
+
+        # Copy instance attributes EXCEPT the datastore references
+        # These are cached/computed values that need to be preserved
+        new_watch._model__newest_history_key = self._model__newest_history_key
+        new_watch._model__history_n = self._model__history_n
+        new_watch.jitter_seconds = self.jitter_seconds
+
+        # Copy datastore_path (string, safe to copy)
+        new_watch._model__datastore_path = self._model__datastore_path
+
+        # CRITICAL: Share the datastore reference (don't copy it!)
+        # This is safe because we never modify the datastore through the watch
+        new_watch._model__datastore = self._model__datastore
+
+        # Do NOT copy favicon cache - let it be regenerated on demand
+        # This is just a performance cache (prevents repeated glob operations)
+        # and will be rebuilt automatically on first access
+
+        return new_watch
+
+    def __getstate__(self):
+        """
+        Custom pickle serialization that excludes __datastore.
+
+        This handles pickle/unpickle (used by multiprocessing, caching, etc.)
+        and ensures the datastore reference is never serialized.
+        """
+        # Get the dict data
+        state = dict(self)
+
+        # Add the instance attributes we want to preserve
+        state['__watch_metadata__'] = {
+            'newest_history_key': self._model__newest_history_key,
+            'history_n': self._model__history_n,
+            'jitter_seconds': self.jitter_seconds,
+            'datastore_path': self._model__datastore_path,
+        }
+
+        # NOTE: __datastore and _favicon_filename_cache are intentionally excluded
+        # Both will be regenerated/restored as needed
+        return state
+
+    def __setstate__(self, state):
+        """
+        Custom pickle deserialization.
+
+        WARNING: This creates a Watch without a __datastore reference!
+        The caller MUST set watch._model__datastore after unpickling.
+        """
+        # Extract metadata
+        metadata = state.pop('__watch_metadata__', {})
+
+        # Restore dict data
+        self.update(state)
+
+        # Restore instance attributes
+        self._model__newest_history_key = metadata.get('newest_history_key')
+        self._model__history_n = metadata.get('history_n', 0)
+        self.jitter_seconds = metadata.get('jitter_seconds', 0)
+        self._model__datastore_path = metadata.get('datastore_path')
+
+        # __datastore is NOT restored - caller must set it!
+        # _favicon_filename_cache is NOT restored - will regenerate on demand
+        self._model__datastore = None
+
     @property
     def viewed(self):
         # Don't return viewed when last_viewed is 0 and newest_key is 0
