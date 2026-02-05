@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-22 06:19+0100\n"
+"POT-Creation-Date: 2026-02-05 17:47+0100\n"
 "PO-Revision-Date: 2026-01-18 21:31+0800\n"
 "Last-Translator: 吾爱分享 <admin@wuaishare.cn>\n"
 "Language: zh\n"
@@ -325,6 +325,14 @@ msgstr "设置为"
 msgid "to disable"
 msgstr "以禁用"
 
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Limit collection of history snapshots for each watch to this number of history items."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Set to empty to disable / no limit"
+msgstr ""
+
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Password protection for your changedetection.io application."
 msgstr "为你的 changedetection.io 应用启用密码保护。"
@@ -340,6 +348,10 @@ msgstr "启用密码时允许访问监视器更改历史页面(便于共享差�
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "When a request returns no content, or the HTML does not contain any text, is this considered a change?"
 msgstr "当请求无内容返回，或 HTML 不包含任何文本时，是否视为变更？"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Choose a default proxy for all watches"
+msgstr "为所有监视器选择默认代理"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Base URL used for the"
@@ -649,10 +661,6 @@ msgid ""
 "SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should "
 "whitelist the IP access instead"
 msgstr "带认证的 SOCKS5 代理仅支持“明文请求”抓取器，其他抓取器请改为白名单 IP"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Choose a default proxy for all watches"
-msgstr "为所有监视器选择默认代理"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Python version:"
@@ -979,8 +987,13 @@ msgstr "已切换到模式 - {}。"
 
 #: changedetectionio/blueprint/ui/edit.py
 #, python-brace-format
-msgid "Cannot load the edit form for processor/plugin '{}', plugin missing?"
-msgstr "无法加载处理器/插件 '{}' 的编辑表单，插件是否缺失？"
+msgid "Could not load '{}' processor, processor plugin might be missing. Please select a different processor."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/edit.py
+#, python-brace-format
+msgid "Could not load '{}' processor, processor plugin might be missing."
+msgstr ""
 
 #: changedetectionio/blueprint/ui/edit.py
 msgid "Updated watch - unpaused!"
@@ -1227,6 +1240,10 @@ msgid ""
 "Sends a notification when the filter can no longer be seen on the page, good for knowing when the page changed and "
 "your filter will not work anymore."
 msgstr "当页面上找不到该过滤器时发送通知，便于知晓页面已变化且过滤器不再适用。"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Set to empty to use system settings default"
+msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "method (default) where your watched site doesn't need Javascript to render."
@@ -1577,6 +1594,18 @@ msgid "records"
 msgstr "记录"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "More info"
+msgstr "更多信息"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "You can also add 'shared' watches."
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Add a new web page change detection watch"
 msgstr "新增网页变更监控"
 
@@ -1587,18 +1616,6 @@ msgstr "监控此 URL！"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Edit first then Watch"
 msgstr "先编辑，再监控"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Create a shareable link"
-msgstr "创建可分享链接"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Tip: You can also add 'shared' watches."
-msgstr "提示：你也可以添加“共享”的监控项。"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "More info"
-msgstr "更多信息"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Pause"
@@ -2114,6 +2131,10 @@ msgid "Use page <title> in list"
 msgstr "列表中使用页面 <title>"
 
 #: changedetectionio/forms.py
+msgid "Number of history items per watch to keep"
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "当请求方法为 GET 时，请求正文必须为空"
 
@@ -2435,14 +2456,19 @@ msgstr "网页文本/HTML、JSON 和 PDF 变更"
 msgid "Detects all text changes where possible"
 msgstr "尽可能检测所有文本变更"
 
-#: changedetectionio/store.py
+#: changedetectionio/store/__init__.py
 #, python-brace-format
 msgid "Error fetching metadata for {}"
 msgstr "获取 {} 的元数据失败"
 
-#: changedetectionio/store.py
+#: changedetectionio/store/__init__.py
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "监控协议不允许或 URL 格式无效"
+
+#: changedetectionio/store/__init__.py
+#, python-brace-format
+msgid "Watch limit reached ({}/{} watches). Cannot add more watches."
+msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
@@ -2985,4 +3011,13 @@ msgstr "否"
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"
 msgstr "主设置"
+
+#~ msgid "Cannot load the edit form for processor/plugin '{}', plugin missing?"
+#~ msgstr "无法加载处理器/插件 '{}' 的编辑表单，插件是否缺失？"
+
+#~ msgid "Create a shareable link"
+#~ msgstr "创建可分享链接"
+
+#~ msgid "Tip: You can also add 'shared' watches."
+#~ msgstr "提示：你也可以添加“共享”的监控项。"
 
