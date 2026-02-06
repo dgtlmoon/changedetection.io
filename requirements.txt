@@ -14,7 +14,7 @@ flask~=3.1
 flask-socketio~=5.6.0
 python-socketio~=5.16.0
 python-engineio~=4.13.0
-inscriptis~=2.2
+inscriptis~=2.7
 pytz
 timeago~=1.0
 validators~=0.35
