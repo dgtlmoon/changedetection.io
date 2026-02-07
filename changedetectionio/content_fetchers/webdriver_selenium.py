@@ -84,6 +84,13 @@ class fetcher(Fetcher):
 
             options = ChromeOptions()
 
+            # Block images if block_assets is enabled
+            if self.block_assets:
+                options.add_experimental_option("prefs",
+                    {"profile.managed_default_content_settings.images": 2}
+                )
+                options.add_argument('--blink-settings=imagesEnabled=false')
+
             # Load Chrome options from env
             CHROME_OPTIONS = [
                 line.strip()
