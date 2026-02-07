@@ -74,12 +74,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     del (app_update['password'])
 
                 datastore.data['settings']['application'].update(app_update)
-                
+
                 # Handle dynamic worker count adjustment
                 old_worker_count = datastore.data['settings']['requests'].get('workers', 1)
                 new_worker_count = form.data['requests'].get('workers', 1)
 
                 datastore.data['settings']['requests'].update(form.data['requests'])
+                datastore.commit()
 
                 # Adjust worker count if it changed
                 if new_worker_count != old_worker_count:
@@ -109,12 +110,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
                 if not os.getenv("SALTED_PASS", False) and len(form.application.form.password.encrypted_password):
                     datastore.data['settings']['application']['password'] = form.application.form.password.encrypted_password
-                    datastore.needs_write_urgent = True
+                    datastore.commit()
                     flash(gettext("Password protection enabled."), 'notice')
                     flask_login.logout_user()
                     return redirect(url_for('watchlist.index'))
-
-                datastore.needs_write_urgent = True
 
                 # Also save plugin settings from the same form submission
                 plugin_tabs_list = get_plugin_settings_tabs()
@@ -181,7 +180,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     def settings_reset_api_key():
         secret = secrets.token_hex(16)
         datastore.data['settings']['application']['api_access_token'] = secret
-        datastore.needs_write_urgent = True
+        datastore.commit()
         flash(gettext("API Key was regenerated."))
         return redirect(url_for('settings.settings_page')+'#api')
         
@@ -198,7 +197,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     def toggle_all_paused():
         current_state = datastore.data['settings']['application'].get('all_paused', False)
         datastore.data['settings']['application']['all_paused'] = not current_state
-        datastore.needs_write_urgent = True
+        datastore.commit()
 
         if datastore.data['settings']['application']['all_paused']:
             flash(gettext("Automatic scheduling paused - checks will not be queued."), 'notice')
@@ -212,7 +211,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     def toggle_all_muted():
         current_state = datastore.data['settings']['application'].get('all_muted', False)
         datastore.data['settings']['application']['all_muted'] = not current_state
-        datastore.needs_write_urgent = True
+        datastore.commit()
 
         if datastore.data['settings']['application']['all_muted']:
             flash(gettext("All notifications muted."), 'notice')

@@ -12,9 +12,17 @@ schema = api_schema.build_watch_json_schema(watch_base_config)
 schema_create_watch = copy.deepcopy(schema)
 schema_create_watch['required'] = ['url']
 del schema_create_watch['properties']['last_viewed']
+# Allow processor_config_* fields (handled separately in endpoint)
+schema_create_watch['patternProperties'] = {
+    '^processor_config_': {'type': ['string', 'number', 'boolean', 'object', 'array', 'null']}
+}
 
 schema_update_watch = copy.deepcopy(schema)
 schema_update_watch['additionalProperties'] = False
+# Allow processor_config_* fields (handled separately in endpoint)
+schema_update_watch['patternProperties'] = {
+    '^processor_config_': {'type': ['string', 'number', 'boolean', 'object', 'array', 'null']}
+}
 
 # Tag schema is also based on watch_base since Tag inherits from it
 schema_tag = copy.deepcopy(schema)

@@ -112,9 +112,9 @@ def sigshutdown_handler(_signo, _stack_frame):
         from changedetectionio.flask_app import update_q, notification_q
         update_q.close()
         notification_q.close()
-        logger.debug("Janus queues closed successfully")
+        logger.debug("Queues closed successfully")
     except Exception as e:
-        logger.critical(f"CRITICAL: Failed to close janus queues: {e}")
+        logger.critical(f"CRITICAL: Failed to close queues: {e}")
     
     # Shutdown socketio server fast
     from changedetectionio.flask_app import socketio_server
@@ -124,13 +124,9 @@ def sigshutdown_handler(_signo, _stack_frame):
         except Exception as e:
             logger.error(f"Error shutting down Socket.IO server: {str(e)}")
     
-    # Save data quickly - force immediate save using abstract method
-    try:
-        datastore.force_save_all()
-        logger.success('Fast sync to storage complete.')
-    except Exception as e:
-        logger.error(f"Error syncing to storage: {str(e)}")
-    
+    # With immediate persistence, all data is already saved
+    logger.success('All data already persisted (immediate commits enabled).')
+
     sys.exit()
 
 def print_help():

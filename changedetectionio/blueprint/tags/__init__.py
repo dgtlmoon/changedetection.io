@@ -59,6 +59,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     def mute(uuid):
         if datastore.data['settings']['application']['tags'].get(uuid):
             datastore.data['settings']['application']['tags'][uuid]['notification_muted'] = not datastore.data['settings']['application']['tags'][uuid]['notification_muted']
+            datastore.commit()
         return redirect(url_for('tags.tags_overview_page'))
 
     @tags_blueprint.route("/delete/<string:uuid>", methods=['GET'])
@@ -76,6 +77,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 for watch_uuid, watch in datastore.data['watching'].items():
                     if watch.get('tags') and tag_uuid in watch['tags']:
                         watch['tags'].remove(tag_uuid)
+                        watch.commit()
                         removed_count += 1
                 logger.info(f"Background: Tag {tag_uuid} removed from {removed_count} watches")
             except Exception as e:
@@ -98,6 +100,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 for watch_uuid, watch in datastore.data['watching'].items():
                     if watch.get('tags') and tag_uuid in watch['tags']:
                         watch['tags'].remove(tag_uuid)
+                        watch.commit()
                         unlinked_count += 1
                 logger.info(f"Background: Tag {tag_uuid} unlinked from {unlinked_count} watches")
             except Exception as e:
@@ -114,6 +117,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     def delete_all():
         # Clear all tags from settings immediately
         datastore.data['settings']['application']['tags'] = {}
+        datastore.commit()
 
         # Clear tags from all watches in background thread to avoid blocking
         def clear_all_tags_background():
@@ -122,6 +126,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             try:
                 for watch_uuid, watch in datastore.data['watching'].items():
                     watch['tags'] = []
+                    watch.commit()
                     cleared_count += 1
                 logger.info(f"Background: Cleared tags from {cleared_count} watches")
             except Exception as e:
@@ -216,7 +221,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         datastore.data['settings']['application']['tags'][uuid].update(form.data)
         datastore.data['settings']['application']['tags'][uuid]['processor'] = 'restock_diff'
-        datastore.needs_write_urgent = True
+        datastore.commit()
         flash(gettext("Updated"))
 
         return redirect(url_for('tags.tags_overview_page'))
