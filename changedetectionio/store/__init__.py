@@ -123,10 +123,17 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
                 self.__data['settings']['application'].update(settings_data['settings']['application'])
 
     def _rehydrate_tags(self):
-        """Rehydrate tag entities from stored data."""
+        """Rehydrate tag entities from stored data into Tag objects with restock_diff processor."""
+        from ..model import Tag
+
         for uuid, tag in self.__data['settings']['application']['tags'].items():
-            self.__data['settings']['application']['tags'][uuid] = self.rehydrate_entity(
-                uuid, tag, processor_override='restock_diff'
+            # Force processor to restock_diff for override functionality (technical debt)
+            tag['processor'] = 'restock_diff'
+
+            self.__data['settings']['application']['tags'][uuid] = Tag.model(
+                datastore_path=self.datastore_path,
+                __datastore=self.__data,
+                default=tag
             )
             logger.info(f"Tag: {uuid} {tag['title']}")
 
@@ -402,9 +409,22 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         File backend implementation: reads individual tag.json files.
         Tags loaded from files override any tags in settings (migration path).
         """
+        from ..model import Tag
+
+        def rehydrate_tag(uuid, entity_dict):
+            """Rehydrate tag as Tag object with forced restock_diff processor."""
+            entity_dict['uuid'] = uuid
+            entity_dict['processor'] = 'restock_diff'  # Force processor for override functionality
+
+            return Tag.model(
+                datastore_path=self.datastore_path,
+                __datastore=self.__data,
+                default=entity_dict
+            )
+
         tags = load_all_tags(
             self.datastore_path,
-            self.rehydrate_entity
+            rehydrate_tag
         )
 
         # Override settings tags with loaded tags

@@ -154,10 +154,10 @@ class DatastoreUpdatesMixin:
         2. For each update > current schema version:
            - Create backup of datastore
            - Run update method
-           - Update schema version
-           - Mark settings and watches dirty
+           - Update schema version and commit settings
+           - Commit all watches and tags
         3. If any update fails, stop processing
-        4. Save all changes immediately
+        4. All changes saved via individual .commit() calls
         """
         updates_available = self.get_updates_available()
 
@@ -230,15 +230,11 @@ class DatastoreUpdatesMixin:
                                 # Tag doesn't have commit() method yet (pre-update_27)
                                 pass
 
-                    # Save changes immediately after each update (more resilient than batching)
-                    logger.critical(f"Saving all changes after update_{update_n}")
-                    try:
-                        self._save_dirty_items()
-                        logger.success(f"Update {update_n} changes saved successfully")
-                    except Exception as e:
-                        logger.error(f"Failed to save update_{update_n} changes: {e}")
-                        # Don't raise - update already ran, but changes might not be persisted
-                        # The update will try to run again on next startup
+                    # All changes already saved via individual .commit() calls:
+                    # - Settings saved via self.commit() above
+                    # - All watches saved via watch.commit() above
+                    # - All tags saved via tag.commit() above
+                    logger.success(f"Update {update_n} completed - all changes persisted")
 
                     # Track which updates ran
                     updates_ran.append(update_n)
@@ -678,7 +674,7 @@ class DatastoreUpdatesMixin:
             logger.success(f"All {len(self.data['watching'])} watches have valid hashes after migration")
 
         # Set schema version to latest available update
-        # This prevents re-running updates and re-marking all watches as dirty
+        # This prevents re-running updates on next startup
         updates_available = self.get_updates_available()
         latest_schema = updates_available[-1] if updates_available else 26
         self.data['settings']['application']['schema_version'] = latest_schema
@@ -735,17 +731,34 @@ class DatastoreUpdatesMixin:
         saved_count = 0
         failed_count = 0
 
-        for uuid, tag in tags.items():
+        for uuid, tag_data in tags.items():
             try:
-                # Save tag to its own file
-                tag.commit()
+                # Force save as tag.json (not watch.json) even if object is corrupted
+                from changedetectionio.store.file_saving_datastore import save_entity_atomic
+                import os
+
+                tag_dir = os.path.join(self.datastore_path, uuid)
+                os.makedirs(tag_dir, exist_ok=True)
+
+                # Convert to dict if it's an object
+                tag_dict = dict(tag_data) if hasattr(tag_data, '__iter__') else tag_data
+
+                # Save explicitly as tag.json
+                save_entity_atomic(
+                    tag_dir,
+                    uuid,
+                    tag_dict,
+                    filename='tag.json',
+                    entity_type='tag',
+                    max_size_mb=1
+                )
                 saved_count += 1
 
                 if saved_count % 10 == 0:
                     logger.info(f"  Progress: {saved_count}/{tag_count} tags migrated...")
 
             except Exception as e:
-                logger.error(f"Failed to save tag {uuid} ({tag.get('title', 'unknown')}): {e}")
+                logger.error(f"Failed to save tag {uuid} ({tag_data.get('title', 'unknown')}): {e}")
                 failed_count += 1
 
         if failed_count > 0:

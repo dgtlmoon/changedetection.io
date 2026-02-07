@@ -510,7 +510,12 @@ class watch_base(dict):
 
         # Save to disk via subclass implementation
         try:
+            # Determine entity type from module name (Watch.py -> watch, Tag.py -> tag)
+            from changedetectionio.model.persistence import _determine_entity_type
+            entity_type = _determine_entity_type(self.__class__)
+            filename = f"{entity_type}.json"
+
             self._save_to_disk(data_dict, uuid)
-            logger.debug(f"Committed {self.__class__.__name__.lower()} {uuid}")
+            logger.debug(f"Committed {entity_type} {uuid} to {uuid}/{filename}")
         except Exception as e:
             logger.error(f"Failed to commit {uuid}: {e}")
