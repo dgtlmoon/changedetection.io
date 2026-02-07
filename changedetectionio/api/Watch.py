@@ -424,7 +424,13 @@ class CreateWatch(Resource):
             except ValidationError as e:
                 return str(e), 400
 
+        # Handle processor-config-* fields separately (save to JSON, not watch)
+        from changedetectionio import processors
+
         extras = copy.deepcopy(json_data)
+
+        # Extract and remove processor config fields from extras
+        processor_config_data = processors.extract_processor_config_from_form_data(extras)
 
         # Because we renamed 'tag' to 'tags' but don't want to change the API (can do this in v2 of the API)
         tags = None
@@ -435,6 +441,10 @@ class CreateWatch(Resource):
         del extras['url']
 
         new_uuid = self.datastore.add_watch(url=url, extras=extras, tag=tags)
+
+        # Save processor config to separate JSON file
+        if new_uuid and processor_config_data:
+            processors.save_processor_config(self.datastore, new_uuid, processor_config_data)
         if new_uuid:
 # Dont queue because the scheduler will check that it hasnt been checked before anyway
 #            worker_pool.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))
