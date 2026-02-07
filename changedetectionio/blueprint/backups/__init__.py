@@ -47,7 +47,7 @@ def create_backup(datastore_path, watches: dict):
 
         # Add any data in the watch data directory.
         for uuid, w in watches.items():
-            for f in Path(w.watch_data_dir).glob('*'):
+            for f in Path(w.data_dir).glob('*'):
                 zipObj.write(f,
                              # Use the full path to access the file, but make the file 'relative' in the Zip.
                              arcname=os.path.join(f.parts[-2], f.parts[-1]),

@@ -193,12 +193,12 @@ class difference_detection_processor():
         import os
 
         watch = self.datastore.data['watching'].get(self.watch_uuid)
-        watch_data_dir = watch.watch_data_dir
+        data_dir = watch.data_dir
 
-        if not watch_data_dir:
+        if not data_dir:
             return {}
 
-        filepath = os.path.join(watch_data_dir, filename)
+        filepath = os.path.join(data_dir, filename)
 
         if not os.path.isfile(filepath):
             return {}
@@ -223,16 +223,16 @@ class difference_detection_processor():
         import os
 
         watch = self.datastore.data['watching'].get(self.watch_uuid)
-        watch_data_dir = watch.watch_data_dir
+        data_dir = watch.data_dir
 
-        if not watch_data_dir:
-            logger.warning(f"Cannot save extra watch config {filename}: no watch_data_dir")
+        if not data_dir:
+            logger.warning(f"Cannot save extra watch config {filename}: no data_dir")
             return
 
         # Ensure directory exists
         watch.ensure_data_dir_exists()
 
-        filepath = os.path.join(watch_data_dir, filename)
+        filepath = os.path.join(data_dir, filename)
 
         try:
             # If merge is enabled, read existing data first

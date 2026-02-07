@@ -24,8 +24,7 @@ class Tag(Resource):
     @validate_openapi_request('getTag')
     def get(self, uuid):
         """Get data for a single tag/group, toggle notification muting, or recheck all."""
-        from copy import deepcopy
-        tag = deepcopy(self.datastore.data['settings']['application']['tags'].get(uuid))
+        tag = self.datastore.data['settings']['application']['tags'].get(uuid)
         if not tag:
             abort(404, message=f'No tag exists with the UUID of {uuid}')
 
@@ -62,12 +61,12 @@ class Tag(Resource):
                 return {'status': f'OK, queueing {len(watches_to_queue)} watches in background'}, 202
 
         if request.args.get('muted', '') == 'muted':
-            self.datastore.data['settings']['application']['tags'][uuid]['notification_muted'] = True
-            self.datastore.commit()
+            tag['notification_muted'] = True
+            tag.commit()
             return "OK", 200
         elif request.args.get('muted', '') == 'unmuted':
-            self.datastore.data['settings']['application']['tags'][uuid]['notification_muted'] = False
-            self.datastore.commit()
+            tag['notification_muted'] = False
+            tag.commit()
             return "OK", 200
 
         return tag
@@ -81,7 +80,17 @@ class Tag(Resource):
 
         # Delete the tag, and any tag reference
         del self.datastore.data['settings']['application']['tags'][uuid]
-        self.datastore.commit()
+
+        # Delete tag.json file if it exists
+        import os
+        tag_dir = os.path.join(self.datastore.datastore_path, uuid)
+        tag_json = os.path.join(tag_dir, "tag.json")
+        if os.path.exists(tag_json):
+            try:
+                os.unlink(tag_json)
+                logger.info(f"Deleted tag.json for tag {uuid}")
+            except Exception as e:
+                logger.error(f"Failed to delete tag.json for tag {uuid}: {e}")
 
         # Remove tag from all watches
         for watch_uuid, watch in self.datastore.data['watching'].items():
@@ -111,7 +120,7 @@ class Tag(Resource):
                 return str(e), 400
 
         tag.update(request.json)
-        self.datastore.commit()
+        tag.commit()
 
         return "OK", 200
 

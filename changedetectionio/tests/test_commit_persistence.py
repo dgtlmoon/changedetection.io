@@ -35,7 +35,7 @@ def test_watch_commit_persists_to_disk(client, live_server):
     watch.commit()
 
     # Read directly from disk (bypass datastore cache)
-    watch_json_path = os.path.join(watch.watch_data_dir, 'watch.json')
+    watch_json_path = os.path.join(watch.data_dir, 'watch.json')
     assert os.path.exists(watch_json_path), "watch.json should exist on disk"
 
     with open(watch_json_path, 'r') as f:
@@ -89,7 +89,7 @@ def test_watch_commit_atomic_on_crash(client, live_server):
     watch.commit()
 
     # Verify watch.json exists and is valid
-    watch_json_path = os.path.join(watch.watch_data_dir, 'watch.json')
+    watch_json_path = os.path.join(watch.data_dir, 'watch.json')
     with open(watch_json_path, 'r') as f:
         data = json.load(f)  # Should not raise JSONDecodeError
         assert data['title'] == 'First Save'
@@ -125,7 +125,7 @@ def test_multiple_watches_commit_independently(client, live_server):
     # Read all from disk
     def read_watch_json(uuid):
         watch = datastore.data['watching'][uuid]
-        path = os.path.join(watch.watch_data_dir, 'watch.json')
+        path = os.path.join(watch.data_dir, 'watch.json')
         with open(path, 'r') as f:
             return json.load(f)
 
@@ -178,7 +178,7 @@ def test_concurrent_watch_commits_dont_corrupt(client, live_server):
     assert len(errors) == 0, f"Expected no errors, got: {errors}"
 
     # JSON file should still be valid (not corrupted)
-    watch_json_path = os.path.join(watch.watch_data_dir, 'watch.json')
+    watch_json_path = os.path.join(watch.data_dir, 'watch.json')
     with open(watch_json_path, 'r') as f:
         data = json.load(f)  # Should not raise JSONDecodeError
         assert data['uuid'] == uuid, "UUID should still be correct"
@@ -270,7 +270,7 @@ def test_datastore_lock_protects_commit_snapshot(client, live_server):
     assert commits_succeeded[0] == 150, f"Expected 150 commits, got {commits_succeeded[0]}"
 
     # Final JSON should be valid
-    watch_json_path = os.path.join(watch.watch_data_dir, 'watch.json')
+    watch_json_path = os.path.join(watch.data_dir, 'watch.json')
     with open(watch_json_path, 'r') as f:
         data = json.load(f)
         assert data['uuid'] == uuid
@@ -301,7 +301,7 @@ def test_processor_config_never_in_watch_json(client, live_server):
     watch.commit()
 
     # Read watch.json from disk
-    watch_json_path = os.path.join(watch.watch_data_dir, 'watch.json')
+    watch_json_path = os.path.join(watch.data_dir, 'watch.json')
     with open(watch_json_path, 'r') as f:
         data = json.load(f)
 
@@ -343,7 +343,7 @@ def test_api_post_saves_processor_config_separately(client, live_server):
     watch = datastore.data['watching'][uuid]
 
     # Check that processor config file exists
-    processor_config_path = os.path.join(watch.watch_data_dir, 'restock_diff.json')
+    processor_config_path = os.path.join(watch.data_dir, 'restock_diff.json')
     assert os.path.exists(processor_config_path), "Processor config file should exist"
 
     with open(processor_config_path, 'r') as f:
@@ -385,7 +385,7 @@ def test_api_put_saves_processor_config_separately(client, live_server):
     watch = datastore.data['watching'][uuid]
 
     # Check processor config file
-    processor_config_path = os.path.join(watch.watch_data_dir, 'restock_diff.json')
+    processor_config_path = os.path.join(watch.data_dir, 'restock_diff.json')
     assert os.path.exists(processor_config_path), "Processor config file should exist"
 
     with open(processor_config_path, 'r') as f:
@@ -414,7 +414,7 @@ def test_ui_edit_saves_processor_config_separately(client, live_server):
     watch.commit()
 
     # Check watch.json has NO processor_config_* fields (main point of this test)
-    watch_json_path = os.path.join(watch.watch_data_dir, 'watch.json')
+    watch_json_path = os.path.join(watch.data_dir, 'watch.json')
     with open(watch_json_path, 'r') as f:
         watch_data = json.load(f)
 
@@ -443,7 +443,7 @@ def test_browser_steps_normalized_to_empty_list(client, live_server):
     watch.commit()
 
     # Read from disk
-    watch_json_path = os.path.join(watch.watch_data_dir, 'watch.json')
+    watch_json_path = os.path.join(watch.data_dir, 'watch.json')
     with open(watch_json_path, 'r') as f:
         data = json.load(f)
 
@@ -547,7 +547,7 @@ def test_tag_delete_removes_from_watches(client, live_server):
     # Tag should be removed from watches and persisted
     def check_watch_tags(uuid):
         watch = datastore.data['watching'][uuid]
-        watch_json_path = os.path.join(watch.watch_data_dir, 'watch.json')
+        watch_json_path = os.path.join(watch.data_dir, 'watch.json')
         with open(watch_json_path, 'r') as f:
             return json.load(f)['tags']
 
@@ -572,7 +572,7 @@ def test_watch_pause_unpause_persists(client, live_server):
     assert response.status_code == 200
 
     # Check persisted to disk
-    watch_json_path = os.path.join(watch.watch_data_dir, 'watch.json')
+    watch_json_path = os.path.join(watch.data_dir, 'watch.json')
     with open(watch_json_path, 'r') as f:
         data = json.load(f)
     assert data['paused'] == True, "Pause should be persisted"
@@ -601,7 +601,7 @@ def test_watch_mute_unmute_persists(client, live_server):
     assert response.status_code == 200
 
     # Check persisted to disk
-    watch_json_path = os.path.join(watch.watch_data_dir, 'watch.json')
+    watch_json_path = os.path.join(watch.data_dir, 'watch.json')
     with open(watch_json_path, 'r') as f:
         data = json.load(f)
     assert data['notification_muted'] == True, "Mute should be persisted"

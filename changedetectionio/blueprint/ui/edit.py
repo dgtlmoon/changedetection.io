@@ -337,9 +337,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
         watch = datastore.data['watching'].get(uuid)
-        if watch and watch.history.keys() and os.path.isdir(watch.watch_data_dir):
+        if watch and watch.history.keys() and os.path.isdir(watch.data_dir):
             latest_filename = list(watch.history.keys())[-1]
-            html_fname = os.path.join(watch.watch_data_dir, f"{latest_filename}.html.br")
+            html_fname = os.path.join(watch.data_dir, f"{latest_filename}.html.br")
             with open(html_fname, 'rb') as f:
                 if html_fname.endswith('.br'):
                     # Read and decompress the Brotli file
