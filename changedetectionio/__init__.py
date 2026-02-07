@@ -112,9 +112,9 @@ def sigshutdown_handler(_signo, _stack_frame):
         from changedetectionio.flask_app import update_q, notification_q
         update_q.close()
         notification_q.close()
-        logger.debug("Janus queues closed successfully")
+        logger.debug("Queues closed successfully")
     except Exception as e:
-        logger.critical(f"CRITICAL: Failed to close janus queues: {e}")
+        logger.critical(f"CRITICAL: Failed to close queues: {e}")
     
     # Shutdown socketio server fast
     from changedetectionio.flask_app import socketio_server

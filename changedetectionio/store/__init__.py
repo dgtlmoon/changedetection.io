@@ -416,7 +416,6 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         """
         Save settings immediately to disk using atomic write.
 
-        Replaces the old mark_settings_dirty() system with immediate persistence.
         Uses atomic write pattern (temp file + rename) for crash safety.
 
         Fire-and-forget: Logs errors but does not raise exceptions.

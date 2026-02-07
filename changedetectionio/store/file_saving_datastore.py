@@ -5,17 +5,13 @@ This module provides the FileSavingDataStore abstract class that implements:
 - Individual watch.json file persistence
 - Immediate commit-based persistence (watch.commit(), datastore.commit())
 - Atomic file writes safe for NFS/NAS
-- Backward compatibility stubs for legacy methods
 """
 
 import glob
-import hashlib
 import json
 import os
 import tempfile
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from threading import Thread
 from loguru import logger
 
 from .base import DataStore
@@ -334,7 +330,6 @@ class FileSavingDataStore(DataStore):
     - Individual watch.json files (one per watch)
     - Immediate persistence via watch.commit() and datastore.commit()
     - Atomic file writes for crash safety
-    - Backward compatibility stubs for legacy methods
 
     Subclasses must implement:
     - rehydrate_entity(): Convert dict to Watch object
@@ -343,14 +338,6 @@ class FileSavingDataStore(DataStore):
 
     def __init__(self):
         super().__init__()
-
-    def mark_watch_dirty(self, uuid):
-        """Deprecated: Watches now save immediately via commit()."""
-        pass
-
-    def mark_settings_dirty(self):
-        """Deprecated: Settings now save immediately."""
-        pass
 
     def _save_settings(self):
         """
