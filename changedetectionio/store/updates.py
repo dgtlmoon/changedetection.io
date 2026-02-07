@@ -206,35 +206,11 @@ class DatastoreUpdatesMixin:
                     # Don't run any more updates
                     return
                 else:
-                    # Bump the version, important
+                    # Bump the version
                     self.data['settings']['application']['schema_version'] = update_n
                     self.commit()
 
-                    # CRITICAL: Save all watches so changes are persisted
-                    # Most updates modify watches, and in the new individual watch.json structure,
-                    # we need to ensure those changes are saved
-                    logger.info(f"Saving all {len(self.data['watching'])} watches after update_{update_n} (so that it saves them to disk)")
-                    for uuid in self.data['watching'].keys():
-                        self.data['watching'][uuid].commit()
-
-                    # CRITICAL: Save all tags so changes are persisted
-                    # After update_27, tags have individual tag.json files
-                    # For updates before update_27, this will fail silently (tags don't have commit() yet)
-                    tags = self.data['settings']['application'].get('tags', {})
-                    if tags and update_n >= 27:
-                        logger.info(f"Saving all {len(tags)} tags after update_{update_n}")
-                        for uuid in tags.keys():
-                            try:
-                                tags[uuid].commit()
-                            except AttributeError:
-                                # Tag doesn't have commit() method yet (pre-update_27)
-                                pass
-
-                    # All changes already saved via individual .commit() calls:
-                    # - Settings saved via self.commit() above
-                    # - All watches saved via watch.commit() above
-                    # - All tags saved via tag.commit() above
-                    logger.success(f"Update {update_n} completed - all changes persisted")
+                    logger.success(f"Update {update_n} completed")
 
                     # Track which updates ran
                     updates_ran.append(update_n)
@@ -664,16 +640,6 @@ class DatastoreUpdatesMixin:
         logger.critical("Reloading datastore from new format...")
         self._load_state() # Includes load_watches
         logger.success("Datastore reloaded from new format successfully")
-
-
-        # Set schema version to latest available update
-        # This prevents re-running updates on next startup
-        updates_available = self.get_updates_available()
-        latest_schema = updates_available[-1] if updates_available else 26
-        self.data['settings']['application']['schema_version'] = latest_schema
-        self.commit()
-        logger.info(f"Set schema_version to {latest_schema} (migration complete, all watches already saved)")
-
         logger.critical("=" * 80)
         logger.critical("MIGRATION COMPLETED SUCCESSFULLY!")
         logger.critical("=" * 80)
@@ -694,7 +660,7 @@ class DatastoreUpdatesMixin:
     def update_26(self):
         self.migrate_legacy_db_format()
 
-    def update_27(self):
+    def update_28(self):
         """
         Migrate tags to individual tag.json files.
 
@@ -708,7 +674,7 @@ class DatastoreUpdatesMixin:
         - Maintains backwards compatibility (tags stay in settings too)
         """
         logger.critical("=" * 80)
-        logger.critical("Running migration: Individual tag persistence (update_27)")
+        logger.critical("Running migration: Individual tag persistence (update_28)")
         logger.critical("Creating individual tag.json files (tags remain in settings too)")
         logger.critical("=" * 80)
 

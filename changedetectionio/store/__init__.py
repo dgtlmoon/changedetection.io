@@ -347,22 +347,28 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         """
         Build settings data structure for saving.
 
-        Tags are stored both in settings AND individual {uuid}/tag.json files.
-        This allows backwards compatibility while enabling atomic tag updates.
+        Tags behavior depends on schema version:
+        - Before update_28 (schema < 28): Tags saved in settings for migration
+        - After update_28 (schema >= 28): Tags excluded from settings (in individual files)
 
         Returns:
-            dict: Settings data ready for serialization (with tags)
+            dict: Settings data ready for serialization
         """
         import copy
 
         # Deep copy settings to avoid modifying the original
         settings_copy = copy.deepcopy(self.__data['settings'])
 
-        # Tags remain in settings for backwards compatibility and easy access
-        # They are ALSO stored in individual tag.json files (dual storage)
+        # Only exclude tags if we've already migrated them to individual files (schema >= 28)
+        # This ensures update_28 can migrate tags from settings
+        schema_version = self.__data['settings']['application'].get('schema_version', 0)
+        if schema_version >= 28:
+            # Tags are in individual tag.json files, don't save to settings
+            settings_copy['application']['tags'] = {}
+        # else: keep tags in settings for update_28 migration
 
         return {
-            'note': 'Settings file - watches are in {uuid}/watch.json, tags are in both settings and {uuid}/tag.json',
+            'note': 'Settings file - watches are in {uuid}/watch.json, tags are in {uuid}/tag.json',
             'app_guid': self.__data['app_guid'],
             'settings': settings_copy,
             'build_sha': self.__data.get('build_sha'),
