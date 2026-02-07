@@ -10,9 +10,18 @@ This module provides the FileSavingDataStore abstract class that implements:
 import glob
 import json
 import os
+import sys
 import tempfile
 import time
 from loguru import logger
+
+# Cross-platform file locking
+if sys.platform == 'win32':
+    import msvcrt
+    HAS_FCNTL = False
+else:
+    import fcntl
+    HAS_FCNTL = True
 
 from .base import DataStore
 from .. import strtobool
@@ -30,15 +39,38 @@ except ImportError:
 FORCE_FSYNC_DATA_IS_CRITICAL = bool(strtobool(os.getenv('FORCE_FSYNC_DATA_IS_CRITICAL', 'False')))
 
 
+def _lock_file(file_obj):
+    """Acquire exclusive lock on file (cross-platform)."""
+    if HAS_FCNTL:
+        # Unix: use fcntl
+        fcntl.flock(file_obj.fileno(), fcntl.LOCK_EX)
+    else:
+        # Windows: use msvcrt
+        file_obj.seek(0)
+        msvcrt.locking(file_obj.fileno(), msvcrt.LK_LOCK, 1)
+
+
+def _unlock_file(file_obj):
+    """Release lock on file (cross-platform)."""
+    if HAS_FCNTL:
+        # Unix: use fcntl
+        fcntl.flock(file_obj.fileno(), fcntl.LOCK_UN)
+    else:
+        # Windows: use msvcrt
+        file_obj.seek(0)
+        msvcrt.locking(file_obj.fileno(), msvcrt.LK_UNLCK, 1)
+
+
 # ============================================================================
 # Helper Functions for Atomic File Operations
 # ============================================================================
 
 def save_json_atomic(file_path, data_dict, label="file", max_size_mb=10):
     """
-    Save JSON data to disk using atomic write pattern.
+    Save JSON data to disk using atomic write pattern with file locking.
 
     Generic helper for saving any JSON data (settings, watches, etc.) with:
+    - File-level locking (protects against concurrent processes)
     - Atomic write (temp file + rename)
     - Directory fsync for crash consistency (only for new files)
     - Size validation
@@ -62,115 +94,133 @@ def save_json_atomic(file_path, data_dict, label="file", max_size_mb=10):
     parent_dir = os.path.dirname(file_path)
     os.makedirs(parent_dir, exist_ok=True)
 
-    # Create temp file in same directory (required for NFS atomicity)
-    fd, temp_path = tempfile.mkstemp(
-        suffix='.tmp',
-        prefix='json-',
-        dir=parent_dir,
-        text=False
-    )
-
-    fd_closed = False
+    # Acquire file lock to prevent concurrent writes from multiple processes
+    lock_path = file_path + '.lock'
+    lock_file = open(lock_path, 'w')
     try:
-        # Serialize data
-        t0 = time.time()
-        if HAS_ORJSON:
-            data = orjson.dumps(data_dict, option=orjson.OPT_INDENT_2)
-        else:
-            data = json.dumps(data_dict, indent=2, ensure_ascii=False).encode('utf-8')
-        serialize_ms = (time.time() - t0) * 1000
+        # Exclusive lock - blocks until acquired (cross-platform)
+        _lock_file(lock_file)
 
-        # Safety check: validate size
-        MAX_SIZE = max_size_mb * 1024 * 1024
-        data_size = len(data)
-        if data_size > MAX_SIZE:
-            raise ValueError(
-                f"{label.capitalize()} data is unexpectedly large: {data_size / 1024 / 1024:.2f}MB "
-                f"(max: {max_size_mb}MB). This indicates a bug or data corruption."
-            )
+        # Create temp file in same directory (required for NFS atomicity)
+        fd, temp_path = tempfile.mkstemp(
+            suffix='.tmp',
+            prefix='json-',
+            dir=parent_dir,
+            text=False
+        )
 
-        # Write to temp file
-        t1 = time.time()
-        os.write(fd, data)
-        write_ms = (time.time() - t1) * 1000
+        fd_closed = False
+        try:
+            # Serialize data
+            t0 = time.time()
+            if HAS_ORJSON:
+                data = orjson.dumps(data_dict, option=orjson.OPT_INDENT_2)
+            else:
+                data = json.dumps(data_dict, indent=2, ensure_ascii=False).encode('utf-8')
+            serialize_ms = (time.time() - t0) * 1000
 
-        # Optional fsync: Force file data to disk for crash safety
-        # Only if FORCE_FSYNC_DATA_IS_CRITICAL=True (default: False, matches legacy behavior)
-        t2 = time.time()
-        if FORCE_FSYNC_DATA_IS_CRITICAL:
-            os.fsync(fd)
-        file_fsync_ms = (time.time() - t2) * 1000
+            # Safety check: validate size
+            MAX_SIZE = max_size_mb * 1024 * 1024
+            data_size = len(data)
+            if data_size > MAX_SIZE:
+                raise ValueError(
+                    f"{label.capitalize()} data is unexpectedly large: {data_size / 1024 / 1024:.2f}MB "
+                    f"(max: {max_size_mb}MB). This indicates a bug or data corruption."
+                )
 
-        os.close(fd)
-        fd_closed = True
+            # Write to temp file
+            t1 = time.time()
+            os.write(fd, data)
+            write_ms = (time.time() - t1) * 1000
 
-        # Atomic rename
-        t3 = time.time()
-        os.replace(temp_path, file_path)
-        rename_ms = (time.time() - t3) * 1000
+            # Optional fsync: Force file data to disk for crash safety
+            # Only if FORCE_FSYNC_DATA_IS_CRITICAL=True (default: False, matches legacy behavior)
+            t2 = time.time()
+            if FORCE_FSYNC_DATA_IS_CRITICAL:
+                os.fsync(fd)
+            file_fsync_ms = (time.time() - t2) * 1000
 
-        # Sync directory to ensure filename metadata is durable
-        # OPTIMIZATION: Only needed for NEW files. Existing files already have
-        # directory entry persisted, so we only need file fsync for data durability.
-        dir_fsync_ms = 0
-        if not file_exists:
-            try:
-                dir_fd = os.open(parent_dir, os.O_RDONLY)
+            os.close(fd)
+            fd_closed = True
+
+            # Atomic rename
+            t3 = time.time()
+            os.replace(temp_path, file_path)
+            rename_ms = (time.time() - t3) * 1000
+
+            # Sync directory to ensure filename metadata is durable
+            # OPTIMIZATION: Only needed for NEW files. Existing files already have
+            # directory entry persisted, so we only need file fsync for data durability.
+            dir_fsync_ms = 0
+            if not file_exists:
                 try:
-                    t4 = time.time()
-                    os.fsync(dir_fd)
-                    dir_fsync_ms = (time.time() - t4) * 1000
-                finally:
-                    os.close(dir_fd)
-            except (OSError, AttributeError):
-                # Windows doesn't support fsync on directories
-                pass
+                    dir_fd = os.open(parent_dir, os.O_RDONLY)
+                    try:
+                        t4 = time.time()
+                        os.fsync(dir_fd)
+                        dir_fsync_ms = (time.time() - t4) * 1000
+                    finally:
+                        os.close(dir_fd)
+                except (OSError, AttributeError):
+                    # Windows doesn't support fsync on directories
+                    pass
 
-        # Log timing breakdown for slow saves
-#        total_ms = serialize_ms + write_ms + file_fsync_ms + rename_ms + dir_fsync_ms
-#        if total_ms:  # Log if save took more than 10ms
-#            file_status = "new" if not file_exists else "update"
-#            logger.trace(
-#                f"Save timing breakdown ({total_ms:.1f}ms total, {file_status}): "
-#                f"serialize={serialize_ms:.1f}ms, write={write_ms:.1f}ms, "
-#                f"file_fsync={file_fsync_ms:.1f}ms, rename={rename_ms:.1f}ms, "
-#                f"dir_fsync={dir_fsync_ms:.1f}ms, using_orjson={HAS_ORJSON}"
-#            )
+            # Log timing breakdown for slow saves
+#            total_ms = serialize_ms + write_ms + file_fsync_ms + rename_ms + dir_fsync_ms
+#            if total_ms:  # Log if save took more than 10ms
+#                file_status = "new" if not file_exists else "update"
+#                logger.trace(
+#                    f"Save timing breakdown ({total_ms:.1f}ms total, {file_status}): "
+#                    f"serialize={serialize_ms:.1f}ms, write={write_ms:.1f}ms, "
+#                    f"file_fsync={file_fsync_ms:.1f}ms, rename={rename_ms:.1f}ms, "
+#                    f"dir_fsync={dir_fsync_ms:.1f}ms, using_orjson={HAS_ORJSON}"
+#                )
 
-    except OSError as e:
-        # Cleanup temp file
-        if not fd_closed:
-            try:
-                os.close(fd)
-            except:
-                pass
-        if os.path.exists(temp_path):
-            try:
-                os.unlink(temp_path)
-            except:
-                pass
+        except OSError as e:
+            # Cleanup temp file
+            if not fd_closed:
+                try:
+                    os.close(fd)
+                except:
+                    pass
+            if os.path.exists(temp_path):
+                try:
+                    os.unlink(temp_path)
+                except:
+                    pass
 
-        # Provide helpful error messages
-        if e.errno == 28:  # ENOSPC
-            raise OSError(f"Disk full: Cannot save {label}") from e
-        elif e.errno == 122:  # EDQUOT
-            raise OSError(f"Disk quota exceeded: Cannot save {label}") from e
-        else:
-            raise OSError(f"I/O error saving {label}: {e}") from e
+            # Provide helpful error messages
+            if e.errno == 28:  # ENOSPC
+                raise OSError(f"Disk full: Cannot save {label}") from e
+            elif e.errno == 122:  # EDQUOT
+                raise OSError(f"Disk quota exceeded: Cannot save {label}") from e
+            else:
+                raise OSError(f"I/O error saving {label}: {e}") from e
 
-    except Exception as e:
-        # Cleanup temp file
-        if not fd_closed:
-            try:
-                os.close(fd)
-            except:
-                pass
-        if os.path.exists(temp_path):
-            try:
-                os.unlink(temp_path)
-            except:
-                pass
-        raise e
+        except Exception as e:
+            # Cleanup temp file
+            if not fd_closed:
+                try:
+                    os.close(fd)
+                except:
+                    pass
+            if os.path.exists(temp_path):
+                try:
+                    os.unlink(temp_path)
+                except:
+                    pass
+            raise e
+
+    finally:
+        # Always release lock and close lock file
+        try:
+            _unlock_file(lock_file)
+        except:
+            pass  # Lock might not have been acquired
+        try:
+            lock_file.close()
+        except:
+            pass
 
 
 def save_watch_atomic(watch_dir, uuid, watch_dict):
