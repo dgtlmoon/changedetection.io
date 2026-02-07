@@ -123,10 +123,17 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
                 self.__data['settings']['application'].update(settings_data['settings']['application'])
 
     def _rehydrate_tags(self):
-        """Rehydrate tag entities from stored data."""
+        """Rehydrate tag entities from stored data into Tag objects with restock_diff processor."""
+        from ..model import Tag
+
         for uuid, tag in self.__data['settings']['application']['tags'].items():
-            self.__data['settings']['application']['tags'][uuid] = self.rehydrate_entity(
-                uuid, tag, processor_override='restock_diff'
+            # Force processor to restock_diff for override functionality (technical debt)
+            tag['processor'] = 'restock_diff'
+
+            self.__data['settings']['application']['tags'][uuid] = Tag.model(
+                datastore_path=self.datastore_path,
+                __datastore=self.__data,
+                default=tag
             )
             logger.info(f"Tag: {uuid} {tag['title']}")
 
@@ -236,8 +243,32 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
                 if not legacy_data:
                     raise Exception("Failed to load legacy datastore from url-watches.json")
 
-                # Store the loaded data
-                self.__data = legacy_data
+                # Merge legacy data with base_config defaults (preserves new fields like 'ui')
+                # self.__data already has App.model() defaults from line 190
+                logger.info("Merging legacy data with base_config defaults...")
+
+                # Apply top-level fields from legacy data
+                if 'app_guid' in legacy_data:
+                    self.__data['app_guid'] = legacy_data['app_guid']
+                if 'build_sha' in legacy_data:
+                    self.__data['build_sha'] = legacy_data['build_sha']
+                if 'version_tag' in legacy_data:
+                    self.__data['version_tag'] = legacy_data['version_tag']
+
+                # Apply watching data (complete replacement as these are user's watches)
+                if 'watching' in legacy_data:
+                    self.__data['watching'] = legacy_data['watching']
+
+                # Merge settings sections (preserves base_config defaults for missing fields)
+                if 'settings' in legacy_data:
+                    if 'headers' in legacy_data['settings']:
+                        self.__data['settings']['headers'].update(legacy_data['settings']['headers'])
+                    if 'requests' in legacy_data['settings']:
+                        self.__data['settings']['requests'].update(legacy_data['settings']['requests'])
+                    if 'application' in legacy_data['settings']:
+                        # CRITICAL: Use .update() to merge, not replace
+                        # This preserves new fields like 'ui' that exist in base_config
+                        self.__data['settings']['application'].update(legacy_data['settings']['application'])
 
                 # CRITICAL: Rehydrate watches from dicts into Watch objects
                 # This ensures watches have their methods available during migration
@@ -340,20 +371,25 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         """
         Build settings data structure for saving.
 
-        Tags are excluded - they are stored in individual {uuid}/tag.json files.
-        This keeps changedetection.json small and allows atomic tag updates.
+        Tags behavior depends on schema version:
+        - Before update_28 (schema < 28): Tags saved in settings for migration
+        - After update_28 (schema >= 28): Tags excluded from settings (in individual files)
 
         Returns:
-            dict: Settings data ready for serialization (without tags)
+            dict: Settings data ready for serialization
         """
         import copy
 
         # Deep copy settings to avoid modifying the original
         settings_copy = copy.deepcopy(self.__data['settings'])
 
-        # Replace tags dict with empty dict (tags are in individual tag.json files)
-        # We keep the empty dict for backwards compatibility and clear structure
-        settings_copy['application']['tags'] = {}
+        # Only exclude tags if we've already migrated them to individual files (schema >= 28)
+        # This ensures update_28 can migrate tags from settings
+        schema_version = self.__data['settings']['application'].get('schema_version', 0)
+        if schema_version >= 28:
+            # Tags are in individual tag.json files, don't save to settings
+            settings_copy['application']['tags'] = {}
+        # else: keep tags in settings for update_28 migration
 
         return {
             'note': 'Settings file - watches are in {uuid}/watch.json, tags are in {uuid}/tag.json',
@@ -403,9 +439,22 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         File backend implementation: reads individual tag.json files.
         Tags loaded from files override any tags in settings (migration path).
         """
+        from ..model import Tag
+
+        def rehydrate_tag(uuid, entity_dict):
+            """Rehydrate tag as Tag object with forced restock_diff processor."""
+            entity_dict['uuid'] = uuid
+            entity_dict['processor'] = 'restock_diff'  # Force processor for override functionality
+
+            return Tag.model(
+                datastore_path=self.datastore_path,
+                __datastore=self.__data,
+                default=entity_dict
+            )
+
         tags = load_all_tags(
             self.datastore_path,
-            self.rehydrate_entity
+            rehydrate_tag
         )
 
         # Override settings tags with loaded tags

@@ -227,8 +227,7 @@ def load_watch_from_file(watch_json, uuid, rehydrate_entity_func):
         rehydrate_entity_func: Function to convert dict to Watch object
 
     Returns:
-        Tuple of (Watch object, raw_data_dict) or (None, None) if failed
-        The raw_data_dict is needed to compute the hash before rehydration
+        Watch object or None if failed
     """
     try:
         # Check file size before reading
@@ -241,7 +240,7 @@ def load_watch_from_file(watch_json, uuid, rehydrate_entity_func):
                 f"File: {watch_json}. This indicates a bug or data corruption. "
                 f"Watch will be skipped."
             )
-            return None, None
+            return None
 
         if HAS_ORJSON:
             with open(watch_json, 'rb') as f:
@@ -250,10 +249,9 @@ def load_watch_from_file(watch_json, uuid, rehydrate_entity_func):
             with open(watch_json, 'r', encoding='utf-8') as f:
                 watch_data = json.load(f)
 
-        # Return both the raw data and the rehydrated watch
-        # Raw data is needed to compute hash before rehydration changes anything
+        # Rehydrate and return watch object
         watch_obj = rehydrate_entity_func(uuid, watch_data)
-        return watch_obj, watch_data
+        return watch_obj
 
     except json.JSONDecodeError as e:
         logger.critical(
@@ -261,7 +259,7 @@ def load_watch_from_file(watch_json, uuid, rehydrate_entity_func):
             f"File: {watch_json}. Error: {e}. "
             f"Watch will be skipped and may need manual recovery from backup."
         )
-        return None, None
+        return None
     except ValueError as e:
         # orjson raises ValueError for invalid JSON
         if "invalid json" in str(e).lower() or HAS_ORJSON:
@@ -270,15 +268,15 @@ def load_watch_from_file(watch_json, uuid, rehydrate_entity_func):
                 f"File: {watch_json}. Error: {e}. "
                 f"Watch will be skipped and may need manual recovery from backup."
             )
-            return None, None
+            return None
         # Re-raise if it's not a JSON parsing error
         raise
     except FileNotFoundError:
         logger.error(f"Watch file not found: {watch_json} for watch {uuid}")
-        return None, None
+        return None
     except Exception as e:
         logger.error(f"Failed to load watch {uuid} from {watch_json}: {e}")
-        return None, None
+        return None
 
 
 def load_all_watches(datastore_path, rehydrate_entity_func):
@@ -318,8 +316,8 @@ def load_all_watches(datastore_path, rehydrate_entity_func):
     for watch_json in watch_files:
         # Extract UUID from path: /datastore/{uuid}/watch.json
         uuid_dir = os.path.basename(os.path.dirname(watch_json))
-        watch, raw_data = load_watch_from_file(watch_json, uuid_dir, rehydrate_entity_func)
-        if watch and raw_data:
+        watch = load_watch_from_file(watch_json, uuid_dir, rehydrate_entity_func)
+        if watch:
             watching[uuid_dir] = watch
             loaded += 1
 
@@ -375,8 +373,10 @@ def load_tag_from_file(tag_json, uuid, rehydrate_entity_func):
             with open(tag_json, 'r', encoding='utf-8') as f:
                 tag_data = json.load(f)
 
+        tag_data['processor'] = 'restock_diff'
         # Rehydrate tag (convert dict to Tag object)
-        tag_obj = rehydrate_entity_func(uuid, tag_data, processor_override='restock_diff')
+        # processor_override is set inside the rehydration function
+        tag_obj = rehydrate_entity_func(uuid, tag_data)
         return tag_obj
 
     except json.JSONDecodeError as e:
