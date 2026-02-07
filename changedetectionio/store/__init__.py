@@ -243,8 +243,32 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
                 if not legacy_data:
                     raise Exception("Failed to load legacy datastore from url-watches.json")
 
-                # Store the loaded data
-                self.__data = legacy_data
+                # Merge legacy data with base_config defaults (preserves new fields like 'ui')
+                # self.__data already has App.model() defaults from line 190
+                logger.info("Merging legacy data with base_config defaults...")
+
+                # Apply top-level fields from legacy data
+                if 'app_guid' in legacy_data:
+                    self.__data['app_guid'] = legacy_data['app_guid']
+                if 'build_sha' in legacy_data:
+                    self.__data['build_sha'] = legacy_data['build_sha']
+                if 'version_tag' in legacy_data:
+                    self.__data['version_tag'] = legacy_data['version_tag']
+
+                # Apply watching data (complete replacement as these are user's watches)
+                if 'watching' in legacy_data:
+                    self.__data['watching'] = legacy_data['watching']
+
+                # Merge settings sections (preserves base_config defaults for missing fields)
+                if 'settings' in legacy_data:
+                    if 'headers' in legacy_data['settings']:
+                        self.__data['settings']['headers'].update(legacy_data['settings']['headers'])
+                    if 'requests' in legacy_data['settings']:
+                        self.__data['settings']['requests'].update(legacy_data['settings']['requests'])
+                    if 'application' in legacy_data['settings']:
+                        # CRITICAL: Use .update() to merge, not replace
+                        # This preserves new fields like 'ui' that exist in base_config
+                        self.__data['settings']['application'].update(legacy_data['settings']['application'])
 
                 # CRITICAL: Rehydrate watches from dicts into Watch objects
                 # This ensures watches have their methods available during migration

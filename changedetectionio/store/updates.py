@@ -460,6 +460,14 @@ class DatastoreUpdatesMixin:
                 del self.data['watching'][uuid]['extract_title_as_title']
 
         if self.data['settings']['application'].get('extract_title_as_title'):
+            # Ensure 'ui' key exists (defensive for edge cases where base_config merge didn't happen)
+            if 'ui' not in self.data['settings']['application']:
+                self.data['settings']['application']['ui'] = {
+                    'use_page_title_in_list': True,
+                    'open_diff_in_new_tab': True,
+                    'socket_io_enabled': True,
+                    'favicons_enabled': True
+                }
             self.data['settings']['application']['ui']['use_page_title_in_list'] = self.data['settings']['application'].get('extract_title_as_title')
 
     def update_21(self):
