@@ -285,8 +285,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         watch = datastore.data['watching'].get(uuid)
         filename = f"step_before-{step_n}.jpeg" if request.args.get('type', '') == 'before' else f"step_{step_n}.jpeg"
 
-        if step_n and watch and os.path.isfile(os.path.join(watch.watch_data_dir, filename)):
-            response = make_response(send_from_directory(directory=watch.watch_data_dir, path=filename))
+        if step_n and watch and os.path.isfile(os.path.join(watch.data_dir, filename)):
+            response = make_response(send_from_directory(directory=watch.data_dir, path=filename))
             response.headers['Content-type'] = 'image/jpeg'
             response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
             response.headers['Pragma'] = 'no-cache'

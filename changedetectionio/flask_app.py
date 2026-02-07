@@ -744,10 +744,10 @@ def changedetection_app(config=None, datastore_o=None):
             favicon_filename = watch.get_favicon_filename()
             if favicon_filename:
                 # Use cached MIME type detection
-                filepath = os.path.join(watch.watch_data_dir, favicon_filename)
+                filepath = os.path.join(watch.data_dir, favicon_filename)
                 mime = get_favicon_mime_type(filepath)
 
-                response = make_response(send_from_directory(watch.watch_data_dir, favicon_filename))
+                response = make_response(send_from_directory(watch.data_dir, favicon_filename))
                 response.headers['Content-type'] = mime
                 response.headers['Cache-Control'] = 'max-age=300, must-revalidate'  # Cache for 5 minutes, then revalidate
                 return response

@@ -55,7 +55,7 @@ def prepare_filter_prevew(datastore, watch_uuid, form_data):
 
     tmp_watch = deepcopy(datastore.data['watching'].get(watch_uuid))
 
-    if tmp_watch and tmp_watch.history and os.path.isdir(tmp_watch.watch_data_dir):
+    if tmp_watch and tmp_watch.history and os.path.isdir(tmp_watch.data_dir):
         # Splice in the temporary stuff from the form
         form = forms.processor_text_json_diff_form(formdata=form_data if request.method == 'POST' else None,
                                                    data=form_data
@@ -68,7 +68,7 @@ def prepare_filter_prevew(datastore, watch_uuid, form_data):
         blank_watch_no_filters['url'] = tmp_watch.get('url')
 
         latest_filename = next(reversed(tmp_watch.history))
-        html_fname = os.path.join(tmp_watch.watch_data_dir, f"{latest_filename}.html.br")
+        html_fname = os.path.join(tmp_watch.data_dir, f"{latest_filename}.html.br")
         with open(html_fname, 'rb') as f:
             decompressed_data = brotli.decompress(f.read()).decode('utf-8') if html_fname.endswith('.br') else f.read().decode('utf-8')
 

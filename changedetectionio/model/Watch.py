@@ -24,8 +24,6 @@ The dream architecture would use Pydantic for:
 See class model docstring for detailed explanation and examples.
 See: processors/restock_diff/processor.py:184-192 for manual resolution example
 """
-import gc
-from copy import copy
 
 from blinker import signal
 from changedetectionio.validate_url import is_safe_valid_url
@@ -33,6 +31,7 @@ from changedetectionio.validate_url import is_safe_valid_url
 from changedetectionio.strtobool import strtobool
 from changedetectionio.jinja2_custom import render as jinja_render
 from . import watch_base
+from .persistence import EntityPersistenceMixin
 import os
 import re
 from pathlib import Path
@@ -129,7 +128,7 @@ def _brotli_save(contents, filepath, mode=None, fallback_uncompressed=False):
             raise Exception(f"Brotli compression failed for {filepath}: {e}")
 
 
-class model(watch_base):
+class model(EntityPersistenceMixin, watch_base):
     """
     Watch domain model for monitoring URL changes.
 
@@ -228,16 +227,11 @@ class model(watch_base):
     jitter_seconds = 0
 
     def __init__(self, *arg, **kw):
-        self.__datastore_path = kw.get('datastore_path')
-        if kw.get('datastore_path'):
-            del kw['datastore_path']
-
-        self.__datastore = kw.get('__datastore')
-        if not self.__datastore:
+        # Validate __datastore before calling parent (Watch requires it)
+        if not kw.get('__datastore'):
             raise ValueError("Watch object requires '__datastore' reference - cannot access global settings without it")
-        if kw.get('__datastore'):
-            del kw['__datastore']
 
+        # Parent class (watch_base) handles __datastore and __datastore_path
         super(model, self).__init__(*arg, **kw)
 
         if kw.get('default'):
@@ -264,11 +258,6 @@ class model(watch_base):
     @property
     def has_unviewed(self):
         return int(self.newest_history_key) > int(self['last_viewed']) and self.__history_n >= 2
-
-    def ensure_data_dir_exists(self):
-        if not os.path.isdir(self.watch_data_dir):
-            logger.debug(f"> Creating data dir {self.watch_data_dir}")
-            os.mkdir(self.watch_data_dir)
 
     @property
     def link(self):
@@ -325,7 +314,8 @@ class model(watch_base):
 
         # JSON Data, Screenshots, Textfiles (history index and snapshots), HTML in the future etc
         # But preserve processor config files (they're configuration, not history data)
-        for item in pathlib.Path(str(self.watch_data_dir)).rglob("*.*"):
+        # Use glob not rglob here for safety.
+        for item in pathlib.Path(str(self.data_dir)).glob("*.*"):
             # Skip processor config files
             if item.name in processor_config_files:
                 continue
@@ -434,11 +424,11 @@ class model(watch_base):
         tmp_history = {}
 
         # In the case we are only using the watch for processing without history
-        if not self.watch_data_dir:
+        if not self.data_dir:
             return []
 
         # Read the history file as a dict
-        fname = os.path.join(self.watch_data_dir, self.history_index_filename)
+        fname = os.path.join(self.data_dir, self.history_index_filename)
         if os.path.isfile(fname):
             logger.debug(f"Reading watch history index for {self.get('uuid')}")
             with open(fname, "r", encoding='utf-8') as f:
@@ -451,13 +441,13 @@ class model(watch_base):
                         # Cross-platform: check for any path separator (works on Windows and Unix)
                         if os.sep not in v and '/' not in v and '\\' not in v:
                             # Relative filename only, no path separators
-                            v = os.path.join(self.watch_data_dir, v)
+                            v = os.path.join(self.data_dir, v)
                         else:
                             # It's possible that they moved the datadir on older versions
                             # So the snapshot exists but is in a different path
                             # Cross-platform: use os.path.basename instead of split('/')
                             snapshot_fname = os.path.basename(v)
-                            proposed_new_path = os.path.join(self.watch_data_dir, snapshot_fname)
+                            proposed_new_path = os.path.join(self.data_dir, snapshot_fname)
                             if not os.path.exists(v) and os.path.exists(proposed_new_path):
                                 v = proposed_new_path
 
@@ -474,7 +464,7 @@ class model(watch_base):
 
     @property
     def has_history(self):
-        fname = os.path.join(self.watch_data_dir, self.history_index_filename)
+        fname = os.path.join(self.data_dir, self.history_index_filename)
         return os.path.isfile(fname)
 
     @property
@@ -580,7 +570,7 @@ class model(watch_base):
     def _write_atomic(self, dest, data, mode='wb'):
         """Write data atomically to dest using a temp file"""
         import tempfile
-        with tempfile.NamedTemporaryFile(mode, delete=False, dir=self.watch_data_dir) as tmp:
+        with tempfile.NamedTemporaryFile(mode, delete=False, dir=self.data_dir) as tmp:
             tmp.write(data)
             tmp.flush()
             os.fsync(tmp.fileno())
@@ -589,7 +579,7 @@ class model(watch_base):
 
     def history_trim(self, newest_n_items):
         from pathlib import Path
-
+        import gc
         # Sort by timestamp (key)
         sorted_items = sorted(self.history.items(), key=lambda x: int(x[0]))
 
@@ -606,7 +596,7 @@ class model(watch_base):
                 finally:
                     logger.debug(f"[{self.get('uuid')}] Deleted {item[1]} history snapshot")
         try:
-            dest = os.path.join(self.watch_data_dir, self.history_index_filename)
+            dest = os.path.join(self.data_dir, self.history_index_filename)
             output = "\r\n".join(
                 f"{k},{Path(v).name}"
                 for k, v in keep_part.items()
@@ -645,7 +635,7 @@ class model(watch_base):
                 ext = 'bin'
 
             snapshot_fname = f"{snapshot_id}.{ext}"
-            dest = os.path.join(self.watch_data_dir, snapshot_fname)
+            dest = os.path.join(self.data_dir, snapshot_fname)
             self._write_atomic(dest, contents)
             logger.trace(f"Saved binary snapshot as {snapshot_fname} ({len(contents)} bytes)")
 
@@ -655,7 +645,7 @@ class model(watch_base):
                 # Compressed text
                 import brotli
                 snapshot_fname = f"{snapshot_id}.txt.br"
-                dest = os.path.join(self.watch_data_dir, snapshot_fname)
+                dest = os.path.join(self.data_dir, snapshot_fname)
 
                 if not os.path.exists(dest):
                     try:
@@ -666,16 +656,16 @@ class model(watch_base):
                         logger.error(f"{self.get('uuid')} - Brotli compression failed: {e}")
                         # Fallback to uncompressed
                         snapshot_fname = f"{snapshot_id}.txt"
-                        dest = os.path.join(self.watch_data_dir, snapshot_fname)
+                        dest = os.path.join(self.data_dir, snapshot_fname)
                         self._write_atomic(dest, contents.encode('utf-8'))
             else:
                 # Plain text
                 snapshot_fname = f"{snapshot_id}.txt"
-                dest = os.path.join(self.watch_data_dir, snapshot_fname)
+                dest = os.path.join(self.data_dir, snapshot_fname)
                 self._write_atomic(dest, contents.encode('utf-8'))
 
         # Append to history.txt atomically
-        index_fname = os.path.join(self.watch_data_dir, self.history_index_filename)
+        index_fname = os.path.join(self.data_dir, self.history_index_filename)
         index_line = f"{timestamp},{snapshot_fname}\n"
 
         with open(index_fname, 'a', encoding='utf-8') as f:
@@ -693,10 +683,7 @@ class model(watch_base):
         #     if self.history_snapshot_max_length: return self.history_snapshot_max_length
         #     if tag := self._get_override_tag(): return tag.history_snapshot_max_length
         #     return self._datastore.settings.history_snapshot_max_length
-        maxlen = (
-                self.get('history_snapshot_max_length')
-                or (self.__datastore and self.__datastore['settings']['application'].get('history_snapshot_max_length'))
-        )
+        maxlen = self.get('history_snapshot_max_length') or self.get_global_setting('application', 'history_snapshot_max_length')
 
         if maxlen and self.__history_n and self.__history_n > maxlen:
             self.history_trim(newest_n_items=maxlen)
@@ -753,7 +740,7 @@ class model(watch_base):
         return not local_lines.issubset(existing_history)
 
     def get_screenshot(self):
-        fname = os.path.join(self.watch_data_dir, "last-screenshot.png")
+        fname = os.path.join(self.data_dir, "last-screenshot.png")
         if os.path.isfile(fname):
             return fname
 
@@ -768,7 +755,7 @@ class model(watch_base):
         if not favicon_fname:
             return True
         try:
-            fname = next(iter(glob.glob(os.path.join(self.watch_data_dir, "favicon.*"))), None)
+            fname = next(iter(glob.glob(os.path.join(self.data_dir, "favicon.*"))), None)
             logger.trace(f"Favicon file maybe found at {fname}")
             if os.path.isfile(fname):
                 file_age = int(time.time() - os.path.getmtime(fname))
@@ -801,7 +788,7 @@ class model(watch_base):
             base = "favicon"
             extension = "ico"
 
-        fname = os.path.join(self.watch_data_dir, f"favicon.{extension}")
+        fname = os.path.join(self.data_dir, f"favicon.{extension}")
 
         try:
             # validate=True makes sure the string only contains valid base64 chars
@@ -848,7 +835,7 @@ class model(watch_base):
         import glob
 
         # Search for all favicon.* files
-        files = glob.glob(os.path.join(self.watch_data_dir, "favicon.*"))
+        files = glob.glob(os.path.join(self.data_dir, "favicon.*"))
 
         if not files:
             result = None
@@ -875,7 +862,7 @@ class model(watch_base):
         import os
         import time
 
-        thumbnail_path = os.path.join(self.watch_data_dir, "thumbnail.jpeg")
+        thumbnail_path = os.path.join(self.data_dir, "thumbnail.jpeg")
         top_trim = 500  # Pixels from top of screenshot to use
 
         screenshot_path = self.get_screenshot()
@@ -926,7 +913,7 @@ class model(watch_base):
             return None
 
     def __get_file_ctime(self, filename):
-        fname = os.path.join(self.watch_data_dir, filename)
+        fname = os.path.join(self.data_dir, filename)
         if os.path.isfile(fname):
             return int(os.path.getmtime(fname))
         return False
@@ -951,14 +938,9 @@ class model(watch_base):
     def snapshot_error_screenshot_ctime(self):
         return self.__get_file_ctime('last-error-screenshot.png')
 
-    @property
-    def watch_data_dir(self):
-        # The base dir of the watch data
-        return os.path.join(self.__datastore_path, self['uuid']) if self.__datastore_path else None
-
     def get_error_text(self):
         """Return the text saved from a previous request that resulted in a non-200 error"""
-        fname = os.path.join(self.watch_data_dir, "last-error.txt")
+        fname = os.path.join(self.data_dir, "last-error.txt")
         if os.path.isfile(fname):
             with open(fname, 'r', encoding='utf-8') as f:
                 return f.read()
@@ -966,7 +948,7 @@ class model(watch_base):
 
     def get_error_snapshot(self):
         """Return path to the screenshot that resulted in a non-200 error"""
-        fname = os.path.join(self.watch_data_dir, "last-error-screenshot.png")
+        fname = os.path.join(self.data_dir, "last-error-screenshot.png")
         if os.path.isfile(fname):
             return fname
         return False
@@ -990,34 +972,17 @@ class model(watch_base):
     def toggle_mute(self):
         self['notification_muted'] ^= True
 
-    def commit(self):
+    def _get_commit_data(self):
         """
-        Save this watch immediately to disk using atomic write.
+        Prepare watch data for commit.
 
-        Replaces the old dirty-tracking system with immediate persistence.
-        Uses atomic write pattern (temp file + rename) for crash safety.
-
-        Fire-and-forget: Logs errors but does not raise exceptions.
-        Watch data remains in memory even if save fails, so next commit will retry.
+        Excludes processor_config_* keys (stored in separate files).
+        Normalizes browser_steps to empty list if no meaningful steps.
         """
-        from loguru import logger
-
-        if not self.__datastore:
-            logger.error(f"Cannot commit watch {self.get('uuid')} without datastore reference")
-            return
-
-        if not self.watch_data_dir:
-            logger.error(f"Cannot commit watch {self.get('uuid')} without datastore_path")
-            return
-
-        # Convert to dict for serialization, excluding processor config keys
-        # Processor configs are stored separately in processor-specific JSON files
-        # Use deepcopy to prevent mutations from affecting the original Watch object
         import copy
 
-        # Acquire datastore lock to prevent concurrent modifications during copy
-        # Take a quick shallow snapshot under lock, then deep copy outside lock
-        lock = self.__datastore.lock if self.__datastore and hasattr(self.__datastore, 'lock') else None
+        # Get base snapshot with lock
+        lock = self._datastore.lock if self._datastore and hasattr(self._datastore, 'lock') else None
 
         if lock:
             with lock:
@@ -1025,20 +990,17 @@ class model(watch_base):
         else:
             snapshot = dict(self)
 
-        # Deep copy snapshot (slower, but done outside lock to minimize contention)
+        # Exclude processor config keys (stored separately)
         watch_dict = {k: copy.deepcopy(v) for k, v in snapshot.items() if not k.startswith('processor_config_')}
 
         # Normalize browser_steps: if no meaningful steps, save as empty list
         if not self.has_browser_steps:
             watch_dict['browser_steps'] = []
 
-        # Use existing atomic write helper
-        from changedetectionio.store.file_saving_datastore import save_watch_atomic
-        try:
-            save_watch_atomic(self.watch_data_dir, self.get('uuid'), watch_dict)
-            logger.debug(f"Committed watch {self.get('uuid')}")
-        except Exception as e:
-            logger.error(f"Failed to commit watch {self.get('uuid')}: {e}")
+        return watch_dict
+
+    # _save_to_disk() method provided by EntityPersistenceMixin
+    # commit() method inherited from watch_base
 
 
     def extra_notification_token_values(self):
@@ -1070,7 +1032,7 @@ class model(watch_base):
                         if not csv_writer:
                             # A file on the disk can be transferred much faster via flask than a string reply
                             csv_output_filename = f"report-{self.get('uuid')}.csv"
-                            f = open(os.path.join(self.watch_data_dir, csv_output_filename), 'w')
+                            f = open(os.path.join(self.data_dir, csv_output_filename), 'w')
                             # @todo some headers in the future
                             #fieldnames = ['Epoch seconds', 'Date']
                             csv_writer = csv.writer(f,
@@ -1112,7 +1074,7 @@ class model(watch_base):
 
     def save_error_text(self, contents):
         self.ensure_data_dir_exists()
-        target_path = os.path.join(self.watch_data_dir, "last-error.txt")
+        target_path = os.path.join(self.data_dir, "last-error.txt")
         with open(target_path, 'w', encoding='utf-8') as f:
             f.write(contents)
 
@@ -1121,9 +1083,9 @@ class model(watch_base):
         import zlib
 
         if as_error:
-            target_path = os.path.join(str(self.watch_data_dir), "elements-error.deflate")
+            target_path = os.path.join(str(self.data_dir), "elements-error.deflate")
         else:
-            target_path = os.path.join(str(self.watch_data_dir), "elements.deflate")
+            target_path = os.path.join(str(self.data_dir), "elements.deflate")
 
         self.ensure_data_dir_exists()
 
@@ -1138,9 +1100,9 @@ class model(watch_base):
     def save_screenshot(self, screenshot: bytes, as_error=False):
 
         if as_error:
-            target_path = os.path.join(self.watch_data_dir, "last-error-screenshot.png")
+            target_path = os.path.join(self.data_dir, "last-error-screenshot.png")
         else:
-            target_path = os.path.join(self.watch_data_dir, "last-screenshot.png")
+            target_path = os.path.join(self.data_dir, "last-screenshot.png")
 
         self.ensure_data_dir_exists()
 
@@ -1151,7 +1113,7 @@ class model(watch_base):
 
     def get_last_fetched_text_before_filters(self):
         import brotli
-        filepath = os.path.join(self.watch_data_dir, 'last-fetched.br')
+        filepath = os.path.join(self.data_dir, 'last-fetched.br')
 
         if not os.path.isfile(filepath) or os.path.getsize(filepath) == 0:
             # If a previous attempt doesnt yet exist, just snarf the previous snapshot instead
@@ -1166,13 +1128,13 @@ class model(watch_base):
 
     def save_last_text_fetched_before_filters(self, contents):
         import brotli
-        filepath = os.path.join(self.watch_data_dir, 'last-fetched.br')
+        filepath = os.path.join(self.data_dir, 'last-fetched.br')
         _brotli_save(contents, filepath, mode=brotli.MODE_TEXT, fallback_uncompressed=False)
 
     def save_last_fetched_html(self, timestamp, contents):
         self.ensure_data_dir_exists()
         snapshot_fname = f"{timestamp}.html.br"
-        filepath = os.path.join(self.watch_data_dir, snapshot_fname)
+        filepath = os.path.join(self.data_dir, snapshot_fname)
         _brotli_save(contents, filepath, mode=None, fallback_uncompressed=True)
         self._prune_last_fetched_html_snapshots()
 
@@ -1180,7 +1142,7 @@ class model(watch_base):
         import brotli
 
         snapshot_fname = f"{timestamp}.html.br"
-        filepath = os.path.join(self.watch_data_dir, snapshot_fname)
+        filepath = os.path.join(self.data_dir, snapshot_fname)
         if os.path.isfile(filepath):
             with open(filepath, 'rb') as f:
                 return (brotli.decompress(f.read()).decode('utf-8'))
@@ -1195,7 +1157,7 @@ class model(watch_base):
 
         for index, timestamp in enumerate(dates):
             snapshot_fname = f"{timestamp}.html.br"
-            filepath = os.path.join(self.watch_data_dir, snapshot_fname)
+            filepath = os.path.join(self.data_dir, snapshot_fname)
 
             # Keep only the first 2
             if index > 1 and os.path.isfile(filepath):
@@ -1206,7 +1168,7 @@ class model(watch_base):
     def get_browsersteps_available_screenshots(self):
         "For knowing which screenshots are available to show the user in BrowserSteps UI"
         available = []
-        for f in Path(self.watch_data_dir).glob('step_before-*.jpeg'):
+        for f in Path(self.data_dir).glob('step_before-*.jpeg'):
             step_n=re.search(r'step_before-(\d+)', f.name)
             if step_n:
                 available.append(step_n.group(1))

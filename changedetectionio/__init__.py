@@ -182,7 +182,6 @@ def main():
     from changedetectionio.flask_app import changedetection_app
 
     datastore_path = None
-    do_cleanup = False
     # Set a default logger level
     logger_level = 'DEBUG'
     include_default_watches = True
@@ -265,7 +264,7 @@ def main():
         i += 1
 
     try:
-        opts, args = getopt.getopt(cleaned_argv[1:], "6Ccsd:h:p:l:P:", "port")
+        opts, args = getopt.getopt(cleaned_argv[1:], "6Csd:h:p:l:P:", "port")
     except getopt.GetoptError as e:
         print_help()
         print(f'Error: {e}')
@@ -292,10 +291,6 @@ def main():
 
         if opt == '-d':
             datastore_path = arg
-
-        # Cleanup (remove text files that arent in the index)
-        if opt == '-c':
-            do_cleanup = True
 
         # Create the datadir if it doesnt exist
         if opt == '-C':
@@ -601,10 +596,6 @@ def main():
         signal.signal(signal.SIGUSR1, sigusr_clean_handler)
     else:
         logger.info("SIGUSR1 handler only registered on Linux, skipped.")
-
-    # Go into cleanup mode
-    if do_cleanup:
-        datastore.remove_unused_snapshots()
 
     app.config['datastore_path'] = datastore_path
 

@@ -2,8 +2,13 @@ import os
 import uuid
 
 from changedetectionio import strtobool
+from .persistence import EntityPersistenceMixin
+
+__all__ = ['EntityPersistenceMixin', 'watch_base']
+
 USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH = 'System default'
 CONDITIONS_MATCH_LOGIC_DEFAULT = 'ALL'
+
 
 class watch_base(dict):
     """
@@ -138,7 +143,7 @@ class watch_base(dict):
 
     Instance Attributes (not serialized):
         __datastore: Reference to parent DataStore (set externally after creation)
-        watch_data_dir: Filesystem path for this watch's data directory
+        data_dir: Filesystem path for this watch's data directory
 
     Notes:
         - Many fields default to None to distinguish "not set" from "set to default"
@@ -149,6 +154,17 @@ class watch_base(dict):
     """
 
     def __init__(self, *arg, **kw):
+        # Store datastore reference (common to Watch and Tag)
+        # Use single underscore to avoid name mangling issues in subclasses
+        self._datastore = kw.get('__datastore')
+        if kw.get('__datastore'):
+            del kw['__datastore']
+
+        # Store datastore_path (common to Watch and Tag)
+        self._datastore_path = kw.get('datastore_path')
+        if kw.get('datastore_path'):
+            del kw['datastore_path']
+
         self.update({
             # Custom notification content
             # Re #110, so then if this is set to None, we know to use the default value instead
@@ -378,3 +394,120 @@ class watch_base(dict):
         # Restore instance attributes
         for attr_name, attr_value in metadata.items():
             setattr(self, attr_name, attr_value)
+
+    @property
+    def data_dir(self):
+        """
+        The base directory for this watch/tag data (property, computed from UUID).
+
+        Common property for both Watch and Tag objects.
+        Returns path like: /datastore/{uuid}/
+        """
+        return os.path.join(self._datastore_path, self['uuid']) if self._datastore_path else None
+
+    def ensure_data_dir_exists(self):
+        """
+        Create the data directory if it doesn't exist.
+
+        Common method for both Watch and Tag objects.
+        """
+        from loguru import logger
+        if not os.path.isdir(self.data_dir):
+            logger.debug(f"> Creating data dir {self.data_dir}")
+            os.mkdir(self.data_dir)
+
+    def get_global_setting(self, *path):
+        """
+        Get a setting from the global datastore configuration.
+
+        Args:
+            *path: Path to the setting (e.g., 'application', 'history_snapshot_max_length')
+
+        Returns:
+            The setting value, or None if not found
+
+        Example:
+            maxlen = self.get_global_setting('application', 'history_snapshot_max_length')
+        """
+        if not self._datastore:
+            return None
+
+        try:
+            value = self._datastore['settings']
+            for key in path:
+                value = value[key]
+            return value
+        except (KeyError, TypeError):
+            return None
+
+    def _get_commit_data(self):
+        """
+        Prepare data for commit (can be overridden by subclasses).
+
+        Returns:
+            dict: Data to serialize (filtered as needed by subclass)
+        """
+        import copy
+
+        # Acquire datastore lock to prevent concurrent modifications during copy
+        lock = self._datastore.lock if self._datastore and hasattr(self._datastore, 'lock') else None
+
+        if lock:
+            with lock:
+                snapshot = dict(self)
+        else:
+            snapshot = dict(self)
+
+        # Deep copy snapshot (slower, but done outside lock to minimize contention)
+        # Subclasses can override to filter keys (e.g., Watch excludes processor_config_*)
+        return {k: copy.deepcopy(v) for k, v in snapshot.items()}
+
+    def _save_to_disk(self, data_dict, uuid):
+        """
+        Save data to disk (must be implemented by subclasses).
+
+        Args:
+            data_dict: Dictionary to save
+            uuid: UUID for logging
+
+        Raises:
+            NotImplementedError: If subclass doesn't implement
+        """
+        raise NotImplementedError("Subclass must implement _save_to_disk()")
+
+    def commit(self):
+        """
+        Save this watch/tag immediately to disk using atomic write.
+
+        Common commit logic for Watch and Tag objects.
+        Subclasses override _get_commit_data() and _save_to_disk() for specifics.
+
+        Fire-and-forget: Logs errors but does not raise exceptions.
+        Data remains in memory even if save fails, so next commit will retry.
+        """
+        from loguru import logger
+
+        if not self.data_dir:
+            entity_type = self.__class__.__name__
+            logger.error(f"Cannot commit {entity_type} {self.get('uuid')} without datastore_path")
+            return
+
+        uuid = self.get('uuid')
+        if not uuid:
+            entity_type = self.__class__.__name__
+            logger.error(f"Cannot commit {entity_type} without UUID")
+            return
+
+        # Get data from subclass (may filter keys)
+        try:
+            data_dict = self._get_commit_data()
+        except Exception as e:
+            logger.error(f"Failed to prepare commit data for {uuid}: {e}")
+            return
+
+        # Save to disk via subclass implementation
+        try:
+            self._save_to_disk(data_dict, uuid)
+            logger.debug(f"Committed {self.__class__.__name__.lower()} {uuid}")
+        except Exception as e:
+            logger.error(f"Failed to commit {uuid}: {e}")

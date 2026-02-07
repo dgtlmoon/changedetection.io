@@ -20,10 +20,12 @@ See: Watch.py model docstring for full Pydantic architecture explanation
 See: processors/restock_diff/processor.py:184-192 for current manual implementation
 """
 
+import os
 from changedetectionio.model import watch_base
+from changedetectionio.model.persistence import EntityPersistenceMixin
 
 
-class model(watch_base):
+class model(EntityPersistenceMixin, watch_base):
     """
     Tag domain model - groups watches and can override their settings.
 
@@ -42,11 +44,7 @@ class model(watch_base):
     """
 
     def __init__(self, *arg, **kw):
-        # Store datastore reference (optional for Tags, but good for consistency)
-        self.__datastore = kw.get('__datastore')
-        if kw.get('__datastore'):
-            del kw['__datastore']
-
+        # Parent class (watch_base) handles __datastore and __datastore_path
         super(model, self).__init__(*arg, **kw)
 
         self['overrides_watch'] = kw.get('default', {}).get('overrides_watch')
@@ -54,3 +52,7 @@ class model(watch_base):
         if kw.get('default'):
             self.update(kw['default'])
             del kw['default']
+
+    # _save_to_disk() method provided by EntityPersistenceMixin
+    # commit() and _get_commit_data() methods inherited from watch_base
+    # Tag uses default _get_commit_data() (includes all keys)
