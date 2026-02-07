@@ -394,6 +394,7 @@ nav
                 {% endfor %}
             {% endif %}
             <div class="tab-pane-inner" id="info">
+                <p><strong>{{ _('Uptime:') }}</strong> {{ uptime_seconds|format_duration }}</p>
                 <p><strong>{{ _('Python version:') }}</strong> {{ python_version }}</p>
                 <p><strong>{{ _('Plugins active:') }}</strong></p>
                 {% if active_plugins %}

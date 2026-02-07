@@ -1,8 +1,9 @@
 import os
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo, available_timezones
 import secrets
+import time
 import flask_login
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_babel import gettext
@@ -142,6 +143,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         active_plugins = get_active_plugins()
         python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
 
+        # Calculate uptime in seconds
+        uptime_seconds = time.time() - datastore.start_time
+
         # Get plugin settings tabs and instantiate forms
         plugin_tabs = get_plugin_settings_tabs()
         plugin_forms = {}
@@ -160,6 +164,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                 active_plugins=active_plugins,
                                 api_key=datastore.data['settings']['application'].get('api_access_token'),
                                 python_version=python_version,
+                                uptime_seconds=uptime_seconds,
                                 available_timezones=sorted(available_timezones()),
                                 emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
                                 extra_notification_token_placeholder_info=datastore.get_unique_notification_token_placeholders_available(),
