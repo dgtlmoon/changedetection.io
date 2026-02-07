@@ -84,15 +84,19 @@ class Watch(Resource):
             return "OK", 200
         if request.args.get('paused', '') == 'paused':
             watch_obj.pause()
+            watch_obj.commit()
             return "OK", 200
         elif request.args.get('paused', '') == 'unpaused':
             watch_obj.unpause()
+            watch_obj.commit()
             return "OK", 200
         if request.args.get('muted', '') == 'muted':
             watch_obj.mute()
+            watch_obj.commit()
             return "OK", 200
         elif request.args.get('muted', '') == 'unmuted':
             watch_obj.unmute()
+            watch_obj.commit()
             return "OK", 200
 
         # Return without history, get that via another API call
@@ -173,6 +177,7 @@ class Watch(Resource):
 
         # Update watch with regular (non-processor-config) fields
         watch.update(json_data)
+        watch.commit()
 
         # Save processor config to JSON file
         processors.save_processor_config(self.datastore, uuid, processor_config_data)

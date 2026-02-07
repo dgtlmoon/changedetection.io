@@ -308,10 +308,6 @@ def prepare_test_function(live_server, datastore_path):
 
 
 
-    # Prevent background thread from writing during cleanup/reload
-    datastore.needs_write = False
-    datastore.needs_write_urgent = False
-
     # CRITICAL: Clean up any files from previous tests
     # This ensures a completely clean directory
     cleanup(datastore_path)
@@ -344,7 +340,6 @@ def prepare_test_function(live_server, datastore_path):
                 break
 
         datastore.data['watching'] = {}
-        datastore.needs_write = True
     except Exception as e:
         logger.warning(f"Error during datastore cleanup: {e}")
 

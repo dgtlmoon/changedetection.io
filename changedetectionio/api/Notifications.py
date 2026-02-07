@@ -67,7 +67,7 @@ class Notifications(Resource):
 
         clean_urls = [url.strip() for url in notification_urls if isinstance(url, str)]
         self.datastore.data['settings']['application']['notification_urls'] = clean_urls
-        self.datastore.needs_write = True
+        self.datastore.commit()
 
         return {'notification_urls': clean_urls}, 200
         
@@ -95,7 +95,7 @@ class Notifications(Resource):
             abort(400, message="No matching notification URLs found.")
 
         self.datastore.data['settings']['application']['notification_urls'] = notification_urls
-        self.datastore.needs_write = True
+        self.datastore.commit()
 
         return 'OK', 204
     

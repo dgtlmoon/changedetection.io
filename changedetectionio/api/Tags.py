@@ -63,9 +63,11 @@ class Tag(Resource):
 
         if request.args.get('muted', '') == 'muted':
             self.datastore.data['settings']['application']['tags'][uuid]['notification_muted'] = True
+            self.datastore.commit()
             return "OK", 200
         elif request.args.get('muted', '') == 'unmuted':
             self.datastore.data['settings']['application']['tags'][uuid]['notification_muted'] = False
+            self.datastore.commit()
             return "OK", 200
 
         return tag
@@ -79,11 +81,13 @@ class Tag(Resource):
 
         # Delete the tag, and any tag reference
         del self.datastore.data['settings']['application']['tags'][uuid]
-        
+        self.datastore.commit()
+
         # Remove tag from all watches
         for watch_uuid, watch in self.datastore.data['watching'].items():
             if watch.get('tags') and uuid in watch['tags']:
                 watch['tags'].remove(uuid)
+                watch.commit()
 
         return 'OK', 204
 
@@ -107,7 +111,7 @@ class Tag(Resource):
                 return str(e), 400
 
         tag.update(request.json)
-        self.datastore.needs_write_urgent = True
+        self.datastore.commit()
 
         return "OK", 200
 

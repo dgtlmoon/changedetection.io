@@ -198,6 +198,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             # Recast it if need be to right data Watch handler
             watch_class = processors.get_custom_watch_obj_for_processor(form.data.get('processor'))
             datastore.data['watching'][uuid] = watch_class(datastore_path=datastore.datastore_path, __datastore=datastore.data, default=datastore.data['watching'][uuid])
+
+            # Save the watch immediately
+            datastore.data['watching'][uuid].commit()
+
             flash(gettext("Updated watch - unpaused!") if request.args.get('unpause_on_save') else gettext("Updated watch."))
 
             # Cleanup any browsersteps session for this watch
@@ -206,10 +210,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 cleanup_session_for_watch(uuid)
             except Exception as e:
                 logger.debug(f"Error cleaning up browsersteps session: {e}")
-
-            # Re #286 - We wait for syncing new data to disk in another thread every 60 seconds
-            # But in the case something is added we should save straight away
-            datastore.needs_write_urgent = True
 
             # Do not queue on edit if its not within the time range
 
@@ -385,6 +385,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                     s = re.escape(l.strip())
                     s = re.sub(r'[0-9]+', r'\\d+', s)
                     datastore.data["watching"][uuid]['ignore_text'].append('/' + s + '/')
+
+            # Save the updated ignore_text
+            datastore.data["watching"][uuid].commit()
 
         return f"<a href={url_for('ui.ui_preview.preview_page', uuid=uuid)}>Click to preview</a>"
     

@@ -24,7 +24,7 @@ def _handle_operations(op, uuids, datastore, worker_pool, update_q, queuedWatchM
         for uuid in uuids:
             if datastore.data['watching'].get(uuid):
                 datastore.data['watching'][uuid]['paused'] = True
-                datastore.mark_watch_dirty(uuid)
+                datastore.data['watching'][uuid].commit()
         if emit_flash:
             flash(gettext("{} watches paused").format(len(uuids)))
 
@@ -32,7 +32,7 @@ def _handle_operations(op, uuids, datastore, worker_pool, update_q, queuedWatchM
         for uuid in uuids:
             if datastore.data['watching'].get(uuid):
                 datastore.data['watching'][uuid.strip()]['paused'] = False
-                datastore.mark_watch_dirty(uuid)
+                datastore.data['watching'][uuid].commit()
         if emit_flash:
             flash(gettext("{} watches unpaused").format(len(uuids)))
 
@@ -47,7 +47,7 @@ def _handle_operations(op, uuids, datastore, worker_pool, update_q, queuedWatchM
         for uuid in uuids:
             if datastore.data['watching'].get(uuid):
                 datastore.data['watching'][uuid]['notification_muted'] = True
-                datastore.mark_watch_dirty(uuid)
+                datastore.data['watching'][uuid].commit()
         if emit_flash:
             flash(gettext("{} watches muted").format(len(uuids)))
 
@@ -55,7 +55,7 @@ def _handle_operations(op, uuids, datastore, worker_pool, update_q, queuedWatchM
         for uuid in uuids:
             if datastore.data['watching'].get(uuid):
                 datastore.data['watching'][uuid]['notification_muted'] = False
-                datastore.mark_watch_dirty(uuid)
+                datastore.data['watching'][uuid].commit()
         if emit_flash:
             flash(gettext("{} watches un-muted").format(len(uuids)))
 
@@ -71,7 +71,7 @@ def _handle_operations(op, uuids, datastore, worker_pool, update_q, queuedWatchM
         for uuid in uuids:
             if datastore.data['watching'].get(uuid):
                 datastore.data['watching'][uuid]["last_error"] = False
-                datastore.mark_watch_dirty(uuid)
+                datastore.data['watching'][uuid].commit()
         if emit_flash:
             flash(gettext("{} watches errors cleared").format(len(uuids)))
 
@@ -92,6 +92,7 @@ def _handle_operations(op, uuids, datastore, worker_pool, update_q, queuedWatchM
                 datastore.data['watching'][uuid]['notification_body'] = None
                 datastore.data['watching'][uuid]['notification_urls'] = []
                 datastore.data['watching'][uuid]['notification_format'] = USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
+                datastore.data['watching'][uuid].commit()
         if emit_flash:
             flash(gettext("{} watches set to use default notification settings").format(len(uuids)))
 
@@ -107,6 +108,7 @@ def _handle_operations(op, uuids, datastore, worker_pool, update_q, queuedWatchM
                             datastore.data['watching'][uuid]['tags'] = []
 
                         datastore.data['watching'][uuid]['tags'].append(tag_uuid)
+                        datastore.data['watching'][uuid].commit()
         if emit_flash:
             flash(gettext("{} watches were tagged").format(len(uuids)))
 

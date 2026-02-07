@@ -168,7 +168,7 @@ class DatastoreUpdatesMixin:
                     latest_update = updates_available[-1] if updates_available else 0
                     logger.info(f"No schema version found and no watches exist - assuming fresh install, setting schema_version to {latest_update}")
                     self.data['settings']['application']['schema_version'] = latest_update
-                    self.mark_settings_dirty()
+                    self.commit()
                     return  # No updates needed for fresh install
                 else:
                     # Has watches but no schema version - likely old datastore, run all updates
@@ -201,14 +201,14 @@ class DatastoreUpdatesMixin:
                 else:
                     # Bump the version, important
                     self.data['settings']['application']['schema_version'] = update_n
-                    self.mark_settings_dirty()
+                    self.commit()
 
-                    # CRITICAL: Mark all watches as dirty so changes are persisted
+                    # CRITICAL: Save all watches so changes are persisted
                     # Most updates modify watches, and in the new individual watch.json structure,
                     # we need to ensure those changes are saved
-                    logger.info(f"Marking all {len(self.data['watching'])} watches as dirty after update_{update_n} (so that it saves them to disk)")
+                    logger.info(f"Saving all {len(self.data['watching'])} watches after update_{update_n} (so that it saves them to disk)")
                     for uuid in self.data['watching'].keys():
-                        self.mark_watch_dirty(uuid)
+                        self.data['watching'][uuid].commit()
 
                     # Save changes immediately after each update (more resilient than batching)
                     logger.critical(f"Saving all changes after update_{update_n}")
@@ -662,7 +662,7 @@ class DatastoreUpdatesMixin:
         updates_available = self.get_updates_available()
         latest_schema = updates_available[-1] if updates_available else 26
         self.data['settings']['application']['schema_version'] = latest_schema
-        self.mark_settings_dirty()
+        self.commit()
         logger.info(f"Set schema_version to {latest_schema} (migration complete, all watches already saved)")
 
         logger.critical("=" * 80)

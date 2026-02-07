@@ -844,6 +844,39 @@ class model(watch_base):
     def toggle_mute(self):
         self['notification_muted'] ^= True
 
+    def commit(self):
+        """
+        Save this watch immediately to disk using atomic write.
+
+        Replaces the old dirty-tracking system with immediate persistence.
+        Uses atomic write pattern (temp file + rename) for crash safety.
+
+        Fire-and-forget: Logs errors but does not raise exceptions.
+        Watch data remains in memory even if save fails, so next commit will retry.
+        """
+        from loguru import logger
+
+        if not self.__datastore:
+            logger.error(f"Cannot commit watch {self.get('uuid')} without datastore reference")
+            return
+
+        if not self.watch_data_dir:
+            logger.error(f"Cannot commit watch {self.get('uuid')} without datastore_path")
+            return
+
+        # Convert to dict for serialization, excluding processor config keys
+        # Processor configs are stored separately in processor-specific JSON files
+        watch_dict = {k: v for k, v in dict(self).items() if not k.startswith('processor_config_')}
+
+        # Use existing atomic write helper
+        from changedetectionio.store.file_saving_datastore import save_watch_atomic
+        try:
+            save_watch_atomic(self.watch_data_dir, self.get('uuid'), watch_dict)
+            logger.debug(f"Committed watch {self.get('uuid')}")
+        except Exception as e:
+            logger.error(f"Failed to commit watch {self.get('uuid')}: {e}")
+
+
     def extra_notification_token_values(self):
         # Used for providing extra tokens
         # return {'widget': 555}

@@ -102,8 +102,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             flash(gettext("Maximum number of backups reached, please remove some"), "error")
             return redirect(url_for('backups.index'))
 
-        # Be sure we're written fresh - force immediate save using abstract method
-        datastore.force_save_all()
+        # With immediate persistence, all data is already saved
         zip_thread = threading.Thread(
             target=create_backup,
             args=(datastore.datastore_path, datastore.data.get("watching")),

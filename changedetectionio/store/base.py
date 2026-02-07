@@ -88,13 +88,11 @@ class DataStore(ABC):
 
         This is the abstract method for forcing a complete save.
         Different backends implement this differently:
-        - File backend: Mark all watches/settings dirty, then save
+        - File backend: No-op (watches save immediately via commit())
         - Redis backend: SAVE command or pipeline flush
         - SQL backend: COMMIT transaction
 
-        Used by:
-        - Backup creation (ensure everything is saved before backup)
-        - Shutdown (ensure all changes are persisted)
-        - Manual save operations
+        Note: With immediate persistence, this is mostly a no-op for file backend.
+        Used for backward compatibility.
         """
         pass

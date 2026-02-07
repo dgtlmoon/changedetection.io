@@ -56,9 +56,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         # Should only be active for docker
         # logging.basicConfig(filename='/dev/stdout', level=logging.INFO)
         self.datastore_path = datastore_path
-        self.needs_write = False
         self.start_time = time.time()
-        self.stop_thread = False
         self.save_version_copy_json_db(version_tag)
         self.reload_state(datastore_path=datastore_path, include_default_watches=include_default_watches, version_tag=version_tag)
 
@@ -286,28 +284,25 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
                 self.__data['app_guid'] = "test-" + str(uuid_builder.uuid4())
             else:
                 self.__data['app_guid'] = str(uuid_builder.uuid4())
-            self.mark_settings_dirty()
+            self.commit()
 
         # Ensure RSS access token exists
         if not self.__data['settings']['application'].get('rss_access_token'):
             secret = secrets.token_hex(16)
             self.__data['settings']['application']['rss_access_token'] = secret
-            self.mark_settings_dirty()
+            self.commit()
 
         # Ensure API access token exists
         if not self.__data['settings']['application'].get('api_access_token'):
             secret = secrets.token_hex(16)
             self.__data['settings']['application']['api_access_token'] = secret
-            self.mark_settings_dirty()
+            self.commit()
 
         # Handle password reset lockfile
         password_reset_lockfile = os.path.join(self.datastore_path, "removepassword.lock")
         if path.isfile(password_reset_lockfile):
             self.remove_password()
             unlink(password_reset_lockfile)
-
-        # Start the background save thread
-        self.start_save_thread()
 
     def rehydrate_entity(self, uuid, entity, processor_override=None):
         """Set the dict back to the dict Watch object"""
@@ -375,22 +370,15 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         Implementation of abstract method from FileSavingDataStore.
         Delegates to helper function and stores results in internal data structure.
         """
-        watching, watch_hashes = load_all_watches(
+        watching = load_all_watches(
             self.datastore_path,
-            self.rehydrate_entity,
-            self._compute_hash
+            self.rehydrate_entity
         )
 
         # Store loaded data
         self.__data['watching'] = watching
-        self._watch_hashes = watch_hashes
 
-        # Verify all watches have hashes
-        missing_hashes = [uuid for uuid in watching.keys() if uuid not in watch_hashes]
-        if missing_hashes:
-            logger.error(f"WARNING: {len(missing_hashes)} watches missing hashes after load: {missing_hashes[:5]}")
-        else:
-            logger.debug(f"All {len(watching)} watches have valid hashes")
+        logger.debug(f"Loaded {len(watching)} watches")
 
     def _delete_watch(self, uuid):
         """
@@ -414,7 +402,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
     def set_last_viewed(self, uuid, timestamp):
         logger.debug(f"Setting watch UUID: {uuid} last viewed to {int(timestamp)}")
         self.data['watching'][uuid].update({'last_viewed': int(timestamp)})
-        self.mark_watch_dirty(uuid)
+        self.data['watching'][uuid].commit()
 
         watch_check_update = signal('watch_check_update')
         if watch_check_update:
@@ -422,7 +410,23 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
     def remove_password(self):
         self.__data['settings']['application']['password'] = False
-        self.mark_settings_dirty()
+        self.commit()
+
+    def commit(self):
+        """
+        Save settings immediately to disk using atomic write.
+
+        Replaces the old mark_settings_dirty() system with immediate persistence.
+        Uses atomic write pattern (temp file + rename) for crash safety.
+
+        Fire-and-forget: Logs errors but does not raise exceptions.
+        Settings data remains in memory even if save fails, so next commit will retry.
+        """
+        try:
+            self._save_settings()
+            logger.debug("Committed settings")
+        except Exception as e:
+            logger.error(f"Failed to commit settings: {e}")
 
     def update_watch(self, uuid, update_obj):
 
@@ -441,7 +445,8 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
             self.__data['watching'][uuid].update(update_obj)
 
-        self.mark_watch_dirty(uuid)
+        # Immediate save
+        self.__data['watching'][uuid].commit()
 
     @property
     def threshold_seconds(self):
@@ -502,10 +507,6 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
                     except Exception as e:
                         logger.error(f"Failed to delete watch {watch_uuid} from storage: {e}")
 
-                    # Clean up tracking data
-                    self._watch_hashes.pop(watch_uuid, None)
-                    self._dirty_watches.discard(watch_uuid)
-
                     # Send delete signal
                     watch_delete_signal = signal('watch_deleted')
                     if watch_delete_signal:
@@ -527,16 +528,10 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
                 # Remove from watching dict
                 del self.data['watching'][uuid]
 
-                # Clean up tracking data
-                self._watch_hashes.pop(uuid, None)
-                self._dirty_watches.discard(uuid)
-
                 # Send delete signal
                 watch_delete_signal = signal('watch_deleted')
                 if watch_delete_signal:
                     watch_delete_signal.send(watch_uuid=uuid)
-
-        self.needs_write_urgent = True
 
     # Clone a watch by UUID
     def clone(self, uuid):
@@ -562,7 +557,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
     # Remove a watchs data but keep the entry (URL etc)
     def clear_watch_history(self, uuid):
         self.__data['watching'][uuid].clear_watch()
-        self.needs_write_urgent = True
+        self.__data['watching'][uuid].commit()
 
     def add_watch(self, url, tag='', extras=None, tag_uuids=None, save_immediately=True):
 
@@ -675,16 +670,9 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         self.__data['watching'][new_uuid] = new_watch
 
         if save_immediately:
-            # Save immediately using polymorphic method
-            try:
-                self.save_watch(new_uuid, force=True)
-                logger.debug(f"Saved new watch {new_uuid}")
-            except Exception as e:
-                logger.error(f"Failed to save new watch {new_uuid}: {e}")
-                # Mark dirty for retry
-                self.mark_watch_dirty(new_uuid)
-        else:
-            self.mark_watch_dirty(new_uuid)
+            # Save immediately using commit
+            new_watch.commit()
+            logger.debug(f"Saved new watch {new_uuid}")
 
         logger.debug(f"Added '{url}'")
 
@@ -889,7 +877,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
             self.__data['settings']['application']['tags'][new_uuid] = new_tag
 
-        self.mark_settings_dirty()
+        self.commit()
         return new_uuid
 
     def get_all_tags_for_watch(self, uuid):
@@ -1006,7 +994,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
             notification_urls.append(notification_url)
             self.__data['settings']['application']['notification_urls'] = notification_urls
 
-        self.mark_settings_dirty()
+        self.commit()
         return notification_url
 
     # Schema update methods moved to store/updates.py (DatastoreUpdatesMixin)
