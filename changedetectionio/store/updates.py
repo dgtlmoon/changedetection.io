@@ -709,18 +709,18 @@ class DatastoreUpdatesMixin:
         """
         Migrate tags to individual tag.json files.
 
-        Tags are currently saved as part of changedetection.json (settings).
-        This migration moves them to individual {uuid}/tag.json files,
-        similar to how watches are stored.
+        Tags are currently saved only in changedetection.json (settings).
+        This migration ALSO saves them to individual {uuid}/tag.json files,
+        similar to how watches are stored (dual storage).
 
         Benefits:
-        - Reduces changedetection.json size
         - Allows atomic tag updates without rewriting entire settings
         - Enables independent tag versioning/backup
+        - Maintains backwards compatibility (tags stay in settings too)
         """
         logger.critical("=" * 80)
         logger.critical("Running migration: Individual tag persistence (update_27)")
-        logger.critical("Moving tags from settings to individual tag.json files")
+        logger.critical("Creating individual tag.json files (tags remain in settings too)")
         logger.critical("=" * 80)
 
         tags = self.data['settings']['application'].get('tags', {})
@@ -753,9 +753,9 @@ class DatastoreUpdatesMixin:
         else:
             logger.success(f"Migration complete: {saved_count} tags saved to individual tag.json files")
 
-        # Tags remain in settings for backwards compatibility
-        # On next load, _load_tags() will read from tag.json files and override settings
-        logger.info("Tags remain in settings for backwards compatibility")
-        logger.info("Future tag edits will save to tag.json files only")
+        # Tags remain in settings for backwards compatibility AND easy access
+        # On next load, _load_tags() will read from tag.json files and merge with settings
+        logger.info("Tags saved to both settings AND individual tag.json files")
+        logger.info("Future tag edits will update both locations (dual storage)")
 
         logger.critical("=" * 80)

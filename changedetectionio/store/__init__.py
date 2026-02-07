@@ -340,23 +340,22 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         """
         Build settings data structure for saving.
 
-        Tags are excluded - they are stored in individual {uuid}/tag.json files.
-        This keeps changedetection.json small and allows atomic tag updates.
+        Tags are stored both in settings AND individual {uuid}/tag.json files.
+        This allows backwards compatibility while enabling atomic tag updates.
 
         Returns:
-            dict: Settings data ready for serialization (without tags)
+            dict: Settings data ready for serialization (with tags)
         """
         import copy
 
         # Deep copy settings to avoid modifying the original
         settings_copy = copy.deepcopy(self.__data['settings'])
 
-        # Replace tags dict with empty dict (tags are in individual tag.json files)
-        # We keep the empty dict for backwards compatibility and clear structure
-        settings_copy['application']['tags'] = {}
+        # Tags remain in settings for backwards compatibility and easy access
+        # They are ALSO stored in individual tag.json files (dual storage)
 
         return {
-            'note': 'Settings file - watches are in {uuid}/watch.json, tags are in {uuid}/tag.json',
+            'note': 'Settings file - watches are in {uuid}/watch.json, tags are in both settings and {uuid}/tag.json',
             'app_guid': self.__data['app_guid'],
             'settings': settings_copy,
             'build_sha': self.__data.get('build_sha'),
