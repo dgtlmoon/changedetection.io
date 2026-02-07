@@ -666,13 +666,6 @@ class DatastoreUpdatesMixin:
         logger.success("Datastore reloaded from new format successfully")
 
 
-        # Verify all watches have hashes after migration
-        missing_hashes = [uuid for uuid in self.data['watching'].keys() if uuid not in self._watch_hashes]
-        if missing_hashes:
-            logger.error(f"WARNING: {len(missing_hashes)} watches missing hashes after migration: {missing_hashes[:5]}")
-        else:
-            logger.success(f"All {len(self.data['watching'])} watches have valid hashes after migration")
-
         # Set schema version to latest available update
         # This prevents re-running updates on next startup
         updates_available = self.get_updates_available()
