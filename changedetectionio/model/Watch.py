@@ -866,7 +866,25 @@ class model(watch_base):
 
         # Convert to dict for serialization, excluding processor config keys
         # Processor configs are stored separately in processor-specific JSON files
-        watch_dict = {k: v for k, v in dict(self).items() if not k.startswith('processor_config_')}
+        # Use deepcopy to prevent mutations from affecting the original Watch object
+        import copy
+
+        # Acquire datastore lock to prevent concurrent modifications during copy
+        # Take a quick shallow snapshot under lock, then deep copy outside lock
+        lock = self.__datastore.lock if self.__datastore and hasattr(self.__datastore, 'lock') else None
+
+        if lock:
+            with lock:
+                snapshot = dict(self)
+        else:
+            snapshot = dict(self)
+
+        # Deep copy snapshot (slower, but done outside lock to minimize contention)
+        watch_dict = {k: copy.deepcopy(v) for k, v in snapshot.items() if not k.startswith('processor_config_')}
+
+        # Normalize browser_steps: if no meaningful steps, save as empty list
+        if not self.has_browser_steps:
+            watch_dict['browser_steps'] = []
 
         # Use existing atomic write helper
         from changedetectionio.store.file_saving_datastore import save_watch_atomic
