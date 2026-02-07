@@ -350,16 +350,6 @@ class FileSavingDataStore(DataStore):
         """
         raise NotImplementedError("Subclass must implement _save_settings")
 
-    def force_save_all(self):
-        """
-        Deprecated: Watches now save immediately via commit().
-
-        Kept as no-op for backward compatibility. In the old system,
-        this would force all watches to save. With immediate persistence,
-        all changes are already saved.
-        """
-        logger.info("force_save_all() called - no-op (immediate persistence enabled)")
-        pass
 
     def _load_watches(self):
         """

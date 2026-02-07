@@ -81,18 +81,3 @@ class DataStore(ABC):
         """
         pass
 
-    @abstractmethod
-    def force_save_all(self):
-        """
-        Force immediate synchronous save of all data to storage.
-
-        This is the abstract method for forcing a complete save.
-        Different backends implement this differently:
-        - File backend: No-op (watches save immediately via commit())
-        - Redis backend: SAVE command or pipeline flush
-        - SQL backend: COMMIT transaction
-
-        Note: With immediate persistence, this is mostly a no-op for file backend.
-        Used for backward compatibility.
-        """
-        pass
