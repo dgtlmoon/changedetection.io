@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-22 06:19+0100\n"
+"POT-Creation-Date: 2026-02-05 17:47+0100\n"
 "PO-Revision-Date: 2026-01-02 11:40+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ko\n"
@@ -325,6 +325,14 @@ msgstr "설정:"
 msgid "to disable"
 msgstr ""
 
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Limit collection of history snapshots for each watch to this number of history items."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Set to empty to disable / no limit"
+msgstr ""
+
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Password protection for your changedetection.io application."
 msgstr ""
@@ -340,6 +348,10 @@ msgstr "비밀번호 활성화 시 변경 기록 페이지 액세스 허용 (dif
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "When a request returns no content, or the HTML does not contain any text, is this considered a change?"
 msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Choose a default proxy for all watches"
+msgstr "모든 모니터의 기본 프록시 선택"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Base URL used for the"
@@ -649,10 +661,6 @@ msgid ""
 "SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should "
 "whitelist the IP access instead"
 msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Choose a default proxy for all watches"
-msgstr "모든 모니터의 기본 프록시 선택"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Python version:"
@@ -979,7 +987,12 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/edit.py
 #, python-brace-format
-msgid "Cannot load the edit form for processor/plugin '{}', plugin missing?"
+msgid "Could not load '{}' processor, processor plugin might be missing. Please select a different processor."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/edit.py
+#, python-brace-format
+msgid "Could not load '{}' processor, processor plugin might be missing."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/edit.py
@@ -1226,6 +1239,10 @@ msgstr "각 확인 사이의 간격/시간입니다."
 msgid ""
 "Sends a notification when the filter can no longer be seen on the page, good for knowing when the page changed and "
 "your filter will not work anymore."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Set to empty to use system settings default"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
@@ -1577,6 +1594,18 @@ msgid "records"
 msgstr "기록"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "More info"
+msgstr "추가 정보"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "You can also add 'shared' watches."
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Add a new web page change detection watch"
 msgstr "새로운 웹 페이지 변경 감지 감시 추가"
 
@@ -1587,18 +1616,6 @@ msgstr "이 URL 모니터!"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Edit first then Watch"
 msgstr "편집 후 모니터"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Create a shareable link"
-msgstr "공유 가능한 링크 만들기"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Tip: You can also add 'shared' watches."
-msgstr "팁: '공유' 시계를 추가할 수도 있습니다."
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "More info"
-msgstr "추가 정보"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Pause"
@@ -2114,6 +2131,10 @@ msgid "Use page <title> in list"
 msgstr "목록의 <제목> 페이지 사용"
 
 #: changedetectionio/forms.py
+msgid "Number of history items per watch to keep"
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "요청 방법이 GET으로 설정된 경우 본문이 비어 있어야 합니다."
 
@@ -2435,13 +2456,18 @@ msgstr "웹페이지 텍스트/HTML, JSON 및 PDF 변경"
 msgid "Detects all text changes where possible"
 msgstr "가능한 경우 모든 텍스트 변경 사항을 감지합니다."
 
-#: changedetectionio/store.py
+#: changedetectionio/store/__init__.py
 #, python-brace-format
 msgid "Error fetching metadata for {}"
 msgstr ""
 
-#: changedetectionio/store.py
+#: changedetectionio/store/__init__.py
 msgid "Watch protocol is not permitted or invalid URL format"
+msgstr ""
+
+#: changedetectionio/store/__init__.py
+#, python-brace-format
+msgid "Watch limit reached ({}/{} watches). Cannot add more watches."
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
@@ -3156,4 +3182,13 @@ msgstr "기본 설정"
 
 #~ msgid "Cleared snapshot history for all watches"
 #~ msgstr "기록 지우기/재설정"
+
+#~ msgid "Cannot load the edit form for processor/plugin '{}', plugin missing?"
+#~ msgstr ""
+
+#~ msgid "Create a shareable link"
+#~ msgstr "공유 가능한 링크 만들기"
+
+#~ msgid "Tip: You can also add 'shared' watches."
+#~ msgstr "팁: '공유' 시계를 추가할 수도 있습니다."
 

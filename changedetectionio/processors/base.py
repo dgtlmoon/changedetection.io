@@ -23,7 +23,14 @@ class difference_detection_processor():
     def __init__(self, datastore, watch_uuid):
         self.datastore = datastore
         self.watch_uuid = watch_uuid
+
+        # Create a stable snapshot of the watch for processing
+        # Why deepcopy?
+        # 1. Prevents "dict changed during iteration" errors if watch is modified during processing
+        # 2. Preserves Watch object with properties (.link, .is_pdf, etc.) - can't use dict()
+        # 3. Safe now: Watch.__deepcopy__() shares datastore ref (no memory leak) but copies dict data
         self.watch = deepcopy(self.datastore.data['watching'].get(watch_uuid))
+
         # Generic fetcher that should be extended (requests, playwright etc)
         self.fetcher = Fetcher()
 

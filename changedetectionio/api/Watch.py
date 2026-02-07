@@ -66,47 +66,46 @@ class Watch(Resource):
     @validate_openapi_request('getWatch')
     def get(self, uuid):
         """Get information about a single watch, recheck, pause, or mute."""
-        import time
-        from copy import deepcopy
-        watch = None
-        # Retry up to 20 times if dict is being modified
-        # With sleep(0), this is fast: ~200µs best case, ~20ms worst case under heavy load
-        for attempt in range(20):
-            try:
-                watch = deepcopy(self.datastore.data['watching'].get(uuid))
-                break
-            except RuntimeError:
-                # Dict changed during deepcopy, retry after yielding to scheduler
-                # sleep(0) releases GIL and yields - no fixed delay, just lets other threads run
-                if attempt < 19:  # Don't yield on last attempt
-                    time.sleep(0)  # Yield to scheduler (microseconds, not milliseconds)
-
-        if not watch:
+        # Get watch reference first (for pause/mute operations)
+        watch_obj = self.datastore.data['watching'].get(uuid)
+        if not watch_obj:
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
+
+        # Create a dict copy for JSON response (with lock for thread safety)
+        # This is much faster than deepcopy and doesn't copy the datastore reference
+        # WARNING: dict() is a SHALLOW copy - nested dicts are shared with original!
+        # Only safe because we only ADD scalar properties (line 97-101), never modify nested dicts
+        # If you need to modify nested dicts, use: from copy import deepcopy; watch = deepcopy(dict(watch_obj))
+        with self.datastore.lock:
+            watch = dict(watch_obj)
 
         if request.args.get('recheck'):
             worker_pool.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
             return "OK", 200
         if request.args.get('paused', '') == 'paused':
-            self.datastore.data['watching'].get(uuid).pause()
+            watch_obj.pause()
+            watch_obj.commit()
             return "OK", 200
         elif request.args.get('paused', '') == 'unpaused':
-            self.datastore.data['watching'].get(uuid).unpause()
+            watch_obj.unpause()
+            watch_obj.commit()
             return "OK", 200
         if request.args.get('muted', '') == 'muted':
-            self.datastore.data['watching'].get(uuid).mute()
+            watch_obj.mute()
+            watch_obj.commit()
             return "OK", 200
         elif request.args.get('muted', '') == 'unmuted':
-            self.datastore.data['watching'].get(uuid).unmute()
+            watch_obj.unmute()
+            watch_obj.commit()
             return "OK", 200
 
         # Return without history, get that via another API call
         # Properties are not returned as a JSON, so add the required props manually
-        watch['history_n'] = watch.history_n
+        watch['history_n'] = watch_obj.history_n
         # attr .last_changed will check for the last written text snapshot on change
-        watch['last_changed'] = watch.last_changed
-        watch['viewed'] = watch.viewed
-        watch['link'] = watch.link,
+        watch['last_changed'] = watch_obj.last_changed
+        watch['viewed'] = watch_obj.viewed
+        watch['link'] = watch_obj.link,
 
         return watch
 
@@ -169,58 +168,19 @@ class Watch(Resource):
 
         # Handle processor-config-* fields separately (save to JSON, not datastore)
         from changedetectionio import processors
-        processor_config_data = {}
-        regular_data = {}
 
-        for key, value in request.json.items():
-            if key.startswith('processor_config_'):
-                config_key = key.replace('processor_config_', '')
-                if value:  # Only save non-empty values
-                    processor_config_data[config_key] = value
-            else:
-                regular_data[key] = value
+        # Make a mutable copy of request.json for modification
+        json_data = dict(request.json)
+
+        # Extract and remove processor config fields from json_data
+        processor_config_data = processors.extract_processor_config_from_form_data(json_data)
 
         # Update watch with regular (non-processor-config) fields
-        watch.update(regular_data)
+        watch.update(json_data)
+        watch.commit()
 
-        # Save processor config to JSON file if any config data exists
-        if processor_config_data:
-            try:
-                processor_name = request.json.get('processor', watch.get('processor'))
-                if processor_name:
-                    # Create a processor instance to access config methods
-                    from changedetectionio.processors import difference_detection_processor
-                    processor_instance = difference_detection_processor(self.datastore, uuid)
-                    # Use processor name as filename so each processor keeps its own config
-                    config_filename = f'{processor_name}.json'
-                    processor_instance.update_extra_watch_config(config_filename, processor_config_data)
-                    logger.debug(f"API: Saved processor config to {config_filename}: {processor_config_data}")
-
-                    # Call optional edit_hook if processor has one
-                    try:
-                        import importlib
-                        edit_hook_module_name = f'changedetectionio.processors.{processor_name}.edit_hook'
-
-                        try:
-                            edit_hook = importlib.import_module(edit_hook_module_name)
-                            logger.debug(f"API: Found edit_hook module for {processor_name}")
-
-                            if hasattr(edit_hook, 'on_config_save'):
-                                logger.info(f"API: Calling edit_hook.on_config_save for {processor_name}")
-                                # Call hook and get updated config
-                                updated_config = edit_hook.on_config_save(watch, processor_config_data, self.datastore)
-                                # Save updated config back to file
-                                processor_instance.update_extra_watch_config(config_filename, updated_config)
-                                logger.info(f"API: Edit hook updated config: {updated_config}")
-                            else:
-                                logger.debug(f"API: Edit hook module found but no on_config_save function")
-                        except ModuleNotFoundError:
-                            logger.debug(f"API: No edit_hook module for processor {processor_name} (this is normal)")
-                    except Exception as hook_error:
-                        logger.error(f"API: Edit hook error (non-fatal): {hook_error}", exc_info=True)
-
-            except Exception as e:
-                logger.error(f"API: Failed to save processor config: {e}")
+        # Save processor config to JSON file
+        processors.save_processor_config(self.datastore, uuid, processor_config_data)
 
         return "OK", 200
 
@@ -464,7 +424,13 @@ class CreateWatch(Resource):
             except ValidationError as e:
                 return str(e), 400
 
+        # Handle processor-config-* fields separately (save to JSON, not watch)
+        from changedetectionio import processors
+
         extras = copy.deepcopy(json_data)
+
+        # Extract and remove processor config fields from extras
+        processor_config_data = processors.extract_processor_config_from_form_data(extras)
 
         # Because we renamed 'tag' to 'tags' but don't want to change the API (can do this in v2 of the API)
         tags = None
@@ -475,6 +441,10 @@ class CreateWatch(Resource):
         del extras['url']
 
         new_uuid = self.datastore.add_watch(url=url, extras=extras, tag=tags)
+
+        # Save processor config to separate JSON file
+        if new_uuid and processor_config_data:
+            processors.save_processor_config(self.datastore, new_uuid, processor_config_data)
         if new_uuid:
 # Dont queue because the scheduler will check that it hasnt been checked before anyway
 #            worker_pool.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))

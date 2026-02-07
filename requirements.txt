@@ -51,9 +51,9 @@ linkify-it-py
 
 # - Needed for apprise/spush, and maybe others? hopefully doesnt trigger a rust compile.
 # - Requires extra wheel for rPi, adds build time for arm/v8 which is not in piwheels
-# Pinned to 43.0.1 for ARM compatibility (45.x may not have pre-built ARM wheels)
+# Pinned to 44.x for ARM compatibility and sslyze compatibility (sslyze requires <45) and (45.x may not have pre-built ARM wheels)
 # Also pinned because dependabot wants specific versions
-cryptography==46.0.3
+cryptography==44.0.0
 
 # apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
 # use any version other than 2.0.x due to https://github.com/eclipse/paho.mqtt.python/issues/814
@@ -70,7 +70,7 @@ lxml >=4.8.0,!=5.2.0,!=5.2.1,<7
 
 # XPath 2.0-3.1 support - 4.2.0 had issues, 4.1.5 stable
 # Consider updating to latest stable version periodically
-elementpath==5.1.0
+elementpath==5.1.1
 
 # For fast image comparison in screenshot change detection
 # opencv-python-headless is OPTIONAL (excluded from requirements.txt)
@@ -91,7 +91,7 @@ jq~=1.3; python_version >= "3.8" and sys_platform == "linux"
 
 # playwright is installed at Dockerfile build time because it's not available on all platforms
 
-pyppeteer-ng==2.0.0rc12
+pyppeteer-ng==2.0.0rc13
 pyppeteerstealth>=0.0.4
 
 # Include pytest, so if theres a support issue we can ask them to run these tests on their setup
@@ -148,7 +148,7 @@ tzdata
 pluggy ~= 1.6
 
 # Needed for testing, cross-platform for process and system monitoring
-psutil==7.2.1
+psutil==7.2.2
 
 ruff >= 0.11.2
 pre_commit >= 4.2.0

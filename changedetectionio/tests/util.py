@@ -161,11 +161,6 @@ def extract_UUID_from_client(client):
 
 def delete_all_watches(client=None):
 
-    # Change tracking
-    client.application.config.get('DATASTORE')._dirty_watches = set()      # Watch UUIDs that need saving
-    client.application.config.get('DATASTORE')._dirty_settings = False     # Settings changed
-    client.application.config.get('DATASTORE')._watch_hashes = {}          # UUID -> SHA256 hash for change detection
-
     uuids = list(client.application.config.get('DATASTORE').data['watching'])
     for uuid in uuids:
         client.application.config.get('DATASTORE').delete(uuid)

@@ -52,7 +52,13 @@ def render(template_str, **args: t.Any) -> str:
     return output[:JINJA2_MAX_RETURN_PAYLOAD_SIZE]
 
 def render_fully_escaped(content):
-    env = jinja2.sandbox.ImmutableSandboxedEnvironment(autoescape=True)
-    template = env.from_string("{{ some_html|e }}")
-    return template.render(some_html=content)
+    """
+    Escape HTML content safely.
+
+    MEMORY LEAK FIX: Use markupsafe.escape() directly instead of creating
+    Jinja2 environments (was causing 1M+ compilations per page load).
+    Simpler, faster, and no concerns about environment state.
+    """
+    from markupsafe import escape
+    return str(escape(content))
 

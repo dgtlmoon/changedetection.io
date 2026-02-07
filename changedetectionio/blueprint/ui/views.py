@@ -24,8 +24,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             flash(gettext('Warning, URL {} already exists').format(url), "notice")
 
         add_paused = request.form.get('edit_and_watch_submit_button') != None
-        processor = request.form.get('processor', 'text_json_diff')
-        new_uuid = datastore.add_watch(url=url, tag=request.form.get('tags').strip(), extras={'paused': add_paused, 'processor': processor})
+        from changedetectionio import processors
+        processor = request.form.get('processor', processors.get_default_processor())
+        new_uuid = datastore.add_watch(url=url, tag=request.form.get('tags','').strip(), extras={'paused': add_paused, 'processor': processor})
 
         if new_uuid:
             if add_paused:

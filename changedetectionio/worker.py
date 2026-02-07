@@ -142,11 +142,14 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     processor = watch.get('processor', 'text_json_diff')
 
                     # Init a new 'difference_detection_processor'
-                    try:
-                        processor_module = importlib.import_module(f"changedetectionio.processors.{processor}.processor")
-                    except ModuleNotFoundError as e:
-                        print(f"Processor module '{processor}' not found.")
-                        raise e
+                    # Use get_processor_module() to support both built-in and plugin processors
+                    from changedetectionio.processors import get_processor_module
+                    processor_module = get_processor_module(processor)
+
+                    if not processor_module:
+                        error_msg = f"Processor module '{processor}' not found."
+                        logger.error(error_msg)
+                        raise ModuleNotFoundError(error_msg)
 
                     update_handler = processor_module.perform_site_check(datastore=datastore,
                                                                          watch_uuid=uuid)
@@ -365,8 +368,9 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     logger.error(f"Exception (BrowserStepsInUnsupportedFetcher) reached processing watch UUID: {uuid}")
 
                 except Exception as e:
+                    import traceback
                     logger.error(f"Worker {worker_id} exception processing watch UUID: {uuid}")
-                    logger.error(str(e))
+                    logger.exception(f"Worker {worker_id} full exception details:")
                     datastore.update_watch(uuid=uuid, update_obj={'last_error': "Exception: " + str(e)})
                     process_changedetection_results = False
 
@@ -385,8 +389,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                 if not datastore.data['watching'].get(uuid):
                     continue
 
-                logger.debug(f"Processing watch UUID: {uuid} - xpath_data length returned {len(update_handler.xpath_data) if update_handler.xpath_data else 'empty.'}")
-                if process_changedetection_results:
+                logger.debug(f"Processing watch UUID: {uuid} - xpath_data length returned {len(update_handler.xpath_data) if update_handler and update_handler.xpath_data else 'empty.'}")
+                if update_handler and process_changedetection_results:
                     try:
                         datastore.update_watch(uuid=uuid, update_obj=update_obj)
 
@@ -430,64 +434,62 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                                     await send_content_changed_notification(uuid, notification_q, datastore)
 
                     except Exception as e:
+
                         logger.critical(f"Worker {worker_id} exception in process_changedetection_results")
-                        logger.critical(str(e))
+                        logger.exception(f"Worker {worker_id} full exception details:")
                         datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
 
                 # Always record attempt count
                 count = watch.get('check_count', 0) + 1
+                if update_handler: # Could be none or empty if the processor was not found
+                    # Always record page title (used in notifications, and can change even when the content is the same)
+                    if update_obj.get('content-type') and 'html' in update_obj.get('content-type'):
+                        try:
+                            page_title = html_tools.extract_title(data=update_handler.fetcher.content)
+                            if page_title:
+                                page_title = page_title.strip()[:2000]
+                                logger.debug(f"UUID: {uuid} Page <title> is '{page_title}'")
+                                datastore.update_watch(uuid=uuid, update_obj={'page_title': page_title})
+                        except Exception as e:
+                            logger.exception(f"Worker {worker_id} full exception details:")
+                            logger.warning(f"UUID: {uuid} Exception when extracting <title> - {str(e)}")
 
-                # Always record page title (used in notifications, and can change even when the content is the same)
-                if update_obj.get('content-type') and 'html' in update_obj.get('content-type'):
+                    # Record server header
                     try:
-                        page_title = html_tools.extract_title(data=update_handler.fetcher.content)
-                        if page_title:
-                            page_title = page_title.strip()[:2000]
-                            logger.debug(f"UUID: {uuid} Page <title> is '{page_title}'")
-                            datastore.update_watch(uuid=uuid, update_obj={'page_title': page_title})
+                        server_header = update_handler.fetcher.headers.get('server', '').strip().lower()[:255]
+                        datastore.update_watch(uuid=uuid, update_obj={'remote_server_reply': server_header})
                     except Exception as e:
-                        logger.warning(f"UUID: {uuid} Exception when extracting <title> - {str(e)}")
+                        pass
 
-                # Record server header
-                try:
-                    server_header = update_handler.fetcher.headers.get('server', '').strip().lower()[:255]
-                    datastore.update_watch(uuid=uuid, update_obj={'remote_server_reply': server_header})
-                except Exception as e:
-                    pass
+                    # Store favicon if necessary
+                    if update_handler.fetcher.favicon_blob and update_handler.fetcher.favicon_blob.get('base64'):
+                        watch.bump_favicon(url=update_handler.fetcher.favicon_blob.get('url'),
+                                           favicon_base_64=update_handler.fetcher.favicon_blob.get('base64')
+                                           )
 
-                # Store favicon if necessary
-                if update_handler.fetcher.favicon_blob and update_handler.fetcher.favicon_blob.get('base64'):
-                    watch.bump_favicon(url=update_handler.fetcher.favicon_blob.get('url'),
-                                       favicon_base_64=update_handler.fetcher.favicon_blob.get('base64')
-                                       )
+                    datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - fetch_start_time, 3),
+                                                                   'check_count': count})
 
-                datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - fetch_start_time, 3),
-                                                               'check_count': count})
+                    # NOW clear fetcher content - after all processing is complete
+                    # This is the last point where we need the fetcher data
+                    if update_handler and hasattr(update_handler, 'fetcher') and update_handler.fetcher:
+                        update_handler.fetcher.clear_content()
+                        logger.debug(f"Cleared fetcher content for UUID {uuid}")
 
-                # NOW clear fetcher content - after all processing is complete
-                # This is the last point where we need the fetcher data
-                if update_handler and hasattr(update_handler, 'fetcher') and update_handler.fetcher:
-                    update_handler.fetcher.clear_content()
-                    logger.debug(f"Cleared fetcher content for UUID {uuid}")
+                    # Explicitly delete update_handler to free all references
+                    if update_handler:
+                        del update_handler
+                        update_handler = None
 
-                # Explicitly delete update_handler to free all references
-                if update_handler:
-                    del update_handler
-                    update_handler = None
-
-                # Force aggressive memory cleanup after clearing
+                # Force garbage collection
                 import gc
                 gc.collect()
-                try:
-                    import ctypes
-                    ctypes.CDLL('libc.so.6').malloc_trim(0)
-                except Exception:
-                    pass
 
         except Exception as e:
+
             logger.error(f"Worker {worker_id} unexpected error processing {uuid}: {e}")
-            logger.error(f"Worker {worker_id} traceback:", exc_info=True)
-            
+            logger.exception(f"Worker {worker_id} full exception details:")
+
             # Also update the watch with error information
             if datastore and uuid in datastore.data['watching']:
                 datastore.update_watch(uuid=uuid, update_obj={'last_error': f"Worker error: {str(e)}"})
@@ -495,49 +497,43 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
         finally:
             # Always cleanup - this runs whether there was an exception or not
             if uuid:
+                # Call quit() as backup (Puppeteer/Playwright have internal cleanup, but this acts as safety net)
                 try:
                     if update_handler and hasattr(update_handler, 'fetcher') and update_handler.fetcher:
                         await update_handler.fetcher.quit(watch=watch)
                 except Exception as e:
                     logger.error(f"Exception while cleaning/quit after calling browser: {e}")
+                    logger.exception(f"Worker {worker_id} full exception details:")
+
                 try:
                     # Release UUID from processing (thread-safe)
                     worker_pool.release_uuid_from_processing(uuid, worker_id=worker_id)
-                    
+
                     # Send completion signal
                     if watch:
-                        #logger.info(f"Worker {worker_id} sending completion signal for UUID {watch['uuid']}")
                         watch_check_update.send(watch_uuid=watch['uuid'])
 
-                    # Explicitly clean up update_handler and all its references
+                    # Clean up all memory references BEFORE garbage collection
                     if update_handler:
-                        # Clear fetcher content using the proper method
                         if hasattr(update_handler, 'fetcher') and update_handler.fetcher:
                             update_handler.fetcher.clear_content()
-
-                        # Clear processor references
                         if hasattr(update_handler, 'content_processor'):
                             update_handler.content_processor = None
-
+                        del update_handler
                         update_handler = None
 
-                    # Clear local contents variable if it still exists
+                    # Clear large content variables
                     if 'contents' in locals():
                         del contents
 
-                    # Note: We don't set watch = None here because:
-                    # 1. watch is just a local reference to datastore.data['watching'][uuid]
-                    # 2. Setting it to None doesn't affect the datastore
-                    # 3. GC can't collect the object anyway (still referenced by datastore)
-                    # 4. It would just cause confusion
-
-                    # Force garbage collection after cleanup
+                    # Force garbage collection after all references are cleared
                     import gc
                     gc.collect()
 
                     logger.debug(f"Worker {worker_id} completed watch {uuid} in {time.time()-fetch_start_time:.2f}s")
                 except Exception as cleanup_error:
                     logger.error(f"Worker {worker_id} error during cleanup: {cleanup_error}")
+                    logger.exception(f"Worker {worker_id} full exception details:")
 
             del(uuid)
 

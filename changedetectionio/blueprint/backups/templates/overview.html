@@ -3,10 +3,10 @@
     {% from '_helpers.html' import render_simple_field, render_field %}
     <div class="edit-form">
         <div class="box-wrap inner">
-            <h4>{{ _('Backups') }}</h4>
+            <h2>{{ _('Backups') }}</h2>
             {% if backup_running %}
                 <p>
-                    <strong>{{ _('A backup is running!') }}</strong>
+                    <span class="spinner"></span>&nbsp;<strong>{{ _('A backup is running!') }}</strong>
                 </p>
             {% endif %}
             <p>

@@ -4,6 +4,13 @@ from changedetectionio.model.Watch import model as BaseWatch
 from typing import Union
 import re
 
+# Processor capabilities
+supports_visual_selector = True
+supports_browser_steps = True
+supports_text_filters_and_triggers = True
+supports_text_filters_and_triggers_elements = True
+supports_request_type = True
+
 class Restock(dict):
 
     def parse_currency(self, raw_value: str) -> Union[float, None]:

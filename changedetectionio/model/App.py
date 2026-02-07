@@ -46,6 +46,7 @@ class model(dict):
                     'filter_failure_notification_threshold_attempts': _FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT,
                     'global_ignore_text': [], # List of text to ignore when calculating the comparison checksum
                     'global_subtractive_selectors': [],
+                    'history_snapshot_max_length': None,
                     'ignore_whitespace': True,
                     'ignore_status_codes': False, #@todo implement, as ternary.
                     'ssim_threshold': '0.96',  # Default SSIM threshold for screenshot comparison

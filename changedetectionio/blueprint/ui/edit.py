@@ -71,8 +71,13 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         processor_name = datastore.data['watching'][uuid].get('processor', '')
         processor_classes = next((tpl for tpl in processors.find_processors() if tpl[1] == processor_name), None)
         if not processor_classes:
-            flash(gettext("Cannot load the edit form for processor/plugin '{}', plugin missing?").format(processor_classes[1]), 'error')
-            return redirect(url_for('watchlist.index'))
+            flash(gettext("Could not load '{}' processor, processor plugin might be missing. Please select a different processor.").format(processor_name), 'error')
+            # Fall back to default processor so user can still edit and change processor
+            processor_classes = next((tpl for tpl in processors.find_processors() if tpl[1] == 'text_json_diff'), None)
+            if not processor_classes:
+                # If even text_json_diff is missing, something is very wrong
+                flash(gettext("Could not load '{}' processor, processor plugin might be missing.").format(processor_name), 'error')
+                return redirect(url_for('watchlist.index'))
 
         parent_module = processors.get_parent_module(processor_classes[0])
 
@@ -149,58 +154,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
             extra_update_obj['time_between_check'] = form.time_between_check.data
 
-             # Handle processor-config-* fields separately (save to JSON, not datastore)
-            processor_config_data = {}
-            fields_to_remove = []
-            for field_name, field_value in form.data.items():
-                if field_name.startswith('processor_config_'):
-                    config_key = field_name.replace('processor_config_', '')
-                    if field_value:  # Only save non-empty values
-                        processor_config_data[config_key] = field_value
-                    fields_to_remove.append(field_name)
-
-            # Save processor config to JSON file if any config data exists
-            if processor_config_data:
-                try:
-                    processor_name = form.data.get('processor')
-                    # Create a processor instance to access config methods
-                    processor_instance = processors.difference_detection_processor(datastore, uuid)
-                    # Use processor name as filename so each processor keeps its own config
-                    config_filename = f'{processor_name}.json'
-                    processor_instance.update_extra_watch_config(config_filename, processor_config_data)
-                    logger.debug(f"Saved processor config to {config_filename}: {processor_config_data}")
-
-                    # Call optional edit_hook if processor has one
-                    try:
-                        # Try to import the edit_hook module from the processor package
-                        import importlib
-                        edit_hook_module_name = f'changedetectionio.processors.{processor_name}.edit_hook'
-
-                        try:
-                            edit_hook = importlib.import_module(edit_hook_module_name)
-                            logger.debug(f"Found edit_hook module for {processor_name}")
-
-                            if hasattr(edit_hook, 'on_config_save'):
-                                logger.info(f"Calling edit_hook.on_config_save for {processor_name}")
-                                watch_obj = datastore.data['watching'][uuid]
-                                # Call hook and get updated config
-                                updated_config = edit_hook.on_config_save(watch_obj, processor_config_data, datastore)
-                                # Save updated config back to file
-                                processor_instance.update_extra_watch_config(config_filename, updated_config)
-                                logger.info(f"Edit hook updated config: {updated_config}")
-                            else:
-                                logger.debug(f"Edit hook module found but no on_config_save function")
-                        except ModuleNotFoundError:
-                            logger.debug(f"No edit_hook module for processor {processor_name} (this is normal)")
-                    except Exception as hook_error:
-                        logger.error(f"Edit hook error (non-fatal): {hook_error}", exc_info=True)
-
-                except Exception as e:
-                    logger.error(f"Failed to save processor config: {e}")
-
-            # Remove processor-config-* fields from form.data before updating datastore
-            for field_name in fields_to_remove:
-                form.data.pop(field_name, None)
+            # Handle processor-config-* fields separately (save to JSON, not datastore)
+            # IMPORTANT: These must NOT be saved to url-watches.json, only to the processor-specific JSON file
+            processor_config_data = processors.extract_processor_config_from_form_data(form.data)
+            processors.save_processor_config(datastore, uuid, processor_config_data)
 
             # Ignore text
             form_ignore_text = form.ignore_text.data
@@ -240,7 +197,11 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
             # Recast it if need be to right data Watch handler
             watch_class = processors.get_custom_watch_obj_for_processor(form.data.get('processor'))
-            datastore.data['watching'][uuid] = watch_class(datastore_path=datastore.datastore_path, default=datastore.data['watching'][uuid])
+            datastore.data['watching'][uuid] = watch_class(datastore_path=datastore.datastore_path, __datastore=datastore.data, default=datastore.data['watching'][uuid])
+
+            # Save the watch immediately
+            datastore.data['watching'][uuid].commit()
+
             flash(gettext("Updated watch - unpaused!") if request.args.get('unpause_on_save') else gettext("Updated watch."))
 
             # Cleanup any browsersteps session for this watch
@@ -249,10 +210,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 cleanup_session_for_watch(uuid)
             except Exception as e:
                 logger.debug(f"Error cleaning up browsersteps session: {e}")
-
-            # Re #286 - We wait for syncing new data to disk in another thread every 60 seconds
-            # But in the case something is added we should save straight away
-            datastore.needs_write_urgent = True
 
             # Do not queue on edit if its not within the time range
 
@@ -310,6 +267,13 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
             # Get fetcher capabilities instead of hardcoded logic
             capabilities = get_fetcher_capabilities(watch, datastore)
+
+            # Add processor capabilities from module
+            capabilities['supports_visual_selector'] = getattr(parent_module, 'supports_visual_selector', False)
+            capabilities['supports_text_filters_and_triggers'] = getattr(parent_module, 'supports_text_filters_and_triggers', False)
+            capabilities['supports_text_filters_and_triggers_elements'] = getattr(parent_module, 'supports_text_filters_and_triggers_elements', False)
+            capabilities['supports_request_type'] = getattr(parent_module, 'supports_request_type', False)
+
             app_rss_token = datastore.data['settings']['application'].get('rss_access_token'),
 
             c = [f"processor-{watch.get('processor')}"]
@@ -422,6 +386,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                     s = re.escape(l.strip())
                     s = re.sub(r'[0-9]+', r'\\d+', s)
                     datastore.data["watching"][uuid]['ignore_text'].append('/' + s + '/')
+
+            # Save the updated ignore_text
+            datastore.data["watching"][uuid].commit()
 
         return f"<a href={url_for('ui.ui_preview.preview_page', uuid=uuid)}>Click to preview</a>"
     

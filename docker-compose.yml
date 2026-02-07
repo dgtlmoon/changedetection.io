@@ -16,6 +16,13 @@ services:
   #        Log output levels: TRACE, DEBUG(default), INFO, SUCCESS, WARNING, ERROR, CRITICAL
   #      - LOGGER_LEVEL=TRACE
   #
+  #        Plugins! See https://changedetection.io/plugins for more plugins.
+  #        Install additional Python packages (processor plugins, etc.)
+  #        Example: Install the OSINT reconnaissance processor plugin
+  #      - EXTRA_PACKAGES=changedetection.io-osint-processor
+  #        Multiple packages can be installed by separating with spaces:
+  #      - EXTRA_PACKAGES=changedetection.io-osint-processor another-plugin
+  #
   #
   #       Uncomment below and the "sockpuppetbrowser" to use a real Chrome browser (It uses the "playwright" protocol)
   #      - PLAYWRIGHT_DRIVER_URL=ws://browser-sockpuppet-chrome:3000

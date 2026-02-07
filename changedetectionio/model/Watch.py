@@ -1,3 +1,32 @@
+"""
+Watch domain model for change detection monitoring.
+
+ARCHITECTURE NOTE: Configuration Override Hierarchy
+===================================================
+
+This module implements Watch objects that inherit from dict (technical debt).
+The dream architecture would use Pydantic for:
+
+1. CHAIN RESOLUTION (Watch → Tag → Global Settings)
+   - Current: Manual resolution scattered across codebase
+   - Future: @computed_field properties with automatic resolution
+   - Examples: resolved_fetch_backend, resolved_restock_settings, etc.
+
+2. DATABASE BACKEND ABSTRACTION
+   - Current: Domain model tightly coupled to file-based JSON storage
+   - Future: Domain model (Pydantic) separate from persistence layer
+   - Enables: Easy migration to PostgreSQL, MongoDB, etc.
+
+3. TYPE SAFETY & VALIDATION
+   - Current: Dict access with no compile-time checks
+   - Future: Type hints, IDE autocomplete, validation at boundaries
+
+See class model docstring for detailed explanation and examples.
+See: processors/restock_diff/processor.py:184-192 for manual resolution example
+"""
+import gc
+from copy import copy
+
 from blinker import signal
 from changedetectionio.validate_url import is_safe_valid_url
 
@@ -13,7 +42,7 @@ from .. import jinja2_custom as safe_jinja
 from ..html_tools import TRANSLATE_WHITESPACE_TABLE
 
 FAVICON_RESAVE_THRESHOLD_SECONDS=86400
-BROTLI_COMPRESS_SIZE_THRESHOLD = int(os.getenv('SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD', 1024))
+BROTLI_COMPRESS_SIZE_THRESHOLD = int(os.getenv('SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD', 1024*20))
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
@@ -101,6 +130,99 @@ def _brotli_save(contents, filepath, mode=None, fallback_uncompressed=False):
 
 
 class model(watch_base):
+    """
+    Watch domain model for monitoring URL changes.
+
+    Inherits from watch_base (which inherits dict) - see watch_base docstring for field documentation.
+
+    ## Configuration Override Hierarchy (Chain Resolution)
+
+    The dream architecture uses a 3-level resolution chain:
+        Watch settings → Tag/Group settings → Global settings
+
+    Current implementation is MANUAL (see processor.py:184-192 for example):
+        - Processors manually check watch.get('field')
+        - Then loop through watch.tags to find first tag with overrides_watch=True
+        - Finally fall back to datastore['settings']['application']['field']
+
+    FUTURE: Pydantic-based chain resolution would enable:
+
+        ```python
+        # Instead of manual resolution in every processor:
+        restock_settings = watch.get('restock_settings', {})
+        for tag_uuid in watch.get('tags'):
+            tag = datastore['settings']['application']['tags'][tag_uuid]
+            if tag.get('overrides_watch'):
+                restock_settings = tag.get('restock_settings', {})
+                break
+
+        # Clean computed properties with automatic resolution:
+        @computed_field
+        def resolved_restock_settings(self) -> dict:
+            if self.restock_settings:
+                return self.restock_settings
+            for tag_uuid in self.tags:
+                tag = self._datastore.get_tag(tag_uuid)
+                if tag.overrides_watch and tag.restock_settings:
+                    return tag.restock_settings
+            return self._datastore.settings.restock_settings or {}
+
+        # Usage: watch.resolved_restock_settings (automatic, type-safe, tested once)
+        ```
+
+    Benefits of Pydantic migration:
+        1. Single source of truth for resolution logic (not scattered across processors)
+        2. Type safety + IDE autocomplete (watch.resolved_fetch_backend vs dict navigation)
+        3. Database backend abstraction (domain model separate from persistence)
+        4. Automatic validation at boundaries
+        5. Self-documenting via type hints
+        6. Easy to test resolution independently
+
+    Resolution chain examples that would benefit:
+        - fetch_backend: watch → tag → global (see get_fetch_backend property)
+        - notification_urls: watch → tag → global
+        - time_between_check: watch → global (see threshold_seconds)
+        - restock_settings: watch → tag (see processors/restock_diff/processor.py:184-192)
+        - history_snapshot_max_length: watch → global (see save_history_blob:550-556)
+        - All processor_config_* settings could use tag overrides
+
+    ## Database Backend Abstraction with Pydantic
+
+    Current: Watch inherits dict, tightly coupled to file-based JSON storage
+    Future: Domain model (Watch) separate from persistence layer
+
+        ```python
+        # Domain model (database-agnostic)
+        class Watch(BaseModel):
+            uuid: str
+            url: str
+            # ... validation, business logic
+
+        # Pluggable backends
+        class DataStoreBackend(ABC):
+            def save_watch(self, watch: Watch): ...
+            def load_watch(self, uuid: str) -> Watch: ...
+
+        # Implementations: FileBackend, MongoBackend, PostgresBackend, etc.
+        ```
+
+    This would enable:
+        - Easy migration between storage backends (file → postgres → mongodb)
+        - Pydantic handles serialization/deserialization automatically
+        - Domain logic stays clean (no storage concerns in Watch methods)
+
+    ## Migration Path
+
+    Given existing codebase, incremental migration recommended:
+        1. Create Pydantic models alongside existing dict-based models
+        2. Add .to_pydantic() / .from_pydantic() bridge methods
+        3. Gradually migrate code to use Pydantic models
+        4. Remove dict inheritance once migration complete
+
+    See: watch_base docstring for technical debt discussion
+    See: processors/restock_diff/processor.py:184-192 for manual resolution example
+    See: Watch.py:550-556 for nested dict navigation that would become watch.resolved_*
+    """
     __newest_history_key = None
     __history_n = 0
     jitter_seconds = 0
@@ -109,8 +231,15 @@ class model(watch_base):
         self.__datastore_path = kw.get('datastore_path')
         if kw.get('datastore_path'):
             del kw['datastore_path']
-            
+
+        self.__datastore = kw.get('__datastore')
+        if not self.__datastore:
+            raise ValueError("Watch object requires '__datastore' reference - cannot access global settings without it")
+        if kw.get('__datastore'):
+            del kw['__datastore']
+
         super(model, self).__init__(*arg, **kw)
+
         if kw.get('default'):
             self.update(kw['default'])
             del kw['default']
@@ -120,6 +249,9 @@ class model(watch_base):
 
         # Be sure the cached timestamp is ready
         bump = self.history
+
+    # Note: __deepcopy__, __getstate__, and __setstate__ are inherited from watch_base
+    # This prevents memory leaks by sharing __datastore reference instead of copying it
 
     @property
     def viewed(self):
@@ -230,8 +362,30 @@ class model(watch_base):
     @property
     def get_fetch_backend(self):
         """
-        Like just using the `fetch_backend` key but there could be some logic
-        :return:
+        Get the fetch backend for this watch with special case handling.
+
+        CHAIN RESOLUTION OPPORTUNITY:
+        Currently returns watch.fetch_backend directly, but doesn't implement
+        Watch → Tag → Global resolution chain. With Pydantic:
+
+        @computed_field
+        def resolved_fetch_backend(self) -> str:
+            # Special case: PDFs always use html_requests
+            if self.is_pdf:
+                return 'html_requests'
+
+            # Watch override
+            if self.fetch_backend and self.fetch_backend != 'system':
+                return self.fetch_backend
+
+            # Tag override (first tag with overrides_watch=True wins)
+            for tag_uuid in self.tags:
+                tag = self._datastore.get_tag(tag_uuid)
+                if tag.overrides_watch and tag.fetch_backend:
+                    return tag.fetch_backend
+
+            # Global default
+            return self._datastore.settings.fetch_backend
         """
         # Maybe also if is_image etc?
         # This is because chrome/playwright wont render the PDF in the browser and we will just fetch it and use pdf2html to see the text.
@@ -423,16 +577,49 @@ class model(watch_base):
         with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
             return f.read()
 
-    def _write_atomic(self, dest, data):
+    def _write_atomic(self, dest, data, mode='wb'):
         """Write data atomically to dest using a temp file"""
-        if not os.path.exists(dest):
-            import tempfile
-            with tempfile.NamedTemporaryFile('wb', delete=False, dir=self.watch_data_dir) as tmp:
-                tmp.write(data)
-                tmp.flush()
-                os.fsync(tmp.fileno())
-                tmp_path = tmp.name
-            os.replace(tmp_path, dest)
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode, delete=False, dir=self.watch_data_dir) as tmp:
+            tmp.write(data)
+            tmp.flush()
+            os.fsync(tmp.fileno())
+            tmp_path = tmp.name
+        os.replace(tmp_path, dest)
+
+    def history_trim(self, newest_n_items):
+        from pathlib import Path
+
+        # Sort by timestamp (key)
+        sorted_items = sorted(self.history.items(), key=lambda x: int(x[0]))
+
+        keep_part = dict(sorted_items[-newest_n_items:])
+        delete_part = dict(sorted_items[:-newest_n_items])
+        logger.info( f"[{self.get('uuid')}] Trimming history to most recent {newest_n_items} items, keeping {len(keep_part)} items deleting {len(delete_part)} items.")
+
+        if delete_part:
+            for item in delete_part.items():
+                try:
+                    Path(item[1]).unlink(missing_ok=True)
+                except Exception as e:
+                    logger.critical(f"{str(e)}")
+                finally:
+                    logger.debug(f"[{self.get('uuid')}] Deleted {item[1]} history snapshot")
+        try:
+            dest = os.path.join(self.watch_data_dir, self.history_index_filename)
+            output = "\r\n".join(
+                f"{k},{Path(v).name}"
+                for k, v in keep_part.items()
+            )+"\r\n"
+            self._write_atomic(dest=dest, data=output, mode='w')
+        except Exception as e:
+            logger.critical(f"{str(e)}")
+        finally:
+            logger.debug(f"[{self.get('uuid')}] Updated history index {dest}")
+
+        # reimport
+        bump = self.history
+        gc.collect()
 
     # Save some text file to the appropriate path and bump the history
     # result_obj from fetch_site_status.run()
@@ -441,7 +628,6 @@ class model(watch_base):
         logger.trace(f"{self.get('uuid')} - Updating {self.history_index_filename} with timestamp {timestamp}")
 
         self.ensure_data_dir_exists()
-
         skip_brotli = strtobool(os.getenv('DISABLE_BROTLI_TEXT_SNAPSHOT', 'False'))
 
         # Binary data - detect file type and save without compression
@@ -500,6 +686,20 @@ class model(watch_base):
         # Update internal state
         self.__newest_history_key = timestamp
         self.__history_n += 1
+
+        # MANUAL CHAIN RESOLUTION: Watch → Global
+        # With Pydantic, this would become: maxlen = watch.resolved_history_snapshot_max_length
+        # @computed_field def resolved_history_snapshot_max_length(self) -> Optional[int]:
+        #     if self.history_snapshot_max_length: return self.history_snapshot_max_length
+        #     if tag := self._get_override_tag(): return tag.history_snapshot_max_length
+        #     return self._datastore.settings.history_snapshot_max_length
+        maxlen = (
+                self.get('history_snapshot_max_length')
+                or (self.__datastore and self.__datastore['settings']['application'].get('history_snapshot_max_length'))
+        )
+
+        if maxlen and self.__history_n and self.__history_n > maxlen:
+            self.history_trim(newest_n_items=maxlen)
 
         # @todo bump static cache of the last timestamp so we dont need to examine the file to set a proper ''viewed'' status
         return snapshot_fname
@@ -613,6 +813,11 @@ class model(watch_base):
                 try:
                     with open(fname, 'wb') as f:
                         f.write(decoded)
+
+                    # Invalidate favicon filename cache
+                    if hasattr(self, '_favicon_filename_cache'):
+                        delattr(self, '_favicon_filename_cache')
+
                     # A signal that could trigger the socket server to update the browser also
                     watch_check_update = signal('watch_favicon_bump')
                     if watch_check_update:
@@ -629,20 +834,32 @@ class model(watch_base):
         Find any favicon.* file in the current working directory
         and return the contents of the newest one.
 
+        MEMORY LEAK FIX: Cache the result to avoid repeated glob.glob() operations.
+        glob.glob() causes millions of fnmatch allocations when called for every watch on page load.
+
         Returns:
-            bytes: Contents of the newest favicon file, or None if not found.
+            str: Basename of the newest favicon file, or None if not found.
         """
+        # Check cache first (prevents 26M+ allocations from repeated glob operations)
+        cache_key = '_favicon_filename_cache'
+        if hasattr(self, cache_key):
+            return getattr(self, cache_key)
+
         import glob
 
         # Search for all favicon.* files
         files = glob.glob(os.path.join(self.watch_data_dir, "favicon.*"))
 
         if not files:
-            return None
+            result = None
+        else:
+            # Find the newest by modification time
+            newest_file = max(files, key=os.path.getmtime)
+            result = os.path.basename(newest_file)
 
-        # Find the newest by modification time
-        newest_file = max(files, key=os.path.getmtime)
-        return os.path.basename(newest_file)
+        # Cache the result
+        setattr(self, cache_key, result)
+        return result
 
     def get_screenshot_as_thumbnail(self, max_age=3200):
         """Return path to a square thumbnail of the most recent screenshot.
@@ -772,6 +989,57 @@ class model(watch_base):
 
     def toggle_mute(self):
         self['notification_muted'] ^= True
+
+    def commit(self):
+        """
+        Save this watch immediately to disk using atomic write.
+
+        Replaces the old dirty-tracking system with immediate persistence.
+        Uses atomic write pattern (temp file + rename) for crash safety.
+
+        Fire-and-forget: Logs errors but does not raise exceptions.
+        Watch data remains in memory even if save fails, so next commit will retry.
+        """
+        from loguru import logger
+
+        if not self.__datastore:
+            logger.error(f"Cannot commit watch {self.get('uuid')} without datastore reference")
+            return
+
+        if not self.watch_data_dir:
+            logger.error(f"Cannot commit watch {self.get('uuid')} without datastore_path")
+            return
+
+        # Convert to dict for serialization, excluding processor config keys
+        # Processor configs are stored separately in processor-specific JSON files
+        # Use deepcopy to prevent mutations from affecting the original Watch object
+        import copy
+
+        # Acquire datastore lock to prevent concurrent modifications during copy
+        # Take a quick shallow snapshot under lock, then deep copy outside lock
+        lock = self.__datastore.lock if self.__datastore and hasattr(self.__datastore, 'lock') else None
+
+        if lock:
+            with lock:
+                snapshot = dict(self)
+        else:
+            snapshot = dict(self)
+
+        # Deep copy snapshot (slower, but done outside lock to minimize contention)
+        watch_dict = {k: copy.deepcopy(v) for k, v in snapshot.items() if not k.startswith('processor_config_')}
+
+        # Normalize browser_steps: if no meaningful steps, save as empty list
+        if not self.has_browser_steps:
+            watch_dict['browser_steps'] = []
+
+        # Use existing atomic write helper
+        from changedetectionio.store.file_saving_datastore import save_watch_atomic
+        try:
+            save_watch_atomic(self.watch_data_dir, self.get('uuid'), watch_dict)
+            logger.debug(f"Committed watch {self.get('uuid')}")
+        except Exception as e:
+            logger.error(f"Failed to commit watch {self.get('uuid')}: {e}")
+
 
     def extra_notification_token_values(self):
         # Used for providing extra tokens

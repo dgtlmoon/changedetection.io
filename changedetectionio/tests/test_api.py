@@ -465,7 +465,10 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage, datasto
 
     assert res.status_code == 400, "Should get error 400 when we give a field that doesnt exist"
     # Message will come from `flask_expects_json`
-    assert b'Additional properties are not allowed' in res.data
+    # With patternProperties for processor_config_*, the error message format changed slightly
+    assert (b'Additional properties are not allowed' in res.data or
+            b'does not match any of the regexes' in res.data), \
+            "Should reject unknown fields with schema validation error"
 
 
     # Try a XSS URL

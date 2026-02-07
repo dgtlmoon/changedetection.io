@@ -39,7 +39,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             elif op == 'mute':
                 datastore.data['watching'][uuid].toggle_mute()
 
-            datastore.needs_write = True
+            datastore.data['watching'][uuid].commit()
             return redirect(url_for('watchlist.index', tag = active_tag_uuid))
 
         # Sort by last_changed and add the uuid which is usually the key..
