@@ -373,8 +373,10 @@ def load_tag_from_file(tag_json, uuid, rehydrate_entity_func):
             with open(tag_json, 'r', encoding='utf-8') as f:
                 tag_data = json.load(f)
 
+        tag_data['processor'] = 'restock_diff'
         # Rehydrate tag (convert dict to Tag object)
-        tag_obj = rehydrate_entity_func(uuid, tag_data, processor_override='restock_diff')
+        # processor_override is set inside the rehydration function
+        tag_obj = rehydrate_entity_func(uuid, tag_data)
         return tag_obj
 
     except json.JSONDecodeError as e:
