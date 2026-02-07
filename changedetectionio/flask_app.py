@@ -848,7 +848,7 @@ def changedetection_app(config=None, datastore_o=None):
     app.register_blueprint(watchlist.construct_blueprint(datastore=datastore, update_q=update_q, queuedWatchMetaData=queuedWatchMetaData), url_prefix='')
 
     # Initialize Socket.IO server conditionally based on settings
-    socket_io_enabled = datastore.data['settings']['application']['ui'].get('socket_io_enabled', True)
+    socket_io_enabled = datastore.data['settings']['application'].get('ui', {}).get('socket_io_enabled', True)
     if socket_io_enabled and app.config.get('batch_mode'):
         socket_io_enabled = False
     if socket_io_enabled:
