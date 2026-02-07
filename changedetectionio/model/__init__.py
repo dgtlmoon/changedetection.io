@@ -13,12 +13,32 @@ class watch_base(dict):
     Dict inheritance is legacy technical debt that should be refactored to a proper
     domain model (e.g., Pydantic BaseModel) for better type safety and validation.
 
-    TODO: Migrate to Pydantic BaseModel or dataclass for:
+    TODO: Migrate to Pydantic BaseModel for:
           - Type safety and IDE autocomplete
           - Automatic validation
           - Clear separation between domain model and serialization
+          - Database backend abstraction (file → postgres → mongodb)
+          - Configuration override chain resolution (Watch → Tag → Global)
           - Immutability options
           - Better testing
+
+    CHAIN RESOLUTION ARCHITECTURE:
+        The dream is a 3-level override hierarchy:
+            Watch settings → Tag/Group settings → Global settings
+
+        Current implementation: MANUAL resolution scattered across codebase
+        - Processors manually check watch.get('field')
+        - Loop through tags to find overrides_watch=True
+        - Fall back to datastore['settings']['application']['field']
+
+        Pydantic implementation: AUTOMATIC resolution via @computed_field
+        - Single source of truth for each setting's resolution logic
+        - Type-safe, testable, self-documenting
+        - Example: watch.resolved_fetch_backend (instead of nested dict navigation)
+
+        See: Watch.py model docstring for detailed Pydantic architecture plan
+        See: Tag.py model docstring for tag override explanation
+        See: processors/restock_diff/processor.py:184-192 for current manual example
 
     Core Fields:
         uuid (str): Unique identifier for this watch (auto-generated)
