@@ -334,8 +334,10 @@ class watch_base(dict):
                     attr_value = getattr(self, attr_name)
 
                     # Special handling: Share references to large objects instead of copying
-                    # Examples: __datastore, __app_reference, __global_settings, etc.
-                    if attr_name.endswith('__datastore') or attr_name.endswith('__app'):
+                    # Examples: _datastore, __datastore, __app_reference, __global_settings, etc.
+                    if (attr_name == '_datastore' or
+                        attr_name.endswith('__datastore') or
+                        attr_name.endswith('__app')):
                         # Share the reference (don't copy!) to prevent memory leaks
                         setattr(new_obj, attr_name, attr_value)
                     # Skip cache attributes - let them regenerate on demand
@@ -365,7 +367,8 @@ class watch_base(dict):
                 try:
                     attr_value = getattr(self, attr_name)
                     # Exclude large reference objects and caches from serialization
-                    if not (attr_name.endswith('__datastore') or
+                    if not (attr_name == '_datastore' or
+                           attr_name.endswith('__datastore') or
                            attr_name.endswith('__app') or
                            'cache' in attr_name.lower() or
                            callable(attr_value)):
