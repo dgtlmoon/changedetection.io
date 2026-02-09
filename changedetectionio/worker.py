@@ -428,7 +428,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                             del contents
 
                             # Send notifications on second+ check
-                            if watch.history_n >= 2:
+                            # RZR CHANGES HACK                            
+                            if watch.history_n >= 1:
                                 logger.info(f"Change detected in UUID {uuid} - {watch['url']}")
                                 if not watch.get('notification_muted'):
                                     await send_content_changed_notification(uuid, notification_q, datastore)
