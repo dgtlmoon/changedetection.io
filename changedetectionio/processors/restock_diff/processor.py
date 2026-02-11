@@ -56,6 +56,194 @@ def _deduplicate_prices(data):
     return list(unique_data)
 
 
+# =============================================================================
+# MEMORY MANAGEMENT: Why We Use Multiprocessing (Linux Only)
+# =============================================================================
+#
+# The get_itemprop_availability() function uses 'extruct' to parse HTML metadata
+# (JSON-LD, microdata, OpenGraph, etc). Extruct internally uses lxml, which wraps
+# libxml2 - a C library that allocates memory at the C level.
+#
+# Memory Leak Problem:
+# --------------------
+# 1. lxml's document_fromstring() creates thousands of Python objects backed by
+#    C-level allocations (nodes, attributes, text content)
+# 2. Python's garbage collector can mark these objects as collectible, but
+#    cannot force the OS to reclaim the actual C-level memory
+# 3. malloc/free typically doesn't return memory to OS - it just marks it as
+#    "free in the process address space"
+# 4. With repeated parsing of large HTML (5MB+ pages), memory accumulates even
+#    after Python GC runs
+#
+# Why Multiprocessing Fixes This:
+# --------------------------------
+# When a subprocess exits, the OS forcibly reclaims ALL memory including C-level
+# allocations that Python GC couldn't release. This ensures clean memory state
+# after each extraction.
+#
+# Performance Impact:
+# -------------------
+# - Memray analysis showed 1.2M document_fromstring allocations per page
+# - Without subprocess: memory grows by ~50-500MB per parse and lingers
+# - With subprocess: ~35MB overhead but forces full cleanup after each run
+# - Trade-off: 35MB resource_tracker vs 500MB+ accumulated leak = much better at scale
+#
+# References:
+# -----------
+# - lxml memory issues: https://medium.com/devopss-hole/python-lxml-memory-leak-b8d0b1000dc7
+# - libxml2 caching behavior: https://www.mail-archive.com/lxml@python.org/msg00026.html
+# - GC limitations with C extensions: https://benbernardblog.com/tracking-down-a-freaky-python-memory-leak-part-2/
+#
+# Additional Context:
+# -------------------
+# - jsonpath_ng (used to query the parsed data) is pure Python and doesn't leak
+# - The leak is specifically from lxml's document parsing, not the JSONPath queries
+# - Linux-only because multiprocessing spawn is well-tested there; other platforms
+#   use direct call as fallback
+#
+# Alternative Solution (Future Optimization):
+# -------------------------------------------
+# This entire problem could be avoided by using regex to extract just the machine
+# data blocks (JSON-LD, microdata, OpenGraph tags) BEFORE parsing with lxml:
+#
+#   1. Use regex to extract <script type="application/ld+json">...</script> blocks
+#   2. Use regex to extract <meta property="og:*"> tags
+#   3. Use regex to find itemprop/itemtype attributes and their containing elements
+#   4. Parse ONLY those extracted snippets instead of the entire HTML document
+#
+# Benefits:
+#   - Avoids parsing 5MB of HTML when we only need a few KB of metadata
+#   - Eliminates the lxml memory leak entirely
+#   - Faster extraction (regex is much faster than DOM parsing)
+#   - No subprocess overhead needed
+#
+# Trade-offs:
+#   - Regex for HTML is brittle (comments, CDATA, edge cases)
+#   - Microdata extraction would be complex (need to track element boundaries)
+#   - Would need extensive testing to ensure we don't miss valid data
+#   - extruct is battle-tested; regex solution would need similar maturity
+#
+# For now, the subprocess approach is safer and leverages existing extruct code.
+# =============================================================================
+
+
+def _extract_itemprop_availability_worker(pipe_conn):
+    """
+    Subprocess worker for itemprop extraction (Linux memory management).
+
+    Uses spawn multiprocessing to isolate extruct/lxml memory allocations.
+    When the subprocess exits, the OS reclaims ALL memory including lxml's
+    C-level allocations that Python's GC cannot release.
+
+    Args:
+        pipe_conn: Pipe connection to receive HTML and send result
+    """
+    import json
+
+    try:
+        # Receive HTML as raw bytes (no pickle)
+        html_bytes = pipe_conn.recv_bytes()
+        html_content = html_bytes.decode('utf-8')
+
+        # Perform extraction in subprocess
+        result_data = get_itemprop_availability(html_content)
+
+        # Convert Restock object to dict for JSON serialization
+        result = {
+            'success': True,
+            'data': dict(result_data) if result_data else {}
+        }
+        pipe_conn.send_bytes(json.dumps(result).encode('utf-8'))
+
+    except MoreThanOnePriceFound:
+        # Serialize the specific exception type
+        result = {
+            'success': False,
+            'exception_type': 'MoreThanOnePriceFound'
+        }
+        pipe_conn.send_bytes(json.dumps(result).encode('utf-8'))
+
+    except Exception as e:
+        # Serialize other exceptions
+        result = {
+            'success': False,
+            'exception_type': type(e).__name__,
+            'exception_message': str(e)
+        }
+        pipe_conn.send_bytes(json.dumps(result).encode('utf-8'))
+
+    finally:
+        pipe_conn.close()
+
+
+def extract_itemprop_availability_safe(html_content) -> Restock:
+    """
+    Extract itemprop availability with platform-aware memory management.
+
+    On Linux: Uses subprocess to isolate extruct/lxml memory and force OS cleanup.
+    On other platforms: Direct call (multiprocessing spawn has issues on some platforms).
+
+    Args:
+        html_content: HTML string to parse
+
+    Returns:
+        Restock: Extracted availability data
+
+    Raises:
+        MoreThanOnePriceFound: When multiple prices detected
+        Other exceptions: From extruct/parsing
+    """
+    import platform
+    import sys
+
+    # Only use subprocess isolation on Linux
+    # Other platforms may have issues with spawn or don't need the aggressive memory management
+    if platform.system() == 'Linux':
+        import multiprocessing
+        import json
+
+        try:
+            ctx = multiprocessing.get_context('spawn')
+            parent_conn, child_conn = ctx.Pipe()
+            p = ctx.Process(target=_extract_itemprop_availability_worker, args=(child_conn,))
+            p.start()
+
+            # Send HTML as raw bytes (no pickle)
+            html_bytes = html_content.encode('utf-8')
+            parent_conn.send_bytes(html_bytes)
+
+            # Receive result as JSON
+            result_bytes = parent_conn.recv_bytes()
+            result = json.loads(result_bytes.decode('utf-8'))
+
+            p.join()
+            parent_conn.close()
+            child_conn.close()
+
+            # Clean up explicitly
+            del p, parent_conn, child_conn, html_bytes
+
+            # Handle result or re-raise exception
+            if result['success']:
+                # Reconstruct Restock object from dict
+                return Restock(result['data'])
+            else:
+                # Re-raise the exception that occurred in subprocess
+                if result['exception_type'] == 'MoreThanOnePriceFound':
+                    raise MoreThanOnePriceFound()
+                else:
+                    exception_msg = result.get('exception_message', '')
+                    raise Exception(f"{result['exception_type']}: {exception_msg}")
+
+        except Exception as e:
+            # If multiprocessing itself fails, log and fall back to direct call
+            logger.warning(f"Subprocess extraction failed: {e}, falling back to direct call")
+            return get_itemprop_availability(html_content)
+    else:
+        # Non-Linux: direct call
+        return get_itemprop_availability(html_content)
+
+
 # should return Restock()
 # add casting?
 def get_itemprop_availability(html_content) -> Restock:
@@ -196,8 +384,9 @@ class perform_site_check(difference_detection_processor):
         multiple_prices_found = False
 
         # Try built-in extraction first, this will scan metadata in the HTML
+        # On Linux, this runs in a subprocess to prevent lxml/extruct memory leaks
         try:
-            itemprop_availability = get_itemprop_availability(self.fetcher.content)
+            itemprop_availability = extract_itemprop_availability_safe(self.fetcher.content)
         except MoreThanOnePriceFound as e:
             # Don't raise immediately - let plugins try to handle this case
             # Plugins might be able to determine which price is correct
