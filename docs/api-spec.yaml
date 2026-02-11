@@ -28,7 +28,7 @@ info:
     
     For example: `x-api-key: YOUR_API_KEY`
     
-  version: 0.1.4
+  version: 0.1.5
   contact:
     name: ChangeDetection.io
     url: https://github.com/dgtlmoon/changedetection.io
@@ -1503,46 +1503,92 @@ paths:
     post:
       operationId: importWatches
       tags: [Import]
-      summary: Import watch URLs
-      description: Import a list of URLs to monitor. Accepts line-separated URLs in request body.
+      summary: Import watch URLs with configuration
+      description: |
+        Import a list of URLs to monitor with optional watch configuration. Accepts line-separated URLs in request body.
+
+        **Configuration via Query Parameters:**
+
+        You can pass ANY watch configuration field as query parameters to apply settings to all imported watches.
+        All parameters from the Watch schema are supported (processor, fetch_backend, notification_urls, etc.).
+
+        **Special Parameters:**
+        - `tag` / `tag_uuids` - Assign tags to imported watches
+        - `proxy` - Use specific proxy for imported watches
+        - `dedupe` - Skip duplicate URLs (default: true)
+
+        **Type Conversion:**
+        - Booleans: `true`, `false`, `1`, `0`, `yes`, `no`
+        - Arrays: Comma-separated or JSON format (`[item1,item2]`)
+        - Objects: JSON format (`{"key":"value"}`)
+        - Numbers: Parsed as int or float
       x-code-samples:
         - lang: 'curl'
           source: |
+            # Basic import
             curl -X POST "http://localhost:5000/api/v1/import" \
               -H "x-api-key: YOUR_API_KEY" \
               -H "Content-Type: text/plain" \
               -d $'https://example.com\nhttps://example.org\nhttps://example.net'
+
+            # Import with processor and fetch backend
+            curl -X POST "http://localhost:5000/api/v1/import?processor=restock_diff&fetch_backend=html_webdriver" \
+              -H "x-api-key: YOUR_API_KEY" \
+              -H "Content-Type: text/plain" \
+              -d $'https://example.com\nhttps://example.org'
+
+            # Import with multiple settings
+            curl -X POST "http://localhost:5000/api/v1/import?processor=restock_diff&paused=true&tag=production" \
+              -H "x-api-key: YOUR_API_KEY" \
+              -H "Content-Type: text/plain" \
+              -d $'https://example.com'
         - lang: 'Python'
           source: |
             import requests
-            
+
             headers = {
                 'x-api-key': 'YOUR_API_KEY',
                 'Content-Type': 'text/plain'
             }
+
+            # Basic import
             urls = 'https://example.com\nhttps://example.org\nhttps://example.net'
-            response = requests.post('http://localhost:5000/api/v1/import', 
+            response = requests.post('http://localhost:5000/api/v1/import',
                                    headers=headers, data=urls)
+            print(response.json())
+
+            # Import with configuration
+            params = {
+                'processor': 'restock_diff',
+                'fetch_backend': 'html_webdriver',
+                'paused': 'false',
+                'tag': 'production'
+            }
+            response = requests.post('http://localhost:5000/api/v1/import',
+                                   headers=headers, params=params, data=urls)
             print(response.json())
       parameters:
         - name: tag_uuids
           in: query
-          description: Tag UUID to apply to imported web page change monitors (watches)
+          description: Tag UUID(s) to apply to imported watches (comma-separated for multiple)
           schema:
             type: string
+          example: "550e8400-e29b-41d4-a716-446655440000"
         - name: tag
           in: query
-          description: Tag name to apply to imported web page change monitors (watches)
+          description: Tag name to apply to imported watches
           schema:
             type: string
+          example: "production"
         - name: proxy
           in: query
-          description: Proxy key to use for imported web page change monitors (watches)
+          description: Proxy key to use for imported watches
           schema:
             type: string
+          example: "proxy1"
         - name: dedupe
           in: query
-          description: Remove duplicate URLs (default true)
+          description: Skip duplicate URLs (default true)
           schema:
             type: boolean
             default: true
