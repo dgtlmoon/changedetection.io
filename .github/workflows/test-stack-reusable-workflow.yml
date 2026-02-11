@@ -105,6 +105,30 @@ jobs:
           docker run test-changedetectionio bash -c 'python3 -m unittest changedetectionio.tests.unit.test_semver'
           docker run test-changedetectionio bash -c 'python3 -m unittest changedetectionio.tests.unit.test_html_to_text'
 
+  upgrade-path-test:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 25
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check upgrade works without error
+        run: |
+          git checkout 0.49.1
+          python3 -mvenv .venv-${{ inputs.python-version }}
+          source .venv-${{ inputs.python-version }}/bin/activate
+          pip3 install -r requirements.txt 
+          pip install 'pyOpenSSL>=23.2.0'
+          timeout 20 python3 ./changedetection.py -C -d /tmp/data
+                    
+          # check it runs up to this version
+          git checkout ${{ github.ref_name }}
+          pip3 install -r requirements.txt 
+          timeout 20 python3 ./changedetection.py -d /tmp/data
+          
+
   # Basic pytest tests with ancillary services
   basic-tests:
     runs-on: ubuntu-latest
@@ -516,3 +540,63 @@ jobs:
             exit 1
           fi
           docker rm sig-test
+
+  # Upgrade path test
+  upgrade-path-test:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 25
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Check upgrade works without error
+        run: |
+          echo "=== Testing upgrade path from 0.49.1 to ${{ github.ref_name }} ==="
+
+          # Checkout old version and create datastore
+          git checkout 0.49.1
+          python3 -m venv .venv
+          source .venv/bin/activate
+          pip install -r requirements.txt
+          pip install 'pyOpenSSL>=23.2.0'
+
+          echo "=== Running version 0.49.1 to create datastore ==="
+          timeout 20 python3 ./changedetection.py -C -d /tmp/data || {
+            echo "Failed to start old version"
+            exit 1
+          }
+
+          # Upgrade to current version
+          git checkout ${{ github.ref_name }}
+          pip install -r requirements.txt
+
+          echo "=== Running current version ${{ github.ref_name }} with old datastore ==="
+          timeout 20 python3 ./changedetection.py -d /tmp/data > /tmp/upgrade-test.log 2>&1 || {
+            echo "Failed to start current version"
+            cat /tmp/upgrade-test.log
+            exit 1
+          }
+
+          # Verify success
+          echo "=== Verifying upgrade succeeded ==="
+          grep -q "Loading existing datastore" /tmp/upgrade-test.log || {
+            echo "ERROR: Datastore not loaded"
+            cat /tmp/upgrade-test.log
+            exit 1
+          }
+
+          echo "✓ Upgrade test passed: 0.49.1 → ${{ github.ref_name }}"
+
+      - name: Upload upgrade test logs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: upgrade-test-logs-py${{ env.PYTHON_VERSION }}
+          path: /tmp/upgrade-test.log
