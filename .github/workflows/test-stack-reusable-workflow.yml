@@ -526,6 +526,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # Fetch all history and tags for upgrade testing
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v6
