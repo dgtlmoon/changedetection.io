@@ -569,7 +569,19 @@ jobs:
               "tag": "github-group-test"
             }'
 
-          echo "✓ Created watch with tag 'github-group-test' in version 0.49.1"
+          echo "✓ Created watch with tag 'github-group-test'"
+
+          # Create a specific test URL watch
+          echo "Creating test URL watch via API..."
+          curl -X POST "http://127.0.0.1:5000/api/v1/watch" \
+            -H "x-api-key: ${API_KEY}" \
+            -H "Content-Type: application/json" \
+            --show-error --fail \
+            -d '{
+              "url": "http://localhost/test.txt"
+            }'
+
+          echo "✓ Created watch for 'http://localhost/test.txt' in version 0.49.1"
 
           # Stop the old version gracefully
           kill $APP_PID
@@ -611,6 +623,19 @@ jobs:
             exit 1
           fi
 
+          # Verify test URL exists in UI
+          if grep -q "http://localhost/test.txt" /tmp/ui-output.html; then
+            echo "✓ Watch URL 'http://localhost/test.txt' found in UI after upgrade"
+          else
+            echo "ERROR: Watch URL 'http://localhost/test.txt' not found in UI after upgrade"
+            echo "=== UI Output ==="
+            cat /tmp/ui-output.html
+            echo "=== App Log ==="
+            cat /tmp/ui-test.log
+            kill $APP_PID || true
+            exit 1
+          fi
+
           # Cleanup
           kill $APP_PID || true
           wait $APP_PID || true
@@ -620,6 +645,7 @@ jobs:
           echo "    - Commit: ${{ github.sha }}"
           echo "    - Datastore migrated successfully"
           echo "    - Tag 'github-group-test' survived upgrade"
+          echo "    - Watch URL 'http://localhost/test.txt' survived upgrade"
 
           echo "✓ Upgrade test passed: 0.49.1 → ${{ github.ref_name }}"
 
