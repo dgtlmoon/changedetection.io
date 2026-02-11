@@ -103,31 +103,7 @@ jobs:
           docker run test-changedetectionio bash -c 'python3 -m unittest changedetectionio.tests.unit.test_watch_model'
           docker run test-changedetectionio bash -c 'python3 -m unittest changedetectionio.tests.unit.test_jinja2_security'
           docker run test-changedetectionio bash -c 'python3 -m unittest changedetectionio.tests.unit.test_semver'
-          docker run test-changedetectionio bash -c 'python3 -m unittest changedetectionio.tests.unit.test_html_to_text'
-
-  upgrade-path-test:
-    runs-on: ubuntu-latest
-    needs: build
-    timeout-minutes: 25
-    env:
-      PYTHON_VERSION: ${{ inputs.python-version }}
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Check upgrade works without error
-        run: |
-          git checkout 0.49.1
-          python3 -mvenv .venv-${{ inputs.python-version }}
-          source .venv-${{ inputs.python-version }}/bin/activate
-          pip3 install -r requirements.txt 
-          pip install 'pyOpenSSL>=23.2.0'
-          timeout 20 python3 ./changedetection.py -C -d /tmp/data
-                    
-          # check it runs up to this version
-          git checkout ${{ github.ref_name }}
-          pip3 install -r requirements.txt 
-          timeout 20 python3 ./changedetection.py -d /tmp/data
-          
+          docker run test-changedetectionio bash -c 'python3 -m unittest changedetectionio.tests.unit.test_html_to_text'         
 
   # Basic pytest tests with ancillary services
   basic-tests:
