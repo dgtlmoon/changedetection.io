@@ -637,11 +637,10 @@ class DatastoreUpdatesMixin:
         logger.critical("Phase 4/4: Verifying changedetection.json exists...")
         changedetection_json_new_schema=os.path.join(self.datastore_path, "changedetection.json")
         if not os.path.isfile(changedetection_json_new_schema):
+            import sys
             logger.critical("Migration failed, changedetection.json not found after update ran!")
-            raise Exception(
-                "Migration failed: changedetection.json not found after save. "
-                "url-watches.json remains intact, safe to retry."
-            )
+            sys.exit(1)
+
 
         logger.critical("Phase 4 complete: Verified changedetection.json exists")
 

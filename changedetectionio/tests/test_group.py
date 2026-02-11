@@ -5,6 +5,8 @@ from flask import url_for
 from .util import live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, get_UUID_for_tag_name, extract_UUID_from_client, delete_all_watches
 import os
 
+from ..store import ChangeDetectionStore
+
 
 # def test_setup(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
@@ -487,7 +489,6 @@ def test_tag_json_persistence(client, live_server, measure_memory_usage, datasto
     - Tag deletion removes tag.json file
     """
     import json
-    from changedetectionio.store import ChangeDetectionStore
 
     datastore = client.application.config.get('DATASTORE')
 
@@ -569,9 +570,6 @@ def test_tag_json_migration_update_27(client, live_server, measure_memory_usage,
     This simulates a pre-update_27 datastore and verifies migration works.
     """
     import json
-    from changedetectionio.store import ChangeDetectionStore
-
-    datastore = client.application.config.get('DATASTORE')
 
     # 1. Create multiple tags
     tag_names = ['migration-tag-1', 'migration-tag-2', 'migration-tag-3']
