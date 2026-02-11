@@ -207,15 +207,6 @@ def save_watch_atomic(watch_dir, uuid, watch_dict):
     save_entity_atomic(watch_dir, uuid, watch_dict, "watch.json", "watch", max_size_mb=10)
 
 
-def save_tag_atomic(tag_dir, uuid, tag_dict):
-    """
-    Save a tag to disk using atomic write pattern.
-
-    Convenience wrapper around save_entity_atomic for tags.
-    Kept for backwards compatibility.
-    """
-    save_entity_atomic(tag_dir, uuid, tag_dict, "tag.json", "tag", max_size_mb=1)
-
 
 def load_watch_from_file(watch_json, uuid, rehydrate_entity_func):
     """

@@ -20,10 +20,8 @@ See: Watch.py model docstring for full Pydantic architecture explanation
 See: processors/restock_diff/processor.py:184-192 for current manual implementation
 """
 
-import os
 from changedetectionio.model import watch_base
 from changedetectionio.model.persistence import EntityPersistenceMixin
-
 
 class model(EntityPersistenceMixin, watch_base):
     """
