@@ -139,13 +139,21 @@ def _extract_itemprop_availability_worker(pipe_conn):
         pipe_conn: Pipe connection to receive HTML and send result
     """
     import json
+    import gc
+
+    html_content = None
+    result_data = None
 
     try:
         # Receive HTML as raw bytes (no pickle)
         html_bytes = pipe_conn.recv_bytes()
         html_content = html_bytes.decode('utf-8')
 
-        # Perform extraction in subprocess
+        # Explicitly delete html_bytes to free memory
+        del html_bytes
+        gc.collect()
+
+        # Perform extraction in subprocess (uses extruct/lxml)
         result_data = get_itemprop_availability(html_content)
 
         # Convert Restock object to dict for JSON serialization
@@ -154,6 +162,10 @@ def _extract_itemprop_availability_worker(pipe_conn):
             'data': dict(result_data) if result_data else {}
         }
         pipe_conn.send_bytes(json.dumps(result).encode('utf-8'))
+
+        # Clean up before exit
+        del result_data, html_content, result
+        gc.collect()
 
     except MoreThanOnePriceFound:
         # Serialize the specific exception type
@@ -173,15 +185,22 @@ def _extract_itemprop_availability_worker(pipe_conn):
         pipe_conn.send_bytes(json.dumps(result).encode('utf-8'))
 
     finally:
+        # Final cleanup before subprocess exits
+        if html_content is not None:
+            del html_content
+        if result_data is not None:
+            del result_data
+        gc.collect()
         pipe_conn.close()
 
 
 def extract_itemprop_availability_safe(html_content) -> Restock:
     """
-    Extract itemprop availability with platform-aware memory management.
+    Extract itemprop availability with hybrid approach for memory efficiency.
 
-    On Linux: Uses subprocess to isolate extruct/lxml memory and force OS cleanup.
-    On other platforms: Direct call (multiprocessing spawn has issues on some platforms).
+    Strategy (fastest to slowest, least to most memory):
+    1. Try pure Python extraction (JSON-LD, OpenGraph, microdata) - covers 80%+ of cases
+    2. Fall back to extruct with subprocess isolation on Linux for complex cases
 
     Args:
         html_content: HTML string to parse
@@ -194,13 +213,37 @@ def extract_itemprop_availability_safe(html_content) -> Restock:
         Other exceptions: From extruct/parsing
     """
     import platform
-    import sys
+
+    # Step 1: Try pure Python extraction first (fast, no lxml, no memory leak)
+    try:
+        from .pure_python_extractor import extract_metadata_pure_python, query_price_availability
+
+        logger.trace("Attempting pure Python metadata extraction (no lxml)")
+        extracted_data = extract_metadata_pure_python(html_content)
+        price_data = query_price_availability(extracted_data)
+
+        # If we got price AND availability, we're done!
+        if price_data.get('price') and price_data.get('availability'):
+            result = Restock(price_data)
+            logger.debug(f"Pure Python extraction successful: {dict(result)}")
+            return result
+
+        # If we got some data but not everything, still try extruct for completeness
+        if price_data.get('price') or price_data.get('availability'):
+            logger.debug(f"Pure Python extraction partial: {price_data}, will try extruct for completeness")
+
+    except Exception as e:
+        logger.debug(f"Pure Python extraction failed: {e}, falling back to extruct")
+
+    # Step 2: Fall back to extruct (uses lxml, needs subprocess on Linux)
+    logger.trace("Falling back to extruct (lxml-based) with subprocess isolation")
 
     # Only use subprocess isolation on Linux
     # Other platforms may have issues with spawn or don't need the aggressive memory management
     if platform.system() == 'Linux':
         import multiprocessing
         import json
+        import gc
 
         try:
             ctx = multiprocessing.get_context('spawn')
@@ -212,35 +255,52 @@ def extract_itemprop_availability_safe(html_content) -> Restock:
             html_bytes = html_content.encode('utf-8')
             parent_conn.send_bytes(html_bytes)
 
+            # Explicitly delete html_bytes copy immediately after sending
+            del html_bytes
+            gc.collect()
+
             # Receive result as JSON
             result_bytes = parent_conn.recv_bytes()
             result = json.loads(result_bytes.decode('utf-8'))
 
+            # Wait for subprocess to complete
             p.join()
+
+            # Close pipes
             parent_conn.close()
             child_conn.close()
 
-            # Clean up explicitly
-            del p, parent_conn, child_conn, html_bytes
+            # Clean up all subprocess-related objects
+            del p, parent_conn, child_conn, result_bytes
+            gc.collect()
 
             # Handle result or re-raise exception
             if result['success']:
                 # Reconstruct Restock object from dict
-                return Restock(result['data'])
+                restock_obj = Restock(result['data'])
+                # Clean up result dict
+                del result
+                gc.collect()
+                return restock_obj
             else:
                 # Re-raise the exception that occurred in subprocess
-                if result['exception_type'] == 'MoreThanOnePriceFound':
+                exception_type = result['exception_type']
+                exception_msg = result.get('exception_message', '')
+                del result
+                gc.collect()
+
+                if exception_type == 'MoreThanOnePriceFound':
                     raise MoreThanOnePriceFound()
                 else:
-                    exception_msg = result.get('exception_message', '')
-                    raise Exception(f"{result['exception_type']}: {exception_msg}")
+                    raise Exception(f"{exception_type}: {exception_msg}")
 
         except Exception as e:
             # If multiprocessing itself fails, log and fall back to direct call
             logger.warning(f"Subprocess extraction failed: {e}, falling back to direct call")
+            gc.collect()
             return get_itemprop_availability(html_content)
     else:
-        # Non-Linux: direct call
+        # Non-Linux: direct call (no subprocess overhead needed)
         return get_itemprop_availability(html_content)
 
 
