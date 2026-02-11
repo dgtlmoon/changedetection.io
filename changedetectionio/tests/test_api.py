@@ -489,6 +489,7 @@ def test_api_import(client, live_server, measure_memory_usage, datastore_path):
 
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
 
+    # Test 1: Basic import with tag
     res = client.post(
         url_for("import") + "?tag=import-test",
         data='https://website1.com\r\nhttps://website2.com',
@@ -506,6 +507,97 @@ def test_api_import(client, live_server, measure_memory_usage, datastore_path):
     # Should see the new tag in the tag/groups list
     res = client.get(url_for('tags.tags_overview_page'))
     assert b'import-test' in res.data
+
+    # Test 2: Import with watch configuration fields (issue #3845)
+    # Test string field (include_filters), boolean (paused), and processor
+    import urllib.parse
+    params = urllib.parse.urlencode({
+        'tag': 'config-test',
+        'include_filters': 'div.content',
+        'paused': 'true',
+        'processor': 'text_json_diff',
+        'title': 'Imported with Config'
+    })
+
+    res = client.post(
+        url_for("import") + "?" + params,
+        data='https://website3.com',
+        headers={'x-api-key': api_key},
+        follow_redirects=True
+    )
+
+    assert res.status_code == 200
+    assert len(res.json) == 1
+    uuid = res.json[0]
+
+    # Verify the configuration was applied
+    watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
+    assert watch['include_filters'] == ['div.content'], "include_filters should be set as array"
+    assert watch['paused'] == True, "paused should be True"
+    assert watch['processor'] == 'text_json_diff', "processor should be set"
+    assert watch['title'] == 'Imported with Config', "title should be set"
+
+    # Test 3: Import with array field (notification_urls) - using valid Apprise format
+    params = urllib.parse.urlencode({
+        'tag': 'notification-test',
+        'notification_urls': 'mailto://test@example.com,mailto://admin@example.com'
+    })
+
+    res = client.post(
+        url_for("import") + "?" + params,
+        data='https://website4.com',
+        headers={'x-api-key': api_key},
+        follow_redirects=True
+    )
+
+    assert res.status_code == 200
+    uuid = res.json[0]
+    watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
+    assert 'mailto://test@example.com' in watch['notification_urls'], "notification_urls should contain first email"
+    assert 'mailto://admin@example.com' in watch['notification_urls'], "notification_urls should contain second email"
+
+    # Test 4: Import with object field (time_between_check)
+    import json
+    time_config = json.dumps({"hours": 2, "minutes": 30})
+    params = urllib.parse.urlencode({
+        'tag': 'schedule-test',
+        'time_between_check': time_config
+    })
+
+    res = client.post(
+        url_for("import") + "?" + params,
+        data='https://website5.com',
+        headers={'x-api-key': api_key},
+        follow_redirects=True
+    )
+
+    assert res.status_code == 200
+    uuid = res.json[0]
+    watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
+    assert watch['time_between_check']['hours'] == 2, "time_between_check hours should be 2"
+    assert watch['time_between_check']['minutes'] == 30, "time_between_check minutes should be 30"
+
+    # Test 5: Import with invalid processor (should fail)
+    res = client.post(
+        url_for("import") + "?processor=invalid_processor",
+        data='https://website6.com',
+        headers={'x-api-key': api_key},
+        follow_redirects=True
+    )
+
+    assert res.status_code == 400, "Should reject invalid processor"
+    assert b"Invalid processor" in res.data, "Error message should mention invalid processor"
+
+    # Test 6: Import with invalid field (should fail)
+    res = client.post(
+        url_for("import") + "?unknown_field=value",
+        data='https://website7.com',
+        headers={'x-api-key': api_key},
+        follow_redirects=True
+    )
+
+    assert res.status_code == 400, "Should reject unknown field"
+    assert b"Unknown watch configuration parameter" in res.data, "Error message should mention unknown parameter"
 
 def test_api_conflict_UI_password(client, live_server, measure_memory_usage, datastore_path):
 
