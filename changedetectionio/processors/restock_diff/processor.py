@@ -186,10 +186,15 @@ def _extract_itemprop_availability_worker(pipe_conn):
 
     finally:
         # Final cleanup before subprocess exits
-        if html_content is not None:
+        # Variables may already be deleted in try block, so use try/except
+        try:
             del html_content
-        if result_data is not None:
+        except (NameError, UnboundLocalError):
+            pass
+        try:
             del result_data
+        except (NameError, UnboundLocalError):
+            pass
         gc.collect()
         pipe_conn.close()
 
