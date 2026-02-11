@@ -6,6 +6,9 @@ from . import auth, validate_openapi_request, schema_create_watch
 from ..validate_url import is_safe_valid_url
 import json
 
+# Number of URLs above which import switches to background processing
+IMPORT_SWITCH_TO_BACKGROUND_THRESHOLD = 20
+
 
 def default_content_type(content_type='text/plain'):
     """Decorator to set a default Content-Type header if none is provided."""
@@ -159,7 +162,8 @@ class Import(Resource):
                 return f"Invalid notification_urls: {str(e)}", 400
 
         urls = request.get_data().decode('utf8').splitlines()
-        added = []
+        # Clean and validate URLs upfront
+        urls_to_import = []
         for url in urls:
             url = url.strip()
             if not len(url):
@@ -173,8 +177,38 @@ class Import(Resource):
             if dedupe and self.datastore.url_exists(url):
                 continue
 
-            # Create watch with extras configuration
-            new_uuid = self.datastore.add_watch(url=url, extras=extras, tag=tags, tag_uuids=tag_uuids)
-            added.append(new_uuid)
+            urls_to_import.append(url)
 
-        return added
+        # For small imports, process synchronously for immediate feedback
+        if len(urls_to_import) < IMPORT_SWITCH_TO_BACKGROUND_THRESHOLD:
+            added = []
+            for url in urls_to_import:
+                new_uuid = self.datastore.add_watch(url=url, extras=extras, tag=tags, tag_uuids=tag_uuids)
+                added.append(new_uuid)
+            return added, 200
+
+        # For large imports (>= 20), process in background thread
+        else:
+            import threading
+            from loguru import logger
+
+            def import_watches_background():
+                """Background thread to import watches - discarded after completion."""
+                try:
+                    added_count = 0
+                    for url in urls_to_import:
+                        try:
+                            self.datastore.add_watch(url=url, extras=extras, tag=tags, tag_uuids=tag_uuids)
+                            added_count += 1
+                        except Exception as e:
+                            logger.error(f"Error importing URL {url}: {e}")
+
+                    logger.info(f"Background import complete: {added_count} watches created")
+                except Exception as e:
+                    logger.error(f"Error in background import: {e}")
+
+            # Start background thread and return immediately
+            thread = threading.Thread(target=import_watches_background, daemon=True, name="ImportWatches-Background")
+            thread.start()
+
+            return {'status': f'Importing {len(urls_to_import)} URLs in background', 'count': len(urls_to_import)}, 202
