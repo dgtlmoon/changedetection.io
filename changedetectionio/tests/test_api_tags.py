@@ -18,7 +18,7 @@ def test_api_tags_listing(client, live_server, measure_memory_usage, datastore_p
         url_for("tags"),
         headers={'x-api-key': api_key}
     )
-    assert res.text.strip() == "{}", "Should be empty list"
+    assert res.get_data(as_text=True).strip() == "{}", "Should be empty list"
     assert res.status_code == 200
 
     res = client.post(
@@ -36,7 +36,7 @@ def test_api_tags_listing(client, live_server, measure_memory_usage, datastore_p
         headers={'x-api-key': api_key}
     )
     assert res.status_code == 200
-    assert new_tag_uuid in res.text
+    assert new_tag_uuid in res.get_data(as_text=True)
     assert res.json[new_tag_uuid]['title'] == tag_title
     assert res.json[new_tag_uuid]['notification_muted'] == False
 
@@ -118,6 +118,16 @@ def test_api_tags_listing(client, live_server, measure_memory_usage, datastore_p
     assert res.status_code == 200
     assert new_tag_uuid in res.json.get('tags', [])
 
+    # Test that tags are returned when listing ALL watches (issue #3854)
+    res = client.get(
+        url_for("createwatch"),  # GET /api/v1/watch - list all watches
+        headers={'x-api-key': api_key}
+    )
+    assert res.status_code == 200
+    assert watch_uuid in res.json, "Watch should be in the list"
+    assert 'tags' in res.json[watch_uuid], "Tags field should be present in watch list"
+    assert new_tag_uuid in res.json[watch_uuid]['tags'], "Tag UUID should be in tags array"
+
     # Check recheck by tag
     before_check_time = live_server.app.config['DATASTORE'].data['watching'][watch_uuid].get('last_checked')
     time.sleep(1)
@@ -148,7 +158,7 @@ def test_api_tags_listing(client, live_server, measure_memory_usage, datastore_p
         headers={'x-api-key': api_key}
     )
     assert res.status_code == 200
-    assert new_tag_uuid not in res.text
+    assert new_tag_uuid not in res.get_data(as_text=True)
 
     # Verify tag was removed from watch
     res = client.get(

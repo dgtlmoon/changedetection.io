@@ -481,6 +481,7 @@ class CreateWatch(Resource):
                 'last_error': watch['last_error'],
                 'link': watch.link,
                 'page_title': watch['page_title'],
+                'tags': list(tags.keys()),
                 'title': watch['title'],
                 'url': watch['url'],
                 'viewed': watch.viewed
