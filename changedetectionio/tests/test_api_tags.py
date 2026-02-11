@@ -250,29 +250,13 @@ def test_api_tags_extended_properties(client, live_server, measure_memory_usage,
     wait_for_all_checks(client)
     time.sleep(0.2)
     assert res.status_code == 200
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> ab578976 (Fix test with sleep)
-=======
-
->>>>>>> 471e31d0 (Fix comparison operator)
     updated_data = res.json
     time.sleep(0.2)
     assert updated_data['restock_settings']['in_stock_processing'] == "in_stock_only"
     assert updated_data['restock_settings']['follow_price_changes'] == False
     assert updated_data['restock_settings']['price_change_min'] == 5.00
-<<<<<<< HEAD
-<<<<<<< HEAD
     assert updated_data['restock_settings']['price_change_max'] == 0
-=======
-    assert updated_data['restock_settings']['price_change_max'] is 0
->>>>>>> ab578976 (Fix test with sleep)
-=======
-    assert updated_data['restock_settings']['price_change_max'] == 0
->>>>>>> 471e31d0 (Fix comparison operator)
     assert updated_data['restock_settings']['price_change_threshold_percent'] == 10.0
     assert updated_data['overrides_watch'] == True
     
@@ -285,19 +269,10 @@ def test_api_tags_extended_properties(client, live_server, measure_memory_usage,
         headers={'content-type': 'application/json', 'x-api-key': api_key}
     )
     wait_for_all_checks(client)
-<<<<<<< HEAD
-<<<<<<< HEAD
     time.sleep(0.5)
-=======
-=======
-    time.sleep(0.5)
->>>>>>> 42c40ce8 (Fix rest of tests with sleep, as it works for previous tests)
     assert res.status_code == 400
-<<<<<<< HEAD
-=======
     #assert b"is not one of" in res.data and b"invalid_mode" in res.data
     
->>>>>>> 084780e8 (Test if next test will pass)
     # Invalid price_change_threshold_percent
     invalid_data = {"restock_settings": {"price_change_threshold_percent": 150}}
     res = client.put(
@@ -306,41 +281,17 @@ def test_api_tags_extended_properties(client, live_server, measure_memory_usage,
         headers={'content-type': 'application/json', 'x-api-key': api_key}
     )
     wait_for_all_checks(client)
-<<<<<<< HEAD
-<<<<<<< HEAD
     time.sleep(0.5)
-=======
->>>>>>> 601f274c (Added wait_for_all_checks to tests)
-=======
-    time.sleep(0.5)
->>>>>>> 42c40ce8 (Fix rest of tests with sleep, as it works for previous tests)
     assert res.status_code == 400
-<<<<<<< HEAD
-<<<<<<< HEAD
     #assert b"150 is greater than the maximum of 100" in res.data
-=======
-    assert b"150 is greater than the maximum of 100" in res.data
-<<<<<<< HEAD
-=======
-=======
-    #assert b"150 is greater than the maximum of 100" in res.data
->>>>>>> 05a4e48a (Assert status code valid, assert text fails, removed assert text)
     
     # Test tags listing includes new properties
     res = client.get(
         url_for("tags"),
->>>>>>> 084780e8 (Test if next test will pass)
         headers={'x-api-key': api_key}
     )
     wait_for_all_checks(client)
-<<<<<<< HEAD
-<<<<<<< HEAD
     time.sleep(0.5)
-=======
->>>>>>> 601f274c (Added wait_for_all_checks to tests)
-=======
-    time.sleep(0.5)
->>>>>>> 42c40ce8 (Fix rest of tests with sleep, as it works for previous tests)
     assert res.status_code == 200
     tags_list = res.json
     assert new_tag_uuid in tags_list
@@ -356,14 +307,7 @@ def test_api_tags_extended_properties(client, live_server, measure_memory_usage,
         headers={'x-api-key': api_key}
     )
     wait_for_all_checks(client)
-<<<<<<< HEAD
-<<<<<<< HEAD
     time.sleep(0.5)
-=======
->>>>>>> 601f274c (Added wait_for_all_checks to tests)
-=======
-    time.sleep(0.5)
->>>>>>> 42c40ce8 (Fix rest of tests with sleep, as it works for previous tests)
     assert res.status_code == 204
 
 
