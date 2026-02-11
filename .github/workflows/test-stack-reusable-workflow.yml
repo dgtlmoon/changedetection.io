@@ -546,29 +546,21 @@ jobs:
           pip install 'pyOpenSSL>=23.2.0'
 
           echo "=== Running version 0.49.1 to create datastore ==="
-          timeout 20 python3 ./changedetection.py -C -d /tmp/data || {
-            echo "Failed to start old version"
-            exit 1
-          }
+          TESTING_SHUTDOWN_AFTER_DATASTORE_LOAD=1 python3 ./changedetection.py -C -d /tmp/data
+          echo "✓ Version 0.49.1 datastore created successfully"
 
           # Upgrade to current version
           git checkout ${{ github.ref_name }}
           pip install -r requirements.txt
 
           echo "=== Running current version ${{ github.ref_name }} with old datastore ==="
-          timeout 20 python3 ./changedetection.py -d /tmp/data > /tmp/upgrade-test.log 2>&1 || {
-            echo "Failed to start current version"
-            cat /tmp/upgrade-test.log
-            exit 1
-          }
+          TESTING_SHUTDOWN_AFTER_DATASTORE_LOAD=1 python3 ./changedetection.py -d /tmp/data > /tmp/upgrade-test.log 2>&1
 
-          # Verify success
-          echo "=== Verifying upgrade succeeded ==="
-          grep -q "Loading existing datastore" /tmp/upgrade-test.log || {
-            echo "ERROR: Datastore not loaded"
-            cat /tmp/upgrade-test.log
-            exit 1
-          }
+          echo "=== Upgrade test output ==="
+          cat /tmp/upgrade-test.log
+
+          echo ""
+          echo "✓ Upgrade test passed: 0.49.1 → ${{ github.ref_name }}"
 
           echo "✓ Upgrade test passed: 0.49.1 → ${{ github.ref_name }}"
 

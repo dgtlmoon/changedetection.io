@@ -371,7 +371,15 @@ def main():
         # Dont' start if the JSON DB looks corrupt
         logger.critical(f"ERROR: JSON DB or Proxy List JSON at '{app_config['datastore_path']}' appears to be corrupt, aborting.")
         logger.critical(str(e))
-        return
+        sys.exit(1)
+
+    # Testing mode: Exit cleanly after datastore initialization (for CI/CD upgrade tests)
+    if os.environ.get('TESTING_SHUTDOWN_AFTER_DATASTORE_LOAD'):
+        logger.success(f"TESTING MODE: Datastore loaded successfully from {app_config['datastore_path']}")
+        logger.success(f"TESTING MODE: Schema version: {datastore.data['settings']['application'].get('schema_version', 'unknown')}")
+        logger.success(f"TESTING MODE: Loaded {len(datastore.data['watching'])} watches")
+        logger.success("TESTING MODE: Exiting cleanly (TESTING_SHUTDOWN_AFTER_DATASTORE_LOAD is set)")
+        sys.exit(0)
 
     # Apply all_paused setting if specified via CLI
     if all_paused is not None:
