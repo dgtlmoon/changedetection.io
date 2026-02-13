@@ -415,7 +415,7 @@ components:
                 description: Value to compare against
             required: [field, operator, value]
           maxItems: 100
-          description: Array of condition rules for change detection logic
+          description: Array of condition rules for change detection logic (empty array when not set)
         conditions_match_logic:
           type: string
           enum: ['ALL', 'ANY']
@@ -464,8 +464,8 @@ components:
               description: Unix timestamp of last change
               readOnly: true
             last_error:
-              type: string
-              description: Last error message
+              type: [string, boolean, 'null']
+              description: Last error message (false when no error, string when error occurred, null if not checked yet)
               readOnly: true
             last_viewed:
               type: integer
@@ -525,12 +525,12 @@ components:
               description: Last browser step that caused an error
               readOnly: true
             viewed:
-              type: integer
-              description: Alias for last_viewed (deprecated, use last_viewed instead)
+              type: [integer, boolean]
+              description: Computed property - true if watch has been viewed, false otherwise (deprecated, use last_viewed instead)
               readOnly: true
             history_n:
-              type: object
-              description: History metadata
+              type: integer
+              description: Number of history snapshots available
               readOnly: true
 
     CreateWatch:
@@ -542,15 +542,16 @@ components:
 
     UpdateWatch:
       allOf:
-        - $ref: '#/components/schemas/Watch'  # Extends Watch (includes WatchBase + readOnly fields)
+        - $ref: '#/components/schemas/WatchBase'  # Extends WatchBase for user-settable fields
         - type: object
           properties:
             last_viewed:
               type: integer
               description: Unix timestamp in seconds of the last time the watch was viewed. Setting it to a value higher than `last_changed` in the "Update watch" endpoint marks the watch as viewed.
               minimum: 0
-      # ReadOnly fields are now evaluated (from Watch schema), so we can safely reject unknown fields
-      unevaluatedProperties: false
+      # Note: ReadOnly and @property fields are filtered out in the backend before update
+      # We don't use unevaluatedProperties:false here to allow roundtrip GET/PUT workflows
+      # where the response includes computed fields that should be silently ignored
 
     Tag:
       type: object

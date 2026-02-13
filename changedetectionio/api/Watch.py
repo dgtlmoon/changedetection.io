@@ -176,8 +176,16 @@ class Watch(Resource):
         # These are system-managed fields that should never be user-settable
         readonly_fields = get_readonly_watch_fields()
 
-        # Remove readOnly fields from update data
-        for field in readonly_fields:
+        # Also filter out @property attributes (computed/derived values from the model)
+        # These are not stored and should be ignored in PUT requests
+        from changedetectionio.model.Watch import model as WatchModel
+        property_fields = WatchModel.get_property_names()
+
+        # Combine both sets of fields to ignore
+        fields_to_ignore = readonly_fields | property_fields
+
+        # Remove all ignored fields from update data
+        for field in fields_to_ignore:
             json_data.pop(field, None)
 
         # Update watch with regular (non-processor-config) fields

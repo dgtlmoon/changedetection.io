@@ -173,7 +173,7 @@ class watch_base(dict):
             'body': None,
             'browser_steps': [],
             'browser_steps_last_error_step': None,
-            'conditions' : {},
+            'conditions' : [],
             'conditions_match_logic': CONDITIONS_MATCH_LOGIC_DEFAULT,
             'check_count': 0,
             'check_unique_lines': False,  # On change-detected, compare against all history if its something new
@@ -298,6 +298,42 @@ class watch_base(dict):
 
         if self.get('default'):
             del self['default']
+
+    @classmethod
+    def get_property_names(cls):
+        """
+        Get all @property attribute names from this model class using introspection.
+
+        This discovers computed/derived properties that are not stored in the datastore.
+        These properties should be filtered out during PUT/POST requests.
+
+        Returns:
+            frozenset: Immutable set of @property attribute names from the model class
+        """
+        import functools
+
+        # Create a cached version if it doesn't exist
+        if not hasattr(cls, '_cached_get_property_names'):
+            @functools.cache
+            def _get_props():
+                properties = set()
+                # Use introspection to find all @property attributes
+                for name in dir(cls):
+                    # Skip private/magic attributes
+                    if name.startswith('_'):
+                        continue
+                    try:
+                        attr = getattr(cls, name)
+                        # Check if it's a property descriptor
+                        if isinstance(attr, property):
+                            properties.add(name)
+                    except (AttributeError, TypeError):
+                        continue
+                return frozenset(properties)
+
+            cls._cached_get_property_names = _get_props
+
+        return cls._cached_get_property_names()
 
     def __deepcopy__(self, memo):
         """

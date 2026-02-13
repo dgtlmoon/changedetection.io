@@ -1022,3 +1022,140 @@ def test_api_url_validation(client, live_server, measure_memory_usage, datastore
         headers={'x-api-key': api_key},
     )
     delete_all_watches(client)
+
+
+def test_api_time_between_check_validation(client, live_server, measure_memory_usage, datastore_path):
+    """
+    Test that time_between_check validation works correctly:
+    - When time_between_check_use_default is false, at least one time value must be > 0
+    - Values must be valid integers
+    """
+    import json
+    from flask import url_for
+    
+    api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
+    
+    # Test 1: time_between_check_use_default=false with NO time_between_check should fail
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({
+            "url": "https://example.com",
+            "time_between_check_use_default": False
+        }),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+    )
+    assert res.status_code == 400, "Should fail when time_between_check_use_default=false with no time_between_check"
+    assert b"At least one time interval" in res.data, "Error message should mention time interval requirement"
+    
+    # Test 2: time_between_check_use_default=false with ALL zeros should fail
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({
+            "url": "https://example.com",
+            "time_between_check_use_default": False,
+            "time_between_check": {
+                "weeks": 0,
+                "days": 0,
+                "hours": 0,
+                "minutes": 0,
+                "seconds": 0
+            }
+        }),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+    )
+    assert res.status_code == 400, "Should fail when all time values are 0"
+    assert b"At least one time interval" in res.data, "Error message should mention time interval requirement"
+    
+    # Test 3: time_between_check_use_default=false with NULL values should fail
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({
+            "url": "https://example.com",
+            "time_between_check_use_default": False,
+            "time_between_check": {
+                "weeks": None,
+                "days": None,
+                "hours": None,
+                "minutes": None,
+                "seconds": None
+            }
+        }),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+    )
+    assert res.status_code == 400, "Should fail when all time values are null"
+    assert b"At least one time interval" in res.data, "Error message should mention time interval requirement"
+    
+    # Test 4: time_between_check_use_default=false with valid hours should succeed
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({
+            "url": "https://example.com",
+            "time_between_check_use_default": False,
+            "time_between_check": {
+                "hours": 2
+            }
+        }),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+    )
+    assert res.status_code == 201, "Should succeed with valid hours value"
+    uuid1 = res.json.get('uuid')
+    
+    # Test 5: time_between_check_use_default=false with valid minutes should succeed
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({
+            "url": "https://example2.com",
+            "time_between_check_use_default": False,
+            "time_between_check": {
+                "minutes": 30
+            }
+        }),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+    )
+    assert res.status_code == 201, "Should succeed with valid minutes value"
+    uuid2 = res.json.get('uuid')
+    
+    # Test 6: time_between_check_use_default=true (or missing) with no time_between_check should succeed (uses defaults)
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({
+            "url": "https://example3.com",
+            "time_between_check_use_default": True
+        }),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+    )
+    assert res.status_code == 201, "Should succeed when using default settings"
+    uuid3 = res.json.get('uuid')
+    
+    # Test 7: Default behavior (no time_between_check_use_default field) should use defaults and succeed
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({
+            "url": "https://example4.com"
+        }),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+    )
+    assert res.status_code == 201, "Should succeed with default behavior (using global settings)"
+    uuid4 = res.json.get('uuid')
+    
+    # Test 8: Verify integer type validation - string should fail (OpenAPI validation)
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({
+            "url": "https://example5.com",
+            "time_between_check_use_default": False,
+            "time_between_check": {
+                "hours": "not_a_number"
+            }
+        }),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+    )
+    assert res.status_code == 400, "Should fail when time value is not an integer"
+    assert b"Validation failed" in res.data or b"not of type" in res.data, "Should mention validation/type error"
+    
+    # Cleanup
+    for uuid in [uuid1, uuid2, uuid3, uuid4]:
+        client.delete(
+            url_for("watch", uuid=uuid),
+            headers={'x-api-key': api_key},
+        )
