@@ -126,6 +126,15 @@ components:
     WatchBase:
       type: object
       properties:
+        uuid:
+          type: string
+          format: uuid
+          description: Unique identifier
+          readOnly: true
+        date_created:
+          type: [integer, 'null']
+          description: Unix timestamp of creation
+          readOnly: true
         url:
           type: string
           format: uri
@@ -453,11 +462,6 @@ components:
         - $ref: '#/components/schemas/WatchBase'
         - type: object
           properties:
-            uuid:
-              type: string
-              format: uuid
-              description: Unique identifier for the web page change monitor (watch)
-              readOnly: true
             last_checked:
               type: integer
               description: Unix timestamp of last check
@@ -513,10 +517,6 @@ components:
               type: integer
               description: Number of notifications sent
               readOnly: true
-            date_created:
-              type: [integer, 'null']
-              description: Unix timestamp of watch creation
-              readOnly: true
             content-type:
               type: [string, 'null']
               description: Content-Type from last fetch
@@ -561,25 +561,13 @@ components:
       # where the response includes computed fields that should be silently ignored
 
     Tag:
-      type: object
-      properties:
-        uuid:
-          type: string
-          format: uuid
-          description: Unique identifier for the tag
-          readOnly: true
-        title:
-          type: string
-          description: Tag title
-          maxLength: 5000
-        notification_urls:
-          type: array
-          items:
-            type: string
-          description: Default notification URLs for web page change monitors (watches) with this tag
-        notification_muted:
-          type: boolean
-          description: Whether notifications are muted for this tag
+      allOf:
+        - $ref: '#/components/schemas/WatchBase'
+        - type: object
+          properties:
+            overrides_watch:
+              type: boolean
+              description: If true, this tag's settings override watch settings for all watches in this tag/group
 
     CreateTag:
       allOf:

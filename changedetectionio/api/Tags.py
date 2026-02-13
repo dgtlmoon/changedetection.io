@@ -106,17 +106,40 @@ class Tag(Resource):
         if not tag:
             abort(404, message='No tag exists with the UUID of {}'.format(uuid))
 
+        # Make a mutable copy of request.json for modification
+        json_data = dict(request.json)
+
         # Validate notification_urls if provided
-        if 'notification_urls' in request.json:
+        if 'notification_urls' in json_data:
             from wtforms import ValidationError
             from changedetectionio.api.Notifications import validate_notification_urls
             try:
-                notification_urls = request.json.get('notification_urls', [])
+                notification_urls = json_data.get('notification_urls', [])
                 validate_notification_urls(notification_urls)
             except ValidationError as e:
                 return str(e), 400
 
-        tag.update(request.json)
+        # Filter out readOnly fields (extracted from OpenAPI spec Tag schema)
+        # These are system-managed fields that should never be user-settable
+        from . import get_readonly_tag_fields
+        readonly_fields = get_readonly_tag_fields()
+
+        # Tag model inherits from watch_base but has no @property attributes of its own
+        # So we only need to filter readOnly fields
+        for field in readonly_fields:
+            json_data.pop(field, None)
+
+        # Validate remaining fields - reject truly unknown fields
+        # Get valid fields from Tag schema
+        from . import get_tag_schema_properties
+        valid_fields = set(get_tag_schema_properties().keys())
+
+        # Check for unknown fields
+        unknown_fields = set(json_data.keys()) - valid_fields
+        if unknown_fields:
+            return f"Unknown field(s): {', '.join(sorted(unknown_fields))}", 400
+
+        tag.update(json_data)
         tag.commit()
 
         return "OK", 200
@@ -124,13 +147,21 @@ class Tag(Resource):
 
     @auth.check_token
     @validate_openapi_request('createTag')
-    # Only cares for {'title': 'xxxx'}
     def post(self):
         """Create a single tag/group."""
 
         json_data = request.get_json()
         title = json_data.get("title",'').strip()
 
+        # Validate that only valid fields are provided
+        # Get valid fields from Tag schema
+        from . import get_tag_schema_properties
+        valid_fields = set(get_tag_schema_properties().keys())
+
+        # Check for unknown fields
+        unknown_fields = set(json_data.keys()) - valid_fields
+        if unknown_fields:
+            return f"Unknown field(s): {', '.join(sorted(unknown_fields))}", 400
 
         new_uuid = self.datastore.add_tag(title=title)
         if new_uuid:

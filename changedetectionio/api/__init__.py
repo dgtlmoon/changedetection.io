@@ -38,54 +38,114 @@ def get_openapi_schema_dict():
         return yaml.safe_load(f)
 
 @functools.cache
+def _resolve_schema_properties(schema_name):
+    """
+    Generic helper to resolve schema properties, including allOf inheritance.
+
+    Args:
+        schema_name: Name of the schema (e.g., 'WatchBase', 'Watch', 'Tag')
+
+    Returns:
+        dict: All properties including inherited ones from $ref schemas
+    """
+    spec_dict = get_openapi_schema_dict()
+    schema = spec_dict['components']['schemas'].get(schema_name, {})
+
+    properties = {}
+
+    # Handle allOf (schema inheritance)
+    if 'allOf' in schema:
+        for item in schema['allOf']:
+            # Resolve $ref to parent schema
+            if '$ref' in item:
+                ref_path = item['$ref'].split('/')[-1]
+                ref_schema = spec_dict['components']['schemas'].get(ref_path, {})
+                properties.update(ref_schema.get('properties', {}))
+            # Add schema-specific properties
+            if 'properties' in item:
+                properties.update(item['properties'])
+    else:
+        # Direct properties (no inheritance)
+        properties = schema.get('properties', {})
+
+    return properties
+
+@functools.cache
+def _resolve_readonly_fields(schema_name):
+    """
+    Generic helper to resolve readOnly fields, including allOf inheritance.
+
+    Args:
+        schema_name: Name of the schema (e.g., 'Watch', 'Tag')
+
+    Returns:
+        frozenset: All readOnly field names including inherited ones
+    """
+    spec_dict = get_openapi_schema_dict()
+    schema = spec_dict['components']['schemas'].get(schema_name, {})
+
+    readonly_fields = set()
+
+    # Handle allOf (schema inheritance)
+    if 'allOf' in schema:
+        for item in schema['allOf']:
+            # Resolve $ref to parent schema
+            if '$ref' in item:
+                ref_path = item['$ref'].split('/')[-1]
+                ref_schema = spec_dict['components']['schemas'].get(ref_path, {})
+                if 'properties' in ref_schema:
+                    for field_name, field_def in ref_schema['properties'].items():
+                        if field_def.get('readOnly') is True:
+                            readonly_fields.add(field_name)
+            # Check schema-specific properties
+            if 'properties' in item:
+                for field_name, field_def in item['properties'].items():
+                    if field_def.get('readOnly') is True:
+                        readonly_fields.add(field_name)
+    else:
+        # Direct properties (no inheritance)
+        if 'properties' in schema:
+            for field_name, field_def in schema['properties'].items():
+                if field_def.get('readOnly') is True:
+                    readonly_fields.add(field_name)
+
+    return frozenset(readonly_fields)
+
+@functools.cache
 def get_watch_schema_properties():
     """
     Extract watch schema properties from OpenAPI spec for Import endpoint.
 
-    Returns a dict of property names to their schema definitions,
-    suitable for validating query parameters.
+    Returns WatchBase properties (all writable Watch fields).
     """
-    spec_dict = get_openapi_schema_dict()
-
-    # Get CreateWatch schema (which references WatchBase via allOf)
-    create_watch_schema = spec_dict['components']['schemas']['CreateWatch']
-    watch_base_schema = spec_dict['components']['schemas']['WatchBase']
-
-    # Return WatchBase properties (CreateWatch uses allOf to extend it)
-    return watch_base_schema.get('properties', {})
+    return _resolve_schema_properties('WatchBase')
 
 @functools.cache
 def get_readonly_watch_fields():
     """
     Extract readOnly field names from Watch schema in OpenAPI spec.
 
-    These are system-managed fields that should never be updated by user input.
-    Used by the Watch PUT endpoint to filter out readOnly fields from requests.
-
-    Returns:
-        frozenset: Immutable set of field names marked as readOnly in the Watch schema
+    Returns readOnly fields from WatchBase (uuid, date_created) + Watch-specific readOnly fields.
     """
-    spec_dict = get_openapi_schema_dict()
-    watch_schema = spec_dict['components']['schemas'].get('Watch', {})
+    return _resolve_readonly_fields('Watch')
 
-    readonly_fields = set()
+@functools.cache
+def get_tag_schema_properties():
+    """
+    Extract Tag schema properties from OpenAPI spec.
 
-    # The Watch schema uses allOf to extend WatchBase and add readOnly properties
-    if 'allOf' in watch_schema:
-        for item in watch_schema['allOf']:
-            # Look for the object that defines Watch-specific properties (not the $ref)
-            if 'properties' in item:
-                for field_name, field_def in item['properties'].items():
-                    if field_def.get('readOnly') is True:
-                        readonly_fields.add(field_name)
+    Returns WatchBase properties + Tag-specific properties (overrides_watch).
+    """
+    return _resolve_schema_properties('Tag')
 
-    # Also check top-level properties (if schema structure changes)
-    if 'properties' in watch_schema:
-        for field_name, field_def in watch_schema['properties'].items():
-            if field_def.get('readOnly') is True:
-                readonly_fields.add(field_name)
+@functools.cache
+def get_readonly_tag_fields():
+    """
+    Extract readOnly field names from Tag schema in OpenAPI spec.
 
-    return frozenset(readonly_fields)
+    Returns readOnly fields from WatchBase (uuid, date_created) + Tag-specific readOnly fields.
+    """
+    return _resolve_readonly_fields('Tag')
 
 def validate_openapi_request(operation_id):
     """Decorator to validate incoming requests against OpenAPI spec."""
