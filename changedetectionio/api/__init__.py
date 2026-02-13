@@ -72,8 +72,16 @@ def validate_openapi_request(operation_id):
                     if result.errors:
                         error_details = []
                         for error in result.errors:
-                            error_details.append(str(error))
-                        raise BadRequest(f"OpenAPI validation failed: {error_details}")
+                            # Extract detailed schema errors from __cause__
+                            if hasattr(error, '__cause__') and hasattr(error.__cause__, 'schema_errors'):
+                                for schema_error in error.__cause__.schema_errors:
+                                    field = '.'.join(str(p) for p in schema_error.path) if schema_error.path else 'body'
+                                    msg = schema_error.message if hasattr(schema_error, 'message') else str(schema_error)
+                                    error_details.append(f"{field}: {msg}")
+                            else:
+                                error_details.append(str(error))
+                            logger.error(f"API Call - Validation failed: {'; '.join(error_details)}")
+                        raise BadRequest(f"Validation failed: {'; '.join(error_details)}")
             except BadRequest:
                 # Re-raise BadRequest exceptions (validation failures)
                 raise
