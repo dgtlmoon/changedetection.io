@@ -37,6 +37,7 @@ def get_openapi_schema_dict():
     with open(spec_path, 'r', encoding='utf-8') as f:
         return yaml.safe_load(f)
 
+@functools.cache
 def get_watch_schema_properties():
     """
     Extract watch schema properties from OpenAPI spec for Import endpoint.
