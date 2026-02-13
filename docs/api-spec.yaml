@@ -400,13 +400,27 @@ components:
 
         # Conditions (advanced logic)
         conditions:
-          type: object
-          description: Custom conditions for change detection logic
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                description: Field to check (e.g., 'page_filtered_text', 'page_title')
+              operator:
+                type: string
+                description: Comparison operator (e.g., 'contains_regex', 'equals', 'not_equals')
+              value:
+                type: string
+                description: Value to compare against
+            required: [field, operator, value]
+          maxItems: 100
+          description: Array of condition rules for change detection logic
         conditions_match_logic:
           type: string
           enum: ['ALL', 'ANY']
           default: 'ALL'
-          description: Logic operator for multiple conditions
+          description: Logic operator - ALL (match all conditions) or ANY (match any condition)
 
     DaySchedule:
       type: object
@@ -528,15 +542,15 @@ components:
 
     UpdateWatch:
       allOf:
-        - $ref: '#/components/schemas/WatchBase'
+        - $ref: '#/components/schemas/Watch'  # Extends Watch (includes WatchBase + readOnly fields)
         - type: object
           properties:
             last_viewed:
               type: integer
               description: Unix timestamp in seconds of the last time the watch was viewed. Setting it to a value higher than `last_changed` in the "Update watch" endpoint marks the watch as viewed.
               minimum: 0
-      # Allow readOnly fields in request body (they will be ignored) to support roundtrip GET/PUT workflows
-      # unevaluatedProperties: false
+      # ReadOnly fields are now evaluated (from Watch schema), so we can safely reject unknown fields
+      unevaluatedProperties: false
 
     Tag:
       type: object

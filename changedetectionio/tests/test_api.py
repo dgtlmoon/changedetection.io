@@ -463,6 +463,9 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage, datasto
         follow_redirects=True
     )
 
+    if res.status_code != 201:
+        print(f"\n=== POST createwatch failed with {res.status_code} ===")
+        print(f"Response: {res.data}")
     assert res.status_code == 201
 
     wait_for_all_checks(client)
