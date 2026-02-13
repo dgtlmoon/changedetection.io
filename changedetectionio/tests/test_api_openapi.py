@@ -26,7 +26,7 @@ def test_openapi_validation_invalid_content_type_on_create_watch(client, live_se
 
     # Should get 400 error due to OpenAPI validation failure
     assert res.status_code == 400, f"Expected 400 but got {res.status_code}"
-    assert b"OpenAPI validation failed" in res.data, "Should contain OpenAPI validation error message"
+    assert b"Validation failed" in res.data, "Should contain validation error message"
 
 
 def test_openapi_validation_missing_required_field_create_watch(client, live_server, measure_memory_usage, datastore_path):
@@ -43,7 +43,7 @@ def test_openapi_validation_missing_required_field_create_watch(client, live_ser
 
     # Should get 400 error due to missing required field
     assert res.status_code == 400, f"Expected 400 but got {res.status_code}"
-    assert b"OpenAPI validation failed" in res.data, "Should contain OpenAPI validation error message"
+    assert b"Validation failed" in res.data, "Should contain validation error message"
 
 
 def test_openapi_validation_invalid_field_in_request_body(client, live_server, measure_memory_usage, datastore_path):
@@ -80,10 +80,9 @@ def test_openapi_validation_invalid_field_in_request_body(client, live_server, m
     # Should get 400 error due to invalid field (this will be caught by internal validation)
     # Note: This tests the flow where OpenAPI validation passes but internal validation catches it
     assert res.status_code == 400, f"Expected 400 but got {res.status_code}"
-    # With patternProperties for processor_config_*, the error message format changed slightly
-    assert (b"Additional properties are not allowed" in res.data or
-            b"does not match any of the regexes" in res.data), \
-            "Should contain validation error about additional/invalid properties"
+    # Backend validation now returns "Unknown field(s):" message
+    assert b"Unknown field" in res.data, \
+            "Should contain validation error about unknown fields"
 
 
 def test_openapi_validation_import_wrong_content_type(client, live_server, measure_memory_usage, datastore_path):
@@ -100,7 +99,7 @@ def test_openapi_validation_import_wrong_content_type(client, live_server, measu
 
     # Should get 400 error due to content-type mismatch
     assert res.status_code == 400, f"Expected 400 but got {res.status_code}"
-    assert b"OpenAPI validation failed" in res.data, "Should contain OpenAPI validation error message"
+    assert b"Validation failed" in res.data, "Should contain validation error message"
 
 
 def test_openapi_validation_import_correct_content_type_succeeds(client, live_server, measure_memory_usage, datastore_path):
@@ -158,7 +157,7 @@ def test_openapi_validation_create_tag_missing_required_title(client, live_serve
 
     # Should get 400 error due to missing required field
     assert res.status_code == 400, f"Expected 400 but got {res.status_code}"
-    assert b"OpenAPI validation failed" in res.data, "Should contain OpenAPI validation error message"
+    assert b"Validation failed" in res.data, "Should contain validation error message"
 
 
 def test_openapi_validation_watch_update_allows_partial_updates(client, live_server, measure_memory_usage, datastore_path):
