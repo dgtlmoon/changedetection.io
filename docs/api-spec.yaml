@@ -178,6 +178,9 @@ components:
           type: [string, 'null']
           description: Proxy configuration
           maxLength: 5000
+        ignore_status_codes:
+          type: [boolean, 'null']
+          description: Ignore HTTP status code errors (boolean or null)
         webdriver_delay:
           type: [integer, 'null']
           description: Delay in seconds for webdriver

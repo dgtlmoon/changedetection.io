@@ -529,12 +529,12 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage, datasto
     )
 
     assert res.status_code == 400, "Should get error 400 when we give a field that doesnt exist"
-    # OpenAPI validation message changed when we switched from flask-expects-json to OpenAPI validation
-    # Using unevaluatedProperties instead of additionalProperties changes the message
-    assert (b'Additional properties are not allowed' in res.data or
+    # Backend validation now rejects unknown fields with a clear error message
+    assert (b'Unknown field' in res.data or
+            b'Additional properties are not allowed' in res.data or
             b'Unevaluated properties are not allowed' in res.data or
             b'does not match any of the regexes' in res.data), \
-            "Should reject unknown fields with schema validation error"
+            "Should reject unknown fields with validation error"
 
 
     # Try a XSS URL

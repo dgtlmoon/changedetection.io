@@ -188,6 +188,19 @@ class Watch(Resource):
         for field in fields_to_ignore:
             json_data.pop(field, None)
 
+        # Validate remaining fields - reject truly unknown fields
+        # Get valid fields from WatchBase schema
+        from . import get_watch_schema_properties
+        valid_fields = set(get_watch_schema_properties().keys())
+
+        # Also allow last_viewed (explicitly defined in UpdateWatch schema)
+        valid_fields.add('last_viewed')
+
+        # Check for unknown fields
+        unknown_fields = set(json_data.keys()) - valid_fields
+        if unknown_fields:
+            return f"Unknown field(s): {', '.join(sorted(unknown_fields))}", 400
+
         # Update watch with regular (non-processor-config) fields
         watch.update(json_data)
         watch.commit()

@@ -26,6 +26,7 @@ class watch_base(dict):
           - Configuration override chain resolution (Watch → Tag → Global)
           - Immutability options
           - Better testing
+          - USE https://docs.pydantic.dev/latest/integrations/datamodel_code_generator TO BUILD THE MODEL FROM THE API-SPEC!!!
 
     CHAIN RESOLUTION ARCHITECTURE:
         The dream is a 3-level override hierarchy:

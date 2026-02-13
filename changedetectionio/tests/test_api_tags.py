@@ -176,4 +176,59 @@ def test_api_tags_listing(client, live_server, measure_memory_usage, datastore_p
     assert res.status_code == 204
 
 
+def test_roundtrip_API(client, live_server, measure_memory_usage, datastore_path):
+    """
+    Test the full round trip, this way we test the default Model fits back into OpenAPI spec
+    :param client:
+    :param live_server:
+    :param measure_memory_usage:
+    :param datastore_path:
+    :return:
+    """
+    api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
 
+    set_original_response(datastore_path=datastore_path)
+
+    res = client.post(
+        url_for("tag"),
+        data=json.dumps({"title": "My tag title"}),
+        headers={'content-type': 'application/json', 'x-api-key': api_key}
+    )
+    assert res.status_code == 201
+
+    uuid = res.json.get('uuid')
+
+    # Now fetch it and send it back
+
+    res = client.get(
+        url_for("tag", uuid=uuid),
+        headers={'x-api-key': api_key}
+    )
+
+    tag = res.json
+
+    tag['last_changed'] = 454444444444
+    tag['date_created'] = 454444444444
+
+    # HTTP PUT ( UPDATE an existing watch )
+    res = client.put(
+        url_for("tag", uuid=uuid),
+        headers={'x-api-key': api_key, 'content-type': 'application/json'},
+        data=json.dumps(tag),
+    )
+    if res.status_code != 200:
+        print(f"\n=== PUT failed with {res.status_code} ===")
+        print(f"Error: {res.data}")
+    assert res.status_code == 200, "HTTP PUT update was sent OK"
+
+    res = client.get(
+        url_for("watch", uuid=uuid),
+        headers={'x-api-key': api_key}
+    )
+    last_changed = res.json.get('last_changed')
+    assert last_changed != 454444444444
+    assert last_changed != "454444444444"
+
+    date_created = res.json.get('date_created')
+    assert date_created != 454444444444
+    assert date_created != "454444444444"
