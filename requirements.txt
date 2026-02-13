@@ -13,7 +13,7 @@ flask_wtf~=1.2
 flask~=3.1
 flask-socketio~=5.6.0
 python-socketio~=5.16.0
-python-engineio~=4.13.0
+python-engineio~=4.13.1
 inscriptis~=2.2
 pytz
 timeago~=1.0
