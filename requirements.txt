@@ -127,7 +127,7 @@ greenlet >= 3.0.3
 gevent
 
 # Pinned or it causes problems with flask_expects_json which seems unmaintained
-referencing==0.35.1
+referencing==0.37.0
 
 # For conditions
 panzi-json-logic
