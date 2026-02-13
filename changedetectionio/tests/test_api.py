@@ -328,6 +328,68 @@ def test_api_simple(client, live_server, measure_memory_usage, datastore_path):
     )
     assert len(res.json) == 0, "Watch list should be empty"
 
+def test_roundtrip_API(client, live_server, measure_memory_usage, datastore_path):
+    """
+    Test the full round trip, this way we test the default Model fits back into OpenAPI spec
+    :param client:
+    :param live_server:
+    :param measure_memory_usage:
+    :param datastore_path:
+    :return:
+    """
+    api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
+
+    set_original_response(datastore_path=datastore_path)
+    test_url = url_for('test_endpoint', _external=True)
+
+    # Create new
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({"url": test_url}),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+        follow_redirects=True
+    )
+
+    assert res.status_code == 201
+    uuid = res.json.get('uuid')
+
+    # Now fetch it and send it back
+
+    res = client.get(
+        url_for("watch", uuid=uuid),
+        headers={'x-api-key': api_key}
+    )
+
+    watch=res.json
+
+    # Be sure that 'readOnly' values are never updated in the real watch
+    watch['last_changed'] = 454444444444
+    watch['date_created'] = 454444444444
+
+    # HTTP PUT ( UPDATE an existing watch )
+    res = client.put(
+        url_for("watch", uuid=uuid),
+        headers={'x-api-key': api_key, 'content-type': 'application/json'},
+        data=json.dumps(watch),
+    )
+    if res.status_code != 200:
+        print(f"\n=== PUT failed with {res.status_code} ===")
+        print(f"Error: {res.data}")
+    assert res.status_code == 200, "HTTP PUT update was sent OK"
+
+    res = client.get(
+        url_for("watch", uuid=uuid),
+        headers={'x-api-key': api_key}
+    )
+    last_changed = res.json.get('last_changed')
+    assert last_changed != 454444444444
+    assert last_changed != "454444444444"
+
+    date_created = res.json.get('date_created')
+    assert date_created != 454444444444
+    assert date_created != "454444444444"
+
+
 def test_access_denied(client, live_server, measure_memory_usage, datastore_path):
     # `config_api_token_enabled` Should be On by default
     res = client.get(
@@ -464,9 +526,10 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage, datasto
     )
 
     assert res.status_code == 400, "Should get error 400 when we give a field that doesnt exist"
-    # Message will come from `flask_expects_json`
-    # With patternProperties for processor_config_*, the error message format changed slightly
+    # OpenAPI validation message changed when we switched from flask-expects-json to OpenAPI validation
+    # Using unevaluatedProperties instead of additionalProperties changes the message
     assert (b'Additional properties are not allowed' in res.data or
+            b'Unevaluated properties are not allowed' in res.data or
             b'does not match any of the regexes' in res.data), \
             "Should reject unknown fields with schema validation error"
 
@@ -867,7 +930,9 @@ def test_api_url_validation(client, live_server, measure_memory_usage, datastore
     )
     assert res.status_code == 400, "Updating watch URL to null should fail"
     # Accept either OpenAPI validation error or our custom validation error
-    assert b'URL cannot be null' in res.data or b'OpenAPI validation failed' in res.data or b'validation error' in res.data.lower()
+    assert (b'URL cannot be null' in res.data or
+            b'Validation failed' in res.data or
+            b'validation error' in res.data.lower())
 
     # Test 8: UPDATE to empty string URL should fail
     res = client.put(

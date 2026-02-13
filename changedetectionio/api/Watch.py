@@ -12,7 +12,7 @@ from flask_restful import abort, Resource
 from loguru import logger
 import copy
 
-from . import validate_openapi_request
+from . import validate_openapi_request, get_readonly_watch_fields
 from ..notification import valid_notification_formats
 from ..notification.handler import newline_re
 
@@ -171,6 +171,14 @@ class Watch(Resource):
 
         # Extract and remove processor config fields from json_data
         processor_config_data = processors.extract_processor_config_from_form_data(json_data)
+
+        # Filter out readOnly fields (extracted from OpenAPI spec Watch schema)
+        # These are system-managed fields that should never be user-settable
+        readonly_fields = get_readonly_watch_fields()
+
+        # Remove readOnly fields from update data
+        for field in readonly_fields:
+            json_data.pop(field, None)
 
         # Update watch with regular (non-processor-config) fields
         watch.update(json_data)

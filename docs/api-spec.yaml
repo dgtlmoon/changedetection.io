@@ -28,7 +28,7 @@ info:
     
     For example: `x-api-key: YOUR_API_KEY`
     
-  version: 0.1.5
+  version: 0.1.6
   contact:
     name: ChangeDetection.io
     url: https://github.com/dgtlmoon/changedetection.io
@@ -189,30 +189,25 @@ components:
           type: object
           properties:
             weeks:
-              type: integer
+              type: [integer, 'null']
               minimum: 0
               maximum: 52000
-              nullable: true
             days:
-              type: integer
+              type: [integer, 'null']
               minimum: 0
               maximum: 365000
-              nullable: true
             hours:
-              type: integer
+              type: [integer, 'null']
               minimum: 0
               maximum: 8760000
-              nullable: true
             minutes:
-              type: integer
+              type: [integer, 'null']
               minimum: 0
               maximum: 525600000
-              nullable: true
             seconds:
-              type: integer
+              type: [integer, 'null']
               minimum: 0
               maximum: 31536000000
-              nullable: true
           description: Time intervals between checks. All fields must be non-negative. At least one non-zero value required when not using default settings.
         time_between_check_use_default:
           type: boolean
@@ -264,6 +259,178 @@ components:
           default: text_json_diff
           description: Optional processor mode to use for change detection. Defaults to `text_json_diff` if not specified.
 
+        # Content Filtering
+        include_filters:
+          type: array
+          items:
+            type: string
+            maxLength: 5000
+          maxItems: 100
+          description: CSS/XPath selectors to extract specific content from the page
+        subtractive_selectors:
+          type: array
+          items:
+            type: string
+            maxLength: 5000
+          maxItems: 100
+          description: CSS/XPath selectors to remove content from the page
+        ignore_text:
+          type: array
+          items:
+            type: string
+            maxLength: 5000
+          maxItems: 100
+          description: Text patterns to ignore in change detection
+        trigger_text:
+          type: array
+          items:
+            type: string
+            maxLength: 5000
+          maxItems: 100
+          description: Text/regex patterns that must be present to trigger a change
+        text_should_not_be_present:
+          type: array
+          items:
+            type: string
+            maxLength: 5000
+          maxItems: 100
+          description: Text that should NOT be present (triggers alert if found)
+        extract_text:
+          type: array
+          items:
+            type: string
+            maxLength: 5000
+          maxItems: 100
+          description: Regex patterns to extract specific text after filtering
+
+        # Text Processing
+        trim_text_whitespace:
+          type: boolean
+          default: false
+          description: Strip leading/trailing whitespace from text
+        sort_text_alphabetically:
+          type: boolean
+          default: false
+          description: Sort lines alphabetically before comparison
+        remove_duplicate_lines:
+          type: boolean
+          default: false
+          description: Remove duplicate lines from content
+        check_unique_lines:
+          type: boolean
+          default: false
+          description: Compare against all history for unique lines
+        strip_ignored_lines:
+          type: [boolean, 'null']
+          description: Remove lines matching ignore patterns
+
+        # Change Detection Filters
+        filter_text_added:
+          type: boolean
+          default: true
+          description: Include added text in change detection
+        filter_text_removed:
+          type: boolean
+          default: true
+          description: Include removed text in change detection
+        filter_text_replaced:
+          type: boolean
+          default: true
+          description: Include replaced text in change detection
+
+        # Restock/Price Detection
+        in_stock_only:
+          type: boolean
+          default: true
+          description: Only trigger on in-stock transitions (restock_diff processor)
+        follow_price_changes:
+          type: boolean
+          default: true
+          description: Monitor and track price changes (restock_diff processor)
+        price_change_threshold_percent:
+          type: [number, 'null']
+          description: Minimum price change percentage to trigger notification
+        has_ldjson_price_data:
+          type: [boolean, 'null']
+          description: Whether page has LD-JSON price data (auto-detected)
+          readOnly: true
+
+        # Notifications
+        notification_screenshot:
+          type: boolean
+          default: false
+          description: Include screenshot in notifications (if supported by notification URL)
+        filter_failure_notification_send:
+          type: boolean
+          default: true
+          description: Send notification when filters fail to match content
+
+        # History & Display
+        use_page_title_in_list:
+          type: [boolean, 'null']
+          description: Display page title in watch list (null = use system default)
+        history_snapshot_max_length:
+          type: [integer, 'null']
+          minimum: 1
+          maximum: 1000
+          description: Maximum number of history snapshots to keep (null = use system default)
+
+        # Scheduling
+        time_schedule_limit:
+          type: object
+          description: Weekly schedule limiting when checks can run
+          properties:
+            enabled:
+              type: boolean
+              default: false
+            monday:
+              $ref: '#/components/schemas/DaySchedule'
+            tuesday:
+              $ref: '#/components/schemas/DaySchedule'
+            wednesday:
+              $ref: '#/components/schemas/DaySchedule'
+            thursday:
+              $ref: '#/components/schemas/DaySchedule'
+            friday:
+              $ref: '#/components/schemas/DaySchedule'
+            saturday:
+              $ref: '#/components/schemas/DaySchedule'
+            sunday:
+              $ref: '#/components/schemas/DaySchedule'
+
+        # Conditions (advanced logic)
+        conditions:
+          type: object
+          description: Custom conditions for change detection logic
+        conditions_match_logic:
+          type: string
+          enum: ['ALL', 'ANY']
+          default: 'ALL'
+          description: Logic operator for multiple conditions
+
+    DaySchedule:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: true
+        start_time:
+          type: string
+          pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+          default: '00:00'
+          description: Start time in HH:MM format
+        duration:
+          type: object
+          properties:
+            hours:
+              type: string
+              pattern: '^[0-9]+$'
+              default: '24'
+            minutes:
+              type: string
+              pattern: '^[0-9]+$'
+              default: '00'
+
     Watch:
       allOf:
         - $ref: '#/components/schemas/WatchBase'
@@ -295,6 +462,62 @@ components:
               format: string
               description: The watch URL rendered in case of any Jinja2 markup, always use this for listing.
               readOnly: true
+            page_title:
+              type: [string, 'null']
+              description: HTML <title> tag extracted from the page
+              readOnly: true
+            check_count:
+              type: integer
+              description: Total number of checks performed
+              readOnly: true
+            fetch_time:
+              type: number
+              description: Duration of last fetch in seconds
+              readOnly: true
+            previous_md5:
+              type: [string, boolean]
+              description: MD5 hash of previous content (false if not set)
+              readOnly: true
+            previous_md5_before_filters:
+              type: [string, boolean]
+              description: MD5 hash before filters applied (false if not set)
+              readOnly: true
+            consecutive_filter_failures:
+              type: integer
+              description: Counter for consecutive filter match failures
+              readOnly: true
+            last_notification_error:
+              type: [string, 'null']
+              description: Last notification error message
+              readOnly: true
+            notification_alert_count:
+              type: integer
+              description: Number of notifications sent
+              readOnly: true
+            date_created:
+              type: [integer, 'null']
+              description: Unix timestamp of watch creation
+              readOnly: true
+            content-type:
+              type: [string, 'null']
+              description: Content-Type from last fetch
+              readOnly: true
+            remote_server_reply:
+              type: [string, 'null']
+              description: Server header from last response
+              readOnly: true
+            browser_steps_last_error_step:
+              type: [integer, 'null']
+              description: Last browser step that caused an error
+              readOnly: true
+            viewed:
+              type: integer
+              description: Alias for last_viewed (deprecated, use last_viewed instead)
+              readOnly: true
+            history_n:
+              type: object
+              description: History metadata
+              readOnly: true
 
     CreateWatch:
       allOf:
@@ -312,6 +535,8 @@ components:
               type: integer
               description: Unix timestamp in seconds of the last time the watch was viewed. Setting it to a value higher than `last_changed` in the "Update watch" endpoint marks the watch as viewed.
               minimum: 0
+      # Allow readOnly fields in request body (they will be ignored) to support roundtrip GET/PUT workflows
+      # unevaluatedProperties: false
 
     Tag:
       type: object

@@ -53,6 +53,39 @@ def get_watch_schema_properties():
     # Return WatchBase properties (CreateWatch uses allOf to extend it)
     return watch_base_schema.get('properties', {})
 
+@functools.cache
+def get_readonly_watch_fields():
+    """
+    Extract readOnly field names from Watch schema in OpenAPI spec.
+
+    These are system-managed fields that should never be updated by user input.
+    Used by the Watch PUT endpoint to filter out readOnly fields from requests.
+
+    Returns:
+        frozenset: Immutable set of field names marked as readOnly in the Watch schema
+    """
+    spec_dict = get_openapi_schema_dict()
+    watch_schema = spec_dict['components']['schemas'].get('Watch', {})
+
+    readonly_fields = set()
+
+    # The Watch schema uses allOf to extend WatchBase and add readOnly properties
+    if 'allOf' in watch_schema:
+        for item in watch_schema['allOf']:
+            # Look for the object that defines Watch-specific properties (not the $ref)
+            if 'properties' in item:
+                for field_name, field_def in item['properties'].items():
+                    if field_def.get('readOnly') is True:
+                        readonly_fields.add(field_name)
+
+    # Also check top-level properties (if schema structure changes)
+    if 'properties' in watch_schema:
+        for field_name, field_def in watch_schema['properties'].items():
+            if field_def.get('readOnly') is True:
+                readonly_fields.add(field_name)
+
+    return frozenset(readonly_fields)
+
 def validate_openapi_request(operation_id):
     """Decorator to validate incoming requests against OpenAPI spec."""
     def decorator(f):
