@@ -67,7 +67,25 @@ class Tag(Resource):
             tag.commit()
             return "OK", 200
 
-        return tag
+        # Filter out Watch-specific runtime fields that don't apply to Tags (yet)
+        # TODO: Future enhancement - aggregate these values from all Watches that have this tag:
+        #   - check_count: sum of all watches' check_count
+        #   - last_checked: most recent last_checked from all watches
+        #   - last_changed: most recent last_changed from all watches
+        #   - consecutive_filter_failures: count of watches with failures
+        #   - etc.
+        # These come from watch_base inheritance but currently have no meaningful value for Tags
+        watch_only_fields = {
+            'browser_steps_last_error_step', 'check_count', 'consecutive_filter_failures',
+            'content-type', 'fetch_time', 'last_changed', 'last_checked', 'last_error',
+            'last_notification_error', 'last_viewed', 'notification_alert_count',
+            'page_title', 'previous_md5', 'previous_md5_before_filters', 'remote_server_reply'
+        }
+
+        # Create clean tag dict without Watch-specific fields
+        clean_tag = {k: v for k, v in tag.items() if k not in watch_only_fields}
+
+        return clean_tag
 
     @auth.check_token
     @validate_openapi_request('deleteTag')

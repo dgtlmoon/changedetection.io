@@ -566,8 +566,28 @@ components:
         - type: object
           properties:
             overrides_watch:
-              type: boolean
-              description: If true, this tag's settings override watch settings for all watches in this tag/group
+              type: [boolean, 'null']
+              description: |
+                Whether this tag's settings override watch settings for all watches in this tag/group.
+                - true: Tag settings override watch settings
+                - false: Tag settings do not override (watches use their own settings)
+                - null: Not decided yet / inherit default behavior
+            # Future: Aggregated statistics from all watches with this tag
+            # check_count:
+            #   type: integer
+            #   description: Sum of check_count from all watches with this tag
+            #   readOnly: true
+            #   x-computed: true
+            # last_checked:
+            #   type: integer
+            #   description: Most recent last_checked timestamp from all watches with this tag
+            #   readOnly: true
+            #   x-computed: true
+            # last_changed:
+            #   type: integer
+            #   description: Most recent last_changed timestamp from all watches with this tag
+            #   readOnly: true
+            #   x-computed: true
 
     CreateTag:
       allOf:

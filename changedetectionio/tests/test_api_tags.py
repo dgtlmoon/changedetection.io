@@ -207,7 +207,8 @@ def test_roundtrip_API(client, live_server, measure_memory_usage, datastore_path
 
     tag = res.json
 
-    tag['last_changed'] = 454444444444
+    # Only test with date_created (readOnly field that should be filtered out)
+    # last_changed is Watch-specific and doesn't apply to Tags
     tag['date_created'] = 454444444444
 
     # HTTP PUT ( UPDATE an existing watch )
@@ -221,14 +222,11 @@ def test_roundtrip_API(client, live_server, measure_memory_usage, datastore_path
         print(f"Error: {res.data}")
     assert res.status_code == 200, "HTTP PUT update was sent OK"
 
+    # Verify readOnly fields like date_created cannot be overridden
     res = client.get(
-        url_for("watch", uuid=uuid),
+        url_for("tag", uuid=uuid),
         headers={'x-api-key': api_key}
     )
-    last_changed = res.json.get('last_changed')
-    assert last_changed != 454444444444
-    assert last_changed != "454444444444"
-
     date_created = res.json.get('date_created')
-    assert date_created != 454444444444
-    assert date_created != "454444444444"
+    assert date_created != 454444444444, "ReadOnly date_created should not be updateable"
+    assert date_created != "454444444444", "ReadOnly date_created should not be updateable"
