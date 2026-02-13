@@ -132,7 +132,7 @@ components:
           description: URL to monitor for changes
           maxLength: 5000
         title:
-          type: string
+          type: [string, 'null']
           description: Custom title for the web page change monitor (watch), not to be confused with page_title
           maxLength: 5000
         tag:
@@ -156,26 +156,33 @@ components:
           description: HTTP method to use
         fetch_backend:
           type: string
-          enum: [html_requests, html_webdriver]
-          description: Backend to use for fetching content
+          description: |
+            Backend to use for fetching content. Common values:
+            - `system` (default) - Use the system-wide default fetcher
+            - `html_requests` - Fast requests-based fetcher
+            - `html_webdriver` - Browser-based fetcher (Playwright/Puppeteer)
+            - `extra_browser_*` - Custom browser configurations (if configured)
+            - Plugin-provided fetchers (if installed)
+          pattern: '^(system|html_requests|html_webdriver|extra_browser_.+)$'
+          default: system
         headers:
           type: object
           additionalProperties:
             type: string
           description: HTTP headers to include in requests
         body:
-          type: string
+          type: [string, 'null']
           description: HTTP request body
           maxLength: 5000
         proxy:
-          type: string
+          type: [string, 'null']
           description: Proxy configuration
           maxLength: 5000
         webdriver_delay:
-          type: integer
+          type: [integer, 'null']
           description: Delay in seconds for webdriver
         webdriver_js_execute_code:
-          type: string
+          type: [string, 'null']
           description: JavaScript code to execute
           maxLength: 5000
         time_between_check:
@@ -219,11 +226,11 @@ components:
           maxItems: 100
           description: Notification URLs for this web page change monitor (watch). Maximum 100 URLs.
         notification_title:
-          type: string
+          type: [string, 'null']
           description: Custom notification title
           maxLength: 5000
         notification_body:
-          type: string
+          type: [string, 'null']
           description: Custom notification body
           maxLength: 5000
         notification_format:
@@ -231,7 +238,7 @@ components:
           enum: ['text', 'html', 'htmlcolor', 'markdown', 'System default']
           description: Format for notifications
         track_ldjson_price_data:
-          type: boolean
+          type: [boolean, 'null']
           description: Whether to track JSON-LD price data
         browser_steps:
           type: array
@@ -239,17 +246,14 @@ components:
             type: object
             properties:
               operation:
-                type: string
+                type: [string, 'null']
                 maxLength: 5000
-                nullable: true
               selector:
-                type: string
+                type: [string, 'null']
                 maxLength: 5000
-                nullable: true
               optional_value:
-                type: string
+                type: [string, 'null']
                 maxLength: 5000
-                nullable: true
             required: [operation, selector, optional_value]
             additionalProperties: false
           maxItems: 100
