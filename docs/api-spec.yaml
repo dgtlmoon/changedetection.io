@@ -466,6 +466,7 @@ components:
               type: integer
               description: Unix timestamp of last change
               readOnly: true
+              x-computed: true
             last_error:
               type: [string, boolean, 'null']
               description: Last error message (false when no error, string when error occurred, null if not checked yet)
@@ -479,6 +480,7 @@ components:
               format: string
               description: The watch URL rendered in case of any Jinja2 markup, always use this for listing.
               readOnly: true
+              x-computed: true
             page_title:
               type: [string, 'null']
               description: HTML <title> tag extracted from the page
@@ -531,10 +533,12 @@ components:
               type: [integer, boolean]
               description: Computed property - true if watch has been viewed, false otherwise (deprecated, use last_viewed instead)
               readOnly: true
+              x-computed: true
             history_n:
               type: integer
               description: Number of history snapshots available
               readOnly: true
+              x-computed: true
 
     CreateWatch:
       allOf:
