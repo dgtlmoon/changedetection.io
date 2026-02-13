@@ -1,41 +1,6 @@
-import copy
 import functools
 from flask import request, abort
 from loguru import logger
-from . import api_schema
-from ..model import watch_base
-
-# Build a JSON Schema atleast partially based on our Watch model
-watch_base_config = watch_base()
-schema = api_schema.build_watch_json_schema(watch_base_config)
-
-schema_create_watch = copy.deepcopy(schema)
-schema_create_watch['required'] = ['url']
-del schema_create_watch['properties']['last_viewed']
-# Allow processor_config_* fields (handled separately in endpoint)
-schema_create_watch['patternProperties'] = {
-    '^processor_config_': {'type': ['string', 'number', 'boolean', 'object', 'array', 'null']}
-}
-
-schema_update_watch = copy.deepcopy(schema)
-schema_update_watch['additionalProperties'] = False
-# Allow processor_config_* fields (handled separately in endpoint)
-schema_update_watch['patternProperties'] = {
-    '^processor_config_': {'type': ['string', 'number', 'boolean', 'object', 'array', 'null']}
-}
-
-# Tag schema is also based on watch_base since Tag inherits from it
-schema_tag = copy.deepcopy(schema)
-schema_create_tag = copy.deepcopy(schema_tag)
-schema_create_tag['required'] = ['title']
-schema_update_tag = copy.deepcopy(schema_tag)
-schema_update_tag['additionalProperties'] = False
-
-schema_notification_urls = copy.deepcopy(schema)
-schema_create_notification_urls = copy.deepcopy(schema_notification_urls)
-schema_create_notification_urls['required'] = ['notification_urls']
-schema_delete_notification_urls = copy.deepcopy(schema_notification_urls)
-schema_delete_notification_urls['required'] = ['notification_urls']
 
 @functools.cache
 def get_openapi_spec():
@@ -53,6 +18,40 @@ def get_openapi_spec():
         spec_dict = yaml.safe_load(f)
     _openapi_spec = OpenAPI.from_dict(spec_dict)
     return _openapi_spec
+
+@functools.cache
+def get_openapi_schema_dict():
+    """
+    Get the raw OpenAPI spec dictionary for schema access.
+
+    Used by Import endpoint to validate and convert query parameters.
+    Returns the YAML dict directly (not the OpenAPI object).
+    """
+    import os
+    import yaml
+
+    spec_path = os.path.join(os.path.dirname(__file__), '../../docs/api-spec.yaml')
+    if not os.path.exists(spec_path):
+        spec_path = os.path.join(os.path.dirname(__file__), '../docs/api-spec.yaml')
+
+    with open(spec_path, 'r', encoding='utf-8') as f:
+        return yaml.safe_load(f)
+
+def get_watch_schema_properties():
+    """
+    Extract watch schema properties from OpenAPI spec for Import endpoint.
+
+    Returns a dict of property names to their schema definitions,
+    suitable for validating query parameters.
+    """
+    spec_dict = get_openapi_schema_dict()
+
+    # Get CreateWatch schema (which references WatchBase via allOf)
+    create_watch_schema = spec_dict['components']['schemas']['CreateWatch']
+    watch_base_schema = spec_dict['components']['schemas']['WatchBase']
+
+    # Return WatchBase properties (CreateWatch uses allOf to extend it)
+    return watch_base_schema.get('properties', {})
 
 def validate_openapi_request(operation_id):
     """Decorator to validate incoming requests against OpenAPI spec."""

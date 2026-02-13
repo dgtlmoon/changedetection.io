@@ -1,6 +1,5 @@
 from changedetectionio import queuedWatchMetaData
 from changedetectionio import worker_pool
-from flask_expects_json import expects_json
 from flask_restful import abort, Resource
 from loguru import logger
 
@@ -8,8 +7,7 @@ import threading
 from flask import request
 from . import auth
 
-# Import schemas from __init__.py
-from . import schema_tag, schema_create_tag, schema_update_tag, validate_openapi_request
+from . import validate_openapi_request
 
 
 class Tag(Resource):
@@ -102,7 +100,6 @@ class Tag(Resource):
 
     @auth.check_token
     @validate_openapi_request('updateTag')
-    @expects_json(schema_update_tag)
     def put(self, uuid):
         """Update tag information."""
         tag = self.datastore.data['settings']['application']['tags'].get(uuid)

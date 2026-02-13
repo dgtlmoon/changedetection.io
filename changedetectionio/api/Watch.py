@@ -8,13 +8,11 @@ from . import auth
 from changedetectionio import queuedWatchMetaData, strtobool
 from changedetectionio import worker_pool
 from flask import request, make_response, send_from_directory
-from flask_expects_json import expects_json
 from flask_restful import abort, Resource
 from loguru import logger
 import copy
 
-# Import schemas from __init__.py
-from . import schema, schema_create_watch, schema_update_watch, validate_openapi_request
+from . import validate_openapi_request
 from ..notification import valid_notification_formats
 from ..notification.handler import newline_re
 
@@ -121,7 +119,6 @@ class Watch(Resource):
 
     @auth.check_token
     @validate_openapi_request('updateWatch')
-    @expects_json(schema_update_watch)
     def put(self, uuid):
         """Update watch information."""
         watch = self.datastore.data['watching'].get(uuid)
@@ -393,7 +390,6 @@ class CreateWatch(Resource):
 
     @auth.check_token
     @validate_openapi_request('createWatch')
-    @expects_json(schema_create_watch)
     def post(self):
         """Create a single watch."""
 
