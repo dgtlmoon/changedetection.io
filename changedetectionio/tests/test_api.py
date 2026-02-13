@@ -328,6 +328,68 @@ def test_api_simple(client, live_server, measure_memory_usage, datastore_path):
     )
     assert len(res.json) == 0, "Watch list should be empty"
 
+def test_roundtrip_API(client, live_server, measure_memory_usage, datastore_path):
+    """
+    Test the full round trip, this way we test the default Model fits back into OpenAPI spec
+    :param client:
+    :param live_server:
+    :param measure_memory_usage:
+    :param datastore_path:
+    :return:
+    """
+    api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
+
+    set_original_response(datastore_path=datastore_path)
+    test_url = url_for('test_endpoint', _external=True)
+
+    # Create new
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({"url": test_url}),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+        follow_redirects=True
+    )
+
+    assert res.status_code == 201
+    uuid = res.json.get('uuid')
+
+    # Now fetch it and send it back
+
+    res = client.get(
+        url_for("watch", uuid=uuid),
+        headers={'x-api-key': api_key}
+    )
+
+    watch=res.json
+
+    # Be sure that 'readOnly' values are never updated in the real watch
+    watch['last_changed'] = 454444444444
+    watch['date_created'] = 454444444444
+
+    # HTTP PUT ( UPDATE an existing watch )
+    res = client.put(
+        url_for("watch", uuid=uuid),
+        headers={'x-api-key': api_key, 'content-type': 'application/json'},
+        data=json.dumps(watch),
+    )
+    if res.status_code != 200:
+        print(f"\n=== PUT failed with {res.status_code} ===")
+        print(f"Error: {res.data}")
+    assert res.status_code == 200, "HTTP PUT update was sent OK"
+
+    res = client.get(
+        url_for("watch", uuid=uuid),
+        headers={'x-api-key': api_key}
+    )
+    last_changed = res.json.get('last_changed')
+    assert last_changed != 454444444444
+    assert last_changed != "454444444444"
+
+    date_created = res.json.get('date_created')
+    assert date_created != 454444444444
+    assert date_created != "454444444444"
+
+
 def test_access_denied(client, live_server, measure_memory_usage, datastore_path):
     # `config_api_token_enabled` Should be On by default
     res = client.get(
@@ -401,6 +463,9 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage, datasto
         follow_redirects=True
     )
 
+    if res.status_code != 201:
+        print(f"\n=== POST createwatch failed with {res.status_code} ===")
+        print(f"Response: {res.data}")
     assert res.status_code == 201
 
     wait_for_all_checks(client)
@@ -464,11 +529,12 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage, datasto
     )
 
     assert res.status_code == 400, "Should get error 400 when we give a field that doesnt exist"
-    # Message will come from `flask_expects_json`
-    # With patternProperties for processor_config_*, the error message format changed slightly
-    assert (b'Additional properties are not allowed' in res.data or
+    # Backend validation now rejects unknown fields with a clear error message
+    assert (b'Unknown field' in res.data or
+            b'Additional properties are not allowed' in res.data or
+            b'Unevaluated properties are not allowed' in res.data or
             b'does not match any of the regexes' in res.data), \
-            "Should reject unknown fields with schema validation error"
+            "Should reject unknown fields with validation error"
 
 
     # Try a XSS URL
@@ -553,6 +619,8 @@ def test_api_import(client, live_server, measure_memory_usage, datastore_path):
     assert res.status_code == 200
     uuid = res.json[0]
     watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
+    assert isinstance(watch['notification_urls'], list), "notification_urls must be stored as a list"
+    assert len(watch['notification_urls']) == 2, "notification_urls should have 2 entries"
     assert 'mailto://test@example.com' in watch['notification_urls'], "notification_urls should contain first email"
     assert 'mailto://admin@example.com' in watch['notification_urls'], "notification_urls should contain second email"
 
@@ -598,6 +666,34 @@ def test_api_import(client, live_server, measure_memory_usage, datastore_path):
 
     assert res.status_code == 400, "Should reject unknown field"
     assert b"Unknown watch configuration parameter" in res.data, "Error message should mention unknown parameter"
+
+    # Test 7: Import with complex nested array (browser_steps) - array of objects
+    browser_steps = json.dumps([
+        {"operation": "wait", "selector": "5", "optional_value": ""},
+        {"operation": "click", "selector": "button.submit", "optional_value": ""}
+    ])
+    params = urllib.parse.urlencode({
+        'tag': 'browser-test',
+        'browser_steps': browser_steps
+    })
+
+    res = client.post(
+        url_for("import") + "?" + params,
+        data='https://website8.com',
+        headers={'x-api-key': api_key},
+        follow_redirects=True
+    )
+
+    assert res.status_code == 200, "Should accept browser_steps array"
+    uuid = res.json[0]
+    watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
+    assert len(watch['browser_steps']) == 2, "Should have 2 browser steps"
+    assert watch['browser_steps'][0]['operation'] == 'wait', "First step should be wait"
+    assert watch['browser_steps'][1]['operation'] == 'click', "Second step should be click"
+    assert watch['browser_steps'][1]['selector'] == 'button.submit', "Second step selector should be button.submit"
+
+    # Cleanup
+    delete_all_watches(client)
 
 
 def test_api_import_small_synchronous(client, live_server, measure_memory_usage, datastore_path):
@@ -837,7 +933,9 @@ def test_api_url_validation(client, live_server, measure_memory_usage, datastore
     )
     assert res.status_code == 400, "Updating watch URL to null should fail"
     # Accept either OpenAPI validation error or our custom validation error
-    assert b'URL cannot be null' in res.data or b'OpenAPI validation failed' in res.data or b'validation error' in res.data.lower()
+    assert (b'URL cannot be null' in res.data or
+            b'Validation failed' in res.data or
+            b'validation error' in res.data.lower())
 
     # Test 8: UPDATE to empty string URL should fail
     res = client.put(
@@ -924,3 +1022,140 @@ def test_api_url_validation(client, live_server, measure_memory_usage, datastore
         headers={'x-api-key': api_key},
     )
     delete_all_watches(client)
+
+
+def test_api_time_between_check_validation(client, live_server, measure_memory_usage, datastore_path):
+    """
+    Test that time_between_check validation works correctly:
+    - When time_between_check_use_default is false, at least one time value must be > 0
+    - Values must be valid integers
+    """
+    import json
+    from flask import url_for
+    
+    api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
+    
+    # Test 1: time_between_check_use_default=false with NO time_between_check should fail
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({
+            "url": "https://example.com",
+            "time_between_check_use_default": False
+        }),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+    )
+    assert res.status_code == 400, "Should fail when time_between_check_use_default=false with no time_between_check"
+    assert b"At least one time interval" in res.data, "Error message should mention time interval requirement"
+    
+    # Test 2: time_between_check_use_default=false with ALL zeros should fail
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({
+            "url": "https://example.com",
+            "time_between_check_use_default": False,
+            "time_between_check": {
+                "weeks": 0,
+                "days": 0,
+                "hours": 0,
+                "minutes": 0,
+                "seconds": 0
+            }
+        }),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+    )
+    assert res.status_code == 400, "Should fail when all time values are 0"
+    assert b"At least one time interval" in res.data, "Error message should mention time interval requirement"
+    
+    # Test 3: time_between_check_use_default=false with NULL values should fail
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({
+            "url": "https://example.com",
+            "time_between_check_use_default": False,
+            "time_between_check": {
+                "weeks": None,
+                "days": None,
+                "hours": None,
+                "minutes": None,
+                "seconds": None
+            }
+        }),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+    )
+    assert res.status_code == 400, "Should fail when all time values are null"
+    assert b"At least one time interval" in res.data, "Error message should mention time interval requirement"
+    
+    # Test 4: time_between_check_use_default=false with valid hours should succeed
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({
+            "url": "https://example.com",
+            "time_between_check_use_default": False,
+            "time_between_check": {
+                "hours": 2
+            }
+        }),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+    )
+    assert res.status_code == 201, "Should succeed with valid hours value"
+    uuid1 = res.json.get('uuid')
+    
+    # Test 5: time_between_check_use_default=false with valid minutes should succeed
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({
+            "url": "https://example2.com",
+            "time_between_check_use_default": False,
+            "time_between_check": {
+                "minutes": 30
+            }
+        }),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+    )
+    assert res.status_code == 201, "Should succeed with valid minutes value"
+    uuid2 = res.json.get('uuid')
+    
+    # Test 6: time_between_check_use_default=true (or missing) with no time_between_check should succeed (uses defaults)
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({
+            "url": "https://example3.com",
+            "time_between_check_use_default": True
+        }),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+    )
+    assert res.status_code == 201, "Should succeed when using default settings"
+    uuid3 = res.json.get('uuid')
+    
+    # Test 7: Default behavior (no time_between_check_use_default field) should use defaults and succeed
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({
+            "url": "https://example4.com"
+        }),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+    )
+    assert res.status_code == 201, "Should succeed with default behavior (using global settings)"
+    uuid4 = res.json.get('uuid')
+    
+    # Test 8: Verify integer type validation - string should fail (OpenAPI validation)
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({
+            "url": "https://example5.com",
+            "time_between_check_use_default": False,
+            "time_between_check": {
+                "hours": "not_a_number"
+            }
+        }),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+    )
+    assert res.status_code == 400, "Should fail when time value is not an integer"
+    assert b"Validation failed" in res.data or b"not of type" in res.data, "Should mention validation/type error"
+    
+    # Cleanup
+    for uuid in [uuid1, uuid2, uuid3, uuid4]:
+        client.delete(
+            url_for("watch", uuid=uuid),
+            headers={'x-api-key': api_key},
+        )

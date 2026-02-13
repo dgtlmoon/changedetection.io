@@ -8,13 +8,11 @@ from . import auth
 from changedetectionio import queuedWatchMetaData, strtobool
 from changedetectionio import worker_pool
 from flask import request, make_response, send_from_directory
-from flask_expects_json import expects_json
 from flask_restful import abort, Resource
 from loguru import logger
 import copy
 
-# Import schemas from __init__.py
-from . import schema, schema_create_watch, schema_update_watch, validate_openapi_request
+from . import validate_openapi_request, get_readonly_watch_fields
 from ..notification import valid_notification_formats
 from ..notification.handler import newline_re
 
@@ -121,7 +119,6 @@ class Watch(Resource):
 
     @auth.check_token
     @validate_openapi_request('updateWatch')
-    @expects_json(schema_update_watch)
     def put(self, uuid):
         """Update watch information."""
         watch = self.datastore.data['watching'].get(uuid)
@@ -174,6 +171,35 @@ class Watch(Resource):
 
         # Extract and remove processor config fields from json_data
         processor_config_data = processors.extract_processor_config_from_form_data(json_data)
+
+        # Filter out readOnly fields (extracted from OpenAPI spec Watch schema)
+        # These are system-managed fields that should never be user-settable
+        readonly_fields = get_readonly_watch_fields()
+
+        # Also filter out @property attributes (computed/derived values from the model)
+        # These are not stored and should be ignored in PUT requests
+        from changedetectionio.model.Watch import model as WatchModel
+        property_fields = WatchModel.get_property_names()
+
+        # Combine both sets of fields to ignore
+        fields_to_ignore = readonly_fields | property_fields
+
+        # Remove all ignored fields from update data
+        for field in fields_to_ignore:
+            json_data.pop(field, None)
+
+        # Validate remaining fields - reject truly unknown fields
+        # Get valid fields from WatchBase schema
+        from . import get_watch_schema_properties
+        valid_fields = set(get_watch_schema_properties().keys())
+
+        # Also allow last_viewed (explicitly defined in UpdateWatch schema)
+        valid_fields.add('last_viewed')
+
+        # Check for unknown fields
+        unknown_fields = set(json_data.keys()) - valid_fields
+        if unknown_fields:
+            return f"Unknown field(s): {', '.join(sorted(unknown_fields))}", 400
 
         # Update watch with regular (non-processor-config) fields
         watch.update(json_data)
@@ -393,7 +419,6 @@ class CreateWatch(Resource):
 
     @auth.check_token
     @validate_openapi_request('createWatch')
-    @expects_json(schema_create_watch)
     def post(self):
         """Create a single watch."""
 

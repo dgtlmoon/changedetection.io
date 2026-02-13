@@ -2,7 +2,7 @@ from changedetectionio.strtobool import strtobool
 from flask_restful import abort, Resource
 from flask import request
 from functools import wraps
-from . import auth, validate_openapi_request, schema_create_watch
+from . import auth, validate_openapi_request
 from ..validate_url import is_safe_valid_url
 import json
 
@@ -33,9 +33,25 @@ def convert_query_param_to_type(value, schema_property):
 
     Returns:
         Converted value in the appropriate type
+
+    Supports both OpenAPI 3.1 formats:
+    - type: [string, 'null']  (array format)
+    - anyOf: [{type: string}, {type: null}]  (anyOf format)
     """
-    # Handle anyOf schemas (extract the first type)
-    if 'anyOf' in schema_property:
+    prop_type = schema_property.get('type')
+
+    # Handle OpenAPI 3.1 type arrays: type: [string, 'null']
+    if isinstance(prop_type, list):
+        # Use the first non-null type from the array
+        for t in prop_type:
+            if t != 'null':
+                prop_type = t
+                break
+        else:
+            prop_type = None
+
+    # Handle anyOf schemas (older format)
+    elif 'anyOf' in schema_property:
         # Use the first non-null type from anyOf
         for option in schema_property['anyOf']:
             if option.get('type') and option.get('type') != 'null':
@@ -43,8 +59,6 @@ def convert_query_param_to_type(value, schema_property):
                 break
         else:
             prop_type = None
-    else:
-        prop_type = schema_property.get('type')
 
     # Handle array type (e.g., notification_urls)
     if prop_type == 'array':
@@ -89,7 +103,7 @@ class Import(Resource):
     @validate_openapi_request('importWatches')
     def post(self):
         """Import a list of watched URLs with optional watch configuration."""
-
+        from . import get_watch_schema_properties
         # Special parameters that are NOT watch configuration
         special_params = {'tag', 'tag_uuids', 'dedupe', 'proxy'}
 
@@ -115,7 +129,8 @@ class Import(Resource):
             tag_uuids = tag_uuids.split(',')
 
         # Extract ALL other query parameters as watch configuration
-        schema_properties = schema_create_watch.get('properties', {})
+        # Get schema from OpenAPI spec (replaces old schema_create_watch)
+        schema_properties = get_watch_schema_properties()
         for param_name, param_value in request.args.items():
             # Skip special parameters
             if param_name in special_params:
