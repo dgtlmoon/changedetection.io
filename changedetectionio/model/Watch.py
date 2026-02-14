@@ -385,10 +385,16 @@ class model(EntityPersistenceMixin, watch_base):
 
     @property
     def is_pdf(self):
-        # content_type field is set in the future
-        # https://github.com/dgtlmoon/changedetection.io/issues/1392
-        # Not sure the best logic here
-        return self.get('url', '').lower().endswith('.pdf') or 'pdf' in self.get('content-type', '').lower()
+        url = str(self.get("url") or "").lower()
+        content_type = str(self.get("content-type") or "").lower()
+
+        if content_type in ("none", "null", ""):
+            content_type = ""
+
+        return (
+                url.endswith(".pdf")
+                or content_type.split(";")[0].strip() == "application/pdf"
+        )
 
     @property
     def label(self):

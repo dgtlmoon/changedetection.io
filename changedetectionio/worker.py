@@ -381,7 +381,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     if not datastore.data['watching'].get(uuid):
                         continue
 
-                    update_obj['content-type'] = update_handler.fetcher.get_all_headers().get('content-type', '').lower()
+                    update_obj['content-type'] = str(update_handler.fetcher.get_all_headers().get('content-type', '') or "").lower()
 
                     if not watch.get('ignore_status_codes'):
                         update_obj['consecutive_filter_failures'] = 0
@@ -453,7 +453,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                                                                   }
                 # Record server header
                 try:
-                    server_header = update_handler.fetcher.headers.get('server', '').strip().lower()[:255]
+                    server_header = str(update_handler.fetcher.get_all_headers().get('server', '') or "").strip().lower()[:255]
                     if server_header:
                         final_updates['remote_server_reply'] = server_header
                 except Exception as e:
