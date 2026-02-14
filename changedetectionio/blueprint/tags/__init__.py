@@ -244,6 +244,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         tag.update(form.data)
         tag['processor'] = 'restock_diff'
         tag.commit()
+
+        # Clear checksums for all watches using this tag to force reprocessing
+        # Tag changes affect inherited configuration
+        cleared_count = datastore.clear_checksums_for_tag(uuid)
+        logger.info(f"Tag {uuid} updated, cleared {cleared_count} watch checksums")
+
         flash(gettext("Updated"))
 
         return redirect(url_for('tags.tags_overview_page'))

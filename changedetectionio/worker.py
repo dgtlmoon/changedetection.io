@@ -276,6 +276,9 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     # Yes fine, so nothing todo, don't continue to process.
                     process_changedetection_results = False
                     changed_detected = False
+                    logger.debug(f'[{uuid}] - checksumFromPreviousCheckWasTheSame - Checksum from previous check was the same, nothing todo here.')
+                    # Reset the edited flag since we successfully completed the check
+                    watch.reset_watch_edited_flag()
                     
                 except content_fetchers_exceptions.BrowserConnectError as e:
                     datastore.update_watch(uuid=uuid,
@@ -378,7 +381,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     if not datastore.data['watching'].get(uuid):
                         continue
 
-                    update_obj['content-type'] = update_handler.fetcher.get_all_headers().get('content-type', '').lower()
+                    update_obj['content-type'] = str(update_handler.fetcher.get_all_headers().get('content-type', '') or "").lower()
 
                     if not watch.get('ignore_status_codes'):
                         update_obj['consecutive_filter_failures'] = 0
@@ -392,6 +395,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                 logger.debug(f"Processing watch UUID: {uuid} - xpath_data length returned {len(update_handler.xpath_data) if update_handler and update_handler.xpath_data else 'empty.'}")
                 if update_handler and process_changedetection_results:
                     try:
+                        # Reset the edited flag BEFORE update_watch (which calls watch.update() and would set it again)
+                        watch.reset_watch_edited_flag()
                         datastore.update_watch(uuid=uuid, update_obj=update_obj)
 
                         if changed_detected or not watch.history_n:
@@ -439,8 +444,22 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                         logger.exception(f"Worker {worker_id} full exception details:")
                         datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e)})
 
+
                 # Always record attempt count
                 count = watch.get('check_count', 0) + 1
+
+                final_updates = {'fetch_time': round(time.time() - fetch_start_time, 3),
+                                                                  'check_count': count,
+                                                                  }
+                # Record server header
+                try:
+                    server_header = str(update_handler.fetcher.get_all_headers().get('server', '') or "").strip().lower()[:255]
+                    if server_header:
+                        final_updates['remote_server_reply'] = server_header
+                except Exception as e:
+                    server_header = None
+                    pass
+
                 if update_handler: # Could be none or empty if the processor was not found
                     # Always record page title (used in notifications, and can change even when the content is the same)
                     if update_obj.get('content-type') and 'html' in update_obj.get('content-type'):
@@ -449,17 +468,12 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                             if page_title:
                                 page_title = page_title.strip()[:2000]
                                 logger.debug(f"UUID: {uuid} Page <title> is '{page_title}'")
-                                datastore.update_watch(uuid=uuid, update_obj={'page_title': page_title})
+                                final_updates['page_title'] = page_title
                         except Exception as e:
                             logger.exception(f"Worker {worker_id} full exception details:")
                             logger.warning(f"UUID: {uuid} Exception when extracting <title> - {str(e)}")
 
-                    # Record server header
-                    try:
-                        server_header = update_handler.fetcher.headers.get('server', '').strip().lower()[:255]
-                        datastore.update_watch(uuid=uuid, update_obj={'remote_server_reply': server_header})
-                    except Exception as e:
-                        pass
+
 
                     # Store favicon if necessary
                     if update_handler.fetcher.favicon_blob and update_handler.fetcher.favicon_blob.get('base64'):
@@ -467,14 +481,12 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                                            favicon_base_64=update_handler.fetcher.favicon_blob.get('base64')
                                            )
 
-                    datastore.update_watch(uuid=uuid, update_obj={'fetch_time': round(time.time() - fetch_start_time, 3),
-                                                                   'check_count': count})
+                    datastore.update_watch(uuid=uuid, update_obj=final_updates)
 
                     # NOW clear fetcher content - after all processing is complete
                     # This is the last point where we need the fetcher data
                     if update_handler and hasattr(update_handler, 'fetcher') and update_handler.fetcher:
                         update_handler.fetcher.clear_content()
-                        logger.debug(f"Cleared fetcher content for UUID {uuid}")
 
                     # Explicitly delete update_handler to free all references
                     if update_handler:

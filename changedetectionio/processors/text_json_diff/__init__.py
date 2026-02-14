@@ -17,7 +17,8 @@ def _task(watch, update_handler):
 
     try:
         # The slow process (we run 2 of these in parallel)
-        changed_detected, update_obj, text_after_filter = update_handler.run_changedetection(watch=watch)
+        # Always force reprocess for preview - we want to show the filtered content regardless of checksums
+        changed_detected, update_obj, text_after_filter = update_handler.run_changedetection(watch=watch, force_reprocess=True)
     except FilterNotFoundInResponse as e:
         text_after_filter = f"Filter not found in HTML: {str(e)}"
     except ReplyWithContentButNoText as e:

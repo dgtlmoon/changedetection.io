@@ -79,7 +79,7 @@ class Tag(Resource):
             'browser_steps_last_error_step', 'check_count', 'consecutive_filter_failures',
             'content-type', 'fetch_time', 'last_changed', 'last_checked', 'last_error',
             'last_notification_error', 'last_viewed', 'notification_alert_count',
-            'page_title', 'previous_md5', 'previous_md5_before_filters', 'remote_server_reply'
+            'page_title', 'previous_md5', 'remote_server_reply'
         }
 
         # Create clean tag dict without Watch-specific fields
@@ -159,6 +159,11 @@ class Tag(Resource):
 
         tag.update(json_data)
         tag.commit()
+
+        # Clear checksums for all watches using this tag to force reprocessing
+        # Tag changes affect inherited configuration
+        cleared_count = self.datastore.clear_checksums_for_tag(uuid)
+        logger.info(f"Tag {uuid} updated via API, cleared {cleared_count} watch checksums")
 
         return "OK", 200
 
