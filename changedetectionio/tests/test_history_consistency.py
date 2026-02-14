@@ -106,7 +106,7 @@ def test_consistent_history(client, live_server, measure_memory_usage, datastore
 
         # Find the snapshot one
         for fname in files_in_watch_dir:
-            if fname != 'history.txt' and fname != 'watch.json' and 'html' not in fname:
+            if fname != 'history.txt' and fname != 'watch.json' and fname != 'last-checksum.txt' and 'html' not in fname:
                 if strtobool(os.getenv("TEST_WITH_BROTLI")):
                     assert fname.endswith('.br'), "Forced TEST_WITH_BROTLI then it should be a .br filename"
 
@@ -123,11 +123,18 @@ def test_consistent_history(client, live_server, measure_memory_usage, datastore
                 assert json_obj['watching'][w]['title'], "Watch should have a title set"
                 assert contents.startswith(watch_title + "x"), f"Snapshot contents in file {fname} should start with '{watch_title}x', got '{contents}'"
 
-        # With new format, we also have watch.json, so 4 files total
+        # With new format, we have watch.json, so 4 files minimum
+        # Note: last-checksum.txt may or may not exist - it gets cleared by settings changes,
+        # and this test changes settings before checking files
+        # This assertion should be AFTER the loop, not inside it
         if os.path.exists(changedetection_json):
-            assert len(files_in_watch_dir) == 4, "Should be four files in the dir with new format: watch.json, html.br snapshot, history.txt and the extracted text snapshot"
+            # 4 required files: watch.json, html.br, history.txt, extracted text snapshot
+            # last-checksum.txt is optional (cleared by settings changes in this test)
+            assert len(files_in_watch_dir) >= 4 and len(files_in_watch_dir) <= 5, f"Should be 4-5 files in the dir with new format (last-checksum.txt is optional). Found {len(files_in_watch_dir)}: {files_in_watch_dir}"
         else:
-            assert len(files_in_watch_dir) == 3, "Should be just three files in the dir with legacy format: html.br snapshot, history.txt and the extracted text snapshot"
+            # 3 required files: html.br, history.txt, extracted text snapshot
+            # last-checksum.txt is optional
+            assert len(files_in_watch_dir) >= 3 and len(files_in_watch_dir) <= 4, f"Should be 3-4 files in the dir with legacy format (last-checksum.txt is optional). Found {len(files_in_watch_dir)}: {files_in_watch_dir}"
 
     # Check that 'default' Watch vars aren't accidentally being saved
     if os.path.exists(changedetection_json):

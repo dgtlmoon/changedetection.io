@@ -2,6 +2,7 @@ from ..base import difference_detection_processor
 from ..exceptions import ProcessorException
 from . import Restock
 from loguru import logger
+from changedetectionio.content_fetchers.exceptions import checksumFromPreviousCheckWasTheSame
 
 import urllib3
 import time
@@ -403,11 +404,23 @@ class perform_site_check(difference_detection_processor):
     screenshot = None
     xpath_data = None
 
-    def run_changedetection(self, watch):
+    def run_changedetection(self, watch, force_reprocess=False):
         import hashlib
 
         if not watch:
             raise Exception("Watch no longer exists.")
+
+        current_raw_document_checksum = self.get_raw_document_checksum()
+        # Skip processing only if BOTH conditions are true:
+        # 1. HTML content unchanged (checksum matches last saved checksum)
+        # 2. Watch configuration was not edited (including trigger_text, filters, etc.)
+        # The was_edited flag handles all watch configuration changes, so we don't need
+        # separate checks for trigger_text or other processing rules.
+        if (not force_reprocess and
+            not watch.was_edited and
+            self.last_raw_content_checksum and
+            self.last_raw_content_checksum == current_raw_document_checksum):
+            raise checksumFromPreviousCheckWasTheSame()
 
         # Unset any existing notification error
         update_obj = {'last_notification_error': False, 'last_error': False, 'restock':  Restock()}
@@ -415,9 +428,12 @@ class perform_site_check(difference_detection_processor):
         self.screenshot = self.fetcher.screenshot
         self.xpath_data = self.fetcher.xpath_data
 
-        # Track the content type
-        update_obj['content_type'] = self.fetcher.headers.get('Content-Type', '')
+        # Track the content type (readonly field, doesn't trigger was_edited)
+        update_obj['content-type'] = self.fetcher.headers.get('Content-Type', '')  # Use hyphen (matches OpenAPI spec)
         update_obj["last_check_status"] = self.fetcher.get_last_status_code()
+
+        # Save the raw content checksum to file (processor implementation detail, not watch config)
+        self.update_last_raw_content_checksum(current_raw_document_checksum)
 
         # Only try to process restock information (like scraping for keywords) if the page was actually rendered correctly.
         # Otherwise it will assume "in stock" because nothing suggesting the opposite was found

@@ -1,6 +1,6 @@
 from functools import lru_cache
 from loguru import logger
-from flask_babel import gettext
+from flask_babel import gettext, get_locale
 import importlib
 import inspect
 import os
@@ -190,14 +190,15 @@ def get_plugin_processor_metadata():
         logger.warning(f"Error getting plugin processor metadata: {e}")
     return metadata
 
-
-def available_processors():
+@lru_cache(maxsize=32)
+def _available_processors_cached(locale_str):
     """
-    Get a list of processors by name and description for the UI elements.
-    Can be filtered via DISABLED_PROCESSORS environment variable (comma-separated list).
-    :return: A list :)
-    """
+    Internal cached function that includes locale in cache key.
+    This ensures translations are cached per-language instead of globally.
 
+    :param locale_str: The locale string (e.g., 'en', 'it', 'zh')
+    :return: A list of tuples (processor_name, translated_description, weight)
+    """
     processor_classes = find_processors()
 
     # Check if DISABLED_PROCESSORS env var is set
@@ -255,6 +256,22 @@ def available_processors():
 
     # Return as tuples without weight (for backwards compatibility)
     return [(name, desc) for name, desc, weight in available]
+
+def available_processors():
+    """
+    Get a list of processors by name and description for the UI elements.
+    Can be filtered via DISABLED_PROCESSORS environment variable (comma-separated list).
+
+    This function delegates to a locale-aware cached version to ensure translations
+    are cached per-language instead of globally.
+
+    :return: A list of tuples (processor_name, translated_description)
+    """
+    # Get current locale and use it as cache key
+    # Convert Babel Locale object to string for use as cache key
+    locale = get_locale()
+    locale_str = str(locale) if locale else 'en'
+    return _available_processors_cached(locale_str)
 
 
 def get_default_processor():

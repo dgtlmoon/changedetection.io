@@ -129,7 +129,6 @@ class watch_base(dict):
         fetch_time (float): Duration of last fetch in seconds
         consecutive_filter_failures (int): Counter for consecutive filter match failures
         previous_md5 (str|bool): MD5 hash of previous content
-        previous_md5_before_filters (str|bool): MD5 hash before filters applied
         history_snapshot_max_length (int|None): Max history snapshots to keep (None = use global)
 
     Conditions:
@@ -165,6 +164,10 @@ class watch_base(dict):
         self._datastore_path = kw.get('datastore_path')
         if kw.get('datastore_path'):
             del kw['datastore_path']
+
+        # IMPORTANT: Don't initialize __watch_was_edited yet!
+        # We'll initialize it AFTER the initial update() call below
+        # This prevents marking the watch as edited during initialization
 
         self.update({
             # Custom notification content
@@ -211,7 +214,6 @@ class watch_base(dict):
             'page_title': None, # <title> from the page
             'paused': False,
             'previous_md5': False,
-            'previous_md5_before_filters': False,  # Used for skipping changedetection entirely
             'processor': 'text_json_diff',  # could be restock_diff or others from .processors
             'price_change_threshold_percent': None,
             'proxy': None,  # Preferred proxy connection
@@ -297,8 +299,115 @@ class watch_base(dict):
 
         super(watch_base, self).__init__(*arg, **kw)
 
+        # Check if we're being initialized from an existing watch object
+        # that has was_edited=True, so we can preserve the flag
+        preserve_edited_flag = False
         if self.get('default'):
+            # When creating a new watch object from an existing one (e.g., changing processor),
+            # preserve the was_edited flag if it was True
+            default_watch = self.get('default')
+            if hasattr(default_watch, 'was_edited') and default_watch.was_edited:
+                preserve_edited_flag = True
             del self['default']
+
+        # NOW initialize the edited flag after all initial setup is complete
+        # This ensures initialization doesn't trigger the edited flag
+        # But preserve it if the source watch had it set to True
+        self.__watch_was_edited = preserve_edited_flag
+
+    def _mark_field_as_edited(self, key):
+        """
+        Helper to mark a field as edited if it's writable.
+
+        Internal method used by __setitem__, update(), pop(), etc.
+        """
+        # Don't track edits during initial load or if already edited
+        if not hasattr(self, '_watch_base__watch_was_edited'):
+            return
+        if self.__watch_was_edited:
+            return  # Already marked as edited
+
+        # Import from shared schema utilities (no circular dependency)
+        from .schema_utils import get_readonly_watch_fields
+        readonly_fields = get_readonly_watch_fields()
+
+        # Additional system-managed fields not in OpenAPI spec (yet)
+        # These are set by processors/workers and should not trigger edited flag
+        additional_system_fields = {
+            'last_check_status',  # Set by processors
+            'restock',  # Set by restock processor
+            'last_viewed',  # Set by mark_all_viewed endpoint
+        }
+
+        # Only mark as edited if this is a user-writable field
+        if key not in readonly_fields and key not in additional_system_fields:
+            self.__watch_was_edited = True
+
+    def __setitem__(self, key, value):
+        """
+        Override dict.__setitem__ to track when writable watch fields are modified.
+
+        This enables skipping reprocessing when:
+        1. HTML content is unchanged (checksumFromPreviousCheckWasTheSame)
+        2. AND watch configuration was not edited
+
+        Only sets the edited flag when field is NOT in readonly_fields (from OpenAPI spec).
+        """
+        # Set the value first (always)
+        super().__setitem__(key, value)
+        # Mark as edited if writable field
+        self._mark_field_as_edited(key)
+
+    def __delitem__(self, key):
+        """Override dict.__delitem__ to track deletions of writable fields."""
+        super().__delitem__(key)
+        self._mark_field_as_edited(key)
+
+    def update(self, *args, **kwargs):
+        """Override dict.update() to track modifications to writable fields."""
+        # Call parent update first
+        super().update(*args, **kwargs)
+
+        # Mark as edited for any writable fields that were updated
+        # Handle both update(dict) and update(key=value) forms
+        if args:
+            for key in args[0].keys():
+                self._mark_field_as_edited(key)
+        for key in kwargs.keys():
+            self._mark_field_as_edited(key)
+
+    def pop(self, key, *args):
+        """Override dict.pop() to track removal of writable fields."""
+        result = super().pop(key, *args)
+        self._mark_field_as_edited(key)
+        return result
+
+    def setdefault(self, key, default=None):
+        """Override dict.setdefault() to track modifications to writable fields."""
+        # Only marks as edited if key didn't exist (i.e., a new value was set)
+        existed = key in self
+        result = super().setdefault(key, default)
+        if not existed:
+            self._mark_field_as_edited(key)
+        return result
+
+    @property
+    def was_edited(self):
+        """
+        Check if watch configuration was edited since last processing.
+
+        Returns:
+            bool: True if writable fields were modified, False otherwise
+        """
+        return getattr(self, '_watch_base__watch_was_edited', False)
+
+    def reset_watch_edited_flag(self):
+        """
+        Reset the watch edited flag after successful processing.
+
+        Call this after processing completes to allow future content-only change detection.
+        """
+        self.__watch_was_edited = False
 
     @classmethod
     def get_property_names(cls):

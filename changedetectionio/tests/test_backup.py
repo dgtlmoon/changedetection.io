@@ -54,11 +54,11 @@ def test_backup(client, live_server, measure_memory_usage, datastore_path):
     backup = ZipFile(io.BytesIO(res.data))
     l = backup.namelist()
 
-    # Check for UUID-based txt files (history and snapshot)
+    # Check for UUID-based txt files (history, snapshot, and last-checksum)
     uuid4hex_txt = re.compile('^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}.*txt', re.I)
     txt_files = list(filter(uuid4hex_txt.match, l))
-    # Should be two txt files in the archive (history and the snapshot)
-    assert len(txt_files) == 2
+    # Should be three txt files in the archive (history, snapshot, and last-checksum)
+    assert len(txt_files) == 3
 
     # Check for watch.json files (new format)
     uuid4hex_json = re.compile('^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}/watch\.json$', re.I)

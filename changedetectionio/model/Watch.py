@@ -335,7 +335,6 @@ class model(EntityPersistenceMixin, watch_base):
             'last_notification_error': False,
             'last_viewed': 0,
             'previous_md5': False,
-            'previous_md5_before_filters': False,
             'remote_server_reply': None,
             'track_ldjson_price_data': None
         })
@@ -389,7 +388,7 @@ class model(EntityPersistenceMixin, watch_base):
         # content_type field is set in the future
         # https://github.com/dgtlmoon/changedetection.io/issues/1392
         # Not sure the best logic here
-        return self.get('url', '').lower().endswith('.pdf') or 'pdf' in self.get('content_type', '').lower()
+        return self.get('url', '').lower().endswith('.pdf') or 'pdf' in self.get('content-type', '').lower()
 
     @property
     def label(self):

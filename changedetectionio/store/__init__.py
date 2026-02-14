@@ -456,6 +456,63 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         self.__data['settings']['application']['password'] = False
         self.commit()
 
+    def clear_all_last_checksums(self):
+        """
+        Delete all last-checksum.txt files to force reprocessing of all watches.
+
+        This should be called when global settings change, since watches inherit
+        configuration and need to reprocess even if their individual watch dict
+        hasn't been modified.
+
+        Note: We delete the checksum file rather than setting was_edited=True because:
+        - was_edited is not persisted across restarts
+        - File deletion ensures reprocessing works across app restarts
+        """
+        deleted_count = 0
+        for uuid in self.__data['watching'].keys():
+            watch = self.__data['watching'][uuid]
+            if watch.data_dir:
+                checksum_file = os.path.join(watch.data_dir, 'last-checksum.txt')
+                if os.path.isfile(checksum_file):
+                    try:
+                        os.remove(checksum_file)
+                        deleted_count += 1
+                        logger.debug(f"Cleared checksum for watch {uuid}")
+                    except OSError as e:
+                        logger.warning(f"Failed to delete checksum file for {uuid}: {e}")
+
+        logger.info(f"Cleared {deleted_count} checksum files to force reprocessing")
+        return deleted_count
+
+    def clear_checksums_for_tag(self, tag_uuid):
+        """
+        Delete last-checksum.txt files for all watches using a specific tag.
+
+        This should be called when a tag configuration is edited, since watches
+        inherit tag settings and need to reprocess.
+
+        Args:
+            tag_uuid: UUID of the tag that was modified
+
+        Returns:
+            int: Number of checksum files deleted
+        """
+        deleted_count = 0
+        for uuid, watch in self.__data['watching'].items():
+            if watch.get('tags') and tag_uuid in watch['tags']:
+                if watch.data_dir:
+                    checksum_file = os.path.join(watch.data_dir, 'last-checksum.txt')
+                    if os.path.isfile(checksum_file):
+                        try:
+                            os.remove(checksum_file)
+                            deleted_count += 1
+                            logger.debug(f"Cleared checksum for watch {uuid} (tag {tag_uuid})")
+                        except OSError as e:
+                            logger.warning(f"Failed to delete checksum file for {uuid}: {e}")
+
+        logger.info(f"Cleared {deleted_count} checksum files for tag {tag_uuid}")
+        return deleted_count
+
     def commit(self):
         """
         Save settings immediately to disk using atomic write.
