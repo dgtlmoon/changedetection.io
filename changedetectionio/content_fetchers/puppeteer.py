@@ -307,7 +307,7 @@ class fetcher(Fetcher):
                 logger.error(f"[{watch_uuid}] Failed to cleanup browser after page creation failure: {cleanup_error}")
             raise
         
-        # Block image requests to improve performance and reduce bandwidth (if enabled)
+        # Block image requests to reduce bandwidth (if enabled)
         if self.block_assets:
             await self.page.setRequestInterception(True)
             

@@ -291,7 +291,7 @@ class fetcher(Fetcher):
 
             self.page = await context.new_page()
 
-            # Block image requests to improve performance and reduce bandwidth (if enabled)
+            # Block image requests to reduce bandwidth (if enabled)
             if self.block_assets:
                 async def handle_route(route):
                     if route.request.resource_type in ('image', 'media', 'font'):

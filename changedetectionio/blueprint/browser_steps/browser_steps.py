@@ -359,7 +359,7 @@ class browsersteps_live_ui(steppable_browser_interface):
 
         self.page = await self.context.new_page()
 
-        # Block image requests to improve performance and reduce bandwidth (if enabled)
+        # Block image requests to reduce bandwidth (if enabled)
         if getattr(self, 'block_assets', False):
             async def handle_route(route):
                 if route.request.resource_type in ('image', 'media', 'font'):
