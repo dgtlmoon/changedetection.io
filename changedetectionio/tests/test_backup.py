@@ -76,3 +76,61 @@ def test_backup(client, live_server, measure_memory_usage, datastore_path):
     )
 
     assert b'No backups found.' in res.data
+
+
+def test_watch_data_package_download(client, live_server, measure_memory_usage, datastore_path):
+    """Test downloading a single watch's data as a zip package"""
+    import os
+    import json
+
+    set_original_response(datastore_path=datastore_path)
+
+    # Add a watch
+    res = client.post(
+        url_for("imports.import_page"),
+        data={"urls": url_for('test_endpoint', _external=True)},
+        follow_redirects=True
+    )
+
+    assert b"1 Imported" in res.data
+    wait_for_all_checks(client)
+
+    # Get the UUID directly from the datastore
+    # Find the watch directories
+    uuid = None
+    for item in os.listdir(datastore_path):
+        item_path = os.path.join(datastore_path, item)
+        if os.path.isdir(item_path) and len(item) == 36:  # UUID format
+            uuid = item
+            break
+
+    assert uuid is not None, "Could not find watch UUID in datastore"
+
+    # Download the watch data package
+    res = client.get(
+        url_for("ui.ui_edit.watch_get_data_package", uuid=uuid),
+        follow_redirects=True
+    )
+
+    # Should get the right zip content type
+    assert res.content_type == "application/zip"
+
+    # Should be PK/ZIP stream (PKzip header)
+    assert res.data[:2] == b'PK', "File should start with PK (PKzip header)"
+    assert res.data.count(b'PK') >= 2, "Should have multiple PK markers (zip file structure)"
+
+    # Verify zip contents
+    backup = ZipFile(io.BytesIO(res.data))
+    files = backup.namelist()
+
+    # Should have files in a UUID directory
+    assert any(uuid in f for f in files), f"Files should be in UUID directory: {files}"
+
+    # Should contain watch.json
+    watch_json_path = f"{uuid}/watch.json"
+    assert watch_json_path in files, f"Should contain watch.json, got: {files}"
+
+    # Should contain history/snapshot files
+    uuid4hex_txt = re.compile(f'^{re.escape(uuid)}/.*\\.txt', re.I)
+    txt_files = list(filter(uuid4hex_txt.match, files))
+    assert len(txt_files) > 0, f"Should have at least one .txt file (history/snapshot), got: {files}"
