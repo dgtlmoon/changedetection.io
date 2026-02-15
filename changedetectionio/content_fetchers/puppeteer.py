@@ -309,6 +309,7 @@ class fetcher(Fetcher):
         
         # Block image requests to reduce bandwidth (if enabled)
         if self.block_assets:
+            logger.info(f"[{watch_uuid}] Enabling block asset requests")
             await self.page.setRequestInterception(True)
             
             async def handle_request(request):

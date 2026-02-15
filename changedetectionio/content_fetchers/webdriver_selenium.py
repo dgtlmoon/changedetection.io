@@ -86,6 +86,7 @@ class fetcher(Fetcher):
 
             # Block images if block_assets is enabled
             if self.block_assets:
+                logger.info(f"[{watch_uuid}] Enabling block asset requests")
                 options.add_experimental_option("prefs",
                     {"profile.managed_default_content_settings.images": 2}
                 )

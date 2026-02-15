@@ -293,6 +293,7 @@ class fetcher(Fetcher):
 
             # Block image requests to reduce bandwidth (if enabled)
             if self.block_assets:
+                logger.info(f"[{watch_uuid}] Enabling block asset requests")
                 async def handle_route(route):
                     if route.request.resource_type in ('image', 'media', 'font'):
                         await route.abort()
