@@ -354,6 +354,59 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         # Return a 500 error
         abort(500)
 
+    @edit_blueprint.route("/edit/<string:uuid>/get-data-package", methods=['GET'])
+    @login_optionally_required
+    def watch_get_data_package(uuid):
+        """Download all data for a single watch as a zip file"""
+        from io import BytesIO
+        from flask import send_file
+        import zipfile
+        from pathlib import Path
+        import datetime
+
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
+
+        watch = datastore.data['watching'].get(uuid)
+        if not watch:
+            abort(404)
+
+        # Create zip in memory
+        memory_file = BytesIO()
+
+        with zipfile.ZipFile(memory_file, 'w',
+                           compression=zipfile.ZIP_DEFLATED,
+                           compresslevel=8) as zipObj:
+
+            # Add the watch's JSON file if it exists
+            watch_json_path = os.path.join(watch.data_dir, 'watch.json')
+            if os.path.isfile(watch_json_path):
+                zipObj.write(watch_json_path,
+                           arcname=os.path.join(uuid, 'watch.json'),
+                           compress_type=zipfile.ZIP_DEFLATED,
+                           compresslevel=8)
+
+            # Add all files in the watch data directory
+            if os.path.isdir(watch.data_dir):
+                for f in Path(watch.data_dir).glob('*'):
+                    if f.is_file() and f.name != 'watch.json':  # Skip watch.json since we already added it
+                        zipObj.write(f,
+                                   arcname=os.path.join(uuid, f.name),
+                                   compress_type=zipfile.ZIP_DEFLATED,
+                                   compresslevel=8)
+
+        # Seek to beginning of file
+        memory_file.seek(0)
+
+        # Generate filename with timestamp
+        timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        filename = f"watch-data-{uuid[:8]}-{timestamp}.zip"
+
+        return send_file(memory_file,
+                        as_attachment=True,
+                        download_name=filename,
+                        mimetype='application/zip')
+
     # Ajax callback
     @edit_blueprint.route("/edit/<string:uuid>/preview-rendered", methods=['POST'])
     @login_optionally_required
