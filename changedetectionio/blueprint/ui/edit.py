@@ -195,6 +195,13 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 # And del(form.data['tags'] ) wont work either for some reason
                 datastore.data['watching'][uuid]['tags'] = []
 
+            # clean null/placeholder browser_steps from form submission
+            if datastore.data['watching'][uuid].get('browser_steps'):
+                datastore.data['watching'][uuid]['browser_steps'] = [
+                    s for s in datastore.data['watching'][uuid]['browser_steps']
+                    if s.get('operation') and s['operation'] not in ('Choose one', 'Goto site')
+                ]
+
             # Recast it if need be to right data Watch handler
             watch_class = processors.get_custom_watch_obj_for_processor(form.data.get('processor'))
             datastore.data['watching'][uuid] = watch_class(datastore_path=datastore.datastore_path, __datastore=datastore.data, default=datastore.data['watching'][uuid])

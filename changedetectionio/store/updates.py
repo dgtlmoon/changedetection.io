@@ -723,3 +723,16 @@ class DatastoreUpdatesMixin:
         logger.info("Future tag edits will update both locations (dual storage)")
         logger.critical("=" * 80)
 
+    def update_29(self):
+        """clean browser_steps with null/placeholder operations from saved watches"""
+        for uuid, watch in self.data['watching'].items():
+            steps = watch.get('browser_steps', [])
+            if steps:
+                cleaned = [
+                    s for s in steps
+                    if s.get('operation')
+                    and s['operation'] not in ('Choose one', 'Goto site')
+                ]
+                if len(cleaned) != len(steps):
+                    self.data['watching'][uuid]['browser_steps'] = cleaned
+

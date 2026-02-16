@@ -998,9 +998,13 @@ class model(EntityPersistenceMixin, watch_base):
         # Exclude processor config keys (stored separately)
         watch_dict = {k: copy.deepcopy(v) for k, v in snapshot.items() if not k.startswith('processor_config_')}
 
-        # Normalize browser_steps: if no meaningful steps, save as empty list
-        if not self.has_browser_steps:
-            watch_dict['browser_steps'] = []
+        # strip null/placeholder browser_steps entries before saving
+        if watch_dict.get('browser_steps'):
+            watch_dict['browser_steps'] = [
+                step for step in watch_dict['browser_steps']
+                if step.get('operation')
+                and step['operation'] not in ('Choose one', 'Goto site')
+            ]
 
         return watch_dict
 
