@@ -324,6 +324,175 @@ jobs:
         run: |
           docker run --rm --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest tests/smtp/test_notification_smtp.py'
 
+  nginx-reverse-proxy:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 10
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: test-changedetectionio-${{ env.PYTHON_VERSION }}
+          path: /tmp
+
+      - name: Load Docker image
+        run: |
+          docker load -i /tmp/test-changedetectionio.tar
+
+      - name: Spin up services
+        run: |
+          docker network create changedet-network
+
+          # Start changedetection.io container with X-Forwarded headers support
+          docker run --name changedet-app --hostname changedet-app --network changedet-network \
+            -e USE_X_SETTINGS=true \
+            -d test-changedetectionio
+          sleep 3
+
+      - name: Start nginx reverse proxy
+        run: |
+          # Start nginx with our test configuration
+          docker run --name nginx-proxy --network changedet-network -d -p 8080:80 --rm \
+            -v ${{ github.workspace }}/.github/nginx-reverse-proxy-test.conf:/etc/nginx/conf.d/default.conf:ro \
+            nginx:alpine
+          sleep 2
+
+      - name: Test reverse proxy - root path
+        run: |
+          echo "=== Testing nginx reverse proxy at root path ==="
+          curl --retry-connrefused --retry 6 -s http://localhost:8080/ > /tmp/nginx-test-root.html
+
+          # Check for changedetection.io UI elements
+          if grep -q "checkbox-uuid" /tmp/nginx-test-root.html; then
+            echo "✓ Found checkbox-uuid in response"
+          else
+            echo "ERROR: checkbox-uuid not found in response"
+            cat /tmp/nginx-test-root.html
+            exit 1
+          fi
+
+          # Check for watchlist content
+          if grep -q -i "watch" /tmp/nginx-test-root.html; then
+            echo "✓ Found watch/watchlist content in response"
+          else
+            echo "ERROR: watchlist content not found"
+            cat /tmp/nginx-test-root.html
+            exit 1
+          fi
+
+          echo "✓ Root path reverse proxy working correctly"
+
+      - name: Test reverse proxy - subpath with X-Forwarded-Prefix
+        run: |
+          echo "=== Testing nginx reverse proxy at subpath /changedet-sub/ ==="
+          curl --retry-connrefused --retry 6 -s http://localhost:8080/changedet-sub/ > /tmp/nginx-test-subpath.html
+
+          # Check for changedetection.io UI elements
+          if grep -q "checkbox-uuid" /tmp/nginx-test-subpath.html; then
+            echo "✓ Found checkbox-uuid in subpath response"
+          else
+            echo "ERROR: checkbox-uuid not found in subpath response"
+            cat /tmp/nginx-test-subpath.html
+            exit 1
+          fi
+
+          echo "✓ Subpath reverse proxy working correctly"
+
+      - name: Test API through reverse proxy subpath
+        run: |
+          echo "=== Testing API endpoints through nginx subpath /changedet-sub/ ==="
+
+          # Extract API key from the changedetection.io datastore
+          API_KEY=$(docker exec changedet-app cat /datastore/changedetection.json | grep -o '"api_access_token": *"[^"]*"' | cut -d'"' -f4)
+
+          if [ -z "$API_KEY" ]; then
+            echo "ERROR: Could not extract API key from datastore"
+            docker exec changedet-app cat /datastore/changedetection.json
+            exit 1
+          fi
+
+          echo "✓ Extracted API key: ${API_KEY:0:8}..."
+
+          # Create a watch via API through nginx proxy subpath
+          echo "Creating watch via POST to /changedet-sub/api/v1/watch"
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "http://localhost:8080/changedet-sub/api/v1/watch" \
+            -H "x-api-key: ${API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "url": "https://example.com/test-nginx-proxy",
+              "tag": "nginx-test"
+            }')
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+
+          if [ "$HTTP_CODE" != "201" ]; then
+            echo "ERROR: Expected HTTP 201, got $HTTP_CODE"
+            echo "Response: $BODY"
+            exit 1
+          fi
+
+          echo "✓ Watch created successfully (HTTP 201)"
+
+          # Extract the watch UUID from response
+          WATCH_UUID=$(echo "$BODY" | grep -o '"uuid": *"[^"]*"' | cut -d'"' -f4)
+          echo "✓ Watch UUID: $WATCH_UUID"
+
+          # Update the watch via PUT through nginx proxy subpath
+          echo "Updating watch via PUT to /changedet-sub/api/v1/watch/${WATCH_UUID}"
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT "http://localhost:8080/changedet-sub/api/v1/watch/${WATCH_UUID}" \
+            -H "x-api-key: ${API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "paused": true
+            }')
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "ERROR: Expected HTTP 200, got $HTTP_CODE"
+            echo "Response: $BODY"
+            exit 1
+          fi
+
+          if echo "$BODY" | grep -q '"ok": *true'; then
+            echo "✓ Watch updated successfully (HTTP 200, ok: true)"
+          else
+            echo "ERROR: Response missing 'ok: true'"
+            echo "Response: $BODY"
+            exit 1
+          fi
+
+          # Verify the watch is paused via GET
+          echo "Verifying watch is paused via GET"
+          RESPONSE=$(curl -s "http://localhost:8080/changedet-sub/api/v1/watch/${WATCH_UUID}" \
+            -H "x-api-key: ${API_KEY}")
+
+          if echo "$RESPONSE" | grep -q '"paused": *true'; then
+            echo "✓ Watch is paused as expected"
+          else
+            echo "ERROR: Watch paused state not confirmed"
+            echo "Response: $RESPONSE"
+            exit 1
+          fi
+
+          echo "✓ API tests through nginx subpath completed successfully"
+
+      - name: Cleanup nginx test
+        if: always()
+        run: |
+          docker logs nginx-proxy || true
+          docker logs changedet-app || true
+          docker stop nginx-proxy changedet-app || true
+          docker rm nginx-proxy changedet-app || true
+
+
+
   # Proxy tests
   proxy-tests:
     runs-on: ubuntu-latest
