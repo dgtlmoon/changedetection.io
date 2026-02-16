@@ -40,6 +40,15 @@ def test_favicon(client, live_server, measure_memory_usage, datastore_path):
     res = client.get(url_for('static_content', group='..', filename='__init__.py'))
     assert res.status_code != 200
 
+
+    res = client.get(url_for('static_content', group='.', filename='../__init__.py'))
+    assert res.status_code != 200
+
+    # Traverse by filename protection
+    res = client.get(url_for('static_content', group='js', filename='../styles/styles.css'))
+    assert res.status_code != 200
+
+
 def test_bad_access(client, live_server, measure_memory_usage, datastore_path):
 
     res = client.post(
