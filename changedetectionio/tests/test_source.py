@@ -6,7 +6,6 @@ from urllib.request import urlopen
 from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
 from ..diff import ADDED_STYLE
 
-sleep_time_for_fetch_thread = 3
 
 def test_check_basic_change_detection_functionality_source(client, live_server, measure_memory_usage, datastore_path):
     set_original_response(datastore_path=datastore_path)
@@ -72,7 +71,10 @@ def test_check_ignore_elements(client, live_server, measure_memory_usage, datast
         follow_redirects=True
     )
 
-    time.sleep(sleep_time_for_fetch_thread)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+
+    wait_for_all_checks(client)
+
 
     res = client.get(
         url_for("ui.ui_preview.preview_page", uuid="first"),
