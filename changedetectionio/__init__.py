@@ -610,7 +610,7 @@ def main():
 
     @app.context_processor
     def inject_template_globals():
-        return dict(right_sticky="v{}".format(datastore.data['version_tag']),
+        return dict(right_sticky="v"+__version__,
                     new_version_available=app.config['NEW_VERSION_AVAILABLE'],
                     has_password=datastore.data['settings']['application']['password'] != False,
                     socket_io_enabled=datastore.data['settings']['application'].get('ui', {}).get('socket_io_enabled', True),
