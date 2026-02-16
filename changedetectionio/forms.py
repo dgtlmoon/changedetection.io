@@ -7,8 +7,6 @@ from flask_babel import lazy_gettext as _l, gettext
 from changedetectionio.blueprint.rss import RSS_FORMAT_TYPES, RSS_TEMPLATE_TYPE_OPTIONS, RSS_TEMPLATE_HTML_DEFAULT
 from changedetectionio.conditions.form import ConditionFormRow
 from changedetectionio.notification_service import NotificationContextData
-from changedetectionio.processors.image_ssim_diff import SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS, \
-    SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT
 from changedetectionio.strtobool import strtobool
 from changedetectionio import processors
 
@@ -37,7 +35,7 @@ from changedetectionio.widgets import TernaryNoneBooleanField
 
 # default
 # each select <option data-enabled="enabled-0-0"
-from changedetectionio.blueprint.browser_steps.browser_steps import browser_step_ui_config
+from changedetectionio.browser_steps.browser_steps import browser_step_ui_config
 
 from changedetectionio import html_tools, content_fetchers
 
@@ -494,7 +492,6 @@ class ValidateJinja2Template(object):
     Validates that a {token} is from a valid set
     """
     def __call__(self, form, field):
-        from changedetectionio import notification
         from changedetectionio.jinja2_custom import create_jinja_env
         from jinja2 import BaseLoader, TemplateSyntaxError, UndefinedError
         from jinja2.meta import find_undeclared_variables
@@ -820,8 +817,7 @@ class processor_text_json_diff_form(commonSettingsForm):
     filter_text_removed = BooleanField(_l('Removed lines'), default=True)
 
     trigger_text = StringListField(_l('Keyword triggers - Trigger/wait for text'), [validators.Optional(), ValidateListRegex()])
-    if os.getenv("PLAYWRIGHT_DRIVER_URL"):
-        browser_steps = FieldList(FormField(SingleBrowserStep), min_entries=10)
+    browser_steps = FieldList(FormField(SingleBrowserStep), min_entries=10)
     text_should_not_be_present = StringListField(_l('Block change-detection while text matches'), [validators.Optional(), ValidateListRegex()])
     webdriver_js_execute_code = TextAreaField(_l('Execute JavaScript before change detection'), render_kw={"rows": "5"}, validators=[validators.Optional()])
 

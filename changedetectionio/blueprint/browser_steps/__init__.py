@@ -174,7 +174,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     browser_steps_blueprint = Blueprint('browser_steps', __name__, template_folder="templates")
 
     async def start_browsersteps_session(watch_uuid):
-        from . import browser_steps
+        from changedetectionio.browser_steps import browser_steps
         import time
         from playwright.async_api import async_playwright
 
@@ -238,7 +238,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @browser_steps_blueprint.route("/browsersteps_start_session", methods=['GET'])
     def browsersteps_start_session():
         # A new session was requested, return sessionID
-        import asyncio
         import uuid
         browsersteps_session_id = str(uuid.uuid4())
         watch_uuid = request.args.get('uuid')
@@ -301,11 +300,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @browser_steps_blueprint.route("/browsersteps_update", methods=['POST'])
     def browsersteps_ui_update():
         import base64
-        import playwright._impl._errors
-        from changedetectionio.blueprint.browser_steps import browser_steps
 
-        remaining =0
+        remaining = 0
         uuid = request.args.get('uuid')
+        goto_website_url_first_step = request.args.get('goto_website_url_first_step')
 
         browsersteps_session_id = request.args.get('browsersteps_session_id')
 
@@ -316,33 +314,33 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             return make_response('No session exists under that ID', 500)
 
         is_last_step = False
-        # Actions - step/apply/etc, do the thing and return state
-        if request.method == 'POST':
-            # @todo - should always be an existing session
+
+        # @todo - should always be an existing session
+        if goto_website_url_first_step:
+            logger.debug("Going to site (requested automatically before stepping)..")
+            step_operation = "Goto site"
+            step_selector = None
+            step_optional_value = None
+        else:
             step_operation = request.form.get('operation')
             step_selector = request.form.get('selector')
             step_optional_value = request.form.get('optional_value')
             is_last_step = strtobool(request.form.get('is_last_step'))
 
-            try:
-                # Run the async call_action method in the dedicated browser steps event loop
-                run_async_in_browser_loop(
-                    browsersteps_sessions[browsersteps_session_id]['browserstepper'].call_action(
-                        action_name=step_operation,
-                        selector=step_selector,
-                        optional_value=step_optional_value
-                    )
+        try:
+            # Run the async call_action method in the dedicated browser steps event loop
+            run_async_in_browser_loop(
+                browsersteps_sessions[browsersteps_session_id]['browserstepper'].call_action(
+                    action_name=step_operation,
+                    selector=step_selector,
+                    optional_value=step_optional_value
                 )
+            )
 
-            except Exception as e:
-                logger.error(f"Exception when calling step operation {step_operation} {str(e)}")
-                # Try to find something of value to give back to the user
-                return make_response(str(e).splitlines()[0], 401)
-
-
-#        if not this_session.page:
-#            cleanup_playwright_session()
-#            return make_response('Browser session ran out of time :( Please reload this page.', 401)
+        except Exception as e:
+            logger.error(f"Exception when calling step operation {step_operation} {str(e)}")
+            # Try to find something of value to give back to the user
+            return make_response(str(e).splitlines()[0], 401)
 
         # Screenshots and other info only needed on requesting a step (POST)
         try:
@@ -350,7 +348,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             (screenshot, xpath_data) = run_async_in_browser_loop(
                 browsersteps_sessions[browsersteps_session_id]['browserstepper'].get_current_state()
             )
-                
+
             if is_last_step:
                 watch = datastore.data['watching'].get(uuid)
                 u = browsersteps_sessions[browsersteps_session_id]['browserstepper'].page.url
@@ -378,6 +376,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         response.set_etag(etag_hash)
 
         return response
+
+    return browser_steps_blueprint
 
     return browser_steps_blueprint
 

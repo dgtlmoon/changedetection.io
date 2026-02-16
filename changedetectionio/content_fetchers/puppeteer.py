@@ -456,7 +456,7 @@ class fetcher(Fetcher):
 
         # Run Browser Steps here
         # @todo not yet supported, we switch to playwright in this case
-        #            if self.browser_steps_get_valid_steps():
+        #            if self.browser_steps:
         #                self.iterate_browser_steps()
 
 

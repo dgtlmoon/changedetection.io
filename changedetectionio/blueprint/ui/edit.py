@@ -26,7 +26,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
     # https://wtforms.readthedocs.io/en/3.0.x/forms/#wtforms.form.Form.populate_obj ?
     def edit_page(uuid):
         from changedetectionio import forms
-        from changedetectionio.blueprint.browser_steps.browser_steps import browser_step_ui_config
+        from changedetectionio.browser_steps.browser_steps import browser_step_ui_config
         from changedetectionio import processors
         import importlib
 
