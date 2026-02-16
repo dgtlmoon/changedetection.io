@@ -460,10 +460,10 @@ jobs:
             exit 1
           fi
 
-          if echo "$BODY" | grep -q '"ok": *true'; then
-            echo "✓ Watch updated successfully (HTTP 200, ok: true)"
+          if echo "$BODY" | grep -q 'OK'; then
+            echo "✓ Watch updated successfully (HTTP 200, response: OK)"
           else
-            echo "ERROR: Response missing 'ok: true'"
+            echo "ERROR: Expected response 'OK', got: $BODY"
             echo "Response: $BODY"
             exit 1
           fi
