@@ -174,7 +174,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     browser_steps_blueprint = Blueprint('browser_steps', __name__, template_folder="templates")
 
     async def start_browsersteps_session(watch_uuid):
-        from . import browser_steps
+        from changedetectionio.browser_steps import browser_steps
         import time
         from playwright.async_api import async_playwright
 
@@ -238,7 +238,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @browser_steps_blueprint.route("/browsersteps_start_session", methods=['GET'])
     def browsersteps_start_session():
         # A new session was requested, return sessionID
-        import asyncio
         import uuid
         browsersteps_session_id = str(uuid.uuid4())
         watch_uuid = request.args.get('uuid')
@@ -301,8 +300,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @browser_steps_blueprint.route("/browsersteps_update", methods=['POST'])
     def browsersteps_ui_update():
         import base64
-        import playwright._impl._errors
-        from changedetectionio.blueprint.browser_steps import browser_steps
 
         remaining =0
         uuid = request.args.get('uuid')

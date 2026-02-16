@@ -1,7 +1,6 @@
 import os
 from abc import abstractmethod
 from loguru import logger
-
 from changedetectionio.content_fetchers import BrowserStepsStepException
 
 
@@ -37,7 +36,6 @@ def manage_user_agent(headers, current_ua=''):
         return current_ua
 
     return None
-
 
 class Fetcher():
     browser_connection_is_custom = None
@@ -163,22 +161,8 @@ class Fetcher():
         """
         return {k.lower(): v for k, v in self.headers.items()}
 
-    def browser_steps_get_valid_steps(self):
-        if self.browser_steps is not None and len(self.browser_steps):
-            valid_steps = list(filter(
-                lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one'),
-                self.browser_steps))
-
-            # Just incase they selected Goto site by accident with older JS
-            if valid_steps and valid_steps[0]['operation'] == 'Goto site':
-                del(valid_steps[0])
-
-            return valid_steps
-
-        return None
-
     async def iterate_browser_steps(self, start_url=None):
-        from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
+        from changedetectionio.browser_steps.browser_steps import steppable_browser_interface
         from playwright._impl._errors import TimeoutError, Error
         from changedetectionio.jinja2_custom import render as jinja_render
         step_n = 0
@@ -186,7 +170,7 @@ class Fetcher():
         if self.browser_steps is not None and len(self.browser_steps):
             interface = steppable_browser_interface(start_url=start_url)
             interface.page = self.page
-            valid_steps = self.browser_steps_get_valid_steps()
+            valid_steps = browser_steps_get_valid_steps(self.browser_steps)
 
             for step in valid_steps:
                 step_n += 1

@@ -6,6 +6,8 @@ from .persistence import EntityPersistenceMixin, _determine_entity_type
 
 __all__ = ['EntityPersistenceMixin', 'watch_base']
 
+from ..browser_steps.browser_steps import browser_steps_get_valid_steps
+
 USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH = 'System default'
 CONDITIONS_MATCH_LOGIC_DEFAULT = 'ALL'
 
@@ -364,6 +366,10 @@ class watch_base(dict):
         self._mark_field_as_edited(key)
 
     def update(self, *args, **kwargs):
+
+        if args and args[0].get('browser_steps'):
+            args[0]['browser_steps'] = browser_steps_get_valid_steps(args[0].get('browser_steps'))
+
         """Override dict.update() to track modifications to writable fields."""
         # Call parent update first
         super().update(*args, **kwargs)
@@ -375,6 +381,7 @@ class watch_base(dict):
                 self._mark_field_as_edited(key)
         for key in kwargs.keys():
             self._mark_field_as_edited(key)
+
 
     def pop(self, key, *args):
         """Override dict.pop() to track removal of writable fields."""

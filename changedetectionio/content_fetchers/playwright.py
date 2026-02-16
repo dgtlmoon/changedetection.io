@@ -295,7 +295,7 @@ class fetcher(Fetcher):
             self.page.on("console", lambda msg: logger.debug(f"Playwright console: Watch URL: {url} {msg.type}: {msg.text} {msg.args}"))
 
             # Re-use as much code from browser steps as possible so its the same
-            from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
+            from changedetectionio.browser_steps.browser_steps import steppable_browser_interface
             browsersteps_interface = steppable_browser_interface(start_url=url)
             browsersteps_interface.page = self.page
 
@@ -362,7 +362,7 @@ class fetcher(Fetcher):
             # Wrap remaining operations in try/finally to ensure cleanup
             try:
                 # Run Browser Steps here
-                if self.browser_steps_get_valid_steps():
+                if self.browser_steps:
                     try:
                         await self.iterate_browser_steps(start_url=url)
                     except BrowserStepsStepException:
