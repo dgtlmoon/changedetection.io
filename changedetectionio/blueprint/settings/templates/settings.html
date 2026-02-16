@@ -122,6 +122,10 @@
                         <p>{{ _('The') }} <strong>{{ _('Chrome/Javascript') }}</strong> {{ _('method requires a network connection to a running WebDriver+Chrome server, set by the ENV var') }} 'WEBDRIVER_URL'. </p>
                     </span>
                 </div>
+                <div class="pure-control-group">
+                    {{ render_field(form.application.form.block_assets) }}
+                    <span class="pure-form-message-inline">{{ _('Block retrieving images, fonts, and media files to reduce bandwidth usage.') }}</span>
+                </div>
                 <fieldset class="pure-group" id="webdriver-override-options" data-visible-for="application-fetch_backend=html_webdriver">
                     <div class="pure-form-message-inline">
                         <strong>{{ _('If you\'re having trouble waiting for the page to be fully rendered (text missing etc), try increasing the \'wait\' time here.') }}</strong>

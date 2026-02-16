@@ -307,6 +307,19 @@ class fetcher(Fetcher):
                 logger.error(f"[{watch_uuid}] Failed to cleanup browser after page creation failure: {cleanup_error}")
             raise
         
+        # Block image requests to reduce bandwidth (if enabled)
+        if self.block_assets:
+            logger.info(f"[{watch_uuid}] Enabling block asset requests")
+            await self.page.setRequestInterception(True)
+            
+            async def handle_request(request):
+                if request.resourceType in ('image', 'media', 'font'):
+                    await request.abort()
+                else:
+                    await request.continue_()
+            
+            self.page.on('request', lambda req: asyncio.create_task(handle_request(req)))
+        
         # Add console handler to capture console.log from favicon fetcher
         #self.page.on('console', lambda msg: logger.debug(f"Browser console [{msg.type}]: {msg.text}"))
 

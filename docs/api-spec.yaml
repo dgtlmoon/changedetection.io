@@ -183,6 +183,10 @@ components:
           type: [string, 'null']
           description: HTTP request body
           maxLength: 5000
+        block_assets:
+          type: [boolean, 'null']
+          nullable: true
+          description: Block retrieving images, fonts, and media files to reduce bandwidth usage. Set to `true` to enable, `false` to disable, or `null` to use the global default setting.
         proxy:
           type: [string, 'null']
           description: Proxy configuration
@@ -725,7 +729,7 @@ paths:
         - **Processor mode**: `processor` field (`restock_diff` or `text_json_diff` - default)
         - **Notification settings**: `notification_urls` (array), `notification_title`, `notification_body`, `notification_format`, `notification_muted`
         - **Tags/Groups**: `tag` (UUID string) or `tags` (array of UUIDs)
-        - **Check settings**: `time_between_check`, `paused`, `method`, `fetch_backend`
+        - **Check settings**: `time_between_check`, `paused`, `method`, `fetch_backend`, `block_assets`
         - **Advanced options**: `headers`, `body`, `proxy`, `browser_steps`, and more
       x-code-samples:
         - lang: 'curl'

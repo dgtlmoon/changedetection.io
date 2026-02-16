@@ -748,6 +748,8 @@ class commonSettingsForm(Form):
     notification_urls = StringListField(_l('Notification URL List'), validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
     processor = RadioField( label=_l("Processor - What do you want to achieve?"), choices=lambda: processors.available_processors(), default=processors.get_default_processor)
     scheduler_timezone_default = StringField(_l("Default timezone for watch check scheduler"), render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
+    #block_assets = BooleanField(_l('Block retrieving images/fonts/media'), default=False)
+    block_assets = TernaryNoneBooleanField(_l('Block retrieving images/fonts/media'), boolean_mode=True, default=None)
     webdriver_delay = IntegerField(_l('Wait seconds before extracting text'), validators=[validators.Optional(), validators.NumberRange(min=1, message=_l("Should contain one or more seconds"))])
 
 # Not true anymore but keep the validate_ hook for future use, we convert color tags
@@ -833,7 +835,9 @@ class processor_text_json_diff_form(commonSettingsForm):
     conditions = FieldList(FormField(ConditionFormRow), min_entries=1)  # Add rule logic here
     use_page_title_in_list = TernaryNoneBooleanField(_l('Use page <title> in list'), default=None)
 
+    block_assets = TernaryNoneBooleanField(_l('Block retrieving images/fonts/media'), default=None)
     history_snapshot_max_length = IntegerField(_l('Number of history items per watch to keep'), render_kw={"style": "width: 5em;"}, validators=[validators.Optional(), validators.NumberRange(min=2)])
+
 
     def extra_tab_content(self):
         return None
