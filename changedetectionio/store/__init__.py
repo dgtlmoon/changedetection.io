@@ -236,7 +236,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
             self.init_fresh_install(include_default_watches=include_default_watches,
                                     version_tag=version_tag)
             # Maybe they copied a bunch of watch subdirs across too
-            self._load_state()
+            # self._load_state()
 
     def init_fresh_install(self, include_default_watches, version_tag):
       # Generate app_guid FIRST (required for all operations)
