@@ -81,30 +81,13 @@ def test_backup(client, live_server, measure_memory_usage, datastore_path):
 def test_watch_data_package_download(client, live_server, measure_memory_usage, datastore_path):
     """Test downloading a single watch's data as a zip package"""
     import os
-    import json
 
     set_original_response(datastore_path=datastore_path)
 
-    # Add a watch
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": url_for('test_endpoint', _external=True)},
-        follow_redirects=True
-    )
+    uuid = client.application.config.get('DATASTORE').add_watch(url=url_for('test_endpoint', _external=True))
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
-    assert b"1 Imported" in res.data
     wait_for_all_checks(client)
-
-    # Get the UUID directly from the datastore
-    # Find the watch directories
-    uuid = None
-    for item in os.listdir(datastore_path):
-        item_path = os.path.join(datastore_path, item)
-        if os.path.isdir(item_path) and len(item) == 36:  # UUID format
-            uuid = item
-            break
-
-    assert uuid is not None, "Could not find watch UUID in datastore"
 
     # Download the watch data package
     res = client.get(url_for("ui.ui_edit.watch_get_data_package", uuid=uuid))
