@@ -103,6 +103,7 @@ def validate_openapi_request(operation_id):
                 if request.method.upper() != 'GET':
                     # Lazy import - only loaded when actually validating a request
                     from openapi_core.contrib.flask import FlaskOpenAPIRequest
+                    from openapi_core.templating.paths.exceptions import ServerNotFound, PathNotFound, PathError
 
                     spec = get_openapi_spec()
                     openapi_request = FlaskOpenAPIRequest(request)
@@ -110,14 +111,16 @@ def validate_openapi_request(operation_id):
                     if result.errors:
                         error_details = []
                         for error in result.errors:
-                            error_str = str(error)
-                            # Skip server validation errors for reverse proxy compatibility
-                            # When behind nginx/reverse proxy, the incoming URL may have path prefixes
-                            # that don't match the OpenAPI spec server definitions
-                            if 'Server not found' in error_str:
-                                logger.debug(f"API Call - Skipping server validation error (reverse proxy): {error_str}")
+                            # Skip path/server validation errors for reverse proxy compatibility
+                            # Flask routing already validates that endpoints exist (returns 404 if not).
+                            # OpenAPI validation here is primarily for request body schema validation.
+                            # When behind nginx/reverse proxy, URLs may have path prefixes that don't
+                            # match the OpenAPI server definitions, causing false positives.
+                            if isinstance(error, PathError):
+                                logger.debug(f"API Call - Skipping path/server validation (delegated to Flask): {error}")
                                 continue
 
+                            error_str = str(error)
                             # Extract detailed schema errors from __cause__
                             if hasattr(error, '__cause__') and hasattr(error.__cause__, 'schema_errors'):
                                 for schema_error in error.__cause__.schema_errors:
@@ -127,7 +130,7 @@ def validate_openapi_request(operation_id):
                             else:
                                 error_details.append(error_str)
 
-                        # Only raise if we have actual validation errors (not just server mismatches)
+                        # Only raise if we have actual validation errors (not path/server issues)
                         if error_details:
                             logger.error(f"API Call - Validation failed: {'; '.join(error_details)}")
                             raise BadRequest(f"Validation failed: {'; '.join(error_details)}")
