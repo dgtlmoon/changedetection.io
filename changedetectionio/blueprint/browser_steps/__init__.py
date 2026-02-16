@@ -379,6 +379,4 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
     return browser_steps_blueprint
 
-    return browser_steps_blueprint
-
 
