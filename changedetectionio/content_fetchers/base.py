@@ -1,6 +1,7 @@
 import os
 from abc import abstractmethod
 from loguru import logger
+
 from changedetectionio.content_fetchers import BrowserStepsStepException
 
 
@@ -162,12 +163,12 @@ class Fetcher():
         return {k.lower(): v for k, v in self.headers.items()}
 
     async def iterate_browser_steps(self, start_url=None):
-        from changedetectionio.browser_steps.browser_steps import steppable_browser_interface
+        from changedetectionio.browser_steps.browser_steps import steppable_browser_interface, browser_steps_get_valid_steps
         from playwright._impl._errors import TimeoutError, Error
         from changedetectionio.jinja2_custom import render as jinja_render
         step_n = 0
 
-        if self.browser_steps is not None and len(self.browser_steps):
+        if self.browser_steps:
             interface = steppable_browser_interface(start_url=start_url)
             interface.page = self.page
             valid_steps = browser_steps_get_valid_steps(self.browser_steps)
