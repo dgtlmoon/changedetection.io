@@ -56,6 +56,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
     while not app.config.exit.is_set():
         update_handler = None
         watch = None
+        processing_exception = None  # Reset at start of each iteration to prevent state bleeding
 
         try:
             # Efficient blocking via run_in_executor (no polling overhead!)
@@ -119,9 +120,6 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
         # to prevent race condition with wait_for_all_checks()
 
         fetch_start_time = round(time.time())
-
-        # Track processing exception for plugin finalization
-        processing_exception = None
 
         try:
             if uuid in list(datastore.data['watching'].keys()) and datastore.data['watching'][uuid].get('url'):
