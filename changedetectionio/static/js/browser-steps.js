@@ -360,16 +360,13 @@ $(document).ready(function () {
     // Add the extra buttons to the steps
     $('ul#browser_steps li').each(function (i) {
             var s = '<div class="control">' + '<a data-step-index=' + i + ' class="pure-button button-secondary button-green button-xsmall apply" >Apply</a>&nbsp;';
-            if (i > 0) {
-                // The first step never gets these (Goto-site)
-                s += `<a data-step-index="${i}" class="pure-button button-secondary button-xsmall clear" >Clear</a>&nbsp;` +
-                    `<a data-step-index="${i}" class="pure-button button-secondary button-red button-xsmall remove" >Remove</a>`;
+            s += `<a data-step-index="${i}" class="pure-button button-secondary button-xsmall clear" >Clear</a>&nbsp;` +
+                `<a data-step-index="${i}" class="pure-button button-secondary button-red button-xsmall remove" >Remove</a>`;
 
-                // if a screenshot is available
-                if (browser_steps_available_screenshots.includes(i.toString())) {
-                    var d = (browser_steps_last_error_step === i+1) ? 'before' : 'after';
-                    s += `&nbsp;<a data-step-index="${i}" class="pure-button button-secondary button-xsmall show-screenshot" title="Show screenshot from last run" data-type="${d}">Pic</a>&nbsp;`;
-                }
+            // if a screenshot is available
+            if (browser_steps_available_screenshots.includes(i.toString())) {
+                var d = (browser_steps_last_error_step === i+1) ? 'before' : 'after';
+                s += `&nbsp;<a data-step-index="${i}" class="pure-button button-secondary button-xsmall show-screenshot" title="Show screenshot from last run" data-type="${d}">Pic</a>&nbsp;`;
             }
             s += '</div>';
             $(this).append(s)
