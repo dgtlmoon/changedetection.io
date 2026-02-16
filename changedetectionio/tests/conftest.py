@@ -331,6 +331,7 @@ def prepare_test_function(live_server, datastore_path):
     # Cleanup: Clear watches and queue after test
     try:
         from changedetectionio.flask_app import update_q
+        from pathlib import Path
 
         # Clear the queue to prevent leakage to next test
         while not update_q.empty():
@@ -340,6 +341,18 @@ def prepare_test_function(live_server, datastore_path):
                 break
 
         datastore.data['watching'] = {}
+
+        # Delete any old watch metadata JSON files
+        base_path = Path(datastore.datastore_path).resolve()
+        max_depth = 2
+
+        for file in base_path.rglob("*.json"):
+            # Calculate depth relative to base path
+            depth = len(file.relative_to(base_path).parts) - 1
+
+            if depth <= max_depth and file.is_file():
+                file.unlink()
+
     except Exception as e:
         logger.warning(f"Error during datastore cleanup: {e}")
 
