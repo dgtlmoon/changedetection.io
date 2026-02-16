@@ -719,8 +719,8 @@ def changedetection_app(config=None, datastore_o=None):
             name, ext = os.path.splitext(filename)
 
             # Remove unwanted chars from name and extension
-            name = re.sub(r'[^a-z0-9_]+', '', name)
-            ext = re.sub(r'[^a-z0-9]+', '', ext.lstrip('.'))
+            name = re.sub(r'[^a-z0-9_-]+', '', name)
+            ext = re.sub(r'[^a-z0-9-]+', '', ext.lstrip('.'))
 
             if not name:
                 raise ValueError("Invalid filename")
