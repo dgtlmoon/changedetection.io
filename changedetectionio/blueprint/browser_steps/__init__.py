@@ -301,8 +301,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     def browsersteps_ui_update():
         import base64
 
-        remaining =0
+        remaining = 0
         uuid = request.args.get('uuid')
+        goto_website_url_first_step = request.args.get('goto_website_url_first_step')
 
         browsersteps_session_id = request.args.get('browsersteps_session_id')
 
@@ -316,10 +317,18 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Actions - step/apply/etc, do the thing and return state
         if request.method == 'POST':
             # @todo - should always be an existing session
-            step_operation = request.form.get('operation')
-            step_selector = request.form.get('selector')
-            step_optional_value = request.form.get('optional_value')
-            is_last_step = strtobool(request.form.get('is_last_step'))
+            if goto_website_url_first_step:
+                logger.debug("Going to site (requested automatically before stepping)..")
+                step_operation = "Goto site"
+                step_selector = None
+                step_optional_value = None
+                is_last_step = False
+
+            else:
+                step_operation = request.form.get('operation')
+                step_selector = request.form.get('selector')
+                step_optional_value = request.form.get('optional_value')
+                is_last_step = strtobool(request.form.get('is_last_step'))
 
             try:
                 # Run the async call_action method in the dedicated browser steps event loop
