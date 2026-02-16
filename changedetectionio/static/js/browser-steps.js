@@ -17,8 +17,6 @@ $(document).ready(function () {
         set_scale();
     });
     // Should always be disabled
-    $('#browser_steps-0-operation option[value="Goto site"]').prop("selected", "selected");
-    $('#browser_steps-0-operation').attr('disabled', 'disabled');
 
     $('#browsersteps-click-start').click(function () {
         $("#browsersteps-click-start").fadeOut();
@@ -45,12 +43,6 @@ $(document).ready(function () {
         browsersteps_session_id = false;
         apply_buttons_disabled = false;
         ctx.clearRect(0, 0, c.width, c.height);
-        set_first_gotosite_disabled();
-    }
-
-    function set_first_gotosite_disabled() {
-        $('#browser_steps >li:first-child select').val('Goto site').attr('disabled', 'disabled');
-        $('#browser_steps >li:first-child').css('opacity', '0.5');
     }
 
     // Show seconds remaining until the browser interface needs to restart the session
@@ -248,7 +240,6 @@ $(document).ready(function () {
         browsersteps_session_id = false;
         // @todo This setting of the first one should be done at the datalayer but wtforms doesnt wanna play nice
         $('#browser_steps >li:first-child').removeClass('empty');
-        set_first_gotosite_disabled();
         $('#browser-steps-ui .loader .spinner').show();
         $('.clear,.remove', $('#browser_steps >li:first-child')).hide();
         $.ajax({
@@ -267,11 +258,8 @@ $(document).ready(function () {
         }).done(function (data) {
             $("#loading-status-text").fadeIn();
             browsersteps_session_id = data.browsersteps_session_id;
-            // This should trigger 'Goto site'
-            console.log("Got startup response, requesting Goto-Site (first) step fake click");
-            $('#browser_steps >li:first-child .apply').click();
             browser_interface_seconds_remaining = 500;
-            set_first_gotosite_disabled();
+            //set_first_gotosite_disabled();
         }).fail(function (data) {
             console.log(data);
             alert('There was an error communicating with the server.');
@@ -280,7 +268,6 @@ $(document).ready(function () {
     }
 
     function disable_browsersteps_ui() {
-        set_first_gotosite_disabled();
         $("#browser-steps-ui").css('opacity', '0.3');
         $('#browsersteps-selector-canvas').off("mousemove mousedown click");
     }
