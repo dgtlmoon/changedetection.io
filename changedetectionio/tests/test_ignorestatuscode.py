@@ -100,7 +100,6 @@ def test_normal_page_check_works_with_ignore_status_code(client, live_server, me
 
 # Tests the whole stack works with staus codes ignored
 def test_403_page_check_works_with_ignore_status_code(client, live_server, measure_memory_usage, datastore_path):
-    sleep_time_for_fetch_thread = 3
 
     set_original_response(datastore_path=datastore_path)
 
@@ -112,8 +111,7 @@ def test_403_page_check_works_with_ignore_status_code(client, live_server, measu
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
-    # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # Goto the edit page, check our ignore option
     # Add our URL to the import page

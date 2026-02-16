@@ -6,9 +6,6 @@ from urllib.request import urlopen
 from .util import set_original_response, set_modified_response, live_server_setup, delete_all_watches
 import re
 
-sleep_time_for_fetch_thread = 3
-
-
 def test_share_watch(client, live_server, measure_memory_usage, datastore_path):
     set_original_response(datastore_path=datastore_path)
 

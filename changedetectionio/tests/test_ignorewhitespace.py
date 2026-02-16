@@ -2,10 +2,9 @@
 
 import time
 from flask import url_for
-from . util import live_server_setup
 import os
 
-
+from .util import live_server_setup, delete_all_watches, wait_for_all_checks
 
 
 # Should be the same as set_original_ignore_response(datastore_path=datastore_path) but with a little more whitespacing
@@ -50,10 +49,7 @@ def set_original_ignore_response(datastore_path):
 
 # If there was only a change in the whitespacing, then we shouldnt have a change detected
 def test_check_ignore_whitespace(client, live_server, measure_memory_usage, datastore_path):
-    sleep_time_for_fetch_thread = 3
 
-    # Give the endpoint time to spin up
-    time.sleep(1)
 
     set_original_ignore_response(datastore_path=datastore_path)
 
@@ -74,17 +70,17 @@ def test_check_ignore_whitespace(client, live_server, measure_memory_usage, data
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     set_original_ignore_response_but_with_whitespace(datastore_path)
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
-    time.sleep(sleep_time_for_fetch_thread)
+    wait_for_all_checks(client)
 
     # It should report nothing found (no new 'has-unread-changes' class)
     res = client.get(url_for("watchlist.index"))

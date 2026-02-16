@@ -6,10 +6,6 @@ from urllib.request import urlopen
 from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
 import os
 
-sleep_time_for_fetch_thread = 3
-
-
-
 def test_check_extract_text_from_diff(client, live_server, measure_memory_usage, datastore_path):
     import time
     with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
