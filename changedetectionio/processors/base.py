@@ -1,5 +1,7 @@
 import re
 import hashlib
+
+from changedetectionio.browser_steps.browser_steps import browser_steps_get_valid_steps
 from changedetectionio.content_fetchers.base import Fetcher
 from changedetectionio.strtobool import strtobool
 from copy import deepcopy
@@ -169,7 +171,7 @@ class difference_detection_processor():
                                    )
 
         if self.watch.has_browser_steps:
-            self.fetcher.browser_steps = self.watch.get('browser_steps', [])
+            self.fetcher.browser_steps = browser_steps_get_valid_steps(self.watch.get('browser_steps', []))
             self.fetcher.browser_steps_screenshot_path = os.path.join(self.datastore.datastore_path, self.watch.get('uuid'))
 
         # Tweak the base config with the per-watch ones
