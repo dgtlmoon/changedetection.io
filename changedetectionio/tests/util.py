@@ -183,8 +183,19 @@ def delete_all_watches(client=None):
 
     # Delete any old watch metadata
     from pathlib import Path
-    for file in Path(client.application.config.get('DATASTORE').datastore_path).rglob("*.json"):
-        file.unlink()
+
+    base_path = Path(
+        client.application.config.get('DATASTORE').datastore_path
+    ).resolve()
+
+    max_depth = 2
+
+    for file in base_path.rglob("*.json"):
+        # Calculate depth relative to base path
+        depth = len(file.relative_to(base_path).parts) - 1
+
+        if depth <= max_depth and file.is_file():
+            file.unlink()
 
 
 def wait_for_all_checks(client=None):
