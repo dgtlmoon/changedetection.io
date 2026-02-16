@@ -712,8 +712,29 @@ def changedetection_app(config=None, datastore_o=None):
     def static_content(group, filename):
         from flask import make_response
         import re
-        group = re.sub(r'[^\w.-]+', '', group.lower())
-        filename = re.sub(r'[^\w.-]+', '', filename.lower())
+        def sanitize_filename(filename):
+            filename = filename.lower()
+
+            # Split extension
+            name, ext = os.path.splitext(filename)
+
+            # Remove unwanted chars from name and extension
+            name = re.sub(r'[^a-z0-9_]+', '', name)
+            ext = re.sub(r'[^a-z0-9]+', '', ext.lstrip('.'))
+
+            if not name:
+                raise ValueError("Invalid filename")
+
+            # Rebuild with at most one dot
+            return f"{name}.{ext}" if ext else name
+
+        # Strict sanitization: only allow a-z, 0-9, and underscore (blocks .. and other traversal)
+        group = re.sub(r'[^a-z0-9_]+', '', group.lower())
+        filename = sanitize_filename(filename)
+
+        # Additional safety: reject if sanitization resulted in empty strings
+        if not group or not filename:
+            abort(404)
 
         if group == 'screenshot':
             # Could be sensitive, follow password requirements
