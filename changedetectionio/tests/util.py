@@ -161,6 +161,7 @@ def extract_UUID_from_client(client):
 
 def delete_all_watches(client=None):
     wait_for_all_checks(client)
+
     uuids = list(client.application.config.get('DATASTORE').data['watching'])
     for uuid in uuids:
         client.application.config.get('DATASTORE').delete(uuid)
@@ -179,6 +180,12 @@ def delete_all_watches(client=None):
                 break
 
     time.sleep(0.2)
+
+    # Delete any old watch metadata
+    from pathlib import Path
+    for file in Path(client.application.config.get('DATASTORE').datastore_path).rglob("*.json"):
+        file.unlink()
+
 
 def wait_for_all_checks(client=None):
     """
