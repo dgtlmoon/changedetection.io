@@ -107,10 +107,7 @@ def test_watch_data_package_download(client, live_server, measure_memory_usage, 
     assert uuid is not None, "Could not find watch UUID in datastore"
 
     # Download the watch data package
-    res = client.get(
-        url_for("ui.ui_edit.watch_get_data_package", uuid=uuid),
-        follow_redirects=True
-    )
+    res = client.get(url_for("ui.ui_edit.watch_get_data_package", uuid=uuid))
 
     # Should get the right zip content type
     assert res.content_type == "application/zip"

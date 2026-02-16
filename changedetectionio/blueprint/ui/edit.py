@@ -364,9 +364,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         from pathlib import Path
         import datetime
 
-        if uuid == 'first':
-            uuid = list(datastore.data['watching'].keys()).pop()
-
         watch = datastore.data['watching'].get(uuid)
         if not watch:
             abort(404)
