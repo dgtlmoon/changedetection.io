@@ -9,7 +9,7 @@ by testing various scenarios that should trigger validation errors.
 import time
 import json
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks
+from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 
 
 def test_openapi_validation_invalid_content_type_on_create_watch(client, live_server, measure_memory_usage, datastore_path):
@@ -27,6 +27,7 @@ def test_openapi_validation_invalid_content_type_on_create_watch(client, live_se
     # Should get 400 error due to OpenAPI validation failure
     assert res.status_code == 400, f"Expected 400 but got {res.status_code}"
     assert b"Validation failed" in res.data, "Should contain validation error message"
+    delete_all_watches(client)
 
 
 def test_openapi_validation_missing_required_field_create_watch(client, live_server, measure_memory_usage, datastore_path):
@@ -44,6 +45,7 @@ def test_openapi_validation_missing_required_field_create_watch(client, live_ser
     # Should get 400 error due to missing required field
     assert res.status_code == 400, f"Expected 400 but got {res.status_code}"
     assert b"Validation failed" in res.data, "Should contain validation error message"
+    delete_all_watches(client)
 
 
 def test_openapi_validation_invalid_field_in_request_body(client, live_server, measure_memory_usage, datastore_path):
@@ -83,6 +85,7 @@ def test_openapi_validation_invalid_field_in_request_body(client, live_server, m
     # Backend validation now returns "Unknown field(s):" message
     assert b"Unknown field" in res.data, \
             "Should contain validation error about unknown fields"
+    delete_all_watches(client)
 
 
 def test_openapi_validation_import_wrong_content_type(client, live_server, measure_memory_usage, datastore_path):
@@ -100,6 +103,7 @@ def test_openapi_validation_import_wrong_content_type(client, live_server, measu
     # Should get 400 error due to content-type mismatch
     assert res.status_code == 400, f"Expected 400 but got {res.status_code}"
     assert b"Validation failed" in res.data, "Should contain validation error message"
+    delete_all_watches(client)
 
 
 def test_openapi_validation_import_correct_content_type_succeeds(client, live_server, measure_memory_usage, datastore_path):
@@ -117,6 +121,7 @@ def test_openapi_validation_import_correct_content_type_succeeds(client, live_se
     # Should succeed
     assert res.status_code == 200, f"Expected 200 but got {res.status_code}"
     assert len(res.json) == 2, "Should import 2 URLs"
+    delete_all_watches(client)
 
 
 def test_openapi_validation_get_requests_bypass_validation(client, live_server, measure_memory_usage, datastore_path):
@@ -141,6 +146,7 @@ def test_openapi_validation_get_requests_bypass_validation(client, live_server, 
 
     # Should return JSON with watch list (empty in this case)
     assert isinstance(res.json, dict), "Should return JSON dictionary for watch list"
+    delete_all_watches(client)
 
 
 def test_openapi_validation_create_tag_missing_required_title(client, live_server, measure_memory_usage, datastore_path):
@@ -158,10 +164,13 @@ def test_openapi_validation_create_tag_missing_required_title(client, live_serve
     # Should get 400 error due to missing required field
     assert res.status_code == 400, f"Expected 400 but got {res.status_code}"
     assert b"Validation failed" in res.data, "Should contain validation error message"
+    delete_all_watches(client)
 
 
 def test_openapi_validation_watch_update_allows_partial_updates(client, live_server, measure_memory_usage, datastore_path):
+
     """Test that watch updates allow partial updates without requiring all fields (positive test)."""
+#xxx
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
 
     # First create a valid watch
@@ -199,3 +208,4 @@ def test_openapi_validation_watch_update_allows_partial_updates(client, live_ser
     assert res.status_code == 200
     assert res.json.get('title') == 'Updated Title Only', "Title should be updated"
     assert res.json.get('url') == 'https://example.com', "URL should remain unchanged"
+    delete_all_watches(client)
