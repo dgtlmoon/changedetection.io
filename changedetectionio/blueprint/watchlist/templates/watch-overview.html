@@ -304,12 +304,13 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
                             </span>
                         {%- endif -%}
 
-                        {%- if watch.get('restock') and watch['restock']['price'] != None -%}
-                            {%- if watch['restock']['price'] != None -%}
+                        {%- if watch.get('restock') and watch['restock'].get('price') -%}
+                                {%- if watch['restock']['price'] is number -%}
                                 <span class="restock-label price" title="{{ _('Price') }}">
                                 {{ watch['restock']['price']|format_number_locale if watch['restock'].get('price') else '' }} {{ watch['restock'].get('currency','') }}
                                 </span>
-                            {%- endif -%}
+                                {%- else -%} <!-- watch['restock']['price']' is not a number, cant output it -->
+                                {%- endif -%}
                         {%- elif not watch.has_restock_info -%}
                             <span class="restock-label error">{{ _('No information') }}</span>
                         {%- endif -%}
