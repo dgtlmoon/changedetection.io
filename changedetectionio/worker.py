@@ -119,7 +119,10 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
         # to prevent race condition with wait_for_all_checks()
 
         fetch_start_time = round(time.time())
-        
+
+        # Track processing exception for plugin finalization
+        processing_exception = None
+
         try:
             if uuid in list(datastore.data['watching'].keys()) and datastore.data['watching'][uuid].get('url'):
                 changed_detected = False
@@ -153,6 +156,10 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
 
                     update_handler = processor_module.perform_site_check(datastore=datastore,
                                                                          watch_uuid=uuid)
+
+                    # Allow plugins to modify/wrap the update_handler
+                    from changedetectionio.pluggy_interface import apply_update_handler_alter
+                    update_handler = apply_update_handler_alter(update_handler, watch, datastore)
 
                     update_signal = signal('watch_small_status_comment')
                     update_signal.send(watch_uuid=uuid, status="Fetching page..")
@@ -498,6 +505,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                 gc.collect()
 
         except Exception as e:
+            # Store the processing exception for plugin finalization hook
+            processing_exception = e
 
             logger.error(f"Worker {worker_id} unexpected error processing {uuid}: {e}")
             logger.exception(f"Worker {worker_id} full exception details:")
@@ -545,6 +554,21 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     logger.debug(f"Worker {worker_id} completed watch {uuid} in {time.time()-fetch_start_time:.2f}s")
                 except Exception as cleanup_error:
                     logger.error(f"Worker {worker_id} error during cleanup: {cleanup_error}")
+                    logger.exception(f"Worker {worker_id} full exception details:")
+
+                # Call plugin finalization hook after all cleanup is done
+                try:
+                    from changedetectionio.pluggy_interface import apply_update_finalize
+                    finalize_handler = update_handler if 'update_handler' in locals() else None
+                    finalize_watch = watch if 'watch' in locals() else None
+                    apply_update_finalize(
+                        update_handler=finalize_handler,
+                        watch=finalize_watch,
+                        datastore=datastore,
+                        processing_exception=processing_exception
+                    )
+                except Exception as finalize_error:
+                    logger.error(f"Worker {worker_id} error in finalize hook: {finalize_error}")
                     logger.exception(f"Worker {worker_id} full exception details:")
 
             del(uuid)
