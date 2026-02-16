@@ -107,7 +107,7 @@ def test_watch_notification_urls_validation(client, live_server, measure_memory_
         headers={'content-type': 'application/json', 'x-api-key': api_key}
     )
     assert res.status_code == 400, "Should reject non-list notification_urls"
-    assert b"OpenAPI validation failed" in res.data or b"Request body validation error" in res.data
+    assert b"Validation failed" in res.data or b"is not of type" in res.data
 
     # Test 6: Verify original URLs are preserved after failed update
     res = client.get(
@@ -159,7 +159,7 @@ def test_tag_notification_urls_validation(client, live_server, measure_memory_us
         headers={'content-type': 'application/json', 'x-api-key': api_key}
     )
     assert res.status_code == 400, "Should reject non-list notification_urls"
-    assert b"OpenAPI validation failed" in res.data or b"Request body validation error" in res.data
+    assert b"Validation failed" in res.data or b"is not of type" in res.data
 
     # Test 4: Verify original URLs are preserved after failed update
     tag = datastore.data['settings']['application']['tags'][tag_uuid]

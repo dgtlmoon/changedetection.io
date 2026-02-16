@@ -100,11 +100,11 @@ class TestDiffBuilder(unittest.TestCase):
         # Test 1: Deepcopy shares datastore reference (doesn't copy it)
         watch_copy = deepcopy(watches[0])
 
-        self.assertIsNotNone(watch_copy._model__datastore,
+        self.assertIsNotNone(watch_copy._datastore,
                             "__datastore should exist in copied watch")
-        self.assertIs(watch_copy._model__datastore, watches[0]._model__datastore,
+        self.assertIs(watch_copy._datastore, watches[0]._datastore,
                      "__datastore should be SHARED (same object), not copied")
-        self.assertIs(watch_copy._model__datastore, mock_datastore,
+        self.assertIs(watch_copy._datastore, mock_datastore,
                      "__datastore should reference the original datastore")
 
         # Test 2: Dict data is properly copied (not shared)
@@ -130,7 +130,7 @@ class TestDiffBuilder(unittest.TestCase):
 
         # All copies should share the same datastore
         for copy in copies:
-            self.assertIs(copy._model__datastore, mock_datastore,
+            self.assertIs(copy._datastore, mock_datastore,
                          "All copies should share the original datastore")
 
     def test_watch_pickle_doesnt_serialize_datastore(self):
@@ -160,7 +160,7 @@ class TestDiffBuilder(unittest.TestCase):
                         "Dict data should be preserved after pickle/unpickle")
 
         # Test 2: __datastore is NOT serialized (attribute shouldn't exist after unpickle)
-        self.assertFalse(hasattr(unpickled_watch, '_model__datastore'),
+        self.assertFalse(hasattr(unpickled_watch, '_datastore'),
                          "__datastore attribute should not exist after unpickle (not serialized)")
 
         # Test 3: Pickled data shouldn't contain the large datastore object
@@ -208,8 +208,8 @@ class TestDiffBuilder(unittest.TestCase):
                            "Modifying copy should not affect original")
 
         # Test 5: Tag with datastore shares it (doesn't copy it)
-        if hasattr(tag_with_ds, '_model__datastore'):
-            self.assertIs(tag_copy2._model__datastore, tag_with_ds._model__datastore,
+        if hasattr(tag_with_ds, '_datastore'):
+            self.assertIs(tag_copy2._datastore, tag_with_ds._datastore,
                          "Tag should share __datastore reference like Watch does")
 
     def test_watch_copy_performance(self):

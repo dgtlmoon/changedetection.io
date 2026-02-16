@@ -83,6 +83,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 datastore.data['settings']['requests'].update(form.data['requests'])
                 datastore.commit()
 
+                # Clear all checksums to force reprocessing with new settings
+                # Global settings can affect watch behavior (filters, rendering, etc.)
+                datastore.clear_all_last_checksums()
+
                 # Adjust worker count if it changed
                 if new_worker_count != old_worker_count:
                     from changedetectionio import worker_pool

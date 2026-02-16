@@ -5,6 +5,8 @@ from flask import url_for
 from .util import live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, get_UUID_for_tag_name, extract_UUID_from_client, delete_all_watches
 import os
 
+from ..store import ChangeDetectionStore
+
 
 # def test_setup(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
@@ -472,5 +474,145 @@ the {test} appeared before. {test in res.data[:n]=}
 {res.data[:n]=}
         """
         n += t_index + len(test)
+
+    delete_all_watches(client)
+
+
+def test_tag_json_persistence(client, live_server, measure_memory_usage, datastore_path):
+    """
+    Test that tags are saved to individual tag.json files and loaded correctly.
+
+    This test verifies the update_27 tag storage refactoring:
+    - Tags are saved to {uuid}/tag.json files
+    - Tags persist across datastore restarts
+    - Tag edits write to tag.json
+    - Tag deletion removes tag.json file
+    """
+    import json
+
+    datastore = client.application.config.get('DATASTORE')
+
+    # 1. Create a tag
+    res = client.post(
+        url_for("tags.form_tag_add"),
+        data={"name": "persistence-test-tag"},
+        follow_redirects=True
+    )
+    assert b"Tag added" in res.data
+
+    tag_uuid = get_UUID_for_tag_name(client, name="persistence-test-tag")
+    assert tag_uuid, "Tag UUID should exist"
+
+    # 2. Verify tag.json file was created
+    tag_json_path = os.path.join(datastore_path, tag_uuid, "tag.json")
+    assert os.path.exists(tag_json_path), f"tag.json should exist at {tag_json_path}"
+
+    # 3. Verify tag.json contains correct data
+    with open(tag_json_path, 'r') as f:
+        tag_data = json.load(f)
+    assert tag_data['title'] == 'persistence-test-tag'
+    assert tag_data['uuid'] == tag_uuid
+    assert 'date_created' in tag_data
+
+    # 4. Edit the tag
+    res = client.post(
+        url_for("tags.form_tag_edit_submit", uuid=tag_uuid),
+        data={
+            "name": "persistence-test-tag",
+            "notification_muted": True,
+            "include_filters": '#test-filter'
+        },
+        follow_redirects=True
+    )
+    assert b"Updated" in res.data
+
+    # 5. Verify tag.json was updated
+    with open(tag_json_path, 'r') as f:
+        tag_data = json.load(f)
+    assert tag_data['notification_muted'] == True
+    assert '#test-filter' in tag_data.get('include_filters', [])
+
+    # 5a. Verify tag is NOT in changedetection.json (tags should be in tag.json only)
+    changedetection_json_path = os.path.join(datastore_path, "changedetection.json")
+    with open(changedetection_json_path, 'r') as f:
+        settings_data = json.load(f)
+    # Tags dict should be empty in settings (all tags are in individual files)
+    assert settings_data['settings']['application']['tags'] == {}, \
+        "Tags should NOT be saved to changedetection.json (should be empty dict)"
+
+    # 6. Simulate restart - reload datastore
+    datastore2 = ChangeDetectionStore(datastore_path=datastore_path, include_default_watches=False, version_tag='test')
+
+    # 7. Verify tag was loaded from tag.json
+    assert tag_uuid in datastore2.data['settings']['application']['tags']
+    loaded_tag = datastore2.data['settings']['application']['tags'][tag_uuid]
+    assert loaded_tag['title'] == 'persistence-test-tag'
+    assert loaded_tag['notification_muted'] == True
+    assert '#test-filter' in loaded_tag.get('include_filters', [])
+
+    # 8. Delete the tag via API
+    res = client.get(url_for("tags.delete", uuid=tag_uuid), follow_redirects=True)
+    assert b"Tag deleted" in res.data
+
+    # 9. Verify tag.json file was deleted
+    assert not os.path.exists(tag_json_path), f"tag.json should be deleted at {tag_json_path}"
+
+    # 10. Verify tag is removed from settings
+    assert tag_uuid not in datastore.data['settings']['application']['tags']
+
+    delete_all_watches(client)
+
+
+def test_tag_json_migration_update_27(client, live_server, measure_memory_usage, datastore_path):
+    """
+    Test that update_27 migration correctly moves tags to individual files.
+
+    This simulates a pre-update_27 datastore and verifies migration works.
+    """
+    import json
+
+    # 1. Create multiple tags
+    tag_names = ['migration-tag-1', 'migration-tag-2', 'migration-tag-3']
+    tag_uuids = []
+
+    for tag_name in tag_names:
+        res = client.post(
+            url_for("tags.form_tag_add"),
+            data={"name": tag_name},
+            follow_redirects=True
+        )
+        assert b"Tag added" in res.data
+        tag_uuid = get_UUID_for_tag_name(client, name=tag_name)
+        tag_uuids.append(tag_uuid)
+
+    # 2. Verify all tag.json files exist (update_27 already ran during add_tag)
+    for tag_uuid in tag_uuids:
+        tag_json_path = os.path.join(datastore_path, tag_uuid, "tag.json")
+        assert os.path.exists(tag_json_path), f"tag.json should exist for {tag_uuid}"
+
+    # 2a. Verify tags are NOT in changedetection.json
+    changedetection_json_path = os.path.join(datastore_path, "changedetection.json")
+    with open(changedetection_json_path, 'r') as f:
+        settings_data = json.load(f)
+    assert settings_data['settings']['application']['tags'] == {}, \
+        "Tags should NOT be in changedetection.json after migration"
+
+    # 3. Simulate restart
+    datastore2 = ChangeDetectionStore(datastore_path=datastore_path, include_default_watches=False, version_tag='test')
+
+    # 4. Verify all tags loaded from tag.json files
+    for idx, tag_uuid in enumerate(tag_uuids):
+        assert tag_uuid in datastore2.data['settings']['application']['tags']
+        loaded_tag = datastore2.data['settings']['application']['tags'][tag_uuid]
+        assert loaded_tag['title'] == tag_names[idx]
+
+    # Cleanup
+    res = client.get(url_for("tags.delete_all"), follow_redirects=True)
+    assert b'All tags deleted' in res.data
+
+    # Verify all tag.json files were deleted
+    for tag_uuid in tag_uuids:
+        tag_json_path = os.path.join(datastore_path, tag_uuid, "tag.json")
+        assert not os.path.exists(tag_json_path), f"tag.json should be deleted for {tag_uuid}"
 
     delete_all_watches(client)

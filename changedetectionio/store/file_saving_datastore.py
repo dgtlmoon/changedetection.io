@@ -175,23 +175,37 @@ def save_json_atomic(file_path, data_dict, label="file", max_size_mb=10):
         raise e
 
 
+def save_entity_atomic(entity_dir, uuid, entity_dict, filename, entity_type, max_size_mb):
+    """
+    Save an entity (watch/tag) to disk using atomic write pattern.
+
+    Generic function for saving any watch_base subclass (Watch, Tag, etc.).
+
+    Args:
+        entity_dir: Directory for this entity (e.g., /datastore/{uuid})
+        uuid: Entity UUID (for logging)
+        entity_dict: Dictionary representation of the entity
+        filename: JSON filename (e.g., 'watch.json', 'tag.json')
+        entity_type: Type label for logging (e.g., 'watch', 'tag')
+        max_size_mb: Maximum allowed file size in MB
+
+    Raises:
+        ValueError: If serialized data exceeds max_size_mb
+        OSError: If disk is full (ENOSPC) or other I/O error
+    """
+    entity_json = os.path.join(entity_dir, filename)
+    save_json_atomic(entity_json, entity_dict, label=f"{entity_type} {uuid}", max_size_mb=max_size_mb)
+
+
 def save_watch_atomic(watch_dir, uuid, watch_dict):
     """
     Save a watch to disk using atomic write pattern.
 
-    Convenience wrapper around save_json_atomic for watches.
-
-    Args:
-        watch_dir: Directory for this watch (e.g., /datastore/{uuid})
-        uuid: Watch UUID (for logging)
-        watch_dict: Dictionary representation of the watch
-
-    Raises:
-        ValueError: If serialized data exceeds 10MB (indicates bug or corruption)
-        OSError: If disk is full (ENOSPC) or other I/O error
+    Convenience wrapper around save_entity_atomic for watches.
+    Kept for backwards compatibility.
     """
-    watch_json = os.path.join(watch_dir, "watch.json")
-    save_json_atomic(watch_json, watch_dict, label=f"watch {uuid}", max_size_mb=10)
+    save_entity_atomic(watch_dir, uuid, watch_dict, "watch.json", "watch", max_size_mb=10)
+
 
 
 def load_watch_from_file(watch_json, uuid, rehydrate_entity_func):
@@ -204,8 +218,7 @@ def load_watch_from_file(watch_json, uuid, rehydrate_entity_func):
         rehydrate_entity_func: Function to convert dict to Watch object
 
     Returns:
-        Tuple of (Watch object, raw_data_dict) or (None, None) if failed
-        The raw_data_dict is needed to compute the hash before rehydration
+        Watch object or None if failed
     """
     try:
         # Check file size before reading
@@ -218,7 +231,7 @@ def load_watch_from_file(watch_json, uuid, rehydrate_entity_func):
                 f"File: {watch_json}. This indicates a bug or data corruption. "
                 f"Watch will be skipped."
             )
-            return None, None
+            return None
 
         if HAS_ORJSON:
             with open(watch_json, 'rb') as f:
@@ -227,10 +240,9 @@ def load_watch_from_file(watch_json, uuid, rehydrate_entity_func):
             with open(watch_json, 'r', encoding='utf-8') as f:
                 watch_data = json.load(f)
 
-        # Return both the raw data and the rehydrated watch
-        # Raw data is needed to compute hash before rehydration changes anything
+        # Rehydrate and return watch object
         watch_obj = rehydrate_entity_func(uuid, watch_data)
-        return watch_obj, watch_data
+        return watch_obj
 
     except json.JSONDecodeError as e:
         logger.critical(
@@ -238,7 +250,7 @@ def load_watch_from_file(watch_json, uuid, rehydrate_entity_func):
             f"File: {watch_json}. Error: {e}. "
             f"Watch will be skipped and may need manual recovery from backup."
         )
-        return None, None
+        return None
     except ValueError as e:
         # orjson raises ValueError for invalid JSON
         if "invalid json" in str(e).lower() or HAS_ORJSON:
@@ -247,15 +259,15 @@ def load_watch_from_file(watch_json, uuid, rehydrate_entity_func):
                 f"File: {watch_json}. Error: {e}. "
                 f"Watch will be skipped and may need manual recovery from backup."
             )
-            return None, None
+            return None
         # Re-raise if it's not a JSON parsing error
         raise
     except FileNotFoundError:
         logger.error(f"Watch file not found: {watch_json} for watch {uuid}")
-        return None, None
+        return None
     except Exception as e:
         logger.error(f"Failed to load watch {uuid} from {watch_json}: {e}")
-        return None, None
+        return None
 
 
 def load_all_watches(datastore_path, rehydrate_entity_func):
@@ -295,8 +307,8 @@ def load_all_watches(datastore_path, rehydrate_entity_func):
     for watch_json in watch_files:
         # Extract UUID from path: /datastore/{uuid}/watch.json
         uuid_dir = os.path.basename(os.path.dirname(watch_json))
-        watch, raw_data = load_watch_from_file(watch_json, uuid_dir, rehydrate_entity_func)
-        if watch and raw_data:
+        watch = load_watch_from_file(watch_json, uuid_dir, rehydrate_entity_func)
+        if watch:
             watching[uuid_dir] = watch
             loaded += 1
 
@@ -318,6 +330,122 @@ def load_all_watches(datastore_path, rehydrate_entity_func):
         logger.info(f"Loaded {loaded} watches from disk in {elapsed:.2f}s ({loaded/elapsed:.0f} watches/sec)")
 
     return watching
+
+
+def load_tag_from_file(tag_json, uuid, rehydrate_entity_func):
+    """
+    Load a tag from its JSON file.
+
+    Args:
+        tag_json: Path to the tag.json file
+        uuid: Tag UUID
+        rehydrate_entity_func: Function to convert dict to Tag object
+
+    Returns:
+        Tag object or None if failed
+    """
+    try:
+        # Check file size before reading
+        file_size = os.path.getsize(tag_json)
+        MAX_TAG_SIZE = 1 * 1024 * 1024  # 1MB
+        if file_size > MAX_TAG_SIZE:
+            logger.critical(
+                f"CORRUPTED TAG DATA: Tag {uuid} file is unexpectedly large: "
+                f"{file_size / 1024 / 1024:.2f}MB (max: {MAX_TAG_SIZE / 1024 / 1024}MB). "
+                f"File: {tag_json}. This indicates a bug or data corruption. "
+                f"Tag will be skipped."
+            )
+            return None
+
+        if HAS_ORJSON:
+            with open(tag_json, 'rb') as f:
+                tag_data = orjson.loads(f.read())
+        else:
+            with open(tag_json, 'r', encoding='utf-8') as f:
+                tag_data = json.load(f)
+
+        tag_data['processor'] = 'restock_diff'
+        # Rehydrate tag (convert dict to Tag object)
+        # processor_override is set inside the rehydration function
+        tag_obj = rehydrate_entity_func(uuid, tag_data)
+        return tag_obj
+
+    except json.JSONDecodeError as e:
+        logger.critical(
+            f"CORRUPTED TAG DATA: Failed to parse JSON for tag {uuid}. "
+            f"File: {tag_json}. Error: {e}. "
+            f"Tag will be skipped and may need manual recovery from backup."
+        )
+        return None
+    except ValueError as e:
+        # orjson raises ValueError for invalid JSON
+        if "invalid json" in str(e).lower() or HAS_ORJSON:
+            logger.critical(
+                f"CORRUPTED TAG DATA: Failed to parse JSON for tag {uuid}. "
+                f"File: {tag_json}. Error: {e}. "
+                f"Tag will be skipped and may need manual recovery from backup."
+            )
+            return None
+        # Re-raise if it's not a JSON parsing error
+        raise
+    except FileNotFoundError:
+        logger.debug(f"Tag file not found: {tag_json} for tag {uuid}")
+        return None
+    except Exception as e:
+        logger.error(f"Failed to load tag {uuid} from {tag_json}: {e}")
+        return None
+
+
+def load_all_tags(datastore_path, rehydrate_entity_func):
+    """
+    Load all tags from individual tag.json files.
+
+    Tags are stored separately from settings in {uuid}/tag.json files.
+
+    Args:
+        datastore_path: Path to the datastore directory
+        rehydrate_entity_func: Function to convert dict to Tag object
+
+    Returns:
+        Dictionary of uuid -> Tag object
+    """
+    logger.info("Loading tags from individual tag.json files...")
+
+    tags = {}
+
+    if not os.path.exists(datastore_path):
+        return tags
+
+    # Find all tag.json files using glob
+    tag_files = glob.glob(os.path.join(datastore_path, "*", "tag.json"))
+
+    total = len(tag_files)
+    if total == 0:
+        logger.debug("No tag.json files found")
+        return tags
+
+    logger.debug(f"Found {total} tag.json files")
+
+    loaded = 0
+    failed = 0
+
+    for tag_json in tag_files:
+        # Extract UUID from path: /datastore/{uuid}/tag.json
+        uuid_dir = os.path.basename(os.path.dirname(tag_json))
+        tag = load_tag_from_file(tag_json, uuid_dir, rehydrate_entity_func)
+        if tag:
+            tags[uuid_dir] = tag
+            loaded += 1
+        else:
+            # load_tag_from_file already logged the specific error
+            failed += 1
+
+    if failed > 0:
+        logger.warning(f"Loaded {loaded} tags, {failed} tags FAILED to load")
+    else:
+        logger.info(f"Loaded {loaded} tags from disk")
+
+    return tags
 
 
 # ============================================================================

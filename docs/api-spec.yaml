@@ -28,7 +28,7 @@ info:
     
     For example: `x-api-key: YOUR_API_KEY`
     
-  version: 0.1.4
+  version: 0.1.6
   contact:
     name: ChangeDetection.io
     url: https://github.com/dgtlmoon/changedetection.io
@@ -126,13 +126,22 @@ components:
     WatchBase:
       type: object
       properties:
+        uuid:
+          type: string
+          format: uuid
+          description: Unique identifier
+          readOnly: true
+        date_created:
+          type: [integer, 'null']
+          description: Unix timestamp of creation
+          readOnly: true
         url:
           type: string
           format: uri
           description: URL to monitor for changes
           maxLength: 5000
         title:
-          type: string
+          type: [string, 'null']
           description: Custom title for the web page change monitor (watch), not to be confused with page_title
           maxLength: 5000
         tag:
@@ -156,60 +165,65 @@ components:
           description: HTTP method to use
         fetch_backend:
           type: string
-          enum: [html_requests, html_webdriver]
-          description: Backend to use for fetching content
+          description: |
+            Backend to use for fetching content. Common values:
+            - `system` (default) - Use the system-wide default fetcher
+            - `html_requests` - Fast requests-based fetcher
+            - `html_webdriver` - Browser-based fetcher (Playwright/Puppeteer)
+            - `extra_browser_*` - Custom browser configurations (if configured)
+            - Plugin-provided fetchers (if installed)
+          pattern: '^(system|html_requests|html_webdriver|extra_browser_.+)$'
+          default: system
         headers:
           type: object
           additionalProperties:
             type: string
           description: HTTP headers to include in requests
         body:
-          type: string
+          type: [string, 'null']
           description: HTTP request body
           maxLength: 5000
-        proxy:
-          type: string
-          description: Proxy configuration
-          maxLength: 5000
         block_assets:
-          type: boolean
+          type: [boolean, 'null']
           nullable: true
           description: Block retrieving images, fonts, and media files to reduce bandwidth usage. Set to `true` to enable, `false` to disable, or `null` to use the global default setting.
+        proxy:
+          type: [string, 'null']
+          description: Proxy configuration
+          maxLength: 5000
+        ignore_status_codes:
+          type: [boolean, 'null']
+          description: Ignore HTTP status code errors (boolean or null)
         webdriver_delay:
-          type: integer
+          type: [integer, 'null']
           description: Delay in seconds for webdriver
         webdriver_js_execute_code:
-          type: string
+          type: [string, 'null']
           description: JavaScript code to execute
           maxLength: 5000
         time_between_check:
           type: object
           properties:
             weeks:
-              type: integer
+              type: [integer, 'null']
               minimum: 0
               maximum: 52000
-              nullable: true
             days:
-              type: integer
+              type: [integer, 'null']
               minimum: 0
               maximum: 365000
-              nullable: true
             hours:
-              type: integer
+              type: [integer, 'null']
               minimum: 0
               maximum: 8760000
-              nullable: true
             minutes:
-              type: integer
+              type: [integer, 'null']
               minimum: 0
               maximum: 525600000
-              nullable: true
             seconds:
-              type: integer
+              type: [integer, 'null']
               minimum: 0
               maximum: 31536000000
-              nullable: true
           description: Time intervals between checks. All fields must be non-negative. At least one non-zero value required when not using default settings.
         time_between_check_use_default:
           type: boolean
@@ -223,11 +237,11 @@ components:
           maxItems: 100
           description: Notification URLs for this web page change monitor (watch). Maximum 100 URLs.
         notification_title:
-          type: string
+          type: [string, 'null']
           description: Custom notification title
           maxLength: 5000
         notification_body:
-          type: string
+          type: [string, 'null']
           description: Custom notification body
           maxLength: 5000
         notification_format:
@@ -235,7 +249,7 @@ components:
           enum: ['text', 'html', 'htmlcolor', 'markdown', 'System default']
           description: Format for notifications
         track_ldjson_price_data:
-          type: boolean
+          type: [boolean, 'null']
           description: Whether to track JSON-LD price data
         browser_steps:
           type: array
@@ -243,17 +257,14 @@ components:
             type: object
             properties:
               operation:
-                type: string
+                type: [string, 'null']
                 maxLength: 5000
-                nullable: true
               selector:
-                type: string
+                type: [string, 'null']
                 maxLength: 5000
-                nullable: true
               optional_value:
-                type: string
+                type: [string, 'null']
                 maxLength: 5000
-                nullable: true
             required: [operation, selector, optional_value]
             additionalProperties: false
           maxItems: 100
@@ -264,16 +275,197 @@ components:
           default: text_json_diff
           description: Optional processor mode to use for change detection. Defaults to `text_json_diff` if not specified.
 
+        # Content Filtering
+        include_filters:
+          type: array
+          items:
+            type: string
+            maxLength: 5000
+          maxItems: 100
+          description: CSS/XPath selectors to extract specific content from the page
+        subtractive_selectors:
+          type: array
+          items:
+            type: string
+            maxLength: 5000
+          maxItems: 100
+          description: CSS/XPath selectors to remove content from the page
+        ignore_text:
+          type: array
+          items:
+            type: string
+            maxLength: 5000
+          maxItems: 100
+          description: Text patterns to ignore in change detection
+        trigger_text:
+          type: array
+          items:
+            type: string
+            maxLength: 5000
+          maxItems: 100
+          description: Text/regex patterns that must be present to trigger a change
+        text_should_not_be_present:
+          type: array
+          items:
+            type: string
+            maxLength: 5000
+          maxItems: 100
+          description: Text that should NOT be present (triggers alert if found)
+        extract_text:
+          type: array
+          items:
+            type: string
+            maxLength: 5000
+          maxItems: 100
+          description: Regex patterns to extract specific text after filtering
+
+        # Text Processing
+        trim_text_whitespace:
+          type: boolean
+          default: false
+          description: Strip leading/trailing whitespace from text
+        sort_text_alphabetically:
+          type: boolean
+          default: false
+          description: Sort lines alphabetically before comparison
+        remove_duplicate_lines:
+          type: boolean
+          default: false
+          description: Remove duplicate lines from content
+        check_unique_lines:
+          type: boolean
+          default: false
+          description: Compare against all history for unique lines
+        strip_ignored_lines:
+          type: [boolean, 'null']
+          description: Remove lines matching ignore patterns
+
+        # Change Detection Filters
+        filter_text_added:
+          type: boolean
+          default: true
+          description: Include added text in change detection
+        filter_text_removed:
+          type: boolean
+          default: true
+          description: Include removed text in change detection
+        filter_text_replaced:
+          type: boolean
+          default: true
+          description: Include replaced text in change detection
+
+        # Restock/Price Detection
+        in_stock_only:
+          type: boolean
+          default: true
+          description: Only trigger on in-stock transitions (restock_diff processor)
+        follow_price_changes:
+          type: boolean
+          default: true
+          description: Monitor and track price changes (restock_diff processor)
+        price_change_threshold_percent:
+          type: [number, 'null']
+          description: Minimum price change percentage to trigger notification
+        has_ldjson_price_data:
+          type: [boolean, 'null']
+          description: Whether page has LD-JSON price data (auto-detected)
+          readOnly: true
+
+        # Notifications
+        notification_screenshot:
+          type: boolean
+          default: false
+          description: Include screenshot in notifications (if supported by notification URL)
+        filter_failure_notification_send:
+          type: boolean
+          default: true
+          description: Send notification when filters fail to match content
+
+        # History & Display
+        use_page_title_in_list:
+          type: [boolean, 'null']
+          description: Display page title in watch list (null = use system default)
+        history_snapshot_max_length:
+          type: [integer, 'null']
+          minimum: 1
+          maximum: 1000
+          description: Maximum number of history snapshots to keep (null = use system default)
+
+        # Scheduling
+        time_schedule_limit:
+          type: object
+          description: Weekly schedule limiting when checks can run
+          properties:
+            enabled:
+              type: boolean
+              default: false
+            monday:
+              $ref: '#/components/schemas/DaySchedule'
+            tuesday:
+              $ref: '#/components/schemas/DaySchedule'
+            wednesday:
+              $ref: '#/components/schemas/DaySchedule'
+            thursday:
+              $ref: '#/components/schemas/DaySchedule'
+            friday:
+              $ref: '#/components/schemas/DaySchedule'
+            saturday:
+              $ref: '#/components/schemas/DaySchedule'
+            sunday:
+              $ref: '#/components/schemas/DaySchedule'
+
+        # Conditions (advanced logic)
+        conditions:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                description: Field to check (e.g., 'page_filtered_text', 'page_title')
+              operator:
+                type: string
+                description: Comparison operator (e.g., 'contains_regex', 'equals', 'not_equals')
+              value:
+                type: string
+                description: Value to compare against
+            required: [field, operator, value]
+          maxItems: 100
+          description: Array of condition rules for change detection logic (empty array when not set)
+        conditions_match_logic:
+          type: string
+          enum: ['ALL', 'ANY']
+          default: 'ALL'
+          description: Logic operator - ALL (match all conditions) or ANY (match any condition)
+
+    DaySchedule:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: true
+        start_time:
+          type: string
+          pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+          default: '00:00'
+          description: Start time in HH:MM format
+        duration:
+          type: object
+          properties:
+            hours:
+              type: string
+              pattern: '^[0-9]+$'
+              default: '24'
+            minutes:
+              type: string
+              pattern: '^[0-9]+$'
+              default: '00'
+
     Watch:
       allOf:
         - $ref: '#/components/schemas/WatchBase'
         - type: object
           properties:
-            uuid:
-              type: string
-              format: uuid
-              description: Unique identifier for the web page change monitor (watch)
-              readOnly: true
             last_checked:
               type: integer
               description: Unix timestamp of last check
@@ -282,9 +474,10 @@ components:
               type: integer
               description: Unix timestamp of last change
               readOnly: true
+              x-computed: true
             last_error:
-              type: string
-              description: Last error message
+              type: [string, boolean, 'null']
+              description: Last error message (false when no error, string when error occurred, null if not checked yet)
               readOnly: true
             last_viewed:
               type: integer
@@ -295,6 +488,61 @@ components:
               format: string
               description: The watch URL rendered in case of any Jinja2 markup, always use this for listing.
               readOnly: true
+              x-computed: true
+            page_title:
+              type: [string, 'null']
+              description: HTML <title> tag extracted from the page
+              readOnly: true
+            check_count:
+              type: integer
+              description: Total number of checks performed
+              readOnly: true
+            fetch_time:
+              type: number
+              description: Duration of last fetch in seconds
+              readOnly: true
+            previous_md5:
+              type: [string, boolean]
+              description: MD5 hash of previous content (false if not set)
+              readOnly: true
+            previous_md5_before_filters:
+              type: [string, boolean]
+              description: MD5 hash before filters applied (false if not set)
+              readOnly: true
+            consecutive_filter_failures:
+              type: integer
+              description: Counter for consecutive filter match failures
+              readOnly: true
+            last_notification_error:
+              type: [string, 'null']
+              description: Last notification error message
+              readOnly: true
+            notification_alert_count:
+              type: integer
+              description: Number of notifications sent
+              readOnly: true
+            content-type:
+              type: [string, 'null']
+              description: Content-Type from last fetch
+              readOnly: true
+            remote_server_reply:
+              type: [string, 'null']
+              description: Server header from last response
+              readOnly: true
+            browser_steps_last_error_step:
+              type: [integer, 'null']
+              description: Last browser step that caused an error
+              readOnly: true
+            viewed:
+              type: [integer, boolean]
+              description: Computed property - true if watch has been viewed, false otherwise (deprecated, use last_viewed instead)
+              readOnly: true
+              x-computed: true
+            history_n:
+              type: integer
+              description: Number of history snapshots available
+              readOnly: true
+              x-computed: true
 
     CreateWatch:
       allOf:
@@ -305,34 +553,45 @@ components:
 
     UpdateWatch:
       allOf:
-        - $ref: '#/components/schemas/WatchBase'
+        - $ref: '#/components/schemas/WatchBase'  # Extends WatchBase for user-settable fields
         - type: object
           properties:
             last_viewed:
               type: integer
               description: Unix timestamp in seconds of the last time the watch was viewed. Setting it to a value higher than `last_changed` in the "Update watch" endpoint marks the watch as viewed.
               minimum: 0
+      # Note: ReadOnly and @property fields are filtered out in the backend before update
+      # We don't use unevaluatedProperties:false here to allow roundtrip GET/PUT workflows
+      # where the response includes computed fields that should be silently ignored
 
     Tag:
-      type: object
-      properties:
-        uuid:
-          type: string
-          format: uuid
-          description: Unique identifier for the tag
-          readOnly: true
-        title:
-          type: string
-          description: Tag title
-          maxLength: 5000
-        notification_urls:
-          type: array
-          items:
-            type: string
-          description: Default notification URLs for web page change monitors (watches) with this tag
-        notification_muted:
-          type: boolean
-          description: Whether notifications are muted for this tag
+      allOf:
+        - $ref: '#/components/schemas/WatchBase'
+        - type: object
+          properties:
+            overrides_watch:
+              type: [boolean, 'null']
+              description: |
+                Whether this tag's settings override watch settings for all watches in this tag/group.
+                - true: Tag settings override watch settings
+                - false: Tag settings do not override (watches use their own settings)
+                - null: Not decided yet / inherit default behavior
+            # Future: Aggregated statistics from all watches with this tag
+            # check_count:
+            #   type: integer
+            #   description: Sum of check_count from all watches with this tag
+            #   readOnly: true
+            #   x-computed: true
+            # last_checked:
+            #   type: integer
+            #   description: Most recent last_checked timestamp from all watches with this tag
+            #   readOnly: true
+            #   x-computed: true
+            # last_changed:
+            #   type: integer
+            #   description: Most recent last_changed timestamp from all watches with this tag
+            #   readOnly: true
+            #   x-computed: true
 
     CreateTag:
       allOf:
@@ -1507,46 +1766,92 @@ paths:
     post:
       operationId: importWatches
       tags: [Import]
-      summary: Import watch URLs
-      description: Import a list of URLs to monitor. Accepts line-separated URLs in request body.
+      summary: Import watch URLs with configuration
+      description: |
+        Import a list of URLs to monitor with optional watch configuration. Accepts line-separated URLs in request body.
+
+        **Configuration via Query Parameters:**
+
+        You can pass ANY watch configuration field as query parameters to apply settings to all imported watches.
+        All parameters from the Watch schema are supported (processor, fetch_backend, notification_urls, etc.).
+
+        **Special Parameters:**
+        - `tag` / `tag_uuids` - Assign tags to imported watches
+        - `proxy` - Use specific proxy for imported watches
+        - `dedupe` - Skip duplicate URLs (default: true)
+
+        **Type Conversion:**
+        - Booleans: `true`, `false`, `1`, `0`, `yes`, `no`
+        - Arrays: Comma-separated or JSON format (`[item1,item2]`)
+        - Objects: JSON format (`{"key":"value"}`)
+        - Numbers: Parsed as int or float
       x-code-samples:
         - lang: 'curl'
           source: |
+            # Basic import
             curl -X POST "http://localhost:5000/api/v1/import" \
               -H "x-api-key: YOUR_API_KEY" \
               -H "Content-Type: text/plain" \
               -d $'https://example.com\nhttps://example.org\nhttps://example.net'
+
+            # Import with processor and fetch backend
+            curl -X POST "http://localhost:5000/api/v1/import?processor=restock_diff&fetch_backend=html_webdriver" \
+              -H "x-api-key: YOUR_API_KEY" \
+              -H "Content-Type: text/plain" \
+              -d $'https://example.com\nhttps://example.org'
+
+            # Import with multiple settings
+            curl -X POST "http://localhost:5000/api/v1/import?processor=restock_diff&paused=true&tag=production" \
+              -H "x-api-key: YOUR_API_KEY" \
+              -H "Content-Type: text/plain" \
+              -d $'https://example.com'
         - lang: 'Python'
           source: |
             import requests
-            
+
             headers = {
                 'x-api-key': 'YOUR_API_KEY',
                 'Content-Type': 'text/plain'
             }
+
+            # Basic import
             urls = 'https://example.com\nhttps://example.org\nhttps://example.net'
-            response = requests.post('http://localhost:5000/api/v1/import', 
+            response = requests.post('http://localhost:5000/api/v1/import',
                                    headers=headers, data=urls)
+            print(response.json())
+
+            # Import with configuration
+            params = {
+                'processor': 'restock_diff',
+                'fetch_backend': 'html_webdriver',
+                'paused': 'false',
+                'tag': 'production'
+            }
+            response = requests.post('http://localhost:5000/api/v1/import',
+                                   headers=headers, params=params, data=urls)
             print(response.json())
       parameters:
         - name: tag_uuids
           in: query
-          description: Tag UUID to apply to imported web page change monitors (watches)
+          description: Tag UUID(s) to apply to imported watches (comma-separated for multiple)
           schema:
             type: string
+          example: "550e8400-e29b-41d4-a716-446655440000"
         - name: tag
           in: query
-          description: Tag name to apply to imported web page change monitors (watches)
+          description: Tag name to apply to imported watches
           schema:
             type: string
+          example: "production"
         - name: proxy
           in: query
-          description: Proxy key to use for imported web page change monitors (watches)
+          description: Proxy key to use for imported watches
           schema:
             type: string
+          example: "proxy1"
         - name: dedupe
           in: query
-          description: Remove duplicate URLs (default true)
+          description: Skip duplicate URLs (default true)
           schema:
             type: boolean
             default: true

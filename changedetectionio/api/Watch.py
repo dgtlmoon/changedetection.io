@@ -8,13 +8,11 @@ from . import auth
 from changedetectionio import queuedWatchMetaData, strtobool
 from changedetectionio import worker_pool
 from flask import request, make_response, send_from_directory
-from flask_expects_json import expects_json
 from flask_restful import abort, Resource
 from loguru import logger
 import copy
 
-# Import schemas from __init__.py
-from . import schema, schema_create_watch, schema_update_watch, validate_openapi_request
+from . import validate_openapi_request, get_readonly_watch_fields
 from ..notification import valid_notification_formats
 from ..notification.handler import newline_re
 
@@ -121,7 +119,6 @@ class Watch(Resource):
 
     @auth.check_token
     @validate_openapi_request('updateWatch')
-    @expects_json(schema_update_watch)
     def put(self, uuid):
         """Update watch information."""
         watch = self.datastore.data['watching'].get(uuid)
@@ -174,6 +171,35 @@ class Watch(Resource):
 
         # Extract and remove processor config fields from json_data
         processor_config_data = processors.extract_processor_config_from_form_data(json_data)
+
+        # Filter out readOnly fields (extracted from OpenAPI spec Watch schema)
+        # These are system-managed fields that should never be user-settable
+        readonly_fields = get_readonly_watch_fields()
+
+        # Also filter out @property attributes (computed/derived values from the model)
+        # These are not stored and should be ignored in PUT requests
+        from changedetectionio.model.Watch import model as WatchModel
+        property_fields = WatchModel.get_property_names()
+
+        # Combine both sets of fields to ignore
+        fields_to_ignore = readonly_fields | property_fields
+
+        # Remove all ignored fields from update data
+        for field in fields_to_ignore:
+            json_data.pop(field, None)
+
+        # Validate remaining fields - reject truly unknown fields
+        # Get valid fields from WatchBase schema
+        from . import get_watch_schema_properties
+        valid_fields = set(get_watch_schema_properties().keys())
+
+        # Also allow last_viewed (explicitly defined in UpdateWatch schema)
+        valid_fields.add('last_viewed')
+
+        # Check for unknown fields
+        unknown_fields = set(json_data.keys()) - valid_fields
+        if unknown_fields:
+            return f"Unknown field(s): {', '.join(sorted(unknown_fields))}", 400
 
         # Update watch with regular (non-processor-config) fields
         watch.update(json_data)
@@ -374,10 +400,10 @@ class WatchFavicon(Resource):
         favicon_filename = watch.get_favicon_filename()
         if favicon_filename:
             # Use cached MIME type detection
-            filepath = os.path.join(watch.watch_data_dir, favicon_filename)
+            filepath = os.path.join(watch.data_dir, favicon_filename)
             mime = get_favicon_mime_type(filepath)
 
-            response = make_response(send_from_directory(watch.watch_data_dir, favicon_filename))
+            response = make_response(send_from_directory(watch.data_dir, favicon_filename))
             response.headers['Content-type'] = mime
             response.headers['Cache-Control'] = 'max-age=300, must-revalidate'  # Cache for 5 minutes, then revalidate
             return response
@@ -393,7 +419,6 @@ class CreateWatch(Resource):
 
     @auth.check_token
     @validate_openapi_request('createWatch')
-    @expects_json(schema_create_watch)
     def post(self):
         """Create a single watch."""
 
@@ -481,6 +506,7 @@ class CreateWatch(Resource):
                 'last_error': watch['last_error'],
                 'link': watch.link,
                 'page_title': watch['page_title'],
+                'tags': [*tags],  # Unpack dict keys to list (can't use list() since variable named 'list')
                 'title': watch['title'],
                 'url': watch['url'],
                 'viewed': watch.viewed

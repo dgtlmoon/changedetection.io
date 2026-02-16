@@ -3,7 +3,7 @@ import hashlib
 import os
 import re
 import asyncio
-from functools import partial
+
 from changedetectionio import strtobool
 from changedetectionio.content_fetchers.exceptions import BrowserStepsInUnsupportedFetcher, EmptyReply, Non200ErrorCodeReceived
 from changedetectionio.content_fetchers.base import Fetcher
@@ -36,7 +36,7 @@ class fetcher(Fetcher):
         import requests
         from requests.exceptions import ProxyError, ConnectionError, RequestException
 
-        if self.browser_steps_get_valid_steps():
+        if self.browser_steps:
             raise BrowserStepsInUnsupportedFetcher(url=url)
 
         proxies = {}
@@ -184,7 +184,6 @@ class fetcher(Fetcher):
         )
 
     async def quit(self, watch=None):
-
         # In case they switched to `requests` fetcher from something else
         # Then the screenshot could be old, in any case, it's not used here.
         # REMOVE_REQUESTS_OLD_SCREENSHOTS - Mainly used for testing

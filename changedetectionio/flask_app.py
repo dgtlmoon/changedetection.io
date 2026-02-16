@@ -70,13 +70,17 @@ socketio_server = None
 # Enable CORS, especially useful for the Chrome extension to operate from anywhere
 CORS(app)
 
-# Super handy for compressing large BrowserSteps responses and others
-# Flask-Compress handles HTTP compression, Socket.IO compression disabled to prevent memory leak
+# Flask-Compress handles HTTP compression, Socket.IO compression disabled to prevent memory leak.
+# There's also a bug between flask compress and socketio that causes some kind of slow memory leak
+# It's better to use compression on your reverse proxy (nginx etc) instead.
+if strtobool(os.getenv("FLASK_ENABLE_COMPRESSION")):
+    app.config['COMPRESS_MIN_SIZE'] = 2096
+    app.config['COMPRESS_MIMETYPES'] = ['text/html', 'text/css', 'text/javascript', 'application/json', 'application/javascript', 'image/svg+xml']
+    # Use gzip only - smaller memory footprint than zstd/brotli (4-8KB vs 200-500KB contexts)
+    app.config['COMPRESS_ALGORITHM'] = ['gzip']
+
 compress = FlaskCompress()
-app.config['COMPRESS_MIN_SIZE'] = 2096
-app.config['COMPRESS_MIMETYPES'] = ['text/html', 'text/css', 'text/javascript', 'application/json', 'application/javascript', 'image/svg+xml']
-# Use gzip only - smaller memory footprint than zstd/brotli (4-8KB vs 200-500KB contexts)
-app.config['COMPRESS_ALGORITHM'] = ['gzip']
+
 compress.init_app(app)
 app.config['TEMPLATES_AUTO_RELOAD'] = False
 
@@ -708,8 +712,13 @@ def changedetection_app(config=None, datastore_o=None):
     def static_content(group, filename):
         from flask import make_response
         import re
-        group = re.sub(r'[^\w.-]+', '', group.lower())
-        filename = re.sub(r'[^\w.-]+', '', filename.lower())
+        # Strict sanitization: only allow a-z, 0-9, and underscore (blocks .. and other traversal)
+        group = re.sub(r'[^a-z0-9_]+', '', group.lower())
+        filename = re.sub(r'[^a-z0-9_]+', '', filename.lower())
+
+        # Additional safety: reject if sanitization resulted in empty strings
+        if not group or not filename:
+            abort(404)
 
         if group == 'screenshot':
             # Could be sensitive, follow password requirements
@@ -744,10 +753,10 @@ def changedetection_app(config=None, datastore_o=None):
             favicon_filename = watch.get_favicon_filename()
             if favicon_filename:
                 # Use cached MIME type detection
-                filepath = os.path.join(watch.watch_data_dir, favicon_filename)
+                filepath = os.path.join(watch.data_dir, favicon_filename)
                 mime = get_favicon_mime_type(filepath)
 
-                response = make_response(send_from_directory(watch.watch_data_dir, favicon_filename))
+                response = make_response(send_from_directory(watch.data_dir, favicon_filename))
                 response.headers['Content-type'] = mime
                 response.headers['Cache-Control'] = 'max-age=300, must-revalidate'  # Cache for 5 minutes, then revalidate
                 return response
@@ -848,7 +857,7 @@ def changedetection_app(config=None, datastore_o=None):
     app.register_blueprint(watchlist.construct_blueprint(datastore=datastore, update_q=update_q, queuedWatchMetaData=queuedWatchMetaData), url_prefix='')
 
     # Initialize Socket.IO server conditionally based on settings
-    socket_io_enabled = datastore.data['settings']['application']['ui'].get('socket_io_enabled', True)
+    socket_io_enabled = datastore.data['settings']['application'].get('ui', {}).get('socket_io_enabled', True)
     if socket_io_enabled and app.config.get('batch_mode'):
         socket_io_enabled = False
     if socket_io_enabled:

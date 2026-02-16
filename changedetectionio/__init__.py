@@ -2,7 +2,7 @@
 
 # Read more https://github.com/dgtlmoon/changedetection.io/wiki
 # Semver means never use .01, or 00. Should be .1.
-__version__ = '0.52.9'
+__version__ = '0.53.1'
 
 from changedetectionio.strtobool import strtobool
 from json.decoder import JSONDecodeError
@@ -182,7 +182,6 @@ def main():
     from changedetectionio.flask_app import changedetection_app
 
     datastore_path = None
-    do_cleanup = False
     # Set a default logger level
     logger_level = 'DEBUG'
     include_default_watches = True
@@ -265,7 +264,7 @@ def main():
         i += 1
 
     try:
-        opts, args = getopt.getopt(cleaned_argv[1:], "6Ccsd:h:p:l:P:", "port")
+        opts, args = getopt.getopt(cleaned_argv[1:], "6Csd:h:p:l:P:", "port")
     except getopt.GetoptError as e:
         print_help()
         print(f'Error: {e}')
@@ -292,10 +291,6 @@ def main():
 
         if opt == '-d':
             datastore_path = arg
-
-        # Cleanup (remove text files that arent in the index)
-        if opt == '-c':
-            do_cleanup = True
 
         # Create the datadir if it doesnt exist
         if opt == '-C':
@@ -376,7 +371,15 @@ def main():
         # Dont' start if the JSON DB looks corrupt
         logger.critical(f"ERROR: JSON DB or Proxy List JSON at '{app_config['datastore_path']}' appears to be corrupt, aborting.")
         logger.critical(str(e))
-        return
+        sys.exit(1)
+
+    # Testing mode: Exit cleanly after datastore initialization (for CI/CD upgrade tests)
+    if os.environ.get('TESTING_SHUTDOWN_AFTER_DATASTORE_LOAD'):
+        logger.success(f"TESTING MODE: Datastore loaded successfully from {app_config['datastore_path']}")
+        logger.success(f"TESTING MODE: Schema version: {datastore.data['settings']['application'].get('schema_version', 'unknown')}")
+        logger.success(f"TESTING MODE: Loaded {len(datastore.data['watching'])} watches")
+        logger.success("TESTING MODE: Exiting cleanly (TESTING_SHUTDOWN_AFTER_DATASTORE_LOAD is set)")
+        sys.exit(0)
 
     # Apply all_paused setting if specified via CLI
     if all_paused is not None:
@@ -602,10 +605,6 @@ def main():
     else:
         logger.info("SIGUSR1 handler only registered on Linux, skipped.")
 
-    # Go into cleanup mode
-    if do_cleanup:
-        datastore.remove_unused_snapshots()
-
     app.config['datastore_path'] = datastore_path
 
 
@@ -614,7 +613,7 @@ def main():
         return dict(right_sticky="v{}".format(datastore.data['version_tag']),
                     new_version_available=app.config['NEW_VERSION_AVAILABLE'],
                     has_password=datastore.data['settings']['application']['password'] != False,
-                    socket_io_enabled=datastore.data['settings']['application']['ui'].get('socket_io_enabled', True),
+                    socket_io_enabled=datastore.data['settings']['application'].get('ui', {}).get('socket_io_enabled', True),
                     all_paused=datastore.data['settings']['application'].get('all_paused', False),
                     all_muted=datastore.data['settings']['application'].get('all_muted', False)
                     )

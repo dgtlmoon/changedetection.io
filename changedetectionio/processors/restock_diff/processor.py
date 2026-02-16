@@ -2,6 +2,7 @@ from ..base import difference_detection_processor
 from ..exceptions import ProcessorException
 from . import Restock
 from loguru import logger
+from changedetectionio.content_fetchers.exceptions import checksumFromPreviousCheckWasTheSame
 
 import urllib3
 import time
@@ -54,6 +55,259 @@ def _deduplicate_prices(data):
             unique_data.add(v)
 
     return list(unique_data)
+
+
+# =============================================================================
+# MEMORY MANAGEMENT: Why We Use Multiprocessing (Linux Only)
+# =============================================================================
+#
+# The get_itemprop_availability() function uses 'extruct' to parse HTML metadata
+# (JSON-LD, microdata, OpenGraph, etc). Extruct internally uses lxml, which wraps
+# libxml2 - a C library that allocates memory at the C level.
+#
+# Memory Leak Problem:
+# --------------------
+# 1. lxml's document_fromstring() creates thousands of Python objects backed by
+#    C-level allocations (nodes, attributes, text content)
+# 2. Python's garbage collector can mark these objects as collectible, but
+#    cannot force the OS to reclaim the actual C-level memory
+# 3. malloc/free typically doesn't return memory to OS - it just marks it as
+#    "free in the process address space"
+# 4. With repeated parsing of large HTML (5MB+ pages), memory accumulates even
+#    after Python GC runs
+#
+# Why Multiprocessing Fixes This:
+# --------------------------------
+# When a subprocess exits, the OS forcibly reclaims ALL memory including C-level
+# allocations that Python GC couldn't release. This ensures clean memory state
+# after each extraction.
+#
+# Performance Impact:
+# -------------------
+# - Memray analysis showed 1.2M document_fromstring allocations per page
+# - Without subprocess: memory grows by ~50-500MB per parse and lingers
+# - With subprocess: ~35MB overhead but forces full cleanup after each run
+# - Trade-off: 35MB resource_tracker vs 500MB+ accumulated leak = much better at scale
+#
+# References:
+# -----------
+# - lxml memory issues: https://medium.com/devopss-hole/python-lxml-memory-leak-b8d0b1000dc7
+# - libxml2 caching behavior: https://www.mail-archive.com/lxml@python.org/msg00026.html
+# - GC limitations with C extensions: https://benbernardblog.com/tracking-down-a-freaky-python-memory-leak-part-2/
+#
+# Additional Context:
+# -------------------
+# - jsonpath_ng (used to query the parsed data) is pure Python and doesn't leak
+# - The leak is specifically from lxml's document parsing, not the JSONPath queries
+# - Linux-only because multiprocessing spawn is well-tested there; other platforms
+#   use direct call as fallback
+#
+# Alternative Solution (Future Optimization):
+# -------------------------------------------
+# This entire problem could be avoided by using regex to extract just the machine
+# data blocks (JSON-LD, microdata, OpenGraph tags) BEFORE parsing with lxml:
+#
+#   1. Use regex to extract <script type="application/ld+json">...</script> blocks
+#   2. Use regex to extract <meta property="og:*"> tags
+#   3. Use regex to find itemprop/itemtype attributes and their containing elements
+#   4. Parse ONLY those extracted snippets instead of the entire HTML document
+#
+# Benefits:
+#   - Avoids parsing 5MB of HTML when we only need a few KB of metadata
+#   - Eliminates the lxml memory leak entirely
+#   - Faster extraction (regex is much faster than DOM parsing)
+#   - No subprocess overhead needed
+#
+# Trade-offs:
+#   - Regex for HTML is brittle (comments, CDATA, edge cases)
+#   - Microdata extraction would be complex (need to track element boundaries)
+#   - Would need extensive testing to ensure we don't miss valid data
+#   - extruct is battle-tested; regex solution would need similar maturity
+#
+# For now, the subprocess approach is safer and leverages existing extruct code.
+# =============================================================================
+
+
+def _extract_itemprop_availability_worker(pipe_conn):
+    """
+    Subprocess worker for itemprop extraction (Linux memory management).
+
+    Uses spawn multiprocessing to isolate extruct/lxml memory allocations.
+    When the subprocess exits, the OS reclaims ALL memory including lxml's
+    C-level allocations that Python's GC cannot release.
+
+    Args:
+        pipe_conn: Pipe connection to receive HTML and send result
+    """
+    import json
+    import gc
+
+    html_content = None
+    result_data = None
+
+    try:
+        # Receive HTML as raw bytes (no pickle)
+        html_bytes = pipe_conn.recv_bytes()
+        html_content = html_bytes.decode('utf-8')
+
+        # Explicitly delete html_bytes to free memory
+        del html_bytes
+        gc.collect()
+
+        # Perform extraction in subprocess (uses extruct/lxml)
+        result_data = get_itemprop_availability(html_content)
+
+        # Convert Restock object to dict for JSON serialization
+        result = {
+            'success': True,
+            'data': dict(result_data) if result_data else {}
+        }
+        pipe_conn.send_bytes(json.dumps(result).encode('utf-8'))
+
+        # Clean up before exit
+        del result_data, html_content, result
+        gc.collect()
+
+    except MoreThanOnePriceFound:
+        # Serialize the specific exception type
+        result = {
+            'success': False,
+            'exception_type': 'MoreThanOnePriceFound'
+        }
+        pipe_conn.send_bytes(json.dumps(result).encode('utf-8'))
+
+    except Exception as e:
+        # Serialize other exceptions
+        result = {
+            'success': False,
+            'exception_type': type(e).__name__,
+            'exception_message': str(e)
+        }
+        pipe_conn.send_bytes(json.dumps(result).encode('utf-8'))
+
+    finally:
+        # Final cleanup before subprocess exits
+        # Variables may already be deleted in try block, so use try/except
+        try:
+            del html_content
+        except (NameError, UnboundLocalError):
+            pass
+        try:
+            del result_data
+        except (NameError, UnboundLocalError):
+            pass
+        gc.collect()
+        pipe_conn.close()
+
+
+def extract_itemprop_availability_safe(html_content) -> Restock:
+    """
+    Extract itemprop availability with hybrid approach for memory efficiency.
+
+    Strategy (fastest to slowest, least to most memory):
+    1. Try pure Python extraction (JSON-LD, OpenGraph, microdata) - covers 80%+ of cases
+    2. Fall back to extruct with subprocess isolation on Linux for complex cases
+
+    Args:
+        html_content: HTML string to parse
+
+    Returns:
+        Restock: Extracted availability data
+
+    Raises:
+        MoreThanOnePriceFound: When multiple prices detected
+        Other exceptions: From extruct/parsing
+    """
+    import platform
+
+    # Step 1: Try pure Python extraction first (fast, no lxml, no memory leak)
+    try:
+        from .pure_python_extractor import extract_metadata_pure_python, query_price_availability
+
+        logger.trace("Attempting pure Python metadata extraction (no lxml)")
+        extracted_data = extract_metadata_pure_python(html_content)
+        price_data = query_price_availability(extracted_data)
+
+        # If we got price AND availability, we're done!
+        if price_data.get('price') and price_data.get('availability'):
+            result = Restock(price_data)
+            logger.debug(f"Pure Python extraction successful: {dict(result)}")
+            return result
+
+        # If we got some data but not everything, still try extruct for completeness
+        if price_data.get('price') or price_data.get('availability'):
+            logger.debug(f"Pure Python extraction partial: {price_data}, will try extruct for completeness")
+
+    except Exception as e:
+        logger.debug(f"Pure Python extraction failed: {e}, falling back to extruct")
+
+    # Step 2: Fall back to extruct (uses lxml, needs subprocess on Linux)
+    logger.trace("Falling back to extruct (lxml-based) with subprocess isolation")
+
+    # Only use subprocess isolation on Linux
+    # Other platforms may have issues with spawn or don't need the aggressive memory management
+    if platform.system() == 'Linux':
+        import multiprocessing
+        import json
+        import gc
+
+        try:
+            ctx = multiprocessing.get_context('spawn')
+            parent_conn, child_conn = ctx.Pipe()
+            p = ctx.Process(target=_extract_itemprop_availability_worker, args=(child_conn,))
+            p.start()
+
+            # Send HTML as raw bytes (no pickle)
+            html_bytes = html_content.encode('utf-8')
+            parent_conn.send_bytes(html_bytes)
+
+            # Explicitly delete html_bytes copy immediately after sending
+            del html_bytes
+            gc.collect()
+
+            # Receive result as JSON
+            result_bytes = parent_conn.recv_bytes()
+            result = json.loads(result_bytes.decode('utf-8'))
+
+            # Wait for subprocess to complete
+            p.join()
+
+            # Close pipes
+            parent_conn.close()
+            child_conn.close()
+
+            # Clean up all subprocess-related objects
+            del p, parent_conn, child_conn, result_bytes
+            gc.collect()
+
+            # Handle result or re-raise exception
+            if result['success']:
+                # Reconstruct Restock object from dict
+                restock_obj = Restock(result['data'])
+                # Clean up result dict
+                del result
+                gc.collect()
+                return restock_obj
+            else:
+                # Re-raise the exception that occurred in subprocess
+                exception_type = result['exception_type']
+                exception_msg = result.get('exception_message', '')
+                del result
+                gc.collect()
+
+                if exception_type == 'MoreThanOnePriceFound':
+                    raise MoreThanOnePriceFound()
+                else:
+                    raise Exception(f"{exception_type}: {exception_msg}")
+
+        except Exception as e:
+            # If multiprocessing itself fails, log and fall back to direct call
+            logger.warning(f"Subprocess extraction failed: {e}, falling back to direct call")
+            gc.collect()
+            return get_itemprop_availability(html_content)
+    else:
+        # Non-Linux: direct call (no subprocess overhead needed)
+        return get_itemprop_availability(html_content)
 
 
 # should return Restock()
@@ -150,11 +404,23 @@ class perform_site_check(difference_detection_processor):
     screenshot = None
     xpath_data = None
 
-    def run_changedetection(self, watch):
+    def run_changedetection(self, watch, force_reprocess=False):
         import hashlib
 
         if not watch:
             raise Exception("Watch no longer exists.")
+
+        current_raw_document_checksum = self.get_raw_document_checksum()
+        # Skip processing only if BOTH conditions are true:
+        # 1. HTML content unchanged (checksum matches last saved checksum)
+        # 2. Watch configuration was not edited (including trigger_text, filters, etc.)
+        # The was_edited flag handles all watch configuration changes, so we don't need
+        # separate checks for trigger_text or other processing rules.
+        if (not force_reprocess and
+            not watch.was_edited and
+            self.last_raw_content_checksum and
+            self.last_raw_content_checksum == current_raw_document_checksum):
+            raise checksumFromPreviousCheckWasTheSame()
 
         # Unset any existing notification error
         update_obj = {'last_notification_error': False, 'last_error': False, 'restock':  Restock()}
@@ -162,9 +428,12 @@ class perform_site_check(difference_detection_processor):
         self.screenshot = self.fetcher.screenshot
         self.xpath_data = self.fetcher.xpath_data
 
-        # Track the content type
-        update_obj['content_type'] = self.fetcher.headers.get('Content-Type', '')
+        # Track the content type (readonly field, doesn't trigger was_edited)
+        update_obj['content-type'] = self.fetcher.headers.get('Content-Type', '')  # Use hyphen (matches OpenAPI spec)
         update_obj["last_check_status"] = self.fetcher.get_last_status_code()
+
+        # Save the raw content checksum to file (processor implementation detail, not watch config)
+        self.update_last_raw_content_checksum(current_raw_document_checksum)
 
         # Only try to process restock information (like scraping for keywords) if the page was actually rendered correctly.
         # Otherwise it will assume "in stock" because nothing suggesting the opposite was found
@@ -196,8 +465,9 @@ class perform_site_check(difference_detection_processor):
         multiple_prices_found = False
 
         # Try built-in extraction first, this will scan metadata in the HTML
+        # On Linux, this runs in a subprocess to prevent lxml/extruct memory leaks
         try:
-            itemprop_availability = get_itemprop_availability(self.fetcher.content)
+            itemprop_availability = extract_itemprop_availability_safe(self.fetcher.content)
         except MoreThanOnePriceFound as e:
             # Don't raise immediately - let plugins try to handle this case
             # Plugins might be able to determine which price is correct

@@ -103,7 +103,7 @@ jobs:
           docker run test-changedetectionio bash -c 'python3 -m unittest changedetectionio.tests.unit.test_watch_model'
           docker run test-changedetectionio bash -c 'python3 -m unittest changedetectionio.tests.unit.test_jinja2_security'
           docker run test-changedetectionio bash -c 'python3 -m unittest changedetectionio.tests.unit.test_semver'
-          docker run test-changedetectionio bash -c 'python3 -m unittest changedetectionio.tests.unit.test_html_to_text'
+          docker run test-changedetectionio bash -c 'python3 -m unittest changedetectionio.tests.unit.test_html_to_text'         
 
   # Basic pytest tests with ancillary services
   basic-tests:
@@ -516,3 +516,142 @@ jobs:
             exit 1
           fi
           docker rm sig-test
+
+  # Upgrade path test
+  upgrade-path-test:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 25
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # Fetch all history and tags for upgrade testing
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Check upgrade works without error
+        run: |
+          echo "=== Testing upgrade path from 0.49.1 to ${{ github.ref_name }} (${{ github.sha }}) ==="
+
+          # Checkout old version and create datastore
+          git checkout 0.49.1
+          python3 -m venv .venv
+          source .venv/bin/activate
+          pip install -r requirements.txt
+          pip install 'pyOpenSSL>=23.2.0'
+
+          echo "=== Running version 0.49.1 to create datastore ==="
+          python3 ./changedetection.py -C -d /tmp/data &
+          APP_PID=$!
+
+          # Wait for app to be ready
+          echo "Waiting for 0.49.1 to be ready..."
+          sleep 6
+
+          # Extract API key from datastore (0.49.1 uses url-watches.json)
+          API_KEY=$(jq -r '.settings.application.api_access_token // empty' /tmp/data/url-watches.json)
+          echo "API Key: ${API_KEY:0:8}..."
+
+          # Create a watch with tag "github-group-test" via API
+          echo "Creating test watch with tag via API..."
+          curl -X POST "http://127.0.0.1:5000/api/v1/watch" \
+            -H "x-api-key: ${API_KEY}" \
+            -H "Content-Type: application/json" \
+            --show-error --fail \
+            --retry 6 --retry-delay 1 --retry-connrefused \
+            -d '{
+              "url": "https://example.com/upgrade-test",
+              "tag": "github-group-test"
+            }'
+
+          echo "✓ Created watch with tag 'github-group-test'"
+
+          # Create a specific test URL watch
+          echo "Creating test URL watch via API..."
+          curl -X POST "http://127.0.0.1:5000/api/v1/watch" \
+            -H "x-api-key: ${API_KEY}" \
+            -H "Content-Type: application/json" \
+            --show-error --fail \
+            -d '{
+              "url": "http://localhost/test.txt"
+            }'
+
+          echo "✓ Created watch for 'http://localhost/test.txt' in version 0.49.1"
+
+          # Stop the old version gracefully
+          kill $APP_PID
+          wait $APP_PID || true
+          echo "✓ Version 0.49.1 stopped"
+
+          # Upgrade to current version (use commit SHA since we're in detached HEAD)
+          echo "Upgrading to commit ${{ github.sha }}"
+          git checkout ${{ github.sha }}
+          pip install -r requirements.txt
+
+          echo "=== Running current version (commit ${{ github.sha }}) with old datastore (testing mode) ==="
+          TESTING_SHUTDOWN_AFTER_DATASTORE_LOAD=1 python3 ./changedetection.py -d /tmp/data > /tmp/upgrade-test.log 2>&1
+
+          echo "=== Upgrade test output ==="
+          cat /tmp/upgrade-test.log
+          echo "✓ Datastore upgraded successfully"
+
+          # Now start the current version normally to verify the tag survived
+          echo "=== Starting current version to verify tag exists after upgrade ==="
+          timeout 20 python3 ./changedetection.py -d /tmp/data > /tmp/ui-test.log 2>&1 &
+          APP_PID=$!
+
+          # Wait for app to be ready and fetch UI
+          echo "Waiting for current version to be ready..."
+          sleep 5
+          curl --retry 6 --retry-delay 1 --retry-connrefused --silent http://127.0.0.1:5000 > /tmp/ui-output.html
+
+          # Verify tag exists in UI
+          if grep -q "github-group-test" /tmp/ui-output.html; then
+            echo "✓ Tag 'github-group-test' found in UI after upgrade"
+          else
+            echo "ERROR: Tag 'github-group-test' not found in UI after upgrade"
+            echo "=== UI Output ==="
+            cat /tmp/ui-output.html
+            echo "=== App Log ==="
+            cat /tmp/ui-test.log
+            kill $APP_PID || true
+            exit 1
+          fi
+
+          # Verify test URL exists in UI
+          if grep -q "http://localhost/test.txt" /tmp/ui-output.html; then
+            echo "✓ Watch URL 'http://localhost/test.txt' found in UI after upgrade"
+          else
+            echo "ERROR: Watch URL 'http://localhost/test.txt' not found in UI after upgrade"
+            echo "=== UI Output ==="
+            cat /tmp/ui-output.html
+            echo "=== App Log ==="
+            cat /tmp/ui-test.log
+            kill $APP_PID || true
+            exit 1
+          fi
+
+          # Cleanup
+          kill $APP_PID || true
+          wait $APP_PID || true
+
+          echo ""
+          echo "✓✓✓ Upgrade test passed: 0.49.1 → ${{ github.ref_name }} ✓✓✓"
+          echo "    - Commit: ${{ github.sha }}"
+          echo "    - Datastore migrated successfully"
+          echo "    - Tag 'github-group-test' survived upgrade"
+          echo "    - Watch URL 'http://localhost/test.txt' survived upgrade"
+
+          echo "✓ Upgrade test passed: 0.49.1 → ${{ github.ref_name }}"
+
+      - name: Upload upgrade test logs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: upgrade-test-logs-py${{ env.PYTHON_VERSION }}
+          path: /tmp/upgrade-test.log

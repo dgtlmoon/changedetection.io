@@ -414,7 +414,7 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
 
     # Load historical data if available (for charts/visualization)
     comparison_data = {}
-    comparison_config_path = os.path.join(watch.watch_data_dir, "visual_comparison_data.json")
+    comparison_config_path = os.path.join(watch.data_dir, "visual_comparison_data.json")
     if os.path.isfile(comparison_config_path):
         try:
             with open(comparison_config_path, 'r') as f:

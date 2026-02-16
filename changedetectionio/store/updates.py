@@ -16,12 +16,18 @@ import time
 from loguru import logger
 from copy import deepcopy
 
+
+# Try to import orjson for faster JSON serialization
+try:
+    import orjson
+    HAS_ORJSON = True
+except ImportError:
+    HAS_ORJSON = False
+
 from ..html_tools import TRANSLATE_WHITESPACE_TABLE
 from ..processors.restock_diff import Restock
 from ..blueprint.rss import RSS_CONTENT_FORMAT_DEFAULT
 from ..model import USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
-from .file_saving_datastore import save_watch_atomic
-
 
 def create_backup_tarball(datastore_path, update_number):
     """
@@ -29,6 +35,7 @@ def create_backup_tarball(datastore_path, update_number):
 
     Includes:
     - All {uuid}/watch.json files
+    - All {uuid}/tag.json files
     - changedetection.json (settings, if it exists)
     - url-watches.json (legacy format, if it exists)
     - Directory structure preserved
@@ -44,7 +51,7 @@ def create_backup_tarball(datastore_path, update_number):
     To restore from a backup:
         cd /path/to/datastore
         tar -xzf before-update-N-timestamp.tar.gz
-    This will restore all watch.json files and settings to their pre-update state.
+    This will restore all watch.json and tag.json files and settings to their pre-update state.
     """
     timestamp = int(time.time())
     backup_filename = f"before-update-{update_number}-{timestamp}.tar.gz"
@@ -66,9 +73,10 @@ def create_backup_tarball(datastore_path, update_number):
                 tar.add(url_watches_json, arcname="url-watches.json")
                 logger.debug("Added url-watches.json to backup")
 
-            # Backup all watch directories with their watch.json files
+            # Backup all watch/tag directories with their JSON files
             # This preserves the UUID directory structure
             watch_count = 0
+            tag_count = 0
             for entry in os.listdir(datastore_path):
                 entry_path = os.path.join(datastore_path, entry)
 
@@ -80,17 +88,22 @@ def create_backup_tarball(datastore_path, update_number):
                 if entry.startswith('.') or entry.startswith('before-update-'):
                     continue
 
-                # Check if this directory has a watch.json (indicates it's a watch UUID directory)
+                # Backup watch.json if exists
                 watch_json = os.path.join(entry_path, "watch.json")
                 if os.path.isfile(watch_json):
-                    # Add the watch.json file preserving directory structure
                     tar.add(watch_json, arcname=f"{entry}/watch.json")
                     watch_count += 1
 
                     if watch_count % 100 == 0:
                         logger.debug(f"Backed up {watch_count} watch.json files...")
 
-            logger.success(f"Backup created: {backup_filename} ({watch_count} watches)")
+                # Backup tag.json if exists
+                tag_json = os.path.join(entry_path, "tag.json")
+                if os.path.isfile(tag_json):
+                    tar.add(tag_json, arcname=f"{entry}/tag.json")
+                    tag_count += 1
+
+            logger.success(f"Backup created: {backup_filename} ({watch_count} watches from disk, {tag_count} tags from disk)")
             return backup_path
 
     except Exception as e:
@@ -130,6 +143,7 @@ class DatastoreUpdatesMixin:
         return updates_available
 
     def run_updates(self, current_schema_version=None):
+        import sys
         """
         Run all pending schema updates sequentially.
 
@@ -147,12 +161,29 @@ class DatastoreUpdatesMixin:
         2. For each update > current schema version:
            - Create backup of datastore
            - Run update method
-           - Update schema version
-           - Mark settings and watches dirty
+           - Update schema version and commit settings
+           - Commit all watches and tags
         3. If any update fails, stop processing
-        4. Save all changes immediately
+        4. All changes saved via individual .commit() calls
         """
         updates_available = self.get_updates_available()
+        if self.data.get('watching'):
+            test_watch = self.data['watching'].get(next(iter(self.data.get('watching', {}))))
+            from ..model.Watch import model
+
+            if not isinstance(test_watch, model):
+                import sys
+                logger.critical("Cannot run updates! Watch structure must be re-hydrated back to a Watch model object!")
+                sys.exit(1)
+
+        if self.data['settings']['application'].get('tags',{}):
+            test_tag = self.data['settings']['application'].get('tags',{}).get(next(iter(self.data['settings']['application'].get('tags',{}))))
+            from ..model.Tag import model as tag_model
+
+            if not isinstance(test_tag, tag_model):
+                import sys
+                logger.critical("Cannot run updates! Watch tag/group structure must be re-hydrated back to a Tag model object!")
+                sys.exit(1)
 
         # Determine current schema version
         if current_schema_version is None:
@@ -194,31 +225,15 @@ class DatastoreUpdatesMixin:
                 try:
                     update_method = getattr(self, f"update_{update_n}")()
                 except Exception as e:
-                    logger.error(f"Error while trying update_{update_n}")
-                    logger.error(e)
-                    # Don't run any more updates
-                    return
+                    logger.critical(f"Error while trying update_{update_n}")
+                    logger.exception(e)
+                    sys.exit(1)
                 else:
-                    # Bump the version, important
+                    # Bump the version
                     self.data['settings']['application']['schema_version'] = update_n
                     self.commit()
 
-                    # CRITICAL: Save all watches so changes are persisted
-                    # Most updates modify watches, and in the new individual watch.json structure,
-                    # we need to ensure those changes are saved
-                    logger.info(f"Saving all {len(self.data['watching'])} watches after update_{update_n} (so that it saves them to disk)")
-                    for uuid in self.data['watching'].keys():
-                        self.data['watching'][uuid].commit()
-
-                    # Save changes immediately after each update (more resilient than batching)
-                    logger.critical(f"Saving all changes after update_{update_n}")
-                    try:
-                        self._save_dirty_items()
-                        logger.success(f"Update {update_n} changes saved successfully")
-                    except Exception as e:
-                        logger.error(f"Failed to save update_{update_n} changes: {e}")
-                        # Don't raise - update already ran, but changes might not be persisted
-                        # The update will try to run again on next startup
+                    logger.success(f"Update {update_n} completed")
 
                     # Track which updates ran
                     updates_ran.append(update_n)
@@ -468,6 +483,14 @@ class DatastoreUpdatesMixin:
                 del self.data['watching'][uuid]['extract_title_as_title']
 
         if self.data['settings']['application'].get('extract_title_as_title'):
+            # Ensure 'ui' key exists (defensive for edge cases where base_config merge didn't happen)
+            if 'ui' not in self.data['settings']['application']:
+                self.data['settings']['application']['ui'] = {
+                    'use_page_title_in_list': True,
+                    'open_diff_in_new_tab': True,
+                    'socket_io_enabled': True,
+                    'favicons_enabled': True
+                }
             self.data['settings']['application']['ui']['use_page_title_in_list'] = self.data['settings']['application'].get('extract_title_as_title')
 
     def update_21(self):
@@ -555,27 +578,6 @@ class DatastoreUpdatesMixin:
         logger.critical("COPY-based migration: url-watches.json will remain intact for rollback")
         logger.critical("=" * 80)
 
-        # Check if already migrated
-        changedetection_json = os.path.join(self.datastore_path, "changedetection.json")
-        if os.path.exists(changedetection_json):
-            logger.info("Migration already completed (changedetection.json exists), skipping")
-            return
-
-        # Check if we need to load legacy data
-        from .legacy_loader import has_legacy_datastore, load_legacy_format
-
-        if not has_legacy_datastore(self.datastore_path):
-            logger.info("No legacy datastore found, nothing to migrate")
-            return
-
-        # Load legacy data from url-watches.json
-        logger.critical("Loading legacy datastore from url-watches.json...")
-        legacy_path = os.path.join(self.datastore_path, "url-watches.json")
-        legacy_data = load_legacy_format(legacy_path)
-
-        if not legacy_data:
-            raise Exception("Failed to load legacy datastore from url-watches.json")
-
         # Populate settings from legacy data
         logger.info("Populating settings from legacy data...")
         watch_count = len(self.data['watching'])
@@ -587,9 +589,7 @@ class DatastoreUpdatesMixin:
         saved_count = 0
         for uuid, watch in self.data['watching'].items():
             try:
-                watch_dict = dict(watch)
-                watch_dir = os.path.join(self.datastore_path, uuid)
-                save_watch_atomic(watch_dir, uuid, watch_dict)
+                watch.commit()
                 saved_count += 1
 
                 if saved_count % 100 == 0:
@@ -635,36 +635,20 @@ class DatastoreUpdatesMixin:
 
         # Phase 4: Verify settings file exists
         logger.critical("Phase 4/4: Verifying changedetection.json exists...")
+        changedetection_json_new_schema=os.path.join(self.datastore_path, "changedetection.json")
+        if not os.path.isfile(changedetection_json_new_schema):
+            import sys
+            logger.critical("Migration failed, changedetection.json not found after update ran!")
+            sys.exit(1)
 
-        if not os.path.isfile(changedetection_json):
-            raise Exception(
-                "Migration failed: changedetection.json not found after save. "
-                "url-watches.json remains intact, safe to retry."
-            )
 
         logger.critical("Phase 4 complete: Verified changedetection.json exists")
 
         # Success! Now reload from new format
         logger.critical("Reloading datastore from new format...")
-        self._load_state() # Includes load_watches
+        # write it to disk, it will be saved without ['watching'] in the JSON db because we find it from disk glob
+        self._save_settings()
         logger.success("Datastore reloaded from new format successfully")
-
-
-        # Verify all watches have hashes after migration
-        missing_hashes = [uuid for uuid in self.data['watching'].keys() if uuid not in self._watch_hashes]
-        if missing_hashes:
-            logger.error(f"WARNING: {len(missing_hashes)} watches missing hashes after migration: {missing_hashes[:5]}")
-        else:
-            logger.success(f"All {len(self.data['watching'])} watches have valid hashes after migration")
-
-        # Set schema version to latest available update
-        # This prevents re-running updates and re-marking all watches as dirty
-        updates_available = self.get_updates_available()
-        latest_schema = updates_available[-1] if updates_available else 26
-        self.data['settings']['application']['schema_version'] = latest_schema
-        self.commit()
-        logger.info(f"Set schema_version to {latest_schema} (migration complete, all watches already saved)")
-
         logger.critical("=" * 80)
         logger.critical("MIGRATION COMPLETED SUCCESSFULLY!")
         logger.critical("=" * 80)
@@ -684,3 +668,58 @@ class DatastoreUpdatesMixin:
 
     def update_26(self):
         self.migrate_legacy_db_format()
+
+    def update_28(self):
+        """
+        Migrate tags to individual tag.json files.
+
+        Tags are currently saved only in changedetection.json (settings).
+        This migration ALSO saves them to individual {uuid}/tag.json files,
+        similar to how watches are stored (dual storage).
+
+        Benefits:
+        - Allows atomic tag updates without rewriting entire settings
+        - Enables independent tag versioning/backup
+        - Maintains backwards compatibility (tags stay in settings too)
+        """
+        # Force save as tag.json (not watch.json) even if object is corrupted
+
+        logger.critical("=" * 80)
+        logger.critical("Running migration: Individual tag persistence (update_28)")
+        logger.critical("Creating individual tag.json files")
+        logger.critical("=" * 80)
+
+        tags = self.data['settings']['application'].get('tags', {})
+        tag_count = len(tags)
+
+        if tag_count == 0:
+            logger.info("No tags found, skipping migration")
+            return
+
+        logger.info(f"Migrating {tag_count} tags to individual tag.json files...")
+
+        saved_count = 0
+        failed_count = 0
+
+        for uuid, tag_data in tags.items():
+            try:
+                tag_data.commit()
+                saved_count += 1
+                if saved_count % 10 == 0:
+                    logger.info(f"  Progress: {saved_count}/{tag_count} tags migrated...")
+
+            except Exception as e:
+                logger.error(f"Failed to save tag {uuid} ({tag_data.get('title', 'unknown')}): {e}")
+                failed_count += 1
+
+        if failed_count > 0:
+            logger.warning(f"Migration complete: {saved_count} tags saved, {failed_count} tags FAILED")
+        else:
+            logger.success(f"Migration complete: {saved_count} tags saved to individual tag.json files")
+
+        # Tags remain in settings for backwards compatibility AND easy access
+        # On next load, _load_tags() will read from tag.json files and merge with settings
+        logger.info("Tags saved to both settings AND individual tag.json files")
+        logger.info("Future tag edits will update both locations (dual storage)")
+        logger.critical("=" * 80)
+

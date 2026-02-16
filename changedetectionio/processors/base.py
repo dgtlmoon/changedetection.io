@@ -1,5 +1,7 @@
 import re
 import hashlib
+
+from changedetectionio.browser_steps.browser_steps import browser_steps_get_valid_steps
 from changedetectionio.content_fetchers.base import Fetcher
 from changedetectionio.strtobool import strtobool
 from copy import deepcopy
@@ -19,6 +21,7 @@ class difference_detection_processor():
     xpath_data = None
     preferred_proxy = None
     screenshot_format = SCREENSHOT_FORMAT_JPEG
+    last_raw_content_checksum = None
 
     def __init__(self, datastore, watch_uuid):
         self.datastore = datastore
@@ -33,6 +36,64 @@ class difference_detection_processor():
 
         # Generic fetcher that should be extended (requests, playwright etc)
         self.fetcher = Fetcher()
+
+        # Load the last raw content checksum from file
+        self.read_last_raw_content_checksum()
+
+    def update_last_raw_content_checksum(self, checksum):
+        """
+        Save the raw content MD5 checksum to file.
+        This is used for skip logic - avoid reprocessing if raw HTML unchanged.
+        """
+        if not checksum:
+            return
+
+        watch = self.datastore.data['watching'].get(self.watch_uuid)
+        if not watch:
+            return
+
+        data_dir = watch.data_dir
+        if not data_dir:
+            return
+
+        watch.ensure_data_dir_exists()
+        checksum_file = os.path.join(data_dir, 'last-checksum.txt')
+
+        try:
+            with open(checksum_file, 'w', encoding='utf-8') as f:
+                f.write(checksum)
+            self.last_raw_content_checksum = checksum
+        except IOError as e:
+            logger.warning(f"Failed to write checksum file for {self.watch_uuid}: {e}")
+
+    def read_last_raw_content_checksum(self):
+        """
+        Read the last raw content MD5 checksum from file.
+        Returns None if file doesn't exist (first run) or can't be read.
+        """
+        watch = self.datastore.data['watching'].get(self.watch_uuid)
+        if not watch:
+            self.last_raw_content_checksum = None
+            return
+
+        data_dir = watch.data_dir
+        if not data_dir:
+            self.last_raw_content_checksum = None
+            return
+
+        checksum_file = os.path.join(data_dir, 'last-checksum.txt')
+
+        if not os.path.isfile(checksum_file):
+            self.last_raw_content_checksum = None
+            return
+
+        try:
+            with open(checksum_file, 'r', encoding='utf-8') as f:
+                self.last_raw_content_checksum = f.read().strip()
+        except IOError as e:
+            logger.warning(f"Failed to read checksum file for {self.watch_uuid}: {e}")
+            self.last_raw_content_checksum = None
+
 
     async def call_browser(self, preferred_proxy_id=None):
 
@@ -110,7 +171,7 @@ class difference_detection_processor():
                                    )
 
         if self.watch.has_browser_steps:
-            self.fetcher.browser_steps = self.watch.get('browser_steps', [])
+            self.fetcher.browser_steps = browser_steps_get_valid_steps(self.watch.get('browser_steps', []))
             self.fetcher.browser_steps_screenshot_path = os.path.join(self.datastore.datastore_path, self.watch.get('uuid'))
 
         # Tweak the base config with the per-watch ones
@@ -204,12 +265,12 @@ class difference_detection_processor():
         import os
 
         watch = self.datastore.data['watching'].get(self.watch_uuid)
-        watch_data_dir = watch.watch_data_dir
+        data_dir = watch.data_dir
 
-        if not watch_data_dir:
+        if not data_dir:
             return {}
 
-        filepath = os.path.join(watch_data_dir, filename)
+        filepath = os.path.join(data_dir, filename)
 
         if not os.path.isfile(filepath):
             return {}
@@ -234,16 +295,16 @@ class difference_detection_processor():
         import os
 
         watch = self.datastore.data['watching'].get(self.watch_uuid)
-        watch_data_dir = watch.watch_data_dir
+        data_dir = watch.data_dir
 
-        if not watch_data_dir:
-            logger.warning(f"Cannot save extra watch config {filename}: no watch_data_dir")
+        if not data_dir:
+            logger.warning(f"Cannot save extra watch config {filename}: no data_dir")
             return
 
         # Ensure directory exists
         watch.ensure_data_dir_exists()
 
-        filepath = os.path.join(watch_data_dir, filename)
+        filepath = os.path.join(data_dir, filename)
 
         try:
             # If merge is enabled, read existing data first
@@ -268,8 +329,16 @@ class difference_detection_processor():
         except IOError as e:
             logger.error(f"Failed to write extra watch config {filename}: {e}")
 
+    def get_raw_document_checksum(self):
+        checksum = None
+
+        if self.fetcher.content:
+            checksum = hashlib.md5(self.fetcher.content.encode('utf-8')).hexdigest()
+
+        return checksum
+
     @abstractmethod
-    def run_changedetection(self, watch):
+    def run_changedetection(self, watch, force_reprocess=False):
         update_obj = {'last_notification_error': False, 'last_error': False}
         some_data = 'xxxxx'
         update_obj["previous_md5"] = hashlib.md5(some_data.encode('utf-8')).hexdigest()

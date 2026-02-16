@@ -30,7 +30,7 @@ class perform_site_check(difference_detection_processor):
     # Override to use PNG format for better image comparison (JPEG compression creates noise)
     screenshot_format = SCREENSHOT_FORMAT_PNG
 
-    def run_changedetection(self, watch):
+    def run_changedetection(self, watch, force_reprocess=False):
         """
         Perform screenshot comparison using OpenCV subprocess handler.
 

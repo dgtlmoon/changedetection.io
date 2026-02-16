@@ -88,7 +88,6 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
 
 def test_basic_browserstep(client, live_server, measure_memory_usage, datastore_path):
 
-    assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
 
     test_url = url_for('test_interactive_html_endpoint', _external=True)
     test_url = test_url.replace('localhost.localdomain', 'cdio')
@@ -108,13 +107,13 @@ def test_basic_browserstep(client, live_server, measure_memory_usage, datastore_
             "url": test_url,
             "tags": "",
             'fetch_backend': "html_webdriver",
-            'browser_steps-0-operation': 'Enter text in field',
-            'browser_steps-0-selector': '#test-input-text',
+            'browser_steps-5-operation': 'Enter text in field',
+            'browser_steps-5-selector': '#test-input-text',
             # Should get set to the actual text (jinja2 rendered)
-            'browser_steps-0-optional_value': "Hello-Jinja2-{% now  'Europe/Berlin', '%Y-%m-%d' %}",
-            'browser_steps-1-operation': 'Click element',
-            'browser_steps-1-selector': 'button[name=test-button]',
-            'browser_steps-1-optional_value': '',
+            'browser_steps-5-optional_value': "Hello-Jinja2-{% now  'Europe/Berlin', '%Y-%m-%d' %}",
+            'browser_steps-8-operation': 'Click element',
+            'browser_steps-8-selector': 'button[name=test-button]',
+            'browser_steps-8-optional_value': '',
             # For now, cookies doesnt work in headers because it must be a full cookiejar object
             'headers': "testheader: yes\buser-agent: MyCustomAgent",
             "time_between_check_use_default": "y",
@@ -122,9 +121,18 @@ def test_basic_browserstep(client, live_server, measure_memory_usage, datastore_
         follow_redirects=True
     )
     assert b"unpaused" in res.data
-    wait_for_all_checks(client)
 
+    wait_for_all_checks(client)
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
+
+    # 3874 - should have tidied up any blanks
+    watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
+    assert watch['browser_steps'][0].get('operation') == 'Enter text in field'
+    assert watch['browser_steps'][1].get('selector') == 'button[name=test-button]'
+
+
+    # This part actually needs the browser, before this we are just testing data
+    assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
     assert live_server.app.config['DATASTORE'].data['watching'][uuid].history_n >= 1, "Watch history had atleast 1 (everything fetched OK)"
 
     assert b"This text should be removed" not in res.data

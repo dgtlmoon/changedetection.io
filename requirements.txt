@@ -5,15 +5,14 @@ flask-compress
 # 0.6.3 included compatibility fix for werkzeug 3.x (2.x had deprecation of url handlers)
 flask-login>=0.6.3
 flask-paginate
-flask_expects_json~=1.7
 flask_restful
 flask_cors # For the Chrome extension to operate
 # janus # No longer needed - using pure threading.Queue for multi-loop support
 flask_wtf~=1.2
 flask~=3.1
 flask-socketio~=5.6.0
-python-socketio~=5.16.0
-python-engineio~=4.13.0
+python-socketio~=5.16.1
+python-engineio~=4.13.1
 inscriptis~=2.2
 pytz
 timeago~=1.0
@@ -126,8 +125,8 @@ greenlet >= 3.0.3
 # Default SOCKETIO_MODE=threading is recommended for better compatibility
 gevent
 
-# Pinned or it causes problems with flask_expects_json which seems unmaintained
-referencing==0.35.1
+# Previously pinned for flask_expects_json (removed 2026-02). Unpinning for now.
+referencing
 
 # For conditions
 panzi-json-logic

@@ -33,9 +33,8 @@ except ImportError:
 from ..processors import get_custom_watch_obj_for_processor
 
 # Import the base class and helpers
-from .file_saving_datastore import FileSavingDataStore, load_all_watches, save_watch_atomic, save_json_atomic
+from .file_saving_datastore import FileSavingDataStore, load_all_watches, load_all_tags, save_json_atomic
 from .updates import DatastoreUpdatesMixin
-from .legacy_loader import has_legacy_datastore
 
 # Because the server will run as a daemon and wont know the URL for notification links when firing off a notification
 BASE_URL_NOT_SET_TEXT = '("Base URL" not set - see settings - notifications)'
@@ -78,7 +77,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
             logger.info(f"Backing up changedetection.json due to new version to '{db_path_version_backup}'.")
             copyfile(db_path, db_path_version_backup)
 
-    def _load_settings(self):
+    def _load_settings(self, filename="changedetection.json"):
         """
         Load settings from storage.
 
@@ -87,7 +86,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         Returns:
             dict: Settings data loaded from storage
         """
-        changedetection_json = os.path.join(self.datastore_path, "changedetection.json")
+        changedetection_json = os.path.join(self.datastore_path, filename)
 
         logger.info(f"Loading settings from {changedetection_json}")
 
@@ -122,11 +121,23 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
             if 'application' in settings_data['settings']:
                 self.__data['settings']['application'].update(settings_data['settings']['application'])
 
+        # More or less for the old format which had this data in the one url-watches.json
+        # cant hurt to leave it here,
+        if 'watching' in settings_data:
+            self.__data['watching'].update(settings_data['watching'])
+
     def _rehydrate_tags(self):
-        """Rehydrate tag entities from stored data."""
+        """Rehydrate tag entities from stored data into Tag objects with restock_diff processor."""
+        from ..model import Tag
+
         for uuid, tag in self.__data['settings']['application']['tags'].items():
-            self.__data['settings']['application']['tags'][uuid] = self.rehydrate_entity(
-                uuid, tag, processor_override='restock_diff'
+            # Force processor to restock_diff for override functionality (technical debt)
+            tag['processor'] = 'restock_diff'
+
+            self.__data['settings']['application']['tags'][uuid] = Tag.model(
+                datastore_path=self.datastore_path,
+                __datastore=self.__data,
+                default=tag
             )
             logger.info(f"Tag: {uuid} {tag['title']}")
 
@@ -139,25 +150,34 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         logger.info(f"Rehydrating {watch_count} watches...")
         watching_rehydrated = {}
         for uuid, watch_dict in self.__data.get('watching', {}).items():
-            watching_rehydrated[uuid] = self.rehydrate_entity(uuid, watch_dict)
+            if isinstance(watch_dict, dict):
+                watching_rehydrated[uuid] = self.rehydrate_entity(uuid, watch_dict)
+            else:
+                logger.error(f"Watch UUID {uuid} already rehydrated")
+
         self.__data['watching'] = watching_rehydrated
         logger.success(f"Rehydrated {watch_count} watches into Watch objects")
 
 
-    def _load_state(self):
+    def _load_state(self, main_settings_filename="changedetection.json"):
         """
         Load complete datastore state from storage.
 
-        Orchestrates loading of settings and watches using polymorphic methods.
+        Orchestrates loading of settings, watches, and tags using polymorphic methods.
         """
         # Load settings
-        settings_data = self._load_settings()
+        settings_data = self._load_settings(filename=main_settings_filename)
         self._apply_settings(settings_data)
 
-        # Load watches (polymorphic - parent class method)
+        # Load watches, scan them from the disk
         self._load_watches()
+        self._rehydrate_watches()
 
-        # Rehydrate tags
+        # Load tags from individual tag.json files
+        # These will override any tags in settings (migration path)
+        self._load_tags()
+
+        # Rehydrate any remaining tags from settings (legacy/fallback)
         self._rehydrate_tags()
 
     def reload_state(self, datastore_path, include_default_watches, version_tag):
@@ -189,88 +209,73 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
         # Check if datastore already exists
         changedetection_json = os.path.join(self.datastore_path, "changedetection.json")
+        changedetection_json_old_schema = os.path.join(self.datastore_path, "url-watches.json")
 
         if os.path.exists(changedetection_json):
-            # Load existing datastore (changedetection.json + watch.json files)
-            logger.info("Loading existing datastore")
-            try:
-                self._load_state()
-            except Exception as e:
-                logger.critical(f"Failed to load datastore: {e}")
-                raise
-
             # Run schema updates if needed
             # Pass current schema version from loaded datastore (defaults to 0 if not set)
+            # Load existing datastore (changedetection.json + watch.json files)
+            logger.info("Loading existing datastore")
+            self._load_state()
+            current_schema = self.data['settings']['application'].get('schema_version', 0)
+            self.run_updates(current_schema_version=current_schema)
+
+        # Legacy datastore detected - trigger migration, even works if the schema is much before the migration step.
+        elif os.path.exists(changedetection_json_old_schema):
+
+            logger.critical(f"Legacy datastore detected at {changedetection_json_old_schema}, loading and running updates")
+            self._load_state(main_settings_filename="url-watches.json")
+            # update 26 will load the whole old config from disk to __data
             current_schema = self.__data['settings']['application'].get('schema_version', 0)
             self.run_updates(current_schema_version=current_schema)
+            # Probably tags were also shifted to disk and many other changes, so best to reload here.
+            self._load_state()
 
         else:
             # No datastore yet - check if this is a fresh install or legacy migration
-            # Generate app_guid FIRST (required for all operations)
-            if "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ:
-                self.__data['app_guid'] = "test-" + str(uuid_builder.uuid4())
-            else:
-                self.__data['app_guid'] = str(uuid_builder.uuid4())
+            self.init_fresh_install(include_default_watches=include_default_watches,
+                                    version_tag=version_tag)
 
-            # Generate RSS access token
-            self.__data['settings']['application']['rss_access_token'] = secrets.token_hex(16)
+    def init_fresh_install(self, include_default_watches, version_tag):
+      # Generate app_guid FIRST (required for all operations)
+        if "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ:
+            self.__data['app_guid'] = "test-" + str(uuid_builder.uuid4())
+        else:
+            self.__data['app_guid'] = str(uuid_builder.uuid4())
 
-            # Generate API access token
-            self.__data['settings']['application']['api_access_token'] = secrets.token_hex(16)
+        # Generate RSS access token
+        self.__data['settings']['application']['rss_access_token'] = secrets.token_hex(16)
 
-            # Check if legacy datastore exists (url-watches.json)
-            if has_legacy_datastore(self.datastore_path):
-                # Legacy datastore detected - trigger migration
-                logger.critical(f"Legacy datastore detected at {self.datastore_path}/url-watches.json")
-                logger.critical("Migration will be triggered via update_26")
+        # Generate API access token
+        self.__data['settings']['application']['api_access_token'] = secrets.token_hex(16)
+        logger.warning(f"No datastore found, creating new datastore at {self.datastore_path}")
 
-                # Load the legacy datastore
-                from .legacy_loader import load_legacy_format
-                legacy_path = os.path.join(self.datastore_path, "url-watches.json")
-                legacy_data = load_legacy_format(legacy_path)
+        # Set schema version to latest (no updates needed)
+        latest_update_available = self.get_updates_available().pop()
+        logger.info(f"Marking fresh install to schema version {latest_update_available}")
+        self.__data['settings']['application']['schema_version'] = latest_update_available
 
-                if not legacy_data:
-                    raise Exception("Failed to load legacy datastore from url-watches.json")
+        # Add default watches if requested
+        if include_default_watches:
+            self.add_watch(
+                url='https://news.ycombinator.com/',
+                tag='Tech news',
+                extras={'fetch_backend': 'html_requests'}
+            )
+            self.add_watch(
+                url='https://changedetection.io/CHANGELOG.txt',
+                tag='changedetection.io',
+                extras={'fetch_backend': 'html_requests'}
+            )
 
-                # Store the loaded data
-                self.__data = legacy_data
-
-                # CRITICAL: Rehydrate watches from dicts into Watch objects
-                # This ensures watches have their methods available during migration
-                self._rehydrate_watches()
-
-                # update_26 will save watches to individual files and create changedetection.json
-                # Next startup will load from new format normally
-                self.run_updates()
+        # Create changedetection.json immediately
+        try:
+            self._save_settings()
+            logger.info("Created changedetection.json for new datastore")
+        except Exception as e:
+            logger.error(f"Failed to create initial changedetection.json: {e}")
 
 
-            else:
-                # Fresh install - create new datastore
-                logger.warning(f"No datastore found, creating new datastore at {self.datastore_path}")
-
-                # Set schema version to latest (no updates needed)
-                updates_available = self.get_updates_available()
-                self.__data['settings']['application']['schema_version'] = updates_available.pop() if updates_available else 26
-
-                # Add default watches if requested
-                if include_default_watches:
-                    self.add_watch(
-                        url='https://news.ycombinator.com/',
-                        tag='Tech news',
-                        extras={'fetch_backend': 'html_requests'}
-                    )
-                    self.add_watch(
-                        url='https://changedetection.io/CHANGELOG.txt',
-                        tag='changedetection.io',
-                        extras={'fetch_backend': 'html_requests'}
-                    )
-
-                # Create changedetection.json immediately
-                try:
-                    self._save_settings()
-                    logger.info("Created changedetection.json for new datastore")
-                except Exception as e:
-                    logger.error(f"Failed to create initial changedetection.json: {e}")
 
         # Set version tag
         self.__data['version_tag'] = version_tag
@@ -336,13 +341,22 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         """
         Build settings data structure for saving.
 
+        Tags behavior depends on schema version:
+        - Before update_28 (schema < 28): Tags saved in settings for migration
+        - After update_28 (schema >= 28): Tags excluded from settings (in individual files)
+
         Returns:
             dict: Settings data ready for serialization
         """
+        import copy
+
+        # Deep copy settings to avoid modifying the original
+        settings_copy = copy.deepcopy(self.__data['settings'])
+
         return {
-            'note': 'Settings file - watches are stored in individual {uuid}/watch.json files',
-            'app_guid': self.__data['app_guid'],
-            'settings': self.__data['settings'],
+            'note': 'Settings file - watches are in {uuid}/watch.json, tags are in {uuid}/tag.json',
+            'app_guid': self.__data.get('app_guid'),
+            'settings': settings_copy,
             'build_sha': self.__data.get('build_sha'),
             'version_tag': self.__data.get('version_tag')
         }
@@ -360,7 +374,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         """
         settings_data = self._build_settings_data()
         changedetection_json = os.path.join(self.datastore_path, "changedetection.json")
-        save_json_atomic(changedetection_json, settings_data, label="settings", max_size_mb=10)
+        save_json_atomic(changedetection_json, settings_data, label="settings")
 
     def _load_watches(self):
         """
@@ -370,15 +384,45 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         Implementation of abstract method from FileSavingDataStore.
         Delegates to helper function and stores results in internal data structure.
         """
-        watching = load_all_watches(
-            self.datastore_path,
-            self.rehydrate_entity
-        )
 
         # Store loaded data
-        self.__data['watching'] = watching
+        # @note this will also work for the old legacy format because self.__data['watching'] should already have them loaded by this point.
+        self.__data['watching'].update(load_all_watches(
+            self.datastore_path,
+            self.rehydrate_entity
+        ))
+        logger.debug(f"Loaded {len(self.__data['watching'])} watches")
 
-        logger.debug(f"Loaded {len(watching)} watches")
+    def _load_tags(self):
+        """
+        Load all tags from storage.
+
+        File backend implementation: reads individual tag.json files.
+        Tags loaded from files override any tags in settings (migration path).
+        """
+        from ..model import Tag
+
+        def rehydrate_tag(uuid, entity_dict):
+            """Rehydrate tag as Tag object with forced restock_diff processor."""
+            entity_dict['uuid'] = uuid
+            entity_dict['processor'] = 'restock_diff'  # Force processor for override functionality
+
+            return Tag.model(
+                datastore_path=self.datastore_path,
+                __datastore=self.__data,
+                default=entity_dict
+            )
+
+        tags = load_all_tags(
+            self.datastore_path,
+            rehydrate_tag
+        )
+
+        # Override settings tags with loaded tags
+        # This ensures tag.json files take precedence over settings
+        if tags:
+            self.__data['settings']['application']['tags'].update(tags)
+            logger.info(f"Loaded {len(tags)} tags from individual tag.json files")
 
     def _delete_watch(self, uuid):
         """
@@ -411,6 +455,63 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
     def remove_password(self):
         self.__data['settings']['application']['password'] = False
         self.commit()
+
+    def clear_all_last_checksums(self):
+        """
+        Delete all last-checksum.txt files to force reprocessing of all watches.
+
+        This should be called when global settings change, since watches inherit
+        configuration and need to reprocess even if their individual watch dict
+        hasn't been modified.
+
+        Note: We delete the checksum file rather than setting was_edited=True because:
+        - was_edited is not persisted across restarts
+        - File deletion ensures reprocessing works across app restarts
+        """
+        deleted_count = 0
+        for uuid in self.__data['watching'].keys():
+            watch = self.__data['watching'][uuid]
+            if watch.data_dir:
+                checksum_file = os.path.join(watch.data_dir, 'last-checksum.txt')
+                if os.path.isfile(checksum_file):
+                    try:
+                        os.remove(checksum_file)
+                        deleted_count += 1
+                        logger.debug(f"Cleared checksum for watch {uuid}")
+                    except OSError as e:
+                        logger.warning(f"Failed to delete checksum file for {uuid}: {e}")
+
+        logger.info(f"Cleared {deleted_count} checksum files to force reprocessing")
+        return deleted_count
+
+    def clear_checksums_for_tag(self, tag_uuid):
+        """
+        Delete last-checksum.txt files for all watches using a specific tag.
+
+        This should be called when a tag configuration is edited, since watches
+        inherit tag settings and need to reprocess.
+
+        Args:
+            tag_uuid: UUID of the tag that was modified
+
+        Returns:
+            int: Number of checksum files deleted
+        """
+        deleted_count = 0
+        for uuid, watch in self.__data['watching'].items():
+            if watch.get('tags') and tag_uuid in watch['tags']:
+                if watch.data_dir:
+                    checksum_file = os.path.join(watch.data_dir, 'last-checksum.txt')
+                    if os.path.isfile(checksum_file):
+                        try:
+                            os.remove(checksum_file)
+                            deleted_count += 1
+                            logger.debug(f"Cleared checksum for watch {uuid} (tag {tag_uuid})")
+                        except OSError as e:
+                            logger.warning(f"Failed to delete checksum file for {uuid}: {e}")
+
+        logger.info(f"Cleared {deleted_count} checksum files for tag {tag_uuid}")
+        return deleted_count
 
     def commit(self):
         """
@@ -706,25 +807,6 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
     # Old sync_to_json and save_datastore methods removed - now handled by FileSavingDataStore parent class
 
-    # Go through the datastore path and remove any snapshots that are not mentioned in the index
-    # This usually is not used, but can be handy.
-    def remove_unused_snapshots(self):
-        logger.info("Removing snapshots from datastore that are not in the index..")
-
-        index = []
-        for uuid in self.data['watching']:
-            for id in self.data['watching'][uuid].history:
-                index.append(self.data['watching'][uuid].history[str(id)])
-
-        import pathlib
-
-        # Only in the sub-directories
-        for uuid in self.data['watching']:
-            for item in pathlib.Path(self.datastore_path).rglob(uuid + "/*.txt"):
-                if not str(item) in index:
-                    logger.info(f"Removing {item}")
-                    unlink(item)
-
     @property
     def proxy_list(self):
         proxy_list = {}
@@ -816,7 +898,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         if watch:
 
             # In /datastore/xyz-xyz/headers.txt
-            filepath = os.path.join(watch.watch_data_dir, 'headers.txt')
+            filepath = os.path.join(watch.data_dir, 'headers.txt')
             try:
                 if os.path.isfile(filepath):
                     headers.update(parse_headers_from_text_file(filepath))
@@ -876,7 +958,8 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
             self.__data['settings']['application']['tags'][new_uuid] = new_tag
 
-        self.commit()
+        # Save tag to its own tag.json file instead of settings
+        new_tag.commit()
         return new_uuid
 
     def get_all_tags_for_watch(self, uuid):
