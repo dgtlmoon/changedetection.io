@@ -324,6 +324,94 @@ jobs:
         run: |
           docker run --rm --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest tests/smtp/test_notification_smtp.py'
 
+  nginx-reverse-proxy:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 10
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: test-changedetectionio-${{ env.PYTHON_VERSION }}
+          path: /tmp
+
+      - name: Load Docker image
+        run: |
+          docker load -i /tmp/test-changedetectionio.tar
+
+      - name: Spin up services
+        run: |
+          docker network create changedet-network
+
+          # Start changedetection.io container with X-Forwarded headers support
+          docker run --name changedet-app --hostname changedet-app --network changedet-network \
+            -e USE_X_SETTINGS=true \
+            -d test-changedetectionio
+          sleep 3
+
+      - name: Start nginx reverse proxy
+        run: |
+          # Start nginx with our test configuration
+          docker run --name nginx-proxy --network changedet-network -d -p 8080:80 --rm \
+            -v ${{ github.workspace }}/.github/nginx-reverse-proxy-test.conf:/etc/nginx/conf.d/default.conf:ro \
+            nginx:alpine
+          sleep 2
+
+      - name: Test reverse proxy - root path
+        run: |
+          echo "=== Testing nginx reverse proxy at root path ==="
+          curl --retry-connrefused --retry 6 -s http://localhost:8080/ > /tmp/nginx-test-root.html
+
+          # Check for changedetection.io UI elements
+          if grep -q "checkbox-uuid" /tmp/nginx-test-root.html; then
+            echo "✓ Found checkbox-uuid in response"
+          else
+            echo "ERROR: checkbox-uuid not found in response"
+            cat /tmp/nginx-test-root.html
+            exit 1
+          fi
+
+          # Check for watchlist content
+          if grep -q -i "watch" /tmp/nginx-test-root.html; then
+            echo "✓ Found watch/watchlist content in response"
+          else
+            echo "ERROR: watchlist content not found"
+            cat /tmp/nginx-test-root.html
+            exit 1
+          fi
+
+          echo "✓ Root path reverse proxy working correctly"
+
+      - name: Test reverse proxy - subpath with X-Forwarded-Prefix
+        run: |
+          echo "=== Testing nginx reverse proxy at subpath /changedet-sub/ ==="
+          curl --retry-connrefused --retry 6 -s http://localhost:8080/changedet-sub/ > /tmp/nginx-test-subpath.html
+
+          # Check for changedetection.io UI elements
+          if grep -q "checkbox-uuid" /tmp/nginx-test-subpath.html; then
+            echo "✓ Found checkbox-uuid in subpath response"
+          else
+            echo "ERROR: checkbox-uuid not found in subpath response"
+            cat /tmp/nginx-test-subpath.html
+            exit 1
+          fi
+
+          echo "✓ Subpath reverse proxy working correctly"
+
+      - name: Cleanup nginx test
+        if: always()
+        run: |
+          docker logs nginx-proxy || true
+          docker logs changedet-app || true
+          docker stop nginx-proxy changedet-app || true
+          docker rm nginx-proxy changedet-app || true
+
+
+
   # Proxy tests
   proxy-tests:
     runs-on: ubuntu-latest
