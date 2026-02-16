@@ -6,6 +6,7 @@ from changedetectionio import html_tools
 from changedetectionio import worker_pool
 from changedetectionio.flask_app import watch_check_update
 from changedetectionio.queuedWatchMetaData import PrioritizedItem
+from changedetectionio.pluggy_interface import apply_update_handler_alter, apply_update_finalize
 
 import asyncio
 import importlib
@@ -156,7 +157,6 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                                                                          watch_uuid=uuid)
 
                     # Allow plugins to modify/wrap the update_handler
-                    from changedetectionio.pluggy_interface import apply_update_handler_alter
                     update_handler = apply_update_handler_alter(update_handler, watch, datastore)
 
                     update_signal = signal('watch_small_status_comment')
@@ -516,6 +516,11 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
         finally:
             # Always cleanup - this runs whether there was an exception or not
             if uuid:
+                # Capture references for plugin finalize hook BEFORE cleanup
+                # (cleanup may delete these variables, but plugins need the original references)
+                finalize_handler = update_handler  # Capture now, before cleanup deletes it
+                finalize_watch = watch              # Capture now, before any modifications
+
                 # Call quit() as backup (Puppeteer/Playwright have internal cleanup, but this acts as safety net)
                 try:
                     if update_handler and hasattr(update_handler, 'fetcher') and update_handler.fetcher:
@@ -525,9 +530,6 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     logger.exception(f"Worker {worker_id} full exception details:")
 
                 try:
-                    # Release UUID from processing (thread-safe)
-                    worker_pool.release_uuid_from_processing(uuid, worker_id=worker_id)
-
                     # Send completion signal
                     if watch:
                         watch_check_update.send(watch_uuid=watch['uuid'])
@@ -555,10 +557,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     logger.exception(f"Worker {worker_id} full exception details:")
 
                 # Call plugin finalization hook after all cleanup is done
+                # Use captured references from before cleanup
                 try:
-                    from changedetectionio.pluggy_interface import apply_update_finalize
-                    finalize_handler = update_handler if 'update_handler' in locals() else None
-                    finalize_watch = watch if 'watch' in locals() else None
                     apply_update_finalize(
                         update_handler=finalize_handler,
                         watch=finalize_watch,
@@ -567,6 +567,18 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     )
                 except Exception as finalize_error:
                     logger.error(f"Worker {worker_id} error in finalize hook: {finalize_error}")
+                    logger.exception(f"Worker {worker_id} full exception details:")
+                finally:
+                    # Clean up captured references to allow immediate garbage collection
+                    del finalize_handler
+                    del finalize_watch
+
+                # Release UUID from processing AFTER all cleanup and hooks complete (thread-safe)
+                # This ensures wait_for_all_checks() waits for finalize hooks to complete
+                try:
+                    worker_pool.release_uuid_from_processing(uuid, worker_id=worker_id)
+                except Exception as release_error:
+                    logger.error(f"Worker {worker_id} error releasing UUID: {release_error}")
                     logger.exception(f"Worker {worker_id} full exception details:")
 
             del(uuid)
