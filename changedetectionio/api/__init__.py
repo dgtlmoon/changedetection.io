@@ -110,6 +110,14 @@ def validate_openapi_request(operation_id):
                     if result.errors:
                         error_details = []
                         for error in result.errors:
+                            error_str = str(error)
+                            # Skip server validation errors for reverse proxy compatibility
+                            # When behind nginx/reverse proxy, the incoming URL may have path prefixes
+                            # that don't match the OpenAPI spec server definitions
+                            if 'Server not found' in error_str:
+                                logger.debug(f"API Call - Skipping server validation error (reverse proxy): {error_str}")
+                                continue
+
                             # Extract detailed schema errors from __cause__
                             if hasattr(error, '__cause__') and hasattr(error.__cause__, 'schema_errors'):
                                 for schema_error in error.__cause__.schema_errors:
@@ -117,9 +125,12 @@ def validate_openapi_request(operation_id):
                                     msg = schema_error.message if hasattr(schema_error, 'message') else str(schema_error)
                                     error_details.append(f"{field}: {msg}")
                             else:
-                                error_details.append(str(error))
+                                error_details.append(error_str)
+
+                        # Only raise if we have actual validation errors (not just server mismatches)
+                        if error_details:
                             logger.error(f"API Call - Validation failed: {'; '.join(error_details)}")
-                        raise BadRequest(f"Validation failed: {'; '.join(error_details)}")
+                            raise BadRequest(f"Validation failed: {'; '.join(error_details)}")
             except BadRequest:
                 # Re-raise BadRequest exceptions (validation failures)
                 raise
