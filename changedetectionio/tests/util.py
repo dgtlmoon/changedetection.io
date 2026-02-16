@@ -160,7 +160,7 @@ def extract_UUID_from_client(client):
     return uuid.strip()
 
 def delete_all_watches(client=None):
-
+    wait_for_all_checks(client)
     uuids = list(client.application.config.get('DATASTORE').data['watching'])
     for uuid in uuids:
         client.application.config.get('DATASTORE').delete(uuid)
