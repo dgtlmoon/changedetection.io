@@ -402,6 +402,87 @@ jobs:
 
           echo "✓ Subpath reverse proxy working correctly"
 
+      - name: Test API through reverse proxy subpath
+        run: |
+          echo "=== Testing API endpoints through nginx subpath /changedet-sub/ ==="
+
+          # Extract API key from the changedetection.io datastore
+          API_KEY=$(docker exec changedet-app cat /datastore/changedetection.json | grep -o '"api_access_token": *"[^"]*"' | cut -d'"' -f4)
+
+          if [ -z "$API_KEY" ]; then
+            echo "ERROR: Could not extract API key from datastore"
+            docker exec changedet-app cat /datastore/changedetection.json
+            exit 1
+          fi
+
+          echo "✓ Extracted API key: ${API_KEY:0:8}..."
+
+          # Create a watch via API through nginx proxy subpath
+          echo "Creating watch via POST to /changedet-sub/api/v1/watch"
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "http://localhost:8080/changedet-sub/api/v1/watch" \
+            -H "x-api-key: ${API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "url": "https://example.com/test-nginx-proxy",
+              "tag": "nginx-test"
+            }')
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+
+          if [ "$HTTP_CODE" != "201" ]; then
+            echo "ERROR: Expected HTTP 201, got $HTTP_CODE"
+            echo "Response: $BODY"
+            exit 1
+          fi
+
+          echo "✓ Watch created successfully (HTTP 201)"
+
+          # Extract the watch UUID from response
+          WATCH_UUID=$(echo "$BODY" | grep -o '"uuid": *"[^"]*"' | cut -d'"' -f4)
+          echo "✓ Watch UUID: $WATCH_UUID"
+
+          # Update the watch via PUT through nginx proxy subpath
+          echo "Updating watch via PUT to /changedet-sub/api/v1/watch/${WATCH_UUID}"
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT "http://localhost:8080/changedet-sub/api/v1/watch/${WATCH_UUID}" \
+            -H "x-api-key: ${API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "paused": true
+            }')
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "ERROR: Expected HTTP 200, got $HTTP_CODE"
+            echo "Response: $BODY"
+            exit 1
+          fi
+
+          if echo "$BODY" | grep -q '"ok": *true'; then
+            echo "✓ Watch updated successfully (HTTP 200, ok: true)"
+          else
+            echo "ERROR: Response missing 'ok: true'"
+            echo "Response: $BODY"
+            exit 1
+          fi
+
+          # Verify the watch is paused via GET
+          echo "Verifying watch is paused via GET"
+          RESPONSE=$(curl -s "http://localhost:8080/changedet-sub/api/v1/watch/${WATCH_UUID}" \
+            -H "x-api-key: ${API_KEY}")
+
+          if echo "$RESPONSE" | grep -q '"paused": *true'; then
+            echo "✓ Watch is paused as expected"
+          else
+            echo "ERROR: Watch paused state not confirmed"
+            echo "Response: $RESPONSE"
+            exit 1
+          fi
+
+          echo "✓ API tests through nginx subpath completed successfully"
+
       - name: Cleanup nginx test
         if: always()
         run: |
