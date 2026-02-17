@@ -4,12 +4,10 @@ import changedetectionio.content_fetchers.exceptions as content_fetchers_excepti
 from changedetectionio.processors.text_json_diff.processor import FilterNotFoundInResponse
 from changedetectionio import html_tools
 from changedetectionio import worker_pool
-from changedetectionio.flask_app import watch_check_update
 from changedetectionio.queuedWatchMetaData import PrioritizedItem
 from changedetectionio.pluggy_interface import apply_update_handler_alter, apply_update_finalize
 
 import asyncio
-import importlib
 import os
 import sys
 import time
@@ -138,6 +136,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                 logger.info(f"Worker {worker_id} processing watch UUID {uuid} Priority {queued_item_data.priority} URL {watch['url']}")
 
                 try:
+                    # Retrieve signal by name to ensure thread-safe access across worker threads
+                    watch_check_update = signal('watch_check_update')
                     watch_check_update.send(watch_uuid=uuid)
 
                     # Processor is what we are using for detecting the "Change"
@@ -530,8 +530,9 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     logger.exception(f"Worker {worker_id} full exception details:")
 
                 try:
-                    # Send completion signal
+                    # Send completion signal - retrieve by name to ensure thread-safe access
                     if watch:
+                        watch_check_update = signal('watch_check_update')
                         watch_check_update.send(watch_uuid=watch['uuid'])
 
                     # Clean up all memory references BEFORE garbage collection
