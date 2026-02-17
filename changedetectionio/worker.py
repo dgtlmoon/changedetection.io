@@ -530,12 +530,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     logger.exception(f"Worker {worker_id} full exception details:")
 
                 try:
-
-                    # Release UUID from processing (thread-safe)
-                    worker_pool.release_uuid_from_processing(uuid, worker_id=worker_id)
-
                     # Send completion signal - retrieve by name to ensure thread-safe access
-
                     if watch:
                         watch_check_update = signal('watch_check_update')
                         watch_check_update.send(watch_uuid=watch['uuid'])
