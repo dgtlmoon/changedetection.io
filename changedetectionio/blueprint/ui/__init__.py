@@ -219,7 +219,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
         if watch_count < 10:
             # Run synchronously for small watch counts
             mark_viewed_impl()
-            flash(gettext("Marked as viewed."))
         else:
             # Start background thread for large watch counts
             thread = threading.Thread(target=mark_viewed_impl, daemon=True)
