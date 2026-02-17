@@ -223,7 +223,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
             # Start background thread for large watch counts
             thread = threading.Thread(target=mark_viewed_impl, daemon=True)
             thread.start()
-            flash(gettext("Marking watches as viewed in background..."))
 
         return redirect(url_for('watchlist.index', tag=tag_limit))
 
