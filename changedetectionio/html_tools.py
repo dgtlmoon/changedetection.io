@@ -572,6 +572,19 @@ def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=Fals
         html_content = re.sub(r'<(?:style|script|svg|noscript)[^>]*>.*?</(?:style|script|svg|noscript)>|<(?:link|meta)[^>]*/?>|<!--.*?-->',
                               '', html_content, flags=re.DOTALL | re.IGNORECASE)
 
+        # SPAs often use <body style="display:none"> to hide content until JS loads
+        # inscriptis respects CSS display rules, so we need to remove these hiding styles
+        # to extract the actual page content
+        body_style_pattern = r'(<body[^>]*)\s+style\s*=\s*["\']([^"\']*\b(?:display\s*:\s*none|visibility\s*:\s*hidden)\b[^"\']*)["\']'
+
+        # Check if body has hiding styles that need to be fixed
+        body_match = re.search(body_style_pattern, html_content, flags=re.IGNORECASE)
+        if body_match:
+            from loguru import logger
+            logger.debug(f"html_to_text: Removing hiding styles from body tag (found: '{body_match.group(2)}')")
+
+        html_content = re.sub(body_style_pattern, r'\1', html_content, flags=re.IGNORECASE)
+
     text_content = get_text(html_content, config=parser_config)
     return text_content
 
