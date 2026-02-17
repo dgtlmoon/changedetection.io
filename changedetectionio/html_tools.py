@@ -569,7 +569,8 @@ def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=Fals
         # Strip bloat in one pass, SPA's often dump 10Mb+ into the <head> for styles, which is not needed
         # Causing inscriptis to silently exit when more than ~10MB is found.
         # All we are doing here is converting the HTML to text, no CSS layout etc
-        html_content = re.sub(r'<(?:style|script|svg|noscript)[^>]*>.*?</(?:style|script|svg|noscript)>|<(?:link|meta)[^>]*/?>|<!--.*?-->',
+        # Use backreference (\1) to ensure opening/closing tags match (prevents <style> matching </svg> in CSS data URIs)
+        html_content = re.sub(r'<(style|script|svg|noscript)[^>]*>.*?</\1>|<(?:link|meta)[^>]*/?>|<!--.*?-->',
                               '', html_content, flags=re.DOTALL | re.IGNORECASE)
 
         # SPAs often use <body style="display:none"> to hide content until JS loads
