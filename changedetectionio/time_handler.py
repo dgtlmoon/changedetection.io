@@ -62,19 +62,19 @@ def am_i_inside_time(
         # Calculate start and end times for the overlap from the previous day
         start_datetime_tz = start_datetime_tz.shift(days=-1)
         end_datetime_tz = start_datetime_tz.shift(minutes=duration)
-        if start_datetime_tz <= now_tz < end_datetime_tz:
+        if start_datetime_tz <= now_tz <= end_datetime_tz:
             return True
 
     # Handle current day's range
     if target_weekday == current_weekday:
         end_datetime_tz = start_datetime_tz.shift(minutes=duration)
-        if start_datetime_tz <= now_tz < end_datetime_tz:
+        if start_datetime_tz <= now_tz <= end_datetime_tz:
             return True
 
     # Handle next day's overlap
     if target_weekday == (current_weekday + 1) % 7:
         end_datetime_tz = start_datetime_tz.shift(minutes=duration)
-        if now_tz < start_datetime_tz and now_tz.shift(days=1) < end_datetime_tz:
+        if now_tz < start_datetime_tz and now_tz.shift(days=1) <= end_datetime_tz:
             return True
 
     return False
