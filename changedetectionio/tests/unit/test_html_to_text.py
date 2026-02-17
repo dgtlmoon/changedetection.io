@@ -452,6 +452,7 @@ class TestHtmlToText(unittest.TestCase):
         print("  ✓ Tag closing validation test passed")
 
 
+
 if __name__ == '__main__':
     # Can run this file directly for quick testing
     unittest.main()
