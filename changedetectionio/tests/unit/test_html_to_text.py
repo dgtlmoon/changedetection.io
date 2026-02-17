@@ -199,6 +199,91 @@ class TestHtmlToText(unittest.TestCase):
 
         print(f"✓ Basic thread-safety test passed: {len(results)} threads, no errors")
 
+    def test_large_html_with_bloated_head(self):
+        """
+        Test that html_to_text can handle large HTML documents with massive <head> bloat.
+
+        SPAs often dump 10MB+ of styles, scripts, and other bloat into the <head> section.
+        This can cause inscriptis to silently exit when processing very large documents.
+        The fix strips <style>, <script>, <svg>, <noscript>, <link>, <meta>, and HTML comments
+        before processing, allowing extraction of actual body content.
+        """
+        # Generate massive style block (~5MB)
+        large_style = '<style>' + '.class{color:red;}\n' * 200000 + '</style>\n'
+
+        # Generate massive script block (~5MB)
+        large_script = '<script>' + 'console.log("bloat");\n' * 200000 + '</script>\n'
+
+        # Generate lots of SVG bloat (~3MB)
+        svg_bloat = '<svg><path d="M0,0 L100,100"/></svg>\n' * 50000
+
+        # Generate meta/link tags (~2MB)
+        meta_bloat = '<meta name="description" content="bloat"/>\n' * 50000
+        link_bloat = '<link rel="stylesheet" href="bloat.css"/>\n' * 50000
+
+        # Generate HTML comments (~1MB)
+        comment_bloat = '<!-- This is bloat -->\n' * 50000
+
+        # Generate noscript bloat
+        noscript_bloat = '<noscript>Enable JavaScript</noscript>\n' * 10000
+
+        # Build the large HTML document
+        html = f'''<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Page</title>
+    {large_style}
+    {large_script}
+    {svg_bloat}
+    {meta_bloat}
+    {link_bloat}
+    {comment_bloat}
+    {noscript_bloat}
+</head>
+<body>
+    <h1>Important Heading</h1>
+    <p>This is the actual content that should be extracted.</p>
+    <div>
+        <p>First paragraph with meaningful text.</p>
+        <p>Second paragraph with more content.</p>
+    </div>
+    <footer>Footer text</footer>
+</body>
+</html>
+'''
+
+        # Verify the HTML is actually large (should be ~20MB+)
+        html_size_mb = len(html) / (1024 * 1024)
+        assert html_size_mb > 15, f"HTML should be >15MB, got {html_size_mb:.2f}MB"
+
+        print(f"  Testing {html_size_mb:.2f}MB HTML document with bloated head...")
+
+        # This should not crash or silently exit
+        text = html_to_text(html)
+
+        # Verify we got actual text output (not empty/None)
+        assert text is not None, "html_to_text returned None"
+        assert len(text) > 0, "html_to_text returned empty string"
+
+        # Verify the actual body content was extracted
+        assert 'Important Heading' in text, "Failed to extract heading"
+        assert 'actual content that should be extracted' in text, "Failed to extract paragraph"
+        assert 'First paragraph with meaningful text' in text, "Failed to extract first paragraph"
+        assert 'Second paragraph with more content' in text, "Failed to extract second paragraph"
+        assert 'Footer text' in text, "Failed to extract footer"
+
+        # Verify bloat was stripped (output should be tiny compared to input)
+        text_size_kb = len(text) / 1024
+        assert text_size_kb < 1, f"Output too large ({text_size_kb:.2f}KB), bloat not stripped"
+
+        # Verify no CSS, script content, or SVG leaked through
+        assert 'color:red' not in text, "Style content leaked into text output"
+        assert 'console.log' not in text, "Script content leaked into text output"
+        assert '<path' not in text, "SVG content leaked into text output"
+        assert 'bloat.css' not in text, "Link href leaked into text output"
+
+        print(f"  ✓ Successfully processed {html_size_mb:.2f}MB HTML -> {text_size_kb:.2f}KB text")
+
 
 if __name__ == '__main__':
     # Can run this file directly for quick testing
