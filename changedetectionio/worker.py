@@ -478,8 +478,6 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                             logger.exception(f"Worker {worker_id} full exception details:")
                             logger.warning(f"UUID: {uuid} Exception when extracting <title> - {str(e)}")
 
-
-
                     # Store favicon if necessary
                     if update_handler.fetcher.favicon_blob and update_handler.fetcher.favicon_blob.get('base64'):
                         watch.bump_favicon(url=update_handler.fetcher.favicon_blob.get('url'),
@@ -583,7 +581,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                         watch_check_update = signal('watch_check_update')
                         watch_check_update.send(watch_uuid=watch['uuid'])
 
-            del(uuid)
+            del (uuid)
 
             # Brief pause before continuing to avoid tight error loops (only on error)
             if 'e' in locals():
