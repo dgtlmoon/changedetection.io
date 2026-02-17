@@ -530,10 +530,6 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     logger.exception(f"Worker {worker_id} full exception details:")
 
                 try:
-                    # Send completion signal - retrieve by name to ensure thread-safe access
-                    if watch:
-                        watch_check_update = signal('watch_check_update')
-                        watch_check_update.send(watch_uuid=watch['uuid'])
 
                     # Clean up all memory references BEFORE garbage collection
                     if update_handler:
@@ -581,6 +577,11 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                 except Exception as release_error:
                     logger.error(f"Worker {worker_id} error releasing UUID: {release_error}")
                     logger.exception(f"Worker {worker_id} full exception details:")
+                finally:
+                    # Send completion signal - retrieve by name to ensure thread-safe access
+                    if watch:
+                        watch_check_update = signal('watch_check_update')
+                        watch_check_update.send(watch_uuid=watch['uuid'])
 
             del(uuid)
 
