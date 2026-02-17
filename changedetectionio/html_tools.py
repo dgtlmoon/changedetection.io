@@ -565,6 +565,12 @@ def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=Fals
     if is_rss:
         html_content = re.sub(r'<title([\s>])', r'<h1\1', html_content)
         html_content = re.sub(r'</title>', r'</h1>', html_content)
+    else:
+        # Strip bloat in one pass, SPA's often dump 10Mb+ into the <head> for styles, which is not needed
+        # Causing inscriptis to silently exit when more than ~10MB is found.
+        # All we are doing here is converting the HTML to text, no CSS layout etc
+        html_content = re.sub(r'<(?:style|script|svg|noscript)[^>]*>.*?</(?:style|script|svg|noscript)>|<(?:link|meta)[^>]*/?>|<!--.*?-->',
+                              '', html_content, flags=re.DOTALL | re.IGNORECASE)
 
     text_content = get_text(html_content, config=parser_config)
     return text_content
