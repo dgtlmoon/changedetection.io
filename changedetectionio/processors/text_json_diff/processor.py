@@ -347,6 +347,7 @@ class ContentProcessor:
     def extract_text_from_html(self, html_content, stream_content_type):
         """Convert HTML to plain text."""
         do_anchor = self.datastore.data["settings"]["application"].get("render_anchor_tag_content", False)
+
         return html_tools.html_to_text(
             html_content=html_content,
             render_anchor_tag_content=do_anchor,
