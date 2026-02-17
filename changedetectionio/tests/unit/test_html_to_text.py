@@ -363,6 +363,7 @@ class TestHtmlToText(unittest.TestCase):
         print("  ✓ All display:none body tag tests passed")
 
 
+
 if __name__ == '__main__':
     # Can run this file directly for quick testing
     unittest.main()

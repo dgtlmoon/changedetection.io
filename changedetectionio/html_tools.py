@@ -585,6 +585,7 @@ def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=Fals
 
         html_content = re.sub(body_style_pattern, r'\1', html_content, flags=re.IGNORECASE)
 
+
     text_content = get_text(html_content, config=parser_config)
     return text_content
 
