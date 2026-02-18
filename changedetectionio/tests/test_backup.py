@@ -171,6 +171,9 @@ def test_backup_restore(client, live_server, measure_memory_usage, datastore_pat
     )
     assert res.status_code == 200
 
+    # Wait for the thread to finish
+    time.sleep(2)
+
     # --- Watch checks ---
     restored_watch = datastore.data['watching'].get(uuid)
     assert restored_watch is not None, f"Watch {uuid} not found after restore"

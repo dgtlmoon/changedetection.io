@@ -11,6 +11,12 @@
         </div>
         <div class="box-wrap inner">
             <div id="general">
+                {% if restore_running %}
+                    <p>
+                        <span class="spinner"></span>&nbsp;<strong>{{ _('A restore is running!') }}</strong>
+                    </p>
+                {% endif %}
+
                 <p>{{ _('Restore a backup. Must be a .zip backup file created on/after v0.53.1 (new database layout).') }}</p>
                 <p>{{ _('Note: This does not override the main application settings, only watches and groups.') }}</p>
 

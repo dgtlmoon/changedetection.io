@@ -1,7 +1,9 @@
+import io
 import json
 import os
 import shutil
 import tempfile
+import threading
 import zipfile
 
 from flask import Blueprint, render_template, flash, url_for, redirect, request
@@ -145,16 +147,23 @@ def import_from_zip(zip_stream, datastore, include_groups, include_groups_replac
 
 def construct_restore_blueprint(datastore):
     restore_blueprint = Blueprint('restore', __name__, template_folder="templates")
+    restore_threads = []
 
     @login_optionally_required
     @restore_blueprint.route("/restore", methods=['GET'])
     def restore():
         form = RestoreForm()
-        return render_template("backup_restore.html", form=form)
+        return render_template("backup_restore.html",
+                               form=form,
+                               restore_running=any(t.is_alive() for t in restore_threads))
 
     @login_optionally_required
     @restore_blueprint.route("/restore/start", methods=['POST'])
     def backups_restore_start():
+        if any(t.is_alive() for t in restore_threads):
+            flash(gettext("A restore is already running, check back in a few minutes"), "error")
+            return redirect(url_for('backups.restore.restore'))
+
         zip_file = request.files.get('zip_file')
         if not zip_file or not zip_file.filename:
             flash(gettext("No file uploaded"), "error")
@@ -164,37 +173,36 @@ def construct_restore_blueprint(datastore):
             flash(gettext("File must be a .zip backup file"), "error")
             return redirect(url_for('backups.restore.restore'))
 
+        # Read into memory now — the request stream is gone once we return
+        try:
+            zip_bytes = io.BytesIO(zip_file.read())
+            zipfile.ZipFile(zip_bytes)  # quick validity check before spawning
+            zip_bytes.seek(0)
+        except zipfile.BadZipFile:
+            flash(gettext("Invalid or corrupted zip file"), "error")
+            return redirect(url_for('backups.restore.restore'))
+
         include_groups = request.form.get('include_groups') == 'y'
         include_groups_replace = request.form.get('include_groups_replace_existing') == 'y'
         include_watches = request.form.get('include_watches') == 'y'
         include_watches_replace = request.form.get('include_watches_replace_existing') == 'y'
 
-        try:
-            counts = import_from_zip(
-                zip_stream=zip_file.stream,
-                datastore=datastore,
-                include_groups=include_groups,
-                include_groups_replace=include_groups_replace,
-                include_watches=include_watches,
-                include_watches_replace=include_watches_replace,
-            )
-        except zipfile.BadZipFile:
-            flash(gettext("Invalid or corrupted zip file"), "error")
-            return redirect(url_for('backups.restore.restore'))
-        except Exception as e:
-            logger.error(f"Restore failed: {e}")
-            flash(gettext("Restore failed: %(error)s", error=str(e)), "error")
-            return redirect(url_for('backups.restore.restore'))
-
-        parts = []
-        if include_groups:
-            parts.append(gettext("Groups: %(n)s restored, %(s)s skipped",
-                                 n=counts['restored_groups'], s=counts['skipped_groups']))
-        if include_watches:
-            parts.append(gettext("Watches: %(n)s restored, %(s)s skipped",
-                                 n=counts['restored_watches'], s=counts['skipped_watches']))
-
-        flash(gettext("Restore complete.") + "  " + "  ".join(parts))
+        restore_thread = threading.Thread(
+            target=import_from_zip,
+            kwargs={
+                'zip_stream': zip_bytes,
+                'datastore': datastore,
+                'include_groups': include_groups,
+                'include_groups_replace': include_groups_replace,
+                'include_watches': include_watches,
+                'include_watches_replace': include_watches_replace,
+            },
+            daemon=True,
+            name="BackupRestore"
+        )
+        restore_thread.start()
+        restore_threads.append(restore_thread)
+        flash(gettext("Restore started in background, check back in a few minutes."))
         return redirect(url_for('backups.restore.restore'))
 
     return restore_blueprint
