@@ -70,17 +70,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         if datastore.data['settings']['application']['tags'].get(uuid):
             del datastore.data['settings']['application']['tags'][uuid]
 
-        # Delete tag.json file if it exists
-        import os
-        tag_dir = os.path.join(datastore.datastore_path, uuid)
-        tag_json = os.path.join(tag_dir, "tag.json")
-        if os.path.exists(tag_json):
-            try:
-                os.unlink(tag_json)
-                logger.info(f"Deleted tag.json for tag {uuid}")
-            except Exception as e:
-                logger.error(f"Failed to delete tag.json for tag {uuid}: {e}")
-
         # Remove tag from all watches in background thread to avoid blocking
         def remove_tag_background(tag_uuid):
             """Background thread to remove tag from watches - discarded after completion."""
@@ -127,19 +116,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @tags_blueprint.route("/delete_all", methods=['GET'])
     @login_optionally_required
     def delete_all():
-        # Delete all tag.json files
-        import os
-        for tag_uuid in list(datastore.data['settings']['application']['tags'].keys()):
-            tag_dir = os.path.join(datastore.datastore_path, tag_uuid)
-            tag_json = os.path.join(tag_dir, "tag.json")
-            if os.path.exists(tag_json):
-                try:
-                    os.unlink(tag_json)
-                except Exception as e:
-                    logger.error(f"Failed to delete tag.json for tag {tag_uuid}: {e}")
 
-        # Clear all tags from settings immediately
-        datastore.data['settings']['application']['tags'] = {}
+        for tag_uuid in list(datastore.data['settings']['application']['tags'].keys()):
+            del datastore.data['settings']['application']['tags'][tag_uuid]
+
 
         # Clear tags from all watches in background thread to avoid blocking
         def clear_all_tags_background():
@@ -255,7 +235,4 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         return redirect(url_for('tags.tags_overview_page'))
 
 
-    @tags_blueprint.route("/delete/<string:uuid>", methods=['GET'])
-    def form_tag_delete(uuid):
-        return redirect(url_for('tags.tags_overview_page'))
     return tags_blueprint
