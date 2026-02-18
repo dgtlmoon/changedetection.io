@@ -362,6 +362,9 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         # Deep copy settings to avoid modifying the original
         settings_copy = copy.deepcopy(self.__data['settings'])
 
+        # Is saved as {uuid}/tag.json
+        settings_copy['application']['tags'] = {}
+
         return {
             'note': 'Settings file - watches are in {uuid}/watch.json, tags are in {uuid}/tag.json',
             'app_guid': self.__data.get('app_guid'),
