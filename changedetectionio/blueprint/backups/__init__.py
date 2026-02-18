@@ -13,10 +13,13 @@ from loguru import logger
 BACKUP_FILENAME_FORMAT = "changedetection-backup-{}.zip"
 
 
-def create_backup(datastore_path, watches: dict):
+def create_backup(datastore_path, watches: dict, tags: dict = None):
     logger.debug("Creating backup...")
     import zipfile
     from pathlib import Path
+
+    if tags is None:
+        tags = {}
 
     # create a ZipFile object
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
@@ -44,6 +47,15 @@ def create_backup(datastore_path, watches: dict):
         secret_file = os.path.join(datastore_path, "secret.txt")
         if os.path.isfile(secret_file):
             zipObj.write(secret_file, arcname="secret.txt")
+
+        # Add tag data directories (each tag has its own {uuid}/tag.json)
+        for uuid, tag in tags.items():
+            for f in Path(tag.data_dir).glob('*'):
+                zipObj.write(f,
+                             arcname=os.path.join(f.parts[-2], f.parts[-1]),
+                             compress_type=zipfile.ZIP_DEFLATED,
+                             compresslevel=8)
+            logger.debug(f"Added tag '{tag.get('title')}' ({uuid}) to backup")
 
         # Add any data in the watch data directory.
         for uuid, w in watches.items():
@@ -109,6 +121,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         zip_thread = threading.Thread(
             target=create_backup,
             args=(datastore.datastore_path, datastore.data.get("watching")),
+            kwargs={'tags': datastore.data['settings']['application'].get('tags', {})},
             daemon=True,
             name="BackupCreator"
         )
