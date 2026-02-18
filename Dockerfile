@@ -116,6 +116,8 @@ ENV PYTHONPYCACHEPREFIX=/tmp/pycache
 # Disable pytest's .pytest_cache directory (also writes to /app, which is root-owned).
 # Only has an effect when running tests inside the container.
 ENV PYTEST_ADDOPTS="-p no:cacheprovider"
+# Redirect test logs to the datastore (writable) instead of /app/tests/logs (read-only in container).
+ENV TEST_LOG_DIR=/datastore/test_logs
 
 # Re #80, sets SECLEVEL=1 in openssl.conf to allow monitoring sites with weak/old cipher suites
 RUN sed -i 's/^CipherString = .*/CipherString = DEFAULT@SECLEVEL=1/' /etc/ssl/openssl.cnf
