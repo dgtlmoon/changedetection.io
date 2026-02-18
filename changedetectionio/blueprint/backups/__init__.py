@@ -13,7 +13,7 @@ from loguru import logger
 BACKUP_FILENAME_FORMAT = "changedetection-backup-{}.zip"
 
 
-def create_backup(datastore_path, watches: dict):
+def create_backup(datastore_path, watches: dict, tags: dict = None):
     logger.debug("Creating backup...")
     import zipfile
     from pathlib import Path
@@ -44,6 +44,15 @@ def create_backup(datastore_path, watches: dict):
         secret_file = os.path.join(datastore_path, "secret.txt")
         if os.path.isfile(secret_file):
             zipObj.write(secret_file, arcname="secret.txt")
+
+        # Add tag data directories (each tag has its own {uuid}/tag.json)
+        for uuid, tag in (tags or {}).items():
+            for f in Path(tag.data_dir).glob('*'):
+                zipObj.write(f,
+                             arcname=os.path.join(f.parts[-2], f.parts[-1]),
+                             compress_type=zipfile.ZIP_DEFLATED,
+                             compresslevel=8)
+            logger.debug(f"Added tag '{tag.get('title')}' ({uuid}) to backup")
 
         # Add any data in the watch data directory.
         for uuid, w in watches.items():
@@ -88,7 +97,10 @@ def create_backup(datastore_path, watches: dict):
 
 
 def construct_blueprint(datastore: ChangeDetectionStore):
+    from .restore import construct_restore_blueprint
+
     backups_blueprint = Blueprint('backups', __name__, template_folder="templates")
+    backups_blueprint.register_blueprint(construct_restore_blueprint(datastore))
     backup_threads = []
 
     @login_optionally_required
@@ -96,16 +108,17 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     def request_backup():
         if any(thread.is_alive() for thread in backup_threads):
             flash(gettext("A backup is already running, check back in a few minutes"), "error")
-            return redirect(url_for('backups.index'))
+            return redirect(url_for('backups.create'))
 
         if len(find_backups()) > int(os.getenv("MAX_NUMBER_BACKUPS", 100)):
             flash(gettext("Maximum number of backups reached, please remove some"), "error")
-            return redirect(url_for('backups.index'))
+            return redirect(url_for('backups.create'))
 
         # With immediate persistence, all data is already saved
         zip_thread = threading.Thread(
             target=create_backup,
             args=(datastore.datastore_path, datastore.data.get("watching")),
+            kwargs={'tags': datastore.data['settings']['application'].get('tags', {})},
             daemon=True,
             name="BackupCreator"
         )
@@ -113,7 +126,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         backup_threads.append(zip_thread)
         flash(gettext("Backup building in background, check back in a few minutes."))
 
-        return redirect(url_for('backups.index'))
+        return redirect(url_for('backups.create'))
 
     def find_backups():
         backup_filepath = os.path.join(datastore.datastore_path, BACKUP_FILENAME_FORMAT.format("*"))
@@ -155,14 +168,14 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         return send_from_directory(os.path.abspath(datastore.datastore_path), filename, as_attachment=True)
 
     @login_optionally_required
-    @backups_blueprint.route("", methods=['GET'])
-    def index():
+    @backups_blueprint.route("/", methods=['GET'])
+    @backups_blueprint.route("/create", methods=['GET'])
+    def create():
         backups = find_backups()
-        output = render_template("overview.html",
+        output = render_template("backup_create.html",
                                  available_backups=backups,
                                  backup_running=any(thread.is_alive() for thread in backup_threads)
                                  )
-
         return output
 
     @login_optionally_required
@@ -176,6 +189,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         flash(gettext("Backups were deleted."))
 
-        return redirect(url_for('backups.index'))
+        return redirect(url_for('backups.create'))
 
     return backups_blueprint
