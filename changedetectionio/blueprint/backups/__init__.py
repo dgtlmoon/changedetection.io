@@ -18,9 +18,6 @@ def create_backup(datastore_path, watches: dict, tags: dict = None):
     import zipfile
     from pathlib import Path
 
-    if tags is None:
-        tags = {}
-
     # create a ZipFile object
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     backupname = BACKUP_FILENAME_FORMAT.format(timestamp)
@@ -49,7 +46,7 @@ def create_backup(datastore_path, watches: dict, tags: dict = None):
             zipObj.write(secret_file, arcname="secret.txt")
 
         # Add tag data directories (each tag has its own {uuid}/tag.json)
-        for uuid, tag in tags.items():
+        for uuid, tag in (tags or {}).items():
             for f in Path(tag.data_dir).glob('*'):
                 zipObj.write(f,
                              arcname=os.path.join(f.parts[-2], f.parts[-1]),
