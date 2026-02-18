@@ -669,7 +669,9 @@ class DatastoreUpdatesMixin:
     def update_26(self):
         self.migrate_legacy_db_format()
 
-    def update_28(self):
+    # Re-run tag to JSON migration
+    def update_29(self):
+
         """
         Migrate tags to individual tag.json files.
 
@@ -682,8 +684,6 @@ class DatastoreUpdatesMixin:
         - Enables independent tag versioning/backup
         - Maintains backwards compatibility (tags stay in settings too)
         """
-        # Force save as tag.json (not watch.json) even if object is corrupted
-
         logger.critical("=" * 80)
         logger.critical("Running migration: Individual tag persistence (update_28)")
         logger.critical("Creating individual tag.json files")
@@ -702,6 +702,9 @@ class DatastoreUpdatesMixin:
         failed_count = 0
 
         for uuid, tag_data in tags.items():
+            if os.path.isfile(os.path.join(self.datastore_path, uuid, "tag.json")):
+                logger.debug(f"Tag {uuid} tag.json exists, skipping")
+                continue
             try:
                 tag_data.commit()
                 saved_count += 1
@@ -722,4 +725,8 @@ class DatastoreUpdatesMixin:
         logger.info("Tags saved to both settings AND individual tag.json files")
         logger.info("Future tag edits will update both locations (dual storage)")
         logger.critical("=" * 80)
+
+        # write it to disk, it will be saved without ['tags'] in the JSON db because we find it from disk glob
+        # (left this out by accident in previous update, added tags={} in the changedetection.json save_to_disk)
+        self._save_settings()
 

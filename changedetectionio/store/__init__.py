@@ -22,6 +22,8 @@ import uuid as uuid_builder
 from loguru import logger
 from blinker import signal
 
+from ..model.Tags import TagsDict
+
 # Try to import orjson for faster JSON serialization
 try:
     import orjson
@@ -121,6 +123,11 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
             if 'application' in settings_data['settings']:
                 self.__data['settings']['application'].update(settings_data['settings']['application'])
 
+                # Use our Tags dict with cleanup helpers etc
+                # @todo Same for Watches
+                existing_tags = settings_data.get('settings', {}).get('application', {}).get('tags') or {}
+                self.__data['settings']['application']['tags'] = TagsDict(existing_tags, datastore_path=self.datastore_path)
+
         # More or less for the old format which had this data in the one url-watches.json
         # cant hurt to leave it here,
         if 'watching' in settings_data:
@@ -196,7 +203,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         self.datastore_path = datastore_path
 
         # Initialize data structure
-        self.__data = App.model()
+        self.__data = App.model(datastore_path=datastore_path)
         self.json_store_path = os.path.join(self.datastore_path, "changedetection.json")
 
         # Base definition for all watchers (deepcopy part of #569)
@@ -354,6 +361,9 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
         # Deep copy settings to avoid modifying the original
         settings_copy = copy.deepcopy(self.__data['settings'])
+
+        # Is saved as {uuid}/tag.json
+        settings_copy['application']['tags'] = {}
 
         return {
             'note': 'Settings file - watches are in {uuid}/watch.json, tags are in {uuid}/tag.json',
