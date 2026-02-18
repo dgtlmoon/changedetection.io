@@ -102,7 +102,9 @@
         }
 
         // Navigate to search results (always redirect to watchlist home)
-        window.location.href = '/?' + params.toString();
+        // Use base_path if available (for sub-path deployments like /enlighten-richerx)
+        const basePath = typeof base_path !== 'undefined' ? base_path : '';
+        window.location.href = basePath + '/?' + params.toString();
       });
     }
   });
