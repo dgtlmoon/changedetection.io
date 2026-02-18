@@ -16,6 +16,11 @@
         <form class="pure-form" action="{{url_for('imports.import_page')}}" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="tab-pane-inner" id="url-list">
+
+                <p>
+                {{ _('Restoring changedetection.io backups is in the') }}<a href="{{ url_for('backups.restore') }}"> {{ _('backups section') }}</a>.
+                <br>
+                </p>
                 <div class="pure-control-group">
                         {{ _('Enter one URL per line, and optionally add tags for each URL after a space, delineated by comma (,):') }}
                         <br>
@@ -37,9 +42,6 @@
             </div>
 
             <div class="tab-pane-inner" id="distill-io">
-
-
-
                     <div class="pure-control-group">
                         {{ _('Copy and Paste your Distill.io watch \'export\' file, this should be a JSON file.') }}<br>
                         {{ _('This is') }} <i>{{ _('experimental') }}</i>, {{ _('supported fields are') }} <code>name</code>, <code>uri</code>, <code>tags</code>, <code>config:selections</code>, {{ _('the rest (including') }} <code>schedule</code>) {{ _('are ignored.') }}
@@ -49,8 +51,6 @@
                         {{ _('Be sure to set your default fetcher to Chrome if required.') }}<br>
                         </p>
                     </div>
-
-
                     <textarea name="distill-io" class="pure-input-1-2" style="width: 100%;
                                 font-family:monospace;
                                 white-space: pre;
@@ -114,6 +114,7 @@
                 </div>
             </div>
             <button type="submit" class="pure-button pure-input-1-2 pure-button-primary">{{ _('Import') }}</button>
+
         </form>
 
     </div>

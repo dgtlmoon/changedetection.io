@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block content %}
+    {% from '_helpers.html' import render_field, render_checkbox_field %}
+
+    <div class="edit-form">
+        <div class="tabs collapsable">
+            <ul>
+                <li class="tab"><a href="{{ url_for('backups.create') }}">{{ _('Create') }}</a></li>
+                <li class="tab active"><a href="{{ url_for('backups.restore.restore') }}">{{ _('Restore') }}</a></li>
+            </ul>
+        </div>
+        <div class="box-wrap inner">
+            <div id="general">
+                <p>{{ _('Restore a backup. Must be a .zip backup file created on/after v0.53.1 (new database layout).') }}</p>
+                <p>{{ _('Note: This does not override the main application settings, only watches and groups.') }}</p>
+
+                <form class="pure-form pure-form-stacked settings"
+                      action="{{ url_for('backups.restore.backups_restore_start') }}"
+                      method="POST"
+                      enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="pure-control-group">
+                        {{ render_checkbox_field(form.include_groups) }}
+                        <span class="pure-form-message-inline">{{ _('Include all groups found in backup?') }}</span>
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_checkbox_field(form.include_groups_replace_existing) }}
+                        <span class="pure-form-message-inline">{{ _('Replace any existing groups of the same UUID?') }}</span>
+                    </div>
+
+                    <div class="pure-control-group">
+                        {{ render_checkbox_field(form.include_watches) }}
+                        <span class="pure-form-message-inline">{{ _('Include all watches found in backup?') }}</span>
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_checkbox_field(form.include_watches_replace_existing) }}
+                        <span class="pure-form-message-inline">{{ _('Replace any existing watches of the same UUID?') }}</span>
+                    </div>
+
+                    <div class="pure-control-group">
+                        {{ render_field(form.zip_file) }}
+                    </div>
+
+                    <div class="pure-controls">
+                        <button type="submit" class="pure-button pure-button-primary">{{ _('Restore backup') }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

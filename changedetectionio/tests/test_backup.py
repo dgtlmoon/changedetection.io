@@ -9,8 +9,6 @@ import time
 
 
 def test_backup(client, live_server, measure_memory_usage, datastore_path):
-   #  live_server_setup(live_server) # Setup on conftest per function
-
     set_original_response(datastore_path=datastore_path)
 
 
@@ -32,7 +30,7 @@ def test_backup(client, live_server, measure_memory_usage, datastore_path):
     time.sleep(4)
 
     res = client.get(
-        url_for("backups.index"),
+        url_for("backups.create"),
         follow_redirects=True
     )
     # Can see the download link to the backup
@@ -80,11 +78,12 @@ def test_backup(client, live_server, measure_memory_usage, datastore_path):
 
 def test_watch_data_package_download(client, live_server, measure_memory_usage, datastore_path):
     """Test downloading a single watch's data as a zip package"""
-    import os
 
     set_original_response(datastore_path=datastore_path)
 
     uuid = client.application.config.get('DATASTORE').add_watch(url=url_for('test_endpoint', _external=True))
+    tag_uuid = client.application.config.get('DATASTORE').add_tag(title="Tasty backup tag")
+    tag_uuid2 = client.application.config.get('DATASTORE').add_tag(title="Tasty backup tag number two")
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
