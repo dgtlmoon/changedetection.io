@@ -118,6 +118,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     def delete_all():
 
         for tag_uuid in list(datastore.data['settings']['application']['tags'].keys()):
+# TagsDict 'del' handler will remove the dir
             del datastore.data['settings']['application']['tags'][tag_uuid]
 
 
