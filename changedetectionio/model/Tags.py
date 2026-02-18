@@ -16,6 +16,10 @@ class TagsDict(dict):
     def __delitem__(self, key: str) -> None:
         super().__delitem__(key)
         tag_dir = self._datastore_path / key
+        tag_json_file = tag_dir / "tag.json"
+        if not os.path.exists(tag_json_file):
+            logger.critical(f"Aborting deletion of directory '{tag_dir}' because '{tag_json_file}' does not exist.")
+            return
         try:
             shutil.rmtree(tag_dir)
             logger.info(f"Deleted tag directory for tag {key!r}")
