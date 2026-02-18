@@ -86,8 +86,8 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
         # better than scrollTo incase they override it in the page
         await page.evaluate(
             """(y) => {
-                document.documentElement.scrollTop = y;
-                document.body.scrollTop = y;
+                const el = document.scrollingElement;
+                if (el) el.scrollTop = y;
             }""",
             y
         )
