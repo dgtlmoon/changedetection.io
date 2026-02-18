@@ -9,6 +9,12 @@ services:
 #        - ./proxies.json:/datastore/proxies.json
 
   #    environment:
+  #        Run as a specific user/group (UID:GID). Defaults to 911:911.
+  #        The container will automatically fix datastore ownership on first start if needed.
+  #        Set SKIP_CHOWN=1 to disable the ownership migration (e.g. if you manage permissions yourself).
+  #      - PUID=1000
+  #      - PGID=1000
+  #
   #        Default listening port, can also be changed with the -p option (not to be confused with ports: below)
   #      - PORT=5000
   #
@@ -80,8 +86,9 @@ services:
   #        RAM usage will be higher if you increase this.
   #      - SCREENSHOT_MAX_HEIGHT=16000
   #
-  #        HTTPS SSL Mode for webserver, unset both of these, you may need to volume mount these files also.
+  #        HTTPS SSL Mode for webserver, volume mount the cert files and set these env vars.
   #        ./cert.pem:/app/cert.pem and ./privkey.pem:/app/privkey.pem
+  #        Permissions are fixed automatically on startup.
   #      - SSL_CERT_FILE=cert.pem
   #      - SSL_PRIVKEY_FILE=privkey.pem
   #
@@ -95,6 +102,8 @@ services:
       ports:
         - 127.0.0.1:5000:5000
       restart: unless-stopped
+      security_opt:
+        - no-new-privileges:true
 
      # Used for fetching pages via WebDriver+Chrome where you need Javascript support.
      # Now working on arm64 (needs testing on rPi - tested on Oracle ARM instance)
