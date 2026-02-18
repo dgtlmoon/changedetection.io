@@ -305,6 +305,8 @@ class fetcher(Fetcher):
                 await asyncio.wait_for(self.browser.close(), timeout=3.0)
             except Exception as cleanup_error:
                 logger.error(f"[{watch_uuid}] Failed to cleanup browser after page creation failure: {cleanup_error}")
+            finally:
+                self.browser = None
             raise
         
         # Add console handler to capture console.log from favicon fetcher
@@ -532,6 +534,14 @@ class fetcher(Fetcher):
             )
         except asyncio.TimeoutError:
             raise (BrowserFetchTimedOut(msg=f"Browser connected but was unable to process the page in {max_time} seconds."))
+        finally:
+            # Internal cleanup on any exception/timeout - call quit() immediately
+            # This prevents connection leaks during exception bursts
+            # Worker.py's quit() call becomes a redundant safety net (idempotent)
+            try:
+                await self.quit(watch={'uuid': watch_uuid} if watch_uuid else None)
+            except Exception as cleanup_error:
+                logger.error(f"[{watch_uuid}] Error during internal quit() cleanup: {cleanup_error}")
 
 
 # Plugin registration for built-in fetcher
