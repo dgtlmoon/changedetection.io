@@ -542,10 +542,11 @@ var also = 1;
         assert '@type' not in text
         assert '"price"' not in text
 
-    def test_inline_svg_path_data_does_not_appear_in_text(self):
+    def test_inline_svg_is_stripped_entirely(self):
         """
-        Inline SVG elements in the body are not stripped by BS4, but inscriptis must not
-        render their path data (d="M0,0 L100,100") as visible text.
+        Inline SVG elements in the body are stripped by BS4 before passing to inscriptis.
+        SVGs can be huge (icon libraries, data visualisations) and produce garbage path-data
+        text. The old regex code explicitly stripped <svg>; the BS4 path must do the same.
         """
         html = '''<html><body>
 <p>Before SVG</p>
@@ -560,6 +561,7 @@ var also = 1;
         assert 'Before SVG' in text
         assert 'After SVG' in text
         assert 'M14 5L7' not in text, "SVG path data should not appear in text output"
+        assert 'viewBox' not in text, "SVG attributes should not appear in text output"
 
     def test_tag_inside_json_data_attribute_does_not_eat_content(self):
         """

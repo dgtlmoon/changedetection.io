@@ -571,7 +571,11 @@ def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=Fals
         # causing the regex to scan past the intended close and eat real page content.
         from bs4 import BeautifulSoup
         soup = BeautifulSoup(html_content, 'html.parser')
-        for tag in soup.find_all(['head', 'script', 'style', 'noscript']):
+        # Strip tags that inscriptis cannot render as meaningful text and which can be very large.
+        # svg/math: produce path-data/MathML garbage; canvas/iframe/template: no inscriptis handlers.
+        # video/audio/picture are kept — they may contain meaningful fallback text or captions.
+        for tag in soup.find_all(['head', 'script', 'style', 'noscript', 'svg',
+                                  'math', 'canvas', 'iframe', 'template']):
             tag.decompose()
 
         # SPAs often use <body style="display:none"> to hide content until JS loads.
