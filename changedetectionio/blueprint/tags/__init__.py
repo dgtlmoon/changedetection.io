@@ -160,12 +160,16 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                        default_system_settings = datastore.data['settings'],
                                        )
 
-        # Bridge API-stored processor_config_* values into the form's FormField sub-forms.
-        # The API stores e.g. processor_config_restock_diff in the tag dict, but the form
-        # uses restock_settings as the sub-form name — find a matching FormField and populate it.
+        # Bridge processor config values into the form's FormField sub-forms.
+        # New API stores as processor_config_restock_diff in the tag dict.
+        # Legacy data was stored as restock_settings directly in the tag dict.
+        # Both are handled here so existing tags render correctly after the migration.
         from wtforms.fields.form import FormField as WTFormField
         for key, value in default.items():
-            if key.startswith('processor_config_') and isinstance(value, dict):
+            if not isinstance(value, dict):
+                continue
+            # Match new-style processor_config_* keys and legacy restock_settings key
+            if key.startswith('processor_config_') or key == 'restock_settings':
                 for form_field in form:
                     if isinstance(form_field, WTFormField) and all(k in form_field.form._fields for k in value):
                         for sub_key, sub_value in value.items():

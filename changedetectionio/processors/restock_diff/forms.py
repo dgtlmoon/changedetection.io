@@ -31,7 +31,7 @@ class RestockSettingsForm(Form):
     follow_price_changes = BooleanField(_l('Follow price changes'), default=True)
 
 class processor_settings_form(processor_text_json_diff_form):
-    restock_settings = FormField(RestockSettingsForm)
+    processor_config_restock_diff = FormField(RestockSettingsForm)
 
     def extra_tab_content(self):
         return _l('Restock & Price Detection')
@@ -48,34 +48,34 @@ class processor_settings_form(processor_text_json_diff_form):
 
         output += """
         {% from '_helpers.html' import render_field, render_checkbox_field, render_button %}
-        <script>        
+        <script>
             $(document).ready(function () {
-                toggleOpacity('#restock_settings-follow_price_changes', '.price-change-minmax', true);
+                toggleOpacity('#processor_config_restock_diff-follow_price_changes', '.price-change-minmax', true);
             });
         </script>
 
         <fieldset id="restock-fieldset-price-group">
             <div class="pure-control-group">
                 <fieldset class="pure-group inline-radio">
-                    {{ render_field(form.restock_settings.in_stock_processing) }}
+                    {{ render_field(form.processor_config_restock_diff.in_stock_processing) }}
                 </fieldset>
                 <fieldset class="pure-group">
-                    {{ render_checkbox_field(form.restock_settings.follow_price_changes) }}
+                    {{ render_checkbox_field(form.processor_config_restock_diff.follow_price_changes) }}
                     <span class="pure-form-message-inline">Changes in price should trigger a notification</span>
                 </fieldset>
-                <fieldset class="pure-group price-change-minmax">               
-                    {{ render_field(form.restock_settings.price_change_min, placeholder=watch.get('restock', {}).get('price')) }}
+                <fieldset class="pure-group price-change-minmax">
+                    {{ render_field(form.processor_config_restock_diff.price_change_min, placeholder=watch.get('restock', {}).get('price')) }}
                     <span class="pure-form-message-inline">Minimum amount, Trigger a change/notification when the price drops <i>below</i> this value.</span>
                 </fieldset>
                 <fieldset class="pure-group price-change-minmax">
-                    {{ render_field(form.restock_settings.price_change_max, placeholder=watch.get('restock', {}).get('price')) }}
+                    {{ render_field(form.processor_config_restock_diff.price_change_max, placeholder=watch.get('restock', {}).get('price')) }}
                     <span class="pure-form-message-inline">Maximum amount, Trigger a change/notification when the price rises <i>above</i> this value.</span>
                 </fieldset>
                 <fieldset class="pure-group price-change-minmax">
-                    {{ render_field(form.restock_settings.price_change_threshold_percent) }}
+                    {{ render_field(form.processor_config_restock_diff.price_change_threshold_percent) }}
                     <span class="pure-form-message-inline">Price must change more than this % to trigger a change since the first check.</span><br>
                     <span class="pure-form-message-inline">For example, If the product is $1,000 USD originally, <strong>2%</strong> would mean it has to change more than $20 since the first check.</span><br>
-                </fieldset>                
+                </fieldset>
             </div>
         </fieldset>
         """
