@@ -109,7 +109,7 @@ def test_itemprop_price_change(client, live_server, measure_memory_usage, datast
     set_original_response(props_markup=instock_props[0], price='120.45', datastore_path=datastore_path)
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
-        data={"restock_settings-follow_price_changes": "", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
+        data={"processor_config_restock_diff-follow_price_changes": "", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -204,9 +204,9 @@ def _run_test_minmax_limit(client, extra_watch_edit_form, datastore_path):
 def test_restock_itemprop_minmax(client, live_server, measure_memory_usage, datastore_path):
     
     extras = {
-        "restock_settings-follow_price_changes": "y",
-        "restock_settings-price_change_min": 900.0,
-        "restock_settings-price_change_max": 1100.10
+        "processor_config_restock_diff-follow_price_changes": "y",
+        "processor_config_restock_diff-price_change_min": 900.0,
+        "processor_config_restock_diff-price_change_max": 1100.10
     }
     _run_test_minmax_limit(client, extra_watch_edit_form=extras, datastore_path=datastore_path)
 
@@ -223,9 +223,9 @@ def test_restock_itemprop_with_tag(client, live_server, measure_memory_usage, da
     res = client.post(
         url_for("tags.form_tag_edit_submit", uuid="first"),
         data={"name": "test-tag",
-              "restock_settings-follow_price_changes": "y",
-              "restock_settings-price_change_min": 900.0,
-              "restock_settings-price_change_max": 1100.10,
+              "processor_config_restock_diff-follow_price_changes": "y",
+              "processor_config_restock_diff-price_change_min": 900.0,
+              "processor_config_restock_diff-price_change_max": 1100.10,
               "overrides_watch": "y", #overrides_watch should be restock_overrides_watch
               },
         follow_redirects=True
@@ -258,8 +258,8 @@ def test_itemprop_percent_threshold(client, live_server, measure_memory_usage, d
 
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
-        data={"restock_settings-follow_price_changes": "y",
-              "restock_settings-price_change_threshold_percent": 5.0,
+        data={"processor_config_restock_diff-follow_price_changes": "y",
+              "processor_config_restock_diff-price_change_threshold_percent": 5.0,
               "url": test_url,
               "tags": "",
               "headers": "",
@@ -305,8 +305,8 @@ def test_itemprop_percent_threshold(client, live_server, measure_memory_usage, d
 
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid=uuid),
-        data={"restock_settings-follow_price_changes": "y",
-              "restock_settings-price_change_threshold_percent": 5.05,
+        data={"processor_config_restock_diff-follow_price_changes": "y",
+              "processor_config_restock_diff-price_change_threshold_percent": 5.05,
               "processor": "text_json_diff",
               "url": test_url,
               'fetch_backend': "html_requests",
