@@ -116,24 +116,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 config_filename = f'{processor_name}.json'
                 processor_config = processor_instance.get_extra_watch_config(config_filename)
 
-                # Migration: if JSON file is empty, look for legacy data stored directly in the watch dict.
-                # Old watches stored e.g. restock_settings in watch.json before the processor_config_* system.
-                # Build a synthetic processor_config from any such keys so the form is pre-populated correctly.
-                # On next save the form will write to the JSON file and the legacy key becomes a harmless fallback.
-                if not processor_config:
-                    for form_field in form:
-                        from wtforms.fields.form import FormField as _FF
-                        if isinstance(form_field, _FF):
-                            legacy_key = form_field.short_name  # e.g. 'restock_settings' (old name kept in watch dict)
-                            # Also check the canonical processor_config_* strip
-                            for candidate_key in (legacy_key, legacy_key.replace('processor_config_', '')):
-                                legacy_data = default.get(candidate_key)
-                                if legacy_data and isinstance(legacy_data, dict):
-                                    processor_config = {processor_name: legacy_data}
-                                    break
-                        if processor_config:
-                            break
-
                 if processor_config:
                     from wtforms.fields.form import FormField
                     # Populate processor-config-* fields from JSON

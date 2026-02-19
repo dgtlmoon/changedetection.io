@@ -450,9 +450,9 @@ class perform_site_check(difference_detection_processor):
                                             )
 
         # Which restock settings to compare against?
-        # Read from restock_diff.json (new storage); fall back to watch dict key for old data migration
+        # Settings are stored in restock_diff.json (migrated from watch.json by update_30).
         _extra_config = self.get_extra_watch_config('restock_diff.json')
-        restock_settings = _extra_config.get('restock_diff') or watch.get('restock_settings') or {
+        restock_settings = _extra_config.get('restock_diff') or {
             'follow_price_changes': True,
             'in_stock_processing': 'in_stock_only',
         }
@@ -461,7 +461,7 @@ class perform_site_check(difference_detection_processor):
         for tag_uuid in watch.get('tags'):
             tag = self.datastore.data['settings']['application']['tags'].get(tag_uuid, {})
             if tag.get('overrides_watch'):
-                restock_settings = tag.get('processor_config_restock_diff') or tag.get('restock_settings', {})
+                restock_settings = tag.get('processor_config_restock_diff') or {}
                 logger.info(f"Watch {watch.get('uuid')} - Tag '{tag.get('title')}' selected for restock settings override")
                 break
 
