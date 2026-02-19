@@ -453,6 +453,173 @@ class TestHtmlToText(unittest.TestCase):
 
 
 
+    def test_script_with_closing_tag_in_string_does_not_eat_content(self):
+        """
+        Script tag containing </script> inside a JS string must not prematurely end the block.
+
+        This is the classic regex failure mode: the old pattern would find the first </script>
+        inside the JS string literal and stop there, leaving the tail of the script block
+        (plus any following content) exposed as raw text. BS4 parses the HTML correctly.
+        """
+        html = '''<html><body>
+<p>Before script</p>
+<script>
+var html = "<div>foo<\\/script><p>bar</p>";
+var also = 1;
+</script>
+<p>AFTER SCRIPT</p>
+</body></html>'''
+
+        text = html_to_text(html)
+        assert 'Before script' in text
+        assert 'AFTER SCRIPT' in text
+        # Script internals must not leak
+        assert 'var html' not in text
+        assert 'var also' not in text
+
+    def test_content_sandwiched_between_multiple_body_scripts(self):
+        """Content between multiple script/style blocks in the body must all survive."""
+        html = '''<html><body>
+<script>var a = 1;</script>
+<p>CONTENT A</p>
+<style>.x { color: red; }</style>
+<p>CONTENT B</p>
+<script>var b = 2;</script>
+<p>CONTENT C</p>
+<style>.y { color: blue; }</style>
+<p>CONTENT D</p>
+</body></html>'''
+
+        text = html_to_text(html)
+        for label in ['CONTENT A', 'CONTENT B', 'CONTENT C', 'CONTENT D']:
+            assert label in text, f"'{label}' was eaten by script/style stripping"
+        assert 'var a' not in text
+        assert 'var b' not in text
+        assert 'color: red' not in text
+        assert 'color: blue' not in text
+
+    def test_unicode_and_international_content_preserved(self):
+        """Non-ASCII content (umlauts, CJK, soft hyphens) must survive stripping."""
+        html = '''<html><body>
+<style>.x{color:red}</style>
+<p>German: Aus\xadge\xadbucht! — ANMELDUNG — Fan\xadday 2026</p>
+<p>Chinese: \u6ce8\u518c</p>
+<p>Japanese: \u767b\u9332</p>
+<p>Korean: \ub4f1\ub85d</p>
+<p>Emoji: \U0001f4e2</p>
+<script>var x = 1;</script>
+</body></html>'''
+
+        text = html_to_text(html)
+        assert 'ANMELDUNG' in text
+        assert '\u6ce8\u518c' in text   # Chinese
+        assert '\u767b\u9332' in text   # Japanese
+        assert '\ub4f1\ub85d' in text   # Korean
+
+    def test_style_with_type_attribute_is_stripped(self):
+        """<style type="text/css"> (with type attribute) must be stripped just like bare <style>."""
+        html = '''<html><body>
+<style type="text/css">.important { display: none; }</style>
+<p>VISIBLE CONTENT</p>
+</body></html>'''
+
+        text = html_to_text(html)
+        assert 'VISIBLE CONTENT' in text
+        assert '.important' not in text
+        assert 'display: none' not in text
+
+    def test_ldjson_script_is_stripped(self):
+        """<script type="application/ld+json"> must be stripped — raw JSON must not appear as text."""
+        html = '''<html><body>
+<script type="application/ld+json">
+{"@type": "Product", "name": "Widget", "price": "9.99"}
+</script>
+<p>PRODUCT PAGE</p>
+</body></html>'''
+
+        text = html_to_text(html)
+        assert 'PRODUCT PAGE' in text
+        assert '@type' not in text
+        assert '"price"' not in text
+
+    def test_inline_svg_path_data_does_not_appear_in_text(self):
+        """
+        Inline SVG elements in the body are not stripped by BS4, but inscriptis must not
+        render their path data (d="M0,0 L100,100") as visible text.
+        """
+        html = '''<html><body>
+<p>Before SVG</p>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+    <path d="M14 5L7 12L14 19Z" fill="none"/>
+    <circle cx="12" cy="12" r="10"/>
+</svg>
+<p>After SVG</p>
+</body></html>'''
+
+        text = html_to_text(html)
+        assert 'Before SVG' in text
+        assert 'After SVG' in text
+        assert 'M14 5L7' not in text, "SVG path data should not appear in text output"
+
+    def test_tag_inside_json_data_attribute_does_not_eat_content(self):
+        """
+        Tags inside JSON data attributes with JS-escaped closing tags must not eat real content.
+
+        Real-world case: Elementor/JetEngine WordPress widgets embed HTML (including SVG icons)
+        inside JSON data attributes like data-slider-atts. The HTML inside is JS-escaped, so
+        closing tags appear as <\\/svg> rather than </svg>.
+
+        The old regex approach would find <svg> inside the attribute value, then fail to find
+        <\/svg> as a matching close tag, and scan forward to the next real </svg> in the DOM —
+        eating tens of kilobytes of actual page content in the process.
+        """
+        html = '''<!DOCTYPE html>
+<html>
+<head><title>Test</title></head>
+<body>
+<div class="slider" data-slider-atts="{&quot;prevArrow&quot;:&quot;<i class=\\&quot;icon\\&quot;><svg width=\\&quot;24\\&quot; height=\\&quot;24\\&quot; viewBox=\\&quot;0 0 24 24\\&quot; xmlns=\\&quot;http:\\/\\/www.w3.org\\/2000\\/svg\\&quot;><path d=\\&quot;M14 5L7 12L14 19\\&quot;\\/><\\/svg><\\/i>&quot;}">
+</div>
+<div class="content">
+    <h1>IMPORTANT CONTENT</h1>
+    <p>This text must not be eaten by the tag-stripping logic.</p>
+</div>
+<svg><circle cx="50" cy="50" r="40"/></svg>
+</body>
+</html>'''
+
+        text = html_to_text(html)
+
+        assert 'IMPORTANT CONTENT' in text, (
+            "Content after a JS-escaped tag in a data attribute was incorrectly stripped. "
+            "The tag-stripping logic is matching <tag> inside attribute values and scanning "
+            "forward to the next real closing tag in the DOM."
+        )
+        assert 'This text must not be eaten' in text
+
+    def test_script_inside_json_data_attribute_does_not_eat_content(self):
+        """Same issue as above but with <script> embedded in a data attribute with JS-escaped closing tag."""
+        html = '''<!DOCTYPE html>
+<html>
+<head><title>Test</title></head>
+<body>
+<div data-config="{&quot;template&quot;:&quot;<script type=\\&quot;text\\/javascript\\&quot;>var x=1;<\\/script>&quot;}">
+</div>
+<div>
+    <h1>MUST SURVIVE</h1>
+    <p>Real content after the data attribute with embedded script tag.</p>
+</div>
+<script>var real = 1;</script>
+</body>
+</html>'''
+
+        text = html_to_text(html)
+
+        assert 'MUST SURVIVE' in text, (
+            "Content after a JS-escaped <script> in a data attribute was incorrectly stripped."
+        )
+        assert 'Real content after the data attribute' in text
+
+
 if __name__ == '__main__':
     # Can run this file directly for quick testing
     unittest.main()

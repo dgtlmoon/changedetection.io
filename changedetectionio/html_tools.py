@@ -561,31 +561,29 @@ def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=Fals
         )
     else:
         parser_config = None
-
     if is_rss:
         html_content = re.sub(r'<title([\s>])', r'<h1\1', html_content)
         html_content = re.sub(r'</title>', r'</h1>', html_content)
     else:
-        # Strip bloat in one pass, SPA's often dump 10Mb+ into the <head> for styles, which is not needed
-        # Causing inscriptis to silently exit when more than ~10MB is found.
-        # All we are doing here is converting the HTML to text, no CSS layout etc
-        # Use backreference (\1) to ensure opening/closing tags match (prevents <style> matching </svg> in CSS data URIs)
-        html_content = re.sub(r'<(style|script|svg|noscript)[^>]*>.*?</\1>|<(?:link|meta)[^>]*/?>|<!--.*?-->',
-                              '', html_content, flags=re.DOTALL | re.IGNORECASE)
+        # Use BS4 html.parser to strip bloat — SPA's often dump 10MB+ of CSS/JS into <head>,
+        # causing inscriptis to silently give up. Regex-based stripping is unsafe because tags
+        # can appear inside JSON data attributes with JS-escaped closing tags (e.g. <\/script>),
+        # causing the regex to scan past the intended close and eat real page content.
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(html_content, 'html.parser')
+        for tag in soup.find_all(['head', 'script', 'style', 'noscript']):
+            tag.decompose()
 
-        # SPAs often use <body style="display:none"> to hide content until JS loads
-        # inscriptis respects CSS display rules, so we need to remove these hiding styles
-        # to extract the actual page content
-        body_style_pattern = r'(<body[^>]*)\s+style\s*=\s*["\']([^"\']*\b(?:display\s*:\s*none|visibility\s*:\s*hidden)\b[^"\']*)["\']'
+        # SPAs often use <body style="display:none"> to hide content until JS loads.
+        # inscriptis respects CSS display rules, so strip hiding styles from the body tag.
+        body_tag = soup.find('body')
+        if body_tag and body_tag.get('style'):
+            style = body_tag['style']
+            if re.search(r'\b(?:display\s*:\s*none|visibility\s*:\s*hidden)\b', style, re.IGNORECASE):
+                logger.debug(f"html_to_text: Removing hiding styles from body tag (found: '{style}')")
+                del body_tag['style']
 
-        # Check if body has hiding styles that need to be fixed
-        body_match = re.search(body_style_pattern, html_content, flags=re.IGNORECASE)
-        if body_match:
-            from loguru import logger
-            logger.debug(f"html_to_text: Removing hiding styles from body tag (found: '{body_match.group(2)}')")
-
-        html_content = re.sub(body_style_pattern, r'\1', html_content, flags=re.IGNORECASE)
-
+        html_content = str(soup)
 
     text_content = get_text(html_content, config=parser_config)
     return text_content
