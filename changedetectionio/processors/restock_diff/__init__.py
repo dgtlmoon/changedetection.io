@@ -67,10 +67,6 @@ class Watch(BaseWatch):
         super().__init__(*arg, **kw)
         self['restock'] = Restock(kw['default']['restock']) if kw.get('default') and kw['default'].get('restock') else Restock()
 
-        self['restock_settings'] = kw['default']['restock_settings'] if kw.get('default',{}).get('restock_settings') else {
-            'follow_price_changes': True,
-            'in_stock_processing' : 'in_stock_only'
-        } #@todo update
 
     def clear_watch(self):
         super().clear_watch()

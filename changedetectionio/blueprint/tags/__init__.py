@@ -160,6 +160,21 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                        default_system_settings = datastore.data['settings'],
                                        )
 
+        # Bridge API-stored processor_config_* values into the form's FormField sub-forms.
+        # The API stores processor_config_restock_diff in the tag dict; find the matching
+        # FormField by checking which one's sub-fields cover the config keys.
+        from wtforms.fields.form import FormField as WTFormField
+        for key, value in default.items():
+            if not key.startswith('processor_config_') or not isinstance(value, dict):
+                continue
+            for form_field in form:
+                if isinstance(form_field, WTFormField) and all(k in form_field.form._fields for k in value):
+                    for sub_key, sub_value in value.items():
+                        sub_field = form_field.form._fields.get(sub_key)
+                        if sub_field is not None:
+                            sub_field.data = sub_value
+                    break
+
         template_args = {
             'data': default,
             'form': form,

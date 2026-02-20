@@ -108,8 +108,13 @@ tags:
       
   - name: System Information
     description: |
-      Retrieve system status and statistics about your changedetection.io instance, including total watch 
+      Retrieve system status and statistics about your changedetection.io instance, including total watch
       counts, uptime information, and version details.
+
+  - name: Plugin API Extensions
+    description: |
+      Retrieve the live OpenAPI specification for this instance. Unlike the static spec, this endpoint
+      returns the fully merged spec including schemas for any processor plugins installed on this instance.
 
 components:
   securitySchemes:
@@ -1889,7 +1894,7 @@ paths:
         - lang: 'Python'
           source: |
             import requests
-            
+
             headers = {'x-api-key': 'YOUR_API_KEY'}
             response = requests.get('http://localhost:5000/api/v1/systeminfo', headers=headers)
             print(response.json())
@@ -1905,3 +1910,27 @@ paths:
                 tag_count: 5
                 uptime: "2 days, 3:45:12"
                 version: "0.50.10"
+
+  /full-spec:
+    get:
+      operationId: getFullApiSpec
+      tags: [Plugin API Extensions]
+      summary: Get full live API spec
+      description: |
+        Return the fully merged OpenAPI specification for this instance.
+
+        Unlike the static `api-spec.yaml` shipped with the application, this endpoint returns the
+        spec dynamically merged with any `api.yaml` schemas provided by installed processor plugins.
+        Use this URL with Swagger UI or Redoc to get accurate documentation for your specific install.
+      security: []
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X GET "http://localhost:5000/api/v1/full-spec"
+      responses:
+        '200':
+          description: Merged OpenAPI specification in YAML format
+          content:
+            application/yaml:
+              schema:
+                type: string
