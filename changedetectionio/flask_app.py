@@ -78,10 +78,9 @@ if strtobool(os.getenv("FLASK_ENABLE_COMPRESSION")):
     app.config['COMPRESS_MIMETYPES'] = ['text/html', 'text/css', 'text/javascript', 'application/json', 'application/javascript', 'image/svg+xml']
     # Use gzip only - smaller memory footprint than zstd/brotli (4-8KB vs 200-500KB contexts)
     app.config['COMPRESS_ALGORITHM'] = ['gzip']
+    compress = FlaskCompress()
+    compress.init_app(app)
 
-compress = FlaskCompress()
-
-compress.init_app(app)
 app.config['TEMPLATES_AUTO_RELOAD'] = False
 
 
