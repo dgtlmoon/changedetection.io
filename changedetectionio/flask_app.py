@@ -27,7 +27,6 @@ from flask import (
     session,
     url_for,
 )
-from flask_compress import Compress as FlaskCompress
 from flask_restful import abort, Api
 from flask_cors import CORS
 
@@ -74,6 +73,7 @@ CORS(app)
 # There's also a bug between flask compress and socketio that causes some kind of slow memory leak
 # It's better to use compression on your reverse proxy (nginx etc) instead.
 if strtobool(os.getenv("FLASK_ENABLE_COMPRESSION")):
+    from flask_compress import Compress as FlaskCompress
     app.config['COMPRESS_MIN_SIZE'] = 2096
     app.config['COMPRESS_MIMETYPES'] = ['text/html', 'text/css', 'text/javascript', 'application/json', 'application/javascript', 'image/svg+xml']
     # Use gzip only - smaller memory footprint than zstd/brotli (4-8KB vs 200-500KB contexts)
