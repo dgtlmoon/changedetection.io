@@ -260,7 +260,10 @@ class WatchSingleHistory(Resource):
                 response = make_response("No content found", 404)
                 response.mimetype = "text/plain"
         else:
+            from changedetectionio import html_tools
             content = watch.get_history_snapshot(timestamp=timestamp)
+            if self.datastore.data['settings']['application'].get('ignore_whitespace', False):
+                content = html_tools.rstrip_snapshot_content(content)
             response = make_response(content, 200)
             response.mimetype = "text/plain"
 
@@ -328,8 +331,12 @@ class WatchHistoryDiff(Resource):
         no_markup = strtobool(request.args.get('no_markup', 'false'))
 
         # Retrieve snapshot contents
+        from changedetectionio import html_tools
         from_version_file_contents = watch.get_history_snapshot(from_timestamp)
         to_version_file_contents = watch.get_history_snapshot(to_timestamp)
+        if self.datastore.data['settings']['application'].get('ignore_whitespace', False):
+            from_version_file_contents = html_tools.rstrip_snapshot_content(from_version_file_contents)
+            to_version_file_contents = html_tools.rstrip_snapshot_content(to_version_file_contents)
 
         # Get diff preferences from query parameters (matching UI preferences in DIFF_PREFERENCES_CONFIG)
         # Support both 'type' (UI parameter) and 'word_diff' (API parameter) for backward compatibility

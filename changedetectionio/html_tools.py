@@ -631,6 +631,17 @@ def workarounds_for_obfuscations(content):
     return content
 
 
+def rstrip_snapshot_content(content: str) -> str:
+    """Strip trailing whitespace from each line of a snapshot.
+
+    Table-layout pages (common on older sites) cause inscriptis to pad every cell
+    to the maximum column width found in any row, producing lines of thousands of
+    trailing spaces from simple spacer/nav rows that sit alongside wide content rows.
+    This should be applied at display/output time, not at storage time.
+    """
+    return '\n'.join(line.rstrip() for line in content.splitlines())
+
+
 def get_triggered_text(content, trigger_text):
     triggered_text = []
     result = strip_ignore_text(content=content,

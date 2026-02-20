@@ -8,7 +8,7 @@ import threading
 import unittest
 from queue import Queue
 
-from changedetectionio.html_tools import html_to_text
+from changedetectionio.html_tools import html_to_text, rstrip_snapshot_content
 
 
 class TestHtmlToText(unittest.TestCase):
@@ -620,6 +620,54 @@ var also = 1;
             "Content after a JS-escaped <script> in a data attribute was incorrectly stripped."
         )
         assert 'Real content after the data attribute' in text
+
+
+class TestRstripSnapshotContent(unittest.TestCase):
+    """Tests for rstrip_snapshot_content — the display-layer whitespace trimmer."""
+
+    def test_strips_trailing_spaces(self):
+        """Lines with trailing spaces are rstripped."""
+        content = "hello   \nworld\nfoo   "
+        result = rstrip_snapshot_content(content)
+        assert result == "hello\nworld\nfoo"
+
+    def test_preserves_content_without_trailing_whitespace(self):
+        """Lines without trailing whitespace are left unchanged."""
+        content = "line one\nline two\nline three"
+        assert rstrip_snapshot_content(content) == content
+
+    def test_table_padding_artifact(self):
+        """Simulates inscriptis table-layout padding: a symbol followed by thousands of spaces."""
+        padded_line = "▲" + " " * 27000
+        content = padded_line + "\n" + " " * 27000 + "\nsome real content"
+        result = rstrip_snapshot_content(content)
+        lines = result.splitlines()
+        assert lines[0] == "▲"
+        assert lines[1] == ""
+        assert lines[2] == "some real content"
+
+    def test_preserves_leading_whitespace(self):
+        """Leading whitespace (indentation) is never touched."""
+        content = "    indented line   \n  another   "
+        result = rstrip_snapshot_content(content)
+        assert result == "    indented line\n  another"
+
+    def test_empty_string(self):
+        assert rstrip_snapshot_content("") == ""
+
+    def test_html_to_text_does_not_rstrip(self):
+        """html_to_text itself must NOT apply rstrip — that's the output layer's job.
+        A table with a narrow cell next to a wide cell produces trailing padding."""
+        html = """<html><body>
+        <table>
+          <tr><td>narrow</td><td>{}</td></tr>
+          <tr><td>x</td><td>y</td></tr>
+        </table>
+        </body></html>""".format("w" * 500)
+        text = html_to_text(html)
+        # At least one line should have trailing spaces (inscriptis table padding)
+        has_trailing = any(line != line.rstrip() for line in text.splitlines())
+        assert has_trailing, "Expected inscriptis to produce trailing-space padding on table rows"
 
 
 if __name__ == '__main__':

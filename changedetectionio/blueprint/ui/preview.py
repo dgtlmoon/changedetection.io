@@ -84,6 +84,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 versions = list(watch.history.keys())
                 content = watch.get_history_snapshot(timestamp=timestamp)
 
+                if datastore.data['settings']['application'].get('ignore_whitespace', False):
+                    content = html_tools.rstrip_snapshot_content(content)
+
                 triggered_line_numbers = html_tools.strip_ignore_text(content=content,
                                                                       wordlist=watch.get('trigger_text'),
                                                                       mode='line numbers'

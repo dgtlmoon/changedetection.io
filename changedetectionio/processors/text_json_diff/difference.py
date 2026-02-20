@@ -152,6 +152,11 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
         logger.error(f"Unable to read watch history from-version for version {from_version}: {str(e)}")
         from_version_file_contents = f"Unable to read to-version {from_version}.\n"
 
+    if datastore.data['settings']['application'].get('ignore_whitespace', False):
+        from changedetectionio import html_tools
+        to_version_file_contents = html_tools.rstrip_snapshot_content(to_version_file_contents)
+        from_version_file_contents = html_tools.rstrip_snapshot_content(from_version_file_contents)
+
     screenshot_url = watch.get_screenshot()
 
     system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
