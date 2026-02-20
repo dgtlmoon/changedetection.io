@@ -386,9 +386,17 @@ class fetcher(Fetcher):
             await self.page._client.send('Page.stopLoading')
             logger.debug("stopLoading command sent!")
 
+        # Capture response metadata from CDP events as a fallback for when goto() times out
+        # (Page.stopLoading does not cause pyppeteer's goto() to resolve, so we need a hard timeout)
+        first_response_data = {}
+
         async def setup_frame_handlers_on_first_response(event):
             # Only trigger for the main document response
             if event.get('type') == 'Document':
+                # Save status/headers so we can proceed even if goto() times out
+                resp = event.get('response', {})
+                first_response_data['status'] = resp.get('status', 200)
+                first_response_data['headers'] = resp.get('headers', {})
                 logger.debug("First response received, setting up frame handlers for forced page stop load.")
                 self.page._client.on('Page.frameStartedNavigating', lambda e: asyncio.create_task(handle_frame_navigation(e)))
                 self.page._client.on('Page.frameStartedLoading', lambda e: asyncio.create_task(handle_frame_navigation(e)))
@@ -405,7 +413,23 @@ class fetcher(Fetcher):
         while not response:
             logger.debug(f"Attempting page fetch {url} attempt {attempt}")
             asyncio.create_task(handle_frame_navigation())
-            response = await self.page.goto(url, timeout=0)
+            try:
+                # Hard timeout safety net: Page.stopLoading CDP command does NOT cause pyppeteer's
+                # goto() to resolve. Iframes like reCAPTCHA v3 maintain persistent connections that
+                # prevent the 'load' event from ever firing, causing goto() to block forever.
+                # asyncio.wait_for() breaks the deadlock - for normal pages goto() returns naturally
+                # well within the timeout; for recaptcha/iframe-heavy pages it times out and we
+                # proceed with whatever content was loaded (first_response_data as fallback).
+                response = await asyncio.wait_for(self.page.goto(url, timeout=0), timeout=extra_wait + 15)
+            except asyncio.TimeoutError:
+                logger.warning(f"[{watch_uuid}] page.goto() timed out after {extra_wait + 15}s - Page.stopLoading did not resolve navigation, proceeding with content retrieved so far")
+                if self.page and hasattr(self.page, '_client'):
+                    try:
+                        await self.page._client.send('Page.stopLoading')
+                    except Exception:
+                        pass
+                break  # response stays None; fall through to use first_response_data
+
             await asyncio.sleep(1 + extra_wait)
             # Check if page still exists before sending command
             if self.page and hasattr(self.page, '_client'):
@@ -420,7 +444,7 @@ class fetcher(Fetcher):
                 raise EmptyReply(url=url, status_code=None)
             attempt+=1
 
-        self.headers = response.headers
+        self.headers = response.headers if response else first_response_data.get('headers', {})
 
         try:
             if self.webdriver_js_execute_code is not None and len(self.webdriver_js_execute_code):
@@ -432,7 +456,7 @@ class fetcher(Fetcher):
             raise PageUnloadable(url=url, status_code=None, message=str(e))
 
         try:
-            self.status_code = response.status
+            self.status_code = response.status if response else first_response_data.get('status', 200)
         except Exception as e:
             # https://github.com/dgtlmoon/changedetection.io/discussions/2122#discussioncomment-8241962
             logger.critical(f"Response from the browser/Playwright did not have a status_code! Response follows.")
@@ -454,7 +478,7 @@ class fetcher(Fetcher):
 
         if not empty_pages_are_a_change and len(content.strip()) == 0:
             logger.error("Content Fetcher > Content was empty (empty_pages_are_a_change is False), closing browsers")
-            raise EmptyReply(url=url, status_code=response.status)
+            raise EmptyReply(url=url, status_code=self.status_code)
 
         # Run Browser Steps here
         # @todo not yet supported, we switch to playwright in this case
