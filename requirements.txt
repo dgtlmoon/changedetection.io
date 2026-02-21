@@ -9,12 +9,6 @@ flask_restful
 flask_cors # For the Chrome extension to operate
 # janus # No longer needed - using pure threading.Queue for multi-loop support
 flask_wtf~=1.2
-# Flask 3.1 removed the session setter on RequestContext; the patch in
-# changedetectionio/realtime/socket_server.py restores it so Flask-SocketIO works.
-# Require >=3.1 so the patch is always needed; <4 guards against unknown breaking changes.
-flask>=3.1,<4
-# Flask-SocketIO 5.x still does ctx.session = ... directly; the patch above handles it.
-# >=5.5.0 ensures the threading async_mode we rely on is available.
 flask-socketio>=5.5.0,<6
 python-socketio>=5.11.0,<6
 python-engineio>=4.9.0,<5
@@ -22,6 +16,12 @@ inscriptis~=2.2
 pytz
 timeago~=1.0
 validators~=0.35
+
+# 3910 - flask and werkzeug need pinning until Flask-SocketIO==5.6.1 is out
+# Then pin a version >= 5.6.1 so it doesnt come back
+# flask>=3.1,<4 should be in the future
+flask==3.0.3
+werkzeug==3.0.6
 
 # Set these versions together to avoid a RequestsDependencyWarning
 # >= 2.26 also adds Brotli support if brotli is installed
