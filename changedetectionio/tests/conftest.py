@@ -39,8 +39,9 @@ def per_test_log_file(request):
     """Create a separate log file for each test function with pytest output."""
     import re
 
-    # Create logs directory if it doesn't exist
-    log_dir = os.path.join(os.path.dirname(__file__), "logs")
+    # Create logs directory if it doesn't exist.
+    # TEST_LOG_DIR can be overridden e.g. to a writable path when /app is read-only (Docker).
+    log_dir = os.environ.get('TEST_LOG_DIR', os.path.join(os.path.dirname(__file__), "logs"))
     os.makedirs(log_dir, exist_ok=True)
 
     # Generate log filename from test name and worker ID (for parallel runs)
