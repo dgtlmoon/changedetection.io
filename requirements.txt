@@ -21,7 +21,7 @@ validators~=0.35
 # Then pin a version >= 5.6.1 so it doesnt come back
 # flask>=3.1,<4 should be in the future
 flask==3.0.3
-werkzeug==3.0.6
+werkzeug==3.1.6
 
 # Set these versions together to avoid a RequestsDependencyWarning
 # >= 2.26 also adds Brotli support if brotli is installed
