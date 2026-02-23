@@ -48,8 +48,9 @@ def save_llm_settings(datastore, plugin_form):
     so they are never persisted to llm.json."""
     from changedetectionio.pluggy_interface import save_plugin_settings
     data = {
-        'llm_connection':    plugin_form.llm_connection.data,
-        'llm_summary_prompt': plugin_form.llm_summary_prompt.data or '',
+        'llm_connection':         plugin_form.llm_connection.data,
+        'llm_summary_prompt':     plugin_form.llm_summary_prompt.data or '',
+        'llm_diff_context_lines': plugin_form.llm_diff_context_lines.data or 2,
     }
     save_plugin_settings(datastore.datastore_path, 'llm', data)
 

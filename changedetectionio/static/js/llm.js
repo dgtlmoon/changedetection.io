@@ -118,15 +118,26 @@
                 serialise();
             });
 
+        function updateBaseVisibility() {
+            var val     = $('#llm-preset').val();
+            var preset  = presetMap[val];
+            var hasBase = preset ? !!preset[3] : (val === 'custom');
+            var show    = (val === 'custom') || hasBase;
+            $('#llm-base-group').toggle(show);
+        }
+
         // Preset dropdown pre-fills add form
         $('#llm-preset').on('change', function () {
-            var p = presetMap[$(this).val()];
-            if (!p) return;
-            $('#llm-add-name').val(p[1].replace(/\s*—.*/, '').trim());
-            $('#llm-add-model').val(p[2]);
-            $('#llm-add-base').val(p[3]);
-            $('#llm-add-tpm').val(p[4] !== undefined ? p[4] : 0);
-            $('#llm-add-key').val('');
+            var val = $(this).val();
+            var p   = presetMap[val];
+            if (p) {
+                $('#llm-add-name').val(p[1].replace(/\s*—.*/, '').trim());
+                $('#llm-add-model').val(p[2]);
+                $('#llm-add-base').val(p[3]);
+                $('#llm-add-tpm').val(p[4] !== undefined ? p[4] : 0);
+                $('#llm-add-key').val('');
+            }
+            updateBaseVisibility();
         });
 
         // Add connection
@@ -148,6 +159,7 @@
             };
             $('#llm-preset, #llm-add-name, #llm-add-model, #llm-add-key, #llm-add-base').val('');
             $('#llm-add-tpm').val('0');
+            $('#llm-base-group').hide();
             renderTable();
             serialise();
         });

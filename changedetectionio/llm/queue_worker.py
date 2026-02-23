@@ -1,8 +1,10 @@
+import fcntl
 import os
 import queue
 import re
 import threading
 import time
+from datetime import datetime, timezone
 from loguru import logger
 
 from changedetectionio.llm.tokens import (
@@ -94,7 +96,30 @@ def _read_snapshot(watch, snapshot_fname):
             return f.read()
 
 
-def _call_llm(model, messages, api_key=None, api_base=None, max_tokens=600, conn_id=None, tpm=0):
+def _append_llm_log(log_path, model, sent_tokens, recv_tokens, elapsed_ms):
+    """Append one line to the datastore-level LLM activity log.
+
+    Line format (tab-separated, LF terminated):
+        ISO-8601-UTC  fetched LLM via <model>  sent=<N>  recv=<N>  ms=<N>
+
+    The file is flock-locked for the duration of the write so concurrent
+    workers don't interleave lines.
+    """
+    ts   = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3]  # ms precision
+    line = f"{ts}\tfetched LLM via {model}\tsent={sent_tokens}\trecv={recv_tokens}\tms={elapsed_ms}\n"
+    try:
+        with open(log_path, 'a', encoding='utf-8', newline='\n') as f:
+            fcntl.flock(f, fcntl.LOCK_EX)
+            try:
+                f.write(line)
+                f.flush()
+            finally:
+                fcntl.flock(f, fcntl.LOCK_UN)
+    except Exception as exc:
+        logger.warning(f"LLM log write failed: {exc}")
+
+
+def _call_llm(model, messages, api_key=None, api_base=None, max_tokens=600, conn_id=None, tpm=0, log_path=None):
     """
     Thin wrapper around litellm.completion.
     Isolated as a named function so tests can mock.patch it without importing litellm.
@@ -117,6 +142,8 @@ def _call_llm(model, messages, api_key=None, api_base=None, max_tokens=600, conn
     conn_id / tpm   — optional rate limiting; when both are set, a proactive token-bucket
                       check is performed before calling the API.  Raises _RateLimitWait if
                       the bucket is empty so the worker can re-queue without retrying.
+
+    log_path        — when set, each call is appended to the datastore LLM activity log.
 
     Returns the response text string.
     """
@@ -143,20 +170,18 @@ def _call_llm(model, messages, api_key=None, api_base=None, max_tokens=600, conn
     if api_base:
         kwargs['api_base'] = api_base
 
+    t0       = time.monotonic()
     response = litellm.completion(**kwargs)
+    elapsed_ms = round((time.monotonic() - t0) * 1000)
+
+    if log_path:
+        usage      = getattr(response, 'usage', None)
+        sent_tok   = getattr(usage, 'prompt_tokens',     0) or 0
+        recv_tok   = getattr(usage, 'completion_tokens', 0) or 0
+        _append_llm_log(log_path, model, sent_tok, recv_tok, elapsed_ms)
+
     return response.choices[0].message.content.strip()
 
-
-def _write_summary(watch_dir, snapshot_id, text):
-    """Write the LLM summary to {snapshot_id}-llm.txt alongside the snapshot."""
-    dest = os.path.join(watch_dir, f"{snapshot_id}-llm.txt")
-    tmp = dest + '.tmp'
-    with open(tmp, 'w', encoding='utf-8') as f:
-        f.write(text)
-        f.flush()
-        os.fsync(f.fileno())
-    os.replace(tmp, dest)
-    return dest
 
 
 def _resolve_llm_connection(watch, datastore):
@@ -206,6 +231,33 @@ SYSTEM_PROMPT = (
 )
 
 
+def _build_context_header(watch, datastore):
+    """Return a short multi-line string describing what this watch monitors.
+
+    Included lines (only when non-empty / non-redundant):
+        URL:      <url>
+        Monitor:  <user title or fetched page title>   (omitted when same as URL)
+        Tags:     <comma-separated tag titles>          (omitted when none)
+    """
+    url   = watch.get('url', '')
+    title = watch.get('title', '') or watch.get('page_title', '')
+
+    lines = [f"URL: {url}"]
+    if title and title != url:
+        lines.append(f"Monitor: {title}")
+
+    tag_titles = []
+    for tag_uuid in (watch.get('tags') or []):
+        tag = datastore.data['settings']['application'].get('tags', {}).get(tag_uuid, {})
+        t = tag.get('title', '').strip()
+        if t:
+            tag_titles.append(t)
+    if tag_titles:
+        lines.append(f"Tags: {', '.join(tag_titles)}")
+
+    return '\n'.join(lines)
+
+
 def _chunk_lines(lines, model, chunk_token_size):
     """Split lines into chunks that each fit within chunk_token_size tokens."""
     import litellm
@@ -222,7 +274,7 @@ def _chunk_lines(lines, model, chunk_token_size):
     return chunks
 
 
-def _enumerate_changes(diff_text, url, model, llm_kwargs):
+def _enumerate_changes(diff_text, context_header, model, llm_kwargs):
     """
     Pass 1 — ask the model to list every distinct change exhaustively, one per line.
     Returns a plain-text list string.
@@ -233,7 +285,7 @@ def _enumerate_changes(diff_text, url, model, llm_kwargs):
         {
             'role': 'user',
             'content': (
-                f"URL: {url}\n"
+                f"{context_header}\n"
                 f"Diff:\n{diff_text}\n\n"
                 "List every distinct change you see, one item per line. "
                 "Be exhaustive — do not filter or prioritise. "
@@ -245,7 +297,7 @@ def _enumerate_changes(diff_text, url, model, llm_kwargs):
     return _call_llm(model=model, messages=messages, max_tokens=1200, **llm_kwargs)
 
 
-def _summarise_enumeration(enumerated, url, model, llm_kwargs, summary_instruction=None):
+def _summarise_enumeration(enumerated, context_header, model, llm_kwargs, summary_instruction=None):
     """
     Pass 2 — compress the exhaustive enumeration into the final output.
     Operates on a small, structured input so nothing is lost that wasn't already listed.
@@ -260,7 +312,7 @@ def _summarise_enumeration(enumerated, url, model, llm_kwargs, summary_instructi
         {
             'role': 'user',
             'content': (
-                f"URL: {url}\n"
+                f"{context_header}\n"
                 f"All changes detected:\n{enumerated}\n\n"
                 + instruction
             ),
@@ -318,23 +370,14 @@ def process_llm_summary(item, datastore):
     before_text  = _read_snapshot(watch, history[history_keys[idx - 1]])
     current_text = _read_snapshot(watch, history[history_keys[idx]])
 
-    diff_lines = list(difflib.unified_diff(
-        before_text.splitlines(),
-        current_text.splitlines(),
-        lineterm='',
-        n=2,
-    ))
-    diff_text = '\n'.join(diff_lines)
-
-    if not diff_text.strip():
-        logger.debug(f"LLM: no diff content for {uuid}/{snapshot_id}, skipping")
-        return
-
     # Resolve model / credentials via connections table (with legacy flat-field fallback)
     model, api_key, api_base, conn_id, tpm = _resolve_llm_connection(watch, datastore)
-    url = watch.get('url', '')
+    url            = watch.get('url', '')
+    context_header = _build_context_header(watch, datastore)
 
-    llm_kwargs = {}
+    llm_kwargs = {
+        'log_path': os.path.join(datastore.datastore_path, 'llm-log.txt'),
+    }
     if api_key:
         llm_kwargs['api_key'] = api_key
     if api_base:
@@ -344,13 +387,26 @@ def process_llm_summary(item, datastore):
     if tpm:
         llm_kwargs['tpm'] = tpm
 
-    # Use custom prompt if configured, otherwise fall back to the built-in default
+    # Use custom prompt / context-line setting if configured
     from changedetectionio.llm.plugin import get_llm_settings
     llm_settings  = get_llm_settings(datastore)
     custom_prompt = (llm_settings.get('llm_summary_prompt') or '').strip()
     summary_instruction = custom_prompt if custom_prompt else (
         "Analyse all changes in this diff.\n\n" + STRUCTURED_OUTPUT_INSTRUCTION
     )
+    context_n = int(llm_settings.get('llm_diff_context_lines') or 2)
+
+    diff_lines = list(difflib.unified_diff(
+        before_text.splitlines(),
+        current_text.splitlines(),
+        lineterm='',
+        n=context_n,
+    ))
+    diff_text = '\n'.join(diff_lines)
+
+    if not diff_text.strip():
+        logger.debug(f"LLM: no diff content for {uuid}/{snapshot_id}, skipping")
+        return
 
     diff_tokens = litellm.token_counter(model=model, text=diff_text)
     logger.debug(f"LLM: diff is {diff_tokens} tokens for {uuid}/{snapshot_id}")
@@ -362,7 +418,7 @@ def process_llm_summary(item, datastore):
             {
                 'role': 'user',
                 'content': (
-                    f"URL: {url}\n"
+                    f"{context_header}\n"
                     f"Diff:\n{diff_text}\n\n"
                     + summary_instruction
                 ),
@@ -373,8 +429,8 @@ def process_llm_summary(item, datastore):
 
     elif diff_tokens < TOKEN_TWO_PASS_THRESHOLD:
         # Medium diff — two-pass: enumerate exhaustively, then compress
-        enumerated = _enumerate_changes(diff_text, url, model, llm_kwargs)
-        raw        = _summarise_enumeration(enumerated, url, model, llm_kwargs, summary_instruction)
+        enumerated = _enumerate_changes(diff_text, context_header, model, llm_kwargs)
+        raw        = _summarise_enumeration(enumerated, context_header, model, llm_kwargs, summary_instruction)
         strategy   = 'two-pass'
 
     else:
@@ -386,11 +442,11 @@ def process_llm_summary(item, datastore):
         for i, chunk in enumerate(chunks):
             logger.debug(f"LLM: enumerating chunk {i+1}/{len(chunks)}")
             chunk_enumerations.append(
-                _enumerate_changes(chunk, url, model, llm_kwargs)
+                _enumerate_changes(chunk, context_header, model, llm_kwargs)
             )
 
         combined = '\n'.join(chunk_enumerations)
-        raw      = _summarise_enumeration(combined, url, model, llm_kwargs, summary_instruction)
+        raw      = _summarise_enumeration(combined, context_header, model, llm_kwargs, summary_instruction)
         strategy = 'map-reduce'
 
     llm_data = parse_llm_response(raw)

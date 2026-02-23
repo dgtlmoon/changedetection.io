@@ -409,6 +409,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
     def watch_regenerate_llm_summaries(uuid):
         """Queue LLM summary generation for all history entries that don't yet have one."""
         from flask import flash
+        from changedetectionio.llm.tokens import is_llm_data_ready
         watch = datastore.data['watching'].get(uuid)
         if not watch:
             abort(404)
@@ -427,7 +428,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             snapshot_id = os.path.basename(snapshot_fname).split('.')[0]  # always 32-char MD5
 
             # Skip entries that already have a summary
-            if os.path.exists(os.path.join(watch.data_dir, f"{snapshot_id}-llm.txt")):
+            if is_llm_data_ready(watch.data_dir, snapshot_id):
                 continue
 
             llm_summary_q.put({

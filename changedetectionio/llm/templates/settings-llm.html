@@ -64,9 +64,9 @@ var LLM_I18N = {
             <button type="button" id="llm-key-toggle" class="pure-button">{{ _('show') }}</button>
         </div>
     </div>
-    <div class="pure-control-group">
+    <div class="pure-control-group" id="llm-base-group" style="display:none">
         <label for="llm-add-base">
-            {{ _('Base URL') }}
+            {{ _('API Endpoint') }}
             <span class="pure-form-message-inline">({{ _('optional') }})</span>
         </label>
         {{ nf.api_base() }}
@@ -87,6 +87,13 @@ var LLM_I18N = {
 {# ── Prompt configuration ────────────────────────────────── #}
 <fieldset>
     <legend>{{ _('Summary Prompt') }}</legend>
+    <div class="pure-control-group">
+        {{ plugin_form.llm_diff_context_lines.label }}
+        {{ plugin_form.llm_diff_context_lines() }}
+        <span class="pure-form-message-inline">
+            {{ _('Unchanged lines shown around each change in the diff sent to the LLM. More lines = more context but higher token cost. (default: 2)') }}
+        </span>
+    </div>
     <div class="pure-control-group">
         {{ render_field(plugin_form.llm_summary_prompt) }}
         <span class="pure-form-message-inline">

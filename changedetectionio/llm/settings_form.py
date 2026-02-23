@@ -44,7 +44,7 @@ class LLMConnectionEntryForm(Form):
     name              = StringField(_l('Name'),          validators=[Optional(), Length(max=100)])
     model             = StringField(_l('Model string'),  validators=[Optional(), Length(max=200)])
     api_key           = StringField(_l('API Key'),       validators=[Optional(), Length(max=500)])
-    api_base          = StringField(_l('Base URL'),      validators=[Optional(), Length(max=500)])
+    api_base          = StringField(_l('API Endpoint'),  validators=[Optional(), Length(max=500)])
     tokens_per_minute = IntegerField(_l('Tokens/min'),   validators=[Optional(), NumberRange(min=0, max=10_000_000)], default=0)
     is_default        = BooleanField(_l('Default'),      validators=[Optional()])
 
@@ -95,7 +95,7 @@ class LLMNewConnectionForm(Form):
     api_key           = PasswordField(_l('API Key'),
                             render_kw={'id': 'llm-add-key',   'size': 40,
                                        'placeholder': 'sk-…', 'autocomplete': 'off'})
-    api_base          = StringField(_l('Base URL'),
+    api_base          = StringField(_l('API Endpoint'),
                             render_kw={'id': 'llm-add-base',  'size': 40,
                                        'placeholder': 'http://localhost:11434', 'autocomplete': 'off'})
     tokens_per_minute = IntegerField(_l('Tokens/min'), default=0,
@@ -112,6 +112,17 @@ class LLMSettingsForm(Form):
     """
     llm_connection  = FieldList(FormField(LLMConnectionEntryForm), min_entries=0)
     new_connection  = FormField(LLMNewConnectionForm)
+
+    llm_diff_context_lines = IntegerField(
+        _l('Diff context lines'),
+        validators=[Optional(), NumberRange(min=0, max=20)],
+        default=2,
+        description=_l(
+            'Number of unchanged lines shown around each change in the diff. '
+            'More lines give the LLM more context but increase token usage. (default: 2)'
+        ),
+        render_kw={'style': 'width: 5em;', 'min': '0', 'max': '20'},
+    )
 
     llm_summary_prompt = TextAreaField(
         _l('Summary prompt'),

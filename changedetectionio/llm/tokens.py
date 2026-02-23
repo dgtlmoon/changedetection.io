@@ -1,8 +1,8 @@
 """
 LLM notification token definitions and file I/O helpers.
 
-All LLM data for a snapshot is stored in a single JSON sidecar file:
-    {data_dir}/{snapshot_id}-llm.json
+All LLM data for a snapshot is stored under a dedicated subdirectory:
+    {data_dir}/llm/{snapshot_id}-llm.json
 
 A plain-text {snapshot_id}-llm.txt is also written containing just the
 summary field, for backward compatibility with any code that already reads it.
@@ -48,12 +48,17 @@ STRUCTURED_OUTPUT_INSTRUCTION = (
 
 # ── File I/O ───────────────────────────────────────────────────────────────
 
+def llm_subdir(data_dir: str) -> str:
+    """Return the llm/ subdirectory path (does not create it)."""
+    return os.path.join(data_dir, 'llm')
+
+
 def llm_json_path(data_dir: str, snapshot_id: str) -> str:
-    return os.path.join(data_dir, f"{snapshot_id}-llm.json")
+    return os.path.join(llm_subdir(data_dir), f"{snapshot_id}-llm.json")
 
 
 def llm_txt_path(data_dir: str, snapshot_id: str) -> str:
-    return os.path.join(data_dir, f"{snapshot_id}-llm.txt")
+    return os.path.join(llm_subdir(data_dir), f"{snapshot_id}-llm.txt")
 
 
 def is_llm_data_ready(data_dir: str, snapshot_id: str) -> bool:
@@ -93,15 +98,18 @@ def read_llm_tokens(data_dir: str, snapshot_id: str) -> dict:
 
 def write_llm_data(data_dir: str, snapshot_id: str, data: dict) -> str:
     """
-    Atomically write LLM data.
+    Atomically write LLM data to the llm/ subdirectory.
 
     Writes:
-      {snapshot_id}-llm.json  — full structured data (all tokens)
-      {snapshot_id}-llm.txt   — plain summary text (backward compat)
+      llm/{snapshot_id}-llm.json  — full structured data (all tokens)
+      llm/{snapshot_id}-llm.txt   — plain summary text (backward compat)
 
     Returns the path of the JSON file.
     """
     normalised = _normalise(data)
+
+    subdir = llm_subdir(data_dir)
+    os.makedirs(subdir, exist_ok=True)
 
     json_file = llm_json_path(data_dir, snapshot_id)
     _atomic_write_text(json_file, json.dumps(normalised, ensure_ascii=False))
