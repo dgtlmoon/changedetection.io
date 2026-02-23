@@ -771,7 +771,7 @@ jobs:
 
           # Now start the current version normally to verify the tag survived
           echo "=== Starting current version to verify tag exists after upgrade ==="
-          timeout 20 ALLOW_IANA_RESTRICTED_ADDRESSES=true python3 ./changedetection.py -d /tmp/data > /tmp/ui-test.log 2>&1 &
+          ALLOW_IANA_RESTRICTED_ADDRESSES=true timeout 20 python3 ./changedetection.py -d /tmp/data > /tmp/ui-test.log 2>&1 &
           APP_PID=$!
 
           # Wait for app to be ready and fetch UI
