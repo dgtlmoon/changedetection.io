@@ -204,8 +204,6 @@ def init_socketio(app, datastore):
     import platform
     import sys
 
-    _patch_flask_request_context_session()
-
     # Platform-specific async_mode selection for better stability
     system = platform.system().lower()
     python_version = sys.version_info
