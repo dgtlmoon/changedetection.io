@@ -54,7 +54,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         return redirect(url_for('tags.tags_overview_page'))
 
-    @tags_blueprint.route("/mute/<string:uuid>", methods=['GET'])
+    @tags_blueprint.route("/mute/<uuid_str:uuid>", methods=['GET'])
     @login_optionally_required
     def mute(uuid):
         tag = datastore.data['settings']['application']['tags'].get(uuid)
@@ -63,7 +63,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             tag.commit()
         return redirect(url_for('tags.tags_overview_page'))
 
-    @tags_blueprint.route("/delete/<string:uuid>", methods=['GET'])
+    @tags_blueprint.route("/delete/<uuid_str:uuid>", methods=['GET'])
     @login_optionally_required
     def delete(uuid):
         # Delete the tag from settings immediately
@@ -90,7 +90,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         flash(gettext("Tag deleted, removing from watches in background"))
         return redirect(url_for('tags.tags_overview_page'))
 
-    @tags_blueprint.route("/unlink/<string:uuid>", methods=['GET'])
+    @tags_blueprint.route("/unlink/<uuid_str:uuid>", methods=['GET'])
     @login_optionally_required
     def unlink(uuid):
         # Unlink tag from all watches in background thread to avoid blocking
@@ -141,7 +141,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         flash(gettext("All tags deleted, clearing from watches in background"))
         return redirect(url_for('tags.tags_overview_page'))
 
-    @tags_blueprint.route("/edit/<string:uuid>", methods=['GET'])
+    @tags_blueprint.route("/edit/<uuid_str:uuid>", methods=['GET'])
     @login_optionally_required
     def form_tag_edit(uuid):
         from changedetectionio.blueprint.tags.form import group_restock_settings_form
@@ -203,7 +203,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         return output
 
 
-    @tags_blueprint.route("/edit/<string:uuid>", methods=['POST'])
+    @tags_blueprint.route("/edit/<uuid_str:uuid>", methods=['POST'])
     @login_optionally_required
     def form_tag_edit_submit(uuid):
         from changedetectionio.blueprint.tags.form import group_restock_settings_form

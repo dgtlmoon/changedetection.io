@@ -6,16 +6,16 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: changedetection.io 0.52.9\n"
+"Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-02-05 17:47+0100\n"
+"POT-Creation-Date: 2026-02-23 03:54+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.17.0\n"
+"Generated-By: Babel 2.16.0\n"
 
 #: changedetectionio/blueprint/backups/__init__.py
 msgid "A backup is already running, check back in a few minutes"
@@ -33,32 +33,114 @@ msgstr ""
 msgid "Backups were deleted."
 msgstr ""
 
-#: changedetectionio/blueprint/backups/templates/overview.html changedetectionio/blueprint/settings/templates/settings.html
-msgid "Backups"
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Backup zip file"
 msgstr ""
 
-#: changedetectionio/blueprint/backups/templates/overview.html
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Must be a .zip backup file!"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Include groups"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Replace existing groups of the same UUID"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Include watches"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Replace existing watches of the same UUID"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/restore.py changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Restore backup"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "A restore is already running, check back in a few minutes"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "No file uploaded"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "File must be a .zip backup file"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Invalid or corrupted zip file"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Restore started in background, check back in a few minutes."
+msgstr ""
+
+#: changedetectionio/blueprint/backups/templates/backup_create.html
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Create"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/templates/backup_create.html
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Restore"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "A backup is running!"
 msgstr ""
 
-#: changedetectionio/blueprint/backups/templates/overview.html
+#: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "Here you can download and request a new backup, when a backup is completed you will see it listed below."
 msgstr ""
 
-#: changedetectionio/blueprint/backups/templates/overview.html
+#: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "Mb"
 msgstr ""
 
-#: changedetectionio/blueprint/backups/templates/overview.html
+#: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "No backups found."
 msgstr ""
 
-#: changedetectionio/blueprint/backups/templates/overview.html
+#: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "Create backup"
 msgstr ""
 
-#: changedetectionio/blueprint/backups/templates/overview.html
+#: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "Remove backups"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "A restore is running!"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Restore a backup. Must be a .zip backup file created on/after v0.53.1 (new database layout)."
+msgstr ""
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Note: This does not override the main application settings, only watches and groups."
+msgstr ""
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Include all groups found in backup?"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Replace any existing groups of the same UUID?"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Include all watches found in backup?"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Replace any existing watches of the same UUID?"
 msgstr ""
 
 #: changedetectionio/blueprint/imports/importer.py
@@ -66,7 +148,6 @@ msgid "Importing 5,000 of the first URLs from your list, the rest can be importe
 msgstr ""
 
 #: changedetectionio/blueprint/imports/importer.py
-#, python-brace-format
 msgid "{} Imported from list in {:.2f}s, {} Skipped."
 msgstr ""
 
@@ -79,7 +160,6 @@ msgid "JSON structure looks invalid, was it broken?"
 msgstr ""
 
 #: changedetectionio/blueprint/imports/importer.py
-#, python-brace-format
 msgid "{} Imported from Distill.io in {:.2f}s, {} Skipped."
 msgstr ""
 
@@ -88,22 +168,18 @@ msgid "Unable to read export XLSX file, something wrong with the file?"
 msgstr ""
 
 #: changedetectionio/blueprint/imports/importer.py
-#, python-brace-format
 msgid "Error processing row number {}, URL value was incorrect, row was skipped."
 msgstr ""
 
 #: changedetectionio/blueprint/imports/importer.py
-#, python-brace-format
 msgid "Error processing row number {}, check all cell data types are correct, row was skipped."
 msgstr ""
 
 #: changedetectionio/blueprint/imports/importer.py
-#, python-brace-format
 msgid "{} imported from Wachete .xlsx in {:.2f}s"
 msgstr ""
 
 #: changedetectionio/blueprint/imports/importer.py
-#, python-brace-format
 msgid "{} imported from custom .xlsx in {:.2f}s"
 msgstr ""
 
@@ -117,6 +193,14 @@ msgstr ""
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid ".XLSX & Wachete"
+msgstr ""
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "Restoring changedetection.io backups is in the"
+msgstr ""
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "backups section"
 msgstr ""
 
 #: changedetectionio/blueprint/imports/templates/import.html
@@ -203,17 +287,25 @@ msgstr ""
 msgid "Import"
 msgstr ""
 
+#: changedetectionio/blueprint/rss/single_watch.py
+#, python-format
+msgid "Watch with UUID %(uuid)s not found"
+msgstr ""
+
+#: changedetectionio/blueprint/rss/single_watch.py
+#, python-format
+msgid "Watch %(uuid)s does not have enough history snapshots to show changes (need at least 2)"
+msgstr ""
+
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Password protection removed."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/__init__.py
-#, python-brace-format
 msgid "Warning: Worker count ({}) is close to or exceeds available CPU cores ({})"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/__init__.py
-#, python-brace-format
 msgid "Worker count adjusted: {}"
 msgstr ""
 
@@ -222,7 +314,6 @@ msgid "Dynamic worker adjustment not supported for sync workers"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/__init__.py
-#, python-brace-format
 msgid "Error adjusting workers: {}"
 msgstr ""
 
@@ -289,6 +380,10 @@ msgid "RSS"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Backups"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Time & Date"
 msgstr ""
 
@@ -302,10 +397,6 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default recheck time for all watches, current system minimum is"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "seconds"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -662,6 +753,10 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Uptime:"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Python version:"
 msgstr ""
 
@@ -682,7 +777,6 @@ msgid "Clear Snapshot History"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/__init__.py
-#, python-brace-format
 msgid "The tag \"{}\" already exists"
 msgstr ""
 
@@ -843,57 +937,46 @@ msgid "RSS Feed for this watch"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
 msgid "{} watches deleted"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
 msgid "{} watches paused"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
 msgid "{} watches unpaused"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
 msgid "{} watches updated"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
 msgid "{} watches muted"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
 msgid "{} watches un-muted"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
 msgid "{} watches queued for rechecking"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
 msgid "{} watches errors cleared"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
 msgid "{} watches cleared/reset."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
 msgid "{} watches set to use default notification settings"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
 msgid "{} watches were tagged"
 msgstr ""
 
@@ -902,7 +985,6 @@ msgid "Watch not found"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
 msgid "Cleared snapshot history for watch {}"
 msgstr ""
 
@@ -915,11 +997,6 @@ msgid "Incorrect confirmation text."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py
-msgid "Marking watches as viewed in background..."
-msgstr ""
-
-#: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
 msgid "The watch by UUID {} does not exist."
 msgstr ""
 
@@ -940,12 +1017,10 @@ msgid "Queued 1 watch for rechecking."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
 msgid "Queued {} watches for rechecking ({} already queued or running)."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
 msgid "Queued {} watches for rechecking."
 msgstr ""
 
@@ -954,7 +1029,6 @@ msgid "Queueing watches for rechecking in background..."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
 msgid "Could not share, something went wrong while communicating with the share server - {}"
 msgstr ""
 
@@ -975,22 +1049,18 @@ msgid "No watches to edit"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/edit.py
-#, python-brace-format
 msgid "No watch with the UUID {} found."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/edit.py
-#, python-brace-format
 msgid "Switched to mode - {}."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/edit.py
-#, python-brace-format
 msgid "Could not load '{}' processor, processor plugin might be missing. Please select a different processor."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/edit.py
-#, python-brace-format
 msgid "Could not load '{}' processor, processor plugin might be missing."
 msgstr ""
 
@@ -1523,6 +1593,10 @@ msgid "Download latest HTML snapshot"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Download watch data package"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Delete Watch?"
 msgstr ""
 
@@ -1571,7 +1645,6 @@ msgid "Screenshot requires a Content Fetcher ( Sockpuppetbrowser, selenium, etc 
 msgstr ""
 
 #: changedetectionio/blueprint/ui/views.py
-#, python-brace-format
 msgid "Warning, URL {} already exists"
 msgstr ""
 
@@ -1584,7 +1657,6 @@ msgid "Watch added."
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/__init__.py
-#, python-brace-format
 msgid "displaying <b>{start} - {end}</b> {record_name} in total <b>{total}</b>"
 msgstr ""
 
@@ -1777,6 +1849,66 @@ msgstr ""
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/flask_app.py
 #: changedetectionio/realtime/socket_server.py
 msgid "Not yet"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "0 seconds"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "year"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "years"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "month"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "months"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "week"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "weeks"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "day"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "days"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "hour"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "hours"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "minute"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "minutes"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "second"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/flask_app.py
+msgid "seconds"
 msgstr ""
 
 #: changedetectionio/flask_app.py
@@ -2325,12 +2457,10 @@ msgid "Not enough history to compare. Need at least 2 snapshots."
 msgstr ""
 
 #: changedetectionio/processors/image_ssim_diff/difference.py
-#, python-brace-format
 msgid "Failed to load screenshots: {}"
 msgstr ""
 
 #: changedetectionio/processors/image_ssim_diff/difference.py
-#, python-brace-format
 msgid "Failed to calculate diff: {}"
 msgstr ""
 
@@ -2456,7 +2586,6 @@ msgid "Detects all text changes where possible"
 msgstr ""
 
 #: changedetectionio/store/__init__.py
-#, python-brace-format
 msgid "Error fetching metadata for {}"
 msgstr ""
 
@@ -2465,7 +2594,6 @@ msgid "Watch protocol is not permitted or invalid URL format"
 msgstr ""
 
 #: changedetectionio/store/__init__.py
-#, python-brace-format
 msgid "Watch limit reached ({}/{} watches). Cannot add more watches."
 msgstr ""
 
@@ -2871,6 +2999,18 @@ msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
 msgid "Note: Wrap in forward slash / to use regex example:"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "You can also use"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "conditions"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "\"Page text\" - with Contains, Starts With, Not Contains and many more"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html

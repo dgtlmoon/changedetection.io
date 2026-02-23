@@ -68,6 +68,30 @@ socketio_server = None
 
 # Enable CORS, especially useful for the Chrome extension to operate from anywhere
 CORS(app)
+from werkzeug.routing import BaseConverter, ValidationError
+from uuid import UUID
+
+class StrictUUIDConverter(BaseConverter):
+    # Special sentinel values allowed in addition to strict UUIDs
+    _ALLOWED_SENTINELS = frozenset({'first'})
+
+    def to_python(self, value: str) -> str:
+        if value in self._ALLOWED_SENTINELS:
+            return value
+        try:
+            u = UUID(value)
+        except ValueError as e:
+            raise ValidationError() from e
+        # Reject non-standard formats (braces, URNs, no-hyphens)
+        if str(u) != value.lower():
+            raise ValidationError()
+        return str(u)
+
+    def to_url(self, value) -> str:
+        return str(value)
+
+# app setup (once)
+app.url_map.converters["uuid_str"] = StrictUUIDConverter
 
 # Flask-Compress handles HTTP compression, Socket.IO compression disabled to prevent memory leak.
 # There's also a bug between flask compress and socketio that causes some kind of slow memory leak
@@ -533,22 +557,22 @@ def changedetection_app(config=None, datastore_o=None):
 
 
     watch_api.add_resource(WatchHistoryDiff,
-                           '/api/v1/watch/<string:uuid>/difference/<string:from_timestamp>/<string:to_timestamp>',
+                           '/api/v1/watch/<uuid_str:uuid>/difference/<string:from_timestamp>/<string:to_timestamp>',
                            resource_class_kwargs={'datastore': datastore})
     watch_api.add_resource(WatchSingleHistory,
-                           '/api/v1/watch/<string:uuid>/history/<string:timestamp>',
+                           '/api/v1/watch/<uuid_str:uuid>/history/<string:timestamp>',
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
     watch_api.add_resource(WatchFavicon,
-                           '/api/v1/watch/<string:uuid>/favicon',
+                           '/api/v1/watch/<uuid_str:uuid>/favicon',
                            resource_class_kwargs={'datastore': datastore})
     watch_api.add_resource(WatchHistory,
-                           '/api/v1/watch/<string:uuid>/history',
+                           '/api/v1/watch/<uuid_str:uuid>/history',
                            resource_class_kwargs={'datastore': datastore})
 
     watch_api.add_resource(CreateWatch, '/api/v1/watch',
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
 
-    watch_api.add_resource(Watch, '/api/v1/watch/<string:uuid>',
+    watch_api.add_resource(Watch, '/api/v1/watch/<uuid_str:uuid>',
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
 
     watch_api.add_resource(SystemInfo, '/api/v1/systeminfo',
@@ -561,7 +585,7 @@ def changedetection_app(config=None, datastore_o=None):
     watch_api.add_resource(Tags, '/api/v1/tags',
                            resource_class_kwargs={'datastore': datastore})
 
-    watch_api.add_resource(Tag, '/api/v1/tag', '/api/v1/tag/<string:uuid>',
+    watch_api.add_resource(Tag, '/api/v1/tag', '/api/v1/tag/<uuid_str:uuid>',
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
                            
     watch_api.add_resource(Search, '/api/v1/search',

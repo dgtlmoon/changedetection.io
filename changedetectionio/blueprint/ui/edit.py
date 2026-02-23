@@ -20,7 +20,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             if tag_uuid in watch.get('tags', []) and (tag.get('include_filters') or tag.get('subtractive_selectors')):
                 return True
 
-    @edit_blueprint.route("/edit/<string:uuid>", methods=['GET', 'POST'])
+    @edit_blueprint.route("/edit/<uuid_str:uuid>", methods=['GET', 'POST'])
     @login_optionally_required
     # https://stackoverflow.com/questions/42984453/wtforms-populate-form-with-data-if-data-exists
     # https://wtforms.readthedocs.io/en/3.0.x/forms/#wtforms.form.Form.populate_obj ?
@@ -327,7 +327,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         return output
 
-    @edit_blueprint.route("/edit/<string:uuid>/get-html", methods=['GET'])
+    @edit_blueprint.route("/edit/<uuid_str:uuid>/get-html", methods=['GET'])
     @login_optionally_required
     def watch_get_latest_html(uuid):
         from io import BytesIO
@@ -354,7 +354,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         # Return a 500 error
         abort(500)
 
-    @edit_blueprint.route("/edit/<string:uuid>/get-data-package", methods=['GET'])
+    @edit_blueprint.route("/edit/<uuid_str:uuid>/get-data-package", methods=['GET'])
     @login_optionally_required
     def watch_get_data_package(uuid):
         """Download all data for a single watch as a zip file"""
@@ -405,7 +405,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                         mimetype='application/zip')
 
     # Ajax callback
-    @edit_blueprint.route("/edit/<string:uuid>/preview-rendered", methods=['POST'])
+    @edit_blueprint.route("/edit/<uuid_str:uuid>/preview-rendered", methods=['POST'])
     @login_optionally_required
     def watch_get_preview_rendered(uuid):
         '''For when viewing the "preview" of the rendered text from inside of Edit'''
