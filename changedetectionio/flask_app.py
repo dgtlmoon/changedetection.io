@@ -984,6 +984,9 @@ def changedetection_app(config=None, datastore_o=None):
         from changedetectionio.pluggy_interface import plugin_manager
         plugin_manager.register(LLMQueuePlugin(llm_summary_q), 'llm_queue_plugin')
 
+        # Re-run template path configuration now that all plugins (including LLM) are registered
+        _configure_plugin_templates()
+
         in_pytest = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
         # Check for new release version, but not when running in test/build or pytest
         if not os.getenv("GITHUB_REF", False) and not strtobool(os.getenv('DISABLE_VERSION_CHECK', 'no')) and not in_pytest:

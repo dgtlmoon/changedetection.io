@@ -45,6 +45,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                         extra_notification_tokens=datastore.get_unique_notification_tokens_available()
                                         )
 
+
         # Remove the last option 'System default'
         form.application.form.notification_format.choices.pop()
 
@@ -75,15 +76,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     del (app_update['password'])
 
                 datastore.data['settings']['application'].update(app_update)
-
-                # Persist LLM connections (JSON blob from the JS-managed hidden field)
-                import json as _json
-                llm_connections_raw = request.form.get('llm_connections', '')
-                if llm_connections_raw:
-                    try:
-                        datastore.data['settings']['application']['llm_connections'] = _json.loads(llm_connections_raw)
-                    except (ValueError, TypeError):
-                        flash(gettext("Invalid LLM connections data."), 'error')
 
                 # Handle dynamic worker count adjustment
                 old_worker_count = datastore.data['settings']['requests'].get('workers', 1)
@@ -138,8 +130,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     # Instantiate plugin form with POST data
                     plugin_form = form_class(formdata=request.form)
 
-                    # Save plugin settings (validation is optional for plugins)
-                    if plugin_form.data:
+                    # Save plugin settings — use plugin's own save_fn if provided
+                    # (allows plugins to strip ephemeral staging fields etc.)
+                    save_fn = tab.get('save_fn')
+                    if save_fn:
+                        save_fn(datastore, plugin_form)
+                    elif plugin_form.data:
                         save_plugin_settings(datastore.datastore_path, plugin_id, plugin_form.data)
 
                 flash(gettext("Settings updated."))

@@ -35,8 +35,32 @@
         return escHtml(k.substring(0, 4)) + '••••';
     }
 
+    // Emit WTForms FieldList hidden inputs (llm_connection-N-fieldname) so the
+    // server processes connections through the declared schema — no arbitrary keys.
     function serialise() {
-        $('#llm-connections-json').val(JSON.stringify(LLM_CONNECTIONS));
+        var $form = $('form.settings');
+        $form.find('input[data-llm-gen]').remove();
+
+        var ids = Object.keys(LLM_CONNECTIONS);
+        $.each(ids, function (i, id) {
+            var c      = LLM_CONNECTIONS[id];
+            var prefix = 'llm_connection-' + i + '-';
+            var fields = {
+                connection_id:     id,
+                name:              c.name              || '',
+                model:             c.model             || '',
+                api_key:           c.api_key           || '',
+                api_base:          c.api_base          || '',
+                tokens_per_minute: parseInt(c.tokens_per_minute || 0, 10)
+            };
+            $.each(fields, function (field, value) {
+                $('<input>').attr({ type: 'hidden', name: prefix + field, value: value, 'data-llm-gen': '1' }).appendTo($form);
+            });
+            // BooleanField: only emit when true (absence == false in WTForms)
+            if (c.is_default) {
+                $('<input>').attr({ type: 'hidden', name: prefix + 'is_default', value: 'y', 'data-llm-gen': '1' }).appendTo($form);
+            }
+        });
     }
 
     function renderTable() {

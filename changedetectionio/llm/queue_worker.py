@@ -163,32 +163,35 @@ def _resolve_llm_connection(watch, datastore):
     """Return (model, api_key, api_base, conn_id, tpm) for the given watch.
 
     Resolution order:
-    1. Watch-level connection ID (``watch['llm_connection_id']``) pointing to a
-       named entry in ``settings.application.llm_connections``.
-    2. The default entry in ``settings.application.llm_connections`` (``is_default=True``).
-    3. Legacy flat fields (``llm_model`` / ``llm_api_key`` / ``llm_api_base``) on
-       the watch or in global settings — kept for backward compatibility.
-    4. Hard-coded fallback: ``gpt-4o-mini`` with no key / base.
-
-    ``tpm`` is tokens-per-minute for the proactive rate limiter; 0 means unlimited.
+    1. Watch-level connection_id pointing to a named entry in plugin settings.
+    2. The default entry in plugin settings (is_default=True).
+    3. Legacy flat fields on the watch or in global settings — backward compat.
+    4. Hard-coded fallback: gpt-4o-mini with no key / base.
     """
-    app_settings = datastore.data['settings']['application']
-    connections  = app_settings.get('llm_connections') or {}
+    from changedetectionio.llm.plugin import get_llm_settings
+    from changedetectionio.llm.settings_form import sanitised_conn_id
 
-    # 1. Watch-level override by explicit connection UUID
-    conn_id = watch.get('llm_connection_id')
-    if conn_id and conn_id in connections:
-        c = connections[conn_id]
-        return (c.get('model', 'gpt-4o-mini'), c.get('api_key', ''), c.get('api_base', ''),
-                conn_id, int(c.get('tokens_per_minute', 0) or 0))
+    llm_settings = get_llm_settings(datastore)
+    connections  = llm_settings.get('llm_connection') or []
+
+    # 1. Watch-level override by explicit connection_id
+    watch_conn_id = watch.get('llm_connection_id')
+    if watch_conn_id:
+        for c in connections:
+            if c.get('connection_id') == watch_conn_id:
+                cid = sanitised_conn_id(c.get('connection_id', ''))
+                return (c.get('model', 'gpt-4o-mini'), c.get('api_key', ''), c.get('api_base', ''),
+                        cid, int(c.get('tokens_per_minute', 0) or 0))
 
     # 2. Global default connection
-    for cid, c in connections.items():
+    for c in connections:
         if c.get('is_default'):
+            cid = sanitised_conn_id(c.get('connection_id', ''))
             return (c.get('model', 'gpt-4o-mini'), c.get('api_key', ''), c.get('api_base', ''),
                     cid, int(c.get('tokens_per_minute', 0) or 0))
 
     # 3. Legacy flat fields (backward compat)
+    app_settings = datastore.data['settings']['application']
     model    = watch.get('llm_model')    or app_settings.get('llm_model',    'gpt-4o-mini')
     api_key  = watch.get('llm_api_key')  or app_settings.get('llm_api_key',  '')
     api_base = watch.get('llm_api_base') or app_settings.get('llm_api_base', '')
@@ -242,11 +245,16 @@ def _enumerate_changes(diff_text, url, model, llm_kwargs):
     return _call_llm(model=model, messages=messages, max_tokens=1200, **llm_kwargs)
 
 
-def _summarise_enumeration(enumerated, url, model, llm_kwargs):
+def _summarise_enumeration(enumerated, url, model, llm_kwargs, summary_instruction=None):
     """
-    Pass 2 — compress the exhaustive enumeration into structured JSON output.
+    Pass 2 — compress the exhaustive enumeration into the final output.
     Operates on a small, structured input so nothing is lost that wasn't already listed.
+    summary_instruction overrides the default STRUCTURED_OUTPUT_INSTRUCTION when set.
     """
+    instruction = summary_instruction or (
+        "Now produce the final structured output for all of these changes.\n\n"
+        + STRUCTURED_OUTPUT_INSTRUCTION
+    )
     messages = [
         {'role': 'system', 'content': SYSTEM_PROMPT},
         {
@@ -254,8 +262,7 @@ def _summarise_enumeration(enumerated, url, model, llm_kwargs):
             'content': (
                 f"URL: {url}\n"
                 f"All changes detected:\n{enumerated}\n\n"
-                "Now produce the final structured output for all of these changes.\n\n"
-                + STRUCTURED_OUTPUT_INSTRUCTION
+                + instruction
             ),
         },
     ]
@@ -337,6 +344,14 @@ def process_llm_summary(item, datastore):
     if tpm:
         llm_kwargs['tpm'] = tpm
 
+    # Use custom prompt if configured, otherwise fall back to the built-in default
+    from changedetectionio.llm.plugin import get_llm_settings
+    llm_settings  = get_llm_settings(datastore)
+    custom_prompt = (llm_settings.get('llm_summary_prompt') or '').strip()
+    summary_instruction = custom_prompt if custom_prompt else (
+        "Analyse all changes in this diff.\n\n" + STRUCTURED_OUTPUT_INSTRUCTION
+    )
+
     diff_tokens = litellm.token_counter(model=model, text=diff_text)
     logger.debug(f"LLM: diff is {diff_tokens} tokens for {uuid}/{snapshot_id}")
 
@@ -349,8 +364,7 @@ def process_llm_summary(item, datastore):
                 'content': (
                     f"URL: {url}\n"
                     f"Diff:\n{diff_text}\n\n"
-                    "Analyse all changes in this diff.\n\n"
-                    + STRUCTURED_OUTPUT_INSTRUCTION
+                    + summary_instruction
                 ),
             },
         ]
@@ -358,13 +372,13 @@ def process_llm_summary(item, datastore):
         strategy = 'single'
 
     elif diff_tokens < TOKEN_TWO_PASS_THRESHOLD:
-        # Medium diff — two-pass: enumerate exhaustively, then compress to JSON
+        # Medium diff — two-pass: enumerate exhaustively, then compress
         enumerated = _enumerate_changes(diff_text, url, model, llm_kwargs)
-        raw        = _summarise_enumeration(enumerated, url, model, llm_kwargs)
+        raw        = _summarise_enumeration(enumerated, url, model, llm_kwargs, summary_instruction)
         strategy   = 'two-pass'
 
     else:
-        # Large diff — map-reduce: chunk → enumerate per chunk → synthesise to JSON
+        # Large diff — map-reduce: chunk → enumerate per chunk → synthesise
         chunks = _chunk_lines(diff_lines, model, TOKEN_CHUNK_SIZE)
         logger.debug(f"LLM: map-reduce over {len(chunks)} chunks for {uuid}/{snapshot_id}")
 
@@ -376,7 +390,7 @@ def process_llm_summary(item, datastore):
             )
 
         combined = '\n'.join(chunk_enumerations)
-        raw      = _summarise_enumeration(combined, url, model, llm_kwargs)
+        raw      = _summarise_enumeration(combined, url, model, llm_kwargs, summary_instruction)
         strategy = 'map-reduce'
 
     llm_data = parse_llm_response(raw)
