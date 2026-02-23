@@ -124,8 +124,7 @@ greenlet >= 3.0.3
 # Default SOCKETIO_MODE=threading is recommended for better compatibility
 gevent
 
-# Previously pinned for flask_expects_json (removed 2026-02). Unpinning for now.
-referencing
+referencing==0.37.0
 
 # For conditions
 panzi-json-logic
