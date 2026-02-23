@@ -715,7 +715,7 @@ jobs:
           pip install 'pyOpenSSL>=23.2.0'
 
           echo "=== Running version 0.49.1 to create datastore ==="
-          python3 ./changedetection.py -C -d /tmp/data &
+          ALLOW_IANA_RESTRICTED_ADDRESSES=true python3 ./changedetection.py -C -d /tmp/data &
           APP_PID=$!
 
           # Wait for app to be ready
@@ -763,7 +763,7 @@ jobs:
           pip install -r requirements.txt
 
           echo "=== Running current version (commit ${{ github.sha }}) with old datastore (testing mode) ==="
-          TESTING_SHUTDOWN_AFTER_DATASTORE_LOAD=1 python3 ./changedetection.py -d /tmp/data > /tmp/upgrade-test.log 2>&1
+          ALLOW_IANA_RESTRICTED_ADDRESSES=true TESTING_SHUTDOWN_AFTER_DATASTORE_LOAD=1 python3 ./changedetection.py -d /tmp/data > /tmp/upgrade-test.log 2>&1
 
           echo "=== Upgrade test output ==="
           cat /tmp/upgrade-test.log
@@ -771,7 +771,7 @@ jobs:
 
           # Now start the current version normally to verify the tag survived
           echo "=== Starting current version to verify tag exists after upgrade ==="
-          timeout 20 python3 ./changedetection.py -d /tmp/data > /tmp/ui-test.log 2>&1 &
+          timeout 20 ALLOW_IANA_RESTRICTED_ADDRESSES=true python3 ./changedetection.py -d /tmp/data > /tmp/ui-test.log 2>&1 &
           APP_PID=$!
 
           # Wait for app to be ready and fetch UI
