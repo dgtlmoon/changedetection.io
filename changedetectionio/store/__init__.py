@@ -728,8 +728,11 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
                 return False
 
         if not is_safe_valid_url(url):
-            flash(gettext('Watch protocol is not permitted or invalid URL format'), 'error')
-
+            from flask import has_request_context
+            if has_request_context():
+                flash(gettext('Watch protocol is not permitted or invalid URL format'), 'error')
+            else:
+                logger.error(f"add_watch: URL '{url}' is not permitted or invalid, skipping.")
             return None
 
         # Check PAGE_WATCH_LIMIT if set

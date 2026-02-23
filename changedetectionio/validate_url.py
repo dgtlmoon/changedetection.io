@@ -1,3 +1,5 @@
+import ipaddress
+import socket
 from functools import lru_cache
 from loguru import logger
 from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
@@ -54,6 +56,23 @@ def normalize_url_encoding(url):
         # If parsing fails for any reason, return original URL
         logger.debug(f"URL normalization failed for '{url}': {e}")
         return url
+
+
+def is_private_hostname(hostname):
+    """Return True if hostname resolves to an IANA-restricted (private/reserved) IP address.
+
+    Fails closed: unresolvable hostnames return True (block them).
+    Never cached — callers that need fresh DNS resolution (e.g. at fetch time) can call
+    this directly without going through the lru_cached is_safe_valid_url().
+    """
+    try:
+        for info in socket.getaddrinfo(hostname, None):
+            ip = ipaddress.ip_address(info[4][0])
+            if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
+                return True
+    except socket.gaierror:
+        return True
+    return False
 
 
 @lru_cache(maxsize=10000)
@@ -118,5 +137,13 @@ def is_safe_valid_url(test_url):
     except validators.ValidationError:
         logger.warning(f'URL f"{test_url}" failed validation, aborting.')
         return False
+
+    # Block IANA-restricted (private/reserved) IP addresses unless explicitly allowed.
+    # This is an add-time check; fetch-time re-validation in requests.py handles DNS rebinding.
+    if not strtobool(os.getenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'false')):
+        parsed = urlparse(test_url)
+        if parsed.hostname and is_private_hostname(parsed.hostname):
+            logger.warning(f'URL "{test_url}" resolves to a private/reserved IP address, aborting.')
+            return False
 
     return True
