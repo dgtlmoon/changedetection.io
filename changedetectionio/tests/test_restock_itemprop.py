@@ -236,6 +236,7 @@ def test_restock_itemprop_with_tag(client, live_server, measure_memory_usage, da
     }
 
     _run_test_minmax_limit(client, extra_watch_edit_form=extras,datastore_path=datastore_path)
+    delete_all_watches(client)
 
 
 
@@ -388,9 +389,10 @@ def test_change_with_notification_values(client, live_server, measure_memory_usa
     os.unlink(os.path.join(datastore_path, "notification.txt"))
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     res = client.post(url_for("ui.ui_notification.ajax_callback_send_notification_test", watch_uuid=uuid), data={}, follow_redirects=True)
-    time.sleep(5)
+    wait_for_notification_endpoint_output(datastore_path=datastore_path)
     assert os.path.isfile(os.path.join(datastore_path, "notification.txt")), "Notification received"
 
+    delete_all_watches(client)
 
 def test_data_sanity(client, live_server, measure_memory_usage, datastore_path):
     
@@ -406,6 +408,7 @@ def test_data_sanity(client, live_server, measure_memory_usage, datastore_path):
         follow_redirects=True
     )
 
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
@@ -417,6 +420,7 @@ def test_data_sanity(client, live_server, measure_memory_usage, datastore_path):
         data={"url": test_url2, "tags": 'restock tests', 'processor': 'restock_diff'},
         follow_redirects=True
     )
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert str(res.data.decode()).count("950.95") == 1, "Price should only show once (for the watch added, no other watches yet)"
@@ -462,3 +466,4 @@ def test_special_prop_examples(client, live_server, measure_memory_usage, datast
             assert b'ception' not in res.data
             assert b'155.55' in res.data
 
+    delete_all_watches(client)

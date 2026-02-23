@@ -90,7 +90,7 @@ def on_config_save(watch, processor_config, datastore):
             processor_config['auto_track_region'] = False
 
             # Remove old template file if exists
-            template_path = os.path.join(watch.watch_data_dir, CROPPED_IMAGE_TEMPLATE_FILENAME)
+            template_path = os.path.join(watch.data_dir, CROPPED_IMAGE_TEMPLATE_FILENAME)
             if os.path.exists(template_path):
                 os.remove(template_path)
                 logger.debug(f"Removed old template file: {template_path}")

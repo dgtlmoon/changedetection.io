@@ -1,18 +1,18 @@
 import os
+import threading
 
 from changedetectionio.validate_url import is_safe_valid_url
+from changedetectionio.favicon_utils import get_favicon_mime_type
 
 from . import auth
 from changedetectionio import queuedWatchMetaData, strtobool
-from changedetectionio import worker_handler
+from changedetectionio import worker_pool
 from flask import request, make_response, send_from_directory
-from flask_expects_json import expects_json
 from flask_restful import abort, Resource
 from loguru import logger
 import copy
 
-# Import schemas from __init__.py
-from . import schema, schema_create_watch, schema_update_watch, validate_openapi_request
+from . import validate_openapi_request, get_readonly_watch_fields
 from ..notification import valid_notification_formats
 from ..notification.handler import newline_re
 
@@ -64,43 +64,46 @@ class Watch(Resource):
     @validate_openapi_request('getWatch')
     def get(self, uuid):
         """Get information about a single watch, recheck, pause, or mute."""
-        import time
-        from copy import deepcopy
-        watch = None
-        for _ in range(20):
-            try:
-                watch = deepcopy(self.datastore.data['watching'].get(uuid))
-                break
-            except RuntimeError:
-                # Incase dict changed, try again
-                time.sleep(0.01)
-
-        if not watch:
+        # Get watch reference first (for pause/mute operations)
+        watch_obj = self.datastore.data['watching'].get(uuid)
+        if not watch_obj:
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
 
+        # Create a dict copy for JSON response (with lock for thread safety)
+        # This is much faster than deepcopy and doesn't copy the datastore reference
+        # WARNING: dict() is a SHALLOW copy - nested dicts are shared with original!
+        # Only safe because we only ADD scalar properties (line 97-101), never modify nested dicts
+        # If you need to modify nested dicts, use: from copy import deepcopy; watch = deepcopy(dict(watch_obj))
+        with self.datastore.lock:
+            watch = dict(watch_obj)
+
         if request.args.get('recheck'):
-            worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+            worker_pool.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
             return "OK", 200
         if request.args.get('paused', '') == 'paused':
-            self.datastore.data['watching'].get(uuid).pause()
+            watch_obj.pause()
+            watch_obj.commit()
             return "OK", 200
         elif request.args.get('paused', '') == 'unpaused':
-            self.datastore.data['watching'].get(uuid).unpause()
+            watch_obj.unpause()
+            watch_obj.commit()
             return "OK", 200
         if request.args.get('muted', '') == 'muted':
-            self.datastore.data['watching'].get(uuid).mute()
+            watch_obj.mute()
+            watch_obj.commit()
             return "OK", 200
         elif request.args.get('muted', '') == 'unmuted':
-            self.datastore.data['watching'].get(uuid).unmute()
+            watch_obj.unmute()
+            watch_obj.commit()
             return "OK", 200
 
         # Return without history, get that via another API call
         # Properties are not returned as a JSON, so add the required props manually
-        watch['history_n'] = watch.history_n
+        watch['history_n'] = watch_obj.history_n
         # attr .last_changed will check for the last written text snapshot on change
-        watch['last_changed'] = watch.last_changed
-        watch['viewed'] = watch.viewed
-        watch['link'] = watch.link,
+        watch['last_changed'] = watch_obj.last_changed
+        watch['viewed'] = watch_obj.viewed
+        watch['link'] = watch_obj.link,
 
         return watch
 
@@ -116,7 +119,6 @@ class Watch(Resource):
 
     @auth.check_token
     @validate_openapi_request('updateWatch')
-    @expects_json(schema_update_watch)
     def put(self, uuid):
         """Update watch information."""
         watch = self.datastore.data['watching'].get(uuid)
@@ -125,72 +127,86 @@ class Watch(Resource):
 
         if request.json.get('proxy'):
             plist = self.datastore.proxy_list
-            if not request.json.get('proxy') in plist:
-                return "Invalid proxy choice, currently supported proxies are '{}'".format(', '.join(plist)), 400
+            if not plist or request.json.get('proxy') not in plist:
+                proxy_list_str = ', '.join(plist) if plist else 'none configured'
+                return f"Invalid proxy choice, currently supported proxies are '{proxy_list_str}'", 400
 
         # Validate time_between_check when not using defaults
         validation_error = validate_time_between_check_required(request.json)
         if validation_error:
             return validation_error, 400
 
-        # XSS etc protection
-        if request.json.get('url') and not is_safe_valid_url(request.json.get('url')):
-            return "Invalid URL", 400
+        # Validate notification_urls if provided
+        if 'notification_urls' in request.json:
+            from wtforms import ValidationError
+            from changedetectionio.api.Notifications import validate_notification_urls
+            try:
+                notification_urls = request.json.get('notification_urls', [])
+                validate_notification_urls(notification_urls)
+            except ValidationError as e:
+                return str(e), 400
+
+        # XSS etc protection - validate URL if it's being updated
+        if 'url' in request.json:
+            new_url = request.json.get('url')
+
+            # URL must be a non-empty string
+            if new_url is None:
+                return "URL cannot be null", 400
+
+            if not isinstance(new_url, str):
+                return "URL must be a string", 400
+
+            if not new_url.strip():
+                return "URL cannot be empty or whitespace only", 400
+
+            if not is_safe_valid_url(new_url.strip()):
+                return "Invalid or unsupported URL format. URL must use http://, https://, or ftp:// protocol", 400
 
         # Handle processor-config-* fields separately (save to JSON, not datastore)
         from changedetectionio import processors
-        processor_config_data = {}
-        regular_data = {}
 
-        for key, value in request.json.items():
-            if key.startswith('processor_config_'):
-                config_key = key.replace('processor_config_', '')
-                if value:  # Only save non-empty values
-                    processor_config_data[config_key] = value
-            else:
-                regular_data[key] = value
+        # Make a mutable copy of request.json for modification
+        json_data = dict(request.json)
+
+        # Extract and remove processor config fields from json_data
+        processor_config_data = processors.extract_processor_config_from_form_data(json_data)
+
+        # Filter out readOnly fields (extracted from OpenAPI spec Watch schema)
+        # These are system-managed fields that should never be user-settable
+        readonly_fields = get_readonly_watch_fields()
+
+        # Also filter out @property attributes (computed/derived values from the model)
+        # These are not stored and should be ignored in PUT requests
+        from changedetectionio.model.Watch import model as WatchModel
+        property_fields = WatchModel.get_property_names()
+
+        # Combine both sets of fields to ignore
+        fields_to_ignore = readonly_fields | property_fields
+
+        # Remove all ignored fields from update data
+        for field in fields_to_ignore:
+            json_data.pop(field, None)
+
+        # Validate remaining fields - reject truly unknown fields
+        # Get valid fields from WatchBase schema
+        from . import get_watch_schema_properties
+        valid_fields = set(get_watch_schema_properties().keys())
+
+        # Also allow last_viewed (explicitly defined in UpdateWatch schema)
+        valid_fields.add('last_viewed')
+
+        # Check for unknown fields
+        unknown_fields = set(json_data.keys()) - valid_fields
+        if unknown_fields:
+            return f"Unknown field(s): {', '.join(sorted(unknown_fields))}", 400
 
         # Update watch with regular (non-processor-config) fields
-        watch.update(regular_data)
+        watch.update(json_data)
+        watch.commit()
 
-        # Save processor config to JSON file if any config data exists
-        if processor_config_data:
-            try:
-                processor_name = request.json.get('processor', watch.get('processor'))
-                if processor_name:
-                    # Create a processor instance to access config methods
-                    from changedetectionio.processors import difference_detection_processor
-                    processor_instance = difference_detection_processor(self.datastore, uuid)
-                    # Use processor name as filename so each processor keeps its own config
-                    config_filename = f'{processor_name}.json'
-                    processor_instance.update_extra_watch_config(config_filename, processor_config_data)
-                    logger.debug(f"API: Saved processor config to {config_filename}: {processor_config_data}")
-
-                    # Call optional edit_hook if processor has one
-                    try:
-                        import importlib
-                        edit_hook_module_name = f'changedetectionio.processors.{processor_name}.edit_hook'
-
-                        try:
-                            edit_hook = importlib.import_module(edit_hook_module_name)
-                            logger.debug(f"API: Found edit_hook module for {processor_name}")
-
-                            if hasattr(edit_hook, 'on_config_save'):
-                                logger.info(f"API: Calling edit_hook.on_config_save for {processor_name}")
-                                # Call hook and get updated config
-                                updated_config = edit_hook.on_config_save(watch, processor_config_data, self.datastore)
-                                # Save updated config back to file
-                                processor_instance.update_extra_watch_config(config_filename, updated_config)
-                                logger.info(f"API: Edit hook updated config: {updated_config}")
-                            else:
-                                logger.debug(f"API: Edit hook module found but no on_config_save function")
-                        except ModuleNotFoundError:
-                            logger.debug(f"API: No edit_hook module for processor {processor_name} (this is normal)")
-                    except Exception as hook_error:
-                        logger.error(f"API: Edit hook error (non-fatal): {hook_error}", exc_info=True)
-
-            except Exception as e:
-                logger.error(f"API: Failed to save processor config: {e}")
+        # Save processor config to JSON file
+        processors.save_processor_config(self.datastore, uuid, processor_config_data)
 
         return "OK", 200
 
@@ -230,6 +246,10 @@ class WatchSingleHistory(Resource):
 
         if timestamp == 'latest':
             timestamp = list(watch.history.keys())[-1]
+
+        # Validate that the timestamp exists in history
+        if timestamp not in watch.history:
+            abort(404, message=f"No history snapshot found for timestamp '{timestamp}'")
 
         if request.args.get('html'):
             content = watch.get_fetched_html(timestamp)
@@ -379,18 +399,11 @@ class WatchFavicon(Resource):
 
         favicon_filename = watch.get_favicon_filename()
         if favicon_filename:
-            try:
-                import magic
-                mime = magic.from_file(
-                    os.path.join(watch.watch_data_dir, favicon_filename),
-                    mime=True
-                )
-            except ImportError:
-                # Fallback, no python-magic
-                import mimetypes
-                mime, encoding = mimetypes.guess_type(favicon_filename)
+            # Use cached MIME type detection
+            filepath = os.path.join(watch.data_dir, favicon_filename)
+            mime = get_favicon_mime_type(filepath)
 
-            response = make_response(send_from_directory(watch.watch_data_dir, favicon_filename))
+            response = make_response(send_from_directory(watch.data_dir, favicon_filename))
             response.headers['Content-type'] = mime
             response.headers['Cache-Control'] = 'max-age=300, must-revalidate'  # Cache for 5 minutes, then revalidate
             return response
@@ -406,7 +419,6 @@ class CreateWatch(Resource):
 
     @auth.check_token
     @validate_openapi_request('createWatch')
-    @expects_json(schema_create_watch)
     def post(self):
         """Create a single watch."""
 
@@ -418,15 +430,32 @@ class CreateWatch(Resource):
 
         if json_data.get('proxy'):
             plist = self.datastore.proxy_list
-            if not json_data.get('proxy') in plist:
-                return "Invalid proxy choice, currently supported proxies are '{}'".format(', '.join(plist)), 400
+            if not plist or json_data.get('proxy') not in plist:
+                proxy_list_str = ', '.join(plist) if plist else 'none configured'
+                return f"Invalid proxy choice, currently supported proxies are '{proxy_list_str}'", 400
 
         # Validate time_between_check when not using defaults
         validation_error = validate_time_between_check_required(json_data)
         if validation_error:
             return validation_error, 400
 
+        # Validate notification_urls if provided
+        if 'notification_urls' in json_data:
+            from wtforms import ValidationError
+            from changedetectionio.api.Notifications import validate_notification_urls
+            try:
+                notification_urls = json_data.get('notification_urls', [])
+                validate_notification_urls(notification_urls)
+            except ValidationError as e:
+                return str(e), 400
+
+        # Handle processor-config-* fields separately (save to JSON, not watch)
+        from changedetectionio import processors
+
         extras = copy.deepcopy(json_data)
+
+        # Extract and remove processor config fields from extras
+        processor_config_data = processors.extract_processor_config_from_form_data(extras)
 
         # Because we renamed 'tag' to 'tags' but don't want to change the API (can do this in v2 of the API)
         tags = None
@@ -437,10 +466,25 @@ class CreateWatch(Resource):
         del extras['url']
 
         new_uuid = self.datastore.add_watch(url=url, extras=extras, tag=tags)
+
+        # Save processor config to separate JSON file
+        if new_uuid and processor_config_data:
+            processors.save_processor_config(self.datastore, new_uuid, processor_config_data)
         if new_uuid:
-            worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))
+# Dont queue because the scheduler will check that it hasnt been checked before anyway
+#            worker_pool.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))
             return {'uuid': new_uuid}, 201
         else:
+            # Check if it was a limit issue
+            page_watch_limit = os.getenv('PAGE_WATCH_LIMIT')
+            if page_watch_limit:
+                try:
+                    page_watch_limit = int(page_watch_limit)
+                    current_watch_count = len(self.datastore.data['watching'])
+                    if current_watch_count >= page_watch_limit:
+                        return f"Watch limit reached ({current_watch_count}/{page_watch_limit} watches). Cannot add more watches.", 429
+                except ValueError:
+                    pass
             return "Invalid or unsupported URL", 400
 
     @auth.check_token
@@ -462,14 +506,65 @@ class CreateWatch(Resource):
                 'last_error': watch['last_error'],
                 'link': watch.link,
                 'page_title': watch['page_title'],
+                'tags': [*tags],  # Unpack dict keys to list (can't use list() since variable named 'list')
                 'title': watch['title'],
                 'url': watch['url'],
                 'viewed': watch.viewed
             }
 
         if request.args.get('recheck_all'):
-            for uuid in self.datastore.data['watching'].keys():
-                worker_handler.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
-            return {'status': "OK"}, 200
+            # Collect all watches to queue
+            watches_to_queue = self.datastore.data['watching'].keys()
+
+            # If less than 20 watches, queue synchronously for immediate feedback
+            if len(watches_to_queue) < 20:
+                # Get already queued/running UUIDs once (efficient)
+                queued_uuids = set(self.update_q.get_queued_uuids())
+                running_uuids = set(worker_pool.get_running_uuids())
+
+                # Filter out watches that are already queued or running
+                watches_to_queue_filtered = [
+                    uuid for uuid in watches_to_queue
+                    if uuid not in queued_uuids and uuid not in running_uuids
+                ]
+
+                # Queue only the filtered watches
+                for uuid in watches_to_queue_filtered:
+                    worker_pool.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+
+                # Provide feedback about skipped watches
+                skipped_count = len(watches_to_queue) - len(watches_to_queue_filtered)
+                if skipped_count > 0:
+                    return {'status': f'OK, queued {len(watches_to_queue_filtered)} watches for rechecking ({skipped_count} already queued or running)'}, 200
+                else:
+                    return {'status': f'OK, queued {len(watches_to_queue_filtered)} watches for rechecking'}, 200
+            else:
+                # 20+ watches - queue in background thread to avoid blocking API response
+                # Capture queued/running state before background thread
+                queued_uuids = set(self.update_q.get_queued_uuids())
+                running_uuids = set(worker_pool.get_running_uuids())
+
+                def queue_all_watches_background():
+                    """Background thread to queue all watches - discarded after completion."""
+                    try:
+                        queued_count = 0
+                        skipped_count = 0
+                        for uuid in watches_to_queue:
+                            # Check if already queued or running (state captured at start)
+                            if uuid not in queued_uuids and uuid not in running_uuids:
+                                worker_pool.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+                                queued_count += 1
+                            else:
+                                skipped_count += 1
+
+                        logger.info(f"Background queueing complete: {queued_count} watches queued, {skipped_count} skipped (already queued/running)")
+                    except Exception as e:
+                        logger.error(f"Error in background queueing all watches: {e}")
+
+                # Start background thread and return immediately
+                thread = threading.Thread(target=queue_all_watches_background, daemon=True, name="QueueAllWatches-Background")
+                thread.start()
+
+                return {'status': f'OK, queueing {len(watches_to_queue)} watches in background'}, 202
 
         return list, 200

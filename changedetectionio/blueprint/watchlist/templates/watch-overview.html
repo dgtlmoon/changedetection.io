@@ -1,5 +1,9 @@
 {%- extends 'base.html' -%}
 {%- block content -%}
+{%- set tips = [
+    _("Changedetection.io can monitor more than just web-pages! See our plugins!") ~ ' <a href="https://changedetection.io/plugins">' ~ _('More info') ~ '</a>',
+    _("You can also add 'shared' watches.") ~ ' <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Sharing-a-Watch">' ~ _('More info') ~ '</a>'
+] -%}
 {%- from '_helpers.html' import render_simple_field, render_field, render_nolabel_field, sort_by_title -%}
 <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
@@ -10,6 +14,46 @@
 // Initialize Feather icons after the page loads
 document.addEventListener('DOMContentLoaded', function() {
     feather.replace();
+
+    // Intersection Observer for lazy loading favicons
+    // Only load favicon images when they enter the viewport
+    if ('IntersectionObserver' in window) {
+        const faviconObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    const src = img.getAttribute('data-src');
+
+                    if (src) {
+                        // Load the actual favicon
+                        img.src = src;
+                        img.removeAttribute('data-src');
+                    }
+
+                    // Stop observing this image
+                    observer.unobserve(img);
+                }
+            });
+        }, {
+            // Start loading slightly before the image enters viewport
+            rootMargin: '50px',
+            threshold: 0.01
+        });
+
+        // Observe all lazy favicon images
+        document.querySelectorAll('.lazy-favicon').forEach(img => {
+            faviconObserver.observe(img);
+        });
+    } else {
+        // Fallback for older browsers: load all favicons immediately
+        document.querySelectorAll('.lazy-favicon').forEach(img => {
+            const src = img.getAttribute('data-src');
+            if (src) {
+                img.src = src;
+                img.removeAttribute('data-src');
+            }
+        });
+    }
 });
 </script>
 <style>
@@ -62,14 +106,16 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
                     {{ render_nolabel_field(form.edit_and_watch_submit_button, title=_("Edit first then Watch") ) }}
             </div>
             <div id="watch-group-tag">
-               {{ render_field(form.tags, value=active_tag.title if active_tag_uuid else '', placeholder="Watch group / tag", class="transparent-field") }}
+               {{ render_field(form.tags, value=active_tag.title if active_tag_uuid else '', placeholder=_("Watch group / tag"), class="transparent-field") }}
             </div>
             <div id="quick-watch-processor-type">
                 {{ render_simple_field(form.processor) }}
             </div>
 
         </fieldset>
-        <span style="color:#eee; font-size: 80%;"><img alt="{{ _('Create a shareable link') }}" style="height: 1em;display:inline-block;" src="{{url_for('static_content', group='images', filename='spread-white.svg')}}" > {{ _("Tip: You can also add 'shared' watches.") }} <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Sharing-a-Watch">{{ _('More info') }}</a></span>
+        <span style="color:#eee; font-size: 80%;">
+            <strong>Tip: </strong> {{ tips | random | safe }}
+        </span>
     </form>
 </div>
 <div class="box">
@@ -99,9 +145,14 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
                        data-confirm-message="{{ _('<p>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>') }}"
                        data-confirm-button="{{ _('Delete') }}"><i data-feather="trash" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('Delete') }}</button>
     </div>
-    {%- if watches|length >= pagination.per_page -%}
-        {{ pagination.info }}
-    {%- endif -%}
+
+    <div id="stats_row">
+        <div class="left">{%- if watches|length >= pagination.per_page -%}{{ pagination.info }}{%- endif -%}</div>
+        <div class="right" >{{ _('Queued size') }}: <span id="queue-size-int">{{ queue_size }}</span></div>
+    </div>
+
+
+
     {%- if search_q -%}<div id="search-result-info">{{ _('Searching') }} "<strong><i>{{search_q}}</i></strong>"</div>{%- endif -%}
     <div>
         <a href="{{url_for('watchlist.index')}}" class="pure-button button-tag {{'active' if not active_tag_uuid }}">{{ _('All') }}</a>
@@ -154,7 +205,7 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
             <tbody>
             {%- if not watches|length -%}
             <tr>
-                <td colspan="{{ cols_required }}" style="text-wrap: wrap;">{{ _('No website watches configured, please add a URL in the box above, or') }} <a href="{{ url_for('imports.import_page')}}" >{{ _('import a list') }}</a>.</td>
+                <td colspan="{{ cols_required }}" style="text-wrap: wrap;">{{ _('No web page change detection watches configured, please add a URL in the box above, or') }} <a href="{{ url_for('imports.import_page')}}" >{{ _('import a list') }}</a>.</td>
             </tr>
             {%- endif -%}
 
@@ -195,30 +246,40 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
                 <td class="title-col inline">
                     <div class="flex-wrapper">
                     {% if 'favicons_enabled' not in ui_settings or ui_settings['favicons_enabled'] %}
-                        <div>{# A page might have hundreds of these images, set IMG options for lazy loading, don't set SRC if we dont have it so it doesnt fetch the placeholder'  #}
-                            <img alt="Favicon thumbnail" class="favicon" loading="lazy" decoding="async" fetchpriority="low" {% if favicon %} src="{{url_for('static_content', group='favicon', filename=watch.uuid)}}" {% else %} src='data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="7.087" height="7.087" viewBox="0 0 7.087 7.087"%3E%3Ccircle cx="3.543" cy="3.543" r="3.279" stroke="%23e1e1e1" stroke-width="0.45" fill="none" opacity="0.74"/%3E%3C/svg%3E' {%  endif %} >
+                        <div>
+                            {# Intersection Observer lazy loading: store real URL in data-src, load only when visible in viewport #}
+                            <img alt="Favicon thumbnail"
+                                 class="favicon lazy-favicon"
+                                 loading="lazy"
+                                 decoding="async"
+                                 fetchpriority="low"
+                                 {% if favicon %}
+                                 data-src="{{url_for('static_content', group='favicon', filename=watch.uuid)}}"
+                                 {% endif %}
+                                 src='data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="7.087" height="7.087" viewBox="0 0 7.087 7.087"%3E%3Ccircle cx="3.543" cy="3.543" r="3.279" stroke="%23e1e1e1" stroke-width="0.45" fill="none" opacity="0.74"/%3E%3C/svg%3E'>
                         </div>
                     {%  endif %}
                         <div>
-                        <span class="watch-title">
-                            {% if system_use_url_watchlist or watch.get('use_page_title_in_list') %}
-                                {{ watch.label }}
-                            {% else %}
-                                {{ watch.get('title') or watch.link }}
-                            {% endif %}
-                           <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">&nbsp;</a>
-                        </span>
+                            {%- if watch['processor'] and watch['processor'] in processor_badge_texts -%}
+                                <span class="processor-badge processor-badge-{{ watch['processor'] }}" title="{{ processor_descriptions.get(watch['processor'], watch['processor']) }}">{{ processor_badge_texts[watch['processor']] }}</span>
+                            {%- endif -%}
+                            <span class="watch-title">
+                                {% if system_use_url_watchlist or watch.get('use_page_title_in_list') %}
+                                    {{ watch.label }}
+                                {% else %}
+                                    {{ watch.get('title') or watch.link }}
+                                {% endif %}
+                               <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">&nbsp;</a>
+                            </span>
                             <div class="error-text" style="display:none;">{{ watch.compile_error_texts(has_proxies=datastore.proxy_list)|safe }}</div>
                             {%- if watch['processor'] == 'text_json_diff'  -%}
                                 {%- if watch['has_ldjson_price_data'] and not watch['track_ldjson_price_data']  -%}
                                 <div class="ldjson-price-track-offer">Switch to Restock & Price watch mode? <a href="{{url_for('price_data_follower.accept', uuid=watch.uuid)}}" class="pure-button button-xsmall">Yes</a> <a href="{{url_for('price_data_follower.reject', uuid=watch.uuid)}}" class="">No</a></div>
                                 {%- endif -%}
                             {%- endif -%}
-                            {%- if watch['processor'] and watch['processor'] in processor_badge_texts -%}
-                                <span class="processor-badge processor-badge-{{ watch['processor'] }}" title="{{ processor_descriptions.get(watch['processor'], watch['processor']) }}">{{ processor_badge_texts[watch['processor']] }}</span>
-                            {%- endif -%}
+
                             {%- for watch_tag_uuid, watch_tag in datastore.get_all_tags_for_watch(watch['uuid']).items() -%}
-                              <span class="watch-tag-list tag-{{ watch_tag.title|sanitize_tag_class }}">{{ watch_tag.title }}</span>
+                              <a href="{{url_for('watchlist.index', tag=watch_tag_uuid) }}" class="watch-tag-list tag-{{ watch_tag.title|sanitize_tag_class }}">{{ watch_tag.title }}</a>
                             {%- endfor -%}
                         </div>
                     <div class="status-icons">
@@ -243,12 +304,13 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
                             </span>
                         {%- endif -%}
 
-                        {%- if watch.get('restock') and watch['restock']['price'] != None -%}
-                            {%- if watch['restock']['price'] != None -%}
+                        {%- if watch.get('restock') and watch['restock'].get('price') -%}
+                                {%- if watch['restock']['price'] is number -%}
                                 <span class="restock-label price" title="{{ _('Price') }}">
                                 {{ watch['restock']['price']|format_number_locale if watch['restock'].get('price') else '' }} {{ watch['restock'].get('currency','') }}
                                 </span>
-                            {%- endif -%}
+                                {%- else -%} <!-- watch['restock']['price']' is not a number, cant output it -->
+                                {%- endif -%}
                         {%- elif not watch.has_restock_info -%}
                             <span class="restock-label error">{{ _('No information') }}</span>
                         {%- endif -%}

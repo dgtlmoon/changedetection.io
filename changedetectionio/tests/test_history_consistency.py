@@ -59,11 +59,29 @@ def test_consistent_history(client, live_server, measure_memory_usage, datastore
     # Wait for the sync DB save to happen
     time.sleep(2)
 
-    json_db_file = os.path.join(live_server.app.config['DATASTORE'].datastore_path, 'url-watches.json')
+    # Check which format is being used
+    datastore_path = live_server.app.config['DATASTORE'].datastore_path
+    changedetection_json = os.path.join(datastore_path, 'changedetection.json')
+    url_watches_json = os.path.join(datastore_path, 'url-watches.json')
 
-    json_obj = None
-    with open(json_db_file, 'r', encoding='utf-8') as f:
-        json_obj = json.load(f)
+    json_obj = {'watching': {}}
+
+    if os.path.exists(changedetection_json):
+        # New format: individual watch.json files
+        logger.info("Testing with new format (changedetection.json + individual watch.json)")
+
+        # Load each watch.json file
+        for uuid in live_server.app.config['DATASTORE'].data['watching'].keys():
+            watch_json_file = os.path.join(datastore_path, uuid, 'watch.json')
+            assert os.path.isfile(watch_json_file), f"watch.json should exist at {watch_json_file}"
+
+            with open(watch_json_file, 'r', encoding='utf-8') as f:
+                json_obj['watching'][uuid] = json.load(f)
+    else:
+        # Legacy format: url-watches.json
+        logger.info("Testing with legacy format (url-watches.json)")
+        with open(url_watches_json, 'r', encoding='utf-8') as f:
+            json_obj = json.load(f)
 
     # assert the right amount of watches was found in the JSON
     assert len(json_obj['watching']) == len(workers), "Correct number of watches was found in the JSON"
@@ -88,7 +106,7 @@ def test_consistent_history(client, live_server, measure_memory_usage, datastore
 
         # Find the snapshot one
         for fname in files_in_watch_dir:
-            if fname != 'history.txt' and 'html' not in fname:
+            if fname != 'history.txt' and fname != 'watch.json' and fname != 'last-checksum.txt' and 'html' not in fname:
                 if strtobool(os.getenv("TEST_WITH_BROTLI")):
                     assert fname.endswith('.br'), "Forced TEST_WITH_BROTLI then it should be a .br filename"
 
@@ -105,12 +123,33 @@ def test_consistent_history(client, live_server, measure_memory_usage, datastore
                 assert json_obj['watching'][w]['title'], "Watch should have a title set"
                 assert contents.startswith(watch_title + "x"), f"Snapshot contents in file {fname} should start with '{watch_title}x', got '{contents}'"
 
-        assert len(files_in_watch_dir) == 3, "Should be just three files in the dir, html.br snapshot, history.txt and the extracted text snapshot"
+        # With new format, we have watch.json, so 4 files minimum
+        # Note: last-checksum.txt may or may not exist - it gets cleared by settings changes,
+        # and this test changes settings before checking files
+        # This assertion should be AFTER the loop, not inside it
+        if os.path.exists(changedetection_json):
+            # 4 required files: watch.json, html.br, history.txt, extracted text snapshot
+            # last-checksum.txt is optional (cleared by settings changes in this test)
+            assert len(files_in_watch_dir) >= 4 and len(files_in_watch_dir) <= 5, f"Should be 4-5 files in the dir with new format (last-checksum.txt is optional). Found {len(files_in_watch_dir)}: {files_in_watch_dir}"
+        else:
+            # 3 required files: html.br, history.txt, extracted text snapshot
+            # last-checksum.txt is optional
+            assert len(files_in_watch_dir) >= 3 and len(files_in_watch_dir) <= 4, f"Should be 3-4 files in the dir with legacy format (last-checksum.txt is optional). Found {len(files_in_watch_dir)}: {files_in_watch_dir}"
 
-    json_db_file = os.path.join(live_server.app.config['DATASTORE'].datastore_path, 'url-watches.json')
-    with open(json_db_file, 'r', encoding='utf-8') as f:
-        assert '"default"' not in f.read(), "'default' probably shouldnt be here, it came from when the 'default' Watch vars were accidently being saved"
+    # Check that 'default' Watch vars aren't accidentally being saved
+    if os.path.exists(changedetection_json):
+        # New format: check all individual watch.json files
+        for uuid in json_obj['watching'].keys():
+            watch_json_file = os.path.join(datastore_path, uuid, 'watch.json')
+            with open(watch_json_file, 'r', encoding='utf-8') as f:
+                assert '"default"' not in f.read(), f"'default' probably shouldnt be here in {watch_json_file}, it came from when the 'default' Watch vars were accidently being saved"
+    else:
+        # Legacy format: check url-watches.json
+        with open(url_watches_json, 'r', encoding='utf-8') as f:
+            assert '"default"' not in f.read(), "'default' probably shouldnt be here, it came from when the 'default' Watch vars were accidently being saved"
 
+
+    delete_all_watches(client)
 
 def test_check_text_history_view(client, live_server, measure_memory_usage, datastore_path):
 
@@ -132,7 +171,7 @@ def test_check_text_history_view(client, live_server, measure_memory_usage, data
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
-    res = client.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
+    res = client.get(url_for("ui.ui_diff.diff_history_page", uuid=uuid))
     assert b'test-one' in res.data
     assert b'test-two' in res.data
 
@@ -150,3 +189,86 @@ def test_check_text_history_view(client, live_server, measure_memory_usage, data
     assert b'test-one' not in res.data
 
     delete_all_watches(client)
+
+
+def test_history_trim_global_only(client, live_server, measure_memory_usage, datastore_path):
+    # Add our URL to the import page
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = None
+    limit = 3
+
+    for i in range(0, 10):
+        with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
+            f.write(f"<html>test {i}</html>")
+        if not uuid:
+            uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+        client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        wait_for_all_checks(client)
+
+        if i ==8:
+            watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
+            history_n = len(list(watch.history.keys()))
+            logger.debug(f"History length should be at limit {limit} and it is {history_n}")
+            assert history_n == limit
+
+        if i == 6:
+            res = client.post(
+                url_for("settings.settings_page"),
+                data={"application-history_snapshot_max_length": limit},
+                follow_redirects=True
+            )
+            # It will need to detect one more change to start trimming it, which is really at 'start of 7'
+            assert b'Settings updated' in res.data
+
+    delete_all_watches(client)
+
+
+def test_history_trim_global_override_in_watch(client, live_server, measure_memory_usage, datastore_path):
+    # Add our URL to the import page
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = None
+    limit = 3
+    res = client.post(
+        url_for("settings.settings_page"),
+        data={"application-history_snapshot_max_length": 10000},
+        follow_redirects=True
+    )
+    # It will need to detect one more change to start trimming it, which is really at 'start of 7'
+    assert b'Settings updated' in res.data
+
+
+    for i in range(0, 10):
+        with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
+            f.write(f"<html>test {i}</html>")
+        if not uuid:
+            uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+            res = client.post(
+                url_for("ui.ui_edit.edit_page", uuid="first"),
+                data={"include_filters": "", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests",
+                      "time_between_check_use_default": "y", "history_snapshot_max_length": str(limit)},
+                follow_redirects=True
+            )
+            assert b"Updated watch." in res.data
+
+            wait_for_all_checks(client)
+
+        client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        wait_for_all_checks(client)
+
+        if i == 8:
+            watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
+            history_n = len(list(watch.history.keys()))
+            logger.debug(f"History length should be at limit {limit} and it is {history_n}")
+            assert history_n == limit
+
+        if i == 6:
+            res = client.post(
+                url_for("settings.settings_page"),
+                data={"application-history_snapshot_max_length": limit},
+                follow_redirects=True
+            )
+            # It will need to detect one more change to start trimming it, which is really at 'start of 7'
+            assert b'Settings updated' in res.data
+
+    delete_all_watches(client)
+

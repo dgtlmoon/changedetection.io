@@ -1,33 +1,6 @@
-import copy
 import functools
 from flask import request, abort
 from loguru import logger
-from . import api_schema
-from ..model import watch_base
-
-# Build a JSON Schema atleast partially based on our Watch model
-watch_base_config = watch_base()
-schema = api_schema.build_watch_json_schema(watch_base_config)
-
-schema_create_watch = copy.deepcopy(schema)
-schema_create_watch['required'] = ['url']
-del schema_create_watch['properties']['last_viewed']
-
-schema_update_watch = copy.deepcopy(schema)
-schema_update_watch['additionalProperties'] = False
-
-# Tag schema is also based on watch_base since Tag inherits from it
-schema_tag = copy.deepcopy(schema)
-schema_create_tag = copy.deepcopy(schema_tag)
-schema_create_tag['required'] = ['title']
-schema_update_tag = copy.deepcopy(schema_tag)
-schema_update_tag['additionalProperties'] = False
-
-schema_notification_urls = copy.deepcopy(schema)
-schema_create_notification_urls = copy.deepcopy(schema_notification_urls)
-schema_create_notification_urls['required'] = ['notification_urls']
-schema_delete_notification_urls = copy.deepcopy(schema_notification_urls)
-schema_delete_notification_urls['required'] = ['notification_urls']
 
 @functools.cache
 def get_openapi_spec():
@@ -46,6 +19,79 @@ def get_openapi_spec():
     _openapi_spec = OpenAPI.from_dict(spec_dict)
     return _openapi_spec
 
+@functools.cache
+def get_openapi_schema_dict():
+    """
+    Get the raw OpenAPI spec dictionary for schema access.
+
+    Used by Import endpoint to validate and convert query parameters.
+    Returns the YAML dict directly (not the OpenAPI object).
+    """
+    import os
+    import yaml
+
+    spec_path = os.path.join(os.path.dirname(__file__), '../../docs/api-spec.yaml')
+    if not os.path.exists(spec_path):
+        spec_path = os.path.join(os.path.dirname(__file__), '../docs/api-spec.yaml')
+
+    with open(spec_path, 'r', encoding='utf-8') as f:
+        return yaml.safe_load(f)
+
+@functools.cache
+def _resolve_schema_properties(schema_name):
+    """
+    Generic helper to resolve schema properties, including allOf inheritance.
+
+    Args:
+        schema_name: Name of the schema (e.g., 'WatchBase', 'Watch', 'Tag')
+
+    Returns:
+        dict: All properties including inherited ones from $ref schemas
+    """
+    spec_dict = get_openapi_schema_dict()
+    schema = spec_dict['components']['schemas'].get(schema_name, {})
+
+    properties = {}
+
+    # Handle allOf (schema inheritance)
+    if 'allOf' in schema:
+        for item in schema['allOf']:
+            # Resolve $ref to parent schema
+            if '$ref' in item:
+                ref_path = item['$ref'].split('/')[-1]
+                ref_schema = spec_dict['components']['schemas'].get(ref_path, {})
+                properties.update(ref_schema.get('properties', {}))
+            # Add schema-specific properties
+            if 'properties' in item:
+                properties.update(item['properties'])
+    else:
+        # Direct properties (no inheritance)
+        properties = schema.get('properties', {})
+
+    return properties
+
+
+@functools.cache
+def get_watch_schema_properties():
+    """
+    Extract watch schema properties from OpenAPI spec for Import endpoint.
+
+    Returns WatchBase properties (all writable Watch fields).
+    """
+    return _resolve_schema_properties('WatchBase')
+
+# Import readonly field utilities from shared module (avoids circular dependencies with model layer)
+from changedetectionio.model.schema_utils import get_readonly_watch_fields, get_readonly_tag_fields
+
+@functools.cache
+def get_tag_schema_properties():
+    """
+    Extract Tag schema properties from OpenAPI spec.
+
+    Returns WatchBase properties + Tag-specific properties (overrides_watch).
+    """
+    return _resolve_schema_properties('Tag')
+
 def validate_openapi_request(operation_id):
     """Decorator to validate incoming requests against OpenAPI spec."""
     def decorator(f):
@@ -57,6 +103,7 @@ def validate_openapi_request(operation_id):
                 if request.method.upper() != 'GET':
                     # Lazy import - only loaded when actually validating a request
                     from openapi_core.contrib.flask import FlaskOpenAPIRequest
+                    from openapi_core.templating.paths.exceptions import ServerNotFound, PathNotFound, PathError
 
                     spec = get_openapi_spec()
                     openapi_request = FlaskOpenAPIRequest(request)
@@ -64,8 +111,29 @@ def validate_openapi_request(operation_id):
                     if result.errors:
                         error_details = []
                         for error in result.errors:
-                            error_details.append(str(error))
-                        raise BadRequest(f"OpenAPI validation failed: {error_details}")
+                            # Skip path/server validation errors for reverse proxy compatibility
+                            # Flask routing already validates that endpoints exist (returns 404 if not).
+                            # OpenAPI validation here is primarily for request body schema validation.
+                            # When behind nginx/reverse proxy, URLs may have path prefixes that don't
+                            # match the OpenAPI server definitions, causing false positives.
+                            if isinstance(error, PathError):
+                                logger.debug(f"API Call - Skipping path/server validation (delegated to Flask): {error}")
+                                continue
+
+                            error_str = str(error)
+                            # Extract detailed schema errors from __cause__
+                            if hasattr(error, '__cause__') and hasattr(error.__cause__, 'schema_errors'):
+                                for schema_error in error.__cause__.schema_errors:
+                                    field = '.'.join(str(p) for p in schema_error.path) if schema_error.path else 'body'
+                                    msg = schema_error.message if hasattr(schema_error, 'message') else str(schema_error)
+                                    error_details.append(f"{field}: {msg}")
+                            else:
+                                error_details.append(error_str)
+
+                        # Only raise if we have actual validation errors (not path/server issues)
+                        if error_details:
+                            logger.error(f"API Call - Validation failed: {'; '.join(error_details)}")
+                            raise BadRequest(f"Validation failed: {'; '.join(error_details)}")
             except BadRequest:
                 # Re-raise BadRequest exceptions (validation failures)
                 raise

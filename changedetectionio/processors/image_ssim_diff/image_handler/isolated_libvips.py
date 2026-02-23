@@ -13,14 +13,9 @@ Research: https://github.com/libvips/pyvips/issues/234
 
 import multiprocessing
 
-# CRITICAL: Use 'spawn' instead of 'fork' to avoid inheriting parent's
+# CRITICAL: Use 'spawn' context instead of 'fork' to avoid inheriting parent's
 # LibVIPS threading state which can cause hangs in gaussblur operations
 # https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
-try:
-    multiprocessing.set_start_method('spawn', force=False)
-except RuntimeError:
-    # Already set, ignore
-    pass
 
 
 def _worker_generate_diff(conn, img_bytes_from, img_bytes_to, threshold, blur_sigma, max_width, max_height):
@@ -95,9 +90,10 @@ def generate_diff_isolated(img_bytes_from, img_bytes_to, threshold, blur_sigma, 
     Returns:
         bytes: JPEG diff image or None on failure
     """
-    parent_conn, child_conn = multiprocessing.Pipe()
+    ctx = multiprocessing.get_context('spawn')
+    parent_conn, child_conn = ctx.Pipe()
 
-    p = multiprocessing.Process(
+    p = ctx.Process(
         target=_worker_generate_diff,
         args=(child_conn, img_bytes_from, img_bytes_to, threshold, blur_sigma, max_width, max_height)
     )
@@ -140,7 +136,8 @@ def calculate_change_percentage_isolated(img_bytes_from, img_bytes_to, threshold
     Returns:
         float: Change percentage
     """
-    parent_conn, child_conn = multiprocessing.Pipe()
+    ctx = multiprocessing.get_context('spawn')
+    parent_conn, child_conn = ctx.Pipe()
 
     def _worker_calculate(conn):
         try:
@@ -185,7 +182,7 @@ def calculate_change_percentage_isolated(img_bytes_from, img_bytes_to, threshold
         finally:
             conn.close()
 
-    p = multiprocessing.Process(target=_worker_calculate, args=(child_conn,))
+    p = ctx.Process(target=_worker_calculate, args=(child_conn,))
     p.start()
 
     result = 0.0
@@ -233,7 +230,8 @@ def compare_images_isolated(img_bytes_from, img_bytes_to, threshold, blur_sigma,
         tuple: (changed_detected, change_percentage)
     """
     print(f"[Parent] Starting compare_images_isolated subprocess", flush=True)
-    parent_conn, child_conn = multiprocessing.Pipe()
+    ctx = multiprocessing.get_context('spawn')
+    parent_conn, child_conn = ctx.Pipe()
 
     def _worker_compare(conn):
         try:
@@ -301,7 +299,7 @@ def compare_images_isolated(img_bytes_from, img_bytes_to, threshold, blur_sigma,
         finally:
             conn.close()
 
-    p = multiprocessing.Process(target=_worker_compare, args=(child_conn,))
+    p = ctx.Process(target=_worker_compare, args=(child_conn,))
     print(f"[Parent] Starting subprocess (pid will be assigned)", flush=True)
     p.start()
     print(f"[Parent] Subprocess started (pid={p.pid}), waiting for result (30s timeout)", flush=True)

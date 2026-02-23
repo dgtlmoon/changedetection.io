@@ -62,7 +62,7 @@ class import_url_list(Importer):
                 extras = None
                 if processor:
                     extras = {'processor': processor}
-                new_uuid = datastore.add_watch(url=url.strip(), tag=tags, write_to_disk_now=False, extras=extras)
+                new_uuid = datastore.add_watch(url=url.strip(), tag=tags, save_immediately=False, extras=extras)
 
                 if new_uuid:
                     # Straight into the queue.
@@ -129,7 +129,7 @@ class import_distill_io_json(Importer):
                 new_uuid = datastore.add_watch(url=d['uri'].strip(),
                                                tag=",".join(d.get('tags', [])),
                                                extras=extras,
-                                               write_to_disk_now=False)
+                                               save_immediately=False)
 
                 if new_uuid:
                     # Straight into the queue.
@@ -204,7 +204,7 @@ class import_xlsx_wachete(Importer):
                     new_uuid = datastore.add_watch(url=data['url'].strip(),
                                                    extras=extras,
                                                    tag=data.get('folder'),
-                                                   write_to_disk_now=False)
+                                                   save_immediately=False)
                     if new_uuid:
                         # Straight into the queue.
                         self.new_uuids.append(new_uuid)
@@ -287,7 +287,7 @@ class import_xlsx_custom(Importer):
                     new_uuid = datastore.add_watch(url=url,
                                                    extras=extras,
                                                    tag=tags,
-                                                   write_to_disk_now=False)
+                                                   save_immediately=False)
                     if new_uuid:
                         # Straight into the queue.
                         self.new_uuids.append(new_uuid)

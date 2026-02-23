@@ -24,6 +24,30 @@ def set_original_response(datastore_path):
         f.write(test_return_data)
     return None
 
+
+def test_favicon(client, live_server, measure_memory_usage, datastore_path):
+    # Attempt to fetch it, make sure that works
+    SVG_BASE64 = 'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxIDEiLz4='
+    uuid = client.application.config.get('DATASTORE').add_watch(url='https://localhost')
+    live_server.app.config['DATASTORE'].data['watching'][uuid].bump_favicon(url="favicon-set-type.svg",
+                                                                            favicon_base_64=SVG_BASE64
+                                                                            )
+
+    res = client.get(url_for('static_content', group='favicon', filename=uuid))
+    assert res.status_code == 200
+    assert len(res.data) > 10
+
+    res = client.get(url_for('static_content', group='..', filename='__init__.py'))
+    assert res.status_code != 200
+
+
+    res = client.get(url_for('static_content', group='.', filename='../__init__.py'))
+    assert res.status_code != 200
+
+    # Traverse by filename protection
+    res = client.get(url_for('static_content', group='js', filename='../styles/styles.css'))
+    assert res.status_code != 200
+
 def test_bad_access(client, live_server, measure_memory_usage, datastore_path):
 
     res = client.post(
@@ -477,4 +501,81 @@ def test_logout_with_redirect(client, live_server, measure_memory_usage, datasto
 
     # Cleanup
     del client.application.config['DATASTORE'].data['settings']['application']['password']
+
+
+def test_static_directory_traversal(client, live_server, measure_memory_usage, datastore_path):
+    """
+    Test that the static file serving route properly blocks directory traversal attempts.
+    This tests the fix for GHSA-9jj8-v89v-xjvw (CVE pending).
+
+    The vulnerability was in /static/<group>/<filename> where the sanitization regex
+    allowed dots, enabling "../" traversal to read application source files.
+
+    The fix changed the regex from r'[^\w.-]+' to r'[^a-z0-9_]+' which blocks dots.
+    """
+
+    # Test 1: Direct .. traversal attempt (URL-encoded)
+    res = client.get(
+        "/static/%2e%2e/flask_app.py",
+        follow_redirects=False
+    )
+    # Should be blocked (404 or 403)
+    assert res.status_code in [404, 403], f"Expected 404/403, got {res.status_code}"
+    # Should NOT contain application source code
+    assert b"def static_content" not in res.data
+    assert b"changedetection_app" not in res.data
+
+    # Test 2: Direct .. traversal attempt (unencoded)
+    res = client.get(
+        "/static/../flask_app.py",
+        follow_redirects=False
+    )
+    assert res.status_code in [404, 403], f"Expected 404/403, got {res.status_code}"
+    assert b"def static_content" not in res.data
+
+    # Test 3: Multiple dots traversal
+    res = client.get(
+        "/static/..../flask_app.py",
+        follow_redirects=False
+    )
+    assert res.status_code in [404, 403], f"Expected 404/403, got {res.status_code}"
+    assert b"def static_content" not in res.data
+
+    # Test 4: Try to access other application files
+    for filename in ["__init__.py", "datastore.py", "store.py"]:
+        res = client.get(
+            f"/static/%2e%2e/{filename}",
+            follow_redirects=False
+        )
+        assert res.status_code in [404, 403], f"File {filename} should be blocked"
+        # Should not contain Python code indicators
+        assert b"import" not in res.data or b"# Test" in res.data  # Allow "1 Imported" etc
+
+    # Test 5: Verify legitimate static files still work
+    # Note: We can't test actual files without knowing what exists,
+    # but we can verify the sanitization doesn't break valid groups
+    res = client.get(
+        "/static/images/test.png",  # Will 404 if file doesn't exist, but won't traverse
+        follow_redirects=False
+    )
+    # Should get 404 (file not found) not 403 (blocked)
+    # This confirms the group name "images" is valid
+    assert res.status_code == 404
+
+    # Test 6: Ensure hyphens and dots are blocked in group names
+    res = client.get(
+        "/static/../../../etc/passwd",
+        follow_redirects=False
+    )
+    assert res.status_code in [404, 403]
+    assert b"root:" not in res.data
+
+    # Test 7: Test that underscores still work (they're allowed)
+    res = client.get(
+        "/static/visual_selector_data/test.json",
+        follow_redirects=False
+    )
+    # visual_selector_data is a real group, but requires auth
+    # Should get 403 (not authenticated) or 404 (file not found), not a path traversal
+    assert res.status_code in [403, 404]
 

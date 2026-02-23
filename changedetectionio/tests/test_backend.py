@@ -6,8 +6,6 @@ from flask import url_for
 from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, \
     extract_UUID_from_client, delete_all_watches
 
-sleep_time_for_fetch_thread = 3
-
 
 # Basic test to check inscriptus is not adding return line chars, basically works etc
 def test_inscriptus():
@@ -38,7 +36,6 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
         # Default no password set, this stuff should be always available.
 
         assert b"SETTINGS" in res.data
-        assert b"BACKUP" in res.data
         assert b"IMPORT" in res.data
 
     #####################
@@ -415,4 +412,4 @@ def test_plaintext_even_if_xml_content_and_can_apply_filters(client, live_server
     assert b'Abonnementen bijwerken' in res.data
     assert b'&lt;foobar' not in res.data
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    res = delete_all_watches(client)

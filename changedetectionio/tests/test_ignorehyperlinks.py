@@ -41,7 +41,6 @@ def set_modified_ignore_response(datastore_path):
 def test_render_anchor_tag_content_true(client, live_server, measure_memory_usage, datastore_path):
     """Testing that the link changes are detected when
     render_anchor_tag_content setting is set to true"""
-    sleep_time_for_fetch_thread = 3
 
     # Give the endpoint time to spin up
     time.sleep(1)

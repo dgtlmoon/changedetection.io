@@ -7,8 +7,6 @@ from flask_babel import lazy_gettext as _l, gettext
 from changedetectionio.blueprint.rss import RSS_FORMAT_TYPES, RSS_TEMPLATE_TYPE_OPTIONS, RSS_TEMPLATE_HTML_DEFAULT
 from changedetectionio.conditions.form import ConditionFormRow
 from changedetectionio.notification_service import NotificationContextData
-from changedetectionio.processors.image_ssim_diff import SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS, \
-    SCREENSHOT_COMPARISON_THRESHOLD_OPTIONS_DEFAULT
 from changedetectionio.strtobool import strtobool
 from changedetectionio import processors
 
@@ -37,7 +35,7 @@ from changedetectionio.widgets import TernaryNoneBooleanField
 
 # default
 # each select <option data-enabled="enabled-0-0"
-from changedetectionio.blueprint.browser_steps.browser_steps import browser_step_ui_config
+from changedetectionio.browser_steps.browser_steps import browser_step_ui_config
 
 from changedetectionio import html_tools, content_fetchers
 
@@ -494,7 +492,6 @@ class ValidateJinja2Template(object):
     Validates that a {token} is from a valid set
     """
     def __call__(self, form, field):
-        from changedetectionio import notification
         from changedetectionio.jinja2_custom import create_jinja_env
         from jinja2 import BaseLoader, TemplateSyntaxError, UndefinedError
         from jinja2.meta import find_undeclared_variables
@@ -727,10 +724,10 @@ class ValidateStartsWithRegex(object):
                 raise ValidationError(self.message or _l("Invalid value."))
 
 class quickWatchForm(Form):
-    url = fields.URLField('URL', validators=[validateURL()])
-    tags = StringTagUUID('Group tag', [validators.Optional()])
+    url = fields.URLField(_l('URL'), validators=[validateURL()])
+    tags = StringTagUUID(_l('Group tag'), validators=[validators.Optional()])
     watch_submit_button = SubmitField(_l('Watch'), render_kw={"class": "pure-button pure-button-primary"})
-    processor = RadioField(_l('Processor'), choices=lambda: processors.available_processors(), default="text_json_diff")
+    processor = RadioField(_l('Processor'), choices=lambda: processors.available_processors(), default=processors.get_default_processor)
     edit_and_watch_submit_button = SubmitField(_l('Edit > Watch'), render_kw={"class": "pure-button pure-button-primary"})
 
 
@@ -749,7 +746,7 @@ class commonSettingsForm(Form):
     notification_format = SelectField(_l('Notification format'), choices=list(valid_notification_formats.items()))
     notification_title = StringField(_l('Notification Title'), default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_urls = StringListField(_l('Notification URL List'), validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
-    processor = RadioField( label=_l("Processor - What do you want to achieve?"), choices=lambda: processors.available_processors(), default="text_json_diff")
+    processor = RadioField( label=_l("Processor - What do you want to achieve?"), choices=lambda: processors.available_processors(), default=processors.get_default_processor)
     scheduler_timezone_default = StringField(_l("Default timezone for watch check scheduler"), render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
     webdriver_delay = IntegerField(_l('Wait seconds before extracting text'), validators=[validators.Optional(), validators.NumberRange(min=1, message=_l("Should contain one or more seconds"))])
 
@@ -763,7 +760,7 @@ class commonSettingsForm(Form):
 
 
 class importForm(Form):
-    processor = RadioField(_l('Processor'), choices=lambda: processors.available_processors(), default="text_json_diff")
+    processor = RadioField(_l('Processor'), choices=lambda: processors.available_processors(), default=processors.get_default_processor)
     urls = TextAreaField(_l('URLs'))
     xlsx_file = FileField(_l('Upload .xlsx file'), validators=[FileAllowed(['xlsx'], _l('Must be .xlsx file!'))])
     file_mapping = SelectField(_l('File mapping'), [validators.DataRequired()], choices={('wachete', 'Wachete mapping'), ('custom','Custom mapping')})
@@ -786,6 +783,7 @@ class processor_text_json_diff_form(commonSettingsForm):
 
     time_between_check = EnhancedFormField(
         TimeBetweenCheckForm,
+        label=_l('Time Between Check'),
         conditional_field='time_between_check_use_default',
         conditional_message=REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT,
         conditional_test_function=validate_time_between_check_has_values
@@ -819,8 +817,7 @@ class processor_text_json_diff_form(commonSettingsForm):
     filter_text_removed = BooleanField(_l('Removed lines'), default=True)
 
     trigger_text = StringListField(_l('Keyword triggers - Trigger/wait for text'), [validators.Optional(), ValidateListRegex()])
-    if os.getenv("PLAYWRIGHT_DRIVER_URL"):
-        browser_steps = FieldList(FormField(SingleBrowserStep), min_entries=10)
+    browser_steps = FieldList(FormField(SingleBrowserStep), min_entries=10)
     text_should_not_be_present = StringListField(_l('Block change-detection while text matches'), [validators.Optional(), ValidateListRegex()])
     webdriver_js_execute_code = TextAreaField(_l('Execute JavaScript before change detection'), render_kw={"rows": "5"}, validators=[validators.Optional()])
 
@@ -835,6 +832,8 @@ class processor_text_json_diff_form(commonSettingsForm):
     conditions_match_logic = RadioField(_l('Match'), choices=[('ALL', _l('Match all of the following')),('ANY', _l('Match any of the following'))], default='ALL')
     conditions = FieldList(FormField(ConditionFormRow), min_entries=1)  # Add rule logic here
     use_page_title_in_list = TernaryNoneBooleanField(_l('Use page <title> in list'), default=None)
+
+    history_snapshot_max_length = IntegerField(_l('Number of history items per watch to keep'), render_kw={"style": "width: 5em;"}, validators=[validators.Optional(), validators.NumberRange(min=2)])
 
     def extra_tab_content(self):
         return None
@@ -947,7 +946,7 @@ class DefaultUAInputForm(Form):
 
 # datastore.data['settings']['requests']..
 class globalSettingsRequestForm(Form):
-    time_between_check = RequiredFormField(TimeBetweenCheckForm)
+    time_between_check = RequiredFormField(TimeBetweenCheckForm, label=_l('Time Between Check'))
     time_schedule_limit = FormField(ScheduleLimitForm)
     proxy = RadioField(_l('Default proxy'))
     jitter_seconds = IntegerField(_l('Random jitter seconds ± check'),
@@ -1007,7 +1006,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
         render_kw={"placeholder": "0.1", "style": "width: 8em;"}
     )
 
-    password = SaltyPasswordField()
+    password = SaltyPasswordField(_l('Password'))
     pager_size = IntegerField(_l('Pager size'),
                               render_kw={"style": "width: 5em;"},
                               validators=[validators.NumberRange(min=0,
@@ -1033,6 +1032,8 @@ class globalSettingsApplicationForm(commonSettingsForm):
                                                                   render_kw={"style": "width: 5em;"},
                                                                   validators=[validators.NumberRange(min=0,
                                                                                                      message=_l("Should contain zero or more attempts"))])
+
+    history_snapshot_max_length = IntegerField(_l('Number of history items per watch to keep'), render_kw={"style": "width: 5em;"}, validators=[validators.Optional(), validators.NumberRange(min=2)])
     ui = FormField(globalSettingsApplicationUIForm)
 
 

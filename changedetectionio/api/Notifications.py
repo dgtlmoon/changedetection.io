@@ -1,8 +1,6 @@
-from flask_expects_json import expects_json
 from flask_restful import Resource, abort
 from flask import request
 from . import auth, validate_openapi_request
-from . import schema_create_notification_urls, schema_delete_notification_urls
 
 class Notifications(Resource):
     def __init__(self, **kwargs):
@@ -22,7 +20,6 @@ class Notifications(Resource):
     
     @auth.check_token
     @validate_openapi_request('addNotifications')
-    @expects_json(schema_create_notification_urls)
     def post(self):
         """Create Notification URLs."""
 
@@ -50,7 +47,6 @@ class Notifications(Resource):
     
     @auth.check_token
     @validate_openapi_request('replaceNotifications')
-    @expects_json(schema_create_notification_urls)
     def put(self):
         """Replace Notification URLs."""
         json_data = request.get_json()
@@ -67,13 +63,12 @@ class Notifications(Resource):
 
         clean_urls = [url.strip() for url in notification_urls if isinstance(url, str)]
         self.datastore.data['settings']['application']['notification_urls'] = clean_urls
-        self.datastore.needs_write = True
+        self.datastore.commit()
 
         return {'notification_urls': clean_urls}, 200
         
     @auth.check_token
     @validate_openapi_request('deleteNotifications')
-    @expects_json(schema_delete_notification_urls)
     def delete(self):
         """Delete Notification URLs."""
 
@@ -95,7 +90,7 @@ class Notifications(Resource):
             abort(400, message="No matching notification URLs found.")
 
         self.datastore.data['settings']['application']['notification_urls'] = notification_urls
-        self.datastore.needs_write = True
+        self.datastore.commit()
 
         return 'OK', 204
     

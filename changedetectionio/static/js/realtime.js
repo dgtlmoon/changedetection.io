@@ -76,7 +76,7 @@ $(document).ready(function () {
 
     // Cache DOM elements for performance
     const queueBubble = document.getElementById('queue-bubble');
-
+    const queueSizePagerInfoText = document.getElementById('queue-size-int');
     // Only try to connect if authentication isn't required or user is authenticated
     // The 'is_authenticated' variable will be set in the template
     if (typeof is_authenticated !== 'undefined' ? is_authenticated : true) {
@@ -118,6 +118,10 @@ $(document).ready(function () {
 
             socket.on('queue_size', function (data) {
                 console.log(`${data.event_timestamp} - Queue size update: ${data.q_length}`);
+                if(queueSizePagerInfoText) {
+                    queueSizePagerInfoText.textContent = parseInt(data.q_length).toLocaleString() || 'None';
+                }
+                document.body.classList.toggle('has-queue', parseInt(data.q_length) > 0);
 
                 // Update queue bubble in action sidebar
                 //if (queueBubble) {

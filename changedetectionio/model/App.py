@@ -2,6 +2,7 @@ from os import getenv
 from copy import deepcopy
 
 from changedetectionio.blueprint.rss import RSS_FORMAT_TYPES, RSS_CONTENT_FORMAT_DEFAULT
+from changedetectionio.model.Tags import TagsDict
 
 from changedetectionio.notification import (
     default_notification_body,
@@ -29,7 +30,7 @@ class model(dict):
                     'proxy': None, # Preferred proxy connection
                     'time_between_check': {'weeks': None, 'days': None, 'hours': 3, 'minutes': None, 'seconds': None},
                     'timeout': int(getenv("DEFAULT_SETTINGS_REQUESTS_TIMEOUT", "45")),  # Default 45 seconds
-                    'workers': int(getenv("DEFAULT_SETTINGS_REQUESTS_WORKERS", "10")),  # Number of threads, lower is better for slow connections
+                    'workers': int(getenv("DEFAULT_SETTINGS_REQUESTS_WORKERS", "5")),  # Number of threads, lower is better for slow connections
                     'default_ua': {
                         'html_requests': getenv("DEFAULT_SETTINGS_HEADERS_USERAGENT", DEFAULT_SETTINGS_HEADERS_USERAGENT),
                         'html_webdriver': None,
@@ -37,6 +38,8 @@ class model(dict):
                 },
                 'application': {
                     # Custom notification content
+                    'all_paused': False,
+                    'all_muted': False,
                     'api_access_token_enabled': True,
                     'base_url' : None,
                     'empty_pages_are_a_change': False,
@@ -44,6 +47,7 @@ class model(dict):
                     'filter_failure_notification_threshold_attempts': _FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT,
                     'global_ignore_text': [], # List of text to ignore when calculating the comparison checksum
                     'global_subtractive_selectors': [],
+                    'history_snapshot_max_length': None,
                     'ignore_whitespace': True,
                     'ignore_status_codes': False, #@todo implement, as ternary.
                     'ssim_threshold': '0.96',  # Default SSIM threshold for screenshot comparison
@@ -65,7 +69,7 @@ class model(dict):
                     'schema_version' : 0,
                     'shared_diff_access': False,
                     'strip_ignored_lines': False,
-                    'tags': {}, #@todo use Tag.model initialisers
+                    'tags': None,  # Initialized in __init__ with real datastore_path
                     'webdriver_delay': None , # Extra delay in seconds before extracting text
                     'ui': {
                         'use_page_title_in_list': True,
@@ -77,10 +81,16 @@ class model(dict):
             }
         }
 
-    def __init__(self, *arg, **kw):
+    def __init__(self, *arg, datastore_path=None, **kw):
         super(model, self).__init__(*arg, **kw)
+        # Capture any tags data passed in before base_config overwrites the structure
+        existing_tags = self.get('settings', {}).get('application', {}).get('tags') or {}
         # CRITICAL: deepcopy to avoid sharing mutable objects between instances
         self.update(deepcopy(self.base_config))
+        # TagsDict requires the real datastore_path at runtime (cannot be set at class-definition time)
+        if datastore_path is None:
+            raise ValueError("App.model() requires 'datastore_path' keyword argument")
+        self['settings']['application']['tags'] = TagsDict(existing_tags, datastore_path=datastore_path)
 
 
 def parse_headers_from_text_file(filepath):

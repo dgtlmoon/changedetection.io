@@ -130,7 +130,7 @@ def get_asset(asset_name, watch, datastore, request):
                 except Exception as e:
                     exception_container[0] = e
 
-            thread = threading.Thread(target=thread_target)
+            thread = threading.Thread(target=thread_target, daemon=True, name="ImageDiff-Asset")
             thread.start()
             thread.join(timeout=60)
 
@@ -284,7 +284,7 @@ def _draw_bounding_box_if_configured(img_bytes, watch, datastore):
             except Exception as e:
                 exception_container[0] = e
 
-        thread = threading.Thread(target=thread_target)
+        thread = threading.Thread(target=thread_target, daemon=True, name="ImageDiff-BoundingBox")
         thread.start()
         thread.join(timeout=15)
 
@@ -393,7 +393,7 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
             except Exception as e:
                 exception_container[0] = e
 
-        thread = threading.Thread(target=thread_target)
+        thread = threading.Thread(target=thread_target, daemon=True, name="ImageDiff-ChangePercentage")
         thread.start()
         thread.join(timeout=60)
 
@@ -414,7 +414,7 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
 
     # Load historical data if available (for charts/visualization)
     comparison_data = {}
-    comparison_config_path = os.path.join(watch.watch_data_dir, "visual_comparison_data.json")
+    comparison_config_path = os.path.join(watch.data_dir, "visual_comparison_data.json")
     if os.path.isfile(comparison_config_path):
         try:
             with open(comparison_config_path, 'r') as f:

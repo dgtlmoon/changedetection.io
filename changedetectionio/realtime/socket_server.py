@@ -145,16 +145,13 @@ def handle_watch_update(socketio, **kwargs):
         # Emit the watch update to all connected clients
         from changedetectionio.flask_app import update_q
         from changedetectionio.flask_app import _jinja2_filter_datetime
-        from changedetectionio import worker_handler
+        from changedetectionio import worker_pool
 
         # Get list of watches that are currently running
-        running_uuids = worker_handler.get_running_uuids()
+        running_uuids = worker_pool.get_running_uuids()
 
-        # Get list of watches in the queue
-        queue_list = []
-        for q_item in update_q.queue:
-            if hasattr(q_item, 'item') and 'uuid' in q_item.item:
-                queue_list.append(q_item.item['uuid'])
+        # Get list of watches in the queue (efficient single-lock method)
+        queue_list = update_q.get_queued_uuids()
 
         # Get the error texts from the watch
         error_texts = watch.compile_error_texts()
@@ -201,7 +198,6 @@ def handle_watch_update(socketio, **kwargs):
     except Exception as e:
         logger.error(f"Socket.IO error in handle_watch_update: {str(e)}")
 
-
 def init_socketio(app, datastore):
     """Initialize SocketIO with the main Flask app"""
     import platform
@@ -243,7 +239,10 @@ def init_socketio(app, datastore):
                         async_mode=async_mode,
                         cors_allowed_origins=cors_origins,  # None means same-origin only
                         logger=strtobool(os.getenv('SOCKETIO_LOGGING', 'False')),
-                        engineio_logger=strtobool(os.getenv('SOCKETIO_LOGGING', 'False')))
+                        engineio_logger=strtobool(os.getenv('SOCKETIO_LOGGING', 'False')),
+                        # Disable WebSocket compression to prevent memory accumulation
+                        # Flask-Compress already handles HTTP response compression
+                        engineio_options={'http_compression': False, 'compression_threshold': 0})
 
     # Set up event handlers
     logger.info("Socket.IO: Registering connect event handler")
@@ -252,23 +251,34 @@ def init_socketio(app, datastore):
     def event_checkbox_operations(data):
         from changedetectionio.blueprint.ui import _handle_operations
         from changedetectionio import queuedWatchMetaData
-        from changedetectionio import worker_handler
+        from changedetectionio import worker_pool
         from changedetectionio.flask_app import update_q, watch_check_update
+        import threading
+
         logger.trace(f"Got checkbox operations event: {data}")
 
         datastore = socketio.datastore
 
-        _handle_operations(
-            op=data.get('op'),
-            uuids=data.get('uuids'),
-            datastore=datastore,
-            extra_data=data.get('extra_data'),
-            worker_handler=worker_handler,
-            update_q=update_q,
-            queuedWatchMetaData=queuedWatchMetaData,
-            watch_check_update=watch_check_update,
-            emit_flash=False
-        )
+        def run_operation():
+            """Run the operation in a background thread to avoid blocking the socket.io event loop"""
+            try:
+                _handle_operations(
+                    op=data.get('op'),
+                    uuids=data.get('uuids'),
+                    datastore=datastore,
+                    extra_data=data.get('extra_data'),
+                    worker_pool=worker_pool,
+                    update_q=update_q,
+                    queuedWatchMetaData=queuedWatchMetaData,
+                    watch_check_update=watch_check_update,
+                    emit_flash=False
+                )
+            except Exception as e:
+                logger.error(f"Error in checkbox operation thread: {e}")
+
+        # Start operation in a disposable daemon thread
+        thread = threading.Thread(target=run_operation, daemon=True, name=f"checkbox-op-{data.get('op')}")
+        thread.start()
 
     @socketio.on('connect')
     def handle_connect():

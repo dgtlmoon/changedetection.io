@@ -9,11 +9,12 @@ import threading
 import time
 import timeago
 from blinker import signal
+from pathlib import Path
 
 from changedetectionio.strtobool import strtobool
 from threading import Event
 from changedetectionio.queue_handlers import RecheckPriorityQueue, NotificationQueue
-from changedetectionio import worker_handler
+from changedetectionio import worker_pool
 
 from flask import (
     Flask,
@@ -26,9 +27,6 @@ from flask import (
     session,
     url_for,
 )
-from urllib.parse import urlparse
-from flask_compress import Compress as FlaskCompress
-from flask_login import current_user
 from flask_restful import abort, Api
 from flask_cors import CORS
 
@@ -45,6 +43,9 @@ from changedetectionio.api import Watch, WatchHistory, WatchSingleHistory, Watch
 from changedetectionio.api.Search import Search
 from .time_handler import is_within_schedule
 from changedetectionio.languages import get_available_languages, get_language_codes, get_flag_for_locale, get_timeago_locale
+from changedetectionio.favicon_utils import get_favicon_mime_type
+
+IN_PYTEST = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
 
 datastore = None
 
@@ -55,7 +56,7 @@ extra_stylesheets = []
 # Use bulletproof janus-based queues for sync/async reliability  
 update_q = RecheckPriorityQueue()
 notification_q = NotificationQueue()
-MAX_QUEUE_SIZE = 2000
+MAX_QUEUE_SIZE = 5000
 
 app = Flask(__name__,
             static_url_path="",
@@ -68,10 +69,18 @@ socketio_server = None
 # Enable CORS, especially useful for the Chrome extension to operate from anywhere
 CORS(app)
 
-# Super handy for compressing large BrowserSteps responses and others
-FlaskCompress(app)
-app.config['COMPRESS_MIN_SIZE'] = 4096
-app.config['COMPRESS_MIMETYPES'] = ['text/html', 'text/css', 'text/javascript', 'application/json', 'application/javascript', 'image/svg+xml']
+# Flask-Compress handles HTTP compression, Socket.IO compression disabled to prevent memory leak.
+# There's also a bug between flask compress and socketio that causes some kind of slow memory leak
+# It's better to use compression on your reverse proxy (nginx etc) instead.
+if strtobool(os.getenv("FLASK_ENABLE_COMPRESSION")):
+    from flask_compress import Compress as FlaskCompress
+    app.config['COMPRESS_MIN_SIZE'] = 2096
+    app.config['COMPRESS_MIMETYPES'] = ['text/html', 'text/css', 'text/javascript', 'application/json', 'application/javascript', 'image/svg+xml']
+    # Use gzip only - smaller memory footprint than zstd/brotli (4-8KB vs 200-500KB contexts)
+    app.config['COMPRESS_ALGORITHM'] = ['gzip']
+    compress = FlaskCompress()
+    compress.init_app(app)
+
 app.config['TEMPLATES_AUTO_RELOAD'] = False
 
 
@@ -83,6 +92,18 @@ app.config['NEW_VERSION_AVAILABLE'] = False
 
 if os.getenv('FLASK_SERVER_NAME'):
     app.config['SERVER_NAME'] = os.getenv('FLASK_SERVER_NAME')
+
+# Babel/i18n configuration
+app.config['BABEL_TRANSLATION_DIRECTORIES'] = str(Path(__file__).parent / 'translations')
+app.config['BABEL_DEFAULT_LOCALE'] = 'en_GB'
+
+# Session configuration
+# NOTE: Flask session (for locale, etc.) is separate from Flask-Login's remember-me cookie
+# - Flask session stores data like session['locale'] in a signed cookie
+# - Flask-Login's remember=True creates a separate authentication cookie
+# - Setting PERMANENT_SESSION_LIFETIME controls how long the Flask session cookie lasts
+from datetime import timedelta
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=3650)  # ~10 years (effectively unlimited)
 
 #app.config["EXPLAIN_TEMPLATE_LOADING"] = True
 
@@ -177,7 +198,7 @@ def _jinja2_filter_format_number_locale(value: float) -> str:
 
 @app.template_global('is_checking_now')
 def _watch_is_checking_now(watch_obj, format="%Y-%m-%d %H:%M:%S"):
-    return worker_handler.is_watch_running(watch_obj['uuid'])
+    return worker_pool.is_watch_running(watch_obj['uuid'])
 
 @app.template_global('get_watch_queue_position')
 def _get_watch_queue_position(watch_obj):
@@ -188,13 +209,13 @@ def _get_watch_queue_position(watch_obj):
 @app.template_global('get_current_worker_count')
 def _get_current_worker_count():
     """Get the current number of operational workers"""
-    return worker_handler.get_worker_count()
+    return worker_pool.get_worker_count()
 
 @app.template_global('get_worker_status_info')
 def _get_worker_status_info():
     """Get detailed worker status information for display"""
-    status = worker_handler.get_worker_status()
-    running_uuids = worker_handler.get_running_uuids()
+    status = worker_pool.get_worker_status()
+    running_uuids = worker_pool.get_running_uuids()
     
     return {
         'count': status['worker_count'],
@@ -247,6 +268,47 @@ def _jinja2_filter_seconds_precise(timestamp):
         return gettext('Not yet')
 
     return format(int(time.time()-timestamp), ',d')
+
+@app.template_filter('format_duration')
+def _jinja2_filter_format_duration(seconds):
+    """Format a duration in seconds into human readable string like '5 days, 3 hours, 30 minutes'"""
+    from datetime import timedelta
+
+    if not seconds or seconds < 0:
+        return gettext('0 seconds')
+
+    td = timedelta(seconds=int(seconds))
+
+    # Calculate components
+    years = td.days // 365
+    remaining_days = td.days % 365
+    months = remaining_days // 30
+    remaining_days = remaining_days % 30
+    weeks = remaining_days // 7
+    days = remaining_days % 7
+
+    hours = td.seconds // 3600
+    minutes = (td.seconds % 3600) // 60
+    secs = td.seconds % 60
+
+    # Build parts list
+    parts = []
+    if years > 0:
+        parts.append(f"{years} {gettext('year') if years == 1 else gettext('years')}")
+    if months > 0:
+        parts.append(f"{months} {gettext('month') if months == 1 else gettext('months')}")
+    if weeks > 0:
+        parts.append(f"{weeks} {gettext('week') if weeks == 1 else gettext('weeks')}")
+    if days > 0:
+        parts.append(f"{days} {gettext('day') if days == 1 else gettext('days')}")
+    if hours > 0:
+        parts.append(f"{hours} {gettext('hour') if hours == 1 else gettext('hours')}")
+    if minutes > 0:
+        parts.append(f"{minutes} {gettext('minute') if minutes == 1 else gettext('minutes')}")
+    if secs > 0 or not parts:
+        parts.append(f"{secs} {gettext('second') if secs == 1 else gettext('seconds')}")
+
+    return ", ".join(parts)
 
 @app.template_filter('fetcher_status_icons')
 def _jinja2_filter_fetcher_status_icons(fetcher_name):
@@ -370,6 +432,9 @@ def changedetection_app(config=None, datastore_o=None):
     global datastore, socketio_server
     datastore = datastore_o
 
+    # Set datastore reference in notification queue for all_muted checking
+    notification_q.set_datastore(datastore)
+
     # Import and create a wrapper for is_safe_url that has access to app
     from changedetectionio.is_safe_url import is_safe_url as _is_safe_url
 
@@ -380,7 +445,10 @@ def changedetection_app(config=None, datastore_o=None):
     # so far just for read-only via tests, but this will be moved eventually to be the main source
     # (instead of the global var)
     app.config['DATASTORE'] = datastore_o
-    
+
+    # Store batch mode flag to skip background threads when running in batch mode
+    app.config['batch_mode'] = config.get('batch_mode', False) if config else False
+
     # Store the signal in the app config to ensure it's accessible everywhere
     app.config['watch_check_update_SIGNAL'] = watch_check_update
 
@@ -393,15 +461,27 @@ def changedetection_app(config=None, datastore_o=None):
     language_codes = get_language_codes()
 
     def get_locale():
+        # Locale aliases: map browser language codes to translation directory names
+        # This handles cases where browsers send standard codes (e.g., zh-TW)
+        # but our translations use more specific codes (e.g., zh_Hant_TW)
+        locale_aliases = {
+            'zh-TW': 'zh_Hant_TW',  # Traditional Chinese: browser sends zh-TW, we use zh_Hant_TW
+            'zh_TW': 'zh_Hant_TW',  # Also handle underscore variant
+        }
+
         # 1. Try to get locale from session (user explicitly selected)
         if 'locale' in session:
-            locale = session['locale']
-            logger.trace(f"DEBUG: get_locale() returning from session: {locale}")
-            return locale
+            return session['locale']
+
         # 2. Fall back to Accept-Language header
-        locale = request.accept_languages.best_match(language_codes)
-        logger.trace(f"DEBUG: get_locale() returning from Accept-Language: {locale}")
-        return locale
+        # Get the best match from browser's Accept-Language header
+        browser_locale = request.accept_languages.best_match(language_codes + list(locale_aliases.keys()))
+
+        # 3. Check if we need to map the browser locale to our internal locale
+        if browser_locale in locale_aliases:
+            return locale_aliases[browser_locale]
+
+        return browser_locale
 
     # Initialize Babel with locale selector
     babel = Babel(app, locale_selector=get_locale)
@@ -518,9 +598,23 @@ def changedetection_app(config=None, datastore_o=None):
     @app.route('/set-language/<locale>')
     def set_language(locale):
         """Set the user's preferred language in the session"""
+        if not request.cookies:
+            logger.error("Cannot set language without session cookie")
+            flash("Cannot set language without session cookie", 'error')
+            return redirect(url_for('watchlist.index'))
+
         # Validate the locale against available languages
         if locale in language_codes:
+            # Make session permanent so language preference persists across browser sessions
+            # NOTE: This is the Flask session cookie (separate from Flask-Login's remember-me auth cookie)
+            session.permanent = True
             session['locale'] = locale
+
+            # CRITICAL: Flask-Babel caches the locale in the request context (ctx.babel_locale)
+            # We must refresh to clear this cache so the new locale takes effect immediately
+            # This is especially important for tests where multiple requests happen rapidly
+            from flask_babel import refresh
+            refresh()
         else:
             logger.error(f"Invalid locale {locale}, available: {language_codes}")
 
@@ -617,8 +711,14 @@ def changedetection_app(config=None, datastore_o=None):
     def static_content(group, filename):
         from flask import make_response
         import re
-        group = re.sub(r'[^\w.-]+', '', group.lower())
-        filename = re.sub(r'[^\w.-]+', '', filename.lower())
+
+        # Strict sanitization: only allow a-z, 0-9, and underscore (blocks .. and other traversal)
+        group = re.sub(r'[^a-z0-9_-]+', '', group.lower())
+        filename = filename
+
+        # Additional safety: reject if sanitization resulted in empty strings
+        if not group or not filename:
+            abort(404)
 
         if group == 'screenshot':
             # Could be sensitive, follow password requirements
@@ -652,18 +752,11 @@ def changedetection_app(config=None, datastore_o=None):
 
             favicon_filename = watch.get_favicon_filename()
             if favicon_filename:
-                try:
-                    import magic
-                    mime = magic.from_file(
-                        os.path.join(watch.watch_data_dir, favicon_filename),
-                        mime=True
-                    )
-                except ImportError:
-                    # Fallback, no python-magic
-                    import mimetypes
-                    mime, encoding = mimetypes.guess_type(favicon_filename)
+                # Use cached MIME type detection
+                filepath = os.path.join(watch.data_dir, favicon_filename)
+                mime = get_favicon_mime_type(filepath)
 
-                response = make_response(send_from_directory(watch.watch_data_dir, favicon_filename))
+                response = make_response(send_from_directory(watch.data_dir, favicon_filename))
                 response.headers['Content-type'] = mime
                 response.headers['Cache-Control'] = 'max-age=300, must-revalidate'  # Cache for 5 minutes, then revalidate
                 return response
@@ -758,13 +851,15 @@ def changedetection_app(config=None, datastore_o=None):
 
     # watchlist UI buttons etc
     import changedetectionio.blueprint.ui as ui
-    app.register_blueprint(ui.construct_blueprint(datastore, update_q, worker_handler, queuedWatchMetaData, watch_check_update))
+    app.register_blueprint(ui.construct_blueprint(datastore, update_q, worker_pool, queuedWatchMetaData, watch_check_update))
 
     import changedetectionio.blueprint.watchlist as watchlist
     app.register_blueprint(watchlist.construct_blueprint(datastore=datastore, update_q=update_q, queuedWatchMetaData=queuedWatchMetaData), url_prefix='')
 
     # Initialize Socket.IO server conditionally based on settings
-    socket_io_enabled = datastore.data['settings']['application']['ui'].get('socket_io_enabled', True)
+    socket_io_enabled = datastore.data['settings']['application'].get('ui', {}).get('socket_io_enabled', True)
+    if socket_io_enabled and app.config.get('batch_mode'):
+        socket_io_enabled = False
     if socket_io_enabled:
         from changedetectionio.realtime.socket_server import init_socketio
         global socketio_server
@@ -793,10 +888,10 @@ def changedetection_app(config=None, datastore_o=None):
         expected_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
         
         # Get basic status
-        status = worker_handler.get_worker_status()
+        status = worker_pool.get_worker_status()
         
         # Perform health check
-        health_result = worker_handler.check_worker_health(
+        health_result = worker_pool.check_worker_health(
             expected_count=expected_workers,
             update_q=update_q,
             notification_q=notification_q,
@@ -860,16 +955,31 @@ def changedetection_app(config=None, datastore_o=None):
     # Can be overridden by ENV or use the default settings
     n_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
     logger.info(f"Starting {n_workers} workers during app initialization")
-    worker_handler.start_workers(n_workers, update_q, notification_q, app, datastore)
+    worker_pool.start_workers(n_workers, update_q, notification_q, app, datastore)
 
-    # @todo handle ctrl break
-    ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks, daemon=True, name="TickerThread-ScheduleChecker").start()
-    threading.Thread(target=notification_runner, daemon=True, name="NotificationRunner").start()
+    # Skip background threads in batch mode (just process queue and exit)
+    batch_mode = app.config.get('batch_mode', False)
+    if not batch_mode:
+        # @todo handle ctrl break
+        ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks, daemon=True, name="TickerThread-ScheduleChecker").start()
 
-    in_pytest = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
-    # Check for new release version, but not when running in test/build or pytest
-    if not os.getenv("GITHUB_REF", False) and not strtobool(os.getenv('DISABLE_VERSION_CHECK', 'no')) and not in_pytest:
-        threading.Thread(target=check_for_new_version, daemon=True, name="VersionChecker").start()
+        # Start configurable number of notification workers (default 1)
+        notification_workers = int(os.getenv("NOTIFICATION_WORKERS", "1"))
+        for i in range(notification_workers):
+            threading.Thread(
+                target=notification_runner,
+                args=(i,),
+                daemon=True,
+                name=f"NotificationRunner-{i}"
+            ).start()
+        logger.info(f"Started {notification_workers} notification worker(s)")
+
+        in_pytest = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
+        # Check for new release version, but not when running in test/build or pytest
+        if not os.getenv("GITHUB_REF", False) and not strtobool(os.getenv('DISABLE_VERSION_CHECK', 'no')) and not in_pytest:
+            threading.Thread(target=check_for_new_version, daemon=True, name="VersionChecker").start()
+    else:
+        logger.info("Batch mode: Skipping ticker thread, notification runner, and version checker")
 
     # Return the Flask app - the Socket.IO will be attached to it but initialized separately
     # This avoids circular dependencies
@@ -904,14 +1014,14 @@ def check_for_new_version():
         app.config.exit.wait(86400)
 
 
-def notification_runner():
+def notification_runner(worker_id=0):
     global notification_debug_log
     from datetime import datetime
     import json
     with app.app_context():
         while not app.config.exit.is_set():
             try:
-                # At the moment only one thread runs (single runner)
+                # Multiple workers can run concurrently (configurable via NOTIFICATION_WORKERS)
                 n_object = notification_q.get(block=False)
             except queue.Empty:
                 app.config.exit.wait(1)
@@ -937,7 +1047,7 @@ def notification_runner():
                         sent_obj = process_notification(n_object, datastore)
 
                 except Exception as e:
-                    logger.error(f"Watch URL: {n_object['watch_url']}  Error {str(e)}")
+                    logger.error(f"Notification worker {worker_id} - Watch URL: {n_object['watch_url']}  Error {str(e)}")
 
                     # UUID wont be present when we submit a 'test' from the global settings
                     if 'uuid' in n_object:
@@ -967,6 +1077,10 @@ def ticker_thread_check_time_launch_checks():
     logger.debug(f"System env MINIMUM_SECONDS_RECHECK_TIME {recheck_time_minimum_seconds}")
 
     # Workers are now started during app initialization, not here
+    WAIT_TIME_BETWEEN_LOOP = 1.0 if not IN_PYTEST else 0.01
+    if IN_PYTEST:
+        # The time between loops should be less than the first .sleep/wait in def wait_for_all_checks() of tests/util.py
+        logger.warning(f"Looks like we're in PYTEST! Setting time between searching for items to add to the queue to {WAIT_TIME_BETWEEN_LOOP}s")
 
     while not app.config.exit.is_set():
 
@@ -974,7 +1088,7 @@ def ticker_thread_check_time_launch_checks():
         now = time.time()
         if now - last_health_check > 60:
             expected_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
-            health_result = worker_handler.check_worker_health(
+            health_result = worker_pool.check_worker_health(
                 expected_count=expected_workers,
                 update_q=update_q,
                 notification_q=notification_q,
@@ -984,11 +1098,19 @@ def ticker_thread_check_time_launch_checks():
             
             if health_result['status'] != 'healthy':
                 logger.warning(f"Worker health check: {health_result['message']}")
-                
+
             last_health_check = now
 
+        # Check if all checks are paused
+        if datastore.data['settings']['application'].get('all_paused', False):
+            app.config.exit.wait(1)
+            continue
+
         # Get a list of watches by UUID that are currently fetching data
-        running_uuids = worker_handler.get_running_uuids()
+        running_uuids = worker_pool.get_running_uuids()
+
+        # Build set of queued UUIDs once for O(1) lookup instead of O(n) per watch
+        queued_uuids = {q_item.item['uuid'] for q_item in update_q.queue}
 
         # Re #232 - Deepcopy the data incase it changes while we're iterating through it all
         watch_uuid_list = []
@@ -1006,16 +1128,17 @@ def ticker_thread_check_time_launch_checks():
             else:
                 break
 
-        # Re #438 - Don't place more watches in the queue to be checked if the queue is already large
-        while update_q.qsize() >= 2000:
-            logger.warning(f"Recheck watches queue size limit reached ({MAX_QUEUE_SIZE}), skipping adding more items")
-            app.config.exit.wait(10.0)
-
-
         recheck_time_system_seconds = int(datastore.threshold_seconds)
 
         # Check for watches outside of the time threshold to put in the thread queue.
-        for uuid in watch_uuid_list:
+        for watch_index, uuid in enumerate(watch_uuid_list):
+            # Re #438 - Check queue size every 100 watches for CPU efficiency (not every watch)
+            if watch_index % 100 == 0:
+                current_queue_size = update_q.qsize()
+                if current_queue_size >= MAX_QUEUE_SIZE:
+                    logger.debug(f"Queue size limit reached ({current_queue_size}/{MAX_QUEUE_SIZE}), stopping scheduler this iteration.")
+                    break
+
             now = time.time()
             watch = datastore.data['watching'].get(uuid)
             if not watch:
@@ -1065,7 +1188,7 @@ def ticker_thread_check_time_launch_checks():
             seconds_since_last_recheck = now - watch['last_checked']
 
             if seconds_since_last_recheck >= (threshold + watch.jitter_seconds) and seconds_since_last_recheck >= recheck_time_minimum_seconds:
-                if not uuid in running_uuids and uuid not in [q_uuid.item['uuid'] for q_uuid in update_q.queue]:
+                if not uuid in running_uuids and uuid not in queued_uuids:
 
                     # Proxies can be set to have a limit on seconds between which they can be called
                     watch_proxy = datastore.get_preferred_proxy_for_watch(uuid=uuid)
@@ -1090,7 +1213,7 @@ def ticker_thread_check_time_launch_checks():
                     priority = int(time.time())
 
                     # Into the queue with you
-                    queued_successfully = worker_handler.queue_item_async_safe(update_q,
+                    queued_successfully = worker_pool.queue_item_async_safe(update_q,
                                                                                queuedWatchMetaData.PrioritizedItem(priority=priority,
                                                                                                                    item={'uuid': uuid})
                                                                                )
@@ -1108,4 +1231,4 @@ def ticker_thread_check_time_launch_checks():
                     watch.jitter_seconds = 0
 
         # Should be low so we can break this out in testing
-        app.config.exit.wait(1)
+        app.config.exit.wait(WAIT_TIME_BETWEEN_LOOP)

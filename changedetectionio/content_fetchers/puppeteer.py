@@ -1,4 +1,5 @@
 import asyncio
+import gc
 import json
 import os
 import websockets.exceptions
@@ -20,18 +21,20 @@ from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200
 # Screenshots also travel via the ws:// (websocket) meaning that the binary data is base64 encoded
 # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
 # acceptable screenshot quality here
-async def capture_full_page(page, screenshot_format='JPEG'):
+async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, lock_viewport_elements=False):
     import os
     import time
-    import multiprocessing
 
     start = time.time()
+    watch_info = f"[{watch_uuid}] " if watch_uuid else ""
 
+    setup_start = time.time()
     page_height = await page.evaluate("document.documentElement.scrollHeight")
     page_width = await page.evaluate("document.documentElement.scrollWidth")
     original_viewport = page.viewport
+    dimensions_time = time.time() - setup_start
 
-    logger.debug(f"Puppeteer viewport size {page.viewport} page height {page_height} page width {page_width}")
+    logger.debug(f"{watch_info}Puppeteer viewport size {page.viewport} page height {page_height} page width {page_width} (got dimensions in {dimensions_time:.2f}s)")
 
     # Bug 3 in Playwright screenshot handling
     # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
@@ -50,26 +53,41 @@ async def capture_full_page(page, screenshot_format='JPEG'):
     screenshot_chunks = []
     y = 0
     elements_locked = False
-    if page_height > page.viewport['height']:
-        # Lock all element dimensions BEFORE screenshot to prevent CSS media queries from resizing
-        # capture_full_page() changes viewport height which triggers @media (min-height) rules
+
+    # Only lock viewport elements if explicitly enabled (for image_ssim_diff processor)
+    # This prevents headers/ads from resizing when viewport changes
+    if lock_viewport_elements and page_height > page.viewport['height']:
+        lock_start = time.time()
         lock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'lock-elements-sizing.js')
+        file_read_start = time.time()
         with open(lock_elements_js_path, 'r') as f:
             lock_elements_js = f.read()
-        await page.evaluate(lock_elements_js)
-        elements_locked = True
-        logger.debug("Element dimensions locked before screenshot capture")
+        file_read_time = time.time() - file_read_start
 
+        evaluate_start = time.time()
+        await page.evaluate(lock_elements_js)
+        evaluate_time = time.time() - evaluate_start
+
+        elements_locked = True
+        lock_time = time.time() - lock_start
+        logger.debug(f"{watch_info}Viewport element locking enabled - File read: {file_read_time:.3f}s, Browser evaluate: {evaluate_time:.2f}s, Total: {lock_time:.2f}s")
+
+    if page_height > page.viewport['height']:
         if page_height < step_size:
             step_size = page_height # Incase page is bigger than default viewport but smaller than proposed step size
+        viewport_start = time.time()
         await page.setViewport({'width': page.viewport['width'], 'height': step_size})
+        viewport_time = time.time() - viewport_start
+        logger.debug(f"{watch_info}Viewport changed to {page.viewport['width']}x{step_size} (took {viewport_time:.2f}s)")
 
+    capture_start = time.time()
+    chunk_times = []
     while y < min(page_height, SCREENSHOT_MAX_TOTAL_HEIGHT):
         # better than scrollTo incase they override it in the page
         await page.evaluate(
             """(y) => {
-                document.documentElement.scrollTop = y;
-                document.body.scrollTop = y;
+                const el = document.scrollingElement;
+                if (el) el.scrollTop = y;
             }""",
             y
         )
@@ -82,7 +100,11 @@ async def capture_full_page(page, screenshot_format='JPEG'):
         if screenshot_type == 'jpeg':
             screenshot_kwargs['quality'] = screenshot_quality
 
+        chunk_start = time.time()
         screenshot_chunks.append(await page.screenshot(**screenshot_kwargs))
+        chunk_time = time.time() - chunk_start
+        chunk_times.append(chunk_time)
+        logger.debug(f"{watch_info}Chunk {len(screenshot_chunks)} captured in {chunk_time:.2f}s")
         y += step_size
 
     await page.setViewport({'width': original_viewport['width'], 'height': original_viewport['height']})
@@ -93,26 +115,53 @@ async def capture_full_page(page, screenshot_format='JPEG'):
         with open(unlock_elements_js_path, 'r') as f:
             unlock_elements_js = f.read()
         await page.evaluate(unlock_elements_js)
-        logger.debug("Element dimensions unlocked after screenshot capture")
+        logger.debug(f"{watch_info}Element dimensions unlocked after screenshot capture")
+
+    capture_time = time.time() - capture_start
+    total_capture_time = sum(chunk_times)
+    logger.debug(f"{watch_info}All {len(screenshot_chunks)} chunks captured in {capture_time:.2f}s (total chunk time: {total_capture_time:.2f}s)")
 
     if len(screenshot_chunks) > 1:
-        # Always use spawn for thread safety - consistent behavior in tests and production
-        from changedetectionio.content_fetchers.screenshot_handler import stitch_images_worker
-        logger.debug(f"Screenshot stitching {len(screenshot_chunks)} chunks together")
+        stitch_start = time.time()
+        logger.debug(f"{watch_info}Starting stitching of {len(screenshot_chunks)} chunks")
+
+        # Always use spawn subprocess for ANY stitching (2+ chunks)
+        # PIL allocates at C level and Python GC never releases it - subprocess exit forces OS to reclaim
+        # Trade-off: 35MB resource_tracker vs 500MB+ PIL leak in main process
+        from changedetectionio.content_fetchers.screenshot_handler import stitch_images_worker_raw_bytes
+        import multiprocessing
+        import struct
+
         ctx = multiprocessing.get_context('spawn')
         parent_conn, child_conn = ctx.Pipe()
-        p = ctx.Process(target=stitch_images_worker, args=(child_conn, screenshot_chunks, page_height, SCREENSHOT_MAX_TOTAL_HEIGHT))
+        p = ctx.Process(target=stitch_images_worker_raw_bytes, args=(child_conn, page_height, SCREENSHOT_MAX_TOTAL_HEIGHT))
         p.start()
+
+        # Send via raw bytes (no pickle)
+        parent_conn.send_bytes(struct.pack('I', len(screenshot_chunks)))
+        for chunk in screenshot_chunks:
+            parent_conn.send_bytes(chunk)
+
         screenshot = parent_conn.recv_bytes()
         p.join()
-        logger.debug(
-            f"Screenshot (chunked/stitched) - Page height: {page_height} Capture height: {SCREENSHOT_MAX_TOTAL_HEIGHT} - Stitched together in {time.time() - start:.2f}s")
 
-        screenshot_chunks = None
+        parent_conn.close()
+        child_conn.close()
+        del p, parent_conn, child_conn
+
+        stitch_time = time.time() - stitch_start
+        total_time = time.time() - start
+        setup_time = total_time - capture_time - stitch_time
+        logger.debug(
+            f"{watch_info}Screenshot complete - Page height: {page_height}px, Capture height: {SCREENSHOT_MAX_TOTAL_HEIGHT}px | "
+            f"Setup: {setup_time:.2f}s, Capture: {capture_time:.2f}s, Stitching: {stitch_time:.2f}s, Total: {total_time:.2f}s")
         return screenshot
 
+    total_time = time.time() - start
+    setup_time = total_time - capture_time
     logger.debug(
-        f"Screenshot Page height: {page_height} Capture height: {SCREENSHOT_MAX_TOTAL_HEIGHT} - Stitched together in {time.time() - start:.2f}s")
+        f"{watch_info}Screenshot complete - Page height: {page_height}px, Capture height: {SCREENSHOT_MAX_TOTAL_HEIGHT}px | "
+        f"Setup: {setup_time:.2f}s, Single chunk: {capture_time:.2f}s, Total: {total_time:.2f}s")
     return screenshot_chunks[0]
 
 
@@ -173,19 +222,36 @@ class fetcher(Fetcher):
                 self.browser_connection_url += f"{r}--proxy-server={proxy_url}"
 
     async def quit(self, watch=None):
-        try:
-            await self.page.close()
-            del self.page
-        except Exception as e:
-            pass
+        watch_uuid = watch.get('uuid') if watch else 'unknown'
 
+        # Close page
         try:
-            await self.browser.close()
-            del self.browser
+            if hasattr(self, 'page') and self.page:
+                await asyncio.wait_for(self.page.close(), timeout=5.0)
+                logger.debug(f"[{watch_uuid}] Page closed successfully")
+        except asyncio.TimeoutError:
+            logger.warning(f"[{watch_uuid}] Timed out closing page (5s)")
         except Exception as e:
-            pass
+            logger.warning(f"[{watch_uuid}] Error closing page: {e}")
+        finally:
+            self.page = None
 
-        logger.info("Cleanup puppeteer complete.")
+        # Close browser connection
+        try:
+            if hasattr(self, 'browser') and self.browser:
+                await asyncio.wait_for(self.browser.close(), timeout=5.0)
+                logger.debug(f"[{watch_uuid}] Browser closed successfully")
+        except asyncio.TimeoutError:
+            logger.warning(f"[{watch_uuid}] Timed out closing browser (5s)")
+        except Exception as e:
+            logger.warning(f"[{watch_uuid}] Error closing browser: {e}")
+        finally:
+            self.browser = None
+
+        logger.info(f"[{watch_uuid}] Cleanup puppeteer complete")
+
+        # Force garbage collection to release resources
+        gc.collect()
 
     async def fetch_page(self,
                          current_include_filters,
@@ -215,9 +281,11 @@ class fetcher(Fetcher):
         # Connect directly using the specified browser_ws_endpoint
         # @todo timeout
         try:
+            logger.debug(f"[{watch_uuid}] Connecting to browser at {self.browser_connection_url}")
             self.browser = await pyppeteer_instance.connect(browserWSEndpoint=self.browser_connection_url,
                                                             ignoreHTTPSErrors=True
                                                             )
+            logger.debug(f"[{watch_uuid}] Browser connected successfully")
         except websockets.exceptions.InvalidStatusCode as e:
             raise BrowserConnectError(msg=f"Error while trying to connect the browser, Code {e.status_code} (check your access, whitelist IP, password etc)")
         except websockets.exceptions.InvalidURI:
@@ -226,7 +294,20 @@ class fetcher(Fetcher):
             raise BrowserConnectError(msg=f"Error connecting to the browser - Exception '{str(e)}'")
 
         # more reliable is to just request a new page
-        self.page = await self.browser.newPage()
+        try:
+            logger.debug(f"[{watch_uuid}] Creating new page")
+            self.page = await self.browser.newPage()
+            logger.debug(f"[{watch_uuid}] Page created successfully")
+        except Exception as e:
+            logger.error(f"[{watch_uuid}] Failed to create new page: {e}")
+            # Browser is connected but page creation failed - must cleanup browser
+            try:
+                await asyncio.wait_for(self.browser.close(), timeout=3.0)
+            except Exception as cleanup_error:
+                logger.error(f"[{watch_uuid}] Failed to cleanup browser after page creation failure: {cleanup_error}")
+            finally:
+                self.browser = None
+            raise
         
         # Add console handler to capture console.log from favicon fetcher
         #self.page.on('console', lambda msg: logger.debug(f"Browser console [{msg.type}]: {msg.text}"))
@@ -295,6 +376,12 @@ class fetcher(Fetcher):
             w = extra_wait - 2 if extra_wait > 4 else 2
             logger.debug(f"Waiting {w} seconds before calling Page.stopLoading...")
             await asyncio.sleep(w)
+
+            # Check if page still exists (might have been closed due to error during sleep)
+            if not self.page or not hasattr(self.page, '_client'):
+                logger.debug("Page already closed, skipping stopLoading")
+                return
+
             logger.debug("Issuing stopLoading command...")
             await self.page._client.send('Page.stopLoading')
             logger.debug("stopLoading command sent!")
@@ -320,7 +407,9 @@ class fetcher(Fetcher):
             asyncio.create_task(handle_frame_navigation())
             response = await self.page.goto(url, timeout=0)
             await asyncio.sleep(1 + extra_wait)
-            await self.page._client.send('Page.stopLoading')
+            # Check if page still exists before sending command
+            if self.page and hasattr(self.page, '_client'):
+                await self.page._client.send('Page.stopLoading')
 
             if response:
                 break
@@ -357,7 +446,7 @@ class fetcher(Fetcher):
                 logger.error(f"Error fetching FavIcon info {str(e)}, continuing.")
 
         if self.status_code != 200 and not ignore_status_codes:
-            screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format)
+            screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format, watch_uuid=watch_uuid, lock_viewport_elements=self.lock_viewport_elements)
 
             raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=screenshot)
 
@@ -369,7 +458,7 @@ class fetcher(Fetcher):
 
         # Run Browser Steps here
         # @todo not yet supported, we switch to playwright in this case
-        #            if self.browser_steps_get_valid_steps():
+        #            if self.browser_steps:
         #                self.iterate_browser_steps()
 
 
@@ -387,7 +476,11 @@ class fetcher(Fetcher):
 
         # Now take screenshot (scrolling may trigger layout changes, but measurements are already captured)
         logger.debug(f"Screenshot format {self.screenshot_format}")
-        self.screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format)
+        self.screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format, watch_uuid=watch_uuid, lock_viewport_elements=self.lock_viewport_elements)
+
+        # Force garbage collection - pyppeteer base64 decode creates temporary buffers
+        import gc
+        gc.collect()
         self.xpath_data = await self.page.evaluate(XPATH_ELEMENT_JS, {
             "visualselector_xpath_selectors": visualselector_xpath_selectors,
             "max_height": MAX_TOTAL_HEIGHT
@@ -441,6 +534,14 @@ class fetcher(Fetcher):
             )
         except asyncio.TimeoutError:
             raise (BrowserFetchTimedOut(msg=f"Browser connected but was unable to process the page in {max_time} seconds."))
+        finally:
+            # Internal cleanup on any exception/timeout - call quit() immediately
+            # This prevents connection leaks during exception bursts
+            # Worker.py's quit() call becomes a redundant safety net (idempotent)
+            try:
+                await self.quit(watch={'uuid': watch_uuid} if watch_uuid else None)
+            except Exception as cleanup_error:
+                logger.error(f"[{watch_uuid}] Error during internal quit() cleanup: {cleanup_error}")
 
 
 # Plugin registration for built-in fetcher

@@ -6,6 +6,42 @@ from flask import url_for
 import logging
 import time
 import os
+import threading
+
+# Thread-safe global storage for test endpoint content
+# Avoids filesystem cache issues in parallel tests
+_test_endpoint_content_lock = threading.Lock()
+_test_endpoint_content = {}
+
+def write_test_file_and_sync(filepath, content, mode='w'):
+    """
+    Write test data to file and ensure it's synced to disk.
+    Also stores in thread-safe global dict to bypass filesystem cache.
+
+    Critical for parallel tests where workers may read files immediately after write.
+    Without fsync(), data may still be in OS buffers when workers try to read,
+    causing race conditions where old data is seen.
+
+    Args:
+        filepath: Full path to file
+        content: Content to write (str or bytes)
+        mode: File mode ('w' for text, 'wb' for binary)
+    """
+    # Convert content to bytes if needed
+    if isinstance(content, str):
+        content_bytes = content.encode('utf-8')
+    else:
+        content_bytes = content
+
+    # Store in thread-safe global dict for instant access
+    with _test_endpoint_content_lock:
+        _test_endpoint_content[os.path.basename(filepath)] = content_bytes
+
+    # Also write to file for compatibility
+    with open(filepath, mode) as f:
+        f.write(content)
+        f.flush()  # Flush Python buffer to OS
+        os.fsync(f.fileno())  # Force OS to write to disk
 
 def set_original_response(datastore_path, extra_title=''):
     test_return_data = f"""<html>
@@ -20,8 +56,7 @@ def set_original_response(datastore_path, extra_title=''):
      </html>
     """
 
-    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
-        f.write(test_return_data)
+    write_test_file_and_sync(os.path.join(datastore_path, "endpoint-content.txt"), test_return_data)
     return None
 
 def set_modified_response(datastore_path):
@@ -36,9 +71,7 @@ def set_modified_response(datastore_path):
      </html>
     """
 
-    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
-        f.write(test_return_data)
-
+    write_test_file_and_sync(os.path.join(datastore_path, "endpoint-content.txt"), test_return_data)
     return None
 def set_longer_modified_response(datastore_path):
     test_return_data = """<html>
@@ -55,9 +88,7 @@ def set_longer_modified_response(datastore_path):
      </html>
     """
 
-    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
-        f.write(test_return_data)
-
+    write_test_file_and_sync(os.path.join(datastore_path, "endpoint-content.txt"), test_return_data)
     return None
 
 def set_more_modified_response(datastore_path):
@@ -73,17 +104,14 @@ def set_more_modified_response(datastore_path):
      </html>
     """
 
-    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
-        f.write(test_return_data)
-
+    write_test_file_and_sync(os.path.join(datastore_path, "endpoint-content.txt"), test_return_data)
     return None
 
 
 def set_empty_text_response(datastore_path):
     test_return_data = """<html><body></body></html>"""
 
-    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
-        f.write(test_return_data)
+    write_test_file_and_sync(os.path.join(datastore_path, "endpoint-content.txt"), test_return_data)
 
     return None
 
@@ -132,46 +160,53 @@ def extract_UUID_from_client(client):
     return uuid.strip()
 
 def delete_all_watches(client=None):
+    wait_for_all_checks(client)
+
     uuids = list(client.application.config.get('DATASTORE').data['watching'])
     for uuid in uuids:
         client.application.config.get('DATASTORE').delete(uuid)
+    from changedetectionio.flask_app import update_q
+
+    # Clear the queue to prevent leakage to next test
+    # Use clear() method to ensure both priority_items and notification_queue are drained
+    if hasattr(update_q, 'clear'):
+        update_q.clear()
+    else:
+        # Fallback for old implementation
+        while not update_q.empty():
+            try:
+                update_q.get_nowait()
+            except:
+                break
+
+    time.sleep(0.2)
+
+    # Delete any old watch metadata
+    from pathlib import Path
+
+    base_path = Path(
+        client.application.config.get('DATASTORE').datastore_path
+    ).resolve()
+
+    max_depth = 2
+
+    for file in base_path.rglob("*.json"):
+        # Calculate depth relative to base path
+        depth = len(file.relative_to(base_path).parts) - 1
+
+        if depth <= max_depth and file.is_file():
+            file.unlink()
 
 
 def wait_for_all_checks(client=None):
     """
     Waits until the queue is empty and workers are idle.
-    Much faster than the original with adaptive timing.
+    Delegates to worker_pool.wait_for_all_checks for shared logic.
     """
     from changedetectionio.flask_app import update_q as global_update_q
-    from changedetectionio import worker_handler
-    empty_since = None
-    attempt = 0
-    max_attempts = 150  # Still reasonable upper bound
+    from changedetectionio import worker_pool
+    return worker_pool.wait_for_all_checks(global_update_q, timeout=150)
 
-    while attempt < max_attempts:
-        # Start with fast checks, slow down if needed
-        if attempt < 10:
-            time.sleep(0.2)  # Very fast initial checks
-        elif attempt < 30:
-            time.sleep(0.4)  # Medium speed
-        else:
-            time.sleep(0.8)  # Slower for persistent issues
-
-        q_length = global_update_q.qsize()
-        running_uuids = worker_handler.get_running_uuids()
-        any_workers_busy = len(running_uuids) > 0
-
-        if q_length == 0 and not any_workers_busy:
-            if empty_since is None:
-                empty_since = time.time()
-            # Brief stabilization period for async workers
-            elif time.time() - empty_since >= 0.3:
-                break
-        else:
-            empty_since = None
-
-        attempt += 1
-        time.sleep(0.3)
 
 def wait_for_watch_history(client, min_history_count=2, timeout=10):
     """
@@ -220,8 +255,11 @@ def new_live_server_setup(live_server):
 
     @live_server.app.route('/test-endpoint')
     def test_endpoint():
-        from loguru import logger
-        logger.debug(f"/test-endpoint hit {request}")
+        # REMOVED: logger.debug() causes file locking between test process and Flask server process
+        # Flask server runs in separate multiprocessing.Process and inherited loguru tries to
+        # write to same log files, causing request handlers to block on file locks
+        # from loguru import logger
+        # logger.debug(f"/test-endpoint hit {request}")
         ctype = request.args.get('content_type')
         status_code = request.args.get('status_code')
         content = request.args.get('content') or None
@@ -243,15 +281,35 @@ def new_live_server_setup(live_server):
                     resp.headers['Content-Type'] = ctype if ctype else 'text/html'
                 return resp
 
-            # Tried using a global var here but didn't seem to work, so reading from a file instead.
-            datastore_path = current_app.config.get('TEST_DATASTORE_PATH', 'test-datastore')
-            with open(os.path.join(datastore_path, "endpoint-content.txt"), "rb") as f:
-                resp = make_response(f.read(), status_code)
-                if uppercase_headers:
-                    resp.headers['CONTENT-TYPE'] = ctype if ctype else 'text/html'
-                else:
-                    resp.headers['Content-Type'] = ctype if ctype else 'text/html'
-                return resp
+            # Check thread-safe global dict first (instant, no cache issues)
+            # Fall back to file if not in dict (for tests that write directly)
+            with _test_endpoint_content_lock:
+                content_data = _test_endpoint_content.get("endpoint-content.txt")
+
+            if content_data is None:
+                # Not in global dict, read from file
+                datastore_path = current_app.config.get('TEST_DATASTORE_PATH', 'test-datastore')
+                filepath = os.path.join(datastore_path, "endpoint-content.txt")
+
+                # REMOVED: os.sync() was blocking for many seconds during parallel tests
+                # With -n 6+ parallel tests, heavy I/O causes os.sync() to wait for ALL
+                # system writes to complete, causing "Read timed out" errors
+                # File writes from test code are already flushed by the time workers fetch
+
+                try:
+                    with open(filepath, "rb") as f:
+                        content_data = f.read()
+                except Exception as e:
+                    # REMOVED: logger.error() causes file locking in multiprocess context
+                    # Just raise the exception directly for debugging
+                    raise
+
+            resp = make_response(content_data, status_code)
+            if uppercase_headers:
+                resp.headers['CONTENT-TYPE'] = ctype if ctype else 'text/html'
+            else:
+                resp.headers['Content-Type'] = ctype if ctype else 'text/html'
+            return resp
         except FileNotFoundError:
             return make_response('', status_code)
 
@@ -325,6 +383,12 @@ def new_live_server_setup(live_server):
     @live_server.app.route('/endpoint-test.pdf')
     def test_pdf_endpoint():
         datastore_path = current_app.config.get('TEST_DATASTORE_PATH', 'test-datastore')
+
+        # Force filesystem sync before reading to ensure fresh data
+        try:
+            os.sync()
+        except (AttributeError, PermissionError):
+            pass
 
         # Tried using a global var here but didn't seem to work, so reading from a file instead.
         with open(os.path.join(datastore_path, "endpoint-test.pdf"), "rb") as f:

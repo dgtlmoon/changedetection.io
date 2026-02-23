@@ -29,3 +29,4 @@ test-datastore/
 
 # Memory consumption log
 test-memory.log
+tests/logs/

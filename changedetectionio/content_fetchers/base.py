@@ -38,7 +38,6 @@ def manage_user_agent(headers, current_ua=''):
 
     return None
 
-
 class Fetcher():
     browser_connection_is_custom = None
     browser_connection_url = None
@@ -71,9 +70,18 @@ class Fetcher():
     supports_screenshots = False        # Can capture page screenshots
     supports_xpath_element_data = False # Can extract xpath element positions/data for visual selector
 
+    # Screenshot element locking - prevents layout shifts during screenshot capture
+    # Only needed for visual comparison (image_ssim_diff processor)
+    # Locks element dimensions in the first viewport to prevent headers/ads from resizing
+    lock_viewport_elements = False      # Default: disabled for performance
+
     def __init__(self, **kwargs):
         if kwargs and 'screenshot_format' in kwargs:
             self.screenshot_format = kwargs.get('screenshot_format')
+
+        # Allow lock_viewport_elements to be set via kwargs
+        if kwargs and 'lock_viewport_elements' in kwargs:
+            self.lock_viewport_elements = kwargs.get('lock_viewport_elements')
 
 
     @classmethod
@@ -154,30 +162,16 @@ class Fetcher():
         """
         return {k.lower(): v for k, v in self.headers.items()}
 
-    def browser_steps_get_valid_steps(self):
-        if self.browser_steps is not None and len(self.browser_steps):
-            valid_steps = list(filter(
-                lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one'),
-                self.browser_steps))
-
-            # Just incase they selected Goto site by accident with older JS
-            if valid_steps and valid_steps[0]['operation'] == 'Goto site':
-                del(valid_steps[0])
-
-            return valid_steps
-
-        return None
-
     async def iterate_browser_steps(self, start_url=None):
-        from changedetectionio.blueprint.browser_steps.browser_steps import steppable_browser_interface
+        from changedetectionio.browser_steps.browser_steps import steppable_browser_interface, browser_steps_get_valid_steps
         from playwright._impl._errors import TimeoutError, Error
         from changedetectionio.jinja2_custom import render as jinja_render
         step_n = 0
 
-        if self.browser_steps is not None and len(self.browser_steps):
+        if self.browser_steps:
             interface = steppable_browser_interface(start_url=start_url)
             interface.page = self.page
-            valid_steps = self.browser_steps_get_valid_steps()
+            valid_steps = browser_steps_get_valid_steps(self.browser_steps)
 
             for step in valid_steps:
                 step_n += 1

@@ -539,6 +539,18 @@ def cdata_in_document_to_text(html_content: str, render_anchor_tag_content=False
 
 
 def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=False, timeout=10) -> str:
+    """
+    Convert HTML content to plain text using inscriptis.
+
+    Thread-Safety: This function uses inscriptis.get_text() which internally calls
+    lxml.html.fromstring() with the default parser. Testing with 50 concurrent threads
+    confirms this approach is thread-safe and produces deterministic output.
+
+    Alternative Approach Rejected: An explicit HTMLParser instance (thread-local or fresh)
+    would also be thread-safe, but was found to break change detection logic in subtle ways
+    (test_check_basic_change_detection_functionality). The default parser provides correct
+    and reliable behavior.
+    """
     from inscriptis import get_text
     from inscriptis.model.config import ParserConfig
 
@@ -549,10 +561,33 @@ def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=Fals
         )
     else:
         parser_config = None
-
     if is_rss:
         html_content = re.sub(r'<title([\s>])', r'<h1\1', html_content)
         html_content = re.sub(r'</title>', r'</h1>', html_content)
+    else:
+        # Use BS4 html.parser to strip bloat — SPA's often dump 10MB+ of CSS/JS into <head>,
+        # causing inscriptis to silently give up. Regex-based stripping is unsafe because tags
+        # can appear inside JSON data attributes with JS-escaped closing tags (e.g. <\/script>),
+        # causing the regex to scan past the intended close and eat real page content.
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(html_content, 'html.parser')
+        # Strip tags that inscriptis cannot render as meaningful text and which can be very large.
+        # svg/math: produce path-data/MathML garbage; canvas/iframe/template: no inscriptis handlers.
+        # video/audio/picture are kept — they may contain meaningful fallback text or captions.
+        for tag in soup.find_all(['head', 'script', 'style', 'noscript', 'svg',
+                                  'math', 'canvas', 'iframe', 'template']):
+            tag.decompose()
+
+        # SPAs often use <body style="display:none"> to hide content until JS loads.
+        # inscriptis respects CSS display rules, so strip hiding styles from the body tag.
+        body_tag = soup.find('body')
+        if body_tag and body_tag.get('style'):
+            style = body_tag['style']
+            if re.search(r'\b(?:display\s*:\s*none|visibility\s*:\s*hidden)\b', style, re.IGNORECASE):
+                logger.debug(f"html_to_text: Removing hiding styles from body tag (found: '{style}')")
+                del body_tag['style']
+
+        html_content = str(soup)
 
     text_content = get_text(html_content, config=parser_config)
     return text_content

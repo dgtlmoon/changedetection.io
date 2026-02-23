@@ -184,7 +184,8 @@ $(document).ready(function() {
         }
         // If it's a button in a form, submit the form
         else if ($element.is('button')) {
-          $element.closest('form').submit();
+          // Use requestSubmit() to include the button's name/value in the form data
+          $element.closest('form')[0].requestSubmit($element[0]);
         }
       }
     };

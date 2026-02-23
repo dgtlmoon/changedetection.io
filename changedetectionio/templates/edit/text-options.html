@@ -6,10 +6,11 @@
 ") }}
                         <span class="pure-form-message-inline">
                     <ul>
-                        <li>Text to wait for before triggering a change/notification, all text and regex are tested <i>case-insensitive</i>.</li>
-                        <li>Trigger text is processed from the result-text that comes out of any CSS/JSON Filters for this watch</li>
-                        <li>Each line is processed separately (think of each line as "OR")</li>
-                        <li>Note: Wrap in forward slash / to use regex  example: <code>/foo\d/</code></li>
+                        <li>{{ _('Text to wait for before triggering a change/notification, all text and regex are tested case-insensitive.') }}</li>
+                        <li>{{ _('Trigger text is processed from the result-text that comes out of any CSS/JSON Filters for this monitor') }}</li>
+                        <li>{{ _('Each line is processed separately (think of each line as "OR")') }}</li>
+                        <li>{{ _('Note: Wrap in forward slash / to use regex example:') }} <code>/foo\d/</code></li>
+                        <li>{{ _('You can also use')}} <a href="#conditions">{{ _('conditions')}}</a> - {{ _('"Page text" - with Contains, Starts With, Not Contains and many more' ) }} <code>/foo\d/</code></li>
                     </ul>
                         </span>
                     </div>
@@ -20,10 +21,10 @@
 ") }}
                     <span class="pure-form-message-inline">
                         <ul>
-                            <li>Matching text will be <strong>ignored</strong> in the text snapshot (you can still see it but it wont trigger a change)</li>
-                            <li>Each line processed separately, any line matching will be ignored (removed before creating the checksum)</li>
-                            <li>Regular Expression support, wrap the entire line in forward slash <code>/regex/</code></li>
-                            <li>Changing this will affect the comparison checksum which may trigger an alert</li>
+                            <li>{{ _('Matching text will be ignored in the text snapshot (you can still see it but it wont trigger a change)') }}</li>
+                            <li>{{ _('Each line processed separately, any line matching will be ignored (removed before creating the checksum)') }}</li>
+                            <li>{{ _('Regular Expression support, wrap the entire line in forward slash') }} <code>/regex/</code></li>
+                            <li>{{ _('Changing this will affect the comparison checksum which may trigger an alert') }}</li>
                         </ul>
                 </span>
                 <br><br>
@@ -40,10 +41,10 @@ Not in stock
 Unavailable") }}
                         <span class="pure-form-message-inline">
                             <ul>
-                                <li>Block change-detection while this text is on the page, all text and regex are tested <i>case-insensitive</i>, good for waiting for when a product is available again</li>
-                                <li>Block text is processed from the result-text that comes out of any CSS/JSON Filters for this watch</li>
-                                <li>All lines here must not exist (think of each line as "OR")</li>
-                                <li>Note: Wrap in forward slash / to use regex  example: <code>/foo\d/</code></li>
+                                <li>{{ _('Block change-detection while this text is on the page, all text and regex are tested case-insensitive, good for waiting for when a product is available again') }}</li>
+                                <li>{{ _('Block text is processed from the result-text that comes out of any CSS/JSON Filters for this monitor') }}</li>
+                                <li>{{ _('All lines here must not exist (think of each line as "OR")') }}</li>
+                                <li>{{ _('Note: Wrap in forward slash / to use regex example:') }} <code>/foo\d/</code></li>
                             </ul>
                         </span>
                     </div>
@@ -55,17 +56,17 @@ Unavailable") }}
 keyword") }}
                         <span class="pure-form-message-inline">
                     <ul>
-                        <li>Extracts text in the final output (line by line) after other filters using regular expressions or string match;
+                        <li>{{ _('Extracts text in the final output (line by line) after other filters using regular expressions or string match:') }}
                             <ul>
-                                <li>Regular expression &dash; example <code>/reports.+?2022/i</code></li>
-                                <li>Don't forget to consider the white-space at the start of a line <code>/.+?reports.+?2022/i</code></li>
-                                <li>Use <code>//(?aiLmsux))</code> type flags (more <a href="https://docs.python.org/3/library/re.html#index-15">information here</a>)<br></li>
-                                <li>Keyword example &dash; example <code>Out of stock</code></li>
-                                <li>Use groups to extract just that text &dash; example <code>/reports.+?(\d+)/i</code> returns a list of years only</li>
-                                <li>Example - match lines containing a keyword <code>/.*icecream.*/</code></li>
+                                <li>{{ _('Regular expression - example') }} <code>/reports.+?2022/i</code></li>
+                                <li>{{ _('Don\'t forget to consider the white-space at the start of a line') }} <code>/.+?reports.+?2022/i</code></li>
+                                <li>{{ _('Use') }} <code>//(?aiLmsux))</code> {{ _('type flags (more') }} <a href="https://docs.python.org/3/library/re.html#index-15">{{ _('information here') }}</a>)<br></li>
+                                <li>{{ _('Keyword example - example') }} <code>Out of stock</code></li>
+                                <li>{{ _('Use groups to extract just that text - example') }} <code>/reports.+?(\d+)/i</code> {{ _('returns a list of years only') }}</li>
+                                <li>{{ _('Example - match lines containing a keyword') }} <code>/.*icecream.*/</code></li>
                             </ul>
                         </li>
-                        <li>One line per regular-expression/string match</li>
+                        <li>{{ _('One line per regular-expression/string match') }}</li>
                     </ul>
                         </span>
                     </div>

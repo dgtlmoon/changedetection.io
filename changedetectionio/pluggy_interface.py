@@ -105,6 +105,75 @@ class ChangeDetectionSpec:
         """
         pass
 
+    @hookspec
+    def register_processor(self):
+        """Register an external processor plugin.
+
+        External packages can implement this hook to register custom processors
+        that will be discovered alongside built-in processors.
+
+        Returns:
+            dict or None: Dictionary with processor information:
+                {
+                    'processor_name': str,      # Machine name (e.g., 'osint_recon')
+                    'processor_module': module, # Module containing processor.py
+                    'processor_class': class,   # The perform_site_check class
+                    'metadata': {               # Optional metadata
+                        'name': str,            # Display name
+                        'description': str,     # Description
+                        'processor_weight': int,# Sort weight (lower = higher priority)
+                        'list_badge_text': str, # Badge text for UI
+                    }
+                }
+                Return None if this plugin doesn't provide a processor
+        """
+        pass
+
+    @hookspec
+    def update_handler_alter(update_handler, watch, datastore):
+        """Modify or wrap the update_handler before it processes a watch.
+
+        This hook is called after the update_handler (perform_site_check instance) is created
+        but before it calls call_browser() and run_changedetection(). Plugins can use this to:
+        - Wrap the handler to add logging/metrics
+        - Modify handler configuration
+        - Add custom preprocessing logic
+
+        Args:
+            update_handler: The perform_site_check instance that will process the watch
+            watch: The watch dict being processed
+            datastore: The application datastore
+
+        Returns:
+            object or None: Return a modified/wrapped handler, or None to keep the original.
+                           If multiple plugins return handlers, they are chained in registration order.
+        """
+        pass
+
+    @hookspec
+    def update_finalize(update_handler, watch, datastore, processing_exception):
+        """Called after watch processing completes (success or failure).
+
+        This hook is called in the finally block after all processing is complete,
+        allowing plugins to perform cleanup, update metrics, or log final status.
+
+        The plugin can access update_handler.last_logging_insert_id if it was stored
+        during update_handler_alter, and use processing_exception to determine if
+        the processing succeeded or failed.
+
+        Args:
+            update_handler: The perform_site_check instance (may be None if creation failed)
+            watch: The watch dict that was processed (may be None if not loaded)
+            datastore: The application datastore
+            processing_exception: The exception from the main processing block, or None if successful.
+                                 This does NOT include cleanup exceptions - only exceptions from
+                                 the actual watch processing (fetch, diff, etc).
+
+        Returns:
+            None: This hook doesn't return a value
+        """
+        pass
+
 
 # Set up Plugin Manager
 plugin_manager = pluggy.PluginManager(PLUGIN_NAMESPACE)
@@ -476,3 +545,65 @@ def get_plugin_template_paths():
                 logger.debug(f"Added plugin template path: {templates_dir}")
 
     return template_paths
+
+
+def apply_update_handler_alter(update_handler, watch, datastore):
+    """Apply update_handler_alter hooks from all plugins.
+
+    Allows plugins to wrap or modify the update_handler before it processes a watch.
+    Multiple plugins can chain modifications - each plugin receives the result from
+    the previous plugin.
+
+    Args:
+        update_handler: The perform_site_check instance to potentially modify
+        watch: The watch dict being processed
+        datastore: The application datastore
+
+    Returns:
+        object: The (potentially modified/wrapped) update_handler
+    """
+    # Get all plugins that implement the update_handler_alter hook
+    results = plugin_manager.hook.update_handler_alter(
+        update_handler=update_handler,
+        watch=watch,
+        datastore=datastore
+    )
+
+    # Chain results - each plugin gets the result from the previous one
+    current_handler = update_handler
+    if results:
+        for result in results:
+            if result is not None:
+                logger.debug(f"Plugin modified update_handler for watch {watch.get('uuid')}")
+                current_handler = result
+
+    return current_handler
+
+
+def apply_update_finalize(update_handler, watch, datastore, processing_exception):
+    """Apply update_finalize hooks from all plugins.
+
+    Called in the finally block after watch processing completes, allowing plugins
+    to perform cleanup, update metrics, or log final status.
+
+    Args:
+        update_handler: The perform_site_check instance (may be None)
+        watch: The watch dict that was processed (may be None)
+        datastore: The application datastore
+        processing_exception: The exception from processing, or None if successful
+
+    Returns:
+        None
+    """
+    try:
+        # Call all plugins that implement the update_finalize hook
+        plugin_manager.hook.update_finalize(
+            update_handler=update_handler,
+            watch=watch,
+            datastore=datastore,
+            processing_exception=processing_exception
+        )
+    except Exception as e:
+        # Don't let plugin errors crash the worker
+        logger.error(f"Error in update_finalize hook: {e}")
+        logger.exception(f"update_finalize hook exception details:")

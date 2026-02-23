@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ get_locale() }}" data-darkmode="{{ get_darkmode_state() }}">
+<html lang="{{ get_locale()|replace('_', '-') }}" data-darkmode="{{ get_darkmode_state() }}">
 
   <head>
     <meta charset="utf-8" >
@@ -27,7 +27,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="{{url_for('static_content', group='favicons', filename='apple-touch-icon.png')}}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{url_for('static_content', group='favicons', filename='favicon-32x32.png')}}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{url_for('static_content', group='favicons', filename='favicon-16x16.png')}}">
-    <link rel="manifest" href="{{url_for('static_content', group='favicons', filename='site.webmanifest')}}">
+    <link rel="manifest" href="{{url_for('static_content', group='favicons', filename='site.webmanifest')}}" crossorigin="use-credentials">
     <link rel="mask-icon" href="{{url_for('static_content', group='favicons', filename='safari-pinned-tab.svg')}}" color="#5bbad5">
     <link rel="shortcut icon" href="{{url_for('static_content', group='favicons', filename='favicon.ico')}}">
     <meta name="msapplication-TileColor" content="#da532c">
@@ -264,6 +264,9 @@
             <span class="lang-option {{ lang_data.flag }}"></span> <span class="language-name">{{ lang_data.name }}</span>
           </a>
           {% endfor %}
+        </div>
+        <div>
+            <a href="{{ url_for('ui.delete_locale_language_session_var_if_it_exists', redirect=request.path) }}" >{{ _('Auto-detect from browser') }}</a>
         </div>
         <div>
             {{ _('Language support is in beta, please help us improve by opening a PR on GitHub with any updates.') }}

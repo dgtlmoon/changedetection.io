@@ -37,10 +37,29 @@ jobs:
             ${{ runner.os }}-pip-py${{ env.PYTHON_VERSION }}-
             ${{ runner.os }}-pip-
 
+      - name: Get current date for cache key
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build changedetection.io container for testing under Python ${{ env.PYTHON_VERSION }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ./
+          file: ./Dockerfile
+          build-args: |
+            PYTHON_VERSION=${{ env.PYTHON_VERSION }}
+            LOGGER_LEVEL=TRACE
+          tags: test-changedetectionio
+          load: true
+          cache-from: type=gha,scope=build-${{ github.ref_name }}-py${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt', 'Dockerfile') }}-${{ steps.date.outputs.date }}
+          cache-to: type=gha,mode=max,scope=build-${{ github.ref_name }}-py${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt', 'Dockerfile') }}-${{ steps.date.outputs.date }}
+
+      - name: Verify build
         run: |
-          echo "---- Building for Python ${{ env.PYTHON_VERSION }} -----"
-          docker build --build-arg PYTHON_VERSION=${{ env.PYTHON_VERSION }} --build-arg LOGGER_LEVEL=TRACE -t test-changedetectionio .
+          echo "---- Built for Python ${{ env.PYTHON_VERSION }} -----"
           docker run test-changedetectionio bash -c 'pip list'
 
       - name: We should be Python ${{ env.PYTHON_VERSION }} ...
@@ -84,6 +103,7 @@ jobs:
           docker run test-changedetectionio bash -c 'python3 -m unittest changedetectionio.tests.unit.test_watch_model'
           docker run test-changedetectionio bash -c 'python3 -m unittest changedetectionio.tests.unit.test_jinja2_security'
           docker run test-changedetectionio bash -c 'python3 -m unittest changedetectionio.tests.unit.test_semver'
+          docker run test-changedetectionio bash -c 'python3 -m unittest changedetectionio.tests.unit.test_html_to_text'         
 
   # Basic pytest tests with ancillary services
   basic-tests:
@@ -110,6 +130,32 @@ jobs:
           docker network inspect changedet-network >/dev/null 2>&1 || docker network create changedet-network
           docker run --name test-cdio-basic-tests --network changedet-network test-changedetectionio bash -c 'cd changedetectionio && ./run_basic_tests.sh'
 
+      - name: Test CLI options
+        run: |
+          docker network inspect changedet-network >/dev/null 2>&1 || docker network create changedet-network
+          docker run --name test-cdio-cli-opts --network changedet-network test-changedetectionio bash -c 'changedetectionio/test_cli_opts.sh' &> cli-opts-output.txt
+          echo "=== CLI Options Test Output ==="
+          cat cli-opts-output.txt
+
+      - name: CLI Memory Test
+        run: |
+          echo "=== Checking CLI batch mode memory usage ==="
+          # Extract RSS memory value from output
+          RSS_MB=$(grep -oP "Memory consumption before worker shutdown: RSS=\K[\d.]+" cli-opts-output.txt | head -1 || echo "0")
+          echo "RSS Memory: ${RSS_MB} MB"
+
+          # Check if RSS is less than 100MB
+          if [ -n "$RSS_MB" ]; then
+            if (( $(echo "$RSS_MB < 100" | bc -l) )); then
+              echo "✓ Memory usage is acceptable: ${RSS_MB} MB < 100 MB"
+            else
+              echo "✗ Memory usage too high: ${RSS_MB} MB >= 100 MB"
+              exit 1
+            fi
+          else
+            echo "⚠ Could not extract memory usage, skipping check"
+          fi
+
       - name: Extract memory report and logs
         if: always()
         uses: ./.github/actions/extract-memory-report
@@ -123,6 +169,13 @@ jobs:
         with:
           name: test-cdio-basic-tests-output-py${{ env.PYTHON_VERSION }}
           path: output-logs
+
+      - name: Store CLI test output
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: test-cdio-cli-opts-output-py${{ env.PYTHON_VERSION }}
+          path: cli-opts-output.txt
 
   # Playwright tests
   playwright-tests:
@@ -271,6 +324,175 @@ jobs:
         run: |
           docker run --rm --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest tests/smtp/test_notification_smtp.py'
 
+  nginx-reverse-proxy:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 10
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: test-changedetectionio-${{ env.PYTHON_VERSION }}
+          path: /tmp
+
+      - name: Load Docker image
+        run: |
+          docker load -i /tmp/test-changedetectionio.tar
+
+      - name: Spin up services
+        run: |
+          docker network create changedet-network
+
+          # Start changedetection.io container with X-Forwarded headers support
+          docker run --name changedet-app --hostname changedet-app --network changedet-network \
+            -e USE_X_SETTINGS=true \
+            -d test-changedetectionio
+          sleep 3
+
+      - name: Start nginx reverse proxy
+        run: |
+          # Start nginx with our test configuration
+          docker run --name nginx-proxy --network changedet-network -d -p 8080:80 --rm \
+            -v ${{ github.workspace }}/.github/nginx-reverse-proxy-test.conf:/etc/nginx/conf.d/default.conf:ro \
+            nginx:alpine
+          sleep 2
+
+      - name: Test reverse proxy - root path
+        run: |
+          echo "=== Testing nginx reverse proxy at root path ==="
+          curl --retry-connrefused --retry 6 -s http://localhost:8080/ > /tmp/nginx-test-root.html
+
+          # Check for changedetection.io UI elements
+          if grep -q "checkbox-uuid" /tmp/nginx-test-root.html; then
+            echo "✓ Found checkbox-uuid in response"
+          else
+            echo "ERROR: checkbox-uuid not found in response"
+            cat /tmp/nginx-test-root.html
+            exit 1
+          fi
+
+          # Check for watchlist content
+          if grep -q -i "watch" /tmp/nginx-test-root.html; then
+            echo "✓ Found watch/watchlist content in response"
+          else
+            echo "ERROR: watchlist content not found"
+            cat /tmp/nginx-test-root.html
+            exit 1
+          fi
+
+          echo "✓ Root path reverse proxy working correctly"
+
+      - name: Test reverse proxy - subpath with X-Forwarded-Prefix
+        run: |
+          echo "=== Testing nginx reverse proxy at subpath /changedet-sub/ ==="
+          curl --retry-connrefused --retry 6 -s http://localhost:8080/changedet-sub/ > /tmp/nginx-test-subpath.html
+
+          # Check for changedetection.io UI elements
+          if grep -q "checkbox-uuid" /tmp/nginx-test-subpath.html; then
+            echo "✓ Found checkbox-uuid in subpath response"
+          else
+            echo "ERROR: checkbox-uuid not found in subpath response"
+            cat /tmp/nginx-test-subpath.html
+            exit 1
+          fi
+
+          echo "✓ Subpath reverse proxy working correctly"
+
+      - name: Test API through reverse proxy subpath
+        run: |
+          echo "=== Testing API endpoints through nginx subpath /changedet-sub/ ==="
+
+          # Extract API key from the changedetection.io datastore
+          API_KEY=$(docker exec changedet-app cat /datastore/changedetection.json | grep -o '"api_access_token": *"[^"]*"' | cut -d'"' -f4)
+
+          if [ -z "$API_KEY" ]; then
+            echo "ERROR: Could not extract API key from datastore"
+            docker exec changedet-app cat /datastore/changedetection.json
+            exit 1
+          fi
+
+          echo "✓ Extracted API key: ${API_KEY:0:8}..."
+
+          # Create a watch via API through nginx proxy subpath
+          echo "Creating watch via POST to /changedet-sub/api/v1/watch"
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "http://localhost:8080/changedet-sub/api/v1/watch" \
+            -H "x-api-key: ${API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "url": "https://example.com/test-nginx-proxy",
+              "tag": "nginx-test"
+            }')
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+
+          if [ "$HTTP_CODE" != "201" ]; then
+            echo "ERROR: Expected HTTP 201, got $HTTP_CODE"
+            echo "Response: $BODY"
+            exit 1
+          fi
+
+          echo "✓ Watch created successfully (HTTP 201)"
+
+          # Extract the watch UUID from response
+          WATCH_UUID=$(echo "$BODY" | grep -o '"uuid": *"[^"]*"' | cut -d'"' -f4)
+          echo "✓ Watch UUID: $WATCH_UUID"
+
+          # Update the watch via PUT through nginx proxy subpath
+          echo "Updating watch via PUT to /changedet-sub/api/v1/watch/${WATCH_UUID}"
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT "http://localhost:8080/changedet-sub/api/v1/watch/${WATCH_UUID}" \
+            -H "x-api-key: ${API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "paused": true
+            }')
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "ERROR: Expected HTTP 200, got $HTTP_CODE"
+            echo "Response: $BODY"
+            exit 1
+          fi
+
+          if echo "$BODY" | grep -q 'OK'; then
+            echo "✓ Watch updated successfully (HTTP 200, response: OK)"
+          else
+            echo "ERROR: Expected response 'OK', got: $BODY"
+            echo "Response: $BODY"
+            exit 1
+          fi
+
+          # Verify the watch is paused via GET
+          echo "Verifying watch is paused via GET"
+          RESPONSE=$(curl -s "http://localhost:8080/changedet-sub/api/v1/watch/${WATCH_UUID}" \
+            -H "x-api-key: ${API_KEY}")
+
+          if echo "$RESPONSE" | grep -q '"paused": *true'; then
+            echo "✓ Watch is paused as expected"
+          else
+            echo "ERROR: Watch paused state not confirmed"
+            echo "Response: $RESPONSE"
+            exit 1
+          fi
+
+          echo "✓ API tests through nginx subpath completed successfully"
+
+      - name: Cleanup nginx test
+        if: always()
+        run: |
+          docker logs nginx-proxy || true
+          docker logs changedet-app || true
+          docker stop nginx-proxy changedet-app || true
+          docker rm nginx-proxy changedet-app || true
+
+
+
   # Proxy tests
   proxy-tests:
     runs-on: ubuntu-latest
@@ -341,6 +563,29 @@ jobs:
         run: |
           cd changedetectionio
           ./run_custom_browser_url_tests.sh
+
+  processor-plugin-tests:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 20
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: test-changedetectionio-${{ env.PYTHON_VERSION }}
+          path: /tmp
+
+      - name: Load Docker image
+        run: |
+          docker load -i /tmp/test-changedetectionio.tar
+
+      - name: Basic processor plugin registration and checks
+        run: |
+          docker run  -e EXTRA_PACKAGES=changedetection.io-osint-processor test-changedetectionio bash -c 'cd changedetectionio;pytest -vvv -s  tests/plugins/test_processor.py::test_check_plugin_processor'
 
   # Container startup tests
   container-tests:
@@ -440,3 +685,142 @@ jobs:
             exit 1
           fi
           docker rm sig-test
+
+  # Upgrade path test
+  upgrade-path-test:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 25
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # Fetch all history and tags for upgrade testing
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Check upgrade works without error
+        run: |
+          echo "=== Testing upgrade path from 0.49.1 to ${{ github.ref_name }} (${{ github.sha }}) ==="
+
+          # Checkout old version and create datastore
+          git checkout 0.49.1
+          python3 -m venv .venv
+          source .venv/bin/activate
+          pip install -r requirements.txt
+          pip install 'pyOpenSSL>=23.2.0'
+
+          echo "=== Running version 0.49.1 to create datastore ==="
+          python3 ./changedetection.py -C -d /tmp/data &
+          APP_PID=$!
+
+          # Wait for app to be ready
+          echo "Waiting for 0.49.1 to be ready..."
+          sleep 6
+
+          # Extract API key from datastore (0.49.1 uses url-watches.json)
+          API_KEY=$(jq -r '.settings.application.api_access_token // empty' /tmp/data/url-watches.json)
+          echo "API Key: ${API_KEY:0:8}..."
+
+          # Create a watch with tag "github-group-test" via API
+          echo "Creating test watch with tag via API..."
+          curl -X POST "http://127.0.0.1:5000/api/v1/watch" \
+            -H "x-api-key: ${API_KEY}" \
+            -H "Content-Type: application/json" \
+            --show-error --fail \
+            --retry 6 --retry-delay 1 --retry-connrefused \
+            -d '{
+              "url": "https://example.com/upgrade-test",
+              "tag": "github-group-test"
+            }'
+
+          echo "✓ Created watch with tag 'github-group-test'"
+
+          # Create a specific test URL watch
+          echo "Creating test URL watch via API..."
+          curl -X POST "http://127.0.0.1:5000/api/v1/watch" \
+            -H "x-api-key: ${API_KEY}" \
+            -H "Content-Type: application/json" \
+            --show-error --fail \
+            -d '{
+              "url": "http://localhost/test.txt"
+            }'
+
+          echo "✓ Created watch for 'http://localhost/test.txt' in version 0.49.1"
+
+          # Stop the old version gracefully
+          kill $APP_PID
+          wait $APP_PID || true
+          echo "✓ Version 0.49.1 stopped"
+
+          # Upgrade to current version (use commit SHA since we're in detached HEAD)
+          echo "Upgrading to commit ${{ github.sha }}"
+          git checkout ${{ github.sha }}
+          pip install -r requirements.txt
+
+          echo "=== Running current version (commit ${{ github.sha }}) with old datastore (testing mode) ==="
+          TESTING_SHUTDOWN_AFTER_DATASTORE_LOAD=1 python3 ./changedetection.py -d /tmp/data > /tmp/upgrade-test.log 2>&1
+
+          echo "=== Upgrade test output ==="
+          cat /tmp/upgrade-test.log
+          echo "✓ Datastore upgraded successfully"
+
+          # Now start the current version normally to verify the tag survived
+          echo "=== Starting current version to verify tag exists after upgrade ==="
+          timeout 20 python3 ./changedetection.py -d /tmp/data > /tmp/ui-test.log 2>&1 &
+          APP_PID=$!
+
+          # Wait for app to be ready and fetch UI
+          echo "Waiting for current version to be ready..."
+          sleep 5
+          curl --retry 6 --retry-delay 1 --retry-connrefused --silent http://127.0.0.1:5000 > /tmp/ui-output.html
+
+          # Verify tag exists in UI
+          if grep -q "github-group-test" /tmp/ui-output.html; then
+            echo "✓ Tag 'github-group-test' found in UI after upgrade"
+          else
+            echo "ERROR: Tag 'github-group-test' not found in UI after upgrade"
+            echo "=== UI Output ==="
+            cat /tmp/ui-output.html
+            echo "=== App Log ==="
+            cat /tmp/ui-test.log
+            kill $APP_PID || true
+            exit 1
+          fi
+
+          # Verify test URL exists in UI
+          if grep -q "http://localhost/test.txt" /tmp/ui-output.html; then
+            echo "✓ Watch URL 'http://localhost/test.txt' found in UI after upgrade"
+          else
+            echo "ERROR: Watch URL 'http://localhost/test.txt' not found in UI after upgrade"
+            echo "=== UI Output ==="
+            cat /tmp/ui-output.html
+            echo "=== App Log ==="
+            cat /tmp/ui-test.log
+            kill $APP_PID || true
+            exit 1
+          fi
+
+          # Cleanup
+          kill $APP_PID || true
+          wait $APP_PID || true
+
+          echo ""
+          echo "✓✓✓ Upgrade test passed: 0.49.1 → ${{ github.ref_name }} ✓✓✓"
+          echo "    - Commit: ${{ github.sha }}"
+          echo "    - Datastore migrated successfully"
+          echo "    - Tag 'github-group-test' survived upgrade"
+          echo "    - Watch URL 'http://localhost/test.txt' survived upgrade"
+
+          echo "✓ Upgrade test passed: 0.49.1 → ${{ github.ref_name }}"
+
+      - name: Upload upgrade test logs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: upgrade-test-logs-py${{ env.PYTHON_VERSION }}
+          path: /tmp/upgrade-test.log

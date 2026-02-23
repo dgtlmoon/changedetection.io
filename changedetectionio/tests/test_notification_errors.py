@@ -1,7 +1,7 @@
 import os
 import time
 from flask import url_for
-from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
+from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks, delete_all_watches
 import logging
 
 def test_check_notification_error_handling(client, live_server, measure_memory_usage, datastore_path):
@@ -42,6 +42,9 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
     )
     assert b"Updated watch." in res.data
 
+
+    wait_for_all_checks(client)
+
     found=False
     for i in range(1, 10):
 
@@ -78,4 +81,4 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
     os.unlink(os.path.join(datastore_path, "notification.txt"))
     assert 'xxxxx' in notification_submission
 
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)

@@ -37,6 +37,8 @@ def construct_single_watch_routes(rss_blueprint, datastore):
 
         rss_content_format = datastore.data['settings']['application'].get('rss_content_format')
 
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
         # Get the watch by UUID
         watch = datastore.data['watching'].get(uuid)
         if not watch:

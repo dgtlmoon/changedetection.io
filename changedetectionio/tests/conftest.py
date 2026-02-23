@@ -5,13 +5,16 @@ from threading import Thread
 
 import pytest
 import arrow
-from changedetectionio import changedetection_app
 from changedetectionio import store
 import os
 import sys
-from loguru import logger
 
-from changedetectionio.flask_app import init_app_secret
+# CRITICAL: Set short timeout for tests to prevent 45-second hangs
+# When test server is slow/unresponsive, workers fail fast instead of holding UUIDs for 45s
+# This prevents exponential priority growth from repeated deferrals (priority × 10 each defer)
+os.environ['DEFAULT_SETTINGS_REQUESTS_TIMEOUT'] = '5'
+
+from changedetectionio.flask_app import init_app_secret, changedetection_app
 from changedetectionio.tests.util import live_server_setup, new_live_server_setup
 
 # https://github.com/pallets/flask/blob/1.1.2/examples/tutorial/tests/test_auth.py
@@ -29,6 +32,93 @@ def reportlog(pytestconfig):
     handler_id = logger.add(logging_plugin.report_handler, format="{message}")
     yield
     logger.remove(handler_id)
+
+
+@pytest.fixture(autouse=True)
+def per_test_log_file(request):
+    """Create a separate log file for each test function with pytest output."""
+    import re
+
+    # Create logs directory if it doesn't exist
+    log_dir = os.path.join(os.path.dirname(__file__), "logs")
+    os.makedirs(log_dir, exist_ok=True)
+
+    # Generate log filename from test name and worker ID (for parallel runs)
+    test_name = request.node.name
+
+    # Sanitize test name - replace unsafe characters with underscores
+    # Keep only alphanumeric, dash, underscore, and period
+    safe_test_name = re.sub(r'[^\w\-.]', '_', test_name)
+
+    # Limit length to avoid filesystem issues (max 200 chars)
+    if len(safe_test_name) > 200:
+        # Keep first 150 chars + hash of full name + last 30 chars
+        import hashlib
+        name_hash = hashlib.md5(test_name.encode()).hexdigest()[:8]
+        safe_test_name = f"{safe_test_name[:150]}_{name_hash}_{safe_test_name[-30:]}"
+
+    worker_id = os.environ.get('PYTEST_XDIST_WORKER', 'master')
+    log_file = os.path.join(log_dir, f"{safe_test_name}_{worker_id}.log")
+
+    # Add file handler for this test with TRACE level
+    handler_id = logger.add(
+        log_file,
+        format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {process} | {name}:{function}:{line} - {message}",
+        level="TRACE",
+        mode="w",  # Overwrite if exists
+        enqueue=True  # Thread-safe
+    )
+
+    logger.info(f"=== Starting test: {test_name} (worker: {worker_id}) ===")
+    logger.info(f"Test location: {request.node.nodeid}")
+
+    yield
+
+    # Capture test outcome (PASSED/FAILED/SKIPPED/ERROR)
+    outcome = "UNKNOWN"
+    exc_info = None
+    stdout = None
+    stderr = None
+
+    if hasattr(request.node, 'rep_call'):
+        outcome = request.node.rep_call.outcome.upper()
+        if request.node.rep_call.failed:
+            exc_info = request.node.rep_call.longreprtext
+        # Capture stdout/stderr from call phase
+        if hasattr(request.node.rep_call, 'sections'):
+            for section_name, section_content in request.node.rep_call.sections:
+                if 'stdout' in section_name.lower():
+                    stdout = section_content
+                elif 'stderr' in section_name.lower():
+                    stderr = section_content
+    elif hasattr(request.node, 'rep_setup'):
+        if request.node.rep_setup.failed:
+            outcome = "SETUP_FAILED"
+            exc_info = request.node.rep_setup.longreprtext
+
+    logger.info(f"=== Test Result: {outcome} ===")
+
+    if exc_info:
+        logger.error(f"=== Test Failure Details ===\n{exc_info}")
+
+    if stdout:
+        logger.info(f"=== Captured stdout ===\n{stdout}")
+
+    if stderr:
+        logger.warning(f"=== Captured stderr ===\n{stderr}")
+
+    logger.info(f"=== Finished test: {test_name} ===")
+    logger.remove(handler_id)
+
+
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    """Hook to capture test results and attach to the test node."""
+    outcome = yield
+    rep = outcome.get_result()
+
+    # Store report on the test node for access in fixtures
+    setattr(item, f"rep_{rep.when}", rep)
 
 
 @pytest.fixture
@@ -159,9 +249,64 @@ def prepare_test_function(live_server, datastore_path):
     # CRITICAL: Get datastore and stop it from writing stale data
     datastore = live_server.app.config.get('DATASTORE')
 
-    # Prevent background thread from writing during cleanup/reload
-    datastore.needs_write = False
-    datastore.needs_write_urgent = False
+    # Clear the queue before starting the test to prevent state leakage
+    from changedetectionio.flask_app import update_q
+    while not update_q.empty():
+        try:
+            update_q.get_nowait()
+        except:
+            break
+
+    # Add test helper methods to the app for worker management
+    def set_workers(count):
+        """Set the number of workers for testing - brutal shutdown, no delays"""
+        from changedetectionio import worker_pool
+        from changedetectionio.flask_app import update_q, notification_q
+
+        current_count = worker_pool.get_worker_count()
+
+       # Special case: Setting to 0 means shutdown all workers brutally
+        if count == 0:
+            logger.debug(f"Brutally shutting down all {current_count} workers")
+            worker_pool.shutdown_workers()
+            return {
+                'status': 'success',
+                'message': f'Shutdown all {current_count} workers',
+                'previous_count': current_count,
+                'current_count': 0
+            }
+
+        # Adjust worker count (no delays, no verification)
+        result = worker_pool.adjust_async_worker_count(
+            count,
+            update_q=update_q,
+            notification_q=notification_q,
+            app=live_server.app,
+            datastore=datastore
+        )
+
+        return result
+
+    def check_all_workers_alive(expected_count):
+        """Check that all expected workers are alive"""
+        from changedetectionio import worker_pool
+        from changedetectionio.flask_app import update_q, notification_q
+        result = worker_pool.check_worker_health(
+            expected_count,
+            update_q=update_q,
+            notification_q=notification_q,
+            app=live_server.app,
+            datastore=datastore
+        )
+        assert result['status'] == 'healthy', f"Workers not healthy: {result['message']}"
+        return result
+
+    # Attach helper methods to app for easy test access
+    live_server.app.set_workers = set_workers
+    live_server.app.check_all_workers_alive = check_all_workers_alive
+
+
+
 
     # CRITICAL: Clean up any files from previous tests
     # This ensures a completely clean directory
@@ -183,10 +328,31 @@ def prepare_test_function(live_server, datastore_path):
 
     yield
 
-    # Cleanup: Clear watches again after test
+    # Cleanup: Clear watches and queue after test
     try:
+        from changedetectionio.flask_app import update_q
+        from pathlib import Path
+
+        # Clear the queue to prevent leakage to next test
+        while not update_q.empty():
+            try:
+                update_q.get_nowait()
+            except:
+                break
+
         datastore.data['watching'] = {}
-        datastore.needs_write = True
+
+        # Delete any old watch metadata JSON files
+        base_path = Path(datastore.datastore_path).resolve()
+        max_depth = 2
+
+        for file in base_path.rglob("*.json"):
+            # Calculate depth relative to base path
+            depth = len(file.relative_to(base_path).parts) - 1
+
+            if depth <= max_depth and file.is_file():
+                file.unlink()
+
     except Exception as e:
         logger.warning(f"Error during datastore cleanup: {e}")
 
@@ -238,17 +404,20 @@ def app(request, datastore_path):
     app.config['TEST_DATASTORE_PATH'] = datastore_path
 
     def teardown():
+        import threading
+        import time
+
         # Stop all threads and services
         datastore.stop_thread = True
         app.config.exit.set()
-        
+
         # Shutdown workers gracefully before loguru cleanup
         try:
-            from changedetectionio import worker_handler
-            worker_handler.shutdown_workers()
+            from changedetectionio import worker_pool
+            worker_pool.shutdown_workers()
         except Exception:
             pass
-            
+
         # Stop socket server threads
         try:
             from changedetectionio.flask_app import socketio_server
@@ -256,20 +425,40 @@ def app(request, datastore_path):
                 socketio_server.shutdown()
         except Exception:
             pass
-        
-        # Give threads a moment to finish their shutdown
-        import time
-        time.sleep(0.1)
-        
+
+        # Get all active threads before cleanup
+        main_thread = threading.main_thread()
+        active_threads = [t for t in threading.enumerate() if t != main_thread and t.is_alive()]
+
+        # Wait for non-daemon threads to finish (with timeout)
+        timeout = 2.0  # 2 seconds max wait
+        start_time = time.time()
+
+        for thread in active_threads:
+            if not thread.daemon:
+                remaining_time = timeout - (time.time() - start_time)
+                if remaining_time > 0:
+                    logger.debug(f"Waiting for non-daemon thread to finish: {thread.name}")
+                    thread.join(timeout=remaining_time)
+                    if thread.is_alive():
+                        logger.warning(f"Thread {thread.name} did not finish in time")
+
+        # Give daemon threads a moment to finish their current work
+        time.sleep(0.2)
+
+        # Log any threads still running
+        remaining_threads = [t for t in threading.enumerate() if t != main_thread and t.is_alive()]
+        if remaining_threads:
+            logger.debug(f"Threads still running after teardown: {[t.name for t in remaining_threads]}")
+
         # Remove all loguru handlers to prevent "closed file" errors
         logger.remove()
-        
+
         # Cleanup files
         cleanup(app_config['datastore_path'])
 
        
     request.addfinalizer(teardown)
     yield app
-
 
 

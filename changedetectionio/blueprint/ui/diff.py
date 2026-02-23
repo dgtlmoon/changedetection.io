@@ -83,7 +83,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         If a processor doesn't have a difference module, falls back to text_json_diff.
         """
 
-        # More for testing, possible to return the first/only
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
 
@@ -101,23 +100,21 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Get the processor type for this watch
         processor_name = watch.get('processor', 'text_json_diff')
 
-        try:
-            # Try to import the processor's difference module
-            processor_module = importlib.import_module(f'changedetectionio.processors.{processor_name}.difference')
+        # Try to get the processor's difference module (works for both built-in and plugin processors)
+        from changedetectionio.processors import get_processor_submodule
+        processor_module = get_processor_submodule(processor_name, 'difference')
 
-            # Call the processor's render() function
-            if hasattr(processor_module, 'render'):
-                return processor_module.render(
-                    watch=watch,
-                    datastore=datastore,
-                    request=request,
-                    url_for=url_for,
-                    render_template=render_template,
-                    flash=flash,
-                    redirect=redirect
-                )
-        except (ImportError, ModuleNotFoundError) as e:
-            logger.warning(f"Processor {processor_name} does not have a difference module, falling back to text_json_diff: {e}")
+        # Call the processor's render() function
+        if processor_module and hasattr(processor_module, 'render'):
+            return processor_module.render(
+                watch=watch,
+                datastore=datastore,
+                request=request,
+                url_for=url_for,
+                render_template=render_template,
+                flash=flash,
+                redirect=redirect
+            )
 
         # Fallback: if processor doesn't have difference module, use text_json_diff as default
         from changedetectionio.processors.text_json_diff.difference import render as default_render
@@ -144,10 +141,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         Each processor implements processors/{type}/extract.py::render_form()
         If a processor doesn't have an extract module, falls back to text_json_diff.
         """
-        # More for testing, possible to return the first/only
+
+
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
-
         try:
             watch = datastore.data['watching'][uuid]
         except KeyError:
@@ -157,23 +154,21 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Get the processor type for this watch
         processor_name = watch.get('processor', 'text_json_diff')
 
-        try:
-            # Try to import the processor's extract module
-            processor_module = importlib.import_module(f'changedetectionio.processors.{processor_name}.extract')
+        # Try to get the processor's extract module (works for both built-in and plugin processors)
+        from changedetectionio.processors import get_processor_submodule
+        processor_module = get_processor_submodule(processor_name, 'extract')
 
-            # Call the processor's render_form() function
-            if hasattr(processor_module, 'render_form'):
-                return processor_module.render_form(
-                    watch=watch,
-                    datastore=datastore,
-                    request=request,
-                    url_for=url_for,
-                    render_template=render_template,
-                    flash=flash,
-                    redirect=redirect
-                )
-        except (ImportError, ModuleNotFoundError) as e:
-            logger.warning(f"Processor {processor_name} does not have an extract module, falling back to base extractor: {e}")
+        # Call the processor's render_form() function
+        if processor_module and hasattr(processor_module, 'render_form'):
+            return processor_module.render_form(
+                watch=watch,
+                datastore=datastore,
+                request=request,
+                url_for=url_for,
+                render_template=render_template,
+                flash=flash,
+                redirect=redirect
+            )
 
         # Fallback: if processor doesn't have extract module, use base processors.extract as default
         from changedetectionio.processors.extract import render_form as default_render_form
@@ -200,7 +195,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         Each processor implements processors/{type}/extract.py::process_extraction()
         If a processor doesn't have an extract module, falls back to text_json_diff.
         """
-        # More for testing, possible to return the first/only
+
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
 
@@ -213,24 +208,22 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Get the processor type for this watch
         processor_name = watch.get('processor', 'text_json_diff')
 
-        try:
-            # Try to import the processor's extract module
-            processor_module = importlib.import_module(f'changedetectionio.processors.{processor_name}.extract')
+        # Try to get the processor's extract module (works for both built-in and plugin processors)
+        from changedetectionio.processors import get_processor_submodule
+        processor_module = get_processor_submodule(processor_name, 'extract')
 
-            # Call the processor's process_extraction() function
-            if hasattr(processor_module, 'process_extraction'):
-                return processor_module.process_extraction(
-                    watch=watch,
-                    datastore=datastore,
-                    request=request,
-                    url_for=url_for,
-                    make_response=make_response,
-                    send_from_directory=send_from_directory,
-                    flash=flash,
-                    redirect=redirect
-                )
-        except (ImportError, ModuleNotFoundError) as e:
-            logger.warning(f"Processor {processor_name} does not have an extract module, falling back to base extractor: {e}")
+        # Call the processor's process_extraction() function
+        if processor_module and hasattr(processor_module, 'process_extraction'):
+            return processor_module.process_extraction(
+                watch=watch,
+                datastore=datastore,
+                request=request,
+                url_for=url_for,
+                make_response=make_response,
+                send_from_directory=send_from_directory,
+                flash=flash,
+                redirect=redirect
+            )
 
         # Fallback: if processor doesn't have extract module, use base processors.extract as default
         from changedetectionio.processors.extract import process_extraction as default_process_extraction
@@ -267,7 +260,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         - /diff/{uuid}/processor-asset/after
         - /diff/{uuid}/processor-asset/rendered_diff
         """
-        # More for testing, possible to return the first/only
+
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
 
@@ -280,38 +273,33 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Get the processor type for this watch
         processor_name = watch.get('processor', 'text_json_diff')
 
-        try:
-            # Try to import the processor's difference module
-            processor_module = importlib.import_module(f'changedetectionio.processors.{processor_name}.difference')
+        # Try to get the processor's difference module (works for both built-in and plugin processors)
+        from changedetectionio.processors import get_processor_submodule
+        processor_module = get_processor_submodule(processor_name, 'difference')
 
-            # Call the processor's get_asset() function
-            if hasattr(processor_module, 'get_asset'):
-                result = processor_module.get_asset(
-                    asset_name=asset_name,
-                    watch=watch,
-                    datastore=datastore,
-                    request=request
-                )
+        # Call the processor's get_asset() function
+        if processor_module and hasattr(processor_module, 'get_asset'):
+            result = processor_module.get_asset(
+                asset_name=asset_name,
+                watch=watch,
+                datastore=datastore,
+                request=request
+            )
 
-                if result is None:
-                    from flask import abort
-                    abort(404, description=f"Asset '{asset_name}' not found")
-
-                binary_data, content_type, cache_control = result
-
-                response = make_response(binary_data)
-                response.headers['Content-Type'] = content_type
-                if cache_control:
-                    response.headers['Cache-Control'] = cache_control
-                return response
-            else:
-                logger.warning(f"Processor {processor_name} does not implement get_asset()")
+            if result is None:
                 from flask import abort
-                abort(404, description=f"Processor '{processor_name}' does not support assets")
+                abort(404, description=f"Asset '{asset_name}' not found")
 
-        except (ImportError, ModuleNotFoundError) as e:
-            logger.warning(f"Processor {processor_name} does not have a difference module: {e}")
+            binary_data, content_type, cache_control = result
+
+            response = make_response(binary_data)
+            response.headers['Content-Type'] = content_type
+            if cache_control:
+                response.headers['Cache-Control'] = cache_control
+            return response
+        else:
+            logger.warning(f"Processor {processor_name} does not implement get_asset()")
             from flask import abort
-            abort(404, description=f"Processor '{processor_name}' not found")
+            abort(404, description=f"Processor '{processor_name}' does not support assets")
 
     return diff_blueprint

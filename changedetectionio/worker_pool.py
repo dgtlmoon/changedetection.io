@@ -17,16 +17,20 @@ worker_threads = []  # List of WorkerThread objects
 
 # Track currently processing UUIDs for async workers - maps {uuid: worker_id}
 currently_processing_uuids = {}
+_uuid_processing_lock = threading.Lock()  # Protects currently_processing_uuids
 
 # Configuration - async workers only
 USE_ASYNC_WORKERS = True
 
 # Custom ThreadPoolExecutor for queue operations with named threads
-# Scale executor threads with FETCH_WORKERS to avoid bottleneck at high concurrency
-_max_executor_workers = max(50, int(os.getenv("FETCH_WORKERS", "10")))
+# Scale executor threads to match FETCH_WORKERS (no minimum, no maximum)
+# Thread naming: "QueueGetter-N" for easy debugging in thread dumps/traces
+# With FETCH_WORKERS=10: 10 workers + 10 executor threads = 20 threads total
+# With FETCH_WORKERS=500: 500 workers + 500 executor threads = 1000 threads total (acceptable on modern systems)
+_max_executor_workers = int(os.getenv("FETCH_WORKERS", "10"))
 queue_executor = ThreadPoolExecutor(
     max_workers=_max_executor_workers,
-    thread_name_prefix="QueueGetter-"
+    thread_name_prefix="QueueGetter-"  # Shows in thread dumps as "QueueGetter-0", "QueueGetter-1", etc.
 )
 
 
@@ -81,16 +85,17 @@ class WorkerThread:
             self.loop = None
 
     def start(self):
-        """Start the worker thread"""
+        """Start the worker thread with descriptive name for debugging"""
         self.thread = threading.Thread(
             target=self.run,
             daemon=True,
-            name=f"PageFetchAsyncUpdateWorker-{self.worker_id}"
+            name=f"PageFetchAsyncUpdateWorker-{self.worker_id}"  # Shows in thread dumps with worker ID
         )
         self.thread.start()
 
     def stop(self):
-        """Stop the worker thread"""
+        """Stop the worker thread brutally - no waiting"""
+        # Try to stop the event loop if it exists
         if self.loop and self.running:
             try:
                 # Signal the loop to stop
@@ -98,8 +103,7 @@ class WorkerThread:
             except RuntimeError:
                 pass
 
-        if self.thread and self.thread.is_alive():
-            self.thread.join(timeout=2.0)
+        # Don't wait - thread is daemon and will die when needed
 
 
 def start_async_workers(n_workers, update_q, notification_q, app, datastore):
@@ -124,7 +128,7 @@ def start_async_workers(n_workers, update_q, notification_q, app, datastore):
 
 async def start_single_async_worker(worker_id, update_q, notification_q, app, datastore, executor=None):
     """Start a single async worker with auto-restart capability"""
-    from changedetectionio.async_update_worker import async_update_worker
+    from changedetectionio.worker import async_update_worker
 
     # Check if we're in pytest environment - if so, be more gentle with logging
     import os
@@ -132,11 +136,19 @@ async def start_single_async_worker(worker_id, update_q, notification_q, app, da
 
     while not app.config.exit.is_set():
         try:
-            await async_update_worker(worker_id, update_q, notification_q, app, datastore, executor)
-            # If we reach here, worker exited cleanly
-            if not in_pytest:
-                logger.info(f"Async worker {worker_id} exited cleanly")
-            break
+            result = await async_update_worker(worker_id, update_q, notification_q, app, datastore, executor)
+
+            if result == "restart":
+                # Worker requested restart - immediately loop back and restart
+                if not in_pytest:
+                    logger.debug(f"Async worker {worker_id} restarting")
+                continue
+            else:
+                # Worker exited cleanly (shutdown)
+                if not in_pytest:
+                    logger.info(f"Async worker {worker_id} exited cleanly")
+                break
+
         except asyncio.CancelledError:
             # Task was cancelled (normal shutdown)
             if not in_pytest:
@@ -147,7 +159,7 @@ async def start_single_async_worker(worker_id, update_q, notification_q, app, da
             if not in_pytest:
                 logger.info(f"Restarting async worker {worker_id} in 5 seconds...")
             await asyncio.sleep(5)
-    
+
     if not in_pytest:
         logger.info(f"Async worker {worker_id} shutdown complete")
 
@@ -161,7 +173,11 @@ def add_worker(update_q, notification_q, app, datastore):
     """Add a new async worker (for dynamic scaling)"""
     global worker_threads
 
-    worker_id = len(worker_threads)
+    # Reuse lowest available ID to prevent unbounded growth over time
+    used_ids = {w.worker_id for w in worker_threads}
+    worker_id = 0
+    while worker_id in used_ids:
+        worker_id += 1
     logger.info(f"Adding async worker {worker_id}")
 
     try:
@@ -195,31 +211,80 @@ def get_worker_count():
 
 def get_running_uuids():
     """Get list of UUIDs currently being processed by async workers"""
-    return list(currently_processing_uuids.keys())
+    with _uuid_processing_lock:
+        return list(currently_processing_uuids.keys())
+
+
+def claim_uuid_for_processing(uuid, worker_id):
+    """
+    Atomically check if UUID is available and claim it for processing.
+
+    This is thread-safe and prevents race conditions where multiple workers
+    try to process the same UUID simultaneously.
+
+    Args:
+        uuid: The watch UUID to claim
+        worker_id: The ID of the worker claiming this UUID
+
+    Returns:
+        True if successfully claimed (UUID was not being processed)
+        False if already being processed by another worker
+    """
+    with _uuid_processing_lock:
+        if uuid in currently_processing_uuids:
+            # Already being processed by another worker
+            return False
+        # Claim it atomically
+        currently_processing_uuids[uuid] = worker_id
+        logger.debug(f"Worker {worker_id} claimed UUID: {uuid}")
+        return True
+
+
+def release_uuid_from_processing(uuid, worker_id):
+    """
+    Release a UUID from processing (thread-safe).
+
+    Args:
+        uuid: The watch UUID to release
+        worker_id: The ID of the worker releasing this UUID
+    """
+    with _uuid_processing_lock:
+        # Only remove if this worker owns it (defensive)
+        if currently_processing_uuids.get(uuid) == worker_id:
+            currently_processing_uuids.pop(uuid, None)
+            logger.debug(f"Worker {worker_id} released UUID: {uuid}")
+        else:
+            logger.warning(f"Worker {worker_id} tried to release UUID {uuid} but doesn't own it (owned by {currently_processing_uuids.get(uuid, 'nobody')})")
 
 
 def set_uuid_processing(uuid, worker_id=None, processing=True):
-    """Mark a UUID as being processed or completed by a specific worker"""
-    global currently_processing_uuids
+    """
+    Mark a UUID as being processed or completed by a specific worker.
+
+    DEPRECATED: Use claim_uuid_for_processing() and release_uuid_from_processing() instead.
+    This function is kept for backward compatibility but doesn't provide atomic check-and-set.
+    """
     if processing:
-        currently_processing_uuids[uuid] = worker_id
-        logger.debug(f"Worker {worker_id} started processing UUID: {uuid}")
+        with _uuid_processing_lock:
+            currently_processing_uuids[uuid] = worker_id
+            logger.debug(f"Worker {worker_id} started processing UUID: {uuid}")
     else:
-        currently_processing_uuids.pop(uuid, None)
-        logger.debug(f"Worker {worker_id} finished processing UUID: {uuid}")
+        release_uuid_from_processing(uuid, worker_id)
 
 
 def is_watch_running(watch_uuid):
     """Check if a specific watch is currently being processed by any worker"""
-    return watch_uuid in currently_processing_uuids
+    with _uuid_processing_lock:
+        return watch_uuid in currently_processing_uuids
 
 
 def is_watch_running_by_another_worker(watch_uuid, current_worker_id):
     """Check if a specific watch is currently being processed by a different worker"""
-    if watch_uuid not in currently_processing_uuids:
-        return False
-    processing_worker_id = currently_processing_uuids[watch_uuid]
-    return processing_worker_id != current_worker_id
+    with _uuid_processing_lock:
+        if watch_uuid not in currently_processing_uuids:
+            return False
+        processing_worker_id = currently_processing_uuids[watch_uuid]
+        return processing_worker_id != current_worker_id
 
 
 def queue_item_async_safe(update_q, item, silent=False):
@@ -251,7 +316,7 @@ def queue_item_async_safe(update_q, item, silent=False):
             return False
 
         if not silent:
-            logger.debug(f"Successfully queued item: {item_uuid}")
+            logger.trace(f"Successfully queued item: {item_uuid}")
         return True
         
     except Exception as e:
@@ -275,24 +340,36 @@ def queue_item_async_safe(update_q, item, silent=False):
 
 
 def shutdown_workers():
-    """Shutdown all async workers fast and aggressively"""
-    global worker_threads
+    """Shutdown all async workers brutally - no delays, no waiting"""
+    global worker_threads, queue_executor
 
     # Check if we're in pytest environment - if so, be more gentle with logging
     import os
     in_pytest = "pytest" in os.sys.modules or "PYTEST_CURRENT_TEST" in os.environ
 
     if not in_pytest:
-        logger.info("Fast shutdown of async workers initiated...")
+        logger.info("Brutal shutdown of async workers initiated...")
 
-    # Stop all worker threads
+    # Stop all worker event loops
     for worker in worker_threads:
         worker.stop()
 
+    # Clear immediately - threads are daemon and will die
     worker_threads.clear()
 
+    # Shutdown the queue executor to prevent "cannot schedule new futures after shutdown" errors
+    # This must happen AFTER workers are stopped to avoid race conditions
+    if queue_executor:
+        try:
+            queue_executor.shutdown(wait=False)
+            if not in_pytest:
+                logger.debug("Queue executor shut down")
+        except Exception as e:
+            if not in_pytest:
+                logger.warning(f"Error shutting down queue executor: {e}")
+
     if not in_pytest:
-        logger.info("Async workers fast shutdown complete")
+        logger.info("Async workers brutal shutdown complete")
 
 
 
@@ -367,6 +444,55 @@ def get_worker_status():
         'running_uuids': get_running_uuids(),
         'active_threads': sum(1 for w in worker_threads if w.thread and w.thread.is_alive()),
     }
+
+
+def wait_for_all_checks(update_q, timeout=150):
+    """
+    Wait for queue to be empty and all workers to be idle.
+
+    Args:
+        update_q: The update queue to monitor
+        timeout: Maximum wait time in seconds (default 150 = 150 iterations * 0.2-0.8s)
+
+    Returns:
+        bool: True if all checks completed, False if timeout
+    """
+    import time
+    empty_since = None
+    attempt = 0
+    max_attempts = timeout
+
+    while attempt < max_attempts:
+        # Adaptive sleep - start fast, slow down if needed
+        if attempt < 10:
+            sleep_time = 0.2  # Very fast initial checks
+        elif attempt < 30:
+            sleep_time = 0.4  # Medium speed
+        else:
+            sleep_time = 0.8  # Slower for persistent issues
+
+        time.sleep(sleep_time)
+
+        q_length = update_q.qsize()
+        running_uuids = get_running_uuids()
+        any_workers_busy = len(running_uuids) > 0
+
+        if q_length == 0 and not any_workers_busy:
+            if empty_since is None:
+                empty_since = time.time()
+            # Brief stabilization period for async workers
+            elif time.time() - empty_since >= 0.3:
+                # Add small buffer for filesystem operations to complete
+                time.sleep(0.2)
+                logger.trace("wait_for_all_checks: All checks complete (queue empty, workers idle)")
+                return True
+        else:
+            empty_since = None
+
+        attempt += 1
+
+    logger.warning(f"wait_for_all_checks: Timeout after {timeout} attempts")
+    return False  # Timeout
 
 
 def check_worker_health(expected_count, update_q=None, notification_q=None, app=None, datastore=None):

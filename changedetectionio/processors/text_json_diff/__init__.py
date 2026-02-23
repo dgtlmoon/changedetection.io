@@ -1,5 +1,11 @@
-
 from loguru import logger
+
+# Processor capabilities
+supports_visual_selector = True
+supports_browser_steps = True
+supports_text_filters_and_triggers = True
+supports_text_filters_and_triggers_elements = True
+supports_request_type = True
 
 
 
@@ -11,7 +17,8 @@ def _task(watch, update_handler):
 
     try:
         # The slow process (we run 2 of these in parallel)
-        changed_detected, update_obj, text_after_filter = update_handler.run_changedetection(watch=watch)
+        # Always force reprocess for preview - we want to show the filtered content regardless of checksums
+        changed_detected, update_obj, text_after_filter = update_handler.run_changedetection(watch=watch, force_reprocess=True)
     except FilterNotFoundInResponse as e:
         text_after_filter = f"Filter not found in HTML: {str(e)}"
     except ReplyWithContentButNoText as e:
@@ -49,7 +56,7 @@ def prepare_filter_prevew(datastore, watch_uuid, form_data):
 
     tmp_watch = deepcopy(datastore.data['watching'].get(watch_uuid))
 
-    if tmp_watch and tmp_watch.history and os.path.isdir(tmp_watch.watch_data_dir):
+    if tmp_watch and tmp_watch.history and os.path.isdir(tmp_watch.data_dir):
         # Splice in the temporary stuff from the form
         form = forms.processor_text_json_diff_form(formdata=form_data if request.method == 'POST' else None,
                                                    data=form_data
@@ -58,11 +65,11 @@ def prepare_filter_prevew(datastore, watch_uuid, form_data):
         # Only update vars that came in via the AJAX post
         p = {k: v for k, v in form.data.items() if k in form_data.keys()}
         tmp_watch.update(p)
-        blank_watch_no_filters = watch_model()
+        blank_watch_no_filters = watch_model(datastore_path=datastore.datastore_path, __datastore=datastore.data)
         blank_watch_no_filters['url'] = tmp_watch.get('url')
 
         latest_filename = next(reversed(tmp_watch.history))
-        html_fname = os.path.join(tmp_watch.watch_data_dir, f"{latest_filename}.html.br")
+        html_fname = os.path.join(tmp_watch.data_dir, f"{latest_filename}.html.br")
         with open(html_fname, 'rb') as f:
             decompressed_data = brotli.decompress(f.read()).decode('utf-8') if html_fname.endswith('.br') else f.read().decode('utf-8')
 

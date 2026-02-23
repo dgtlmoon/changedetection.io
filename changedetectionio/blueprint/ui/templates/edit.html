@@ -45,14 +45,19 @@
     <div class="tabs collapsable">
         <ul>
             <li class="tab"><a href="#general">{{ _('General') }}</a></li>
+            {% if capabilities.supports_request_type %}
             <li class="tab"><a href="#request">{{ _('Request') }}</a></li>
+            {% endif %}
             {% if extra_tab_content %}
             <li class="tab"><a href="#extras_tab">{{ extra_tab_content }}</a></li>
             {% endif %}
+            {% if capabilities.supports_browser_steps %}
             <li class="tab"><a id="browsersteps-tab" href="#browser-steps">{{ _('Browser Steps') }}</a></li>
-        <!-- should goto extra forms? -->
-            {% if watch['processor'] == 'text_json_diff' or watch['processor'] == 'image_ssim_diff' %}
+            {% endif %}
+            {% if capabilities.supports_visual_selector %}
             <li class="tab"><a id="visualselector-tab" href="#visualselector">{{ _('Visual Filter Selector') }}</a></li>
+            {% endif %}
+            {% if capabilities.supports_text_filters_and_triggers %}
             <li class="tab" id="filters-and-triggers-tab"><a href="#filters-and-triggers">{{ _('Filters & Triggers') }}</a></li>
             <li class="tab" id="conditions-tab"><a href="#conditions">{{ _('Conditions') }}</a></li>
             {% endif %}
@@ -111,11 +116,19 @@
                         </span>
                     </div>
                     <div class="pure-control-group">
+                        {{ render_field(form.history_snapshot_max_length, class="history_snapshot_max_length") }}
+                        <span class="pure-form-message-inline">{{ _('Limit collection of history snapshots for each watch to this number of history items.') }}
+                        <br>
+                        {{ _('Set to empty to use system settings default') }}
+                        </span>
+                    </div>
+                    <div class="pure-control-group">
                         {{ render_ternary_field(form.use_page_title_in_list) }}
                     </div>
                 </fieldset>
             </div>
 
+            {% if capabilities.supports_request_type %}
             <div class="tab-pane-inner" id="request">
                     <div class="pure-control-group inline-radio">
                         {{ render_field(form.fetch_backend, class="fetch-backend") }}
@@ -203,6 +216,7 @@ Math: {{ 1 + 1 }}") }}
                     </div>
             </fieldset>
             </div>
+            {% endif %}
 
             <div class="tab-pane-inner" id="browser-steps">
             {% if capabilities.supports_browser_steps %}
@@ -283,8 +297,7 @@ Math: {{ 1 + 1 }}") }}
                 </fieldset>
             </div>
 
-            {% if watch['processor'] == 'text_json_diff' or watch['processor'] == 'image_ssim_diff' %}
-
+            {% if capabilities.supports_text_filters_and_triggers %}
             <div class="tab-pane-inner" id="conditions">
                     <script>
                         const verify_condition_rule_url="{{url_for('conditions.verify_condition_single_rule', watch_uuid=uuid)}}";
@@ -303,7 +316,9 @@ Math: {{ 1 + 1 }}") }}
                 <span id="activate-text-preview" class="pure-button pure-button-primary button-xsmall">{{ _('Activate preview') }}</span>
               <div>
               <div id="edit-text-filter">
-                    <div class="pure-control-group" id="pro-tips">
+
+{% if capabilities.supports_text_filters_and_triggers_elements %}
+                        <div class="pure-control-group" id="pro-tips">
                             <strong>{{ _('Pro-tips:') }}</strong><br>
                             <ul>
                                 <li>
@@ -314,8 +329,8 @@ Math: {{ 1 + 1 }}") }}
                                 </li>
                             </ul>
                     </div>
-
 {% include "edit/include_subtract.html" %}
+{% endif %}
                 <div class="text-filtering border-fieldset">
                 <fieldset class="pure-group" id="text-filtering-type-options">
                     <h3>{{ _('Text filtering') }}</h3>
@@ -374,7 +389,7 @@ Math: {{ 1 + 1 }}") }}
             {{ extra_form_content|safe }}
             </div>
         {% endif %}
-            {% if watch['processor'] == 'text_json_diff' or watch['processor'] == 'image_ssim_diff' %}
+            {% if capabilities.supports_visual_selector %}
             <div class="tab-pane-inner visual-selector-ui" id="visualselector">
                 <img class="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}" alt="New beta functionality">
 
@@ -386,7 +401,7 @@ Math: {{ 1 + 1 }}") }}
                                     {{ _('The Visual Selector tool lets you select the') }} <i>{{ _('text') }}</i> {{ _('elements that will be used for the change detection. It automatically fills-in the filters in the "CSS/JSONPath/JQ/XPath Filters" box of the') }} <a href="#filters-and-triggers">{{ _('Filters & Triggers') }}</a> {{ _('tab. Use') }} <strong>{{ _('Shift+Click') }}</strong> {{ _('to select multiple items.') }}
                                 </span>
 
-                                {% if watch['processor'] == 'image_ssim_diff' %}
+                                {% if watch['processor'] == 'image_ssim_diff' %} {# @todo, integrate with image_ssim_diff selector better, use some extra form ? #}
                                 <div id="selection-mode-controls" style="margin: 10px 0; padding: 10px; background: var(--color-background-tab); border-radius: 5px;">
                                     <label style="font-weight: 600; margin-right: 15px;">{{ _('Selection Mode:') }}</label>
                                     <label style="margin-right: 15px;">
@@ -473,6 +488,7 @@ Math: {{ 1 + 1 }}") }}
                     {% if watch.history_n %}
                         <p>
                              <a href="{{url_for('ui.ui_edit.watch_get_latest_html', uuid=uuid)}}" class="pure-button button-small">{{ _('Download latest HTML snapshot') }}</a>
+                             <a href="{{url_for('ui.ui_edit.watch_get_data_package', uuid=uuid)}}" class="pure-button button-small">{{ _('Download watch data package') }}</a>
                         </p>
                     {% endif %}
 
