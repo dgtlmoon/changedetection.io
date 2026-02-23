@@ -6,6 +6,7 @@ Extracted from update_worker.py to provide standalone notification functionality
 for both sync and async workers
 """
 import datetime
+import os
 
 import pytz
 from loguru import logger
@@ -82,6 +83,12 @@ class NotificationContextData(dict):
             'watch_tag': None,
             'watch_title': None,
             'watch_url': 'https://WATCH-PLACE-HOLDER/',
+            # LLM-generated tokens (populated by notification_runner once LLM data is ready)
+            'llm_headline':   None,
+            'llm_importance': None,
+            'llm_one_liner':  None,
+            'llm_sentiment':  None,
+            'llm_summary':    None,
         })
 
         # Apply any initial data passed in
@@ -274,6 +281,11 @@ class NotificationService:
                                                     timestamp_changed=dates[date_index_to]))
 
         if self.notification_q:
+            # Store snapshot_id hint so notification_runner can gate on LLM data readiness
+            if watch and len(dates) > 0:
+                latest_fname = watch.history.get(dates[date_index_to], '')
+                if latest_fname:
+                    n_object['_llm_snapshot_id'] = os.path.basename(latest_fname).split('.')[0]
             logger.debug("Queued notification for sending")
             self.notification_q.put(n_object)
         else:

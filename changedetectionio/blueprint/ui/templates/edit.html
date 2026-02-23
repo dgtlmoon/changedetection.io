@@ -489,6 +489,9 @@ Math: {{ 1 + 1 }}") }}
                         <p>
                              <a href="{{url_for('ui.ui_edit.watch_get_latest_html', uuid=uuid)}}" class="pure-button button-small">{{ _('Download latest HTML snapshot') }}</a>
                              <a href="{{url_for('ui.ui_edit.watch_get_data_package', uuid=uuid)}}" class="pure-button button-small">{{ _('Download watch data package') }}</a>
+                             {% if watch.history_n > 1 %}
+                             <a href="{{url_for('ui.ui_edit.watch_regenerate_llm_summaries', uuid=uuid)}}" class="pure-button button-small">{{ _('Regenerate LLM summaries') }}</a>
+                             {% endif %}
                         </p>
                     {% endif %}
 

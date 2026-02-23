@@ -1,0 +1,57 @@
+#llm {
+  // ── Key field wrapper — input + show/hide toggle inline ───────────────
+  .llm-key-wrap {
+    display: flex;
+    gap: 0.3em;
+    align-items: center;
+
+    input { flex: 1; min-width: 0; }
+
+    button {
+      flex: 0 0 auto;
+    }
+  }
+
+  // ── Pure-grid column padding consistency ──────────────────────────────
+  .pure-u-md-1-2 {
+    .pure-control-group {
+      padding-right: 1em;
+    }
+  }
+
+  // ── Connections table ─────────────────────────────────────────────────
+  table.llm-connections {
+    width: 100%;
+
+    .llm-col-def   { width: 3em;   text-align: center; }
+    .llm-col-name  { font-weight: 500; }
+    .llm-col-model { font-family: monospace; font-size: 0.85em; color: var(--color-grey-400); }
+    .llm-col-key   {
+      font-family: monospace; font-size: 0.82em; color: var(--color-grey-600);
+      max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .llm-col-del   { width: 2.5em; text-align: center; }
+
+    .llm-del {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--color-grey-600);
+      padding: 0.15em 0.4em;
+      border-radius: 3px;
+      font-size: 1.1em;
+      line-height: 1;
+      &:hover { color: var(--color-dark-red); background: #ffeaea; }
+    }
+
+    .llm-empty td {
+      text-align: center;
+      color: var(--color-grey-600);
+      padding: 1.8em;
+      font-style: italic;
+      font-size: 0.92em;
+    }
+  }
+
+  .llm-default-radio { cursor: pointer; }
+}

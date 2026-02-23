@@ -1009,14 +1009,31 @@ class model(EntityPersistenceMixin, watch_base):
 
 
     def extra_notification_token_values(self):
-        # Used for providing extra tokens
-        # return {'widget': 555}
-        return {}
+        from changedetectionio.llm.tokens import read_llm_tokens
+        history = self.history
+        if not history:
+            return {}
+        latest_fname = history[list(history.keys())[-1]]
+        snapshot_id = os.path.basename(latest_fname).split('.')[0]  # always 32-char MD5
+        data = read_llm_tokens(self.data_dir, snapshot_id)
+        if not data:
+            return {}
+        return {
+            'llm_summary':    data.get('summary', ''),
+            'llm_headline':   data.get('headline', ''),
+            'llm_importance': data.get('importance'),
+            'llm_sentiment':  data.get('sentiment', ''),
+            'llm_one_liner':  data.get('one_liner', ''),
+        }
 
     def extra_notification_token_placeholder_info(self):
-        # Used for providing extra tokens
-        # return [('widget', "Get widget amounts")]
-        return []
+        return [
+            ('llm_summary',    "LLM: 1-3 sentence summary of all changes with exact values"),
+            ('llm_headline',   "LLM: 5-8 word punchy title for this specific change"),
+            ('llm_importance', "LLM: Significance score 1-10 (1=trivial, 10=critical)"),
+            ('llm_sentiment',  "LLM: Change sentiment — positive, negative, or neutral"),
+            ('llm_one_liner',  "LLM: One sentence for SMS/push character limits"),
+        ]
 
 
     def extract_regex_from_all_history(self, regex):

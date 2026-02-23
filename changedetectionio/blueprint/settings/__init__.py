@@ -76,6 +76,15 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
                 datastore.data['settings']['application'].update(app_update)
 
+                # Persist LLM connections (JSON blob from the JS-managed hidden field)
+                import json as _json
+                llm_connections_raw = request.form.get('llm_connections', '')
+                if llm_connections_raw:
+                    try:
+                        datastore.data['settings']['application']['llm_connections'] = _json.loads(llm_connections_raw)
+                    except (ValueError, TypeError):
+                        flash(gettext("Invalid LLM connections data."), 'error')
+
                 # Handle dynamic worker count adjustment
                 old_worker_count = datastore.data['settings']['requests'].get('workers', 1)
                 new_worker_count = form.data['requests'].get('workers', 1)

@@ -15,6 +15,7 @@ from changedetectionio.strtobool import strtobool
 from threading import Event
 from changedetectionio.queue_handlers import RecheckPriorityQueue, NotificationQueue
 from changedetectionio import worker_pool
+import changedetectionio.llm as llm
 
 from flask import (
     Flask,
@@ -56,6 +57,7 @@ extra_stylesheets = []
 # Use bulletproof janus-based queues for sync/async reliability  
 update_q = RecheckPriorityQueue()
 notification_q = NotificationQueue()
+llm_summary_q = llm.create_queue()
 MAX_QUEUE_SIZE = 5000
 
 app = Flask(__name__,
@@ -851,7 +853,7 @@ def changedetection_app(config=None, datastore_o=None):
 
     # watchlist UI buttons etc
     import changedetectionio.blueprint.ui as ui
-    app.register_blueprint(ui.construct_blueprint(datastore, update_q, worker_pool, queuedWatchMetaData, watch_check_update))
+    app.register_blueprint(ui.construct_blueprint(datastore, update_q, worker_pool, queuedWatchMetaData, watch_check_update, llm_summary_q=llm_summary_q))
 
     import changedetectionio.blueprint.watchlist as watchlist
     app.register_blueprint(watchlist.construct_blueprint(datastore=datastore, update_q=update_q, queuedWatchMetaData=queuedWatchMetaData), url_prefix='')
@@ -974,6 +976,14 @@ def changedetection_app(config=None, datastore_o=None):
             ).start()
         logger.info(f"Started {notification_workers} notification worker(s)")
 
+        llm.start_workers(app=app, datastore=datastore, llm_q=llm_summary_q,
+                          n_workers=int(os.getenv("LLM_WORKERS", "1")))
+
+        # Register the LLM queue plugin so changes trigger summary jobs
+        from changedetectionio.llm.plugin import LLMQueuePlugin
+        from changedetectionio.pluggy_interface import plugin_manager
+        plugin_manager.register(LLMQueuePlugin(llm_summary_q), 'llm_queue_plugin')
+
         in_pytest = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
         # Check for new release version, but not when running in test/build or pytest
         if not os.getenv("GITHUB_REF", False) and not strtobool(os.getenv('DISABLE_VERSION_CHECK', 'no')) and not in_pytest:
@@ -1028,18 +1038,64 @@ def notification_runner(worker_id=0):
 
             else:
 
+                # ── LLM deferred-send gate ─────────────────────────────────────────
+                # If the notification was re-queued to wait for LLM data, honour the
+                # scheduled retry time before doing any further processing.
+                _llm_next_retry = n_object.get('_llm_next_retry_at', 0)
+                if _llm_next_retry and _llm_next_retry > time.time():
+                    notification_q.put(n_object)
+                    app.config.exit.wait(min(_llm_next_retry - time.time(), 2))
+                    continue
+
+                # Apply system-config fallbacks first so we can scan the final body/title.
+                if not n_object.get('notification_body') and datastore.data['settings']['application'].get('notification_body'):
+                    n_object['notification_body'] = datastore.data['settings']['application'].get('notification_body')
+                if not n_object.get('notification_title') and datastore.data['settings']['application'].get('notification_title'):
+                    n_object['notification_title'] = datastore.data['settings']['application'].get('notification_title')
+
+                # If the body or title references llm_* tokens, wait until LLM data is ready.
+                import re as _re
+                _llm_scan = (n_object.get('notification_body') or '') + ' ' + (n_object.get('notification_title') or '')
+                if _re.search(r'\bllm_(?:summary|headline|importance|sentiment|one_liner)\b', _llm_scan):
+                    from changedetectionio.llm.tokens import (
+                        is_llm_data_ready, read_llm_tokens,
+                        LLM_NOTIFICATION_RETRY_DELAY_SECONDS, LLM_NOTIFICATION_MAX_WAIT_ATTEMPTS,
+                    )
+                    _llm_uuid     = n_object.get('uuid')
+                    _llm_watch    = datastore.data['watching'].get(_llm_uuid) if _llm_uuid else None
+                    _llm_snap_id  = n_object.get('_llm_snapshot_id')
+
+                    if _llm_watch and _llm_snap_id and not is_llm_data_ready(_llm_watch.data_dir, _llm_snap_id):
+                        _llm_attempts = n_object.get('_llm_wait_attempts', 0)
+                        if _llm_attempts < LLM_NOTIFICATION_MAX_WAIT_ATTEMPTS:
+                            n_object['_llm_wait_attempts'] = _llm_attempts + 1
+                            n_object['_llm_next_retry_at'] = time.time() + LLM_NOTIFICATION_RETRY_DELAY_SECONDS
+                            notification_q.put(n_object)
+                            logger.debug(
+                                f"Notification gate: LLM data pending for {_llm_uuid} "
+                                f"(attempt {n_object['_llm_wait_attempts']}/{LLM_NOTIFICATION_MAX_WAIT_ATTEMPTS})"
+                            )
+                            continue
+                        else:
+                            logger.warning(
+                                f"Notification: LLM data never arrived for {_llm_uuid} after "
+                                f"{LLM_NOTIFICATION_MAX_WAIT_ATTEMPTS} attempts — sending without LLM tokens"
+                            )
+                    elif _llm_watch and _llm_snap_id:
+                        # Data is ready — populate the LLM tokens into n_object
+                        _llm_data = read_llm_tokens(_llm_watch.data_dir, _llm_snap_id)
+                        n_object['llm_summary']    = _llm_data.get('summary', '')
+                        n_object['llm_headline']   = _llm_data.get('headline', '')
+                        n_object['llm_importance'] = _llm_data.get('importance')
+                        n_object['llm_sentiment']  = _llm_data.get('sentiment', '')
+                        n_object['llm_one_liner']  = _llm_data.get('one_liner', '')
+                # ── end LLM gate ───────────────────────────────────────────────────
+
                 now = datetime.now()
                 sent_obj = None
 
                 try:
                     from changedetectionio.notification.handler import process_notification
-
-                    # Fallback to system config if not set
-                    if not n_object.get('notification_body') and datastore.data['settings']['application'].get('notification_body'):
-                        n_object['notification_body'] = datastore.data['settings']['application'].get('notification_body')
-
-                    if not n_object.get('notification_title') and datastore.data['settings']['application'].get('notification_title'):
-                        n_object['notification_title'] = datastore.data['settings']['application'].get('notification_title')
 
                     if not n_object.get('notification_format') and datastore.data['settings']['application'].get('notification_format'):
                         n_object['notification_format'] = datastore.data['settings']['application'].get('notification_format')

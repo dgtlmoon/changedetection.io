@@ -15,6 +15,7 @@
 <script src="{{url_for('static_content', group='js', filename='vis.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='global-settings.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='scheduler.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='llm.js')}}" defer></script>
 <div class="edit-form">
     <div class="tabs collapsable">
         <ul>
@@ -27,6 +28,26 @@
             <li class="tab"><a href="#rss">{{ _('RSS') }}</a></li>
             <li class="tab"><a href="{{ url_for('backups.create') }}">{{ _('Backups') }}</a></li>
             <li class="tab"><a href="#timedate">{{ _('Time & Date') }}</a></li>
+            <li class="tab"><a href="#llm">{{ _('LLM') }}&nbsp;<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="18" height="18" style="vertical-align:middle;margin-right:3px;margin-bottom:2px" aria-hidden="true">
+              <!-- connection lines, drawn first so nodes sit on top -->
+              <line x1="3" y1="4.5"  x2="9.5" y2="7.5"  stroke="currentColor" stroke-width="0.75" opacity="0.4"/>
+              <line x1="3" y1="4.5"  x2="9.5" y2="12.5" stroke="currentColor" stroke-width="0.75" opacity="0.28"/>
+              <line x1="3" y1="10"   x2="9.5" y2="7.5"  stroke="currentColor" stroke-width="0.75" opacity="0.65"/>
+              <line x1="3" y1="10"   x2="9.5" y2="12.5" stroke="currentColor" stroke-width="0.75" opacity="0.65"/>
+              <line x1="3" y1="15.5" x2="9.5" y2="7.5"  stroke="currentColor" stroke-width="0.75" opacity="0.28"/>
+              <line x1="3" y1="15.5" x2="9.5" y2="12.5" stroke="currentColor" stroke-width="0.75" opacity="0.4"/>
+              <line x1="11" y1="7.5"  x2="17" y2="10"   stroke="currentColor" stroke-width="0.9"  opacity="0.7"/>
+              <line x1="11" y1="12.5" x2="17" y2="10"   stroke="currentColor" stroke-width="0.9"  opacity="0.7"/>
+              <!-- input nodes -->
+              <circle cx="3"  cy="4.5"  r="1.35" fill="currentColor" opacity="0.6"/>
+              <circle cx="3"  cy="10"   r="1.35" fill="currentColor" opacity="0.9"/>
+              <circle cx="3"  cy="15.5" r="1.35" fill="currentColor" opacity="0.6"/>
+              <!-- hidden layer -->
+              <circle cx="10.25" cy="7.5"  r="1.55" fill="currentColor"/>
+              <circle cx="10.25" cy="12.5" r="1.55" fill="currentColor"/>
+              <!-- output node — slightly larger, full opacity -->
+              <circle cx="17" cy="10" r="1.75" fill="currentColor"/>
+            </svg></a></li>
             <li class="tab"><a href="#proxies">{{ _('CAPTCHA & Proxies') }}</a></li>
             {% if plugin_tabs %}
                 {% for tab in plugin_tabs %}
@@ -307,6 +328,9 @@ nav
                     <span class="pure-form-message-inline">{{ _('Number of items per page in the watch overview list, 0 to disable.') }}</span>
                 </div>
 
+            </div>
+            <div class="tab-pane-inner" id="llm">
+                {% include 'settings-llm.html' %}
             </div>
             <div class="tab-pane-inner" id="proxies">
                 <div id="recommended-proxy">
