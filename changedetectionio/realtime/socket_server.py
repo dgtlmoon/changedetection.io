@@ -199,18 +199,6 @@ def handle_watch_update(socketio, **kwargs):
         logger.error(f"Socket.IO error in handle_watch_update: {str(e)}")
 
 
-def _patch_flask_request_context_session():
-    """Flask 3.1 removed the session setter from RequestContext, but Flask-SocketIO 5.6.0
-    still assigns to it directly (ctx.session = ...).  Restore a setter that writes the
-    private _session attribute so the two libraries work together.
-    """
-    from flask.ctx import RequestContext
-    if getattr(RequestContext.session, 'fset', None) is not None:
-        return  # Already has a setter (future Flask version restored it)
-    original_prop = RequestContext.session
-    RequestContext.session = original_prop.setter(lambda self, value: setattr(self, '_session', value))
-
-
 def init_socketio(app, datastore):
     """Initialize SocketIO with the main Flask app"""
     import platform

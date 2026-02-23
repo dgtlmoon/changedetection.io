@@ -1,27 +1,21 @@
-# eventlet>=0.38.0  # Removed - replaced with threading mode for better Python 3.12+ compatibility
 feedgen~=1.0
 feedparser~=6.0  # For parsing RSS/Atom feeds
 flask-compress
-# 0.6.3 included compatibility fix for werkzeug 3.x (2.x had deprecation of url handlers)
 flask-login>=0.6.3
 flask-paginate
-flask_restful
-flask_cors # For the Chrome extension to operate
-# janus # No longer needed - using pure threading.Queue for multi-loop support
-flask_wtf~=1.2
-# Flask 3.1 removed the session setter on RequestContext; the patch in
-# changedetectionio/realtime/socket_server.py restores it so Flask-SocketIO works.
-# Require >=3.1 so the patch is always needed; <4 guards against unknown breaking changes.
+flask-socketio>=5.6.1,<6 # Re #3910
 flask>=3.1,<4
-# Flask-SocketIO 5.x still does ctx.session = ... directly; the patch above handles it.
-# >=5.5.0 ensures the threading async_mode we rely on is available.
-flask-socketio>=5.5.0,<6
-python-socketio>=5.11.0,<6
-python-engineio>=4.9.0,<5
+flask_cors # For the Chrome extension to operate
+flask_restful
+flask_wtf~=1.2
 inscriptis~=2.2
+python-engineio>=4.9.0,<5
+python-socketio>=5.11.0,<6
 pytz
 timeago~=1.0
 validators~=0.35
+werkzeug==3.1.6
+
 
 # Set these versions together to avoid a RequestsDependencyWarning
 # >= 2.26 also adds Brotli support if brotli is installed
@@ -130,8 +124,7 @@ greenlet >= 3.0.3
 # Default SOCKETIO_MODE=threading is recommended for better compatibility
 gevent
 
-# Previously pinned for flask_expects_json (removed 2026-02). Unpinning for now.
-referencing
+referencing==0.37.0
 
 # For conditions
 panzi-json-logic
