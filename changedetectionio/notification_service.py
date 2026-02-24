@@ -62,6 +62,7 @@ class FormattableTimestamp(str):
 
         {{ change_datetime }}                        → '2024-01-15 10:30:00 UTC'
         {{ change_datetime(format='%Y') }}           → '2024'
+        {{ change_datetime(format='%A') }}           → 'Monday'
         {{ change_datetime(format='%Y-%m-%d') }}     → '2024-01-15'
 
     Being a str subclass means it is natively JSON serializable.
@@ -87,6 +88,62 @@ class FormattableTimestamp(str):
             return self._dt.isoformat()
 
 
+class FormattableDiff(str):
+    """
+    A str subclass representing a rendered diff. As a plain string it renders
+    with the default options for that variant, but can be called with custom
+    arguments in Jinja2 templates:
+
+        {{ diff }}                                    → default diff output
+        {{ diff(lines=5) }}                           → truncate to 5 lines
+        {{ diff(added_only=true) }}                   → only show added lines
+        {{ diff(removed_only=true) }}                 → only show removed lines
+        {{ diff(context=3) }}                         → 3 lines of context around changes
+        {{ diff(word_diff=false) }}                   → line-level diff instead of word-level
+        {{ diff(lines=10, added_only=true) }}         → combine args
+        {{ diff_added(lines=5) }}                     → works on any diff_* variant too
+
+    Being a str subclass means it is natively JSON serializable.
+    """
+    def __new__(cls, prev_snapshot, current_snapshot, **base_kwargs):
+        if prev_snapshot or current_snapshot:
+            from changedetectionio import diff as diff_module
+            rendered = diff_module.render_diff(prev_snapshot, current_snapshot, **base_kwargs)
+        else:
+            rendered = ''
+        instance = super().__new__(cls, rendered)
+        instance._prev = prev_snapshot
+        instance._current = current_snapshot
+        instance._base_kwargs = base_kwargs
+        return instance
+
+    def __call__(self, lines=None, added_only=False, removed_only=False, context=0,
+                 word_diff=None, case_insensitive=False, ignore_junk=False):
+        from changedetectionio import diff as diff_module
+        kwargs = dict(self._base_kwargs)
+
+        if added_only:
+            kwargs['include_removed'] = False
+        if removed_only:
+            kwargs['include_added'] = False
+        if context:
+            kwargs['context_lines'] = int(context)
+        if word_diff is not None:
+            kwargs['word_diff'] = bool(word_diff)
+        if case_insensitive:
+            kwargs['case_insensitive'] = True
+        if ignore_junk:
+            kwargs['ignore_junk'] = True
+
+        result = diff_module.render_diff(self._prev or '', self._current or '', **kwargs)
+
+        if lines is not None:
+            result = '\n'.join(result.splitlines()[:int(lines)])
+
+        return result
+
+
+
 # What is passed around as notification context, also used as the complete list of valid {{ tokens }}
 class NotificationContextData(dict):
     def __init__(self, initial_data=None, **kwargs):
@@ -95,15 +152,15 @@ class NotificationContextData(dict):
             'base_url': None,
             'change_datetime': FormattableTimestamp(time.time()),
             'current_snapshot': None,
-            'diff': None,
-            'diff_added': None,
-            'diff_added_clean': None,
-            'diff_clean': None,
-            'diff_full': None,
-            'diff_full_clean': None,
-            'diff_patch': None,
-            'diff_removed': None,
-            'diff_removed_clean': None,
+            'diff': FormattableDiff('', ''),
+            'diff_clean': FormattableDiff('', '', include_change_type_prefix=False),
+            'diff_added': FormattableDiff('', '', include_removed=False),
+            'diff_added_clean': FormattableDiff('', '', include_removed=False, include_change_type_prefix=False),
+            'diff_full': FormattableDiff('', '', include_equal=True),
+            'diff_full_clean': FormattableDiff('', '', include_equal=True, include_change_type_prefix=False),
+            'diff_patch': FormattableDiff('', '', patch_format=True),
+            'diff_removed': FormattableDiff('', '', include_added=False),
+            'diff_removed_clean': FormattableDiff('', '', include_added=False, include_change_type_prefix=False),
             'diff_url': None,
             'markup_text_links_to_html_links': False, # If automatic conversion of plaintext to HTML should happen
             'notification_timestamp': time.time(),
@@ -140,7 +197,7 @@ class NotificationContextData(dict):
         So we can test the output in the notification body
         """
         for key in self.keys():
-            if key in ['uuid', 'time', 'watch_uuid', 'change_datetime']:
+            if key in ['uuid', 'time', 'watch_uuid', 'change_datetime'] or key.startswith('diff'):
                 continue
             rand_str = 'RANDOM-PLACEHOLDER-'+''.join(random.choices(string.ascii_letters + string.digits, k=12))
             self[key] = rand_str
@@ -169,13 +226,12 @@ def add_rendered_diff_to_notification_vars(notification_scan_text:str, prev_snap
     Returns:
         dict: Only the diff placeholders that were found in notification_scan_text, with rendered content
     """
-    from changedetectionio import diff
     import re
-    from functools import lru_cache
 
     now = time.time()
 
-    # Define specifications for each diff variant
+    # Define base kwargs for each diff variant — these become the stored defaults
+    # on the FormattableDiff object, so {{ diff(lines=5) }} overrides on top of them
     diff_specs = {
         'diff': {'word_diff': word_diff},
         'diff_clean': {'word_diff': word_diff, 'include_change_type_prefix': False},
@@ -188,22 +244,15 @@ def add_rendered_diff_to_notification_vars(notification_scan_text:str, prev_snap
         'diff_removed_clean': {'word_diff': word_diff, 'include_added': False, 'include_change_type_prefix': False},
     }
 
-    # Memoize render_diff to avoid duplicate renders with same kwargs
-    @lru_cache(maxsize=4)
-    def cached_render(kwargs_tuple):
-        return diff.render_diff(prev_snapshot, current_snapshot, **dict(kwargs_tuple))
-
     ret = {}
     rendered_count = 0
-    # Only check and render diff keys that exist in NotificationContextData
+    # Only create FormattableDiff objects for diff keys actually used in the notification text
     for key in NotificationContextData().keys():
         if key.startswith('diff') and key in diff_specs:
             # Check if this placeholder is actually used in the notification text
             pattern = rf"(?<![A-Za-z0-9_]){re.escape(key)}(?![A-Za-z0-9_])"
             if re.search(pattern, notification_scan_text, re.IGNORECASE):
-                kwargs = diff_specs[key]
-                # Convert dict to sorted tuple for cache key (handles duplicate kwarg combinations)
-                ret[key] = cached_render(tuple(sorted(kwargs.items())))
+                ret[key] = FormattableDiff(prev_snapshot, current_snapshot, **diff_specs[key])
                 rendered_count += 1
 
     if rendered_count:

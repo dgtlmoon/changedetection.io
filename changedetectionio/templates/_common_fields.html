@@ -58,7 +58,12 @@
             </tr>
             <tr>
                 <td><code>{{ '{{diff}}' }}</code></td>
-                <td>{{ _('The diff output - only changes, additions, and removals') }}</td>
+                <td>{{ _('The diff output - only changes, additions, and removals') }}<br>
+                    <small>
+                        {{ _('All diff variants accept') }} <code>lines=</code>, <code>context=</code>, <code>word_diff=</code>, <code>ignore_junk=</code> {{ _('args, e.g.') }}
+                        <code>{{ '{{diff(lines=10)}}' }}</code>, <code>{{ '{{diff_added(lines=5, context=2)}}' }}</code>
+                    </small>
+                </td>
             </tr>
             <tr>
                 <td><code>{{ '{{diff_clean}}' }}</code></td>

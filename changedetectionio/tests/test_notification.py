@@ -108,6 +108,7 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
                                                    "Diff Added: {{diff_added}}\n"
                                                    "Diff Removed: {{diff_removed}}\n"
                                                    "Diff Full: {{diff_full}}\n"
+                                                   "Diff with args: {{diff(context=3)}}"
                                                    "Diff as Patch: {{diff_patch}}\n"
                                                    "Change datetime: {{change_datetime}}\n"
                                                    "Change datetime format: Weekday {{change_datetime(format='%A')}}\n"
