@@ -54,36 +54,37 @@ def _check_cascading_vars(datastore, var_name, watch):
     return None
 
 
-class FormattableTimestamp:
+class FormattableTimestamp(str):
     """
-    A datetime wrapper that renders with a default strftime format when used as a string,
-    but can also be called with a custom format argument in Jinja2 templates:
+    A str subclass representing a formatted datetime. As a plain string it renders
+    with the default format, but can also be called with a custom format argument
+    in Jinja2 templates:
 
         {{ change_datetime }}                        → '2024-01-15 10:30:00 UTC'
         {{ change_datetime(format='%Y') }}           → '2024'
         {{ change_datetime(format='%Y-%m-%d') }}     → '2024-01-15'
+
+    Being a str subclass means it is natively JSON serializable.
     """
     _DEFAULT_FORMAT = '%Y-%m-%d %H:%M:%S %Z'
 
-    def __init__(self, timestamp):
+    def __new__(cls, timestamp):
         dt = datetime.datetime.fromtimestamp(int(timestamp), tz=pytz.UTC)
         local_tz = datetime.datetime.now().astimezone().tzinfo
-        self._dt = dt.astimezone(local_tz)
+        dt_local = dt.astimezone(local_tz)
+        try:
+            formatted = dt_local.strftime(cls._DEFAULT_FORMAT)
+        except Exception:
+            formatted = dt_local.isoformat()
+        instance = super().__new__(cls, formatted)
+        instance._dt = dt_local
+        return instance
 
     def __call__(self, format=_DEFAULT_FORMAT):
         try:
             return self._dt.strftime(format)
         except Exception:
             return self._dt.isoformat()
-
-    def __str__(self):
-        try:
-            return self._dt.strftime(self._DEFAULT_FORMAT)
-        except Exception:
-            return self._dt.isoformat()
-
-    def __repr__(self):
-        return self.__str__()
 
 
 # What is passed around as notification context, also used as the complete list of valid {{ tokens }}
