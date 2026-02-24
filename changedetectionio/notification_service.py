@@ -61,6 +61,7 @@ class NotificationContextData(dict):
         super().__init__({
             'base_url': None,
             'change_datetime': None,
+            'change_datetime_z': None,
             'current_snapshot': None,
             'diff': None,
             'diff_added': None,
@@ -118,6 +119,16 @@ class NotificationContextData(dict):
                 raise ValueError(f'Invalid notification format: "{value}"')
 
         super().__setitem__(key, value)
+
+def timestamp_to_localtime_iso8601(timestamp):
+    # Interpret timestamp as UTC
+    dt_utc = datetime.datetime.fromtimestamp(int(timestamp), tz=pytz.UTC)
+
+    # Convert to local timezone
+    local_dt = dt_utc.astimezone()
+
+    # Return ISO 8601 format
+    return local_dt.isoformat()
 
 def timestamp_to_localtime(timestamp):
     # Format the date using locale-aware formatting with timezone
@@ -204,6 +215,7 @@ def set_basic_notification_vars(current_snapshot, prev_snapshot, watch, triggere
         'prev_snapshot': prev_snapshot,
         'screenshot': watch.get_screenshot() if watch and watch.get('notification_screenshot') else None,
         'change_datetime': timestamp_to_localtime(timestamp_changed) if timestamp_changed else None,
+        'change_datetime_z': timestamp_to_localtime_iso8601(timestamp_changed) if timestamp_changed else None,
         'triggered_text': triggered_text,
         'uuid': watch.get('uuid') if watch else None,
         'watch_url': watch.get('url') if watch else None,

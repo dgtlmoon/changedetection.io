@@ -109,6 +109,7 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
                                                    "Diff Full: {{diff_full}}\n"
                                                    "Diff as Patch: {{diff_patch}}\n"
                                                    "Change datetime: {{change_datetime}}\n"
+                                                   "Change datetime Z: {{change_datetime_z}}\n"
                                                    ":-)",
                               "notification_screenshot": True,
                               "notification_format": 'text'}
@@ -135,8 +136,6 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
         url_for("ui.ui_edit.edit_page", uuid="first"))
     assert bytes(notification_url.encode('utf-8')) in res.data
     assert bytes("New ChangeDetection.io Notification".encode('utf-8')) in res.data
-
-
 
     ## Now recheck, and it should have sent the notification
     wait_for_all_checks(client)
@@ -181,9 +180,12 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
 
     # timestamp worked
     import time
-    from changedetectionio.notification_service import timestamp_to_localtime
+    from changedetectionio.notification_service import timestamp_to_localtime, timestamp_to_localtime_iso8601
     # Could be from a few seconds ago (when the notification was fired vs in this test checking), so check for any
     times_possible = [timestamp_to_localtime(int(time.time()) - i) for i in range(15)]
+    assert any(t in notification_submission for t in times_possible)
+
+    times_possible = [timestamp_to_localtime_iso8601(int(time.time()) - i) for i in range(15)]
     assert any(t in notification_submission for t in times_possible)
 
 
