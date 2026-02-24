@@ -57,13 +57,15 @@ def _check_cascading_vars(datastore, var_name, watch):
 # What is passed around as notification context, also used as the complete list of valid {{ tokens }}
 class NotificationContextData(dict):
     def __init__(self, initial_data=None, **kwargs):
+        # ValidateJinja2Template() validates against the keynames of this dict to check for valid tokens in the body (user submission)
         super().__init__({
             'base_url': None,
+            'change_datetime': None,
             'current_snapshot': None,
             'diff': None,
-            'diff_clean': None,
             'diff_added': None,
             'diff_added_clean': None,
+            'diff_clean': None,
             'diff_full': None,
             'diff_full_clean': None,
             'diff_patch': None,
@@ -72,16 +74,18 @@ class NotificationContextData(dict):
             'diff_url': None,
             'markup_text_links_to_html_links': False, # If automatic conversion of plaintext to HTML should happen
             'notification_timestamp': time.time(),
+            'prev_snapshot': None,
             'preview_url': None,
             'screenshot': None,
-            'triggered_text': None,
             'timestamp_from': None,
             'timestamp_to': None,
+            'triggered_text': None,
             'uuid': 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX',  # Converted to 'watch_uuid' in create_notification_parameters
             'watch_mime_type': None,
             'watch_tag': None,
             'watch_title': None,
             'watch_url': 'https://WATCH-PLACE-HOLDER/',
+            'watch_uuid': 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX',  # Converted to 'watch_uuid' in create_notification_parameters
         })
 
         # Apply any initial data passed in
@@ -117,8 +121,9 @@ class NotificationContextData(dict):
 
 def timestamp_to_localtime(timestamp):
     # Format the date using locale-aware formatting with timezone
-    dt = datetime.datetime.fromtimestamp(int(timestamp))
-    dt = dt.replace(tzinfo=pytz.UTC)
+    # Pass tz=UTC so fromtimestamp() interprets the epoch correctly as UTC,
+    # rather than converting to local time first and then mislabelling it as UTC.
+    dt = datetime.datetime.fromtimestamp(int(timestamp), tz=pytz.UTC)
 
     # Get local timezone-aware datetime
     local_tz = datetime.datetime.now().astimezone().tzinfo

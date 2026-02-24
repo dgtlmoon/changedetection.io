@@ -108,6 +108,7 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
                                                    "Diff Removed: {{diff_removed}}\n"
                                                    "Diff Full: {{diff_full}}\n"
                                                    "Diff as Patch: {{diff_patch}}\n"
+                                                   "Change datetime: {{change_datetime}}\n"
                                                    ":-)",
                               "notification_screenshot": True,
                               "notification_format": 'text'}
@@ -172,10 +173,19 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
     assert ":-)" in notification_submission
     assert "New ChangeDetection.io Notification - {}".format(test_url) in notification_submission
     assert test_url in notification_submission
+
     assert ':-)' in notification_submission
     # Check the attachment was added, and that it is a JPEG from the original PNG
     notification_submission_object = json.loads(notification_submission)
     assert notification_submission_object
+
+    # timestamp worked
+    import time
+    from changedetectionio.notification_service import timestamp_to_localtime
+    # Could be from a few seconds ago (when the notification was fired vs in this test checking), so check for any
+    times_possible = [timestamp_to_localtime(int(time.time()) - i) for i in range(15)]
+    assert any(t in notification_submission for t in times_possible)
+
 
     # We keep PNG screenshots for now
     # IF THIS FAILS YOU SHOULD BE TESTING WITH ENV VAR REMOVE_REQUESTS_OLD_SCREENSHOTS=False
