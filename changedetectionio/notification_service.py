@@ -54,16 +54,51 @@ def _check_cascading_vars(datastore, var_name, watch):
     return None
 
 
+class FormattableTimestamp(str):
+    """
+    A str subclass representing a formatted datetime. As a plain string it renders
+    with the default format, but can also be called with a custom format argument
+    in Jinja2 templates:
+
+        {{ change_datetime }}                        → '2024-01-15 10:30:00 UTC'
+        {{ change_datetime(format='%Y') }}           → '2024'
+        {{ change_datetime(format='%Y-%m-%d') }}     → '2024-01-15'
+
+    Being a str subclass means it is natively JSON serializable.
+    """
+    _DEFAULT_FORMAT = '%Y-%m-%d %H:%M:%S %Z'
+
+    def __new__(cls, timestamp):
+        dt = datetime.datetime.fromtimestamp(int(timestamp), tz=pytz.UTC)
+        local_tz = datetime.datetime.now().astimezone().tzinfo
+        dt_local = dt.astimezone(local_tz)
+        try:
+            formatted = dt_local.strftime(cls._DEFAULT_FORMAT)
+        except Exception:
+            formatted = dt_local.isoformat()
+        instance = super().__new__(cls, formatted)
+        instance._dt = dt_local
+        return instance
+
+    def __call__(self, format=_DEFAULT_FORMAT):
+        try:
+            return self._dt.strftime(format)
+        except Exception:
+            return self._dt.isoformat()
+
+
 # What is passed around as notification context, also used as the complete list of valid {{ tokens }}
 class NotificationContextData(dict):
     def __init__(self, initial_data=None, **kwargs):
+        # ValidateJinja2Template() validates against the keynames of this dict to check for valid tokens in the body (user submission)
         super().__init__({
             'base_url': None,
+            'change_datetime': FormattableTimestamp(time.time()),
             'current_snapshot': None,
             'diff': None,
-            'diff_clean': None,
             'diff_added': None,
             'diff_added_clean': None,
+            'diff_clean': None,
             'diff_full': None,
             'diff_full_clean': None,
             'diff_patch': None,
@@ -72,16 +107,18 @@ class NotificationContextData(dict):
             'diff_url': None,
             'markup_text_links_to_html_links': False, # If automatic conversion of plaintext to HTML should happen
             'notification_timestamp': time.time(),
+            'prev_snapshot': None,
             'preview_url': None,
             'screenshot': None,
-            'triggered_text': None,
             'timestamp_from': None,
             'timestamp_to': None,
+            'triggered_text': None,
             'uuid': 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX',  # Converted to 'watch_uuid' in create_notification_parameters
             'watch_mime_type': None,
             'watch_tag': None,
             'watch_title': None,
             'watch_url': 'https://WATCH-PLACE-HOLDER/',
+            'watch_uuid': 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX',  # Converted to 'watch_uuid' in create_notification_parameters
         })
 
         # Apply any initial data passed in
@@ -103,7 +140,7 @@ class NotificationContextData(dict):
         So we can test the output in the notification body
         """
         for key in self.keys():
-            if key in ['uuid', 'time', 'watch_uuid']:
+            if key in ['uuid', 'time', 'watch_uuid', 'change_datetime']:
                 continue
             rand_str = 'RANDOM-PLACEHOLDER-'+''.join(random.choices(string.ascii_letters + string.digits, k=12))
             self[key] = rand_str
@@ -114,24 +151,6 @@ class NotificationContextData(dict):
                 raise ValueError(f'Invalid notification format: "{value}"')
 
         super().__setitem__(key, value)
-
-def timestamp_to_localtime(timestamp):
-    # Format the date using locale-aware formatting with timezone
-    dt = datetime.datetime.fromtimestamp(int(timestamp))
-    dt = dt.replace(tzinfo=pytz.UTC)
-
-    # Get local timezone-aware datetime
-    local_tz = datetime.datetime.now().astimezone().tzinfo
-    local_dt = dt.astimezone(local_tz)
-
-    # Format date with timezone - using strftime for locale awareness
-    try:
-        formatted_date = local_dt.strftime('%Y-%m-%d %H:%M:%S %Z')
-    except:
-        # Fallback if locale issues
-        formatted_date = local_dt.isoformat()
-
-    return formatted_date
 
 def add_rendered_diff_to_notification_vars(notification_scan_text:str, prev_snapshot:str, current_snapshot:str, word_diff:bool):
     """
@@ -198,7 +217,7 @@ def set_basic_notification_vars(current_snapshot, prev_snapshot, watch, triggere
         'current_snapshot': current_snapshot,
         'prev_snapshot': prev_snapshot,
         'screenshot': watch.get_screenshot() if watch and watch.get('notification_screenshot') else None,
-        'change_datetime': timestamp_to_localtime(timestamp_changed) if timestamp_changed else None,
+        'change_datetime': FormattableTimestamp(timestamp_changed) if timestamp_changed else None,
         'triggered_text': triggered_text,
         'uuid': watch.get('uuid') if watch else None,
         'watch_url': watch.get('url') if watch else None,
