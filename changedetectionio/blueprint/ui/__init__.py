@@ -141,7 +141,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
     # Import the login decorator
     from changedetectionio.auth_decorator import login_optionally_required
 
-    @ui_blueprint.route("/clear_history/<string:uuid>", methods=['GET'])
+    @ui_blueprint.route("/clear_history/<uuid_str:uuid>", methods=['GET'])
     @login_optionally_required
     def clear_watch_history(uuid):
         try:
@@ -366,7 +366,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
         return redirect(url_for('watchlist.index'))
 
 
-    @ui_blueprint.route("/share-url/<string:uuid>", methods=['GET'])
+    @ui_blueprint.route("/share-url/<uuid_str:uuid>", methods=['GET'])
     @login_optionally_required
     def form_share_put_watch(uuid):
         """Given a watch UUID, upload the info and return a share-link

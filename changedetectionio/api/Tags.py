@@ -17,7 +17,7 @@ class Tag(Resource):
         self.update_q = kwargs['update_q']
 
     # Get information about a single tag
-    # curl http://localhost:5000/api/v1/tag/<string:uuid>
+    # curl http://localhost:5000/api/v1/tag/<uuid_str:uuid>
     @auth.check_token
     @validate_openapi_request('getTag')
     def get(self, uuid):

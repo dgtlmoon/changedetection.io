@@ -57,7 +57,7 @@ class Watch(Resource):
         self.update_q = kwargs['update_q']
 
     # Get information about a single watch, excluding the history list (can be large)
-    # curl http://localhost:5000/api/v1/watch/<string:uuid>
+    # curl http://localhost:5000/api/v1/watch/<uuid_str:uuid>
     # @todo - version2 - ?muted and ?paused should be able to be called together, return the watch struct not "OK"
     # ?recheck=true
     @auth.check_token
@@ -217,7 +217,7 @@ class WatchHistory(Resource):
         self.datastore = kwargs['datastore']
 
     # Get a list of available history for a watch by UUID
-    # curl http://localhost:5000/api/v1/watch/<string:uuid>/history
+    # curl http://localhost:5000/api/v1/watch/<uuid_str:uuid>/history
     @auth.check_token
     @validate_openapi_request('getWatchHistory')
     def get(self, uuid):

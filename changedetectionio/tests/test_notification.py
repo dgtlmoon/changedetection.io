@@ -17,6 +17,7 @@ from changedetectionio.notification import (
 )
 from ..diff import HTML_CHANGED_STYLE
 from ..model import USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
+from ..notification_service import FormattableTimestamp
 
 
 # Hard to just add more live server URLs when one test is already running (I think)
@@ -108,6 +109,9 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
                                                    "Diff Removed: {{diff_removed}}\n"
                                                    "Diff Full: {{diff_full}}\n"
                                                    "Diff as Patch: {{diff_patch}}\n"
+                                                   "Change datetime: {{change_datetime}}\n"
+                                                   "Change datetime format: Weekday {{change_datetime(format='%A')}}\n"
+                                                   "Change datetime format: {{change_datetime(format='%Y-%m-%dT%H:%M:%S%z')}}\n"
                                                    ":-)",
                               "notification_screenshot": True,
                               "notification_format": 'text'}
@@ -134,8 +138,6 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
         url_for("ui.ui_edit.edit_page", uuid="first"))
     assert bytes(notification_url.encode('utf-8')) in res.data
     assert bytes("New ChangeDetection.io Notification".encode('utf-8')) in res.data
-
-
 
     ## Now recheck, and it should have sent the notification
     wait_for_all_checks(client)
@@ -172,10 +174,22 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
     assert ":-)" in notification_submission
     assert "New ChangeDetection.io Notification - {}".format(test_url) in notification_submission
     assert test_url in notification_submission
+
     assert ':-)' in notification_submission
     # Check the attachment was added, and that it is a JPEG from the original PNG
     notification_submission_object = json.loads(notification_submission)
     assert notification_submission_object
+
+    import time
+    # Could be from a few seconds ago (when the notification was fired vs in this test checking), so check for any
+    times_possible = [str(FormattableTimestamp(int(time.time()) - i)) for i in range(15)]
+    assert any(t in notification_submission for t in times_possible)
+
+    txt = f"Weekday {FormattableTimestamp(int(time.time()))(format='%A')}"
+    assert txt in notification_submission
+
+
+
 
     # We keep PNG screenshots for now
     # IF THIS FAILS YOU SHOULD BE TESTING WITH ENV VAR REMOVE_REQUESTS_OLD_SCREENSHOTS=False

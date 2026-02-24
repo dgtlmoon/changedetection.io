@@ -94,13 +94,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         return results
 
     @login_required
-    @check_proxies_blueprint.route("/<string:uuid>/status", methods=['GET'])
+    @check_proxies_blueprint.route("/<uuid_str:uuid>/status", methods=['GET'])
     def get_recheck_status(uuid):
         results = _recalc_check_status(uuid=uuid)
         return results
 
     @login_required
-    @check_proxies_blueprint.route("/<string:uuid>/start", methods=['GET'])
+    @check_proxies_blueprint.route("/<uuid_str:uuid>/start", methods=['GET'])
     def start_check(uuid):
 
         if not datastore.proxy_list:

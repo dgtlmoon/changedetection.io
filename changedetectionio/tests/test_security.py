@@ -1,4 +1,5 @@
 import os
+import pytest
 
 from flask import url_for
 
@@ -579,3 +580,131 @@ def test_static_directory_traversal(client, live_server, measure_memory_usage, d
     # Should get 403 (not authenticated) or 404 (file not found), not a path traversal
     assert res.status_code in [403, 404]
 
+
+def test_ssrf_private_ip_blocked(client, live_server, monkeypatch, measure_memory_usage, datastore_path):
+    """
+    SSRF protection: IANA-reserved/private IP addresses must be blocked by default.
+
+    Covers:
+    1. is_private_hostname() correctly classifies all reserved ranges
+    2. is_safe_valid_url() rejects private-IP URLs at add-time (env var off)
+    3. is_safe_valid_url() allows private-IP URLs when ALLOW_IANA_RESTRICTED_ADDRESSES=true
+    4. UI form rejects private-IP URLs and shows the standard error message
+    5. Requests fetcher blocks fetch-time DNS rebinding (fresh check on every fetch)
+    6. Requests fetcher blocks redirects that lead to a private IP (open-redirect bypass)
+
+    conftest.py sets ALLOW_IANA_RESTRICTED_ADDRESSES=true globally so the test
+    server (localhost) keeps working for all other tests.  monkeypatch temporarily
+    overrides it to 'false' here, and is automatically restored after the test.
+    """
+    from unittest.mock import patch, MagicMock
+    from changedetectionio.validate_url import is_safe_valid_url, is_private_hostname
+
+    monkeypatch.setenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'false')
+    # Clear any URL results cached while the env var was 'true'
+    is_safe_valid_url.cache_clear()
+
+    # ------------------------------------------------------------------
+    # 1. is_private_hostname() — unit tests across all reserved ranges
+    # ------------------------------------------------------------------
+    private_hosts = [
+        '127.0.0.1',          # loopback
+        '10.0.0.1',           # RFC 1918
+        '172.16.0.1',         # RFC 1918
+        '192.168.1.1',        # RFC 1918
+        '169.254.169.254',    # link-local / AWS metadata endpoint
+        '::1',                # IPv6 loopback
+        'fc00::1',            # IPv6 unique local
+        'fe80::1',            # IPv6 link-local
+    ]
+    for host in private_hosts:
+        assert is_private_hostname(host), f"{host} should be identified as private/reserved"
+
+    for host in ['8.8.8.8', '1.1.1.1']:
+        assert not is_private_hostname(host), f"{host} should be identified as public"
+
+    # ------------------------------------------------------------------
+    # 2. is_safe_valid_url() blocks private-IP URLs (env var off)
+    # ------------------------------------------------------------------
+    blocked_urls = [
+        'http://127.0.0.1/',
+        'http://10.0.0.1/',
+        'http://172.16.0.1/',
+        'http://192.168.1.1/',
+        'http://169.254.169.254/',
+        'http://169.254.169.254/latest/meta-data/iam/security-credentials/',
+        'http://[::1]/',
+        'http://[fc00::1]/',
+        'http://[fe80::1]/',
+    ]
+    for url in blocked_urls:
+        assert not is_safe_valid_url(url), f"{url} should be blocked by is_safe_valid_url"
+
+    # ------------------------------------------------------------------
+    # 3. ALLOW_IANA_RESTRICTED_ADDRESSES=true bypasses the block
+    # ------------------------------------------------------------------
+    monkeypatch.setenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'true')
+    is_safe_valid_url.cache_clear()
+    assert is_safe_valid_url('http://127.0.0.1/'), \
+        "Private IP should be allowed when ALLOW_IANA_RESTRICTED_ADDRESSES=true"
+
+    # Restore the block for the remaining assertions
+    monkeypatch.setenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'false')
+    is_safe_valid_url.cache_clear()
+
+    # ------------------------------------------------------------------
+    # 4. UI form rejects private-IP URLs
+    # ------------------------------------------------------------------
+    for url in ['http://127.0.0.1/', 'http://169.254.169.254/latest/meta-data/']:
+        res = client.post(
+            url_for('ui.ui_views.form_quick_watch_add'),
+            data={'url': url, 'tags': ''},
+            follow_redirects=True
+        )
+        assert b'Watch protocol is not permitted or invalid URL format' in res.data, \
+            f"UI should reject {url}"
+
+    # ------------------------------------------------------------------
+    # 5. Fetch-time DNS-rebinding check in the requests fetcher
+    #    Simulates: URL passed add-time validation with a public IP, but
+    #    by fetch time DNS has been rebound to a private IP.
+    # ------------------------------------------------------------------
+    from changedetectionio.content_fetchers.requests import fetcher as RequestsFetcher
+
+    f = RequestsFetcher()
+
+    with patch('changedetectionio.content_fetchers.requests.is_private_hostname', return_value=True):
+        with pytest.raises(Exception, match='private/reserved'):
+            f._run_sync(
+                url='http://example.com/',
+                timeout=5,
+                request_headers={},
+                request_body=None,
+                request_method='GET',
+            )
+
+    # ------------------------------------------------------------------
+    # 6. Redirect-to-private-IP blocked (open-redirect SSRF bypass)
+    #    Public host returns a 302 pointing at an IANA-reserved address.
+    # ------------------------------------------------------------------
+    mock_redirect = MagicMock()
+    mock_redirect.is_redirect = True
+    mock_redirect.status_code = 302
+    mock_redirect.headers = {'Location': 'http://169.254.169.254/latest/meta-data/'}
+
+    def _private_only_for_redirect(hostname):
+        # Initial host is "public"; the redirect target is private
+        return hostname in {'169.254.169.254', '10.0.0.1', '172.16.0.1',
+                            '192.168.0.1', '127.0.0.1', '::1'}
+
+    with patch('changedetectionio.content_fetchers.requests.is_private_hostname',
+               side_effect=_private_only_for_redirect):
+        with patch('requests.Session.request', return_value=mock_redirect):
+            with pytest.raises(Exception, match='Redirect blocked'):
+                f._run_sync(
+                    url='http://example.com/',
+                    timeout=5,
+                    request_headers={},
+                    request_body=None,
+                    request_method='GET',
+                )
