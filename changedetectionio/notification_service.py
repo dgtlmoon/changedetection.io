@@ -54,14 +54,45 @@ def _check_cascading_vars(datastore, var_name, watch):
     return None
 
 
+class FormattableTimestamp:
+    """
+    A datetime wrapper that renders with a default strftime format when used as a string,
+    but can also be called with a custom format argument in Jinja2 templates:
+
+        {{ change_datetime }}                        → '2024-01-15 10:30:00 UTC'
+        {{ change_datetime(format='%Y') }}           → '2024'
+        {{ change_datetime(format='%Y-%m-%d') }}     → '2024-01-15'
+    """
+    _DEFAULT_FORMAT = '%Y-%m-%d %H:%M:%S %Z'
+
+    def __init__(self, timestamp):
+        dt = datetime.datetime.fromtimestamp(int(timestamp), tz=pytz.UTC)
+        local_tz = datetime.datetime.now().astimezone().tzinfo
+        self._dt = dt.astimezone(local_tz)
+
+    def __call__(self, format=_DEFAULT_FORMAT):
+        try:
+            return self._dt.strftime(format)
+        except Exception:
+            return self._dt.isoformat()
+
+    def __str__(self):
+        try:
+            return self._dt.strftime(self._DEFAULT_FORMAT)
+        except Exception:
+            return self._dt.isoformat()
+
+    def __repr__(self):
+        return self.__str__()
+
+
 # What is passed around as notification context, also used as the complete list of valid {{ tokens }}
 class NotificationContextData(dict):
     def __init__(self, initial_data=None, **kwargs):
         # ValidateJinja2Template() validates against the keynames of this dict to check for valid tokens in the body (user submission)
         super().__init__({
             'base_url': None,
-            'change_datetime': None,
-            'change_datetime_z': None,
+            'change_datetime': FormattableTimestamp(time.time()),
             'current_snapshot': None,
             'diff': None,
             'diff_added': None,
@@ -108,7 +139,7 @@ class NotificationContextData(dict):
         So we can test the output in the notification body
         """
         for key in self.keys():
-            if key in ['uuid', 'time', 'watch_uuid']:
+            if key in ['uuid', 'time', 'watch_uuid', 'change_datetime']:
                 continue
             rand_str = 'RANDOM-PLACEHOLDER-'+''.join(random.choices(string.ascii_letters + string.digits, k=12))
             self[key] = rand_str
@@ -119,35 +150,6 @@ class NotificationContextData(dict):
                 raise ValueError(f'Invalid notification format: "{value}"')
 
         super().__setitem__(key, value)
-
-def timestamp_to_localtime_iso8601(timestamp):
-    # Interpret timestamp as UTC
-    dt_utc = datetime.datetime.fromtimestamp(int(timestamp), tz=pytz.UTC)
-
-    # Convert to local timezone
-    local_dt = dt_utc.astimezone()
-
-    # Return ISO 8601 format
-    return local_dt.isoformat()
-
-def timestamp_to_localtime(timestamp):
-    # Format the date using locale-aware formatting with timezone
-    # Pass tz=UTC so fromtimestamp() interprets the epoch correctly as UTC,
-    # rather than converting to local time first and then mislabelling it as UTC.
-    dt = datetime.datetime.fromtimestamp(int(timestamp), tz=pytz.UTC)
-
-    # Get local timezone-aware datetime
-    local_tz = datetime.datetime.now().astimezone().tzinfo
-    local_dt = dt.astimezone(local_tz)
-
-    # Format date with timezone - using strftime for locale awareness
-    try:
-        formatted_date = local_dt.strftime('%Y-%m-%d %H:%M:%S %Z')
-    except:
-        # Fallback if locale issues
-        formatted_date = local_dt.isoformat()
-
-    return formatted_date
 
 def add_rendered_diff_to_notification_vars(notification_scan_text:str, prev_snapshot:str, current_snapshot:str, word_diff:bool):
     """
@@ -214,8 +216,7 @@ def set_basic_notification_vars(current_snapshot, prev_snapshot, watch, triggere
         'current_snapshot': current_snapshot,
         'prev_snapshot': prev_snapshot,
         'screenshot': watch.get_screenshot() if watch and watch.get('notification_screenshot') else None,
-        'change_datetime': timestamp_to_localtime(timestamp_changed) if timestamp_changed else None,
-        'change_datetime_z': timestamp_to_localtime_iso8601(timestamp_changed) if timestamp_changed else None,
+        'change_datetime': FormattableTimestamp(timestamp_changed) if timestamp_changed else None,
         'triggered_text': triggered_text,
         'uuid': watch.get('uuid') if watch else None,
         'watch_url': watch.get('url') if watch else None,

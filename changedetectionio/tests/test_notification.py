@@ -17,6 +17,7 @@ from changedetectionio.notification import (
 )
 from ..diff import HTML_CHANGED_STYLE
 from ..model import USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
+from ..notification_service import FormattableTimestamp
 
 
 # Hard to just add more live server URLs when one test is already running (I think)
@@ -109,7 +110,8 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
                                                    "Diff Full: {{diff_full}}\n"
                                                    "Diff as Patch: {{diff_patch}}\n"
                                                    "Change datetime: {{change_datetime}}\n"
-                                                   "Change datetime Z: {{change_datetime_z}}\n"
+                                                   "Change datetime format: Weekday {{change_datetime(format='%A')}}\n"
+                                                   "Change datetime format: {{change_datetime(format='%Y-%m-%dT%H:%M:%S%z')}}\n"
                                                    ":-)",
                               "notification_screenshot": True,
                               "notification_format": 'text'}
@@ -178,15 +180,15 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
     notification_submission_object = json.loads(notification_submission)
     assert notification_submission_object
 
-    # timestamp worked
     import time
-    from changedetectionio.notification_service import timestamp_to_localtime, timestamp_to_localtime_iso8601
     # Could be from a few seconds ago (when the notification was fired vs in this test checking), so check for any
-    times_possible = [timestamp_to_localtime(int(time.time()) - i) for i in range(15)]
+    times_possible = [str(FormattableTimestamp(int(time.time()) - i)) for i in range(15)]
     assert any(t in notification_submission for t in times_possible)
 
-    times_possible = [timestamp_to_localtime_iso8601(int(time.time()) - i) for i in range(15)]
-    assert any(t in notification_submission for t in times_possible)
+    txt = f"Weekday {FormattableTimestamp(int(time.time()))(format='%A')}"
+    assert txt in notification_submission
+
+
 
 
     # We keep PNG screenshots for now
