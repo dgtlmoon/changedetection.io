@@ -198,6 +198,7 @@ def handle_watch_update(socketio, **kwargs):
     except Exception as e:
         logger.error(f"Socket.IO error in handle_watch_update: {str(e)}")
 
+
 def init_socketio(app, datastore):
     """Initialize SocketIO with the main Flask app"""
     import platform

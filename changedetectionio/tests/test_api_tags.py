@@ -176,6 +176,76 @@ def test_api_tags_listing(client, live_server, measure_memory_usage, datastore_p
     assert res.status_code == 204
 
 
+def test_api_tag_restock_processor_config(client, live_server, measure_memory_usage, datastore_path):
+    """
+    Test that a tag/group can be updated with processor_config_restock_diff via the API.
+    Since Tag extends WatchBase, processor config fields injected into WatchBase are also valid for tags.
+    """
+    api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
+
+    set_original_response(datastore_path=datastore_path)
+
+    # Create a tag
+    res = client.post(
+        url_for("tag"),
+        data=json.dumps({"title": "Restock Group"}),
+        headers={'content-type': 'application/json', 'x-api-key': api_key}
+    )
+    assert res.status_code == 201
+    tag_uuid = res.json.get('uuid')
+
+    # Update tag with valid processor_config_restock_diff
+    res = client.put(
+        url_for("tag", uuid=tag_uuid),
+        headers={'x-api-key': api_key, 'content-type': 'application/json'},
+        data=json.dumps({
+            "overrides_watch": True,
+            "processor_config_restock_diff": {
+                "in_stock_processing": "in_stock_only",
+                "follow_price_changes": True,
+                "price_change_min": 8888888
+            }
+        })
+    )
+    assert res.status_code == 200, f"PUT tag with restock config failed: {res.data}"
+
+    # Verify the config was stored via API
+    res = client.get(
+        url_for("tag", uuid=tag_uuid),
+        headers={'x-api-key': api_key}
+    )
+    assert res.status_code == 200
+    tag_data = res.json
+    assert tag_data.get('overrides_watch') == True
+    assert tag_data.get('processor_config_restock_diff', {}).get('in_stock_processing') == 'in_stock_only'
+    assert tag_data.get('processor_config_restock_diff', {}).get('price_change_min') == 8888888
+
+    # Verify the value is also reflected in the UI tag edit page
+    res = client.get(url_for("tags.form_tag_edit", uuid=tag_uuid))
+    assert res.status_code == 200
+    assert b'8888888' in res.data, "price_change_min set via API should appear in the UI tag edit form"
+
+    # Invalid enum value should be rejected by OpenAPI spec validation
+    res = client.put(
+        url_for("tag", uuid=tag_uuid),
+        headers={'x-api-key': api_key, 'content-type': 'application/json'},
+        data=json.dumps({
+            "processor_config_restock_diff": {
+                "in_stock_processing": "not_a_valid_value"
+            }
+        })
+    )
+    assert res.status_code == 400
+    assert b'Validation failed' in res.data
+
+    # Clean up
+    res = client.delete(
+        url_for("tag", uuid=tag_uuid),
+        headers={'x-api-key': api_key}
+    )
+    assert res.status_code == 204
+
+
 def test_roundtrip_API(client, live_server, measure_memory_usage, datastore_path):
     """
     Test the full round trip, this way we test the default Model fits back into OpenAPI spec

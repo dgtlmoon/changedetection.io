@@ -730,3 +730,48 @@ class DatastoreUpdatesMixin:
         # (left this out by accident in previous update, added tags={} in the changedetection.json save_to_disk)
         self._save_settings()
 
+    def update_30(self):
+        """Migrate restock_settings out of watch.json into restock_diff.json processor config file.
+
+        Previously, restock_diff processor settings (in_stock_processing, follow_price_changes, etc.)
+        were stored directly in the watch dict (watch.json). They now belong in a separate per-watch
+        processor config file (restock_diff.json) consistent with the processor_config_* API system.
+
+        For tags: restock_settings key is renamed to processor_config_restock_diff in the tag dict,
+        matching what the API writes when updating a tag.
+
+        Safe to re-run: skips watches that already have a restock_diff.json, skips tags that already
+        have processor_config_restock_diff set.
+        """
+        import json
+
+        # --- Watches ---
+        for uuid, watch in self.data['watching'].items():
+            if watch.get('processor') != 'restock_diff':
+                continue
+            restock_settings = watch.get('restock_settings')
+            if not restock_settings:
+                continue
+
+            data_dir = watch.data_dir
+            if data_dir:
+                watch.ensure_data_dir_exists()
+                filepath = os.path.join(data_dir, 'restock_diff.json')
+                if not os.path.isfile(filepath):
+                    with open(filepath, 'w', encoding='utf-8') as f:
+                        json.dump({'restock_diff': restock_settings}, f, indent=2)
+                    logger.info(f"update_30: migrated restock_settings → {filepath}")
+
+            del self.data['watching'][uuid]['restock_settings']
+            watch.commit()
+
+        # --- Tags ---
+        for tag_uuid, tag in self.data['settings']['application']['tags'].items():
+            restock_settings = tag.get('restock_settings')
+            if not restock_settings or tag.get('processor_config_restock_diff'):
+                continue
+            tag['processor_config_restock_diff'] = restock_settings
+            del tag['restock_settings']
+            tag.commit()
+            logger.info(f"update_30: migrated tag {tag_uuid} restock_settings → processor_config_restock_diff")
+
