@@ -1978,7 +1978,7 @@ msgstr "Format d'heure invalide. Utilisez HH:MM."
 
 #: changedetectionio/forms.py
 msgid "Not a valid timezone name"
-msgstr "Ce n'est pas un nom de fuseau horaire valide"
+msgstr "Nom de fuseau horaire invalide"
 
 #: changedetectionio/forms.py
 msgid "not set"
@@ -2054,9 +2054,7 @@ msgstr "secondes"
 
 #: changedetectionio/forms.py
 msgid "Notification Body and Title is required when a Notification URL is used"
-msgstr ""
-"Le corps et le titre de la notification sont requis lorsqu'une URL de notification est utiliséeLe corps et le titre "
-"de la notification sont requis lorsqu'une URL de notification est utilisée"
+msgstr "Le corps et le titre de la notification sont requis lorsqu'une URL de notification est utilisée"
 
 #: changedetectionio/forms.py
 #, python-format
@@ -2185,11 +2183,11 @@ msgstr "Utilisez les paramètres globaux pour le temps entre la vérification et
 
 #: changedetectionio/forms.py
 msgid "CSS/JSONPath/JQ/XPath Filters"
-msgstr "Filtre CSS/xPath"
+msgstr "Filtre CSS/JSONPath/JQ/XPath"
 
 #: changedetectionio/forms.py
 msgid "Remove elements"
-msgstr "Sélectionner par élément"
+msgstr "Supprimer par élément"
 
 #: changedetectionio/forms.py
 msgid "Extract text"
@@ -2337,7 +2335,7 @@ msgstr "URL du proxy"
 
 #: changedetectionio/forms.py
 msgid "Proxy URLs must start with http://, https:// or socks5://"
-msgstr "Les URL proxy doivent commencer par http://, https:// ou chaussettes5://"
+msgstr "Les URL proxy doivent commencer par http://, https:// ou socks5://"
 
 #: changedetectionio/forms.py
 msgid "Browser connection URL"
