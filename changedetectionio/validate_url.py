@@ -61,7 +61,9 @@ def normalize_url_encoding(url):
 def is_private_hostname(hostname):
     """Return True if hostname resolves to an IANA-restricted (private/reserved) IP address.
 
-    Fails closed: unresolvable hostnames return True (block them).
+    Unresolvable hostnames return False (allow them) — DNS may be temporarily unavailable
+    or the domain not yet live. The actual DNS rebinding attack is mitigated by fetch-time
+    re-validation in requests.py, not by blocking unresolvable domains at add-time.
     Never cached — callers that need fresh DNS resolution (e.g. at fetch time) can call
     this directly without going through the lru_cached is_safe_valid_url().
     """
@@ -70,12 +72,11 @@ def is_private_hostname(hostname):
             ip = ipaddress.ip_address(info[4][0])
             if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
                 return True
-    except socket.gaierror:
-        return True
+    except socket.gaierror as e:
+        logger.warning(f"{hostname} error checking {str(e)}")
+        return False
     return False
 
-
-@lru_cache(maxsize=10000)
 def is_safe_valid_url(test_url):
     from changedetectionio import strtobool
     from changedetectionio.jinja2_custom import render as jinja_render
