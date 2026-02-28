@@ -1522,6 +1522,10 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Helps reduce changes detected caused by inconsistent JSON formatting"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with"
 msgstr ""
 
