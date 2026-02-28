@@ -71,11 +71,14 @@ def is_private_hostname(hostname):
         for info in socket.getaddrinfo(hostname, None):
             ip = ipaddress.ip_address(info[4][0])
             if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
+                logger.warning(f"Hostname '{hostname} - {ip} - ip.is_private = {ip.is_private}, ip.is_loopback = {ip.is_loopback}, ip.is_link_local = {ip.is_link_local}, ip.is_reserved = {ip.is_reserved}")
                 return True
     except socket.gaierror as e:
         logger.warning(f"{hostname} error checking {str(e)}")
         return False
+    logger.info(f"Hostname '{hostname}' is NOT private/IANA restricted.")
     return False
+
 
 def is_safe_valid_url(test_url):
     from changedetectionio import strtobool
@@ -138,13 +141,5 @@ def is_safe_valid_url(test_url):
     except validators.ValidationError:
         logger.warning(f'URL f"{test_url}" failed validation, aborting.')
         return False
-
-    # Block IANA-restricted (private/reserved) IP addresses unless explicitly allowed.
-    # This is an add-time check; fetch-time re-validation in requests.py handles DNS rebinding.
-    if not strtobool(os.getenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'false')):
-        parsed = urlparse(test_url)
-        if parsed.hostname and is_private_hostname(parsed.hostname):
-            logger.warning(f'URL "{test_url}" resolves to a private/reserved IP address, aborting.')
-            return False
 
     return True

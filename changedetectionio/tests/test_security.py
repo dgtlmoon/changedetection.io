@@ -584,13 +584,16 @@ def test_static_directory_traversal(client, live_server, measure_memory_usage, d
 
 def test_ssrf_private_ip_blocked(client, live_server, monkeypatch, measure_memory_usage, datastore_path):
     """
-    SSRF protection: IANA-reserved/private IP addresses must be blocked by default.
+    SSRF protection: IANA-reserved/private IP addresses are blocked at fetch-time, not add-time.
+
+    Watches targeting private/reserved IPs can be *added* freely; the block happens when the
+    fetcher actually tries to reach the URL (via validate_iana_url() in call_browser()).
 
     Covers:
     1. is_private_hostname() correctly classifies all reserved ranges
-    2. is_safe_valid_url() rejects private-IP URLs at add-time (env var off)
-    3. is_safe_valid_url() allows private-IP URLs when ALLOW_IANA_RESTRICTED_ADDRESSES=true
-    4. UI form rejects private-IP URLs and shows the standard error message
+    2. is_safe_valid_url() ALLOWS private-IP URLs at add-time (IANA check moved to fetch-time)
+    3. ALLOW_IANA_RESTRICTED_ADDRESSES has no effect on add-time; it only controls fetch-time
+    4. UI form accepts private-IP URLs at add-time without error
     5. Requests fetcher blocks fetch-time DNS rebinding (fresh check on every fetch)
     6. Requests fetcher blocks redirects that lead to a private IP (open-redirect bypass)
 
@@ -623,9 +626,10 @@ def test_ssrf_private_ip_blocked(client, live_server, monkeypatch, measure_memor
         assert not is_private_hostname(host), f"{host} should be identified as public"
 
     # ------------------------------------------------------------------
-    # 2. is_safe_valid_url() blocks private-IP URLs (env var off)
+    # 2. is_safe_valid_url() ALLOWS private-IP URLs at add-time
+    #    IANA check is no longer done here — it moved to fetch-time validate_iana_url()
     # ------------------------------------------------------------------
-    blocked_urls = [
+    private_ip_urls = [
         'http://127.0.0.1/',
         'http://10.0.0.1/',
         'http://172.16.0.1/',
@@ -636,21 +640,24 @@ def test_ssrf_private_ip_blocked(client, live_server, monkeypatch, measure_memor
         'http://[fc00::1]/',
         'http://[fe80::1]/',
     ]
-    for url in blocked_urls:
-        assert not is_safe_valid_url(url), f"{url} should be blocked by is_safe_valid_url"
+    for url in private_ip_urls:
+        assert is_safe_valid_url(url), f"{url} should be allowed by is_safe_valid_url (IANA check is at fetch-time)"
 
     # ------------------------------------------------------------------
-    # 3. ALLOW_IANA_RESTRICTED_ADDRESSES=true bypasses the block
+    # 3. ALLOW_IANA_RESTRICTED_ADDRESSES does not affect add-time validation
+    #    It only controls fetch-time blocking inside validate_iana_url()
     # ------------------------------------------------------------------
     monkeypatch.setenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'true')
     assert is_safe_valid_url('http://127.0.0.1/'), \
-        "Private IP should be allowed when ALLOW_IANA_RESTRICTED_ADDRESSES=true"
+        "Private IP should be allowed at add-time regardless of ALLOW_IANA_RESTRICTED_ADDRESSES"
 
-    # Restore the block for the remaining assertions
     monkeypatch.setenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'false')
+    assert is_safe_valid_url('http://127.0.0.1/'), \
+        "Private IP should be allowed at add-time regardless of ALLOW_IANA_RESTRICTED_ADDRESSES"
 
     # ------------------------------------------------------------------
-    # 4. UI form rejects private-IP URLs
+    # 4. UI form accepts private-IP URLs at add-time
+    #    The watch is created; the SSRF block fires later at fetch-time
     # ------------------------------------------------------------------
     for url in ['http://127.0.0.1/', 'http://169.254.169.254/latest/meta-data/']:
         res = client.post(
@@ -658,8 +665,8 @@ def test_ssrf_private_ip_blocked(client, live_server, monkeypatch, measure_memor
             data={'url': url, 'tags': ''},
             follow_redirects=True
         )
-        assert b'Watch protocol is not permitted or invalid URL format' in res.data, \
-            f"UI should reject {url}"
+        assert b'Watch protocol is not permitted or invalid URL format' not in res.data, \
+            f"UI should accept {url} at add-time (SSRF is blocked at fetch-time)"
 
     # ------------------------------------------------------------------
     # 5. Fetch-time DNS-rebinding check in the requests fetcher
