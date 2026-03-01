@@ -253,13 +253,14 @@ def prepare_test_function(live_server, datastore_path):
     # CRITICAL: Get datastore and stop it from writing stale data
     datastore = live_server.app.config.get('DATASTORE')
 
-    # Clear the queue before starting the test to prevent state leakage
-    from changedetectionio.flask_app import update_q
-    while not update_q.empty():
-        try:
-            update_q.get_nowait()
-        except:
-            break
+    # Clear the queues before starting the test to prevent state leakage
+    from changedetectionio.flask_app import update_q, llm_summary_q
+    for q in (update_q, llm_summary_q):
+        while not q.empty():
+            try:
+                q.get_nowait()
+            except:
+                break
 
     # Add test helper methods to the app for worker management
     def set_workers(count):

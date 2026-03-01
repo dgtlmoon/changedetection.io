@@ -151,7 +151,8 @@ class ChangeDetectionSpec:
         pass
 
     @hookspec
-    def update_finalize(update_handler, watch, datastore, processing_exception):
+    def update_finalize(update_handler, watch, datastore, processing_exception,
+                        changed_detected=False, snapshot_id=None):
         """Called after watch processing completes (success or failure).
 
         This hook is called in the finally block after all processing is complete,
@@ -168,6 +169,10 @@ class ChangeDetectionSpec:
             processing_exception: The exception from the main processing block, or None if successful.
                                  This does NOT include cleanup exceptions - only exceptions from
                                  the actual watch processing (fetch, diff, etc).
+            changed_detected: True when the processor detected a content change (default False).
+            snapshot_id: MD5 hex string of the new snapshot, matches the prefix of the history
+                         filename (e.g. 'abc123…' → 'abc123….txt[.br]').  None when no snapshot
+                         was saved (first run, error, same content).
 
         Returns:
             None: This hook doesn't return a value
@@ -580,7 +585,8 @@ def apply_update_handler_alter(update_handler, watch, datastore):
     return current_handler
 
 
-def apply_update_finalize(update_handler, watch, datastore, processing_exception):
+def apply_update_finalize(update_handler, watch, datastore, processing_exception,
+                          changed_detected=False, snapshot_id=None):
     """Apply update_finalize hooks from all plugins.
 
     Called in the finally block after watch processing completes, allowing plugins
@@ -591,6 +597,8 @@ def apply_update_finalize(update_handler, watch, datastore, processing_exception
         watch: The watch dict that was processed (may be None)
         datastore: The application datastore
         processing_exception: The exception from processing, or None if successful
+        changed_detected: True when the processor detected a content change.
+        snapshot_id: MD5 hex string of the new snapshot, or None.
 
     Returns:
         None
@@ -601,7 +609,9 @@ def apply_update_finalize(update_handler, watch, datastore, processing_exception
             update_handler=update_handler,
             watch=watch,
             datastore=datastore,
-            processing_exception=processing_exception
+            processing_exception=processing_exception,
+            changed_detected=changed_detected,
+            snapshot_id=snapshot_id,
         )
     except Exception as e:
         # Don't let plugin errors crash the worker

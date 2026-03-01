@@ -1,0 +1,103 @@
+<script src="{{url_for('static_content', group='js', filename='llm.js')}}" defer></script>
+<script>
+var LLM_CONNECTIONS = (function () {
+    var list = {{ plugin_form.llm_connection.data|tojson }};
+    var out  = {};
+    (list || []).forEach(function (c) { if (c && c.connection_id) out[c.connection_id] = c; });
+    return out;
+}());
+var LLM_I18N = {
+    noConnections:     '{{ _("No connections configured yet.") }}',
+    setDefault:        '{{ _("Set as default") }}',
+    remove:            '{{ _("Remove") }}',
+    show:              '{{ _("show") }}',
+    hide:              '{{ _("hide") }}',
+    nameModelRequired: '{{ _("Name and Model string are required.") }}'
+};
+</script>
+
+{# ── Configured connections table ──────────────────── #}
+<fieldset>
+    <legend>{{ _('LLM Connections') }}</legend>
+
+    <table class="pure-table pure-table-horizontal llm-connections">
+        <thead>
+            <tr>
+                <th class="llm-col-def" title="{{ _('Default') }}">{{ _('Default') }}</th>
+                <th class="llm-col-name">{{ _('Name') }}</th>
+                <th class="llm-col-model">{{ _('Model') }}</th>
+                <th class="llm-col-key">{{ _('API Key') }}</th>
+                <th class="llm-col-tpm" title="{{ _('Tokens per minute limit (0 = unlimited)') }}">{{ _('TPM') }}</th>
+                <th class="llm-col-del"></th>
+            </tr>
+        </thead>
+        <tbody id="llm-connections-tbody">
+        </tbody>
+    </table>
+</fieldset>
+
+{# ── Add connection ─────────────────────────────────── #}
+{% set nf = plugin_form.new_connection.form %}
+<fieldset>
+    <legend>{{ _('Add a connection') }}</legend>
+
+    <div class="pure-control-group">
+        {{ nf.preset.label }}
+        {{ nf.preset() }}
+    </div>
+
+    <div class="pure-control-group">
+        {{ nf.name.label }}
+        {{ nf.name(placeholder=_('e.g. My OpenAI')) }}
+    </div>
+    <div class="pure-control-group">
+        {{ nf.model.label }}
+        {{ nf.model() }}
+    </div>
+    <div class="pure-control-group">
+        <label for="llm-add-key">
+            {{ _('API Key') }}
+            <span class="pure-form-message-inline">({{ _('leave blank for local') }})</span>
+        </label>
+        <div class="llm-key-wrap">
+            {{ nf.api_key() }}
+            <button type="button" id="llm-key-toggle" class="pure-button">{{ _('show') }}</button>
+        </div>
+    </div>
+    <div class="pure-control-group" id="llm-base-group" style="display:none">
+        <label for="llm-add-base">
+            {{ _('API Endpoint') }}
+            <span class="pure-form-message-inline">({{ _('optional') }})</span>
+        </label>
+        {{ nf.api_base() }}
+    </div>
+    <div class="pure-control-group">
+        <label for="llm-add-tpm">
+            {{ _('Tokens/min limit') }}
+            <span class="pure-form-message-inline">({{ _('0 = unlimited') }})</span>
+        </label>
+        {{ nf.tokens_per_minute() }}
+    </div>
+
+    <div class="pure-controls">
+        <button type="button" id="llm-btn-add" class="pure-button pure-button-primary">{{ _('+ Add connection') }}</button>
+    </div>
+</fieldset>
+
+{# ── Prompt configuration ────────────────────────────────── #}
+<fieldset>
+    <legend>{{ _('Summary Prompt') }}</legend>
+    <div class="pure-control-group">
+        {{ plugin_form.llm_diff_context_lines.label }}
+        {{ plugin_form.llm_diff_context_lines() }}
+        <span class="pure-form-message-inline">
+            {{ _('Unchanged lines shown around each change in the diff sent to the LLM. More lines = more context but higher token cost. (default: 2)') }}
+        </span>
+    </div>
+    <div class="pure-control-group">
+        {{ render_field(plugin_form.llm_summary_prompt) }}
+        <span class="pure-form-message-inline">
+            {{ _('Instruction appended after the diff in every LLM call. Leave blank to use the built-in default (structured JSON output).') }}
+        </span>
+    </div>
+</fieldset>

@@ -11,7 +11,7 @@ from changedetectionio.auth_decorator import login_optionally_required
 from changedetectionio.time_handler import is_within_schedule
 from changedetectionio import worker_pool
 
-def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData):
+def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData, llm_summary_q=None):
     edit_blueprint = Blueprint('ui_edit', __name__, template_folder="../ui/templates")
     
     def _watch_has_tag_options_set(watch):
@@ -416,6 +416,47 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                         as_attachment=True,
                         download_name=filename,
                         mimetype='application/zip')
+
+    @edit_blueprint.route("/edit/<string:uuid>/regenerate-llm-summaries", methods=['GET'])
+    @login_optionally_required
+    def watch_regenerate_llm_summaries(uuid):
+        """Queue LLM summary generation for all history entries that don't yet have one."""
+        from flask import flash
+        from changedetectionio.llm.tokens import is_llm_data_ready
+        watch = datastore.data['watching'].get(uuid)
+        if not watch:
+            abort(404)
+
+        if not llm_summary_q:
+            flash(gettext("LLM summarisation is not configured."), 'error')
+            return redirect(url_for('ui.ui_edit.edit_page', uuid=uuid))
+
+        history = watch.history
+        history_keys = list(history.keys())
+
+        queued = 0
+        # Skip the first entry — there is no prior snapshot to diff against
+        for timestamp in history_keys[1:]:
+            snapshot_fname = history[timestamp]
+            snapshot_id = os.path.basename(snapshot_fname).split('.')[0]  # always 32-char MD5
+
+            # Skip entries that already have a summary
+            if is_llm_data_ready(watch.data_dir, snapshot_id):
+                continue
+
+            llm_summary_q.put({
+                'uuid':        uuid,
+                'snapshot_id': snapshot_id,
+                'attempts':    0,
+            })
+            queued += 1
+
+        if queued:
+            flash(gettext("Queued %(count)d LLM summaries for generation.", count=queued), 'success')
+        else:
+            flash(gettext("All history entries already have LLM summaries."), 'notice')
+
+        return redirect(url_for('ui.ui_edit.edit_page', uuid=uuid) + '#info')
 
     # Ajax callback
     @edit_blueprint.route("/edit/<uuid_str:uuid>/preview-rendered", methods=['POST'])
