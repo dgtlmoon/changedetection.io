@@ -158,7 +158,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
         if request.method == 'POST':
             confirmtext = request.form.get('confirmtext')
 
-            if confirmtext == 'clear':
+            if confirmtext.strip().lower() == gettext('clear').strip().lower():
                 # Run in background thread to avoid blocking
                 def clear_history_background():
                     # Capture UUIDs first to avoid race conditions
