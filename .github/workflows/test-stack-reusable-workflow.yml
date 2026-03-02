@@ -706,7 +706,19 @@ jobs:
       - name: Check upgrade works without error
         run: |
           echo "=== Testing upgrade path from 0.49.1 to ${{ github.ref_name }} (${{ github.sha }}) ==="
-
+          apt-get update && apt-get install -y --no-install-recommends \
+              g++ \
+              gcc \
+              libc-dev \
+              libffi-dev \
+              libjpeg-dev \
+              libssl-dev \
+              libxslt-dev \
+              make \
+              patch \
+              pkg-config \
+              zlib1g-dev
+          
           # Checkout old version and create datastore
           git checkout 0.49.1
           python3 -m venv .venv
