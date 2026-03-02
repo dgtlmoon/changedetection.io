@@ -156,7 +156,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
     @login_optionally_required
     def clear_all_history():
         if request.method == 'POST':
-            confirmtext = request.form.get('confirmtext')
+            confirmtext = request.form.get('confirmtext', '')
 
             if confirmtext.strip().lower() == gettext('clear').strip().lower():
                 # Run in background thread to avoid blocking

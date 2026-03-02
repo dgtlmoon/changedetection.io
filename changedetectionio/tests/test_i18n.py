@@ -688,3 +688,13 @@ def test_clear_history_translated_confirmation(client, live_server, measure_memo
     assert res.status_code == 200
     assert b"Incorrect confirmation text" not in res.data, \
         "English confirmation word 'clear' should still be accepted"
+
+    # Verify that missing/empty confirmtext does not crash the server
+    res = client.post(
+        url_for("ui.clear_all_history"),
+        data={},
+        follow_redirects=True
+    )
+    assert res.status_code == 200
+    assert b"Incorrect confirmation text" in res.data, \
+        "Missing confirmtext should show error, not crash"
