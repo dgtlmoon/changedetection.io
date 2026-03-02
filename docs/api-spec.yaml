@@ -113,8 +113,156 @@ tags:
 
   - name: Plugin API Extensions
     description: |
-      Retrieve the live OpenAPI specification for this instance. Unlike the static spec, this endpoint
-      returns the fully merged spec including schemas for any processor plugins installed on this instance.
+      ## How Processor Plugins Extend the API
+
+      changedetection.io uses a **processor plugin** system to handle different types of change detection.
+      Each processor lives in `changedetectionio/processors/<name>/` and may include an `api.yaml` file
+      that extends the core Watch schema with processor-specific configuration fields.
+
+      ### How it works
+
+      At startup, changedetection.io scans all installed processors for an `api.yaml` file. Any schemas
+      and code samples defined there are deep-merged into the live API specification, making the
+      processor's configuration fields valid on all watch create and update requests.
+
+      The live, fully-merged spec is always available at `/api/v1/full-spec` — use that URL with
+      Swagger UI or Redoc to see the complete schema for your specific installation.
+
+      ---
+
+      ### Writing a processor `api.yaml`
+
+      Place an `api.yaml` in the processor plugin's own directory, alongside its `__init__.py`
+      (e.g. `changedetectionio/processors/my_processor/api.yaml`). The schema name **must** follow the
+      convention `processor_config_<processor_name>` (e.g. `processor_config_restock_diff`). That same
+      key is used as the JSON field name when creating or updating a watch.
+
+      A minimal `api.yaml` for a hypothetical `my_processor`:
+
+      ```yaml
+      components:
+        schemas:
+          processor_config_my_processor:
+            type: object
+            description: Configuration for my_processor
+            properties:
+              some_option:
+                type: boolean
+                default: true
+                description: Enable some behaviour
+
+      paths:
+        /watch:
+          post:
+            x-code-samples:
+              - lang: curl
+                label: my_processor example
+                source: |
+                  curl -X POST "http://localhost:5000/api/v1/watch" \
+                    -H "x-api-key: YOUR_API_KEY" \
+                    -H "Content-Type: application/json" \
+                    -d '{
+                      "url": "https://example.com",
+                      "processor": "my_processor",
+                      "processor_config_my_processor": { "some_option": true }
+                    }'
+      ```
+
+      The `paths` section in `api.yaml` is used only for injecting additional `x-code-samples` into
+      existing endpoints — you cannot define new routes via plugin.
+
+      ---
+
+      ### Built-in plugin: `restock_diff`
+
+      The `restock_diff` processor is always shipped with changedetection.io. It monitors product
+      availability and price changes using structured data (JSON-LD / schema.org microdata) and
+      text heuristics. It is activated by setting `"processor": "restock_diff"` on a watch.
+
+      It adds the `processor_config_restock_diff` block to the Watch schema with these fields:
+
+      | Field | Type | Default | Description |
+      |---|---|---|---|
+      | `in_stock_processing` | string | `in_stock_only` | `in_stock_only` — only alert Out-of-Stock→In-Stock · `all_changes` — alert any availability change · `off` — disable stock tracking |
+      | `follow_price_changes` | boolean | `true` | Monitor and alert on price changes |
+      | `price_change_min` | number\|null | — | Alert when price drops **below** this value |
+      | `price_change_max` | number\|null | — | Alert when price rises **above** this value |
+      | `price_change_threshold_percent` | number\|null | — | Minimum % change since the original price to trigger an alert |
+
+      #### CREATE — Add a restock/price monitor
+
+      ```bash
+      curl -X POST "http://localhost:5000/api/v1/watch" \
+        -H "x-api-key: YOUR_API_KEY" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "url": "https://example.com/product/widget",
+          "processor": "restock_diff",
+          "processor_config_restock_diff": {
+            "in_stock_processing": "in_stock_only",
+            "follow_price_changes": true,
+            "price_change_threshold_percent": 5
+          }
+        }'
+      ```
+
+      #### READ — Retrieve the monitor
+
+      The response JSON includes `processor_config_restock_diff` alongside all standard watch fields:
+
+      ```bash
+      curl -X GET "http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091" \
+        -H "x-api-key: YOUR_API_KEY"
+      ```
+
+      ```json
+      {
+        "uuid": "cc0cfffa-f449-477b-83ea-0caafd1dc091",
+        "url": "https://example.com/product/widget",
+        "processor": "restock_diff",
+        "processor_config_restock_diff": {
+          "in_stock_processing": "in_stock_only",
+          "follow_price_changes": true,
+          "price_change_threshold_percent": 5,
+          "price_change_min": null,
+          "price_change_max": null
+        }
+      }
+      ```
+
+      #### UPDATE — Change thresholds without recreating the monitor
+
+      Only fields included in the request body are updated; omitted fields are left unchanged.
+
+      ```bash
+      curl -X PUT "http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091" \
+        -H "x-api-key: YOUR_API_KEY" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "processor_config_restock_diff": {
+            "in_stock_processing": "all_changes",
+            "follow_price_changes": true,
+            "price_change_min": 10.00,
+            "price_change_max": 500.00
+          }
+        }'
+      ```
+
+      #### DELETE — Remove the monitor
+
+      ```bash
+      curl -X DELETE "http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091" \
+        -H "x-api-key: YOUR_API_KEY"
+      ```
+
+      ---
+
+      For the complete schema-validated documentation including all processor fields, fetch the live spec
+      and load it into Swagger UI or Redoc:
+
+      ```
+      GET /api/v1/full-spec
+      ```
 
 components:
   securitySchemes:
@@ -1921,15 +2069,35 @@ paths:
 
         Unlike the static `api-spec.yaml` shipped with the application, this endpoint returns the
         spec dynamically merged with any `api.yaml` schemas provided by installed processor plugins.
-        Use this URL with Swagger UI or Redoc to get accurate documentation for your specific install.
+
+        **Use this URL** with Swagger UI or Redoc to get schema-accurate documentation for your
+        specific install — it includes every `processor_config_<name>` schema block contributed by
+        installed processors (e.g. `processor_config_restock_diff` from the built-in restock plugin).
+
+        This endpoint requires no authentication and returns YAML.
+
+        To load it directly in Swagger UI, paste the URL into the "Explore" box:
+        ```
+        http://localhost:5000/api/v1/full-spec
+        ```
       security: []
       x-code-samples:
         - lang: 'curl'
           source: |
+            # Fetch the live merged spec (no API key needed)
             curl -X GET "http://localhost:5000/api/v1/full-spec"
+        - lang: 'Python'
+          source: |
+            import requests
+
+            # No authentication required
+            response = requests.get('http://localhost:5000/api/v1/full-spec')
+            print(response.text)  # Returns YAML
       responses:
         '200':
-          description: Merged OpenAPI specification in YAML format
+          description: |
+            Merged OpenAPI specification in YAML format. Includes all processor plugin schemas
+            (e.g. `processor_config_restock_diff`) not present in the static `api-spec.yaml`.
           content:
             application/yaml:
               schema:
