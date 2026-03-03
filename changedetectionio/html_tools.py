@@ -98,7 +98,7 @@ def subtractive_xpath_selector(selectors: List[str], html_content: str) -> str:
             element.getparent().remove(element)
 
     # Convert the modified HTML tree back to a string
-    modified_html = etree.tostring(html_tree, method="html").decode("utf-8")
+    modified_html = etree.tostring(html_tree, method="html", encoding="unicode")
     return modified_html
 
 
@@ -227,7 +227,7 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
 
             if type(element) == str:
                 html_block += element
-            elif issubclass(type(element), etree._Element) or issubclass(type(element), etree._ElementTree):
+            elif isinstance(element, (etree._Element, etree._ElementTree)):
                 # Use 'xml' method for RSS/XML content, 'html' for HTML content
                 # parser will be XMLParser if we detected XML content
                 method = 'xml' if (is_xml or isinstance(parser, etree.XMLParser)) else 'html'
