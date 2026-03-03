@@ -109,8 +109,10 @@ class fetcher(Fetcher):
                 # Create the RemoteConnection and set timeout (e.g., 30 seconds)
                 remote_connection = RemoteConnection(
                     self.browser_connection_url,
+                    keep_alive=True,
                 )
-                remote_connection.set_timeout(30)  # seconds
+                # set_timeout() was deprecated in selenium 4.x; pass timeout to the constructor
+                RemoteConnection.set_timeout(30)  # seconds
 
                 # Now create the driver with the RemoteConnection
                 driver = RemoteWebDriver(
