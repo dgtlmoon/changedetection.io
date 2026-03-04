@@ -217,8 +217,12 @@ def _jinja2_filter_format_number_locale(value: float) -> str:
     "Formats for example 4000.10 to the local locale default of 4,000.10"
     # Format the number with two decimal places (locale format string will return 6 decimal)
     formatted_value = locale.format_string("%.2f", value, grouping=True)
-
     return formatted_value
+
+@app.template_filter('regex_search')
+def _jinja2_filter_regex_search(value, pattern):
+    import re
+    return re.search(pattern, str(value)) is not None
 
 @app.template_global('is_checking_now')
 def _watch_is_checking_now(watch_obj, format="%Y-%m-%d %H:%M:%S"):
