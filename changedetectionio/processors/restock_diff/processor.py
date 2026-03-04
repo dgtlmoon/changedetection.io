@@ -437,17 +437,18 @@ class perform_site_check(difference_detection_processor):
 
         # Only try to process restock information (like scraping for keywords) if the page was actually rendered correctly.
         # Otherwise it will assume "in stock" because nothing suggesting the opposite was found
-        from ...html_tools import html_to_text
-        text = html_to_text(self.fetcher.content)
-        logger.debug(f"Length of text after conversion: {len(text)}")
-        if not len(text):
-            from ...content_fetchers.exceptions import ReplyWithContentButNoText
-            raise ReplyWithContentButNoText(url=watch.link,
-                                            status_code=self.fetcher.get_last_status_code(),
-                                            screenshot=self.fetcher.screenshot,
-                                            html_content=self.fetcher.content,
-                                            xpath_data=self.fetcher.xpath_data
-                                            )
+#useless
+#        from ...html_tools import html_to_text
+#        text = html_to_text(self.fetcher.content)
+#        logger.debug(f"Length of text after conversion: {len(text)}")
+#        if not len(text):
+#            from ...content_fetchers.exceptions import ReplyWithContentButNoText
+#            raise ReplyWithContentButNoText(url=watch.link,
+#                                            status_code=self.fetcher.get_last_status_code(),
+#                                            screenshot=self.fetcher.screenshot,
+#                                            html_content=self.fetcher.content,
+#                                            xpath_data=self.fetcher.xpath_data
+#                                            )
 
         # Which restock settings to compare against?
         # Settings are stored in restock_diff.json (migrated from watch.json by update_30).
