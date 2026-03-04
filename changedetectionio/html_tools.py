@@ -23,6 +23,53 @@ class JSONNotFound(ValueError):
     def __init__(self, msg):
         ValueError.__init__(self, msg)
 
+
+_DEFAULT_UNSAFE_XPATH3_FUNCTIONS = [
+    'unparsed-text',
+    'unparsed-text-lines',
+    'unparsed-text-available',
+    'doc',
+    'doc-available',
+    'environment-variable',
+    'available-environment-variables',
+]
+
+
+def _build_safe_xpath3_parser():
+    """Return an XPath3Parser subclass with filesystem/environment access functions removed.
+
+    XPath 3.0 includes functions that can read arbitrary files or environment variables:
+      - unparsed-text / unparsed-text-lines / unparsed-text-available  (file read)
+      - doc / doc-available                                             (XML fetch from URI)
+      - environment-variable / available-environment-variables         (env var leakage)
+
+    Subclassing gives us an independent symbol_table copy (not shared with the parent class),
+    so removing entries here does not affect XPath3Parser itself.
+
+    Override the blocked list via the XPATH_BLOCKED_FUNCTIONS environment variable
+    (comma-separated, e.g. "unparsed-text,doc,environment-variable").
+    """
+    import os
+    from elementpath.xpath3 import XPath3Parser
+
+    class SafeXPath3Parser(XPath3Parser):
+        pass
+
+    env_override = os.getenv('XPATH_BLOCKED_FUNCTIONS')
+    if env_override is not None:
+        blocked = [f.strip() for f in env_override.split(',') if f.strip()]
+    else:
+        blocked = _DEFAULT_UNSAFE_XPATH3_FUNCTIONS
+
+    for _fn in blocked:
+        SafeXPath3Parser.symbol_table.pop(_fn, None)
+
+    return SafeXPath3Parser
+
+
+# Module-level singleton — built once, reused everywhere.
+SafeXPath3Parser = _build_safe_xpath3_parser()
+
 # Doesn't look like python supports forward slash auto enclosure in re.findall
 # So convert it to inline flag "(?i)foobar" type configuration
 @lru_cache(maxsize=100)
@@ -183,8 +230,6 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
     """
     from lxml import etree, html
     import elementpath
-    # xpath 2.0-3.1
-    from elementpath.xpath3 import XPath3Parser
 
     parser = etree.HTMLParser()
     tree = None
@@ -210,7 +255,7 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
             # This allows //title to match elements in the default namespace
             namespaces[''] = tree.nsmap[None]
 
-        r = elementpath.select(tree, xpath_filter.strip(), namespaces=namespaces, parser=XPath3Parser)
+        r = elementpath.select(tree, xpath_filter.strip(), namespaces=namespaces, parser=SafeXPath3Parser)
         #@note: //title/text() now works with default namespaces (fixed by registering '' prefix)
         #@note: //title/text() wont work where <title>CDATA.. (use cdata_in_document_to_text first)
 
@@ -235,6 +280,9 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
             else:
                 html_block += elementpath_tostring(element)
 
+        # Drop element references before the finally block so tree.clear() can release
+        # the libxml2 document immediately (elements pin the C-level doc via refcount).
+        del r
         return html_block
     finally:
         # Explicitly clear the tree to free memory
