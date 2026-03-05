@@ -260,6 +260,16 @@ class difference_detection_processor():
         # @todo .quit here could go on close object, so we can run JS if change-detected
         await self.fetcher.quit(watch=self.watch)
 
+        # Sanitize lone surrogates - these can appear when servers return malformed/mixed-encoding
+        # content that gets decoded into surrogate characters (e.g. \udcad). Without this,
+        # encode('utf-8') raises UnicodeEncodeError downstream in checksums, diffs, file writes, etc.
+        # Covers all fetchers (requests, playwright, puppeteer, selenium) in one place.
+        # Also note: By this point we SHOULD know the original encoding so it can safely convert to utf-8 for the rest of the app.
+        # See: https://github.com/dgtlmoon/changedetection.io/issues/3952
+
+        if self.fetcher.content and isinstance(self.fetcher.content, str):
+            self.fetcher.content = self.fetcher.content.encode('utf-8', errors='replace').decode('utf-8')
+
         # After init, call run_changedetection() which will do the actual change-detection
 
     def get_extra_watch_config(self, filename):
