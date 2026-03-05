@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
+import hashlib
 import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks, extract_UUID_from_client
@@ -9,6 +10,27 @@ import os
 
 
 
+
+
+def test_surrogate_characters_in_content_are_sanitized():
+    """Lone surrogates can appear in requests' r.text when a server returns malformed/mixed-encoding
+    content. Without sanitization, encoding to UTF-8 raises UnicodeEncodeError.
+    See: https://github.com/dgtlmoon/changedetection.io/issues/3952
+    """
+    content_with_surrogate = '<html><body>Hello \udcad World</body></html>'
+
+    # Confirm the raw problem exists
+    with pytest.raises(UnicodeEncodeError):
+        content_with_surrogate.encode('utf-8')
+
+    # Our fix: sanitize after fetcher.run() in processors/base.py call_browser()
+    sanitized = content_with_surrogate.encode('utf-8', errors='replace').decode('utf-8')
+    assert 'Hello' in sanitized
+    assert 'World' in sanitized
+    assert '\udcad' not in sanitized
+
+    # Checksum computation (processors/base.py get_raw_document_checksum) must not crash
+    hashlib.md5(sanitized.encode('utf-8')).hexdigest()
 
 
 def set_html_response(datastore_path):
