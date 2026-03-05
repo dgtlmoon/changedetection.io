@@ -266,9 +266,8 @@ class difference_detection_processor():
         # Covers all fetchers (requests, playwright, puppeteer, selenium) in one place.
         # See: https://github.com/dgtlmoon/changedetection.io/issues/3952
 
-        # DISABLED FOR NOW, TRY TO SEE IF THE TEST BREAKS ON GITHUB
-       # if self.fetcher.content and isinstance(self.fetcher.content, str):
-        #    self.fetcher.content = self.fetcher.content.encode('utf-8', errors='replace').decode('utf-8')
+        if self.fetcher.content and isinstance(self.fetcher.content, str):
+            self.fetcher.content = self.fetcher.content.encode('utf-8', errors='replace').decode('utf-8')
 
         # After init, call run_changedetection() which will do the actual change-detection
 

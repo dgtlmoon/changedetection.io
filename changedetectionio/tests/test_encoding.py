@@ -33,6 +33,48 @@ def test_surrogate_characters_in_content_are_sanitized():
     hashlib.md5(sanitized.encode('utf-8')).hexdigest()
 
 
+def test_utf8_content_without_charset_header(client, live_server, datastore_path):
+    """Server returns UTF-8 content but no charset in Content-Type header.
+    chardet can misdetect such pages as UTF-7 (Python 3.14 then produces surrogates).
+    Our fix tries UTF-8 first before falling back to chardet.
+    See: https://github.com/dgtlmoon/changedetection.io/issues/3952
+    """
+    from .util import write_test_file_and_sync
+    # UTF-8 encoded content with non-ASCII chars - no charset will be in the header
+    html = '<html><body><p>Español</p><p>Français</p><p>日本語</p></body></html>'
+    write_test_file_and_sync(os.path.join(datastore_path, "endpoint-content.txt"), html.encode('utf-8'), mode='wb')
+
+    test_url = url_for('test_endpoint', content_type="text/html", _external=True)
+    client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid="first"), follow_redirects=True)
+    # Should decode correctly as UTF-8, not produce mojibake (EspaÃ±ol) or replacement chars
+    assert 'Español'.encode('utf-8') in res.data
+    assert 'Français'.encode('utf-8') in res.data
+    assert '日本語'.encode('utf-8') in res.data
+
+
+def test_shiftjis_content_without_charset_header(client, live_server, datastore_path):
+    """Server returns Shift-JIS encoded content with no charset header.
+    UTF-8 decode will fail, so we fall back to chardet which should detect Shift-JIS.
+    """
+    from .util import write_test_file_and_sync
+    japanese_text = '日本語のページ'
+    html = f'<html><body><p>{japanese_text}</p></body></html>'
+    write_test_file_and_sync(os.path.join(datastore_path, "endpoint-content.txt"), html.encode('shift_jis'), mode='wb')
+
+    test_url = url_for('test_endpoint', content_type="text/html", _external=True)
+    client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid="first"), follow_redirects=True)
+    # chardet should detect Shift-JIS and decode correctly to Unicode
+    assert japanese_text.encode('utf-8') in res.data
+
+
 def set_html_response(datastore_path):
     test_return_data = """
 <html><body><span class="nav_second_img_text">

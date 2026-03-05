@@ -148,10 +148,19 @@ class fetcher(Fetcher):
                         # Default to UTF-8 for XML if no encoding found
                         r.encoding = 'utf-8'
                 else:
-                    # For other content types, use chardet
-                    encoding = chardet.detect(r.content)['encoding']
-                    if encoding:
-                        r.encoding = encoding
+                    # Try UTF-8 first - the vast majority of modern pages are UTF-8.
+                    # chardet can misdetect UTF-8 content as UTF-7 or other encodings,
+                    # which causes surrogates/mojibake and is also slow (scans entire body).
+                    # See: https://github.com/dgtlmoon/changedetection.io/issues/3952
+                    try:
+                        r.content.decode('utf-8') # try to decode, validation only
+                        r.encoding = 'utf-8' # If it got this far, set it to utf-8
+                    except UnicodeDecodeError:
+                        # Not valid UTF-8, fall back to chardet
+                        encoding = chardet.detect(r.content)['encoding']
+                        logger.warning(f"URL: {url} Did not decode as UTF-8, got UnicodeDecodeError, guessed new encoding as '{encoding}' via chardet")
+                        if encoding:
+                            r.encoding = encoding
 
         self.headers = r.headers
 
