@@ -264,6 +264,7 @@ class difference_detection_processor():
         # content that gets decoded into surrogate characters (e.g. \udcad). Without this,
         # encode('utf-8') raises UnicodeEncodeError downstream in checksums, diffs, file writes, etc.
         # Covers all fetchers (requests, playwright, puppeteer, selenium) in one place.
+        # Also note: By this point we SHOULD know the original encoding so it can safely convert to utf-8 for the rest of the app.
         # See: https://github.com/dgtlmoon/changedetection.io/issues/3952
 
         if self.fetcher.content and isinstance(self.fetcher.content, str):

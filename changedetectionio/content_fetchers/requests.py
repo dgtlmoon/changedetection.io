@@ -148,20 +148,19 @@ class fetcher(Fetcher):
                         # Default to UTF-8 for XML if no encoding found
                         r.encoding = 'utf-8'
                 else:
-                    # Try UTF-8 first - the vast majority of modern pages are UTF-8.
-                    # chardet can misdetect UTF-8 content as UTF-7 or other encodings,
-                    # which causes surrogates/mojibake and is also slow (scans entire body).
+                    # No charset in HTTP header - check for <meta charset=...> in the first 2kb.
+                    # This is more reliable than chardet which can misdetect encodings (e.g. UTF-8 as UTF-7).
+                    # Handles both HTML5 <meta charset="Shift-JIS"> and
+                    # HTML4 <meta http-equiv="Content-Type" content="text/html;charset=Shift-JIS">
                     # See: https://github.com/dgtlmoon/changedetection.io/issues/3952
-                    try:
-                        r.content.decode('utf-8') # try to decode, validation only
-                        original_encoding = r.encoding
-                        r.encoding = 'utf-8' # If it got this far, set it to utf-8
-                        if original_encoding != r.encoding:
-                            logger.info(f"URL: {url} content was re-encoded successfully from '{original_encoding}' to '{r.encoding}'")
-                    except UnicodeDecodeError:
-                        # Not valid UTF-8, fall back to chardetr
+                    meta_charset_match = re.search(rb'<meta[^>]+charset\s*=\s*["\']?\s*([^"\'\s;>]+)', r.content[:2000], re.IGNORECASE)
+                    if meta_charset_match:
+                        encoding = meta_charset_match.group(1).decode('ascii', errors='ignore')
+                        logger.info(f"URL: {url} No content-type encoding in HTTP headers - Using encoding '{encoding}' from HTML meta charset tag")
+                        r.encoding = encoding
+                    else:
                         encoding = chardet.detect(r.content)['encoding']
-                        logger.warning(f"URL: {url} Did not decode as utf-8, got UnicodeDecodeError, guessed new encoding as '{encoding}' via chardet")
+                        logger.warning(f"URL: {url} No charset in headers or meta tag, guessed encoding as '{encoding}' via chardet")
                         if encoding:
                             r.encoding = encoding
 
