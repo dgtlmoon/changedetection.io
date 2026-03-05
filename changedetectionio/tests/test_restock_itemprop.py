@@ -467,3 +467,38 @@ def test_special_prop_examples(client, live_server, measure_memory_usage, datast
             assert b'155.55' in res.data
 
     delete_all_watches(client)
+
+
+def test_itemprop_as_str(client, live_server, measure_memory_usage, datastore_path):
+
+    test_return_data = f"""<html>
+       <body>
+     Some initial text<br>
+     <p>Which is across multiple lines</p>
+<span itemprop="offers" itemscope itemtype="http://schema.org/Offer">
+<meta content="767.55" itemprop="price"/>
+<meta content="EUR" itemprop="priceCurrency"/>
+<meta content="InStock" itemprop="availability"/>
+<meta content="https://www.123-test.dk" itemprop="url"/>
+</span>
+     </body>
+     </html>
+    """
+
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
+        f.write(test_return_data)
+
+
+    test_url = url_for('test_endpoint', _external=True)
+
+    client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": 'restock tests', 'processor': 'restock_diff'},
+        follow_redirects=True
+    )
+
+    client.get(url_for("ui.form_watch_checknow"))
+    wait_for_all_checks(client)
+
+    res = client.get(url_for("watchlist.index"))
+    assert b'767.55' in res.data

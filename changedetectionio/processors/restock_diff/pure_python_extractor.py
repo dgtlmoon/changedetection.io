@@ -283,4 +283,7 @@ def query_price_availability(extracted_data):
     if not result.get('availability') and 'availability' in microdata:
         result['availability'] = microdata['availability']
 
+    # result['price'] could be float or str here, depending on the website, for example it might contain "1,00" commas, etc.
+    # using something like babel you need to know the locale of the website and even then it can be problematic
+    # we dont really do anything with the price data so far.. so just accept it the way it comes.
     return result

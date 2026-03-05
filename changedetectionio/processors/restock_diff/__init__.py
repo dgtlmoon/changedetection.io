@@ -31,6 +31,7 @@ class Restock(dict):
 
         if standardized_value:
             # Convert to float
+            # @todo locale needs to be the locale of the webpage
             return float(parse_decimal(standardized_value, locale='en'))
 
         return None
