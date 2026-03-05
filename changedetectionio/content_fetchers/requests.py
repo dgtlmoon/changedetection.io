@@ -154,11 +154,14 @@ class fetcher(Fetcher):
                     # See: https://github.com/dgtlmoon/changedetection.io/issues/3952
                     try:
                         r.content.decode('utf-8') # try to decode, validation only
+                        original_encoding = r.encoding
                         r.encoding = 'utf-8' # If it got this far, set it to utf-8
+                        if original_encoding != r.encoding:
+                            logger.info(f"URL: {url} content was re-encoded successfully from '{original_encoding}' to '{r.encoding}'")
                     except UnicodeDecodeError:
-                        # Not valid UTF-8, fall back to chardet
+                        # Not valid UTF-8, fall back to chardetr
                         encoding = chardet.detect(r.content)['encoding']
-                        logger.warning(f"URL: {url} Did not decode as UTF-8, got UnicodeDecodeError, guessed new encoding as '{encoding}' via chardet")
+                        logger.warning(f"URL: {url} Did not decode as utf-8, got UnicodeDecodeError, guessed new encoding as '{encoding}' via chardet")
                         if encoding:
                             r.encoding = encoding
 
