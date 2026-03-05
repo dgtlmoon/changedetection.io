@@ -148,21 +148,32 @@ class fetcher(Fetcher):
                         # Default to UTF-8 for XML if no encoding found
                         r.encoding = 'utf-8'
                 else:
-                    # No charset in HTTP header - check for <meta charset=...> in the first 2kb.
-                    # This is more reliable than chardet which can misdetect encodings (e.g. UTF-8 as UTF-7).
-                    # Handles both HTML5 <meta charset="Shift-JIS"> and
-                    # HTML4 <meta http-equiv="Content-Type" content="text/html;charset=Shift-JIS">
+                    # No charset in HTTP header - sniff encoding in priority order matching browsers
+                    # (WHATWG encoding sniffing algorithm):
+                    # 1. BOM - highest confidence, check before anything else
+                    # 2. <meta charset> in first 2kb
+                    # 3. chardet statistical detection - last resort
                     # See: https://github.com/dgtlmoon/changedetection.io/issues/3952
-                    meta_charset_match = re.search(rb'<meta[^>]+charset\s*=\s*["\']?\s*([^"\'\s;>]+)', r.content[:2000], re.IGNORECASE)
-                    if meta_charset_match:
-                        encoding = meta_charset_match.group(1).decode('ascii', errors='ignore')
-                        logger.info(f"URL: {url} No content-type encoding in HTTP headers - Using encoding '{encoding}' from HTML meta charset tag")
-                        r.encoding = encoding
+                    boms = [
+                        (b'\xef\xbb\xbf', 'utf-8-sig'),
+                        (b'\xff\xfe', 'utf-16-le'),
+                        (b'\xfe\xff', 'utf-16-be'),
+                    ]
+                    bom_encoding = next((enc for bom, enc in boms if r.content.startswith(bom)), None)
+                    if bom_encoding:
+                        logger.info(f"URL: {url} Using encoding '{bom_encoding}' detected from BOM")
+                        r.encoding = bom_encoding
                     else:
-                        encoding = chardet.detect(r.content)['encoding']
-                        logger.warning(f"URL: {url} No charset in headers or meta tag, guessed encoding as '{encoding}' via chardet")
-                        if encoding:
+                        meta_charset_match = re.search(rb'<meta[^>]+charset\s*=\s*["\']?\s*([^"\'\s;>]+)', r.content[:2000], re.IGNORECASE)
+                        if meta_charset_match:
+                            encoding = meta_charset_match.group(1).decode('ascii', errors='ignore')
+                            logger.info(f"URL: {url} No content-type encoding in HTTP headers - Using encoding '{encoding}' from HTML meta charset tag")
                             r.encoding = encoding
+                        else:
+                            encoding = chardet.detect(r.content)['encoding']
+                            logger.warning(f"URL: {url} No charset in headers or meta tag, guessed encoding as '{encoding}' via chardet")
+                            if encoding:
+                                r.encoding = encoding
 
         self.headers = r.headers
 
