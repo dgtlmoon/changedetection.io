@@ -66,27 +66,27 @@ jobs:
           echo ${{ github.ref }} > changedetectionio/tag.txt
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
         with:
           image: tonistiigi/binfmt:latest
           platforms: all
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Login to Docker Hub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
         with:
           install: true
           version: latest
@@ -95,7 +95,7 @@ jobs:
       # master branch -> :dev container tag
       - name: Docker meta :dev
         if: ${{ github.ref == 'refs/heads/master' && github.event_name != 'release' }}
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         id: meta_dev
         with:
           images: |
@@ -107,7 +107,7 @@ jobs:
       - name: Build and push :dev
         id: docker_build
         if: ${{ github.ref == 'refs/heads/master' && github.event_name != 'release' }}
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./
           file: ./Dockerfile
@@ -131,7 +131,7 @@ jobs:
           
       - name: Docker meta :tag
         if: github.event_name == 'release' && startsWith(github.event.release.tag_name, '0.')
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         id: meta
         with:
             images: |
@@ -146,7 +146,7 @@ jobs:
       - name: Build and push :tag
         id: docker_build_tag_release
         if: github.event_name == 'release' && startsWith(github.event.release.tag_name, '0.')
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./
           file: ./Dockerfile
