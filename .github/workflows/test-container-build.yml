@@ -60,14 +60,14 @@ jobs:
 
         # Just test that the build works, some libraries won't compile on ARM/rPi etc
         - name: Set up QEMU
-          uses: docker/setup-qemu-action@v3
+          uses: docker/setup-qemu-action@v4
           with:
             image: tonistiigi/binfmt:latest
             platforms: all
 
         - name: Set up Docker Buildx
           id: buildx
-          uses: docker/setup-buildx-action@v3
+          uses: docker/setup-buildx-action@v4
           with:
             install: true
             version: latest
@@ -75,7 +75,7 @@ jobs:
 
         - name: Test that the docker containers can build (${{ matrix.platform }} - ${{ matrix.dockerfile }})
           id: docker_build
-          uses: docker/build-push-action@v6
+          uses: docker/build-push-action@v7
           # https://github.com/docker/build-push-action#customizing
           with:
             context: ./
