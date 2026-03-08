@@ -497,28 +497,14 @@ def changedetection_app(config=None, datastore_o=None):
     _locale_match_list = language_codes + list(_locale_aliases.keys())
 
     def get_locale():
-        from flask import g
-        try:
-            cached = g.get('_locale')
-            if cached is not None:
-                return cached
-        except RuntimeError:
-            pass
-
         # 1. Try to get locale from session (user explicitly selected)
         if 'locale' in session:
-            result = session['locale']
-        else:
-            # 2. Fall back to Accept-Language header
-            browser_locale = request.accept_languages.best_match(_locale_match_list)
-            # 3. Map browser locale to our internal locale if needed
-            result = _locale_aliases.get(browser_locale, browser_locale)
+            return session['locale']
 
-        try:
-            g._locale = result
-        except RuntimeError:
-            pass
-        return result
+        # 2. Fall back to Accept-Language header
+        browser_locale = request.accept_languages.best_match(_locale_match_list)
+        # 3. Map browser locale to our internal locale if needed
+        return _locale_aliases.get(browser_locale, browser_locale)
 
     # Initialize Babel with locale selector
     babel = Babel(app, locale_selector=get_locale)
