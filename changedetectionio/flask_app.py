@@ -4,6 +4,7 @@ import flask_login
 import locale
 import os
 import queue
+import re
 import sys
 import threading
 import time
@@ -387,6 +388,8 @@ def _jinja2_filter_fetcher_status_icons(fetcher_name):
 
     return ''
 
+_RE_SANITIZE_TAG = re.compile(r'[^a-zA-Z0-9]')
+
 @app.template_filter('sanitize_tag_class')
 def _jinja2_filter_sanitize_tag_class(tag_title):
     """Sanitize a tag title to create a valid CSS class name.
@@ -398,9 +401,8 @@ def _jinja2_filter_sanitize_tag_class(tag_title):
     Returns:
         str: A sanitized string suitable for use as a CSS class name
     """
-    import re
     # Remove all non-alphanumeric characters and convert to lowercase
-    sanitized = re.sub(r'[^a-zA-Z0-9]', '', tag_title).lower()
+    sanitized = _RE_SANITIZE_TAG.sub('', tag_title).lower()
     # Ensure it starts with a letter (CSS requirement)
     if sanitized and not sanitized[0].isalpha():
         sanitized = 'tag' + sanitized
@@ -488,28 +490,21 @@ def changedetection_app(config=None, datastore_o=None):
     available_languages = get_available_languages()
     language_codes = get_language_codes()
 
-    def get_locale():
-        # Locale aliases: map browser language codes to translation directory names
-        # This handles cases where browsers send standard codes (e.g., zh-TW)
-        # but our translations use more specific codes (e.g., zh_Hant_TW)
-        locale_aliases = {
-            'zh-TW': 'zh_Hant_TW',  # Traditional Chinese: browser sends zh-TW, we use zh_Hant_TW
-            'zh_TW': 'zh_Hant_TW',  # Also handle underscore variant
-        }
+    _locale_aliases = {
+        'zh-TW': 'zh_Hant_TW',  # Traditional Chinese: browser sends zh-TW, we use zh_Hant_TW
+        'zh_TW': 'zh_Hant_TW',  # Also handle underscore variant
+    }
+    _locale_match_list = language_codes + list(_locale_aliases.keys())
 
+    def get_locale():
         # 1. Try to get locale from session (user explicitly selected)
         if 'locale' in session:
             return session['locale']
 
         # 2. Fall back to Accept-Language header
-        # Get the best match from browser's Accept-Language header
-        browser_locale = request.accept_languages.best_match(language_codes + list(locale_aliases.keys()))
-
-        # 3. Check if we need to map the browser locale to our internal locale
-        if browser_locale in locale_aliases:
-            return locale_aliases[browser_locale]
-
-        return browser_locale
+        browser_locale = request.accept_languages.best_match(_locale_match_list)
+        # 3. Map browser locale to our internal locale if needed
+        return _locale_aliases.get(browser_locale, browser_locale)
 
     # Initialize Babel with locale selector
     babel = Babel(app, locale_selector=get_locale)
@@ -1022,15 +1017,16 @@ def check_for_new_version():
     import urllib3
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+    session = requests.Session()
+    session.verify = False
+
     while not app.config.exit.is_set():
         try:
-            r = requests.post("https://changedetection.io/check-ver.php",
+            r = session.post("https://changedetection.io/check-ver.php",
                               data={'version': __version__,
                                     'app_guid': datastore.data['app_guid'],
                                     'watch_count': len(datastore.data['watching'])
-                                    },
-
-                              verify=False)
+                                    })
         except:
             pass
 
