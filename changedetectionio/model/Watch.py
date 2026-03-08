@@ -47,7 +47,6 @@ BROTLI_COMPRESS_SIZE_THRESHOLD = int(os.getenv('SNAPSHOT_BROTLI_COMPRESSION_THRE
 # Keyed by data_dir so it survives Watch object recreation, deepcopy, and concurrent requests.
 # Invalidated explicitly in bump_favicon() when a new favicon is saved.
 _FAVICON_FILENAME_CACHE: dict = {}
-_FAVICON_KNOWN_EXTENSIONS = ('ico', 'png', 'svg', 'jpg', 'jpeg', 'gif', 'webp')
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
@@ -840,15 +839,11 @@ class model(EntityPersistenceMixin, watch_base):
         if self.data_dir in _FAVICON_FILENAME_CACHE:
             return _FAVICON_FILENAME_CACHE[self.data_dir]
 
-        # Check for known extensions directly — avoids glob/fnmatch entirely
-        for ext in _FAVICON_KNOWN_EXTENSIONS:
-            fname = f"favicon.{ext}"
-            if os.path.isfile(os.path.join(self.data_dir, fname)):
-                _FAVICON_FILENAME_CACHE[self.data_dir] = fname
-                return fname
-
-        _FAVICON_FILENAME_CACHE[self.data_dir] = None
-        return None
+        import glob
+        files = glob.glob(os.path.join(self.data_dir, "favicon.*"))
+        fname = os.path.basename(files[0]) if files else None
+        _FAVICON_FILENAME_CACHE[self.data_dir] = fname
+        return fname
 
     def get_screenshot_as_thumbnail(self, max_age=3200):
         """Return path to a square thumbnail of the most recent screenshot.
