@@ -389,13 +389,11 @@ msgstr "La clave API se regeneró."
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Automatic scheduling paused - checks will not be queued."
-msgstr "Programación automática en pausa: los cheques no se pondrán en cola."
+msgstr "Programación automática en pausa: las comprobaciones no se pondrán en cola."
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Automatic scheduling resumed - checks will be queued normally."
-msgstr ""
-"Se reanudó la programación automática: los cheques se pondrán en cola "
-"normalmente."
+msgstr "Se reanudó la programación automática: las comprobaciones se pondrán en cola normalmente."
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "All notifications muted."
@@ -910,13 +908,11 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Enable or Disable Favicons next to the watch list"
-msgstr "Habilitar o deshabilitar Favicons junto a la lista de vigilancia"
+msgstr "Habilitar o deshabilitar favicons junto a la lista de monitores"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Number of items per page in the watch overview list, 0 to disable."
-msgstr ""
-"Número de elementos por página en la lista de descripción general de "
-"vigilancia, 0 para desactivar."
+msgstr "Número de elementos por página en la lista general de monitores, 0 para desactivar."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Tip"
@@ -1238,7 +1234,7 @@ msgstr "Clonado, estás editando el nuevo monitor."
 
 #: changedetectionio/blueprint/ui/__init__.py
 msgid "Watch is already queued or being checked."
-msgstr "La vigilancia ya está en cola o en proceso de verificación."
+msgstr "El monitor ya está en cola o en proceso de verificación."
 
 #: changedetectionio/blueprint/ui/__init__.py
 msgid "Queued 1 watch for rechecking."
@@ -1246,16 +1242,15 @@ msgstr "1 monitor en cola para volver a verificar."
 
 #: changedetectionio/blueprint/ui/__init__.py
 msgid "Queued {} watches for rechecking ({} already queued or running)."
-msgstr ""
-"En cola{} monitores para volver a comprobar ({} ya en cola o en ejecución)."
+msgstr "{} monitores en cola para volver a comprobar ({} ya en cola o en ejecución)."
 
 #: changedetectionio/blueprint/ui/__init__.py
 msgid "Queued {} watches for rechecking."
-msgstr "En cola{} monitores para volver a comprobar."
+msgstr "{} monitores en cola para volver a comprobar."
 
 #: changedetectionio/blueprint/ui/__init__.py
 msgid "Queueing watches for rechecking in background..."
-msgstr "Cola de alertas para volver a verificar en segundo plano..."
+msgstr "Poniendo monitores en cola para volver a comprobar en segundo plano..."
 
 #: changedetectionio/blueprint/ui/__init__.py
 msgid ""
@@ -1293,21 +1288,17 @@ msgstr "No se encontró ningún monitor con el UUID {}."
 
 #: changedetectionio/blueprint/ui/edit.py
 msgid "Switched to mode - {}."
-msgstr "Cambiado al modo -{}."
+msgstr "Cambiado al modo: {}."
 
 #: changedetectionio/blueprint/ui/edit.py
 msgid ""
 "Could not load '{}' processor, processor plugin might be missing. Please "
 "select a different processor."
-msgstr ""
-"No se pudo cargar '{} ' Procesador, es posible que falte el complemento del "
-"procesador. Seleccione un procesador diferente."
+msgstr "No se pudo cargar el procesador '{}'; es posible que falte el complemento del procesador. Seleccione un procesador diferente."
 
 #: changedetectionio/blueprint/ui/edit.py
 msgid "Could not load '{}' processor, processor plugin might be missing."
-msgstr ""
-"No se pudo cargar '{} ' Procesador, es posible que falte el complemento del "
-"procesador."
+msgstr "No se pudo cargar el procesador '{}'; es posible que falte el complemento del procesador."
 
 #: changedetectionio/blueprint/ui/edit.py
 msgid "Updated watch - unpaused!"
@@ -1889,9 +1880,7 @@ msgstr "Actualmente:"
 msgid ""
 "Sorry, this functionality only works with fetchers that support Javascript "
 "and screenshots (such as playwright etc)."
-msgstr ""
-"Lo sentimos, esta funcionalidad sólo funciona con buscadores que admiten "
-"Javascript y capturas de pantalla (como dramaturgos, etc.)."
+msgstr "Lo sentimos, esta funcionalidad solo funciona con métodos de obtención que admiten JavaScript y capturas de pantalla (como Playwright, etc.)."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "to one that supports Javascript and screenshots."
@@ -1899,7 +1888,7 @@ msgstr "a uno que admita Javascript y capturas de pantalla."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Check count"
-msgstr "Recuento de cheques"
+msgstr "Número de comprobaciones"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Consecutive filter failures"
@@ -1907,7 +1896,7 @@ msgstr "Fallos consecutivos del filtro"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "History length"
-msgstr "Longitud de la historia"
+msgstr "Longitud del historial"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Last fetch duration"
@@ -2023,15 +2012,15 @@ msgstr "También puedes agregar monitores 'compartidos'."
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Add a new web page change detection watch"
-msgstr "Agregar una nueva vigilancia de detección de cambios de página web"
+msgstr "Agregar un nuevo monitor de detección de cambios en páginas web"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Watch this URL!"
-msgstr "¡Mira esta URL!"
+msgstr "¡Monitoriza esta URL!"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Edit first then Watch"
-msgstr "Editar primero y luego mirar"
+msgstr "Editar primero y luego monitorizar"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Pause"
@@ -2465,9 +2454,7 @@ msgstr "Procesador: ¿Qué quieres lograr?"
 
 #: changedetectionio/forms.py
 msgid "Default timezone for watch check scheduler"
-msgstr ""
-"Zona horaria predeterminada para el programador de verificación de "
-"vigilancia"
+msgstr "Zona horaria predeterminada para el programador de verificación de monitores"
 
 #: changedetectionio/forms.py
 msgid "Wait seconds before extracting text"
@@ -2507,7 +2494,7 @@ msgstr "valor"
 
 #: changedetectionio/forms.py
 msgid "Time Between Check"
-msgstr "Tiempo entre cheques"
+msgstr "Tiempo entre comprobaciones"
 
 #: changedetectionio/forms.py
 msgid "Use global settings for time between check and scheduler."
@@ -2745,7 +2732,7 @@ msgstr "Favicones habilitados"
 
 #: changedetectionio/forms.py
 msgid "Use page <title> in watch overview list"
-msgstr "Usar página<title>en la lista de visión general de vigilancia"
+msgstr "Usar <title> de la página en la lista general de monitores"
 
 #: changedetectionio/forms.py
 msgid "API access token security check enabled"
@@ -3047,7 +3034,7 @@ msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
 msgid "The watch group / tag"
-msgstr "El grupo/etiqueta de vigilancia"
+msgstr "El grupo/etiqueta del monitor"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "The URL of the preview page generated by changedetection.io."
@@ -3292,9 +3279,7 @@ msgstr "Verifique esta regla con la instantánea actual"
 msgid ""
 "Error - This watch needs Chrome (with playwright/sockpuppetbrowser), but "
 "Chrome based fetching is not enabled."
-msgstr ""
-"Error: este monitor necesita Chrome (con dramaturgo/sockpuppetbrowser), pero"
-" la búsqueda basada en Chrome no está habilitada."
+msgstr "Error: este monitor necesita Chrome (con playwright/sockpuppetbrowser), pero la obtención basada en Chrome no está habilitada."
 
 #: changedetectionio/templates/_helpers.html
 msgid "Alternatively try our"
@@ -3313,7 +3298,7 @@ msgstr "Es posible que necesites"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Enable playwright environment variable"
-msgstr "Habilitar la variable de entorno del dramaturgo"
+msgstr "Habilitar la variable de entorno de playwright"
 
 #: changedetectionio/templates/_helpers.html
 msgid "and uncomment the"
@@ -3632,3 +3617,4 @@ msgstr "No"
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"
 msgstr "Configuraciones principales"
+
