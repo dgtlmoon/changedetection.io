@@ -81,6 +81,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         sorted_tags = sorted(datastore.data['settings']['application'].get('tags').items(), key=lambda x: x[1]['title'])
 
+        proxy_list = datastore.proxy_list
         output = render_template(
             "watch-overview.html",
             active_tag=active_tag,
@@ -92,7 +93,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             form=form,
             generate_tag_colors=processors.generate_processor_badge_colors,
             guid=datastore.data['app_guid'],
-            has_proxies=datastore.proxy_list,
+            has_proxies=proxy_list,
             hosted_sticky=os.getenv("SALTED_PASS", False) == False,
             now_time_server=round(time.time()),
             pagination=pagination,
@@ -109,6 +110,16 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             unread_changes_count=datastore.unread_changes_count,
             watches=sorted_watches
         )
+
+        # Return freed template-building memory to the OS immediately.
+        # render_template allocates ~20MB of intermediate strings that are freed on return,
+        # but glibc keeps those pages mapped in its arenas as RSS. malloc_trim() forces
+        # glibc to release them, preventing RSS growth from concurrent Chrome connections.
+        try:
+            import ctypes
+            ctypes.CDLL('libc.so.6').malloc_trim(0)
+        except Exception:
+            pass
 
         if session.get('share-link'):
             del (session['share-link'])

@@ -100,6 +100,19 @@ def is_safe_valid_url(test_url):
         logger.warning('URL validation failed: URL is empty or whitespace only')
         return False
 
+    # Per-request cache: same URL is often validated 2-3x per watchlist render (sort + display).
+    # Flask's g is scoped to one request and auto-cleared on teardown, so dynamic Jinja2 URLs
+    # like {{microtime()}} are always re-evaluated on the next request.
+    # Falls back gracefully when called outside a request context (e.g. background workers).
+    _cache_key = test_url
+    try:
+        from flask import g
+        _cache = g.setdefault('_url_validation_cache', {})
+        if _cache_key in _cache:
+            return _cache[_cache_key]
+    except RuntimeError:
+        _cache = None  # No app context
+
     allow_file_access = strtobool(os.getenv('ALLOW_FILE_URI', 'false'))
     safe_protocol_regex = '^(http|https|ftp|file):' if allow_file_access else '^(http|https|ftp):'
 
@@ -112,11 +125,14 @@ def is_safe_valid_url(test_url):
     test_url = r.sub('', test_url)
 
     # Check the actual rendered URL in case of any Jinja markup
-    try:
-        test_url = jinja_render(test_url)
-    except Exception as e:
-        logger.error(f'URL "{test_url}" is not correct Jinja2? {str(e)}')
-        return False
+    # Only run jinja_render when the URL actually contains Jinja2 syntax - creating a new
+    # ImmutableSandboxedEnvironment is expensive and is called once per watch per page load
+    if '{%' in test_url or '{{' in test_url:
+        try:
+            test_url = jinja_render(test_url)
+        except Exception as e:
+            logger.error(f'URL "{test_url}" is not correct Jinja2? {str(e)}')
+            return False
 
     # Check query parameters and fragment
     if re.search(r'[<>]', test_url):
@@ -142,4 +158,6 @@ def is_safe_valid_url(test_url):
         logger.warning(f'URL f"{test_url}" failed validation, aborting.')
         return False
 
+    if _cache is not None:
+        _cache[_cache_key] = True
     return True
