@@ -349,7 +349,7 @@ class WatchHistoryDiff(Resource):
             previous_version_file_contents=from_version_file_contents,
             newest_version_file_contents=to_version_file_contents,
             ignore_junk=ignore_whitespace,
-            include_equal=changes_only,
+            include_equal=not changes_only,
             include_removed=include_removed,
             include_added=include_added,
             include_replaced=include_replaced,
