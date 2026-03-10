@@ -178,23 +178,44 @@ def test_api_tags_listing(client, live_server, measure_memory_usage, datastore_p
 
 def test_api_tag_restock_processor_config(client, live_server, measure_memory_usage, datastore_path):
     """
-    Test that a tag/group can be updated with processor_config_restock_diff via the API.
+    Test that a tag/group can be created and updated with processor_config_restock_diff via the API.
     Since Tag extends WatchBase, processor config fields injected into WatchBase are also valid for tags.
     """
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
 
     set_original_response(datastore_path=datastore_path)
 
-    # Create a tag
+    # Create a tag with processor_config_restock_diff in a single POST (issue #3966)
     res = client.post(
         url_for("tag"),
-        data=json.dumps({"title": "Restock Group"}),
+        data=json.dumps({
+            "title": "Restock Group",
+            "overrides_watch": True,
+            "processor_config_restock_diff": {
+                "in_stock_processing": "in_stock_only",
+                "follow_price_changes": True,
+                "price_change_min": 7777777
+            }
+        }),
         headers={'content-type': 'application/json', 'x-api-key': api_key}
     )
-    assert res.status_code == 201
+    assert res.status_code == 201, f"POST tag with restock config failed: {res.data}"
     tag_uuid = res.json.get('uuid')
 
-    # Update tag with valid processor_config_restock_diff
+    # Verify processor config was saved during creation (the bug: these were discarded)
+    res = client.get(
+        url_for("tag", uuid=tag_uuid),
+        headers={'x-api-key': api_key}
+    )
+    assert res.status_code == 200
+    tag_data = res.json
+    assert tag_data.get('overrides_watch') == True, "overrides_watch should be saved on POST"
+    assert tag_data.get('processor_config_restock_diff', {}).get('in_stock_processing') == 'in_stock_only', \
+        "processor_config_restock_diff should be saved on POST"
+    assert tag_data.get('processor_config_restock_diff', {}).get('price_change_min') == 7777777, \
+        "price_change_min should be saved on POST"
+
+    # Update tag with valid processor_config_restock_diff via PUT
     res = client.put(
         url_for("tag", uuid=tag_uuid),
         headers={'x-api-key': api_key, 'content-type': 'application/json'},
