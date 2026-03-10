@@ -48,6 +48,15 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     # Check this class does not appear (that we didnt see the actual source)
     assert b'foobar-detection' not in res.data
 
+    # Check POST preview
+    res = client.post(
+        url_for("ui.ui_preview.preview_page", uuid="first"),
+        follow_redirects=True
+    )
+    # Check this class does not appear (that we didnt see the actual source)
+    assert b'foobar-detection' not in res.data
+
+
     # Make a change
     set_modified_response(datastore_path=datastore_path)
 

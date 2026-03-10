@@ -17,7 +17,7 @@
     <script src="{{ url_for('static_content', group='js', filename='tabs.js') }}" defer></script>
     {% if versions|length >= 2 %}
         <div id="diff-form" style="text-align: center;">
-            <form class="pure-form " action="" method="POST">
+            <form class="pure-form "  action="{{url_for('ui.ui_preview.preview_page', uuid=uuid)}}" method="POST">
                 <fieldset>
                     <label for="preview-version">{{ _('Select timestamp') }}</label> <select id="preview-version"
                                                                                  name="from_version"
@@ -28,6 +28,7 @@
                         </option>
                     {% endfor %}
                 </select>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="pure-button pure-button-primary">{{ _('Go') }}</button>
 
                 </fieldset>
