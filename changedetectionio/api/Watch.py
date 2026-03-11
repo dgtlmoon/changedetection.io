@@ -15,6 +15,7 @@ import copy
 from . import validate_openapi_request, get_readonly_watch_fields
 from ..notification import valid_notification_formats
 from ..notification.handler import newline_re
+from ..processors.text_json_diff.difference import DIFF_PREFERENCES_CONFIG, parse_diff_preferences
 
 
 def validate_time_between_check_required(json_data):
@@ -338,22 +339,14 @@ class WatchHistoryDiff(Resource):
             word_diff = True
 
         # Get boolean diff preferences with defaults from DIFF_PREFERENCES_CONFIG
-        changes_only = strtobool(request.args.get('changesOnly', 'true'))
-        ignore_whitespace = strtobool(request.args.get('ignoreWhitespace', 'false'))
-        include_removed = strtobool(request.args.get('removed', 'true'))
-        include_added = strtobool(request.args.get('added', 'true'))
-        include_replaced = strtobool(request.args.get('replaced', 'true'))
+        prefs, render_kwargs = parse_diff_preferences(request.args)
 
         # Generate the diff with all preferences
         content = diff.render_diff(
             previous_version_file_contents=from_version_file_contents,
             newest_version_file_contents=to_version_file_contents,
-            ignore_junk=ignore_whitespace,
-            include_equal=changes_only,
-            include_removed=include_removed,
-            include_added=include_added,
-            include_replaced=include_replaced,
             word_diff=word_diff,
+            **render_kwargs,
         )
 
         # Skip formatting if no_markup is set
