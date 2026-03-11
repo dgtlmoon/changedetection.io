@@ -99,6 +99,26 @@ DIFF_PREFERENCES_CONFIG = {
     'type': {'default': 'diffLines', 'type': 'value'},
 }
 
+def parse_diff_preferences(args, checkbox_mode=False):
+    parsed = {}
+    render_kwargs = {}
+
+    for query_name, config in DIFF_PREFERENCES_CONFIG.items():
+        value = args.get(query_name, config['default'])
+
+        if config['type'] == 'bool':
+            if checkbox_mode:
+                value = strtobool(args.get(query_name, 'off'))
+            else:
+                value = strtobool(value)
+
+        parsed[query_name] = value
+
+        if 'render_arg' in config:
+            render_kwargs[config['render_arg']] = value
+
+    return parsed, render_kwargs
+
 def render(watch, datastore, request, url_for, render_template, flash, redirect, extract_form=None):
     """
     Render the history/diff view for text/JSON/HTML changes.
@@ -166,30 +186,12 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
 
     datastore.set_last_viewed(uuid, time.time())
 
-    # Parse diff preferences from request using config as single source of truth
-    # Check if this is a user submission (any diff pref param exists in query string)
-    user_submitted = any(key in request.args for key in DIFF_PREFERENCES_CONFIG.keys())
-
-    diff_prefs = {}
-    for key, config in DIFF_PREFERENCES_CONFIG.items():
-        if user_submitted:
-            # User submitted form - missing checkboxes are explicitly OFF
-            if config['type'] == 'bool':
-                diff_prefs[key] = strtobool(request.args.get(key, 'off'))
-            else:
-                diff_prefs[key] = request.args.get(key, config['default'])
-        else:
-            # Initial load - use defaults from config
-            diff_prefs[key] = config['default']
+    diff_prefs, render_kwargs = parse_diff_preferences(request.args)
 
     content = diff.render_diff(previous_version_file_contents=from_version_file_contents,
                                newest_version_file_contents=to_version_file_contents,
-                               include_replaced=diff_prefs['replaced'],
-                               include_added=diff_prefs['added'],
-                               include_removed=diff_prefs['removed'],
-                               include_equal=diff_prefs['changesOnly'],
-                               ignore_junk=diff_prefs['ignoreWhitespace'],
                                word_diff=diff_prefs['type'] == 'diffWords',
+                               **render_kwargs,
                                )
 
     # Build cell grid visualizer before applying HTML color (so we can detect placemarkers)
