@@ -103,6 +103,14 @@ jobs:
             ghcr.io/${{ github.repository }}
           tags: |
             type=raw,value=dev
+        labels: |
+          org.opencontainers.image.source=https://github.com/dgtlmoon/changedetection.io
+          org.opencontainers.image.title=changedetection.io
+          org.opencontainers.image.url=https://changedetection.io
+          org.opencontainers.image.description=Website, webpage change detection, monitoring and notifications.
+          org.opencontainers.image.created=${{ github.event.release.published_at }}
+          org.opencontainers.image.revision=${{ github.sha }}
+          org.opencontainers.image.documentation=https://changedetection.io
 
       - name: Build and push :dev
         id: docker_build
