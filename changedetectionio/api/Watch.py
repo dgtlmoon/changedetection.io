@@ -338,7 +338,7 @@ class WatchHistoryDiff(Resource):
             word_diff = True
 
         # Get boolean diff preferences with defaults from DIFF_PREFERENCES_CONFIG
-        changes_only = strtobool(request.args.get('changesOnly', 'true'))
+        changes_only = strtobool(request.args.get('changesOnly', 'false'))
         ignore_whitespace = strtobool(request.args.get('ignoreWhitespace', 'false'))
         include_removed = strtobool(request.args.get('removed', 'true'))
         include_added = strtobool(request.args.get('added', 'true'))
@@ -349,7 +349,7 @@ class WatchHistoryDiff(Resource):
             previous_version_file_contents=from_version_file_contents,
             newest_version_file_contents=to_version_file_contents,
             ignore_junk=ignore_whitespace,
-            include_equal=changes_only,
+            include_equal=not changes_only,
             include_removed=include_removed,
             include_added=include_added,
             include_replaced=include_replaced,

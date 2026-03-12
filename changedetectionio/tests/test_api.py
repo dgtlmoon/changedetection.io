@@ -170,6 +170,14 @@ def test_api_simple(client, live_server, measure_memory_usage, datastore_path):
         headers={'x-api-key': api_key},
     )
     assert b'(changed) Which is across' in res.data
+    assert b'Some text thats the same' in res.data
+
+    # Fetch the difference between two versions (default text format)
+    res = client.get(
+        url_for("watchhistorydiff", uuid=watch_uuid, from_timestamp='previous', to_timestamp='latest')+"?changesOnly=true",
+        headers={'x-api-key': api_key},
+    )
+    assert b'Some text thats the same' not in res.data
 
     # Test htmlcolor format
     res = client.get(
