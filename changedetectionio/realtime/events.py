@@ -29,9 +29,11 @@ def register_watch_operation_handlers(socketio, datastore):
             # Perform the operation
             if op == 'pause':
                 watch.toggle_pause()
+                watch.commit()
                 logger.info(f"Socket.IO: Toggled pause for watch {uuid}")
             elif op == 'mute':
                 watch.toggle_mute()
+                watch.commit()
                 logger.info(f"Socket.IO: Toggled mute for watch {uuid}")
             elif op == 'recheck':
                 # Import here to avoid circular imports
