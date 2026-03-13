@@ -1554,6 +1554,10 @@ msgstr ""
 "hinzugefügt werden. Vergleicht neue Zeilen mit dem gesamten Verlauf dieser Überwachung."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Helps reduce changes detected caused by inconsistent JSON formatting"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with"
 msgstr ""
 "Hilft dabei, erkannte Änderungen zu reduzieren, die durch das Umstellen von Zeilen auf Websites verursacht werden, "

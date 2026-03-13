@@ -220,6 +220,7 @@ class watch_base(dict):
             'price_change_threshold_percent': None,
             'proxy': None,  # Preferred proxy connection
             'remote_server_reply': None,  # From 'server' reply header
+            'sort_keys_alphabetically': False,
             'sort_text_alphabetically': False,
             'strip_ignored_lines': None,
             'subtractive_selectors': [],
