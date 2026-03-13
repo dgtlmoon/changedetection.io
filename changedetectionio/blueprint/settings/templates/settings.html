@@ -27,6 +27,7 @@
             <li class="tab"><a href="#rss">{{ _('RSS') }}</a></li>
             <li class="tab"><a href="{{ url_for('backups.create') }}">{{ _('Backups') }}</a></li>
             <li class="tab"><a href="#timedate">{{ _('Time & Date') }}</a></li>
+
             <li class="tab"><a href="#proxies">{{ _('CAPTCHA & Proxies') }}</a></li>
             {% if plugin_tabs %}
                 {% for tab in plugin_tabs %}
@@ -308,6 +309,7 @@ nav
                 </div>
 
             </div>
+
             <div class="tab-pane-inner" id="proxies">
                 <div id="recommended-proxy">
                     <div>

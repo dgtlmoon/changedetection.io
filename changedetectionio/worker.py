@@ -518,6 +518,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                 # (cleanup may delete these variables, but plugins need the original references)
                 finalize_handler = update_handler  # Capture now, before cleanup deletes it
                 finalize_watch = watch              # Capture now, before any modifications
+                finalize_changed_detected = locals().get('changed_detected', False)
+                finalize_snapshot_id = (locals().get('update_obj') or {}).get('previous_md5') or ''
 
                 # Call quit() as backup (Puppeteer/Playwright have internal cleanup, but this acts as safety net)
                 try:
@@ -558,7 +560,9 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                         update_handler=finalize_handler,
                         watch=finalize_watch,
                         datastore=datastore,
-                        processing_exception=processing_exception
+                        processing_exception=processing_exception,
+                        changed_detected=finalize_changed_detected,
+                        snapshot_id=finalize_snapshot_id,
                     )
                 except Exception as finalize_error:
                     logger.error(f"Worker {worker_id} error in finalize hook: {finalize_error}")
