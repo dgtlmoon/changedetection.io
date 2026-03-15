@@ -399,7 +399,7 @@ class model(EntityPersistenceMixin, watch_base):
 
         fetcher_name = self.get_fetch_backend  # already handles is_pdf → html_requests
         if not fetcher_name or fetcher_name == 'system':
-            fetcher_name = self._datastore.data['settings']['application'].get('fetch_backend', 'html_requests')
+            fetcher_name = self._datastore['settings']['application'].get('fetch_backend', 'html_requests')
 
         fetcher_class = getattr(content_fetchers, fetcher_name, None)
         if fetcher_class is None:
