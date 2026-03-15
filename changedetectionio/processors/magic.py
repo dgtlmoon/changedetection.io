@@ -100,7 +100,13 @@ class guess_stream_type():
         if any(s in http_content_header for s in RSS_XML_CONTENT_TYPES):
             self.is_rss = True
         elif any(s in http_content_header for s in JSON_CONTENT_TYPES):
-            self.is_json = True
+            # JSONP detection: server claims application/json but content is actually JSONP (e.g. cb({...}))
+            # A JSONP response starts with an identifier followed by '(' - not valid JSON
+            if re.match(r'^\w[\w.]*\s*\(', test_content):
+                logger.warning(f"Content-Type header claims JSON but content looks like JSONP (starts with identifier+parenthesis) - treating as plaintext")
+                self.is_plaintext = True
+            else:
+                self.is_json = True
         elif 'pdf' in magic_content_header:
             self.is_pdf = True
         # magic will call a rss document 'xml'

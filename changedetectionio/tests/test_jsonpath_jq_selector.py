@@ -16,6 +16,51 @@ except ModuleNotFoundError:
 
 
 
+def test_jsonp_treated_as_plaintext():
+    from ..processors.magic import guess_stream_type
+
+    # JSONP content (server wrongly claims application/json) should be detected as plaintext
+    # Callback names are arbitrary identifiers, not always 'cb'
+    jsonp_content = 'jQuery123456({ "version": "8.0.41", "url": "https://example.com/app.apk" })'
+    result = guess_stream_type(http_content_header="application/json", content=jsonp_content)
+    assert result.is_json is False
+    assert result.is_plaintext is True
+
+    # Variation with dotted callback name e.g. jQuery.cb(...)
+    jsonp_dotted = 'some.callback({ "version": "1.0" })'
+    result = guess_stream_type(http_content_header="application/json", content=jsonp_dotted)
+    assert result.is_json is False
+    assert result.is_plaintext is True
+
+    # Real JSON should still be detected as JSON
+    json_content = '{ "version": "8.0.41", "url": "https://example.com/app.apk" }'
+    result = guess_stream_type(http_content_header="application/json", content=json_content)
+    assert result.is_json is True
+    assert result.is_plaintext is False
+
+
+def test_jsonp_json_filter_extraction():
+    from .. import html_tools
+
+    # Tough case: dotted namespace callback, trailing semicolon, deeply nested content with arrays
+    jsonp_content = 'weixin.update.callback({"platforms": {"android": {"variants": [{"arch": "arm64", "versionName": "8.0.68", "url": "https://example.com/app-arm64.apk"}, {"arch": "arm32", "versionName": "8.0.41", "url": "https://example.com/app-arm32.apk"}]}}});'
+
+    # Deep nested jsonpath filter into array element
+    text = html_tools.extract_json_as_string(jsonp_content, "json:$.platforms.android.variants[0].versionName")
+    assert text == '"8.0.68"'
+
+    # Filter that selects the second array element
+    text = html_tools.extract_json_as_string(jsonp_content, "json:$.platforms.android.variants[1].arch")
+    assert text == '"arm32"'
+
+    if jq_support:
+        text = html_tools.extract_json_as_string(jsonp_content, "jq:.platforms.android.variants[0].versionName")
+        assert text == '"8.0.68"'
+
+        text = html_tools.extract_json_as_string(jsonp_content, "jqraw:.platforms.android.variants[1].url")
+        assert text == "https://example.com/app-arm32.apk"
+
+
 def test_unittest_inline_html_extract():
     # So lets pretend that the JSON we want is inside some HTML
     content="""
