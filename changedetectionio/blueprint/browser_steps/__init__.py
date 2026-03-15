@@ -102,6 +102,35 @@ def run_async_in_browser_loop(coro):
     else:
         raise RuntimeError("Browser steps event loop is not available")
 
+async def _close_session_resources(session_data, label=''):
+    """Close all browser resources for a session in the correct order.
+
+    browserstepper.cleanup() closes page+context but not the browser itself.
+    For CloakBrowser, browser.close() is what stops the local Chromium process via pw.stop().
+    For the default CDP path, playwright_context.stop() shuts down the playwright instance.
+    """
+    browserstepper = session_data.get('browserstepper')
+    if browserstepper:
+        try:
+            await browserstepper.cleanup()
+        except Exception as e:
+            logger.error(f"Error cleaning up browserstepper{label}: {e}")
+
+    browser = session_data.get('browser')
+    if browser:
+        try:
+            await asyncio.wait_for(browser.close(), timeout=5.0)
+        except Exception as e:
+            logger.warning(f"Error closing browser{label}: {e}")
+
+    playwright_context = session_data.get('playwright_context')
+    if playwright_context:
+        try:
+            await playwright_context.stop()
+        except Exception as e:
+            logger.warning(f"Error stopping playwright context{label}: {e}")
+
+
 def cleanup_expired_sessions():
     """Remove expired browsersteps sessions and cleanup their resources"""
     global browsersteps_sessions, browsersteps_watch_to_session
@@ -119,13 +148,10 @@ def cleanup_expired_sessions():
         logger.debug(f"Cleaning up expired browsersteps session {session_id}")
         session_data = browsersteps_sessions[session_id]
 
-        # Cleanup playwright resources asynchronously
-        browserstepper = session_data.get('browserstepper')
-        if browserstepper:
-            try:
-                run_async_in_browser_loop(browserstepper.cleanup())
-            except Exception as e:
-                logger.error(f"Error cleaning up session {session_id}: {e}")
+        try:
+            run_async_in_browser_loop(_close_session_resources(session_data, label=f" for session {session_id}"))
+        except Exception as e:
+            logger.error(f"Error cleaning up session {session_id}: {e}")
 
         # Remove from sessions dict
         del browsersteps_sessions[session_id]
@@ -152,12 +178,10 @@ def cleanup_session_for_watch(watch_uuid):
 
     session_data = browsersteps_sessions.get(session_id)
     if session_data:
-        browserstepper = session_data.get('browserstepper')
-        if browserstepper:
-            try:
-                run_async_in_browser_loop(browserstepper.cleanup())
-            except Exception as e:
-                logger.error(f"Error cleaning up session {session_id} for watch {watch_uuid}: {e}")
+        try:
+            run_async_in_browser_loop(_close_session_resources(session_data, label=f" for watch {watch_uuid}"))
+        except Exception as e:
+            logger.error(f"Error cleaning up session {session_id} for watch {watch_uuid}: {e}")
 
         # Remove from sessions dict
         del browsersteps_sessions[session_id]
@@ -178,58 +202,68 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         import time
         from playwright.async_api import async_playwright
 
-        # We keep the playwright session open for many minutes
         keepalive_seconds = int(os.getenv('BROWSERSTEPS_MINUTES_KEEPALIVE', 10)) * 60
+        keepalive_ms = ((keepalive_seconds + 3) * 1000)
 
         browsersteps_start_session = {'start_time': time.time()}
 
-        # Create a new async playwright instance for browser steps
-        playwright_instance = async_playwright()
-        playwright_context = await playwright_instance.start()
-
-        keepalive_ms = ((keepalive_seconds + 3) * 1000)
-        base_url = os.getenv('PLAYWRIGHT_DRIVER_URL', '').strip('"')
-        a = "?" if not '?' in base_url else '&'
-        base_url += a + f"timeout={keepalive_ms}"
-
-        browser = await playwright_context.chromium.connect_over_cdp(base_url, timeout=keepalive_ms)
-        browsersteps_start_session['browser'] = browser
-        browsersteps_start_session['playwright_context'] = playwright_context
-
+        # Build proxy dict first — needed by both the CDP path and fetcher-specific launchers
         proxy_id = datastore.get_preferred_proxy_for_watch(uuid=watch_uuid)
         proxy = None
         if proxy_id:
-            proxy_url = datastore.proxy_list.get(proxy_id).get('url')
+            proxy_url = datastore.proxy_list.get(proxy_id, {}).get('url')
             if proxy_url:
-
-                # Playwright needs separate username and password values
                 from urllib.parse import urlparse
                 parsed = urlparse(proxy_url)
                 proxy = {'server': proxy_url}
-
                 if parsed.username:
                     proxy['username'] = parsed.username
-
                 if parsed.password:
                     proxy['password'] = parsed.password
-
                 logger.debug(f"Browser Steps: UUID {watch_uuid} selected proxy {proxy_url}")
 
-        # Tell Playwright to connect to Chrome and setup a new session via our stepper interface
+        # Resolve the fetcher class for this watch so we can ask it to launch its own browser
+        # if it supports that (e.g. CloakBrowser, which runs locally rather than via CDP)
+        watch = datastore.data['watching'][watch_uuid]
+        from changedetectionio import content_fetchers
+        fetcher_name = watch.get_fetch_backend or 'system'
+        if fetcher_name == 'system':
+            fetcher_name = datastore.data['settings']['application'].get('fetch_backend', 'html_requests')
+        fetcher_class = getattr(content_fetchers, fetcher_name, None)
+
+        browser = None
+        playwright_context = None
+
+        # If the fetcher has its own browser launch for the live steps UI, use it.
+        # get_browsersteps_browser(proxy, keepalive_ms) returns (browser, playwright_context_or_None)
+        # or None to fall back to the default CDP path.
+        if fetcher_class and hasattr(fetcher_class, 'get_browsersteps_browser'):
+            result = await fetcher_class.get_browsersteps_browser(proxy=proxy, keepalive_ms=keepalive_ms)
+            if result is not None:
+                browser, playwright_context = result
+                logger.debug(f"Browser Steps: using fetcher-specific browser for '{fetcher_name}'")
+
+        # Default: connect to the remote Playwright/sockpuppetbrowser via CDP
+        if browser is None:
+            playwright_instance = async_playwright()
+            playwright_context = await playwright_instance.start()
+            base_url = os.getenv('PLAYWRIGHT_DRIVER_URL', '').strip('"')
+            a = "?" if '?' not in base_url else '&'
+            base_url += a + f"timeout={keepalive_ms}"
+            browser = await playwright_context.chromium.connect_over_cdp(base_url, timeout=keepalive_ms)
+            logger.debug(f"Browser Steps: using CDP connection to {base_url}")
+
+        browsersteps_start_session['browser'] = browser
+        browsersteps_start_session['playwright_context'] = playwright_context
+
         browserstepper = browser_steps.browsersteps_live_ui(
             playwright_browser=browser,
             proxy=proxy,
-            start_url=datastore.data['watching'][watch_uuid].link,
-            headers=datastore.data['watching'][watch_uuid].get('headers')
+            start_url=watch.link,
+            headers=watch.get('headers')
         )
-        
-        # Initialize the async connection
         await browserstepper.connect(proxy=proxy)
-        
         browsersteps_start_session['browserstepper'] = browserstepper
-
-        # For test
-        #await browsersteps_start_session['browserstepper'].action_goto_url(value="http://example.com?time="+str(time.time()))
 
         return browsersteps_start_session
 

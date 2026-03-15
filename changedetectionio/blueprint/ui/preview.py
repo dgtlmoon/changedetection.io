@@ -60,12 +60,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         versions = []
         timestamp = None
 
-        system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
         extra_stylesheets = [url_for('static_content', group='styles', filename='diff.css')]
-
-        is_html_webdriver = False
-        if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver' or watch.get('fetch_backend', '').startswith('extra_browser_'):
-            is_html_webdriver = True
+        is_html_webdriver = watch.fetcher_supports_screenshots
 
         triggered_line_numbers = []
         ignored_line_numbers = []
