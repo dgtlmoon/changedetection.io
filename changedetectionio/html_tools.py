@@ -487,13 +487,25 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
         except json.JSONDecodeError as e:
             logger.warning(f"Error processing JSON {content[:20]}...{str(e)})")
     else:
-        # Probably something else, go fish inside for it
-        try:
-            stripped_text_from_html = extract_json_blob_from_html(content=content,
-                                                                  ensure_is_ldjson_info_type=ensure_is_ldjson_info_type,
-                                                                  json_filter=json_filter                                                                  )
-        except json.JSONDecodeError as e:
-            logger.warning(f"Error processing JSON while extracting JSON from HTML blob {content[:20]}...{str(e)})")
+        # Check for JSONP wrapper: someCallback({...}) or some.namespace({...})
+        # Server may claim application/json but actually return JSONP
+        jsonp_match = re.match(r'^\w[\w.]*\s*\((.+)\)\s*;?\s*$', content.lstrip("\ufeff").strip(), re.DOTALL)
+        if jsonp_match:
+            try:
+                inner = jsonp_match.group(1).strip()
+                logger.warning(f"Content looks like JSONP, attempting to extract inner JSON for filter '{json_filter}'")
+                stripped_text_from_html = _parse_json(json.loads(inner), json_filter)
+            except json.JSONDecodeError as e:
+                logger.warning(f"Error processing JSONP inner content {content[:20]}...{str(e)})")
+
+        if not stripped_text_from_html:
+            # Probably something else, go fish inside for it
+            try:
+                stripped_text_from_html = extract_json_blob_from_html(content=content,
+                                                                      ensure_is_ldjson_info_type=ensure_is_ldjson_info_type,
+                                                                      json_filter=json_filter)
+            except json.JSONDecodeError as e:
+                logger.warning(f"Error processing JSON while extracting JSON from HTML blob {content[:20]}...{str(e)})")
 
     if not stripped_text_from_html:
         # Re 265 - Just return an empty string when filter not found
