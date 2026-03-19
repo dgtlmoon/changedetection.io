@@ -116,6 +116,14 @@ $(document).ready(function () {
                 $('#realtime-conn-error').show();
             });
 
+            // Tell the server we're leaving cleanly so it can release the connection
+            // immediately rather than waiting for a timeout.
+            // Note: this only fires for voluntary closes (tab/window close, navigation away).
+            // Hard kills, crashes and network drops will still timeout normally on the server.
+            window.addEventListener('beforeunload', function () {
+                socket.disconnect();
+            });
+
             socket.on('queue_size', function (data) {
                 console.log(`${data.event_timestamp} - Queue size update: ${data.q_length}`);
                 if(queueSizePagerInfoText) {
