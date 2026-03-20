@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-23 03:54+0100\n"
-"PO-Revision-Date: 2026-03-20 18:07+0100\n"
+"PO-Revision-Date: 2026-03-20 18:13+0100\n"
 "Last-Translator: Adrian Gonzalez <adrian@example.com>\n"
 "Language-Team: Español\n"
 "Language: es\n"
@@ -1459,7 +1459,7 @@ msgstr "reemplazo"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "for example."
-msgstr "for ejemplo."
+msgstr "por ejemplo."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "addition"
