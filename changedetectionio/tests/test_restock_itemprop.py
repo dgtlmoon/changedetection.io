@@ -350,6 +350,7 @@ def test_change_with_notification_values(client, live_server, measure_memory_usa
     res = client.get(url_for("settings.settings_page"))
     
     assert b'{{restock.original_price}}' in res.data
+    assert b'{{restock.previous_price}}' in res.data
     assert b'Original price at first check' in res.data
 
     #####################
@@ -358,7 +359,7 @@ def test_change_with_notification_values(client, live_server, measure_memory_usa
         url_for("settings.settings_page"),
         data={"application-notification_urls": notification_url,
               "application-notification_title": "title new price {{restock.price}}",
-              "application-notification_body": "new price {{restock.price}}",
+              "application-notification_body": "new price {{restock.price}} previous price {{restock.previous_price}} instock {{restock.in_stock}}",
               "application-notification_format": default_notification_format,
               "requests-time_between_check-minutes": 180,
               'application-fetch_backend': "html_requests"},
@@ -372,8 +373,6 @@ def test_change_with_notification_values(client, live_server, measure_memory_usa
 
     assert b"Settings updated." in res.data
 
-
-    set_original_response(props_markup=instock_props[0], price='960.45', datastore_path=datastore_path)
     # A change in price, should trigger a change by default
     set_original_response(props_markup=instock_props[0], price='1950.45', datastore_path=datastore_path)
     client.get(url_for("ui.form_watch_checknow"))
@@ -384,6 +383,7 @@ def test_change_with_notification_values(client, live_server, measure_memory_usa
         notification = f.read()
         assert "new price 1950.45" in notification
         assert "title new price 1950.45" in notification
+        assert "previous price 960.45" in notification
 
     ## Now test the "SEND TEST NOTIFICATION" is working
     os.unlink(os.path.join(datastore_path, "notification.txt"))
