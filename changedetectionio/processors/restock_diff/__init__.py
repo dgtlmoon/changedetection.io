@@ -1,6 +1,7 @@
 
 from babel.numbers import parse_decimal
 from changedetectionio.model.Watch import model as BaseWatch
+from decimal import Decimal, InvalidOperation
 from typing import Union
 import re
 
@@ -10,6 +11,8 @@ supports_browser_steps = True
 supports_text_filters_and_triggers = True
 supports_text_filters_and_triggers_elements = True
 supports_request_type = True
+_price_re = re.compile(r"Price:\s*(\d+(?:\.\d+)?)", re.IGNORECASE)
+
 
 class Restock(dict):
 
@@ -63,6 +66,17 @@ class Restock(dict):
 
         super().__setitem__(key, value)
 
+def get_price_from_history_str(history_str):
+    m = _price_re.search(history_str)
+    if not m:
+        return None
+
+    try:
+        return str(Decimal(m.group(1)))
+    except InvalidOperation:
+        return None
+
+
 class Watch(BaseWatch):
     def __init__(self, *arg, **kw):
         super().__init__(*arg, **kw)
@@ -76,13 +90,27 @@ class Watch(BaseWatch):
     def extra_notification_token_values(self):
         values = super().extra_notification_token_values()
         values['restock'] = self.get('restock', {})
+
+        values['restock']['previous_price'] = None
+        if self.history_n >= 2:
+            history = self.history
+            if history and len(history) >=2:
+                """Unfortunately for now timestamp is stored as string key"""
+                sorted_keys = sorted(list(history), key=lambda x: int(x))
+                sorted_keys.reverse()
+
+                price_str = self.get_history_snapshot(timestamp=sorted_keys[-1])
+                if price_str:
+                    values['restock']['previous_price'] = get_price_from_history_str(price_str)
         return values
 
     def extra_notification_token_placeholder_info(self):
         values = super().extra_notification_token_placeholder_info()
 
         values.append(('restock.price', "Price detected"))
+        values.append(('restock.in_stock', "In stock status"))
         values.append(('restock.original_price', "Original price at first check"))
+        values.append(('restock.previous_price', "Previous price in history"))
 
         return values
 
