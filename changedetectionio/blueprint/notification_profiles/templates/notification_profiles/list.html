@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="pure-g">
+  <div class="pure-u-1">
+    <h1>{{ _('Notification Profiles') }}</h1>
+    <p class="pure-form-message-inline">
+      {{ _('Profiles define where and how notifications are sent. Link them to watches or groups.') }}
+      <a href="{{ url_for('notification_profiles.edit') }}">{{ _('Create new profile') }}</a>
+    </p>
+
+    {% if not profiles %}
+    <div class="inline-warning" style="margin: 1em 0;">
+      {{ _('No notification profiles yet.') }}
+      <a href="{{ url_for('notification_profiles.edit') }}" class="pure-button pure-button-primary button-xsmall">{{ _('Create first profile') }}</a>
+    </div>
+    {% else %}
+    <table class="pure-table pure-table-striped" style="width:100%">
+      <thead>
+        <tr>
+          <th>{{ _('Name') }}</th>
+          <th>{{ _('Type') }}</th>
+          <th>{{ _('Destination') }}</th>
+          <th>{{ _('Used by') }}</th>
+          <th>{{ _('Last result') }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for uuid, profile in profiles.items() %}
+        {% set type_handler = registry.get(profile.get('type', 'apprise')) %}
+        <tr>
+          <td><strong>{{ profile.get('name', '') }}</strong></td>
+          <td>
+            <i data-feather="{{ type_handler.icon }}" style="width:14px;height:14px;"></i>
+            {{ type_handler.display_name }}
+          </td>
+          <td><small class="pure-form-message-inline">{{ type_handler.get_url_hint(profile.get('config', {})) }}</small></td>
+          <td>
+            {% set n = usage.get(uuid, 0) %}
+            {% if n %}
+              <span class="button-tag button-xsmall">{{ n }} {{ _('watch(es)') }}</span>
+            {% else %}
+              <span style="color: var(--color-grey-600)">{{ _('unused') }}</span>
+            {% endif %}
+          </td>
+          <td>
+            {%- set _last = last_log.get(uuid) -%}
+            {%- if _last -%}
+              <a href="{{ url_for('notification_profiles.profile_log', profile_uuid=uuid) }}"
+                 class="notif-last-result {{ _last.status }}"
+                 title="{{ _last.ts }}{% if _last.message %} — {{ _last.message[:120] }}{% endif %}">
+                {%- if _last.status == 'ok' -%}&#10003; {{ _('OK') }}
+                {%- elif _last.status == 'test' -%}&#9654; {{ _('Test') }}
+                {%- else -%}&#10007; {{ _('Error') }}
+                {%- endif -%}
+              </a>
+            {%- else -%}
+              <a href="{{ url_for('notification_profiles.profile_log', profile_uuid=uuid) }}"
+                 style="color:var(--color-grey-500); font-size:0.85em;">{{ _('no log') }}</a>
+            {%- endif -%}
+          </td>
+          <td style="white-space:nowrap;">
+            <a href="{{ url_for('notification_profiles.edit', profile_uuid=uuid) }}" class="pure-button button-xsmall">{{ _('Edit') }}</a>
+            <button type="button"
+                    class="pure-button button-xsmall btn-test-profile"
+                    data-test-url="{{ url_for('notification_profiles.test', profile_uuid=uuid) }}"
+                    data-csrf="{{ csrf_token() }}">{{ _('Test') }}</button>
+            <span class="test-result-{{ uuid }} pure-form-message-inline" style="display:none; font-size:0.85em;"></span>
+            <form method="POST" action="{{ url_for('notification_profiles.delete', profile_uuid=uuid) }}" style="display:inline;"
+                  onsubmit="return confirm('{{ _('Delete this profile?') }}{% if usage.get(uuid, 0) %} {{ _('It is linked to %(n)d watch(es).', n=usage.get(uuid,0)) }}{% endif %}')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="pure-button button-xsmall" style="background:var(--color-background-button-red);color:#fff;">{{ _('Delete') }}</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    <br>
+    <a href="{{ url_for('notification_profiles.edit') }}" class="pure-button pure-button-primary">{{ _('+ New profile') }}</a>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.btn-test-profile').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var url = this.dataset.testUrl;
+        var csrf = this.dataset.csrf;
+        var row = this.closest('tr');
+        var resultSpan = row.querySelector('[class^="test-result-"]');
+        btn.disabled = true;
+        btn.textContent = '...';
+        if (resultSpan) {
+            resultSpan.style.display = 'inline';
+            resultSpan.textContent = '{{ _("Sending...") }}';
+        }
+        fetch(url, {
+            method: 'POST',
+            headers: {'X-CSRFToken': csrf, 'Content-Type': 'application/x-www-form-urlencoded'},
+        }).then(function(r) {
+            return r.text().then(function(t) { return {ok: r.ok, text: t}; });
+        }).then(function(res) {
+            if (resultSpan) resultSpan.textContent = res.text;
+        }).catch(function(e) {
+            if (resultSpan) resultSpan.textContent = 'Error: ' + e;
+        }).finally(function() {
+            btn.disabled = false;
+            btn.textContent = '{{ _("Test") }}';
+        });
+    });
+});
+</script>
+{% endblock %}

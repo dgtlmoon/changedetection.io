@@ -131,15 +131,17 @@ class difference_detection_processor():
         await self.validate_iana_url()
 
         # Requests, playwright, other browser via wss:// etc, fetch_extra_something
-        prefer_fetch_backend = self.watch.get('fetch_backend', 'system')
+        # Resolved via Watch → Tag (overrides_watch=True) → Global cascade.
+        from changedetectionio.model.resolver import resolve_setting
+        prefer_fetch_backend = resolve_setting(
+            self.watch, self.datastore, 'fetch_backend',
+            sentinel_values={'system'},
+            default='html_requests',
+        )
 
         # Proxy ID "key"
         preferred_proxy_id = preferred_proxy_id if preferred_proxy_id else self.datastore.get_preferred_proxy_for_watch(
             uuid=self.watch.get('uuid'))
-
-        # Pluggable content self.fetcher
-        if not prefer_fetch_backend or prefer_fetch_backend == 'system':
-            prefer_fetch_backend = self.datastore.data['settings']['application'].get('fetch_backend')
 
         # In the case that the preferred fetcher was a browser config with custom connection URL..
         # @todo - on save watch, if its extra_browser_ then it should be obvious it will use playwright (like if its requests now..)

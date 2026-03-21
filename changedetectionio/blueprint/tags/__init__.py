@@ -7,6 +7,14 @@ from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.flask_app import login_optionally_required
 
 
+def _get_tag_inherited_notification_profiles(datastore):
+    """Tags only inherit from system level."""
+    result = []
+    for uid in datastore.data['settings']['application'].get('notification_profiles', []):
+        result.append((uid, 'system'))
+    return result
+
+
 def construct_blueprint(datastore: ChangeDetectionStore):
     tags_blueprint = Blueprint('tags', __name__, template_folder="templates")
 
@@ -175,11 +183,14 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                             sub_field.data = sub_value
                     break
 
+        from changedetectionio.notification_profiles.registry import registry as notification_registry
         template_args = {
             'data': default,
             'form': form,
             'watch': default,
             'extra_notification_token_placeholder_info': datastore.get_unique_notification_token_placeholders_available(),
+            'notification_registry': notification_registry,
+            'inherited_notification_profiles': _get_tag_inherited_notification_profiles(datastore),
         }
 
         included_content = {}
@@ -239,6 +250,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         tag.update(form.data)
         tag['processor'] = 'restock_diff'
+        tag['notification_profiles'] = request.form.getlist('notification_profiles')
         tag.commit()
 
         # Clear checksums for all watches using this tag to force reprocessing

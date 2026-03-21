@@ -115,6 +115,55 @@ def set_empty_text_response(datastore_path):
 
     return None
 
+def add_notification_profile(datastore, notification_url, notification_title='', notification_body='',
+                              notification_format='text', name='Test Profile'):
+    """Create a notification profile in the datastore and return its UUID."""
+    import uuid as uuid_mod
+    uid = str(uuid_mod.uuid4())
+    urls = [notification_url] if isinstance(notification_url, str) else notification_url
+    datastore.data['settings']['application'].setdefault('notification_profile_data', {})[uid] = {
+        'uuid': uid,
+        'name': name,
+        'type': 'apprise',
+        'config': {
+            'notification_urls': urls,
+            'notification_title': notification_title or None,
+            'notification_body': notification_body or None,
+            'notification_format': notification_format or None,
+        },
+    }
+    return uid
+
+
+def set_watch_notification_profile(datastore, watch_uuid, profile_uuid):
+    """Link a notification profile UUID to a specific watch."""
+    watch = datastore.data['watching'][watch_uuid]
+    profiles = list(watch.get('notification_profiles', []))
+    if profile_uuid not in profiles:
+        profiles.append(profile_uuid)
+    watch['notification_profiles'] = profiles
+    watch.commit()
+
+
+def set_system_notification_profile(datastore, profile_uuid):
+    """Link a notification profile UUID to system settings."""
+    app = datastore.data['settings']['application']
+    profiles = list(app.get('notification_profiles', []))
+    if profile_uuid not in profiles:
+        profiles.append(profile_uuid)
+    app['notification_profiles'] = profiles
+
+
+def clear_notification_profiles(datastore):
+    """Remove all notification profiles and links."""
+    app = datastore.data['settings']['application']
+    app['notification_profile_data'] = {}
+    app['notification_profiles'] = []
+    for watch in datastore.data['watching'].values():
+        watch['notification_profiles'] = []
+        watch.commit()
+
+
 def wait_for_notification_endpoint_output(datastore_path):
     '''Apprise can take a few seconds to fire'''
     #@todo - could check the apprise object directly instead of looking for this file

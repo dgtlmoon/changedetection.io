@@ -443,20 +443,6 @@ class ValidateContentFetcherIsReady(object):
         #         raise ValidationError(message % (field.data, e))
 
 
-class ValidateNotificationBodyAndTitleWhenURLisSet(object):
-    """
-       Validates that they entered something in both notification title+body when the URL is set
-       Due to https://github.com/dgtlmoon/changedetection.io/issues/360
-       """
-
-    def __init__(self, message=None):
-        self.message = message
-
-    def __call__(self, form, field):
-        if len(field.data):
-            if not len(form.notification_title.data) or not len(form.notification_body.data):
-                message = field.gettext('Notification Body and Title is required when a Notification URL is used')
-                raise ValidationError(message)
 
 class ValidateAppRiseServers(object):
     """
@@ -734,17 +720,7 @@ class quickWatchForm(Form):
 class commonSettingsForm(Form):
     from . import processors
 
-    def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
-        super().__init__(formdata, obj, prefix, data, meta, **kwargs)
-        self.notification_body.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
-        self.notification_title.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
-        self.notification_urls.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
-
     fetch_backend = RadioField(_l('Fetch Method'), choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
-    notification_body = TextAreaField(_l('Notification Body'), default='{{ watch_url }} had a change.', validators=[validators.Optional(), ValidateJinja2Template()])
-    notification_format = SelectField(_l('Notification format'), choices=list(valid_notification_formats.items()))
-    notification_title = StringField(_l('Notification Title'), default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
-    notification_urls = StringListField(_l('Notification URL List'), validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
     processor = RadioField( label=_l("Processor - What do you want to achieve?"), choices=lambda: processors.available_processors(), default=processors.get_default_processor)
     scheduler_timezone_default = StringField(_l("Default timezone for watch check scheduler"), render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
     webdriver_delay = IntegerField(_l('Wait seconds before extracting text'), validators=[validators.Optional(), validators.NumberRange(min=1, message=_l("Should contain one or more seconds"))])
@@ -1040,12 +1016,6 @@ class globalSettingsForm(Form):
     # Define these as FormFields/"sub forms", this way it matches the JSON storage
     # datastore.data['settings']['application']..
     # datastore.data['settings']['requests']..
-    def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
-        super().__init__(formdata, obj, prefix, data, meta, **kwargs)
-        self.application.notification_body.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
-        self.application.notification_title.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
-        self.application.notification_urls.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
-
     requests = FormField(globalSettingsRequestForm)
     application = FormField(globalSettingsApplicationForm)
     save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})

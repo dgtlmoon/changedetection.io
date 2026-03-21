@@ -7,6 +7,9 @@
     <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('tags.') %}active{% endif %}">
         <a href="{{ url_for('tags.tags_overview_page') }}" class="pure-menu-link">{{ _('GROUPS') }}</a>
     </li>
+    <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('notification_profiles.') %}active{% endif %}">
+        <a href="{{ url_for('notification_profiles.index') }}" class="pure-menu-link">{{ _('NOTIFICATIONS') }}</a>
+    </li>
     <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('settings.') %}active{% endif %}">
         <a href="{{ url_for('settings.settings_page') }}" class="pure-menu-link">{{ _('SETTINGS') }}</a>
     </li>

@@ -273,7 +273,7 @@ Math: {{ 1 + 1 }}") }}
 
             <div class="tab-pane-inner" id="notifications">
                 <fieldset>
-                    <div  class="pure-control-group inline-radio">
+                    <div class="pure-control-group inline-radio">
                       {{ render_ternary_field(form.notification_muted, BooleanField=true) }}
                     </div>
                     {% if capabilities.supports_screenshots %}
@@ -284,15 +284,21 @@ Math: {{ 1 + 1 }}") }}
                         </span>
                     </div>
                     {% endif %}
-                    <div class="field-group" id="notification-field-group">
-                        {% if has_default_notification_urls %}
-                        <div class="inline-warning">
-                            <img class="inline-warning-icon" src="{{url_for('static_content', group='images', filename='notice.svg')}}" alt="{{ _('Look out!') }}" title="{{ _('Lookout!') }}" >
-                            {{ _('There are') }} <a href="{{ url_for('settings.settings_page')}}#notifications">{{ _('system-wide notification URLs enabled') }}</a>, {{ _('this form will override notification settings for this watch only') }} &dash; {{ _('an empty Notification URL list here will still send notifications.') }}
+                    <div class="pure-control-group">
+                        {% from '_notification_profiles_selector.html' import render_notification_profile_selector %}
+                        {{ render_notification_profile_selector(
+                            own_profiles=watch.get('notification_profiles', []),
+                            inherited_profiles=inherited_notification_profiles,
+                            all_profile_data=settings_application.get('notification_profile_data', {}),
+                            registry=notification_registry
+                        ) }}
+                    </div>
+                    <div class="pure-control-group" style="margin-top: 1em;">
+                        <button id="send-test-notification" type="button" class="pure-button button-secondary">{{ _('Send test notification') }}</button>
+                        <div class="notifications-wrapper" style="display:inline-block; margin-left: 8px;">
+                            <div class="spinner" style="display: none;"></div>
+                            <div id="notification-test-log" style="display: none;"><span class="pure-form-message-inline"></span></div>
                         </div>
-                        {% endif %}
-                        <a href="#notifications" id="notification-setting-reset-to-default" class="pure-button button-xsmall" style="right: 20px; top: 20px; position: absolute; background-color: #5f42dd; border-radius: 4px; font-size: 70%; color: #fff">{{ _('Use system defaults') }}</a>
-                        {{ render_common_settings_form(form, emailprefix, settings_application, extra_notification_token_placeholder_info) }}
                     </div>
                 </fieldset>
             </div>

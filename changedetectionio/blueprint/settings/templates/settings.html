@@ -103,7 +103,18 @@
 
             <div class="tab-pane-inner" id="notifications">
                 <fieldset>
-                    {{ render_common_settings_form(form.application.form, emailprefix, settings_application, extra_notification_token_placeholder_info) }}
+                    <div class="pure-control-group">
+                        <label>{{ _('System-wide notification profiles') }}</label>
+                        <p class="pure-form-message-inline">{{ _('Profiles linked here fire for every watch that has no profiles of its own (or its groups).') }}
+                        <a href="{{ url_for('notification_profiles.index') }}">{{ _('Manage profiles →') }}</a></p>
+                        {% from '_notification_profiles_selector.html' import render_notification_profile_selector %}
+                        {{ render_notification_profile_selector(
+                            own_profiles=settings_application.get('notification_profiles', []),
+                            inherited_profiles=[],
+                            all_profile_data=settings_application.get('notification_profile_data', {}),
+                            registry=notification_registry
+                        ) }}
+                    </div>
                 </fieldset>
                 <div class="pure-control-group" id="notification-base-url">
                     {{ render_field(form.application.form.base_url, class="m-d") }}

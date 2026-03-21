@@ -290,13 +290,29 @@ class NotificationService:
     def __init__(self, datastore, notification_q):
         self.datastore = datastore
         self.notification_q = notification_q
-    
-    def queue_notification_for_watch(self, n_object: NotificationContextData, watch, date_index_from=-2, date_index_to=-1):
-        """
-        Queue a notification for a watch with full diff rendering and template variables
-        """
-        from changedetectionio.notification import USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
 
+    def _log_profile_send(self, profile: dict, watch=None, *, status: str, message: str = ''):
+        """Write one entry to the per-profile notification log."""
+        try:
+            from changedetectionio.notification_profiles.log import write_profile_log
+            write_profile_log(
+                self.datastore.datastore_path,
+                profile_uuid=profile.get('uuid', ''),
+                watch_url=watch.get('url', '') if watch else '',
+                watch_uuid=watch.get('uuid', '') if watch else '',
+                status=status,
+                message=message,
+            )
+        except Exception as log_err:
+            logger.warning(f"Could not write profile log: {log_err}")
+    
+    def queue_notification_for_watch(self, n_object: NotificationContextData, watch,
+                                      profile=None, type_handler=None,
+                                      date_index_from=-2, date_index_to=-1):
+        """
+        Build full notification context and either queue it (via type_handler.send) or return it.
+        profile and type_handler come from resolve_notification_profiles().
+        """
         if not isinstance(n_object, NotificationContextData):
             raise TypeError(f"Expected NotificationContextData, got {type(n_object)}")
 
@@ -308,16 +324,10 @@ class NotificationService:
             dates = list(watch_history.keys())
             trigger_text = watch.get('trigger_text', [])
 
-        # Add text that was triggered
         if len(dates):
             snapshot_contents = watch.get_history_snapshot(timestamp=dates[-1])
         else:
             snapshot_contents = "No snapshot/history available, the watch should fetch atleast once."
-
-        # If we ended up here with "System default"
-        if n_object.get('notification_format') == USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH:
-            n_object['notification_format'] = self.datastore.data['settings']['application'].get('notification_format')
-
 
         triggered_text = ''
         if len(trigger_text):
@@ -326,7 +336,6 @@ class NotificationService:
             if triggered_text:
                 triggered_text = '\n'.join(triggered_text)
 
-        # Could be called as a 'test notification' with only 1 snapshot available
         prev_snapshot = "Example text: example test\nExample text: change detection is cool\nExample text: some more examples\n"
         current_snapshot = "Example text: example test\nExample text: change detection is fantastic\nExample text: even more examples\nExample text: a lot more examples"
 
@@ -334,14 +343,19 @@ class NotificationService:
             prev_snapshot = watch.get_history_snapshot(timestamp=dates[date_index_from])
             current_snapshot = watch.get_history_snapshot(timestamp=dates[date_index_to])
 
-
         n_object.update(set_basic_notification_vars(current_snapshot=current_snapshot,
                                                     prev_snapshot=prev_snapshot,
                                                     watch=watch,
                                                     triggered_text=triggered_text,
                                                     timestamp_changed=dates[date_index_to]))
 
-        if self.notification_q:
+        # Include screenshot if configured on the watch
+        n_object['notification_screenshot'] = watch.get('notification_screenshot', False) if watch else False
+
+        if type_handler and profile:
+            logger.debug(f"Sending via profile type_handler {type_handler.type_id}")
+            type_handler.send(profile.get('config', {}), n_object, self.datastore)
+        elif self.notification_q:
             logger.debug("Queued notification for sending")
             self.notification_q.put(n_object)
         else:
@@ -350,54 +364,83 @@ class NotificationService:
 
     def send_content_changed_notification(self, watch_uuid):
         """
-        Send notification when content changes are detected
+        Send notification when content changes are detected.
+        Fires all NotificationProfiles linked to the watch (via watch → tags → system cascade).
         """
-        n_object = NotificationContextData()
+        from changedetectionio.model.resolver import resolve_setting
+        from changedetectionio.notification_profiles.resolver import resolve_notification_profiles
+
         watch = self.datastore.data['watching'].get(watch_uuid)
         if not watch:
-            return
+            return False
+
+        # Mute cascade: watch → tag → system
+        muted = resolve_setting(watch, self.datastore, 'notification_muted', sentinel_values={None}, default=False)
+        if muted:
+            return False
 
         watch_history = watch.history
         dates = list(watch_history.keys())
-        # Theoretically it's possible that this could be just 1 long,
-        # - In the case that the timestamp key was not unique
         if len(dates) == 1:
             raise ValueError(
                 "History index had 2 or more, but only 1 date loaded, timestamps were not unique? maybe two of the same timestamps got written, needs more delay?"
             )
 
-        # Should be a better parent getter in the model object
+        profiles = resolve_notification_profiles(watch, self.datastore)
+        if not profiles:
+            return False
 
-        # Prefer - Individual watch settings > Tag settings >  Global settings (in that order)
-        # this change probably not needed?
-        n_object['notification_urls'] = _check_cascading_vars(self.datastore, 'notification_urls', watch)
-        n_object['notification_title'] = _check_cascading_vars(self.datastore,'notification_title', watch)
-        n_object['notification_body'] = _check_cascading_vars(self.datastore,'notification_body', watch)
-        n_object['notification_format'] = _check_cascading_vars(self.datastore,'notification_format', watch)
-
-        # (Individual watch) Only prepare to notify if the rules above matched
         queued = False
-        if n_object and n_object.get('notification_urls'):
-            queued = True
+        for profile, type_handler in profiles:
+            n_object = NotificationContextData()
+            try:
+                self.queue_notification_for_watch(n_object=n_object, watch=watch,
+                                                  profile=profile, type_handler=type_handler)
+                queued = True
+                self._log_profile_send(profile, watch, status='ok')
+            except Exception as e:
+                err_str = str(e)
+                logger.error(f"Notification profile '{profile.get('name', profile.get('uuid'))}' failed for watch {watch_uuid}: {e}")
+                self._log_profile_send(profile, watch, status='error', message=err_str)
+                self.datastore.update_watch(uuid=watch_uuid,
+                                            update_obj={'last_notification_error': "Notification error detected, goto notification log."})
+                try:
+                    from changedetectionio.flask_app import notification_debug_log
+                    notification_debug_log += err_str.splitlines()
+                    notification_debug_log[:] = notification_debug_log[-100:]
+                except Exception:
+                    pass
 
+        if queued:
             count = watch.get('notification_alert_count', 0) + 1
             self.datastore.update_watch(uuid=watch_uuid, update_obj={'notification_alert_count': count})
-
-            self.queue_notification_for_watch(n_object=n_object, watch=watch)
 
         return queued
 
     def send_filter_failure_notification(self, watch_uuid):
         """
-        Send notification when CSS/XPath filters fail consecutively
+        Send notification when CSS/XPath filters fail consecutively.
+        Fires via the resolved notification profiles for the watch.
         """
+        from changedetectionio.notification_profiles.resolver import resolve_notification_profiles
+        from changedetectionio.model.resolver import resolve_setting
+
         threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts')
         watch = self.datastore.data['watching'].get(watch_uuid)
         if not watch:
             return
 
+        # Mute cascade check
+        muted = resolve_setting(watch, self.datastore, 'notification_muted', sentinel_values={None}, default=False)
+        if muted:
+            return
+
+        profiles = resolve_notification_profiles(watch, self.datastore)
+        if not profiles:
+            logger.debug(f"NOT sending filter not found notification for {watch_uuid} - no notification profiles")
+            return
+
         filter_list = ", ".join(watch['include_filters'])
-        # @todo - This could be a markdown template on the disk, apprise will convert the markdown to HTML+Plaintext parts in the email, and then 'markup_text_links_to_html_links' is not needed
         body = f"""Hello,
 
 Your configured CSS/xPath filters of '{filter_list}' for {{{{watch_url}}}} did not appear on the page after {threshold} attempts.
@@ -408,47 +451,55 @@ Edit link: {{{{base_url}}}}/edit/{{{{watch_uuid}}}}
 
 Thanks - Your omniscient changedetection.io installation.
 """
-
         n_object = NotificationContextData({
             'notification_title': 'Changedetection.io - Alert - CSS/xPath filter was not present in the page',
             'notification_body': body,
-            'notification_format': _check_cascading_vars(self.datastore, 'notification_format', watch),
+            'watch_url': watch['url'],
+            'uuid': watch_uuid,
+            'watch_uuid': watch_uuid,
+            'screenshot': None,
         })
-        n_object['markup_text_links_to_html_links'] = n_object.get('notification_format').startswith('html')
 
-        if len(watch['notification_urls']):
-            n_object['notification_urls'] = watch['notification_urls']
+        # Use the notification_format from the profile config, or fall back to system default
+        from changedetectionio.notification import default_notification_format
+        n_object['notification_format'] = default_notification_format
+        n_object['markup_text_links_to_html_links'] = n_object.get('notification_format', '').startswith('html')
 
-        elif len(self.datastore.data['settings']['application']['notification_urls']):
-            n_object['notification_urls'] = self.datastore.data['settings']['application']['notification_urls']
+        for profile, type_handler in profiles:
+            try:
+                type_handler.send(profile.get('config', {}), n_object, self.datastore)
+                self._log_profile_send(profile, watch, status='ok', message='Filter failure alert')
+            except Exception as e:
+                logger.error(f"Filter failure notification via profile '{profile.get('name')}' failed: {e}")
+                self._log_profile_send(profile, watch, status='error', message=str(e))
 
-        # Only prepare to notify if the rules above matched
-        if 'notification_urls' in n_object:
-            n_object.update({
-                'watch_url': watch['url'],
-                'uuid': watch_uuid,
-                'screenshot': None
-            })
-            self.notification_q.put(n_object)
-            logger.debug(f"Sent filter not found notification for {watch_uuid}")
-        else:
-            logger.debug(f"NOT sending filter not found notification for {watch_uuid} - no notification URLs")
+        logger.debug(f"Sent filter not found notification for {watch_uuid} via {len(profiles)} profile(s)")
 
     def send_step_failure_notification(self, watch_uuid, step_n):
         """
-        Send notification when browser steps fail consecutively
+        Send notification when browser steps fail consecutively.
+        Fires via the resolved notification profiles for the watch.
         """
+        from changedetectionio.notification_profiles.resolver import resolve_notification_profiles
+        from changedetectionio.model.resolver import resolve_setting
+
         watch = self.datastore.data['watching'].get(watch_uuid, False)
         if not watch:
             return
+
+        muted = resolve_setting(watch, self.datastore, 'notification_muted', sentinel_values={None}, default=False)
+        if muted:
+            return
+
+        profiles = resolve_notification_profiles(watch, self.datastore)
+        if not profiles:
+            return
+
         threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts')
-
         step = step_n + 1
-        # @todo - This could be a markdown template on the disk, apprise will convert the markdown to HTML+Plaintext parts in the email, and then 'markup_text_links_to_html_links' is not needed
 
-        # {{{{ }}}} because this will be Jinja2 {{ }} tokens
         body = f"""Hello,
-        
+
 Your configured browser step at position {step} for the web page watch {{{{watch_url}}}} did not appear on the page after {threshold} attempts, did the page change layout?
 
 The element may have moved and needs editing, or does it need a delay added?
@@ -457,28 +508,26 @@ Edit link: {{{{base_url}}}}/edit/{{{{watch_uuid}}}}
 
 Thanks - Your omniscient changedetection.io installation.
 """
-
+        from changedetectionio.notification import default_notification_format
         n_object = NotificationContextData({
             'notification_title': f"Changedetection.io - Alert - Browser step at position {step} could not be run",
             'notification_body': body,
-            'notification_format': self._check_cascading_vars('notification_format', watch),
+            'notification_format': default_notification_format,
+            'watch_url': watch['url'],
+            'uuid': watch_uuid,
+            'watch_uuid': watch_uuid,
+            'screenshot': None,
         })
-        n_object['markup_text_links_to_html_links'] = n_object.get('notification_format').startswith('html')
 
-        if len(watch['notification_urls']):
-            n_object['notification_urls'] = watch['notification_urls']
+        for profile, type_handler in profiles:
+            try:
+                type_handler.send(profile.get('config', {}), n_object, self.datastore)
+                self._log_profile_send(profile, watch, status='ok', message='Browser step failure alert')
+            except Exception as e:
+                logger.error(f"Step failure notification via profile '{profile.get('name')}' failed: {e}")
+                self._log_profile_send(profile, watch, status='error', message=str(e))
 
-        elif len(self.datastore.data['settings']['application']['notification_urls']):
-            n_object['notification_urls'] = self.datastore.data['settings']['application']['notification_urls']
-
-        # Only prepare to notify if the rules above matched
-        if 'notification_urls' in n_object:
-            n_object.update({
-                'watch_url': watch['url'],
-                'uuid': watch_uuid
-            })
-            self.notification_q.put(n_object)
-            logger.error(f"Sent step not found notification for {watch_uuid}")
+        logger.error(f"Sent step not found notification for {watch_uuid} via {len(profiles)} profile(s)")
 
 
 # Convenience functions for creating notification service instances

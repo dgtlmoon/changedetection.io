@@ -3,7 +3,7 @@ Utility functions for RSS feed generation.
 """
 
 from changedetectionio.notification.handler import process_notification
-from changedetectionio.notification_service import NotificationContextData, _check_cascading_vars
+from changedetectionio.notification_service import NotificationContextData
 from loguru import logger
 import datetime
 import pytz
@@ -71,7 +71,14 @@ def validate_rss_token(datastore, request):
 def get_rss_template(datastore, watch, rss_content_format, default_html, default_plaintext):
     """Get the appropriate template for RSS content."""
     if datastore.data['settings']['application'].get('rss_template_type') == 'notification_body':
-        return _check_cascading_vars(datastore=datastore, var_name='notification_body', watch=watch)
+        # Resolve notification body from the profile chain (watch → tag → system)
+        from changedetectionio.notification_profiles.resolver import resolve_notification_profiles
+        from changedetectionio.notification import default_notification_body
+        for profile, _ in resolve_notification_profiles(watch, datastore):
+            body = profile.get('config', {}).get('notification_body')
+            if body:
+                return body
+        return default_notification_body
 
     override = datastore.data['settings']['application'].get('rss_template_override')
     if override and override.strip():

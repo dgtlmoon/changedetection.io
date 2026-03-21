@@ -51,10 +51,8 @@ class model(dict):
                     'ignore_whitespace': True,
                     'ignore_status_codes': False, #@todo implement, as ternary.
                     'ssim_threshold': '0.96',  # Default SSIM threshold for screenshot comparison
-                    'notification_body': default_notification_body,
-                    'notification_format': default_notification_format,
-                    'notification_title': default_notification_title,
-                    'notification_urls': [], # Apprise URL list
+                    'notification_profile_data': {},  # uuid → NotificationProfile dict (the actual stored profiles)
+                    'notification_profiles': [],      # System-level linked NotificationProfile UUIDs
                     'pager_size': 50,
                     'password': False,
                     'render_anchor_tag_content': False,
