@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-23 03:54+0100\n"
-"PO-Revision-Date: 2026-03-08 19:58+0100\n"
+"PO-Revision-Date: 2026-03-20 18:13+0100\n"
 "Last-Translator: Adrian Gonzalez <adrian@example.com>\n"
 "Language-Team: Español\n"
 "Language: es\n"
@@ -13,12 +13,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.16.0\n"
+"X-Generator: Poedit 3.9\n"
 
 #: changedetectionio/blueprint/backups/__init__.py
 msgid "A backup is already running, check back in a few minutes"
-msgstr ""
-"Ya se está ejecutando una copia de seguridad. Vuelve a comprobarla en unos "
-"minutos."
+msgstr "Ya se está ejecutando una copia de seguridad. Vuelve a comprobarla en unos minutos"
 
 #: changedetectionio/blueprint/backups/__init__.py
 msgid "Maximum number of backups reached, please remove some"
@@ -26,9 +25,7 @@ msgstr "Se alcanzó el número máximo de copias de seguridad; elimine algunas"
 
 #: changedetectionio/blueprint/backups/__init__.py
 msgid "Backup building in background, check back in a few minutes."
-msgstr ""
-"La copia de seguridad se está creando en segundo plano. Vuelve a comprobarlo"
-" en unos minutos."
+msgstr "La copia de seguridad se está creando en segundo plano. Vuelve a comprobarlo en unos minutos."
 
 #: changedetectionio/blueprint/backups/__init__.py
 msgid "Backups were deleted."
@@ -58,16 +55,13 @@ msgstr "Incluir monitores"
 msgid "Replace existing watches of the same UUID"
 msgstr "Reemplazar monitores existentes del mismo UUID"
 
-#: changedetectionio/blueprint/backups/restore.py
-#: changedetectionio/blueprint/backups/templates/backup_restore.html
+#: changedetectionio/blueprint/backups/restore.py changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Restore backup"
 msgstr "Restaurar copia de seguridad"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "A restore is already running, check back in a few minutes"
-msgstr ""
-"Ya se está ejecutando una restauración, vuelve a comprobarlo en unos "
-"minutos."
+msgstr "Ya se está ejecutando una restauración, vuelve a comprobarlo en unos minutos"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "No file uploaded"
@@ -83,17 +77,13 @@ msgstr "Archivo zip no válido o dañado"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "Restore started in background, check back in a few minutes."
-msgstr ""
-"La restauración comenzó en segundo plano, vuelve a comprobarlo en unos "
-"minutos."
+msgstr "La restauración comenzó en segundo plano, vuelve a comprobarlo en unos minutos."
 
-#: changedetectionio/blueprint/backups/templates/backup_create.html
-#: changedetectionio/blueprint/backups/templates/backup_restore.html
+#: changedetectionio/blueprint/backups/templates/backup_create.html changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Create"
 msgstr "Crear"
 
-#: changedetectionio/blueprint/backups/templates/backup_create.html
-#: changedetectionio/blueprint/backups/templates/backup_restore.html
+#: changedetectionio/blueprint/backups/templates/backup_create.html changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Restore"
 msgstr "Restaurar"
 
@@ -102,12 +92,8 @@ msgid "A backup is running!"
 msgstr "¡Se está ejecutando una copia de seguridad!"
 
 #: changedetectionio/blueprint/backups/templates/backup_create.html
-msgid ""
-"Here you can download and request a new backup, when a backup is completed "
-"you will see it listed below."
-msgstr ""
-"Aquí puede descargar y solicitar una nueva copia de seguridad; cuando se "
-"complete una copia de seguridad, la verá en la lista a continuación."
+msgid "Here you can download and request a new backup, when a backup is completed you will see it listed below."
+msgstr "Aquí puede descargar y solicitar una nueva copia de seguridad; cuando se complete una copia de seguridad, la verá en la lista a continuación."
 
 #: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "Mb"
@@ -130,20 +116,14 @@ msgid "A restore is running!"
 msgstr "¡Se está ejecutando una restauración!"
 
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
-msgid ""
-"Restore a backup. Must be a .zip backup file created on/after v0.53.1 (new "
-"database layout)."
+msgid "Restore a backup. Must be a .zip backup file created on/after v0.53.1 (new database layout)."
 msgstr ""
-"Restaurar una copia de seguridad. Debe ser un archivo de copia de seguridad "
-".zip creado a partir de la versión 0.53.1 (nuevo diseño de base de datos)."
+"Restaurar una copia de seguridad. Debe ser un archivo de copia de seguridad .zip creado a partir de la versión 0.53.1 (nuevo diseño de base de "
+"datos)."
 
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
-msgid ""
-"Note: This does not override the main application settings, only watches and"
-" groups."
-msgstr ""
-"Nota: Esto no sobrescribe la configuración principal de la aplicación, solo "
-"monitores y grupos."
+msgid "Note: This does not override the main application settings, only watches and groups."
+msgstr "Nota: Esto no sobrescribe la configuración principal de la aplicación, solo monitores y grupos."
 
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Include all groups found in backup?"
@@ -162,12 +142,8 @@ msgid "Replace any existing watches of the same UUID?"
 msgstr "¿Reemplazar cualquier monitor existente con el mismo UUID?"
 
 #: changedetectionio/blueprint/imports/importer.py
-msgid ""
-"Importing 5,000 of the first URLs from your list, the rest can be imported "
-"again."
-msgstr ""
-"Importando 5.000 de las primeras URL de tu lista, el resto se puede importar"
-" nuevamente."
+msgid "Importing 5,000 of the first URLs from your list, the rest can be imported again."
+msgstr "Importando 5.000 de las primeras URL de tu lista, el resto se puede importar nuevamente."
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "{} Imported from list in {:.2f}s, {} Skipped."
@@ -187,24 +163,15 @@ msgstr "{} importado de Distill.io en {:.2f}s, {} omitido."
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read export XLSX file, something wrong with the file?"
-msgstr ""
-"No se puede leer el archivo XLSX exportado, ¿hay algún problema con el "
-"archivo?"
+msgstr "No se puede leer el archivo XLSX exportado, ¿hay algún problema con el archivo?"
 
 #: changedetectionio/blueprint/imports/importer.py
-msgid ""
-"Error processing row number {}, URL value was incorrect, row was skipped."
-msgstr ""
-"Error al procesar la fila número {}, el valor de la URL era incorrecto y se "
-"omitió la fila."
+msgid "Error processing row number {}, URL value was incorrect, row was skipped."
+msgstr "Error al procesar la fila número {}, el valor de la URL era incorrecto y se omitió la fila."
 
 #: changedetectionio/blueprint/imports/importer.py
-msgid ""
-"Error processing row number {}, check all cell data types are correct, row "
-"was skipped."
-msgstr ""
-"Error al procesar la fila número {}, compruebe que todos los tipos de datos "
-"de celda sean correctos; se omitió la fila."
+msgid "Error processing row number {}, check all cell data types are correct, row was skipped."
+msgstr "Error al procesar la fila número {}, compruebe que todos los tipos de datos de celda sean correctos; se omitió la fila."
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "{} imported from Wachete .xlsx in {:.2f}s"
@@ -228,20 +195,15 @@ msgstr ".XLSX y Wachete"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Restoring changedetection.io backups is in the"
-msgstr ""
-"Restaurar las copias de seguridad de changetection.io se encuentra en el"
+msgstr "Restaurar las copias de seguridad de changetection.io se encuentra en el"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "backups section"
 msgstr "sección de copias de seguridad"
 
 #: changedetectionio/blueprint/imports/templates/import.html
-msgid ""
-"Enter one URL per line, and optionally add tags for each URL after a space, "
-"delineated by comma (,):"
-msgstr ""
-"Ingrese una URL por línea y, opcionalmente, agregue etiquetas para cada URL "
-"después de un espacio, delimitado por una coma (,):"
+msgid "Enter one URL per line, and optionally add tags for each URL after a space, delineated by comma (,):"
+msgstr "Ingrese una URL por línea y, opcionalmente, agregue etiquetas para cada URL después de un espacio, delimitado por una coma (,):"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Example:"
@@ -252,12 +214,8 @@ msgid "URLs which do not pass validation will stay in the textarea."
 msgstr "Las URL que no pasen la validación permanecerán en el área de texto."
 
 #: changedetectionio/blueprint/imports/templates/import.html
-msgid ""
-"Copy and Paste your Distill.io watch 'export' file, this should be a JSON "
-"file."
-msgstr ""
-"Copie y pegue el archivo de 'exportación' del monitor Distill.io, este "
-"debería ser un archivo JSON."
+msgid "Copy and Paste your Distill.io watch 'export' file, this should be a JSON file."
+msgstr "Copie y pegue el archivo de 'exportación' del monitor Distill.io, este debería ser un archivo JSON."
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "This is"
@@ -269,7 +227,7 @@ msgstr "experimental"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "supported fields are"
-msgstr "Los campos admitidos son"
+msgstr "los campos admitidos son"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "the rest (including"
@@ -285,14 +243,11 @@ msgstr "¿Cómo exportar?"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Be sure to set your default fetcher to Chrome if required."
-msgstr ""
-"Asegúrese de configurar su buscador predeterminado en Chrome si es "
-"necesario."
+msgstr "Asegúrese de configurar su buscador predeterminado en Chrome si es necesario."
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Table of custom column and data types mapping for the"
-msgstr ""
-"Tabla de asignación de tipos de datos y columnas personalizadas para el"
+msgstr "Tabla de asignación de tipos de datos y columnas personalizadas para el"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Custom mapping"
@@ -337,23 +292,16 @@ msgstr "Ver con UUID%(uuid)sextraviado"
 
 #: changedetectionio/blueprint/rss/single_watch.py
 #, python-format
-msgid ""
-"Watch %(uuid)s does not have enough history snapshots to show changes (need "
-"at least 2)"
-msgstr ""
-"Mirar%(uuid)sno tiene suficientes instantáneas del historial para mostrar "
-"los cambios (se necesitan al menos 2)"
+msgid "Watch %(uuid)s does not have enough history snapshots to show changes (need at least 2)"
+msgstr "Mirar%(uuid)sno tiene suficientes instantáneas del historial para mostrar los cambios (se necesitan al menos 2)"
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Password protection removed."
 msgstr "Se eliminó la protección con contraseña."
 
 #: changedetectionio/blueprint/settings/__init__.py
-msgid ""
-"Warning: Worker count ({}) is close to or exceeds available CPU cores ({})"
-msgstr ""
-"Advertencia: recuento de trabajadores ({} ) está cerca o excede los núcleos "
-"de CPU disponibles ({} )"
+msgid "Warning: Worker count ({}) is close to or exceeds available CPU cores ({})"
+msgstr "Advertencia: recuento de trabajadores ({} ) está cerca o excede los núcleos de CPU disponibles ({} )"
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Worker count adjusted: {}"
@@ -361,9 +309,7 @@ msgstr "Conteo de trabajadores ajustado:{}"
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Dynamic worker adjustment not supported for sync workers"
-msgstr ""
-"El ajuste dinámico de trabajadores no es compatible con trabajadores "
-"sincronizados"
+msgstr "El ajuste dinámico de trabajadores no es compatible con trabajadores sincronizados"
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Error adjusting workers: {}"
@@ -377,9 +323,7 @@ msgstr "Protección con contraseña habilitada."
 msgid "Settings updated."
 msgstr "Configuración actualizada."
 
-#: changedetectionio/blueprint/settings/__init__.py
-#: changedetectionio/blueprint/ui/edit.py
-#: changedetectionio/processors/extract.py
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/ui/edit.py changedetectionio/processors/extract.py
 msgid "An error occurred, please see below."
 msgstr "Se produjo un error, consulte a continuación."
 
@@ -407,15 +351,14 @@ msgstr "Todas las notificaciones activadas."
 msgid "Notification debug log"
 msgstr "Registro de depuración de notificaciones"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "General"
 msgstr "General"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Fetching"
-msgstr "Atractivo"
+msgstr "Obteniendo"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Global Filters"
@@ -451,21 +394,15 @@ msgstr "Información"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default recheck time for all watches, current system minimum is"
-msgstr ""
-"Tiempo de revisión predeterminado para todos los monitores, el mínimo actual"
-" del sistema es"
+msgstr "Tiempo de revisión predeterminado para todos los monitores, el mínimo actual del sistema es"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "more info"
 msgstr "más información"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"After this many consecutive times that the CSS/xPath filter is missing, send"
-" a notification"
-msgstr ""
-"Después de tantas veces consecutivas que falta el filtro CSS/xPath, envíe "
-"una notificación"
+msgid "After this many consecutive times that the CSS/xPath filter is missing, send a notification"
+msgstr "Después de tantas veces consecutivas que falta el filtro CSS/xPath, envíe una notificación"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Set to"
@@ -475,14 +412,9 @@ msgstr "Empezar a"
 msgid "to disable"
 msgstr "deshabilitar"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid ""
-"Limit collection of history snapshots for each watch to this number of "
-"history items."
-msgstr ""
-"Limite la recopilación de instantáneas del historial para cada monitor a "
-"esta cantidad de elementos del historial."
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Limit collection of history snapshots for each watch to this number of history items."
+msgstr "Limite la recopilación de instantáneas del historial para cada monitor a esta cantidad de elementos del historial."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Set to empty to disable / no limit"
@@ -497,21 +429,14 @@ msgid "Password is locked."
 msgstr "La contraseña está bloqueada."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"Allow access to the watch change history page when password is enabled (Good"
-" for sharing the diff page)"
+msgid "Allow access to the watch change history page when password is enabled (Good for sharing the diff page)"
 msgstr ""
-"Permitir el acceso a la página del historial de cambios del monitor cuando "
-"la contraseña está habilitada (bueno para compartir la página de "
+"Permitir el acceso a la página del historial de cambios del monitor cuando la contraseña está habilitada (bueno para compartir la página de "
 "diferencias)"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"When a request returns no content, or the HTML does not contain any text, is"
-" this considered a change?"
-msgstr ""
-"Cuando una solicitud no devuelve contenido o el HTML no contiene ningún "
-"texto, ¿se considera esto un cambio?"
+msgid "When a request returns no content, or the HTML does not contain any text, is this considered a change?"
+msgstr "Cuando una solicitud no devuelve contenido o el HTML no contiene ningún texto, ¿se considera esto un cambio?"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Choose a default proxy for all watches"
@@ -527,74 +452,52 @@ msgstr "token en enlaces de notificación."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default value is the system environment variable"
-msgstr "El valor predeterminado es la variable de entorno del sistema."
+msgstr "El valor predeterminado es la variable de entorno del sistema"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/templates/_common_fields.html
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/_common_fields.html
 msgid "read more here"
 msgstr "leer más aquí"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"method (default) where your watched sites don't need Javascript to render."
-msgstr ""
-"método (predeterminado) donde los sitios observados no necesitan Javascript "
-"para renderizarse."
+msgid "method (default) where your watched sites don't need Javascript to render."
+msgstr "método (predeterminado) donde los sitios observados no necesitan Javascript para renderizarse."
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use the"
 msgstr "Utilice el"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Basic"
 msgstr "Básico"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"method requires a network connection to a running WebDriver+Chrome server, "
-"set by the ENV var"
-msgstr ""
-"El método requiere una conexión de red a un servidor WebDriver+Chrome en "
-"ejecución, establecido por la var ENV"
+msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var"
+msgstr "este método requiere una conexión de red a un servidor WebDriver+Chrome en ejecución, configurado mediante la variable de entorno ENV"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "The"
 msgstr "El"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Chrome/Javascript"
 msgstr "Cromo/Javascript"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid ""
-"If you're having trouble waiting for the page to be fully rendered (text "
-"missing etc), try increasing the 'wait' time here."
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "If you're having trouble waiting for the page to be fully rendered (text missing etc), try increasing the 'wait' time here."
 msgstr ""
-"Si tiene problemas para esperar a que la página se represente por completo "
-"(falta texto, etc.), intente aumentar el tiempo de \"espera\" aquí."
+"Si tiene problemas para esperar a que la página se represente por completo (falta texto, etc.), intente aumentar el tiempo de \"espera\" aquí."
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "This will wait"
 msgstr "Esto esperará"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "seconds before extracting the text."
 msgstr "segundos antes de extraer el texto."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"Number of concurrent workers to process watches. More workers = faster "
-"processing but higher memory usage."
-msgstr ""
-"Número de trabajadores simultáneos para procesar monitores. Más trabajadores"
-" = procesamiento más rápido pero mayor uso de memoria."
+msgid "Number of concurrent workers to process watches. More workers = faster processing but higher memory usage."
+msgstr "Número de trabajadores simultáneos para procesar monitores. Más trabajadores = procesamiento más rápido pero mayor uso de memoria."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Currently running:"
@@ -613,109 +516,70 @@ msgid "actively processing"
 msgstr "procesando activamente"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"Example - 3 seconds random jitter could trigger up to 3 seconds earlier or "
-"up to 3 seconds later"
-msgstr ""
-"Ejemplo: una fluctuación aleatoria de 3 segundos podría activarse hasta 3 "
-"segundos antes o hasta 3 segundos después"
+msgid "Example - 3 seconds random jitter could trigger up to 3 seconds earlier or up to 3 seconds later"
+msgstr "Ejemplo: una fluctuación aleatoria de 3 segundos podría activarse hasta 3 segundos antes o hasta 3 segundos después"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"For regular plain requests (not chrome based), maximum number of seconds "
-"until timeout, 1-999."
-msgstr ""
-"Para solicitudes simples regulares (no basadas en Chrome), número máximo de "
-"segundos hasta el tiempo de espera, 1-999."
+msgid "For regular plain requests (not chrome based), maximum number of seconds until timeout, 1-999."
+msgstr "Para solicitudes simples regulares (no basadas en Chrome), número máximo de segundos hasta el tiempo de espera, 1-999."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Applied to all requests."
 msgstr "Aplicado a todas las solicitudes."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"Note: Simply changing the User-Agent often does not defeat anti-robot "
-"technologies, it's important to consider"
-msgstr ""
-"Nota: El simple hecho de cambiar el User-Agent a menudo no derrota a las "
-"tecnologías anti-robots; es importante tenerlo en cuenta."
+msgid "Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it's important to consider"
+msgstr "Nota: El simple hecho de cambiar el User-Agent a menudo no supera a las tecnologías anti-robots; es importante tenerlo en cuenta"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "all of the ways that the browser is detected"
 msgstr "todas las formas en que se detecta el navegador"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/edit.html
-#: changedetectionio/templates/_common_fields.html
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/diff.html
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/templates/_common_fields.html
 msgid "Tip:"
 msgstr "Consejo:"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Connect using Bright Data and Oxylabs Proxies, find out more here."
-msgstr ""
-"Conéctese utilizando Bright Data y Oxylabs Proxies; obtenga más información "
-"aquí."
+msgstr "Conéctese utilizando Bright Data y Oxylabs Proxies; obtenga más información aquí."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"Ignore whitespace, tabs and new-lines/line-feeds when considering if a "
-"change was detected."
-msgstr ""
-"Ignore los espacios en blanco, las tabulaciones y las nuevas líneas/avances "
-"de línea al considerar si se detectó un cambio."
+msgid "Ignore whitespace, tabs and new-lines/line-feeds when considering if a change was detected."
+msgstr "Ignore los espacios en blanco, las tabulaciones y las nuevas líneas/avances de línea al considerar si se detectó un cambio."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Note:"
 msgstr "Nota:"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"Changing this will change the status of your existing watches, possibly "
-"trigger alerts etc."
-msgstr ""
-"Cambiar esto cambiará el estado de sus monitores existentes, posiblemente "
-"activará alertas, etc."
+msgid "Changing this will change the status of your existing watches, possibly trigger alerts etc."
+msgstr "Cambiar esto cambiará el estado de sus monitores existentes, posiblemente activará alertas, etc."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"Render anchor tag content, default disabled, when enabled renders links as"
+msgid "Render anchor tag content, default disabled, when enabled renders links as"
 msgstr ""
-"Representar el contenido de la etiqueta de anclaje, deshabilitado de forma "
-"predeterminada; cuando está habilitado, los enlaces se muestran como"
+"Representar el contenido de la etiqueta de anclaje, deshabilitado de forma predeterminada; cuando está habilitado, los enlaces se muestran como"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"Changing this could affect the content of your existing watches, possibly "
-"trigger alerts etc."
-msgstr ""
-"Cambiar esto podría afectar el contenido de sus monitores existentes, "
-"posiblemente activar alertas, etc."
+msgid "Changing this could affect the content of your existing watches, possibly trigger alerts etc."
+msgstr "Cambiar esto podría afectar el contenido de sus monitores existentes, posiblemente activar alertas, etc."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"Remove HTML element(s) by CSS and XPath selectors before text conversion."
-msgstr ""
-"Elimine los elementos HTML mediante los selectores CSS y XPath antes de la "
-"conversión de texto."
+msgid "Remove HTML element(s) by CSS and XPath selectors before text conversion."
+msgstr "Elimine los elementos HTML mediante los selectores CSS y XPath antes de la conversión de texto."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Don't paste HTML here, use only CSS and XPath selectors"
 msgstr "No pegue HTML aquí, use solo selectores CSS y XPath"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"Add multiple elements, CSS or XPath selectors per line to ignore multiple "
-"parts of the HTML."
-msgstr ""
-"Agregue múltiples elementos, selectores CSS o XPath por línea para ignorar "
-"múltiples partes del HTML."
+msgid "Add multiple elements, CSS or XPath selectors per line to ignore multiple parts of the HTML."
+msgstr "Agregue múltiples elementos, selectores CSS o XPath por línea para ignorar múltiples partes del HTML."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Note: This is applied globally in addition to the per-watch rules."
-msgstr ""
-"Nota: Esto se aplica globalmente además de las reglas por visualización."
+msgstr "Nota: Esto se aplica globalmente además de las reglas por visualización."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Matching text will be"
@@ -726,41 +590,25 @@ msgid "ignored"
 msgstr "ignorado"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"in the text snapshot (you can still see it but it wont trigger a change)"
-msgstr ""
-"en la instantánea de texto (aún puedes verla pero no activará un cambio)"
+msgid "in the text snapshot (you can still see it but it wont trigger a change)"
+msgstr "en la instantánea de texto (aún puedes verla pero no activará un cambio)"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/templates/edit/text-options.html
-msgid ""
-"Each line processed separately, any line matching will be ignored (removed "
-"before creating the checksum)"
-msgstr ""
-"Cada línea se procesa por separado, cualquier coincidencia de líneas se "
-"ignorará (se eliminará antes de crear la suma de verificación)"
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
+msgid "Each line processed separately, any line matching will be ignored (removed before creating the checksum)"
+msgstr "Cada línea se procesa por separado, cualquier coincidencia de líneas se ignorará (se eliminará antes de crear la suma de verificación)"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/templates/edit/text-options.html
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
 msgid "Regular Expression support, wrap the entire line in forward slash"
-msgstr ""
-"Soporte de expresión regular, ajuste toda la línea con una barra diagonal"
+msgstr "Soporte de expresión regular, ajuste toda la línea con una barra diagonal"
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
+msgid "Changing this will affect the comparison checksum which may trigger an alert"
+msgstr "Cambiar esto afectará la suma de verificación de comparación, lo que puede generar una alerta"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/templates/edit/text-options.html
-msgid ""
-"Changing this will affect the comparison checksum which may trigger an alert"
+msgid "Remove any text that appears in the \"Ignore text\" from the output (otherwise its just ignored for change-detection)"
 msgstr ""
-"Cambiar esto afectará la suma de verificación de comparación, lo que puede "
-"generar una alerta."
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"Remove any text that appears in the \"Ignore text\" from the output "
-"(otherwise its just ignored for change-detection)"
-msgstr ""
-"Elimine cualquier texto que aparezca en \"Ignorar texto\" de la salida (de "
-"lo contrario, simplemente se ignorará para la detección de cambios)"
+"Elimine cualquier texto que aparezca en \"Ignorar texto\" de la salida (de lo contrario, simplemente se ignorará para la detección de cambios)"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "API Access"
@@ -788,7 +636,7 @@ msgstr "Clave API"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "copy"
-msgstr "Copiar"
+msgstr "copiar"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Regenerate API key"
@@ -799,12 +647,8 @@ msgid "Chrome Extension"
 msgstr "Extensión de Chrome"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"Easily add any web-page to your changedetection.io installation from within "
-"Chrome."
-msgstr ""
-"Agregue fácilmente cualquier página web a su instalación de changetection.io"
-" desde Chrome."
+msgid "Easily add any web-page to your changedetection.io installation from within Chrome."
+msgstr "Agregue fácilmente cualquier página web a su instalación de changetection.io desde Chrome."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Step 1"
@@ -847,40 +691,25 @@ msgid "Chrome Webstore"
 msgstr "Tienda web de Chrome"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"Maximum number of history snapshots to include in the watch specific RSS "
-"feed."
-msgstr ""
-"Número máximo de instantáneas del historial que se incluirán en la fuente "
-"RSS específica del monitor."
+msgid "Maximum number of history snapshots to include in the watch specific RSS feed."
+msgstr "Número máximo de instantáneas del historial que se incluirán en la fuente RSS específica del monitor."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"For watching other RSS feeds - When watching RSS/Atom feeds, convert them "
-"into clean text for better change detection."
-msgstr ""
-"Para ver otras fuentes RSS: cuando vea fuentes RSS/Atom, conviértalas en "
-"texto limpio para una mejor detección de cambios."
+msgid "For watching other RSS feeds - When watching RSS/Atom feeds, convert them into clean text for better change detection."
+msgstr "Para ver otras fuentes RSS: cuando vea fuentes RSS/Atom, conviértalas en texto limpio para una mejor detección de cambios."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Does your reader support HTML? Set it here"
 msgstr "¿Su lector soporta HTML? Ponlo aquí"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"'System default' for the same template for all items, or re-use your "
-"\"Notification Body\" as the template."
-msgstr ""
-"'Predeterminado del sistema' para la misma plantilla para todos los "
-"elementos, o reutilice su \"Cuerpo de notificación\" como plantilla."
+msgid "'System default' for the same template for all items, or re-use your \"Notification Body\" as the template."
+msgstr "'Predeterminado del sistema' para la misma plantilla para todos los elementos, o reutilice su \"Cuerpo de notificación\" como plantilla."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"Ensure the settings below are correct, they are used to manage the time "
-"schedule for checking your web page watches."
+msgid "Ensure the settings below are correct, they are used to manage the time schedule for checking your web page watches."
 msgstr ""
-"Asegúrese de que las configuraciones a continuación sean correctas, se "
-"utilizan para administrar el horario para verificar las visitas a su página "
+"Asegúrese de que las configuraciones a continuación sean correctas, se utilizan para administrar el horario para verificar las visitas a su página "
 "web."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -892,19 +721,14 @@ msgid "Local Time & Date in Browser:"
 msgstr "Hora y fecha locales en el navegador:"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"Enable this setting to open the diff page in a new tab. If disabled, the "
-"diff page will open in the current tab."
+msgid "Enable this setting to open the diff page in a new tab. If disabled, the diff page will open in the current tab."
 msgstr ""
-"Habilite esta configuración para abrir la página de diferencias en una nueva"
-" pestaña. Si está deshabilitado, la página de diferencias se abrirá en la "
-"pestaña actual."
+"Habilite esta configuración para abrir la página de diferencias en una nueva pestaña. Si está deshabilitado, la página de diferencias se abrirá en "
+"la pestaña actual."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Realtime UI Updates Enabled - (Restart required if this is changed)"
-msgstr ""
-"Actualizaciones de UI en tiempo real habilitadas: (es necesario reiniciar si"
-" se cambia esto)"
+msgstr "Actualizaciones de UI en tiempo real habilitadas: (es necesario reiniciar si se cambia esto)"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Enable or Disable Favicons next to the watch list"
@@ -919,27 +743,19 @@ msgid "Tip"
 msgstr "Consejo"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"\"Residential\" and \"Mobile\" proxy type can be more successfull than "
-"\"Data Center\" for blocked websites."
-msgstr ""
-"El tipo de proxy \"residencial\" y \"móvil\" puede tener más éxito que el "
-"\"centro de datos\" para sitios web bloqueados."
+msgid "\"Residential\" and \"Mobile\" proxy type can be more successfull than \"Data Center\" for blocked websites."
+msgstr "El tipo de proxy \"residencial\" y \"móvil\" puede tener más éxito que el \"centro de datos\" para sitios web bloqueados."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "\"Name\" will be used for selecting the proxy in the Watch Edit settings"
-msgstr ""
-"\"Nombre\" se utilizará para seleccionar el proxy en la configuración de "
-"edición de visualización."
+msgstr "«Nombre» se utilizará para seleccionar el proxy en la configuración de edición de visualización"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid ""
-"SOCKS5 proxies with authentication are only supported with 'plain requests' "
-"fetcher, for other fetchers you should whitelist the IP access instead"
+"SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should whitelist the IP access instead"
 msgstr ""
-"Los proxies SOCKS5 con autenticación solo son compatibles con el buscador de"
-" 'solicitudes simples'; para otros buscadores, en su lugar, debe incluir en "
-"la lista blanca el acceso IP"
+"Los proxies SOCKS5 con autenticación solo son compatibles con el buscador de 'solicitudes simples'; para otros buscadores, en su lugar, debe "
+"incluir en la lista blanca el acceso IP"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Uptime:"
@@ -983,8 +799,7 @@ msgstr "Desvincular etiqueta de monitores en segundo plano"
 
 #: changedetectionio/blueprint/tags/__init__.py
 msgid "All tags deleted, clearing from watches in background"
-msgstr ""
-"Todas las etiquetas eliminadas, borradas de los monitores en segundo plano."
+msgstr "Todas las etiquetas eliminadas, borradas de los monitores en segundo plano."
 
 #: changedetectionio/blueprint/tags/__init__.py
 msgid "Tag not found"
@@ -994,8 +809,7 @@ msgstr "Etiqueta no encontrada"
 msgid "Updated"
 msgstr "Actualizado"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Filters & Triggers"
 msgstr "Filtros y activadores"
 
@@ -1011,59 +825,43 @@ msgstr "agregado"
 msgid "to any existing watch configurations."
 msgstr "a cualquier configuración de monitor existente."
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Text filtering"
 msgstr "Filtrado de texto"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use with caution!"
 msgstr "¡Úselo con precaución!"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid ""
-"This will easily fill up your email storage quota or flood other storages."
-msgstr ""
-"Esto llenará fácilmente su cuota de almacenamiento de correo electrónico o "
-"inundará otros almacenamientos."
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "This will easily fill up your email storage quota or flood other storages."
+msgstr "Esto llenará fácilmente su cuota de almacenamiento de correo electrónico o inundará otros almacenamientos."
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Look out!"
 msgstr "¡Estar atento!"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Lookout!"
 msgstr "¡Estar atento!"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "There are"
 msgstr "Hay"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "system-wide notification URLs enabled"
-msgstr "URL de notificación en todo el sistema habilitadas"
+msgstr "URLs de notificación en todo el sistema habilitadas"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "this form will override notification settings for this watch only"
-msgstr ""
-"este formulario anulará la configuración de notificaciones solo para este "
-"monitor"
+msgstr "este formulario anulará la configuración de notificaciones solo para este monitor"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "an empty Notification URL list here will still send notifications."
-msgstr ""
-"una lista de URL de notificación vacía aquí seguirá enviando notificaciones."
+msgstr "una lista de URL de notificación vacía aquí seguirá enviando notificaciones."
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use system defaults"
 msgstr "Usar los valores predeterminados del sistema"
 
@@ -1071,18 +869,13 @@ msgstr "Usar los valores predeterminados del sistema"
 msgid "Add a new organisational tag"
 msgstr "Agregar una nueva etiqueta organizacional"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Watch group / tag"
 msgstr "Ver grupo/etiqueta"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
-msgid ""
-"Groups allows you to manage filters and notifications for multiple watches "
-"under a single organisational tag."
-msgstr ""
-"Grupos le permite administrar filtros y notificaciones para múltiples "
-"monitores bajo una única etiqueta organizacional."
+msgid "Groups allows you to manage filters and notifications for multiple watches under a single organisational tag."
+msgstr "Grupos le permite administrar filtros y notificaciones para múltiples monitores bajo una única etiqueta organizacional."
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "# Watches"
@@ -1096,13 +889,11 @@ msgstr "Nombre de etiqueta/etiqueta"
 msgid "No website organisational tags/groups configured"
 msgstr "No hay etiquetas/grupos organizativos del sitio web configurados"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Edit"
 msgstr "Editar"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Recheck"
 msgstr "Vuelva a comprobar"
 
@@ -1112,16 +903,10 @@ msgstr "¿Eliminar grupo?"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 #, python-format
-msgid ""
-"<p>Are you sure you want to delete group "
-"<strong>%(title)s</strong>?</p><p>This action cannot be undone.</p>"
-msgstr ""
-"<p>¿Estás seguro de que deseas eliminar el "
-"grupo?<strong>%(title)s</strong>?</p><p>Esta acción no se puede "
-"deshacer.</p>"
+msgid "<p>Are you sure you want to delete group <strong>%(title)s</strong>?</p><p>This action cannot be undone.</p>"
+msgstr "<p>¿Estás seguro de que deseas eliminar el grupo?<strong>%(title)s</strong>?</p><p>Esta acción no se puede deshacer.</p>"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/templates/edit.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Delete"
 msgstr "Borrar"
@@ -1137,12 +922,10 @@ msgstr "¿Desvincular grupo?"
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 #, python-format
 msgid ""
-"<p>Are you sure you want to unlink all watches from group "
-"<strong>%(title)s</strong>?</p><p>The tag will be kept but watches will be "
-"removed from it.</p>"
+"<p>Are you sure you want to unlink all watches from group <strong>%(title)s</strong>?</p><p>The tag will be kept but watches will be removed from "
+"it.</p>"
 msgstr ""
-"<p>¿Está seguro de que desea desvincular todos los monitores del "
-"grupo?<strong>%(title)s</strong>?</p><p>La etiqueta se mantendrá pero se le "
+"<p>¿Está seguro de que desea desvincular todos los monitores del grupo?<strong>%(title)s</strong>?</p><p>La etiqueta se mantendrá pero se le "
 "quitarán los monitores.</p>"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
@@ -1153,8 +936,7 @@ msgstr "Desconectar"
 msgid "Keep the tag but unlink any watches"
 msgstr "Conserva la etiqueta pero desvincula cualquier monitor"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "RSS Feed for this watch"
 msgstr "Feed RSS para este monitor"
 
@@ -1196,9 +978,7 @@ msgstr "{} monitores borrados/restablecidos."
 
 #: changedetectionio/blueprint/ui/__init__.py
 msgid "{} watches set to use default notification settings"
-msgstr ""
-"{} monitores configurados para usar la configuración de notificación "
-"predeterminada"
+msgstr "{} monitores configurados para usar la configuración de notificación predeterminada"
 
 #: changedetectionio/blueprint/ui/__init__.py
 msgid "{} watches were tagged"
@@ -1253,30 +1033,20 @@ msgid "Queueing watches for rechecking in background..."
 msgstr "Poniendo monitores en cola para volver a comprobar en segundo plano..."
 
 #: changedetectionio/blueprint/ui/__init__.py
-msgid ""
-"Could not share, something went wrong while communicating with the share "
-"server - {}"
-msgstr ""
-"No se pudo compartir, algo salió mal al comunicarse con el servidor "
-"compartido.{}"
+msgid "Could not share, something went wrong while communicating with the share server - {}"
+msgstr "No se pudo compartir, algo salió mal al comunicarse con el servidor compartido.{}"
 
 #: changedetectionio/blueprint/ui/__init__.py
 msgid "Language set to auto-detect from browser"
 msgstr "Idioma configurado para detectarse automáticamente desde el navegador"
 
-#: changedetectionio/blueprint/ui/diff.py
-#: changedetectionio/blueprint/ui/preview.py
+#: changedetectionio/blueprint/ui/diff.py changedetectionio/blueprint/ui/preview.py
 msgid "No history found for the specified link, bad link?"
-msgstr ""
-"No se encontró historial para el enlace especificado, ¿enlace incorrecto?"
+msgstr "No se encontró historial para el enlace especificado, ¿enlace incorrecto?"
 
 #: changedetectionio/blueprint/ui/diff.py
-msgid ""
-"Not enough history (2 snapshots required) to show difference page for this "
-"watch."
-msgstr ""
-"No hay suficiente historial (se requieren 2 instantáneas) para mostrar la "
-"página de diferencias para este monitor."
+msgid "Not enough history (2 snapshots required) to show difference page for this watch."
+msgstr "No hay suficiente historial (se requieren 2 instantáneas) para mostrar la página de diferencias para este monitor."
 
 #: changedetectionio/blueprint/ui/edit.py
 msgid "No watches to edit"
@@ -1291,9 +1061,7 @@ msgid "Switched to mode - {}."
 msgstr "Cambiado al modo: {}."
 
 #: changedetectionio/blueprint/ui/edit.py
-msgid ""
-"Could not load '{}' processor, processor plugin might be missing. Please "
-"select a different processor."
+msgid "Could not load '{}' processor, processor plugin might be missing. Please select a different processor."
 msgstr "No se pudo cargar el procesador '{}'; es posible que falte el complemento del procesador. Seleccione un procesador diferente."
 
 #: changedetectionio/blueprint/ui/edit.py
@@ -1310,17 +1078,11 @@ msgstr "Monitor actualizado."
 
 #: changedetectionio/blueprint/ui/preview.py
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
-msgstr ""
-"Vista previa no disponible: no se completó la búsqueda/verificación o no se "
-"alcanzaron los activadores"
+msgstr "Vista previa no disponible: no se completó la búsqueda/verificación o no se alcanzaron los activadores"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
-msgid ""
-"This will remove version history (snapshots) for ALL watches, but keep your "
-"list of URLs!"
-msgstr ""
-"Esto eliminará el historial de versiones (instantáneas) de TODOS los "
-"monitores, ¡pero mantendrá su lista de URL!"
+msgid "This will remove version history (snapshots) for ALL watches, but keep your list of URLs!"
+msgstr "Esto eliminará el historial de versiones (instantáneas) de TODOS los monitores, ¡pero mantendrá su lista de URL!"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "You may like to use the"
@@ -1354,8 +1116,7 @@ msgstr "para confirmar que entiende."
 msgid "Clear History!"
 msgstr "¡Borrar historial!"
 
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html
-#: changedetectionio/templates/base.html
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -1389,7 +1150,7 @@ msgstr "Palabras"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Lines"
-msgstr "Pauta"
+msgstr "Líneas"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Ignore Whitespace"
@@ -1403,28 +1164,23 @@ msgstr "Igual/sin cambios"
 msgid "Removed"
 msgstr "Remoto"
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Added"
 msgstr "Agregado"
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Replaced"
 msgstr "Reemplazado"
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Keyboard:"
 msgstr "Teclado:"
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Previous"
 msgstr "Anterior"
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Next"
 msgstr "Próximo"
 
@@ -1436,23 +1192,19 @@ msgstr "Saltar a la siguiente diferencia"
 msgid "Jump"
 msgstr "Saltar"
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Error Text"
 msgstr "Texto de error"
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Error Screenshot"
 msgstr "Captura de pantalla de error"
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Text"
 msgstr "Texto"
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Current screenshot"
 msgstr "Captura de pantalla actual"
 
@@ -1462,12 +1214,11 @@ msgstr "Extraer datos"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "seconds ago."
-msgstr "Hace segundos."
+msgstr "hace unos segundos."
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "seconds ago"
-msgstr "hace segundos"
+msgstr "hace unos segundos"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Current error-ing screenshot from most recent request"
@@ -1479,7 +1230,7 @@ msgstr "Consejo profesional: puedes habilitar"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "\"share access when password is enabled\""
-msgstr "\"compartir acceso cuando la contraseña está habilitada\""
+msgstr "«compartir acceso cuando la contraseña está habilitada»"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "from settings."
@@ -1493,35 +1244,25 @@ msgstr "Ir a instantánea única"
 msgid "Highlight text to share or add to ignore lists."
 msgstr "Resalte el texto para compartir o agregar a las listas de ignorados."
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/preview.html
-msgid ""
-"For now, Differences are performed on text, not graphically, only the latest"
-" screenshot is available."
-msgstr ""
-"Por ahora, las diferencias se realizan en texto, no gráficamente, solo está "
-"disponible la última captura de pantalla."
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
+msgid "For now, Differences are performed on text, not graphically, only the latest screenshot is available."
+msgstr "Por ahora, las diferencias se realizan en texto, no gráficamente, solo está disponible la última captura de pantalla."
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Current screenshot from most recent request"
 msgstr "Captura de pantalla actual de la solicitud más reciente"
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "No screenshot available just yet! Try rechecking the page."
-msgstr ""
-"¡Aún no hay captura de pantalla disponible! Intente volver a revisar la "
-"página."
+msgstr "¡Aún no hay captura de pantalla disponible! Intente volver a revisar la página."
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Screenshot requires Playwright/WebDriver enabled"
-msgstr ""
-"La captura de pantalla requiere que Playwright/WebDriver esté habilitado"
+msgstr "La captura de pantalla requiere que Playwright/WebDriver esté habilitado"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Request"
-msgstr "Pedido"
+msgstr "Petición"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Browser Steps"
@@ -1541,8 +1282,7 @@ msgstr "Estadísticas"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Some sites use JavaScript to create the content, for this you should"
-msgstr ""
-"Algunos sitios utilizan JavaScript para crear el contenido, para ello debes"
+msgstr "Algunos sitios utilizan JavaScript para crear el contenido, para ello debes"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "use the Chrome/WebDriver Fetcher"
@@ -1550,7 +1290,7 @@ msgstr "utilizar el buscador de Chrome/WebDriver"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Variables are supported in the URL"
-msgstr "Las variables son compatibles con la URL."
+msgstr "Las variables son compatibles con la URL"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "help and examples here"
@@ -1558,17 +1298,11 @@ msgstr "ayuda y ejemplos aquí"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Organisational tag/group name used in the main listing page"
-msgstr ""
-"Etiqueta organizativa/nombre de grupo utilizado en la página principal del "
-"listado"
+msgstr "Etiqueta organizativa/nombre de grupo utilizado en la página principal del listado"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid ""
-"Automatically uses the page title if found, you can also use your own "
-"title/description here"
-msgstr ""
-"Utiliza automáticamente el título de la página si la encuentra, también "
-"puede usar su propio título/descripción aquí"
+msgid "Automatically uses the page title if found, you can also use your own title/description here"
+msgstr "Utiliza automáticamente el título de la página si la encuentra, también puede usar su propio título/descripción aquí"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "The interval/amount of time between each check."
@@ -1576,32 +1310,23 @@ msgstr "El intervalo/cantidad de tiempo entre cada verificación."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid ""
-"Sends a notification when the filter can no longer be seen on the page, good"
-" for knowing when the page changed and your filter will not work anymore."
+"Sends a notification when the filter can no longer be seen on the page, good for knowing when the page changed and your filter will not work "
+"anymore."
 msgstr ""
-"Envía una notificación cuando el filtro ya no se puede ver en la página, lo "
-"cual es bueno para saber cuándo cambió la página y su filtro ya no "
+"Envía una notificación cuando el filtro ya no se puede ver en la página, lo cual es bueno para saber cuándo cambió la página y su filtro ya no "
 "funcionará."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Set to empty to use system settings default"
-msgstr ""
-"Establecer en vacío para usar la configuración predeterminada del sistema"
+msgstr "Establecer en vacío para usar la configuración predeterminada del sistema"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid ""
-"method (default) where your watched site doesn't need Javascript to render."
-msgstr ""
-"método (predeterminado) donde su sitio observado no necesita Javascript para"
-" renderizarse."
+msgid "method (default) where your watched site doesn't need Javascript to render."
+msgstr "método (predeterminado) donde su sitio observado no necesita Javascript para renderizarse."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid ""
-"method requires a network connection to a running WebDriver+Chrome server, "
-"set by the ENV var 'WEBDRIVER_URL'."
-msgstr ""
-"El método requiere una conexión de red a un servidor WebDriver+Chrome en "
-"ejecución, establecido por la variable ENV 'WEBDRIVER_URL'."
+msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'."
+msgstr "el método requiere una conexión de red a un servidor WebDriver+Chrome en ejecución, establecido por la variable ENV 'WEBDRIVER_URL'."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Check/Scan all"
@@ -1620,37 +1345,28 @@ msgid "Show advanced options"
 msgstr "Mostrar opciones avanzadas"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid ""
-"Run this code before performing change detection, handy for filling in "
-"fields and other actions"
-msgstr ""
-"Ejecute este código antes de realizar la detección de cambios, útil para "
-"completar campos y otras acciones."
+msgid "Run this code before performing change detection, handy for filling in fields and other actions"
+msgstr "Ejecute este código antes de realizar la detección de cambios, útil para completar campos y otras acciones"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "More help and examples here"
-msgstr "Más ayuda y ejemplos aquí."
+msgstr "Más ayuda y ejemplos aquí"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Variables are supported in the request body"
-msgstr "Las variables se admiten en el cuerpo de la solicitud."
+msgstr "Las variables se admiten en el cuerpo de la solicitud"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Variables are supported in the request header values"
-msgstr ""
-"Las variables se admiten en los valores del encabezado de la solicitud."
+msgstr "Las variables se admiten en los valores del encabezado de la solicitud"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Alert! Extra headers file found and will be added to this watch!"
-msgstr ""
-"¡Alerta! ¡Se encontró un archivo de encabezados adicional que se agregará a "
-"este monitor!"
+msgstr "¡Alerta! ¡Se encontró un archivo de encabezados adicional que se agregará a este monitor!"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Headers can be also read from a file in your data-directory"
-msgstr ""
-"Los encabezados también se pueden leer desde un archivo en su directorio de "
-"datos"
+msgstr "Los encabezados también se pueden leer desde un archivo en su directorio de datos"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Read more here"
@@ -1666,8 +1382,7 @@ msgstr "Activar el buscador de texto"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Please wait, first browser step can take a little time to load.."
-msgstr ""
-"Espere, el primer paso del navegador puede tardar un poco en cargarse."
+msgstr "Espere, el primer paso del navegador puede tardar un poco en cargarse."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Click here to Start"
@@ -1682,19 +1397,13 @@ msgid "Press \"Play\" to start."
 msgstr "Presione \"Reproducir\" para comenzar."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid ""
-"Visual Selector data is not ready, watch needs to be checked atleast once."
-msgstr ""
-"Los datos del selector visual no están listos; es necesario revisar el "
-"monitor al menos una vez."
+msgid "Visual Selector data is not ready, watch needs to be checked atleast once."
+msgstr "Los datos del selector visual no están listos; es necesario revisar el monitor al menos una vez."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid ""
-"Sorry, this functionality only works with fetchers that support interactive "
-"Javascript (so far only Playwright based fetchers)"
+msgid "Sorry, this functionality only works with fetchers that support interactive Javascript (so far only Playwright based fetchers)"
 msgstr ""
-"Lo sentimos, esta funcionalidad solo funciona con buscadores que admiten "
-"Javascript interactivo (hasta ahora solo buscadores basados ​​en Playwright)"
+"Lo sentimos, esta funcionalidad solo funciona con buscadores que admiten Javascript interactivo (hasta ahora solo buscadores basados ​​en Playwright)"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "to one that supports interactive Javascript."
@@ -1709,12 +1418,8 @@ msgid "Set the fetch method"
 msgstr "Establecer el método de recuperación"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid ""
-"Use the verify (✓) button to test if a condition passes against the current "
-"snapshot."
-msgstr ""
-"Utilice el botón de verificación ( ✓ ) para probar si una condición se "
-"cumple con la instantánea actual."
+msgid "Use the verify (✓) button to test if a condition passes against the current snapshot."
+msgstr "Utilice el botón de verificación ( ✓ ) para probar si una condición se cumple con la instantánea actual."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Read a quick tutorial about"
@@ -1734,21 +1439,15 @@ msgstr "Consejos profesionales:"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use the preview page to see your filters and triggers highlighted."
-msgstr ""
-"Utilice la página de vista previa para ver sus filtros y activadores "
-"resaltados."
+msgstr "Utilice la página de vista previa para ver sus filtros y activadores resaltados."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Limit trigger/ignore/block/extract to;"
 msgstr "Limitar activación/ignorar/bloquear/extraer a;"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid ""
-"Note: Depending on the length and similarity of the text on each line, the "
-"algorithm may consider an"
-msgstr ""
-"Nota: Dependiendo de la extensión y similitud del texto en cada línea, el "
-"algoritmo puede considerar una"
+msgid "Note: Depending on the length and similarity of the text on each line, the algorithm may consider an"
+msgstr "Nota: Dependiendo de la extensión y similitud del texto en cada línea, el algoritmo puede considerar una"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "instead of"
@@ -1760,7 +1459,7 @@ msgstr "reemplazo"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "for example."
-msgstr "Por ejemplo."
+msgstr "por ejemplo."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "addition"
@@ -1776,8 +1475,7 @@ msgstr "cuando esté interesado en contenido nuevo."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "When content is merely moved in a list, it will also trigger an"
-msgstr ""
-"Cuando el contenido simplemente se mueve en una lista, también activará una"
+msgstr "Cuando el contenido simplemente se mueve en una lista, también activará una"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "consider enabling"
@@ -1789,21 +1487,15 @@ msgstr "Solo se activa cuando aparecen líneas únicas"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid ""
-"Good for websites that just move the content around, and you want to know "
-"when NEW content is added, compares new lines against all history for this "
-"watch."
+"Good for websites that just move the content around, and you want to know when NEW content is added, compares new lines against all history for "
+"this watch."
 msgstr ""
-"Bueno para sitios web que simplemente mueven el contenido y desea saber "
-"cuándo se agrega contenido NUEVO, compara nuevas líneas con todo el "
+"Bueno para sitios web que simplemente mueven el contenido y desea saber cuándo se agrega contenido NUEVO, compara nuevas líneas con todo el "
 "historial de este monitor."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid ""
-"Helps reduce changes detected caused by sites shuffling lines around, "
-"combine with"
-msgstr ""
-"Ayuda a reducir los cambios detectados causados ​​por sitios que cambian las"
-" líneas, combinar con"
+msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with"
+msgstr "Ayuda a reducir los cambios detectados causados ​​por sitios que cambian las líneas, combinar con"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "check unique lines"
@@ -1815,8 +1507,7 @@ msgstr "abajo."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Remove any whitespace before and after each line of text"
-msgstr ""
-"Elimine cualquier espacio en blanco antes y después de cada línea de texto."
+msgstr "Eliminar cualquier espacio en blanco antes y después de cada línea de texto"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Loading..."
@@ -1831,13 +1522,9 @@ msgid "text"
 msgstr "texto"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid ""
-"elements that will be used for the change detection. It automatically fills-"
-"in the filters in the \"CSS/JSONPath/JQ/XPath Filters\" box of the"
+msgid "elements that will be used for the change detection. It automatically fills-in the filters in the \"CSS/JSONPath/JQ/XPath Filters\" box of the"
 msgstr ""
-"elementos que se utilizarán para la detección de cambios. Completa "
-"automáticamente los filtros en el cuadro \"Filtros CSS/JSONPath/JQ/XPath\" "
-"del"
+"elementos que se utilizarán para la detección de cambios. Completa automáticamente los filtros en el cuadro \"Filtros CSS/JSONPath/JQ/XPath\" del"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "tab. Use"
@@ -1869,17 +1556,14 @@ msgstr "Borrar selección"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "One moment, fetching screenshot and element information.."
-msgstr ""
-"Un momento, obteniendo captura de pantalla e información del elemento."
+msgstr "Un momento, obteniendo captura de pantalla e información del elemento."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Currently:"
 msgstr "Actualmente:"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid ""
-"Sorry, this functionality only works with fetchers that support Javascript "
-"and screenshots (such as playwright etc)."
+msgid "Sorry, this functionality only works with fetchers that support Javascript and screenshots (such as playwright etc)."
 msgstr "Lo sentimos, esta funcionalidad solo funciona con métodos de obtención que admiten JavaScript y capturas de pantalla (como Playwright, etc.)."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
@@ -1939,12 +1623,8 @@ msgid "Are you sure you want to clear all history for:"
 msgstr "¿Está seguro de que desea borrar todo el historial de:"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid ""
-"This will remove all snapshots and previous versions. This action cannot be "
-"undone."
-msgstr ""
-"Esto eliminará todas las instantáneas y versiones anteriores. Esta acción no"
-" se puede deshacer."
+msgid "This will remove all snapshots and previous versions. This action cannot be undone."
+msgstr "Esto eliminará todas las instantáneas y versiones anteriores. Esta acción no se puede deshacer."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Clear History"
@@ -1967,12 +1647,8 @@ msgid "Current erroring screenshot from most recent request"
 msgstr "Captura de pantalla con error actual de la solicitud más reciente"
 
 #: changedetectionio/blueprint/ui/templates/preview.html
-msgid ""
-"Screenshot requires a Content Fetcher ( Sockpuppetbrowser, selenium, etc ) "
-"that supports screenshots."
-msgstr ""
-"La captura de pantalla requiere un buscador de contenido (Sockpuppetbrowser,"
-" selenium, etc.) que admita capturas de pantalla."
+msgid "Screenshot requires a Content Fetcher ( Sockpuppetbrowser, selenium, etc ) that supports screenshots."
+msgstr "La captura de pantalla requiere un buscador de contenido (Sockpuppetbrowser, selenium, etc.) que admita capturas de pantalla."
 
 #: changedetectionio/blueprint/ui/views.py
 msgid "Warning, URL {} already exists"
@@ -1987,8 +1663,7 @@ msgid "Watch added."
 msgstr "Monitor añadido."
 
 #: changedetectionio/blueprint/watchlist/__init__.py
-msgid ""
-"displaying <b>{start} - {end}</b> {record_name} in total <b>{total}</b>"
+msgid "displaying <b>{start} - {end}</b> {record_name} in total <b>{total}</b>"
 msgstr "mostrando<b>{start} - {end}</b> {record_name}en total<b>{total}</b>"
 
 #: changedetectionio/blueprint/watchlist/__init__.py
@@ -1996,11 +1671,8 @@ msgid "records"
 msgstr "archivos"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid ""
-"Changedetection.io can monitor more than just web-pages! See our plugins!"
-msgstr ""
-"¡Changedetection.io puede monitorear más que solo páginas web! ¡Vea nuestros"
-" complementos!"
+msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
+msgstr "¡Changedetection.io puede monitorear más que solo páginas web! ¡Vea nuestros complementos!"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "More info"
@@ -2059,16 +1731,12 @@ msgid "Clear Histories"
 msgstr "Borrar historiales"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid ""
-"<p>Are you sure you want to clear history for the selected items?</p><p>This"
-" action cannot be undone.</p>"
-msgstr ""
-"<p>¿Está seguro de que desea borrar el historial de los elementos "
-"seleccionados?</p><p>Esta acción no se puede deshacer.</p>"
+msgid "<p>Are you sure you want to clear history for the selected items?</p><p>This action cannot be undone.</p>"
+msgstr "<p>¿Está seguro de que desea borrar el historial de los elementos seleccionados?</p><p>Esta acción no se puede deshacer.</p>"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "OK"
-msgstr "DE ACUERDO"
+msgstr "OK"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Clear/reset history"
@@ -2079,12 +1747,8 @@ msgid "Delete Watches?"
 msgstr "¿Eliminar monitores?"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid ""
-"<p>Are you sure you want to delete the selected watches?</strong></p><p>This"
-" action cannot be undone.</p>"
-msgstr ""
-"<p>¿Está seguro de que desea eliminar los monitores "
-"seleccionados?</strong></p><p>Esta acción no se puede deshacer.</p>"
+msgid "<p>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>"
+msgstr "<p>¿Está seguro de que desea eliminar los monitores seleccionados?</strong></p><p>Esta acción no se puede deshacer.</p>"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Queued size"
@@ -2092,7 +1756,7 @@ msgstr "Tamaño de la cola"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Searching"
-msgstr "Búsqueda"
+msgstr "Buscando"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "All"
@@ -2116,15 +1780,11 @@ msgstr "Último"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changed"
-msgstr "Cambió"
+msgstr "Cambiadp"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid ""
-"No web page change detection watches configured, please add a URL in the box"
-" above, or"
-msgstr ""
-"No hay monitores de detección de cambios de página web configuradas; agregue"
-" una URL en el cuadro de arriba, o"
+msgid "No web page change detection watches configured, please add a URL in the box above, or"
+msgstr "No hay monitores de detección de cambios de página web configuradas; agregue una URL en el cuadro de arriba, o"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "import a list"
@@ -2150,8 +1810,7 @@ msgstr "Precio"
 msgid "No information"
 msgstr "Sin información"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/templates/base.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
 msgid "Checking now"
 msgstr "Comprobando ahora"
 
@@ -2193,8 +1852,7 @@ msgstr "Vuelva a comprobar todo"
 msgid "in '%(title)s'"
 msgstr "en '%(title)s'"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/flask_app.py changedetectionio/realtime/socket_server.py
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/flask_app.py changedetectionio/realtime/socket_server.py
 msgid "Not yet"
 msgstr "Aún no"
 
@@ -2254,10 +1912,9 @@ msgstr "minutos"
 msgid "second"
 msgstr "segundo"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/flask_app.py
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/flask_app.py
 msgid "seconds"
-msgstr "artículos de segunda clase"
+msgstr "segundos"
 
 #: changedetectionio/flask_app.py
 msgid "Already logged in"
@@ -2272,20 +1929,12 @@ msgid "Incorrect password"
 msgstr "Contraseña incorrecta"
 
 #: changedetectionio/forms.py
-msgid ""
-"At least one time interval (weeks, days, hours, minutes, or seconds) must be"
-" specified."
-msgstr ""
-"Se debe especificar al menos un intervalo de tiempo (semanas, días, horas, "
-"minutos o segundos)."
+msgid "At least one time interval (weeks, days, hours, minutes, or seconds) must be specified."
+msgstr "Se debe especificar al menos un intervalo de tiempo (semanas, días, horas, minutos o segundos)."
 
 #: changedetectionio/forms.py
-msgid ""
-"At least one time interval (weeks, days, hours, minutes, or seconds) must be"
-" specified when not using global settings."
-msgstr ""
-"Se debe especificar al menos un intervalo de tiempo (semanas, días, horas, "
-"minutos o segundos) cuando no se utilice la configuración global."
+msgid "At least one time interval (weeks, days, hours, minutes, or seconds) must be specified when not using global settings."
+msgstr "Se debe especificar al menos un intervalo de tiempo (semanas, días, horas, minutos o segundos) cuando no se utilice la configuración global."
 
 #: changedetectionio/forms.py
 msgid "Invalid time format. Use HH:MM."
@@ -2349,7 +1998,7 @@ msgstr "Semanas"
 
 #: changedetectionio/forms.py
 msgid "Should contain zero or more seconds"
-msgstr "Debe contener cero o más segundos."
+msgstr "Debe contener cero o más segundos"
 
 #: changedetectionio/forms.py
 msgid "Days"
@@ -2365,14 +2014,11 @@ msgstr "Minutos"
 
 #: changedetectionio/forms.py
 msgid "Seconds"
-msgstr "Artículos de segunda clase"
+msgstr "Segundos"
 
 #: changedetectionio/forms.py
-msgid ""
-"Notification Body and Title is required when a Notification URL is used"
-msgstr ""
-"Se requiere el cuerpo y el título de la notificación cuando se utiliza una "
-"URL de notificación"
+msgid "Notification Body and Title is required when a Notification URL is used"
+msgstr "Se requiere el cuerpo y el título de la notificación cuando se utiliza una URL de notificación"
 
 #: changedetectionio/forms.py
 #, python-format
@@ -2407,8 +2053,7 @@ msgstr "Valor vacío no permitido."
 msgid "Invalid value."
 msgstr "Valor no válido."
 
-#: changedetectionio/blueprint/imports/templates/import.html
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/forms.py
 msgid "URL"
 msgstr "URL"
 
@@ -2458,11 +2103,11 @@ msgstr "Zona horaria predeterminada para el programador de verificación de moni
 
 #: changedetectionio/forms.py
 msgid "Wait seconds before extracting text"
-msgstr "Espere unos segundos antes de extraer el texto."
+msgstr "Segundos de espera antes de extraer el texto"
 
 #: changedetectionio/forms.py
 msgid "Should contain one or more seconds"
-msgstr "Debe contener uno o más segundos."
+msgstr "Debe contener uno o más segundos"
 
 #: changedetectionio/forms.py
 msgid "URLs"
@@ -2498,9 +2143,7 @@ msgstr "Tiempo entre comprobaciones"
 
 #: changedetectionio/forms.py
 msgid "Use global settings for time between check and scheduler."
-msgstr ""
-"Utilice la configuración global para el tiempo entre la verificación y el "
-"programador."
+msgstr "Utilice la configuración global para el tiempo entre la verificación y el programador."
 
 #: changedetectionio/forms.py
 msgid "CSS/JSONPath/JQ/XPath Filters"
@@ -2514,8 +2157,7 @@ msgstr "Eliminar elementos"
 msgid "Extract text"
 msgstr "Extraer texto"
 
-#: changedetectionio/blueprint/imports/templates/import.html
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/forms.py
 msgid "Title"
 msgstr "Título"
 
@@ -2533,16 +2175,13 @@ msgstr "Método de solicitud"
 
 #: changedetectionio/forms.py
 msgid "Ignore status codes (process non-2xx status codes as normal)"
-msgstr ""
-"Ignorar códigos de estado (procesar códigos de estado que no sean 2xx como "
-"de costumbre)"
+msgstr "Ignorar códigos de estado (procesar códigos de estado que no sean 2xx como de costumbre)"
 
 #: changedetectionio/forms.py
 msgid "Only trigger when unique lines appear in all history"
 msgstr "Solo se activa cuando aparecen líneas únicas en todo el historial"
 
-#: changedetectionio/blueprint/ui/templates/edit.html
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/forms.py
 msgid "Remove duplicate lines of text"
 msgstr "Eliminar líneas de texto duplicadas"
 
@@ -2582,33 +2221,28 @@ msgstr "Bloquear la detección de cambios mientras el texto coincide"
 msgid "Execute JavaScript before change detection"
 msgstr "Ejecute JavaScript antes de la detección de cambios"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/forms.py
 msgid "Save"
-msgstr "Ahorrar"
+msgstr "Guardar"
 
 #: changedetectionio/forms.py
 msgid "Proxy"
-msgstr "Apoderado"
+msgstr "Proxy"
 
 #: changedetectionio/forms.py
 msgid "Send a notification when the filter can no longer be found on the page"
-msgstr ""
-"Enviar una notificación cuando el filtro ya no se pueda encontrar en la "
-"página"
+msgstr "Enviar una notificación cuando el filtro ya no se pueda encontrar en la página"
 
 #: changedetectionio/forms.py
 msgid "Muted"
-msgstr "Apagado"
+msgstr "Silenciado"
 
 #: changedetectionio/forms.py
 msgid "On"
-msgstr "En"
+msgstr "On"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/forms.py
 msgid "Notifications"
 msgstr "Notificaciones"
 
@@ -2618,7 +2252,7 @@ msgstr "Adjunte captura de pantalla a la notificación (cuando sea posible)"
 
 #: changedetectionio/forms.py
 msgid "Match"
-msgstr "Fósforo"
+msgstr "Coincidencia"
 
 #: changedetectionio/forms.py
 msgid "Match all of the following"
@@ -2638,9 +2272,7 @@ msgstr "Número de elementos del historial por monitor que se deben conservar"
 
 #: changedetectionio/forms.py
 msgid "Body must be empty when Request Method is set to GET"
-msgstr ""
-"El cuerpo debe estar vacío cuando el método de solicitud está configurado en"
-" GET"
+msgstr "El cuerpo debe estar vacío cuando el método de solicitud está configurado en GET"
 
 #: changedetectionio/forms.py
 #, python-format
@@ -2667,8 +2299,7 @@ msgstr "URL de proxy"
 
 #: changedetectionio/forms.py
 msgid "Proxy URLs must start with http://, https:// or socks5://"
-msgstr ""
-"Las URL de proxy deben comenzar con http://, https:// o calcetines5://"
+msgstr "Las URL de proxy deben comenzar con http://, https:// o socks5://"
 
 #: changedetectionio/forms.py
 msgid "Browser connection URL"
@@ -2754,8 +2385,7 @@ msgstr "Ignorar texto"
 msgid "Ignore whitespace"
 msgstr "Ignorar espacios en blanco"
 
-#: changedetectionio/forms.py
-#: changedetectionio/processors/image_ssim_diff/forms.py
+#: changedetectionio/forms.py changedetectionio/processors/image_ssim_diff/forms.py
 msgid "Must be between 0 and 100"
 msgstr "Debe estar entre 0 y 100"
 
@@ -2765,7 +2395,7 @@ msgstr "Contraseña"
 
 #: changedetectionio/forms.py
 msgid "Pager size"
-msgstr "Tamaño del buscapersonas"
+msgstr "Tamaño del paginador"
 
 #: changedetectionio/forms.py
 msgid "Should be atleast zero (disabled)"
@@ -2793,9 +2423,7 @@ msgstr "Representar el contenido de la etiqueta de anclaje"
 
 #: changedetectionio/forms.py
 msgid "Allow anonymous access to watch history page when password is enabled"
-msgstr ""
-"Permitir el acceso anónimo a la página del historial de visualización cuando"
-" la contraseña esté habilitada"
+msgstr "Permitir el acceso anónimo a la página del historial de visualización cuando la contraseña esté habilitada"
 
 #: changedetectionio/forms.py
 msgid "Hide muted watches from RSS feed"
@@ -2803,7 +2431,7 @@ msgstr "Ocultar monitores silenciados del feed RSS"
 
 #: changedetectionio/forms.py
 msgid "Enable RSS reader mode "
-msgstr "Habilitar el modo lector RSS"
+msgstr "Habilitar el modo lector RSS "
 
 #: changedetectionio/forms.py
 msgid "Number of changes to show in watch RSS feed"
@@ -2811,13 +2439,11 @@ msgstr "Número de cambios que se mostrarán en la fuente RSS del monitor"
 
 #: changedetectionio/forms.py
 msgid "Should contain zero or more attempts"
-msgstr "Debe contener cero o más intentos."
+msgstr "Debe contener cero o más intentos"
 
 #: changedetectionio/forms.py
-msgid ""
-"Number of times the filter can be missing before sending a notification"
-msgstr ""
-"Número de veces que puede faltar el filtro antes de enviar una notificación"
+msgid "Number of times the filter can be missing before sending a notification"
+msgstr "Número de veces que puede faltar el filtro antes de enviar una notificación"
 
 #: changedetectionio/forms.py
 msgid "RegEx to extract"
@@ -2828,16 +2454,12 @@ msgid "Extract as CSV"
 msgstr "Extraer como CSV"
 
 #: changedetectionio/processors/extract.py
-msgid ""
-"No matches found while scanning all of the watch history for that RegEx."
-msgstr ""
-"No se encontraron coincidencias al escanear todo el historial de "
-"visualización para esa expresión regular."
+msgid "No matches found while scanning all of the watch history for that RegEx."
+msgstr "No se encontraron coincidencias al escanear todo el historial de visualización para esa expresión regular."
 
 #: changedetectionio/processors/image_ssim_diff/difference.py
 msgid "Not enough history to compare. Need at least 2 snapshots."
-msgstr ""
-"No hay suficiente historia para comparar. Necesita al menos 2 instantáneas."
+msgstr "No hay suficiente historia para comparar. Necesita al menos 2 instantáneas."
 
 #: changedetectionio/processors/image_ssim_diff/difference.py
 msgid "Failed to load screenshots: {}"
@@ -2853,9 +2475,7 @@ msgstr "El valor del cuadro delimitador es demasiado largo"
 
 #: changedetectionio/processors/image_ssim_diff/forms.py
 msgid "Bounding box must be in format: x,y,width,height (integers only)"
-msgstr ""
-"El cuadro delimitador debe tener el formato: x,y,ancho,alto (solo números "
-"enteros)"
+msgstr "El cuadro delimitador debe tener el formato: x,y,ancho,alto (solo números enteros)"
 
 #: changedetectionio/processors/image_ssim_diff/forms.py
 msgid "Bounding box values must be non-negative"
@@ -2906,11 +2526,8 @@ msgid "Visual / Image screenshot change detection"
 msgstr "Detección de cambios de captura de pantalla visual/imagen"
 
 #: changedetectionio/processors/image_ssim_diff/processor.py
-msgid ""
-"Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM"
-msgstr ""
-"Compara capturas de pantalla utilizando el rápido algoritmo OpenCV, entre 10"
-" y 100 veces más rápido que SSIM"
+msgid "Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM"
+msgstr "Compara capturas de pantalla utilizando el rápido algoritmo OpenCV, entre 10 y 100 veces más rápido que SSIM"
 
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Re-stock detection"
@@ -2959,8 +2576,7 @@ msgstr "Reabastecimiento y detección de precios"
 
 #: changedetectionio/processors/restock_diff/processor.py
 msgid "Re-stock & Price detection for pages with a SINGLE product"
-msgstr ""
-"Reabastecimiento y detección de precios para páginas con un ÚNICO producto"
+msgstr "Reabastecimiento y detección de precios para páginas con un ÚNICO producto"
 
 #: changedetectionio/processors/restock_diff/processor.py
 msgid "Detects if the product goes back to in-stock"
@@ -2972,7 +2588,7 @@ msgstr "Cambios en el texto/HTML, JSON y PDF de la página web"
 
 #: changedetectionio/processors/text_json_diff/processor.py
 msgid "Detects all text changes where possible"
-msgstr "Detecta todos los cambios de texto siempre que sea posible."
+msgstr "Detecta todos los cambios de texto siempre que sea posible"
 
 #: changedetectionio/store/__init__.py
 msgid "Error fetching metadata for {}"
@@ -2980,26 +2596,19 @@ msgstr "Error al obtener metadatos para{}"
 
 #: changedetectionio/store/__init__.py
 msgid "Watch protocol is not permitted or invalid URL format"
-msgstr ""
-"El protocolo de visualización no está permitido o el formato de URL no es "
-"válido"
+msgstr "El protocolo de visualización no está permitido o el formato de URL no es válido"
 
 #: changedetectionio/store/__init__.py
 msgid "Watch limit reached ({}/{} watches). Cannot add more watches."
-msgstr ""
-"Límite de visualización alcanzado ({} /{} monitores). No se pueden agregar "
-"más monitores."
+msgstr "Límite de visualización alcanzado ({} /{} monitores). No se pueden agregar más monitores."
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
 msgstr "Cuerpo de todas las notificaciones: puedes utilizar"
 
 #: changedetectionio/templates/_common_fields.html
-msgid ""
-"templating in the notification title, body and URL, and tokens from below."
-msgstr ""
-"plantillas en el título, el cuerpo y la URL de la notificación, y tokens "
-"desde abajo."
+msgid "templating in the notification title, body and URL, and tokens from below."
+msgstr "plantillas en el título, el cuerpo y la URL de la notificación, y tokens desde abajo."
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Show token/placeholders"
@@ -3007,7 +2616,7 @@ msgstr "Mostrar token/marcadores de posición"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Token"
-msgstr "Simbólico"
+msgstr "Token"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Description"
@@ -3026,11 +2635,8 @@ msgid "The UUID of the watch."
 msgstr "El UUID del monitor."
 
 #: changedetectionio/templates/_common_fields.html
-msgid ""
-"The page title of the watch, uses <title> if not set, falls back to URL"
-msgstr ""
-"El título de la página del monitor, utiliza<title>si no se establece, vuelve"
-" a la URL"
+msgid "The page title of the watch, uses <title> if not set, falls back to URL"
+msgstr "El título de la página del monitor, utiliza<title>si no se establece, vuelve a la URL"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "The watch group / tag"
@@ -3058,39 +2664,35 @@ msgstr "Sin prefijo ni colores (añadidos)"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "The diff output - only changes and additions"
-msgstr "La salida del diferencial: solo cambios y adiciones"
+msgstr "La salida de la comparación - solo cambios y adiciones"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "The diff output - only changes and additions —"
-msgstr "La salida del diferencial (solo cambios y adiciones)"
+msgstr "La salida de la comparación  - solo cambios y adiciones —"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "The diff output - only changes and removals"
-msgstr "La salida del diferencial: solo cambios y eliminaciones"
+msgstr "La salida de la comparación - solo cambios y eliminaciones"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "The diff output - only changes and removals —"
-msgstr "La salida del diferencial (solo cambios y eliminaciones)"
+msgstr "La salida de la comparación - solo cambios y eliminaciones  —"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "The diff output - full difference output"
-msgstr "La salida diff - salida de diferencia completa"
+msgstr "La salida de la comparación - salida de diferencia completa"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "The diff output - full difference output —"
-msgstr "La salida diff - salida de diferencia completa -"
+msgstr "La salida de la comparación  - salida de diferencia completa -"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "The diff output - patch in unified format"
-msgstr "La salida diff - parche en formato unificado"
+msgstr "La salida de la comparación - parche en formato unificado"
 
 #: changedetectionio/templates/_common_fields.html
-msgid ""
-"The current snapshot text contents value, useful when combined with JSON or "
-"CSS filters"
-msgstr ""
-"El valor del contenido del texto de la instantánea actual, útil cuando se "
-"combina con filtros JSON o CSS"
+msgid "The current snapshot text contents value, useful when combined with JSON or CSS filters"
+msgstr "El valor del contenido del texto de la instantánea actual, útil cuando se combina con filtros JSON o CSS"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Text that tripped the trigger from filters"
@@ -3106,15 +2708,11 @@ msgstr "y"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "depend on how the difference algorithm perceives the change."
-msgstr "Depende de cómo el algoritmo de diferencia percibe el cambio."
+msgstr "depende de cómo el algoritmo de diferencia percibe el cambio."
 
 #: changedetectionio/templates/_common_fields.html
-msgid ""
-"For example, an addition or removal could be perceived as a change in some "
-"cases."
-msgstr ""
-"Por ejemplo, una adición o eliminación podría percibirse como un cambio en "
-"algunos casos."
+msgid "For example, an addition or removal could be perceived as a change in some cases."
+msgstr "Por ejemplo, una adición o eliminación podría percibirse como un cambio en algunos casos."
 
 #: changedetectionio/templates/_common_fields.html
 msgid "More Here"
@@ -3129,15 +2727,10 @@ msgid "for notification to just about any service!"
 msgstr "para notificar a casi cualquier servicio!"
 
 #: changedetectionio/templates/_common_fields.html
-msgid ""
-"Please read the notification services wiki here for important configuration "
-"notes"
-msgstr ""
-"Lea la wiki de servicios de notificación aquí para obtener notas de "
-"configuración importantes."
+msgid "Please read the notification services wiki here for important configuration notes"
+msgstr "Lea la wiki de servicios de notificación aquí para obtener notas de configuración importantes"
 
-#: changedetectionio/templates/_common_fields.html
-#: changedetectionio/templates/edit/text-options.html
+#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/text-options.html
 msgid "Use"
 msgstr "Usar"
 
@@ -3162,18 +2755,12 @@ msgid "of notification text, including the title."
 msgstr "del texto de la notificación, incluido el título."
 
 #: changedetectionio/templates/_common_fields.html
-msgid ""
-"bots can't send messages to other bots, so you should specify chat ID of "
-"non-bot user."
-msgstr ""
-"Los bots no pueden enviar mensajes a otros bots, por lo que debes "
-"especificar el ID de chat de un usuario que no sea un bot."
+msgid "bots can't send messages to other bots, so you should specify chat ID of non-bot user."
+msgstr "Los bots no pueden enviar mensajes a otros bots, por lo que debes especificar el ID de chat de un usuario que no sea un bot."
 
 #: changedetectionio/templates/_common_fields.html
 msgid "only supports very limited HTML and can fail when extra tags are sent,"
-msgstr ""
-"solo admite HTML muy limitado y puede fallar cuando se envían etiquetas "
-"adicionales,"
+msgstr "solo admite HTML muy limitado y puede fallar cuando se envían etiquetas adicionales,"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "(or use plaintext/markdown format)"
@@ -3221,7 +2808,7 @@ msgstr "Tratamiento.."
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Title for all notifications"
-msgstr "Título para todas las notificaciones."
+msgstr "Título para todas las notificaciones"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "For JSON payloads, use"
@@ -3237,23 +2824,19 @@ msgstr "Codificación de URL, uso"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "for example -"
-msgstr "Por ejemplo -"
+msgstr "por ejemplo -"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Regular-expression replace, use"
 msgstr "Reemplazo de expresión regular, uso"
 
 #: changedetectionio/templates/_common_fields.html
-msgid ""
-"For a complete reference of all Jinja2 built-in filters, users can refer to "
-"the"
-msgstr ""
-"Para obtener una referencia completa de todos los filtros integrados de "
-"Jinja2, los usuarios pueden consultar el"
+msgid "For a complete reference of all Jinja2 built-in filters, users can refer to the"
+msgstr "Para obtener una referencia completa de todos los filtros integrados de Jinja2, los usuarios pueden consultar el"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Format for all notifications"
-msgstr "Formato para todas las notificaciones."
+msgstr "Formato para todas las notificaciones"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Entry"
@@ -3261,7 +2844,7 @@ msgstr "Entrada"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Actions"
-msgstr "Comportamiento"
+msgstr "Acciones"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Add a row/rule after"
@@ -3276,9 +2859,7 @@ msgid "Verify this rule against current snapshot"
 msgstr "Verifique esta regla con la instantánea actual"
 
 #: changedetectionio/templates/_helpers.html
-msgid ""
-"Error - This watch needs Chrome (with playwright/sockpuppetbrowser), but "
-"Chrome based fetching is not enabled."
+msgid "Error - This watch needs Chrome (with playwright/sockpuppetbrowser), but Chrome based fetching is not enabled."
 msgstr "Error: este monitor necesita Chrome (con playwright/sockpuppetbrowser), pero la obtención basada en Chrome no está habilitada."
 
 #: changedetectionio/templates/_helpers.html
@@ -3286,11 +2867,8 @@ msgid "Alternatively try our"
 msgstr "Alternativamente prueba nuestro"
 
 #: changedetectionio/templates/_helpers.html
-msgid ""
-"very affordable subscription based service which has all this setup for you"
-msgstr ""
-"Servicio basado en suscripción muy asequible que tiene toda esta "
-"configuración para usted."
+msgid "very affordable subscription based service which has all this setup for you"
+msgstr "servicio basado en suscripción muy asequible que tiene toda esta configuración para usted."
 
 #: changedetectionio/templates/_helpers.html
 msgid "You may need to"
@@ -3310,7 +2888,7 @@ msgstr "en el"
 
 #: changedetectionio/templates/_helpers.html
 msgid "file"
-msgstr "archivo"
+msgstr "fichero"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Set a hourly/week day schedule"
@@ -3333,12 +2911,8 @@ msgid "Reset"
 msgstr "Reiniciar"
 
 #: changedetectionio/templates/_helpers.html
-msgid ""
-"Warning, one or more of your 'days' has a duration that would extend into "
-"the next day."
-msgstr ""
-"Advertencia, uno o más de sus 'días' tienen una duración que se extendería "
-"hasta el día siguiente."
+msgid "Warning, one or more of your 'days' has a duration that would extend into the next day."
+msgstr "Advertencia, uno o más de sus 'días' tienen una duración que se extendería hasta el día siguiente."
 
 #: changedetectionio/templates/_helpers.html
 msgid "This could have unintended consequences."
@@ -3357,9 +2931,7 @@ msgid "First confirm/save your Time Zone Settings"
 msgstr "Primero confirme/guarde su configuración de zona horaria"
 
 #: changedetectionio/templates/_helpers.html
-msgid ""
-"Triggers a change if this text appears, AND something changed in the "
-"document."
+msgid "Triggers a change if this text appears, AND something changed in the document."
 msgstr "Activa un cambio si aparece este texto Y algo cambia en el documento."
 
 #: changedetectionio/templates/_helpers.html
@@ -3376,8 +2948,7 @@ msgstr "Texto ignorado"
 
 #: changedetectionio/templates/_helpers.html
 msgid "No change-detection will occur because this text exists."
-msgstr ""
-"No se producirá ninguna detección de cambios porque este texto existe."
+msgstr "No se producirá ninguna detección de cambios porque este texto existe."
 
 #: changedetectionio/templates/_helpers.html
 msgid "Blocked text"
@@ -3400,12 +2971,8 @@ msgid "Auto-detect from browser"
 msgstr "Detectar automáticamente desde el navegador"
 
 #: changedetectionio/templates/base.html
-msgid ""
-"Language support is in beta, please help us improve by opening a PR on "
-"GitHub with any updates."
-msgstr ""
-"El soporte de idiomas está en versión beta. Ayúdenos a mejorar abriendo un "
-"PR en GitHub con cualquier actualización."
+msgid "Language support is in beta, please help us improve by opening a PR on GitHub with any updates."
+msgstr "El soporte de idiomas está en versión beta. Ayúdenos a mejorar abriendo un PR en GitHub con cualquier actualización."
 
 #: changedetectionio/templates/base.html
 msgid "Search"
@@ -3424,21 +2991,14 @@ msgid "Enter search term..."
 msgstr "Introduzca el término de búsqueda..."
 
 #: changedetectionio/templates/edit/text-options.html
-msgid ""
-"Text to wait for before triggering a change/notification, all text and regex"
-" are tested case-insensitive."
+msgid "Text to wait for before triggering a change/notification, all text and regex are tested case-insensitive."
 msgstr ""
-"Texto a esperar antes de activar un cambio/notificación, todo el texto y las"
-" expresiones regulares se prueban sin distinguir entre mayúsculas y "
+"Texto a esperar antes de activar un cambio/notificación, todo el texto y las expresiones regulares se prueban sin distinguir entre mayúsculas y "
 "minúsculas."
 
 #: changedetectionio/templates/edit/text-options.html
-msgid ""
-"Trigger text is processed from the result-text that comes out of any "
-"CSS/JSON Filters for this monitor"
-msgstr ""
-"El texto de activación se procesa a partir del texto de resultado que surge "
-"de cualquier filtro CSS/JSON para este monitor."
+msgid "Trigger text is processed from the result-text that comes out of any CSS/JSON Filters for this monitor"
+msgstr "El texto de activación se procesa a partir del texto de resultado que surge de cualquier filtro CSS/JSON para este monitor"
 
 #: changedetectionio/templates/edit/text-options.html
 msgid "Each line is processed separately (think of each line as \"OR\")"
@@ -3446,9 +3006,7 @@ msgstr "Cada línea se procesa por separado (piense en cada línea como \"O\")"
 
 #: changedetectionio/templates/edit/text-options.html
 msgid "Note: Wrap in forward slash / to use regex example:"
-msgstr ""
-"Nota: incluya una barra diagonal / para usar el ejemplo de expresiones "
-"regulares:"
+msgstr "Nota: incluya una barra diagonal / para usar el ejemplo de expresiones regulares:"
 
 #: changedetectionio/templates/edit/text-options.html
 msgid "You can also use"
@@ -3463,43 +3021,28 @@ msgid "\"Page text\" - with Contains, Starts With, Not Contains and many more"
 msgstr "\"Texto de página\": contiene, comienza con, no contiene y muchos más"
 
 #: changedetectionio/templates/edit/text-options.html
-msgid ""
-"Matching text will be ignored in the text snapshot (you can still see it but"
-" it wont trigger a change)"
-msgstr ""
-"El texto coincidente se ignorará en la instantánea del texto (aún podrás "
-"verlo pero no activará un cambio)"
+msgid "Matching text will be ignored in the text snapshot (you can still see it but it wont trigger a change)"
+msgstr "El texto coincidente se ignorará en la instantánea del texto (aún podrás verlo pero no activará un cambio)"
 
 #: changedetectionio/templates/edit/text-options.html
 msgid ""
-"Block change-detection while this text is on the page, all text and regex "
-"are tested case-insensitive, good for waiting for when a product is "
+"Block change-detection while this text is on the page, all text and regex are tested case-insensitive, good for waiting for when a product is "
 "available again"
 msgstr ""
-"Bloquear la detección de cambios mientras este texto está en la página, todo"
-" el texto y las expresiones regulares se prueban sin distinguir entre "
-"mayúsculas y minúsculas, lo cual es bueno para esperar a que un producto "
-"vuelva a estar disponible"
+"Bloquear la detección de cambios mientras este texto está en la página, todo el texto y las expresiones regulares se prueban sin distinguir entre "
+"mayúsculas y minúsculas, lo cual es bueno para esperar a que un producto vuelva a estar disponible"
 
 #: changedetectionio/templates/edit/text-options.html
-msgid ""
-"Block text is processed from the result-text that comes out of any CSS/JSON "
-"Filters for this monitor"
-msgstr ""
-"El texto del bloque se procesa a partir del texto resultante que surge de "
-"cualquier filtro CSS/JSON para este monitor."
+msgid "Block text is processed from the result-text that comes out of any CSS/JSON Filters for this monitor"
+msgstr "El texto del bloque se procesa a partir del texto resultante que surge de cualquier filtro CSS/JSON para este monitor"
 
 #: changedetectionio/templates/edit/text-options.html
 msgid "All lines here must not exist (think of each line as \"OR\")"
 msgstr "Todas las líneas aquí no deben existir (piense en cada línea como \"O\")"
 
 #: changedetectionio/templates/edit/text-options.html
-msgid ""
-"Extracts text in the final output (line by line) after other filters using "
-"regular expressions or string match:"
-msgstr ""
-"Extrae texto en la salida final (línea por línea) después de otros filtros "
-"usando expresiones regulares o coincidencia de cadenas:"
+msgid "Extracts text in the final output (line by line) after other filters using regular expressions or string match:"
+msgstr "Extrae texto en la salida final (línea por línea) después de otros filtros usando expresiones regulares o coincidencia de cadenas:"
 
 #: changedetectionio/templates/edit/text-options.html
 msgid "Regular expression - example"
@@ -3507,7 +3050,7 @@ msgstr "Expresión regular - ejemplo"
 
 #: changedetectionio/templates/edit/text-options.html
 msgid "Don't forget to consider the white-space at the start of a line"
-msgstr "No olvides considerar el espacio en blanco al comienzo de una línea."
+msgstr "No olvides considerar el espacio en blanco al comienzo de una línea"
 
 #: changedetectionio/templates/edit/text-options.html
 msgid "type flags (more"
@@ -3575,8 +3118,7 @@ msgstr "Silenciar notificaciones"
 
 #: changedetectionio/templates/menu.html
 msgid "Notifications are muted - click to unmute"
-msgstr ""
-"Las notificaciones están silenciadas: haga clic para activar el silencio"
+msgstr "Las notificaciones están silenciadas: haga clic para activar el silencio"
 
 #: changedetectionio/templates/menu.html
 msgid "EDIT"
@@ -3617,4 +3159,3 @@ msgstr "No"
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"
 msgstr "Configuraciones principales"
-
