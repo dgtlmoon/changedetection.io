@@ -284,6 +284,9 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     logger.debug(f'[{uuid}] - checksumFromPreviousCheckWasTheSame - Checksum from previous check was the same, nothing todo here.')
                     # Reset the edited flag since we successfully completed the check
                     watch.reset_watch_edited_flag()
+                    # Page was fetched successfully - clear any previous error state
+                    datastore.update_watch(uuid=uuid, update_obj={'last_error': False})
+                    cleanup_error_artifacts(uuid, datastore)
                     
                 except content_fetchers_exceptions.BrowserConnectError as e:
                     datastore.update_watch(uuid=uuid,
