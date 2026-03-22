@@ -435,6 +435,12 @@ class fetcher(Fetcher):
                     # redirects can cause Chrome to abort the original navigation. The page DOM is
                     # still loaded with whatever content was served, so proceed and scrape it.
                     logger.opt(exception=True).warning(f"[{watch_uuid}] page.goto() ERR_ABORTED for {url} - likely anti-bot challenge or JS redirect, proceeding with loaded content")
+                    await asyncio.sleep(1 + extra_wait)
+                    if self.page and hasattr(self.page, '_client'):
+                        try:
+                            await self.page._client.send('Page.stopLoading')
+                        except Exception:
+                            pass
                     break  # response stays None; fall through to use first_response_data
                 raise
 
