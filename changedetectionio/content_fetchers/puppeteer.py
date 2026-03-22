@@ -429,6 +429,14 @@ class fetcher(Fetcher):
                     except Exception:
                         pass
                 break  # response stays None; fall through to use first_response_data
+            except Exception as e:
+                if 'ERR_ABORTED' in str(e):
+                    # Anti-bot JS challenges (Cloudflare, WP Simple Firewall etc) or JS-initiated
+                    # redirects can cause Chrome to abort the original navigation. The page DOM is
+                    # still loaded with whatever content was served, so proceed and scrape it.
+                    logger.opt(exception=True).warning(f"[{watch_uuid}] page.goto() ERR_ABORTED for {url} - likely anti-bot challenge or JS redirect, proceeding with loaded content")
+                    break  # response stays None; fall through to use first_response_data
+                raise
 
             await asyncio.sleep(1 + extra_wait)
             # Check if page still exists before sending command
