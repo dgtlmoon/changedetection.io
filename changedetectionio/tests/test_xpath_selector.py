@@ -592,3 +592,74 @@ def test_rss_xpath(client, live_server, measure_memory_usage, datastore_path):
         set_rss_atom_feed_response(header=feed_header, datastore_path=datastore_path)
         for content_type in RSS_XML_CONTENT_TYPES:
             _subtest_xpath_rss(client, content_type=content_type, datastore_path=datastore_path)
+
+
+# GHSA-6fmw-82m7-jq6p — XPath arbitrary file read via unparsed-text() and friends
+# Unit-level: verify xpath_filter() and SafeXPath3Parser block all dangerous functions.
+def test_xpath_blocked_functions_unit():
+    """Dangerous XPath 3.0 functions must be rejected at the parser level (no live server needed)."""
+    import elementpath
+    from changedetectionio.html_tools import xpath_filter, SafeXPath3Parser
+    from lxml import html
+
+    html_content = '<html><body><p>safe content</p></body></html>'
+
+    dangerous_expressions = [
+        "unparsed-text('file:///etc/passwd')",
+        "unparsed-text-lines('file:///etc/passwd')",
+        "unparsed-text-available('file:///etc/passwd')",
+        "doc('file:///etc/passwd')",
+        "doc-available('file:///etc/passwd')",
+        "environment-variable('PATH')",
+        "available-environment-variables()",
+    ]
+
+    for expr in dangerous_expressions:
+        # xpath_filter() must raise, not silently return file contents
+        try:
+            result = xpath_filter(expr, html_content)
+            assert False, f"xpath_filter should have raised for: {expr!r}, got: {result!r}"
+        except elementpath.ElementPathError:
+            pass  # expected
+
+        # SafeXPath3Parser must reject the expression at parse time
+        tree = html.fromstring(html_content)
+        try:
+            elementpath.select(tree, expr, parser=SafeXPath3Parser)
+            assert False, f"SafeXPath3Parser should have raised for: {expr!r}"
+        except elementpath.ElementPathError:
+            pass  # expected
+
+    # Sanity check: normal XPath still works
+    result = xpath_filter('//p/text()', html_content)
+    assert result == 'safe content'
+
+
+# GHSA-6fmw-82m7-jq6p — form validation must also reject dangerous XPath expressions.
+def test_xpath_blocked_functions_form_validation(client, live_server, measure_memory_usage, datastore_path):
+    """Edit-form validation must reject dangerous XPath 3.0 functions before they are stored."""
+    from flask import url_for
+
+    set_original_response(datastore_path=datastore_path)
+    test_url = url_for('test_endpoint', _external=True)
+    client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    dangerous_expressions = [
+        "xpath:unparsed-text('file:///etc/passwd')",
+        "xpath:environment-variable('PATH')",
+        "xpath:doc('file:///etc/passwd')",
+    ]
+
+    for expr in dangerous_expressions:
+        res = client.post(
+            url_for("ui.ui_edit.edit_page", uuid="first"),
+            data={"include_filters": expr, "url": test_url, "tags": "", "headers": "",
+                  'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
+            follow_redirects=True
+        )
+        assert b"is not a valid XPath expression" in res.data, \
+            f"Form should reject dangerous expression: {expr!r}"
+
+    delete_all_watches(client)

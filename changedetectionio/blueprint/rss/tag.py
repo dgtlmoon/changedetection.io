@@ -7,7 +7,7 @@ def construct_tag_routes(rss_blueprint, datastore):
         datastore: The ChangeDetectionStore instance
     """
 
-    @rss_blueprint.route("/tag/<string:tag_uuid>", methods=['GET'])
+    @rss_blueprint.route("/tag/<uuid_str:tag_uuid>", methods=['GET'])
     def rss_tag_feed(tag_uuid):
 
         from flask import make_response, request, url_for

@@ -10,7 +10,8 @@ from changedetectionio import html_tools
 def construct_blueprint(datastore: ChangeDetectionStore):
     preview_blueprint = Blueprint('ui_preview', __name__, template_folder="../ui/templates")
 
-    @preview_blueprint.route("/preview/<string:uuid>", methods=['GET'])
+
+    @preview_blueprint.route("/preview/<uuid_str:uuid>", methods=['GET', 'POST'])
     @login_optionally_required
     def preview_page(uuid):
         """
@@ -59,12 +60,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         versions = []
         timestamp = None
 
-        system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
         extra_stylesheets = [url_for('static_content', group='styles', filename='diff.css')]
-
-        is_html_webdriver = False
-        if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver' or watch.get('fetch_backend', '').startswith('extra_browser_'):
-            is_html_webdriver = True
+        is_html_webdriver = watch.fetcher_supports_screenshots
 
         triggered_line_numbers = []
         ignored_line_numbers = []
@@ -74,7 +71,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             flash(gettext("Preview unavailable - No fetch/check completed or triggers not reached"), "error")
         else:
             # So prepare the latest preview or not
-            preferred_version = request.args.get('version')
+            preferred_version = request.values.get('version') if request.method == 'POST' else request.args.get('version')
+
+
             versions = list(watch.history.keys())
             timestamp = versions[-1]
             if preferred_version and preferred_version in versions:
@@ -125,7 +124,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         return output
 
-    @preview_blueprint.route("/preview/<string:uuid>/processor-asset/<string:asset_name>", methods=['GET'])
+    @preview_blueprint.route("/preview/<uuid_str:uuid>/processor-asset/<string:asset_name>", methods=['GET'])
     @login_optionally_required
     def processor_asset(uuid, asset_name):
         """

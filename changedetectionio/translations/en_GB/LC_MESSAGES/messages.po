@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  changedetection.io\n"
 "Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io\n"
-"POT-Creation-Date: 2026-02-05 17:47+0100\n"
+"POT-Creation-Date: 2026-02-23 03:54+0100\n"
 "PO-Revision-Date: 2026-01-12 16:33+0100\n"
 "Last-Translator: British English Translation Team\n"
 "Language: en_GB\n"
@@ -16,7 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.17.0\n"
+"Generated-By: Babel 2.16.0\n"
 
 #: changedetectionio/blueprint/backups/__init__.py
 msgid "A backup is already running, check back in a few minutes"
@@ -34,32 +34,114 @@ msgstr ""
 msgid "Backups were deleted."
 msgstr ""
 
-#: changedetectionio/blueprint/backups/templates/overview.html changedetectionio/blueprint/settings/templates/settings.html
-msgid "Backups"
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Backup zip file"
 msgstr ""
 
-#: changedetectionio/blueprint/backups/templates/overview.html
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Must be a .zip backup file!"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Include groups"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Replace existing groups of the same UUID"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Include watches"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Replace existing watches of the same UUID"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/restore.py changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Restore backup"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "A restore is already running, check back in a few minutes"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "No file uploaded"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "File must be a .zip backup file"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Invalid or corrupted zip file"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Restore started in background, check back in a few minutes."
+msgstr ""
+
+#: changedetectionio/blueprint/backups/templates/backup_create.html
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Create"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/templates/backup_create.html
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Restore"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "A backup is running!"
 msgstr ""
 
-#: changedetectionio/blueprint/backups/templates/overview.html
+#: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "Here you can download and request a new backup, when a backup is completed you will see it listed below."
 msgstr ""
 
-#: changedetectionio/blueprint/backups/templates/overview.html
+#: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "Mb"
 msgstr ""
 
-#: changedetectionio/blueprint/backups/templates/overview.html
+#: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "No backups found."
 msgstr ""
 
-#: changedetectionio/blueprint/backups/templates/overview.html
+#: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "Create backup"
 msgstr ""
 
-#: changedetectionio/blueprint/backups/templates/overview.html
+#: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "Remove backups"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "A restore is running!"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Restore a backup. Must be a .zip backup file created on/after v0.53.1 (new database layout)."
+msgstr ""
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Note: This does not override the main application settings, only watches and groups."
+msgstr ""
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Include all groups found in backup?"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Replace any existing groups of the same UUID?"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Include all watches found in backup?"
+msgstr ""
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Replace any existing watches of the same UUID?"
 msgstr ""
 
 #: changedetectionio/blueprint/imports/importer.py
@@ -118,6 +200,14 @@ msgstr ""
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid ".XLSX & Wachete"
+msgstr ""
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "Restoring changedetection.io backups is in the"
+msgstr ""
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "backups section"
 msgstr ""
 
 #: changedetectionio/blueprint/imports/templates/import.html
@@ -202,6 +292,16 @@ msgstr ""
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Import"
+msgstr ""
+
+#: changedetectionio/blueprint/rss/single_watch.py
+#, python-format
+msgid "Watch with UUID %(uuid)s not found"
+msgstr ""
+
+#: changedetectionio/blueprint/rss/single_watch.py
+#, python-format
+msgid "Watch %(uuid)s does not have enough history snapshots to show changes (need at least 2)"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/__init__.py
@@ -290,6 +390,10 @@ msgid "RSS"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Backups"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Time & Date"
 msgstr ""
 
@@ -303,10 +407,6 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default recheck time for all watches, current system minimum is"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "seconds"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -663,6 +763,10 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Uptime:"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Python version:"
 msgstr ""
 
@@ -913,10 +1017,6 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py
 msgid "Incorrect confirmation text."
-msgstr ""
-
-#: changedetectionio/blueprint/ui/__init__.py
-msgid "Marking watches as viewed in background..."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py
@@ -1524,6 +1624,10 @@ msgid "Download latest HTML snapshot"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Download watch data package"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Delete Watch?"
 msgstr ""
 
@@ -1778,6 +1882,66 @@ msgstr ""
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/flask_app.py
 #: changedetectionio/realtime/socket_server.py
 msgid "Not yet"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "0 seconds"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "year"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "years"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "month"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "months"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "week"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "weeks"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "day"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "days"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "hour"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "hours"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "minute"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "minutes"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "second"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/flask_app.py
+msgid "seconds"
 msgstr ""
 
 #: changedetectionio/flask_app.py
@@ -2875,6 +3039,18 @@ msgid "Note: Wrap in forward slash / to use regex example:"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
+msgid "You can also use"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "conditions"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "\"Page text\" - with Contains, Starts With, Not Contains and many more"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html
 msgid "Matching text will be ignored in the text snapshot (you can still see it but it wont trigger a change)"
 msgstr ""
 
@@ -3034,5 +3210,8 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Tip: You can also add 'shared' watches."
+#~ msgstr ""
+
+#~ msgid "Marking watches as viewed in background..."
 #~ msgstr ""
 

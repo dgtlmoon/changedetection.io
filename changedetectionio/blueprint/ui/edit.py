@@ -20,7 +20,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             if tag_uuid in watch.get('tags', []) and (tag.get('include_filters') or tag.get('subtractive_selectors')):
                 return True
 
-    @edit_blueprint.route("/edit/<string:uuid>", methods=['GET', 'POST'])
+    @edit_blueprint.route("/edit/<uuid_str:uuid>", methods=['GET', 'POST'])
     @login_optionally_required
     # https://stackoverflow.com/questions/42984453/wtforms-populate-form-with-data-if-data-exists
     # https://wtforms.readthedocs.io/en/3.0.x/forms/#wtforms.form.Form.populate_obj ?
@@ -117,12 +117,25 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 processor_config = processor_instance.get_extra_watch_config(config_filename)
 
                 if processor_config:
+                    from wtforms.fields.form import FormField
                     # Populate processor-config-* fields from JSON
                     for config_key, config_value in processor_config.items():
-                        field_name = f'processor_config_{config_key}'
-                        if hasattr(form, field_name):
-                            getattr(form, field_name).data = config_value
-                            logger.debug(f"Loaded processor config from {config_filename}: {field_name} = {config_value}")
+                        if not isinstance(config_value, dict):
+                            continue
+                        # Try exact API-named field first (e.g., processor_config_restock_diff)
+                        target_field = getattr(form, f'processor_config_{config_key}', None)
+                        # Fallback: find any FormField sub-form whose fields cover config_value keys
+                        if target_field is None:
+                            for form_field in form:
+                                if isinstance(form_field, FormField) and all(k in form_field.form._fields for k in config_value):
+                                    target_field = form_field
+                                    break
+                        if target_field is not None:
+                            for sub_key, sub_value in config_value.items():
+                                sub_field = target_field.form._fields.get(sub_key)
+                                if sub_field is not None:
+                                    sub_field.data = sub_value
+                                    logger.debug(f"Loaded processor config from {config_filename}: {sub_key} = {sub_value}")
             except Exception as e:
                 logger.warning(f"Failed to load processor config: {e}")
 
@@ -327,7 +340,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         return output
 
-    @edit_blueprint.route("/edit/<string:uuid>/get-html", methods=['GET'])
+    @edit_blueprint.route("/edit/<uuid_str:uuid>/get-html", methods=['GET'])
     @login_optionally_required
     def watch_get_latest_html(uuid):
         from io import BytesIO
@@ -354,7 +367,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         # Return a 500 error
         abort(500)
 
-    @edit_blueprint.route("/edit/<string:uuid>/get-data-package", methods=['GET'])
+    @edit_blueprint.route("/edit/<uuid_str:uuid>/get-data-package", methods=['GET'])
     @login_optionally_required
     def watch_get_data_package(uuid):
         """Download all data for a single watch as a zip file"""
@@ -405,7 +418,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                         mimetype='application/zip')
 
     # Ajax callback
-    @edit_blueprint.route("/edit/<string:uuid>/preview-rendered", methods=['POST'])
+    @edit_blueprint.route("/edit/<uuid_str:uuid>/preview-rendered", methods=['POST'])
     @login_optionally_required
     def watch_get_preview_rendered(uuid):
         '''For when viewing the "preview" of the rendered text from inside of Edit'''

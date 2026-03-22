@@ -40,12 +40,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         contents = ''
         now = time.time()
         try:
+            import asyncio
             processor_module = importlib.import_module("changedetectionio.processors.text_json_diff.processor")
             update_handler = processor_module.perform_site_check(datastore=datastore,
                                                                  watch_uuid=uuid
                                                                  )
 
-            update_handler.call_browser(preferred_proxy_id=preferred_proxy)
+            asyncio.run(update_handler.call_browser(preferred_proxy_id=preferred_proxy))
         # title, size is len contents not len xfer
         except content_fetcher_exceptions.Non200ErrorCodeReceived as e:
             if e.status_code == 404:
@@ -94,13 +95,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         return results
 
     @login_required
-    @check_proxies_blueprint.route("/<string:uuid>/status", methods=['GET'])
+    @check_proxies_blueprint.route("/<uuid_str:uuid>/status", methods=['GET'])
     def get_recheck_status(uuid):
         results = _recalc_check_status(uuid=uuid)
         return results
 
     @login_required
-    @check_proxies_blueprint.route("/<string:uuid>/start", methods=['GET'])
+    @check_proxies_blueprint.route("/<uuid_str:uuid>/start", methods=['GET'])
     def start_check(uuid):
 
         if not datastore.proxy_list:

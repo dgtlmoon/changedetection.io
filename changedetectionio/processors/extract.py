@@ -42,10 +42,7 @@ def render_form(watch, datastore, request, url_for, render_template, flash, redi
     # Get error information for the template
     screenshot_url = watch.get_screenshot()
 
-    system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
-    is_html_webdriver = False
-    if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver' or watch.get('fetch_backend', '').startswith('extra_browser_'):
-        is_html_webdriver = True
+    is_html_webdriver = watch.fetcher_supports_screenshots
 
     password_enabled_and_share_is_off = False
     if datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False):

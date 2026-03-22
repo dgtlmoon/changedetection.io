@@ -48,6 +48,15 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     # Check this class does not appear (that we didnt see the actual source)
     assert b'foobar-detection' not in res.data
 
+    # Check POST preview
+    res = client.post(
+        url_for("ui.ui_preview.preview_page", uuid="first"),
+        follow_redirects=True
+    )
+    # Check this class does not appear (that we didnt see the actual source)
+    assert b'foobar-detection' not in res.data
+
+
     # Make a change
     set_modified_response(datastore_path=datastore_path)
 
@@ -413,3 +422,28 @@ def test_plaintext_even_if_xml_content_and_can_apply_filters(client, live_server
     assert b'&lt;foobar' not in res.data
 
     res = delete_all_watches(client)
+
+
+def test_last_error_cleared_on_same_checksum(client, live_server, datastore_path):
+    """last_error should be cleared even when content is unchanged (checksumFromPreviousCheckWasTheSame path)"""
+    set_original_response(datastore_path=datastore_path)
+
+    uuid = client.application.config.get('DATASTORE').add_watch(url=url_for('test_endpoint', _external=True))
+
+    # First check - establishes baseline checksum
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    # Inject a stale last_error directly (simulates a prior failed check)
+    datastore = client.application.config.get('DATASTORE')
+    datastore.update_watch(uuid=uuid, update_obj={'last_error': 'Some previous error'})
+    assert datastore.data['watching'][uuid].get('last_error') == 'Some previous error'
+
+    # Second check - same content, so checksumFromPreviousCheckWasTheSame will fire
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    # last_error must be cleared even though no change was detected
+    assert datastore.data['watching'][uuid].get('last_error') == False
+
+    delete_all_watches(client)

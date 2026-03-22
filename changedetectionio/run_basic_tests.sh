@@ -44,12 +44,12 @@ data_sanity_test () {
   cd ..
   TMPDIR=$(mktemp -d)
   PORT_N=$((5000 + RANDOM % (6501 - 5000)))
-  ./changedetection.py -p $PORT_N -d $TMPDIR -u "https://localhost?test-url-is-sanity=1" &
+  ALLOW_IANA_RESTRICTED_ADDRESSES=true ./changedetection.py -p $PORT_N -d $TMPDIR -u "https://localhost?test-url-is-sanity=1" &
   PID=$!
   sleep 5
   kill $PID
   sleep 2
-  ./changedetection.py -p $PORT_N -d $TMPDIR &
+  ALLOW_IANA_RESTRICTED_ADDRESSES=true ./changedetection.py -p $PORT_N -d $TMPDIR &
   PID=$!
   sleep 5
   # On a restart the URL should still be there

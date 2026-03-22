@@ -1,3 +1,5 @@
+import ipaddress
+import socket
 from functools import lru_cache
 from loguru import logger
 from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
@@ -56,7 +58,28 @@ def normalize_url_encoding(url):
         return url
 
 
-@lru_cache(maxsize=10000)
+def is_private_hostname(hostname):
+    """Return True if hostname resolves to an IANA-restricted (private/reserved) IP address.
+
+    Unresolvable hostnames return False (allow them) — DNS may be temporarily unavailable
+    or the domain not yet live. The actual DNS rebinding attack is mitigated by fetch-time
+    re-validation in requests.py, not by blocking unresolvable domains at add-time.
+    Never cached — callers that need fresh DNS resolution (e.g. at fetch time) can call
+    this directly without going through the lru_cached is_safe_valid_url().
+    """
+    try:
+        for info in socket.getaddrinfo(hostname, None):
+            ip = ipaddress.ip_address(info[4][0])
+            if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
+                logger.warning(f"Hostname '{hostname} - {ip} - ip.is_private = {ip.is_private}, ip.is_loopback = {ip.is_loopback}, ip.is_link_local = {ip.is_link_local}, ip.is_reserved = {ip.is_reserved}")
+                return True
+    except socket.gaierror as e:
+        logger.warning(f"{hostname} error checking {str(e)}")
+        return False
+    logger.info(f"Hostname '{hostname}' is NOT private/IANA restricted.")
+    return False
+
+
 def is_safe_valid_url(test_url):
     from changedetectionio import strtobool
     from changedetectionio.jinja2_custom import render as jinja_render
@@ -77,6 +100,19 @@ def is_safe_valid_url(test_url):
         logger.warning('URL validation failed: URL is empty or whitespace only')
         return False
 
+    # Per-request cache: same URL is often validated 2-3x per watchlist render (sort + display).
+    # Flask's g is scoped to one request and auto-cleared on teardown, so dynamic Jinja2 URLs
+    # like {{microtime()}} are always re-evaluated on the next request.
+    # Falls back gracefully when called outside a request context (e.g. background workers).
+    _cache_key = test_url
+    try:
+        from flask import g
+        _cache = g.setdefault('_url_validation_cache', {})
+        if _cache_key in _cache:
+            return _cache[_cache_key]
+    except RuntimeError:
+        _cache = None  # No app context
+
     allow_file_access = strtobool(os.getenv('ALLOW_FILE_URI', 'false'))
     safe_protocol_regex = '^(http|https|ftp|file):' if allow_file_access else '^(http|https|ftp):'
 
@@ -89,11 +125,14 @@ def is_safe_valid_url(test_url):
     test_url = r.sub('', test_url)
 
     # Check the actual rendered URL in case of any Jinja markup
-    try:
-        test_url = jinja_render(test_url)
-    except Exception as e:
-        logger.error(f'URL "{test_url}" is not correct Jinja2? {str(e)}')
-        return False
+    # Only run jinja_render when the URL actually contains Jinja2 syntax - creating a new
+    # ImmutableSandboxedEnvironment is expensive and is called once per watch per page load
+    if '{%' in test_url or '{{' in test_url:
+        try:
+            test_url = jinja_render(test_url)
+        except Exception as e:
+            logger.error(f'URL "{test_url}" is not correct Jinja2? {str(e)}')
+            return False
 
     # Check query parameters and fragment
     if re.search(r'[<>]', test_url):
@@ -119,4 +158,6 @@ def is_safe_valid_url(test_url):
         logger.warning(f'URL f"{test_url}" failed validation, aborting.')
         return False
 
+    if _cache is not None:
+        _cache[_cache_key] = True
     return True

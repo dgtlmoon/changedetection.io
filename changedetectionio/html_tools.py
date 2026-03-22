@@ -23,6 +23,53 @@ class JSONNotFound(ValueError):
     def __init__(self, msg):
         ValueError.__init__(self, msg)
 
+
+_DEFAULT_UNSAFE_XPATH3_FUNCTIONS = [
+    'unparsed-text',
+    'unparsed-text-lines',
+    'unparsed-text-available',
+    'doc',
+    'doc-available',
+    'environment-variable',
+    'available-environment-variables',
+]
+
+
+def _build_safe_xpath3_parser():
+    """Return an XPath3Parser subclass with filesystem/environment access functions removed.
+
+    XPath 3.0 includes functions that can read arbitrary files or environment variables:
+      - unparsed-text / unparsed-text-lines / unparsed-text-available  (file read)
+      - doc / doc-available                                             (XML fetch from URI)
+      - environment-variable / available-environment-variables         (env var leakage)
+
+    Subclassing gives us an independent symbol_table copy (not shared with the parent class),
+    so removing entries here does not affect XPath3Parser itself.
+
+    Override the blocked list via the XPATH_BLOCKED_FUNCTIONS environment variable
+    (comma-separated, e.g. "unparsed-text,doc,environment-variable").
+    """
+    import os
+    from elementpath.xpath3 import XPath3Parser
+
+    class SafeXPath3Parser(XPath3Parser):
+        pass
+
+    env_override = os.getenv('XPATH_BLOCKED_FUNCTIONS')
+    if env_override is not None:
+        blocked = [f.strip() for f in env_override.split(',') if f.strip()]
+    else:
+        blocked = _DEFAULT_UNSAFE_XPATH3_FUNCTIONS
+
+    for _fn in blocked:
+        SafeXPath3Parser.symbol_table.pop(_fn, None)
+
+    return SafeXPath3Parser
+
+
+# Module-level singleton — built once, reused everywhere.
+SafeXPath3Parser = _build_safe_xpath3_parser()
+
 # Doesn't look like python supports forward slash auto enclosure in re.findall
 # So convert it to inline flag "(?i)foobar" type configuration
 @lru_cache(maxsize=100)
@@ -183,8 +230,6 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
     """
     from lxml import etree, html
     import elementpath
-    # xpath 2.0-3.1
-    from elementpath.xpath3 import XPath3Parser
 
     parser = etree.HTMLParser()
     tree = None
@@ -210,7 +255,7 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
             # This allows //title to match elements in the default namespace
             namespaces[''] = tree.nsmap[None]
 
-        r = elementpath.select(tree, xpath_filter.strip(), namespaces=namespaces, parser=XPath3Parser)
+        r = elementpath.select(tree, xpath_filter.strip(), namespaces=namespaces, parser=SafeXPath3Parser)
         #@note: //title/text() now works with default namespaces (fixed by registering '' prefix)
         #@note: //title/text() wont work where <title>CDATA.. (use cdata_in_document_to_text first)
 
@@ -235,6 +280,9 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
             else:
                 html_block += elementpath_tostring(element)
 
+        # Drop element references before the finally block so tree.clear() can release
+        # the libxml2 document immediately (elements pin the C-level doc via refcount).
+        del r
         return html_block
     finally:
         # Explicitly clear the tree to free memory
@@ -439,13 +487,25 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
         except json.JSONDecodeError as e:
             logger.warning(f"Error processing JSON {content[:20]}...{str(e)})")
     else:
-        # Probably something else, go fish inside for it
-        try:
-            stripped_text_from_html = extract_json_blob_from_html(content=content,
-                                                                  ensure_is_ldjson_info_type=ensure_is_ldjson_info_type,
-                                                                  json_filter=json_filter                                                                  )
-        except json.JSONDecodeError as e:
-            logger.warning(f"Error processing JSON while extracting JSON from HTML blob {content[:20]}...{str(e)})")
+        # Check for JSONP wrapper: someCallback({...}) or some.namespace({...})
+        # Server may claim application/json but actually return JSONP
+        jsonp_match = re.match(r'^\w[\w.]*\s*\((.+)\)\s*;?\s*$', content.lstrip("\ufeff").strip(), re.DOTALL)
+        if jsonp_match:
+            try:
+                inner = jsonp_match.group(1).strip()
+                logger.warning(f"Content looks like JSONP, attempting to extract inner JSON for filter '{json_filter}'")
+                stripped_text_from_html = _parse_json(json.loads(inner), json_filter)
+            except json.JSONDecodeError as e:
+                logger.warning(f"Error processing JSONP inner content {content[:20]}...{str(e)})")
+
+        if not stripped_text_from_html:
+            # Probably something else, go fish inside for it
+            try:
+                stripped_text_from_html = extract_json_blob_from_html(content=content,
+                                                                      ensure_is_ldjson_info_type=ensure_is_ldjson_info_type,
+                                                                      json_filter=json_filter)
+            except json.JSONDecodeError as e:
+                logger.warning(f"Error processing JSON while extracting JSON from HTML blob {content[:20]}...{str(e)})")
 
     if not stripped_text_from_html:
         # Re 265 - Just return an empty string when filter not found
@@ -561,31 +621,33 @@ def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=Fals
         )
     else:
         parser_config = None
-
     if is_rss:
         html_content = re.sub(r'<title([\s>])', r'<h1\1', html_content)
         html_content = re.sub(r'</title>', r'</h1>', html_content)
     else:
-        # Strip bloat in one pass, SPA's often dump 10Mb+ into the <head> for styles, which is not needed
-        # Causing inscriptis to silently exit when more than ~10MB is found.
-        # All we are doing here is converting the HTML to text, no CSS layout etc
-        # Use backreference (\1) to ensure opening/closing tags match (prevents <style> matching </svg> in CSS data URIs)
-        html_content = re.sub(r'<(style|script|svg|noscript)[^>]*>.*?</\1>|<(?:link|meta)[^>]*/?>|<!--.*?-->',
-                              '', html_content, flags=re.DOTALL | re.IGNORECASE)
+        # Use BS4 html.parser to strip bloat — SPA's often dump 10MB+ of CSS/JS into <head>,
+        # causing inscriptis to silently give up. Regex-based stripping is unsafe because tags
+        # can appear inside JSON data attributes with JS-escaped closing tags (e.g. <\/script>),
+        # causing the regex to scan past the intended close and eat real page content.
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(html_content, 'html.parser')
+        # Strip tags that inscriptis cannot render as meaningful text and which can be very large.
+        # svg/math: produce path-data/MathML garbage; canvas/iframe/template: no inscriptis handlers.
+        # video/audio/picture are kept — they may contain meaningful fallback text or captions.
+        for tag in soup.find_all(['head', 'script', 'style', 'noscript', 'svg',
+                                  'math', 'canvas', 'iframe', 'template']):
+            tag.decompose()
 
-        # SPAs often use <body style="display:none"> to hide content until JS loads
-        # inscriptis respects CSS display rules, so we need to remove these hiding styles
-        # to extract the actual page content
-        body_style_pattern = r'(<body[^>]*)\s+style\s*=\s*["\']([^"\']*\b(?:display\s*:\s*none|visibility\s*:\s*hidden)\b[^"\']*)["\']'
+        # SPAs often use <body style="display:none"> to hide content until JS loads.
+        # inscriptis respects CSS display rules, so strip hiding styles from the body tag.
+        body_tag = soup.find('body')
+        if body_tag and body_tag.get('style'):
+            style = body_tag['style']
+            if re.search(r'\b(?:display\s*:\s*none|visibility\s*:\s*hidden)\b', style, re.IGNORECASE):
+                logger.debug(f"html_to_text: Removing hiding styles from body tag (found: '{style}')")
+                del body_tag['style']
 
-        # Check if body has hiding styles that need to be fixed
-        body_match = re.search(body_style_pattern, html_content, flags=re.IGNORECASE)
-        if body_match:
-            from loguru import logger
-            logger.debug(f"html_to_text: Removing hiding styles from body tag (found: '{body_match.group(2)}')")
-
-        html_content = re.sub(body_style_pattern, r'\1', html_content, flags=re.IGNORECASE)
-
+        html_content = str(soup)
 
     text_content = get_text(html_content, config=parser_config)
     return text_content

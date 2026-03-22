@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import re
 import shutil
 import tempfile
 import threading
@@ -13,6 +14,16 @@ from flask_wtf.file import FileField, FileAllowed
 from loguru import logger
 
 from changedetectionio.flask_app import login_optionally_required
+
+# Maximum size of the uploaded zip file. Override via env var MAX_RESTORE_UPLOAD_MB.
+_MAX_UPLOAD_BYTES = int(os.getenv("MAX_RESTORE_UPLOAD_MB", 256)) * 1024 * 1024
+# Maximum total uncompressed size of all entries (zip-bomb guard). Override via MAX_RESTORE_DECOMPRESSED_MB.
+_MAX_DECOMPRESSED_BYTES = int(os.getenv("MAX_RESTORE_DECOMPRESSED_MB", 1024)) * 1024 * 1024
+# Only top-level directories whose name is a valid UUID are treated as watch/tag entries.
+_UUID_RE = re.compile(
+    r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+    re.IGNORECASE,
+)
 
 
 class RestoreForm(Form):
@@ -50,7 +61,18 @@ def import_from_zip(zip_stream, datastore, include_groups, include_groups_replac
     with tempfile.TemporaryDirectory() as tmpdir:
         logger.debug(f"Restore: extracting zip to {tmpdir}")
         with zipfile.ZipFile(zip_stream, 'r') as zf:
-            zf.extractall(tmpdir)
+            total_uncompressed = sum(m.file_size for m in zf.infolist())
+            if total_uncompressed > _MAX_DECOMPRESSED_BYTES:
+                raise ValueError(
+                    f"Backup archive decompressed size ({total_uncompressed // (1024 * 1024)} MB) "
+                    f"exceeds the {_MAX_DECOMPRESSED_BYTES // (1024 * 1024)} MB limit"
+                )
+            resolved_dest = os.path.realpath(tmpdir)
+            for member in zf.infolist():
+                member_dest = os.path.realpath(os.path.join(resolved_dest, member.filename))
+                if not member_dest.startswith(resolved_dest + os.sep) and member_dest != resolved_dest:
+                    raise ValueError(f"Zip Slip path traversal detected in backup archive: {member.filename!r}")
+                zf.extract(member, tmpdir)
         logger.debug("Restore: zip extracted, scanning UUID directories")
 
         for entry in os.scandir(tmpdir):
@@ -58,6 +80,9 @@ def import_from_zip(zip_stream, datastore, include_groups, include_groups_replac
                 continue
 
             uuid = entry.name
+            if not _UUID_RE.match(uuid):
+                logger.warning(f"Restore: skipping non-UUID directory {uuid!r}")
+                continue
             tag_json_path = os.path.join(entry.path, 'tag.json')
             watch_json_path = os.path.join(entry.path, 'watch.json')
 
@@ -155,7 +180,9 @@ def construct_restore_blueprint(datastore):
         form = RestoreForm()
         return render_template("backup_restore.html",
                                form=form,
-                               restore_running=any(t.is_alive() for t in restore_threads))
+                               restore_running=any(t.is_alive() for t in restore_threads),
+                               max_upload_mb=_MAX_UPLOAD_BYTES // (1024 * 1024),
+                               max_decompressed_mb=_MAX_DECOMPRESSED_BYTES // (1024 * 1024))
 
     @login_optionally_required
     @restore_blueprint.route("/restore/start", methods=['POST'])
@@ -173,10 +200,22 @@ def construct_restore_blueprint(datastore):
             flash(gettext("File must be a .zip backup file"), "error")
             return redirect(url_for('backups.restore.restore'))
 
-        # Read into memory now — the request stream is gone once we return
+        # Reject oversized uploads before reading the stream into memory.
+        content_length = request.content_length
+        if content_length and content_length > _MAX_UPLOAD_BYTES:
+            flash(gettext("Backup file is too large (max %(mb)s MB)", mb=_MAX_UPLOAD_BYTES // (1024 * 1024)), "error")
+            return redirect(url_for('backups.restore.restore'))
+
+        # Read into memory now — the request stream is gone once we return.
+        # Read one byte beyond the limit so we can detect truncated-but-still-oversized streams.
         try:
-            zip_bytes = io.BytesIO(zip_file.read())
-            zipfile.ZipFile(zip_bytes)  # quick validity check before spawning
+            raw = zip_file.read(_MAX_UPLOAD_BYTES + 1)
+            if len(raw) > _MAX_UPLOAD_BYTES:
+                flash(gettext("Backup file is too large (max %(mb)s MB)", mb=_MAX_UPLOAD_BYTES // (1024 * 1024)), "error")
+                return redirect(url_for('backups.restore.restore'))
+            zip_bytes = io.BytesIO(raw)
+            with zipfile.ZipFile(zip_bytes):  # quick validity check before spawning
+                pass
             zip_bytes.seek(0)
         except zipfile.BadZipFile:
             flash(gettext("Invalid or corrupted zip file"), "error")
@@ -201,6 +240,7 @@ def construct_restore_blueprint(datastore):
             name="BackupRestore"
         )
         restore_thread.start()
+        restore_threads[:] = [t for t in restore_threads if t.is_alive()]
         restore_threads.append(restore_thread)
         flash(gettext("Restore started in background, check back in a few minutes."))
         return redirect(url_for('backups.restore.restore'))

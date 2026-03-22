@@ -36,7 +36,7 @@ def _task(watch, update_handler):
 
 
 def prepare_filter_prevew(datastore, watch_uuid, form_data):
-    '''Used by @app.route("/edit/<string:uuid>/preview-rendered", methods=['POST'])'''
+    '''Used by @app.route("/edit/<uuid_str:uuid>/preview-rendered", methods=['POST'])'''
     from changedetectionio import forms, html_tools
     from changedetectionio.model.Watch import model as watch_model
     from concurrent.futures import ThreadPoolExecutor

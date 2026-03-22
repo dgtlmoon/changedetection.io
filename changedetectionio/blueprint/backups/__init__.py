@@ -40,11 +40,6 @@ def create_backup(datastore_path, watches: dict, tags: dict = None):
             zipObj.write(url_watches_json, arcname="url-watches.json")
             logger.debug("Added url-watches.json to backup")
 
-        # Add the flask app secret (if it exists)
-        secret_file = os.path.join(datastore_path, "secret.txt")
-        if os.path.isfile(secret_file):
-            zipObj.write(secret_file, arcname="secret.txt")
-
         # Add tag data directories (each tag has its own {uuid}/tag.json)
         for uuid, tag in (tags or {}).items():
             for f in Path(tag.data_dir).glob('*'):
@@ -151,18 +146,21 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     def download_backup(filename):
         import re
         filename = filename.strip()
-        backup_filename_regex = BACKUP_FILENAME_FORMAT.format("\d+")
+        backup_filename_regex = BACKUP_FILENAME_FORMAT.format(r"\d+")
 
-        full_path = os.path.join(os.path.abspath(datastore.datastore_path), filename)
-        if not full_path.startswith(os.path.abspath(datastore.datastore_path)):
-            abort(404)
-
+        # Resolve 'latest' before any validation so checks run against the real filename.
         if filename == 'latest':
             backups = find_backups()
+            if not backups:
+                abort(404)
             filename = backups[0]['filename']
 
         if not re.match(r"^" + backup_filename_regex + "$", filename):
             abort(400)  # Bad Request if the filename doesn't match the pattern
+
+        full_path = os.path.join(os.path.abspath(datastore.datastore_path), filename)
+        if not full_path.startswith(os.path.abspath(datastore.datastore_path) + os.sep):
+            abort(404)
 
         logger.debug(f"Backup download request for '{full_path}'")
         return send_from_directory(os.path.abspath(datastore.datastore_path), filename, as_attachment=True)

@@ -213,12 +213,13 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
                 {%- set checking_now = is_checking_now(watch) -%}
                 {%- set history_n = watch.history_n -%}
                 {%- set favicon = watch.get_favicon_filename() -%}
+                {%- set error_texts = watch.compile_error_texts(has_proxies=has_proxies) -%}
                 {%- set system_use_url_watchlist = datastore.data['settings']['application']['ui'].get('use_page_title_in_list')  -%}
                 {#  Class settings mirrored in changedetectionio/static/js/realtime.js for the frontend #}
                 {%- set row_classes = [
                     loop.cycle('pure-table-odd', 'pure-table-even'),
                     'processor-' ~ watch['processor'],
-                    'has-error' if watch.compile_error_texts()|length > 2 else '',
+                    'has-error' if error_texts|length > 2 else '',
                     'paused' if watch.paused is defined and watch.paused != False else '',
                     'unviewed' if watch.has_unviewed else '',
                     'has-restock-info' if watch.has_restock_info else 'no-restock-info',
@@ -271,7 +272,7 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
                                 {% endif %}
                                <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">&nbsp;</a>
                             </span>
-                            <div class="error-text" style="display:none;">{{ watch.compile_error_texts(has_proxies=datastore.proxy_list)|safe }}</div>
+                            <div class="error-text" style="display:none;">{{ error_texts|safe }}</div>
                             {%- if watch['processor'] == 'text_json_diff'  -%}
                                 {%- if watch['has_ldjson_price_data'] and not watch['track_ldjson_price_data']  -%}
                                 <div class="ldjson-price-track-offer">Switch to Restock & Price watch mode? <a href="{{url_for('price_data_follower.accept', uuid=watch.uuid)}}" class="pure-button button-xsmall">Yes</a> <a href="{{url_for('price_data_follower.reject', uuid=watch.uuid)}}" class="">No</a></div>
@@ -305,12 +306,20 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
                         {%- endif -%}
 
                         {%- if watch.get('restock') and watch['restock'].get('price') -%}
-                                {%- if watch['restock']['price'] is number -%}
-                                <span class="restock-label price" title="{{ _('Price') }}">
-                                {{ watch['restock']['price']|format_number_locale if watch['restock'].get('price') else '' }} {{ watch['restock'].get('currency','') }}
-                                </span>
-                                {%- else -%} <!-- watch['restock']['price']' is not a number, cant output it -->
+                            {%- set restock = watch['restock'] -%}
+                            {%- set price = restock.get('price') -%}
+                            {%- set cur = restock.get('currency','') -%}
+
+                            {%- if price is not none and (price|string)|regex_search('\d') -%}
+                              <span class="restock-label price" title="{{ _('Price') }}">
+                              {# @todo: make parse_currency/parse_decimal aware of the locale of the actual web page and use that instead changedetectionio/processors/restock_diff/__init__.py #}
+                                {%- if price is number -%}{# It's a number so we can convert it to their locale' #}
+                                  {{ price|format_number_locale }} {{ cur }}<!-- as number -->
+                                {%- else -%}{# It's totally fine if it arrives as something else, the website might be something weird in this field #}
+                                  {{ price }} {{ cur }}<!-- as string -->
                                 {%- endif -%}
+                              </span>
+                            {%- endif -%}
                         {%- elif not watch.has_restock_info -%}
                             <span class="restock-label error">{{ _('No information') }}</span>
                         {%- endif -%}

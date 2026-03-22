@@ -624,3 +624,76 @@ def test_session_locale_overrides_accept_language(client, live_server, measure_m
     assert "분".encode() in res.data, "Expected Korean '분' for Minutes"
     assert "小時".encode() not in res.data, "Should not have Traditional Chinese '小時' when Korean is set"
     assert "分鐘".encode() not in res.data, "Should not have Traditional Chinese '分鐘' when Korean is set"
+
+
+def test_clear_history_translated_confirmation(client, live_server, measure_memory_usage, datastore_path):
+    """
+    Test that clearing snapshot history works with translated confirmation text.
+
+    Issue #3865: When the app language is set to German, the clear history
+    confirmation dialog shows the translated word (e.g. 'loschen') but the
+    backend only accepted the English word 'clear', making it impossible
+    to clear snapshots in non-English languages.
+    """
+    from flask import url_for
+
+    test_url = url_for('test_endpoint', _external=True)
+
+    # Add a watch so there is history to clear
+    res = client.post(
+        url_for("imports.import_page"),
+        data={"urls": test_url},
+        follow_redirects=True
+    )
+    assert b"1 Imported" in res.data
+    wait_for_all_checks(client)
+
+    # Set language to German
+    res = client.get(
+        url_for("set_language", locale="de"),
+        follow_redirects=True
+    )
+    assert res.status_code == 200
+
+    # Verify the clear history page shows the German confirmation word
+    res = client.get(
+        url_for("ui.clear_all_history"),
+        follow_redirects=True
+    )
+    assert res.status_code == 200
+    assert "löschen".encode() in res.data, "Expected German word 'loschen' on clear history page"
+
+    # Submit the form with the German translated word
+    res = client.post(
+        url_for("ui.clear_all_history"),
+        data={"confirmtext": "löschen"},
+        follow_redirects=True
+    )
+    assert res.status_code == 200
+    # Should NOT show error message
+    assert b"Incorrect confirmation text" not in res.data, \
+        "German confirmation word 'loschen' should be accepted (issue #3865)"
+
+    # Switch back to English and verify English word still works
+    res = client.get(
+        url_for("set_language", locale="en_US"),
+        follow_redirects=True
+    )
+
+    res = client.post(
+        url_for("ui.clear_all_history"),
+        data={"confirmtext": "clear"},
+        follow_redirects=True
+    )
+    assert res.status_code == 200
+    assert b"Incorrect confirmation text" not in res.data, \
+        "English confirmation word 'clear' should still be accepted"
+
+    # Verify that missing/empty confirmtext does not crash the server
+    res = client.post(
+        url_for("ui.clear_all_history"),
+        data={},
+        follow_redirects=True
+    )
+    assert res.status_code == 200, \
+        "Missing confirmtext should not crash the server"

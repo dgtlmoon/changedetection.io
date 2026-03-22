@@ -1,4 +1,5 @@
 from loguru import logger
+from urllib.parse import urljoin, urlparse
 import hashlib
 import os
 import re
@@ -7,6 +8,7 @@ import asyncio
 from changedetectionio import strtobool
 from changedetectionio.content_fetchers.exceptions import BrowserStepsInUnsupportedFetcher, EmptyReply, Non200ErrorCodeReceived
 from changedetectionio.content_fetchers.base import Fetcher
+from changedetectionio.validate_url import is_private_hostname
 
 
 # "html_requests" is listed as the default fetcher in store.py!
@@ -79,14 +81,48 @@ class fetcher(Fetcher):
         if strtobool(os.getenv('ALLOW_FILE_URI', 'false')) and url.startswith('file://'):
             from requests_file import FileAdapter
             session.mount('file://', FileAdapter())
+
+        allow_iana_restricted = strtobool(os.getenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'false'))
+
         try:
+            # Fresh DNS check at fetch time — catches DNS rebinding regardless of add-time cache.
+            if not allow_iana_restricted:
+                parsed_initial = urlparse(url)
+                if parsed_initial.hostname and is_private_hostname(parsed_initial.hostname):
+                    raise Exception(f"Fetch blocked: '{url}' resolves to a private/reserved IP address. "
+                                    f"Set ALLOW_IANA_RESTRICTED_ADDRESSES=true to allow.")
+
             r = session.request(method=request_method,
                                 data=request_body.encode('utf-8') if type(request_body) is str else request_body,
                                 url=url,
                                 headers=request_headers,
                                 timeout=timeout,
                                 proxies=proxies,
-                                verify=False)
+                                verify=False,
+                                allow_redirects=False)
+
+            # Manually follow redirects so each hop's resolved IP can be validated,
+            # preventing SSRF via an open redirect on a public host.
+            current_url = url
+            for _ in range(10):
+                if not r.is_redirect:
+                    break
+                location = r.headers.get('Location', '')
+                redirect_url = urljoin(current_url, location)
+                if not allow_iana_restricted:
+                    parsed_redirect = urlparse(redirect_url)
+                    if parsed_redirect.hostname and is_private_hostname(parsed_redirect.hostname):
+                        raise Exception(f"Redirect blocked: '{redirect_url}' resolves to a private/reserved IP address.")
+                current_url = redirect_url
+                r = session.request('GET', redirect_url,
+                                    headers=request_headers,
+                                    timeout=timeout,
+                                    proxies=proxies,
+                                    verify=False,
+                                    allow_redirects=False)
+            else:
+                raise Exception("Too many redirects")
+
         except Exception as e:
             msg = str(e)
             if proxies and 'SOCKSHTTPSConnectionPool' in msg:
@@ -112,10 +148,32 @@ class fetcher(Fetcher):
                         # Default to UTF-8 for XML if no encoding found
                         r.encoding = 'utf-8'
                 else:
-                    # For other content types, use chardet
-                    encoding = chardet.detect(r.content)['encoding']
-                    if encoding:
-                        r.encoding = encoding
+                    # No charset in HTTP header - sniff encoding in priority order matching browsers
+                    # (WHATWG encoding sniffing algorithm):
+                    # 1. BOM - highest confidence, check before anything else
+                    # 2. <meta charset> in first 2kb
+                    # 3. chardet statistical detection - last resort
+                    # See: https://github.com/dgtlmoon/changedetection.io/issues/3952
+                    boms = [
+                        (b'\xef\xbb\xbf', 'utf-8-sig'),
+                        (b'\xff\xfe', 'utf-16-le'),
+                        (b'\xfe\xff', 'utf-16-be'),
+                    ]
+                    bom_encoding = next((enc for bom, enc in boms if r.content.startswith(bom)), None)
+                    if bom_encoding:
+                        logger.info(f"URL: {url} Using encoding '{bom_encoding}' detected from BOM")
+                        r.encoding = bom_encoding
+                    else:
+                        meta_charset_match = re.search(rb'<meta[^>]+charset\s*=\s*["\']?\s*([^"\'\s;>]+)', r.content[:2000], re.IGNORECASE)
+                        if meta_charset_match:
+                            encoding = meta_charset_match.group(1).decode('ascii', errors='ignore')
+                            logger.info(f"URL: {url} No content-type encoding in HTTP headers - Using encoding '{encoding}' from HTML meta charset tag")
+                            r.encoding = encoding
+                        else:
+                            encoding = chardet.detect(r.content)['encoding']
+                            logger.warning(f"URL: {url} No charset in headers or meta tag, guessed encoding as '{encoding}' via chardet")
+                            if encoding:
+                                r.encoding = encoding
 
         self.headers = r.headers
 

@@ -4,6 +4,7 @@ import flask_login
 import locale
 import os
 import queue
+import re
 import sys
 import threading
 import time
@@ -27,7 +28,6 @@ from flask import (
     session,
     url_for,
 )
-from flask_compress import Compress as FlaskCompress
 from flask_restful import abort, Api
 from flask_cors import CORS
 
@@ -40,7 +40,7 @@ from loguru import logger
 
 from changedetectionio import __version__
 from changedetectionio import queuedWatchMetaData
-from changedetectionio.api import Watch, WatchHistory, WatchSingleHistory, WatchHistoryDiff, CreateWatch, Import, SystemInfo, Tag, Tags, Notifications, WatchFavicon
+from changedetectionio.api import Watch, WatchHistory, WatchSingleHistory, WatchHistoryDiff, CreateWatch, Import, SystemInfo, Tag, Tags, Notifications, WatchFavicon, Spec
 from changedetectionio.api.Search import Search
 from .time_handler import is_within_schedule
 from changedetectionio.languages import get_available_languages, get_language_codes, get_flag_for_locale, get_timeago_locale
@@ -69,19 +69,43 @@ socketio_server = None
 
 # Enable CORS, especially useful for the Chrome extension to operate from anywhere
 CORS(app)
+from werkzeug.routing import BaseConverter, ValidationError
+from uuid import UUID
+
+class StrictUUIDConverter(BaseConverter):
+    # Special sentinel values allowed in addition to strict UUIDs
+    _ALLOWED_SENTINELS = frozenset({'first'})
+
+    def to_python(self, value: str) -> str:
+        if value in self._ALLOWED_SENTINELS:
+            return value
+        try:
+            u = UUID(value)
+        except ValueError as e:
+            raise ValidationError() from e
+        # Reject non-standard formats (braces, URNs, no-hyphens)
+        if str(u) != value.lower():
+            raise ValidationError()
+        return str(u)
+
+    def to_url(self, value) -> str:
+        return str(value)
+
+# app setup (once)
+app.url_map.converters["uuid_str"] = StrictUUIDConverter
 
 # Flask-Compress handles HTTP compression, Socket.IO compression disabled to prevent memory leak.
 # There's also a bug between flask compress and socketio that causes some kind of slow memory leak
 # It's better to use compression on your reverse proxy (nginx etc) instead.
 if strtobool(os.getenv("FLASK_ENABLE_COMPRESSION")):
+    from flask_compress import Compress as FlaskCompress
     app.config['COMPRESS_MIN_SIZE'] = 2096
     app.config['COMPRESS_MIMETYPES'] = ['text/html', 'text/css', 'text/javascript', 'application/json', 'application/javascript', 'image/svg+xml']
     # Use gzip only - smaller memory footprint than zstd/brotli (4-8KB vs 200-500KB contexts)
     app.config['COMPRESS_ALGORITHM'] = ['gzip']
+    compress = FlaskCompress()
+    compress.init_app(app)
 
-compress = FlaskCompress()
-
-compress.init_app(app)
 app.config['TEMPLATES_AUTO_RELOAD'] = False
 
 
@@ -194,8 +218,12 @@ def _jinja2_filter_format_number_locale(value: float) -> str:
     "Formats for example 4000.10 to the local locale default of 4,000.10"
     # Format the number with two decimal places (locale format string will return 6 decimal)
     formatted_value = locale.format_string("%.2f", value, grouping=True)
-
     return formatted_value
+
+@app.template_filter('regex_search')
+def _jinja2_filter_regex_search(value, pattern):
+    import re
+    return re.search(pattern, str(value)) is not None
 
 @app.template_global('is_checking_now')
 def _watch_is_checking_now(watch_obj, format="%Y-%m-%d %H:%M:%S"):
@@ -360,6 +388,8 @@ def _jinja2_filter_fetcher_status_icons(fetcher_name):
 
     return ''
 
+_RE_SANITIZE_TAG = re.compile(r'[^a-zA-Z0-9]')
+
 @app.template_filter('sanitize_tag_class')
 def _jinja2_filter_sanitize_tag_class(tag_title):
     """Sanitize a tag title to create a valid CSS class name.
@@ -371,9 +401,8 @@ def _jinja2_filter_sanitize_tag_class(tag_title):
     Returns:
         str: A sanitized string suitable for use as a CSS class name
     """
-    import re
     # Remove all non-alphanumeric characters and convert to lowercase
-    sanitized = re.sub(r'[^a-zA-Z0-9]', '', tag_title).lower()
+    sanitized = _RE_SANITIZE_TAG.sub('', tag_title).lower()
     # Ensure it starts with a letter (CSS requirement)
     if sanitized and not sanitized[0].isalpha():
         sanitized = 'tag' + sanitized
@@ -461,28 +490,21 @@ def changedetection_app(config=None, datastore_o=None):
     available_languages = get_available_languages()
     language_codes = get_language_codes()
 
-    def get_locale():
-        # Locale aliases: map browser language codes to translation directory names
-        # This handles cases where browsers send standard codes (e.g., zh-TW)
-        # but our translations use more specific codes (e.g., zh_Hant_TW)
-        locale_aliases = {
-            'zh-TW': 'zh_Hant_TW',  # Traditional Chinese: browser sends zh-TW, we use zh_Hant_TW
-            'zh_TW': 'zh_Hant_TW',  # Also handle underscore variant
-        }
+    _locale_aliases = {
+        'zh-TW': 'zh_Hant_TW',  # Traditional Chinese: browser sends zh-TW, we use zh_Hant_TW
+        'zh_TW': 'zh_Hant_TW',  # Also handle underscore variant
+    }
+    _locale_match_list = language_codes + list(_locale_aliases.keys())
 
+    def get_locale():
         # 1. Try to get locale from session (user explicitly selected)
         if 'locale' in session:
             return session['locale']
 
         # 2. Fall back to Accept-Language header
-        # Get the best match from browser's Accept-Language header
-        browser_locale = request.accept_languages.best_match(language_codes + list(locale_aliases.keys()))
-
-        # 3. Check if we need to map the browser locale to our internal locale
-        if browser_locale in locale_aliases:
-            return locale_aliases[browser_locale]
-
-        return browser_locale
+        browser_locale = request.accept_languages.best_match(_locale_match_list)
+        # 3. Map browser locale to our internal locale if needed
+        return _locale_aliases.get(browser_locale, browser_locale)
 
     # Initialize Babel with locale selector
     babel = Babel(app, locale_selector=get_locale)
@@ -534,22 +556,22 @@ def changedetection_app(config=None, datastore_o=None):
 
 
     watch_api.add_resource(WatchHistoryDiff,
-                           '/api/v1/watch/<string:uuid>/difference/<string:from_timestamp>/<string:to_timestamp>',
+                           '/api/v1/watch/<uuid_str:uuid>/difference/<string:from_timestamp>/<string:to_timestamp>',
                            resource_class_kwargs={'datastore': datastore})
     watch_api.add_resource(WatchSingleHistory,
-                           '/api/v1/watch/<string:uuid>/history/<string:timestamp>',
+                           '/api/v1/watch/<uuid_str:uuid>/history/<string:timestamp>',
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
     watch_api.add_resource(WatchFavicon,
-                           '/api/v1/watch/<string:uuid>/favicon',
+                           '/api/v1/watch/<uuid_str:uuid>/favicon',
                            resource_class_kwargs={'datastore': datastore})
     watch_api.add_resource(WatchHistory,
-                           '/api/v1/watch/<string:uuid>/history',
+                           '/api/v1/watch/<uuid_str:uuid>/history',
                            resource_class_kwargs={'datastore': datastore})
 
     watch_api.add_resource(CreateWatch, '/api/v1/watch',
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
 
-    watch_api.add_resource(Watch, '/api/v1/watch/<string:uuid>',
+    watch_api.add_resource(Watch, '/api/v1/watch/<uuid_str:uuid>',
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
 
     watch_api.add_resource(SystemInfo, '/api/v1/systeminfo',
@@ -562,7 +584,7 @@ def changedetection_app(config=None, datastore_o=None):
     watch_api.add_resource(Tags, '/api/v1/tags',
                            resource_class_kwargs={'datastore': datastore})
 
-    watch_api.add_resource(Tag, '/api/v1/tag', '/api/v1/tag/<string:uuid>',
+    watch_api.add_resource(Tag, '/api/v1/tag', '/api/v1/tag/<uuid_str:uuid>',
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
                            
     watch_api.add_resource(Search, '/api/v1/search',
@@ -570,6 +592,8 @@ def changedetection_app(config=None, datastore_o=None):
 
     watch_api.add_resource(Notifications, '/api/v1/notifications',
                            resource_class_kwargs={'datastore': datastore})
+
+    watch_api.add_resource(Spec, '/api/v1/full-spec')
 
     @login_manager.user_loader
     def user_loader(email):
@@ -993,15 +1017,16 @@ def check_for_new_version():
     import urllib3
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+    session = requests.Session()
+    session.verify = False
+
     while not app.config.exit.is_set():
         try:
-            r = requests.post("https://changedetection.io/check-ver.php",
+            r = session.post("https://changedetection.io/check-ver.php",
                               data={'version': __version__,
                                     'app_guid': datastore.data['app_guid'],
                                     'watch_count': len(datastore.data['watching'])
-                                    },
-
-                              verify=False)
+                                    })
         except:
             pass
 

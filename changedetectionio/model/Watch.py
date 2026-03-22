@@ -43,6 +43,11 @@ from ..html_tools import TRANSLATE_WHITESPACE_TABLE
 FAVICON_RESAVE_THRESHOLD_SECONDS=86400
 BROTLI_COMPRESS_SIZE_THRESHOLD = int(os.getenv('SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD', 1024*20))
 
+# Module-level favicon filename cache: data_dir → basename (or None)
+# Keyed by data_dir so it survives Watch object recreation, deepcopy, and concurrent requests.
+# Invalidated explicitly in bump_favicon() when a new favicon is saved.
+_FAVICON_FILENAME_CACHE: dict = {}
+
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
 
@@ -382,6 +387,25 @@ class model(EntityPersistenceMixin, watch_base):
             return 'html_requests'
 
         return self.get('fetch_backend')
+
+    @property
+    def fetcher_supports_screenshots(self):
+        """Return True if the fetcher configured for this watch supports screenshots.
+
+        Resolves 'system' via self._datastore, then checks supports_screenshots on
+        the actual fetcher class. Works for built-in and plugin fetchers alike.
+        """
+        from changedetectionio import content_fetchers
+
+        fetcher_name = self.get_fetch_backend  # already handles is_pdf → html_requests
+        if not fetcher_name or fetcher_name == 'system':
+            fetcher_name = self._datastore['settings']['application'].get('fetch_backend', 'html_requests')
+
+        fetcher_class = getattr(content_fetchers, fetcher_name, None)
+        if fetcher_class is None:
+            return False
+
+        return bool(getattr(fetcher_class, 'supports_screenshots', False))
 
     @property
     def is_pdf(self):
@@ -806,9 +830,8 @@ class model(EntityPersistenceMixin, watch_base):
                     with open(fname, 'wb') as f:
                         f.write(decoded)
 
-                    # Invalidate favicon filename cache
-                    if hasattr(self, '_favicon_filename_cache'):
-                        delattr(self, '_favicon_filename_cache')
+                    # Invalidate module-level favicon filename cache for this watch
+                    _FAVICON_FILENAME_CACHE.pop(self.data_dir, None)
 
                     # A signal that could trigger the socket server to update the browser also
                     watch_check_update = signal('watch_favicon_bump')
@@ -823,35 +846,23 @@ class model(EntityPersistenceMixin, watch_base):
 
     def get_favicon_filename(self) -> str | None:
         """
-        Find any favicon.* file in the current working directory
-        and return the contents of the newest one.
+        Find any favicon.* file in the watch data directory.
 
-        MEMORY LEAK FIX: Cache the result to avoid repeated glob.glob() operations.
-        glob.glob() causes millions of fnmatch allocations when called for every watch on page load.
+        Uses a module-level cache keyed by data_dir to survive Watch object recreation,
+        deepcopy (which drops instance attrs), and concurrent request races.
+        Invalidated by bump_favicon() when a new favicon is saved.
 
         Returns:
-            str: Basename of the newest favicon file, or None if not found.
+            str: Basename of the favicon file, or None if not found.
         """
-        # Check cache first (prevents 26M+ allocations from repeated glob operations)
-        cache_key = '_favicon_filename_cache'
-        if hasattr(self, cache_key):
-            return getattr(self, cache_key)
+        if self.data_dir in _FAVICON_FILENAME_CACHE:
+            return _FAVICON_FILENAME_CACHE[self.data_dir]
 
         import glob
-
-        # Search for all favicon.* files
         files = glob.glob(os.path.join(self.data_dir, "favicon.*"))
-
-        if not files:
-            result = None
-        else:
-            # Find the newest by modification time
-            newest_file = max(files, key=os.path.getmtime)
-            result = os.path.basename(newest_file)
-
-        # Cache the result
-        setattr(self, cache_key, result)
-        return result
+        fname = os.path.basename(files[0]) if files else None
+        _FAVICON_FILENAME_CACHE[self.data_dir] = fname
+        return fname
 
     def get_screenshot_as_thumbnail(self, max_age=3200):
         """Return path to a square thumbnail of the most recent screenshot.
@@ -1182,18 +1193,13 @@ class model(EntityPersistenceMixin, watch_base):
     def compile_error_texts(self, has_proxies=None):
         """Compile error texts for this watch.
         Accepts has_proxies parameter to ensure it works even outside app context"""
-        from flask import url_for
+        from flask import url_for, has_request_context
         from markupsafe import Markup
 
         output = []  # Initialize as list since we're using append
         last_error = self.get('last_error','')
 
-        try:
-            url_for('settings.settings_page')
-        except Exception as e:
-            has_app_context = False
-        else:
-            has_app_context = True
+        has_app_context = has_request_context()
 
         # has app+request context, we can use url_for()
         if has_app_context:

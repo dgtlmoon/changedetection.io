@@ -199,8 +199,31 @@ def handle_watch_update(socketio, **kwargs):
         logger.error(f"Socket.IO error in handle_watch_update: {str(e)}")
 
 
+def _suppress_werkzeug_ws_abrupt_disconnect_noise():
+    """Patch BaseWSGIServer.log to suppress the AssertionError traceback that fires when
+    a browser closes a WebSocket connection mid-handshake (e.g. closing a tab).
+    The exception is caught inside run_wsgi and routed to self.server.log() — it never
+    propagates out, so wrapping run_wsgi doesn't help. Patching the log method is the
+    only reliable intercept point. The error is cosmetic: Socket.IO already handles the
+    disconnect correctly via its own disconnect handler and timeout logic."""
+    try:
+        from werkzeug.serving import BaseWSGIServer
+        _original_log = BaseWSGIServer.log
+
+        def _filtered_log(self, type, message, *args):
+            if type == 'error' and 'write() before start_response' in message:
+                return
+            _original_log(self, type, message, *args)
+
+        BaseWSGIServer.log = _filtered_log
+    except Exception:
+        pass
+
+
 def init_socketio(app, datastore):
     """Initialize SocketIO with the main Flask app"""
+    _suppress_werkzeug_ws_abrupt_disconnect_noise()
+
     import platform
     import sys
 

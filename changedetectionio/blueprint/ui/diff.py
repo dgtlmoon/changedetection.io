@@ -66,7 +66,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         return Markup(result)
 
-    @diff_blueprint.route("/diff/<string:uuid>", methods=['GET'])
+    @diff_blueprint.route("/diff/<uuid_str:uuid>", methods=['GET'])
     @login_optionally_required
     def diff_history_page(uuid):
         """
@@ -128,7 +128,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             redirect=redirect
         )
 
-    @diff_blueprint.route("/diff/<string:uuid>/extract", methods=['GET'])
+    @diff_blueprint.route("/diff/<uuid_str:uuid>/extract", methods=['GET'])
     @login_optionally_required
     def diff_history_page_extract_GET(uuid):
         """
@@ -182,7 +182,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             redirect=redirect
         )
 
-    @diff_blueprint.route("/diff/<string:uuid>/extract", methods=['POST'])
+    @diff_blueprint.route("/diff/<uuid_str:uuid>/extract", methods=['POST'])
     @login_optionally_required
     def diff_history_page_extract_POST(uuid):
         """
@@ -238,7 +238,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             redirect=redirect
         )
 
-    @diff_blueprint.route("/diff/<string:uuid>/processor-asset/<string:asset_name>", methods=['GET'])
+    @diff_blueprint.route("/diff/<uuid_str:uuid>/processor-asset/<string:asset_name>", methods=['GET'])
     @login_optionally_required
     def processor_asset(uuid, asset_name):
         """

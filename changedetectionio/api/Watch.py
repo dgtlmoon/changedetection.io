@@ -57,7 +57,7 @@ class Watch(Resource):
         self.update_q = kwargs['update_q']
 
     # Get information about a single watch, excluding the history list (can be large)
-    # curl http://localhost:5000/api/v1/watch/<string:uuid>
+    # curl http://localhost:5000/api/v1/watch/<uuid_str:uuid>
     # @todo - version2 - ?muted and ?paused should be able to be called together, return the watch struct not "OK"
     # ?recheck=true
     @auth.check_token
@@ -217,7 +217,7 @@ class WatchHistory(Resource):
         self.datastore = kwargs['datastore']
 
     # Get a list of available history for a watch by UUID
-    # curl http://localhost:5000/api/v1/watch/<string:uuid>/history
+    # curl http://localhost:5000/api/v1/watch/<uuid_str:uuid>/history
     @auth.check_token
     @validate_openapi_request('getWatchHistory')
     def get(self, uuid):
@@ -338,7 +338,7 @@ class WatchHistoryDiff(Resource):
             word_diff = True
 
         # Get boolean diff preferences with defaults from DIFF_PREFERENCES_CONFIG
-        changes_only = strtobool(request.args.get('changesOnly', 'true'))
+        changes_only = strtobool(request.args.get('changesOnly', 'false'))
         ignore_whitespace = strtobool(request.args.get('ignoreWhitespace', 'false'))
         include_removed = strtobool(request.args.get('removed', 'true'))
         include_added = strtobool(request.args.get('added', 'true'))
@@ -349,7 +349,7 @@ class WatchHistoryDiff(Resource):
             previous_version_file_contents=from_version_file_contents,
             newest_version_file_contents=to_version_file_contents,
             ignore_junk=ignore_whitespace,
-            include_equal=changes_only,
+            include_equal=not changes_only,
             include_removed=include_removed,
             include_added=include_added,
             include_replaced=include_replaced,

@@ -2,6 +2,7 @@
 import psutil
 import time
 from threading import Thread
+import multiprocessing
 
 import pytest
 import arrow
@@ -13,6 +14,10 @@ import sys
 # When test server is slow/unresponsive, workers fail fast instead of holding UUIDs for 45s
 # This prevents exponential priority growth from repeated deferrals (priority × 10 each defer)
 os.environ['DEFAULT_SETTINGS_REQUESTS_TIMEOUT'] = '5'
+# Test server runs on localhost (127.0.0.1) which is a private IP.
+# Allow it globally so all existing tests keep working; test_ssrf_protection
+# uses monkeypatch to temporarily override this for its own assertions.
+os.environ['ALLOW_IANA_RESTRICTED_ADDRESSES'] = 'true'
 
 from changedetectionio.flask_app import init_app_secret, changedetection_app
 from changedetectionio.tests.util import live_server_setup, new_live_server_setup
@@ -186,6 +191,34 @@ def cleanup(datastore_path):
                 continue
             if os.path.isfile(f):
                 os.unlink(f)
+
+def pytest_configure(config):
+    """Configure pytest environment before tests run.
+
+    CRITICAL: Set multiprocessing start method to 'fork' for Python 3.14+ compatibility.
+
+    Python 3.14 changed the default start method from 'fork' to 'forkserver' on Linux.
+    The forkserver method requires all objects to be picklable, but pytest-flask's
+    LiveServer uses nested functions that can't be pickled.
+
+    Setting 'fork' explicitly:
+    - Maintains compatibility with Python 3.10-3.13 (where 'fork' was already default)
+    - Fixes Python 3.14 pickling errors
+    - Only affects Unix-like systems (Windows uses 'spawn' regardless)
+
+    See: https://github.com/python/cpython/issues/126831
+    See: https://docs.python.org/3/whatsnew/3.14.html
+    """
+    # Only set if not already set (respects existing configuration)
+    if multiprocessing.get_start_method(allow_none=True) is None:
+        try:
+            # 'fork' is available on Unix-like systems (Linux, macOS)
+            # On Windows, this will have no effect as 'spawn' is the only option
+            multiprocessing.set_start_method('fork', force=False)
+            logger.debug("Set multiprocessing start method to 'fork' for Python 3.14+ compatibility")
+        except (ValueError, RuntimeError):
+            # Already set, not available on this platform, or context already created
+            pass
 
 def pytest_addoption(parser):
     """Add custom command-line options for pytest.

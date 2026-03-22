@@ -17,7 +17,7 @@ class Tag(Resource):
         self.update_q = kwargs['update_q']
 
     # Get information about a single tag
-    # curl http://localhost:5000/api/v1/tag/<string:uuid>
+    # curl http://localhost:5000/api/v1/tag/<uuid_str:uuid>
     @auth.check_token
     @validate_openapi_request('getTag')
     def get(self, uuid):
@@ -177,6 +177,13 @@ class Tag(Resource):
 
         new_uuid = self.datastore.add_tag(title=title)
         if new_uuid:
+            # Apply any extra fields (e.g. processor_config_restock_diff) beyond just title
+            extra = {k: v for k, v in json_data.items() if k != 'title'}
+            if extra:
+                tag = self.datastore.data['settings']['application']['tags'].get(new_uuid)
+                if tag:
+                    tag.update(extra)
+                    tag.commit()
             return {'uuid': new_uuid}, 201
         else:
             return "Invalid or unsupported tag", 400

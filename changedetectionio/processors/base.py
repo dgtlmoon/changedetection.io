@@ -1,12 +1,15 @@
+import asyncio
 import re
 import hashlib
 
 from changedetectionio.browser_steps.browser_steps import browser_steps_get_valid_steps
 from changedetectionio.content_fetchers.base import Fetcher
 from changedetectionio.strtobool import strtobool
+from changedetectionio.validate_url import is_private_hostname
 from copy import deepcopy
 from abc import abstractmethod
 import os
+from urllib.parse import urlparse
 from loguru import logger
 
 SCREENSHOT_FORMAT_JPEG = 'JPEG'
@@ -95,6 +98,23 @@ class difference_detection_processor():
             self.last_raw_content_checksum = None
 
 
+    async def validate_iana_url(self):
+        """Pre-flight SSRF check — runs DNS lookup in executor to avoid blocking the event loop.
+        Covers all fetchers (requests, playwright, puppeteer, plugins) since every fetch goes
+        through call_browser().
+        """
+        if strtobool(os.getenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'false')):
+            return
+        parsed = urlparse(self.watch.link)
+        if not parsed.hostname:
+            return
+        loop = asyncio.get_running_loop()
+        if await loop.run_in_executor(None, is_private_hostname, parsed.hostname):
+            raise Exception(
+                f"Fetch blocked: '{self.watch.link}' resolves to a private/reserved IP address. "
+                f"Set ALLOW_IANA_RESTRICTED_ADDRESSES=true to allow."
+            )
+
     async def call_browser(self, preferred_proxy_id=None):
 
         from requests.structures import CaseInsensitiveDict
@@ -107,6 +127,8 @@ class difference_detection_processor():
                 raise Exception(
                     "file:// type access is denied for security reasons."
                 )
+
+        await self.validate_iana_url()
 
         # Requests, playwright, other browser via wss:// etc, fetch_extra_something
         prefer_fetch_backend = self.watch.get('fetch_backend', 'system')
@@ -237,6 +259,16 @@ class difference_detection_processor():
 
         # @todo .quit here could go on close object, so we can run JS if change-detected
         await self.fetcher.quit(watch=self.watch)
+
+        # Sanitize lone surrogates - these can appear when servers return malformed/mixed-encoding
+        # content that gets decoded into surrogate characters (e.g. \udcad). Without this,
+        # encode('utf-8') raises UnicodeEncodeError downstream in checksums, diffs, file writes, etc.
+        # Covers all fetchers (requests, playwright, puppeteer, selenium) in one place.
+        # Also note: By this point we SHOULD know the original encoding so it can safely convert to utf-8 for the rest of the app.
+        # See: https://github.com/dgtlmoon/changedetection.io/issues/3952
+
+        if self.fetcher.content and isinstance(self.fetcher.content, str):
+            self.fetcher.content = self.fetcher.content.encode('utf-8', errors='replace').decode('utf-8')
 
         # After init, call run_changedetection() which will do the actual change-detection
 
