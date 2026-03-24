@@ -21,7 +21,6 @@ def test_proxy_noconnect_custom(client, live_server, measure_memory_usage, datas
         data={
             "requests-time_between_check-minutes": 180,
             "application-ignore_whitespace": "y",
-            "application-browser_profile": 'browser_chromeplaywright' if os.getenv('PLAYWRIGHT_DRIVER_URL') or os.getenv("WEBDRIVER_URL") else 'direct_http_requests',
             "requests-extra_proxies-0-proxy_name": "custom-test-proxy",
             # test:awesome is set in tests/proxy_list/squid-passwords.txt
             "requests-extra_proxies-0-proxy_url": "http://127.0.0.1:3128",

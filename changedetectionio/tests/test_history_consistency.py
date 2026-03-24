@@ -50,8 +50,7 @@ def test_consistent_history(client, live_server, measure_memory_usage, datastore
     res = client.post(
         url_for("settings.settings_page"),
         data={"application-empty_pages_are_a_change": "",
-              "requests-time_between_check-minutes": 180,
-              'application-browser_profile': "direct_http_requests"},
+              "requests-time_between_check-minutes": 180},
         follow_redirects=True
     )
     assert b"Settings updated." in res.data

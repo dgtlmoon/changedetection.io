@@ -37,6 +37,8 @@ class difference_detection_processor():
         # 2. Preserves Watch object with properties (.link, .is_pdf, etc.) - can't use dict()
         # 3. Safe now: Watch.__deepcopy__() shares datastore ref (no memory leak) but copies dict data
         self.watch = deepcopy(self.datastore.data['watching'].get(watch_uuid))
+        if self.watch is None:
+            raise KeyError(f"Watch UUID {watch_uuid} not found in datastore (deleted before processing?)")
 
         # Generic fetcher that should be extended (requests, playwright etc)
         self.fetcher = Fetcher()

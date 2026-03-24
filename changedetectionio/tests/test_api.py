@@ -416,7 +416,6 @@ def test_access_denied(client, live_server, measure_memory_usage, datastore_path
         url_for("settings.settings_page"),
         data={
             "requests-time_between_check-minutes": 180,
-            "application-browser_profile": "direct_http_requests",
             "application-api_access_token_enabled": ""
         },
         follow_redirects=True
@@ -436,7 +435,6 @@ def test_access_denied(client, live_server, measure_memory_usage, datastore_path
         url_for("settings.settings_page"),
         data={
             "requests-time_between_check-minutes": 180,
-            "application-browser_profile": "direct_http_requests",
             "application-api_access_token_enabled": "y"
         },
         follow_redirects=True
@@ -907,8 +905,7 @@ def test_api_conflict_UI_password(client, live_server, measure_memory_usage, dat
         url_for("settings.settings_page"),
         data={"application-password": "foobar", # password is now set! API should still work!
               "application-api_access_token_enabled": "y",
-              "requests-time_between_check-minutes": 180,
-              'application-browser_profile': "direct_http_requests"},
+              "requests-time_between_check-minutes": 180},
         follow_redirects=True
     )
 

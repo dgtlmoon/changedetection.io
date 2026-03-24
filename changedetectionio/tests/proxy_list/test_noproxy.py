@@ -22,7 +22,6 @@ def test_noproxy_option(client, live_server, measure_memory_usage, datastore_pat
         data={
             "requests-time_between_check-minutes": 180,
             "application-ignore_whitespace": "y",
-            "application-browser_profile": "direct_http_requests",
             "requests-extra_proxies-0-proxy_name": "custom-one-proxy",
             "requests-extra_proxies-0-proxy_url": "http://test:awesome@squid-one:3128",
             "requests-extra_proxies-1-proxy_name": "custom-two-proxy",

@@ -253,7 +253,6 @@ def test_ua_global_override(client, live_server, measure_memory_usage, datastore
     res = client.post(
         url_for("settings.settings_page"),
         data={
-            "application-browser_profile": "direct_http_requests",
             "application-minutes_between_check": 180,
             "requests-default_ua-html_requests": "html-requests-user-agent"
         },
@@ -311,7 +310,6 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage, 
         test_url = test_url.replace('localhost', 'cdio')
 
     form_data = {
-        "application-browser_profile": "direct_http_requests",
         "application-minutes_between_check": 180,
         "requests-default_ua-html_requests": requests_ua
     }

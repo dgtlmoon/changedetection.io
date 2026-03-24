@@ -49,8 +49,7 @@ def test_normal_page_check_works_with_ignore_status_code(client, live_server, me
         url_for("settings.settings_page"),
         data={
             "requests-time_between_check-minutes": 180,
-            "application-ignore_status_codes": "y",
-            'application-browser_profile': "direct_http_requests"
+            "application-ignore_status_codes": "y"
         },
         follow_redirects=True
     )

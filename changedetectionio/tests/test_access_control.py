@@ -32,8 +32,7 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
             url_for("settings.settings_page"),
             data={"application-password": "foobar",
                   "application-shared_diff_access": "True",
-                  "requests-time_between_check-minutes": 180,
-                  'application-browser_profile': "direct_http_requests"},
+                  "requests-time_between_check-minutes": 180},
             follow_redirects=True
         )
 
@@ -91,8 +90,7 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         res = c.post(
             url_for("settings.settings_page"),
             data={
-                  "requests-time_between_check-minutes": 180,
-                  'application-browser_profile': "direct_http_requests"},
+                  "requests-time_between_check-minutes": 180},
             follow_redirects=True
         )
 
@@ -132,11 +130,11 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         ##################################################
         # Remove password button, and check that it worked
         ##################################################
+        c.post(url_for("settings_browsers.set_default"), data={"machine_name": "browser_chromeplaywright", "csrf_token": ""}, follow_redirects=True)
         res = c.post(
             url_for("settings.settings_page"),
             data={
                 "requests-time_between_check-minutes": 180,
-                "application-browser_profile": "browser_chromeplaywright",
                 "application-removepassword_button": "Remove password"
             },
             follow_redirects=True,
@@ -150,8 +148,7 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         res = c.post(
             url_for("settings.settings_page"),
             data={"application-password": "",
-                  "requests-time_between_check-minutes": 180,
-                  'application-browser_profile': "direct_http_requests"},
+                  "requests-time_between_check-minutes": 180},
             follow_redirects=True
         )
 
@@ -164,8 +161,7 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
             data={"application-password": "foobar",
                   # Should be disabled
                   "application-shared_diff_access": "",
-                  "requests-time_between_check-minutes": 180,
-                  'application-browser_profile': "direct_http_requests"},
+                  "requests-time_between_check-minutes": 180},
             follow_redirects=True
         )
 

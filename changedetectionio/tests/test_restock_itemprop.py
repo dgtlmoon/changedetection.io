@@ -361,8 +361,7 @@ def test_change_with_notification_values(client, live_server, measure_memory_usa
               "application-notification_title": "title new price {{restock.price}}",
               "application-notification_body": "new price {{restock.price}} previous price {{restock.previous_price}} instock {{restock.in_stock}}",
               "application-notification_format": default_notification_format,
-              "requests-time_between_check-minutes": 180,
-              'application-browser_profile': "direct_http_requests"},
+              "requests-time_between_check-minutes": 180},
         follow_redirects=True
     )
 

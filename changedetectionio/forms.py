@@ -740,7 +740,6 @@ class commonSettingsForm(Form):
         self.notification_title.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
         self.notification_urls.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
 
-    browser_profile = RadioField(_l('Browser / Fetch method'), choices=[])  # populated at runtime in edit.py
     notification_body = TextAreaField(_l('Notification Body'), default='{{ watch_url }} had a change.', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_format = SelectField(_l('Notification format'), choices=list(valid_notification_formats.items()))
     notification_title = StringField(_l('Notification Title'), default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
@@ -777,6 +776,7 @@ class SingleBrowserStep(Form):
 
 class processor_text_json_diff_form(commonSettingsForm):
 
+    browser_profile = RadioField(_l('Browser / Fetch method'), choices=[])  # populated at runtime in edit.py
     url = fields.URLField('Web Page URL', validators=[validateURL()])
     tags = StringTagUUID('Group Tag', [validators.Optional()], default='')
 

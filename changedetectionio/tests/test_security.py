@@ -159,8 +159,7 @@ def test_xss(client, live_server, measure_memory_usage, datastore_path):
               "application-notification_title": '"><img src=x onerror=alert(document.domain)>',
               "application-notification_body": '"><img src=x onerror=alert(document.domain)>',
               "application-notification_format": default_notification_format,
-              "requests-time_between_check-minutes": 180,
-              'application-browser_profile': "direct_http_requests"},
+              "requests-time_between_check-minutes": 180},
         follow_redirects=True
     )
 

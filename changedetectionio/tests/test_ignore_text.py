@@ -181,8 +181,7 @@ def _run_test_global_ignore(client, datastore_path, as_source=False, extra_ignor
         data={
             "requests-time_between_check-minutes": 180,
             "application-ignore_whitespace": "y",
-            "application-global_ignore_text": ignore_text,
-            'application-browser_profile': "direct_http_requests"
+            "application-global_ignore_text": ignore_text
         },
         follow_redirects=True
     )

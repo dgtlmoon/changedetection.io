@@ -378,6 +378,11 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     process_changedetection_results = False
                     logger.error(f"Exception (BrowserStepsInUnsupportedFetcher) reached processing watch UUID: {uuid}")
 
+                except KeyError as e:
+                    # Watch was deleted between being queued and processed — skip
+                    logger.warning(f"Worker {worker_id} skipping UUID {uuid}: {e}")
+                    process_changedetection_results = False
+
                 except Exception as e:
                     import traceback
                     logger.error(f"Worker {worker_id} exception processing watch UUID: {uuid}")

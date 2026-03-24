@@ -41,8 +41,7 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
               "application-notification_title": "fallback-title "+default_notification_title,
               "application-notification_body": "fallback-body "+default_notification_body,
               "application-notification_format": default_notification_format,
-              "requests-time_between_check-minutes": 180,
-              'application-browser_profile': "direct_http_requests"},
+              "requests-time_between_check-minutes": 180},
         follow_redirects=True
     )
 
@@ -282,7 +281,6 @@ def test_notification_urls_jinja2_apprise_integration(client, live_server, measu
     res = client.post(
         url_for("settings.settings_page"),
         data={
-              "application-browser_profile": "direct_http_requests",
               "application-minutes_between_check": 180,
               "application-notification_body": '{ "url" : "{{ watch_url }}", "secret": 444, "somebug": "网站监测 内容更新了", "another": "{{diff|truncate(1500)}}" }',
               "application-notification_format": default_notification_format,
@@ -314,7 +312,6 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
     res = client.post(
         url_for("settings.settings_page"),
         data={
-              "application-browser_profile": "direct_http_requests",
               "application-minutes_between_check": 180,
               "application-notification_body": '{ "url" : "{{ watch_url }}", "secret": 444, "somebug": "网站监测 内容更新了" }',
               "application-notification_format": default_notification_format,
@@ -399,7 +396,6 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
     res = client.post(
         url_for("settings.settings_page"),
         data={
-            "application-browser_profile": "direct_http_requests",
             "application-minutes_between_check": 180,
             "application-notification_body": test_body,
             "application-notification_format": default_notification_format,
@@ -556,7 +552,6 @@ def _test_color_notifications(client, notification_body_token, datastore_path):
     res = client.post(
         url_for("settings.settings_page"),
         data={
-            "application-browser_profile": "direct_http_requests",
             "application-minutes_between_check": 180,
             "application-notification_body": notification_body_token,
             "application-notification_format": "htmlcolor",

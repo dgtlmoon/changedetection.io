@@ -127,8 +127,7 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
               # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#get-parameter-manipulation
               "application-notification_urls": test_notification_url,
               "application-notification_format": 'text',
-              "application-minutes_between_check": 180,
-              "application-browser_profile": "direct_http_requests"
+              "application-minutes_between_check": 180
               },
         follow_redirects=True
     )

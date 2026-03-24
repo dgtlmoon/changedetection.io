@@ -179,8 +179,7 @@ def test_page_title_listing_behaviour(client, live_server, measure_memory_usage,
     res = client.post(
         url_for("settings.settings_page"),
         data={"application-ui-use_page_title_in_list": "",
-              "requests-time_between_check-minutes": 180,
-              'application-browser_profile': "direct_http_requests"},
+              "requests-time_between_check-minutes": 180},
         follow_redirects=True
     )
     assert b"Settings updated." in res.data
@@ -219,8 +218,7 @@ def test_page_title_listing_behaviour(client, live_server, measure_memory_usage,
     res = client.post(
         url_for("settings.settings_page"),
         data={"application-ui-use_page_title_in_list": "y",
-              "requests-time_between_check-minutes": 180,
-              'application-browser_profile': "direct_http_requests"},
+              "requests-time_between_check-minutes": 180},
         follow_redirects=True
     )
     assert b"Settings updated." in res.data
