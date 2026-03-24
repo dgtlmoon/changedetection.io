@@ -1005,7 +1005,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
         render_kw={"placeholder": "0.1", "style": "width: 8em;"}
     )
 
-    password = SaltyPasswordField(_l('Password'))
+    password = SaltyPasswordField(_l('Password'), render_kw={"autocomplete": "new-password"})
     pager_size = IntegerField(_l('Pager size'),
                               render_kw={"style": "width: 5em;"},
                               validators=[validators.NumberRange(min=0,
