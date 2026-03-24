@@ -17,6 +17,7 @@
                     <th style="width:2.5em; text-align:center;" title="{{ _('System default') }}">{{ _('Default') }}</th>
                     <th>{{ _('Name') }}</th>
                     <th>{{ _('Fetch method') }}</th>
+                    <th style="width:3em; text-align:center;"></th>
                     <th>{{ _('Viewport') }}</th>
                     <th>{{ _('Options') }}</th>
                     <th></th>
@@ -38,6 +39,7 @@
                         {% if profile.is_builtin %}<span style="font-size:0.75em; margin-left:0.4em; background:#888; color:#fff; padding:1px 5px; border-radius:3px;">{{ _('built-in') }}</span>{% endif %}
                     </td>
                     <td><code>{{ profile.fetch_backend }}</code></td>
+                    <td style="text-align:center;">{{ profile.get_fetcher_class_name()|fetcher_status_icons }}</td>
                     <td>{{ profile.viewport_width }}×{{ profile.viewport_height }}</td>
                     <td>
                         {% if profile.block_images %}<span title="{{ _('Images blocked') }}">&#x1F6AB;&#x1F5BC;</span> {% endif %}

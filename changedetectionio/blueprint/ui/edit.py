@@ -67,6 +67,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 default['proxy'] = ''
         # proxy_override set to the json/text list of the items
 
+        # browser_profile: None means "use system default" — map to 'system' so the radio pre-selects correctly
+        if not default.get('browser_profile'):
+            default['browser_profile'] = 'system'
+
         # Does it use some custom form? does one exist?
         processor_name = datastore.data['watching'][uuid].get('processor', '')
         processor_classes = next((tpl for tpl in processors.find_processors() if tpl[1] == processor_name), None)
@@ -224,7 +228,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
             # Recast it if need be to right data Watch handler
             watch_class = processors.get_custom_watch_obj_for_processor(form.data.get('processor'))
-            datastore.data['watching'][uuid] = watch_class(datastore_path=datastore.datastore_path, __datastore=datastore.data, default=datastore.data['watching'][uuid])
+            datastore.data['watching'][uuid] = watch_class(datastore_path=datastore.datastore_path, __datastore=datastore, default=datastore.data['watching'][uuid])
 
             # Save the watch immediately
             datastore.data['watching'][uuid].commit()
