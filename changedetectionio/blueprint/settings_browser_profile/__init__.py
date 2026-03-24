@@ -13,9 +13,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         template_folder="templates"
     )
 
-    @settings_browser_profile_blueprint.route("", methods=['GET'])
-    @login_optionally_required
-    def index():
+    def _render_index(browser_profile_form=None, editing_machine_name=None):
         from changedetectionio import forms
         from changedetectionio import content_fetchers as cf
         from changedetectionio.model.browser_profile import (
@@ -23,10 +21,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         )
 
         fetcher_choices = [(name[len('html_'):], desc) for name, desc in cf.available_fetchers()]
-        browser_profile_form = forms.BrowserProfileForm()
+        if browser_profile_form is None:
+            browser_profile_form = forms.BrowserProfileForm()
         browser_profile_form.fetch_backend.choices = fetcher_choices
 
-        # Map clean fetcher name → supports_screenshots so the template can hide viewport options
         fetcher_supports_screenshots = {}
         for name, _desc in cf.available_fetchers():
             clean_name = name[len('html_'):]
@@ -51,7 +49,33 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             fetcher_choices=fetcher_choices,
             fetcher_supports_screenshots=fetcher_supports_screenshots,
             current_default_profile=current_default,
+            editing_machine_name=editing_machine_name,
         )
+
+    @settings_browser_profile_blueprint.route("", methods=['GET'])
+    @login_optionally_required
+    def index():
+        return _render_index()
+
+    @settings_browser_profile_blueprint.route("/<string:machine_name>/edit", methods=['GET'])
+    @login_optionally_required
+    def edit(machine_name):
+        from changedetectionio import forms
+        from changedetectionio.model.browser_profile import get_builtin_profiles, BrowserProfile, RESERVED_MACHINE_NAMES
+
+        if machine_name in RESERVED_MACHINE_NAMES:
+            flash(gettext("Built-in browser profiles cannot be edited."), 'error')
+            return redirect(url_for('settings_browsers.index'))
+
+        store_profiles = datastore.data['settings']['application'].get('browser_profiles', {})
+        raw = store_profiles.get(machine_name)
+        if raw is None:
+            flash(gettext("Browser profile not found."), 'error')
+            return redirect(url_for('settings_browsers.index'))
+
+        profile = BrowserProfile(**raw) if isinstance(raw, dict) else raw
+        form = forms.BrowserProfileForm(data=profile.model_dump())
+        return _render_index(browser_profile_form=form, editing_machine_name=machine_name)
 
     @settings_browser_profile_blueprint.route("/save", methods=['POST'])
     @login_optionally_required

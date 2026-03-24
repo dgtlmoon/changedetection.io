@@ -49,8 +49,8 @@
                     </td>
                     <td style="white-space:nowrap;">
                         {% if not profile.is_builtin %}
-                        <button type="button" class="pure-button button-small"
-                                onclick="browserProfileEdit({{ profile.model_dump()|tojson }}, {{ machine_name|tojson }})">{{ _('Edit') }}</button>
+                        <a href="{{ url_for('settings_browsers.edit', machine_name=machine_name) }}"
+                           class="pure-button button-small">{{ _('Edit') }}</a>
                         <a href="{{ url_for('settings_browsers.delete', machine_name=machine_name) }}"
                            class="pure-button button-small button-error"
                            onclick="return confirm('{{ _('Delete this browser profile?') }}')">{{ _('Delete') }}</a>
@@ -63,13 +63,13 @@
             </tbody>
         </table>
 
-        <h3 id="profile-form-heading">{{ _('Add new browser profile') }}</h3>
+        <h3 id="profile-form-heading">{{ _('Edit browser profile') if editing_machine_name else _('Add new browser profile') }}</h3>
         <form class="pure-form pure-form-stacked"
               id="browser-profile-form"
               action="{{ url_for('settings_browsers.save') }}"
               method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <input type="hidden" name="original_machine_name" id="original_machine_name" value="">
+            <input type="hidden" name="original_machine_name" id="original_machine_name" value="{{ editing_machine_name or '' }}">
             <fieldset>
                 <div class="pure-control-group">
                     {{ render_field(browser_profile_form.name) }}
@@ -107,8 +107,9 @@
                 </div>
                 <div class="pure-control-group">
                     <button type="submit" class="pure-button pure-button-primary" id="profile-submit-btn">{{ _('Save profile') }}</button>
-                    <button type="button" class="pure-button button-cancel" id="profile-cancel-btn" style="display:none;"
-                            onclick="cancelEdit()">{{ _('Cancel') }}</button>
+                    {% if editing_machine_name %}
+                    <a href="{{ url_for('settings_browsers.index') }}" class="pure-button button-cancel">{{ _('Cancel') }}</a>
+                    {% endif %}
                     <a href="{{ url_for('settings.settings_page') }}" class="pure-button button-cancel">{{ _('Back to Settings') }}</a>
                 </div>
             </fieldset>
@@ -140,33 +141,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-function browserProfileEdit(profile, machineName) {
-    document.getElementById('profile-form-heading').textContent = {{ _('Edit browser profile')|tojson }};
-    document.getElementById('original_machine_name').value = machineName;
-
-    const form = document.getElementById('browser-profile-form');
-    form.querySelector('[name="name"]').value = profile.name || '';
-    form.querySelector('[name="fetch_backend"]').value = profile.fetch_backend || '';
-    form.querySelector('[name="browser_connection_url"]').value = profile.browser_connection_url || '';
-    form.querySelector('[name="viewport_width"]').value = profile.viewport_width || 1280;
-    form.querySelector('[name="viewport_height"]').value = profile.viewport_height || 1000;
-    form.querySelector('[name="block_images"]').checked = !!profile.block_images;
-    form.querySelector('[name="block_fonts"]').checked = !!profile.block_fonts;
-    form.querySelector('[name="ignore_https_errors"]').checked = !!profile.ignore_https_errors;
-    form.querySelector('[name="user_agent"]').value = profile.user_agent || '';
-    form.querySelector('[name="locale"]').value = profile.locale || '';
-
-    updateBrowserFieldVisibility();
-    document.getElementById('profile-cancel-btn').style.display = '';
-    form.scrollIntoView({behavior: 'smooth'});
-}
-
-function cancelEdit() {
-    document.getElementById('profile-form-heading').textContent = {{ _('Add new browser profile')|tojson }};
-    document.getElementById('original_machine_name').value = '';
-    document.getElementById('browser-profile-form').reset();
-    updateBrowserFieldVisibility();
-    document.getElementById('profile-cancel-btn').style.display = 'none';
-}
+{% if editing_machine_name %}
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('browser-profile-form').scrollIntoView({behavior: 'smooth'});
+});
+{% endif %}
 </script>
 {% endblock %}
