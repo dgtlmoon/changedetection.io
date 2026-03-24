@@ -28,7 +28,7 @@
             <li class="tab"><a href="{{ url_for('backups.create') }}">{{ _('Backups') }}</a></li>
             <li class="tab"><a href="#timedate">{{ _('Time & Date') }}</a></li>
             <li class="tab"><a href="#proxies">{{ _('CAPTCHA & Proxies') }}</a></li>
-            <li class="tab"><a href="{{ url_for('settings_browsers.index') }}">{{ _('Browsers') }}</a></li>
+            <li class="tab"><a href="{{ url_for('settings.settings_browsers.index') }}">{{ _('Browsers') }}</a></li>
             {% if plugin_tabs %}
                 {% for tab in plugin_tabs %}
             <li class="tab"><a href="#plugin-{{ tab.plugin_id }}">{{ tab.tab_label }}</a></li>

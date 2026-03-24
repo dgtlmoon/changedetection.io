@@ -12,7 +12,7 @@ def test_fetch_webdriver_content(client, live_server, measure_memory_usage, data
     #  live_server_setup(live_server) # Setup on conftest per function
 
     #####################
-    client.post(url_for("settings_browsers.set_default"), data={"machine_name": "browser_chromeplaywright", "csrf_token": ""}, follow_redirects=True)
+    client.post(url_for("settings.settings_browsers.set_default"), data={"machine_name": "browser_chromeplaywright", "csrf_token": ""}, follow_redirects=True)
     res = client.post(
         url_for("settings.settings_page"),
         data={

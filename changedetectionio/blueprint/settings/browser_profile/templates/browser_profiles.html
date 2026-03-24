@@ -7,7 +7,7 @@
         <h2>{{ _('Browser Profiles') }}</h2>
         <p>{{ _('Create named profiles to configure browser settings — viewport size, connection URL, image/font blocking, and more. Each profile is based on an available browser type.') }}</p>
 
-        <form id="set-default-form" action="{{ url_for('settings_browsers.set_default') }}" method="POST">
+        <form id="set-default-form" action="{{ url_for('settings.settings_browsers.set_default') }}" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="machine_name" id="default-machine-name" value="">
         </form>
@@ -47,9 +47,9 @@
                     </td>
                     <td style="white-space:nowrap;">
                         {% if not profile.is_builtin %}
-                        <a href="{{ url_for('settings_browsers.edit', machine_name=machine_name) }}"
+                        <a href="{{ url_for('settings.settings_browsers.edit', machine_name=machine_name) }}"
                            class="pure-button button-small">{{ _('Edit') }}</a>
-                        <a href="{{ url_for('settings_browsers.delete', machine_name=machine_name) }}"
+                        <a href="{{ url_for('settings.settings_browsers.delete', machine_name=machine_name) }}"
                            class="pure-button button-small button-error"
                            onclick="return confirm('{{ _('Delete this browser profile?') }}')">{{ _('Delete') }}</a>
                         {% endif %}
@@ -69,7 +69,7 @@
             {% endif %}
             <form class="pure-form pure-form-stacked"
                   id="browser-profile-form"
-                  action="{{ url_for('settings_browsers.save') }}"
+                  action="{{ url_for('settings.settings_browsers.save') }}"
                   method="POST">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="original_machine_name" id="original_machine_name" value="{{ editing_machine_name or '' }}">
@@ -111,7 +111,7 @@
                     <div class="pure-control-group">
                         <button type="submit" class="pure-button pure-button-primary" id="profile-submit-btn">{{ _('Save profile') }}</button>
                         {% if editing_machine_name %}
-                        <a href="{{ url_for('settings_browsers.index') }}" class="pure-button button-cancel">{{ _('Cancel') }}</a>
+                        <a href="{{ url_for('settings.settings_browsers.index') }}" class="pure-button button-cancel">{{ _('Cancel') }}</a>
                         {% endif %}
                         <a href="{{ url_for('settings.settings_page') }}" class="pure-button button-cancel">{{ _('Back to Settings') }}</a>
                     </div>

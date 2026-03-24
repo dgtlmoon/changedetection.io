@@ -11,7 +11,7 @@ from flask import url_for
 
 def set_system_default_profile(client, profile_machine_name):
     res = client.post(
-        url_for('settings_browsers.set_default'),
+        url_for('settings.settings_browsers.set_default'),
         data={'machine_name': profile_machine_name},
         follow_redirects=True,
     )
@@ -126,7 +126,7 @@ def test_icon_shown_for_custom_browser_profile(client, live_server, measure_memo
 
     # Create a custom profile that uses playwright
     res = client.post(
-        url_for('settings_browsers.save'),
+        url_for('settings.settings_browsers.save'),
         data={
             'name': 'My Custom Chrome',
             'fetch_backend': 'playwright',
@@ -150,4 +150,4 @@ def test_icon_shown_for_custom_browser_profile(client, live_server, measure_memo
         "Chrome icon should appear for a custom webdriver browser profile"
 
     datastore.delete(uuid)
-    client.get(url_for('settings_browsers.delete', machine_name='my_custom_chrome'), follow_redirects=True)
+    client.get(url_for('settings.settings_browsers.delete', machine_name='my_custom_chrome'), follow_redirects=True)

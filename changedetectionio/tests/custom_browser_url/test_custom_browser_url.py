@@ -12,7 +12,7 @@ CUSTOM_BROWSER_WS = 'ws://sockpuppetbrowser-custom-url:3000'
 def create_custom_browser_profile(client):
     """Create a browser profile that uses the custom sockpuppet container."""
     res = client.post(
-        url_for("settings_browsers.save"),
+        url_for("settings.settings_browsers.save"),
         data={
             "name": CUSTOM_PROFILE_NAME,
             "fetch_backend": "playwright",
@@ -39,7 +39,7 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
     test_url = "https://changedetection.io/ci-test.html?non-custom-default=true"
 
     # Set global default to webdriver (browser-based)
-    client.post(url_for("settings_browsers.set_default"), data={"machine_name": "browser_chromeplaywright", "csrf_token": ""}, follow_redirects=True)
+    client.post(url_for("settings.settings_browsers.set_default"), data={"machine_name": "browser_chromeplaywright", "csrf_token": ""}, follow_redirects=True)
     res = client.post(
         url_for("settings.settings_page"),
         data={

@@ -852,9 +852,6 @@ def changedetection_app(config=None, datastore_o=None):
     import changedetectionio.blueprint.settings as settings
     app.register_blueprint(settings.construct_blueprint(datastore), url_prefix='/settings')
 
-    import changedetectionio.blueprint.settings_browser_profile as settings_browser_profile
-    app.register_blueprint(settings_browser_profile.construct_blueprint(datastore), url_prefix='/settings/browsers')
-
     import changedetectionio.conditions.blueprint as conditions
     app.register_blueprint(conditions.construct_blueprint(datastore), url_prefix='/conditions')
 

@@ -144,7 +144,7 @@
                         </ul></div>
                         <span class="pure-form-message-inline">
                             <p>{{ _('Choose how this watch fetches its target URL. \'System settings default\' inherits the global setting.') }}</p>
-                            <p>{{ _('Manage browser profiles in') }} <a href="{{ url_for('settings_browsers.index') }}">{{ _('Settings → Browsers') }}</a>.</p>
+                            <p>{{ _('Manage browser profiles in') }} <a href="{{ url_for('settings.settings_browsers.index') }}">{{ _('Settings → Browsers') }}</a>.</p>
                         </span>
                     </div>
                 {% if form.proxy %}

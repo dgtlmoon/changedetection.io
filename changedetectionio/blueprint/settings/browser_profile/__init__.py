@@ -61,13 +61,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         if machine_name in RESERVED_MACHINE_NAMES:
             flash(gettext("Built-in browser profiles cannot be edited."), 'error')
-            return redirect(url_for('settings_browsers.index'))
+            return redirect(url_for('settings.settings_browsers.index'))
 
         store_profiles = datastore.data['settings']['application'].get('browser_profiles', {})
         raw = store_profiles.get(machine_name)
         if raw is None:
             flash(gettext("Browser profile not found."), 'error')
-            return redirect(url_for('settings_browsers.index'))
+            return redirect(url_for('settings.settings_browsers.index'))
 
         profile = BrowserProfile(**raw) if isinstance(raw, dict) else raw
         form = forms.BrowserProfileForm(data=profile.model_dump())
@@ -88,21 +88,21 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             flash(gettext("Browser profile error: {}").format(
                 '; '.join(str(e) for errs in browser_profile_form.errors.values() for e in errs)
             ), 'error')
-            return redirect(url_for('settings_browsers.index'))
+            return redirect(url_for('settings.settings_browsers.index'))
 
         name = browser_profile_form.name.data.strip()
         machine_name = BrowserProfile.machine_name_from_str(name)
 
         if machine_name in RESERVED_MACHINE_NAMES:
             flash(gettext("Cannot use reserved profile name '{}'. Please choose a different name.").format(name), 'error')
-            return redirect(url_for('settings_browsers.index'))
+            return redirect(url_for('settings.settings_browsers.index'))
 
         original_machine_name = request.form.get('original_machine_name', '').strip()
         store_profiles = datastore.data['settings']['application'].setdefault('browser_profiles', {})
 
         if machine_name != original_machine_name and machine_name in store_profiles:
             flash(gettext("A browser profile named '{}' already exists.").format(name), 'error')
-            return redirect(url_for('settings_browsers.index'))
+            return redirect(url_for('settings.settings_browsers.index'))
 
         profile_data = {
             'name': name,
@@ -122,7 +122,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             BrowserProfile(**profile_data)
         except Exception as e:
             flash(gettext("Browser profile validation error: {}").format(str(e)), 'error')
-            return redirect(url_for('settings_browsers.index'))
+            return redirect(url_for('settings.settings_browsers.index'))
 
         # Handle rename: remove old key, cascade-update watches and tags
         if original_machine_name and original_machine_name != machine_name and original_machine_name in store_profiles:
@@ -137,7 +137,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         store_profiles[machine_name] = profile_data
         datastore.commit()
         flash(gettext("Browser profile '{}' saved.").format(name), 'notice')
-        return redirect(url_for('settings_browsers.index'))
+        return redirect(url_for('settings.settings_browsers.index'))
 
     @settings_browser_profile_blueprint.route("/<string:machine_name>/delete", methods=['GET'])
     @login_optionally_required
@@ -146,12 +146,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         if machine_name in RESERVED_MACHINE_NAMES:
             flash(gettext("Built-in browser profiles cannot be deleted."), 'error')
-            return redirect(url_for('settings_browsers.index'))
+            return redirect(url_for('settings.settings_browsers.index'))
 
         store_profiles = datastore.data['settings']['application'].get('browser_profiles', {})
         if machine_name not in store_profiles:
             flash(gettext("Browser profile not found."), 'error')
-            return redirect(url_for('settings_browsers.index'))
+            return redirect(url_for('settings.settings_browsers.index'))
 
         raw = store_profiles[machine_name]
         profile_name = raw.get('name', machine_name) if isinstance(raw, dict) else machine_name
@@ -170,7 +170,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         del store_profiles[machine_name]
         datastore.commit()
         flash(gettext("Browser profile '{}' deleted.").format(profile_name), 'notice')
-        return redirect(url_for('settings_browsers.index'))
+        return redirect(url_for('settings.settings_browsers.index'))
 
     @settings_browser_profile_blueprint.route("/set-default", methods=['POST'])
     @login_optionally_required
@@ -180,17 +180,17 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         machine_name = request.form.get('machine_name', '').strip()
         if not machine_name:
             flash(gettext("No profile specified."), 'error')
-            return redirect(url_for('settings_browsers.index'))
+            return redirect(url_for('settings.settings_browsers.index'))
 
         store_profiles = datastore.data['settings']['application'].get('browser_profiles', {})
         all_valid = set(cf.DEFAULT_BROWSER_PROFILES.keys()) | set(store_profiles.keys())
         if machine_name not in all_valid:
             flash(gettext("Unknown browser profile '{}'.").format(machine_name), 'error')
-            return redirect(url_for('settings_browsers.index'))
+            return redirect(url_for('settings.settings_browsers.index'))
 
         datastore.data['settings']['application']['browser_profile'] = machine_name
         datastore.commit()
         flash(gettext("Default browser profile set to '{}'.").format(machine_name), 'notice')
-        return redirect(url_for('settings_browsers.index'))
+        return redirect(url_for('settings.settings_browsers.index'))
 
     return settings_browser_profile_blueprint
