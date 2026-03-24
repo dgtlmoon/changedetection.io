@@ -238,7 +238,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             result = await fetcher_class.get_browsersteps_browser(proxy=proxy, keepalive_ms=keepalive_ms)
             if result is not None:
                 browser, playwright_context = result
-                logger.debug(f"Browser Steps: using fetcher-specific browser for '{fetcher_name}'")
+                logger.debug(f"Browser Steps: using fetcher-specific browser for '{fetcher_class.__name__}'")
 
         # Default: connect to the remote Playwright/sockpuppetbrowser via CDP
         if browser is None:
