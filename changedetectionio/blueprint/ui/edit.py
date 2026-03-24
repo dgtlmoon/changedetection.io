@@ -143,18 +143,21 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             except Exception as e:
                 logger.warning(f"Failed to load processor config: {e}")
 
-        from changedetectionio.model.browser_profile import get_builtin_profiles, BrowserProfile
+        from changedetectionio.model.browser_profile import BrowserProfile
+        from changedetectionio import content_fetchers as cf
         store_profiles = datastore.data['settings']['application'].get('browser_profiles', {})
+
+        # Choices: system default + always-present defaults (requests) + user-created profiles
         form.browser_profile.choices = [('system', gettext('System settings default'))] + [
             (p.get_machine_name(), p.name)
-            for p in get_builtin_profiles().values()
+            for p in cf.DEFAULT_BROWSER_PROFILES.values()
         ] + [
             (machine_name, raw.get('name', machine_name) if isinstance(raw, dict) else machine_name)
             for machine_name, raw in store_profiles.items()
         ]
 
         # Build a map of machine_name → fetcher class name for the JS visibility system
-        all_profiles = {**get_builtin_profiles()}
+        all_profiles = dict(cf.DEFAULT_BROWSER_PROFILES)
         for machine_name, raw in store_profiles.items():
             try:
                 all_profiles[machine_name] = BrowserProfile(**raw) if isinstance(raw, dict) else raw

@@ -39,11 +39,11 @@
                     <td><code>{{ profile.fetch_backend }}</code></td>
                     <td style="text-align:center;">{{ profile.get_fetcher_class_name()|fetcher_status_icons }}</td>
                     <td>{{ profile.viewport_width }}×{{ profile.viewport_height }}</td>
-                    <td>
-                        {% if profile.block_images %}<span title="{{ _('Images blocked') }}">&#x1F6AB;&#x1F5BC;</span> {% endif %}
-                        {% if profile.block_fonts %}<span title="{{ _('Fonts blocked') }}">&#x1F6AB;&#x1F524;</span> {% endif %}
-                        {% if profile.ignore_https_errors %}<span title="{{ _('HTTPS errors ignored') }}">&#x26A0;&#x1F512;</span> {% endif %}
-                        {% if profile.browser_connection_url %}<span title="{{ profile.browser_connection_url }}">&#x1F50C;</span>{% endif %}
+                    <td style="font-size:0.8em; line-height:1.6;">
+                        {% if profile.block_images %}{{ _('No images') }}<br>{% endif %}
+                        {% if profile.block_fonts %}{{ _('No fonts') }}<br>{% endif %}
+                        {% if profile.ignore_https_errors %}{{ _('Ignore TLS') }}<br>{% endif %}
+                        {% if profile.browser_connection_url %}<span title="{{ profile.browser_connection_url }}">{{ _('Custom URL') }}</span>{% endif %}
                     </td>
                     <td style="white-space:nowrap;">
                         {% if not profile.is_builtin %}
@@ -62,60 +62,62 @@
         <p style="color:#888; font-style:italic;">{{ _('No browser profiles configured yet. Add one below.') }}</p>
         {% endif %}
 
-        <h3 id="profile-form-heading">{{ _('Edit browser profile') if editing_machine_name else _('Add new browser profile') }}</h3>
-        {% if not editing_machine_name %}
-        <p style="font-size:0.9em; color:#666;">{{ _('Choose a browser type, give it a name, and configure its settings. You can create multiple profiles from the same type with different connection URLs or options.') }}</p>
-        {% endif %}
-        <form class="pure-form pure-form-stacked"
-              id="browser-profile-form"
-              action="{{ url_for('settings_browsers.save') }}"
-              method="POST">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <input type="hidden" name="original_machine_name" id="original_machine_name" value="{{ editing_machine_name or '' }}">
-            <fieldset>
-                <div class="pure-control-group">
-                    {{ render_field(browser_profile_form.name) }}
-                </div>
-                <div class="pure-control-group inline-radio">
-                    {{ render_field(browser_profile_form.fetch_backend, id="profile-fetch-backend") }}
-                </div>
-                <div class="pure-control-group browser-only-field">
-                    {{ render_field(browser_profile_form.browser_connection_url) }}
-                    <span class="pure-form-message-inline">{{ _('Optional — override the system CDP/WebSocket URL for this profile only (e.g.') }} <code>ws://my-chrome:3000</code>).</span>
-                </div>
-                <div class="pure-control-group browser-only-field" style="display:flex; gap:1em; flex-wrap:wrap;">
-                    <div>{{ render_field(browser_profile_form.viewport_width) }}</div>
-                    <div>{{ render_field(browser_profile_form.viewport_height) }}</div>
-                </div>
-                <div class="pure-control-group browser-only-field">
-                    {{ render_checkbox_field(browser_profile_form.block_images) }}
-                    <span class="pure-form-message-inline">{{ _('Block image downloads — speeds up loads on image-heavy pages.') }}</span>
-                </div>
-                <div class="pure-control-group browser-only-field">
-                    {{ render_checkbox_field(browser_profile_form.block_fonts) }}
-                    <span class="pure-form-message-inline">{{ _('Block web font downloads.') }}</span>
-                </div>
-                <div class="pure-control-group browser-only-field">
-                    {{ render_checkbox_field(browser_profile_form.ignore_https_errors) }}
-                    <span class="pure-form-message-inline">{{ _('Ignore TLS/HTTPS certificate errors (useful for self-signed certs on staging sites).') }}</span>
-                </div>
-                <div class="pure-control-group browser-only-field">
-                    {{ render_field(browser_profile_form.user_agent) }}
-                    <span class="pure-form-message-inline">{{ _("Leave blank to use the fetcher's default User-Agent.") }}</span>
-                </div>
-                <div class="pure-control-group browser-only-field">
-                    {{ render_field(browser_profile_form.locale) }}
-                    <span class="pure-form-message-inline">{{ _('Sets Accept-Language and navigator.language (e.g. en-US, de-DE).') }}</span>
-                </div>
-                <div class="pure-control-group">
-                    <button type="submit" class="pure-button pure-button-primary" id="profile-submit-btn">{{ _('Save profile') }}</button>
-                    {% if editing_machine_name %}
-                    <a href="{{ url_for('settings_browsers.index') }}" class="pure-button button-cancel">{{ _('Cancel') }}</a>
-                    {% endif %}
-                    <a href="{{ url_for('settings.settings_page') }}" class="pure-button button-cancel">{{ _('Back to Settings') }}</a>
-                </div>
-            </fieldset>
-        </form>
+        <div class="border-fieldset">
+            <h3 id="profile-form-heading">{{ _('Edit browser profile') if editing_machine_name else _('Add new browser profile') }}</h3>
+            {% if not editing_machine_name %}
+            <p style="font-size:0.9em; color:#666;">{{ _('Choose a browser type, give it a name, and configure its settings. You can create multiple profiles from the same type with different connection URLs or options.') }}</p>
+            {% endif %}
+            <form class="pure-form pure-form-stacked"
+                  id="browser-profile-form"
+                  action="{{ url_for('settings_browsers.save') }}"
+                  method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="original_machine_name" id="original_machine_name" value="{{ editing_machine_name or '' }}">
+                <fieldset>
+                    <div class="pure-control-group">
+                        {{ render_field(browser_profile_form.name) }}
+                    </div>
+                    <div class="pure-control-group inline-radio">
+                        {{ render_field(browser_profile_form.fetch_backend, id="profile-fetch-backend") }}
+                    </div>
+                    <div class="pure-control-group browser-only-field">
+                        {{ render_field(browser_profile_form.browser_connection_url) }}
+                        <span class="pure-form-message-inline">{{ _('Optional — override the system CDP/WebSocket URL for this profile only (e.g.') }} <code>ws://my-chrome:3000</code>).</span>
+                    </div>
+                    <div class="pure-control-group browser-only-field" style="display:flex; gap:1em; flex-wrap:wrap;">
+                        <div>{{ render_field(browser_profile_form.viewport_width) }}</div>
+                        <div>{{ render_field(browser_profile_form.viewport_height) }}</div>
+                    </div>
+                    <div class="pure-control-group browser-only-field">
+                        {{ render_checkbox_field(browser_profile_form.block_images) }}
+                        <span class="pure-form-message-inline">{{ _('Block image downloads — speeds up loads on image-heavy pages.') }}</span>
+                    </div>
+                    <div class="pure-control-group browser-only-field">
+                        {{ render_checkbox_field(browser_profile_form.block_fonts) }}
+                        <span class="pure-form-message-inline">{{ _('Block web font downloads.') }}</span>
+                    </div>
+                    <div class="pure-control-group browser-only-field">
+                        {{ render_checkbox_field(browser_profile_form.ignore_https_errors) }}
+                        <span class="pure-form-message-inline">{{ _('Ignore TLS/HTTPS certificate errors (useful for self-signed certs on staging sites).') }}</span>
+                    </div>
+                    <div class="pure-control-group browser-only-field">
+                        {{ render_field(browser_profile_form.user_agent) }}
+                        <span class="pure-form-message-inline">{{ _("Leave blank to use the fetcher's default User-Agent.") }}</span>
+                    </div>
+                    <div class="pure-control-group browser-only-field">
+                        {{ render_field(browser_profile_form.locale) }}
+                        <span class="pure-form-message-inline">{{ _('Sets Accept-Language and navigator.language (e.g. en-US, de-DE).') }}</span>
+                    </div>
+                    <div class="pure-control-group">
+                        <button type="submit" class="pure-button pure-button-primary" id="profile-submit-btn">{{ _('Save profile') }}</button>
+                        {% if editing_machine_name %}
+                        <a href="{{ url_for('settings_browsers.index') }}" class="pure-button button-cancel">{{ _('Cancel') }}</a>
+                        {% endif %}
+                        <a href="{{ url_for('settings.settings_page') }}" class="pure-button button-cancel">{{ _('Back to Settings') }}</a>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
     </div>
 </div>
 

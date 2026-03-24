@@ -237,14 +237,23 @@ def register_builtin_fetchers():
     This is called from content_fetchers/__init__.py after all fetchers are imported
     to avoid circular import issues.
     """
-    from changedetectionio.content_fetchers import requests, playwright, puppeteer, webdriver_selenium
+    from changedetectionio.content_fetchers import requests, puppeteer, webdriver_selenium
+    from changedetectionio.content_fetchers.playwright import CDP, chrome, firefox, webkit
 
-    # Register each built-in fetcher plugin
     if hasattr(requests, 'requests_plugin'):
         plugin_manager.register(requests.requests_plugin, 'builtin_requests')
 
-    if hasattr(playwright, 'playwright_plugin'):
-        plugin_manager.register(playwright.playwright_plugin, 'builtin_playwright')
+    if hasattr(CDP, 'cdp_plugin'):
+        plugin_manager.register(CDP.cdp_plugin, 'builtin_playwright_cdp')
+
+    if hasattr(chrome, 'chrome_plugin'):
+        plugin_manager.register(chrome.chrome_plugin, 'builtin_playwright_chrome')
+
+    if hasattr(firefox, 'firefox_plugin'):
+        plugin_manager.register(firefox.firefox_plugin, 'builtin_playwright_firefox')
+
+    if hasattr(webkit, 'webkit_plugin'):
+        plugin_manager.register(webkit.webkit_plugin, 'builtin_playwright_webkit')
 
     if hasattr(puppeteer, 'puppeteer_plugin'):
         plugin_manager.register(puppeteer.puppeteer_plugin, 'builtin_puppeteer')

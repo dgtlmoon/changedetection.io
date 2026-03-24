@@ -181,6 +181,9 @@ class fetcher(Fetcher):
 
     status_icon = {'filename': 'google-chrome-icon.png', 'alt': 'Using a Chrome browser', 'title': 'Using a Chrome browser'}
 
+    def disk_cleanup_after_fetch(self):
+        self.delete_browser_steps_screenshots()
+
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
         super().__init__(**kwargs)
 

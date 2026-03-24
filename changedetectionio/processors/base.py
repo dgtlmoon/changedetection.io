@@ -246,6 +246,7 @@ class difference_detection_processor():
 
         # @todo .quit here could go on close object, so we can run JS if change-detected
         await self.fetcher.quit(watch=self.watch)
+        self.fetcher.disk_cleanup_after_fetch()
 
         # Sanitize lone surrogates - these can appear when servers return malformed/mixed-encoding
         # content that gets decoded into surrogate characters (e.g. \udcad). Without this,

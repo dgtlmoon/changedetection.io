@@ -199,6 +199,16 @@ class Fetcher():
                     # Stop processing here
                     raise BrowserStepsStepException(step_n=step_n, original_e=e)
 
+    def disk_cleanup_after_fetch(self):
+        """Remove any temporary files written to disk during a fetch.
+
+        The default implementation is a no-op.  Browser-based fetchers
+        override this to delete browser-step screenshots and any other
+        ephemeral files they create.  Called by the processor after
+        ``quit()`` regardless of whether the fetch succeeded or failed.
+        """
+        pass
+
     # It's always good to reset these
     def delete_browser_steps_screenshots(self):
         import glob
