@@ -108,7 +108,7 @@ def test_check_ignore_text_functionality(client, live_server, measure_memory_usa
     # Add our URL to the import page
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
-        data={"ignore_text": ignore_text, "url": test_url, 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
+        data={"ignore_text": ignore_text, "url": test_url, 'browser_profile': "direct_http_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -182,7 +182,7 @@ def _run_test_global_ignore(client, datastore_path, as_source=False, extra_ignor
             "requests-time_between_check-minutes": 180,
             "application-ignore_whitespace": "y",
             "application-global_ignore_text": ignore_text,
-            'application-fetch_backend': "html_requests"
+            'application-browser_profile': "direct_http_requests"
         },
         follow_redirects=True
     )
@@ -204,7 +204,7 @@ def _run_test_global_ignore(client, datastore_path, as_source=False, extra_ignor
     #Adding some ignore text should not trigger a change
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
-        data={"ignore_text": "something irrelevent but just to check", "url": test_url, 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
+        data={"ignore_text": "something irrelevent but just to check", "url": test_url, 'browser_profile': "direct_http_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data

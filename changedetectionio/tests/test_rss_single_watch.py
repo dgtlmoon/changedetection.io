@@ -273,7 +273,7 @@ def test_rss_single_watch_follow_notification_body(client, live_server, measure_
     res = client.post(
         url_for("settings.settings_page"),
         data={
-              "application-fetch_backend": "html_requests",
+              "application-browser_profile": "direct_http_requests",
               "application-minutes_between_check": 180,
               "application-notification_body": 'Boo yeah hello from main settings notification body<br>\nTitle: {{ watch_title }} changed',
               "application-notification_format": default_notification_format,
@@ -335,7 +335,7 @@ def test_rss_single_watch_follow_notification_body(client, live_server, measure_
         url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={"notification_body": "RSS body description set from watch level at notification body - {{ watch_title }}",
               "url": test_url,
-              'fetch_backend': "html_requests",
+              'browser_profile': "direct_http_requests",
               "time_between_check_use_default": "y"
               },
         follow_redirects=True

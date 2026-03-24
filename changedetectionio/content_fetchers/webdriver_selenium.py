@@ -19,14 +19,7 @@ class fetcher(Fetcher):
     supports_screenshots = True
     supports_xpath_element_data = True
 
-    @classmethod
-    def get_status_icon_data(cls):
-        """Return Chrome browser icon data for WebDriver fetcher."""
-        return {
-            'filename': 'google-chrome-icon.png',
-            'alt': 'Using a Chrome browser',
-            'title': 'Using a Chrome browser'
-        }
+    status_icon = {'filename': 'google-chrome-icon.png', 'alt': 'Using a Chrome browser', 'title': 'Using a Chrome browser'}
 
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
         super().__init__(**kwargs)

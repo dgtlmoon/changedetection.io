@@ -36,7 +36,7 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
               "title": "",
               "headers": "",
               "time_between_check-minutes": "180",
-              "fetch_backend": "html_requests",
+              "browser_profile": "direct_http_requests",
               "time_between_check_use_default": "y"},
         follow_redirects=True
     )

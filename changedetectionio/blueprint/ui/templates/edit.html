@@ -27,7 +27,8 @@
     const proxy_recheck_status_url="{{url_for('check_proxies.get_recheck_status', uuid=uuid)}}";
     const screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid)}}";
     const watch_visual_selector_data_url="{{url_for('static_content', group='visual_selector_data', filename=uuid)}}";
-    const default_system_fetch_backend="{{ settings_application['fetch_backend'] }}";
+    const default_system_fetch_backend = {{ (browser_profile_fetchers.get(settings_application.get('browser_profile') or 'direct_http_requests', 'html_requests')) | tojson }};
+    const browserProfileFetcherMap = {{ browser_profile_fetchers | tojson }};
 </script>
 <script src="{{url_for('static_content', group='js', filename='plugins.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='watch-settings.js')}}" defer></script>
@@ -131,11 +132,10 @@
             {% if capabilities.supports_request_type %}
             <div class="tab-pane-inner" id="request">
                     <div class="pure-control-group inline-radio">
-                        {{ render_field(form.fetch_backend, class="fetch-backend") }}
+                        {{ render_field(form.browser_profile, class="fetch-backend") }}
                         <span class="pure-form-message-inline">
-                            <p>{{ _('Use the') }} <strong>{{ _('Basic') }}</strong> {{ _('method (default) where your watched site doesn\'t need Javascript to render.') }}</p>
-                            <p>{{ _('The') }} <strong>{{ _('Chrome/Javascript') }}</strong> {{ _('method requires a network connection to a running WebDriver+Chrome server, set by the ENV var \'WEBDRIVER_URL\'.') }} </p>
-                            {{ _('Tip:') }} <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#brightdata-proxy-support">{{ _('Connect using Bright Data and Oxylabs Proxies, find out more here.') }}</a>
+                            <p>{{ _('Choose how this watch fetches its target URL. \'System settings default\' inherits the global setting.') }}</p>
+                            <p>{{ _('Manage browser profiles in') }} <a href="{{ url_for('settings_browsers.index') }}">{{ _('Settings → Browsers') }}</a>.</p>
                         </span>
                     </div>
                 {% if form.proxy %}

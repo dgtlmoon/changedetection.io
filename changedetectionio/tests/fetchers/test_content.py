@@ -17,7 +17,7 @@ def test_fetch_webdriver_content(client, live_server, measure_memory_usage, data
         data={
             "application-empty_pages_are_a_change": "",
             "requests-time_between_check-minutes": 180,
-            'application-fetch_backend': "html_webdriver",
+            'application-browser_profile': "browser_chromeplaywright",
             'application-ui-favicons_enabled': "y",
         },
         follow_redirects=True

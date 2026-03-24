@@ -205,12 +205,12 @@ def test_import_watchete_xlsx(client, live_server, measure_memory_usage, datasto
             filters = watch.get('include_filters')
             assert filters[0] == '/html[1]/body[1]/div[4]/div[1]/div[1]/div[1]||//*[@id=\'content\']/div[3]/div[1]/div[1]||//*[@id=\'content\']/div[1]'
             assert watch.get('time_between_check') == {'weeks': 0, 'days': 1, 'hours': 6, 'minutes': 24, 'seconds': 0}
-            assert watch.get('fetch_backend') == 'html_requests' # Has inactive 'dynamic wachet'
+            assert watch.get('browser_profile') == 'direct_http_requests' # Has inactive 'dynamic wachet'
 
         if watch.get('title') == 'JS website':
-            assert watch.get('fetch_backend') == 'html_webdriver' # Has active 'dynamic wachet'
+            assert watch.get('browser_profile') == 'browser_chromeplaywright' # Has active 'dynamic wachet'
 
         if watch.get('title') == 'system default website':
-            assert watch.get('fetch_backend') == 'system' # uses default if blank
+            assert watch.get('browser_profile') is None # uses default if blank (importer doesn't set it)
 
     delete_all_watches(client)

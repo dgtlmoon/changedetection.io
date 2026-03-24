@@ -43,6 +43,8 @@ class model(dict):
                     'api_access_token_enabled': True,
                     'base_url' : None,
                     'empty_pages_are_a_change': False,
+                    'browser_profile': None,           # machine-name of the system-default BrowserProfile
+                    'browser_profiles': {},            # user-defined profiles keyed by machine name
                     'fetch_backend': getenv("DEFAULT_FETCH_BACKEND", "html_requests"),
                     'filter_failure_notification_threshold_attempts': _FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT,
                     'global_ignore_text': [], # List of text to ignore when calculating the comparison checksum

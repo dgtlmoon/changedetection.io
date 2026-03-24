@@ -139,10 +139,24 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             except Exception as e:
                 logger.warning(f"Failed to load processor config: {e}")
 
-        for p in datastore.extra_browsers:
-            form.fetch_backend.choices.append(p)
+        from changedetectionio.model.browser_profile import get_builtin_profiles, BrowserProfile
+        store_profiles = datastore.data['settings']['application'].get('browser_profiles', {})
+        form.browser_profile.choices = [('system', gettext('System settings default'))] + [
+            (p.get_machine_name(), p.name)
+            for p in get_builtin_profiles().values()
+        ] + [
+            (machine_name, raw.get('name', machine_name) if isinstance(raw, dict) else machine_name)
+            for machine_name, raw in store_profiles.items()
+        ]
 
-        form.fetch_backend.choices.append(("system", 'System settings default'))
+        # Build a map of machine_name → fetcher class name for the JS visibility system
+        all_profiles = {**get_builtin_profiles()}
+        for machine_name, raw in store_profiles.items():
+            try:
+                all_profiles[machine_name] = BrowserProfile(**raw) if isinstance(raw, dict) else raw
+            except Exception:
+                pass
+        browser_profile_fetchers = {mn: p.get_fetcher_class_name() for mn, p in all_profiles.items()}
 
         # form.browser_steps[0] can be assumed that we 'goto url' first
 
@@ -296,6 +310,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             template_args = {
                 'available_processors': processors.available_processors(),
                 'available_timezones': sorted(available_timezones()),
+                'browser_profile_fetchers': browser_profile_fetchers,
                 'browser_steps_config': browser_step_ui_config,
                 'emailprefix': os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
                 'extra_classes': ' '.join(c),

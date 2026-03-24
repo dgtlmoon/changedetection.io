@@ -15,6 +15,7 @@ import tarfile
 import time
 from loguru import logger
 from copy import deepcopy
+from typing import Optional
 
 
 # Try to import orjson for faster JSON serialization
@@ -729,6 +730,141 @@ class DatastoreUpdatesMixin:
         # write it to disk, it will be saved without ['tags'] in the JSON db because we find it from disk glob
         # (left this out by accident in previous update, added tags={} in the changedetection.json save_to_disk)
         self._save_settings()
+
+    def update_31(self):
+        """
+        Migrate legacy ``fetch_backend`` strings to the new ``browser_profile``
+        machine-name system.
+
+        What this migration does
+        ------------------------
+        1. ``settings.requests.extra_browsers`` entries are converted into
+           ``BrowserProfile`` objects and stored in
+           ``settings.application.browser_profiles`` keyed by machine name.
+
+        2. ``settings.application.fetch_backend`` (the system-wide default) is
+           translated to a machine name and written to
+           ``settings.application.browser_profile``.
+
+        3. Every watch that has an explicit ``fetch_backend`` (not ``'system'``)
+           gets a corresponding ``browser_profile`` machine name set, then
+           ``fetch_backend`` is reset to ``'system'``.
+
+        4. The same translation is applied to tags with ``overrides_watch=True``
+           that carry an explicit ``fetch_backend``.
+
+        Legacy mapping
+        ~~~~~~~~~~~~~~
+        * ``'html_requests'``        → built-in ``'direct_http_requests'``
+        * ``'html_webdriver'``       → built-in ``'browser_chromeplaywright'``
+        * ``'extra_browser_<name>'`` → machine name of the migrated custom profile
+        * ``'system'`` / missing     → ``None``  (continue to use chain resolution)
+
+        Safe to re-run: skips watches / tags that already have ``browser_profile``
+        set, and skips extra_browser entries that have already been migrated.
+        """
+        from ..model.browser_profile import (
+            BrowserProfile,
+            BUILTIN_REQUESTS,
+            BUILTIN_BROWSER,
+        )
+
+        app_settings = self.data['settings']['application']
+
+        # ------------------------------------------------------------------
+        # 1. Migrate extra_browsers → browser_profiles
+        # ------------------------------------------------------------------
+        extra_browsers = self.data['settings']['requests'].get('extra_browsers', [])
+        browser_profiles: dict = app_settings.setdefault('browser_profiles', {})
+
+        extra_browser_name_to_machine: dict[str, str] = {}
+
+        for entry in extra_browsers:
+            browser_name = entry.get('browser_name', '').strip()
+            connection_url = entry.get('browser_connection_url', '').strip()
+            if not browser_name:
+                continue
+
+            profile = BrowserProfile(
+                name=browser_name,
+                fetch_backend='webdriver',
+                browser_connection_url=connection_url or None,
+            )
+            machine_name = profile.get_machine_name()
+
+            if machine_name not in browser_profiles:
+                browser_profiles[machine_name] = profile.model_dump()
+                logger.info(f"update_31: migrated extra_browser '{browser_name}' → profile '{machine_name}'")
+
+            extra_browser_name_to_machine[browser_name] = machine_name
+
+        # ------------------------------------------------------------------
+        # Helper: translate a fetch_backend string to a machine name
+        # ------------------------------------------------------------------
+        builtin_requests_name = BUILTIN_REQUESTS.get_machine_name()
+        builtin_browser_name  = BUILTIN_BROWSER.get_machine_name()
+
+        def _to_machine_name(fetch_backend: str) -> Optional[str]:
+            if not fetch_backend or fetch_backend in ('system', 'default', ''):
+                return None
+            if fetch_backend == 'html_requests':
+                return builtin_requests_name
+            if fetch_backend == 'html_webdriver':
+                return builtin_browser_name
+            if fetch_backend.startswith('extra_browser_'):
+                key = fetch_backend[len('extra_browser_'):]
+                return extra_browser_name_to_machine.get(key)
+            # Unknown value — log and treat as "no preference"
+            logger.warning(f"update_31: unknown fetch_backend value {fetch_backend!r}, skipping")
+            return None
+
+        # ------------------------------------------------------------------
+        # 2. Migrate system-wide default
+        # ------------------------------------------------------------------
+        system_fetch_backend = app_settings.get('fetch_backend', 'html_requests')
+        if not app_settings.get('browser_profile'):
+            machine = _to_machine_name(system_fetch_backend)
+            app_settings['browser_profile'] = machine
+            logger.info(
+                f"update_31: system fetch_backend '{system_fetch_backend}' → browser_profile '{machine}'"
+            )
+
+        # ------------------------------------------------------------------
+        # 3. Migrate watches
+        # ------------------------------------------------------------------
+        for uuid, watch in self.data['watching'].items():
+            if watch.get('browser_profile'):
+                continue  # already migrated
+
+            fetch_backend = watch.get('fetch_backend', 'system')
+            machine = _to_machine_name(fetch_backend)
+            watch['browser_profile'] = machine
+            watch['fetch_backend'] = 'system'  # clear legacy value
+            watch.commit()
+            if machine:
+                logger.info(
+                    f"update_31: watch {uuid} fetch_backend '{fetch_backend}' → browser_profile '{machine}'"
+                )
+
+        # ------------------------------------------------------------------
+        # 4. Migrate tags
+        # ------------------------------------------------------------------
+        for tag_uuid, tag in app_settings.get('tags', {}).items():
+            if tag.get('browser_profile'):
+                continue  # already migrated
+
+            fetch_backend = tag.get('fetch_backend', 'system')
+            machine = _to_machine_name(fetch_backend)
+            if machine:
+                tag['browser_profile'] = machine
+                tag['fetch_backend'] = 'system'
+                tag.commit()
+                logger.info(
+                    f"update_31: tag {tag_uuid} fetch_backend '{fetch_backend}' → browser_profile '{machine}'"
+                )
+
+        self._save_settings()
+        logger.success("update_31: fetch_backend → browser_profile migration complete")
 
     def update_30(self):
         """Migrate restock_settings out of watch.json into restock_diff.json processor config file.

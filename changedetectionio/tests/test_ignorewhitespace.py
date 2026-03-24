@@ -59,7 +59,7 @@ def test_check_ignore_whitespace(client, live_server, measure_memory_usage, data
         data={
             "requests-time_between_check-minutes": 180,
             "application-ignore_whitespace": "y",
-            "application-fetch_backend": "html_requests"
+            "application-browser_profile": "direct_http_requests"
         },
         follow_redirects=True
     )

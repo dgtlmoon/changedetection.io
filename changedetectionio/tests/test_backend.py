@@ -173,7 +173,7 @@ def test_title_scraper(client, live_server, measure_memory_usage, datastore_path
         url_for("settings.settings_page"),
         data={"application-ui-use_page_title_in_list": "",
               "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+              'application-browser_profile': "direct_http_requests"},
         follow_redirects=True
     )
 
@@ -216,7 +216,7 @@ def test_requests_timeout(client, live_server, measure_memory_usage, datastore_p
         data={"application-ui-use_page_title_in_list": "",
               "requests-time_between_check-minutes": 180,
               "requests-timeout": delay - 1,
-              'application-fetch_backend': "html_requests"},
+              'application-browser_profile': "direct_http_requests"},
         follow_redirects=True
     )
 
@@ -235,7 +235,7 @@ def test_requests_timeout(client, live_server, measure_memory_usage, datastore_p
         data={"application-ui-use_page_title_in_list": "",
               "requests-time_between_check-minutes": 180,
               "requests-timeout": delay + 1, # timeout should be a second more than the reply time
-              'application-fetch_backend': "html_requests"},
+              'application-browser_profile': "direct_http_requests"},
         follow_redirects=True
     )
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)

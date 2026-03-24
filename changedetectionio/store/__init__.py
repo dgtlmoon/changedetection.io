@@ -143,7 +143,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
             self.__data['settings']['application']['tags'][uuid] = Tag.model(
                 datastore_path=self.datastore_path,
-                __datastore=self.__data,
+                __datastore=self,
                 default=tag
             )
             logger.info(f"Tag: {uuid} {tag['title']}")
@@ -207,7 +207,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         self.json_store_path = os.path.join(self.datastore_path, "changedetection.json")
 
         # Base definition for all watchers (deepcopy part of #569)
-        self.generic_definition = deepcopy(Watch.model(datastore_path=datastore_path, __datastore=self.__data, default={}))
+        self.generic_definition = deepcopy(Watch.model(datastore_path=datastore_path, __datastore=self, default={}))
 
         # Load build SHA if available (Docker deployments)
         if path.isfile('changedetectionio/source.txt'):
@@ -269,12 +269,12 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
             self.add_watch(
                 url='https://news.ycombinator.com/',
                 tag='Tech news',
-                extras={'fetch_backend': 'html_requests'}
+                extras={'browser_profile': 'direct_http_requests'}
             )
             self.add_watch(
                 url='https://changedetection.io/CHANGELOG.txt',
                 tag='changedetection.io',
-                extras={'fetch_backend': 'html_requests'}
+                extras={'browser_profile': 'direct_http_requests'}
             )
 
         # Create changedetection.json immediately
@@ -331,7 +331,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         if entity.get('processor') != 'text_json_diff':
             logger.trace(f"Loading Watch object '{watch_class.__module__}.{watch_class.__name__}' for UUID {uuid}")
 
-        entity = watch_class(datastore_path=self.datastore_path, __datastore=self.__data, default=entity)
+        entity = watch_class(datastore_path=self.datastore_path, __datastore=self, default=entity)
         return entity
 
     # ============================================================================
@@ -421,7 +421,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
             return Tag.model(
                 datastore_path=self.datastore_path,
-                __datastore=self.__data,
+                __datastore=self,
                 default=entity_dict
             )
 
@@ -767,7 +767,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
         # If the processor also has its own Watch implementation
         watch_class = get_custom_watch_obj_for_processor(apply_extras.get('processor'))
-        new_watch = watch_class(datastore_path=self.datastore_path, __datastore=self.__data, url=url)
+        new_watch = watch_class(datastore_path=self.datastore_path, __datastore=self, url=url)
 
         new_uuid = new_watch.get('uuid')
 
@@ -885,6 +885,71 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
         return None
 
+    # ------------------------------------------------------------------
+    # BrowserProfile helpers
+    # ------------------------------------------------------------------
+
+    def get_browser_profile(self, machine_name: str):
+        """Return a BrowserProfile by machine name, or None if not found.
+
+        Built-in profiles (direct_http_requests, browser_chromeplaywright) are
+        always available and checked first.
+        """
+        from changedetectionio.model.browser_profile import get_profile
+        store_profiles = self.data['settings']['application'].get('browser_profiles', {})
+        return get_profile(machine_name, store_profiles)
+
+    def delete_browser_profile(self, machine_name: str):
+        """Delete a user-defined BrowserProfile by machine name.
+
+        Rules enforced:
+        - Built-in profiles cannot be deleted.
+        - The profile cannot be the current system default
+          (settings.application.browser_profile); caller must change the
+          default first.
+        - Any watch or tag that referenced this profile is reset to None
+          (falls back through the chain on next fetch).
+
+        Returns the number of watches/tags that were reset.
+        """
+        from changedetectionio.model.browser_profile import RESERVED_MACHINE_NAMES
+
+        if machine_name in RESERVED_MACHINE_NAMES:
+            raise ValueError(f"Built-in profile '{machine_name}' cannot be deleted")
+
+        system_default = self.data['settings']['application'].get('browser_profile')
+        if system_default == machine_name:
+            raise ValueError(
+                f"Profile '{machine_name}' is the system default. "
+                f"Change the system default before deleting it."
+            )
+
+        store_profiles = self.data['settings']['application'].get('browser_profiles', {})
+        if machine_name not in store_profiles:
+            return 0
+
+        del store_profiles[machine_name]
+
+        reset_count = 0
+
+        # Reset watches that reference this profile
+        for uuid, watch in self.data['watching'].items():
+            if watch.get('browser_profile') == machine_name:
+                watch['browser_profile'] = None
+                watch.commit()
+                reset_count += 1
+
+        # Reset tags that reference this profile
+        for tag_uuid, tag in self.data['settings']['application'].get('tags', {}).items():
+            if tag.get('browser_profile') == machine_name:
+                tag['browser_profile'] = None
+                tag.commit()
+                reset_count += 1
+
+        self._save_settings()
+        logger.info(f"Deleted BrowserProfile '{machine_name}', reset {reset_count} watches/tags")
+        return reset_count
+
     @property
     def has_extra_headers_file(self):
         filepath = os.path.join(self.datastore_path, 'headers.txt')
@@ -962,7 +1027,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
             from ..model import Tag
             new_tag = Tag.model(
                 datastore_path=self.datastore_path,
-                __datastore=self.__data,
+                __datastore=self,
                 default={
                     'title': title.strip(),
                     'date_created': int(time.time())

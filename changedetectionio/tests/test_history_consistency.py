@@ -51,7 +51,7 @@ def test_consistent_history(client, live_server, measure_memory_usage, datastore
         url_for("settings.settings_page"),
         data={"application-empty_pages_are_a_change": "",
               "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+              'application-browser_profile': "direct_http_requests"},
         follow_redirects=True
     )
     assert b"Settings updated." in res.data
@@ -244,7 +244,7 @@ def test_history_trim_global_override_in_watch(client, live_server, measure_memo
             uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
             res = client.post(
                 url_for("ui.ui_edit.edit_page", uuid="first"),
-                data={"include_filters": "", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests",
+                data={"include_filters": "", "url": test_url, "tags": "", "headers": "", 'browser_profile': "direct_http_requests",
                       "time_between_check_use_default": "y", "history_snapshot_max_length": str(limit)},
                 follow_redirects=True
             )

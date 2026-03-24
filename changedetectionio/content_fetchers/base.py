@@ -70,37 +70,38 @@ class Fetcher():
     supports_screenshots = False        # Can capture page screenshots
     supports_xpath_element_data = False # Can extract xpath element positions/data for visual selector
 
+    # Icon shown in the watch list when this fetcher is the effective fetcher.
+    # Set to a dict with 'filename', 'alt', 'title' keys (image served from static/images/).
+    # None means no icon is shown (e.g. plain HTTP requests fetcher).
+    status_icon = None
+
     # Screenshot element locking - prevents layout shifts during screenshot capture
     # Only needed for visual comparison (image_ssim_diff processor)
     # Locks element dimensions in the first viewport to prevent headers/ads from resizing
     lock_viewport_elements = False      # Default: disabled for performance
 
+    # BrowserProfile-derived settings — applied by browser fetchers, ignored by html_requests
+    viewport_width: int = 1280
+    viewport_height: int = 1000
+    block_images: bool = False
+    block_fonts: bool = False
+    profile_user_agent: str = None   # Profile-level UA; lower priority than request_headers User-Agent
+    ignore_https_errors: bool = False
+    locale: str = None
+
     def __init__(self, **kwargs):
         if kwargs and 'screenshot_format' in kwargs:
             self.screenshot_format = kwargs.get('screenshot_format')
 
-        # Allow lock_viewport_elements to be set via kwargs
         if kwargs and 'lock_viewport_elements' in kwargs:
             self.lock_viewport_elements = kwargs.get('lock_viewport_elements')
 
+        # BrowserProfile fields — store whatever was passed, subclasses use them
+        for field in ('viewport_width', 'viewport_height', 'block_images', 'block_fonts',
+                      'profile_user_agent', 'ignore_https_errors', 'locale'):
+            if field in kwargs:
+                setattr(self, field, kwargs[field])
 
-    @classmethod
-    def get_status_icon_data(cls):
-        """Return data for status icon to display in the watch overview.
-
-        This method can be overridden by subclasses to provide custom status icons.
-
-        Returns:
-            dict or None: Dictionary with icon data:
-                {
-                    'filename': 'icon-name.svg',  # Icon filename
-                    'alt': 'Alt text',            # Alt attribute
-                    'title': 'Tooltip text',      # Title attribute
-                    'style': 'height: 1em;'       # Optional inline CSS
-                }
-                Or None if no icon
-        """
-        return None
 
     def clear_content(self):
         """

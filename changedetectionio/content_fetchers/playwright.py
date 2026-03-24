@@ -2,6 +2,7 @@ import asyncio
 import gc
 import json
 import os
+import re
 from urllib.parse import urlparse
 
 from loguru import logger
@@ -168,14 +169,7 @@ class fetcher(Fetcher):
     supports_screenshots = True
     supports_xpath_element_data = True
 
-    @classmethod
-    def get_status_icon_data(cls):
-        """Return Chrome browser icon data for Playwright fetcher."""
-        return {
-            'filename': 'google-chrome-icon.png',
-            'alt': 'Using a Chrome browser',
-            'title': 'Using a Chrome browser'
-        }
+    status_icon = {'filename': 'google-chrome-icon.png', 'alt': 'Using a Chrome browser', 'title': 'Using a Chrome browser'}
 
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
         super().__init__(**kwargs)
@@ -279,15 +273,35 @@ class fetcher(Fetcher):
 
             # Set user agent to prevent Cloudflare from blocking the browser
             # Use the default one configured in the App.py model that's passed from fetch_site_status.py
-            context = await browser.new_context(
+            # User-agent: request_headers win, then profile override, then auto-detect
+            ua = manage_user_agent(headers=request_headers) or self.profile_user_agent or None
+
+            context_kwargs = dict(
                 accept_downloads=False,  # Should never be needed
                 bypass_csp=True,  # This is needed to enable JavaScript execution on GitHub and others
                 extra_http_headers=request_headers,
-                ignore_https_errors=True,
+                ignore_https_errors=self.ignore_https_errors,
                 proxy=self.proxy,
-                service_workers=os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow'), # Should be `allow` or `block` - sites like YouTube can transmit large amounts of data via Service Workers
-                user_agent=manage_user_agent(headers=request_headers),
+                service_workers=os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow'),
+                user_agent=ua,
+                viewport={'width': self.viewport_width, 'height': self.viewport_height},
             )
+            if self.locale:
+                context_kwargs['locale'] = self.locale
+
+            context = await browser.new_context(**context_kwargs)
+
+            # Block resources per profile settings
+            if self.block_images:
+                await context.route(
+                    re.compile(r'\.(png|jpe?g|gif|svg|ico|webp|avif|bmp)(\?.*)?$', re.IGNORECASE),
+                    lambda route: route.abort()
+                )
+            if self.block_fonts:
+                await context.route(
+                    re.compile(r'\.(woff2?|ttf|otf|eot)(\?.*)?$', re.IGNORECASE),
+                    lambda route: route.abort()
+                )
 
             self.page = await context.new_page()
 

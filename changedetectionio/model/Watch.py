@@ -354,57 +354,38 @@ class model(EntityPersistenceMixin, watch_base):
         return self.get('url', '').startswith('source:')
 
     @property
+    def effective_browser_profile(self):
+        """Resolve the effective BrowserProfile for this watch.
+
+        Walks the chain: watch → tag (overrides_watch=True) → global settings → built-in fallback.
+        Never raises. Returns a BrowserProfile instance.
+        """
+        from changedetectionio.model.browser_profile import resolve_browser_profile, BUILTIN_REQUESTS
+        if not self._datastore:
+            return BUILTIN_REQUESTS
+        try:
+            return resolve_browser_profile(self, self._datastore)
+        except Exception:
+            return BUILTIN_REQUESTS
+
+    @property
     def get_fetch_backend(self):
+        """Legacy property — prefer effective_browser_profile.fetch_backend for new code.
+
+        Returns the raw fetch_backend stored on this watch (or 'html_requests' for PDFs).
+        Does NOT walk the tag/global resolution chain.
         """
-        Get the fetch backend for this watch with special case handling.
-
-        CHAIN RESOLUTION OPPORTUNITY:
-        Currently returns watch.fetch_backend directly, but doesn't implement
-        Watch → Tag → Global resolution chain. With Pydantic:
-
-        @computed_field
-        def resolved_fetch_backend(self) -> str:
-            # Special case: PDFs always use html_requests
-            if self.is_pdf:
-                return 'html_requests'
-
-            # Watch override
-            if self.fetch_backend and self.fetch_backend != 'system':
-                return self.fetch_backend
-
-            # Tag override (first tag with overrides_watch=True wins)
-            for tag_uuid in self.tags:
-                tag = self._datastore.get_tag(tag_uuid)
-                if tag.overrides_watch and tag.fetch_backend:
-                    return tag.fetch_backend
-
-            # Global default
-            return self._datastore.settings.fetch_backend
-        """
-        # Maybe also if is_image etc?
-        # This is because chrome/playwright wont render the PDF in the browser and we will just fetch it and use pdf2html to see the text.
         if self.is_pdf:
             return 'html_requests'
-
         return self.get('fetch_backend')
 
     @property
     def fetcher_supports_screenshots(self):
-        """Return True if the fetcher configured for this watch supports screenshots.
-
-        Resolves 'system' via self._datastore, then checks supports_screenshots on
-        the actual fetcher class. Works for built-in and plugin fetchers alike.
-        """
+        """Return True if the resolved fetcher for this watch supports screenshots."""
         from changedetectionio import content_fetchers
-
-        fetcher_name = self.get_fetch_backend  # already handles is_pdf → html_requests
-        if not fetcher_name or fetcher_name == 'system':
-            fetcher_name = self._datastore['settings']['application'].get('fetch_backend', 'html_requests')
-
-        fetcher_class = getattr(content_fetchers, fetcher_name, None)
+        fetcher_class = getattr(content_fetchers, self.effective_browser_profile.get_fetcher_class_name(), None)
         if fetcher_class is None:
             return False
-
         return bool(getattr(fetcher_class, 'supports_screenshots', False))
 
     @property

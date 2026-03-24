@@ -50,7 +50,7 @@ def test_normal_page_check_works_with_ignore_status_code(client, live_server, me
         data={
             "requests-time_between_check-minutes": 180,
             "application-ignore_status_codes": "y",
-            'application-fetch_backend': "html_requests"
+            'application-browser_profile': "direct_http_requests"
         },
         follow_redirects=True
     )
@@ -117,7 +117,7 @@ def test_403_page_check_works_with_ignore_status_code(client, live_server, measu
     # Add our URL to the import page
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
-        data={"ignore_status_codes": "y", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
+        data={"ignore_status_codes": "y", "url": test_url, "tags": "", "headers": "", 'browser_profile': "direct_http_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data

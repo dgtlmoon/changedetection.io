@@ -29,7 +29,7 @@ def test_socks5(client, live_server, measure_memory_usage, datastore_path):
         data={
             "requests-time_between_check-minutes": 180,
             "application-ignore_whitespace": "y",
-            "application-fetch_backend": "html_requests",
+            "application-browser_profile": "direct_http_requests",
             # set in .github/workflows/test-only.yml
             "requests-extra_proxies-0-proxy_url": "socks5://proxy_user123:proxy_pass123@socks5proxy:1080",
             "requests-extra_proxies-0-proxy_name": "socks5proxy",
@@ -61,7 +61,7 @@ def test_socks5(client, live_server, measure_memory_usage, datastore_path):
         url_for("ui.ui_edit.edit_page", uuid="first", unpause_on_save=1),
         data={
             "include_filters": "",
-            "fetch_backend": 'html_webdriver' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'html_requests',
+            "browser_profile": 'browser_chromeplaywright' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'direct_http_requests',
             "headers": "",
             "proxy": "ui-0socks5proxy",
             "tags": "",

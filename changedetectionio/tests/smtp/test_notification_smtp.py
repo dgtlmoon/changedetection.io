@@ -57,7 +57,7 @@ def test_check_notification_email_formats_default_HTML(client, live_server, meas
               "application-notification_body": "some text\nfallback-body<br> " + default_notification_body,
               "application-notification_format": 'html',
               "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+              'application-browser_profile': "direct_http_requests"},
         follow_redirects=True
     )
     assert b"Settings updated." in res.data
@@ -127,7 +127,7 @@ def test_check_notification_plaintext_format(client, live_server, measure_memory
               "application-notification_body": f"some text\n" + default_notification_body + f"\nMore output test\n{ALL_MARKUP_TOKENS}",
               "application-notification_format": 'text',
               "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+              'application-browser_profile': "direct_http_requests"},
         follow_redirects=True
     )
 
@@ -189,7 +189,7 @@ def test_check_notification_html_color_format(client, live_server, measure_memor
               "application-notification_body": f"some text\n{default_notification_body}\nMore output test\n{ALL_MARKUP_TOKENS}",
               "application-notification_format": 'htmlcolor',
               "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+              'application-browser_profile': "direct_http_requests"},
         follow_redirects=True
     )
 
@@ -274,7 +274,7 @@ def test_check_notification_markdown_format(client, live_server, measure_memory_
               "application-notification_body": "*header*\n\nsome text\n" + default_notification_body,
               "application-notification_format": 'markdown',
               "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+              'application-browser_profile': "direct_http_requests"},
         follow_redirects=True
     )
 
@@ -370,7 +370,7 @@ def test_check_notification_email_formats_default_Text_override_HTML(client, liv
               "application-notification_body": notification_body,
               "application-notification_format": 'text',
               "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+              'application-browser_profile': "direct_http_requests"},
         follow_redirects=True
     )
     assert b"Settings updated." in res.data
@@ -420,7 +420,7 @@ def test_check_notification_email_formats_default_Text_override_HTML(client, liv
         data={
             "url": test_url,
             "notification_format": 'html',
-            'fetch_backend': "html_requests",
+            'browser_profile': "direct_http_requests",
             "time_between_check_use_default": "y"},
         follow_redirects=True
     )
@@ -481,7 +481,7 @@ def test_check_plaintext_document_plaintext_notification_smtp(client, live_serve
               "application-notification_body": f"{notification_body}\nMore output test\n{ALL_MARKUP_TOKENS}",
               "application-notification_format": 'text',
               "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+              'application-browser_profile': "direct_http_requests"},
         follow_redirects=True
     )
     assert b"Settings updated." in res.data
@@ -534,7 +534,7 @@ def test_check_plaintext_document_html_notifications(client, live_server, measur
               "application-notification_body": f"{notification_body}\nMore output test\n{ALL_MARKUP_TOKENS}",
               "application-notification_format": 'html',
               "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+              'application-browser_profile': "direct_http_requests"},
         follow_redirects=True
     )
     assert b"Settings updated." in res.data
@@ -614,7 +614,7 @@ def test_check_plaintext_document_html_color_notifications(client, live_server, 
               "application-notification_body": f"{notification_body}\nMore output test\n{ALL_MARKUP_TOKENS}",
               "application-notification_format": 'htmlcolor',
               "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+              'application-browser_profile': "direct_http_requests"},
         follow_redirects=True
     )
 
@@ -687,7 +687,7 @@ def test_check_html_document_plaintext_notification(client, live_server, measure
               "application-notification_body": f"{notification_body}\nMore output test\n{ALL_MARKUP_TOKENS}",
               "application-notification_format": 'text',
               "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+              'application-browser_profile': "direct_http_requests"},
         follow_redirects=True
     )
 
@@ -741,7 +741,7 @@ def test_check_html_notification_with_apprise_format_is_html(client, live_server
               "application-notification_body": "some text\nfallback-body<br> " + default_notification_body,
               "application-notification_format": 'html',
               "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+              'application-browser_profile': "direct_http_requests"},
         follow_redirects=True
     )
     assert b"Settings updated." in res.data

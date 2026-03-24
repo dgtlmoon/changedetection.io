@@ -35,7 +35,7 @@ def test_headers_in_request(client, live_server, measure_memory_usage, datastore
         data={
               "url": test_url,
               "tags": "",
-              "fetch_backend": 'html_webdriver' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'html_requests',
+              "browser_profile": 'browser_chromeplaywright' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'direct_http_requests',
               "headers": "jinja2:{{ 1+1 }}\nxxx:ooo\ncool:yeah\r\ncookie:"+cookie_header,
               "time_between_check_use_default": "y"},
         follow_redirects=True
@@ -98,7 +98,7 @@ def test_body_in_request(client, live_server, measure_memory_usage, datastore_pa
               "url": test_url,
               "tags": "",
               "method": "POST",
-              "fetch_backend": "html_requests",
+              "browser_profile": "direct_http_requests",
               "body": "something something",
               "time_between_check_use_default": "y"},
         follow_redirects=True
@@ -116,7 +116,7 @@ def test_body_in_request(client, live_server, measure_memory_usage, datastore_pa
               "url": test_url,
               "tags": "",
               "method": "POST",
-              "fetch_backend": "html_requests",
+              "browser_profile": "direct_http_requests",
               "body": body_value,
               "time_between_check_use_default": "y"},
         follow_redirects=True
@@ -163,7 +163,7 @@ def test_body_in_request(client, live_server, measure_memory_usage, datastore_pa
               "url": test_url,
               "tags": "",
               "method": "GET",
-              "fetch_backend": "html_requests",
+              "browser_profile": "direct_http_requests",
               "body": "invalid",
               "time_between_check_use_default": "y"},
         follow_redirects=True
@@ -195,7 +195,7 @@ def test_method_in_request(client, live_server, measure_memory_usage, datastore_
         data={
             "url": test_url,
             "tags": "",
-            "fetch_backend": "html_requests",
+            "browser_profile": "direct_http_requests",
             "method": "invalid",
             "time_between_check_use_default": "y"},
         follow_redirects=True
@@ -208,7 +208,7 @@ def test_method_in_request(client, live_server, measure_memory_usage, datastore_
         data={
             "url": test_url,
             "tags": "",
-            "fetch_backend": "html_requests",
+            "browser_profile": "direct_http_requests",
             "method": "PATCH",
             "time_between_check_use_default": "y"},
         follow_redirects=True
@@ -253,7 +253,7 @@ def test_ua_global_override(client, live_server, measure_memory_usage, datastore
     res = client.post(
         url_for("settings.settings_page"),
         data={
-            "application-fetch_backend": "html_requests",
+            "application-browser_profile": "direct_http_requests",
             "application-minutes_between_check": 180,
             "requests-default_ua-html_requests": "html-requests-user-agent"
         },
@@ -281,7 +281,7 @@ def test_ua_global_override(client, live_server, measure_memory_usage, datastore
         data={
             "url": test_url,
             "tags": "testtag",
-            "fetch_backend": 'html_requests',
+            "browser_profile": 'direct_http_requests',
             # Important - also test case-insensitive
             "headers": "User-AGent: agent-from-watch",
             "time_between_check_use_default": "y"},
@@ -311,7 +311,7 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage, 
         test_url = test_url.replace('localhost', 'cdio')
 
     form_data = {
-        "application-fetch_backend": "html_requests",
+        "application-browser_profile": "direct_http_requests",
         "application-minutes_between_check": 180,
         "requests-default_ua-html_requests": requests_ua
     }
@@ -347,7 +347,7 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage, 
         data={
             "url": test_url,
             "tags": "testtag",
-            "fetch_backend": 'html_webdriver' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'html_requests',
+            "browser_profile": 'browser_chromeplaywright' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'direct_http_requests',
             "headers": "xxx:ooo\ncool:yeah\r\n",
             "time_between_check_use_default": "y"},
         follow_redirects=True
@@ -418,7 +418,7 @@ def test_headers_validation(client, live_server, measure_memory_usage, datastore
         url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
             "url": test_url,
-            "fetch_backend": 'html_requests',
+            "browser_profile": 'direct_http_requests',
             "headers": "User-AGent agent-from-watch\r\nsadfsadfsadfsdaf\r\n:foobar",
             "time_between_check_use_default": "y"},
         follow_redirects=True

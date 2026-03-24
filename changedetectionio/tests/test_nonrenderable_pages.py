@@ -51,7 +51,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
         url_for("settings.settings_page"),
         data={"application-empty_pages_are_a_change": "", # default, OFF, they are NOT a change
               "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+              'application-browser_profile': "direct_http_requests"},
         follow_redirects=True
     )
 
@@ -82,7 +82,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
         url_for("settings.settings_page"),
         data={"application-empty_pages_are_a_change": "y",
               "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+              'application-browser_profile': "direct_http_requests"},
         follow_redirects=True
     )
     set_modified_response(datastore_path=datastore_path)

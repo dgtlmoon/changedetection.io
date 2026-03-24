@@ -22,7 +22,7 @@ def test_noproxy_option(client, live_server, measure_memory_usage, datastore_pat
         data={
             "requests-time_between_check-minutes": 180,
             "application-ignore_whitespace": "y",
-            "application-fetch_backend": "html_requests",
+            "application-browser_profile": "direct_http_requests",
             "requests-extra_proxies-0-proxy_name": "custom-one-proxy",
             "requests-extra_proxies-0-proxy_url": "http://test:awesome@squid-one:3128",
             "requests-extra_proxies-1-proxy_name": "custom-two-proxy",
@@ -57,7 +57,7 @@ def test_noproxy_option(client, live_server, measure_memory_usage, datastore_pat
         url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
         data={
                 "include_filters": "",
-                "fetch_backend": "html_requests",
+                "browser_profile": "direct_http_requests",
                 "headers": "",
                 "proxy": "no-proxy",
                 "tags": "",

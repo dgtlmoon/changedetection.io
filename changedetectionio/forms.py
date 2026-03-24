@@ -740,7 +740,7 @@ class commonSettingsForm(Form):
         self.notification_title.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
         self.notification_urls.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
 
-    fetch_backend = RadioField(_l('Fetch Method'), choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+    browser_profile = RadioField(_l('Browser / Fetch method'), choices=[])  # populated at runtime in edit.py
     notification_body = TextAreaField(_l('Notification Body'), default='{{ watch_url }} had a change.', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_format = SelectField(_l('Notification format'), choices=list(valid_notification_formats.items()))
     notification_title = StringField(_l('Notification Title'), default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
@@ -938,6 +938,58 @@ class SingleExtraBrowser(Form):
         ValidateSimpleURL()
     ], render_kw={"placeholder": "wss://brightdata... wss://oxylabs etc", "size":50})
 
+
+class BrowserProfileForm(Form):
+    """Create or edit a named BrowserProfile stored in settings.application.browser_profiles."""
+
+    name = StringField(
+        _l('Profile name'),
+        [validators.DataRequired(), validators.Length(max=100)],
+        render_kw={"placeholder": _l("e.g. Mobile Chrome, Bright Data CDP"), "maxlength": "100"}
+    )
+    fetch_backend = SelectField(
+        _l('Fetch method'),
+        choices=[],  # populated at runtime from available_fetchers()
+    )
+    browser_connection_url = StringField(
+        _l('Browser connection URL'),
+        [
+            validators.Optional(),
+            ValidateStartsWithRegex(
+                regex=r'^(wss?|ws)://',
+                flags=re.IGNORECASE,
+                message=_l('Browser connection URL must start with ws:// or wss://')
+            ),
+            ValidateSimpleURL(),
+        ],
+        render_kw={"placeholder": "ws://my-chrome:3000", "size": 50}
+    )
+    viewport_width = IntegerField(
+        _l('Viewport width (px)'),
+        [validators.Optional(), validators.NumberRange(min=100, max=7680)],
+        default=1280,
+        render_kw={"style": "width:5em;"}
+    )
+    viewport_height = IntegerField(
+        _l('Viewport height (px)'),
+        [validators.Optional(), validators.NumberRange(min=100, max=4320)],
+        default=1000,
+        render_kw={"style": "width:5em;"}
+    )
+    block_images = BooleanField(_l('Block images (faster loads)'), default=False)
+    block_fonts = BooleanField(_l('Block web fonts'), default=False)
+    ignore_https_errors = BooleanField(_l('Ignore HTTPS/TLS errors'), default=False)
+    user_agent = StringField(
+        _l('User-Agent override'),
+        [validators.Optional(), validators.Length(max=500)],
+        render_kw={"placeholder": _l("Leave blank to use fetcher default"), "size": 60}
+    )
+    locale = StringField(
+        _l('Locale'),
+        [validators.Optional(), validators.Length(max=20)],
+        render_kw={"placeholder": "en-US, de-DE, fr-FR …", "size": 15}
+    )
+
 class DefaultUAInputForm(Form):
     html_requests = StringField(_l('Plaintext requests'), validators=[validators.Optional()], render_kw={"placeholder": "<default>"})
     if os.getenv("PLAYWRIGHT_DRIVER_URL") or os.getenv("WEBDRIVER_URL"):
@@ -989,7 +1041,6 @@ class globalSettingsApplicationForm(commonSettingsForm):
                            render_kw={"placeholder": os.getenv('BASE_URL', 'Not set')}
                            )
     empty_pages_are_a_change =  BooleanField(_l('Treat empty pages as a change?'), default=False)
-    fetch_backend = RadioField(_l('Fetch Method'), default="html_requests", choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     global_ignore_text = StringListField(_l('Ignore Text'), [ValidateListRegex()])
     global_subtractive_selectors = StringListField(_l('Remove elements'), [ValidateCSSJSONXPATHInput(allow_json=False)])
     ignore_whitespace = BooleanField(_l('Ignore whitespace'))

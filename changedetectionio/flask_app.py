@@ -341,52 +341,34 @@ def _jinja2_filter_format_duration(seconds):
 
 @app.template_filter('fetcher_status_icons')
 def _jinja2_filter_fetcher_status_icons(fetcher_name):
-    """Get status icon HTML for a given fetcher.
+    """Return status icon HTML for a fetcher, or empty string if none.
 
-    This filter checks both built-in fetchers and plugin fetchers for status icons.
-
-    Args:
-        fetcher_name: The fetcher name (e.g., 'html_webdriver', 'html_js_zyte')
-
-    Returns:
-        str: HTML string containing status icon elements
+    Built-in fetchers declare their icon via the ``status_icon`` class attribute
+    on their ``Fetcher`` subclass.  Plugin fetchers may still use the pluggy
+    ``collect_fetcher_status_icons`` hook as a fallback.
     """
     from changedetectionio import content_fetchers
-    from changedetectionio.pluggy_interface import collect_fetcher_status_icons
     from markupsafe import Markup
     from flask import url_for
 
     icon_data = None
 
-    # First check if it's a plugin fetcher (plugins have priority)
-    plugin_icon_data = collect_fetcher_status_icons(fetcher_name)
-    if plugin_icon_data:
-        icon_data = plugin_icon_data
-    # Check if it's a built-in fetcher
-    elif hasattr(content_fetchers, fetcher_name):
-        fetcher_class = getattr(content_fetchers, fetcher_name)
-        if hasattr(fetcher_class, 'get_status_icon_data'):
-            icon_data = fetcher_class.get_status_icon_data()
+    fetcher_class = getattr(content_fetchers, fetcher_name, None)
+    if fetcher_class is not None:
+        icon_data = getattr(fetcher_class, 'status_icon', None)
 
-    # Build HTML from icon data
-    if icon_data and isinstance(icon_data, dict):
-        # Use 'group' from icon_data if specified, otherwise default to 'images'
-        group = icon_data.get('group', 'images')
+    # Fallback: plugin fetchers that haven't migrated to status_icon yet
+    if not icon_data:
+        from changedetectionio.pluggy_interface import collect_fetcher_status_icons
+        icon_data = collect_fetcher_status_icons(fetcher_name)
 
-        # Try to use url_for, but fall back to manual URL building if endpoint not registered yet
-        try:
-            icon_url = url_for('static_content', group=group, filename=icon_data['filename'])
-        except:
-            # Fallback: build URL manually respecting APPLICATION_ROOT
-            from flask import request
-            app_root = request.script_root if hasattr(request, 'script_root') else ''
-            icon_url = f"{app_root}/static/{group}/{icon_data['filename']}"
+    if not icon_data:
+        return ''
 
-        style_attr = f' style="{icon_data["style"]}"' if icon_data.get('style') else ''
-        html = f'<img class="status-icon" src="{icon_url}" alt="{icon_data["alt"]}" title="{icon_data["title"]}"{style_attr}>'
-        return Markup(html)
-
-    return ''
+    group = icon_data.get('group', 'images')
+    icon_url = url_for('static_content', group=group, filename=icon_data['filename'])
+    style_attr = f' style="{icon_data["style"]}"' if icon_data.get('style') else ''
+    return Markup(f'<img class="status-icon" src="{icon_url}" alt="{icon_data["alt"]}" title="{icon_data["title"]}"{style_attr}>')
 
 _RE_SANITIZE_TAG = re.compile(r'[^a-zA-Z0-9]')
 
@@ -867,6 +849,9 @@ def changedetection_app(config=None, datastore_o=None):
 
     import changedetectionio.blueprint.settings as settings
     app.register_blueprint(settings.construct_blueprint(datastore), url_prefix='/settings')
+
+    import changedetectionio.blueprint.settings_browser_profile as settings_browser_profile
+    app.register_blueprint(settings_browser_profile.construct_blueprint(datastore), url_prefix='/settings/browsers')
 
     import changedetectionio.conditions.blueprint as conditions
     app.register_blueprint(conditions.construct_blueprint(datastore), url_prefix='/conditions')

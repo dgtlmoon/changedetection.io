@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% block content %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_button %}
+
+<div class="edit-form">
+    <div class="box-wrap inner">
+        <h2>{{ _('Browser Profiles') }}</h2>
+        <p>{{ _('Browser profiles let you configure how individual watches fetch their target URL — choose a fetch method, set viewport size, block images/fonts, or connect to a custom browser.') }}</p>
+
+        <form id="set-default-form" action="{{ url_for('settings_browsers.set_default') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="machine_name" id="default-machine-name" value="">
+        </form>
+        <table class="pure-table pure-table-striped" style="width:100%; margin-bottom:1.5em;">
+            <thead>
+                <tr>
+                    <th style="width:2.5em; text-align:center;" title="{{ _('System default') }}">{{ _('Default') }}</th>
+                    <th>{{ _('Name') }}</th>
+                    <th>{{ _('Fetch method') }}</th>
+                    <th>{{ _('Viewport') }}</th>
+                    <th>{{ _('Options') }}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for machine_name, profile in browser_profiles.items() %}
+                <tr>
+                    <td style="text-align:center;">
+                        <input type="radio"
+                               name="default_profile"
+                               value="{{ machine_name }}"
+                               title="{{ _('Set as system default') }}"
+                               {% if machine_name == current_default_profile %}checked{% endif %}
+                               onchange="setDefaultProfile('{{ machine_name }}')">
+                    </td>
+                    <td>
+                        {{ profile.name }}
+                        {% if profile.is_builtin %}<span style="font-size:0.75em; margin-left:0.4em; background:#888; color:#fff; padding:1px 5px; border-radius:3px;">{{ _('built-in') }}</span>{% endif %}
+                    </td>
+                    <td><code>{{ profile.fetch_backend }}</code></td>
+                    <td>{{ profile.viewport_width }}×{{ profile.viewport_height }}</td>
+                    <td>
+                        {% if profile.block_images %}<span title="{{ _('Images blocked') }}">&#x1F6AB;&#x1F5BC;</span> {% endif %}
+                        {% if profile.block_fonts %}<span title="{{ _('Fonts blocked') }}">&#x1F6AB;&#x1F524;</span> {% endif %}
+                        {% if profile.ignore_https_errors %}<span title="{{ _('HTTPS errors ignored') }}">&#x26A0;&#x1F512;</span> {% endif %}
+                        {% if profile.browser_connection_url %}<span title="{{ profile.browser_connection_url }}">&#x1F50C;</span>{% endif %}
+                    </td>
+                    <td style="white-space:nowrap;">
+                        {% if not profile.is_builtin %}
+                        <button type="button" class="pure-button button-small"
+                                onclick="browserProfileEdit({{ profile.model_dump()|tojson }}, {{ machine_name|tojson }})">{{ _('Edit') }}</button>
+                        <a href="{{ url_for('settings_browsers.delete', machine_name=machine_name) }}"
+                           class="pure-button button-small button-error"
+                           onclick="return confirm('{{ _('Delete this browser profile?') }}')">{{ _('Delete') }}</a>
+                        {% else %}
+                        <span style="font-size:0.85em; color:#999;">{{ _('read-only') }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <h3 id="profile-form-heading">{{ _('Add new browser profile') }}</h3>
+        <form class="pure-form pure-form-stacked"
+              id="browser-profile-form"
+              action="{{ url_for('settings_browsers.save') }}"
+              method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="original_machine_name" id="original_machine_name" value="">
+            <fieldset>
+                <div class="pure-control-group">
+                    {{ render_field(browser_profile_form.name) }}
+                </div>
+                <div class="pure-control-group inline-radio">
+                    {{ render_field(browser_profile_form.fetch_backend, id="profile-fetch-backend") }}
+                </div>
+                <div class="pure-control-group browser-only-field">
+                    {{ render_field(browser_profile_form.browser_connection_url) }}
+                    <span class="pure-form-message-inline">{{ _('Optional — override the system CDP/WebSocket URL for this profile only (e.g.') }} <code>ws://my-chrome:3000</code>).</span>
+                </div>
+                <div class="pure-control-group browser-only-field" style="display:flex; gap:1em; flex-wrap:wrap;">
+                    <div>{{ render_field(browser_profile_form.viewport_width) }}</div>
+                    <div>{{ render_field(browser_profile_form.viewport_height) }}</div>
+                </div>
+                <div class="pure-control-group browser-only-field">
+                    {{ render_checkbox_field(browser_profile_form.block_images) }}
+                    <span class="pure-form-message-inline">{{ _('Block image downloads — speeds up loads on image-heavy pages.') }}</span>
+                </div>
+                <div class="pure-control-group browser-only-field">
+                    {{ render_checkbox_field(browser_profile_form.block_fonts) }}
+                    <span class="pure-form-message-inline">{{ _('Block web font downloads.') }}</span>
+                </div>
+                <div class="pure-control-group browser-only-field">
+                    {{ render_checkbox_field(browser_profile_form.ignore_https_errors) }}
+                    <span class="pure-form-message-inline">{{ _('Ignore TLS/HTTPS certificate errors (useful for self-signed certs on staging sites).') }}</span>
+                </div>
+                <div class="pure-control-group browser-only-field">
+                    {{ render_field(browser_profile_form.user_agent) }}
+                    <span class="pure-form-message-inline">{{ _("Leave blank to use the fetcher's default User-Agent.") }}</span>
+                </div>
+                <div class="pure-control-group browser-only-field">
+                    {{ render_field(browser_profile_form.locale) }}
+                    <span class="pure-form-message-inline">{{ _('Sets Accept-Language and navigator.language (e.g. en-US, de-DE).') }}</span>
+                </div>
+                <div class="pure-control-group">
+                    <button type="submit" class="pure-button pure-button-primary" id="profile-submit-btn">{{ _('Save profile') }}</button>
+                    <button type="button" class="pure-button button-cancel" id="profile-cancel-btn" style="display:none;"
+                            onclick="cancelEdit()">{{ _('Cancel') }}</button>
+                    <a href="{{ url_for('settings.settings_page') }}" class="pure-button button-cancel">{{ _('Back to Settings') }}</a>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+</div>
+
+<script>
+function setDefaultProfile(machineName) {
+    document.getElementById('default-machine-name').value = machineName;
+    document.getElementById('set-default-form').submit();
+}
+
+const fetcherSupportsBrowser = {{ fetcher_supports_screenshots | tojson }};
+
+function updateBrowserFieldVisibility() {
+    const fetchBackend = document.getElementById('profile-fetch-backend').value;
+    const isBrowser = !!fetcherSupportsBrowser[fetchBackend];
+    document.querySelectorAll('.browser-only-field').forEach(function(el) {
+        el.style.display = isBrowser ? '' : 'none';
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const sel = document.getElementById('profile-fetch-backend');
+    if (sel) {
+        sel.addEventListener('change', updateBrowserFieldVisibility);
+        updateBrowserFieldVisibility();
+    }
+});
+
+function browserProfileEdit(profile, machineName) {
+    document.getElementById('profile-form-heading').textContent = {{ _('Edit browser profile')|tojson }};
+    document.getElementById('original_machine_name').value = machineName;
+
+    const form = document.getElementById('browser-profile-form');
+    form.querySelector('[name="name"]').value = profile.name || '';
+    form.querySelector('[name="fetch_backend"]').value = profile.fetch_backend || '';
+    form.querySelector('[name="browser_connection_url"]').value = profile.browser_connection_url || '';
+    form.querySelector('[name="viewport_width"]').value = profile.viewport_width || 1280;
+    form.querySelector('[name="viewport_height"]').value = profile.viewport_height || 1000;
+    form.querySelector('[name="block_images"]').checked = !!profile.block_images;
+    form.querySelector('[name="block_fonts"]').checked = !!profile.block_fonts;
+    form.querySelector('[name="ignore_https_errors"]').checked = !!profile.ignore_https_errors;
+    form.querySelector('[name="user_agent"]').value = profile.user_agent || '';
+    form.querySelector('[name="locale"]').value = profile.locale || '';
+
+    updateBrowserFieldVisibility();
+    document.getElementById('profile-cancel-btn').style.display = '';
+    form.scrollIntoView({behavior: 'smooth'});
+}
+
+function cancelEdit() {
+    document.getElementById('profile-form-heading').textContent = {{ _('Add new browser profile')|tojson }};
+    document.getElementById('original_machine_name').value = '';
+    document.getElementById('browser-profile-form').reset();
+    updateBrowserFieldVisibility();
+    document.getElementById('profile-cancel-btn').style.display = 'none';
+}
+</script>
+{% endblock %}

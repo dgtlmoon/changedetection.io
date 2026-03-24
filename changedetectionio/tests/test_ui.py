@@ -44,7 +44,7 @@ def test_recheck_time_field_validation_single_watch(client, live_server, measure
         url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
             "url": test_url,
-            'fetch_backend': "html_requests",
+            'browser_profile': "direct_http_requests",
             "time_between_check_use_default": "",  # OFF
             "time_between_check-weeks": '',
             "time_between_check-days": '',
@@ -63,7 +63,7 @@ def test_recheck_time_field_validation_single_watch(client, live_server, measure
         url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
             "url": test_url,
-            'fetch_backend': "html_requests",
+            'browser_profile': "direct_http_requests",
             "time_between_check_use_default": "",  # OFF
             "time_between_check-weeks": '',
             "time_between_check-days": '',
@@ -82,7 +82,7 @@ def test_recheck_time_field_validation_single_watch(client, live_server, measure
         url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
             "url": test_url,
-            'fetch_backend': "html_requests",
+            'browser_profile': "direct_http_requests",
             "time_between_check_use_default": "y",  # ON YES
             "time_between_check-weeks": '',
             "time_between_check-days": '',
@@ -180,7 +180,7 @@ def test_page_title_listing_behaviour(client, live_server, measure_memory_usage,
         url_for("settings.settings_page"),
         data={"application-ui-use_page_title_in_list": "",
               "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+              'application-browser_profile': "direct_http_requests"},
         follow_redirects=True
     )
     assert b"Settings updated." in res.data
@@ -207,7 +207,7 @@ def test_page_title_listing_behaviour(client, live_server, measure_memory_usage,
         data={
         "url": url_for('test_endpoint', _external=True),
         "title": "my title",
-        "fetch_backend": "html_requests",
+        "browser_profile": "direct_http_requests",
         "time_between_check_use_default": "y"},
         follow_redirects=True
     )
@@ -220,7 +220,7 @@ def test_page_title_listing_behaviour(client, live_server, measure_memory_usage,
         url_for("settings.settings_page"),
         data={"application-ui-use_page_title_in_list": "y",
               "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+              'application-browser_profile': "direct_http_requests"},
         follow_redirects=True
     )
     assert b"Settings updated." in res.data
@@ -235,7 +235,7 @@ def test_page_title_listing_behaviour(client, live_server, measure_memory_usage,
         data={
         "url": url_for('test_endpoint', _external=True),
         "title": "",
-        "fetch_backend": "html_requests",
+        "browser_profile": "direct_http_requests",
         "time_between_check_use_default": "y"},
         follow_redirects=True
     )

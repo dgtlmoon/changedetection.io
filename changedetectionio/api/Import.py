@@ -154,11 +154,10 @@ class Import(Resource):
             if extras['processor'] not in available:
                 return f"Invalid processor '{extras['processor']}'. Available processors: {', '.join(available)}", 400
 
-        # Validate fetch_backend if provided
+        # Validate fetch_backend if provided (legacy API compat — still accepted, stored as-is)
         if 'fetch_backend' in extras:
             from changedetectionio.content_fetchers import available_fetchers
             available = [f[0] for f in available_fetchers()]
-            # Also allow 'system' and extra_browser_* patterns
             is_valid = (
                 extras['fetch_backend'] == 'system' or
                 extras['fetch_backend'] in available or
@@ -166,6 +165,14 @@ class Import(Resource):
             )
             if not is_valid:
                 return f"Invalid fetch_backend '{extras['fetch_backend']}'. Available: system, {', '.join(available)}", 400
+
+        # Validate browser_profile if provided
+        if 'browser_profile' in extras:
+            from changedetectionio.model.browser_profile import get_builtin_profiles, RESERVED_MACHINE_NAMES
+            store_profiles = self.datastore.data['settings']['application'].get('browser_profiles', {})
+            known = set(get_builtin_profiles().keys()) | set(store_profiles.keys()) | {'system', None}
+            if extras['browser_profile'] not in known:
+                return f"Invalid browser_profile '{extras['browser_profile']}'. Available: {', '.join(str(k) for k in known)}", 400
 
         # Validate notification_urls if provided
         if 'notification_urls' in extras:
