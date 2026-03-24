@@ -147,8 +147,18 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         from changedetectionio import content_fetchers as cf
         store_profiles = datastore.data['settings']['application'].get('browser_profiles', {})
 
+        # Resolve the name of the system-level default profile for the label
+        from changedetectionio.model.browser_profile import get_profile
+        _system_default_machine_name = datastore.data['settings']['application'].get('browser_profile') or 'direct_http_requests'
+        _all_store_profiles = datastore.data['settings']['application'].get('browser_profiles', {})
+        _default_profile = get_profile(_system_default_machine_name, _all_store_profiles)
+        if _default_profile:
+            _system_label = gettext('System settings default') + ' \u2013 ' + _default_profile.name
+        else:
+            _system_label = gettext('System settings default')
+
         # Choices: system default + always-present defaults (requests) + user-created profiles
-        form.browser_profile.choices = [('system', gettext('System settings default'))] + [
+        form.browser_profile.choices = [('system', _system_label)] + [
             (p.get_machine_name(), p.name)
             for p in cf.DEFAULT_BROWSER_PROFILES.values()
         ] + [
