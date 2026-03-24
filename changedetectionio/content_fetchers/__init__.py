@@ -51,6 +51,12 @@ def available_fetchers():
             if hasattr(cls, 'fetcher_description')]
 
 
+def available_browser_fetchers():
+    """Return list of (name, description) for fetchers that support screenshots (browser-type fetchers)."""
+    return [(name, cls.fetcher_description) for name, cls in FETCHERS.items()
+            if cls.supports_screenshots]
+
+
 def _load_fetchers():
     """Load all fetchers (built-ins + plugins) into the FETCHERS registry."""
     from changedetectionio.pluggy_interface import plugin_manager, register_builtin_fetchers
@@ -84,12 +90,17 @@ def get_active_browser_fetcher_name() -> str:
     return 'selenium'
 
 
+# Default browser profiles always shown in the browser profiles table (keyed by machine name)
+DEFAULT_BROWSER_PROFILES: dict = {}
+
+
+def _register_default_browser_profiles():
+    """Register browser profiles that are always present in the profiles table."""
+    from changedetectionio.model.browser_profile import BUILTIN_REQUESTS
+    DEFAULT_BROWSER_PROFILES[BUILTIN_REQUESTS.get_machine_name()] = BUILTIN_REQUESTS
+
+
 # Populate the registry at module load time
 _load_fetchers()
-
-# Convenience module-level aliases (clean names, no html_ prefix)
-html_requests  = FETCHERS.get('requests')   # backwards-compat alias
-html_playwright = FETCHERS.get('playwright') # backwards-compat alias
-html_selenium  = FETCHERS.get('selenium')   # backwards-compat alias
-html_puppeteer = FETCHERS.get('puppeteer')  # backwards-compat alias
+_register_default_browser_profiles()
 

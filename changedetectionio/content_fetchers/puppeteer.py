@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 
 from loguru import logger
 
+from changedetectionio.pluggy_interface import hookimpl
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, visualselector_xpath_selectors, \
     SCREENSHOT_SIZE_STITCH_THRESHOLD, SCREENSHOT_DEFAULT_QUALITY, XPATH_ELEMENT_JS, INSTOCK_DATA_JS, \
     SCREENSHOT_MAX_TOTAL_HEIGHT, FAVICON_FETCHER_JS
@@ -166,11 +167,7 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
 
 
 class fetcher(Fetcher):
-    fetcher_description = "Puppeteer/direct {}/Javascript".format(
-        os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').capitalize()
-    )
-    if os.getenv("PLAYWRIGHT_DRIVER_URL"):
-        fetcher_description += " via '{}'".format(os.getenv("PLAYWRIGHT_DRIVER_URL"))
+    fetcher_description = "Puppeteer Chromium"
 
     browser = None
     browser_type = ''
@@ -541,6 +538,7 @@ class fetcher(Fetcher):
 class PuppeteerFetcherPlugin:
     """Plugin class that registers the Puppeteer fetcher as a built-in plugin."""
 
+    @hookimpl
     def register_content_fetcher(self):
         """Register the Puppeteer fetcher"""
         return ('puppeteer', fetcher)

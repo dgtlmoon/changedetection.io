@@ -5,18 +5,19 @@
 <div class="edit-form">
     <div class="box-wrap inner">
         <h2>{{ _('Browser Profiles') }}</h2>
-        <p>{{ _('Browser profiles let you configure how individual watches fetch their target URL — choose a fetch method, set viewport size, block images/fonts, or connect to a custom browser.') }}</p>
+        <p>{{ _('Create named profiles to configure browser settings — viewport size, connection URL, image/font blocking, and more. Each profile is based on an available browser type.') }}</p>
 
         <form id="set-default-form" action="{{ url_for('settings_browsers.set_default') }}" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="machine_name" id="default-machine-name" value="">
         </form>
+        {% if browser_profiles %}
         <table class="pure-table pure-table-striped" style="width:100%; margin-bottom:1.5em;">
             <thead>
                 <tr>
                     <th style="width:2.5em; text-align:center;" title="{{ _('System default') }}">{{ _('Default') }}</th>
                     <th>{{ _('Name') }}</th>
-                    <th>{{ _('Fetch method') }}</th>
+                    <th>{{ _('Type') }}</th>
                     <th style="width:3em; text-align:center;"></th>
                     <th>{{ _('Viewport') }}</th>
                     <th>{{ _('Options') }}</th>
@@ -34,10 +35,7 @@
                                {% if machine_name == current_default_profile %}checked{% endif %}
                                onchange="setDefaultProfile('{{ machine_name }}')">
                     </td>
-                    <td>
-                        {{ profile.name }}
-                        {% if profile.is_builtin %}<span style="font-size:0.75em; margin-left:0.4em; background:#888; color:#fff; padding:1px 5px; border-radius:3px;">{{ _('built-in') }}</span>{% endif %}
-                    </td>
+                    <td>{{ profile.name }}</td>
                     <td><code>{{ profile.fetch_backend }}</code></td>
                     <td style="text-align:center;">{{ profile.get_fetcher_class_name()|fetcher_status_icons }}</td>
                     <td>{{ profile.viewport_width }}×{{ profile.viewport_height }}</td>
@@ -54,16 +52,20 @@
                         <a href="{{ url_for('settings_browsers.delete', machine_name=machine_name) }}"
                            class="pure-button button-small button-error"
                            onclick="return confirm('{{ _('Delete this browser profile?') }}')">{{ _('Delete') }}</a>
-                        {% else %}
-                        <span style="font-size:0.85em; color:#999;">{{ _('read-only') }}</span>
                         {% endif %}
                     </td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
+        {% else %}
+        <p style="color:#888; font-style:italic;">{{ _('No browser profiles configured yet. Add one below.') }}</p>
+        {% endif %}
 
         <h3 id="profile-form-heading">{{ _('Edit browser profile') if editing_machine_name else _('Add new browser profile') }}</h3>
+        {% if not editing_machine_name %}
+        <p style="font-size:0.9em; color:#666;">{{ _('Choose a browser type, give it a name, and configure its settings. You can create multiple profiles from the same type with different connection URLs or options.') }}</p>
+        {% endif %}
         <form class="pure-form pure-form-stacked"
               id="browser-profile-form"
               action="{{ url_for('settings_browsers.save') }}"

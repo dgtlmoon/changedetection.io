@@ -807,16 +807,19 @@ class DatastoreUpdatesMixin:
         def _to_machine_name(fetch_backend: str) -> Optional[str]:
             if not fetch_backend or fetch_backend in ('system', 'default', ''):
                 return None
-            if fetch_backend in ('html_requests', 'requests'):
-                return builtin_requests_name
-            if fetch_backend in ('html_webdriver', 'html_playwright', 'html_selenium', 'html_puppeteer', 'playwright', 'selenium', 'puppeteer'):
-                return builtin_browser_name
             if fetch_backend.startswith('extra_browser_'):
                 key = fetch_backend[len('extra_browser_'):]
                 return extra_browser_name_to_machine.get(key)
-            # Unknown value — log and treat as "no preference"
-            logger.warning(f"update_31: unknown fetch_backend value {fetch_backend!r}, skipping")
-            return None
+            # Strip legacy html_ prefix then query the fetcher registry
+            from changedetectionio import content_fetchers as cf
+            clean = fetch_backend[5:] if fetch_backend.startswith('html_') else fetch_backend
+            fetcher_cls = cf.get_fetcher(clean)
+            if fetcher_cls is None:
+                logger.warning(f"update_31: unknown fetch_backend value {fetch_backend!r}, skipping")
+                return None
+            if fetcher_cls.supports_screenshots:
+                return builtin_browser_name
+            return builtin_requests_name
 
         # ------------------------------------------------------------------
         # 2. Migrate system-wide default

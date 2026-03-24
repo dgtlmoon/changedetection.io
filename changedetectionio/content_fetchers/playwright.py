@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 
 from loguru import logger
 
+from changedetectionio.pluggy_interface import hookimpl
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, visualselector_xpath_selectors, \
     SCREENSHOT_SIZE_STITCH_THRESHOLD, SCREENSHOT_MAX_TOTAL_HEIGHT, XPATH_ELEMENT_JS, INSTOCK_DATA_JS, FAVICON_FETCHER_JS
 from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
@@ -149,11 +150,7 @@ async def capture_full_page_async(page, screenshot_format='JPEG', watch_uuid=Non
     return screenshot_chunks[0]
 
 class fetcher(Fetcher):
-    fetcher_description = "Playwright {}/Javascript".format(
-        os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').capitalize()
-    )
-    if os.getenv("PLAYWRIGHT_DRIVER_URL"):
-        fetcher_description += " via '{}'".format(os.getenv("PLAYWRIGHT_DRIVER_URL"))
+    fetcher_description = "Playwright Chromium"
 
     browser_type = ''
     command_executor = ''
@@ -473,6 +470,7 @@ class fetcher(Fetcher):
 class PlaywrightFetcherPlugin:
     """Plugin class that registers the Playwright fetcher as a built-in plugin."""
 
+    @hookimpl
     def register_content_fetcher(self):
         """Register the Playwright fetcher"""
         return ('playwright', fetcher)

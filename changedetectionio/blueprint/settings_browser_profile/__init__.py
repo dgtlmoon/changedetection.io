@@ -16,25 +16,22 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     def _render_index(browser_profile_form=None, editing_machine_name=None):
         from changedetectionio import forms
         from changedetectionio import content_fetchers as cf
-        from changedetectionio.model.browser_profile import (
-            get_builtin_profiles, BrowserProfile, RESERVED_MACHINE_NAMES
-        )
+        from changedetectionio.model.browser_profile import BrowserProfile, RESERVED_MACHINE_NAMES
 
-        fetcher_choices = [(name, desc) for name, desc in cf.available_fetchers()]
+        # Only browser-capable fetchers are valid profile types
+        fetcher_choices = cf.available_browser_fetchers()
         if browser_profile_form is None:
             browser_profile_form = forms.BrowserProfileForm()
         browser_profile_form.fetch_backend.choices = fetcher_choices
 
-        fetcher_supports_screenshots = {}
-        for name, _desc in cf.available_fetchers():
-            fetcher_cls = cf.get_fetcher(name)
-            fetcher_supports_screenshots[name] = bool(getattr(fetcher_cls, 'supports_screenshots', False))
+        fetcher_supports_screenshots = {name: True for name, _ in fetcher_choices}
 
+        # Table shows default built-in profiles first, then user-created profiles
         store_profiles = datastore.data['settings']['application'].get('browser_profiles', {})
-        all_profiles = {**get_builtin_profiles()}
+        user_profiles = dict(cf.DEFAULT_BROWSER_PROFILES)
         for machine_name, raw in store_profiles.items():
             try:
-                all_profiles[machine_name] = BrowserProfile(**raw) if isinstance(raw, dict) else raw
+                user_profiles[machine_name] = BrowserProfile(**raw) if isinstance(raw, dict) else raw
             except Exception:
                 pass
 
@@ -42,7 +39,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         return render_template(
             "browser_profiles.html",
-            browser_profiles=all_profiles,
+            browser_profiles=user_profiles,
             browser_profile_form=browser_profile_form,
             reserved_browser_profile_names=RESERVED_MACHINE_NAMES,
             fetcher_choices=fetcher_choices,
@@ -60,7 +57,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @login_optionally_required
     def edit(machine_name):
         from changedetectionio import forms
-        from changedetectionio.model.browser_profile import get_builtin_profiles, BrowserProfile, RESERVED_MACHINE_NAMES
+        from changedetectionio.model.browser_profile import BrowserProfile, RESERVED_MACHINE_NAMES
 
         if machine_name in RESERVED_MACHINE_NAMES:
             flash(gettext("Built-in browser profiles cannot be edited."), 'error')
@@ -178,14 +175,15 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @settings_browser_profile_blueprint.route("/set-default", methods=['POST'])
     @login_optionally_required
     def set_default():
+        from changedetectionio import content_fetchers as cf
+
         machine_name = request.form.get('machine_name', '').strip()
         if not machine_name:
             flash(gettext("No profile specified."), 'error')
             return redirect(url_for('settings_browsers.index'))
 
-        from changedetectionio.model.browser_profile import get_builtin_profiles
         store_profiles = datastore.data['settings']['application'].get('browser_profiles', {})
-        all_valid = set(get_builtin_profiles().keys()) | set(store_profiles.keys())
+        all_valid = set(cf.DEFAULT_BROWSER_PROFILES.keys()) | set(store_profiles.keys())
         if machine_name not in all_valid:
             flash(gettext("Unknown browser profile '{}'.").format(machine_name), 'error')
             return redirect(url_for('settings_browsers.index'))

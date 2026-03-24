@@ -3,13 +3,11 @@ import time
 
 from loguru import logger
 from changedetectionio.content_fetchers.base import Fetcher
+from changedetectionio.pluggy_interface import hookimpl
 
 
 class fetcher(Fetcher):
-    if os.getenv("WEBDRIVER_URL"):
-        fetcher_description = f"WebDriver Chrome/Javascript via \"{os.getenv('WEBDRIVER_URL', '')}\""
-    else:
-        fetcher_description = "WebDriver Chrome/Javascript"
+    fetcher_description = "Selenium WebDriver Chrome"
 
     proxy = None
     proxy_url = None
@@ -183,6 +181,7 @@ class fetcher(Fetcher):
 class WebDriverSeleniumFetcherPlugin:
     """Plugin class that registers the WebDriver Selenium fetcher as a built-in plugin."""
 
+    @hookimpl
     def register_content_fetcher(self):
         """Register the WebDriver Selenium fetcher"""
         return ('selenium', fetcher)
