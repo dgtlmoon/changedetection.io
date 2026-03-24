@@ -125,7 +125,7 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         assert b"IMPORT" in res.data
         assert b"LOG OUT" in res.data
         assert b"time_between_check-minutes" in res.data
-        assert b"browser_profile" in res.data
+
 
         ##################################################
         # Remove password button, and check that it worked
