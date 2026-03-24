@@ -590,7 +590,9 @@ class watch_base(dict):
             return None
 
         try:
-            value = self._datastore.data['settings']
+            # _datastore is a ChangeDetectionStore (has .data) or a plain dict (unit tests)
+            store_data = self._datastore.data if hasattr(self._datastore, 'data') else self._datastore
+            value = store_data['settings']
             for key in path:
                 value = value[key]
             return value
