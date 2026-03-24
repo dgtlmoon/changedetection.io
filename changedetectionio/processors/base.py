@@ -156,16 +156,14 @@ class difference_detection_processor():
         from changedetectionio import content_fetchers
         fetcher_class_name = profile.get_fetcher_class_name()
 
-        if fetcher_class_name == 'html_webdriver' and self.watch.has_browser_steps:
-            # Browser steps require Playwright specifically — puppeteer support is incomplete
-            logger.warning("Overriding to Playwright for browser steps")
-            from changedetectionio.content_fetchers.playwright import fetcher as playwright_fetcher
-            fetcher_obj = playwright_fetcher
-        else:
-            fetcher_obj = getattr(content_fetchers, fetcher_class_name, None)
-            if fetcher_obj is None:
-                logger.warning(f"Fetcher '{fetcher_class_name}' not found, falling back to html_requests")
-                fetcher_obj = content_fetchers.html_requests
+        fetcher_obj = content_fetchers.get_fetcher(fetcher_class_name)
+        if fetcher_obj is None:
+            logger.warning(f"Fetcher '{fetcher_class_name}' not found, falling back to requests")
+            fetcher_obj = content_fetchers.get_fetcher('requests')
+        elif self.watch.has_browser_steps and not getattr(fetcher_obj, 'supports_browser_steps', False):
+            # Browser steps require Playwright — override if the resolved fetcher doesn't support them
+            logger.warning(f"Fetcher '{fetcher_class_name}' does not support browser steps, overriding to Playwright")
+            fetcher_obj = content_fetchers.get_fetcher('playwright')
 
         self.fetcher = fetcher_obj(
             proxy_override=proxy_url,

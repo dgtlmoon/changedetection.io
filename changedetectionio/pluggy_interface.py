@@ -373,7 +373,7 @@ def get_fetcher_capabilities(watch, datastore):
     from changedetectionio import content_fetchers
 
     profile = resolve_browser_profile(watch, datastore)
-    fetcher_class = getattr(content_fetchers, profile.get_fetcher_class_name(), None)
+    fetcher_class = content_fetchers.get_fetcher(profile.fetch_backend)
 
     if fetcher_class is None:
         return {'supports_browser_steps': False, 'supports_screenshots': False, 'supports_xpath_element_data': False}

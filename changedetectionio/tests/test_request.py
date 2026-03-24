@@ -254,7 +254,7 @@ def test_ua_global_override(client, live_server, measure_memory_usage, datastore
         url_for("settings.settings_page"),
         data={
             "application-minutes_between_check": 180,
-            "requests-default_ua-html_requests": "html-requests-user-agent"
+            "requests-default_ua-requests": "html-requests-user-agent"
         },
         follow_redirects=True
     )
@@ -311,11 +311,11 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage, 
 
     form_data = {
         "application-minutes_between_check": 180,
-        "requests-default_ua-html_requests": requests_ua
+        "requests-default_ua-requests": requests_ua
     }
 
     if os.getenv('PLAYWRIGHT_DRIVER_URL'):
-        form_data["requests-default_ua-html_webdriver"] = webdriver_ua
+        form_data["requests-default_ua-playwright"] = webdriver_ua
 
     res = client.post(
         url_for("settings.settings_page"),
@@ -328,10 +328,10 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage, 
 
     # Only when some kind of real browser is setup
     if os.getenv('PLAYWRIGHT_DRIVER_URL'):
-        assert b'requests-default_ua-html_webdriver' in res.data
+        assert b'requests-default_ua-playwright' in res.data
 
     # Field should always be there
-    assert b"requests-default_ua-html_requests" in res.data
+    assert b"requests-default_ua-requests" in res.data
 
     # Add the test URL twice, we will check
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)

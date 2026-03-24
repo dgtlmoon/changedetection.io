@@ -209,20 +209,14 @@ class BrowserProfile(BaseModel):
         return self.machine_name_from_str(self.name)
 
     def get_fetcher_class_name(self) -> str:
-        """
-        Return the ``content_fetchers`` module attribute name for this profile.
+        """Return the clean fetcher name for this profile (same as ``fetch_backend``).
 
-        The fetcher classes in ``content_fetchers/`` are named with an ``html_``
-        prefix (``html_requests``, ``html_webdriver``, ``html_cloakbrowser`` …).
-        This method bridges the clean ``fetch_backend`` value stored on the
-        profile to that module-level naming convention.
-
-        Usage::
+        Use with ``content_fetchers.get_fetcher()``::
 
             from changedetectionio import content_fetchers
-            fetcher_cls = getattr(content_fetchers, profile.get_fetcher_class_name())
+            fetcher_cls = content_fetchers.get_fetcher(profile.get_fetcher_class_name())
         """
-        return f'html_{self.fetch_backend}'
+        return self.fetch_backend
 
 
 # ---------------------------------------------------------------------------
@@ -235,20 +229,53 @@ BUILTIN_REQUESTS = BrowserProfile(
     is_builtin=True,
 )
 
-BUILTIN_BROWSER = BrowserProfile(
+BUILTIN_PLAYWRIGHT = BrowserProfile(
     name='Browser (Chrome/Playwright)',
-    fetch_backend='webdriver',
+    fetch_backend='playwright',
     is_builtin=True,
 )
+
+BUILTIN_SELENIUM = BrowserProfile(
+    name='Browser (Chrome/Selenium)',
+    fetch_backend='selenium',
+    is_builtin=True,
+)
+
+BUILTIN_PUPPETEER = BrowserProfile(
+    name='Browser (Chrome/Puppeteer)',
+    fetch_backend='puppeteer',
+    is_builtin=True,
+)
+
+# Backwards-compatible alias — code that imported BUILTIN_BROWSER keeps working.
+BUILTIN_BROWSER = BUILTIN_PLAYWRIGHT
 
 # Keyed by machine name for O(1) lookup.
 _BUILTINS: dict[str, BrowserProfile] = {
     b.get_machine_name(): b
-    for b in (BUILTIN_REQUESTS, BUILTIN_BROWSER)
+    for b in (BUILTIN_REQUESTS, BUILTIN_PLAYWRIGHT, BUILTIN_SELENIUM, BUILTIN_PUPPETEER)
 }
 
 # Machine names that cannot be used by user-created profiles.
 RESERVED_MACHINE_NAMES: frozenset[str] = frozenset(_BUILTINS.keys())
+
+
+def get_default_browser_builtin() -> BrowserProfile:
+    """Return the built-in browser profile that matches the current environment.
+
+    Reads the same env vars as ``content_fetchers.get_active_browser_fetcher_name()``:
+
+    * ``PLAYWRIGHT_DRIVER_URL`` set + ``FAST_PUPPETEER_CHROME_FETCHER=False`` → Playwright
+    * ``PLAYWRIGHT_DRIVER_URL`` set + ``FAST_PUPPETEER_CHROME_FETCHER=True``  → Puppeteer
+    * Neither set → Selenium
+    """
+    import os
+    from changedetectionio.strtobool import strtobool
+    if os.getenv('PLAYWRIGHT_DRIVER_URL', False):
+        if not strtobool(os.getenv('FAST_PUPPETEER_CHROME_FETCHER', 'False')):
+            return BUILTIN_PLAYWRIGHT
+        return BUILTIN_PUPPETEER
+    return BUILTIN_SELENIUM
 
 
 # ---------------------------------------------------------------------------

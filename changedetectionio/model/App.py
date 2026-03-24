@@ -32,8 +32,10 @@ class model(dict):
                     'timeout': int(getenv("DEFAULT_SETTINGS_REQUESTS_TIMEOUT", "45")),  # Default 45 seconds
                     'workers': int(getenv("DEFAULT_SETTINGS_REQUESTS_WORKERS", "5")),  # Number of threads, lower is better for slow connections
                     'default_ua': {
-                        'html_requests': getenv("DEFAULT_SETTINGS_HEADERS_USERAGENT", DEFAULT_SETTINGS_HEADERS_USERAGENT),
-                        'html_webdriver': None,
+                        'requests': getenv("DEFAULT_SETTINGS_HEADERS_USERAGENT", DEFAULT_SETTINGS_HEADERS_USERAGENT),
+                        'playwright': None,
+                        'selenium': None,
+                        'puppeteer': None,
                     }
                 },
                 'application': {
@@ -45,7 +47,7 @@ class model(dict):
                     'empty_pages_are_a_change': False,
                     'browser_profile': None,           # machine-name of the system-default BrowserProfile
                     'browser_profiles': {},            # user-defined profiles keyed by machine name
-                    'fetch_backend': getenv("DEFAULT_FETCH_BACKEND", "html_requests"),
+                    'fetch_backend': getenv("DEFAULT_FETCH_BACKEND", "requests"),
                     'filter_failure_notification_threshold_attempts': _FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT,
                     'global_ignore_text': [], # List of text to ignore when calculating the comparison checksum
                     'global_subtractive_selectors': [],

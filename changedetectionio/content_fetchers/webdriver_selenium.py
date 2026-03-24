@@ -185,7 +185,7 @@ class WebDriverSeleniumFetcherPlugin:
 
     def register_content_fetcher(self):
         """Register the WebDriver Selenium fetcher"""
-        return ('html_webdriver', fetcher)
+        return ('selenium', fetcher)
 
 
 # Create module-level instance for plugin registration

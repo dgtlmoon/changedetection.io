@@ -475,7 +475,7 @@ class PlaywrightFetcherPlugin:
 
     def register_content_fetcher(self):
         """Register the Playwright fetcher"""
-        return ('html_webdriver', fetcher)
+        return ('playwright', fetcher)
 
 
 # Create module-level instance for plugin registration

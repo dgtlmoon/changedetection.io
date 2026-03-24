@@ -372,18 +372,18 @@ class model(EntityPersistenceMixin, watch_base):
     def get_fetch_backend(self):
         """Legacy property — prefer effective_browser_profile.fetch_backend for new code.
 
-        Returns the raw fetch_backend stored on this watch (or 'html_requests' for PDFs).
+        Returns the raw fetch_backend stored on this watch (or 'requests' for PDFs).
         Does NOT walk the tag/global resolution chain.
         """
         if self.is_pdf:
-            return 'html_requests'
+            return 'requests'
         return self.get('fetch_backend')
 
     @property
     def fetcher_supports_screenshots(self):
         """Return True if the resolved fetcher for this watch supports screenshots."""
         from changedetectionio import content_fetchers
-        fetcher_class = getattr(content_fetchers, self.effective_browser_profile.get_fetcher_class_name(), None)
+        fetcher_class = content_fetchers.get_fetcher(self.effective_browser_profile.fetch_backend)
         if fetcher_class is None:
             return False
         return bool(getattr(fetcher_class, 'supports_screenshots', False))

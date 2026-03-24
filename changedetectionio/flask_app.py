@@ -353,7 +353,7 @@ def _jinja2_filter_fetcher_status_icons(fetcher_name):
 
     icon_data = None
 
-    fetcher_class = getattr(content_fetchers, fetcher_name, None)
+    fetcher_class = content_fetchers.get_fetcher(fetcher_name)
     if fetcher_class is not None:
         icon_data = getattr(fetcher_class, 'status_icon', None)
         if not icon_data and callable(getattr(fetcher_class, 'get_status_icon_data', None)):

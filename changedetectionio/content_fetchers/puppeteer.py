@@ -543,7 +543,7 @@ class PuppeteerFetcherPlugin:
 
     def register_content_fetcher(self):
         """Register the Puppeteer fetcher"""
-        return ('html_webdriver', fetcher)
+        return ('puppeteer', fetcher)
 
 
 # Create module-level instance for plugin registration

@@ -260,7 +260,7 @@ class RequestsFetcherPlugin:
 
     def register_content_fetcher(self):
         """Register the requests fetcher"""
-        return ('html_requests', fetcher)
+        return ('requests', fetcher)
 
 
 # Create module-level instance for plugin registration

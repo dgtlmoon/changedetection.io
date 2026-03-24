@@ -20,16 +20,15 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             get_builtin_profiles, BrowserProfile, RESERVED_MACHINE_NAMES
         )
 
-        fetcher_choices = [(name[len('html_'):], desc) for name, desc in cf.available_fetchers()]
+        fetcher_choices = [(name, desc) for name, desc in cf.available_fetchers()]
         if browser_profile_form is None:
             browser_profile_form = forms.BrowserProfileForm()
         browser_profile_form.fetch_backend.choices = fetcher_choices
 
         fetcher_supports_screenshots = {}
         for name, _desc in cf.available_fetchers():
-            clean_name = name[len('html_'):]
-            fetcher_cls = getattr(cf, name, None)
-            fetcher_supports_screenshots[clean_name] = bool(getattr(fetcher_cls, 'supports_screenshots', False))
+            fetcher_cls = cf.get_fetcher(name)
+            fetcher_supports_screenshots[name] = bool(getattr(fetcher_cls, 'supports_screenshots', False))
 
         store_profiles = datastore.data['settings']['application'].get('browser_profiles', {})
         all_profiles = {**get_builtin_profiles()}
@@ -84,7 +83,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         from changedetectionio import content_fetchers as cf
         from changedetectionio.model.browser_profile import BrowserProfile, RESERVED_MACHINE_NAMES
 
-        fetcher_choices = [(name[len('html_'):], desc) for name, desc in cf.available_fetchers()]
+        fetcher_choices = [(name, desc) for name, desc in cf.available_fetchers()]
         browser_profile_form = forms.BrowserProfileForm(formdata=request.form)
         browser_profile_form.fetch_backend.choices = fetcher_choices
 

@@ -8,7 +8,7 @@ $(document).ready(function () {
         var n = name + "=" + val;
 
         // Resolve browser_profile select → underlying fetch_backend class name
-        // browserProfileFetcherMap is injected by the page as {machine_name: 'html_webdriver', ...}
+        // browserProfileFetcherMap is injected by the page as {machine_name: 'playwright', ...}
         if (name && name.endsWith('browser_profile') && typeof browserProfileFetcherMap !== 'undefined') {
             var fetcherClass = val === 'system'
                 ? (typeof default_system_fetch_backend !== 'undefined' ? default_system_fetch_backend : null)

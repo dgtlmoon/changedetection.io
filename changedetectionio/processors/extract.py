@@ -42,7 +42,7 @@ def render_form(watch, datastore, request, url_for, render_template, flash, redi
     # Get error information for the template
     screenshot_url = watch.get_screenshot()
 
-    is_html_webdriver = watch.fetcher_supports_screenshots
+    fetcher_supports_screenshots = watch.fetcher_supports_screenshots
 
     password_enabled_and_share_is_off = False
     if datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False):
@@ -59,7 +59,7 @@ def render_form(watch, datastore, request, url_for, render_template, flash, redi
         last_error_screenshot=watch.get_error_snapshot(),
         last_error_text=watch.get_error_text(),
         screenshot=screenshot_url,
-        is_html_webdriver=is_html_webdriver,
+        fetcher_supports_screenshots=fetcher_supports_screenshots,
         password_enabled_and_share_is_off=password_enabled_and_share_is_off,
         extra_title=f" - {watch.label} - Extract Data",
         extra_stylesheets=[url_for('static_content', group='styles', filename='diff.css')],

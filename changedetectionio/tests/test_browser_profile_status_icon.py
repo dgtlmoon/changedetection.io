@@ -49,19 +49,19 @@ def test_fetcher_status_icons_filter_uses_status_icon(monkeypatch):
     class FakeBrowserFetcher:
         status_icon = {'filename': 'test-icon.png', 'alt': 'Test browser', 'title': 'Test browser'}
 
-    monkeypatch.setattr(content_fetchers, 'html_fake_browser', FakeBrowserFetcher, raising=False)
+    content_fetchers.register_fetcher('fake_browser', FakeBrowserFetcher)
 
     # Import the filter function directly and call it inside an app context
     from changedetectionio.flask_app import app
     with app.test_request_context('/'):
         from changedetectionio.flask_app import _jinja2_filter_fetcher_status_icons
-        result = _jinja2_filter_fetcher_status_icons('html_fake_browser')
+        result = _jinja2_filter_fetcher_status_icons('fake_browser')
         assert 'test-icon.png' in result
         assert 'Test browser' in result
 
     # Requests fetcher → empty string
     with app.test_request_context('/'):
-        result = _jinja2_filter_fetcher_status_icons('html_requests')
+        result = _jinja2_filter_fetcher_status_icons('requests')
         assert result == ''
 
 
@@ -119,23 +119,17 @@ def test_icon_when_system_default_is_browser(client, live_server, measure_memory
     datastore.delete(uuid)
 
 
-def test_icon_shown_for_custom_browser_profile(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
-    """Custom browser profile using webdriver fetcher should also show chrome icon."""
-    from changedetectionio import content_fetchers
-    from changedetectionio.content_fetchers.playwright import fetcher as playwright_fetcher
-
-    # Force html_webdriver to be the playwright class regardless of env
-    monkeypatch.setattr(content_fetchers, 'html_webdriver', playwright_fetcher)
-
+def test_icon_shown_for_custom_browser_profile(client, live_server, measure_memory_usage, datastore_path):
+    """Custom browser profile using playwright fetcher should also show chrome icon."""
     datastore = client.application.config.get('DATASTORE')
     set_system_default_profile(client, 'direct_http_requests')
 
-    # Create a custom profile that uses webdriver
+    # Create a custom profile that uses playwright
     res = client.post(
         url_for('settings_browsers.save'),
         data={
             'name': 'My Custom Chrome',
-            'fetch_backend': 'webdriver',
+            'fetch_backend': 'playwright',
             'browser_connection_url': 'ws://localhost:3000',
             'viewport_width': 1280,
             'viewport_height': 1000,

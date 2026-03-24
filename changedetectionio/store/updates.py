@@ -787,7 +787,7 @@ class DatastoreUpdatesMixin:
 
             profile = BrowserProfile(
                 name=browser_name,
-                fetch_backend='webdriver',
+                fetch_backend='playwright',
                 browser_connection_url=connection_url or None,
             )
             machine_name = profile.get_machine_name()
@@ -807,9 +807,9 @@ class DatastoreUpdatesMixin:
         def _to_machine_name(fetch_backend: str) -> Optional[str]:
             if not fetch_backend or fetch_backend in ('system', 'default', ''):
                 return None
-            if fetch_backend == 'html_requests':
+            if fetch_backend in ('html_requests', 'requests'):
                 return builtin_requests_name
-            if fetch_backend == 'html_webdriver':
+            if fetch_backend in ('html_webdriver', 'html_playwright', 'html_selenium', 'html_puppeteer', 'playwright', 'selenium', 'puppeteer'):
                 return builtin_browser_name
             if fetch_backend.startswith('extra_browser_'):
                 key = fetch_backend[len('extra_browser_'):]
@@ -821,7 +821,7 @@ class DatastoreUpdatesMixin:
         # ------------------------------------------------------------------
         # 2. Migrate system-wide default
         # ------------------------------------------------------------------
-        system_fetch_backend = app_settings.get('fetch_backend', 'html_requests')
+        system_fetch_backend = app_settings.get('fetch_backend', 'requests')
         if not app_settings.get('browser_profile'):
             machine = _to_machine_name(system_fetch_backend)
             app_settings['browser_profile'] = machine

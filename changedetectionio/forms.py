@@ -991,9 +991,11 @@ class BrowserProfileForm(Form):
     )
 
 class DefaultUAInputForm(Form):
-    html_requests = StringField(_l('Plaintext requests'), validators=[validators.Optional()], render_kw={"placeholder": "<default>"})
+    requests = StringField(_l('Plaintext requests'), validators=[validators.Optional()], render_kw={"placeholder": "<default>"})
     if os.getenv("PLAYWRIGHT_DRIVER_URL") or os.getenv("WEBDRIVER_URL"):
-        html_webdriver = StringField(_l('Chrome requests'), validators=[validators.Optional()], render_kw={"placeholder": "<default>"})
+        playwright = StringField(_l('Chrome/Playwright requests'), validators=[validators.Optional()], render_kw={"placeholder": "<default>"})
+        selenium = StringField(_l('Chrome/Selenium requests'), validators=[validators.Optional()], render_kw={"placeholder": "<default>"})
+        puppeteer = StringField(_l('Chrome/Puppeteer requests'), validators=[validators.Optional()], render_kw={"placeholder": "<default>"})
 
 # datastore.data['settings']['requests']..
 class globalSettingsRequestForm(Form):
