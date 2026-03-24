@@ -25,11 +25,6 @@ SCREENSHOT_MAX_TOTAL_HEIGHT = int(os.getenv("SCREENSHOT_MAX_HEIGHT", SCREENSHOT_
 # Most modern GPUs support 16384x16384 textures, so 1280x10000 is safe
 SCREENSHOT_SIZE_STITCH_THRESHOLD = int(os.getenv("SCREENSHOT_CHUNK_HEIGHT", 10000))
 
-# available_fetchers() will scan this implementation looking for anything starting with html_
-# this information is used in the form selections
-from changedetectionio.content_fetchers.requests import fetcher as html_requests
-
-
 import importlib.resources
 XPATH_ELEMENT_JS = importlib.resources.files("changedetectionio.content_fetchers.res").joinpath('xpath_element_scraper.js').read_text(encoding='utf-8')
 INSTOCK_DATA_JS = importlib.resources.files("changedetectionio.content_fetchers.res").joinpath('stock-not-in-stock.js').read_text(encoding='utf-8')
