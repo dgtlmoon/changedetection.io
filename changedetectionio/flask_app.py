@@ -356,8 +356,10 @@ def _jinja2_filter_fetcher_status_icons(fetcher_name):
     fetcher_class = getattr(content_fetchers, fetcher_name, None)
     if fetcher_class is not None:
         icon_data = getattr(fetcher_class, 'status_icon', None)
+        if not icon_data and callable(getattr(fetcher_class, 'get_status_icon_data', None)):
+            icon_data = fetcher_class.get_status_icon_data()
 
-    # Fallback: plugin fetchers that haven't migrated to status_icon yet
+    # Fallback: pluggy hook for plugins that implement fetcher_status_icon
     if not icon_data:
         from changedetectionio.pluggy_interface import collect_fetcher_status_icons
         icon_data = collect_fetcher_status_icons(fetcher_name)
