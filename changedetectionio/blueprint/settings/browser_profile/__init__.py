@@ -182,9 +182,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             flash(gettext("No profile specified."), 'error')
             return redirect(url_for('settings.settings_browsers.index'))
 
+        from changedetectionio.model.browser_profile import get_profile
         store_profiles = datastore.data['settings']['application'].get('browser_profiles', {})
-        all_valid = set(cf.DEFAULT_BROWSER_PROFILES.keys()) | set(store_profiles.keys())
-        if machine_name not in all_valid:
+        if get_profile(machine_name, store_profiles) is None:
             flash(gettext("Unknown browser profile '{}'.").format(machine_name), 'error')
             return redirect(url_for('settings.settings_browsers.index'))
 

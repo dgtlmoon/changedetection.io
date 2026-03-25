@@ -787,7 +787,7 @@ class DatastoreUpdatesMixin:
 
             profile = BrowserProfile(
                 name=browser_name,
-                fetch_backend='playwright',
+                fetch_backend='playwright_cdp',
                 browser_connection_url=connection_url or None,
             )
             machine_name = profile.get_machine_name()

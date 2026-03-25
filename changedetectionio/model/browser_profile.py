@@ -231,7 +231,7 @@ BUILTIN_REQUESTS = BrowserProfile(
 
 BUILTIN_PLAYWRIGHT = BrowserProfile(
     name='Browser (Chrome/Playwright)',
-    fetch_backend='playwright',
+    fetch_backend='playwright_cdp',
     is_builtin=True,
 )
 

@@ -79,13 +79,13 @@ def _load_fetchers():
 def get_active_browser_fetcher_name() -> str:
     """Return the clean name of the browser fetcher activated by environment config.
 
-    - ``PLAYWRIGHT_DRIVER_URL`` set + ``FAST_PUPPETEER_CHROME_FETCHER=False`` → ``playwright``
+    - ``PLAYWRIGHT_DRIVER_URL`` set + ``FAST_PUPPETEER_CHROME_FETCHER=False`` → ``playwright_cdp``
     - ``PLAYWRIGHT_DRIVER_URL`` set + ``FAST_PUPPETEER_CHROME_FETCHER=True``  → ``puppeteer``
     - Neither set → ``selenium``
     """
     if os.getenv('PLAYWRIGHT_DRIVER_URL', False):
         if not strtobool(os.getenv('FAST_PUPPETEER_CHROME_FETCHER', 'False')):
-            return 'playwright'
+            return 'playwright_cdp'
         return 'puppeteer'
     return 'selenium'
 
@@ -102,5 +102,11 @@ def _register_default_browser_profiles():
 
 # Populate the registry at module load time
 _load_fetchers()
+
+# Backwards-compat alias: stored data may reference 'playwright' (pre-refactor name).
+# Map it to playwright_cdp which is the CDP-based fetcher that replaced it.
+if 'playwright_cdp' in FETCHERS and 'playwright' not in FETCHERS:
+    FETCHERS['playwright'] = FETCHERS['playwright_cdp']
+
 _register_default_browser_profiles()
 

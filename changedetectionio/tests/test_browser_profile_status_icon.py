@@ -24,7 +24,7 @@ def set_system_default_profile(client, profile_machine_name):
 
 def test_status_icon_on_browser_fetchers():
     """Browser fetcher classes must declare a status_icon dict."""
-    from changedetectionio.content_fetchers.playwright import fetcher as playwright_fetcher
+    from changedetectionio.content_fetchers.playwright.CDP import fetcher as playwright_fetcher
     from changedetectionio.content_fetchers.puppeteer import fetcher as puppeteer_fetcher
     from changedetectionio.content_fetchers.webdriver_selenium import fetcher as selenium_fetcher
 
@@ -45,11 +45,14 @@ def test_fetcher_status_icons_filter_uses_status_icon(monkeypatch):
     """fetcher_status_icons filter returns icon HTML for a class with status_icon set."""
     from changedetectionio import content_fetchers
 
-    # Inject a fake fetcher with a known status_icon — no real browser needed
+    # Inject a fake fetcher with a known status_icon — no real browser needed.
+    # Use monkeypatch.setitem so the entry is removed automatically after the test,
+    # preventing it from polluting available_browser_fetchers() in later tests.
     class FakeBrowserFetcher:
         status_icon = {'filename': 'test-icon.png', 'alt': 'Test browser', 'title': 'Test browser'}
+        supports_screenshots = True
 
-    content_fetchers.register_fetcher('fake_browser', FakeBrowserFetcher)
+    monkeypatch.setitem(content_fetchers.FETCHERS, 'fake_browser', FakeBrowserFetcher)
 
     # Import the filter function directly and call it inside an app context
     from changedetectionio.flask_app import app
