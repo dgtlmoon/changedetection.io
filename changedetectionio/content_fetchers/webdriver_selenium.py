@@ -3,6 +3,7 @@ import time
 
 from loguru import logger
 from changedetectionio.content_fetchers.base import Fetcher
+from changedetectionio.content_fetchers.exceptions import Non200ErrorCodeReceived
 from changedetectionio.pluggy_interface import hookimpl
 
 
@@ -130,15 +131,21 @@ class fetcher(Fetcher):
                     # Selenium doesn't automatically wait for actions as good as Playwright, so wait again
                     driver.implicitly_wait(self.extra_delay)
 
-                # @todo - how to check this? is it possible?
-                self.status_code = 200
-                # @todo somehow we should try to get this working for WebDriver
-                # raise EmptyReply(url=url, status_code=r.status_code)
-
                 # @todo - dom wait loaded?
                 import time
                 time.sleep(self.extra_delay + self.render_extract_delay)
                 self.content = driver.page_source
+
+                # Use Navigation Timing API to get the real HTTP status code (Chrome 102+)
+                # Read after the sleep so the page is fully settled
+                try:
+                    nav_status = driver.execute_script(
+                        "return window.performance.getEntriesByType('navigation')[0]?.responseStatus"
+                    )
+                    # Guard against 0 (file://, blocked requests) which should not raise Non200
+                    self.status_code = int(nav_status) if nav_status and int(nav_status) > 0 else 200
+                except Exception:
+                    self.status_code = 200
                 self.headers = {}
 
                 # Selenium always captures as PNG, convert to JPEG if needed
@@ -168,6 +175,10 @@ class fetcher(Fetcher):
                     img.close()
                 else:
                     self.screenshot = screenshot_png
+
+                if self.status_code != 200 and not ignore_status_codes:
+                    raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=self.screenshot, page_html=self.content)
+
             except Exception as e:
                 driver.quit()
                 raise e
