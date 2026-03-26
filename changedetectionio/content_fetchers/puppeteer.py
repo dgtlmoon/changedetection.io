@@ -442,7 +442,7 @@ class fetcher(Fetcher):
         if self.status_code != 200 and not ignore_status_codes:
             screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format, watch_uuid=watch_uuid, lock_viewport_elements=self.lock_viewport_elements)
             try:
-                page_html = await self.page.content()
+                page_html = await self.page.content
             except Exception as e:
                 logger.warning(f"Got non-200 status {self.status_code} but failed to fetch page content: {e}")
                 page_html = None
