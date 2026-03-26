@@ -35,7 +35,6 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
             "tags": "",
             # For now, cookies doesnt work in headers because it must be a full cookiejar object
             'headers': "testheader: yes\buser-agent: MyCustomAgent",
-            'browser_profile': "browser_chromeplaywright",
             "time_between_check_use_default": "y",
         },
         follow_redirects=True
@@ -106,7 +105,6 @@ def test_basic_browserstep(client, live_server, measure_memory_usage, datastore_
         data={
             "url": test_url,
             "tags": "",
-            'browser_profile': "browser_chromeplaywright",
             'browser_steps-5-operation': 'Enter text in field',
             'browser_steps-5-selector': '#test-input-text',
             # Should get set to the actual text (jinja2 rendered)
@@ -173,7 +171,6 @@ def test_non_200_errors_report_browsersteps(client, live_server, measure_memory_
         data={
               "url": four_o_four_url,
               "tags": "",
-              'browser_profile': "browser_chromeplaywright",
               'browser_steps-0-operation': 'Click element',
               'browser_steps-0-selector': 'button[name=test-button]',
               'browser_steps-0-optional_value': '',
@@ -239,7 +236,6 @@ def test_browsersteps_edit_UI_startsession(client, live_server, measure_memory_u
         data={
             "url": test_url,
             "tags": "",
-            'browser_profile': "browser_chromeplaywright",
             "time_between_check_use_default": "y",
         },
         follow_redirects=True

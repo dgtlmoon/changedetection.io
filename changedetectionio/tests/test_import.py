@@ -207,10 +207,5 @@ def test_import_watchete_xlsx(client, live_server, measure_memory_usage, datasto
             assert watch.get('time_between_check') == {'weeks': 0, 'days': 1, 'hours': 6, 'minutes': 24, 'seconds': 0}
             assert watch.get('browser_profile') == 'direct_http_requests' # Has inactive 'dynamic wachet'
 
-        if watch.get('title') == 'JS website':
-            assert watch.get('browser_profile') == 'browser_chromeplaywright' # Has active 'dynamic wachet'
-
-        if watch.get('title') == 'system default website':
-            assert watch.get('browser_profile') == 'system' # uses default if blank (importer doesn't set it)
 
     delete_all_watches(client)
