@@ -25,6 +25,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         browser_profile_form.fetch_backend.choices = fetcher_choices
 
         fetcher_supports_screenshots = {name: True for name, _ in fetcher_choices}
+        fetcher_requires_connection_url = {name: True for name, cls in cf.FETCHERS.items()
+                                           if getattr(cls, 'requires_connection_url', False)}
 
         # Table shows default built-in profiles first, then user-created profiles
         store_profiles = datastore.data['settings']['application'].get('browser_profiles', {})
@@ -44,6 +46,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             reserved_browser_profile_names=RESERVED_MACHINE_NAMES,
             fetcher_choices=fetcher_choices,
             fetcher_supports_screenshots=fetcher_supports_screenshots,
+            fetcher_requires_connection_url=fetcher_requires_connection_url,
             current_default_profile=current_default,
             editing_machine_name=editing_machine_name,
         )

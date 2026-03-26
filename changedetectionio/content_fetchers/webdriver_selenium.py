@@ -9,6 +9,7 @@ from changedetectionio.pluggy_interface import hookimpl
 
 class fetcher(Fetcher):
     fetcher_description = "Selenium WebDriver Chrome"
+    requires_connection_url = True
 
     proxy = None
     proxy_url = None

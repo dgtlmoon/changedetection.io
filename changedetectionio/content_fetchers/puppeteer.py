@@ -168,6 +168,7 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
 
 class fetcher(Fetcher):
     fetcher_description = "Puppeteer Chromium"
+    requires_connection_url = True
 
     browser = None
     browser_type = ''

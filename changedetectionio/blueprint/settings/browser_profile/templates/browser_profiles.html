@@ -80,7 +80,7 @@
                     <div class="pure-control-group inline-radio">
                         {{ render_field(browser_profile_form.fetch_backend, id="profile-fetch-backend") }}
                     </div>
-                    <div class="pure-control-group browser-only-field">
+                    <div class="pure-control-group browser-only-field cdp-only-field">
                         {{ render_field(browser_profile_form.browser_connection_url) }}
                         <span class="pure-form-message-inline">{{ _('Optional — override the system CDP/WebSocket URL for this profile only (e.g.') }} <code>ws://my-chrome:3000</code>).</span>
                     </div>
@@ -128,12 +128,17 @@ function setDefaultProfile(machineName) {
 }
 
 const fetcherSupportsBrowser = {{ fetcher_supports_screenshots | tojson }};
+const fetcherRequiresConnectionUrl = {{ fetcher_requires_connection_url | tojson }};
 
 function updateBrowserFieldVisibility() {
     const fetchBackend = document.getElementById('profile-fetch-backend').value;
     const isBrowser = !!fetcherSupportsBrowser[fetchBackend];
+    const isCdp = !!fetcherRequiresConnectionUrl[fetchBackend];
     document.querySelectorAll('.browser-only-field').forEach(function(el) {
         el.style.display = isBrowser ? '' : 'none';
+    });
+    document.querySelectorAll('.cdp-only-field').forEach(function(el) {
+        el.style.display = isCdp ? '' : 'none';
     });
 }
 

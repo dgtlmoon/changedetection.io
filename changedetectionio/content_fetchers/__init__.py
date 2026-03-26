@@ -89,10 +89,6 @@ def _register_default_browser_profiles():
 # Populate the registry at module load time
 _load_fetchers()
 
-# Backwards-compat alias: stored data may reference 'playwright' (pre-refactor name).
-# Map it to playwright_cdp which is the CDP-based fetcher that replaced it.
-if 'playwright_cdp' in FETCHERS and 'playwright' not in FETCHERS:
-    FETCHERS['playwright'] = FETCHERS['playwright_cdp']
 
 _register_default_browser_profiles()
 
