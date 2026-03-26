@@ -422,6 +422,14 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         # Is saved as {uuid}/tag.json
         settings_copy['application']['tags'] = {}
 
+        # Serialize BrowserProfile Pydantic instances to plain dicts for JSON storage
+        raw_profiles = settings_copy['application'].get('browser_profiles', {})
+        from changedetectionio.model.browser_profile import BrowserProfile
+        settings_copy['application']['browser_profiles'] = {
+            k: v.model_dump() if isinstance(v, BrowserProfile) else v
+            for k, v in raw_profiles.items()
+        }
+
         return {
             'note': 'Settings file - watches are in {uuid}/watch.json, tags are in {uuid}/tag.json',
             'app_guid': self.__data.get('app_guid'),
