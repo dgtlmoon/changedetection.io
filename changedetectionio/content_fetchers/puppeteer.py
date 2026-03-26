@@ -191,7 +191,10 @@ class fetcher(Fetcher):
             self.browser_connection_is_custom = True
             self.browser_connection_url = custom_browser_connection_url
         else:
-            self.browser_connection_url = 'ws://playwright-chrome:3000'
+            from loguru import logger
+            logger.critical("Puppeteer fetcher has no browser_connection_url — browser profile was not configured. "
+                            "Set PLAYWRIGHT_DRIVER_URL or configure a browser profile in Settings.")
+            self.browser_connection_url = None
 
         # allow per-watch proxy selection override
         # @todo check global too?

@@ -130,7 +130,7 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         ##################################################
         # Remove password button, and check that it worked
         ##################################################
-        c.post(url_for("settings.settings_browsers.set_default"), data={"machine_name": "browser_chromeplaywright", "csrf_token": ""}, follow_redirects=True)
+        # preconfigure_browser_profiles_based_on_env() already set the correct system default
         res = c.post(
             url_for("settings.settings_page"),
             data={

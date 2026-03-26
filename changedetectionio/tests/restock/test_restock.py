@@ -60,8 +60,7 @@ def test_restock_detection(client, live_server, measure_memory_usage, datastore_
 
 
     #####################
-    # Set this up for when we remove the notification from the watch, it should fallback with these details
-    client.post(url_for("settings.settings_browsers.set_default"), data={"machine_name": "browser_chromeplaywright", "csrf_token": ""}, follow_redirects=True)
+    # preconfigure_browser_profiles_based_on_env() already set the correct system default
     res = client.post(
         url_for("settings.settings_page"),
         data={"application-notification_urls": notification_url,

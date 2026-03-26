@@ -1,11 +1,10 @@
 """
 Playwright CDP fetcher — connects to a remote browser via Chrome DevTools Protocol.
 
-This is the original "playwright" fetcher, renamed to make the connection
-method explicit. The PLAYWRIGHT_DRIVER_URL env var (or per-profile
-browser_connection_url) points to a running Chrome/Chromium container that
-exposes the CDP WebSocket endpoint (e.g. ws://playwright-chrome:3000).
+browser_connection_url must be supplied via the resolved BrowserProfile
+(set by preconfigure_browser_profiles_based_on_env at startup or edited in the UI).
 """
+from loguru import logger
 from changedetectionio.pluggy_interface import hookimpl
 from changedetectionio.content_fetchers.playwright import PlaywrightBaseFetcher
 
@@ -20,7 +19,9 @@ class fetcher(PlaywrightBaseFetcher):
             self.browser_connection_is_custom = True
             self.browser_connection_url = custom_browser_connection_url
         else:
-            self.browser_connection_url = 'ws://playwright-chrome:3000'
+            logger.critical("Playwright CDP fetcher has no browser_connection_url — browser profile was not configured. "
+                            "Set PLAYWRIGHT_DRIVER_URL or configure a browser profile in Settings.")
+            self.browser_connection_url = None
 
         # CDP always connects to Chromium
         self.browser_type = 'chromium'

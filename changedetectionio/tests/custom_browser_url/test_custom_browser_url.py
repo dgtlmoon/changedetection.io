@@ -38,8 +38,7 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
 
     test_url = "https://changedetection.io/ci-test.html?non-custom-default=true"
 
-    # Set global default to webdriver (browser-based)
-    client.post(url_for("settings.settings_browsers.set_default"), data={"machine_name": "browser_chromeplaywright", "csrf_token": ""}, follow_redirects=True)
+    # preconfigure_browser_profiles_based_on_env() already set the correct system default
     res = client.post(
         url_for("settings.settings_page"),
         data={
