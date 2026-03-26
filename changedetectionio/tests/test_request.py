@@ -247,6 +247,12 @@ def test_method_in_request(client, live_server, measure_memory_usage, datastore_
 
 # Re #2408 - user-agent override test, also should handle case-insensitive header deduplication
 def test_ua_global_override(client, live_server, measure_memory_usage, datastore_path):
+
+    if os.getenv('WEBDRIVER_URL'):
+        print("Selenium doesnt support custom HTTP headers!!")
+        return
+
+
     ##  live_server_setup(live_server) # Setup on conftest per function
     test_url = url_for('test_headers', _external=True)
 
@@ -260,7 +266,8 @@ def test_ua_global_override(client, live_server, measure_memory_usage, datastore
     )
     assert b'Settings updated' in res.data
 
-    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    # Force requests fetcher so default_ua['requests'] applies regardless of system default browser
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, extras={'browser_profile': 'direct_http_requests'})
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
@@ -299,8 +306,11 @@ def test_ua_global_override(client, live_server, measure_memory_usage, datastore
 def test_headers_textfile_in_request(client, live_server, measure_memory_usage, datastore_path):
     import os
 
-    # Add our URL to the import page
+    if os.getenv('WEBDRIVER_URL'):
+        print("Selenium doesnt support custom HTTP headers!!")
+        return
 
+    # Add our URL to the import page
     webdriver_ua = "Hello fancy webdriver UA 1.0"
     requests_ua = "Hello basic requests UA 1.1"
 

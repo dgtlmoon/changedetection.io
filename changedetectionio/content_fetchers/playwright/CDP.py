@@ -12,6 +12,7 @@ from changedetectionio.content_fetchers.playwright import PlaywrightBaseFetcher
 class fetcher(PlaywrightBaseFetcher):
     fetcher_description = "Playwright Chrome (CDP/Remote)"
     requires_connection_url = True
+    ua_settings_key = 'playwright'  # matches DefaultUAInputForm field name
 
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
         super().__init__(proxy_override=proxy_override, custom_browser_connection_url=custom_browser_connection_url, **kwargs)

@@ -181,6 +181,7 @@ class fetcher(Fetcher):
     supports_xpath_element_data = True
 
     status_icon = {'filename': 'google-chrome-icon.png', 'alt': 'Using a Chrome browser', 'title': 'Using a Chrome browser'}
+    ua_settings_key = 'playwright'  # shares the 'playwright' UA field in settings UI
 
     def disk_cleanup_after_fetch(self):
         self.delete_browser_steps_screenshots()

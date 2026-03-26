@@ -187,8 +187,9 @@ class difference_detection_processor():
         request_headers = CaseInsensitiveDict()
 
         ua = self.datastore.data['settings']['requests'].get('default_ua')
-        if ua and ua.get(fetcher_class_name):
-            request_headers.update({'User-Agent': ua.get(fetcher_class_name)})
+        ua_key = getattr(fetcher_obj, 'ua_settings_key', fetcher_class_name)
+        if ua and ua.get(ua_key):
+            request_headers.update({'User-Agent': ua.get(ua_key)})
 
         request_headers.update(self.watch.get('headers', {}))
         request_headers.update(self.datastore.get_all_base_headers())
