@@ -474,7 +474,8 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
         b"nodename nor servname provided" in res.data or
         b"Temporary failure in name resolution" in res.data or
         b"Failed to establish a new connection" in res.data or
-        b"Connection error occurred" in res.data
+        b"Connection error occurred" in res.data or
+        b"net::ERR_NAME_NOT_RESOLVED" in res.data
     )
     
     client.get(
