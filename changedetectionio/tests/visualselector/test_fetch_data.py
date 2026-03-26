@@ -203,7 +203,7 @@ def test_browsersteps_edit_UI_startsession(client, live_server, measure_memory_u
     test_url = test_url.replace('localhost.localdomain', 'cdio')
     test_url = test_url.replace('localhost', 'cdio')
 
-    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, extras={'browser_profile': 'browser_chromeplaywright', 'paused': True})
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, extras={'paused': True})
 
     # Test starting a browsersteps session
     res = client.get(

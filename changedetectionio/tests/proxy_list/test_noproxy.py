@@ -56,7 +56,6 @@ def test_noproxy_option(client, live_server, measure_memory_usage, datastore_pat
         url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
         data={
                 "include_filters": "",
-                "browser_profile": "direct_http_requests",
                 "headers": "",
                 "proxy": "no-proxy",
                 "tags": "",

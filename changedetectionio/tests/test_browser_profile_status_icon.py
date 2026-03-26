@@ -77,7 +77,7 @@ def test_chrome_icon_shown_for_browser_profile(client, live_server, measure_memo
     datastore = client.application.config.get('DATASTORE')
     set_system_default_profile(client, 'direct_http_requests')
 
-    uuid = datastore.add_watch(url='http://example.com', extras={'browser_profile': 'browser_chromeplaywright', 'paused': True})
+    uuid = datastore.add_watch(url='http://example.com', extras={ 'paused': True})
     res = client.get(url_for('watchlist.index'), follow_redirects=True)
     assert b'Using a Chrome browser' in res.data, \
         "Chrome icon should appear when watch is set to browser_chromeplaywright"
@@ -89,7 +89,7 @@ def test_no_icon_for_requests_profile(client, live_server, measure_memory_usage,
     datastore = client.application.config.get('DATASTORE')
     set_system_default_profile(client, 'direct_http_requests')
 
-    uuid = datastore.add_watch(url='http://example.com', extras={'browser_profile': 'direct_http_requests', 'paused': True})
+    uuid = datastore.add_watch(url='http://example.com', extras={'paused': True})
     res = client.get(url_for('watchlist.index'), follow_redirects=True)
     assert b'Using a Chrome browser' not in res.data, \
         "Chrome icon should NOT appear when watch is set to direct_http_requests"

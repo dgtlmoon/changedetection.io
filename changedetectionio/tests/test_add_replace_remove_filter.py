@@ -60,7 +60,6 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
         url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"trigger_text": 'The golden line',
               "url": test_url,
-              'browser_profile': "direct_http_requests",
               'filter_text_removed': 'y',
               "time_between_check_use_default": "y"},
         follow_redirects=True
@@ -148,7 +147,6 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
         data={"trigger_text": 'Oh yes please',
               "url": test_url,
               'processor': 'text_json_diff',
-              'browser_profile': "direct_http_requests",
               'filter_text_removed': '',
               'filter_text_added': 'y',
               "time_between_check_use_default": "y"},

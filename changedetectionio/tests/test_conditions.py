@@ -72,7 +72,6 @@ def test_conditions_with_text_and_number(client, live_server, measure_memory_usa
         url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
             "url": test_url,
-            "browser_profile": "direct_http_requests",
             "include_filters": ".number-container",
             "title": "Number AND Text Condition Test",
             "conditions_match_logic": CONDITIONS_MATCH_LOGIC_DEFAULT,  # ALL = AND logic
@@ -258,7 +257,6 @@ def test_lev_conditions_plugin(client, live_server, measure_memory_usage, datast
         url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
         data={
             "url": test_url,
-            "browser_profile": "direct_http_requests",
             "conditions_match_logic": CONDITIONS_MATCH_LOGIC_DEFAULT,  # ALL = AND logic
             "conditions-0-field": "levenshtein_ratio",
             "conditions-0-operator": "<",
