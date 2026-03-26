@@ -3,6 +3,8 @@
 import os
 from flask import url_for
 from ..util import live_server_setup, wait_for_all_checks
+from ... import strtobool
+
 
 # def test_setup(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
@@ -87,6 +89,9 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
 
 def test_basic_browserstep(client, live_server, measure_memory_usage, datastore_path):
 
+    if os.getenv('PLAYWRIGHT_DRIVER_URL') and strtobool(os.getenv('FAST_PUPPETEER_CHROME_FETCHER', 'False')):
+        print("Puppeteer chrome fetch for BrowserSteps not supported!! test_basic_browserstep will be skipped")
+        return
 
     test_url = url_for('test_interactive_html_endpoint', _external=True)
     test_url = test_url.replace('localhost.localdomain', 'cdio')
