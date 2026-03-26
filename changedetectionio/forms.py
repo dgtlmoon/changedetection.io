@@ -991,13 +991,15 @@ class BrowserProfileForm(Form):
         [validators.Optional(), validators.Length(max=20)],
         render_kw={"placeholder": "en-US, de-DE, fr-FR …", "size": 15}
     )
-
-class DefaultUAInputForm(Form):
-    requests = StringField(_l('Plaintext requests'), validators=[validators.Optional()], render_kw={"placeholder": "<default>"})
-    if os.getenv("PLAYWRIGHT_DRIVER_URL") or os.getenv("WEBDRIVER_URL"):
-        playwright = StringField(_l('Chrome/Playwright requests'), validators=[validators.Optional()], render_kw={"placeholder": "<default>"})
-        selenium = StringField(_l('Chrome/Selenium requests'), validators=[validators.Optional()], render_kw={"placeholder": "<default>"})
-        puppeteer = StringField(_l('Chrome/Puppeteer requests'), validators=[validators.Optional()], render_kw={"placeholder": "<default>"})
+    custom_headers = TextAreaField(
+        _l('Custom headers'),
+        [validators.Optional()],
+        render_kw={
+            "placeholder": "Header-Name: value\nAnother-Header: value",
+            "rows": 4, "cols": 60,
+            "style": "font-family:monospace;"
+        }
+    )
 
 # datastore.data['settings']['requests']..
 class globalSettingsRequestForm(Form):
@@ -1020,8 +1022,6 @@ class globalSettingsRequestForm(Form):
 
     extra_proxies = FieldList(FormField(SingleExtraProxy), min_entries=5)
     extra_browsers = FieldList(FormField(SingleExtraBrowser), min_entries=5)
-
-    default_ua = FormField(DefaultUAInputForm, label=_l("Default User-Agent overrides"))
 
     def validate_extra_proxies(self, extra_validators=None):
         for e in self.data['extra_proxies']:

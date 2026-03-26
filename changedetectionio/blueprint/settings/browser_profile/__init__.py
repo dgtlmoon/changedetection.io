@@ -118,6 +118,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             'ignore_https_errors': bool(browser_profile_form.ignore_https_errors.data),
             'user_agent': browser_profile_form.user_agent.data or None,
             'locale': browser_profile_form.locale.data or None,
+            'custom_headers': browser_profile_form.custom_headers.data or '',
             'is_builtin': False,
         }
 

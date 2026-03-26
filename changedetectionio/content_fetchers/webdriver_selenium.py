@@ -20,7 +20,6 @@ class fetcher(Fetcher):
     supports_xpath_element_data = True
 
     status_icon = {'filename': 'google-chrome-icon.png', 'alt': 'Using a Chrome browser', 'title': 'Using a Chrome browser'}
-    ua_settings_key = 'selenium'  # matches DefaultUAInputForm field name
 
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
         super().__init__(**kwargs)

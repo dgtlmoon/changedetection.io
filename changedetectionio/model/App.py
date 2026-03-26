@@ -12,7 +12,6 @@ from changedetectionio.notification import (
 
 # Equal to or greater than this number of FilterNotFoundInResponse exceptions will trigger a filter-not-found notification
 _FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT = 6
-DEFAULT_SETTINGS_HEADERS_USERAGENT='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36'
 
 
 
@@ -31,12 +30,6 @@ class model(dict):
                     'time_between_check': {'weeks': None, 'days': None, 'hours': 3, 'minutes': None, 'seconds': None},
                     'timeout': int(getenv("DEFAULT_SETTINGS_REQUESTS_TIMEOUT", "45")),  # Default 45 seconds
                     'workers': int(getenv("DEFAULT_SETTINGS_REQUESTS_WORKERS", "5")),  # Number of threads, lower is better for slow connections
-                    'default_ua': {
-                        'requests': getenv("DEFAULT_SETTINGS_HEADERS_USERAGENT", DEFAULT_SETTINGS_HEADERS_USERAGENT),
-                        'playwright': None,
-                        'selenium': None,
-                        'puppeteer': None,
-                    }
                 },
                 'application': {
                     # Custom notification content

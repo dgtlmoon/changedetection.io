@@ -39,11 +39,19 @@ references.  After that migration no legacy paths are needed here.
 
 from __future__ import annotations
 
+import os
 import re
 from typing import Optional
 
 from loguru import logger
 from pydantic import BaseModel, field_validator
+
+# Default User-Agent for the built-in plaintext requests profile.
+# Overridable via environment variable for deployments that need a custom UA.
+_DEFAULT_REQUESTS_UA = os.getenv(
+    "DEFAULT_SETTINGS_HEADERS_USERAGENT",
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36'
+)
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -137,6 +145,13 @@ class BrowserProfile(BaseModel):
     Browser locale (e.g. ``en-US``, ``de-DE``).
     Sets the ``Accept-Language`` header and ``navigator.language``.
     Some sites serve different prices or copy based on locale.
+    """
+
+    custom_headers: str = ''
+    """
+    Extra HTTP headers sent with every request using this profile, in ``Key: Value`` format
+    (one per line, ``#`` lines are ignored).  Applied before per-watch headers so
+    individual watches can override them.
     """
 
     service_workers: str = 'allow'
@@ -241,6 +256,7 @@ BUILTIN_REQUESTS = BrowserProfile(
     name='Direct HTTP (requests)',
     fetch_backend='requests',
     is_builtin=True,
+    user_agent=_DEFAULT_REQUESTS_UA,
 )
 
 BUILTIN_PLAYWRIGHT = BrowserProfile(

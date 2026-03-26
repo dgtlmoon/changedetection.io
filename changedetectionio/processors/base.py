@@ -186,10 +186,17 @@ class difference_detection_processor():
         from changedetectionio.jinja2_custom import render as jinja_render
         request_headers = CaseInsensitiveDict()
 
-        ua = self.datastore.data['settings']['requests'].get('default_ua')
-        ua_key = getattr(fetcher_obj, 'ua_settings_key', fetcher_class_name)
-        if ua and ua.get(ua_key):
-            request_headers.update({'User-Agent': ua.get(ua_key)})
+        # Browser profile: UA override (lowest priority — watch headers override this)
+        if profile.user_agent:
+            request_headers['User-Agent'] = profile.user_agent
+
+        # Browser profile: custom headers (override profile UA, but watch headers override these)
+        if profile.custom_headers:
+            for line in profile.custom_headers.splitlines():
+                line = line.strip()
+                if not line.startswith('#') and ':' in line:
+                    k, v = line.split(':', 1)
+                    request_headers[k.strip()] = v.strip()
 
         request_headers.update(self.watch.get('headers', {}))
         request_headers.update(self.datastore.get_all_base_headers())

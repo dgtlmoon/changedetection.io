@@ -249,62 +249,60 @@ def test_method_in_request(client, live_server, measure_memory_usage, datastore_
 
     delete_all_watches(client)
 
-# Re #2408 - user-agent override test, also should handle case-insensitive header deduplication
+# Re #2408 - user-agent override via BrowserProfile; per-watch headers override the profile UA
 def test_ua_global_override(client, live_server, measure_memory_usage, datastore_path):
-
-    if os.getenv('WEBDRIVER_URL'):
-        print("Selenium doesnt support custom HTTP headers!!")
-        return
-
-
-    ##  live_server_setup(live_server) # Setup on conftest per function
     test_url = url_for('test_headers', _external=True)
+    datastore = client.application.config.get('DATASTORE')
 
+    # Create a requests-type browser profile with a custom UA
     res = client.post(
-        url_for("settings.settings_page"),
+        url_for('settings.settings_browsers.save'),
         data={
-            "application-minutes_between_check": 180,
-            "requests-default_ua-requests": "html-requests-user-agent"
+            'name': 'UA Test Profile',
+            'fetch_backend': 'requests',
+            'browser_connection_url': '',
+            'viewport_width': 1280,
+            'viewport_height': 1000,
+            'block_images': '',
+            'block_fonts': '',
+            'ignore_https_errors': '',
+            'user_agent': 'profile-ua-test/1.0',
+            'locale': '',
+            'custom_headers': '',
+            'original_machine_name': '',
         },
-        follow_redirects=True
+        follow_redirects=True,
     )
-    assert b'Settings updated' in res.data
+    assert b'saved.' in res.data
 
-    # Force requests fetcher so default_ua['requests'] applies regardless of system default browser
-    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, extras={'browser_profile': 'direct_http_requests'})
+    from changedetectionio.model.browser_profile import BrowserProfile
+    profile_machine_name = BrowserProfile(name='UA Test Profile', fetch_backend='requests').get_machine_name()
+
+    uuid = datastore.add_watch(url=test_url, extras={'browser_profile': profile_machine_name})
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
-
     wait_for_all_checks(client)
-    res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid="first"),
-        follow_redirects=True
-    )
 
-    assert b"html-requests-user-agent" in res.data
-    # default user-agent should have shown by now
-    # now add a custom one in the headers
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid="first"), follow_redirects=True)
+    assert b"profile-ua-test/1.0" in res.data
 
-
-    # Add some headers to a request
+    # Per-watch User-Agent header should override the profile UA (case-insensitive)
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
             "url": test_url,
-            "tags": "testtag",
-            "browser_profile": 'direct_http_requests',
-            # Important - also test case-insensitive
+            "tags": "",
+            "browser_profile": profile_machine_name,
             "headers": "User-AGent: agent-from-watch",
             "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
     wait_for_all_checks(client)
-    res = client.get(
-        url_for("ui.ui_preview.preview_page", uuid="first"),
-        follow_redirects=True
-    )
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid="first"), follow_redirects=True)
     assert b"agent-from-watch" in res.data
-    assert b"html-requests-user-agent" not in res.data
+    assert b"profile-ua-test/1.0" not in res.data
+
+    client.get(url_for('settings.settings_browsers.delete', machine_name=profile_machine_name), follow_redirects=True)
     delete_all_watches(client)
 
 def test_headers_textfile_in_request(client, live_server, measure_memory_usage, datastore_path):
@@ -314,40 +312,11 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage, 
         print("Selenium doesnt support custom HTTP headers!!")
         return
 
-    # Add our URL to the import page
-    webdriver_ua = "Hello fancy webdriver UA 1.0"
-    requests_ua = "Hello basic requests UA 1.1"
-
     test_url = url_for('test_headers', _external=True)
     if os.getenv('PLAYWRIGHT_DRIVER_URL'):
         # Because its no longer calling back to localhost but from the browser container, set in test-only.yml
         test_url = test_url.replace('localhost', 'cdio')
 
-    form_data = {
-        "application-minutes_between_check": 180,
-        "requests-default_ua-requests": requests_ua
-    }
-
-    if os.getenv('PLAYWRIGHT_DRIVER_URL'):
-        form_data["requests-default_ua-playwright"] = webdriver_ua
-
-    res = client.post(
-        url_for("settings.settings_page"),
-        data=form_data,
-        follow_redirects=True
-    )
-    assert b'Settings updated' in res.data
-
-    res = client.get(url_for("settings.settings_page"))
-
-    # Only when some kind of real browser is setup
-    if os.getenv('PLAYWRIGHT_DRIVER_URL'):
-        assert b'requests-default_ua-playwright' in res.data
-
-    # Field should always be there
-    assert b"requests-default_ua-requests" in res.data
-
-    # Add the test URL twice, we will check
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
@@ -409,12 +378,6 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage, 
     assert b"Url-Header:http://example.com" in res.data
     assert b"Url-Header-Global:http://example.com/global" in res.data
     assert b"Url-Header-Watch:http://example.com/watch" in res.data
-
-    # Check the custom UA from system settings page made it through
-    if os.getenv('PLAYWRIGHT_DRIVER_URL'):
-        assert "User-Agent:".encode('utf-8') + webdriver_ua.encode('utf-8') in res.data
-    else:
-        assert "User-Agent:".encode('utf-8') + requests_ua.encode('utf-8') in res.data
 
     # unlink headers.txt on start/stop
     delete_all_watches(client)
