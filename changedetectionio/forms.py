@@ -667,9 +667,11 @@ class ValidateCSSJSONXPATHInput(object):
                     # `jq` requires full compilation in windows and so isn't generally available
                     raise ValidationError("jq not support not found")
 
+                from changedetectionio.html_tools import validate_jq_expression
                 input = line.replace('jq:', '')
 
                 try:
+                    validate_jq_expression(input)
                     jq.compile(input)
                 except (ValueError) as e:
                     message = field.gettext('\'%s\' is not a valid jq expression. (%s)')
