@@ -15,7 +15,7 @@ def create_custom_browser_profile(client):
         url_for("settings.settings_browsers.save"),
         data={
             "name": CUSTOM_PROFILE_NAME,
-            "fetch_backend": "playwright",
+            "fetch_backend": "playwright_cdp",
             "browser_connection_url": CUSTOM_BROWSER_WS,
             "viewport_width": 1280,
             "viewport_height": 1000,
