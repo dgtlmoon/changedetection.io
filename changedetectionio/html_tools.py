@@ -70,6 +70,12 @@ _DEFAULT_UNSAFE_XPATH3_FUNCTIONS = [
     'unparsed-text-available',
     'doc',
     'doc-available',
+    'json-doc',
+    'json-doc-available',
+    'collection',           # XPath 2.0+: loads XML node collections from arbitrary URIs
+    'uri-collection',       # XPath 3.0+: enumerates URIs from resource collections
+    'transform',            # XPath 3.1: XSLT transformation (currently raises, block proactively)
+    'load-xquery-module',   # XPath 3.1: loads XQuery modules (currently raises, block proactively)
     'environment-variable',
     'available-environment-variables',
 ]
