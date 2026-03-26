@@ -218,8 +218,6 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         changedetection_json = os.path.join(self.datastore_path, "changedetection.json")
         changedetection_json_old_schema = os.path.join(self.datastore_path, "url-watches.json")
 
-        self.preconfigure_browsers_based_on_env()
-
         if os.path.exists(changedetection_json):
             # Run schema updates if needed
             # Pass current schema version from loaded datastore (defaults to 0 if not set)
@@ -246,6 +244,10 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
                                     version_tag=version_tag)
             # Maybe they copied a bunch of watch subdirs across too
             self._load_state()
+
+        # Apply env-var browser config after state is fully loaded so we can safely
+        # read existing settings without risk of being overwritten.
+        self.preconfigure_browser_profiles_based_on_env()
 
     def init_fresh_install(self, include_default_watches, version_tag):
       # Generate app_guid FIRST (required for all operations)
@@ -336,36 +338,57 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         entity = watch_class(datastore_path=self.datastore_path, __datastore=self, default=entity)
         return entity
 
-    def preconfigure_browsers_based_on_env(self):
-        """Set browser_connection_url on built-in profiles from environment variables.
+    def preconfigure_browser_profiles_based_on_env(self):
+        """Instantiate browser profiles from environment variables and store them.
 
-        Called once at datastore init (before _load_state).  Mutates the module-level
-        _BUILTINS singletons so the URLs are visible to every profile lookup for the
-        lifetime of the process without needing to touch persisted settings.
+        Called once after _load_state() so we can read the stored settings
+        before deciding whether to set a system default.
+
+        Creates BrowserProfile instances from env vars and stores them in
+        ``settings.application.browser_profiles`` under their machine names.
+        If no system-default browser profile is already stored, also sets
+        ``settings.application.browser_profile`` to the new profile.
         """
         from changedetectionio.model import browser_profile as bp
         from changedetectionio.strtobool import strtobool
 
+        store_profiles = self.__data['settings']['application'].setdefault('browser_profiles', {})
+        service_workers = os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow')
+        extra_delay = int(os.getenv('WEBDRIVER_DELAY_BEFORE_CONTENT_READY', 0))
+        configured_profile = None
+
         playwright_url = os.getenv('PLAYWRIGHT_DRIVER_URL')
         if playwright_url:
             playwright_url = playwright_url.strip('"')
-            if strtobool(os.getenv('FAST_PUPPETEER_CHROME_FETCHER', 'False')):
-                bp.BUILTIN_PUPPETEER.browser_connection_url = playwright_url
-            else:
-                bp.BUILTIN_PLAYWRIGHT.browser_connection_url = playwright_url
+            builtin = bp.BUILTIN_PUPPETEER if strtobool(os.getenv('FAST_PUPPETEER_CHROME_FETCHER', 'False')) else bp.BUILTIN_PLAYWRIGHT
+            profile = bp.BrowserProfile(
+                name=builtin.name,
+                fetch_backend=builtin.fetch_backend,
+                browser_connection_url=playwright_url,
+                service_workers=service_workers,
+                extra_delay=extra_delay,
+                is_builtin=True,
+            )
+            logger.debug(f"Configuring browser profile '{profile.get_machine_name()}' from env")
+            store_profiles[profile.get_machine_name()] = profile
+            configured_profile = configured_profile or profile
 
         webdriver_url = os.getenv('WEBDRIVER_URL')
         if webdriver_url:
-            bp.BUILTIN_SELENIUM.browser_connection_url = webdriver_url.strip('"')
+            profile = bp.BrowserProfile(
+                name=bp.BUILTIN_SELENIUM.name,
+                fetch_backend=bp.BUILTIN_SELENIUM.fetch_backend,
+                browser_connection_url=webdriver_url.strip('"'),
+                extra_delay=extra_delay,
+                is_builtin=True,
+            )
+            logger.debug(f"Configuring browser profile '{profile.get_machine_name()}' from env")
+            store_profiles[profile.get_machine_name()] = profile
+            configured_profile = configured_profile or profile
 
-        service_workers = os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow')
-        bp.BUILTIN_PLAYWRIGHT.service_workers = service_workers
-        bp.BUILTIN_PUPPETEER.service_workers = service_workers
-
-        extra_delay = int(os.getenv('WEBDRIVER_DELAY_BEFORE_CONTENT_READY', 0))
-        bp.BUILTIN_PLAYWRIGHT.extra_delay = extra_delay
-        bp.BUILTIN_PUPPETEER.extra_delay = extra_delay
-        bp.BUILTIN_SELENIUM.extra_delay = extra_delay
+        if configured_profile and not self.__data['settings']['application'].get('browser_profile'):
+            logger.debug(f"Setting system default browser profile to '{configured_profile.get_machine_name()}'")
+            self.__data['settings']['application']['browser_profile'] = configured_profile.get_machine_name()
 
 
     # ============================================================================

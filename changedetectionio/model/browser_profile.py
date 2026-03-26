@@ -275,18 +275,13 @@ RESERVED_MACHINE_NAMES: frozenset[str] = frozenset(_BUILTINS.keys())
 
 
 def get_default_browser_builtin() -> BrowserProfile:
-    """Return the built-in browser profile configured by the environment.
+    """Final fallback when no profile can be resolved through the chain.
 
-    ``preconfigure_browsers_based_on_env()`` sets ``browser_connection_url`` on
-    the relevant built-in at startup.  We just check which one has a URL.
-    Falls back to ``BUILTIN_SELENIUM`` when nothing is configured.
+    ``preconfigure_browser_profiles_based_on_env()`` sets
+    ``settings.application.browser_profile`` explicitly at startup, so this
+    fallback is only reached for watches with stale / missing machine-name
+    references.  Safe default is always direct HTTP requests.
     """
-    if BUILTIN_PLAYWRIGHT.browser_connection_url:
-        return BUILTIN_PLAYWRIGHT
-    if BUILTIN_PUPPETEER.browser_connection_url:
-        return BUILTIN_PUPPETEER
-    if BUILTIN_SELENIUM.browser_connection_url:
-        return BUILTIN_SELENIUM
     return BUILTIN_REQUESTS
 
 
@@ -303,25 +298,28 @@ def get_profile(machine_name: str, store_profiles: dict) -> Optional[BrowserProf
     """
     Look up a ``BrowserProfile`` by machine name.
 
-    Built-ins are checked first and cannot be shadowed by user profiles.
+    Stored profiles are checked first so that env-configured built-ins (written
+    by ``preconfigure_browser_profiles_based_on_env``) take priority over the
+    bare module-level defaults.  Falls back to ``_BUILTINS`` when no stored
+    version exists.
+
     Returns ``None`` when the machine name is unknown or the stored data is
     corrupt (a warning is logged in the latter case).
     """
+    raw = store_profiles.get(machine_name)
+    if raw is not None:
+        if isinstance(raw, BrowserProfile):
+            return raw
+        try:
+            return BrowserProfile(**raw)
+        except Exception as exc:
+            logger.warning(f"BrowserProfile '{machine_name}': failed to deserialize — {exc}")
+            # Fall through to built-in
+
     if machine_name in _BUILTINS:
         return _BUILTINS[machine_name]
 
-    raw = store_profiles.get(machine_name)
-    if raw is None:
-        return None
-
-    if isinstance(raw, BrowserProfile):
-        return raw
-
-    try:
-        return BrowserProfile(**raw)
-    except Exception as exc:
-        logger.warning(f"BrowserProfile '{machine_name}': failed to deserialize — {exc}")
-        return None
+    return None
 
 
 # ---------------------------------------------------------------------------
