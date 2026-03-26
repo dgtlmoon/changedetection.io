@@ -9,6 +9,10 @@ from . util import set_original_response, set_modified_response, live_server_set
 # Hard to just add more live server URLs when one test is already running (I think)
 # So we add our test here (was in a different file)
 def test_headers_in_request(client, live_server, measure_memory_usage, datastore_path):
+    if os.getenv('WEBDRIVER_URL'):
+        print("Selenium doesnt support custom HTTP headers!!")
+        return
+
     #ve_server_setup(live_server)
     # Add our URL to the import page
     test_url = url_for('test_headers', _external=True)
