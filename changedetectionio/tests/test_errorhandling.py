@@ -76,7 +76,7 @@ def test_DNS_errors(client, live_server, measure_memory_usage, datastore_path):
         b"nodename nor servname provided" in res.data or
         b"Temporary failure in name resolution" in res.data or
         b"Failed to establish a new connection" in res.data or
-        b"Connection error occurred" in res.dataa or
+        b"Connection error occurred" in res.data or
         b"net::ERR_NAME_NOT_RESOLVED" in res.data
     )
     assert found_name_resolution_error
@@ -133,7 +133,7 @@ def test_low_level_errors_clear_correctly(client, live_server, measure_memory_us
         b"nodename nor servname provided" in res.data or
         b"Temporary failure in name resolution" in res.data or
         b"Failed to establish a new connection" in res.data or
-        b"Connection error occurred" in res.dataa or
+        b"Connection error occurred" in res.data or
         b"net::ERR_NAME_NOT_RESOLVED" in res.data
     )
     assert not found_name_resolution_error
