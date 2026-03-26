@@ -35,7 +35,7 @@ def test_headers_in_request(client, live_server, measure_memory_usage, datastore
         data={
               "url": test_url,
               "tags": "",
-              "browser_profile": 'browser_chromeplaywright' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'direct_http_requests',
+              "browser_profile": "system",
               "headers": "jinja2:{{ 1+1 }}\nxxx:ooo\ncool:yeah\r\ncookie:"+cookie_header,
               "time_between_check_use_default": "y"},
         follow_redirects=True
@@ -345,7 +345,7 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage, 
         data={
             "url": test_url,
             "tags": "testtag",
-            "browser_profile": 'browser_chromeplaywright' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'direct_http_requests',
+            "browser_profile": "system",
             "headers": "xxx:ooo\ncool:yeah\r\n",
             "time_between_check_use_default": "y"},
         follow_redirects=True

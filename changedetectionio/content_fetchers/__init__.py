@@ -1,5 +1,4 @@
 import sys
-from changedetectionio.strtobool import strtobool
 from loguru import logger
 from changedetectionio.content_fetchers.exceptions import BrowserStepsStepException
 import os
@@ -75,19 +74,6 @@ def _load_fetchers():
     except Exception as e:
         logger.error(f"Error loading plugin fetchers: {e}")
 
-
-def get_active_browser_fetcher_name() -> str:
-    """Return the clean name of the browser fetcher activated by environment config.
-
-    - ``PLAYWRIGHT_DRIVER_URL`` set + ``FAST_PUPPETEER_CHROME_FETCHER=False`` → ``playwright_cdp``
-    - ``PLAYWRIGHT_DRIVER_URL`` set + ``FAST_PUPPETEER_CHROME_FETCHER=True``  → ``puppeteer``
-    - Neither set → ``selenium``
-    """
-    if os.getenv('PLAYWRIGHT_DRIVER_URL', False):
-        if not strtobool(os.getenv('FAST_PUPPETEER_CHROME_FETCHER', 'False')):
-            return 'playwright_cdp'
-        return 'puppeteer'
-    return 'selenium'
 
 
 # Default browser profiles always shown in the browser profiles table (keyed by machine name)

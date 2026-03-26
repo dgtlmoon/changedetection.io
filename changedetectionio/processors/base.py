@@ -177,6 +177,8 @@ class difference_detection_processor():
             profile_user_agent=profile.user_agent,
             ignore_https_errors=profile.ignore_https_errors,
             locale=profile.locale,
+            service_workers=profile.service_workers,
+            extra_delay=profile.extra_delay,
         )
 
         if self.watch.has_browser_steps:

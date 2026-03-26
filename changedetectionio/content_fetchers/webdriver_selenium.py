@@ -24,12 +24,11 @@ class fetcher(Fetcher):
         from urllib.parse import urlparse
         from selenium.webdriver.common.proxy import Proxy
 
-        # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
-        if not custom_browser_connection_url:
-            self.browser_connection_url = os.getenv("WEBDRIVER_URL", 'http://browser-chrome:4444/wd/hub').strip('"')
-        else:
+        if custom_browser_connection_url:
             self.browser_connection_is_custom = True
             self.browser_connection_url = custom_browser_connection_url
+        else:
+            self.browser_connection_url = 'http://browser-chrome:4444/wd/hub'
 
         ##### PROXY SETUP #####
 
@@ -121,12 +120,12 @@ class fetcher(Fetcher):
                 if not "--window-size" in os.getenv("CHROME_OPTIONS", ""):
                     driver.set_window_size(1280, 1024)
 
-                driver.implicitly_wait(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
+                driver.implicitly_wait(self.extra_delay)
 
                 if self.webdriver_js_execute_code is not None:
                     driver.execute_script(self.webdriver_js_execute_code)
                     # Selenium doesn't automatically wait for actions as good as Playwright, so wait again
-                    driver.implicitly_wait(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
+                    driver.implicitly_wait(self.extra_delay)
 
                 # @todo - how to check this? is it possible?
                 self.status_code = 200
@@ -135,7 +134,7 @@ class fetcher(Fetcher):
 
                 # @todo - dom wait loaded?
                 import time
-                time.sleep(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay)
+                time.sleep(self.extra_delay + self.render_extract_delay)
                 self.content = driver.page_source
                 self.headers = {}
 

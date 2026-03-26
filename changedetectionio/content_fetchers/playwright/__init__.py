@@ -261,7 +261,7 @@ class PlaywrightBaseFetcher(Fetcher):
                 extra_http_headers=request_headers,
                 ignore_https_errors=self.ignore_https_errors,
                 proxy=self.proxy,
-                service_workers=os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow'),
+                service_workers=self.service_workers,
                 user_agent=ua,
                 viewport={'width': self.viewport_width, 'height': self.viewport_height},
             )
@@ -312,7 +312,7 @@ class PlaywrightBaseFetcher(Fetcher):
                 await browser.close()
                 raise PageUnloadable(url=url, status_code=None, message=str(e))
 
-            extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
+            extra_wait = self.extra_delay + self.render_extract_delay
             await self.page.wait_for_timeout(extra_wait * 1000)
 
             try:

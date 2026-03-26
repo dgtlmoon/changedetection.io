@@ -139,6 +139,20 @@ class BrowserProfile(BaseModel):
     Some sites serve different prices or copy based on locale.
     """
 
+    service_workers: str = 'allow'
+    """
+    Whether to allow Service Workers in the browser context.
+    Playwright accepts ``'allow'`` or ``'block'``.
+    Block to avoid large Service Worker data transfers (e.g. YouTube).
+    """
+
+    extra_delay: int = 0
+    """
+    Extra seconds to wait after page load before extracting content
+    (on top of the per-watch ``render_extract_delay``).
+    Sourced from ``WEBDRIVER_DELAY_BEFORE_CONTENT_READY`` at startup.
+    """
+
     model_config = {"frozen": False}
 
     # ------------------------------------------------------------------
@@ -261,21 +275,19 @@ RESERVED_MACHINE_NAMES: frozenset[str] = frozenset(_BUILTINS.keys())
 
 
 def get_default_browser_builtin() -> BrowserProfile:
-    """Return the built-in browser profile that matches the current environment.
+    """Return the built-in browser profile configured by the environment.
 
-    Reads the same env vars as ``content_fetchers.get_active_browser_fetcher_name()``:
-
-    * ``PLAYWRIGHT_DRIVER_URL`` set + ``FAST_PUPPETEER_CHROME_FETCHER=False`` → Playwright
-    * ``PLAYWRIGHT_DRIVER_URL`` set + ``FAST_PUPPETEER_CHROME_FETCHER=True``  → Puppeteer
-    * Neither set → Selenium
+    ``preconfigure_browsers_based_on_env()`` sets ``browser_connection_url`` on
+    the relevant built-in at startup.  We just check which one has a URL.
+    Falls back to ``BUILTIN_SELENIUM`` when nothing is configured.
     """
-    import os
-    from changedetectionio.strtobool import strtobool
-    if os.getenv('PLAYWRIGHT_DRIVER_URL', False):
-        if not strtobool(os.getenv('FAST_PUPPETEER_CHROME_FETCHER', 'False')):
-            return BUILTIN_PLAYWRIGHT
+    if BUILTIN_PLAYWRIGHT.browser_connection_url:
+        return BUILTIN_PLAYWRIGHT
+    if BUILTIN_PUPPETEER.browser_connection_url:
         return BUILTIN_PUPPETEER
-    return BUILTIN_SELENIUM
+    if BUILTIN_SELENIUM.browser_connection_url:
+        return BUILTIN_SELENIUM
+    return BUILTIN_REQUESTS
 
 
 # ---------------------------------------------------------------------------
@@ -351,4 +363,4 @@ def resolve_browser_profile(watch, datastore) -> BrowserProfile:
             f"falling back through the chain"
         )
 
-    return BUILTIN_REQUESTS
+    return get_default_browser_builtin()

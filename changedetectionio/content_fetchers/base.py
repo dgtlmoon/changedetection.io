@@ -88,6 +88,8 @@ class Fetcher():
     profile_user_agent: str = None   # Profile-level UA; lower priority than request_headers User-Agent
     ignore_https_errors: bool = False
     locale: str = None
+    service_workers: str = 'allow'
+    extra_delay: int = 0
 
     def __init__(self, **kwargs):
         if kwargs and 'screenshot_format' in kwargs:
@@ -98,7 +100,8 @@ class Fetcher():
 
         # BrowserProfile fields — store whatever was passed, subclasses use them
         for field in ('viewport_width', 'viewport_height', 'block_images', 'block_fonts',
-                      'profile_user_agent', 'ignore_https_errors', 'locale'):
+                      'profile_user_agent', 'ignore_https_errors', 'locale',
+                      'service_workers', 'extra_delay'):
             if field in kwargs:
                 setattr(self, field, kwargs[field])
 

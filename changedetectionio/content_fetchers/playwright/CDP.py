@@ -6,8 +6,6 @@ method explicit. The PLAYWRIGHT_DRIVER_URL env var (or per-profile
 browser_connection_url) points to a running Chrome/Chromium container that
 exposes the CDP WebSocket endpoint (e.g. ws://playwright-chrome:3000).
 """
-import os
-
 from changedetectionio.pluggy_interface import hookimpl
 from changedetectionio.content_fetchers.playwright import PlaywrightBaseFetcher
 
@@ -22,10 +20,10 @@ class fetcher(PlaywrightBaseFetcher):
             self.browser_connection_is_custom = True
             self.browser_connection_url = custom_browser_connection_url
         else:
-            self.browser_connection_url = os.getenv("PLAYWRIGHT_DRIVER_URL", 'ws://playwright-chrome:3000').strip('"')
+            self.browser_connection_url = 'ws://playwright-chrome:3000'
 
-        # CDP always talks to Chromium; respect PLAYWRIGHT_BROWSER_TYPE for exotic setups
-        self.browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
+        # CDP always connects to Chromium
+        self.browser_type = 'chromium'
 
     async def _connect_browser(self, p):
         browser_type = getattr(p, self.browser_type)

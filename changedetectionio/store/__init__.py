@@ -218,6 +218,8 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         changedetection_json = os.path.join(self.datastore_path, "changedetection.json")
         changedetection_json_old_schema = os.path.join(self.datastore_path, "url-watches.json")
 
+        self.preconfigure_browsers_based_on_env()
+
         if os.path.exists(changedetection_json):
             # Run schema updates if needed
             # Pass current schema version from loaded datastore (defaults to 0 if not set)
@@ -333,6 +335,38 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
         entity = watch_class(datastore_path=self.datastore_path, __datastore=self, default=entity)
         return entity
+
+    def preconfigure_browsers_based_on_env(self):
+        """Set browser_connection_url on built-in profiles from environment variables.
+
+        Called once at datastore init (before _load_state).  Mutates the module-level
+        _BUILTINS singletons so the URLs are visible to every profile lookup for the
+        lifetime of the process without needing to touch persisted settings.
+        """
+        from changedetectionio.model import browser_profile as bp
+        from changedetectionio.strtobool import strtobool
+
+        playwright_url = os.getenv('PLAYWRIGHT_DRIVER_URL')
+        if playwright_url:
+            playwright_url = playwright_url.strip('"')
+            if strtobool(os.getenv('FAST_PUPPETEER_CHROME_FETCHER', 'False')):
+                bp.BUILTIN_PUPPETEER.browser_connection_url = playwright_url
+            else:
+                bp.BUILTIN_PLAYWRIGHT.browser_connection_url = playwright_url
+
+        webdriver_url = os.getenv('WEBDRIVER_URL')
+        if webdriver_url:
+            bp.BUILTIN_SELENIUM.browser_connection_url = webdriver_url.strip('"')
+
+        service_workers = os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow')
+        bp.BUILTIN_PLAYWRIGHT.service_workers = service_workers
+        bp.BUILTIN_PUPPETEER.service_workers = service_workers
+
+        extra_delay = int(os.getenv('WEBDRIVER_DELAY_BEFORE_CONTENT_READY', 0))
+        bp.BUILTIN_PLAYWRIGHT.extra_delay = extra_delay
+        bp.BUILTIN_PUPPETEER.extra_delay = extra_delay
+        bp.BUILTIN_SELENIUM.extra_delay = extra_delay
+
 
     # ============================================================================
     # FileSavingDataStore Abstract Method Implementations

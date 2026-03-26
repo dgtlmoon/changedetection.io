@@ -41,7 +41,7 @@ def test_proxy_noconnect_custom(client, live_server, measure_memory_usage, datas
 
     options = {
         "url": test_url,
-        "browser_profile": "browser_chromeplaywright" if os.getenv('PLAYWRIGHT_DRIVER_URL') or os.getenv("WEBDRIVER_URL") else "direct_http_requests",
+        "browser_profile": "system",
         "proxy": "ui-0custom-test-proxy",
         "time_between_check_use_default": "y",
     }

@@ -22,7 +22,7 @@ def test_preferred_proxy(client, live_server, measure_memory_usage, datastore_pa
         url_for("ui.ui_edit.edit_page", uuid="first", unpause_on_save=1),
         data={
                 "include_filters": "",
-                "browser_profile": 'browser_chromeplaywright' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'direct_http_requests',
+                "browser_profile": "system",
                 "headers": "",
                 "proxy": "proxy-two",
                 "tags": "",

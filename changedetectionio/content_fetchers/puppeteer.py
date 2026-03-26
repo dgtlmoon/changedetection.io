@@ -191,9 +191,7 @@ class fetcher(Fetcher):
             self.browser_connection_is_custom = True
             self.browser_connection_url = custom_browser_connection_url
         else:
-            # Fallback to fetching from system
-            # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
-            self.browser_connection_url = os.getenv("PLAYWRIGHT_DRIVER_URL", 'ws://playwright-chrome:3000').strip('"')
+            self.browser_connection_url = 'ws://playwright-chrome:3000'
 
         # allow per-watch proxy selection override
         # @todo check global too?
@@ -263,7 +261,7 @@ class fetcher(Fetcher):
         import re
         self.delete_browser_steps_screenshots()
 
-        n = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 12)) + self.render_extract_delay
+        n = self.extra_delay + self.render_extract_delay
         extra_wait = min(n, 15)
 
         logger.debug(f"Extra wait set to {extra_wait}s, requested was {n}s.")
