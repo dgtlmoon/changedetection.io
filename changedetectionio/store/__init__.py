@@ -272,13 +272,11 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         if include_default_watches:
             self.add_watch(
                 url='https://news.ycombinator.com/',
-                tag='Tech news',
-                extras={'browser_profile': 'direct_http_requests'}
+                tag='Tech news'
             )
             self.add_watch(
                 url='https://changedetection.io/CHANGELOG.txt',
-                tag='changedetection.io',
-                extras={'browser_profile': 'direct_http_requests'}
+                tag='changedetection.io'
             )
 
         # Create changedetection.json immediately
@@ -348,6 +346,8 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         ``settings.application.browser_profiles`` under their machine names.
         If no system-default browser profile is already stored, also sets
         ``settings.application.browser_profile`` to the new profile.
+
+        NOTE: Most of this is largely for historical and testing purposes.
         """
         from changedetectionio.model import browser_profile as bp
         from changedetectionio.strtobool import strtobool
@@ -364,7 +364,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
             profile = bp.BrowserProfile(
                 name=builtin.name,
                 fetch_backend=builtin.fetch_backend,
-                browser_connection_url=playwright_url,
+                browser_connection_url=playwright_url.strip('"'),
                 service_workers=service_workers,
                 extra_delay=extra_delay,
                 is_builtin=True,
