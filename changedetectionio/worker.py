@@ -214,6 +214,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     process_changedetection_results = False
 
                 except content_fetchers_exceptions.Non200ErrorCodeReceived as e:
+                    logger.info(f"Watch UUID {uuid} Non200ErrorCodeReceived")
                     if e.status_code == 403:
                         err_text = "Error - 403 (Access denied) received"
                     elif e.status_code == 404:

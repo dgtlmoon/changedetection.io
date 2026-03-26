@@ -331,7 +331,12 @@ class PlaywrightBaseFetcher(Fetcher):
 
             if self.status_code != 200 and not ignore_status_codes:
                 screenshot = await capture_full_page_async(self.page, screenshot_format=self.screenshot_format, watch_uuid=watch_uuid, lock_viewport_elements=self.lock_viewport_elements)
-                raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=screenshot)
+                try:
+                    page_html = await self.page.content()
+                except Exception as e:
+                    logger.warning(f"Got non-200 status {self.status_code} but failed to fetch page content: {e}")
+                    page_html = None
+                raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=screenshot, page_html=page_html)
 
             if not empty_pages_are_a_change and len((await self.page.content()).strip()) == 0:
                 await context.close()
