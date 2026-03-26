@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
 Tests that the watchlist shows/hides the browser status icon based on the
-effective browser profile, and that the system default does not bleed through
-when set to 'direct_http_requests'.
+effective browser profile, covering the full inheritance chain:
+
+  watch browser_profile → system default browser_profile → direct_http_requests
 """
 
 import pytest
@@ -16,6 +17,30 @@ def set_system_default_profile(client, profile_machine_name):
         follow_redirects=True,
     )
     assert res.status_code == 200
+
+
+def create_custom_browser_profile(client, name='My Custom Chrome'):
+    """Create a custom browser profile using playwright_cdp and return its machine name."""
+    res = client.post(
+        url_for('settings.settings_browsers.save'),
+        data={
+            'name': name,
+            'fetch_backend': 'playwright_cdp',
+            'browser_connection_url': 'ws://localhost:3000',
+            'viewport_width': 1280,
+            'viewport_height': 1000,
+            'block_images': '',
+            'block_fonts': '',
+            'ignore_https_errors': '',
+            'user_agent': '',
+            'locale': '',
+            'original_machine_name': '',
+        },
+        follow_redirects=True,
+    )
+    assert b'saved.' in res.data
+    from changedetectionio.model.browser_profile import BrowserProfile
+    return BrowserProfile(name=name, fetch_backend='playwright_cdp').get_machine_name()
 
 
 # ---------------------------------------------------------------------------
@@ -45,16 +70,12 @@ def test_fetcher_status_icons_filter_uses_status_icon(monkeypatch):
     """fetcher_status_icons filter returns icon HTML for a class with status_icon set."""
     from changedetectionio import content_fetchers
 
-    # Inject a fake fetcher with a known status_icon — no real browser needed.
-    # Use monkeypatch.setitem so the entry is removed automatically after the test,
-    # preventing it from polluting available_browser_fetchers() in later tests.
     class FakeBrowserFetcher:
         status_icon = {'filename': 'test-icon.png', 'alt': 'Test browser', 'title': 'Test browser'}
         supports_screenshots = True
 
     monkeypatch.setitem(content_fetchers.FETCHERS, 'fake_browser', FakeBrowserFetcher)
 
-    # Import the filter function directly and call it inside an app context
     from changedetectionio.flask_app import app
     with app.test_request_context('/'):
         from changedetectionio.flask_app import _jinja2_filter_fetcher_status_icons
@@ -69,88 +90,68 @@ def test_fetcher_status_icons_filter_uses_status_icon(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# Integration tests — watchlist HTML output
+# Integration tests — inheritance chain
 # ---------------------------------------------------------------------------
 
-def test_chrome_icon_shown_for_browser_profile(client, live_server, measure_memory_usage, datastore_path):
-    """Watch explicitly set to browser_chromeplaywright should show the chrome icon."""
+def test_watch_explicit_browser_profile_shows_icon(client, live_server, measure_memory_usage, datastore_path):
+    """Watch explicitly assigned a browser profile shows the chrome icon,
+    even when the system default is requests."""
     datastore = client.application.config.get('DATASTORE')
     set_system_default_profile(client, 'direct_http_requests')
 
-    uuid = datastore.add_watch(url='http://example.com', extras={ 'paused': True})
+    machine_name = create_custom_browser_profile(client)
+    uuid = datastore.add_watch(url='http://example.com', extras={'browser_profile': machine_name, 'paused': True})
     res = client.get(url_for('watchlist.index'), follow_redirects=True)
     assert b'Using a Chrome browser' in res.data, \
-        "Chrome icon should appear when watch is set to browser_chromeplaywright"
+        "Chrome icon should appear when watch is explicitly set to a browser profile"
+
     datastore.delete(uuid)
+    client.get(url_for('settings.settings_browsers.delete', machine_name=machine_name), follow_redirects=True)
 
 
-def test_no_icon_for_requests_profile(client, live_server, measure_memory_usage, datastore_path):
-    """Watch explicitly set to direct_http_requests should not show the chrome icon."""
+def test_watch_explicit_requests_profile_no_icon(client, live_server, measure_memory_usage, datastore_path):
+    """Watch explicitly set to direct_http_requests never shows the chrome icon,
+    even when the system default is a browser."""
+    datastore = client.application.config.get('DATASTORE')
+
+    machine_name = create_custom_browser_profile(client)
+    set_system_default_profile(client, machine_name)
+
+    uuid = datastore.add_watch(url='http://example.com', extras={'browser_profile': 'direct_http_requests', 'paused': True})
+    res = client.get(url_for('watchlist.index'), follow_redirects=True)
+    assert b'Using a Chrome browser' not in res.data, \
+        "Chrome icon should NOT appear when watch is explicitly set to direct_http_requests"
+
+    datastore.delete(uuid)
+    set_system_default_profile(client, 'direct_http_requests')
+    client.get(url_for('settings.settings_browsers.delete', machine_name=machine_name), follow_redirects=True)
+
+
+def test_system_default_requests_inherited_by_watch(client, live_server, measure_memory_usage, datastore_path):
+    """Watch using system default inherits requests → no icon."""
     datastore = client.application.config.get('DATASTORE')
     set_system_default_profile(client, 'direct_http_requests')
 
     uuid = datastore.add_watch(url='http://example.com', extras={'paused': True})
     res = client.get(url_for('watchlist.index'), follow_redirects=True)
     assert b'Using a Chrome browser' not in res.data, \
-        "Chrome icon should NOT appear when watch is set to direct_http_requests"
-    datastore.delete(uuid)
-
-
-def test_no_icon_when_system_default_is_requests(client, live_server, measure_memory_usage, datastore_path):
-    """Watch using system default, system default = requests → no chrome icon."""
-    datastore = client.application.config.get('DATASTORE')
-    set_system_default_profile(client, 'direct_http_requests')
-
-    uuid = datastore.add_watch(url='http://example.com', extras={'paused': True})  # browser_profile=None → system default
-    res = client.get(url_for('watchlist.index'), follow_redirects=True)
-    assert b'Using a Chrome browser' not in res.data, \
         "Chrome icon should NOT appear when system default is requests and watch uses system default"
+
     datastore.delete(uuid)
 
 
-def test_icon_when_system_default_is_browser(client, live_server, measure_memory_usage, datastore_path):
-    """Watch using system default, system default = browser_chromeplaywright → chrome icon shown."""
+def test_system_default_browser_inherited_by_watch(client, live_server, measure_memory_usage, datastore_path):
+    """Watch using system default inherits a browser profile → icon shown."""
     datastore = client.application.config.get('DATASTORE')
-    set_system_default_profile(client, 'browser_chromeplaywright')
 
-    uuid = datastore.add_watch(url='http://example.com', extras={'paused': True})  # browser_profile=None → system default
+    machine_name = create_custom_browser_profile(client)
+    set_system_default_profile(client, machine_name)
+
+    uuid = datastore.add_watch(url='http://example.com', extras={'paused': True})
     res = client.get(url_for('watchlist.index'), follow_redirects=True)
     assert b'Using a Chrome browser' in res.data, \
-        "Chrome icon should appear when system default is browser_chromeplaywright and watch uses system default"
-
-    set_system_default_profile(client, 'direct_http_requests')
-    datastore.delete(uuid)
-
-
-def test_icon_shown_for_custom_browser_profile(client, live_server, measure_memory_usage, datastore_path):
-    """Custom browser profile using playwright fetcher should also show chrome icon."""
-    datastore = client.application.config.get('DATASTORE')
-    set_system_default_profile(client, 'direct_http_requests')
-
-    # Create a custom profile that uses playwright
-    res = client.post(
-        url_for('settings.settings_browsers.save'),
-        data={
-            'name': 'My Custom Chrome',
-            'fetch_backend': 'playwright',
-            'browser_connection_url': 'ws://localhost:3000',
-            'viewport_width': 1280,
-            'viewport_height': 1000,
-            'block_images': '',
-            'block_fonts': '',
-            'ignore_https_errors': '',
-            'user_agent': '',
-            'locale': '',
-            'original_machine_name': '',
-        },
-        follow_redirects=True,
-    )
-    assert b'saved.' in res.data
-
-    uuid = datastore.add_watch(url='http://example.com', extras={'browser_profile': 'my_custom_chrome', 'paused': True})
-    res = client.get(url_for('watchlist.index'), follow_redirects=True)
-    assert b'Using a Chrome browser' in res.data, \
-        "Chrome icon should appear for a custom webdriver browser profile"
+        "Chrome icon should appear when system default is a browser profile and watch uses system default"
 
     datastore.delete(uuid)
-    client.get(url_for('settings.settings_browsers.delete', machine_name='my_custom_chrome'), follow_redirects=True)
+    set_system_default_profile(client, 'direct_http_requests')
+    client.get(url_for('settings.settings_browsers.delete', machine_name=machine_name), follow_redirects=True)
