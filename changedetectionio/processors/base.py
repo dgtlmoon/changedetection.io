@@ -140,15 +140,14 @@ class difference_detection_processor():
         if self.watch.is_pdf:
             profile = BUILTIN_REQUESTS
 
-        # Resolve proxy — custom browser endpoints skip proxy (connection URL is already routing)
+        # Resolve proxy for the target URL fetch.
+        # Note: browser_connection_url is the WebSocket endpoint to reach the remote browser,
+        # which is separate from the proxy used by the browser to fetch target pages.
         proxy_url = None
         preferred_proxy_id = self.preferred_proxy_override or self.datastore.get_preferred_proxy_for_watch(uuid=self.watch.get('uuid'))
         if preferred_proxy_id:
-            if not profile.browser_connection_url:
-                proxy_url = self.datastore.proxy_list.get(preferred_proxy_id, {}).get('url')
-                logger.debug(f"Proxy '{preferred_proxy_id}' → '{proxy_url}' for {url}")
-            else:
-                logger.debug("Skipping proxy — custom browser_connection_url is set")
+            proxy_url = self.datastore.proxy_list.get(preferred_proxy_id, {}).get('url')
+            logger.debug(f"Proxy '{preferred_proxy_id}' → '{proxy_url}' for {url}")
 
         logger.debug(f"BrowserProfile '{profile.get_machine_name()}' (fetcher={profile.fetch_backend}) for watch {self.watch['uuid']}")
 
