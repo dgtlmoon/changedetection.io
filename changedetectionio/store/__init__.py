@@ -339,15 +339,14 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
     def preconfigure_browser_profiles_based_on_env(self):
         """Instantiate browser profiles from environment variables and store them.
 
-        Called once after _load_state() so we can read the stored settings
-        before deciding whether to set a system default.
+        Always runs at the end of reload_state() — covers fresh installs,
+        existing datastores, and server restarts.  Env vars always win so that
+        changing PLAYWRIGHT_DRIVER_URL and restarting is reflected immediately.
 
         Creates BrowserProfile instances from env vars and stores them in
-        ``settings.application.browser_profiles`` under their machine names.
-        If no system-default browser profile is already stored, also sets
-        ``settings.application.browser_profile`` to the new profile.
-
-        NOTE: Most of this is largely for historical and testing purposes.
+        ``settings.application.browser_profiles`` under their machine names,
+        then sets ``settings.application.browser_profile`` to that profile as
+        the system-wide default.
         """
         from changedetectionio.model import browser_profile as bp
         from changedetectionio.strtobool import strtobool
@@ -364,14 +363,14 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
             profile = bp.BrowserProfile(
                 name=builtin.name,
                 fetch_backend=builtin.fetch_backend,
-                browser_connection_url=playwright_url.strip('"'),
+                browser_connection_url=playwright_url,
                 service_workers=service_workers,
                 extra_delay=extra_delay,
                 is_builtin=True,
             )
             logger.debug(f"Configuring browser profile '{profile.get_machine_name()}' from env")
             store_profiles[profile.get_machine_name()] = profile
-            configured_profile = configured_profile or profile
+            configured_profile = profile
 
         webdriver_url = os.getenv('WEBDRIVER_URL')
         if webdriver_url:
@@ -384,9 +383,10 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
             )
             logger.debug(f"Configuring browser profile '{profile.get_machine_name()}' from env")
             store_profiles[profile.get_machine_name()] = profile
-            configured_profile = configured_profile or profile
+            if not configured_profile:
+                configured_profile = profile
 
-        if configured_profile and not self.__data['settings']['application'].get('browser_profile'):
+        if configured_profile:
             logger.debug(f"Setting system default browser profile to '{configured_profile.get_machine_name()}'")
             self.__data['settings']['application']['browser_profile'] = configured_profile.get_machine_name()
 
