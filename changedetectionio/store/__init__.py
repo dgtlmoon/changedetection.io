@@ -909,6 +909,16 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
         return proxy_list if len(proxy_list) else None
 
+    def get_proxy_url_for_watch(self, uuid, override_id=None):
+        """
+        Returns the resolved proxy URL string for a watch, or None.
+        override_id forces a specific proxy (e.g. proxy checker bypass).
+        """
+        proxy_id = override_id or self.get_preferred_proxy_for_watch(uuid)
+        if proxy_id:
+            return self.proxy_list.get(proxy_id, {}).get('url')
+        return None
+
     def get_preferred_proxy_for_watch(self, uuid):
         """
         Returns the preferred proxy by ID key

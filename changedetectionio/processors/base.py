@@ -143,11 +143,9 @@ class difference_detection_processor():
         # Resolve proxy for the target URL fetch.
         # Note: browser_connection_url is the WebSocket endpoint to reach the remote browser,
         # which is separate from the proxy used by the browser to fetch target pages.
-        proxy_url = None
-        preferred_proxy_id = self.preferred_proxy_override or self.datastore.get_preferred_proxy_for_watch(uuid=self.watch.get('uuid'))
-        if preferred_proxy_id:
-            proxy_url = self.datastore.proxy_list.get(preferred_proxy_id, {}).get('url')
-            logger.debug(f"Proxy '{preferred_proxy_id}' → '{proxy_url}' for {url}")
+        proxy_url = self.datastore.get_proxy_url_for_watch(self.watch.get('uuid'), override_id=self.preferred_proxy_override)
+        if proxy_url:
+            logger.debug(f"Proxy '{proxy_url}' for {url}")
 
         logger.debug(f"BrowserProfile '{profile.get_machine_name()}' (fetcher={profile.fetch_backend}) for watch {self.watch['uuid']}")
 
