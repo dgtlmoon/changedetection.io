@@ -35,7 +35,7 @@ def test_content_filter_live_preview(client, live_server, measure_memory_usage, 
         url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
             "include_filters": "",
-            "fetch_backend": 'html_requests',
+            "browser_profile": 'direct_http_requests',
             "ignore_text": "something to ignore",
             "trigger_text": "something to trigger",
             "url": test_url,
@@ -64,7 +64,7 @@ def test_content_filter_live_preview(client, live_server, measure_memory_usage, 
         url_for("ui.ui_edit.watch_get_preview_rendered", uuid=uuid),
         data={
             "include_filters": "",
-            "fetch_backend": 'html_requests',
+            "browser_profile": 'direct_http_requests',
             "ignore_text": "sOckS", # Also be sure case insensitive works
             "trigger_text": "AweSOme",
             "url": test_url,

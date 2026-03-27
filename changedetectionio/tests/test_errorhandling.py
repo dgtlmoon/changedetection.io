@@ -10,6 +10,8 @@ from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 
 
 def _runner_test_http_errors(client, live_server, http_code, expected_text, datastore_path):
+    from loguru import logger
+    logger.debug(f"_runner_test_http_errors - testing text '{expected_text}' for code {http_code}")
 
     with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("Now you going to get a {} error code\n".format(http_code))
@@ -19,6 +21,11 @@ def _runner_test_http_errors(client, live_server, http_code, expected_text, data
     test_url = url_for('test_endpoint',
                        status_code=http_code,
                        _external=True)
+
+    if  os.getenv("PLAYWRIGHT_DRIVER_URL") or os.getenv('WEBDRIVER_URL'):
+        logger.warning("!!! Looks like we're running test with playwright or selenium, so FORCE a connection back to our container 'cdio'")
+        test_url = test_url.replace('localhost.localdomain', 'changedet')
+        test_url = test_url.replace('localhost', 'changedet')
 
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -76,7 +83,8 @@ def test_DNS_errors(client, live_server, measure_memory_usage, datastore_path):
         b"nodename nor servname provided" in res.data or
         b"Temporary failure in name resolution" in res.data or
         b"Failed to establish a new connection" in res.data or
-        b"Connection error occurred" in res.data
+        b"Connection error occurred" in res.data or
+        b"net::ERR_NAME_NOT_RESOLVED" in res.data
     )
     assert found_name_resolution_error
     # Should always record that we tried
@@ -108,7 +116,8 @@ def test_low_level_errors_clear_correctly(client, live_server, measure_memory_us
         b"nodename nor servname provided" in res.data or
         b"Temporary failure in name resolution" in res.data or
         b"Failed to establish a new connection" in res.data or
-        b"Connection error occurred" in res.data
+        b"Connection error occurred" in res.data or
+        b"net::ERR_NAME_NOT_RESOLVED" in res.data
     )
     assert found_name_resolution_error
 
@@ -117,7 +126,7 @@ def test_low_level_errors_clear_correctly(client, live_server, measure_memory_us
         url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
             "url": test_url,
-            "fetch_backend": "html_requests",
+            "browser_profile": "direct_http_requests",
             "time_between_check_use_default": "y"},
         follow_redirects=True
     )
@@ -131,7 +140,8 @@ def test_low_level_errors_clear_correctly(client, live_server, measure_memory_us
         b"nodename nor servname provided" in res.data or
         b"Temporary failure in name resolution" in res.data or
         b"Failed to establish a new connection" in res.data or
-        b"Connection error occurred" in res.data
+        b"Connection error occurred" in res.data or
+        b"net::ERR_NAME_NOT_RESOLVED" in res.data
     )
     assert not found_name_resolution_error
 

@@ -85,6 +85,9 @@ class Tag(Resource):
         # Create clean tag dict without Watch-specific fields
         clean_tag = {k: v for k, v in tag.items() if k not in watch_only_fields}
 
+        # fetch_backend is a legacy field superseded by browser_profile — omit from API response
+        clean_tag.pop('fetch_backend', None)
+
         return clean_tag
 
     @auth.check_token

@@ -68,7 +68,7 @@ def test_bad_access(client, live_server, measure_memory_usage, datastore_path):
               "url": 'javascript:alert(document.domain)',
               "tags": "",
               "method": "GET",
-              "fetch_backend": "html_requests",
+              "browser_profile": "direct_http_requests",
               "body": "",
               "time_between_check_use_default": "y"},
         follow_redirects=True
@@ -159,8 +159,7 @@ def test_xss(client, live_server, measure_memory_usage, datastore_path):
               "application-notification_title": '"><img src=x onerror=alert(document.domain)>',
               "application-notification_body": '"><img src=x onerror=alert(document.domain)>',
               "application-notification_format": default_notification_format,
-              "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+              "requests-time_between_check-minutes": 180},
         follow_redirects=True
     )
 
@@ -205,7 +204,7 @@ def test_xss_watch_last_error(client, live_server, measure_memory_usage, datasto
         data={
             "include_filters": '<a href="https://foobar"></a><script>alert(123);</script>',
             "url": url_for('test_endpoint', _external=True),
-            'fetch_backend': "html_requests",
+            'browser_profile': "direct_http_requests",
             "time_between_check_use_default": "y"
         },
         follow_redirects=True

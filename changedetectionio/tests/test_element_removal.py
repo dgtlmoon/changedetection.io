@@ -171,7 +171,7 @@ def test_element_removal_full(client, live_server, measure_memory_usage, datasto
             "url": test_url,
             "tags": "",
             "headers": "",
-            "fetch_backend": "html_requests",
+            "browser_profile": "direct_http_requests",
             "time_between_check_use_default": "y",
         },
         follow_redirects=True,

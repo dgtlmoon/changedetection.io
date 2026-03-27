@@ -4,7 +4,7 @@ $(document).ready(function(){
 });
 
 var checkUserVal = function(){
-    if($('#fetch_backend input:checked').val()=='html_requests') {
+    if($('#fetch_backend input:checked').val()=='requests') {
       $('#request-override').show();
       $('#webdriver-stepper').hide();
     } else {

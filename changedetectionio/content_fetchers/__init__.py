@@ -1,5 +1,4 @@
 import sys
-from changedetectionio.strtobool import strtobool
 from loguru import logger
 from changedetectionio.content_fetchers.exceptions import BrowserStepsStepException
 import os
@@ -25,87 +24,71 @@ SCREENSHOT_MAX_TOTAL_HEIGHT = int(os.getenv("SCREENSHOT_MAX_HEIGHT", SCREENSHOT_
 # Most modern GPUs support 16384x16384 textures, so 1280x10000 is safe
 SCREENSHOT_SIZE_STITCH_THRESHOLD = int(os.getenv("SCREENSHOT_CHUNK_HEIGHT", 10000))
 
-# available_fetchers() will scan this implementation looking for anything starting with html_
-# this information is used in the form selections
-from changedetectionio.content_fetchers.requests import fetcher as html_requests
-
-
 import importlib.resources
 XPATH_ELEMENT_JS = importlib.resources.files("changedetectionio.content_fetchers.res").joinpath('xpath_element_scraper.js').read_text(encoding='utf-8')
 INSTOCK_DATA_JS = importlib.resources.files("changedetectionio.content_fetchers.res").joinpath('stock-not-in-stock.js').read_text(encoding='utf-8')
 FAVICON_FETCHER_JS = importlib.resources.files("changedetectionio.content_fetchers.res").joinpath('favicon-fetcher.js').read_text(encoding='utf-8')
 
 
+# Registry: clean fetcher name → fetcher class (e.g. 'requests', 'playwright', 'cloakbrowser')
+FETCHERS: dict = {}
+
+
+def register_fetcher(name: str, cls) -> None:
+    """Register a fetcher class under its clean name (no html_ prefix)."""
+    FETCHERS[name] = cls
+
+
+def get_fetcher(name: str):
+    """Return the fetcher class for a clean name, or None."""
+    return FETCHERS.get(name)
+
+
 def available_fetchers():
-    # See the if statement at the bottom of this file for how we switch between playwright and webdriver
-    import inspect
-    p = []
-
-    # Get built-in fetchers (but skip plugin fetchers that were added via setattr)
-    for name, obj in inspect.getmembers(sys.modules[__name__], inspect.isclass):
-        if inspect.isclass(obj):
-            # @todo html_ is maybe better as fetcher_ or something
-            # In this case, make sure to edit the default one in store.py and fetch_site_status.py
-            if name.startswith('html_'):
-                # Skip plugin fetchers that were already registered
-                if name not in _plugin_fetchers:
-                    t = tuple([name, obj.fetcher_description])
-                    p.append(t)
-
-    # Get plugin fetchers from cache (already loaded at module init)
-    for name, fetcher_class in _plugin_fetchers.items():
-        if hasattr(fetcher_class, 'fetcher_description'):
-            t = tuple([name, fetcher_class.fetcher_description])
-            p.append(t)
-        else:
-            logger.warning(f"Plugin fetcher '{name}' does not have fetcher_description attribute")
-
-    return p
+    """Return list of (name, description) for all registered fetchers."""
+    return [(name, cls.fetcher_description) for name, cls in FETCHERS.items()
+            if hasattr(cls, 'fetcher_description')]
 
 
-def get_plugin_fetchers():
-    """Load and return all plugin fetchers from the centralized plugin manager."""
-    from changedetectionio.pluggy_interface import plugin_manager
+def available_browser_fetchers():
+    """Return list of (name, description) for fetchers that support screenshots (browser-type fetchers)."""
+    return [(name, cls.fetcher_description) for name, cls in FETCHERS.items()
+            if cls.supports_screenshots]
 
-    fetchers = {}
+
+def _load_fetchers():
+    """Load all fetchers (built-ins + plugins) into the FETCHERS registry."""
+    from changedetectionio.pluggy_interface import plugin_manager, register_builtin_fetchers
+
+    # Built-ins must be registered first
+    register_builtin_fetchers()
+
+    # Then external plugins
     try:
-        # Call the register_content_fetcher hook from all registered plugins
         results = plugin_manager.hook.register_content_fetcher()
         for result in results:
             if result:
                 name, fetcher_class = result
-                fetchers[name] = fetcher_class
-                # Register in current module so hasattr() checks work
-                setattr(sys.modules[__name__], name, fetcher_class)
-                logger.info(f"Registered plugin fetcher: {name} - {getattr(fetcher_class, 'fetcher_description', 'No description')}")
+                register_fetcher(name, fetcher_class)
+                logger.info(f"Registered fetcher: {name} - {getattr(fetcher_class, 'fetcher_description', '?')}")
     except Exception as e:
         logger.error(f"Error loading plugin fetchers: {e}")
 
-    return fetchers
 
 
-# Initialize plugins at module load time
-_plugin_fetchers = get_plugin_fetchers()
+# Default browser profiles always shown in the browser profiles table (keyed by machine name)
+DEFAULT_BROWSER_PROFILES: dict = {}
 
 
-# Decide which is the 'real' HTML webdriver, this is more a system wide config
-# rather than site-specific.
-use_playwright_as_chrome_fetcher = os.getenv('PLAYWRIGHT_DRIVER_URL', False)
-if use_playwright_as_chrome_fetcher:
-    # @note - For now, browser steps always uses playwright
-    if not strtobool(os.getenv('FAST_PUPPETEER_CHROME_FETCHER', 'False')):
-        logger.debug('Using Playwright library as fetcher')
-        from .playwright import fetcher as html_webdriver
-    else:
-        logger.debug('Using direct Python Puppeteer library as fetcher')
-        from .puppeteer import fetcher as html_webdriver
-
-else:
-    logger.debug("Falling back to selenium as fetcher")
-    from .webdriver_selenium import fetcher as html_webdriver
+def _register_default_browser_profiles():
+    """Register browser profiles that are always present in the profiles table."""
+    from changedetectionio.model.browser_profile import BUILTIN_REQUESTS
+    DEFAULT_BROWSER_PROFILES[BUILTIN_REQUESTS.get_machine_name()] = BUILTIN_REQUESTS
 
 
-# Register built-in fetchers as plugins after all imports are complete
-from changedetectionio.pluggy_interface import register_builtin_fetchers
-register_builtin_fetchers()
+# Populate the registry at module load time
+_load_fetchers()
+
+
+_register_default_browser_profiles()
 

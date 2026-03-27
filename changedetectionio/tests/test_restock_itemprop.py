@@ -109,7 +109,7 @@ def test_itemprop_price_change(client, live_server, measure_memory_usage, datast
     set_original_response(props_markup=instock_props[0], price='120.45', datastore_path=datastore_path)
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
-        data={"processor_config_restock_diff-follow_price_changes": "", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
+        data={"processor_config_restock_diff-follow_price_changes": "", "url": test_url, "tags": "", "headers": "", 'browser_profile': "direct_http_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -141,7 +141,7 @@ def _run_test_minmax_limit(client, extra_watch_edit_form, datastore_path):
         "url": test_url,
         "headers": "",
         "time_between_check-hours": 5,
-        'fetch_backend': "html_requests",
+        'browser_profile': "direct_http_requests",
         "time_between_check_use_default": "y"
     }
     data.update(extra_watch_edit_form)
@@ -263,7 +263,7 @@ def test_itemprop_percent_threshold(client, live_server, measure_memory_usage, d
               "url": test_url,
               "tags": "",
               "headers": "",
-              'fetch_backend': "html_requests",
+              'browser_profile': "direct_http_requests",
               "time_between_check_use_default": "y"
               },
         follow_redirects=True
@@ -309,7 +309,7 @@ def test_itemprop_percent_threshold(client, live_server, measure_memory_usage, d
               "processor_config_restock_diff-price_change_threshold_percent": 5.05,
               "processor": "text_json_diff",
               "url": test_url,
-              'fetch_backend': "html_requests",
+              'browser_profile': "direct_http_requests",
               "time_between_check_use_default": "y"
               },
         follow_redirects=True
@@ -361,8 +361,7 @@ def test_change_with_notification_values(client, live_server, measure_memory_usa
               "application-notification_title": "title new price {{restock.price}}",
               "application-notification_body": "new price {{restock.price}} previous price {{restock.previous_price}} instock {{restock.in_stock}}",
               "application-notification_format": default_notification_format,
-              "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+              "requests-time_between_check-minutes": 180},
         follow_redirects=True
     )
 

@@ -23,6 +23,7 @@ class difference_detection_processor():
     watch = None
     xpath_data = None
     preferred_proxy = None
+    preferred_proxy_override = None   # Set externally to force a specific proxy (e.g. proxy checker)
     screenshot_format = SCREENSHOT_FORMAT_JPEG
     last_raw_content_checksum = None
 
@@ -36,6 +37,8 @@ class difference_detection_processor():
         # 2. Preserves Watch object with properties (.link, .is_pdf, etc.) - can't use dict()
         # 3. Safe now: Watch.__deepcopy__() shares datastore ref (no memory leak) but copies dict data
         self.watch = deepcopy(self.datastore.data['watching'].get(watch_uuid))
+        if self.watch is None:
+            raise KeyError(f"Watch UUID {watch_uuid} not found in datastore (deleted before processing?)")
 
         # Generic fetcher that should be extended (requests, playwright etc)
         self.fetcher = Fetcher()
@@ -115,82 +118,65 @@ class difference_detection_processor():
                 f"Set ALLOW_IANA_RESTRICTED_ADDRESSES=true to allow."
             )
 
-    async def call_browser(self, preferred_proxy_id=None):
+    async def call_browser(self):
 
         from requests.structures import CaseInsensitiveDict
+        from changedetectionio.model.browser_profile import resolve_browser_profile, BUILTIN_REQUESTS
 
         url = self.watch.link
 
-        # Protect against file:, file:/, file:// access, check the real "link" without any meta "source:" etc prepended.
+        # Protect against file:, file:/, file:// access
         if re.search(r'^file:', url.strip(), re.IGNORECASE):
             if not strtobool(os.getenv('ALLOW_FILE_URI', 'false')):
-                raise Exception(
-                    "file:// type access is denied for security reasons."
-                )
+                raise Exception("file:// type access is denied for security reasons.")
 
         await self.validate_iana_url()
 
-        # Requests, playwright, other browser via wss:// etc, fetch_extra_something
-        prefer_fetch_backend = self.watch.get('fetch_backend', 'system')
+        # Resolve the full browser profile for this watch (watch → tag → global → built-in)
+        profile = resolve_browser_profile(self.watch, self.datastore)
 
-        # Proxy ID "key"
-        preferred_proxy_id = preferred_proxy_id if preferred_proxy_id else self.datastore.get_preferred_proxy_for_watch(
-            uuid=self.watch.get('uuid'))
-
-        # Pluggable content self.fetcher
-        if not prefer_fetch_backend or prefer_fetch_backend == 'system':
-            prefer_fetch_backend = self.datastore.data['settings']['application'].get('fetch_backend')
-
-        # In the case that the preferred fetcher was a browser config with custom connection URL..
-        # @todo - on save watch, if its extra_browser_ then it should be obvious it will use playwright (like if its requests now..)
-        custom_browser_connection_url = None
-        if prefer_fetch_backend.startswith('extra_browser_'):
-            (t, key) = prefer_fetch_backend.split('extra_browser_')
-            connection = list(
-                filter(lambda s: (s['browser_name'] == key), self.datastore.data['settings']['requests'].get('extra_browsers', [])))
-            if connection:
-                prefer_fetch_backend = 'html_webdriver'
-                custom_browser_connection_url = connection[0].get('browser_connection_url')
-
-        # PDF should be html_requests because playwright will serve it up (so far) in a embedded page
+        # PDFs always use the requests fetcher — browsers render them in an embedded viewer
         # @todo https://github.com/dgtlmoon/changedetection.io/issues/2019
-        # @todo needs test to or a fix
         if self.watch.is_pdf:
-            prefer_fetch_backend = "html_requests"
+            profile = BUILTIN_REQUESTS
 
-        # Grab the right kind of 'fetcher', (playwright, requests, etc)
+        # Resolve proxy for the target URL fetch.
+        # Note: browser_connection_url is the WebSocket endpoint to reach the remote browser,
+        # which is separate from the proxy used by the browser to fetch target pages.
+        proxy_url = self.datastore.get_proxy_url_for_watch(self.watch.get('uuid'), override_id=self.preferred_proxy_override)
+        if proxy_url:
+            logger.debug(f"Proxy '{proxy_url}' for {url}")
+
+        logger.debug(f"BrowserProfile '{profile.get_machine_name()}' (fetcher={profile.fetch_backend}) for watch {self.watch['uuid']}")
+
+        # Select the fetcher class
         from changedetectionio import content_fetchers
-        if hasattr(content_fetchers, prefer_fetch_backend):
-            # @todo TEMPORARY HACK - SWITCH BACK TO PLAYWRIGHT FOR BROWSERSTEPS
-            if prefer_fetch_backend == 'html_webdriver' and self.watch.has_browser_steps:
-                # This is never supported in selenium anyway
-                logger.warning(
-                    "Using playwright fetcher override for possible puppeteer request in browsersteps, because puppetteer:browser steps is incomplete.")
-                from changedetectionio.content_fetchers.playwright import fetcher as playwright_fetcher
-                fetcher_obj = playwright_fetcher
-            else:
-                fetcher_obj = getattr(content_fetchers, prefer_fetch_backend)
-        else:
-            # What it referenced doesnt exist, Just use a default
-            fetcher_obj = getattr(content_fetchers, "html_requests")
+        fetcher_class_name = profile.get_fetcher_class_name()
 
-        proxy_url = None
-        if preferred_proxy_id:
-            # Custom browser endpoints should NOT have a proxy added
-            if not prefer_fetch_backend.startswith('extra_browser_'):
-                proxy_url = self.datastore.proxy_list.get(preferred_proxy_id).get('url')
-                logger.debug(f"Selected proxy key '{preferred_proxy_id}' as proxy URL '{proxy_url}' for {url}")
-            else:
-                logger.debug("Skipping adding proxy data when custom Browser endpoint is specified. ")
+        fetcher_obj = content_fetchers.get_fetcher(fetcher_class_name)
+        if fetcher_obj is None:
+            logger.warning(f"Fetcher '{fetcher_class_name}' not found, falling back to requests")
+            fetcher_obj = content_fetchers.get_fetcher('requests')
+        elif self.watch.has_browser_steps and not getattr(fetcher_obj, 'supports_browser_steps', False):
+            # Browser steps require Playwright — override if the resolved fetcher doesn't support them
+            logger.warning(f"Fetcher '{fetcher_class_name}' does not support browser steps, overriding to Playwright")
+            fetcher_obj = content_fetchers.get_fetcher('playwright')
 
-        logger.debug(f"Using proxy '{proxy_url}' for {self.watch['uuid']}")
-
-        # Now call the fetcher (playwright/requests/etc) with arguments that only a fetcher would need.
-        # When browser_connection_url is None, it method should default to working out whats the best defaults (os env vars etc)
-        self.fetcher = fetcher_obj(proxy_override=proxy_url,
-                                   custom_browser_connection_url=custom_browser_connection_url,
-                                   screenshot_format=self.screenshot_format
-                                   )
+        self.fetcher = fetcher_obj(
+            proxy_override=proxy_url,
+            custom_browser_connection_url=profile.browser_connection_url,
+            screenshot_format=self.screenshot_format,
+            # BrowserProfile fields — browser fetchers use these; html_requests ignores them
+            viewport_width=profile.viewport_width,
+            viewport_height=profile.viewport_height,
+            block_images=profile.block_images,
+            block_fonts=profile.block_fonts,
+            profile_user_agent=profile.user_agent,
+            ignore_https_errors=profile.ignore_https_errors,
+            locale=profile.locale,
+            service_workers=profile.service_workers,
+            extra_delay=profile.extra_delay,
+        )
 
         if self.watch.has_browser_steps:
             self.fetcher.browser_steps = browser_steps_get_valid_steps(self.watch.get('browser_steps', []))
@@ -200,9 +186,17 @@ class difference_detection_processor():
         from changedetectionio.jinja2_custom import render as jinja_render
         request_headers = CaseInsensitiveDict()
 
-        ua = self.datastore.data['settings']['requests'].get('default_ua')
-        if ua and ua.get(prefer_fetch_backend):
-            request_headers.update({'User-Agent': ua.get(prefer_fetch_backend)})
+        # Browser profile: UA override (lowest priority — watch headers override this)
+        if profile.user_agent:
+            request_headers['User-Agent'] = profile.user_agent
+
+        # Browser profile: custom headers (override profile UA, but watch headers override these)
+        if profile.custom_headers:
+            for line in profile.custom_headers.splitlines():
+                line = line.strip()
+                if not line.startswith('#') and ':' in line:
+                    k, v = line.split(':', 1)
+                    request_headers[k.strip()] = v.strip()
 
         request_headers.update(self.watch.get('headers', {}))
         request_headers.update(self.datastore.get_all_base_headers())
@@ -259,6 +253,7 @@ class difference_detection_processor():
 
         # @todo .quit here could go on close object, so we can run JS if change-detected
         await self.fetcher.quit(watch=self.watch)
+        self.fetcher.disk_cleanup_after_fetch()
 
         # Sanitize lone surrogates - these can appear when servers return malformed/mixed-encoding
         # content that gets decoded into surrogate characters (e.g. \udcad). Without this,
