@@ -174,6 +174,37 @@ class ChangeDetectionSpec:
         """
         pass
 
+    @hookspec
+    def get_html_head_extras():
+        """Return HTML to inject into the <head> of every page via base.html.
+
+        Plugins can use this to add <script>, <style>, or <link> tags that should
+        be present on all pages.  Return a raw HTML string or None.
+
+        IMPORTANT: Always use Flask's url_for() for any src/href URLs so that
+        sub-path deployments (nginx reverse proxy with USE_X_SETTINGS / X-Forwarded-Prefix)
+        work correctly.  This hook is called inside a request context so url_for() is
+        always available.
+
+        Example::
+
+            from flask import url_for
+            from changedetectionio.pluggy_interface import hookimpl
+
+            @hookimpl
+            def get_html_head_extras():
+                css = url_for('static_content', group='my_plugin', filename='custom.css')
+                js  = url_for('static_content', group='my_plugin', filename='custom.js')
+                return (
+                    f'<link rel="stylesheet" href="{css}">\\n'
+                    f'<script src="{js}" defer></script>'
+                )
+
+        Returns:
+            str or None: Raw HTML string to inject inside <head>, or None
+        """
+        pass
+
 
 # Set up Plugin Manager
 plugin_manager = pluggy.PluginManager(PLUGIN_NAMESPACE)
@@ -607,3 +638,19 @@ def apply_update_finalize(update_handler, watch, datastore, processing_exception
         # Don't let plugin errors crash the worker
         logger.error(f"Error in update_finalize hook: {e}")
         logger.exception(f"update_finalize hook exception details:")
+
+
+def collect_html_head_extras():
+    """Collect and combine HTML head extras from all plugins.
+
+    Called from a Flask template global so it always runs inside a request context.
+    This means url_for() works correctly in plugin implementations, including when the
+    app is deployed under a sub-path via USE_X_SETTINGS / X-Forwarded-Prefix (ProxyFix
+    sets SCRIPT_NAME so url_for() automatically prepends the prefix).
+
+    Returns:
+        str: Combined HTML string to inject inside <head>, or empty string
+    """
+    results = plugin_manager.hook.get_html_head_extras()
+    parts = [r for r in results if r]
+    return "\n".join(parts) if parts else ""
