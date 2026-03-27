@@ -958,9 +958,9 @@ class BrowserProfileForm(Form):
         [
             validators.Optional(),
             ValidateStartsWithRegex(
-                regex=r'^(wss?|ws)://',
+                regex=r'^(wss?|ws|http|https)://',
                 flags=re.IGNORECASE,
-                message=_l('Browser connection URL must start with ws:// or wss://')
+                message=_l('Browser connection URL must start with ws://, wss://, http://, https://')
             ),
             ValidateSimpleURL(),
         ],
