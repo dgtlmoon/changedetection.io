@@ -186,15 +186,42 @@ class ChangeDetectionSpec:
         work correctly.  This hook is called inside a request context so url_for() is
         always available.
 
-        Example::
+        For small amounts of CSS/JS, return them inline — no file-serving needed::
 
-            from flask import url_for
             from changedetectionio.pluggy_interface import hookimpl
 
             @hookimpl
-            def get_html_head_extras():
-                css = url_for('static_content', group='my_plugin', filename='custom.css')
-                js  = url_for('static_content', group='my_plugin', filename='custom.js')
+            def get_html_head_extras(self):
+                return (
+                    '<style>.my-module-banner { color: red; }</style>\\n'
+                    '<script>console.log("my_module_content loaded");</script>'
+                )
+
+        For larger assets, register your own lightweight Flask routes in the plugin
+        module and point to them with url_for() so the sub-path prefix is handled
+        automatically::
+
+            from flask import url_for, Response
+            from changedetectionio.pluggy_interface import hookimpl
+            from changedetectionio.flask_app import app as _app
+
+            MY_CSS = ".my-module-example { color: red; }"
+            MY_JS  = "console.log('my_module_content loaded');"
+
+            @_app.route('/my_module_content/css')
+            def my_module_content_css():
+                return Response(MY_CSS, mimetype='text/css',
+                                headers={'Cache-Control': 'max-age=3600'})
+
+            @_app.route('/my_module_content/js')
+            def my_module_content_js():
+                return Response(MY_JS, mimetype='application/javascript',
+                                headers={'Cache-Control': 'max-age=3600'})
+
+            @hookimpl
+            def get_html_head_extras(self):
+                css = url_for('my_module_content_css')
+                js  = url_for('my_module_content_js')
                 return (
                     f'<link rel="stylesheet" href="{css}">\\n'
                     f'<script src="{js}" defer></script>'
