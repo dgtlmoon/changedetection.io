@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% from '_helpers.html' import render_field %}
+{% from '_common_fields.html' import show_token_placeholders %}
+{% block content %}
+<div class="pure-g">
+  <div class="pure-u-1">
+    <h1>
+      <i data-feather="{{ handler.icon }}" style="width:20px;height:20px;vertical-align:middle;"></i>
+      {{ handler.display_name }} &mdash; {{ _('System defaults') }}
+    </h1>
+    <p class="pure-form-message-inline">
+      {{ _('These values are used when a notification profile leaves a field blank.') }}
+      <a href="{{ url_for('notification_profiles.index') }}">{{ _('Back to profiles') }}</a>
+    </p>
+
+    <form class="pure-form pure-form-stacked" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <fieldset>
+        {% for field in form if field.name not in ('save_button', 'csrf_token') %}
+        <div class="pure-control-group">
+          {{ render_field(field) }}
+        </div>
+        {% endfor %}
+        {{ show_token_placeholders(extra_notification_token_placeholder_info=None) }}
+      </fieldset>
+      <div class="pure-controls" style="margin-top:1em;">
+        {{ render_field(form.save_button) }}
+        <a href="{{ url_for('notification_profiles.index') }}" class="pure-button">{{ _('Cancel') }}</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

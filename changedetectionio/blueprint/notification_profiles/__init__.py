@@ -176,6 +176,45 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         return 'OK - Test notification sent'
 
+    @bp.route("/type-defaults/<type_id>", methods=['GET', 'POST'])
+    @login_optionally_required
+    def type_defaults(type_id):
+        """Edit system-wide defaults for a notification profile type."""
+        from changedetectionio.notification_profiles.registry import registry
+
+        handler = registry.get(type_id)
+        if handler is None or handler.defaults_form_class is None:
+            flash(gettext("No configurable defaults for this notification type."), 'error')
+            return redirect(url_for('notification_profiles.index'))
+
+        all_defaults = datastore.data['settings']['application'].setdefault('notification_type_defaults', {})
+        existing = all_defaults.get(type_id, {})
+
+        FormClass = handler.defaults_form_class
+        form = FormClass(
+            request.form if request.method == 'POST' else None,
+            data=existing or None,
+        )
+
+        if request.method == 'POST' and form.validate():
+            # Collect all non-button, non-hidden fields
+            all_defaults[type_id] = {
+                field.name: field.data
+                for field in form
+                if field.name not in ('save_button', 'csrf_token')
+            }
+            datastore.commit()
+            flash(gettext("Notification type defaults saved."), 'notice')
+            return redirect(url_for('notification_profiles.index'))
+
+        template = handler.defaults_template or 'notification_profiles/type_defaults.html'
+        return render_template(
+            template,
+            form=form,
+            handler=handler,
+            type_id=type_id,
+        )
+
     @bp.route("/<uuid_str:profile_uuid>/log", methods=['GET'])
     @login_optionally_required
     def profile_log(profile_uuid):

@@ -50,6 +50,7 @@ class model(dict):
                     'ssim_threshold': '0.96',  # Default SSIM threshold for screenshot comparison
                     'notification_profile_data': {},  # uuid → NotificationProfile dict (the actual stored profiles)
                     'notification_profiles': [],      # System-level linked NotificationProfile UUIDs
+                    'notification_type_defaults': {},  # type_id → dict of type-specific system defaults
                     'pager_size': 50,
                     'password': False,
                     'render_anchor_tag_content': False,

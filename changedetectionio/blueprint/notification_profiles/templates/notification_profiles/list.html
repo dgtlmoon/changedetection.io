@@ -80,6 +80,38 @@
 
     <br>
     <a href="{{ url_for('notification_profiles.edit') }}" class="pure-button pure-button-primary">{{ _('+ New profile') }}</a>
+
+    {# Per-type system defaults #}
+    {% set types_with_defaults = registry.all() | selectattr('defaults_form_class') | list %}
+    {% if types_with_defaults %}
+    <hr style="margin: 1.5em 0;">
+    <h2 style="font-size: 1em; margin-bottom: 0.5em;">{{ _('Notification type defaults') }}</h2>
+    <p class="pure-form-message-inline" style="margin-bottom: 0.75em;">
+      {{ _('Configure system-wide fallback values used when a profile leaves a field blank.') }}
+    </p>
+    <table class="pure-table pure-table-striped" style="width:100%">
+      <thead>
+        <tr>
+          <th>{{ _('Type') }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for handler in types_with_defaults %}
+      <tr>
+        <td>
+          <i data-feather="{{ handler.icon }}" style="width:14px;height:14px;vertical-align:middle;"></i>
+          <strong>{{ handler.display_name }}</strong>
+        </td>
+        <td>
+          <a href="{{ url_for('notification_profiles.type_defaults', type_id=handler.type_id) }}"
+             class="pure-button button-xsmall">{{ _('Configure defaults') }}</a>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
   </div>
 </div>
 
