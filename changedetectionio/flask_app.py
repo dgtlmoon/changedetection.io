@@ -212,6 +212,11 @@ def _is_safe_valid_url(test_url):
     from .validate_url import is_safe_valid_url
     return is_safe_valid_url(test_url)
 
+@app.template_global('get_html_head_extras')
+def _get_html_head_extras():
+    from .pluggy_interface import collect_html_head_extras
+    return collect_html_head_extras()
+
 
 @app.template_filter('format_number_locale')
 def _jinja2_filter_format_number_locale(value: float) -> str:

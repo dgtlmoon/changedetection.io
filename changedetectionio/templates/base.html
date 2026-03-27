@@ -45,6 +45,10 @@
     <script src="{{url_for('static_content', group='js', filename='socket.io.min.js')}}"></script>
     <script src="{{url_for('static_content', group='js', filename='realtime.js')}}" defer></script>
     {% endif %}
+    {%- set _html_head_extras = get_html_head_extras() -%}
+    {%- if _html_head_extras %}
+    {{ _html_head_extras | safe }}
+    {%- endif %}
   </head>
 
   <body class="{{extra_classes}}">
