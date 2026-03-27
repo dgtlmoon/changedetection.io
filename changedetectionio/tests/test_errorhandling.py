@@ -24,8 +24,8 @@ def _runner_test_http_errors(client, live_server, http_code, expected_text, data
 
     if  os.getenv("PLAYWRIGHT_DRIVER_URL") or os.getenv('WEBDRIVER_URL'):
         logger.warning("!!! Looks like we're running test with playwright or selenium, so FORCE a connection back to our container 'cdio'")
-        test_url = test_url.replace('localhost.localdomain', 'cdio')
-        test_url = test_url.replace('localhost', 'cdio')
+        test_url = test_url.replace('localhost.localdomain', 'changedet')
+        test_url = test_url.replace('localhost', 'changedet')
 
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
