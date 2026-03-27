@@ -653,9 +653,11 @@ class ValidateCSSJSONXPATHInput(object):
                     # `jq` requires full compilation in windows and so isn't generally available
                     raise ValidationError("jq not support not found")
 
+                from changedetectionio.html_tools import validate_jq_expression
                 input = line.replace('jq:', '')
 
                 try:
+                    validate_jq_expression(input)
                     jq.compile(input)
                 except (ValueError) as e:
                     message = field.gettext('\'%s\' is not a valid jq expression. (%s)')
@@ -981,7 +983,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
         render_kw={"placeholder": "0.1", "style": "width: 8em;"}
     )
 
-    password = SaltyPasswordField(_l('Password'))
+    password = SaltyPasswordField(_l('Password'), render_kw={"autocomplete": "new-password"})
     pager_size = IntegerField(_l('Pager size'),
                               render_kw={"style": "width: 5em;"},
                               validators=[validators.NumberRange(min=0,

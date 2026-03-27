@@ -4,6 +4,7 @@ from loguru import logger
 from typing import List
 import html
 import json
+import os
 import re
 
 # HTML added to be sure each result matching a filter (.example) gets converted to a new line by Inscriptis
@@ -13,6 +14,45 @@ PERL_STYLE_REGEX = r'^/(.*?)/([a-z]*)?$'
 
 TITLE_RE = re.compile(r"<title[^>]*>(.*?)</title>", re.I | re.S)
 META_CS  = re.compile(r'<meta[^>]+charset=["\']?\s*([a-z0-9_\-:+.]+)', re.I)
+
+# jq builtins that can leak sensitive data or cause harm when user-supplied expressions are executed.
+# env/$ENV reads all process environment variables (passwords, API keys, etc.)
+# include/import can read arbitrary files from disk
+# input/inputs reads beyond the supplied JSON data
+# debug/stderr leaks data to stderr
+# halt/halt_error terminates the process (DoS)
+_JQ_BLOCKED_PATTERNS = [
+    (re.compile(r'\benv\b'),                    'env (reads environment variables)'),
+    (re.compile(r'\$ENV\b'),                    '$ENV (reads environment variables)'),
+    (re.compile(r'\binclude\b'),                'include (reads files from disk)'),
+    (re.compile(r'\bimport\b'),                 'import (reads files from disk)'),
+    (re.compile(r'\binputs?\b'),                'input/inputs (reads beyond provided data)'),
+    (re.compile(r'\bdebug\b'),                  'debug (leaks data to stderr)'),
+    (re.compile(r'\bstderr\b'),                 'stderr (leaks data to stderr)'),
+    (re.compile(r'\bhalt(?:_error)?\b'),        'halt/halt_error (terminates the process)'),
+    (re.compile(r'\$__loc__\b'),                '$__loc__ (leaks file path information)'),
+    (re.compile(r'\bbuiltins\b'),               'builtins (enumerates available functions)'),
+    (re.compile(r'\bmodulemeta\b'),             'modulemeta (leaks module information)'),
+    (re.compile(r'\$JQ_BUILD_CONFIGURATION\b'), '$JQ_BUILD_CONFIGURATION (leaks build information)'),
+]
+
+def validate_jq_expression(expression: str) -> None:
+    """Raise ValueError if the jq expression uses any dangerous builtin.
+
+    User-supplied jq expressions are executed server-side. Without this check,
+    builtins like `env` expose every process environment variable (SALTED_PASS,
+    proxy credentials, API keys, etc.) as watch output.
+    """
+    from changedetectionio.strtobool import strtobool
+    if strtobool(os.getenv('JQ_ALLOW_RISKY_EXPRESSIONS', 'false')):
+        return
+
+    for pattern, description in _JQ_BLOCKED_PATTERNS:
+        if pattern.search(expression):
+            msg = f"jq expression uses disallowed builtin: {description}"
+            logger.critical(f"Security: blocked jq expression containing '{description}' - expression: {expression!r}")
+            raise ValueError(msg)
+
 META_CT  = re.compile(r'<meta[^>]+http-equiv=["\']?content-type["\']?[^>]*content=["\'][^>]*charset=([a-z0-9_\-:+.]+)', re.I)
 
 # 'price' , 'lowPrice', 'highPrice' are usually under here
@@ -30,6 +70,12 @@ _DEFAULT_UNSAFE_XPATH3_FUNCTIONS = [
     'unparsed-text-available',
     'doc',
     'doc-available',
+    'json-doc',
+    'json-doc-available',
+    'collection',           # XPath 2.0+: loads XML node collections from arbitrary URIs
+    'uri-collection',       # XPath 3.0+: enumerates URIs from resource collections
+    'transform',            # XPath 3.1: XSLT transformation (currently raises, block proactively)
+    'load-xquery-module',   # XPath 3.1: loads XQuery modules (currently raises, block proactively)
     'environment-variable',
     'available-environment-variables',
 ]
@@ -378,12 +424,16 @@ def _parse_json(json_data, json_filter):
             raise Exception("jq not support not found")
 
         if json_filter.startswith("jq:"):
-            jq_expression = jq.compile(json_filter.removeprefix("jq:"))
+            expr = json_filter.removeprefix("jq:")
+            validate_jq_expression(expr)
+            jq_expression = jq.compile(expr)
             match = jq_expression.input(json_data).all()
             return _get_stripped_text_from_json_match(match)
 
         if json_filter.startswith("jqraw:"):
-            jq_expression = jq.compile(json_filter.removeprefix("jqraw:"))
+            expr = json_filter.removeprefix("jqraw:")
+            validate_jq_expression(expr)
+            jq_expression = jq.compile(expr)
             match = jq_expression.input(json_data).all()
             return '\n'.join(str(item) for item in match)
 

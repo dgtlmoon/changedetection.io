@@ -369,7 +369,7 @@ msgstr "Protokol ladění oznámení"
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "General"
-msgstr "Generál"
+msgstr "Obecné"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Fetching"
@@ -393,7 +393,7 @@ msgstr "RSS"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Backups"
-msgstr "Backups"
+msgstr "Zálohy"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Time & Date"
@@ -409,7 +409,7 @@ msgstr "Info"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default recheck time for all watches, current system minimum is"
-msgstr "Výchozí čas opětovné kontroly pro všechny monitory, aktuální systémové minimum je"
+msgstr "Výchozí čas opětovné kontroly pro všechna sledování, aktuální systémové minimum je"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "more info"
@@ -445,9 +445,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Allow access to the watch change history page when password is enabled (Good for sharing the diff page)"
-msgstr ""
-"Povolit přístup na stránku historie změn monitoru, když je povoleno heslo (Vhodné pro sdílení stránky rozdílů)Povolit"
-" anonymní přístup na stránku historie sledování, když je povoleno heslo"
+msgstr "Povolit přístup na stránku historie změn monitoru, když je povoleno heslo (Vhodné pro sdílení stránky rozdílů)"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "When a request returns no content, or the HTML does not contain any text, is this considered a change?"
@@ -455,7 +453,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Choose a default proxy for all watches"
-msgstr "Vyberte výchozí proxy pro všechny monitory"
+msgstr "Vyberte výchozí proxy pro všechna sledování"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Base URL used for the"
@@ -479,7 +477,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use the"
-msgstr "Použijte"
+msgstr "Použít"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Basic"
@@ -505,7 +503,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "This will wait"
-msgstr "Tohle počká"
+msgstr "Toto počká"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "seconds before extracting the text."
@@ -865,7 +863,7 @@ msgstr "povoleny adresy URL pro upozornění v celém systému"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "this form will override notification settings for this watch only"
-msgstr "tento formulář přepíše nastavení oznámení pouze pro tyto monitory"
+msgstr "tento formulář přepíše nastavení oznámení pouze pro tato sledování"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "an empty Notification URL list here will still send notifications."
@@ -882,7 +880,7 @@ msgstr "Přidejte novou značku organizace"
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Watch group / tag"
-msgstr "Skupina / Značka"
+msgstr "Sledovat skupinu / Značka"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Groups allows you to manage filters and notifications for multiple watches under a single organisational tag."
@@ -890,15 +888,15 @@ msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "# Watches"
-msgstr "# monitorů"
+msgstr "# Sledování"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Tag / Label name"
-msgstr "Název štítku / štítku"
+msgstr "Tag / Název štítku"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "No website organisational tags/groups configured"
-msgstr "Žádné skupiny/značky"
+msgstr "Žádné skupiny/značky zatím nebyly nastaveny"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
@@ -908,7 +906,7 @@ msgstr "Upravit"
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Recheck"
-msgstr "Znovu zkontrolujte"
+msgstr "Znovu zkontrolovat"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Delete Group?"
@@ -922,7 +920,7 @@ msgstr ""
 #: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/templates/edit.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Delete"
-msgstr "Vymazat"
+msgstr "Smazat"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Deletes and removes tag"
@@ -945,36 +943,36 @@ msgstr "Odpojit"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Keep the tag but unlink any watches"
-msgstr "Ponechte štítek, ale odpojte všechny monitory"
+msgstr "Ponechte štítek, ale odpojte všechna sledování"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "RSS Feed for this watch"
-msgstr "RSS kanál pro tyto monitory"
+msgstr "RSS kanál pro toto sledování"
 
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "{} watches deleted"
-msgstr ""
+msgstr "{} sledování smazáno"
 
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "{} watches paused"
-msgstr "{} monitorů pozastaveno"
+msgstr "{} sledování pozastaveno"
 
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "{} watches unpaused"
-msgstr ""
+msgstr "{} sledování opět spuštěno"
 
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "{} watches updated"
-msgstr ""
+msgstr "{} sledování aktualizováno"
 
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "{} watches muted"
-msgstr "{} monitorů ztlumeno"
+msgstr "{} sledování ztlumeno"
 
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
@@ -1013,7 +1011,7 @@ msgstr "Sledujte tuto adresu URL!"
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "Cleared snapshot history for watch {}"
-msgstr "Historie snímků vymazána pro monitor {}"
+msgstr "Historie snímků vymazána pro sledování {}"
 
 #: changedetectionio/blueprint/ui/__init__.py
 msgid "History clearing started in background"
@@ -1030,7 +1028,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py
 msgid "Deleted."
-msgstr "Vymazat"
+msgstr "Smazáno"
 
 #: changedetectionio/blueprint/ui/__init__.py
 msgid "Cloned, you are editing the new watch."
@@ -1047,7 +1045,7 @@ msgstr ""
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "Queued {} watches for rechecking ({} already queued or running)."
-msgstr "Do fronty přidáno {} monitorů k opětovné kontrole ({} již ve frontě nebo běží)."
+msgstr "Do fronty přidáno {} sledování k opětovné kontrole ({} již ve frontě nebo běží)."
 
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
@@ -1056,7 +1054,7 @@ msgstr "Do fronty přidáno {} sledování k opětovné kontrole."
 
 #: changedetectionio/blueprint/ui/__init__.py
 msgid "Queueing watches for rechecking in background..."
-msgstr "Přidávání monitorů do fronty pro opětovnou kontrolu na pozadí..."
+msgstr "Přidává se sledování do fronty pro opětovnou kontrolu na pozadí..."
 
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
@@ -1105,7 +1103,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/edit.py
 msgid "Updated watch."
-msgstr "Smazat monitory?"
+msgstr "Sledování aktualizováno."
 
 #: changedetectionio/blueprint/ui/preview.py
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
@@ -1121,7 +1119,7 @@ msgstr "Možná budete chtít použít"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "BACKUP"
-msgstr "BACKUP"
+msgstr "ZÁLOHA"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "link first."
@@ -1161,11 +1159,11 @@ msgstr "Sdílet jako obrázek"
 
 #: changedetectionio/blueprint/ui/templates/diff-offscreen-options.html
 msgid "Ignore any lines matching"
-msgstr "Ignorujte všechny odpovídající řádky"
+msgstr "Ignorovat všechny odpovídající řádky"
 
 #: changedetectionio/blueprint/ui/templates/diff-offscreen-options.html
 msgid "Ignore any lines matching excluding digits"
-msgstr "Ignorujte všechny odpovídající řádky kromě číslic"
+msgstr "Ignorovat všechny odpovídající řádky kromě číslic"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "From"
@@ -1185,7 +1183,7 @@ msgstr "Řádky"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Ignore Whitespace"
-msgstr "Ignorujte mezery"
+msgstr "Ignorovat mezery"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Same/non-changed"
@@ -1209,7 +1207,7 @@ msgstr "Klávesnice:"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Previous"
-msgstr "Náhled"
+msgstr "Předchozí"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Next"
@@ -1241,7 +1239,7 @@ msgstr "Aktuální snímek obrazovky"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Extract Data"
-msgstr "Extrahujte data"
+msgstr "Extrahovat data"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "seconds ago."
@@ -1269,7 +1267,7 @@ msgstr "NASTAVENÍ"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Goto single snapshot"
-msgstr "Přejít na jeden snímek"
+msgstr "Přejít na samotný snímek"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Highlight text to share or add to ignore lists."
@@ -1359,15 +1357,15 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Check/Scan all"
-msgstr "Znovu zkontrolujte vše"
+msgstr "Vše znovu zkontrolovat"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Choose a proxy for this watch"
-msgstr "RSS kanál pro tyto monitory"
+msgstr "Vybrat proxy pro toto sledování"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Using the current global default settings"
-msgstr "Použití aktuálního globálního výchozího nastavení"
+msgstr "Aktuálně je použito globální výchozí nastavení"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Show advanced options"
@@ -1391,7 +1389,7 @@ msgstr "Proměnné jsou podporovány v hodnotách hlavičky požadavku"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Alert! Extra headers file found and will be added to this watch!"
-msgstr "Upozornění! Byl nalezen další soubor záhlaví a bude přidán do těchto monitorů!"
+msgstr "Upozornění! Byl nalezen další soubor záhlaví a bude přidán do těchto sledování!"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Headers can be also read from a file in your data-directory"
@@ -1427,7 +1425,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Visual Selector data is not ready, watch needs to be checked atleast once."
-msgstr "Data Visual Selector nejsou připravena, monitory je třeba alespoň jednou zkontrolovat."
+msgstr "Data Visual Selector nejsou připravena, sledování je třeba alespoň jednou zkontrolovat."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid ""
@@ -1633,11 +1631,11 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Delete Watch?"
-msgstr "Smazat monitory?"
+msgstr "Smazat sledování?"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Are you sure you want to delete the watch for:"
-msgstr "Opravdu chcete smazat monitory pro:"
+msgstr "Opravdu chcete smazat sledování pro:"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "This action cannot be undone."
@@ -1661,15 +1659,15 @@ msgstr "Vymazat historii"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Clone & Edit"
-msgstr "Klonovat a upravovat"
+msgstr "Duplikovat a upravit"
 
 #: changedetectionio/blueprint/ui/templates/preview.html
 msgid "Select timestamp"
-msgstr "Vyberte časové razítko"
+msgstr "Vybrat časové razítko"
 
 #: changedetectionio/blueprint/ui/templates/preview.html
 msgid "Go"
-msgstr "Jít"
+msgstr "Přejít"
 
 #: changedetectionio/blueprint/ui/templates/preview.html
 msgid "Current erroring screenshot from most recent request"
@@ -1715,7 +1713,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Add a new web page change detection watch"
-msgstr "Přidejte nové monitory zjišťování změn webové stránky"
+msgstr "Přidejte nové sledování zjišťování změn webové stránky"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Watch this URL!"
@@ -1723,7 +1721,7 @@ msgstr "Monitorovat tuto URL!"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Edit first then Watch"
-msgstr "Upravit a monitorovat"
+msgstr "Nejdříve upravit, poté sledovat"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Pause"
@@ -1747,7 +1745,7 @@ msgstr "Štítek"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Mark viewed"
-msgstr "Mark zobrazil"
+msgstr "Označit jako shlédnuté"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Use default notification"
@@ -1775,7 +1773,7 @@ msgstr "Vymazat/resetovat historii"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Delete Watches?"
-msgstr "Smazat monitory?"
+msgstr "Smazat sledování?"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "<p>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>"
@@ -1823,7 +1821,7 @@ msgstr "importovat seznam"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Detecting restock and price"
-msgstr "Detekce zásob a ceny"
+msgstr "Kontrola zásob a ceny"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "In stock"
@@ -1876,7 +1874,7 @@ msgstr "Nepřečtený"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Recheck all"
-msgstr "Znovu zkontrolujte vše"
+msgstr "Znovu zkontrolovat vše"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
@@ -2026,7 +2024,7 @@ msgstr "neděle"
 
 #: changedetectionio/forms.py
 msgid "Weeks"
-msgstr "týdny"
+msgstr "Týdny"
 
 #: changedetectionio/forms.py
 msgid "Should contain zero or more seconds"
@@ -2046,7 +2044,7 @@ msgstr "Minuty"
 
 #: changedetectionio/forms.py
 msgid "Seconds"
-msgstr "sekundy"
+msgstr "Sekundy"
 
 #: changedetectionio/forms.py
 msgid "Notification Body and Title is required when a Notification URL is used"
@@ -2151,7 +2149,7 @@ msgstr "Nahrajte soubor .xlsx"
 
 #: changedetectionio/forms.py
 msgid "Must be .xlsx file!"
-msgstr "Musí to být soubor .xlsx!"
+msgstr "Musí být soubor .xlsx!"
 
 #: changedetectionio/forms.py
 msgid "File mapping"
@@ -2175,7 +2173,7 @@ msgstr "Interval mezi kontrolami"
 
 #: changedetectionio/forms.py
 msgid "Use global settings for time between check and scheduler."
-msgstr "Použijte globální nastavení pro čas mezi kontrolou a plánovačem."
+msgstr "Použít globální nastavení pro čas mezi kontrolou a plánovačem."
 
 #: changedetectionio/forms.py
 msgid "CSS/JSONPath/JQ/XPath Filters"
@@ -2284,7 +2282,7 @@ msgstr "Připojte snímek obrazovky k oznámení (pokud je to možné)"
 
 #: changedetectionio/forms.py
 msgid "Match"
-msgstr "# monitory"
+msgstr "Shoda"
 
 #: changedetectionio/forms.py
 msgid "Match all of the following"
@@ -2355,11 +2353,11 @@ msgstr "Výchozí proxy"
 
 #: changedetectionio/forms.py
 msgid "Random jitter seconds ± check"
-msgstr "Náhodné jitter sekundy ± kontrola"
+msgstr "Náhodný rozptyl kontrol ± sekund"
 
 #: changedetectionio/forms.py
 msgid "Number of fetch workers"
-msgstr "Počet pracovníků aportů"
+msgstr "Počet procesů kontrol"
 
 #: changedetectionio/forms.py
 msgid "Should be between 1 and 50"
@@ -2367,15 +2365,15 @@ msgstr "Mělo by být mezi 1 a 50"
 
 #: changedetectionio/forms.py
 msgid "Requests timeout in seconds"
-msgstr "Požaduje časový limit v sekundách"
+msgstr "Časový limit vypršení kontrol v sekundách"
 
 #: changedetectionio/forms.py
 msgid "Should be between 1 and 999"
-msgstr "Mělo by být mezi 1 a 999"
+msgstr "Nastavit mezi 1 a 999"
 
 #: changedetectionio/forms.py
 msgid "Default User-Agent overrides"
-msgstr "Výchozí přepisy User-Agent"
+msgstr "Změna výchozího nastavení hodnoty User-Agent"
 
 #: changedetectionio/forms.py
 msgid "Both a name, and a Proxy URL is required."
@@ -2387,11 +2385,11 @@ msgstr "Otevřete stránku „Historie“ na nové kartě"
 
 #: changedetectionio/forms.py
 msgid "Realtime UI Updates Enabled"
-msgstr "Aktualizace v reálném čase offline"
+msgstr "Aktualizace UI v reálném čase"
 
 #: changedetectionio/forms.py
 msgid "Favicons Enabled"
-msgstr "zvážit povolení"
+msgstr "Povolit favikony"
 
 #: changedetectionio/forms.py
 msgid "Use page <title> in watch overview list"
@@ -2427,7 +2425,7 @@ msgstr "Heslo"
 
 #: changedetectionio/forms.py
 msgid "Pager size"
-msgstr "Velikost pageru"
+msgstr "Počet položek na stránku"
 
 #: changedetectionio/forms.py
 msgid "Should be atleast zero (disabled)"
@@ -2459,7 +2457,7 @@ msgstr "Povolit anonymní přístup na stránku historie sledování, když je p
 
 #: changedetectionio/forms.py
 msgid "Hide muted watches from RSS feed"
-msgstr "Skrýt ztlumené monitory ze zdroje RSS"
+msgstr "Skrýt ztlumená sledování pro RSS zdroje"
 
 #: changedetectionio/forms.py
 msgid "Enable RSS reader mode "

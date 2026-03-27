@@ -610,6 +610,11 @@ def test_xpath_blocked_functions_unit():
         "unparsed-text-available('file:///etc/passwd')",
         "doc('file:///etc/passwd')",
         "doc-available('file:///etc/passwd')",
+        "json-doc('file:///datastore/changedetection.json')",
+        "collection('file:///datastore/')",
+        "uri-collection('file:///datastore/')",
+        "transform(map{})",
+        "load-xquery-module('foo')",
         "environment-variable('PATH')",
         "available-environment-variables()",
     ]
