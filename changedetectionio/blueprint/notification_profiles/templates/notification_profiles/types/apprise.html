@@ -1,0 +1,37 @@
+{% from '_helpers.html' import render_field %}
+{% from '_common_fields.html' import show_token_placeholders %}
+
+<div class="pure-control-group">
+    {{ render_field(form.notification_urls,
+        rows=5,
+        placeholder="Examples:\n  Slack   - slack://TokenA/TokenB/TokenC\n  Discord - discord://WebhookID/WebhookToken\n  Email   - mailtos://user:pass@smtp.host?to=you@example.com\n  Telegram- tgram://BotToken/ChatID",
+        class="notification-urls") }}
+    <div class="pure-form-message-inline">
+        <strong>{{ _('Tip:') }}</strong> {{ _('Use') }}
+        <a target="newwindow" href="https://github.com/caronc/apprise">{{ _('Apprise Notification URLs') }}</a>
+        {{ _('for notifications to almost any service.') }}
+        <a target="newwindow" href="https://github.com/dgtlmoon/changedetection.io/wiki/Notification-configuration-notes">{{ _('Configuration notes') }}</a>
+    </div>
+    <div class="notifications-wrapper" style="margin-top: 6px;">
+        <div class="spinner" style="display: none;"></div>
+        <div id="notification-test-log" style="display: none;"><span class="pure-form-message-inline">{{ _('Processing..') }}</span></div>
+    </div>
+</div>
+
+<div class="pure-control-group grey-form-border">
+    <div class="pure-control-group">
+        {{ render_field(form.notification_title,
+            class="notification-title",
+            placeholder=_('Leave blank to use system default')) }}
+    </div>
+    <div class="pure-control-group">
+        {{ render_field(form.notification_body,
+            rows=5,
+            class="notification-body",
+            placeholder=_('Leave blank to use system default')) }}
+        {{ show_token_placeholders(extra_notification_token_placeholder_info=None) }}
+    </div>
+    <div class="pure-control-group">
+        {{ render_field(form.notification_format, class="notification-format") }}
+    </div>
+</div>

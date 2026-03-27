@@ -1,0 +1,181 @@
+.notification-profile-selector {
+  position: relative;
+
+  .np-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    min-height: 32px;
+    padding: 4px 0;
+  }
+
+  .np-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 0.82em;
+    line-height: 1.4;
+    background: var(--color-background-button-tag);
+    color: var(--color-white);
+    cursor: default;
+    max-width: 240px;
+
+    .np-chip-icon svg {
+      width: 12px;
+      height: 12px;
+      flex-shrink: 0;
+    }
+
+    .np-chip-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &.np-chip-own .np-chip-remove {
+      cursor: pointer;
+      margin-left: 2px;
+      opacity: 0.65;
+      font-size: 1.1em;
+      line-height: 1;
+      flex-shrink: 0;
+      &:hover { opacity: 1; }
+    }
+
+    &.np-chip-inherited {
+      opacity: 0.5;
+      border: 1px dashed var(--color-grey-600);
+      background: transparent;
+      color: var(--color-grey-500);
+
+      .np-chip-lock svg {
+        width: 10px;
+        height: 10px;
+        flex-shrink: 0;
+      }
+    }
+  }
+
+  .np-add-wrapper {
+    position: relative;
+    display: inline-block;
+  }
+
+  .np-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    border: 1px dashed var(--color-grey-500);
+    color: var(--color-grey-400);
+    padding: 2px 8px;
+    font-size: 0.82em;
+    cursor: pointer;
+    border-radius: 3px;
+    &:hover {
+      border-color: var(--color-link);
+      color: var(--color-link);
+    }
+    svg { width: 12px; height: 12px; }
+  }
+
+  .np-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 200;
+    min-width: 300px;
+    max-width: 420px;
+    background: var(--color-background);
+    border: 1px solid var(--color-border-input);
+    border-radius: 4px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+    overflow: hidden;
+
+    .np-search {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px 10px;
+      border: none;
+      border-bottom: 1px solid var(--color-border-input);
+      outline: none;
+      font-size: 0.9em;
+      background: var(--color-background-input);
+      color: var(--color-text-input);
+    }
+
+    .np-options {
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .np-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+
+      &:hover { background: var(--color-grey-900); }
+
+      .np-option-icon svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+      .np-option-text {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        overflow: hidden;
+      }
+      .np-option-name { font-size: 0.88em; font-weight: 600; white-space: nowrap; }
+      .np-option-hint { font-size: 0.76em; color: var(--color-text-input-description); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    }
+
+    .np-create-new {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-top: 1px solid var(--color-border-input);
+      font-size: 0.88em;
+      color: var(--color-link);
+      text-decoration: none;
+      &:hover { background: var(--color-grey-900); }
+      svg { width: 13px; height: 13px; }
+    }
+  }
+}
+
+// Profile type cards on the edit form
+.profile-type-cards {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 6px 0;
+
+  .profile-type-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 16px;
+    border: 2px solid var(--color-border-input);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85em;
+    color: var(--color-grey-400);
+    min-width: 80px;
+    transition: border-color 0.15s, color 0.15s;
+
+    svg { width: 18px; height: 18px; }
+
+    input[type="radio"] { display: none; }
+
+    &.active, &:hover {
+      border-color: var(--color-link);
+      color: var(--color-link);
+    }
+  }
+}

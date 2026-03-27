@@ -914,3 +914,117 @@ class DatastoreUpdatesMixin:
             tag.commit()
             logger.info(f"update_30: migrated tag {tag_uuid} restock_settings → processor_config_restock_diff")
 
+    def update_31(self):
+        """Migrate embedded notification settings to NotificationProfile objects.
+
+        Creates NotificationProfile entries in settings.application.notification_profile_data
+        from any existing notification_urls/title/body/format fields on watches, tags, and
+        system settings. Deduplicates identical configs to avoid redundant profiles.
+        Cleans up the old flat fields afterwards.
+
+        Safe to re-run: skips if notification_profile_data already exists.
+        """
+        import uuid as uuid_mod
+
+        app = self.data['settings']['application']
+
+        # Idempotency: if we already ran, skip
+        if app.get('notification_profile_data'):
+            logger.info("update_31: notification_profile_data already exists, skipping")
+            return
+
+        app.setdefault('notification_profile_data', {})
+        app.setdefault('notification_profiles', [])
+
+        def _find_or_create(name, urls, title, body, fmt):
+            """Return UUID of a matching existing profile or create a new one."""
+            for existing_uuid, p in app['notification_profile_data'].items():
+                c = p.get('config', {})
+                if (c.get('notification_urls') == urls
+                        and c.get('notification_title') == title
+                        and c.get('notification_body') == body
+                        and c.get('notification_format') == fmt):
+                    return existing_uuid
+            new_uuid = str(uuid_mod.uuid4())
+            app['notification_profile_data'][new_uuid] = {
+                'uuid':   new_uuid,
+                'name':   name,
+                'type':   'apprise',
+                'config': {
+                    'notification_urls':  urls,
+                    'notification_title': title,
+                    'notification_body':  body,
+                    'notification_format': fmt,
+                },
+            }
+            logger.info(f"update_31: created profile '{name}' ({new_uuid})")
+            return new_uuid
+
+        # 1. System-wide settings
+        sys_urls = app.get('notification_urls', [])
+        if sys_urls:
+            uid = _find_or_create(
+                name="System Default",
+                urls=sys_urls,
+                title=app.get('notification_title'),
+                body=app.get('notification_body'),
+                fmt=app.get('notification_format'),
+            )
+            if uid not in app['notification_profiles']:
+                app['notification_profiles'].append(uid)
+
+        # 2. Tags
+        for tag_uuid, tag in app.get('tags', {}).items():
+            tag_urls = tag.get('notification_urls', [])
+            if not tag_urls:
+                continue
+            uid = _find_or_create(
+                name=f"{tag.get('title', 'Group')} notifications",
+                urls=tag_urls,
+                title=tag.get('notification_title'),
+                body=tag.get('notification_body'),
+                fmt=tag.get('notification_format'),
+            )
+            tag.setdefault('notification_profiles', [])
+            if uid not in tag['notification_profiles']:
+                tag['notification_profiles'].append(uid)
+            tag.commit()
+
+        # 3. Watches
+        for watch_uuid, watch in self.data['watching'].items():
+            watch_urls = watch.get('notification_urls', [])
+            if not watch_urls:
+                continue
+            label = watch.get('title') or watch.get('url', watch_uuid)
+            uid = _find_or_create(
+                name=f"{label[:60]} notifications",
+                urls=watch_urls,
+                title=watch.get('notification_title'),
+                body=watch.get('notification_body'),
+                fmt=watch.get('notification_format'),
+            )
+            watch.setdefault('notification_profiles', [])
+            if uid not in watch['notification_profiles']:
+                watch['notification_profiles'].append(uid)
+            watch.commit()
+
+        # 4. Remove old flat fields from system settings
+        for key in ('notification_urls', 'notification_title', 'notification_body', 'notification_format'):
+            app.pop(key, None)
+
+        # 5. Strip old flat fields from tags
+        for tag in app.get('tags', {}).values():
+            for key in ('notification_urls', 'notification_title', 'notification_body', 'notification_format'):
+                tag.pop(key, None)
+            tag.commit()
+
+        # 6. Strip old flat fields from watches
+        for watch in self.data['watching'].values():
+            for key in ('notification_urls', 'notification_title', 'notification_body', 'notification_format'):
+                watch.pop(key, None)
+            watch.commit()
+
+        created = len(app['notification_profile_data'])
+        logger.success(f"update_31: migrated {created} notification profile(s)")
+        self.commit()
+

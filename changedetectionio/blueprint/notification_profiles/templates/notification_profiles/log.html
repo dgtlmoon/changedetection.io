@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="pure-g">
+  <div class="pure-u-1">
+    <h1>{{ _('Notification Log') }}: <em>{{ profile.get('name', '') }}</em></h1>
+    <p>
+      <a href="{{ url_for('notification_profiles.index') }}" class="pure-button button-xsmall">&#8592; {{ _('Back to profiles') }}</a>
+      <a href="{{ url_for('notification_profiles.edit', profile_uuid=profile_uuid) }}" class="pure-button button-xsmall">{{ _('Edit profile') }}</a>
+    </p>
+
+    {% if not entries %}
+      <div class="inline-warning" style="margin:1em 0;">
+        {{ _('No log entries yet — logs are written each time a notification is attempted.') }}
+      </div>
+    {% else %}
+    <table class="pure-table pure-table-striped" style="width:100%; font-size:0.88em;">
+      <thead>
+        <tr>
+          <th style="width:12em;">{{ _('Time') }}</th>
+          <th style="width:6em;">{{ _('Status') }}</th>
+          <th>{{ _('Watch') }}</th>
+          <th>{{ _('Detail') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for e in entries %}
+        <tr class="log-row-{{ e.status }}">
+          <td style="white-space:nowrap; font-family:monospace;">{{ e.ts }}</td>
+          <td>
+            {% if e.status == 'ok' %}
+              <span class="notif-log-status ok">&#10003; {{ _('OK') }}</span>
+            {% elif e.status == 'test' %}
+              <span class="notif-log-status test">&#9654; {{ _('Test') }}</span>
+            {% else %}
+              <span class="notif-log-status error">&#10007; {{ _('Error') }}</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if e.watch_url %}
+              <a href="{{ e.watch_url | safe }}" target="_blank" rel="noopener" title="{{ e.watch_uuid }}">{{ e.watch_url[:80] }}{% if e.watch_url|length > 80 %}…{% endif %}</a>
+            {% else %}
+              <span style="color:var(--color-grey-500)">—</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if e.message %}
+              <small style="color: {% if e.status == 'error' %}var(--color-error){% else %}inherit{% endif %};">{{ e.message }}</small>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <p class="pure-form-message-inline" style="margin-top:0.5em;">{{ _('Showing last %(n)d entries (newest first).', n=entries|length) }}</p>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+.notif-log-status { font-weight: bold; }
+.notif-log-status.ok    { color: var(--color-success, #2a9d2a); }
+.notif-log-status.test  { color: var(--color-info,    #1a6fa8); }
+.notif-log-status.error { color: var(--color-error,   #c0392b); }
+.log-row-error td { background: rgba(192,57,43,0.05); }
+</style>
+{% endblock %}

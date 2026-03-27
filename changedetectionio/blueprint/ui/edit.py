@@ -11,9 +11,27 @@ from changedetectionio.auth_decorator import login_optionally_required
 from changedetectionio.time_handler import is_within_schedule
 from changedetectionio import worker_pool
 
+def _get_inherited_notification_profiles(watch, datastore):
+    """Return list of (uuid, origin_label) for profiles inherited from groups/system."""
+    own = set(watch.get('notification_profiles', []))
+    result = []
+    seen = set()
+    tags = datastore.get_all_tags_for_watch(uuid=watch.get('uuid')) or {}
+    for tag in tags.values():
+        for uid in tag.get('notification_profiles', []):
+            if uid not in own and uid not in seen:
+                result.append((uid, tag.get('title', 'group')))
+                seen.add(uid)
+    for uid in datastore.data['settings']['application'].get('notification_profiles', []):
+        if uid not in own and uid not in seen:
+            result.append((uid, 'system'))
+            seen.add(uid)
+    return result
+
+
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData):
     edit_blueprint = Blueprint('ui_edit', __name__, template_folder="../ui/templates")
-    
+
     def _watch_has_tag_options_set(watch):
         """This should be fixed better so that Tag is some proper Model, a tag is just a Watch also"""
         for tag_uuid, tag in datastore.data['settings']['application'].get('tags', {}).items():
@@ -231,6 +249,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                         tag_uuids.append(datastore.add_tag(title=t))
                     extra_update_obj['tags'] = tag_uuids
 
+            # notification_profiles comes from hidden inputs (not a form field), handle separately
+            extra_update_obj['notification_profiles'] = request.form.getlist('notification_profiles')
+
             datastore.data['watching'][uuid].update(form.data)
             datastore.data['watching'][uuid].update(extra_update_obj)
 
@@ -335,7 +356,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 'extra_processor_config': form.extra_tab_content(),
                 'extra_title': f" - Edit - {watch.label}",
                 'form': form,
-                'has_default_notification_urls': True if len(datastore.data['settings']['application']['notification_urls']) else False,
+                'inherited_notification_profiles': _get_inherited_notification_profiles(watch, datastore),
+                'notification_registry': __import__('changedetectionio.notification_profiles.registry', fromlist=['registry']).registry,
                 'has_extra_headers_file': len(datastore.get_all_headers_in_textfile_for_watch(uuid=uuid)) > 0,
                 'has_special_tag_options': _watch_has_tag_options_set(watch=watch),
                 'jq_support': jq_support,

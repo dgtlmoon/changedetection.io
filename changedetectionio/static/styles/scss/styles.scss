@@ -32,6 +32,7 @@
 @use "parts/toast";
 @use "parts/login_form";
 @use "parts/tabs";
+@use "parts/notification_profiles";
 
 // Smooth transitions for theme switching
 body,
@@ -216,6 +217,40 @@ code {
 .processor-badge {
   @extend .inline-tag;
   font-weight: 900;
+}
+
+.watch-notif-profile {
+  @extend .inline-tag;
+  color: var(--color-white);
+  background: var(--color-link, #5c6bc0);
+  opacity: 0.8;
+  font-size: 0.7em;
+  cursor: default;
+
+  &.inherited {
+    opacity: 0.5;
+  }
+
+  &.system {
+    background: var(--color-grey-600, #888);
+    opacity: 0.55;
+  }
+}
+
+// Per-profile last-result badge in the profiles list
+a.notif-last-result {
+  font-size: 0.82em;
+  font-weight: bold;
+  text-decoration: none;
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+
+  &.ok   { color: #2a7c2a; background: rgba(42,124,42,0.10); }
+  &.test { color: #1a6fa8; background: rgba(26,111,168,0.10); }
+  &.error { color: #c0392b; background: rgba(192,57,43,0.10); }
+
+  &:hover { opacity: 0.75; }
 }
 
 .watch-tag-list {

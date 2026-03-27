@@ -208,12 +208,9 @@ class watch_base(dict):
             'last_viewed': 0,  # history key value of the last viewed via the [diff] link
             'method': 'GET',
             'notification_alert_count': 0,
-            'notification_body': None,
-            'notification_format': USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH,
             'notification_muted': False,
-            'notification_screenshot': False,  # Include the latest screenshot if available and supported by the apprise URL
-            'notification_title': None,
-            'notification_urls': [],  # List of URLs to add to the notification Queue (Usually AppRise)
+            'notification_profiles': [],        # List of linked NotificationProfile UUIDs
+            'notification_screenshot': False,   # Include the latest screenshot if available and supported by the apprise URL
             'page_title': None, # <title> from the page
             'paused': False,
             'previous_md5': False,

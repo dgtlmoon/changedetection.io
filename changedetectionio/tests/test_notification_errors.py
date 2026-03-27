@@ -1,15 +1,16 @@
 import os
 import time
 from flask import url_for
-from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks, delete_all_watches
+from .util import (set_original_response, set_modified_response, live_server_setup, wait_for_all_checks,
+                   delete_all_watches, add_notification_profile, set_watch_notification_profile,
+                   clear_notification_profiles)
 import logging
 
 def test_check_notification_error_handling(client, live_server, measure_memory_usage, datastore_path):
 
-   #  live_server_setup(live_server) # Setup on conftest per function
     set_original_response(datastore_path=datastore_path)
 
-    # Set a URL and fetch it, then set a notification URL which is going to give errors
+    # Set a URL and fetch it, then set notification profiles — one broken, one working
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
         url_for("ui.ui_views.form_quick_watch_add"),
@@ -24,6 +25,19 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
     working_notification_url = url_for('test_notification_endpoint', _external=True).replace('http', 'json')
     broken_notification_url = "jsons://broken-url-xxxxxxxx123/test"
 
+<<<<<<< HEAD
+    datastore = client.application.config.get('DATASTORE')
+    uuid = next(iter(datastore.data['watching']))
+
+    # A broken URL in a profile should not block a working profile from firing
+    broken_profile_uuid = add_notification_profile(
+        datastore,
+        notification_url=broken_notification_url,
+        notification_title="xxx",
+        notification_body="xxxxx",
+        notification_format='text',
+        name="Broken Profile",
+=======
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
         # A URL with errors should not block the one that is working
@@ -39,34 +53,37 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
               "browser_profile": "direct_http_requests",
               "time_between_check_use_default": "y"},
         follow_redirects=True
+>>>>>>> dev
     )
-    assert b"Updated watch." in res.data
+    working_profile_uuid = add_notification_profile(
+        datastore,
+        notification_url=working_notification_url,
+        notification_title="xxx",
+        notification_body="xxxxx",
+        notification_format='text',
+        name="Working Profile",
+    )
+    set_watch_notification_profile(datastore, uuid, broken_profile_uuid)
+    set_watch_notification_profile(datastore, uuid, working_profile_uuid)
 
-
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
-    found=False
+    found = False
     for i in range(1, 10):
-
         logging.debug("Fetching watch overview....")
-        res = client.get(
-            url_for("watchlist.index"))
-
+        res = client.get(url_for("watchlist.index"))
         if bytes("Notification error detected".encode('utf-8')) in res.data:
-            found=True
+            found = True
             break
-
         time.sleep(1)
 
     assert found
 
-
     # The error should show in the notification logs
-    res = client.get(
-        url_for("settings.notification_logs"))
-    # Check for various DNS/connection error patterns that may appear in different environments
+    res = client.get(url_for("settings.notification_logs"))
     found_name_resolution_error = (
-        b"No address found" in res.data or 
+        b"No address found" in res.data or
         b"Name or service not known" in res.data or
         b"nodename nor servname provided" in res.data or
         b"Temporary failure in name resolution" in res.data or
@@ -76,10 +93,11 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
     )
     assert found_name_resolution_error
 
-    # And the working one, which is after the 'broken' one should still have fired
+    # And the working one should still have fired
     with open(os.path.join(datastore_path, "notification.txt"), "r") as f:
         notification_submission = f.read()
     os.unlink(os.path.join(datastore_path, "notification.txt"))
     assert 'xxxxx' in notification_submission
 
     delete_all_watches(client)
+    clear_notification_profiles(datastore)

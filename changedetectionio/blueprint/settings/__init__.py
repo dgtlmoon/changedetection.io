@@ -48,9 +48,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                         extra_notification_tokens=datastore.get_unique_notification_tokens_available()
                                         )
 
-        # Remove the last option 'System default'
-        form.application.form.notification_format.choices.pop()
-
         if datastore.proxy_list is None:
             # @todo - Couldn't get setattr() etc dynamic addition working, so remove it instead
             del form.requests.form.proxy
@@ -78,6 +75,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     del (app_update['password'])
 
                 datastore.data['settings']['application'].update(app_update)
+                # notification_profiles is submitted as hidden inputs (list of UUIDs), not a form field
+                datastore.data['settings']['application']['notification_profiles'] = request.form.getlist('notification_profiles')
 
                 # Handle dynamic worker count adjustment
                 old_worker_count = datastore.data['settings']['requests'].get('workers', 1)
@@ -167,6 +166,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             # Instantiate the form with existing settings
             plugin_forms[plugin_id] = form_class(data=settings)
 
+        from changedetectionio.notification_profiles.registry import registry as notification_registry
         output = render_template("settings.html",
                                 active_plugins=active_plugins,
                                 api_key=datastore.data['settings']['application'].get('api_access_token'),
@@ -178,6 +178,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                 form=form,
                                 hide_remove_pass=os.getenv("SALTED_PASS", False),
                                 min_system_recheck_seconds=int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3)),
+                                notification_registry=notification_registry,
                                 settings_application=datastore.data['settings']['application'],
                                 timezone_default_config=datastore.data['settings']['application'].get('scheduler_timezone_default'),
                                 utc_time=utc_time,

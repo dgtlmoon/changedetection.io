@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% from '_helpers.html' import render_field %}
+{% block content %}
+<script src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
+
+<div class="pure-g">
+  <div class="pure-u-1">
+    <h1>{% if profile_uuid %}{{ _('Edit Notification Profile') }}{% else %}{{ _('New Notification Profile') }}{% endif %}</h1>
+
+    <form class="pure-form pure-form-stacked" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      {{ form.profile_type() }}
+
+      <fieldset>
+        <div class="pure-control-group">
+          {{ render_field(form.name, placeholder=_('e.g. My Slack Alerts')) }}
+        </div>
+
+        {# Type selector — only one type for now but ready for more #}
+        <div class="pure-control-group" id="profile-type-selector">
+          <label>{{ _('Profile type') }}</label>
+          <div class="profile-type-cards">
+            {% for type_id, display_name in registry.choices() %}
+            {% set handler = registry.get(type_id) %}
+            <label class="profile-type-card {% if (existing.get('type') or 'apprise') == type_id %}active{% endif %}"
+                   data-type="{{ type_id }}">
+              <input type="radio" name="_profile_type_radio" value="{{ type_id }}"
+                     {% if (existing.get('type') or 'apprise') == type_id %}checked{% endif %}>
+              <i data-feather="{{ handler.icon }}"></i>
+              <span>{{ display_name }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        {# Type-specific config — rendered via the type's template partial #}
+        <div id="profile-type-config">
+          {% for type_id, display_label in registry.choices() %}
+          {% set handler = registry.get(type_id) %}
+          <div class="profile-type-fields" data-type="{{ type_id }}"
+               style="{% if (existing.get('type') or 'apprise') != type_id %}display:none{% endif %}">
+            {% include handler.template %}
+          </div>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      <div class="pure-controls" style="margin-top: 1em; display: flex; gap: 8px; align-items: center;">
+        {{ render_field(form.save_button) }}
+        {% if profile_uuid %}
+        <a id="send-test-notification"
+           data-url="{{ url_for('notification_profiles.test', profile_uuid=profile_uuid) }}"
+           class="pure-button button-secondary">{{ _('Send test') }}</a>
+        <div class="spinner" style="display:none;"></div>
+        <span id="notification-test-log" style="display:none; font-size:0.85em;"></span>
+        {% endif %}
+        <a href="{{ url_for('notification_profiles.index') }}" class="pure-button">{{ _('Cancel') }}</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// Switch visible type config when card is clicked
+document.querySelectorAll('.profile-type-card').forEach(function(card) {
+    card.addEventListener('click', function() {
+        var type = this.dataset.type;
+        document.querySelector('input[name="profile_type"]').value = type;
+        document.querySelectorAll('.profile-type-card').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+        document.querySelectorAll('.profile-type-fields').forEach(function(el) {
+            el.style.display = el.dataset.type === type ? '' : 'none';
+        });
+    });
+});
+
+{% if profile_uuid %}
+document.getElementById('send-test-notification').addEventListener('click', function(e) {
+    e.preventDefault();
+    var btn = this;
+    var log = document.getElementById('notification-test-log');
+    var spinner = document.querySelector('.spinner');
+    spinner.style.display = 'inline-block';
+    log.style.display = 'inline';
+    log.textContent = '{{ _("Sending...") }}';
+    fetch(btn.dataset.url, {
+        method: 'POST',
+        headers: {'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value},
+    }).then(r => r.text()).then(function(t) {
+        log.textContent = t;
+    }).catch(function(e) {
+        log.textContent = 'Error: ' + e;
+    }).finally(function() {
+        spinner.style.display = 'none';
+    });
+});
+{% endif %}
+</script>
+{% endblock %}

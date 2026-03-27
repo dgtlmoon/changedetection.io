@@ -2,27 +2,56 @@ from flask_restful import Resource, abort
 from flask import request
 from . import auth, validate_openapi_request
 
+_API_PROFILE_NAME = "API Default"
+
+def _get_api_profile(datastore):
+    """Return (uuid, profile_dict) for the API-managed system profile, or (None, None)."""
+    profiles = datastore.data['settings']['application'].get('notification_profile_data', {})
+    for uid, p in profiles.items():
+        if p.get('name') == _API_PROFILE_NAME:
+            return uid, p
+    return None, None
+
+
+def _ensure_api_profile(datastore, urls):
+    """Create or update the API Default profile and ensure it's linked to system."""
+    import uuid as uuid_mod
+
+    app = datastore.data['settings']['application']
+    app.setdefault('notification_profile_data', {})
+    app.setdefault('notification_profiles', [])
+
+    uid, profile = _get_api_profile(datastore)
+    if uid is None:
+        uid = str(uuid_mod.uuid4())
+        profile = {'uuid': uid, 'name': _API_PROFILE_NAME, 'type': 'apprise', 'config': {}}
+        app['notification_profile_data'][uid] = profile
+
+    profile['config']['notification_urls'] = urls
+
+    if uid not in app['notification_profiles']:
+        app['notification_profiles'].append(uid)
+
+    datastore.needs_write = True
+    return uid, profile
+
+
 class Notifications(Resource):
     def __init__(self, **kwargs):
-        # datastore is a black box dependency
         self.datastore = kwargs['datastore']
 
     @auth.check_token
     @validate_openapi_request('getNotifications')
     def get(self):
-        """Return Notification URL List."""
+        """Return Notification URL List (from the API Default profile)."""
+        _, profile = _get_api_profile(self.datastore)
+        urls = profile['config'].get('notification_urls', []) if profile else []
+        return {'notification_urls': urls}, 200
 
-        notification_urls = self.datastore.data.get('settings', {}).get('application', {}).get('notification_urls', [])        
-
-        return {
-                'notification_urls': notification_urls,
-               }, 200
-    
     @auth.check_token
     @validate_openapi_request('addNotifications')
     def post(self):
-        """Create Notification URLs."""
-
+        """Add Notification URLs to the API Default profile."""
         json_data = request.get_json()
         notification_urls = json_data.get("notification_urls", [])
 
@@ -32,23 +61,27 @@ class Notifications(Resource):
         except ValidationError as e:
             return str(e), 400
 
-        added_urls = []
+        _, profile = _get_api_profile(self.datastore)
+        existing = list(profile['config'].get('notification_urls', []) if profile else [])
 
+        added = []
         for url in notification_urls:
-            clean_url = url.strip()
-            added_url = self.datastore.add_notification_url(clean_url)
-            if added_url:
-                added_urls.append(added_url)
+            clean = url.strip()
+            if clean and clean not in existing:
+                existing.append(clean)
+                added.append(clean)
 
-        if not added_urls:
+        if not added:
             return "No valid notification URLs were added", 400
 
-        return {'notification_urls': added_urls}, 201
-    
+        _ensure_api_profile(self.datastore, existing)
+        self.datastore.commit()
+        return {'notification_urls': existing}, 201
+
     @auth.check_token
     @validate_openapi_request('replaceNotifications')
     def put(self):
-        """Replace Notification URLs."""
+        """Replace Notification URLs in the API Default profile."""
         json_data = request.get_json()
         notification_urls = json_data.get("notification_urls", [])
 
@@ -57,43 +90,57 @@ class Notifications(Resource):
             validate_notification_urls(notification_urls)
         except ValidationError as e:
             return str(e), 400
-        
+
         if not isinstance(notification_urls, list):
             return "Invalid input format", 400
 
         clean_urls = [url.strip() for url in notification_urls if isinstance(url, str)]
-        self.datastore.data['settings']['application']['notification_urls'] = clean_urls
-        self.datastore.commit()
 
+        if clean_urls:
+            _ensure_api_profile(self.datastore, clean_urls)
+        else:
+            # Empty list: remove the profile entirely
+            uid, _ = _get_api_profile(self.datastore)
+            if uid:
+                app = self.datastore.data['settings']['application']
+                app['notification_profile_data'].pop(uid, None)
+                if uid in app.get('notification_profiles', []):
+                    app['notification_profiles'].remove(uid)
+                self.datastore.needs_write = True
+
+        self.datastore.commit()
         return {'notification_urls': clean_urls}, 200
-        
+
     @auth.check_token
     @validate_openapi_request('deleteNotifications')
     def delete(self):
-        """Delete Notification URLs."""
-
+        """Delete specific Notification URLs from the API Default profile."""
         json_data = request.get_json()
         urls_to_delete = json_data.get("notification_urls", [])
         if not isinstance(urls_to_delete, list):
             abort(400, message="Expected a list of notification URLs.")
 
-        notification_urls = self.datastore.data['settings']['application'].get('notification_urls', [])
-        deleted = []
+        uid, profile = _get_api_profile(self.datastore)
+        if not profile:
+            abort(400, message="No matching notification URLs found.")
 
+        current = list(profile['config'].get('notification_urls', []))
+        deleted = []
         for url in urls_to_delete:
-            clean_url = url.strip()
-            if clean_url in notification_urls:
-                notification_urls.remove(clean_url)
-                deleted.append(clean_url)
+            clean = url.strip()
+            if clean in current:
+                current.remove(clean)
+                deleted.append(clean)
 
         if not deleted:
             abort(400, message="No matching notification URLs found.")
 
-        self.datastore.data['settings']['application']['notification_urls'] = notification_urls
+        profile['config']['notification_urls'] = current
+        self.datastore.needs_write = True
         self.datastore.commit()
-
         return 'OK', 204
-    
+
+
 def validate_notification_urls(notification_urls):
     from changedetectionio.forms import ValidateAppRiseServers
     validator = ValidateAppRiseServers()

@@ -279,8 +279,18 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
                                 {%- endif -%}
                             {%- endif -%}
 
-                            {%- for watch_tag_uuid, watch_tag in datastore.get_all_tags_for_watch(watch['uuid']).items() -%}
+                            {%- set _watch_tags = datastore.get_all_tags_for_watch(watch['uuid']) -%}
+                            {%- for watch_tag_uuid, watch_tag in _watch_tags.items() -%}
                               <a href="{{url_for('watchlist.index', tag=watch_tag_uuid) }}" class="watch-tag-list tag-{{ watch_tag.title|sanitize_tag_class }}">{{ watch_tag.title }}</a>
+                            {%- endfor -%}
+                            {%- for np in get_resolved_notification_profiles(watch) -%}
+                              {%- if np.level == 'direct' -%}
+                                <span class="watch-notif-profile" title="{{ _('Direct notification profile') }}"><i data-feather="bell" style="width:10px;height:10px;vertical-align:middle;"></i> {{ np.name }}</span>
+                              {%- elif np.level == 'group' -%}
+                                <span class="watch-notif-profile inherited" title="{{ _('Via group') }}: {{ np.group_name }}"><i data-feather="bell" style="width:10px;height:10px;vertical-align:middle;"></i> {{ np.name }}</span>
+                              {%- else -%}
+                                <span class="watch-notif-profile system" title="{{ _('System-wide profile') }}"><i data-feather="bell" style="width:10px;height:10px;vertical-align:middle;"></i> {{ np.name }}</span>
+                              {%- endif -%}
                             {%- endfor -%}
                         </div>
                     <div class="status-icons">

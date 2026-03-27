@@ -245,6 +245,31 @@ def _get_current_worker_count():
     """Get the current number of operational workers"""
     return worker_pool.get_worker_count()
 
+@app.template_global('get_resolved_notification_profiles')
+def _get_resolved_notification_profiles(watch):
+    """Return list of resolved notification profile info dicts for a watch.
+
+    Each entry: {'name': str, 'level': 'direct'|'group'|'system', 'group_name': str}
+    Deduplicated by UUID across all levels — same logic as resolve_notification_profiles().
+    """
+    all_profiles = datastore.data['settings']['application'].get('notification_profile_data', {})
+    seen = set()
+    result = []
+
+    def _add(uuids, level, group_name=''):
+        for uid in (uuids or []):
+            if uid in seen or uid not in all_profiles:
+                continue
+            seen.add(uid)
+            result.append({'name': all_profiles[uid].get('name', ''), 'level': level, 'group_name': group_name})
+
+    _add(watch.get('notification_profiles', []), 'direct')
+    for tag in (datastore.get_all_tags_for_watch(uuid=watch.get('uuid')) or {}).values():
+        _add(tag.get('notification_profiles', []), 'group', tag.get('title', ''))
+    _add(datastore.data['settings']['application'].get('notification_profiles', []), 'system')
+    return result
+
+
 @app.template_global('get_worker_status_info')
 def _get_worker_status_info():
     """Get detailed worker status information for display"""
@@ -847,6 +872,9 @@ def changedetection_app(config=None, datastore_o=None):
 
     import changedetectionio.blueprint.tags as tags
     app.register_blueprint(tags.construct_blueprint(datastore), url_prefix='/tags')
+
+    from changedetectionio.blueprint.notification_profiles import construct_blueprint as construct_notification_profiles_blueprint
+    app.register_blueprint(construct_notification_profiles_blueprint(datastore), url_prefix='/notification-profiles')
 
     import changedetectionio.blueprint.check_proxies as check_proxies
     app.register_blueprint(check_proxies.construct_blueprint(datastore=datastore), url_prefix='/check_proxy')
