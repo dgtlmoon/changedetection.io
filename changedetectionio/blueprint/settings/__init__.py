@@ -15,6 +15,9 @@ from changedetectionio.auth_decorator import login_optionally_required
 def construct_blueprint(datastore: ChangeDetectionStore):
     settings_blueprint = Blueprint('settings', __name__, template_folder="templates")
 
+    from changedetectionio.blueprint.settings.browser_profile import construct_blueprint as construct_browser_profile_blueprint
+    settings_blueprint.register_blueprint(construct_browser_profile_blueprint(datastore), url_prefix='/browsers')
+
     @settings_blueprint.route("", methods=['GET', "POST"])
     @login_optionally_required
     def settings_page():

@@ -61,7 +61,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         timestamp = None
 
         extra_stylesheets = [url_for('static_content', group='styles', filename='diff.css')]
-        is_html_webdriver = watch.fetcher_supports_screenshots
+        fetcher_supports_screenshots = watch.fetcher_supports_screenshots
 
         triggered_line_numbers = []
         ignored_line_numbers = []
@@ -112,7 +112,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                  highlight_triggered_line_numbers=triggered_line_numbers,
                                  highlight_blocked_line_numbers=blocked_line_numbers,
                                  history_n=watch.history_n,
-                                 is_html_webdriver=is_html_webdriver,
+                                 fetcher_supports_screenshots=fetcher_supports_screenshots,
                                  last_error=watch['last_error'],
                                  last_error_screenshot=watch.get_error_snapshot(),
                                  last_error_text=watch.get_error_text(),

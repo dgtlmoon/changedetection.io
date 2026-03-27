@@ -80,7 +80,7 @@ def test_trigger_functionality(client, live_server, measure_memory_usage, datast
         data={"trigger_text": trigger_text,
               "ignore_text": "and more",
               "url": test_url,
-              "fetch_backend": "html_requests",
+              "browser_profile": "direct_http_requests",
               "time_between_check_use_default": "y"},
         follow_redirects=True
     )

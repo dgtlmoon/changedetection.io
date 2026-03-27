@@ -152,7 +152,7 @@ def test_rss_xpath_filtering(client, live_server, measure_memory_usage, datastor
         url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
         data={
                 "include_filters": "//item/title",
-                "fetch_backend": "html_requests",
+                "browser_profile": "direct_http_requests",
                 "headers": "",
                 "proxy": "no-proxy",
                 "tags": "",

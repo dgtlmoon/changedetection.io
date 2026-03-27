@@ -50,6 +50,7 @@ def run_filter_test(client, live_server, content_filter, app_notification_format
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     assert live_server.app.config['DATASTORE'].data['watching'][uuid]['consecutive_filter_failures'] == 0, "No filter = No filter failure"
 
+<<<<<<< HEAD
     # Create a notification profile for this watch and link it
     profile_uuid = add_notification_profile(
         datastore,
@@ -86,6 +87,32 @@ def run_filter_test(client, live_server, content_filter, app_notification_format
         "url": test_url,
         "notification_profiles": profile_uuid,
     }
+=======
+    watch_data = {"notification_urls": notification_url,
+                  "notification_title": "New ChangeDetection.io Notification - {{watch_url}}",
+                  "notification_body": "BASE URL: {{base_url}}\n"
+                                       "Watch URL: {{watch_url}}\n"
+                                       "Watch UUID: {{watch_uuid}}\n"
+                                       "Watch title: {{watch_title}}\n"
+                                       "Watch tag: {{watch_tag}}\n"
+                                       "Preview: {{preview_url}}\n"
+                                       "Diff URL: {{diff_url}}\n"
+                                       "Snapshot: {{current_snapshot}}\n"
+                                       "Diff: {{diff}}\n"
+                                       "Diff Full: {{diff_full}}\n"
+                                       "Diff as Patch: {{diff_patch}}\n"
+                                       ":-)",
+                  "notification_format": 'text',
+                  "browser_profile": "direct_http_requests",
+                  "filter_failure_notification_send": 'y',
+                  "time_between_check_use_default": "y",
+                  "headers": "",
+                  "tags": "my tag",
+                  "title": "my title 123",
+                  "time_between_check-hours": 5,  # So that the queue runner doesnt also put it in
+                  "url": test_url,
+                  }
+>>>>>>> dev
 
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid=uuid),

@@ -89,7 +89,7 @@ def test_check_markup_include_filters_restriction(client, live_server, measure_m
     # Add our URL to the import page
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
-        data={"include_filters": include_filters, "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
+        data={"include_filters": include_filters, "url": test_url, "tags": "", "headers": "", 'browser_profile': "direct_http_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -144,7 +144,7 @@ def test_check_multiple_filters(client, live_server, measure_memory_usage, datas
               "url": test_url,
               "tags": "",
               "headers": "",
-              'fetch_backend': "html_requests",
+              'browser_profile': "direct_http_requests",
               "time_between_check_use_default": "y"},
         follow_redirects=True
     )
@@ -195,7 +195,7 @@ def test_filter_is_empty_help_suggestion(client, live_server, measure_memory_usa
               "url": test_url,
               "tags": "",
               "headers": "",
-              'fetch_backend': "html_requests",
+              'browser_profile': "direct_http_requests",
               "time_between_check_use_default": "y"},
         follow_redirects=True
     )

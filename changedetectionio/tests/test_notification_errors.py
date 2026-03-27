@@ -25,6 +25,7 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
     working_notification_url = url_for('test_notification_endpoint', _external=True).replace('http', 'json')
     broken_notification_url = "jsons://broken-url-xxxxxxxx123/test"
 
+<<<<<<< HEAD
     datastore = client.application.config.get('DATASTORE')
     uuid = next(iter(datastore.data['watching']))
 
@@ -36,6 +37,23 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
         notification_body="xxxxx",
         notification_format='text',
         name="Broken Profile",
+=======
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid="first"),
+        # A URL with errors should not block the one that is working
+        data={"notification_urls": f"{broken_notification_url}\r\n{working_notification_url}",
+              "notification_title": "xxx",
+              "notification_body": "xxxxx",
+              "notification_format": 'text',
+              "url": test_url,
+              "tags": "",
+              "title": "",
+              "headers": "",
+              "time_between_check-minutes": "180",
+              "browser_profile": "direct_http_requests",
+              "time_between_check_use_default": "y"},
+        follow_redirects=True
+>>>>>>> dev
     )
     working_profile_uuid = add_notification_profile(
         datastore,
@@ -70,7 +88,8 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
         b"nodename nor servname provided" in res.data or
         b"Temporary failure in name resolution" in res.data or
         b"Failed to establish a new connection" in res.data or
-        b"Connection error occurred" in res.data
+        b"Connection error occurred" in res.data or
+        b"net::ERR_NAME_NOT_RESOLVED" in res.data
     )
     assert found_name_resolution_error
 

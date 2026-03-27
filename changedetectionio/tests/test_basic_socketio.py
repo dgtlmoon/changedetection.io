@@ -118,8 +118,7 @@ def test_everything(live_server, client, measure_memory_usage, datastore_path):
     res = client.post(
         url_for("settings.settings_page"),
         data={"application-password": "foobar",
-              "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+              "requests-time_between_check-minutes": 180},
         follow_redirects=True
     )
 

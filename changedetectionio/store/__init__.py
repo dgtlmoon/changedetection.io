@@ -143,7 +143,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
             self.__data['settings']['application']['tags'][uuid] = Tag.model(
                 datastore_path=self.datastore_path,
-                __datastore=self.__data,
+                __datastore=self,
                 default=tag
             )
             logger.info(f"Tag: {uuid} {tag['title']}")
@@ -207,7 +207,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         self.json_store_path = os.path.join(self.datastore_path, "changedetection.json")
 
         # Base definition for all watchers (deepcopy part of #569)
-        self.generic_definition = deepcopy(Watch.model(datastore_path=datastore_path, __datastore=self.__data, default={}))
+        self.generic_definition = deepcopy(Watch.model(datastore_path=datastore_path, __datastore=self, default={}))
 
         # Load build SHA if available (Docker deployments)
         if path.isfile('changedetectionio/source.txt'):
@@ -245,6 +245,10 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
             # Maybe they copied a bunch of watch subdirs across too
             self._load_state()
 
+        # Apply env-var browser config after state is fully loaded so we can safely
+        # read existing settings without risk of being overwritten.
+        self.preconfigure_browser_profiles_based_on_env()
+
     def init_fresh_install(self, include_default_watches, version_tag):
       # Generate app_guid FIRST (required for all operations)
         if "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ:
@@ -268,13 +272,11 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         if include_default_watches:
             self.add_watch(
                 url='https://news.ycombinator.com/',
-                tag='Tech news',
-                extras={'fetch_backend': 'html_requests'}
+                tag='Tech news'
             )
             self.add_watch(
                 url='https://changedetection.io/CHANGELOG.txt',
-                tag='changedetection.io',
-                extras={'fetch_backend': 'html_requests'}
+                tag='changedetection.io'
             )
 
         # Create changedetection.json immediately
@@ -331,8 +333,63 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         if entity.get('processor') != 'text_json_diff':
             logger.trace(f"Loading Watch object '{watch_class.__module__}.{watch_class.__name__}' for UUID {uuid}")
 
-        entity = watch_class(datastore_path=self.datastore_path, __datastore=self.__data, default=entity)
+        entity = watch_class(datastore_path=self.datastore_path, __datastore=self, default=entity)
         return entity
+
+    def preconfigure_browser_profiles_based_on_env(self):
+        """Instantiate browser profiles from environment variables and store them.
+
+        Always runs at the end of reload_state() — covers fresh installs,
+        existing datastores, and server restarts.  Env vars always win so that
+        changing PLAYWRIGHT_DRIVER_URL and restarting is reflected immediately.
+
+        Creates BrowserProfile instances from env vars and stores them in
+        ``settings.application.browser_profiles`` under their machine names,
+        then sets ``settings.application.browser_profile`` to that profile as
+        the system-wide default.
+        """
+        from changedetectionio.model import browser_profile as bp
+        from changedetectionio.strtobool import strtobool
+
+        store_profiles = self.__data['settings']['application'].setdefault('browser_profiles', {})
+        service_workers = os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow')
+        extra_delay = int(os.getenv('WEBDRIVER_DELAY_BEFORE_CONTENT_READY', 0))
+        configured_profile = None
+
+        playwright_url = os.getenv('PLAYWRIGHT_DRIVER_URL')
+        if playwright_url:
+            playwright_url = playwright_url.strip('"')
+            builtin = bp.BUILTIN_PUPPETEER if strtobool(os.getenv('FAST_PUPPETEER_CHROME_FETCHER', 'False')) else bp.BUILTIN_PLAYWRIGHT
+            profile = bp.BrowserProfile(
+                name=builtin.name,
+                fetch_backend=builtin.fetch_backend,
+                browser_connection_url=playwright_url,
+                service_workers=service_workers,
+                extra_delay=extra_delay,
+                is_builtin=True,
+            )
+            logger.debug(f"Configuring browser profile '{profile.get_machine_name()}' from env")
+            store_profiles[profile.get_machine_name()] = profile.model_dump()
+            configured_profile = profile
+
+        webdriver_url = os.getenv('WEBDRIVER_URL')
+        if webdriver_url:
+            profile = bp.BrowserProfile(
+                name=bp.BUILTIN_SELENIUM.name,
+                fetch_backend=bp.BUILTIN_SELENIUM.fetch_backend,
+                browser_connection_url=webdriver_url.strip('"'),
+                extra_delay=extra_delay,
+                is_builtin=True,
+            )
+            logger.debug(f"Configuring browser profile '{profile.get_machine_name()}' from env")
+            store_profiles[profile.get_machine_name()] = profile.model_dump()
+            if not configured_profile:
+                configured_profile = profile
+
+        if configured_profile:
+            logger.debug(f"Setting system default browser profile to '{configured_profile.get_machine_name()}'")
+            self.__data['settings']['application']['browser_profile'] = configured_profile.get_machine_name()
+
 
     # ============================================================================
     # FileSavingDataStore Abstract Method Implementations
@@ -364,6 +421,14 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
         # Is saved as {uuid}/tag.json
         settings_copy['application']['tags'] = {}
+
+        # Serialize BrowserProfile Pydantic instances to plain dicts for JSON storage
+        raw_profiles = settings_copy['application'].get('browser_profiles', {})
+        from changedetectionio.model.browser_profile import BrowserProfile
+        settings_copy['application']['browser_profiles'] = {
+            k: v.model_dump() if isinstance(v, BrowserProfile) else v
+            for k, v in raw_profiles.items()
+        }
 
         return {
             'note': 'Settings file - watches are in {uuid}/watch.json, tags are in {uuid}/tag.json',
@@ -421,7 +486,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
             return Tag.model(
                 datastore_path=self.datastore_path,
-                __datastore=self.__data,
+                __datastore=self,
                 default=entity_dict
             )
 
@@ -767,7 +832,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
         # If the processor also has its own Watch implementation
         watch_class = get_custom_watch_obj_for_processor(apply_extras.get('processor'))
-        new_watch = watch_class(datastore_path=self.datastore_path, __datastore=self.__data, url=url)
+        new_watch = watch_class(datastore_path=self.datastore_path, __datastore=self, url=url)
 
         new_uuid = new_watch.get('uuid')
 
@@ -852,6 +917,16 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
         return proxy_list if len(proxy_list) else None
 
+    def get_proxy_url_for_watch(self, uuid, override_id=None):
+        """
+        Returns the resolved proxy URL string for a watch, or None.
+        override_id forces a specific proxy (e.g. proxy checker bypass).
+        """
+        proxy_id = override_id or self.get_preferred_proxy_for_watch(uuid)
+        if proxy_id:
+            return self.proxy_list.get(proxy_id, {}).get('url')
+        return None
+
     def get_preferred_proxy_for_watch(self, uuid):
         """
         Returns the preferred proxy by ID key
@@ -884,6 +959,71 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
             return first_default
 
         return None
+
+    # ------------------------------------------------------------------
+    # BrowserProfile helpers
+    # ------------------------------------------------------------------
+
+    def get_browser_profile(self, machine_name: str):
+        """Return a BrowserProfile by machine name, or None if not found.
+
+        Built-in profiles (direct_http_requests, browser_chromeplaywright) are
+        always available and checked first.
+        """
+        from changedetectionio.model.browser_profile import get_profile
+        store_profiles = self.data['settings']['application'].get('browser_profiles', {})
+        return get_profile(machine_name, store_profiles)
+
+    def delete_browser_profile(self, machine_name: str):
+        """Delete a user-defined BrowserProfile by machine name.
+
+        Rules enforced:
+        - Built-in profiles cannot be deleted.
+        - The profile cannot be the current system default
+          (settings.application.browser_profile); caller must change the
+          default first.
+        - Any watch or tag that referenced this profile is reset to None
+          (falls back through the chain on next fetch).
+
+        Returns the number of watches/tags that were reset.
+        """
+        from changedetectionio.model.browser_profile import RESERVED_MACHINE_NAMES
+
+        if machine_name in RESERVED_MACHINE_NAMES:
+            raise ValueError(f"Built-in profile '{machine_name}' cannot be deleted")
+
+        system_default = self.data['settings']['application'].get('browser_profile')
+        if system_default == machine_name:
+            raise ValueError(
+                f"Profile '{machine_name}' is the system default. "
+                f"Change the system default before deleting it."
+            )
+
+        store_profiles = self.data['settings']['application'].get('browser_profiles', {})
+        if machine_name not in store_profiles:
+            return 0
+
+        del store_profiles[machine_name]
+
+        reset_count = 0
+
+        # Reset watches that reference this profile
+        for uuid, watch in self.data['watching'].items():
+            if watch.get('browser_profile') == machine_name:
+                watch['browser_profile'] = None
+                watch.commit()
+                reset_count += 1
+
+        # Reset tags that reference this profile
+        for tag_uuid, tag in self.data['settings']['application'].get('tags', {}).items():
+            if tag.get('browser_profile') == machine_name:
+                tag['browser_profile'] = None
+                tag.commit()
+                reset_count += 1
+
+        self._save_settings()
+        logger.info(f"Deleted BrowserProfile '{machine_name}', reset {reset_count} watches/tags")
+        return reset_count
 
     @property
     def has_extra_headers_file(self):
@@ -962,7 +1102,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
             from ..model import Tag
             new_tag = Tag.model(
                 datastore_path=self.datastore_path,
-                __datastore=self.__data,
+                __datastore=self,
                 default={
                     'title': title.strip(),
                     'date_created': int(time.time())

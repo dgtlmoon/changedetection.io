@@ -12,12 +12,13 @@ def test_fetch_webdriver_content(client, live_server, measure_memory_usage, data
     #  live_server_setup(live_server) # Setup on conftest per function
 
     #####################
+    # preconfigure_browser_profiles_based_on_env() already set the correct system default
+    # (playwright or puppeteer depending on FAST_PUPPETEER_CHROME_FETCHER) — no need to override it.
     res = client.post(
         url_for("settings.settings_page"),
         data={
             "application-empty_pages_are_a_change": "",
             "requests-time_between_check-minutes": 180,
-            'application-fetch_backend': "html_webdriver",
             'application-ui-favicons_enabled': "y",
         },
         follow_redirects=True

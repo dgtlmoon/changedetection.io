@@ -187,6 +187,7 @@ class watch_base(dict):
             'content-type': None,
             'date_created': None,
             'extract_text': [],  # Extract text by regex after filters
+            'browser_profile': 'system',  # machine-name key of a BrowserProfile; 'system' → resolve via chain
             'fetch_backend': 'system',  # plaintext, playwright etc
             'fetch_time': 0.0,
             'filter_failure_notification_send': strtobool(os.getenv('FILTER_FAILURE_NOTIFICATION_SEND_DEFAULT', 'True')),
@@ -586,7 +587,9 @@ class watch_base(dict):
             return None
 
         try:
-            value = self._datastore['settings']
+            # _datastore is a ChangeDetectionStore (has .data) or a plain dict (unit tests)
+            store_data = self._datastore.data if hasattr(self._datastore, 'data') else self._datastore
+            value = store_data['settings']
             for key in path:
                 value = value[key]
             return value

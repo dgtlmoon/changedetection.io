@@ -3,6 +3,8 @@
 import os
 from flask import url_for
 from ..util import live_server_setup, wait_for_all_checks
+from ... import strtobool
+
 
 # def test_setup(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
@@ -35,7 +37,6 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
             "tags": "",
             # For now, cookies doesnt work in headers because it must be a full cookiejar object
             'headers': "testheader: yes\buser-agent: MyCustomAgent",
-            'fetch_backend': "html_webdriver",
             "time_between_check_use_default": "y",
         },
         follow_redirects=True
@@ -88,6 +89,9 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
 
 def test_basic_browserstep(client, live_server, measure_memory_usage, datastore_path):
 
+    if os.getenv('PLAYWRIGHT_DRIVER_URL') and strtobool(os.getenv('FAST_PUPPETEER_CHROME_FETCHER', 'False')):
+        print("Puppeteer chrome fetch for BrowserSteps not supported!! test_basic_browserstep will be skipped")
+        return
 
     test_url = url_for('test_interactive_html_endpoint', _external=True)
     test_url = test_url.replace('localhost.localdomain', 'cdio')
@@ -106,7 +110,6 @@ def test_basic_browserstep(client, live_server, measure_memory_usage, datastore_
         data={
             "url": test_url,
             "tags": "",
-            'fetch_backend': "html_webdriver",
             'browser_steps-5-operation': 'Enter text in field',
             'browser_steps-5-selector': '#test-input-text',
             # Should get set to the actual text (jinja2 rendered)
@@ -173,7 +176,6 @@ def test_non_200_errors_report_browsersteps(client, live_server, measure_memory_
         data={
               "url": four_o_four_url,
               "tags": "",
-              'fetch_backend': "html_webdriver",
               'browser_steps-0-operation': 'Click element',
               'browser_steps-0-selector': 'button[name=test-button]',
               'browser_steps-0-optional_value': '',
@@ -203,7 +205,7 @@ def test_browsersteps_edit_UI_startsession(client, live_server, measure_memory_u
     test_url = test_url.replace('localhost.localdomain', 'cdio')
     test_url = test_url.replace('localhost', 'cdio')
 
-    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, extras={'fetch_backend': 'html_webdriver', 'paused': True})
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, extras={'paused': True})
 
     # Test starting a browsersteps session
     res = client.get(
@@ -239,7 +241,6 @@ def test_browsersteps_edit_UI_startsession(client, live_server, measure_memory_u
         data={
             "url": test_url,
             "tags": "",
-            'fetch_backend': "html_webdriver",
             "time_between_check_use_default": "y",
         },
         follow_redirects=True
