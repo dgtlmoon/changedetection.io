@@ -369,7 +369,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
                 is_builtin=True,
             )
             logger.debug(f"Configuring browser profile '{profile.get_machine_name()}' from env")
-            store_profiles[profile.get_machine_name()] = profile
+            store_profiles[profile.get_machine_name()] = profile.model_dump()
             configured_profile = profile
 
         webdriver_url = os.getenv('WEBDRIVER_URL')
@@ -382,7 +382,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
                 is_builtin=True,
             )
             logger.debug(f"Configuring browser profile '{profile.get_machine_name()}' from env")
-            store_profiles[profile.get_machine_name()] = profile
+            store_profiles[profile.get_machine_name()] = profile.model_dump()
             if not configured_profile:
                 configured_profile = profile
 

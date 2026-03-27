@@ -162,7 +162,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             (p.get_machine_name(), p.name)
             for p in cf.DEFAULT_BROWSER_PROFILES.values()
         ] + [
-            (machine_name, raw.get('name', machine_name) if isinstance(raw, dict) else machine_name)
+            (machine_name, raw.get('name', machine_name) if isinstance(raw, dict) else getattr(raw, 'name', machine_name))
             for machine_name, raw in store_profiles.items()
         ]
 
