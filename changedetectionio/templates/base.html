@@ -47,7 +47,7 @@
     {% endif %}
     {%- set _html_head_extras = get_html_head_extras() -%}
     {%- if _html_head_extras %}
-    {{ _html_head_extras }}
+    {{ _html_head_extras | safe }}
     {%- endif %}
   </head>
 
