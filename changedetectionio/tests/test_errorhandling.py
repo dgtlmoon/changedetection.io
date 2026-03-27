@@ -10,7 +10,9 @@ from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 
 
 def _runner_test_http_errors(client, live_server, http_code, expected_text, datastore_path):
-
+    from loguru import logger
+    logger.debug(f"_runner_test_http_errors - testing text '{expected_text}' for code {http_code}")
+    
     with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("Now you going to get a {} error code\n".format(http_code))
 
