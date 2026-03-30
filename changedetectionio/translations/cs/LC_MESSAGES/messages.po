@@ -20,85 +20,85 @@ msgstr ""
 
 #: changedetectionio/blueprint/backups/__init__.py
 msgid "A backup is already running, check back in a few minutes"
-msgstr ""
+msgstr "Tvorba souboru zálohy běží, vraťte se za pár minut"
 
 #: changedetectionio/blueprint/backups/__init__.py
 msgid "Maximum number of backups reached, please remove some"
-msgstr ""
+msgstr "Maximální počet souborů záloh dosažen, některé prosím smažte"
 
 #: changedetectionio/blueprint/backups/__init__.py
 msgid "Backup building in background, check back in a few minutes."
-msgstr ""
+msgstr "Tvorba souboru zálohy běží na pozadí, vraťte se za pár minut."
 
 #: changedetectionio/blueprint/backups/__init__.py
 msgid "Backups were deleted."
-msgstr ""
+msgstr "Zálohy byly smazány"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "Backup zip file"
-msgstr ""
+msgstr "Záložní zip soubor"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "Must be a .zip backup file!"
-msgstr ""
+msgstr "Musí být .zip soubor zálohy!"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "Include groups"
-msgstr ""
+msgstr "Zahrnout skupiny"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "Replace existing groups of the same UUID"
-msgstr ""
+msgstr "Nahradit existující skupiny obsahující stejné UUID"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "Include watches"
-msgstr ""
+msgstr "Zahrnout sledování"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "Replace existing watches of the same UUID"
-msgstr ""
+msgstr "Nahradit existující sledování obsahující stejne UUID"
 
 #: changedetectionio/blueprint/backups/restore.py changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Restore backup"
-msgstr ""
+msgstr "Obnovit zálohu"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "A restore is already running, check back in a few minutes"
-msgstr ""
+msgstr "Obnova již probíhá, vraťte se za pár minut"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "No file uploaded"
-msgstr ""
+msgstr "Nebyl nahrán žádný soubor"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "File must be a .zip backup file"
-msgstr ""
+msgstr "Soubor musí být .zip soubor zálohy!"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "Invalid or corrupted zip file"
-msgstr ""
+msgstr "Neplatný nebo poškozený zip soubor"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "Restore started in background, check back in a few minutes."
-msgstr ""
+msgstr "Obnova běží na pozadí, vraťte se za pár minut."
 
 #: changedetectionio/blueprint/backups/templates/backup_create.html
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Create"
-msgstr ""
+msgstr "Vytvořit"
 
 #: changedetectionio/blueprint/backups/templates/backup_create.html
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Restore"
-msgstr ""
+msgstr "Obnovit"
 
 #: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "A backup is running!"
-msgstr "A backup is running!"
+msgstr "Probíhá zálohování!"
 
 #: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "Here you can download and request a new backup, when a backup is completed you will see it listed below."
-msgstr ""
+msgstr "Zde můžete stáhnout a vyžádat vytvoření zálohy, dostupné vytvořené zálohy jsou vypsané níže."
 
 #: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "Mb"
@@ -106,7 +106,7 @@ msgstr "Mb"
 
 #: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "No backups found."
-msgstr "No backups found."
+msgstr "Nenalezeny žádné zálohy."
 
 #: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "Create backup"
@@ -118,77 +118,77 @@ msgstr "Odstranit zálohy"
 
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "A restore is running!"
-msgstr ""
+msgstr "Probíhá obnova!"
 
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Restore a backup. Must be a .zip backup file created on/after v0.53.1 (new database layout)."
-msgstr ""
+msgstr "Obnovit ze zálohy. Musí být .zip soubor zálohy vytvořený nejméně v0.53.1 (nové rozvržení databáze)"
 
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Note: This does not override the main application settings, only watches and groups."
-msgstr ""
+msgstr "Pozn.: Nepřepíše hlavní nastavení aplikaci, pouze sledování a skupiny."
 
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Include all groups found in backup?"
-msgstr ""
+msgstr "Zahrnout všechny skupiny nalezené v záloze?"
 
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Replace any existing groups of the same UUID?"
-msgstr ""
+msgstr "Nahradit všechny existující skupiny se stejným UUID?"
 
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Include all watches found in backup?"
-msgstr ""
+msgstr "Zahrnout všechna sledování nalezená v záloze?"
 
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Replace any existing watches of the same UUID?"
-msgstr ""
+msgstr "Nahradit všechna existující sledování se stejným UUID?"
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Importing 5,000 of the first URLs from your list, the rest can be imported again."
-msgstr ""
+msgstr "Importuje se prvních 5000 URL adres, další lze načíst opakovaným importem."
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
 msgid "{} Imported from list in {:.2f}s, {} Skipped."
-msgstr ""
+msgstr "{} importováno ze seznamu za {:.2f}s, {} přeskočeno."
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read JSON file, was it broken?"
-msgstr ""
+msgstr "Nelze načíst JSON soubor, byl poškozen?"
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "JSON structure looks invalid, was it broken?"
-msgstr ""
+msgstr "Strukturovaný JSON text je neplatný, byl poškozen?"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
 msgid "{} Imported from Distill.io in {:.2f}s, {} Skipped."
-msgstr ""
+msgstr "{} importováno z Distill.io za {:.2f}s, {} přeskočeno."
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read export XLSX file, something wrong with the file?"
-msgstr ""
+msgstr "Nelze přečíst vyexportovaný XLSX soubor, je s ním něco v nepořádku?"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
 msgid "Error processing row number {}, URL value was incorrect, row was skipped."
-msgstr ""
+msgstr "Chyba při zpracování řádku {}, hodnota URL neplatná, řádek přeskočen."
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
 msgid "Error processing row number {}, check all cell data types are correct, row was skipped."
-msgstr ""
+msgstr "Chyba při zpracování řádku {}, zkontrolujte že všechny typy dat v buňkách jsou správné, řádka přeskočena."
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
 msgid "{} imported from Wachete .xlsx in {:.2f}s"
-msgstr ""
+msgstr "{} importováno z Wachete .xlsx za {:.2f}s"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
 msgid "{} imported from custom .xlsx in {:.2f}s"
-msgstr ""
+msgstr "{} importováno z vlastního .xlsx za {:.2f}s"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "URL List"
@@ -204,15 +204,15 @@ msgstr ".XLSX a Wachete"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Restoring changedetection.io backups is in the"
-msgstr ""
+msgstr "Možnost obnovení changedetection.io zálohy je v"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "backups section"
-msgstr ""
+msgstr "sekci záloh"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Enter one URL per line, and optionally add tags for each URL after a space, delineated by comma (,):"
-msgstr ""
+msgstr "Vložte jednu URL na řádek a případně přidejte tagy pro každou URL odsazené mezerníkem, oddělené čárkou (,):"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Example:"
@@ -224,7 +224,7 @@ msgstr "URL, které neprojdou validací, zůstanou v textové oblasti."
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Copy and Paste your Distill.io watch 'export' file, this should be a JSON file."
-msgstr ""
+msgstr "Nakopírujte a vložte exportovaný Distill.io soubor, měl by být ve formátu JSON."
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "This is"
@@ -252,9 +252,7 @@ msgstr "Jak exportovat?"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Be sure to set your default fetcher to Chrome if required."
-msgstr ""
-"V případě potřeby nezapomeňte nastavit výchozí nástroj pro načítání na Chrome.V případě potřeby nezapomeňte nastavit "
-"výchozí načítání na Chrome.V případě potřeby nezapomeňte nastavit výchozí nástroj pro načítání na Chrome."
+msgstr "V případě potřeby nastavte výchozí nástroj pro načítání na Chrome."
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Table of custom column and data types mapping for the"
@@ -286,15 +284,15 @@ msgstr "CSS/xPath filtr"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Group / Tag name(s)"
-msgstr "Sledovat skupinu / tag"
+msgstr "Skupina / tag"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Recheck time (minutes)"
-msgstr "Znovu zkontrolovat čas (minuty)"
+msgstr "Znovu zkontrolovat po (minuty)"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Import"
-msgstr "IMPORTOVAT"
+msgstr "Importovat"
 
 #: changedetectionio/blueprint/rss/single_watch.py
 #, python-format
