@@ -338,19 +338,19 @@ msgstr "Nastavení upraveno."
 #: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/ui/edit.py
 #: changedetectionio/processors/extract.py
 msgid "An error occurred, please see below."
-msgstr ""
+msgstr "Došlo k chybě, více informací níže."
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "API Key was regenerated."
-msgstr ""
+msgstr "API klíč byl znovu vygenerován."
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Automatic scheduling paused - checks will not be queued."
-msgstr ""
+msgstr "Automatické plánování pozastaveno - kontroly nejsou řazeny do fronty."
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Automatic scheduling resumed - checks will be queued normally."
-msgstr ""
+msgstr "Automatické plánování spuštěno - kontroly budou opět řazeny do fronty."
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "All notifications muted."
@@ -423,7 +423,7 @@ msgstr "Nastavit na"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "to disable"
-msgstr ""
+msgstr "vypnuto"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Limit collection of history snapshots for each watch to this number of history items."
