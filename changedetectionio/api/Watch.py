@@ -105,6 +105,9 @@ class Watch(Resource):
         watch['viewed'] = watch_obj.viewed
         watch['link'] = watch_obj.link,
 
+        # fetch_backend is a legacy field superseded by browser_profile — omit from API response
+        watch.pop('fetch_backend', None)
+
         return watch
 
     @auth.check_token

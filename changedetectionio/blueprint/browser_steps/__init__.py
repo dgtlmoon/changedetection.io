@@ -208,28 +208,23 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         browsersteps_start_session = {'start_time': time.time()}
 
         # Build proxy dict first — needed by both the CDP path and fetcher-specific launchers
-        proxy_id = datastore.get_preferred_proxy_for_watch(uuid=watch_uuid)
+        proxy_url = datastore.get_proxy_url_for_watch(uuid=watch_uuid)
         proxy = None
-        if proxy_id:
-            proxy_url = datastore.proxy_list.get(proxy_id, {}).get('url')
-            if proxy_url:
-                from urllib.parse import urlparse
-                parsed = urlparse(proxy_url)
-                proxy = {'server': proxy_url}
-                if parsed.username:
-                    proxy['username'] = parsed.username
-                if parsed.password:
-                    proxy['password'] = parsed.password
-                logger.debug(f"Browser Steps: UUID {watch_uuid} selected proxy {proxy_url}")
+        if proxy_url:
+            from urllib.parse import urlparse
+            parsed = urlparse(proxy_url)
+            proxy = {'server': proxy_url}
+            if parsed.username:
+                proxy['username'] = parsed.username
+            if parsed.password:
+                proxy['password'] = parsed.password
+            logger.debug(f"Browser Steps: UUID {watch_uuid} selected proxy {proxy_url}")
 
         # Resolve the fetcher class for this watch so we can ask it to launch its own browser
         # if it supports that (e.g. CloakBrowser, which runs locally rather than via CDP)
         watch = datastore.data['watching'][watch_uuid]
         from changedetectionio import content_fetchers
-        fetcher_name = watch.get_fetch_backend or 'system'
-        if fetcher_name == 'system':
-            fetcher_name = datastore.data['settings']['application'].get('fetch_backend', 'html_requests')
-        fetcher_class = getattr(content_fetchers, fetcher_name, None)
+        fetcher_class = content_fetchers.get_fetcher(watch.effective_browser_profile.fetch_backend)
 
         browser = None
         playwright_context = None
@@ -241,7 +236,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             result = await fetcher_class.get_browsersteps_browser(proxy=proxy, keepalive_ms=keepalive_ms)
             if result is not None:
                 browser, playwright_context = result
-                logger.debug(f"Browser Steps: using fetcher-specific browser for '{fetcher_name}'")
+                logger.debug(f"Browser Steps: using fetcher-specific browser for '{fetcher_class.__name__}'")
 
         # Default: connect to the remote Playwright/sockpuppetbrowser via CDP
         if browser is None:

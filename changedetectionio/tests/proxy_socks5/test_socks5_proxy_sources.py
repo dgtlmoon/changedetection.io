@@ -48,7 +48,7 @@ def test_socks5_from_proxiesjson_file(client, live_server, measure_memory_usage,
         url_for("ui.ui_edit.edit_page", uuid="first", unpause_on_save=1),
         data={
             "include_filters": "",
-            "fetch_backend": 'html_webdriver' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'html_requests',
+            "browser_profile": "system",
             "headers": "",
             "proxy": "socks5proxy",
             "tags": "",

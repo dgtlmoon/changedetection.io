@@ -154,7 +154,7 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
 
     screenshot_url = watch.get_screenshot()
 
-    is_html_webdriver = watch.fetcher_supports_screenshots
+    fetcher_supports_screenshots = watch.fetcher_supports_screenshots
 
     password_enabled_and_share_is_off = False
     if datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False):
@@ -210,7 +210,7 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
                              extra_title=f" - {watch.label} - History",
                              extract_form=extract_form,
                              from_version=str(from_version),
-                             is_html_webdriver=is_html_webdriver,
+                             fetcher_supports_screenshots=fetcher_supports_screenshots,
                              last_error=watch['last_error'],
                              last_error_screenshot=watch.get_error_snapshot(),
                              last_error_text=watch.get_error_text(),

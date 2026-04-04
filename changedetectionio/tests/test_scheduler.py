@@ -24,8 +24,7 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
         url_for("settings.settings_page"),
         data={"application-empty_pages_are_a_change": "",
               "requests-time_between_check-seconds": 1,
-              "application-scheduler_timezone_default": "Pacific/Kiritimati",  # Most Forward Time Zone (UTC+14:00)
-              'application-fetch_backend': "html_requests"},
+              "application-scheduler_timezone_default": "Pacific/Kiritimati"},  # Most Forward Time Zone (UTC+14:00)
         follow_redirects=True
     )
 
@@ -59,7 +58,7 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
 
     data = {
         "url": test_url,
-        "fetch_backend": "html_requests",
+        "browser_profile": "direct_http_requests",
         "time_between_check_use_default": "" # no
     }
     data.update(scheduler_data)
@@ -120,7 +119,6 @@ def test_check_basic_global_scheduler_functionality(client, live_server, measure
     data = {
         "application-empty_pages_are_a_change": "",
         "application-scheduler_timezone_default": "Pacific/Kiritimati",  # Most Forward Time Zone (UTC+14:00)
-        'application-fetch_backend': "html_requests",
         "requests-time_between_check-hours": 0,
         "requests-time_between_check-minutes": 0,
         "requests-time_between_check-seconds": 1,
@@ -152,7 +150,7 @@ def test_check_basic_global_scheduler_functionality(client, live_server, measure
         url_for("ui.ui_edit.edit_page", uuid="first"),
         data={
             "url": test_url,
-            "fetch_backend": "html_requests",
+            "browser_profile": "direct_http_requests",
             "time_between_check_use_default": "y"},
         follow_redirects=True
     )
@@ -182,7 +180,7 @@ def test_validation_time_interval_field(client, live_server, measure_memory_usag
         url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"trigger_text": 'The golden line',
               "url": test_url,
-              'fetch_backend': "html_requests",
+              'browser_profile': "direct_http_requests",
               'filter_text_removed': 'y',
               "time_between_check_use_default": ""
               },
@@ -197,7 +195,7 @@ def test_validation_time_interval_field(client, live_server, measure_memory_usag
         url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"trigger_text": 'The golden line',
               "url": test_url,
-              'fetch_backend': "html_requests",
+              'browser_profile': "direct_http_requests",
               "time_between_check-minutes": 1,
               "time_between_check_use_default": ""
               },

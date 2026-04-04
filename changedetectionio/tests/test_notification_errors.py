@@ -36,7 +36,7 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
               "title": "",
               "headers": "",
               "time_between_check-minutes": "180",
-              "fetch_backend": "html_requests",
+              "browser_profile": "direct_http_requests",
               "time_between_check_use_default": "y"},
         follow_redirects=True
     )
@@ -71,7 +71,8 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
         b"nodename nor servname provided" in res.data or
         b"Temporary failure in name resolution" in res.data or
         b"Failed to establish a new connection" in res.data or
-        b"Connection error occurred" in res.data
+        b"Connection error occurred" in res.data or
+        b"net::ERR_NAME_NOT_RESOLVED" in res.data
     )
     assert found_name_resolution_error
 

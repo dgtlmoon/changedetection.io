@@ -28,6 +28,7 @@
             <li class="tab"><a href="{{ url_for('backups.create') }}">{{ _('Backups') }}</a></li>
             <li class="tab"><a href="#timedate">{{ _('Time & Date') }}</a></li>
             <li class="tab"><a href="#proxies">{{ _('CAPTCHA & Proxies') }}</a></li>
+            <li class="tab"><a href="{{ url_for('settings.settings_browsers.index') }}">{{ _('Browsers') }}</a></li>
             {% if plugin_tabs %}
                 {% for tab in plugin_tabs %}
             <li class="tab"><a href="#plugin-{{ tab.plugin_id }}">{{ tab.tab_label }}</a></li>
@@ -115,14 +116,7 @@
             </div>
 
             <div class="tab-pane-inner" id="fetching">
-                <div class="pure-control-group inline-radio">
-                    {{ render_field(form.application.form.fetch_backend, class="fetch-backend") }}
-                    <span class="pure-form-message-inline">
-                        <p>{{ _('Use the') }} <strong>{{ _('Basic') }}</strong> {{ _('method (default) where your watched sites don\'t need Javascript to render.') }}</p>
-                        <p>{{ _('The') }} <strong>{{ _('Chrome/Javascript') }}</strong> {{ _('method requires a network connection to a running WebDriver+Chrome server, set by the ENV var') }} 'WEBDRIVER_URL'. </p>
-                    </span>
-                </div>
-                <fieldset class="pure-group" id="webdriver-override-options" data-visible-for="application-fetch_backend=html_webdriver">
+                <fieldset class="pure-group" id="webdriver-override-options">
                     <div class="pure-form-message-inline">
                         <strong>{{ _('If you\'re having trouble waiting for the page to be fully rendered (text missing etc), try increasing the \'wait\' time here.') }}</strong>
                         <br>
@@ -145,13 +139,6 @@
                 <div class="pure-control-group">
                     {{ render_field(form.requests.form.timeout) }}
                     <span class="pure-form-message-inline">{{ _('For regular plain requests (not chrome based), maximum number of seconds until timeout, 1-999.') }}</span><br>
-                </div>
-                <div class="pure-control-group inline-radio">
-                    {{ render_field(form.requests.form.default_ua) }}
-                    <span class="pure-form-message-inline">
-                        {{ _('Applied to all requests.') }}<br><br>
-                        {{ _('Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it\'s important to consider') }} <a href="https://changedetection.io/tutorial/what-are-main-types-anti-robot-mechanisms">{{ _('all of the ways that the browser is detected') }}</a>.
-                    </span>
                 </div>
                 <div class="pure-control-group">
                 <br>

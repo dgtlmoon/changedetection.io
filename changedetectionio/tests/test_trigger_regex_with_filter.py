@@ -44,7 +44,7 @@ def test_trigger_regex_functionality_with_filter(client, live_server, measure_me
         data={"trigger_text": "/cool.stuff/",
               "url": test_url,
               "include_filters": '#in-here',
-              "fetch_backend": "html_requests",
+              "browser_profile": "direct_http_requests",
               "time_between_check_use_default": "y"},
         follow_redirects=True
     )

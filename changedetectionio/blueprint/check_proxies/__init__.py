@@ -46,7 +46,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                                                  watch_uuid=uuid
                                                                  )
 
-            asyncio.run(update_handler.call_browser(preferred_proxy_id=preferred_proxy))
+            update_handler.preferred_proxy_override = preferred_proxy
+            asyncio.run(update_handler.call_browser())
         # title, size is len contents not len xfer
         except content_fetcher_exceptions.Non200ErrorCodeReceived as e:
             if e.status_code == 404:

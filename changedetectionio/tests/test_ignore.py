@@ -68,8 +68,7 @@ def test_strip_ignore_lines(client, live_server, measure_memory_usage, datastore
             "requests-time_between_check-minutes": 180,
             "application-ignore_whitespace": "y",
             "application-strip_ignored_lines": "y",
-            "application-global_ignore_text": "Which is across multiple",
-            'application-fetch_backend': "html_requests"
+            "application-global_ignore_text": "Which is across multiple"
         },
         follow_redirects=True
     )

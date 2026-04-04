@@ -54,8 +54,7 @@ def test_settings_change_forces_reprocess(client, live_server, measure_memory_us
         url_for("settings.settings_page"),
         data={
             "application-empty_pages_are_a_change": "",
-            "requests-time_between_check-minutes": 180,
-            'application-fetch_backend': "html_requests"
+            "requests-time_between_check-minutes": 180
         },
         follow_redirects=True
     )
