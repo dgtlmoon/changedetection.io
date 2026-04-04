@@ -6,6 +6,7 @@ Extracted from update_worker.py to provide standalone notification functionality
 for both sync and async workers
 """
 import datetime
+from copy import deepcopy
 
 import pytz
 from loguru import logger
@@ -352,7 +353,7 @@ class NotificationService:
         """
         Send notification when content changes are detected
         """
-        n_object = NotificationContextData()
+
         watch = self.datastore.data['watching'].get(watch_uuid)
         if not watch:
             return
@@ -369,21 +370,51 @@ class NotificationService:
         # Should be a better parent getter in the model object
 
         # Prefer - Individual watch settings > Tag settings >  Global settings (in that order)
-        # this change probably not needed?
-        n_object['notification_urls'] = _check_cascading_vars(self.datastore, 'notification_urls', watch)
+        # If the watch has no notification_body for example, it will try to get from the first matching group or system setting
+
+        # Should be, if none in the watch, and no group tag ones found, then use system ones at the end
+        #n_object['notification_urls'] = _check_cascading_vars(self.datastore, 'notification_urls', watch)
+        n_object = NotificationContextData()
         n_object['notification_title'] = _check_cascading_vars(self.datastore,'notification_title', watch)
         n_object['notification_body'] = _check_cascading_vars(self.datastore,'notification_body', watch)
         n_object['notification_format'] = _check_cascading_vars(self.datastore,'notification_format', watch)
 
+        notification_objects = []
+        if n_object.get('notification_urls'):
+            notification_objects.append(n_object)
+
+
+        # LOGIC SHOULD BE something that all tests currently pass too
+        # !!! _check_cascading_vars is not really used much, only used here..
+        #
+
+
+        # If any related group/tag has a notification_url set, then we fan out horizontally and collect it as extra notifications
+        tags = self.datastore.get_all_tags_for_watch(uuid=watch.get('uuid'))
+        logger.debug(f'{len(tags)} related to this watch')
+        if tags:
+            for tag_uuid, tag in tags.items():
+                logger.debug(f"Checking group/tag for notification URLs '{tag['title']}' Muted? '{tag.get('notification_muted')}', URLs {tag.get('notification_urls')}")
+                v = tag.get('notification_urls')
+                if v and not tag.get('notification_muted'):
+                    logger.debug("OK MAN")
+                    next_n_object = deepcopy(n_object)
+                    next_n_object['notification_urls'] = v
+                    next_n_object['notification_title'] = _check_cascading_vars(self.datastore, 'notification_title', watch)
+                    next_n_object['notification_body'] = _check_cascading_vars(self.datastore, 'notification_body', watch)
+                    next_n_object['notification_format'] = _check_cascading_vars(self.datastore, 'notification_format', watch)
+                    notification_objects.append(next_n_object)
+                    logger.debug(f"Adding notification from group/tag {tag['title']}")
+
+
         # (Individual watch) Only prepare to notify if the rules above matched
         queued = False
-        if n_object and n_object.get('notification_urls'):
+        if notification_objects:
             queued = True
-
             count = watch.get('notification_alert_count', 0) + 1
             self.datastore.update_watch(uuid=watch_uuid, update_obj={'notification_alert_count': count})
-
-            self.queue_notification_for_watch(n_object=n_object, watch=watch)
+            for n_object in notification_objects:
+                self.queue_notification_for_watch(n_object=n_object, watch=watch)
 
         return queued
 
