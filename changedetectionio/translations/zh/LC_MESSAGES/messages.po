@@ -1518,6 +1518,10 @@ msgid ""
 msgstr "适合仅移动内容的网站，想知道新增内容时使用，会将新行与该监控项的全部历史进行比对。"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Helps reduce changes detected caused by inconsistent JSON formatting"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with"
 msgstr "有助于减少因行顺序变化导致的变更，可结合"
 
