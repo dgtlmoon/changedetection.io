@@ -1617,7 +1617,7 @@ msgstr "Bereich zeichnen"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Clear selection"
-msgstr "Klare Auswahl"
+msgstr "Auswahl löschen"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "One moment, fetching screenshot and element information.."
