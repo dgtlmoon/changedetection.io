@@ -174,8 +174,8 @@ def construct_restore_blueprint(datastore):
     restore_blueprint = Blueprint('restore', __name__, template_folder="templates")
     restore_threads = []
 
-    @login_optionally_required
     @restore_blueprint.route("/restore", methods=['GET'])
+    @login_optionally_required
     def restore():
         form = RestoreForm()
         return render_template("backup_restore.html",
@@ -184,8 +184,8 @@ def construct_restore_blueprint(datastore):
                                max_upload_mb=_MAX_UPLOAD_BYTES // (1024 * 1024),
                                max_decompressed_mb=_MAX_DECOMPRESSED_BYTES // (1024 * 1024))
 
-    @login_optionally_required
     @restore_blueprint.route("/restore/start", methods=['POST'])
+    @login_optionally_required
     def backups_restore_start():
         if any(t.is_alive() for t in restore_threads):
             flash(gettext("A restore is already running, check back in a few minutes"), "error")

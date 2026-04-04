@@ -268,8 +268,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         return browsersteps_start_session
 
 
-    @login_optionally_required
     @browser_steps_blueprint.route("/browsersteps_start_session", methods=['GET'])
+    @login_optionally_required
     def browsersteps_start_session():
         # A new session was requested, return sessionID
         import uuid
@@ -304,8 +304,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         logger.debug("Starting connection with playwright - done")
         return {'browsersteps_session_id': browsersteps_session_id}
 
-    @login_optionally_required
     @browser_steps_blueprint.route("/browsersteps_image", methods=['GET'])
+    @login_optionally_required
     def browser_steps_fetch_screenshot_image():
         from flask import (
             make_response,
@@ -330,8 +330,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             return make_response('Unable to fetch image, is the URL correct? does the watch exist? does the step_type-n.jpeg exist?', 401)
 
     # A request for an action was received
-    @login_optionally_required
     @browser_steps_blueprint.route("/browsersteps_update", methods=['POST'])
+    @login_optionally_required
     def browsersteps_ui_update():
         import base64
 
