@@ -37,6 +37,7 @@ def get_timeago_locale(flask_locale):
         'no': 'nb_NO',      # Norwegian Bokmål
         'hi': 'in_HI',      # Hindi
         'cs': 'en',         # Czech not supported by timeago, fallback to English
+        'ja': 'ja',         # Japanese
         'uk': 'uk',         # Ukrainian
         'en_GB': 'en',      # British English - timeago uses 'en'
         'en_US': 'en',      # American English - timeago uses 'en'
