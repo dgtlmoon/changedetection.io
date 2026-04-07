@@ -1,4 +1,3 @@
-
 # HORRIBLE HACK BUT WORKS :-) PR anyone?
 #
 # Why?
@@ -35,6 +34,7 @@ _browser_steps_loop = None
 _browser_steps_thread = None
 _browser_steps_loop_lock = threading.Lock()
 
+
 def _start_browser_steps_loop():
     """Start a dedicated event loop for browser steps in its own thread"""
     global _browser_steps_loop
@@ -67,6 +67,7 @@ def _start_browser_steps_loop():
             loop.close()
             logger.debug("Browser steps event loop closed")
 
+
 def _ensure_browser_steps_loop():
     """Ensure the browser steps event loop is running"""
     global _browser_steps_loop, _browser_steps_thread
@@ -75,9 +76,7 @@ def _ensure_browser_steps_loop():
         if _browser_steps_thread is None or not _browser_steps_thread.is_alive():
             logger.debug("Starting browser steps event loop thread")
             _browser_steps_thread = threading.Thread(
-                target=_start_browser_steps_loop,
-                daemon=True,
-                name="BrowserStepsEventLoop"
+                target=_start_browser_steps_loop, daemon=True, name="BrowserStepsEventLoop"
             )
             _browser_steps_thread.start()
 
@@ -91,6 +90,7 @@ def _ensure_browser_steps_loop():
 
             logger.debug("Browser steps event loop thread started and ready")
 
+
 def run_async_in_browser_loop(coro):
     """Run async coroutine using the dedicated browser steps event loop"""
     _ensure_browser_steps_loop()
@@ -101,6 +101,7 @@ def run_async_in_browser_loop(coro):
         return future.result()
     else:
         raise RuntimeError("Browser steps event loop is not available")
+
 
 async def _close_session_resources(session_data, label=''):
     """Close all browser resources for a session in the correct order.
@@ -149,7 +150,9 @@ def cleanup_expired_sessions():
         session_data = browsersteps_sessions[session_id]
 
         try:
-            run_async_in_browser_loop(_close_session_resources(session_data, label=f" for session {session_id}"))
+            run_async_in_browser_loop(
+                _close_session_resources(session_data, label=f" for session {session_id}")
+            )
         except Exception as e:
             logger.error(f"Error cleaning up session {session_id}: {e}")
 
@@ -165,6 +168,7 @@ def cleanup_expired_sessions():
     if expired_session_ids:
         logger.info(f"Cleaned up {len(expired_session_ids)} expired browsersteps session(s)")
 
+
 def cleanup_session_for_watch(watch_uuid):
     """Cleanup a specific browsersteps session for a watch UUID"""
     global browsersteps_sessions, browsersteps_watch_to_session
@@ -179,7 +183,9 @@ def cleanup_session_for_watch(watch_uuid):
     session_data = browsersteps_sessions.get(session_id)
     if session_data:
         try:
-            run_async_in_browser_loop(_close_session_resources(session_data, label=f" for watch {watch_uuid}"))
+            run_async_in_browser_loop(
+                _close_session_resources(session_data, label=f" for watch {watch_uuid}")
+            )
         except Exception as e:
             logger.error(f"Error cleaning up session {session_id} for watch {watch_uuid}: {e}")
 
@@ -194,6 +200,7 @@ def cleanup_session_for_watch(watch_uuid):
     # Opportunistically cleanup any other expired sessions
     cleanup_expired_sessions()
 
+
 def construct_blueprint(datastore: ChangeDetectionStore):
     browser_steps_blueprint = Blueprint('browser_steps', __name__, template_folder="templates")
 
@@ -203,7 +210,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         from playwright.async_api import async_playwright
 
         keepalive_seconds = int(os.getenv('BROWSERSTEPS_MINUTES_KEEPALIVE', 10)) * 60
-        keepalive_ms = ((keepalive_seconds + 3) * 1000)
+        keepalive_ms = (keepalive_seconds + 3) * 1000
 
         browsersteps_start_session = {'start_time': time.time()}
 
@@ -214,6 +221,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             proxy_url = datastore.proxy_list.get(proxy_id, {}).get('url')
             if proxy_url:
                 from urllib.parse import urlparse
+
                 parsed = urlparse(proxy_url)
                 proxy = {'server': proxy_url}
                 if parsed.username:
@@ -226,9 +234,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # if it supports that (e.g. CloakBrowser, which runs locally rather than via CDP)
         watch = datastore.data['watching'][watch_uuid]
         from changedetectionio import content_fetchers
-        fetcher_name = watch.get_fetch_backend or 'system'
-        if fetcher_name == 'system':
-            fetcher_name = datastore.data['settings']['application'].get('fetch_backend', 'html_requests')
+        from changedetectionio.pluggy_interface import resolve_watch_fetcher_name
+
+        fetcher_name = resolve_watch_fetcher_name(watch, datastore)
         fetcher_class = getattr(content_fetchers, fetcher_name, None)
 
         browser = None
@@ -238,7 +246,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # get_browsersteps_browser(proxy, keepalive_ms) returns (browser, playwright_context_or_None)
         # or None to fall back to the default CDP path.
         if fetcher_class and hasattr(fetcher_class, 'get_browsersteps_browser'):
-            result = await fetcher_class.get_browsersteps_browser(proxy=proxy, keepalive_ms=keepalive_ms)
+            result = await fetcher_class.get_browsersteps_browser(
+                proxy=proxy, keepalive_ms=keepalive_ms
+            )
             if result is not None:
                 browser, playwright_context = result
                 logger.debug(f"Browser Steps: using fetcher-specific browser for '{fetcher_name}'")
@@ -250,7 +260,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             base_url = os.getenv('PLAYWRIGHT_DRIVER_URL', '').strip('"')
             a = "?" if '?' not in base_url else '&'
             base_url += a + f"timeout={keepalive_ms}"
-            browser = await playwright_context.chromium.connect_over_cdp(base_url, timeout=keepalive_ms)
+            browser = await playwright_context.chromium.connect_over_cdp(
+                base_url, timeout=keepalive_ms
+            )
             logger.debug(f"Browser Steps: using CDP connection to {base_url}")
 
         browsersteps_start_session['browser'] = browser
@@ -260,19 +272,19 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             playwright_browser=browser,
             proxy=proxy,
             start_url=watch.link,
-            headers=watch.get('headers')
+            headers=watch.get('headers'),
         )
         await browserstepper.connect(proxy=proxy)
         browsersteps_start_session['browserstepper'] = browserstepper
 
         return browsersteps_start_session
 
-
     @browser_steps_blueprint.route("/browsersteps_start_session", methods=['GET'])
     @login_optionally_required
     def browsersteps_start_session():
         # A new session was requested, return sessionID
         import uuid
+
         browsersteps_session_id = str(uuid.uuid4())
         watch_uuid = request.args.get('uuid')
 
@@ -296,7 +308,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         except Exception as e:
             if 'ECONNREFUSED' in str(e):
-                return make_response('Unable to start the Playwright Browser session, is sockpuppetbrowser running? Network configuration is OK?', 401)
+                return make_response(
+                    'Unable to start the Playwright Browser session, is sockpuppetbrowser running? Network configuration is OK?',
+                    401,
+                )
             else:
                 # Other errors, bad URL syntax, bad reply etc
                 return make_response(str(e), 401)
@@ -312,11 +327,16 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             request,
             send_from_directory,
         )
+
         uuid = request.args.get('uuid')
         step_n = int(request.args.get('step_n'))
 
         watch = datastore.data['watching'].get(uuid)
-        filename = f"step_before-{step_n}.jpeg" if request.args.get('type', '') == 'before' else f"step_{step_n}.jpeg"
+        filename = (
+            f"step_before-{step_n}.jpeg"
+            if request.args.get('type', '') == 'before'
+            else f"step_{step_n}.jpeg"
+        )
 
         if step_n and watch and os.path.isfile(os.path.join(watch.data_dir, filename)):
             response = make_response(send_from_directory(directory=watch.data_dir, path=filename))
@@ -327,7 +347,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             return response
 
         else:
-            return make_response('Unable to fetch image, is the URL correct? does the watch exist? does the step_type-n.jpeg exist?', 401)
+            return make_response(
+                'Unable to fetch image, is the URL correct? does the watch exist? does the step_type-n.jpeg exist?',
+                401,
+            )
 
     # A request for an action was received
     @browser_steps_blueprint.route("/browsersteps_update", methods=['POST'])
@@ -367,7 +390,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 browsersteps_sessions[browsersteps_session_id]['browserstepper'].call_action(
                     action_name=step_operation,
                     selector=step_selector,
-                    optional_value=step_optional_value
+                    optional_value=step_optional_value,
                 )
             )
 
@@ -397,8 +420,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         output = {
             "screenshot": f"data:image/jpeg;base64,{base64.b64encode(screenshot).decode('ascii')}",
             "xpath_data": xpath_data,
-            "session_age_start": browsersteps_sessions[browsersteps_session_id]['browserstepper'].age_start,
-            "browser_time_remaining": round(remaining)
+            "session_age_start": browsersteps_sessions[browsersteps_session_id][
+                'browserstepper'
+            ].age_start,
+            "browser_time_remaining": round(remaining),
         }
         json_data = json.dumps(output)
 
@@ -412,5 +437,3 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         return response
 
     return browser_steps_blueprint
-
-

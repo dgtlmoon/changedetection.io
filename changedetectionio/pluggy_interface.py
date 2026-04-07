@@ -239,6 +239,7 @@ plugin_manager = pluggy.PluginManager(PLUGIN_NAMESPACE)
 # Register hookspecs
 plugin_manager.add_hookspecs(ChangeDetectionSpec)
 
+
 # Load plugins from subdirectories
 def load_plugins_from_directories():
     # Dictionary of directories to scan for plugins
@@ -246,19 +247,19 @@ def load_plugins_from_directories():
         'conditions': os.path.join(os.path.dirname(__file__), 'conditions', 'plugins'),
         # Add more plugin directories here as needed
     }
-    
+
     # Note: Removed the direct import of example_word_count_plugin as it's now in the conditions/plugins directory
-    
+
     for dir_name, dir_path in plugin_dirs.items():
         if not os.path.exists(dir_path):
             continue
-            
+
         # Get all Python files (excluding __init__.py)
         for filename in os.listdir(dir_path):
             if filename.endswith(".py") and filename != "__init__.py":
                 module_name = filename[:-3]  # Remove .py extension
                 module_path = f"changedetectionio.{dir_name}.plugins.{module_name}"
-                
+
                 try:
                     module = importlib.import_module(module_path)
                     # Register the plugin with pluggy
@@ -266,11 +267,13 @@ def load_plugins_from_directories():
                 except (ImportError, AttributeError) as e:
                     print(f"Error loading plugin {module_name}: {e}")
 
+
 # Load plugins
 load_plugins_from_directories()
 
 # Discover installed plugins from external packages (if any)
 plugin_manager.load_setuptools_entrypoints(PLUGIN_NAMESPACE)
+
 
 # Function to inject datastore into plugins that need it
 def inject_datastore_into_plugins(datastore):
@@ -288,6 +291,7 @@ def inject_datastore_into_plugins(datastore):
                 plugin_obj.datastore = datastore
                 logger.debug(f"Injected datastore into plugin: {plugin_name}")
 
+
 # Function to register built-in fetchers - called later from content_fetchers/__init__.py
 def register_builtin_fetchers():
     """Register built-in content fetchers as internal plugins
@@ -295,7 +299,12 @@ def register_builtin_fetchers():
     This is called from content_fetchers/__init__.py after all fetchers are imported
     to avoid circular import issues.
     """
-    from changedetectionio.content_fetchers import requests, playwright, puppeteer, webdriver_selenium
+    from changedetectionio.content_fetchers import (
+        requests,
+        playwright,
+        puppeteer,
+        webdriver_selenium,
+    )
 
     # Register each built-in fetcher plugin
     if hasattr(requests, 'requests_plugin'):
@@ -308,7 +317,10 @@ def register_builtin_fetchers():
         plugin_manager.register(puppeteer.puppeteer_plugin, 'builtin_puppeteer')
 
     if hasattr(webdriver_selenium, 'webdriver_selenium_plugin'):
-        plugin_manager.register(webdriver_selenium.webdriver_selenium_plugin, 'builtin_webdriver_selenium')
+        plugin_manager.register(
+            webdriver_selenium.webdriver_selenium_plugin, 'builtin_webdriver_selenium'
+        )
+
 
 # Helper function to collect UI stats extras from all plugins
 def collect_ui_edit_stats_extras(watch):
@@ -325,6 +337,7 @@ def collect_ui_edit_stats_extras(watch):
                 extras_content.append(result)
 
     return "\n".join(extras_content) if extras_content else ""
+
 
 def collect_fetcher_status_icons(fetcher_name):
     """Collect status icon data from all plugins
@@ -346,6 +359,7 @@ def collect_fetcher_status_icons(fetcher_name):
 
     return None
 
+
 def get_itemprop_availability_from_plugin(content, fetcher_name, fetcher_instance, url):
     """Get itemprop availability data from plugins as a fallback.
 
@@ -362,10 +376,7 @@ def get_itemprop_availability_from_plugin(content, fetcher_name, fetcher_instanc
     """
     # Get availability data from plugins
     results = plugin_manager.hook.get_itemprop_availability_override(
-        content=content,
-        fetcher_name=fetcher_name,
-        fetcher_instance=fetcher_instance,
-        url=url
+        content=content, fetcher_name=fetcher_name, fetcher_instance=fetcher_instance, url=url
     )
 
     # Return first non-None result with actual data
@@ -409,12 +420,39 @@ def get_active_plugins():
         if hasattr(plugin_obj, 'name'):
             friendly_name = plugin_obj.name
 
-        active_plugins.append({
-            'name': friendly_name,
-            'description': description or 'No description available'
-        })
+        active_plugins.append(
+            {'name': friendly_name, 'description': description or 'No description available'}
+        )
 
     return active_plugins
+
+
+def resolve_watch_fetcher_name(watch, datastore, fallback='html_requests'):
+    """Resolve the effective fetcher name for a watch.
+
+    This normalizes watch-specific aliases such as ``extra_browser_*`` to the
+    real fetcher implementation they use under the hood.
+
+    Args:
+        watch: The watch object/dict
+        datastore: The datastore to resolve system defaults and extra browsers
+        fallback: Fallback fetcher name when nothing is configured
+
+    Returns:
+        str: Effective fetcher name
+    """
+    if getattr(watch, 'is_pdf', False):
+        return 'html_requests'
+
+    fetcher_name = watch.get('fetch_backend', 'system') or 'system'
+
+    if fetcher_name == 'system':
+        fetcher_name = datastore.data['settings']['application'].get('fetch_backend', fallback)
+
+    if fetcher_name and fetcher_name.startswith('extra_browser_'):
+        return 'html_webdriver'
+
+    return fetcher_name or fallback
 
 
 def get_fetcher_capabilities(watch, datastore):
@@ -432,12 +470,7 @@ def get_fetcher_capabilities(watch, datastore):
                 'supports_xpath_element_data': bool
             }
     """
-    # Get the fetcher name from watch
-    fetcher_name = watch.get('fetch_backend', 'system')
-
-    # Resolve 'system' to actual fetcher
-    if fetcher_name == 'system':
-        fetcher_name = datastore.data['settings']['application'].get('fetch_backend', 'html_requests')
+    fetcher_name = resolve_watch_fetcher_name(watch, datastore)
 
     # Get the fetcher class
     from changedetectionio import content_fetchers
@@ -448,7 +481,9 @@ def get_fetcher_capabilities(watch, datastore):
         return {
             'supports_browser_steps': getattr(fetcher_class, 'supports_browser_steps', False),
             'supports_screenshots': getattr(fetcher_class, 'supports_screenshots', False),
-            'supports_xpath_element_data': getattr(fetcher_class, 'supports_xpath_element_data', False)
+            'supports_xpath_element_data': getattr(
+                fetcher_class, 'supports_xpath_element_data', False
+            ),
         }
 
     # Try to get from plugin-provided fetchers
@@ -459,16 +494,20 @@ def get_fetcher_capabilities(watch, datastore):
             name, fetcher_class = fetcher_registration
             if name == fetcher_name:
                 return {
-                    'supports_browser_steps': getattr(fetcher_class, 'supports_browser_steps', False),
+                    'supports_browser_steps': getattr(
+                        fetcher_class, 'supports_browser_steps', False
+                    ),
                     'supports_screenshots': getattr(fetcher_class, 'supports_screenshots', False),
-                    'supports_xpath_element_data': getattr(fetcher_class, 'supports_xpath_element_data', False)
+                    'supports_xpath_element_data': getattr(
+                        fetcher_class, 'supports_xpath_element_data', False
+                    ),
                 }
 
     # Default: no capabilities
     return {
         'supports_browser_steps': False,
         'supports_screenshots': False,
-        'supports_xpath_element_data': False
+        'supports_xpath_element_data': False,
     }
 
 
@@ -512,6 +551,7 @@ def load_plugin_settings(datastore_path, plugin_id):
         dict: Plugin settings, or empty dict if file doesn't exist
     """
     import json
+
     settings_file = os.path.join(datastore_path, f"{plugin_id}.json")
 
     if not os.path.exists(settings_file):
@@ -537,6 +577,7 @@ def save_plugin_settings(datastore_path, plugin_id, settings):
         bool: True if save was successful, False otherwise
     """
     import json
+
     settings_file = os.path.join(datastore_path, f"{plugin_id}.json")
 
     try:
@@ -560,13 +601,16 @@ def get_plugin_template_paths():
     template_paths = []
 
     # Add the base processors/templates directory (as absolute path)
-    processors_templates_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'processors', 'templates')
+    processors_templates_dir = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), 'processors', 'templates'
+    )
     if os.path.isdir(processors_templates_dir):
         template_paths.append(processors_templates_dir)
         logger.debug(f"Added base processors template path: {processors_templates_dir}")
 
     # Scan built-in processor plugins
     from changedetectionio.processors import find_processors
+
     processor_list = find_processors()
     for processor_module, processor_name in processor_list:
         # Each processor is a module, check if it has a templates directory
@@ -622,9 +666,7 @@ def apply_update_handler_alter(update_handler, watch, datastore):
     """
     # Get all plugins that implement the update_handler_alter hook
     results = plugin_manager.hook.update_handler_alter(
-        update_handler=update_handler,
-        watch=watch,
-        datastore=datastore
+        update_handler=update_handler, watch=watch, datastore=datastore
     )
 
     # Chain results - each plugin gets the result from the previous one
@@ -659,7 +701,7 @@ def apply_update_finalize(update_handler, watch, datastore, processing_exception
             update_handler=update_handler,
             watch=watch,
             datastore=datastore,
-            processing_exception=processing_exception
+            processing_exception=processing_exception,
         )
     except Exception as e:
         # Don't let plugin errors crash the worker

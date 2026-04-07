@@ -40,8 +40,8 @@ from loguru import logger
 from .. import jinja2_custom as safe_jinja
 from ..html_tools import TRANSLATE_WHITESPACE_TABLE
 
-FAVICON_RESAVE_THRESHOLD_SECONDS=86400
-BROTLI_COMPRESS_SIZE_THRESHOLD = int(os.getenv('SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD', 1024*20))
+FAVICON_RESAVE_THRESHOLD_SECONDS = 86400
+BROTLI_COMPRESS_SIZE_THRESHOLD = int(os.getenv('SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD', 1024 * 20))
 
 # Module-level favicon filename cache: data_dir → basename (or None)
 # Keyed by data_dir so it survives Watch object recreation, deepcopy, and concurrent requests.
@@ -50,6 +50,7 @@ _FAVICON_FILENAME_CACHE: dict = {}
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
+
 
 def _brotli_save(contents, filepath, mode=None, fallback_uncompressed=False):
     """
@@ -82,7 +83,9 @@ def _brotli_save(contents, filepath, mode=None, fallback_uncompressed=False):
         logger.debug(f"Starting brotli streaming compression of {original_size} bytes.")
 
         # Create streaming compressor
-        compressor = brotli.Compressor(quality=6, mode=mode if mode is not None else brotli.MODE_GENERIC)
+        compressor = brotli.Compressor(
+            quality=6, mode=mode if mode is not None else brotli.MODE_GENERIC
+        )
 
         # Stream compress in chunks to minimize memory usage
         chunk_size = 65536  # 64KB chunks
@@ -92,7 +95,7 @@ def _brotli_save(contents, filepath, mode=None, fallback_uncompressed=False):
             # Process data in chunks
             offset = 0
             while offset < len(contents):
-                chunk = contents[offset:offset + chunk_size]
+                chunk = contents[offset : offset + chunk_size]
                 compressed_chunk = compressor.process(chunk)
                 if compressed_chunk:
                     f.write(compressed_chunk)
@@ -105,7 +108,9 @@ def _brotli_save(contents, filepath, mode=None, fallback_uncompressed=False):
                 f.write(final_chunk)
                 total_compressed_size += len(final_chunk)
 
-        logger.debug(f"Finished brotli compression - From {original_size} to {total_compressed_size} bytes.")
+        logger.debug(
+            f"Finished brotli compression - From {original_size} to {total_compressed_size} bytes."
+        )
 
         # Cleanup: Delete compressor, force Python GC, then force C-level memory release
         del compressor
@@ -227,6 +232,7 @@ class model(EntityPersistenceMixin, watch_base):
     See: processors/restock_diff/processor.py:184-192 for manual resolution example
     See: Watch.py:550-556 for nested dict navigation that would become watch.resolved_*
     """
+
     __newest_history_key = None
     __history_n = 0
     jitter_seconds = 0
@@ -234,7 +240,9 @@ class model(EntityPersistenceMixin, watch_base):
     def __init__(self, *arg, **kw):
         # Validate __datastore before calling parent (Watch requires it)
         if not kw.get('__datastore'):
-            raise ValueError("Watch object requires '__datastore' reference - cannot access global settings without it")
+            raise ValueError(
+                "Watch object requires '__datastore' reference - cannot access global settings without it"
+            )
 
         # Parent class (watch_base) handles __datastore and __datastore_path
         super(model, self).__init__(*arg, **kw)
@@ -255,7 +263,7 @@ class model(EntityPersistenceMixin, watch_base):
     @property
     def viewed(self):
         # Don't return viewed when last_viewed is 0 and newest_key is 0
-        if int(self['last_viewed']) and int(self['last_viewed']) >= int(self.newest_history_key) :
+        if int(self['last_viewed']) and int(self['last_viewed']) >= int(self.newest_history_key):
             return True
 
         return False
@@ -280,13 +288,17 @@ class model(EntityPersistenceMixin, watch_base):
                 logger.critical(f"Invalid URL template for: '{url}' - {str(e)}")
                 from flask import flash, url_for
                 from markupsafe import Markup
-                message = Markup('<a href="{}#general">The URL {} is invalid and cannot be used, click to edit</a>'.format(
-                    url_for('ui.ui_edit.edit_page', uuid=self.get('uuid')), self.get('url', '')))
+
+                message = Markup(
+                    '<a href="{}#general">The URL {} is invalid and cannot be used, click to edit</a>'.format(
+                        url_for('ui.ui_edit.edit_page', uuid=self.get('uuid')), self.get('url', '')
+                    )
+                )
                 flash(message, 'error')
                 return ''
 
         if ready_url.startswith('source:'):
-            ready_url=ready_url.replace('source:', '')
+            ready_url = ready_url.replace('source:', '')
 
         # Also double check it after any Jinja2 formatting just incase
         if not is_safe_valid_url(ready_url):
@@ -296,6 +308,7 @@ class model(EntityPersistenceMixin, watch_base):
     @property
     def domain_only_from_link(self):
         from urllib.parse import urlparse
+
         parsed = urlparse(self.link)
         domain = parsed.hostname
         return domain
@@ -314,6 +327,7 @@ class model(EntityPersistenceMixin, watch_base):
 
         # Get list of processor config files to preserve
         from changedetectionio.processors import find_processors
+
         processor_names = [name for cls, name in find_processors()]
         processor_config_files = {f"{name}.json" for name in processor_names}
 
@@ -330,19 +344,21 @@ class model(EntityPersistenceMixin, watch_base):
         bump = self.history
 
         # Do this last because it will trigger a recheck due to last_checked being zero
-        self.update({
-            'browser_steps_last_error_step': None,
-            'check_count': 0,
-            'fetch_time': 0.0,
-            'has_ldjson_price_data': None,
-            'last_checked': 0,
-            'last_error': False,
-            'last_notification_error': False,
-            'last_viewed': 0,
-            'previous_md5': False,
-            'remote_server_reply': None,
-            'track_ldjson_price_data': None
-        })
+        self.update(
+            {
+                'browser_steps_last_error_step': None,
+                'check_count': 0,
+                'fetch_time': 0.0,
+                'has_ldjson_price_data': None,
+                'last_checked': 0,
+                'last_error': False,
+                'last_notification_error': False,
+                'last_viewed': 0,
+                'previous_md5': False,
+                'remote_server_reply': None,
+                'track_ldjson_price_data': None,
+            }
+        )
         watch_check_update = signal('watch_check_update')
         if watch_check_update:
             watch_check_update.send(watch_uuid=self.get('uuid'))
@@ -392,14 +408,13 @@ class model(EntityPersistenceMixin, watch_base):
     def fetcher_supports_screenshots(self):
         """Return True if the fetcher configured for this watch supports screenshots.
 
-        Resolves 'system' via self._datastore, then checks supports_screenshots on
+        Resolves 'system' and custom ``extra_browser_*`` aliases before checking
         the actual fetcher class. Works for built-in and plugin fetchers alike.
         """
         from changedetectionio import content_fetchers
+        from changedetectionio.pluggy_interface import resolve_watch_fetcher_name
 
-        fetcher_name = self.get_fetch_backend  # already handles is_pdf → html_requests
-        if not fetcher_name or fetcher_name == 'system':
-            fetcher_name = self._datastore['settings']['application'].get('fetch_backend', 'html_requests')
+        fetcher_name = resolve_watch_fetcher_name(self, self._datastore)
 
         fetcher_class = getattr(content_fetchers, fetcher_name, None)
         if fetcher_class is None:
@@ -415,10 +430,7 @@ class model(EntityPersistenceMixin, watch_base):
         if content_type in ("none", "null", ""):
             content_type = ""
 
-        return (
-                url.endswith(".pdf")
-                or content_type.split(";")[0].strip() == "application/pdf"
-        )
+        return url.endswith(".pdf") or content_type.split(";")[0].strip() == "application/pdf"
 
     @property
     def label(self):
@@ -441,13 +453,13 @@ class model(EntityPersistenceMixin, watch_base):
     @property
     def history(self):
         """History index is just a text file as a list
-            {watch-uuid}/history.txt
+        {watch-uuid}/history.txt
 
-            contains a list like
+        contains a list like
 
-            {epoch-time},{filename}\n
+        {epoch-time},{filename}\n
 
-            We read in this list as the history information
+        We read in this list as the history information
 
         """
         tmp_history = {}
@@ -498,16 +510,24 @@ class model(EntityPersistenceMixin, watch_base):
 
     @property
     def has_browser_steps(self):
-        has_browser_steps = self.get('browser_steps') and list(filter(
-            lambda s: (s['operation'] and len(s['operation']) and s['operation'] != 'Choose one' and s['operation'] != 'Goto site'),
-            self.get('browser_steps')))
+        has_browser_steps = self.get('browser_steps') and list(
+            filter(
+                lambda s: (
+                    s['operation']
+                    and len(s['operation'])
+                    and s['operation'] != 'Choose one'
+                    and s['operation'] != 'Goto site'
+                ),
+                self.get('browser_steps'),
+            )
+        )
 
         return has_browser_steps
 
     @property
     def has_restock_info(self):
         if self.get('restock') and self['restock'].get('in_stock') != None:
-                return True
+            return True
 
         return False
 
@@ -520,14 +540,12 @@ class model(EntityPersistenceMixin, watch_base):
         if len(self.history) <= 1:
             return 0
 
-
         bump = self.history
         return self.__newest_history_key
 
     # Given an arbitrary timestamp, find the best history key for the [diff] button so it can preset a smarter from_version
     @property
     def get_from_version_based_on_last_viewed(self):
-
         """Unfortunately for now timestamp is stored as string key"""
         keys = list(self.history.keys())
         if not keys:
@@ -542,7 +560,7 @@ class model(EntityPersistenceMixin, watch_base):
         # When the 'last viewed' timestamp is greater than or equal the newest snapshot, return second newest
         if last_viewed >= int(sorted_keys[0]):
             return sorted_keys[1]
-        
+
         # When the 'last viewed' timestamp is between snapshots, return the older snapshot
         for newer, older in list(zip(sorted_keys[0:], sorted_keys[1:])):
             if last_viewed < int(newer) and last_viewed >= int(older):
@@ -599,6 +617,7 @@ class model(EntityPersistenceMixin, watch_base):
     def _write_atomic(self, dest, data, mode='wb'):
         """Write data atomically to dest using a temp file"""
         import tempfile
+
         with tempfile.NamedTemporaryFile(mode, delete=False, dir=self.data_dir) as tmp:
             tmp.write(data)
             tmp.flush()
@@ -609,12 +628,15 @@ class model(EntityPersistenceMixin, watch_base):
     def history_trim(self, newest_n_items):
         from pathlib import Path
         import gc
+
         # Sort by timestamp (key)
         sorted_items = sorted(self.history.items(), key=lambda x: int(x[0]))
 
         keep_part = dict(sorted_items[-newest_n_items:])
         delete_part = dict(sorted_items[:-newest_n_items])
-        logger.info( f"[{self.get('uuid')}] Trimming history to most recent {newest_n_items} items, keeping {len(keep_part)} items deleting {len(delete_part)} items.")
+        logger.info(
+            f"[{self.get('uuid')}] Trimming history to most recent {newest_n_items} items, keeping {len(keep_part)} items deleting {len(delete_part)} items."
+        )
 
         if delete_part:
             for item in delete_part.items():
@@ -626,10 +648,7 @@ class model(EntityPersistenceMixin, watch_base):
                     logger.debug(f"[{self.get('uuid')}] Deleted {item[1]} history snapshot")
         try:
             dest = os.path.join(self.data_dir, self.history_index_filename)
-            output = "\r\n".join(
-                f"{k},{Path(v).name}"
-                for k, v in keep_part.items()
-            )+"\r\n"
+            output = "\r\n".join(f"{k},{Path(v).name}" for k, v in keep_part.items()) + "\r\n"
             self._write_atomic(dest=dest, data=output, mode='w')
         except Exception as e:
             logger.critical(f"{str(e)}")
@@ -644,7 +663,9 @@ class model(EntityPersistenceMixin, watch_base):
     # result_obj from fetch_site_status.run()
     def save_history_blob(self, contents, timestamp, snapshot_id):
 
-        logger.trace(f"{self.get('uuid')} - Updating {self.history_index_filename} with timestamp {timestamp}")
+        logger.trace(
+            f"{self.get('uuid')} - Updating {self.history_index_filename} with timestamp {timestamp}"
+        )
 
         self.ensure_data_dir_exists()
         skip_brotli = strtobool(os.getenv('DISABLE_BROTLI_TEXT_SNAPSHOT', 'False'))
@@ -653,12 +674,15 @@ class model(EntityPersistenceMixin, watch_base):
         if isinstance(contents, bytes):
             try:
                 import puremagic
+
                 detections = puremagic.magic_string(contents[:2048])
                 ext = detections[0].extension if detections else 'bin'
                 # Strip leading dot if present (puremagic returns extensions like '.jfif')
                 ext = ext.lstrip('.')
                 if detections:
-                    logger.trace(f"Detected file type: {detections[0].mime_type} -> extension: {ext}")
+                    logger.trace(
+                        f"Detected file type: {detections[0].mime_type} -> extension: {ext}"
+                    )
             except Exception as e:
                 logger.warning(f"puremagic detection failed: {e}, using 'bin' extension")
                 ext = 'bin'
@@ -673,12 +697,15 @@ class model(EntityPersistenceMixin, watch_base):
             if not skip_brotli and len(contents) > BROTLI_COMPRESS_SIZE_THRESHOLD:
                 # Compressed text
                 import brotli
+
                 snapshot_fname = f"{snapshot_id}.txt.br"
                 dest = os.path.join(self.data_dir, snapshot_fname)
 
                 if not os.path.exists(dest):
                     try:
-                        actual_dest = _brotli_save(contents, dest, mode=brotli.MODE_TEXT, fallback_uncompressed=True)
+                        actual_dest = _brotli_save(
+                            contents, dest, mode=brotli.MODE_TEXT, fallback_uncompressed=True
+                        )
                         if actual_dest != dest:
                             snapshot_fname = os.path.basename(actual_dest)
                     except Exception as e:
@@ -712,7 +739,9 @@ class model(EntityPersistenceMixin, watch_base):
         #     if self.history_snapshot_max_length: return self.history_snapshot_max_length
         #     if tag := self._get_override_tag(): return tag.history_snapshot_max_length
         #     return self._datastore.settings.history_snapshot_max_length
-        maxlen = self.get('history_snapshot_max_length') or self.get_global_setting('application', 'history_snapshot_max_length')
+        maxlen = self.get('history_snapshot_max_length') or self.get_global_setting(
+            'application', 'history_snapshot_max_length'
+        )
 
         if maxlen and self.__history_n and self.__history_n > maxlen:
             self.history_trim(newest_n_items=maxlen)
@@ -724,7 +753,9 @@ class model(EntityPersistenceMixin, watch_base):
     def has_empty_checktime(self):
         # using all() + dictionary comprehension
         # Check if all values are 0 in dictionary
-        res = all(x == None or x == False or x==0 for x in self.get('time_between_check', {}).values())
+        res = all(
+            x == None or x == False or x == 0 for x in self.get('time_between_check', {}).values()
+        )
         return res
 
     def threshold_seconds(self):
@@ -737,20 +768,32 @@ class model(EntityPersistenceMixin, watch_base):
 
     # Iterate over all history texts and see if something new exists
     # Always applying .strip() to start/end but optionally replace any other whitespace
-    def lines_contain_something_unique_compared_to_history(self, lines: list, ignore_whitespace=False):
+    def lines_contain_something_unique_compared_to_history(
+        self, lines: list, ignore_whitespace=False
+    ):
         local_lines = set([])
         if lines:
             if ignore_whitespace:
-                if isinstance(lines[0], str): # Can be either str or bytes depending on what was on the disk
-                    local_lines = set([l.translate(TRANSLATE_WHITESPACE_TABLE).lower() for l in lines])
+                if isinstance(
+                    lines[0], str
+                ):  # Can be either str or bytes depending on what was on the disk
+                    local_lines = set(
+                        [l.translate(TRANSLATE_WHITESPACE_TABLE).lower() for l in lines]
+                    )
                 else:
-                    local_lines = set([l.decode('utf-8').translate(TRANSLATE_WHITESPACE_TABLE).lower() for l in lines])
+                    local_lines = set(
+                        [
+                            l.decode('utf-8').translate(TRANSLATE_WHITESPACE_TABLE).lower()
+                            for l in lines
+                        ]
+                    )
             else:
-                if isinstance(lines[0], str): # Can be either str or bytes depending on what was on the disk
+                if isinstance(
+                    lines[0], str
+                ):  # Can be either str or bytes depending on what was on the disk
                     local_lines = set([l.strip().lower() for l in lines])
                 else:
                     local_lines = set([l.decode('utf-8').strip().lower() for l in lines])
-
 
         # Compare each lines (set) against each history text file (set) looking for something new..
         existing_history = set({})
@@ -758,7 +801,12 @@ class model(EntityPersistenceMixin, watch_base):
             content = self.get_history_snapshot(filepath=v)
 
             if ignore_whitespace:
-                alist = set([line.translate(TRANSLATE_WHITESPACE_TABLE).lower() for line in content.splitlines()])
+                alist = set(
+                    [
+                        line.translate(TRANSLATE_WHITESPACE_TABLE).lower()
+                        for line in content.splitlines()
+                    ]
+                )
             else:
                 alist = set([line.strip().lower() for line in content.splitlines()])
 
@@ -802,6 +850,7 @@ class model(EntityPersistenceMixin, watch_base):
         from urllib.parse import urlparse
         import base64
         import binascii
+
         decoded = None
 
         if url:
@@ -839,7 +888,9 @@ class model(EntityPersistenceMixin, watch_base):
                         watch_check_update.send(watch_uuid=self.get('uuid'))
 
                 except Exception as e:
-                    logger.warning(f"UUID: {self.get('uuid')} error saving FavIcon to {fname} - {str(e)}")
+                    logger.warning(
+                        f"UUID: {self.get('uuid')} error saving FavIcon to {fname} - {str(e)}"
+                    )
 
         # @todo - Store some checksum and only write when its different
         logger.debug(f"UUID: {self.get('uuid')} updated favicon to at {fname}")
@@ -859,6 +910,7 @@ class model(EntityPersistenceMixin, watch_base):
             return _FAVICON_FILENAME_CACHE[self.data_dir]
 
         import glob
+
         files = glob.glob(os.path.join(self.data_dir, "favicon.*"))
         fname = os.path.basename(files[0]) if files else None
         _FAVICON_FILENAME_CACHE[self.data_dir] = fname
@@ -940,7 +992,7 @@ class model(EntityPersistenceMixin, watch_base):
 
     @property
     def snapshot_text_ctime(self):
-        if self.history_n==0:
+        if self.history_n == 0:
             return False
 
         timestamp = list(self.history.keys())[-1]
@@ -968,7 +1020,6 @@ class model(EntityPersistenceMixin, watch_base):
         if os.path.isfile(fname):
             return fname
         return False
-
 
     def pause(self):
         self['paused'] = True
@@ -998,7 +1049,9 @@ class model(EntityPersistenceMixin, watch_base):
         import copy
 
         # Get base snapshot with lock
-        lock = self._datastore.lock if self._datastore and hasattr(self._datastore, 'lock') else None
+        lock = (
+            self._datastore.lock if self._datastore and hasattr(self._datastore, 'lock') else None
+        )
 
         if lock:
             with lock:
@@ -1007,7 +1060,11 @@ class model(EntityPersistenceMixin, watch_base):
             snapshot = dict(self)
 
         # Exclude processor config keys (stored separately)
-        watch_dict = {k: copy.deepcopy(v) for k, v in snapshot.items() if not k.startswith('processor_config_')}
+        watch_dict = {
+            k: copy.deepcopy(v)
+            for k, v in snapshot.items()
+            if not k.startswith('processor_config_')
+        }
 
         # Normalize browser_steps: if no meaningful steps, save as empty list
         if not self.has_browser_steps:
@@ -1017,7 +1074,6 @@ class model(EntityPersistenceMixin, watch_base):
 
     # _save_to_disk() method provided by EntityPersistenceMixin
     # commit() method inherited from watch_base
-
 
     def extra_notification_token_values(self):
         # Used for providing extra tokens
@@ -1029,11 +1085,11 @@ class model(EntityPersistenceMixin, watch_base):
         # return [('widget', "Get widget amounts")]
         return []
 
-
     def extract_regex_from_all_history(self, regex):
         import csv
         import re
         import datetime
+
         csv_output_filename = False
         csv_writer = False
         f = None
@@ -1050,23 +1106,26 @@ class model(EntityPersistenceMixin, watch_base):
                             csv_output_filename = f"report-{self.get('uuid')}.csv"
                             f = open(os.path.join(self.data_dir, csv_output_filename), 'w')
                             # @todo some headers in the future
-                            #fieldnames = ['Epoch seconds', 'Date']
-                            csv_writer = csv.writer(f,
-                                                    delimiter=',',
-                                                    quotechar='"',
-                                                    quoting=csv.QUOTE_MINIMAL,
-                                                    #fieldnames=fieldnames
-                                                    )
+                            # fieldnames = ['Epoch seconds', 'Date']
+                            csv_writer = csv.writer(
+                                f,
+                                delimiter=',',
+                                quotechar='"',
+                                quoting=csv.QUOTE_MINIMAL,
+                                # fieldnames=fieldnames
+                            )
                             csv_writer.writerow(['Epoch seconds', 'Date'])
                             # csv_writer.writeheader()
 
-                        date_str = datetime.datetime.fromtimestamp(int(k)).strftime('%Y-%m-%d %H:%M:%S')
+                        date_str = datetime.datetime.fromtimestamp(int(k)).strftime(
+                            '%Y-%m-%d %H:%M:%S'
+                        )
                         for r in res:
                             row = [k, date_str]
                             if isinstance(r, str):
                                 row.append(r)
                             else:
-                                row+=r
+                                row += r
                             csv_writer.writerow(row)
 
         if f:
@@ -1074,15 +1133,22 @@ class model(EntityPersistenceMixin, watch_base):
 
         return csv_output_filename
 
-
     def has_special_diff_filter_options_set(self):
 
         # All False - nothing would be done, so act like it's not processable
-        if not self.get('filter_text_added', True) and not self.get('filter_text_replaced', True) and not self.get('filter_text_removed', True):
+        if (
+            not self.get('filter_text_added', True)
+            and not self.get('filter_text_replaced', True)
+            and not self.get('filter_text_removed', True)
+        ):
             return False
 
         # Or one is set
-        if not self.get('filter_text_added', True) or not self.get('filter_text_replaced', True) or not self.get('filter_text_removed', True):
+        if (
+            not self.get('filter_text_added', True)
+            or not self.get('filter_text_replaced', True)
+            or not self.get('filter_text_removed', True)
+        ):
             return True
 
         # None is set
@@ -1126,9 +1192,9 @@ class model(EntityPersistenceMixin, watch_base):
             f.write(screenshot)
             f.close()
 
-
     def get_last_fetched_text_before_filters(self):
         import brotli
+
         filepath = os.path.join(self.data_dir, 'last-fetched.br')
 
         if not os.path.isfile(filepath) or os.path.getsize(filepath) == 0:
@@ -1140,10 +1206,11 @@ class model(EntityPersistenceMixin, watch_base):
                 return ''
 
         with open(filepath, 'rb') as f:
-            return(brotli.decompress(f.read()).decode('utf-8'))
+            return brotli.decompress(f.read()).decode('utf-8')
 
     def save_last_text_fetched_before_filters(self, contents):
         import brotli
+
         filepath = os.path.join(self.data_dir, 'last-fetched.br')
         _brotli_save(contents, filepath, mode=brotli.MODE_TEXT, fallback_uncompressed=False)
 
@@ -1161,10 +1228,9 @@ class model(EntityPersistenceMixin, watch_base):
         filepath = os.path.join(self.data_dir, snapshot_fname)
         if os.path.isfile(filepath):
             with open(filepath, 'rb') as f:
-                return (brotli.decompress(f.read()).decode('utf-8'))
+                return brotli.decompress(f.read()).decode('utf-8')
 
         return False
-
 
     def _prune_last_fetched_html_snapshots(self):
 
@@ -1179,13 +1245,12 @@ class model(EntityPersistenceMixin, watch_base):
             if index > 1 and os.path.isfile(filepath):
                 os.remove(filepath)
 
-
     @property
     def get_browsersteps_available_screenshots(self):
         "For knowing which screenshots are available to show the user in BrowserSteps UI"
         available = []
         for f in Path(self.data_dir).glob('step_before-*.jpeg'):
-            step_n=re.search(r'step_before-(\d+)', f.name)
+            step_n = re.search(r'step_before-(\d+)', f.name)
             if step_n:
                 available.append(step_n.group(1))
         return available
@@ -1197,7 +1262,7 @@ class model(EntityPersistenceMixin, watch_base):
         from markupsafe import Markup
 
         output = []  # Initialize as list since we're using append
-        last_error = self.get('last_error','')
+        last_error = self.get('last_error', '')
 
         has_app_context = has_request_context()
 
@@ -1207,9 +1272,21 @@ class model(EntityPersistenceMixin, watch_base):
                 last_error = safe_jinja.render_fully_escaped(last_error)
                 if '403' in last_error:
                     if has_proxies:
-                        output.append(str(Markup(f"{last_error} - <a href=\"{url_for('settings.settings_page', uuid=self.get('uuid'))}\">Try other proxies/location</a>&nbsp;'")))
+                        output.append(
+                            str(
+                                Markup(
+                                    f"{last_error} - <a href=\"{url_for('settings.settings_page', uuid=self.get('uuid'))}\">Try other proxies/location</a>&nbsp;'"
+                                )
+                            )
+                        )
                     else:
-                        output.append(str(Markup(f"{last_error} - <a href=\"{url_for('settings.settings_page', uuid=self.get('uuid'))}\">Try adding external proxies/locations</a>&nbsp;'")))
+                        output.append(
+                            str(
+                                Markup(
+                                    f"{last_error} - <a href=\"{url_for('settings.settings_page', uuid=self.get('uuid'))}\">Try adding external proxies/locations</a>&nbsp;'"
+                                )
+                            )
+                        )
                 else:
                     output.append(str(Markup(last_error)))
 
@@ -1227,4 +1304,3 @@ class model(EntityPersistenceMixin, watch_base):
 
         res = "\n".join(output)
         return res
-
