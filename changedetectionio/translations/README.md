@@ -78,6 +78,7 @@ These commands read settings from `../../setup.cfg` automatically.
 - `it` - Italian (Italiano)
 - `ja` - Japanese (日本語)
 - `ko` - Korean (한국어)
+- `pt_BR` - Portuguese (Brasil)
 - `zh` - Chinese Simplified (中文简体)
 - `zh_Hant_TW` - Chinese Traditional (繁體中文)
 

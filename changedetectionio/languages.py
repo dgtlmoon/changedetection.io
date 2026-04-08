@@ -28,19 +28,20 @@ def get_timeago_locale(flask_locale):
         str: timeago library locale code (e.g., 'en', 'zh_CN', 'pt_PT')
     """
     locale_map = {
-        'zh': 'zh_CN',      # Chinese Simplified
+        'zh': 'zh_CN',          # Chinese Simplified
         # timeago library just hasn't been updated to use the more modern locale naming convention, before BCP 47 / RFC 5646.
-        'zh_TW': 'zh_TW',   # Chinese Traditional (timeago uses zh_TW)
+        'zh_TW': 'zh_TW',       # Chinese Traditional (timeago uses zh_TW)
         'zh_Hant_TW': 'zh_TW',  # Flask-Babel normalizes zh_TW to zh_Hant_TW, map back to timeago's zh_TW
-        'pt': 'pt_PT',      # Portuguese (Portugal)
-        'sv': 'sv_SE',      # Swedish
-        'no': 'nb_NO',      # Norwegian Bokmål
-        'hi': 'in_HI',      # Hindi
-        'cs': 'en',         # Czech not supported by timeago, fallback to English
-        'ja': 'ja',         # Japanese
-        'uk': 'uk',         # Ukrainian
-        'en_GB': 'en',      # British English - timeago uses 'en'
-        'en_US': 'en',      # American English - timeago uses 'en'
+        'pt': 'pt_PT',          # Portuguese (Portugal)
+        'pt_BR': 'pt_BR',       # Portuguese (Brasil)
+        'sv': 'sv_SE',          # Swedish
+        'no': 'nb_NO',          # Norwegian Bokmål
+        'hi': 'in_HI',          # Hindi
+        'cs': 'en',             # Czech not supported by timeago, fallback to English
+        'ja': 'ja',             # Japanese
+        'uk': 'uk',             # Ukrainian
+        'en_GB': 'en',          # British English - timeago uses 'en'
+        'en_US': 'en',          # American English - timeago uses 'en'
     }
     return locale_map.get(flask_locale, flask_locale)
 
@@ -54,7 +55,8 @@ LANGUAGE_DATA = {
     'ko': {'flag': 'fi fi-kr fis', 'name': '한국어'},
     'cs': {'flag': 'fi fi-cz fis', 'name': 'Čeština'},
     'es': {'flag': 'fi fi-es fis', 'name': 'Español'},
-    'pt': {'flag': 'fi fi-pt fis', 'name': 'Português'},
+    'pt': {'flag': 'fi fi-pt fis', 'name': 'Português (Portugal)'},
+    'pt_BR': {'flag': 'fi fi-br fis', 'name': 'Português (Brasil)'},
     'it': {'flag': 'fi fi-it fis', 'name': 'Italiano'},
     'ja': {'flag': 'fi fi-jp fis', 'name': '日本語'},
     'zh': {'flag': 'fi fi-cn fis', 'name': '中文 (简体)'},
