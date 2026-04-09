@@ -49,6 +49,9 @@ async def capture_full_page_async(page, screenshot_format='JPEG', watch_uuid=Non
     if page_height > page.viewport_size['height']:
         if page_height < step_size:
             step_size = page_height # Incase page is bigger than default viewport but smaller than proposed step size
+        # Never set viewport taller than our max capture height - otherwise one screenshot chunk
+        # captures the whole (e.g. 8098px) page even when SCREENSHOT_MAX_HEIGHT=1000
+        step_size = min(step_size, SCREENSHOT_MAX_TOTAL_HEIGHT)
         viewport_start = time.time()
         logger.debug(f"{watch_info}Setting bigger viewport to step through large page width W{page.viewport_size['width']}xH{step_size} because page_height > viewport_size")
         # Set viewport to a larger size to capture more content at once
