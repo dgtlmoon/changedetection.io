@@ -88,6 +88,28 @@ class FormattableTimestamp(str):
             return self._dt.isoformat()
 
 
+class FormattableExtract(str):
+    """
+    A str subclass that holds only the extracted changed fragments from a diff.
+    Used for {{diff_changed_from}} and {{diff_changed_to}} tokens.
+
+        {{ diff_changed_from }}   → old value(s) only, e.g. "$99.99"
+        {{ diff_changed_to }}     → new value(s) only, e.g. "$109.99"
+
+    Multiple changed fragments are joined with newlines.
+    Being a str subclass means it is natively JSON serializable.
+    """
+    def __new__(cls, prev_snapshot, current_snapshot, extract_fn):
+        if prev_snapshot or current_snapshot:
+            from changedetectionio import diff as diff_module
+            raw = diff_module.render_diff(prev_snapshot, current_snapshot, word_diff=True)
+            extracted = extract_fn(raw)
+        else:
+            extracted = ''
+        instance = super().__new__(cls, extracted)
+        return instance
+
+
 class FormattableDiff(str):
     """
     A str subclass representing a rendered diff. As a plain string it renders
@@ -161,6 +183,8 @@ class NotificationContextData(dict):
             'diff_patch': FormattableDiff('', '', patch_format=True),
             'diff_removed': FormattableDiff('', '', include_added=False),
             'diff_removed_clean': FormattableDiff('', '', include_added=False, include_change_type_prefix=False),
+            'diff_changed_from': FormattableExtract('', '', extract_fn=lambda x: x),
+            'diff_changed_to': FormattableExtract('', '', extract_fn=lambda x: x),
             'diff_url': None,
             'markup_text_links_to_html_links': False, # If automatic conversion of plaintext to HTML should happen
             'notification_timestamp': time.time(),
@@ -244,16 +268,27 @@ def add_rendered_diff_to_notification_vars(notification_scan_text:str, prev_snap
         'diff_removed_clean': {'word_diff': word_diff, 'include_added': False, 'include_change_type_prefix': False},
     }
 
+    from changedetectionio.diff import extract_changed_from, extract_changed_to
+    extract_specs = {
+        'diff_changed_from': extract_changed_from,
+        'diff_changed_to':   extract_changed_to,
+    }
+
     ret = {}
     rendered_count = 0
-    # Only create FormattableDiff objects for diff keys actually used in the notification text
+    # Only create FormattableDiff/FormattableExtract objects for diff keys actually used in the notification text
     for key in NotificationContextData().keys():
-        if key.startswith('diff') and key in diff_specs:
-            # Check if this placeholder is actually used in the notification text
-            pattern = rf"(?<![A-Za-z0-9_]){re.escape(key)}(?![A-Za-z0-9_])"
-            if re.search(pattern, notification_scan_text, re.IGNORECASE):
-                ret[key] = FormattableDiff(prev_snapshot, current_snapshot, **diff_specs[key])
-                rendered_count += 1
+        if not key.startswith('diff'):
+            continue
+        pattern = rf"(?<![A-Za-z0-9_]){re.escape(key)}(?![A-Za-z0-9_])"
+        if not re.search(pattern, notification_scan_text, re.IGNORECASE):
+            continue
+        if key in diff_specs:
+            ret[key] = FormattableDiff(prev_snapshot, current_snapshot, **diff_specs[key])
+            rendered_count += 1
+        elif key in extract_specs:
+            ret[key] = FormattableExtract(prev_snapshot, current_snapshot, extract_fn=extract_specs[key])
+            rendered_count += 1
 
     if rendered_count:
         logger.trace(f"Rendered {rendered_count} diff placeholder(s) {sorted(ret.keys())} in {time.time() - now:.3f}s")
