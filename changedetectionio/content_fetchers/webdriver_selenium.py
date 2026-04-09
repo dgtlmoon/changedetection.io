@@ -99,15 +99,17 @@ class fetcher(Fetcher):
 
             from selenium.webdriver.remote.remote_connection import RemoteConnection
             from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
+            from selenium.webdriver.remote.client_config import ClientConfig
+            from urllib3.util import Timeout
             driver = None
             try:
-                # Create the RemoteConnection and set timeout (e.g., 30 seconds)
-                remote_connection = RemoteConnection(
-                    self.browser_connection_url,
+                connection_timeout = int(os.getenv("WEBDRIVER_CONNECTION_TIMEOUT", 90))
+                client_config = ClientConfig(
+                    remote_server_addr=self.browser_connection_url,
+                    timeout=Timeout(connect=connection_timeout, total=connection_timeout)
                 )
-                remote_connection.set_timeout(30)  # seconds
+                remote_connection = RemoteConnection(client_config=client_config)
 
-                # Now create the driver with the RemoteConnection
                 driver = RemoteWebDriver(
                     command_executor=remote_connection,
                     options=options

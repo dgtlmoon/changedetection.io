@@ -64,7 +64,7 @@ class TestTriggerConditions(unittest.TestCase):
                 "conditions": [
                     {"operator": ">=", "field": "extracted_number", "value": "10"},
                     {"operator": "<=", "field": "extracted_number", "value": "5000"},
-                    {"operator": "in", "field": "page_text", "value": "rock"},
+                    {"operator": "in", "field": "page_filtered_text", "value": "rock"},
                     #{"operator": "starts_with", "field": "page_text", "value": "I saw"},
                 ]
             }

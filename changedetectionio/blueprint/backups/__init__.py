@@ -98,8 +98,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     backups_blueprint.register_blueprint(construct_restore_blueprint(datastore))
     backup_threads = []
 
-    @login_optionally_required
     @backups_blueprint.route("/request-backup", methods=['GET'])
+    @login_optionally_required
     def request_backup():
         if any(thread.is_alive() for thread in backup_threads):
             flash(gettext("A backup is already running, check back in a few minutes"), "error")
@@ -141,8 +141,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         return backup_info
 
-    @login_optionally_required
     @backups_blueprint.route("/download/<string:filename>", methods=['GET'])
+    @login_optionally_required
     def download_backup(filename):
         import re
         filename = filename.strip()
@@ -165,9 +165,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         logger.debug(f"Backup download request for '{full_path}'")
         return send_from_directory(os.path.abspath(datastore.datastore_path), filename, as_attachment=True)
 
-    @login_optionally_required
     @backups_blueprint.route("/", methods=['GET'])
     @backups_blueprint.route("/create", methods=['GET'])
+    @login_optionally_required
     def create():
         backups = find_backups()
         output = render_template("backup_create.html",
@@ -176,8 +176,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                  )
         return output
 
-    @login_optionally_required
     @backups_blueprint.route("/remove-backups", methods=['GET'])
+    @login_optionally_required
     def remove_backups():
 
         backup_filepath = os.path.join(datastore.datastore_path, BACKUP_FILENAME_FORMAT.format("*"))
