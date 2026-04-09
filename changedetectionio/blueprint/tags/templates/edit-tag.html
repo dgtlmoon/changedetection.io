@@ -43,6 +43,20 @@
                     <div class="pure-control-group">
                         {{ render_field(form.title, placeholder="https://...", required=true, class="m-d") }}
                     </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.url_match_pattern, class="m-d") }}
+                        <span class="pure-form-message-inline">{{ _('Automatically applies this tag to any watch whose URL matches. Supports wildcards: <code>*example.com*</code> or plain substring: <code>github.com/myorg</code>')|safe }}</span>
+                    </div>
+                    {% if matching_watches %}
+                    <div class="pure-control-group">
+                        <label>{{ _('Currently matching watches') }} ({{ matching_watches|length }})</label>
+                        <ul class="tag-url-match-list">
+                            {% for w_uuid, w in matching_watches.items() %}
+                            <li><a href="{{ url_for('ui.ui_edit.edit_page', uuid=w_uuid) }}">{{ w.label }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
                 </fieldset>
             </div>
 
