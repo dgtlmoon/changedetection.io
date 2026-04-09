@@ -15,7 +15,9 @@ from changedetectionio.diff import (
     CHANGED_PLACEMARKER_OPEN,
     CHANGED_PLACEMARKER_CLOSED,
     CHANGED_INTO_PLACEMARKER_OPEN,
-    CHANGED_INTO_PLACEMARKER_CLOSED
+    CHANGED_INTO_PLACEMARKER_CLOSED,
+    extract_changed_from,
+    extract_changed_to,
 )
 
 
@@ -380,6 +382,73 @@ Line 3 with tabs and spaces"""
         # Verify Line 2 is not shown as changed
         self.assertNotIn('[-Line 2-]', output)
         self.assertNotIn('[+Line 2+]', output)
+
+    def test_diff_changed_from_to_word_level(self):
+        """Primary use case: extract just the old/new value from a changed line (e.g. price monitoring)"""
+        before = "Widget costs $99.99 per month"
+        after  = "Widget costs $109.99 per month"
+
+        raw = diff.render_diff(before, after, word_diff=True)
+
+        self.assertEqual(extract_changed_from(raw), "$99.99")
+        self.assertEqual(extract_changed_to(raw),   "$109.99")
+
+    def test_diff_changed_from_to_multiple_changes(self):
+        """Multiple changed fragments on different lines are joined with newline.
+        An unchanged line between the two changes ensures each is a 1-to-1 replace,
+        so word_diff fires per line rather than falling back to multi-line block mode."""
+        before = "Price $99\nunchanged\nTax $5"
+        after  = "Price $149\nunchanged\nTax $12"
+
+        raw = diff.render_diff(before, after, word_diff=True)
+
+        self.assertEqual(extract_changed_from(raw), "$99\n$5")
+        self.assertEqual(extract_changed_to(raw),   "$149\n$12")
+
+    def test_diff_changed_from_to_pure_insert_delete(self):
+        """Pure line additions/deletions (no inline word diff) are also captured"""
+        before = "old line"
+        after  = "new line"
+
+        # word_diff=False forces line-level CHANGED markers
+        raw = diff.render_diff(before, after, word_diff=False)
+
+        self.assertEqual(extract_changed_from(raw), "old line")
+        self.assertEqual(extract_changed_to(raw),   "new line")
+
+    def test_diff_changed_from_to_similar_numbers(self):
+        """$90.00 → $9.00 must not produce a partial match like '0.00'.
+        The tokenizer splits on whitespace only, so '$90.00' and '$9.00' are
+        each a single atomic token — diff never sees their internal characters."""
+        before = "for sale $90.00"
+        after  = "for sale $9.00"
+
+        raw = diff.render_diff(before, after, word_diff=True)
+
+        self.assertEqual(extract_changed_from(raw), "$90.00")
+        self.assertEqual(extract_changed_to(raw),   "$9.00")
+
+    def test_diff_changed_from_to_whole_line_replaced(self):
+        """When every token on the line changed (no common tokens), render_inline_word_diff
+        takes the whole_line_replaced path using CHANGED/CHANGED_INTO markers instead of
+        REMOVED/ADDED. Extraction must still work via the alternation in the regex."""
+        before = "$99"
+        after  = "$109"
+
+        raw = diff.render_diff(before, after, word_diff=True)
+
+        self.assertEqual(extract_changed_from(raw), "$99")
+        self.assertEqual(extract_changed_to(raw),   "$109")
+
+    def test_diff_changed_from_to_no_change(self):
+        """No changes → empty string"""
+        content = "nothing changed here"
+
+        raw = diff.render_diff(content, content, word_diff=True)
+
+        self.assertEqual(extract_changed_from(raw), "")
+        self.assertEqual(extract_changed_to(raw),   "")
+
 
 if __name__ == '__main__':
     unittest.main()

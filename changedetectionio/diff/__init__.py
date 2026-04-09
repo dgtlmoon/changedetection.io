@@ -45,6 +45,36 @@ CHANGED_INTO_PLACEMARKER_CLOSED = '@changed_into_PLACEMARKER_CLOSED'
 # Compiled regex patterns for performance
 WHITESPACE_NORMALIZE_RE = re.compile(r'\s+')
 
+# Regexes built from the constants above — no brittle hardcoded strings
+_EXTRACT_REMOVED_RE = re.compile(
+    re.escape(REMOVED_PLACEMARKER_OPEN) + r'(.*?)' + re.escape(REMOVED_PLACEMARKER_CLOSED)
+    + r'|' +
+    re.escape(CHANGED_PLACEMARKER_OPEN) + r'(.*?)' + re.escape(CHANGED_PLACEMARKER_CLOSED)
+)
+_EXTRACT_ADDED_RE = re.compile(
+    re.escape(ADDED_PLACEMARKER_OPEN) + r'(.*?)' + re.escape(ADDED_PLACEMARKER_CLOSED)
+    + r'|' +
+    re.escape(CHANGED_INTO_PLACEMARKER_OPEN) + r'(.*?)' + re.escape(CHANGED_INTO_PLACEMARKER_CLOSED)
+)
+
+
+def extract_changed_from(raw_diff: str) -> str:
+    """Extract only the removed/changed-from fragments from a raw diff string.
+
+    Useful for {{diff_changed_from}} — gives just the old value (e.g. old price),
+    not the full surrounding line. Multiple fragments joined with newlines.
+    """
+    return '\n'.join(m.group(1) or m.group(2) for m in _EXTRACT_REMOVED_RE.finditer(raw_diff))
+
+
+def extract_changed_to(raw_diff: str) -> str:
+    """Extract only the added/changed-into fragments from a raw diff string.
+
+    Useful for {{diff_changed_to}} — gives just the new value (e.g. new price),
+    not the full surrounding line. Multiple fragments joined with newlines.
+    """
+    return '\n'.join(m.group(1) or m.group(2) for m in _EXTRACT_ADDED_RE.finditer(raw_diff))
+
 
 def render_inline_word_diff(before_line: str, after_line: str, ignore_junk: bool = False, markdown_style: str = None, tokenizer: str = 'words_and_html') -> tuple[str, bool]:
     """

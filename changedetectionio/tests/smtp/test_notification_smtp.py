@@ -11,10 +11,10 @@ from changedetectionio.tests.util import set_original_response, set_modified_res
     set_longer_modified_response, delete_all_watches
 
 import logging
-
+import os
 
 # NOTE - RELIES ON mailserver as hostname running, see github build recipes
-smtp_test_server = 'mailserver'
+smtp_test_server = os.getenv('SMTP_TEST_MAILSERVER', 'mailserver')
 
 ALL_MARKUP_TOKENS = ''.join(f"TOKEN: '{t}'\n{{{{{t}}}}}\n" for t in NotificationContextData().keys())
 
