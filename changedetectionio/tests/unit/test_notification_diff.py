@@ -440,6 +440,18 @@ Line 3 with tabs and spaces"""
         self.assertEqual(extract_changed_from(raw), "$99")
         self.assertEqual(extract_changed_to(raw),   "$109")
 
+    def test_diff_changed_from_to_multiple_words_same_line(self):
+        """When multiple words change on the same line all fragments are joined with newline.
+        'quick brown fox jumps' -> 'slow brown fox hops' gives 'quick\njumps' / 'slow\nhops'.
+        These tokens work best when a single value changes per line."""
+        before = "quick brown fox jumps"
+        after  = "slow brown fox hops"
+
+        raw = diff.render_diff(before, after, word_diff=True)
+
+        self.assertEqual(extract_changed_from(raw), "quick\njumps")
+        self.assertEqual(extract_changed_to(raw),   "slow\nhops")
+
     def test_diff_changed_from_to_no_change(self):
         """No changes → empty string"""
         content = "nothing changed here"
