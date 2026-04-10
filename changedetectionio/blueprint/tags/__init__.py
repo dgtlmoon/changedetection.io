@@ -29,6 +29,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                  form=add_form,
                                  generate_tag_colors=processors.generate_processor_badge_colors,
                                  tag_count=tag_count,
+                                 wcag_text_color=processors.wcag_text_color,
                                  )
 
         return output

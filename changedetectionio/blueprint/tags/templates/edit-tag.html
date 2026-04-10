@@ -57,6 +57,32 @@
                         </ul>
                     </div>
                     {% endif %}
+                    <div class="pure-control-group">
+                        <label>{{ _('Tag colour') }}</label>
+                        <div style="display:flex; align-items:center; gap:0.75em;">
+                            <input type="checkbox" id="use_custom_colour"
+                                   {% if data.get('tag_colour') %}checked{% endif %}>
+                            <label for="use_custom_colour" style="margin:0">{{ _('Custom colour') }}</label>
+                            <input type="color" id="tag_colour_picker"
+                                   value="{{ data.get('tag_colour') or '#4f8ef7' }}"
+                                   {% if not data.get('tag_colour') %}disabled{% endif %}>
+                            <input type="hidden" name="tag_colour" id="tag_colour_hidden"
+                                   value="{{ data.get('tag_colour', '') }}">
+                        </div>
+                        <span class="pure-form-message-inline">{{ _('Leave unchecked to use the auto-generated colour based on the tag name.') }}</span>
+                    </div>
+                    <script>
+                    (function () {
+                        var cb = document.getElementById('use_custom_colour');
+                        var picker = document.getElementById('tag_colour_picker');
+                        var hidden = document.getElementById('tag_colour_hidden');
+                        picker.addEventListener('input', function () { hidden.value = this.value; });
+                        cb.addEventListener('change', function () {
+                            picker.disabled = !this.checked;
+                            hidden.value = this.checked ? picker.value : '';
+                        });
+                    })();
+                    </script>
                 </fieldset>
             </div>
 

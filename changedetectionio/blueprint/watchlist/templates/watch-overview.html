@@ -71,6 +71,13 @@ document.addEventListener('DOMContentLoaded', function() {
 {%- for uuid, tag in tags -%}
 {%- if tag and tag.title -%}
 {%- set class_name = tag.title|sanitize_tag_class -%}
+{%- if tag.get('tag_colour') -%}
+.button-tag.tag-{{ class_name }},
+.watch-tag-list.tag-{{ class_name }} {
+  background-color: {{ tag.tag_colour }};
+  color: {{ wcag_text_color(tag.tag_colour) }};
+}
+{%- else -%}
 {%- set colors = generate_tag_colors(tag.title) -%}
 .button-tag.tag-{{ class_name }} {
   background-color: {{ colors['light']['bg'] }};
@@ -91,6 +98,7 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
   background-color: {{ colors['dark']['bg'] }};
   color: {{ colors['dark']['color'] }};
 }
+{%- endif -%}
 {%- endif -%}
 {%- endfor -%}
 </style>
