@@ -320,7 +320,12 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 'using_global_webdriver_wait': not default['webdriver_delay'],
                 'uuid': uuid,
                 'watch': watch,
-                'capabilities': capabilities
+                'capabilities': capabilities,
+                'auto_applied_tags': {
+                    tag_uuid: tag
+                    for tag_uuid, tag in datastore.data['settings']['application']['tags'].items()
+                    if tag_uuid not in watch.get('tags', []) and tag.matches_url(watch.get('url', ''))
+                },
             }
 
             included_content = None

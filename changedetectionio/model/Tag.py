@@ -46,16 +46,17 @@ class model(EntityPersistenceMixin, watch_base):
         super(model, self).__init__(*arg, **kw)
 
         self['overrides_watch'] = kw.get('default', {}).get('overrides_watch')
+        self['url_match_pattern'] = kw.get('default', {}).get('url_match_pattern', '')
 
         if kw.get('default'):
             self.update(kw['default'])
             del kw['default']
 
     def matches_url(self, url: str) -> bool:
-        """Return True if url matches this tag's url_match_pattern.
+        """Return True if this tag should be auto-applied to the given watch URL.
 
-        Supports fnmatch wildcards (* and ?) when the pattern contains them;
-        otherwise falls back to case-insensitive substring matching.
+        Wildcard patterns (*,?,[ ) use fnmatch; anything else is a case-insensitive
+        substring match. Returns False if no pattern is configured.
         """
         import fnmatch
         pattern = self.get('url_match_pattern', '').strip()

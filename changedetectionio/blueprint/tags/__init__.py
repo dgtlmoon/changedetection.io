@@ -211,6 +211,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             template = env.from_string(template_str)
             included_content = template.render(**template_args)
 
+        # Watches whose URL currently matches this tag's pattern
         matching_watches = {
             w_uuid: watch
             for w_uuid, watch in datastore.data['watching'].items()

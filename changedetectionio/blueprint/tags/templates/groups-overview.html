@@ -11,8 +11,14 @@
 .watch-tag-list.tag-{{ class_name }} { background-color: {{ tag.tag_colour }}; color: {{ wcag_text_color(tag.tag_colour) }}; }
 {%- else -%}
 {%- set colors = generate_tag_colors(tag.title) -%}
-.watch-tag-list.tag-{{ class_name }} { background-color: {{ colors['light']['bg'] }}; color: {{ colors['light']['color'] }}; }
-html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} { background-color: {{ colors['dark']['bg'] }}; color: {{ colors['dark']['color'] }}; }
+.watch-tag-list.tag-{{ class_name }} {
+  background-color: {{ colors['light']['bg'] }};
+  color: {{ colors['light']['color'] }};
+}
+html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
+  background-color: {{ colors['dark']['bg'] }};
+  color: {{ colors['dark']['color'] }};
+}
 {%- endif -%}
 {%- endif -%}
 {%- endfor -%}
