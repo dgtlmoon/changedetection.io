@@ -496,7 +496,7 @@ Thanks - Your omniscient changedetection.io installation.
         n_object = NotificationContextData({
             'notification_title': f"Changedetection.io - Alert - Browser step at position {step} could not be run",
             'notification_body': body,
-            'notification_format': self._check_cascading_vars('notification_format', watch),
+            'notification_format': _check_cascading_vars(self.datastore, 'notification_format', watch),
         })
         n_object['markup_text_links_to_html_links'] = n_object.get('notification_format').startswith('html')
 
