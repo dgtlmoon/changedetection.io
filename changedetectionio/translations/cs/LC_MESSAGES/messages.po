@@ -1759,7 +1759,7 @@ msgstr "Vymazat historie"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "<p>Are you sure you want to clear history for the selected items?</p><p>This action cannot be undone.</p>"
-msgstr ""
+msgstr "<p>Opravdu chcete vyčistit historii u vybraných položek?</p><p>Tuto akci nelze vzít zpět.</p>"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "OK"
@@ -1775,7 +1775,7 @@ msgstr "Smazat sledování?"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "<p>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>"
-msgstr ""
+msgstr "<p>Opravdu chcete smazat vybraná sledování?</p><p>Tuto akci nelze vzít zpět.</p>"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Queued size"
@@ -1886,59 +1886,59 @@ msgstr "Ještě ne"
 
 #: changedetectionio/flask_app.py
 msgid "0 seconds"
-msgstr ""
+msgstr "0 sekund"
 
 #: changedetectionio/flask_app.py
 msgid "year"
-msgstr ""
+msgstr "rok"
 
 #: changedetectionio/flask_app.py
 msgid "years"
-msgstr ""
+msgstr "roky"
 
 #: changedetectionio/flask_app.py
 msgid "month"
-msgstr ""
+msgstr "měsíc"
 
 #: changedetectionio/flask_app.py
 msgid "months"
-msgstr ""
+msgstr "měsíce"
 
 #: changedetectionio/flask_app.py
 msgid "week"
-msgstr ""
+msgstr "týden"
 
 #: changedetectionio/flask_app.py
 msgid "weeks"
-msgstr ""
+msgstr "týdny"
 
 #: changedetectionio/flask_app.py
 msgid "day"
-msgstr ""
+msgstr "den"
 
 #: changedetectionio/flask_app.py
 msgid "days"
-msgstr ""
+msgstr "dny"
 
 #: changedetectionio/flask_app.py
 msgid "hour"
-msgstr ""
+msgstr "hodina"
 
 #: changedetectionio/flask_app.py
 msgid "hours"
-msgstr ""
+msgstr "hodiny"
 
 #: changedetectionio/flask_app.py
 msgid "minute"
-msgstr ""
+msgstr "minuta"
 
 #: changedetectionio/flask_app.py
 msgid "minutes"
-msgstr ""
+msgstr "minut"
 
 #: changedetectionio/flask_app.py
 msgid "second"
-msgstr ""
+msgstr "sekunda"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/flask_app.py
 msgid "seconds"
@@ -1946,11 +1946,11 @@ msgstr "sekundy"
 
 #: changedetectionio/flask_app.py
 msgid "Already logged in"
-msgstr ""
+msgstr "Již přihlášen(a)"
 
 #: changedetectionio/flask_app.py
 msgid "You must be logged in, please log in."
-msgstr ""
+msgstr "Je třeba být přihlášen(a), přihlas se."
 
 #: changedetectionio/flask_app.py
 msgid "Incorrect password"
@@ -1958,11 +1958,11 @@ msgstr "Nesprávné heslo"
 
 #: changedetectionio/forms.py
 msgid "At least one time interval (weeks, days, hours, minutes, or seconds) must be specified."
-msgstr ""
+msgstr "Je třeba zadat alespoň jeden časový interval (týdny, dny, hodiny, minuty nebo sekundy)."
 
 #: changedetectionio/forms.py
 msgid "At least one time interval (weeks, days, hours, minutes, or seconds) must be specified when not using global settings."
-msgstr ""
+msgstr "Je třeba zadat alespoň jeden časový interval (týdny, dny, hodiny, minuty nebo sekundy) pokud nejsou použita globální nastavení."
 
 #: changedetectionio/forms.py
 msgid "Invalid time format. Use HH:MM."
@@ -1978,7 +1978,7 @@ msgstr "nenastaveno"
 
 #: changedetectionio/forms.py
 msgid "Start At"
-msgstr "Začíná v"
+msgstr "Spustit v"
 
 #: changedetectionio/forms.py
 msgid "Run duration"
@@ -2026,7 +2026,7 @@ msgstr "Týdny"
 
 #: changedetectionio/forms.py
 msgid "Should contain zero or more seconds"
-msgstr "Mělo by obsahovat nula nebo více sekund"
+msgstr "Je třeba zadat nula nebo více sekund"
 
 #: changedetectionio/forms.py
 msgid "Days"
@@ -2175,15 +2175,15 @@ msgstr "Použít globální nastavení pro čas mezi kontrolou a plánovačem."
 
 #: changedetectionio/forms.py
 msgid "CSS/JSONPath/JQ/XPath Filters"
-msgstr "CSS/xPath filtr"
+msgstr "CSS/JSONPath/JQ/xPath filtry"
 
 #: changedetectionio/forms.py
 msgid "Remove elements"
-msgstr "Vyberte podle prvku"
+msgstr "Odstranit prvky"
 
 #: changedetectionio/forms.py
 msgid "Extract text"
-msgstr "Extrahujte data"
+msgstr "Extrahovat text"
 
 #: changedetectionio/blueprint/imports/templates/import.html changedetectionio/forms.py
 msgid "Title"
@@ -2191,15 +2191,15 @@ msgstr "Titul"
 
 #: changedetectionio/forms.py
 msgid "Ignore lines containing"
-msgstr "Ignorujte všechny odpovídající řádky"
+msgstr "Ignorovat řádky obsahující"
 
 #: changedetectionio/forms.py
 msgid "Request body"
-msgstr "Žádost"
+msgstr "Tělo žádosti"
 
 #: changedetectionio/forms.py
 msgid "Request method"
-msgstr "Žádost"
+msgstr "Metoda žádosti"
 
 #: changedetectionio/forms.py
 msgid "Ignore status codes (process non-2xx status codes as normal)"
@@ -2207,11 +2207,11 @@ msgstr "Ignorovat stavové kódy (zpracovat stavové kódy jiné než 2xx jako n
 
 #: changedetectionio/forms.py
 msgid "Only trigger when unique lines appear in all history"
-msgstr "Spustit pouze tehdy, když se objeví jedinečné čáry"
+msgstr "Zpracovat pouze tehdy, když se objeví jedinečné řádky"
 
 #: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/forms.py
 msgid "Remove duplicate lines of text"
-msgstr "Odstraňte duplicitní řádky textu"
+msgstr "Odstranit duplicitní řádky textu"
 
 #: changedetectionio/forms.py
 msgid "Sort text alphabetically"
@@ -2219,11 +2219,11 @@ msgstr "Seřadit text podle abecedy"
 
 #: changedetectionio/forms.py
 msgid "Strip ignored lines"
-msgstr "Odstraňte ignorované řádky"
+msgstr "Odstranit ignorované řádky"
 
 #: changedetectionio/forms.py
 msgid "Trim whitespace before and after text"
-msgstr "Odstraňte všechny mezery před a za každým řádkem textu"
+msgstr "Odstranit všechny mezery před a za každým řádkem textu"
 
 #: changedetectionio/forms.py
 msgid "Added lines"
@@ -2231,11 +2231,11 @@ msgstr "Přidané řádky"
 
 #: changedetectionio/forms.py
 msgid "Replaced/changed lines"
-msgstr "Vyměněny/změněny řádky"
+msgstr "Nahrazené/upravené řádky"
 
 #: changedetectionio/forms.py
 msgid "Removed lines"
-msgstr "Odebráno"
+msgstr "Odstraněné řádky"
 
 #: changedetectionio/forms.py
 msgid "Keyword triggers - Trigger/wait for text"
@@ -2259,7 +2259,7 @@ msgstr "Proxy"
 
 #: changedetectionio/forms.py
 msgid "Send a notification when the filter can no longer be found on the page"
-msgstr "Odeslat upozornění, když filtr již na stránce nelze najít"
+msgstr "Odeslat upozornění pokud filtr již na stránce nelze najít"
 
 #: changedetectionio/forms.py
 msgid "Muted"
@@ -2276,7 +2276,7 @@ msgstr "Oznámení"
 
 #: changedetectionio/forms.py
 msgid "Attach screenshot to notification (where possible)"
-msgstr "Připojte snímek obrazovky k oznámení (pokud je to možné)"
+msgstr "Připojit snímek obrazovky k oznámení (pokud je to možné)"
 
 #: changedetectionio/forms.py
 msgid "Match"
@@ -2284,7 +2284,7 @@ msgstr "Shoda"
 
 #: changedetectionio/forms.py
 msgid "Match all of the following"
-msgstr "Spojte všechny následující položky"
+msgstr "Spojit všechny následující položky"
 
 #: changedetectionio/forms.py
 msgid "Match any of the following"
@@ -2296,7 +2296,7 @@ msgstr "V seznamu použijte stránku <title>"
 
 #: changedetectionio/forms.py
 msgid "Number of history items per watch to keep"
-msgstr ""
+msgstr "Počet historických záznamů pro sledování"
 
 #: changedetectionio/forms.py
 msgid "Body must be empty when Request Method is set to GET"
@@ -2315,7 +2315,7 @@ msgstr "Neplatná syntaxe šablony: %(error)s"
 #: changedetectionio/forms.py
 #, python-format
 msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
-msgstr ""
+msgstr "Neplatná syntax šablony v \"%(header)s\" hlavička: %(error)s"
 
 #: changedetectionio/forms.py
 msgid "Name"
@@ -2439,7 +2439,7 @@ msgstr "RSS <description> tělo sestavené z"
 
 #: changedetectionio/forms.py
 msgid "RSS \"System default\" template override"
-msgstr ""
+msgstr "Úprava \"Systémové výchozí\" RSS šablony"
 
 #: changedetectionio/forms.py
 msgid "Remove password"
