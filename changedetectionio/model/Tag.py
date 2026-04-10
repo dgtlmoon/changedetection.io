@@ -46,10 +46,25 @@ class model(EntityPersistenceMixin, watch_base):
         super(model, self).__init__(*arg, **kw)
 
         self['overrides_watch'] = kw.get('default', {}).get('overrides_watch')
+        self['url_match_pattern'] = kw.get('default', {}).get('url_match_pattern', '')
 
         if kw.get('default'):
             self.update(kw['default'])
             del kw['default']
+
+    def matches_url(self, url: str) -> bool:
+        """Return True if this tag should be auto-applied to the given watch URL.
+
+        Wildcard patterns (*,?,[ ) use fnmatch; anything else is a case-insensitive
+        substring match. Returns False if no pattern is configured.
+        """
+        import fnmatch
+        pattern = self.get('url_match_pattern', '').strip()
+        if not pattern or not url:
+            return False
+        if any(c in pattern for c in ('*', '?', '[')):
+            return fnmatch.fnmatch(url.lower(), pattern.lower())
+        return pattern.lower() in url.lower()
 
     # _save_to_disk() method provided by EntityPersistenceMixin
     # commit() and _get_commit_data() methods inherited from watch_base

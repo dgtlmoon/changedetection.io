@@ -22,10 +22,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         tag_count = Counter(tag for watch in datastore.data['watching'].values() if watch.get('tags') for tag in watch['tags'])
 
+        from changedetectionio import processors
         output = render_template("groups-overview.html",
                                  app_rss_token=datastore.data['settings']['application'].get('rss_access_token'),
                                  available_tags=sorted_tags,
                                  form=add_form,
+                                 generate_tag_colors=processors.generate_processor_badge_colors,
                                  tag_count=tag_count,
                                  )
 
@@ -208,9 +210,17 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             template = env.from_string(template_str)
             included_content = template.render(**template_args)
 
+        # Watches whose URL currently matches this tag's pattern
+        matching_watches = {
+            w_uuid: watch
+            for w_uuid, watch in datastore.data['watching'].items()
+            if default.matches_url(watch.get('url', ''))
+        }
+
         output = render_template("edit-tag.html",
                                  extra_form_content=included_content,
                                  extra_tab_content=form.extra_tab_content() if form.extra_tab_content() else None,
+                                 matching_watches=matching_watches,
                                  settings_application=datastore.data['settings']['application'],
                                  **template_args
                                  )

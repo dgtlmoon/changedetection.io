@@ -10,6 +10,8 @@ from changedetectionio.processors.restock_diff.forms import processor_settings_f
 
 class group_restock_settings_form(restock_settings_form):
     overrides_watch = BooleanField('Activate for individual watches in this tag/group?', default=False)
+    url_match_pattern = StringField('Auto-apply to watches with URLs matching',
+                                    render_kw={"placeholder": "e.g. *://example.com/* or github.com/myorg"})
 
 class SingleTag(Form):
 

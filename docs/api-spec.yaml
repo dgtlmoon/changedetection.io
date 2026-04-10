@@ -725,6 +725,13 @@ components:
                 - true: Tag settings override watch settings
                 - false: Tag settings do not override (watches use their own settings)
                 - null: Not decided yet / inherit default behavior
+            url_match_pattern:
+              type: string
+              description: |
+                Automatically apply this tag to any watch whose URL matches this pattern.
+                Supports fnmatch wildcards (* and ?): e.g. *://example.com/* or github.com/myorg.
+                Plain strings are matched as case-insensitive substrings.
+                Leave empty to disable auto-matching.
             # Future: Aggregated statistics from all watches with this tag
             # check_count:
             #   type: integer
