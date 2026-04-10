@@ -76,7 +76,7 @@ def extract_changed_to(raw_diff: str) -> str:
     return '\n'.join(m.group(1) or m.group(2) for m in _EXTRACT_ADDED_RE.finditer(raw_diff))
 
 
-def render_inline_word_diff(before_line: str, after_line: str, ignore_junk: bool = False, markdown_style: str = None, tokenizer: str = 'words_and_html') -> tuple[str, bool]:
+def render_inline_word_diff(before_line: str, after_line: str, ignore_junk: bool = False, markdown_style: str = None, tokenizer: str = 'words_and_html', include_change_type_prefix: bool = True) -> tuple[str, bool]:
     """
     Render word-level differences between two lines inline using diff-match-patch library.
 
@@ -163,14 +163,20 @@ def render_inline_word_diff(before_line: str, after_line: str, ignore_junk: bool
         if removed_tokens:
             removed_full = ''.join(removed_tokens).rstrip()
             trailing_removed = ''.join(removed_tokens)[len(removed_full):] if len(''.join(removed_tokens)) > len(removed_full) else ''
-            result_parts.append(f'{CHANGED_PLACEMARKER_OPEN}{removed_full}{CHANGED_PLACEMARKER_CLOSED}{trailing_removed}')
+            if include_change_type_prefix:
+                result_parts.append(f'{CHANGED_PLACEMARKER_OPEN}{removed_full}{CHANGED_PLACEMARKER_CLOSED}{trailing_removed}')
+            else:
+                result_parts.append(f'{removed_full}{trailing_removed}')
 
         if added_tokens:
             if result_parts:  # Add newline between removed and added
                 result_parts.append('\n')
             added_full = ''.join(added_tokens).rstrip()
             trailing_added = ''.join(added_tokens)[len(added_full):] if len(''.join(added_tokens)) > len(added_full) else ''
-            result_parts.append(f'{CHANGED_INTO_PLACEMARKER_OPEN}{added_full}{CHANGED_INTO_PLACEMARKER_CLOSED}{trailing_added}')
+            if include_change_type_prefix:
+                result_parts.append(f'{CHANGED_INTO_PLACEMARKER_OPEN}{added_full}{CHANGED_INTO_PLACEMARKER_CLOSED}{trailing_added}')
+            else:
+                result_parts.append(f'{added_full}{trailing_added}')
 
         return ''.join(result_parts), has_changes
     else:
@@ -180,21 +186,27 @@ def render_inline_word_diff(before_line: str, after_line: str, ignore_junk: bool
             if op == 0:  # Equal
                 result_parts.append(text)
             elif op == 1:  # Insertion
-                # Don't wrap empty content (e.g., whitespace-only tokens after rstrip)
-                content = text.rstrip()
-                trailing = text[len(content):] if len(text) > len(content) else ''
-                if content:
-                    result_parts.append(f'{ADDED_PLACEMARKER_OPEN}{content}{ADDED_PLACEMARKER_CLOSED}{trailing}')
+                if not include_change_type_prefix:
+                    result_parts.append(text)
                 else:
-                    result_parts.append(trailing)
+                    # Don't wrap empty content (e.g., whitespace-only tokens after rstrip)
+                    content = text.rstrip()
+                    trailing = text[len(content):] if len(text) > len(content) else ''
+                    if content:
+                        result_parts.append(f'{ADDED_PLACEMARKER_OPEN}{content}{ADDED_PLACEMARKER_CLOSED}{trailing}')
+                    else:
+                        result_parts.append(trailing)
             elif op == -1:  # Deletion
-                # Don't wrap empty content (e.g., whitespace-only tokens after rstrip)
-                content = text.rstrip()
-                trailing = text[len(content):] if len(text) > len(content) else ''
-                if content:
-                    result_parts.append(f'{REMOVED_PLACEMARKER_OPEN}{content}{REMOVED_PLACEMARKER_CLOSED}{trailing}')
+                if not include_change_type_prefix:
+                    result_parts.append(text)
                 else:
-                    result_parts.append(trailing)
+                    # Don't wrap empty content (e.g., whitespace-only tokens after rstrip)
+                    content = text.rstrip()
+                    trailing = text[len(content):] if len(text) > len(content) else ''
+                    if content:
+                        result_parts.append(f'{REMOVED_PLACEMARKER_OPEN}{content}{REMOVED_PLACEMARKER_CLOSED}{trailing}')
+                    else:
+                        result_parts.append(trailing)
 
         return ''.join(result_parts), has_changes
 
@@ -390,7 +402,7 @@ def customSequenceMatcher(
 
             # Use inline word-level diff for single line replacements when word_diff is enabled
             if word_diff and len(before_lines) == 1 and len(after_lines) == 1:
-                inline_diff, has_changes = render_inline_word_diff(before_lines[0], after_lines[0], ignore_junk=ignore_junk, tokenizer=tokenizer)
+                inline_diff, has_changes = render_inline_word_diff(before_lines[0], after_lines[0], ignore_junk=ignore_junk, tokenizer=tokenizer, include_change_type_prefix=include_change_type_prefix)
                 # Check if there are any actual changes (not just whitespace when ignore_junk is enabled)
                 if ignore_junk and not has_changes:
                     # No real changes, skip this line

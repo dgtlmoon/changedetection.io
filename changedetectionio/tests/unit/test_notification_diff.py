@@ -462,5 +462,40 @@ Line 3 with tabs and spaces"""
         self.assertEqual(extract_changed_to(raw),   "")
 
 
+    def test_word_diff_no_prefix_whole_line_replaced(self):
+        """When include_change_type_prefix=False, word-level diffs for whole-line
+        replacements must not include placemarkers (issue #3816)."""
+        before = "73"
+        after = "100"
+
+        raw = diff.render_diff(before, after, word_diff=True, include_change_type_prefix=False)
+
+        self.assertNotIn('PLACEMARKER', raw)
+        # Should contain just the raw values separated by newline
+        self.assertIn('73', raw)
+        self.assertIn('100', raw)
+
+    def test_word_diff_no_prefix_inline_changes(self):
+        """When include_change_type_prefix=False, inline word-level diffs
+        must not include placemarkers (issue #3816)."""
+        before = "the price is 50 dollars"
+        after = "the price is 75 dollars"
+
+        raw = diff.render_diff(before, after, word_diff=True, include_change_type_prefix=False)
+
+        self.assertNotIn('PLACEMARKER', raw)
+        self.assertIn('50', raw)
+        self.assertIn('75', raw)
+
+    def test_word_diff_with_prefix_still_wraps(self):
+        """Default include_change_type_prefix=True must still wrap tokens."""
+        before = "73"
+        after = "100"
+
+        raw = diff.render_diff(before, after, word_diff=True, include_change_type_prefix=True)
+
+        self.assertIn('PLACEMARKER', raw)
+
+
 if __name__ == '__main__':
     unittest.main()
