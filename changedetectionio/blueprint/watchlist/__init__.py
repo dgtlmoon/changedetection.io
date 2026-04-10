@@ -92,6 +92,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             extra_classes='has-queue' if not update_q.empty() else '',
             form=form,
             generate_tag_colors=processors.generate_processor_badge_colors,
+            wcag_text_color=processors.wcag_text_color,
             guid=datastore.data['app_guid'],
             has_proxies=proxy_list,
             hosted_sticky=os.getenv("SALTED_PASS", False) == False,
