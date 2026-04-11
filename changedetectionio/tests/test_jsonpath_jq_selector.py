@@ -377,7 +377,7 @@ def check_json_ext_filter(json_filter, client, live_server, datastore_path):
               "url": test_url,
               "tags": "",
               "headers": "",
-              "fetch_backend": "html_requests",
+              "browser_profile": "direct_http_requests",
               "time_between_check_use_default": "y"
               },
         follow_redirects=True

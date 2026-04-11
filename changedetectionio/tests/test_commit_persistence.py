@@ -464,7 +464,7 @@ def test_settings_persist_after_update(client, live_server):
 
     # Update settings directly (bypass form validation issues)
     datastore.data['settings']['application']['empty_pages_are_a_change'] = True
-    datastore.data['settings']['application']['fetch_backend'] = 'html_requests'
+    datastore.data['settings']['application']['browser_profile'] = 'direct_http_requests'
     datastore.data['settings']['requests']['time_between_check']['minutes'] = 120
     datastore.commit()
 
@@ -478,7 +478,7 @@ def test_settings_persist_after_update(client, live_server):
 
     # Verify settings survived
     assert datastore2.data['settings']['application']['empty_pages_are_a_change'] == True, "empty_pages_are_a_change should persist"
-    assert datastore2.data['settings']['application']['fetch_backend'] == 'html_requests', "fetch_backend should persist"
+    assert datastore2.data['settings']['application']['browser_profile'] == 'direct_http_requests', "browser_profile should persist"
     assert datastore2.data['settings']['requests']['time_between_check']['minutes'] == 120, "time_between_check should persist"
 
 
@@ -634,7 +634,7 @@ def test_ui_watch_edit_persists_all_fields(client, live_server):
             'time_between_check-hours': '2',
             'time_between_check-minutes': '30',
             'include_filters': '#content',
-            'fetch_backend': 'html_requests',
+            'browser_profile': 'direct_http_requests',
             'method': 'POST',
             'ignore_text': 'Advertisement\nTracking'
         },
@@ -657,5 +657,5 @@ def test_ui_watch_edit_persists_all_fields(client, live_server):
     assert watch['title'] == 'Updated Watch Title'
     assert watch['time_between_check']['hours'] == 2
     assert watch['time_between_check']['minutes'] == 30
-    assert watch['fetch_backend'] == 'html_requests'
+    assert watch['browser_profile'] == 'direct_http_requests'
     assert watch['method'] == 'POST'

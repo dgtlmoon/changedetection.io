@@ -27,7 +27,8 @@
     const proxy_recheck_status_url="{{url_for('check_proxies.get_recheck_status', uuid=uuid)}}";
     const screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid)}}";
     const watch_visual_selector_data_url="{{url_for('static_content', group='visual_selector_data', filename=uuid)}}";
-    const default_system_fetch_backend="{{ settings_application['fetch_backend'] }}";
+    const default_system_fetch_backend = {{ (browser_profile_fetchers.get(settings_application.get('browser_profile') or 'direct_http_requests', 'requests')) | tojson }};
+    const browserProfileFetcherMap = {{ browser_profile_fetchers | tojson }};
 </script>
 <script src="{{url_for('static_content', group='js', filename='plugins.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='watch-settings.js')}}" defer></script>
@@ -139,11 +140,19 @@
             {% if capabilities.supports_request_type %}
             <div class="tab-pane-inner" id="request">
                     <div class="pure-control-group inline-radio">
-                        {{ render_field(form.fetch_backend, class="fetch-backend") }}
+                        <div><label for="browser_profile">{{ form.browser_profile.label.text }}</label></div>
+                        <div><ul class="fetch-backend" id="browser_profile">
+                        {%- for subfield in form.browser_profile %}
+                            <li>
+                                {{ subfield() }}
+                                {{ browser_profile_fetchers.get(subfield.data, '')|fetcher_status_icons }}
+                                <label for="{{ subfield.id }}">{{ subfield.label.text }}</label>
+                            </li>
+                        {%- endfor %}
+                        </ul></div>
                         <span class="pure-form-message-inline">
-                            <p>{{ _('Use the') }} <strong>{{ _('Basic') }}</strong> {{ _('method (default) where your watched site doesn\'t need Javascript to render.') }}</p>
-                            <p>{{ _('The') }} <strong>{{ _('Chrome/Javascript') }}</strong> {{ _('method requires a network connection to a running WebDriver+Chrome server, set by the ENV var \'WEBDRIVER_URL\'.') }} </p>
-                            {{ _('Tip:') }} <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#brightdata-proxy-support">{{ _('Connect using Bright Data and Oxylabs Proxies, find out more here.') }}</a>
+                            <p>{{ _('Choose how this watch fetches its target URL. \'System settings default\' inherits the global setting.') }}</p>
+                            <p>{{ _('Manage browser profiles in') }} <a href="{{ url_for('settings.settings_browsers.index') }}">{{ _('Settings → Browsers') }}</a>.</p>
                         </span>
                     </div>
                 {% if form.proxy %}
@@ -157,7 +166,7 @@
                 {% endif %}
 
                 <!-- webdriver always -->
-                <fieldset data-visible-for="fetch_backend=html_webdriver"  style="display: none;">
+                <fieldset data-visible-for="fetch_backend=playwright fetch_backend=selenium fetch_backend=puppeteer fetch_backend=cloakbrowser"  style="display: none;">
                     <div class="pure-control-group">
                         {{ render_field(form.webdriver_delay) }}
                         <div class="pure-form-message-inline">
@@ -180,8 +189,8 @@
                         </div>
                     </div>
                 </fieldset>
-                <!-- html requests always -->
-                <fieldset data-visible-for="fetch_backend=html_requests">
+                <!-- requests always -->
+                <fieldset data-visible-for="fetch_backend=requests">
                     <div class="pure-control-group">
                         <a class="pure-button button-secondary button-xsmall show-advanced">{{ _('Show advanced options') }}</a>
                     </div>
@@ -218,7 +227,7 @@ Math: {{ 1 + 1 }}") }}
                             ({{ _('Not supported by Selenium browser') }})
                         </div>
                     </div>
-            <fieldset data-visible-for="fetch_backend=html_requests fetch_backend=html_webdriver" >
+            <fieldset data-visible-for="fetch_backend=requests fetch_backend=playwright fetch_backend=selenium fetch_backend=puppeteer fetch_backend=cloakbrowser" >
                     <div class="pure-control-group inline-radio advanced-options"  style="display: none;">
                     {{ render_checkbox_field(form.ignore_status_codes) }}
                     </div>

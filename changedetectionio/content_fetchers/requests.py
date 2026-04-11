@@ -8,6 +8,7 @@ import asyncio
 from changedetectionio import strtobool
 from changedetectionio.content_fetchers.exceptions import BrowserStepsInUnsupportedFetcher, EmptyReply, Non200ErrorCodeReceived
 from changedetectionio.content_fetchers.base import Fetcher
+from changedetectionio.pluggy_interface import hookimpl
 from changedetectionio.validate_url import is_private_hostname
 
 
@@ -258,9 +259,10 @@ class fetcher(Fetcher):
 class RequestsFetcherPlugin:
     """Plugin class that registers the requests fetcher as a built-in plugin."""
 
+    @hookimpl
     def register_content_fetcher(self):
         """Register the requests fetcher"""
-        return ('html_requests', fetcher)
+        return ('requests', fetcher)
 
 
 # Create module-level instance for plugin registration

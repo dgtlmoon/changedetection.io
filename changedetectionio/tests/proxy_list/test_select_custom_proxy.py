@@ -15,7 +15,6 @@ def test_select_custom(client, live_server, measure_memory_usage, datastore_path
         data={
             "requests-time_between_check-minutes": 180,
             "application-ignore_whitespace": "y",
-            "application-fetch_backend": 'html_webdriver' if os.getenv('PLAYWRIGHT_DRIVER_URL') else 'html_requests',
             "requests-extra_proxies-0-proxy_name": "custom-test-proxy",
             # test:awesome is set in tests/proxy_list/squid-passwords.txt
             "requests-extra_proxies-0-proxy_url": "http://test:awesome@squid-custom:3128",
@@ -59,7 +58,6 @@ def test_custom_proxy_validation(client, live_server, measure_memory_usage, data
         data={
             "requests-time_between_check-minutes": 180,
             "application-ignore_whitespace": "y",
-            "application-fetch_backend": 'html_requests',
             "requests-extra_proxies-0-proxy_name": "custom-test-proxy",
             "requests-extra_proxies-0-proxy_url": "xxxxhtt/333??p://test:awesome@squid-custom:3128",
         },
@@ -75,7 +73,6 @@ def test_custom_proxy_validation(client, live_server, measure_memory_usage, data
         data={
             "requests-time_between_check-minutes": 180,
             "application-ignore_whitespace": "y",
-            "application-fetch_backend": 'html_requests',
             "requests-extra_proxies-0-proxy_name": "custom-test-proxy",
             "requests-extra_proxies-0-proxy_url": "https://",
         },

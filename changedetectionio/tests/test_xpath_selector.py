@@ -119,7 +119,7 @@ def test_check_xpath_filter_utf8(client, live_server, measure_memory_usage, data
     wait_for_all_checks(client)
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
-        data={"include_filters": filter, "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
+        data={"include_filters": filter, "url": test_url, "tags": "", "headers": "", 'browser_profile': "direct_http_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -168,7 +168,7 @@ def test_check_xpath_text_function_utf8(client, live_server, measure_memory_usag
     wait_for_all_checks(client)
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
-        data={"include_filters": filter, "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
+        data={"include_filters": filter, "url": test_url, "tags": "", "headers": "", 'browser_profile': "direct_http_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -205,7 +205,7 @@ def test_check_markup_xpath_filter_restriction(client, live_server, measure_memo
     # Add our URL to the import page
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
-        data={"include_filters": xpath_filter, "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
+        data={"include_filters": xpath_filter, "url": test_url, "tags": "", "headers": "", 'browser_profile': "direct_http_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
@@ -238,7 +238,7 @@ def test_xpath_validation(client, live_server, measure_memory_usage, datastore_p
 
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
-        data={"include_filters": "/something horrible", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
+        data={"include_filters": "/something horrible", "url": test_url, "tags": "", "headers": "", 'browser_profile': "direct_http_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"is not a valid XPath expression" in res.data
@@ -254,7 +254,7 @@ def test_xpath23_prefix_validation(client, live_server, measure_memory_usage, da
 
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
-        data={"include_filters": "xpath:/something horrible", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
+        data={"include_filters": "xpath:/something horrible", "url": test_url, "tags": "", "headers": "", 'browser_profile': "direct_http_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"is not a valid XPath expression" in res.data
@@ -300,7 +300,7 @@ def test_xpath1_lxml(client, live_server, measure_memory_usage, datastore_path):
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": "xpath1://title/text()", "url": test_url, "tags": "", "headers": "",
-              'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
+              'browser_profile': "direct_http_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
 
@@ -329,7 +329,7 @@ def test_xpath1_validation(client, live_server, measure_memory_usage, datastore_
 
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
-        data={"include_filters": "xpath1:/something horrible", "url": test_url, "tags": "", "headers": "", 'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
+        data={"include_filters": "xpath1:/something horrible", "url": test_url, "tags": "", "headers": "", 'browser_profile': "direct_http_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
     assert b"is not a valid XPath expression" in res.data
@@ -351,7 +351,7 @@ def test_check_with_prefix_include_filters(client, live_server, measure_memory_u
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"include_filters": "xpath://*[contains(@class, 'sametext')]", "url": test_url, "tags": "", "headers": "",
-              'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
+              'browser_profile': "direct_http_requests", "time_between_check_use_default": "y"},
         follow_redirects=True
     )
 
@@ -401,7 +401,7 @@ def test_various_rules(client, live_server, measure_memory_usage, datastore_path
                   "url": test_url,
                   "tags": "",
                   "headers": "",
-                  'fetch_backend': "html_requests",
+                  'browser_profile': "direct_http_requests",
                   "time_between_check_use_default": "y"},
             follow_redirects=True
         )
@@ -428,7 +428,7 @@ def test_xpath_20(client, live_server, measure_memory_usage, datastore_path):
               "url": test_url,
               "tags": "",
               "headers": "",
-              'fetch_backend': "html_requests",
+              'browser_profile': "direct_http_requests",
               "time_between_check_use_default": "y"},
         follow_redirects=True
     )
@@ -462,7 +462,7 @@ def test_xpath_20_function_count(client, live_server, measure_memory_usage, data
               "url": test_url,
               "tags": "",
               "headers": "",
-              'fetch_backend': "html_requests",
+              'browser_profile': "direct_http_requests",
               "time_between_check_use_default": "y"},
         follow_redirects=True
     )
@@ -495,7 +495,7 @@ def test_xpath_20_function_count2(client, live_server, measure_memory_usage, dat
               "url": test_url,
               "tags": "",
               "headers": "",
-              'fetch_backend': "html_requests",
+              'browser_profile': "direct_http_requests",
               "time_between_check_use_default": "y"},
         follow_redirects=True
     )
@@ -531,7 +531,7 @@ def test_xpath_20_function_string_join_matches(client, live_server, measure_memo
             "url": test_url,
             "tags": "",
             "headers": "",
-            'fetch_backend': "html_requests",
+            'browser_profile': "direct_http_requests",
             "time_between_check_use_default": "y"},
         follow_redirects=True
     )
@@ -567,7 +567,7 @@ def _subtest_xpath_rss(client, datastore_path, content_type='text/html'):
             "url": test_url,
             "include_filters": "xpath://item",
             "tags": '',
-            "fetch_backend": "html_requests",
+            "browser_profile": "direct_http_requests",
             "time_between_check_use_default": "y",
         },
         follow_redirects=True
@@ -661,7 +661,7 @@ def test_xpath_blocked_functions_form_validation(client, live_server, measure_me
         res = client.post(
             url_for("ui.ui_edit.edit_page", uuid="first"),
             data={"include_filters": expr, "url": test_url, "tags": "", "headers": "",
-                  'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
+                  'browser_profile': "direct_http_requests", "time_between_check_use_default": "y"},
             follow_redirects=True
         )
         assert b"is not a valid XPath expression" in res.data, \

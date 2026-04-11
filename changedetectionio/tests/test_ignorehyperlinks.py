@@ -53,7 +53,6 @@ def test_render_anchor_tag_content_true(client, live_server, measure_memory_usag
         url_for("settings.settings_page"),
         data={
             "requests-time_between_check-minutes": 180,
-            "application-fetch_backend": "html_requests",
         },
         follow_redirects=True,
     )
@@ -90,7 +89,6 @@ def test_render_anchor_tag_content_true(client, live_server, measure_memory_usag
         data={
             "requests-time_between_check-minutes": 180,
             "application-render_anchor_tag_content": "true",
-            "application-fetch_backend": "html_requests",
         },
         follow_redirects=True,
     )

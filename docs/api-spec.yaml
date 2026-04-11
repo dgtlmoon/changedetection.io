@@ -316,17 +316,15 @@ components:
           type: string
           enum: [GET, POST, DELETE, PUT]
           description: HTTP method to use
-        fetch_backend:
+        browser_profile:
           type: string
           description: |
-            Backend to use for fetching content. Common values:
-            - `system` (default) - Use the system-wide default fetcher
-            - `html_requests` - Fast requests-based fetcher
-            - `html_webdriver` - Browser-based fetcher (Playwright/Puppeteer)
-            - `extra_browser_*` - Custom browser configurations (if configured)
-            - Plugin-provided fetchers (if installed)
-          pattern: '^(system|html_requests|html_webdriver|extra_browser_.+)$'
-          default: system
+            Browser profile (machine name) to use for fetching this watch.
+            - `null` or omitted — use the system default profile
+            - `direct_http_requests` — fast requests-based fetcher
+            - `browser_chromeplaywright` — Chrome/Playwright browser
+            - Any named profile configured in Settings → Browsers
+            - Plugin-provided profiles (e.g. CloakBrowser, if installed)
         headers:
           type: object
           additionalProperties:

@@ -32,8 +32,7 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
             url_for("settings.settings_page"),
             data={"application-password": "foobar",
                   "application-shared_diff_access": "True",
-                  "requests-time_between_check-minutes": 180,
-                  'application-fetch_backend': "html_requests"},
+                  "requests-time_between_check-minutes": 180},
             follow_redirects=True
         )
 
@@ -91,8 +90,7 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         res = c.post(
             url_for("settings.settings_page"),
             data={
-                  "requests-time_between_check-minutes": 180,
-                  'application-fetch_backend': "html_requests"},
+                  "requests-time_between_check-minutes": 180},
             follow_redirects=True
         )
 
@@ -127,16 +125,16 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         assert b"IMPORT" in res.data
         assert b"LOG OUT" in res.data
         assert b"time_between_check-minutes" in res.data
-        assert b"fetch_backend" in res.data
+
 
         ##################################################
         # Remove password button, and check that it worked
         ##################################################
+        # preconfigure_browser_profiles_based_on_env() already set the correct system default
         res = c.post(
             url_for("settings.settings_page"),
             data={
                 "requests-time_between_check-minutes": 180,
-                "application-fetch_backend": "html_webdriver",
                 "application-removepassword_button": "Remove password"
             },
             follow_redirects=True,
@@ -150,8 +148,7 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         res = c.post(
             url_for("settings.settings_page"),
             data={"application-password": "",
-                  "requests-time_between_check-minutes": 180,
-                  'application-fetch_backend': "html_requests"},
+                  "requests-time_between_check-minutes": 180},
             follow_redirects=True
         )
 
@@ -164,8 +161,7 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
             data={"application-password": "foobar",
                   # Should be disabled
                   "application-shared_diff_access": "",
-                  "requests-time_between_check-minutes": 180,
-                  'application-fetch_backend': "html_requests"},
+                  "requests-time_between_check-minutes": 180},
             follow_redirects=True
         )
 

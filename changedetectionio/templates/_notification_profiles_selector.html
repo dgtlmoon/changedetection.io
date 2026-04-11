@@ -1,0 +1,208 @@
+{#
+  Notification Profile Selector widget.
+
+  Usage:
+    {% from '_notification_profiles_selector.html' import render_notification_profile_selector %}
+    {{ render_notification_profile_selector(
+        own_profiles=watch.get('notification_profiles', []),
+        inherited_profiles=inherited_notification_profiles,
+        all_profile_data=settings_application.get('notification_profile_data', {}),
+        registry=registry
+    ) }}
+
+  own_profiles       — list of UUIDs directly linked to this watch/group
+  inherited_profiles — list of (uuid, origin_label) tuples from parent groups/system
+  all_profile_data   — dict of uuid→profile from settings.application.notification_profile_data
+  registry           — notification_profiles.registry instance
+#}
+
+{% macro render_notification_profile_selector(own_profiles, inherited_profiles, all_profile_data, registry) %}
+<div class="notification-profile-selector" id="notification-profile-selector">
+
+  {# Hidden inputs — one per selected UUID, submitted with the form #}
+  <div id="np-hidden-inputs">
+    {% for uid in own_profiles %}
+    <input type="hidden" name="notification_profiles" value="{{ uid }}">
+    {% endfor %}
+  </div>
+
+  <div class="np-chips" id="np-chips">
+
+    {# Own profiles — solid chips, removable #}
+    {% for uid in own_profiles %}
+      {% set profile = all_profile_data.get(uid) %}
+      {% if profile %}
+        {% set handler = registry.get(profile.get('type', 'apprise')) %}
+        <span class="np-chip np-chip-own" data-uuid="{{ uid }}"
+              title="{{ handler.get_url_hint(profile.get('config', {})) }}">
+          <i data-feather="{{ handler.icon }}" class="np-chip-icon"></i>
+          <span class="np-chip-name">{{ profile.get('name', uid) }}</span>
+          <span class="np-chip-remove" data-uuid="{{ uid }}" title="{{ _('Remove') }}">×</span>
+        </span>
+      {% endif %}
+    {% endfor %}
+
+    {# Inherited profiles — dimmed, read-only, show origin #}
+    {% for uid, origin_label in (inherited_profiles or []) %}
+      {% if uid not in own_profiles %}
+        {% set profile = all_profile_data.get(uid) %}
+        {% if profile %}
+          {% set handler = registry.get(profile.get('type', 'apprise')) %}
+          <span class="np-chip np-chip-inherited"
+                title="{{ _('Inherited from') }}: {{ origin_label }} — {{ handler.get_url_hint(profile.get('config', {})) }}">
+            <i data-feather="{{ handler.icon }}" class="np-chip-icon"></i>
+            <span class="np-chip-name">{{ profile.get('name', uid) }}</span>
+            <i data-feather="lock" class="np-chip-lock"></i>
+          </span>
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+
+    {# Add button + dropdown #}
+    <div class="np-add-wrapper" id="np-add-wrapper">
+      <button type="button" class="np-add-btn pure-button button-xsmall" id="np-add-btn">
+        <i data-feather="plus"></i> {{ _('Add profile') }}
+      </button>
+
+      <div class="np-dropdown" id="np-dropdown" style="display:none;">
+        <input type="text" class="np-search" id="np-search" placeholder="{{ _('Search profiles…') }}" autocomplete="off">
+        <div class="np-options" id="np-options">
+          {% set has_options = [] %}
+          {% for uid, profile in all_profile_data.items() %}
+            {% if uid not in own_profiles %}
+              {% set handler = registry.get(profile.get('type', 'apprise')) %}
+              {% set hint = handler.get_url_hint(profile.get('config', {})) %}
+              <div class="np-option" data-uuid="{{ uid }}"
+                   data-name="{{ profile.get('name', '') }}"
+                   data-icon="{{ handler.icon }}"
+                   data-hint="{{ hint }}">
+                <i data-feather="{{ handler.icon }}" class="np-option-icon"></i>
+                <span class="np-option-text">
+                  <strong class="np-option-name">{{ profile.get('name', uid) }}</strong>
+                  {% if hint %}<small class="np-option-hint">{{ hint }}</small>{% endif %}
+                </span>
+              </div>
+              {% if has_options.append(1) %}{% endif %}
+            {% endif %}
+          {% endfor %}
+          {% if not has_options %}
+          <div class="np-option np-no-results" style="pointer-events:none; color: var(--color-grey-600);">
+            {{ _('No other profiles available') }}
+          </div>
+          {% endif %}
+          <div class="np-no-match" style="display:none; padding: 8px 12px; color: var(--color-grey-600); font-size: 0.85em;">
+            {{ _('No profiles match') }}
+          </div>
+        </div>
+        <a href="{{ url_for('notification_profiles.edit') }}" class="np-create-new">
+          <i data-feather="plus-circle"></i> {{ _('Create new profile') }}
+        </a>
+      </div>
+    </div>
+
+  </div>{# .np-chips #}
+
+  {% if not own_profiles and not inherited_profiles %}
+  <p class="pure-form-message-inline" style="margin: 4px 0 0 0; color: var(--color-grey-600);">
+    {{ _('No notification profiles linked. Notifications will not be sent for this watch.') }}
+  </p>
+  {% endif %}
+
+</div>{# .notification-profile-selector #}
+
+<script>
+(function() {
+    var selector = document.getElementById('notification-profile-selector');
+    if (!selector) return;
+
+    var addBtn     = selector.querySelector('#np-add-btn');
+    var dropdown   = selector.querySelector('#np-dropdown');
+    var search     = selector.querySelector('#np-search');
+    var chips      = selector.querySelector('#np-chips');
+    var hiddenWrap = selector.querySelector('#np-hidden-inputs');
+    var noMatch    = selector.querySelector('.np-no-match');
+
+    // Toggle dropdown
+    addBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var open = dropdown.style.display !== 'none';
+        dropdown.style.display = open ? 'none' : 'block';
+        if (!open) { search.value = ''; filterOptions(''); search.focus(); }
+    });
+
+    // Close on outside click
+    document.addEventListener('click', function(e) {
+        if (!selector.contains(e.target)) dropdown.style.display = 'none';
+    });
+
+    // Search filter
+    search.addEventListener('input', function() { filterOptions(this.value.toLowerCase()); });
+
+    function filterOptions(q) {
+        var opts = selector.querySelectorAll('.np-option:not(.np-no-results)');
+        var visible = 0;
+        opts.forEach(function(opt) {
+            var match = !q || opt.dataset.name.toLowerCase().indexOf(q) !== -1
+                           || (opt.dataset.hint || '').toLowerCase().indexOf(q) !== -1;
+            opt.style.display = match ? '' : 'none';
+            if (match) visible++;
+        });
+        noMatch.style.display = (visible === 0 && q) ? 'block' : 'none';
+    }
+
+    // Add profile
+    selector.querySelectorAll('.np-option:not(.np-no-results)').forEach(function(opt) {
+        opt.addEventListener('click', function() {
+            var uuid = this.dataset.uuid;
+            var name = this.dataset.name;
+            var icon = this.dataset.icon;
+            var hint = this.dataset.hint;
+
+            // Add hidden input
+            var inp = document.createElement('input');
+            inp.type = 'hidden'; inp.name = 'notification_profiles'; inp.value = uuid;
+            hiddenWrap.appendChild(inp);
+
+            // Add chip (before the add-wrapper)
+            var chip = document.createElement('span');
+            chip.className = 'np-chip np-chip-own';
+            chip.dataset.uuid = uuid;
+            chip.title = hint || '';
+            chip.innerHTML = '<i data-feather="' + icon + '" class="np-chip-icon"></i>'
+                           + '<span class="np-chip-name">' + escHtml(name) + '</span>'
+                           + '<span class="np-chip-remove" data-uuid="' + uuid + '" title="{{ _("Remove") }}">×</span>';
+            chips.insertBefore(chip, selector.querySelector('#np-add-wrapper'));
+            chip.querySelector('.np-chip-remove').addEventListener('click', removeChip);
+
+            // Hide this option in dropdown
+            this.style.display = 'none';
+
+            dropdown.style.display = 'none';
+            if (window.feather) feather.replace();
+        });
+    });
+
+    // Remove chip
+    selector.querySelectorAll('.np-chip-remove').forEach(function(btn) {
+        btn.addEventListener('click', removeChip);
+    });
+
+    function removeChip() {
+        var uuid = this.dataset.uuid;
+        var chip = selector.querySelector('.np-chip-own[data-uuid="' + uuid + '"]');
+        if (chip) chip.remove();
+        var inp = hiddenWrap.querySelector('input[value="' + uuid + '"]');
+        if (inp) inp.remove();
+        // Re-show in dropdown
+        var opt = selector.querySelector('.np-option[data-uuid="' + uuid + '"]');
+        if (opt) opt.style.display = '';
+    }
+
+    function escHtml(s) {
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    if (window.feather) feather.replace();
+})();
+</script>
+{% endmacro %}

@@ -3,13 +3,13 @@ import time
 
 from loguru import logger
 from changedetectionio.content_fetchers.base import Fetcher
+from changedetectionio.content_fetchers.exceptions import Non200ErrorCodeReceived
+from changedetectionio.pluggy_interface import hookimpl
 
 
 class fetcher(Fetcher):
-    if os.getenv("WEBDRIVER_URL"):
-        fetcher_description = f"WebDriver Chrome/Javascript via \"{os.getenv('WEBDRIVER_URL', '')}\""
-    else:
-        fetcher_description = "WebDriver Chrome/Javascript"
+    fetcher_description = "Selenium WebDriver Chrome"
+    requires_connection_url = True
 
     proxy = None
     proxy_url = None
@@ -19,26 +19,21 @@ class fetcher(Fetcher):
     supports_screenshots = True
     supports_xpath_element_data = True
 
-    @classmethod
-    def get_status_icon_data(cls):
-        """Return Chrome browser icon data for WebDriver fetcher."""
-        return {
-            'filename': 'google-chrome-icon.png',
-            'alt': 'Using a Chrome browser',
-            'title': 'Using a Chrome browser'
-        }
+    status_icon = {'filename': 'google-chrome-icon.png', 'alt': 'Using a Chrome browser', 'title': 'Using a Chrome browser'}
 
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
         super().__init__(**kwargs)
         from urllib.parse import urlparse
         from selenium.webdriver.common.proxy import Proxy
 
-        # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
-        if not custom_browser_connection_url:
-            self.browser_connection_url = os.getenv("WEBDRIVER_URL", 'http://browser-chrome:4444/wd/hub').strip('"')
-        else:
+        if custom_browser_connection_url:
             self.browser_connection_is_custom = True
             self.browser_connection_url = custom_browser_connection_url
+        else:
+            from loguru import logger
+            logger.critical("Selenium WebDriver fetcher has no browser_connection_url — browser profile was not configured. "
+                            "Set WEBDRIVER_URL or configure a browser profile in Settings.")
+            self.browser_connection_url = None
 
         ##### PROXY SETUP #####
 
@@ -132,22 +127,28 @@ class fetcher(Fetcher):
                 if not "--window-size" in os.getenv("CHROME_OPTIONS", ""):
                     driver.set_window_size(1280, 1024)
 
-                driver.implicitly_wait(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
+                driver.implicitly_wait(self.extra_delay)
 
                 if self.webdriver_js_execute_code is not None:
                     driver.execute_script(self.webdriver_js_execute_code)
                     # Selenium doesn't automatically wait for actions as good as Playwright, so wait again
-                    driver.implicitly_wait(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)))
-
-                # @todo - how to check this? is it possible?
-                self.status_code = 200
-                # @todo somehow we should try to get this working for WebDriver
-                # raise EmptyReply(url=url, status_code=r.status_code)
+                    driver.implicitly_wait(self.extra_delay)
 
                 # @todo - dom wait loaded?
                 import time
-                time.sleep(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay)
+                time.sleep(self.extra_delay + self.render_extract_delay)
                 self.content = driver.page_source
+
+                # Use Navigation Timing API to get the real HTTP status code (Chrome 102+)
+                # Read after the sleep so the page is fully settled
+                try:
+                    nav_status = driver.execute_script(
+                        "return window.performance.getEntriesByType('navigation')[0]?.responseStatus"
+                    )
+                    # Guard against 0 (file://, blocked requests) which should not raise Non200
+                    self.status_code = int(nav_status) if nav_status and int(nav_status) > 0 else 200
+                except Exception:
+                    self.status_code = 200
                 self.headers = {}
 
                 # Selenium always captures as PNG, convert to JPEG if needed
@@ -177,6 +178,10 @@ class fetcher(Fetcher):
                     img.close()
                 else:
                     self.screenshot = screenshot_png
+
+                if self.status_code != 200 and not ignore_status_codes:
+                    raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=self.screenshot, page_html=self.content)
+
             except Exception as e:
                 driver.quit()
                 raise e
@@ -192,9 +197,10 @@ class fetcher(Fetcher):
 class WebDriverSeleniumFetcherPlugin:
     """Plugin class that registers the WebDriver Selenium fetcher as a built-in plugin."""
 
+    @hookimpl
     def register_content_fetcher(self):
         """Register the WebDriver Selenium fetcher"""
-        return ('html_webdriver', fetcher)
+        return ('selenium', fetcher)
 
 
 # Create module-level instance for plugin registration

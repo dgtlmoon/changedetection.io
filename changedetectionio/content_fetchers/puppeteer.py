@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 
 from loguru import logger
 
+from changedetectionio.pluggy_interface import hookimpl
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, visualselector_xpath_selectors, \
     SCREENSHOT_SIZE_STITCH_THRESHOLD, SCREENSHOT_DEFAULT_QUALITY, XPATH_ELEMENT_JS, INSTOCK_DATA_JS, \
     SCREENSHOT_MAX_TOTAL_HEIGHT, FAVICON_FETCHER_JS
@@ -169,11 +170,8 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
 
 
 class fetcher(Fetcher):
-    fetcher_description = "Puppeteer/direct {}/Javascript".format(
-        os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').capitalize()
-    )
-    if os.getenv("PLAYWRIGHT_DRIVER_URL"):
-        fetcher_description += " via '{}'".format(os.getenv("PLAYWRIGHT_DRIVER_URL"))
+    fetcher_description = "Puppeteer Chromium"
+    requires_connection_url = True
 
     browser = None
     browser_type = ''
@@ -185,14 +183,10 @@ class fetcher(Fetcher):
     supports_screenshots = True
     supports_xpath_element_data = True
 
-    @classmethod
-    def get_status_icon_data(cls):
-        """Return Chrome browser icon data for Puppeteer fetcher."""
-        return {
-            'filename': 'google-chrome-icon.png',
-            'alt': 'Using a Chrome browser',
-            'title': 'Using a Chrome browser'
-        }
+    status_icon = {'filename': 'google-chrome-icon.png', 'alt': 'Using a Chrome browser', 'title': 'Using a Chrome browser'}
+
+    def disk_cleanup_after_fetch(self):
+        self.delete_browser_steps_screenshots()
 
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
         super().__init__(**kwargs)
@@ -201,9 +195,10 @@ class fetcher(Fetcher):
             self.browser_connection_is_custom = True
             self.browser_connection_url = custom_browser_connection_url
         else:
-            # Fallback to fetching from system
-            # .strip('"') is going to save someone a lot of time when they accidently wrap the env value
-            self.browser_connection_url = os.getenv("PLAYWRIGHT_DRIVER_URL", 'ws://playwright-chrome:3000').strip('"')
+            from loguru import logger
+            logger.critical("Puppeteer fetcher has no browser_connection_url — browser profile was not configured. "
+                            "Set PLAYWRIGHT_DRIVER_URL or configure a browser profile in Settings.")
+            self.browser_connection_url = None
 
         # allow per-watch proxy selection override
         # @todo check global too?
@@ -273,7 +268,7 @@ class fetcher(Fetcher):
         import re
         self.delete_browser_steps_screenshots()
 
-        n = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 12)) + self.render_extract_delay
+        n = self.extra_delay + self.render_extract_delay
         extra_wait = min(n, 15)
 
         logger.debug(f"Extra wait set to {extra_wait}s, requested was {n}s.")
@@ -450,8 +445,12 @@ class fetcher(Fetcher):
 
         if self.status_code != 200 and not ignore_status_codes:
             screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format, watch_uuid=watch_uuid, lock_viewport_elements=self.lock_viewport_elements)
-
-            raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=screenshot)
+            try:
+                page_html = await self.page.content
+            except Exception as e:
+                logger.warning(f"Got non-200 status {self.status_code} but failed to fetch page content: {e}")
+                page_html = None
+            raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=screenshot, page_html=page_html)
 
         content = await self.page.content
 
@@ -551,9 +550,10 @@ class fetcher(Fetcher):
 class PuppeteerFetcherPlugin:
     """Plugin class that registers the Puppeteer fetcher as a built-in plugin."""
 
+    @hookimpl
     def register_content_fetcher(self):
         """Register the Puppeteer fetcher"""
-        return ('html_webdriver', fetcher)
+        return ('puppeteer', fetcher)
 
 
 # Create module-level instance for plugin registration
