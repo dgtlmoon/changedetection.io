@@ -367,8 +367,10 @@ def test_extract_lines_containing_with_ignore_text(client, live_server, measure_
     """
     extract_lines_containing narrows to matching lines; ignore_text then suppresses specific
     lines from triggering change detection (they remain visible but don't affect the checksum).
+
+    Filters are set BEFORE the first check so the filtered+ignored checksum is the baseline
+    from the very start — no race between a forced-recheck and the next content write.
     """
-    # Initial page: two celsius lines
     initial_data = """<html><body>
       <p>Temperature: 21 celsius</p>
       <p>Feels like: 19 celsius</p>
@@ -380,14 +382,15 @@ def test_extract_lines_containing_with_ignore_text(client, live_server, measure_
 
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
-    wait_for_all_checks(client)
 
+    # Set filters BEFORE the first check so the baseline is always filtered+ignored.
+    # (Setting them after an initial unfiltered check creates a race: the forced recheck
+    #  that updates previous_md5 must complete before the next content write, which is
+    #  timing-sensitive and fails intermittently on slower systems / Python 3.14.)
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
             'extract_lines_containing': 'celsius',
-            # Ignore the "feels like" line — changes to it should not trigger alerts
             'ignore_text': 'Feels like',
             "url": test_url,
             "tags": "",
@@ -399,21 +402,18 @@ def test_extract_lines_containing_with_ignore_text(client, live_server, measure_
     )
     assert b"Updated watch." in res.data
 
-    # Re-check now so previous_md5 is established with the filters active.
-    # Without this the baseline is the old unfiltered checksum, and any subsequent
-    # check would differ from it regardless of ignore_text.
+    # First check — establishes filtered+ignored baseline. previous_md5 was False so
+    # a change is always detected here; mark_all_viewed clears it before we assert.
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
+    client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
 
-    # Preview should show only celsius lines (humidity excluded by extract_lines_containing)
+    # Sanity: preview should only show celsius lines
     res = client.get(url_for("ui.ui_preview.preview_page", uuid=uuid), follow_redirects=True)
     assert b'celsius' in res.data
     assert b'Humidity' not in res.data
 
-    # The re-check above may have flagged a change (filtered != unfiltered baseline) — clear it.
-    client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
-
-    # Now change ONLY the ignored "Feels like" line — should NOT trigger a change
+    # Change ONLY the ignored "Feels like" line — should NOT trigger a change
     changed_data = """<html><body>
       <p>Temperature: 21 celsius</p>
       <p>Feels like: 17 celsius</p>
@@ -427,13 +427,12 @@ def test_extract_lines_containing_with_ignore_text(client, live_server, measure_
     wait_for_all_checks(client)
 
     res = client.get(url_for("watchlist.index"))
-    # The "Feels like" line changed but is in ignore_text, so no unread-changes badge
-    assert b'has-unread-changes' not in res.data
+    assert b'has-unread-changes' not in res.data, \
+        "Changing an ignored line should not trigger a change notification"
 
-    # Mark all viewed so we start clean for the next assertion
     client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
 
-    # Now change the non-ignored celsius line — should trigger
+    # Change the non-ignored celsius line — SHOULD trigger
     triggered_data = """<html><body>
       <p>Temperature: 30 celsius</p>
       <p>Feels like: 17 celsius</p>
@@ -447,7 +446,8 @@ def test_extract_lines_containing_with_ignore_text(client, live_server, measure_
     wait_for_all_checks(client)
 
     res = client.get(url_for("watchlist.index"))
-    assert b'has-unread-changes' in res.data
+    assert b'has-unread-changes' in res.data, \
+        "Changing a non-ignored line should trigger a change notification"
 
     delete_all_watches(client)
 
