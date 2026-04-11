@@ -151,3 +151,10 @@ blinker
 pytest-xdist
 
 
+litellm
+# pydantic-core >=2.41 imports typing_extensions.Sentinel, which is absent in the
+# system-installed typing_extensions on many Linux distros (e.g. Ubuntu 22/24).
+# When the system path leaks into sys.path before the venv, the system copy is
+# cached first and the import fails at runtime inside the LLM worker thread.
+pydantic-core<2.41
+pydantic<2.12
