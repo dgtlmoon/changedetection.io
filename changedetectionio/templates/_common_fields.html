@@ -99,6 +99,14 @@
                 <td>{{ _('The diff output - patch in unified format') }}</td>
             </tr>
             <tr>
+                <td><code>{{ '{{diff_changed_from}}' }}</code></td>
+                <td>{{ _('Only the changed words/values from the previous version — e.g. the old price. Best when a single value changes per line; multiple changed fragments are joined by newline.') }}</td>
+            </tr>
+            <tr>
+                <td><code>{{ '{{diff_changed_to}}' }}</code></td>
+                <td>{{ _('Only the changed words/values from the new version — e.g. the new price. Best when a single value changes per line; multiple changed fragments are joined by newline.') }}</td>
+            </tr>
+            <tr>
                 <td><code>{{ '{{current_snapshot}}' }}</code></td>
                 <td>{{ _('The current snapshot text contents value, useful when combined with JSON or CSS filters') }}
                 </td>

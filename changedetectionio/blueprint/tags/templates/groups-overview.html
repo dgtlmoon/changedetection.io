@@ -3,6 +3,26 @@
 {% from '_helpers.html' import render_simple_field, render_field %}
 <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='modal.js')}}"></script>
+<style>
+{%- for uuid, tag in available_tags -%}
+{%- if tag and tag.title -%}
+{%- set class_name = tag.title|sanitize_tag_class -%}
+{%- if tag.get('tag_colour') -%}
+.watch-tag-list.tag-{{ class_name }} { background-color: {{ tag.tag_colour }}; color: {{ wcag_text_color(tag.tag_colour) }}; }
+{%- else -%}
+{%- set colors = generate_tag_colors(tag.title) -%}
+.watch-tag-list.tag-{{ class_name }} {
+  background-color: {{ colors['light']['bg'] }};
+  color: {{ colors['light']['color'] }};
+}
+html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
+  background-color: {{ colors['dark']['bg'] }};
+  color: {{ colors['dark']['color'] }};
+}
+{%- endif -%}
+{%- endif -%}
+{%- endfor -%}
+</style>
 
 <div class="box">
     <form class="pure-form" action="{{ url_for('tags.form_tag_add') }}" method="POST" id="new-watch-form">
@@ -48,7 +68,7 @@
                     <a class="link-mute state-{{'on' if tag.notification_muted else 'off'}}" href="{{url_for('tags.mute', uuid=tag.uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="Mute notifications" title="Mute notifications" class="icon icon-mute" ></a>
                 </td>
                 <td>{{ "{:,}".format(tag_count[uuid]) if uuid in tag_count else 0 }}</td>
-                <td class="title-col inline"> <a href="{{url_for('watchlist.index', tag=uuid) }}">{{ tag.title }}</a></td>
+                <td class="title-col inline"> <a href="{{url_for('watchlist.index', tag=uuid) }}" class="watch-tag-list tag-{{ tag.title|sanitize_tag_class }}">{{ tag.title }}</a></td>
                 <td>
                     <a class="pure-button pure-button-primary" href="{{ url_for('tags.form_tag_edit', uuid=uuid) }}">{{ _('Edit') }}</a>
                     <a href="{{ url_for('ui.form_watch_checknow', tag=uuid) }}" class="pure-button pure-button-primary" >{{ _('Recheck') }}</a>

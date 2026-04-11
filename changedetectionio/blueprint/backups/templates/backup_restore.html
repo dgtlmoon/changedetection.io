@@ -20,8 +20,7 @@
                 <p>{{ _('Restore a backup. Must be a .zip backup file created on/after v0.53.1 (new database layout).') }}</p>
                 <p>{{ _('Note: This does not override the main application settings, only watches and groups.') }}</p>
                 <p class="pure-form-message">
-                    {{ _('Max upload size: %(upload)s MB &nbsp;·&nbsp; Max decompressed size: %(decomp)s MB',
-                         upload=max_upload_mb, decomp=max_decompressed_mb) }}
+                    {{ _('Max upload size: %(upload)s MB, Max decompressed size: %(decomp)s MB', upload=max_upload_mb, decomp=max_decompressed_mb) }}
                 </p>
 
                 <form class="pure-form pure-form-stacked settings"

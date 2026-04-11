@@ -725,7 +725,7 @@ class ValidateStartsWithRegex(object):
                 raise ValidationError(self.message or _l("Invalid value."))
 
 class quickWatchForm(Form):
-    url = fields.URLField(_l('URL'), validators=[validateURL()])
+    url = StringField(_l('URL'), validators=[validateURL()])
     tags = StringTagUUID(_l('Group tag'), validators=[validators.Optional()])
     watch_submit_button = SubmitField(_l('Watch'), render_kw={"class": "pure-button pure-button-primary"})
     processor = RadioField(_l('Processor'), choices=lambda: processors.available_processors(), default=processors.get_default_processor)
@@ -779,7 +779,7 @@ class SingleBrowserStep(Form):
 class processor_text_json_diff_form(commonSettingsForm):
 
     browser_profile = RadioField(_l('Browser / Fetch method'), choices=[])  # populated at runtime in edit.py
-    url = fields.URLField('Web Page URL', validators=[validateURL()])
+    url = StringField('Web Page URL', validators=[validateURL()])
     tags = StringTagUUID('Group Tag', [validators.Optional()], default='')
 
     time_between_check = EnhancedFormField(

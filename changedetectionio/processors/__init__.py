@@ -341,6 +341,18 @@ def get_processor_descriptions():
     return descriptions
 
 
+def wcag_text_color(hex_bg: str) -> str:
+    """Return #000000 or #ffffff for maximum WCAG contrast against hex_bg."""
+    hex_bg = hex_bg.lstrip('#')
+    if len(hex_bg) != 6:
+        return '#000000'
+    r, g, b = (int(hex_bg[i:i+2], 16) / 255 for i in (0, 2, 4))
+    def lin(c):
+        return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+    L = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+    return '#000000' if L > 0.179 else '#ffffff'
+
+
 def generate_processor_badge_colors(processor_name):
     """
     Generate consistent colors for a processor badge based on its name.

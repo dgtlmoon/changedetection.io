@@ -56,6 +56,10 @@ def stitch_images_worker_raw_bytes(pipe_conn, original_page_height, capture_heig
             im.close()
         del images
 
+        # Clip stitched image to capture_height (chunks may overshoot by up to step_size-1 px)
+        if total_height > capture_height:
+            stitched = stitched.crop((0, 0, max_width, capture_height))
+
         # Draw caption only if page was trimmed
         if original_page_height > capture_height:
             draw = ImageDraw.Draw(stitched)

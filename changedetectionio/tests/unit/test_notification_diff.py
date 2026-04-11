@@ -15,7 +15,9 @@ from changedetectionio.diff import (
     CHANGED_PLACEMARKER_OPEN,
     CHANGED_PLACEMARKER_CLOSED,
     CHANGED_INTO_PLACEMARKER_OPEN,
-    CHANGED_INTO_PLACEMARKER_CLOSED
+    CHANGED_INTO_PLACEMARKER_CLOSED,
+    extract_changed_from,
+    extract_changed_to,
 )
 
 
@@ -380,6 +382,141 @@ Line 3 with tabs and spaces"""
         # Verify Line 2 is not shown as changed
         self.assertNotIn('[-Line 2-]', output)
         self.assertNotIn('[+Line 2+]', output)
+
+    def test_diff_changed_from_to_word_level(self):
+        """Primary use case: extract just the old/new value from a changed line (e.g. price monitoring)"""
+        before = "Widget costs $99.99 per month"
+        after  = "Widget costs $109.99 per month"
+
+        raw = diff.render_diff(before, after, word_diff=True)
+
+        self.assertEqual(extract_changed_from(raw), "$99.99")
+        self.assertEqual(extract_changed_to(raw),   "$109.99")
+
+    def test_diff_changed_from_to_multiple_changes(self):
+        """Multiple changed fragments on different lines are joined with newline.
+        An unchanged line between the two changes ensures each is a 1-to-1 replace,
+        so word_diff fires per line rather than falling back to multi-line block mode."""
+        before = "Price $99\nunchanged\nTax $5"
+        after  = "Price $149\nunchanged\nTax $12"
+
+        raw = diff.render_diff(before, after, word_diff=True)
+
+        self.assertEqual(extract_changed_from(raw), "$99\n$5")
+        self.assertEqual(extract_changed_to(raw),   "$149\n$12")
+
+    def test_diff_changed_from_to_pure_insert_delete(self):
+        """Pure line additions/deletions (no inline word diff) are also captured"""
+        before = "old line"
+        after  = "new line"
+
+        # word_diff=False forces line-level CHANGED markers
+        raw = diff.render_diff(before, after, word_diff=False)
+
+        self.assertEqual(extract_changed_from(raw), "old line")
+        self.assertEqual(extract_changed_to(raw),   "new line")
+
+    def test_diff_changed_from_to_similar_numbers(self):
+        """$90.00 → $9.00 must not produce a partial match like '0.00'.
+        The tokenizer splits on whitespace only, so '$90.00' and '$9.00' are
+        each a single atomic token — diff never sees their internal characters."""
+        before = "for sale $90.00"
+        after  = "for sale $9.00"
+
+        raw = diff.render_diff(before, after, word_diff=True)
+
+        self.assertEqual(extract_changed_from(raw), "$90.00")
+        self.assertEqual(extract_changed_to(raw),   "$9.00")
+
+    def test_diff_changed_from_to_whole_line_replaced(self):
+        """When every token on the line changed (no common tokens), render_inline_word_diff
+        takes the whole_line_replaced path using CHANGED/CHANGED_INTO markers instead of
+        REMOVED/ADDED. Extraction must still work via the alternation in the regex."""
+        before = "$99"
+        after  = "$109"
+
+        raw = diff.render_diff(before, after, word_diff=True)
+
+        self.assertEqual(extract_changed_from(raw), "$99")
+        self.assertEqual(extract_changed_to(raw),   "$109")
+
+    def test_diff_changed_from_to_multiple_words_same_line(self):
+        """When multiple words change on the same line all fragments are joined with newline.
+        'quick brown fox jumps' -> 'slow brown fox hops' gives 'quick\njumps' / 'slow\nhops'.
+        These tokens work best when a single value changes per line."""
+        before = "quick brown fox jumps"
+        after  = "slow brown fox hops"
+
+        raw = diff.render_diff(before, after, word_diff=True)
+
+        self.assertEqual(extract_changed_from(raw), "quick\njumps")
+        self.assertEqual(extract_changed_to(raw),   "slow\nhops")
+
+    def test_diff_changed_from_to_no_change(self):
+        """No changes → empty string"""
+        content = "nothing changed here"
+
+        raw = diff.render_diff(content, content, word_diff=True)
+
+        self.assertEqual(extract_changed_from(raw), "")
+        self.assertEqual(extract_changed_to(raw),   "")
+
+
+    def test_word_diff_no_prefix_whole_line_replaced(self):
+        """When include_change_type_prefix=False, word-level diffs for whole-line
+        replacements must not include placemarkers (issue #3816)."""
+        before = "73"
+        after = "100"
+
+        raw = diff.render_diff(before, after, word_diff=True, include_change_type_prefix=False)
+
+        self.assertNotIn('PLACEMARKER', raw)
+        # Should contain just the raw values separated by newline
+        self.assertIn('73', raw)
+        self.assertIn('100', raw)
+
+    def test_word_diff_no_prefix_inline_changes(self):
+        """When include_change_type_prefix=False, inline word-level diffs
+        must not include placemarkers (issue #3816)."""
+        before = "the price is 50 dollars"
+        after = "the price is 75 dollars"
+
+        raw = diff.render_diff(before, after, word_diff=True, include_change_type_prefix=False)
+
+        self.assertNotIn('PLACEMARKER', raw)
+        self.assertIn('50', raw)
+        self.assertIn('75', raw)
+
+    def test_word_diff_with_prefix_still_wraps(self):
+        """Default include_change_type_prefix=True must still wrap tokens."""
+        before = "73"
+        after = "100"
+
+        raw = diff.render_diff(before, after, word_diff=True, include_change_type_prefix=True)
+
+        self.assertIn('PLACEMARKER', raw)
+
+    def test_word_diff_no_prefix_exact_output(self):
+        """Pin exact output for include_change_type_prefix=False to catch regressions.
+
+        Whole-line replacement: old and new values separated by newline, no markers.
+        Inline partial replacement: equal tokens kept, changed tokens (both old and new)
+        appended without markers — this means old+new are concatenated in place.
+        """
+        # Whole-line replaced: both values on separate lines, clean
+        raw = diff.render_diff('73', '100', word_diff=True, include_change_type_prefix=False)
+        self.assertEqual(raw, '73\n100')
+
+        # Inline word replacement: equal context preserved, old+new token concatenated in-place
+        raw = diff.render_diff('the price is 50 dollars', 'the price is 75 dollars',
+                               word_diff=True, include_change_type_prefix=False)
+        self.assertEqual(raw, 'the price is 5075 dollars')
+
+        # Sanity: with prefix the whole-line case is fully wrapped
+        raw = diff.render_diff('73', '100', word_diff=True, include_change_type_prefix=True)
+        self.assertEqual(raw, '@changed_PLACEMARKER_OPEN73@changed_PLACEMARKER_CLOSED\n'
+                               '@changed_into_PLACEMARKER_OPEN100@changed_into_PLACEMARKER_CLOSED')
+
 
 if __name__ == '__main__':
     unittest.main()

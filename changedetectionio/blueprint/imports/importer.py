@@ -160,8 +160,7 @@ class import_xlsx_wachete(Importer):
             flash(gettext("Unable to read export XLSX file, something wrong with the file?"), 'error')
             return
 
-        row_id = 2
-        for row in wb.active.iter_rows(min_row=row_id):
+        for row_id, row in enumerate(wb.active.iter_rows(min_row=2), start=2):
             try:
                 extras = {}
                 data = {}
@@ -212,8 +211,6 @@ class import_xlsx_wachete(Importer):
             except Exception as e:
                 logger.error(e)
                 flash(gettext("Error processing row number {}, check all cell data types are correct, row was skipped.").format(row_id), 'error')
-            else:
-                row_id += 1
 
         flash(gettext("{} imported from Wachete .xlsx in {:.2f}s").format(len(self.new_uuids), time.time() - now))
 
@@ -241,10 +238,10 @@ class import_xlsx_custom(Importer):
 
         # @todo cehck atleast 2 rows, same in other method
         from changedetectionio.forms import validate_url
-        row_i = 1
+        row_i = 0
 
         try:
-            for row in wb.active.iter_rows():
+            for row_i, row in enumerate(wb.active.iter_rows(), start=1):
                 url = None
                 tags = None
                 extras = {}
@@ -295,7 +292,5 @@ class import_xlsx_custom(Importer):
         except Exception as e:
             logger.error(e)
             flash(gettext("Error processing row number {}, check all cell data types are correct, row was skipped.").format(row_i), 'error')
-        else:
-            row_i += 1
 
         flash(gettext("{} imported from custom .xlsx in {:.2f}s").format(len(self.new_uuids), time.time() - now))

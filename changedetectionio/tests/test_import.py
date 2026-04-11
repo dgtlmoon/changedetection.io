@@ -209,3 +209,85 @@ def test_import_watchete_xlsx(client, live_server, measure_memory_usage, datasto
 
 
     delete_all_watches(client)
+
+
+def test_import_wachete_xlsx_row_counter(client, live_server, measure_memory_usage, datastore_path):
+    """Row counter in Wachete XLSX import must advance even after a failed row.
+
+    Regression: row_id was only incremented in the try/else (on success), so
+    after any failure the counter froze and all subsequent errors cited the
+    stale number.  With the enumerate() fix, row 5 must say "row 5", not "row 3".
+    """
+    import openpyxl
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    # Header row (row 1)
+    ws.append(['Name', 'Id', 'Url', 'Interval (min)', 'XPath', 'Dynamic Wachet', 'Portal Wachet', 'Folder'])
+    # Row 2: valid
+    ws.append(['Site A', '001', 'https://example.com/a', 60, None, None, None, None])
+    # Row 3: bad URL — must report row 3
+    ws.append(['Site B', '002', 'not-a-valid-url', 60, None, None, None, None])
+    # Row 4: valid
+    ws.append(['Site C', '003', 'https://example.com/c', 60, None, None, None, None])
+    # Row 5: bad URL — must report row 5, not "row 3" (the pre-fix stale value)
+    ws.append(['Site D', '004', 'also-not-valid', 60, None, None, None, None])
+
+    xlsx_bytes = io.BytesIO()
+    wb.save(xlsx_bytes)
+    xlsx_bytes.seek(0)
+
+    res = client.post(
+        url_for("imports.import_page"),
+        data={'file_mapping': 'wachete', 'xlsx_file': (xlsx_bytes, 'test.xlsx')},
+        follow_redirects=True,
+    )
+
+    assert b'2 imported from Wachete .xlsx' in res.data
+    assert b'Error processing row number 3' in res.data
+    assert b'Error processing row number 5' in res.data
+
+    delete_all_watches(client)
+
+
+def test_import_custom_xlsx_row_counter(client, live_server, measure_memory_usage, datastore_path):
+    """Row counter in custom XLSX import must reflect the actual row, not always row 1.
+
+    Regression: row_i was incremented in the else clause of the *outer* try/except
+    (which only fired once, after the whole loop), so every URL-validation error
+    inside the loop reported "row 1".  With enumerate() the third row must say
+    "row 3", not "row 1".
+    """
+    import openpyxl
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    # Row 1: bad URL — must report row 1
+    ws.append(['not-valid-url-row1'])
+    # Row 2: valid
+    ws.append(['https://example.com/b'])
+    # Row 3: bad URL — must report row 3, not "row 1" (the pre-fix value)
+    ws.append(['not-valid-url-row3'])
+    # Row 4: valid
+    ws.append(['https://example.com/d'])
+
+    xlsx_bytes = io.BytesIO()
+    wb.save(xlsx_bytes)
+    xlsx_bytes.seek(0)
+
+    res = client.post(
+        url_for("imports.import_page"),
+        data={
+            'file_mapping': 'custom',
+            'custom_xlsx[col_0]': '1',
+            'custom_xlsx[col_type_0]': 'url',
+            'xlsx_file': (xlsx_bytes, 'test.xlsx'),
+        },
+        follow_redirects=True,
+    )
+
+    assert b'2 imported from custom .xlsx' in res.data
+    assert b'Error processing row number 1' in res.data
+    assert b'Error processing row number 3' in res.data
+
+    delete_all_watches(client)
