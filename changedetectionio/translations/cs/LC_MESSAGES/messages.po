@@ -20,85 +20,85 @@ msgstr ""
 
 #: changedetectionio/blueprint/backups/__init__.py
 msgid "A backup is already running, check back in a few minutes"
-msgstr ""
+msgstr "Tvorba souboru zálohy běží, vraťte se za pár minut"
 
 #: changedetectionio/blueprint/backups/__init__.py
 msgid "Maximum number of backups reached, please remove some"
-msgstr ""
+msgstr "Maximální počet souborů záloh dosažen, některé prosím smažte"
 
 #: changedetectionio/blueprint/backups/__init__.py
 msgid "Backup building in background, check back in a few minutes."
-msgstr ""
+msgstr "Tvorba souboru zálohy běží na pozadí, vraťte se za pár minut."
 
 #: changedetectionio/blueprint/backups/__init__.py
 msgid "Backups were deleted."
-msgstr ""
+msgstr "Zálohy byly smazány"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "Backup zip file"
-msgstr ""
+msgstr "Záložní zip soubor"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "Must be a .zip backup file!"
-msgstr ""
+msgstr "Musí být .zip soubor zálohy!"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "Include groups"
-msgstr ""
+msgstr "Zahrnout skupiny"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "Replace existing groups of the same UUID"
-msgstr ""
+msgstr "Nahradit existující skupiny obsahující stejné UUID"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "Include watches"
-msgstr ""
+msgstr "Zahrnout sledování"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "Replace existing watches of the same UUID"
-msgstr ""
+msgstr "Nahradit existující sledování obsahující stejne UUID"
 
 #: changedetectionio/blueprint/backups/restore.py changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Restore backup"
-msgstr ""
+msgstr "Obnovit zálohu"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "A restore is already running, check back in a few minutes"
-msgstr ""
+msgstr "Obnova již probíhá, vraťte se za pár minut"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "No file uploaded"
-msgstr ""
+msgstr "Nebyl nahrán žádný soubor"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "File must be a .zip backup file"
-msgstr ""
+msgstr "Soubor musí být .zip soubor zálohy!"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "Invalid or corrupted zip file"
-msgstr ""
+msgstr "Neplatný nebo poškozený zip soubor"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "Restore started in background, check back in a few minutes."
-msgstr ""
+msgstr "Obnova běží na pozadí, vraťte se za pár minut."
 
 #: changedetectionio/blueprint/backups/templates/backup_create.html
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Create"
-msgstr ""
+msgstr "Vytvořit"
 
 #: changedetectionio/blueprint/backups/templates/backup_create.html
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Restore"
-msgstr ""
+msgstr "Obnovit"
 
 #: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "A backup is running!"
-msgstr "A backup is running!"
+msgstr "Probíhá zálohování!"
 
 #: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "Here you can download and request a new backup, when a backup is completed you will see it listed below."
-msgstr ""
+msgstr "Zde můžete stáhnout a vyžádat vytvoření zálohy, dostupné vytvořené zálohy jsou vypsané níže."
 
 #: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "Mb"
@@ -106,7 +106,7 @@ msgstr "Mb"
 
 #: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "No backups found."
-msgstr "No backups found."
+msgstr "Nenalezeny žádné zálohy."
 
 #: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "Create backup"
@@ -118,77 +118,77 @@ msgstr "Odstranit zálohy"
 
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "A restore is running!"
-msgstr ""
+msgstr "Probíhá obnova!"
 
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Restore a backup. Must be a .zip backup file created on/after v0.53.1 (new database layout)."
-msgstr ""
+msgstr "Obnovit ze zálohy. Musí být .zip soubor zálohy vytvořený nejméně v0.53.1 (nové rozvržení databáze)"
 
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Note: This does not override the main application settings, only watches and groups."
-msgstr ""
+msgstr "Pozn.: Nepřepíše hlavní nastavení aplikaci, pouze sledování a skupiny."
 
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Include all groups found in backup?"
-msgstr ""
+msgstr "Zahrnout všechny skupiny nalezené v záloze?"
 
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Replace any existing groups of the same UUID?"
-msgstr ""
+msgstr "Nahradit všechny existující skupiny se stejným UUID?"
 
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Include all watches found in backup?"
-msgstr ""
+msgstr "Zahrnout všechna sledování nalezená v záloze?"
 
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Replace any existing watches of the same UUID?"
-msgstr ""
+msgstr "Nahradit všechna existující sledování se stejným UUID?"
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Importing 5,000 of the first URLs from your list, the rest can be imported again."
-msgstr ""
+msgstr "Importuje se prvních 5000 URL adres, další lze načíst opakovaným importem."
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
 msgid "{} Imported from list in {:.2f}s, {} Skipped."
-msgstr ""
+msgstr "{} importováno ze seznamu za {:.2f}s, {} přeskočeno."
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read JSON file, was it broken?"
-msgstr ""
+msgstr "Nelze načíst JSON soubor, byl poškozen?"
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "JSON structure looks invalid, was it broken?"
-msgstr ""
+msgstr "Strukturovaný JSON text je neplatný, byl poškozen?"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
 msgid "{} Imported from Distill.io in {:.2f}s, {} Skipped."
-msgstr ""
+msgstr "{} importováno z Distill.io za {:.2f}s, {} přeskočeno."
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read export XLSX file, something wrong with the file?"
-msgstr ""
+msgstr "Nelze přečíst vyexportovaný XLSX soubor, je s ním něco v nepořádku?"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
 msgid "Error processing row number {}, URL value was incorrect, row was skipped."
-msgstr ""
+msgstr "Chyba při zpracování řádku {}, hodnota URL neplatná, řádek přeskočen."
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
 msgid "Error processing row number {}, check all cell data types are correct, row was skipped."
-msgstr ""
+msgstr "Chyba při zpracování řádku {}, zkontrolujte že všechny typy dat v buňkách jsou správné, řádka přeskočena."
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
 msgid "{} imported from Wachete .xlsx in {:.2f}s"
-msgstr ""
+msgstr "{} importováno z Wachete .xlsx za {:.2f}s"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
 msgid "{} imported from custom .xlsx in {:.2f}s"
-msgstr ""
+msgstr "{} importováno z vlastního .xlsx za {:.2f}s"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "URL List"
@@ -204,15 +204,15 @@ msgstr ".XLSX a Wachete"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Restoring changedetection.io backups is in the"
-msgstr ""
+msgstr "Možnost obnovení changedetection.io zálohy je v"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "backups section"
-msgstr ""
+msgstr "sekci záloh"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Enter one URL per line, and optionally add tags for each URL after a space, delineated by comma (,):"
-msgstr ""
+msgstr "Vložte jednu URL na řádek a případně přidejte tagy pro každou URL odsazené mezerníkem, oddělené čárkou (,):"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Example:"
@@ -224,7 +224,7 @@ msgstr "URL, které neprojdou validací, zůstanou v textové oblasti."
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Copy and Paste your Distill.io watch 'export' file, this should be a JSON file."
-msgstr ""
+msgstr "Nakopírujte a vložte exportovaný Distill.io soubor, měl by být ve formátu JSON."
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "This is"
@@ -252,9 +252,7 @@ msgstr "Jak exportovat?"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Be sure to set your default fetcher to Chrome if required."
-msgstr ""
-"V případě potřeby nezapomeňte nastavit výchozí nástroj pro načítání na Chrome.V případě potřeby nezapomeňte nastavit "
-"výchozí načítání na Chrome.V případě potřeby nezapomeňte nastavit výchozí nástroj pro načítání na Chrome."
+msgstr "V případě potřeby nastavte výchozí nástroj pro načítání na Chrome."
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Table of custom column and data types mapping for the"
@@ -286,73 +284,73 @@ msgstr "CSS/xPath filtr"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Group / Tag name(s)"
-msgstr "Sledovat skupinu / tag"
+msgstr "Skupina / tag"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Recheck time (minutes)"
-msgstr "Znovu zkontrolovat čas (minuty)"
+msgstr "Znovu zkontrolovat po (minuty)"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Import"
-msgstr "IMPORTOVAT"
+msgstr "Importovat"
 
 #: changedetectionio/blueprint/rss/single_watch.py
 #, python-format
 msgid "Watch with UUID %(uuid)s not found"
-msgstr ""
+msgstr "Sledování s UUID %(uuid)s nenalezeno"
 
 #: changedetectionio/blueprint/rss/single_watch.py
 #, python-format
 msgid "Watch %(uuid)s does not have enough history snapshots to show changes (need at least 2)"
-msgstr ""
+msgstr "Sledování %(uuid)s nemá dostatečný počet historických záznamů pro zobrazení změn (třeba alespoň 2)"
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Password protection removed."
-msgstr ""
+msgstr "Ochrana heslem odebrána."
 
 #: changedetectionio/blueprint/settings/__init__.py
 #, python-brace-format
 msgid "Warning: Worker count ({}) is close to or exceeds available CPU cores ({})"
-msgstr "Upozornění: Počet workerů ({}) se blíží nebo překračuje dostupné CPU jádra ({})"
+msgstr "Upozornění: Počet pracovních procesů ({}) se blíží nebo překračuje počet CPU jader ({})"
 
 #: changedetectionio/blueprint/settings/__init__.py
 #, python-brace-format
 msgid "Worker count adjusted: {}"
-msgstr ""
+msgstr "Počet pracovních procesů upraven: {}"
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Dynamic worker adjustment not supported for sync workers"
-msgstr ""
+msgstr "Dynamická úprava počtu pracovních procesů není u synchronizace podporována"
 
 #: changedetectionio/blueprint/settings/__init__.py
 #, python-brace-format
 msgid "Error adjusting workers: {}"
-msgstr ""
+msgstr "Došlo k chybě při úpravě pracovních procesů: {}"
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Password protection enabled."
-msgstr ""
+msgstr "Ochrana heslem povolena."
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Settings updated."
-msgstr "NASTAVENÍ"
+msgstr "Nastavení upraveno."
 
 #: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/ui/edit.py
 #: changedetectionio/processors/extract.py
 msgid "An error occurred, please see below."
-msgstr ""
+msgstr "Došlo k chybě, více informací níže."
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "API Key was regenerated."
-msgstr ""
+msgstr "API klíč byl znovu vygenerován."
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Automatic scheduling paused - checks will not be queued."
-msgstr ""
+msgstr "Automatické plánování pozastaveno - kontroly nejsou řazeny do fronty."
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Automatic scheduling resumed - checks will be queued normally."
-msgstr ""
+msgstr "Automatické plánování spuštěno - kontroly budou opět řazeny do fronty."
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "All notifications muted."
@@ -425,7 +423,7 @@ msgstr "Nastavit na"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "to disable"
-msgstr ""
+msgstr "vypnuto"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Limit collection of history snapshots for each watch to this number of history items."
@@ -1761,7 +1759,7 @@ msgstr "Vymazat historie"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "<p>Are you sure you want to clear history for the selected items?</p><p>This action cannot be undone.</p>"
-msgstr ""
+msgstr "<p>Opravdu chcete vyčistit historii u vybraných položek?</p><p>Tuto akci nelze vzít zpět.</p>"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "OK"
@@ -1777,7 +1775,7 @@ msgstr "Smazat sledování?"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "<p>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>"
-msgstr ""
+msgstr "<p>Opravdu chcete smazat vybraná sledování?</p><p>Tuto akci nelze vzít zpět.</p>"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Queued size"
@@ -1888,59 +1886,59 @@ msgstr "Ještě ne"
 
 #: changedetectionio/flask_app.py
 msgid "0 seconds"
-msgstr ""
+msgstr "0 sekund"
 
 #: changedetectionio/flask_app.py
 msgid "year"
-msgstr ""
+msgstr "rok"
 
 #: changedetectionio/flask_app.py
 msgid "years"
-msgstr ""
+msgstr "roky"
 
 #: changedetectionio/flask_app.py
 msgid "month"
-msgstr ""
+msgstr "měsíc"
 
 #: changedetectionio/flask_app.py
 msgid "months"
-msgstr ""
+msgstr "měsíce"
 
 #: changedetectionio/flask_app.py
 msgid "week"
-msgstr ""
+msgstr "týden"
 
 #: changedetectionio/flask_app.py
 msgid "weeks"
-msgstr ""
+msgstr "týdny"
 
 #: changedetectionio/flask_app.py
 msgid "day"
-msgstr ""
+msgstr "den"
 
 #: changedetectionio/flask_app.py
 msgid "days"
-msgstr ""
+msgstr "dny"
 
 #: changedetectionio/flask_app.py
 msgid "hour"
-msgstr ""
+msgstr "hodina"
 
 #: changedetectionio/flask_app.py
 msgid "hours"
-msgstr ""
+msgstr "hodiny"
 
 #: changedetectionio/flask_app.py
 msgid "minute"
-msgstr ""
+msgstr "minuta"
 
 #: changedetectionio/flask_app.py
 msgid "minutes"
-msgstr ""
+msgstr "minut"
 
 #: changedetectionio/flask_app.py
 msgid "second"
-msgstr ""
+msgstr "sekunda"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/flask_app.py
 msgid "seconds"
@@ -1948,11 +1946,11 @@ msgstr "sekundy"
 
 #: changedetectionio/flask_app.py
 msgid "Already logged in"
-msgstr ""
+msgstr "Již přihlášen(a)"
 
 #: changedetectionio/flask_app.py
 msgid "You must be logged in, please log in."
-msgstr ""
+msgstr "Je třeba být přihlášen(a), přihlas se."
 
 #: changedetectionio/flask_app.py
 msgid "Incorrect password"
@@ -1960,11 +1958,11 @@ msgstr "Nesprávné heslo"
 
 #: changedetectionio/forms.py
 msgid "At least one time interval (weeks, days, hours, minutes, or seconds) must be specified."
-msgstr ""
+msgstr "Je třeba zadat alespoň jeden časový interval (týdny, dny, hodiny, minuty nebo sekundy)."
 
 #: changedetectionio/forms.py
 msgid "At least one time interval (weeks, days, hours, minutes, or seconds) must be specified when not using global settings."
-msgstr ""
+msgstr "Je třeba zadat alespoň jeden časový interval (týdny, dny, hodiny, minuty nebo sekundy) pokud nejsou použita globální nastavení."
 
 #: changedetectionio/forms.py
 msgid "Invalid time format. Use HH:MM."
@@ -1980,7 +1978,7 @@ msgstr "nenastaveno"
 
 #: changedetectionio/forms.py
 msgid "Start At"
-msgstr "Začíná v"
+msgstr "Spustit v"
 
 #: changedetectionio/forms.py
 msgid "Run duration"
@@ -2028,7 +2026,7 @@ msgstr "Týdny"
 
 #: changedetectionio/forms.py
 msgid "Should contain zero or more seconds"
-msgstr "Mělo by obsahovat nula nebo více sekund"
+msgstr "Je třeba zadat nula nebo více sekund"
 
 #: changedetectionio/forms.py
 msgid "Days"
@@ -2177,15 +2175,15 @@ msgstr "Použít globální nastavení pro čas mezi kontrolou a plánovačem."
 
 #: changedetectionio/forms.py
 msgid "CSS/JSONPath/JQ/XPath Filters"
-msgstr "CSS/xPath filtr"
+msgstr "CSS/JSONPath/JQ/xPath filtry"
 
 #: changedetectionio/forms.py
 msgid "Remove elements"
-msgstr "Vyberte podle prvku"
+msgstr "Odstranit prvky"
 
 #: changedetectionio/forms.py
 msgid "Extract text"
-msgstr "Extrahujte data"
+msgstr "Extrahovat text"
 
 #: changedetectionio/blueprint/imports/templates/import.html changedetectionio/forms.py
 msgid "Title"
@@ -2193,15 +2191,15 @@ msgstr "Titul"
 
 #: changedetectionio/forms.py
 msgid "Ignore lines containing"
-msgstr "Ignorujte všechny odpovídající řádky"
+msgstr "Ignorovat řádky obsahující"
 
 #: changedetectionio/forms.py
 msgid "Request body"
-msgstr "Žádost"
+msgstr "Tělo žádosti"
 
 #: changedetectionio/forms.py
 msgid "Request method"
-msgstr "Žádost"
+msgstr "Metoda žádosti"
 
 #: changedetectionio/forms.py
 msgid "Ignore status codes (process non-2xx status codes as normal)"
@@ -2209,11 +2207,11 @@ msgstr "Ignorovat stavové kódy (zpracovat stavové kódy jiné než 2xx jako n
 
 #: changedetectionio/forms.py
 msgid "Only trigger when unique lines appear in all history"
-msgstr "Spustit pouze tehdy, když se objeví jedinečné čáry"
+msgstr "Zpracovat pouze tehdy, když se objeví jedinečné řádky"
 
 #: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/forms.py
 msgid "Remove duplicate lines of text"
-msgstr "Odstraňte duplicitní řádky textu"
+msgstr "Odstranit duplicitní řádky textu"
 
 #: changedetectionio/forms.py
 msgid "Sort text alphabetically"
@@ -2221,11 +2219,11 @@ msgstr "Seřadit text podle abecedy"
 
 #: changedetectionio/forms.py
 msgid "Strip ignored lines"
-msgstr "Odstraňte ignorované řádky"
+msgstr "Odstranit ignorované řádky"
 
 #: changedetectionio/forms.py
 msgid "Trim whitespace before and after text"
-msgstr "Odstraňte všechny mezery před a za každým řádkem textu"
+msgstr "Odstranit všechny mezery před a za každým řádkem textu"
 
 #: changedetectionio/forms.py
 msgid "Added lines"
@@ -2233,11 +2231,11 @@ msgstr "Přidané řádky"
 
 #: changedetectionio/forms.py
 msgid "Replaced/changed lines"
-msgstr "Vyměněny/změněny řádky"
+msgstr "Nahrazené/upravené řádky"
 
 #: changedetectionio/forms.py
 msgid "Removed lines"
-msgstr "Odebráno"
+msgstr "Odstraněné řádky"
 
 #: changedetectionio/forms.py
 msgid "Keyword triggers - Trigger/wait for text"
@@ -2261,7 +2259,7 @@ msgstr "Proxy"
 
 #: changedetectionio/forms.py
 msgid "Send a notification when the filter can no longer be found on the page"
-msgstr "Odeslat upozornění, když filtr již na stránce nelze najít"
+msgstr "Odeslat upozornění pokud filtr již na stránce nelze najít"
 
 #: changedetectionio/forms.py
 msgid "Muted"
@@ -2278,7 +2276,7 @@ msgstr "Oznámení"
 
 #: changedetectionio/forms.py
 msgid "Attach screenshot to notification (where possible)"
-msgstr "Připojte snímek obrazovky k oznámení (pokud je to možné)"
+msgstr "Připojit snímek obrazovky k oznámení (pokud je to možné)"
 
 #: changedetectionio/forms.py
 msgid "Match"
@@ -2286,7 +2284,7 @@ msgstr "Shoda"
 
 #: changedetectionio/forms.py
 msgid "Match all of the following"
-msgstr "Spojte všechny následující položky"
+msgstr "Spojit všechny následující položky"
 
 #: changedetectionio/forms.py
 msgid "Match any of the following"
@@ -2298,7 +2296,7 @@ msgstr "V seznamu použijte stránku <title>"
 
 #: changedetectionio/forms.py
 msgid "Number of history items per watch to keep"
-msgstr ""
+msgstr "Počet historických záznamů pro sledování"
 
 #: changedetectionio/forms.py
 msgid "Body must be empty when Request Method is set to GET"
@@ -2317,7 +2315,7 @@ msgstr "Neplatná syntaxe šablony: %(error)s"
 #: changedetectionio/forms.py
 #, python-format
 msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
-msgstr ""
+msgstr "Neplatná syntax šablony v \"%(header)s\" hlavička: %(error)s"
 
 #: changedetectionio/forms.py
 msgid "Name"
@@ -2441,7 +2439,7 @@ msgstr "RSS <description> tělo sestavené z"
 
 #: changedetectionio/forms.py
 msgid "RSS \"System default\" template override"
-msgstr ""
+msgstr "Úprava \"Systémové výchozí\" RSS šablony"
 
 #: changedetectionio/forms.py
 msgid "Remove password"
