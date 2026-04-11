@@ -381,14 +381,14 @@ def test_extract_lines_containing_with_ignore_text(client, live_server, measure_
         f.write(initial_data)
 
     test_url = url_for('test_endpoint', _external=True)
-    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, extras={'paused': True})
 
     # Set filters BEFORE the first check so the baseline is always filtered+ignored.
     # (Setting them after an initial unfiltered check creates a race: the forced recheck
     #  that updates previous_md5 must complete before the next content write, which is
     #  timing-sensitive and fails intermittently on slower systems / Python 3.14.)
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
         data={
             'extract_lines_containing': 'celsius',
             'ignore_text': 'Feels like',
@@ -400,13 +400,12 @@ def test_extract_lines_containing_with_ignore_text(client, live_server, measure_
         },
         follow_redirects=True
     )
-    assert b"Updated watch." in res.data
+    assert b"unpaused" in res.data
 
     # First check — establishes filtered+ignored baseline. previous_md5 was False so
     # a change is always detected here; mark_all_viewed clears it before we assert.
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-    client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
 
     # Sanity: preview should only show celsius lines
     res = client.get(url_for("ui.ui_preview.preview_page", uuid=uuid), follow_redirects=True)
@@ -427,10 +426,10 @@ def test_extract_lines_containing_with_ignore_text(client, live_server, measure_
     wait_for_all_checks(client)
 
     res = client.get(url_for("watchlist.index"))
-    assert b'has-unread-changes' not in res.data, \
-        "Changing an ignored line should not trigger a change notification"
+    assert b'has-unread-changes' not in res.data, "Changing an ignored line should not trigger a change notification"
 
     client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
+    time.sleep(1)
 
     # Change the non-ignored celsius line — SHOULD trigger
     triggered_data = """<html><body>
@@ -446,8 +445,7 @@ def test_extract_lines_containing_with_ignore_text(client, live_server, measure_
     wait_for_all_checks(client)
 
     res = client.get(url_for("watchlist.index"))
-    assert b'has-unread-changes' in res.data, \
-        "Changing a non-ignored line should trigger a change notification"
+    assert b'has-unread-changes' in res.data,  "Changing a non-ignored line should trigger a change notification"
 
     delete_all_watches(client)
 
