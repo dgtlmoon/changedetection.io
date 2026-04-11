@@ -398,12 +398,20 @@ def test_extract_lines_containing_with_ignore_text(client, live_server, measure_
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
+
+    # Re-check now so previous_md5 is established with the filters active.
+    # Without this the baseline is the old unfiltered checksum, and any subsequent
+    # check would differ from it regardless of ignore_text.
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Preview should show only celsius lines (humidity excluded by extract_lines_containing)
     res = client.get(url_for("ui.ui_preview.preview_page", uuid=uuid), follow_redirects=True)
     assert b'celsius' in res.data
     assert b'Humidity' not in res.data
+
+    # The re-check above may have flagged a change (filtered != unfiltered baseline) — clear it.
+    client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
 
     # Now change ONLY the ignored "Feels like" line — should NOT trigger a change
     changed_data = """<html><body>
