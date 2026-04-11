@@ -186,6 +186,7 @@ class watch_base(dict):
             'consecutive_filter_failures': 0,  # Every time the CSS/xPath filter cannot be located, reset when all is fine.
             'content-type': None,
             'date_created': None,
+            'extract_lines_containing': [],  # Keep only lines containing these substrings (plain text, case-insensitive)
             'extract_text': [],  # Extract text by regex after filters
             'fetch_backend': 'system',  # plaintext, playwright etc
             'fetch_time': 0.0,

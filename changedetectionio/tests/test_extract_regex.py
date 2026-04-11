@@ -220,3 +220,336 @@ def test_regex_error_handling(client, live_server, measure_memory_usage, datasto
     assert b'is not a valid regular expression.' in res.data
 
     delete_all_watches(client)
+
+
+def test_extract_lines_containing(client, live_server, measure_memory_usage, datastore_path):
+    """Test the 'extract_lines_containing' filter keeps only lines with matching substrings."""
+
+    test_return_data = """<html>
+       <body>
+         <p>Current temperature: 21 celsius</p>
+         <p>Humidity: 55%</p>
+         <p>Wind speed: 10 km/h</p>
+         <p>Feels like: 19 celsius</p>
+         <p>UV index: 3</p>
+       </body>
+       </html>
+    """
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
+        f.write(test_return_data)
+
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        data={
+            'extract_lines_containing': 'celsius',
+            "url": test_url,
+            "tags": "",
+            "headers": "",
+            'fetch_backend': "html_requests",
+            "time_between_check_use_default": "y"
+        },
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+    wait_for_all_checks(client)
+
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid=uuid), follow_redirects=True)
+
+    # Lines containing 'celsius' should be present
+    assert b'celsius' in res.data
+    # Lines without 'celsius' should be excluded
+    assert b'Humidity' not in res.data
+    assert b'Wind speed' not in res.data
+    assert b'UV index' not in res.data
+
+    delete_all_watches(client)
+
+
+def test_extract_lines_containing_case_insensitive(client, live_server, measure_memory_usage, datastore_path):
+    """Test that extract_lines_containing is case-insensitive."""
+
+    test_return_data = """<html>
+       <body>
+         <p>PRICE: $99.99</p>
+         <p>Price drops to $79.99</p>
+         <p>Stock: Available</p>
+         <p>price history shows decline</p>
+       </body>
+       </html>
+    """
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
+        f.write(test_return_data)
+
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        data={
+            'extract_lines_containing': 'price',
+            "url": test_url,
+            "tags": "",
+            "headers": "",
+            'fetch_backend': "html_requests",
+            "time_between_check_use_default": "y"
+        },
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+    wait_for_all_checks(client)
+
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid=uuid), follow_redirects=True)
+
+    # All three price lines (different cases) should match
+    assert b'$99.99' in res.data
+    assert b'$79.99' in res.data
+    assert b'price history' in res.data
+    # Non-price line should be excluded
+    assert b'Stock' not in res.data
+
+    delete_all_watches(client)
+
+
+def test_extract_lines_containing_multiple_terms(client, live_server, measure_memory_usage, datastore_path):
+    """Test that multiple extract_lines_containing entries act as OR (keep line if any term matches)."""
+
+    test_return_data = """<html>
+       <body>
+         <p>Temperature: 21 celsius</p>
+         <p>Humidity: 55%</p>
+         <p>Wind speed: 10 km/h</p>
+         <p>Rain chance: 20%</p>
+       </body>
+       </html>
+    """
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
+        f.write(test_return_data)
+
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        data={
+            'extract_lines_containing': 'celsius\r\nhumidity',
+            "url": test_url,
+            "tags": "",
+            "headers": "",
+            'fetch_backend': "html_requests",
+            "time_between_check_use_default": "y"
+        },
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+    wait_for_all_checks(client)
+
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid=uuid), follow_redirects=True)
+
+    assert b'celsius' in res.data
+    assert b'Humidity' in res.data
+    # Wind and Rain lines should be excluded
+    assert b'Wind speed' not in res.data
+    assert b'Rain chance' not in res.data
+
+    delete_all_watches(client)
+
+
+def test_extract_lines_containing_with_ignore_text(client, live_server, measure_memory_usage, datastore_path):
+    """
+    extract_lines_containing narrows to matching lines; ignore_text then suppresses specific
+    lines from triggering change detection (they remain visible but don't affect the checksum).
+    """
+    # Initial page: two celsius lines
+    initial_data = """<html><body>
+      <p>Temperature: 21 celsius</p>
+      <p>Feels like: 19 celsius</p>
+      <p>Humidity: 55%</p>
+    </body></html>"""
+
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
+        f.write(initial_data)
+
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        data={
+            'extract_lines_containing': 'celsius',
+            # Ignore the "feels like" line — changes to it should not trigger alerts
+            'ignore_text': 'Feels like',
+            "url": test_url,
+            "tags": "",
+            "headers": "",
+            'fetch_backend': "html_requests",
+            "time_between_check_use_default": "y"
+        },
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+    wait_for_all_checks(client)
+
+    # Preview should show only celsius lines (humidity excluded by extract_lines_containing)
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid=uuid), follow_redirects=True)
+    assert b'celsius' in res.data
+    assert b'Humidity' not in res.data
+
+    # Now change ONLY the ignored "Feels like" line — should NOT trigger a change
+    changed_data = """<html><body>
+      <p>Temperature: 21 celsius</p>
+      <p>Feels like: 17 celsius</p>
+      <p>Humidity: 55%</p>
+    </body></html>"""
+
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
+        f.write(changed_data)
+
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    res = client.get(url_for("watchlist.index"))
+    # The "Feels like" line changed but is in ignore_text, so no unread-changes badge
+    assert b'has-unread-changes' not in res.data
+
+    # Mark all viewed so we start clean for the next assertion
+    client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
+
+    # Now change the non-ignored celsius line — should trigger
+    triggered_data = """<html><body>
+      <p>Temperature: 30 celsius</p>
+      <p>Feels like: 17 celsius</p>
+      <p>Humidity: 55%</p>
+    </body></html>"""
+
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
+        f.write(triggered_data)
+
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    res = client.get(url_for("watchlist.index"))
+    assert b'has-unread-changes' in res.data
+
+    delete_all_watches(client)
+
+
+def test_extract_lines_containing_with_extract_text_regex(client, live_server, measure_memory_usage, datastore_path):
+    """
+    extract_lines_containing first narrows to relevant lines, then extract_text regex
+    pulls specific tokens from those lines — verifying correct pipeline ordering.
+    """
+    test_return_data = """<html><body>
+      <p>Widget price: $49.99 each</p>
+      <p>Gadget price: $129.00 each</p>
+      <p>Latest news: price index up 2%</p>
+      <p>Stock count: 150 units</p>
+      <p>Shipping cost: $5.99</p>
+    </body></html>"""
+
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
+        f.write(test_return_data)
+
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        data={
+            # Step 1: keep lines containing "price" (excludes Stock count and Shipping cost)
+            'extract_lines_containing': 'price',
+            # Step 2: from those lines extract only dollar amounts
+            'extract_text': r'/\$[\d.]+/',
+            "url": test_url,
+            "tags": "",
+            "headers": "",
+            'fetch_backend': "html_requests",
+            "time_between_check_use_default": "y"
+        },
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+    wait_for_all_checks(client)
+
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid=uuid), follow_redirects=True)
+
+    # Dollar amounts from price lines should be extracted
+    assert b'$49.99' in res.data
+    assert b'$129.00' in res.data
+    # "price index up 2%" has no dollar amount — nothing extracted from that line
+    # "Shipping cost" line was excluded by extract_lines_containing before regex ran
+    assert b'$5.99' not in res.data
+    # Raw line text should not appear — regex replaced it with just the match
+    assert b'Widget' not in res.data
+    assert b'Stock count' not in res.data
+
+    delete_all_watches(client)
+
+
+def test_extract_lines_containing_with_include_filters_css(client, live_server, measure_memory_usage, datastore_path):
+    """
+    CSS include_filters narrows the HTML first; extract_lines_containing then filters
+    within that already-reduced text — verifying correct pipeline ordering.
+    """
+    test_return_data = """<html><body>
+      <div class="weather">
+        <p>Temperature: 21 celsius</p>
+        <p>Humidity: 60%</p>
+        <p>Wind: 15 km/h</p>
+      </div>
+      <div class="news">
+        <p>Local forecast: warm celsius weather ahead</p>
+        <p>Markets closed early</p>
+      </div>
+    </body></html>"""
+
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
+        f.write(test_return_data)
+
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        data={
+            # CSS filter: only look inside the weather div
+            'include_filters': 'div.weather',
+            # Then keep only celsius lines from that section
+            'extract_lines_containing': 'celsius',
+            "url": test_url,
+            "tags": "",
+            "headers": "",
+            'fetch_backend': "html_requests",
+            "time_between_check_use_default": "y"
+        },
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+    wait_for_all_checks(client)
+
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid=uuid), follow_redirects=True)
+
+    # Only the celsius line from the weather div should survive both filters
+    assert b'celsius' in res.data
+    # Other weather lines excluded by extract_lines_containing
+    assert b'Humidity' not in res.data
+    assert b'Wind' not in res.data
+    # News div content excluded entirely by CSS filter (even though it contains "celsius")
+    assert b'Markets' not in res.data
+    assert b'forecast' not in res.data
+
+    delete_all_watches(client)

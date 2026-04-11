@@ -8,17 +8,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-02-23 03:54+0100\n"
+"POT-Creation-Date: 2026-04-11 04:15+0200\n"
 "PO-Revision-Date: 2026-04-10 20:38+0300\n"
 "Last-Translator: \n"
-"Language-Team: tr <LL@li.org>\n"
 "Language: tr\n"
+"Language-Team: tr <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.18.0\n"
-"X-Generator: Poedit 3.9\n"
 
 #: changedetectionio/blueprint/backups/__init__.py
 msgid "A backup is already running, check back in a few minutes"
@@ -60,8 +59,7 @@ msgstr "İzleyicileri dahil et"
 msgid "Replace existing watches of the same UUID"
 msgstr "Aynı UUID'li mevcut izleyicileri değiştir"
 
-#: changedetectionio/blueprint/backups/restore.py
-#: changedetectionio/blueprint/backups/templates/backup_restore.html
+#: changedetectionio/blueprint/backups/restore.py changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Restore backup"
 msgstr "Yedeği geri yükle"
 
@@ -76,6 +74,11 @@ msgstr "Dosya yüklenmedi"
 #: changedetectionio/blueprint/backups/restore.py
 msgid "File must be a .zip backup file"
 msgstr "Dosya bir .zip yedek dosyası olmalıdır"
+
+#: changedetectionio/blueprint/backups/restore.py
+#, python-format
+msgid "Backup file is too large (max %(mb)s MB)"
+msgstr ""
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "Invalid or corrupted zip file"
@@ -101,7 +104,9 @@ msgstr "Bir yedekleme çalışıyor!"
 
 #: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "Here you can download and request a new backup, when a backup is completed you will see it listed below."
-msgstr "Buradan yeni bir yedekleme indirebilir ve talep edebilirsiniz, yedekleme tamamlandığında aşağıda listelendiğini göreceksiniz."
+msgstr ""
+"Buradan yeni bir yedekleme indirebilir ve talep edebilirsiniz, yedekleme tamamlandığında aşağıda listelendiğini "
+"göreceksiniz."
 
 #: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "Mb"
@@ -125,11 +130,18 @@ msgstr "Bir geri yükleme çalışıyor!"
 
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Restore a backup. Must be a .zip backup file created on/after v0.53.1 (new database layout)."
-msgstr "Bir yedeği geri yükleyin. v0.53.1 veya sonrasında oluşturulmuş (yeni veritabanı düzeni) bir .zip yedek dosyası olmalıdır."
+msgstr ""
+"Bir yedeği geri yükleyin. v0.53.1 veya sonrasında oluşturulmuş (yeni veritabanı düzeni) bir .zip yedek dosyası "
+"olmalıdır."
 
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Note: This does not override the main application settings, only watches and groups."
 msgstr "Not: Bu, ana uygulama ayarlarını geçersiz kılmaz, yalnızca izleyicileri ve grupları geçersiz kılar."
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+#, python-format
+msgid "Max upload size: %(upload)s MB, Max decompressed size: %(decomp)s MB"
+msgstr ""
 
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Include all groups found in backup?"
@@ -206,6 +218,10 @@ msgid ".XLSX & Wachete"
 msgstr ".XLSX ve Wachete"
 
 #: changedetectionio/blueprint/imports/templates/import.html
+msgid "Backup Restore"
+msgstr ""
+
+#: changedetectionio/blueprint/imports/templates/import.html
 msgid "Restoring changedetection.io backups is in the"
 msgstr "changedetection.io yedeklerini geri yükleme yeri"
 
@@ -215,7 +231,9 @@ msgstr "yedeklemeler bölümü"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Enter one URL per line, and optionally add tags for each URL after a space, delineated by comma (,):"
-msgstr "Her satıra bir URL girin ve isteğe bağlı olarak her URL için bir boşluk bıraktıktan sonra virgülle (,) ayrılmış etiketler ekleyin:"
+msgstr ""
+"Her satıra bir URL girin ve isteğe bağlı olarak her URL için bir boşluk bıraktıktan sonra virgülle (,) ayrılmış "
+"etiketler ekleyin:"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Example:"
@@ -338,8 +356,7 @@ msgstr "Parola koruması etkinleştirildi."
 msgid "Settings updated."
 msgstr "Ayarlar güncellendi."
 
-#: changedetectionio/blueprint/settings/__init__.py
-#: changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/ui/edit.py
 #: changedetectionio/processors/extract.py
 msgid "An error occurred, please see below."
 msgstr "Bir hata oluştu, lütfen aşağıya bakın."
@@ -368,8 +385,7 @@ msgstr "Tüm bildirimlerin sesi açıldı."
 msgid "Notification debug log"
 msgstr "Bildirim hata ayıklama günlüğü"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "General"
 msgstr "Genel"
@@ -430,8 +446,7 @@ msgstr "Şuna ayarla"
 msgid "to disable"
 msgstr "devre dışı bırakmak için"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Limit collection of history snapshots for each watch to this number of history items."
 msgstr "Her izleyici için geçmiş anlık görüntülerin toplanmasını bu sayıda geçmiş öğesiyle sınırla."
 
@@ -449,7 +464,9 @@ msgstr "Parola kilitli."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Allow access to the watch change history page when password is enabled (Good for sharing the diff page)"
-msgstr "Parola etkinleştirildiğinde izleyici değişiklik geçmişi sayfasına erişime izin ver (Fark sayfasını paylaşmak için iyidir)"
+msgstr ""
+"Parola etkinleştirildiğinde izleyici değişiklik geçmişi sayfasına erişime izin ver (Fark sayfasını paylaşmak için "
+"iyidir)"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "When a request returns no content, or the HTML does not contain any text, is this considered a change?"
@@ -471,8 +488,7 @@ msgstr "bildirim bağlantılarındaki belirteç."
 msgid "Default value is the system environment variable"
 msgstr "Varsayılan değer sistem ortam değişkenidir"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/templates/_common_fields.html
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/_common_fields.html
 msgid "read more here"
 msgstr "daha fazlasını buradan okuyun"
 
@@ -480,13 +496,11 @@ msgstr "daha fazlasını buradan okuyun"
 msgid "method (default) where your watched sites don't need Javascript to render."
 msgstr "izlenen sitelerinizin oluşturulması için Javascript gerektirmeyen yöntem (varsayılan)."
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use the"
 msgstr "Şunu kullanın"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Basic"
 msgstr "Temel"
 
@@ -494,34 +508,35 @@ msgstr "Temel"
 msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var"
 msgstr "yöntemi, ENV değişkeni tarafından ayarlanan çalışan bir WebDriver+Chrome sunucusuna ağ bağlantısı gerektirir"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "The"
 msgstr "Şu"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Chrome/Javascript"
 msgstr "Chrome/Javascript"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "If you're having trouble waiting for the page to be fully rendered (text missing etc), try increasing the 'wait' time here."
-msgstr "Sayfanın tam olarak oluşturulmasını beklerken sorun yaşıyorsanız (eksik metin vb.), buradaki 'bekleme' süresini artırmayı deneyin."
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"If you're having trouble waiting for the page to be fully rendered (text missing etc), try increasing the 'wait' time"
+" here."
+msgstr ""
+"Sayfanın tam olarak oluşturulmasını beklerken sorun yaşıyorsanız (eksik metin vb.), buradaki 'bekleme' süresini "
+"artırmayı deneyin."
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "This will wait"
 msgstr "Bu şu kadar bekleyecek"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "seconds before extracting the text."
 msgstr "metni çıkarmadan önce saniye."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Number of concurrent workers to process watches. More workers = faster processing but higher memory usage."
-msgstr "İzleyicileri işlemek için eşzamanlı çalışan sayısı. Daha fazla çalışan = daha hızlı işleme ancak daha yüksek bellek kullanımı."
+msgstr ""
+"İzleyicileri işlemek için eşzamanlı çalışan sayısı. Daha fazla çalışan = daha hızlı işleme ancak daha yüksek bellek "
+"kullanımı."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Currently running:"
@@ -560,20 +575,19 @@ msgid "all of the ways that the browser is detected"
 msgstr "tarayıcının tespit edilmesinin tüm yolları"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/edit.html
-#: changedetectionio/templates/_common_fields.html
+msgid "Connect using Bright Data proxies, find out more here."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/diff.html
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/templates/_common_fields.html
 msgid "Tip:"
 msgstr "İpucu:"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Connect using Bright Data and Oxylabs Proxies, find out more here."
-msgstr "Bright Data ve Oxylabs Proxy'lerini kullanarak bağlanın, daha fazlasını buradan öğrenin."
-
-#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Ignore whitespace, tabs and new-lines/line-feeds when considering if a change was detected."
-msgstr "Bir değişikliğin tespit edilip edilmediğini değerlendirirken boşlukları, sekmeleri ve yeni satırları/satır beslemelerini yoksay."
+msgstr ""
+"Bir değişikliğin tespit edilip edilmediğini değerlendirirken boşlukları, sekmeleri ve yeni satırları/satır "
+"beslemelerini yoksay."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Note:"
@@ -585,7 +599,9 @@ msgstr "Bunu değiştirmek mevcut izleyicilerinizin durumunu değiştirecek, muh
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Render anchor tag content, default disabled, when enabled renders links as"
-msgstr "Bağlantı etiketi içeriğini oluştur, varsayılan olarak devre dışıdır. etkinleştirildiğinde bağlantıları şu şekilde oluşturur"
+msgstr ""
+"Bağlantı etiketi içeriğini oluştur, varsayılan olarak devre dışıdır. etkinleştirildiğinde bağlantıları şu şekilde "
+"oluşturur"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Changing this could affect the content of your existing watches, possibly trigger alerts etc."
@@ -619,24 +635,23 @@ msgstr "yoksayılacak"
 msgid "in the text snapshot (you can still see it but it wont trigger a change)"
 msgstr "metin anlık görüntüsünde (hala görebilirsiniz ancak bir değişikliği tetiklemez)"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/templates/edit/text-options.html
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
 msgid "Each line processed separately, any line matching will be ignored (removed before creating the checksum)"
 msgstr "Her satır ayrı ayrı işlenir, eşleşen herhangi bir satır yoksayılır (sağlama toplamı oluşturulmadan önce kaldırılır)"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/templates/edit/text-options.html
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
 msgid "Regular Expression support, wrap the entire line in forward slash"
 msgstr "Düzenli İfade desteği, tüm satırı eğik çizgi içine alın"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/templates/edit/text-options.html
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
 msgid "Changing this will affect the comparison checksum which may trigger an alert"
 msgstr "Bunu değiştirmek, bir uyarıyı tetikleyebilecek karşılaştırma sağlama toplamını etkiler"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Remove any text that appears in the \"Ignore text\" from the output (otherwise its just ignored for change-detection)"
-msgstr "\"Yoksayılan metin\" bölümünde görünen herhangi bir metni çıktıdan kaldırın (aksi takdirde değişiklik tespiti için sadece yoksayılır)"
+msgstr ""
+"\"Yoksayılan metin\" bölümünde görünen herhangi bir metni çıktıdan kaldırın (aksi takdirde değişiklik tespiti için "
+"sadece yoksayılır)"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "API Access"
@@ -724,7 +739,9 @@ msgstr "İzleyiciye özel RSS akışına dahil edilecek maksimum geçmiş anlık
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "For watching other RSS feeds - When watching RSS/Atom feeds, convert them into clean text for better change detection."
-msgstr "Diğer RSS akışlarını izlemek için - RSS/Atom akışlarını izlerken, daha iyi değişiklik tespiti için bunları temiz metne dönüştürün."
+msgstr ""
+"Diğer RSS akışlarını izlemek için - RSS/Atom akışlarını izlerken, daha iyi değişiklik tespiti için bunları temiz "
+"metne dönüştürün."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Does your reader support HTML? Set it here"
@@ -736,7 +753,9 @@ msgstr "Tüm öğeler için aynı şablon olarak 'Sistem varsayılanı' veya şa
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Ensure the settings below are correct, they are used to manage the time schedule for checking your web page watches."
-msgstr "Aşağıdaki ayarların doğru olduğundan emin olun, bunlar web sayfası izleyicilerinizi kontrol etme zaman çizelgesini yönetmek için kullanılır."
+msgstr ""
+"Aşağıdaki ayarların doğru olduğundan emin olun, bunlar web sayfası izleyicilerinizi kontrol etme zaman çizelgesini "
+"yönetmek için kullanılır."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "UTC Time & Date from Server:"
@@ -748,7 +767,9 @@ msgstr "Tarayıcıdaki Yerel Saat ve Tarih:"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Enable this setting to open the diff page in a new tab. If disabled, the diff page will open in the current tab."
-msgstr "Fark sayfasını yeni bir sekmede açmak için bu ayarı etkinleştirin. Devre dışı bırakılırsa, fark sayfası geçerli sekmede açılır."
+msgstr ""
+"Fark sayfasını yeni bir sekmede açmak için bu ayarı etkinleştirin. Devre dışı bırakılırsa, fark sayfası geçerli "
+"sekmede açılır."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Realtime UI Updates Enabled - (Restart required if this is changed)"
@@ -767,16 +788,20 @@ msgid "Tip"
 msgstr "İpucu"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "\"Residential\" and \"Mobile\" proxy type can be more successfull than \"Data Center\" for blocked websites."
-msgstr "Engellenen web siteleri için \"Yerleşim Yeri\" ve \"Mobil\" proxy türü \"Veri Merkezi\"nden daha başarılı olabilir."
+msgid "\"Residential\" and \"Mobile\" proxy type can be more successful than \"Data Center\" for blocked websites."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "\"Name\" will be used for selecting the proxy in the Watch Edit settings"
 msgstr "\"Ad\", İzleyici Düzenleme ayarlarında proxy'yi seçmek için kullanılacaktır"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should whitelist the IP access instead"
-msgstr "Kimlik doğrulamalı SOCKS5 proxy'leri yalnızca 'düz istekler' getiricisi ile desteklenir, diğer getiriciler için bunun yerine IP erişimini beyaz listeye almalısınız"
+msgid ""
+"SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should "
+"whitelist the IP access instead"
+msgstr ""
+"Kimlik doğrulamalı SOCKS5 proxy'leri yalnızca 'düz istekler' getiricisi ile desteklenir, diğer getiriciler için bunun"
+" yerine IP erişimini beyaz listeye almalısınız"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Uptime:"
@@ -831,10 +856,31 @@ msgstr "Etiket bulunamadı"
 msgid "Updated"
 msgstr "Güncellendi"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Filters & Triggers"
 msgstr "Filtreler ve Tetikleyiciler"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid ""
+"Automatically applies this tag to any watch whose URL matches. Supports wildcards: <code>*example.com*</code> or "
+"plain substring: <code>github.com/myorg</code>"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "Currently matching watches"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "Tag colour"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "Custom colour"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "Leave unchecked to use the auto-generated colour based on the tag name."
+msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "These settings are"
@@ -848,53 +894,43 @@ msgstr "eklenerek"
 msgid "to any existing watch configurations."
 msgstr "mevcut izleyici yapılandırmalarına uygulanır."
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Text filtering"
 msgstr "Metin filtreleme"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use with caution!"
 msgstr "Dikkatli kullanın!"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "This will easily fill up your email storage quota or flood other storages."
 msgstr "Bu, e-posta depolama kotanızı kolayca dolduracak veya diğer depolama alanlarını taşıracaktır."
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Look out!"
 msgstr "Dikkat!"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Lookout!"
 msgstr "Dikkat!"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "There are"
 msgstr "Şunlar var"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "system-wide notification URLs enabled"
 msgstr "sistem geneli bildirim URL'leri etkinleştirildi"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "this form will override notification settings for this watch only"
 msgstr "bu form bildirim ayarlarını yalnızca bu izleyici için geçersiz kılar"
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "an empty Notification URL list here will still send notifications."
 msgstr "buradaki boş bir Bildirim URL listesi yine de bildirim gönderir."
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use system defaults"
 msgstr "Sistem varsayılanlarını kullan"
 
@@ -942,8 +978,7 @@ msgstr "Grup Silinsin mi?"
 msgid "<p>Are you sure you want to delete group <strong>%(title)s</strong>?</p><p>This action cannot be undone.</p>"
 msgstr "<p><strong>%(title)s</strong> grubunu silmek istediğinizden emin misiniz?</p><p>Bu işlem geri alınamaz.</p>"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/templates/edit.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Delete"
 msgstr "Sil"
@@ -958,8 +993,12 @@ msgstr "Grubun Bağlantısı Kesilsin mi?"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 #, python-format
-msgid "<p>Are you sure you want to unlink all watches from group <strong>%(title)s</strong>?</p><p>The tag will be kept but watches will be removed from it.</p>"
-msgstr "<p><strong>%(title)s</strong> grubundaki tüm izleyicilerin bağlantısını kesmek istediğinizden emin misiniz?</p><p>Etiket tutulacak ancak izleyiciler ondan kaldırılacaktır.</p>"
+msgid ""
+"<p>Are you sure you want to unlink all watches from group <strong>%(title)s</strong>?</p><p>The tag will be kept but "
+"watches will be removed from it.</p>"
+msgstr ""
+"<p><strong>%(title)s</strong> grubundaki tüm izleyicilerin bağlantısını kesmek istediğinizden emin "
+"misiniz?</p><p>Etiket tutulacak ancak izleyiciler ondan kaldırılacaktır.</p>"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Unlink"
@@ -969,8 +1008,7 @@ msgstr "Bağlantıyı Kes"
 msgid "Keep the tag but unlink any watches"
 msgstr "Etiketi tutun ancak tüm izleyicilerin bağlantısını kesin"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "RSS Feed for this watch"
 msgstr "Bu izleyici için RSS Akışı"
 
@@ -1038,6 +1076,10 @@ msgstr "İzleyici bulunamadı"
 msgid "Cleared snapshot history for watch {}"
 msgstr "{} izleyicisi için anlık görüntü geçmişi temizlendi"
 
+#: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "clear"
+msgstr "temizle"
+
 #: changedetectionio/blueprint/ui/__init__.py
 msgid "History clearing started in background"
 msgstr "Geçmiş temizleme arka planda başladı"
@@ -1090,8 +1132,7 @@ msgstr "Paylaşılamadı, paylaşım sunucusu ile iletişim kurulurken bir şeyl
 msgid "Language set to auto-detect from browser"
 msgstr "Dil, tarayıcıdan otomatik algılanacak şekilde ayarlandı"
 
-#: changedetectionio/blueprint/ui/diff.py
-#: changedetectionio/blueprint/ui/preview.py
+#: changedetectionio/blueprint/ui/diff.py changedetectionio/blueprint/ui/preview.py
 msgid "No history found for the specified link, bad link?"
 msgstr "Belirtilen bağlantı için geçmiş bulunamadı, hatalı bağlantı mı?"
 
@@ -1160,10 +1201,6 @@ msgid "Type in the word"
 msgstr "Kelimeyi yazın"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
-msgid "clear"
-msgstr "temizle"
-
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "to confirm that you understand."
 msgstr "anladığınızı onaylamak için."
 
@@ -1171,8 +1208,7 @@ msgstr "anladığınızı onaylamak için."
 msgid "Clear History!"
 msgstr "Geçmişi Temizle!"
 
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html
-#: changedetectionio/templates/base.html
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
 msgid "Cancel"
 msgstr "İptal"
 
@@ -1220,28 +1256,23 @@ msgstr "Aynı/değişmemiş"
 msgid "Removed"
 msgstr "Kaldırıldı"
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Added"
 msgstr "Eklendi"
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Replaced"
 msgstr "Değiştirildi"
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Keyboard:"
 msgstr "Klavye:"
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Previous"
 msgstr "Önceki"
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Next"
 msgstr "Sonraki"
 
@@ -1253,23 +1284,19 @@ msgstr "Sonraki farka atla"
 msgid "Jump"
 msgstr "Atla"
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Error Text"
 msgstr "Hata Metni"
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Error Screenshot"
 msgstr "Hata Ekran Görüntüsü"
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Text"
 msgstr "Metin"
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Current screenshot"
 msgstr "Mevcut ekran görüntüsü"
 
@@ -1281,8 +1308,7 @@ msgstr "Veriyi Çıkar"
 msgid "seconds ago."
 msgstr "saniye önce."
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "seconds ago"
 msgstr "saniye önce"
 
@@ -1310,18 +1336,15 @@ msgstr "Tek bir anlık görüntüye git"
 msgid "Highlight text to share or add to ignore lists."
 msgstr "Paylaşmak veya yoksayma listelerine eklemek için metni vurgulayın."
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "For now, Differences are performed on text, not graphically, only the latest screenshot is available."
 msgstr "Şimdilik, Farklar grafiksel olarak değil metin üzerinde gerçekleştirilir, yalnızca en son ekran görüntüsü mevcuttur."
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Current screenshot from most recent request"
 msgstr "En son istekten gelen mevcut ekran görüntüsü"
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "No screenshot available just yet! Try rechecking the page."
 msgstr "Henüz bir ekran görüntüsü mevcut değil! Sayfayı yeniden kontrol etmeyi deneyin."
 
@@ -1370,6 +1393,10 @@ msgid "Organisational tag/group name used in the main listing page"
 msgstr "Ana listeleme sayfasında kullanılan organizasyonel etiket/grup adı"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Also automatically applied by URL pattern:"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Automatically uses the page title if found, you can also use your own title/description here"
 msgstr "Bulunursa otomatik olarak sayfa başlığını kullanır, ayrıca kendi başlığınızı/açıklamanızı da burada kullanabilirsiniz"
 
@@ -1378,8 +1405,12 @@ msgid "The interval/amount of time between each check."
 msgstr "Her kontrol arasındaki zaman aralığı/miktarı."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Sends a notification when the filter can no longer be seen on the page, good for knowing when the page changed and your filter will not work anymore."
-msgstr "Filtre artık sayfada görülemediğinde bir bildirim gönderir, sayfanın ne zaman değiştiğini ve filtrenizin artık çalışmayacağını bilmek için iyidir."
+msgid ""
+"Sends a notification when the filter can no longer be seen on the page, good for knowing when the page changed and "
+"your filter will not work anymore."
+msgstr ""
+"Filtre artık sayfada görülemediğinde bir bildirim gönderir, sayfanın ne zaman değiştiğini ve filtrenizin artık "
+"çalışmayacağını bilmek için iyidir."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Set to empty to use system settings default"
@@ -1391,7 +1422,13 @@ msgstr "izlenen sitenizin oluşturulması için Javascript gerektirmeyen yöntem
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'."
-msgstr "yöntemi, 'WEBDRIVER_URL' ENV değişkeni tarafından ayarlanan, çalışan bir WebDriver+Chrome sunucusuna ağ bağlantısı gerektirir."
+msgstr ""
+"yöntemi, 'WEBDRIVER_URL' ENV değişkeni tarafından ayarlanan, çalışan bir WebDriver+Chrome sunucusuna ağ bağlantısı "
+"gerektirir."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Connect using Bright Data and Oxylabs Proxies, find out more here."
+msgstr "Bright Data ve Oxylabs Proxy'lerini kullanarak bağlanın, daha fazlasını buradan öğrenin."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Check/Scan all"
@@ -1466,8 +1503,12 @@ msgid "Visual Selector data is not ready, watch needs to be checked atleast once
 msgstr "Görsel Seçici verileri hazır değil, izleyicinin en az bir kez kontrol edilmesi gerekiyor."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Sorry, this functionality only works with fetchers that support interactive Javascript (so far only Playwright based fetchers)"
-msgstr "Üzgünüz, bu işlevsellik yalnızca etkileşimli Javascript'i destekleyen getiricilerle (şimdiye kadar yalnızca Playwright tabanlı getiriciler) çalışır"
+msgid ""
+"Sorry, this functionality only works with fetchers that support interactive Javascript (so far only Playwright based "
+"fetchers)"
+msgstr ""
+"Üzgünüz, bu işlevsellik yalnızca etkileşimli Javascript'i destekleyen getiricilerle (şimdiye kadar yalnızca "
+"Playwright tabanlı getiriciler) çalışır"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "to one that supports interactive Javascript."
@@ -1550,12 +1591,18 @@ msgid "Only trigger when unique lines appear"
 msgstr "Yalnızca benzersiz satırlar göründüğünde tetikle"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Good for websites that just move the content around, and you want to know when NEW content is added, compares new lines against all history for this watch."
-msgstr "Yalnızca içeriği hareket ettiren web siteleri için iyidir ve YENİ içerik eklendiğinde bilmek istersiniz, yeni satırları bu izleyicinin tüm geçmişiyle karşılaştırır."
+msgid ""
+"Good for websites that just move the content around, and you want to know when NEW content is added, compares new "
+"lines against all history for this watch."
+msgstr ""
+"Yalnızca içeriği hareket ettiren web siteleri için iyidir ve YENİ içerik eklendiğinde bilmek istersiniz, yeni "
+"satırları bu izleyicinin tüm geçmişiyle karşılaştırır."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with"
-msgstr "Sitelerin satırları karıştırmasından kaynaklanan tespit edilen değişiklikleri azaltmaya yardımcı olur, şununla birleştirin"
+msgstr ""
+"Sitelerin satırları karıştırmasından kaynaklanan tespit edilen değişiklikleri azaltmaya yardımcı olur, şununla "
+"birleştirin"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "check unique lines"
@@ -1582,8 +1629,12 @@ msgid "text"
 msgstr "metin"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "elements that will be used for the change detection. It automatically fills-in the filters in the \"CSS/JSONPath/JQ/XPath Filters\" box of the"
-msgstr "değişiklik tespiti için kullanılacak öğeler. \"CSS/JSONPath/JQ/XPath Filtreleri\" kutusundaki filtreleri otomatik olarak doldurur"
+msgid ""
+"elements that will be used for the change detection. It automatically fills-in the filters in the "
+"\"CSS/JSONPath/JQ/XPath Filters\" box of the"
+msgstr ""
+"değişiklik tespiti için kullanılacak öğeler. \"CSS/JSONPath/JQ/XPath Filtreleri\" kutusundaki filtreleri otomatik "
+"olarak doldurur"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "tab. Use"
@@ -1623,7 +1674,9 @@ msgstr "Şu anda:"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Sorry, this functionality only works with fetchers that support Javascript and screenshots (such as playwright etc)."
-msgstr "Üzgünüz, bu işlevsellik yalnızca Javascript ve ekran görüntülerini destekleyen getiricilerle (örneğin playwright vb.) çalışır."
+msgstr ""
+"Üzgünüz, bu işlevsellik yalnızca Javascript ve ekran görüntülerini destekleyen getiricilerle (örneğin playwright vb.)"
+" çalışır."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "to one that supports Javascript and screenshots."
@@ -1871,8 +1924,7 @@ msgstr "Fiyat"
 msgid "No information"
 msgstr "Bilgi yok"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/templates/base.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
 msgid "Checking now"
 msgstr "Şimdi kontrol ediliyor"
 
@@ -1914,8 +1966,8 @@ msgstr "Tümünü yeniden kontrol et"
 msgid "in '%(title)s'"
 msgstr "'%(title)s' içinde"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/flask_app.py changedetectionio/realtime/socket_server.py
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/flask_app.py
+#: changedetectionio/realtime/socket_server.py
 msgid "Not yet"
 msgstr "Henüz değil"
 
@@ -1975,8 +2027,7 @@ msgstr "dakika"
 msgid "second"
 msgstr "saniye"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/flask_app.py
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/flask_app.py
 msgid "seconds"
 msgstr "saniye"
 
@@ -2117,8 +2168,7 @@ msgstr "Boş değere izin verilmez."
 msgid "Invalid value."
 msgstr "Geçersiz değer."
 
-#: changedetectionio/blueprint/imports/templates/import.html
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/forms.py
 msgid "URL"
 msgstr "URL"
 
@@ -2219,11 +2269,14 @@ msgid "Remove elements"
 msgstr "Öğeleri kaldır"
 
 #: changedetectionio/forms.py
+msgid "Extract lines containing"
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "Extract text"
 msgstr "Metni çıkar"
 
-#: changedetectionio/blueprint/imports/templates/import.html
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/forms.py
 msgid "Title"
 msgstr "Başlık"
 
@@ -2247,8 +2300,7 @@ msgstr "Durum kodlarını yoksay (2xx olmayan durum kodlarını normal olarak i�
 msgid "Only trigger when unique lines appear in all history"
 msgstr "Yalnızca tüm geçmişte benzersiz satırlar göründüğünde tetikle"
 
-#: changedetectionio/blueprint/ui/templates/edit.html
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/forms.py
 msgid "Remove duplicate lines of text"
 msgstr "Yinelenen metin satırlarını kaldır"
 
@@ -2288,8 +2340,7 @@ msgstr "Metin eşleşirken değişiklik tespitini engelle"
 msgid "Execute JavaScript before change detection"
 msgstr "Değişiklik tespitinden önce JavaScript'i çalıştır"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/forms.py
 msgid "Save"
 msgstr "Kaydet"
 
@@ -2309,10 +2360,8 @@ msgstr "Sessize alındı"
 msgid "On"
 msgstr "Açık"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/forms.py
 msgid "Notifications"
 msgstr "Bildirimler"
 
@@ -2455,8 +2504,7 @@ msgstr "Metni Yoksay"
 msgid "Ignore whitespace"
 msgstr "Boşlukları yoksay"
 
-#: changedetectionio/forms.py
-#: changedetectionio/processors/image_ssim_diff/forms.py
+#: changedetectionio/forms.py changedetectionio/processors/image_ssim_diff/forms.py
 msgid "Must be between 0 and 100"
 msgstr "0 ile 100 arasında olmalıdır"
 
@@ -2722,12 +2770,25 @@ msgid "The URL of the preview page generated by changedetection.io."
 msgstr "changedetection.io tarafından oluşturulan önizleme sayfasının URL'si."
 
 #: changedetectionio/templates/_common_fields.html
+#, python-format
+msgid "Date/time of the change, accepts format=, change_datetime(format='%A')', default is '%Y-%m-%d %H:%M:%S %Z'"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
 msgid "The URL of the diff output for the watch."
 msgstr "İzleyici için fark çıktısının URL'si."
 
 #: changedetectionio/templates/_common_fields.html
 msgid "The diff output - only changes, additions, and removals"
 msgstr "Fark çıktısı - yalnızca değişiklikler, eklemeler ve kaldırmalar"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "All diff variants accept"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
+msgid "args, e.g."
+msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
 msgid "The diff output - only changes, additions, and removals —"
@@ -2764,6 +2825,18 @@ msgstr "Fark çıktısı - tam fark çıktısı —"
 #: changedetectionio/templates/_common_fields.html
 msgid "The diff output - patch in unified format"
 msgstr "Fark çıktısı - birleşik formatta yama"
+
+#: changedetectionio/templates/_common_fields.html
+msgid ""
+"Only the changed words/values from the previous version — e.g. the old price. Best when a single value changes per "
+"line; multiple changed fragments are joined by newline."
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
+msgid ""
+"Only the changed words/values from the new version — e.g. the new price. Best when a single value changes per line; "
+"multiple changed fragments are joined by newline."
+msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
 msgid "The current snapshot text contents value, useful when combined with JSON or CSS filters"
@@ -2805,8 +2878,7 @@ msgstr "ile hemen hemen her hizmete bildirim gönderebilirsiniz!"
 msgid "Please read the notification services wiki here for important configuration notes"
 msgstr "Önemli yapılandırma notları için lütfen buradaki bildirim hizmetleri wiki'sini okuyun"
 
-#: changedetectionio/templates/_common_fields.html
-#: changedetectionio/templates/edit/text-options.html
+#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/text-options.html
 msgid "Use"
 msgstr "Şu"
 
@@ -2936,7 +3008,9 @@ msgstr "Bu kuralı mevcut anlık görüntüye karşı doğrula"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Error - This watch needs Chrome (with playwright/sockpuppetbrowser), but Chrome based fetching is not enabled."
-msgstr "Hata - Bu izleyicinin Chrome'a ​​(playwright/sockpuppetbrowser ile) ihtiyacı var, ancak Chrome tabanlı getirme etkin değil."
+msgstr ""
+"Hata - Bu izleyicinin Chrome'a ​​(playwright/sockpuppetbrowser ile) ihtiyacı var, ancak Chrome tabanlı getirme etkin "
+"değil."
 
 #: changedetectionio/templates/_helpers.html
 msgid "Alternatively try our"
@@ -3048,7 +3122,9 @@ msgstr "Tarayıcıdan otomatik algıla"
 
 #: changedetectionio/templates/base.html
 msgid "Language support is in beta, please help us improve by opening a PR on GitHub with any updates."
-msgstr "Dil desteği beta aşamasındadır, lütfen herhangi bir güncellemeyle GitHub'da bir PR açarak geliştirmemize yardımcı olun."
+msgstr ""
+"Dil desteği beta aşamasındadır, lütfen herhangi bir güncellemeyle GitHub'da bir PR açarak geliştirmemize yardımcı "
+"olun."
 
 #: changedetectionio/templates/base.html
 msgid "Search"
@@ -3068,7 +3144,9 @@ msgstr "Arama terimini girin..."
 
 #: changedetectionio/templates/edit/text-options.html
 msgid "Text to wait for before triggering a change/notification, all text and regex are tested case-insensitive."
-msgstr "Bir değişikliği/bildirimi tetiklemeden önce beklenecek metin, tüm metinler ve regex'ler büyük/küçük harfe duyarsız olarak test edilir."
+msgstr ""
+"Bir değişikliği/bildirimi tetiklemeden önce beklenecek metin, tüm metinler ve regex'ler büyük/küçük harfe duyarsız "
+"olarak test edilir."
 
 #: changedetectionio/templates/edit/text-options.html
 msgid "Trigger text is processed from the result-text that comes out of any CSS/JSON Filters for this monitor"
@@ -3096,11 +3174,17 @@ msgstr "da kullanabilirsiniz: \\\"Sayfa metni\\\" - İçerir, Şununla Başlar, 
 
 #: changedetectionio/templates/edit/text-options.html
 msgid "Matching text will be ignored in the text snapshot (you can still see it but it wont trigger a change)"
-msgstr "Eşleşen metin metin anlık görüntüsünde yoksayılacaktır (yine de görebilirsiniz ancak bir değişikliği tetiklemeyecektir)"
+msgstr ""
+"Eşleşen metin metin anlık görüntüsünde yoksayılacaktır (yine de görebilirsiniz ancak bir değişikliği "
+"tetiklemeyecektir)"
 
 #: changedetectionio/templates/edit/text-options.html
-msgid "Block change-detection while this text is on the page, all text and regex are tested case-insensitive, good for waiting for when a product is available again"
-msgstr "Bu metin sayfadayken değişiklik tespitini engelle, tüm metinler ve regex'ler büyük/küçük harfe duyarsız olarak test edilir, bir ürünün tekrar ne zaman kullanılabileceğini beklemek için iyidir"
+msgid ""
+"Block change-detection while this text is on the page, all text and regex are tested case-insensitive, good for "
+"waiting for when a product is available again"
+msgstr ""
+"Bu metin sayfadayken değişiklik tespitini engelle, tüm metinler ve regex'ler büyük/küçük harfe duyarsız olarak test "
+"edilir, bir ürünün tekrar ne zaman kullanılabileceğini beklemek için iyidir"
 
 #: changedetectionio/templates/edit/text-options.html
 msgid "Block text is processed from the result-text that comes out of any CSS/JSON Filters for this monitor"
@@ -3109,6 +3193,26 @@ msgstr "Engelleme metni, bu izleyici için herhangi bir CSS/JSON Filtresinden ç
 #: changedetectionio/templates/edit/text-options.html
 msgid "All lines here must not exist (think of each line as \"OR\")"
 msgstr "Buradaki tüm satırlar var olmamalıdır (her satırı \"VEYA\" olarak düşünün)"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "Keep only lines that contain any of these words or phrases (plain text, case-insensitive)"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "One entry per line — any line in the page text that contains a match is kept"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "Simpler alternative to regex — use this when you just want lines about a specific topic"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "Example: enter"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "to keep only lines mentioning temperature readings"
+msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
 msgid "Extracts text in the final output (line by line) after other filters using regular expressions or string match:"
@@ -3229,3 +3333,7 @@ msgstr "Hayır"
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"
 msgstr "Ana ayarlar"
+
+#~ msgid "\"Residential\" and \"Mobile\" proxy type can be more successfull than \"Data Center\" for blocked websites."
+#~ msgstr "Engellenen web siteleri için \"Yerleşim Yeri\" ve \"Mobil\" proxy türü \"Veri Merkezi\"nden daha başarılı olabilir."
+

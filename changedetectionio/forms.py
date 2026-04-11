@@ -798,6 +798,7 @@ class processor_text_json_diff_form(commonSettingsForm):
 
     subtractive_selectors = StringListField(_l('Remove elements'), [ValidateCSSJSONXPATHInput(allow_json=False)])
 
+    extract_lines_containing = StringListField(_l('Extract lines containing'), [validators.Optional()])
     extract_text = StringListField(_l('Extract text'), [ValidateListRegex()])
 
     title = StringField(_l('Title'), default='')
