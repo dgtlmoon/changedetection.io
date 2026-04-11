@@ -171,6 +171,7 @@ def test_group_tag_notification(client, live_server, measure_memory_usage, datas
     delete_all_watches(client)
 
     set_original_response(datastore_path=datastore_path)
+    notification_url_endpoint = url_for('test_notification_endpoint', _external=True).replace('http', 'post')
 
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
@@ -181,35 +182,50 @@ def test_group_tag_notification(client, live_server, measure_memory_usage, datas
 
     assert b"Watch added" in res.data
 
-    notification_url = url_for('test_notification_endpoint', _external=True).replace('http', 'json')
-    notification_form_data = {"notification_urls": notification_url,
-                              "notification_title": "New GROUP TAG ChangeDetection.io Notification - {{watch_url}}",
-                              "notification_body": "BASE URL: {{base_url}}\n"
-                                                   "Watch URL: {{watch_url}}\n"
-                                                   "Watch UUID: {{watch_uuid}}\n"
-                                                   "Watch title: {{watch_title}}\n"
-                                                   "Watch tag: {{watch_tag}}\n"
-                                                   "Preview: {{preview_url}}\n"
-                                                   "Diff URL: {{diff_url}}\n"
-                                                   "Snapshot: {{current_snapshot}}\n"
-                                                   "Diff: {{diff}}\n"
-                                                   "Diff Added: {{diff_added}}\n"
-                                                   "Diff Removed: {{diff_removed}}\n"
-                                                   "Diff Full: {{diff_full}}\n"
-                                                   "Diff as Patch: {{diff_patch}}\n"
-                                                   ":-)",
-                              "notification_screenshot": True,
-                              "notification_format": 'text',
-                              "title": "test-tag"}
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
 
+    group_tag_form_data = {
+        "notification_title": "New GROUP TAG ChangeDetection.io Notification - {{watch_url}}",
+        "notification_body": "BASE URL: {{base_url}}\n"
+                             "Watch URL: {{watch_url}}\n"
+                             "Watch UUID: {{watch_uuid}}\n"
+                             "Watch title: {{watch_title}}\n"
+                             "Watch tag: {{watch_tag}}\n"
+                             "Preview: {{preview_url}}\n"
+                             "Diff URL: {{diff_url}}\n"
+                             "Snapshot: {{current_snapshot}}\n"
+                             "Diff: {{diff}}\n"
+                             "Diff Added: {{diff_added}}\n"
+                             "Diff Removed: {{diff_removed}}\n"
+                             "Diff Full: {{diff_full}}\n"
+                             "Diff as Patch: {{diff_patch}}\n"
+                             ":-)",
+        "notification_screenshot": True,
+        "notification_format": 'text',
+        }
+
+    # Setup for test-tag
+    group_tag_form_data['notification_urls'] = notification_url_endpoint+"?outputfilename=test-tag.txt"
+    group_tag_form_data['title'] = 'test-tag'
     res = client.post(
         url_for("tags.form_tag_edit_submit", uuid=get_UUID_for_tag_name(client, name="test-tag")),
-        data=notification_form_data,
+        data=group_tag_form_data,
         follow_redirects=True
     )
     assert b"Updated" in res.data
 
-    wait_for_all_checks(client)
+    # Setup for other-tag, we only add notifications-urls
+    group_tag_form_data['notification_urls'] = notification_url_endpoint+"?outputfilename=other-tag.txt"
+    group_tag_form_data['title'] = 'other-tag'
+
+    res = client.post(
+        url_for("tags.form_tag_edit_submit", uuid=get_UUID_for_tag_name(client, name="other-tag")),
+        data=group_tag_form_data,
+        follow_redirects=True
+    )
+    assert b"Updated" in res.data
+
 
     set_modified_response(datastore_path=datastore_path)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -217,12 +233,14 @@ def test_group_tag_notification(client, live_server, measure_memory_usage, datas
 
     time.sleep(3)
 
-    assert os.path.isfile(os.path.join(datastore_path, "notification.txt"))
+    assert os.path.isfile(os.path.join(datastore_path, "test-tag.txt"))
+    assert os.path.isfile(os.path.join(datastore_path, "other-tag.txt"))
 
+    # @todo assert the group name or other unique body is in other-tag.txt
     # Verify what was sent as a notification, this file should exist
-    with open(os.path.join(datastore_path, "notification.txt"), "r") as f:
+    with open(os.path.join(datastore_path, "test-tag.txt"), "r") as f:
         notification_submission = f.read()
-    os.unlink(os.path.join(datastore_path, "notification.txt"))
+    os.unlink(os.path.join(datastore_path, "test-tag.txt"))
 
     # Did we see the URL that had a change, in the notification?
     # Diff was correctly executed
