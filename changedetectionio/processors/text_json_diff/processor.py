@@ -86,6 +86,10 @@ class FilterConfig:
         return self._subtractive_selectors_cache
 
     @property
+    def extract_lines_containing(self):
+        return self._get_merged_rules('extract_lines_containing')
+
+    @property
     def extract_text(self):
         return self._get_merged_rules('extract_text')
 
@@ -134,6 +138,17 @@ class ContentTransformer:
         # Remove double line feeds before sorting
         text = text.replace("\n\n", "\n")
         return '\n'.join(sorted(text.splitlines(), key=lambda x: x.lower()))
+
+    @staticmethod
+    def extract_lines_containing(text, substrings):
+        """Keep only lines that contain at least one of the given substrings (case-insensitive)."""
+        needles = [s.lower() for s in substrings if s.strip()]
+        if not needles:
+            return text
+        return '\n'.join(
+            line for line in text.splitlines()
+            if any(needle in line.lower() for needle in needles)
+        )
 
     @staticmethod
     def extract_by_regex(text, regex_patterns):
@@ -502,6 +517,10 @@ class perform_site_check(difference_detection_processor):
             )
 
         update_obj["last_check_status"] = self.fetcher.get_last_status_code()
+
+        # === LINE FILTER (plain-text substring) ===
+        if filter_config.extract_lines_containing:
+            stripped_text = transformer.extract_lines_containing(stripped_text, filter_config.extract_lines_containing)
 
         # === REGEX EXTRACTION ===
         if filter_config.extract_text:
