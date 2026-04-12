@@ -555,8 +555,8 @@ class perform_site_check(difference_detection_processor):
         # === BLOCKING RULES EVALUATION ===
         blocked = False
 
-        # Check trigger_text
-        if rule_engine.evaluate_trigger_text(stripped_text, filter_config.trigger_text):
+        # Check trigger_text - use text_for_checksuming so ignore_text can suppress trigger_text
+        if rule_engine.evaluate_trigger_text(text_for_checksuming, filter_config.trigger_text):
             blocked = True
 
         # Check text_should_not_be_present
