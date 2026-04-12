@@ -1,5 +1,11 @@
-
 from loguru import logger
+
+# Processor capabilities
+supports_visual_selector = True
+supports_browser_steps = True
+supports_text_filters_and_triggers = True
+supports_text_filters_and_triggers_elements = True
+supports_request_type = True
 
 
 
@@ -11,7 +17,8 @@ def _task(watch, update_handler):
 
     try:
         # The slow process (we run 2 of these in parallel)
-        changed_detected, update_obj, text_after_filter = update_handler.run_changedetection(watch=watch)
+        # Always force reprocess for preview - we want to show the filtered content regardless of checksums
+        changed_detected, update_obj, text_after_filter = update_handler.run_changedetection(watch=watch, force_reprocess=True)
     except FilterNotFoundInResponse as e:
         text_after_filter = f"Filter not found in HTML: {str(e)}"
     except ReplyWithContentButNoText as e:
@@ -29,10 +36,10 @@ def _task(watch, update_handler):
 
 
 def prepare_filter_prevew(datastore, watch_uuid, form_data):
-    '''Used by @app.route("/edit/<string:uuid>/preview-rendered", methods=['POST'])'''
+    '''Used by @app.route("/edit/<uuid_str:uuid>/preview-rendered", methods=['POST'])'''
     from changedetectionio import forms, html_tools
     from changedetectionio.model.Watch import model as watch_model
-    from concurrent.futures import ProcessPoolExecutor
+    from concurrent.futures import ThreadPoolExecutor
     from copy import deepcopy
     from flask import request
     import brotli
@@ -45,10 +52,11 @@ def prepare_filter_prevew(datastore, watch_uuid, form_data):
     text_before_filter = ''
     trigger_line_numbers = []
     ignore_line_numbers = []
+    blocked_line_numbers = []
 
     tmp_watch = deepcopy(datastore.data['watching'].get(watch_uuid))
 
-    if tmp_watch and tmp_watch.history and os.path.isdir(tmp_watch.watch_data_dir):
+    if tmp_watch and tmp_watch.history and os.path.isdir(tmp_watch.data_dir):
         # Splice in the temporary stuff from the form
         form = forms.processor_text_json_diff_form(formdata=form_data if request.method == 'POST' else None,
                                                    data=form_data
@@ -57,11 +65,11 @@ def prepare_filter_prevew(datastore, watch_uuid, form_data):
         # Only update vars that came in via the AJAX post
         p = {k: v for k, v in form.data.items() if k in form_data.keys()}
         tmp_watch.update(p)
-        blank_watch_no_filters = watch_model()
+        blank_watch_no_filters = watch_model(datastore_path=datastore.datastore_path, __datastore=datastore.data)
         blank_watch_no_filters['url'] = tmp_watch.get('url')
 
         latest_filename = next(reversed(tmp_watch.history))
-        html_fname = os.path.join(tmp_watch.watch_data_dir, f"{latest_filename}.html.br")
+        html_fname = os.path.join(tmp_watch.data_dir, f"{latest_filename}.html.br")
         with open(html_fname, 'rb') as f:
             decompressed_data = brotli.decompress(f.read()).decode('utf-8') if html_fname.endswith('.br') else f.read().decode('utf-8')
 
@@ -76,13 +84,16 @@ def prepare_filter_prevew(datastore, watch_uuid, form_data):
             update_handler.fetcher.headers['content-type'] = tmp_watch.get('content-type')
 
             # Process our watch with filters and the HTML from disk, and also a blank watch with no filters but also with the same HTML from disk
-            # Do this as a parallel process because it could take some time
-            with ProcessPoolExecutor(max_workers=2) as executor:
-                future1 = executor.submit(_task, tmp_watch, update_handler)
-                future2 = executor.submit(_task, blank_watch_no_filters, update_handler)
+            # Do this as parallel threads (not processes) to avoid pickle issues with Lock objects
+            try:
+                with ThreadPoolExecutor(max_workers=2) as executor:
+                    future1 = executor.submit(_task, tmp_watch, update_handler)
+                    future2 = executor.submit(_task, blank_watch_no_filters, update_handler)
 
-                text_after_filter = future1.result()
-                text_before_filter = future2.result()
+                    text_after_filter = future1.result()
+                    text_before_filter = future2.result()
+            except Exception as e:
+                x=1
 
     try:
         trigger_line_numbers = html_tools.strip_ignore_text(content=text_after_filter,
@@ -101,14 +112,23 @@ def prepare_filter_prevew(datastore, watch_uuid, form_data):
     except Exception as e:
         text_before_filter = f"Error: {str(e)}"
 
+    try:
+        blocked_line_numbers = html_tools.strip_ignore_text(content=text_after_filter,
+                                                           wordlist=tmp_watch.get('text_should_not_be_present', []) + datastore.data['settings']['application'].get('text_should_not_be_present', []),
+                                                           mode='line numbers'
+                                                           )
+    except Exception as e:
+        text_before_filter = f"Error: {str(e)}"
+
     logger.trace(f"Parsed in {time.time() - now:.3f}s")
 
     return ({
-            'after_filter': text_after_filter,
-            'before_filter': text_before_filter.decode('utf-8') if isinstance(text_before_filter, bytes) else text_before_filter,
-            'duration': time.time() - now,
-            'trigger_line_numbers': trigger_line_numbers,
-            'ignore_line_numbers': ignore_line_numbers,
+        'after_filter': text_after_filter,
+        'before_filter': text_before_filter.decode('utf-8') if isinstance(text_before_filter, bytes) else text_before_filter,
+        'blocked_line_numbers': blocked_line_numbers,
+        'duration': time.time() - now,
+        'ignore_line_numbers': ignore_line_numbers,
+        'trigger_line_numbers': trigger_line_numbers,
         })
 
 

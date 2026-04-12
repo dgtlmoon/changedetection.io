@@ -11,6 +11,4 @@ updates:
   - package-ecosystem: pip
     directory: /
     schedule:
-      interval: "daily"
-    allow:
-      - dependency-name: "apprise"
+      interval: "weekly"

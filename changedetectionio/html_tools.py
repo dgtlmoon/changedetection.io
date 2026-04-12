@@ -1,8 +1,10 @@
+from functools import lru_cache
+
 from loguru import logger
-from lxml import etree
 from typing import List
 import html
 import json
+import os
 import re
 
 # HTML added to be sure each result matching a filter (.example) gets converted to a new line by Inscriptis
@@ -12,8 +14,46 @@ PERL_STYLE_REGEX = r'^/(.*?)/([a-z]*)?$'
 
 TITLE_RE = re.compile(r"<title[^>]*>(.*?)</title>", re.I | re.S)
 META_CS  = re.compile(r'<meta[^>]+charset=["\']?\s*([a-z0-9_\-:+.]+)', re.I)
-META_CT  = re.compile(r'<meta[^>]+http-equiv=["\']?content-type["\']?[^>]*content=["\'][^>]*charset=([a-z0-9_\-:+.]+)', re.I)
 
+# jq builtins that can leak sensitive data or cause harm when user-supplied expressions are executed.
+# env/$ENV reads all process environment variables (passwords, API keys, etc.)
+# include/import can read arbitrary files from disk
+# input/inputs reads beyond the supplied JSON data
+# debug/stderr leaks data to stderr
+# halt/halt_error terminates the process (DoS)
+_JQ_BLOCKED_PATTERNS = [
+    (re.compile(r'\benv\b'),                    'env (reads environment variables)'),
+    (re.compile(r'\$ENV\b'),                    '$ENV (reads environment variables)'),
+    (re.compile(r'\binclude\b'),                'include (reads files from disk)'),
+    (re.compile(r'\bimport\b'),                 'import (reads files from disk)'),
+    (re.compile(r'\binputs?\b'),                'input/inputs (reads beyond provided data)'),
+    (re.compile(r'\bdebug\b'),                  'debug (leaks data to stderr)'),
+    (re.compile(r'\bstderr\b'),                 'stderr (leaks data to stderr)'),
+    (re.compile(r'\bhalt(?:_error)?\b'),        'halt/halt_error (terminates the process)'),
+    (re.compile(r'\$__loc__\b'),                '$__loc__ (leaks file path information)'),
+    (re.compile(r'\bbuiltins\b'),               'builtins (enumerates available functions)'),
+    (re.compile(r'\bmodulemeta\b'),             'modulemeta (leaks module information)'),
+    (re.compile(r'\$JQ_BUILD_CONFIGURATION\b'), '$JQ_BUILD_CONFIGURATION (leaks build information)'),
+]
+
+def validate_jq_expression(expression: str) -> None:
+    """Raise ValueError if the jq expression uses any dangerous builtin.
+
+    User-supplied jq expressions are executed server-side. Without this check,
+    builtins like `env` expose every process environment variable (SALTED_PASS,
+    proxy credentials, API keys, etc.) as watch output.
+    """
+    from changedetectionio.strtobool import strtobool
+    if strtobool(os.getenv('JQ_ALLOW_RISKY_EXPRESSIONS', 'false')):
+        return
+
+    for pattern, description in _JQ_BLOCKED_PATTERNS:
+        if pattern.search(expression):
+            msg = f"jq expression uses disallowed builtin: {description}"
+            logger.critical(f"Security: blocked jq expression containing '{description}' - expression: {expression!r}")
+            raise ValueError(msg)
+
+META_CT  = re.compile(r'<meta[^>]+http-equiv=["\']?content-type["\']?[^>]*content=["\'][^>]*charset=([a-z0-9_\-:+.]+)', re.I)
 
 # 'price' , 'lowPrice', 'highPrice' are usually under here
 # All of those may or may not appear on different websites - I didnt find a way todo case-insensitive searching here
@@ -24,8 +64,61 @@ class JSONNotFound(ValueError):
         ValueError.__init__(self, msg)
 
 
+_DEFAULT_UNSAFE_XPATH3_FUNCTIONS = [
+    'unparsed-text',
+    'unparsed-text-lines',
+    'unparsed-text-available',
+    'doc',
+    'doc-available',
+    'json-doc',
+    'json-doc-available',
+    'collection',           # XPath 2.0+: loads XML node collections from arbitrary URIs
+    'uri-collection',       # XPath 3.0+: enumerates URIs from resource collections
+    'transform',            # XPath 3.1: XSLT transformation (currently raises, block proactively)
+    'load-xquery-module',   # XPath 3.1: loads XQuery modules (currently raises, block proactively)
+    'environment-variable',
+    'available-environment-variables',
+]
+
+
+def _build_safe_xpath3_parser():
+    """Return an XPath3Parser subclass with filesystem/environment access functions removed.
+
+    XPath 3.0 includes functions that can read arbitrary files or environment variables:
+      - unparsed-text / unparsed-text-lines / unparsed-text-available  (file read)
+      - doc / doc-available                                             (XML fetch from URI)
+      - environment-variable / available-environment-variables         (env var leakage)
+
+    Subclassing gives us an independent symbol_table copy (not shared with the parent class),
+    so removing entries here does not affect XPath3Parser itself.
+
+    Override the blocked list via the XPATH_BLOCKED_FUNCTIONS environment variable
+    (comma-separated, e.g. "unparsed-text,doc,environment-variable").
+    """
+    import os
+    from elementpath.xpath3 import XPath3Parser
+
+    class SafeXPath3Parser(XPath3Parser):
+        pass
+
+    env_override = os.getenv('XPATH_BLOCKED_FUNCTIONS')
+    if env_override is not None:
+        blocked = [f.strip() for f in env_override.split(',') if f.strip()]
+    else:
+        blocked = _DEFAULT_UNSAFE_XPATH3_FUNCTIONS
+
+    for _fn in blocked:
+        SafeXPath3Parser.symbol_table.pop(_fn, None)
+
+    return SafeXPath3Parser
+
+
+# Module-level singleton — built once, reused everywhere.
+SafeXPath3Parser = _build_safe_xpath3_parser()
+
 # Doesn't look like python supports forward slash auto enclosure in re.findall
 # So convert it to inline flag "(?i)foobar" type configuration
+@lru_cache(maxsize=100)
 def perl_style_slash_enclosed_regex_to_options(regex):
 
     res = re.search(PERL_STYLE_REGEX, regex, re.IGNORECASE)
@@ -58,12 +151,16 @@ def include_filters(include_filters, html_content, append_pretty_line_formatting
 
     return html_block
 
-def subtractive_css_selector(css_selector, html_content):
+def subtractive_css_selector(css_selector, content):
     from bs4 import BeautifulSoup
-    soup = BeautifulSoup(html_content, "html.parser")
+    soup = BeautifulSoup(content, "html.parser")
 
     # So that the elements dont shift their index, build a list of elements here which will be pointers to their place in the DOM
     elements_to_remove = soup.select(css_selector)
+
+    if not elements_to_remove:
+        # Better to return the original that rebuild with BeautifulSoup
+        return content
 
     # Then, remove them in a separate loop
     for item in elements_to_remove:
@@ -72,6 +169,7 @@ def subtractive_css_selector(css_selector, html_content):
     return str(soup)
 
 def subtractive_xpath_selector(selectors: List[str], html_content: str) -> str:
+    from lxml import etree
     # Parse the HTML content using lxml
     html_tree = etree.HTML(html_content)
 
@@ -82,6 +180,10 @@ def subtractive_xpath_selector(selectors: List[str], html_content: str) -> str:
     for selector in selectors:
         # Collect elements for each selector
         elements_to_remove.extend(html_tree.xpath(selector))
+
+    # If no elements were found, return the original HTML content
+    if not elements_to_remove:
+        return html_content
 
     # Then, remove them in a separate loop
     for element in elements_to_remove:
@@ -100,7 +202,7 @@ def element_removal(selectors: List[str], html_content):
     xpath_selectors = []
 
     for selector in selectors:
-        if selector.startswith(('xpath:', 'xpath1:', '//')):
+        if selector.strip().startswith(('xpath:', 'xpath1:', '//')):
             # Handle XPath selectors separately
             xpath_selector = selector.removeprefix('xpath:').removeprefix('xpath1:')
             xpath_selectors.append(xpath_selector)
@@ -163,75 +265,132 @@ def elementpath_tostring(obj):
     return str(obj)
 
 # Return str Utf-8 of matched rules
-def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False, is_rss=False):
+def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False, is_xml=False):
+    """
+
+    :param xpath_filter:
+    :param html_content:
+    :param append_pretty_line_formatting:
+    :param is_xml: set to true if is XML or is RSS (RSS is XML)
+    :return:
+    """
     from lxml import etree, html
     import elementpath
-    # xpath 2.0-3.1
-    from elementpath.xpath3 import XPath3Parser
 
     parser = etree.HTMLParser()
-    if is_rss:
-        # So that we can keep CDATA for cdata_in_document_to_text() to process
-        parser = etree.XMLParser(strip_cdata=False)
-
-    tree = html.fromstring(bytes(html_content, encoding='utf-8'), parser=parser)
-    html_block = ""
-
-    r = elementpath.select(tree, xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'}, parser=XPath3Parser)
-    #@note: //title/text() wont work where <title>CDATA..
-
-    if type(r) != list:
-        r = [r]
-
-    for element in r:
-        # When there's more than 1 match, then add the suffix to separate each line
-        # And where the matched result doesn't include something that will cause Inscriptis to add a newline
-        # (This way each 'match' reliably has a new-line in the diff)
-        # Divs are converted to 4 whitespaces by inscriptis
-        if append_pretty_line_formatting and len(html_block) and (not hasattr( element, 'tag' ) or not element.tag in (['br', 'hr', 'div', 'p'])):
-            html_block += TEXT_FILTER_LIST_LINE_SUFFIX
-
-        if type(element) == str:
-            html_block += element
-        elif issubclass(type(element), etree._Element) or issubclass(type(element), etree._ElementTree):
-            html_block += etree.tostring(element, pretty_print=True).decode('utf-8')
+    tree = None
+    try:
+        if is_xml:
+            # So that we can keep CDATA for cdata_in_document_to_text() to process
+            parser = etree.XMLParser(strip_cdata=False)
+            # For XML/RSS content, use etree.fromstring to properly handle XML declarations
+            tree = etree.fromstring(html_content.encode('utf-8') if isinstance(html_content, str) else html_content, parser=parser)
         else:
-            html_block += elementpath_tostring(element)
+            tree = html.fromstring(html_content, parser=parser)
+        html_block = ""
 
-    return html_block
+        # Build namespace map for XPath queries
+        namespaces = {'re': 'http://exslt.org/regular-expressions'}
+
+        # Handle default namespace in documents (common in RSS/Atom feeds, but can occur in any XML)
+        # XPath spec: unprefixed element names have no namespace, not the default namespace
+        # Solution: Register the default namespace with empty string prefix in elementpath
+        # This is primarily for RSS/Atom feeds but works for any XML with default namespace
+        if hasattr(tree, 'nsmap') and tree.nsmap and None in tree.nsmap:
+            # Register the default namespace with empty string prefix for elementpath
+            # This allows //title to match elements in the default namespace
+            namespaces[''] = tree.nsmap[None]
+
+        r = elementpath.select(tree, xpath_filter.strip(), namespaces=namespaces, parser=SafeXPath3Parser)
+        #@note: //title/text() now works with default namespaces (fixed by registering '' prefix)
+        #@note: //title/text() wont work where <title>CDATA.. (use cdata_in_document_to_text first)
+
+        if type(r) != list:
+            r = [r]
+
+        for element in r:
+            # When there's more than 1 match, then add the suffix to separate each line
+            # And where the matched result doesn't include something that will cause Inscriptis to add a newline
+            # (This way each 'match' reliably has a new-line in the diff)
+            # Divs are converted to 4 whitespaces by inscriptis
+            if append_pretty_line_formatting and len(html_block) and (not hasattr( element, 'tag' ) or not element.tag in (['br', 'hr', 'div', 'p'])):
+                html_block += TEXT_FILTER_LIST_LINE_SUFFIX
+
+            if type(element) == str:
+                html_block += element
+            elif issubclass(type(element), etree._Element) or issubclass(type(element), etree._ElementTree):
+                # Use 'xml' method for RSS/XML content, 'html' for HTML content
+                # parser will be XMLParser if we detected XML content
+                method = 'xml' if (is_xml or isinstance(parser, etree.XMLParser)) else 'html'
+                html_block += etree.tostring(element, pretty_print=True, method=method, encoding='unicode')
+            else:
+                html_block += elementpath_tostring(element)
+
+        # Drop element references before the finally block so tree.clear() can release
+        # the libxml2 document immediately (elements pin the C-level doc via refcount).
+        del r
+        return html_block
+    finally:
+        # Explicitly clear the tree to free memory
+        # lxml trees can hold significant memory, especially with large documents
+        if tree is not None:
+            tree.clear()
 
 # Return str Utf-8 of matched rules
 # 'xpath1:'
-def xpath1_filter(xpath_filter, html_content, append_pretty_line_formatting=False, is_rss=False):
+def xpath1_filter(xpath_filter, html_content, append_pretty_line_formatting=False, is_xml=False):
     from lxml import etree, html
 
     parser = None
-    if is_rss:
-        # So that we can keep CDATA for cdata_in_document_to_text() to process
-        parser = etree.XMLParser(strip_cdata=False)
-
-    tree = html.fromstring(bytes(html_content, encoding='utf-8'), parser=parser)
-    html_block = ""
-
-    r = tree.xpath(xpath_filter.strip(), namespaces={'re': 'http://exslt.org/regular-expressions'})
-    #@note: //title/text() wont work where <title>CDATA..
-
-    for element in r:
-        # When there's more than 1 match, then add the suffix to separate each line
-        # And where the matched result doesn't include something that will cause Inscriptis to add a newline
-        # (This way each 'match' reliably has a new-line in the diff)
-        # Divs are converted to 4 whitespaces by inscriptis
-        if append_pretty_line_formatting and len(html_block) and (not hasattr(element, 'tag') or not element.tag in (['br', 'hr', 'div', 'p'])):
-            html_block += TEXT_FILTER_LIST_LINE_SUFFIX
-
-        # Some kind of text, UTF-8 or other
-        if isinstance(element, (str, bytes)):
-            html_block += element
+    tree = None
+    try:
+        if is_xml:
+            # So that we can keep CDATA for cdata_in_document_to_text() to process
+            parser = etree.XMLParser(strip_cdata=False)
+            # For XML/RSS content, use etree.fromstring to properly handle XML declarations
+            tree = etree.fromstring(html_content.encode('utf-8') if isinstance(html_content, str) else html_content, parser=parser)
         else:
-            # Return the HTML which will get parsed as text
-            html_block += etree.tostring(element, pretty_print=True).decode('utf-8')
+            tree = html.fromstring(html_content, parser=parser)
+        html_block = ""
 
-    return html_block
+        # Build namespace map for XPath queries
+        namespaces = {'re': 'http://exslt.org/regular-expressions'}
+
+        # NOTE: lxml's native xpath() does NOT support empty string prefix for default namespace
+        # For documents with default namespace (RSS/Atom feeds), users must use:
+        #   - local-name(): //*[local-name()='title']/text()
+        #   - Or use xpath_filter (not xpath1_filter) which supports default namespaces
+        # XPath spec: unprefixed element names have no namespace, not the default namespace
+
+        r = tree.xpath(xpath_filter.strip(), namespaces=namespaces)
+        #@note: xpath1 (lxml) does NOT automatically handle default namespaces
+        #@note: Use //*[local-name()='element'] or switch to xpath_filter for default namespace support
+        #@note: //title/text() wont work where <title>CDATA.. (use cdata_in_document_to_text first)
+
+        for element in r:
+            # When there's more than 1 match, then add the suffix to separate each line
+            # And where the matched result doesn't include something that will cause Inscriptis to add a newline
+            # (This way each 'match' reliably has a new-line in the diff)
+            # Divs are converted to 4 whitespaces by inscriptis
+            if append_pretty_line_formatting and len(html_block) and (not hasattr(element, 'tag') or not element.tag in (['br', 'hr', 'div', 'p'])):
+                html_block += TEXT_FILTER_LIST_LINE_SUFFIX
+
+            # Some kind of text, UTF-8 or other
+            if isinstance(element, (str, bytes)):
+                html_block += element
+            else:
+                # Return the HTML/XML which will get parsed as text
+                # Use 'xml' method for RSS/XML content, 'html' for HTML content
+                # parser will be XMLParser if we detected XML content
+                method = 'xml' if (is_xml or isinstance(parser, etree.XMLParser)) else 'html'
+                html_block += etree.tostring(element, pretty_print=True, method=method, encoding='unicode')
+
+        return html_block
+    finally:
+        # Explicitly clear the tree to free memory
+        # lxml trees can hold significant memory, especially with large documents
+        if tree is not None:
+            tree.clear()
 
 # Extract/find element
 def extract_element(find='title', html_content=''):
@@ -265,12 +424,16 @@ def _parse_json(json_data, json_filter):
             raise Exception("jq not support not found")
 
         if json_filter.startswith("jq:"):
-            jq_expression = jq.compile(json_filter.removeprefix("jq:"))
+            expr = json_filter.removeprefix("jq:")
+            validate_jq_expression(expr)
+            jq_expression = jq.compile(expr)
             match = jq_expression.input(json_data).all()
             return _get_stripped_text_from_json_match(match)
 
         if json_filter.startswith("jqraw:"):
-            jq_expression = jq.compile(json_filter.removeprefix("jqraw:"))
+            expr = json_filter.removeprefix("jqraw:")
+            validate_jq_expression(expr)
+            jq_expression = jq.compile(expr)
             match = jq_expression.input(json_data).all()
             return '\n'.join(str(item) for item in match)
 
@@ -295,70 +458,104 @@ def _get_stripped_text_from_json_match(match):
 
     return stripped_text_from_html
 
+def extract_json_blob_from_html(content, ensure_is_ldjson_info_type, json_filter):
+    from bs4 import BeautifulSoup
+    stripped_text_from_html = ''
+
+    # Foreach <script json></script> blob.. just return the first that matches json_filter
+    # As a last resort, try to parse the whole <body>
+    soup = BeautifulSoup(content, 'html.parser')
+
+    if ensure_is_ldjson_info_type:
+        bs_result = soup.find_all('script', {"type": "application/ld+json"})
+    else:
+        bs_result = soup.find_all('script')
+    bs_result += soup.find_all('body')
+
+    bs_jsons = []
+
+    for result in bs_result:
+        # result.text is how bs4 magically strips JSON from the body
+        content_start = result.text.lstrip("\ufeff").strip()[:100] if result.text else ''
+        # Skip empty tags, and things that dont even look like JSON
+        if not result.text or not (content_start[0] == '{' or content_start[0] == '['):
+            continue
+        try:
+            json_data = json.loads(result.text)
+            bs_jsons.append(json_data)
+        except json.JSONDecodeError:
+            # Skip objects which cannot be parsed
+            continue
+
+    if not bs_jsons:
+        raise JSONNotFound("No parsable JSON found in this document")
+
+    for json_data in bs_jsons:
+        stripped_text_from_html = _parse_json(json_data, json_filter)
+
+        if ensure_is_ldjson_info_type:
+            # Could sometimes be list, string or something else random
+            if isinstance(json_data, dict):
+                # If it has LD JSON 'key' @type, and @type is 'product', and something was found for the search
+                # (Some sites have multiple of the same ld+json @type='product', but some have the review part, some have the 'price' part)
+                # @type could also be a list although non-standard ("@type": ["Product", "SubType"],)
+                # LD_JSON auto-extract also requires some content PLUS the ldjson to be present
+                # 1833 - could be either str or dict, should not be anything else
+
+                t = json_data.get('@type')
+                if t and stripped_text_from_html:
+
+                    if isinstance(t, str) and t.lower() == ensure_is_ldjson_info_type.lower():
+                        break
+                    # The non-standard part, some have a list
+                    elif isinstance(t, list):
+                        if ensure_is_ldjson_info_type.lower() in [x.lower().strip() for x in t]:
+                            break
+
+        elif stripped_text_from_html:
+            break
+
+    return stripped_text_from_html
+
 # content - json
 # json_filter - ie json:$..price
 # ensure_is_ldjson_info_type - str "product", optional, "@type == product" (I dont know how to do that as a json selector)
 def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None):
-    from bs4 import BeautifulSoup
 
     stripped_text_from_html = False
 # https://github.com/dgtlmoon/changedetection.io/pull/2041#issuecomment-1848397161w
     # Try to parse/filter out the JSON, if we get some parser error, then maybe it's embedded within HTML tags
-    try:
-        # .lstrip("\ufeff") strings ByteOrderMark from UTF8 and still lets the UTF work
-        stripped_text_from_html = _parse_json(json.loads(content.lstrip("\ufeff") ), json_filter)
-    except json.JSONDecodeError as e:
-        logger.warning(str(e))
 
-        # Foreach <script json></script> blob.. just return the first that matches json_filter
-        # As a last resort, try to parse the whole <body>
-        soup = BeautifulSoup(content, 'html.parser')
+    # Looks like clean JSON, dont bother extracting from HTML
 
-        if ensure_is_ldjson_info_type:
-            bs_result = soup.find_all('script', {"type": "application/ld+json"})
-        else:
-            bs_result = soup.find_all('script')
-        bs_result += soup.find_all('body')
+    content_start = content.lstrip("\ufeff").strip()[:100]
 
-        bs_jsons = []
-        for result in bs_result:
-            # Skip empty tags, and things that dont even look like JSON
-            if not result.text or '{' not in result.text:
-                continue
+    if content_start[0] == '{' or content_start[0] == '[':
+        try:
+            # .lstrip("\ufeff") strings ByteOrderMark from UTF8 and still lets the UTF work
+            stripped_text_from_html = _parse_json(json.loads(content.lstrip("\ufeff")), json_filter)
+        except json.JSONDecodeError as e:
+            logger.warning(f"Error processing JSON {content[:20]}...{str(e)})")
+    else:
+        # Check for JSONP wrapper: someCallback({...}) or some.namespace({...})
+        # Server may claim application/json but actually return JSONP
+        jsonp_match = re.match(r'^\w[\w.]*\s*\((.+)\)\s*;?\s*$', content.lstrip("\ufeff").strip(), re.DOTALL)
+        if jsonp_match:
             try:
-                json_data = json.loads(result.text)
-                bs_jsons.append(json_data)
-            except json.JSONDecodeError:
-                # Skip objects which cannot be parsed
-                continue
+                inner = jsonp_match.group(1).strip()
+                logger.warning(f"Content looks like JSONP, attempting to extract inner JSON for filter '{json_filter}'")
+                stripped_text_from_html = _parse_json(json.loads(inner), json_filter)
+            except json.JSONDecodeError as e:
+                logger.warning(f"Error processing JSONP inner content {content[:20]}...{str(e)})")
 
-        if not bs_jsons:
-            raise JSONNotFound("No parsable JSON found in this document")
-        
-        for json_data in bs_jsons:
-            stripped_text_from_html = _parse_json(json_data, json_filter)
-
-            if ensure_is_ldjson_info_type:
-                # Could sometimes be list, string or something else random
-                if isinstance(json_data, dict):
-                    # If it has LD JSON 'key' @type, and @type is 'product', and something was found for the search
-                    # (Some sites have multiple of the same ld+json @type='product', but some have the review part, some have the 'price' part)
-                    # @type could also be a list although non-standard ("@type": ["Product", "SubType"],)
-                    # LD_JSON auto-extract also requires some content PLUS the ldjson to be present
-                    # 1833 - could be either str or dict, should not be anything else
-
-                    t = json_data.get('@type')
-                    if t and stripped_text_from_html:
-
-                        if isinstance(t, str) and t.lower() == ensure_is_ldjson_info_type.lower():
-                            break
-                        # The non-standard part, some have a list
-                        elif isinstance(t, list):
-                            if ensure_is_ldjson_info_type.lower() in [x.lower().strip() for x in t]:
-                                break
-
-            elif stripped_text_from_html:
-                break
+        if not stripped_text_from_html:
+            # Probably something else, go fish inside for it
+            try:
+                stripped_text_from_html = extract_json_blob_from_html(content=content,
+                                                                      ensure_is_ldjson_info_type=ensure_is_ldjson_info_type,
+                                                                      json_filter=json_filter)
+            except json.JSONDecodeError as e:
+                logger.warning(f"Error processing JSON while extracting JSON from HTML blob {content[:20]}...{str(e)})")
 
     if not stripped_text_from_html:
         # Re 265 - Just return an empty string when filter not found
@@ -377,7 +574,13 @@ def strip_ignore_text(content, wordlist, mode="content"):
     ignore_regex_multiline = []
     ignored_lines = []
 
+    if not content:
+        return ''
+
     for k in wordlist:
+        # Skip empty strings to avoid matching everything
+        if not k or not k.strip():
+            continue
         # Is it a regex?
         res = re.search(PERL_STYLE_REGEX, k, re.IGNORECASE)
         if res:
@@ -446,6 +649,18 @@ def cdata_in_document_to_text(html_content: str, render_anchor_tag_content=False
 
 
 def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=False, timeout=10) -> str:
+    """
+    Convert HTML content to plain text using inscriptis.
+
+    Thread-Safety: This function uses inscriptis.get_text() which internally calls
+    lxml.html.fromstring() with the default parser. Testing with 50 concurrent threads
+    confirms this approach is thread-safe and produces deterministic output.
+
+    Alternative Approach Rejected: An explicit HTMLParser instance (thread-local or fresh)
+    would also be thread-safe, but was found to break change detection logic in subtle ways
+    (test_check_basic_change_detection_functionality). The default parser provides correct
+    and reliable behavior.
+    """
     from inscriptis import get_text
     from inscriptis.model.config import ParserConfig
 
@@ -456,10 +671,33 @@ def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=Fals
         )
     else:
         parser_config = None
-
     if is_rss:
         html_content = re.sub(r'<title([\s>])', r'<h1\1', html_content)
         html_content = re.sub(r'</title>', r'</h1>', html_content)
+    else:
+        # Use BS4 html.parser to strip bloat — SPA's often dump 10MB+ of CSS/JS into <head>,
+        # causing inscriptis to silently give up. Regex-based stripping is unsafe because tags
+        # can appear inside JSON data attributes with JS-escaped closing tags (e.g. <\/script>),
+        # causing the regex to scan past the intended close and eat real page content.
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(html_content, 'html.parser')
+        # Strip tags that inscriptis cannot render as meaningful text and which can be very large.
+        # svg/math: produce path-data/MathML garbage; canvas/iframe/template: no inscriptis handlers.
+        # video/audio/picture are kept — they may contain meaningful fallback text or captions.
+        for tag in soup.find_all(['head', 'script', 'style', 'noscript', 'svg',
+                                  'math', 'canvas', 'iframe', 'template']):
+            tag.decompose()
+
+        # SPAs often use <body style="display:none"> to hide content until JS loads.
+        # inscriptis respects CSS display rules, so strip hiding styles from the body tag.
+        body_tag = soup.find('body')
+        if body_tag and body_tag.get('style'):
+            style = body_tag['style']
+            if re.search(r'\b(?:display\s*:\s*none|visibility\s*:\s*hidden)\b', style, re.IGNORECASE):
+                logger.debug(f"html_to_text: Removing hiding styles from body tag (found: '{style}')")
+                del body_tag['style']
+
+        html_content = str(soup)
 
     text_content = get_text(html_content, config=parser_config)
     return text_content

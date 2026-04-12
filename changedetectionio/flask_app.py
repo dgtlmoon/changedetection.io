@@ -4,16 +4,18 @@ import flask_login
 import locale
 import os
 import queue
+import re
 import sys
 import threading
 import time
 import timeago
 from blinker import signal
+from pathlib import Path
 
 from changedetectionio.strtobool import strtobool
 from threading import Event
 from changedetectionio.queue_handlers import RecheckPriorityQueue, NotificationQueue
-from changedetectionio import worker_handler
+from changedetectionio import worker_pool
 
 from flask import (
     Flask,
@@ -23,10 +25,9 @@ from flask import (
     render_template,
     request,
     send_from_directory,
+    session,
     url_for,
 )
-from flask_compress import Compress as FlaskCompress
-from flask_login import current_user
 from flask_restful import abort, Api
 from flask_cors import CORS
 
@@ -34,13 +35,18 @@ from flask_cors import CORS
 # Make this a global singleton to avoid multiple signal objects
 watch_check_update = signal('watch_check_update', doc='Signal sent when a watch check is completed')
 from flask_wtf import CSRFProtect
+from flask_babel import Babel, gettext, get_locale
 from loguru import logger
 
 from changedetectionio import __version__
 from changedetectionio import queuedWatchMetaData
-from changedetectionio.api import Watch, WatchHistory, WatchSingleHistory, CreateWatch, Import, SystemInfo, Tag, Tags, Notifications, WatchFavicon
+from changedetectionio.api import Watch, WatchHistory, WatchSingleHistory, WatchHistoryDiff, CreateWatch, Import, SystemInfo, Tag, Tags, Notifications, WatchFavicon, Spec
 from changedetectionio.api.Search import Search
 from .time_handler import is_within_schedule
+from changedetectionio.languages import get_available_languages, get_language_codes, get_flag_for_locale, get_timeago_locale
+from changedetectionio.favicon_utils import get_favicon_mime_type
+
+IN_PYTEST = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
 
 datastore = None
 
@@ -51,7 +57,7 @@ extra_stylesheets = []
 # Use bulletproof janus-based queues for sync/async reliability  
 update_q = RecheckPriorityQueue()
 notification_q = NotificationQueue()
-MAX_QUEUE_SIZE = 2000
+MAX_QUEUE_SIZE = 5000
 
 app = Flask(__name__,
             static_url_path="",
@@ -63,9 +69,45 @@ socketio_server = None
 
 # Enable CORS, especially useful for the Chrome extension to operate from anywhere
 CORS(app)
+from werkzeug.routing import BaseConverter, ValidationError
+from uuid import UUID
 
-# Super handy for compressing large BrowserSteps responses and others
-FlaskCompress(app)
+class StrictUUIDConverter(BaseConverter):
+    # Special sentinel values allowed in addition to strict UUIDs
+    _ALLOWED_SENTINELS = frozenset({'first'})
+
+    def to_python(self, value: str) -> str:
+        if value in self._ALLOWED_SENTINELS:
+            return value
+        try:
+            u = UUID(value)
+        except ValueError as e:
+            raise ValidationError() from e
+        # Reject non-standard formats (braces, URNs, no-hyphens)
+        if str(u) != value.lower():
+            raise ValidationError()
+        return str(u)
+
+    def to_url(self, value) -> str:
+        return str(value)
+
+# app setup (once)
+app.url_map.converters["uuid_str"] = StrictUUIDConverter
+
+# Flask-Compress handles HTTP compression, Socket.IO compression disabled to prevent memory leak.
+# There's also a bug between flask compress and socketio that causes some kind of slow memory leak
+# It's better to use compression on your reverse proxy (nginx etc) instead.
+if strtobool(os.getenv("FLASK_ENABLE_COMPRESSION")):
+    from flask_compress import Compress as FlaskCompress
+    app.config['COMPRESS_MIN_SIZE'] = 2096
+    app.config['COMPRESS_MIMETYPES'] = ['text/html', 'text/css', 'text/javascript', 'application/json', 'application/javascript', 'image/svg+xml']
+    # Use gzip only - smaller memory footprint than zstd/brotli (4-8KB vs 200-500KB contexts)
+    app.config['COMPRESS_ALGORITHM'] = ['gzip']
+    compress = FlaskCompress()
+    compress.init_app(app)
+
+app.config['TEMPLATES_AUTO_RELOAD'] = False
+
 
 # Stop browser caching of assets
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
@@ -76,11 +118,43 @@ app.config['NEW_VERSION_AVAILABLE'] = False
 if os.getenv('FLASK_SERVER_NAME'):
     app.config['SERVER_NAME'] = os.getenv('FLASK_SERVER_NAME')
 
+# Babel/i18n configuration
+app.config['BABEL_TRANSLATION_DIRECTORIES'] = str(Path(__file__).parent / 'translations')
+app.config['BABEL_DEFAULT_LOCALE'] = 'en_GB'
+
+# Session configuration
+# NOTE: Flask session (for locale, etc.) is separate from Flask-Login's remember-me cookie
+# - Flask session stores data like session['locale'] in a signed cookie
+# - Flask-Login's remember=True creates a separate authentication cookie
+# - Setting PERMANENT_SESSION_LIFETIME controls how long the Flask session cookie lasts
+from datetime import timedelta
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=3650)  # ~10 years (effectively unlimited)
+
 #app.config["EXPLAIN_TEMPLATE_LOADING"] = True
 
-# Disables caching of the templates
-app.config['TEMPLATES_AUTO_RELOAD'] = True
+
 app.jinja_env.add_extension('jinja2.ext.loopcontrols')
+
+# Configure Jinja2 to search for templates in plugin directories
+def _configure_plugin_templates():
+    """Configure Jinja2 loader to include plugin template directories."""
+    from jinja2 import ChoiceLoader, FileSystemLoader
+    from changedetectionio.pluggy_interface import get_plugin_template_paths
+
+    # Get plugin template paths
+    plugin_template_paths = get_plugin_template_paths()
+
+    if plugin_template_paths:
+        # Create a ChoiceLoader that searches app templates first, then plugin templates
+        loaders = [app.jinja_loader]  # Keep the default app loader first
+        for path in plugin_template_paths:
+            loaders.append(FileSystemLoader(path))
+
+        app.jinja_loader = ChoiceLoader(loaders)
+        logger.info(f"Configured Jinja2 to search {len(plugin_template_paths)} plugin template directories")
+
+# Configure plugin templates (called after plugins are loaded)
+_configure_plugin_templates()
 csrf = CSRFProtect()
 csrf.init_app(app)
 notification_debug_log=[]
@@ -101,12 +175,12 @@ def init_app_secret(datastore_path):
     path = os.path.join(datastore_path, "secret.txt")
 
     try:
-        with open(path, "r") as f:
+        with open(path, "r", encoding='utf-8') as f:
             secret = f.read()
 
     except FileNotFoundError:
         import secrets
-        with open(path, "w") as f:
+        with open(path, "w", encoding='utf-8') as f:
             secret = secrets.token_hex(32)
             f.write(secret)
 
@@ -133,18 +207,32 @@ def get_socketio_path():
     # Socket.IO will be available at {prefix}/socket.io/
     return prefix
 
+@app.template_global('is_safe_valid_url')
+def _is_safe_valid_url(test_url):
+    from .validate_url import is_safe_valid_url
+    return is_safe_valid_url(test_url)
+
+@app.template_global('get_html_head_extras')
+def _get_html_head_extras():
+    from .pluggy_interface import collect_html_head_extras
+    return collect_html_head_extras()
+
 
 @app.template_filter('format_number_locale')
 def _jinja2_filter_format_number_locale(value: float) -> str:
     "Formats for example 4000.10 to the local locale default of 4,000.10"
     # Format the number with two decimal places (locale format string will return 6 decimal)
     formatted_value = locale.format_string("%.2f", value, grouping=True)
-
     return formatted_value
+
+@app.template_filter('regex_search')
+def _jinja2_filter_regex_search(value, pattern):
+    import re
+    return re.search(pattern, str(value)) is not None
 
 @app.template_global('is_checking_now')
 def _watch_is_checking_now(watch_obj, format="%Y-%m-%d %H:%M:%S"):
-    return worker_handler.is_watch_running(watch_obj['uuid'])
+    return worker_pool.is_watch_running(watch_obj['uuid'])
 
 @app.template_global('get_watch_queue_position')
 def _get_watch_queue_position(watch_obj):
@@ -155,13 +243,13 @@ def _get_watch_queue_position(watch_obj):
 @app.template_global('get_current_worker_count')
 def _get_current_worker_count():
     """Get the current number of operational workers"""
-    return worker_handler.get_worker_count()
+    return worker_pool.get_worker_count()
 
 @app.template_global('get_worker_status_info')
 def _get_worker_status_info():
     """Get detailed worker status information for display"""
-    status = worker_handler.get_worker_status()
-    running_uuids = worker_handler.get_running_uuids()
+    status = worker_pool.get_worker_status()
+    running_uuids = worker_pool.get_running_uuids()
     
     return {
         'count': status['worker_count'],
@@ -178,16 +266,26 @@ def _get_worker_status_info():
 def _jinja2_filter_datetime(watch_obj, format="%Y-%m-%d %H:%M:%S"):
 
     if watch_obj['last_checked'] == 0:
-        return 'Not yet'
+        return gettext('Not yet')
 
-    return timeago.format(int(watch_obj['last_checked']), time.time())
+    locale = get_timeago_locale(str(get_locale()))
+    try:
+        return timeago.format(int(watch_obj['last_checked']), time.time(), locale)
+    except:
+        # Fallback to English if locale not supported by timeago
+        return timeago.format(int(watch_obj['last_checked']), time.time(), 'en')
 
 @app.template_filter('format_timestamp_timeago')
 def _jinja2_filter_datetimestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
     if not timestamp:
-        return 'Not yet'
+        return gettext('Not yet')
 
-    return timeago.format(int(timestamp), time.time())
+    locale = get_timeago_locale(str(get_locale()))
+    try:
+        return timeago.format(int(timestamp), time.time(), locale)
+    except:
+        # Fallback to English if locale not supported by timeago
+        return timeago.format(int(timestamp), time.time(), 'en')
 
 
 @app.template_filter('pagination_slice')
@@ -201,9 +299,119 @@ def _jinja2_filter_pagination_slice(arr, skip):
 @app.template_filter('format_seconds_ago')
 def _jinja2_filter_seconds_precise(timestamp):
     if timestamp == False:
-        return 'Not yet'
+        return gettext('Not yet')
 
     return format(int(time.time()-timestamp), ',d')
+
+@app.template_filter('format_duration')
+def _jinja2_filter_format_duration(seconds):
+    """Format a duration in seconds into human readable string like '5 days, 3 hours, 30 minutes'"""
+    from datetime import timedelta
+
+    if not seconds or seconds < 0:
+        return gettext('0 seconds')
+
+    td = timedelta(seconds=int(seconds))
+
+    # Calculate components
+    years = td.days // 365
+    remaining_days = td.days % 365
+    months = remaining_days // 30
+    remaining_days = remaining_days % 30
+    weeks = remaining_days // 7
+    days = remaining_days % 7
+
+    hours = td.seconds // 3600
+    minutes = (td.seconds % 3600) // 60
+    secs = td.seconds % 60
+
+    # Build parts list
+    parts = []
+    if years > 0:
+        parts.append(f"{years} {gettext('year') if years == 1 else gettext('years')}")
+    if months > 0:
+        parts.append(f"{months} {gettext('month') if months == 1 else gettext('months')}")
+    if weeks > 0:
+        parts.append(f"{weeks} {gettext('week') if weeks == 1 else gettext('weeks')}")
+    if days > 0:
+        parts.append(f"{days} {gettext('day') if days == 1 else gettext('days')}")
+    if hours > 0:
+        parts.append(f"{hours} {gettext('hour') if hours == 1 else gettext('hours')}")
+    if minutes > 0:
+        parts.append(f"{minutes} {gettext('minute') if minutes == 1 else gettext('minutes')}")
+    if secs > 0 or not parts:
+        parts.append(f"{secs} {gettext('second') if secs == 1 else gettext('seconds')}")
+
+    return ", ".join(parts)
+
+@app.template_filter('fetcher_status_icons')
+def _jinja2_filter_fetcher_status_icons(fetcher_name):
+    """Get status icon HTML for a given fetcher.
+
+    This filter checks both built-in fetchers and plugin fetchers for status icons.
+
+    Args:
+        fetcher_name: The fetcher name (e.g., 'html_webdriver', 'html_js_zyte')
+
+    Returns:
+        str: HTML string containing status icon elements
+    """
+    from changedetectionio import content_fetchers
+    from changedetectionio.pluggy_interface import collect_fetcher_status_icons
+    from markupsafe import Markup
+    from flask import url_for
+
+    icon_data = None
+
+    # First check if it's a plugin fetcher (plugins have priority)
+    plugin_icon_data = collect_fetcher_status_icons(fetcher_name)
+    if plugin_icon_data:
+        icon_data = plugin_icon_data
+    # Check if it's a built-in fetcher
+    elif hasattr(content_fetchers, fetcher_name):
+        fetcher_class = getattr(content_fetchers, fetcher_name)
+        if hasattr(fetcher_class, 'get_status_icon_data'):
+            icon_data = fetcher_class.get_status_icon_data()
+
+    # Build HTML from icon data
+    if icon_data and isinstance(icon_data, dict):
+        # Use 'group' from icon_data if specified, otherwise default to 'images'
+        group = icon_data.get('group', 'images')
+
+        # Try to use url_for, but fall back to manual URL building if endpoint not registered yet
+        try:
+            icon_url = url_for('static_content', group=group, filename=icon_data['filename'])
+        except:
+            # Fallback: build URL manually respecting APPLICATION_ROOT
+            from flask import request
+            app_root = request.script_root if hasattr(request, 'script_root') else ''
+            icon_url = f"{app_root}/static/{group}/{icon_data['filename']}"
+
+        style_attr = f' style="{icon_data["style"]}"' if icon_data.get('style') else ''
+        html = f'<img class="status-icon" src="{icon_url}" alt="{icon_data["alt"]}" title="{icon_data["title"]}"{style_attr}>'
+        return Markup(html)
+
+    return ''
+
+_RE_SANITIZE_TAG = re.compile(r'[^a-zA-Z0-9]')
+
+@app.template_filter('sanitize_tag_class')
+def _jinja2_filter_sanitize_tag_class(tag_title):
+    """Sanitize a tag title to create a valid CSS class name.
+    Removes all non-alphanumeric characters and converts to lowercase.
+
+    Args:
+        tag_title: The tag title string
+
+    Returns:
+        str: A sanitized string suitable for use as a CSS class name
+    """
+    # Remove all non-alphanumeric characters and convert to lowercase
+    sanitized = _RE_SANITIZE_TAG.sub('', tag_title).lower()
+    # Ensure it starts with a letter (CSS requirement)
+    if sanitized and not sanitized[0].isalpha():
+        sanitized = 'tag' + sanitized
+    return sanitized if sanitized else 'tag'
 
 # Import login_optionally_required from auth_decorator
 from changedetectionio.auth_decorator import login_optionally_required
@@ -259,17 +467,61 @@ def changedetection_app(config=None, datastore_o=None):
     global datastore, socketio_server
     datastore = datastore_o
 
+    # Set datastore reference in notification queue for all_muted checking
+    notification_q.set_datastore(datastore)
+
+    # Import and create a wrapper for is_safe_url that has access to app
+    from changedetectionio.is_safe_url import is_safe_url as _is_safe_url
+
+    def is_safe_url(target):
+        """Wrapper for is_safe_url that passes the app instance"""
+        return _is_safe_url(target, app)
+
     # so far just for read-only via tests, but this will be moved eventually to be the main source
     # (instead of the global var)
     app.config['DATASTORE'] = datastore_o
-    
+
+    # Store batch mode flag to skip background threads when running in batch mode
+    app.config['batch_mode'] = config.get('batch_mode', False) if config else False
+
     # Store the signal in the app config to ensure it's accessible everywhere
     app.config['watch_check_update_SIGNAL'] = watch_check_update
 
     login_manager = flask_login.LoginManager(app)
     login_manager.login_view = 'login'
     app.secret_key = init_app_secret(config['datastore_path'])
-    
+
+    # Initialize Flask-Babel for i18n support
+    available_languages = get_available_languages()
+    language_codes = get_language_codes()
+
+    _locale_aliases = {
+        'zh-TW': 'zh_Hant_TW',  # Traditional Chinese: browser sends zh-TW, we use zh_Hant_TW
+        'zh_TW': 'zh_Hant_TW',  # Also handle underscore variant
+    }
+    _locale_match_list = language_codes + list(_locale_aliases.keys())
+
+    def get_locale():
+        # 1. Try to get locale from session (user explicitly selected)
+        if 'locale' in session:
+            return session['locale']
+
+        # 2. Fall back to Accept-Language header
+        browser_locale = request.accept_languages.best_match(_locale_match_list)
+        # 3. Map browser locale to our internal locale if needed
+        return _locale_aliases.get(browser_locale, browser_locale)
+
+    # Initialize Babel with locale selector
+    babel = Babel(app, locale_selector=get_locale)
+
+    # Make i18n functions available to templates
+    app.jinja_env.globals.update(
+        _=gettext,
+        get_locale=get_locale,
+        get_flag_for_locale=get_flag_for_locale,
+        available_languages=available_languages
+    )
+
     # Set up a request hook to check authentication for all routes
     @app.before_request
     def check_authentication():
@@ -279,6 +531,12 @@ def changedetection_app(config=None, datastore_o=None):
             # Permitted
             if request.endpoint and request.endpoint == 'static_content' and request.view_args:
                 # Handled by static_content handler
+                return None
+            # Permitted - static flag icons need to load on login page
+            elif request.endpoint and request.endpoint == 'static_flags':
+                return None
+            # Permitted - language selection should work on login page
+            elif request.endpoint and request.endpoint == 'set_language':
                 return None
             # Permitted
             elif request.endpoint and 'login' in request.endpoint:
@@ -302,20 +560,23 @@ def changedetection_app(config=None, datastore_o=None):
                 return login_manager.unauthorized()
 
 
+    watch_api.add_resource(WatchHistoryDiff,
+                           '/api/v1/watch/<uuid_str:uuid>/difference/<string:from_timestamp>/<string:to_timestamp>',
+                           resource_class_kwargs={'datastore': datastore})
     watch_api.add_resource(WatchSingleHistory,
-                           '/api/v1/watch/<string:uuid>/history/<string:timestamp>',
+                           '/api/v1/watch/<uuid_str:uuid>/history/<string:timestamp>',
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
     watch_api.add_resource(WatchFavicon,
-                           '/api/v1/watch/<string:uuid>/favicon',
+                           '/api/v1/watch/<uuid_str:uuid>/favicon',
                            resource_class_kwargs={'datastore': datastore})
     watch_api.add_resource(WatchHistory,
-                           '/api/v1/watch/<string:uuid>/history',
+                           '/api/v1/watch/<uuid_str:uuid>/history',
                            resource_class_kwargs={'datastore': datastore})
 
     watch_api.add_resource(CreateWatch, '/api/v1/watch',
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
 
-    watch_api.add_resource(Watch, '/api/v1/watch/<string:uuid>',
+    watch_api.add_resource(Watch, '/api/v1/watch/<uuid_str:uuid>',
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
 
     watch_api.add_resource(SystemInfo, '/api/v1/systeminfo',
@@ -328,7 +589,7 @@ def changedetection_app(config=None, datastore_o=None):
     watch_api.add_resource(Tags, '/api/v1/tags',
                            resource_class_kwargs={'datastore': datastore})
 
-    watch_api.add_resource(Tag, '/api/v1/tag', '/api/v1/tag/<string:uuid>',
+    watch_api.add_resource(Tag, '/api/v1/tag', '/api/v1/tag/<uuid_str:uuid>',
                            resource_class_kwargs={'datastore': datastore, 'update_q': update_q})
                            
     watch_api.add_resource(Search, '/api/v1/search',
@@ -336,6 +597,8 @@ def changedetection_app(config=None, datastore_o=None):
 
     watch_api.add_resource(Notifications, '/api/v1/notifications',
                            resource_class_kwargs={'datastore': datastore})
+
+    watch_api.add_resource(Spec, '/api/v1/full-spec')
 
     @login_manager.user_loader
     def user_loader(email):
@@ -345,25 +608,76 @@ def changedetection_app(config=None, datastore_o=None):
 
     @login_manager.unauthorized_handler
     def unauthorized_handler():
-        flash("You must be logged in, please log in.", 'error')
-        return redirect(url_for('login', next=url_for('watchlist.index')))
+        # Pass the current request path so users are redirected back after login
+        return redirect(url_for('login', redirect=request.path))
 
     @app.route('/logout')
     def logout():
         flask_login.logout_user()
+
+        # Check if there's a redirect parameter to return to after re-login
+        redirect_url = request.args.get('redirect')
+
+        # If redirect is provided and safe, pass it to login page
+        if redirect_url and is_safe_url(redirect_url):
+            return redirect(url_for('login', redirect=redirect_url))
+
+        # Otherwise just go to watchlist
+        return redirect(url_for('watchlist.index'))
+
+    @app.route('/set-language/<locale>')
+    def set_language(locale):
+        """Set the user's preferred language in the session"""
+        if not request.cookies:
+            logger.error("Cannot set language without session cookie")
+            flash("Cannot set language without session cookie", 'error')
+            return redirect(url_for('watchlist.index'))
+
+        # Validate the locale against available languages
+        if locale in language_codes:
+            # Make session permanent so language preference persists across browser sessions
+            # NOTE: This is the Flask session cookie (separate from Flask-Login's remember-me auth cookie)
+            session.permanent = True
+            session['locale'] = locale
+
+            # CRITICAL: Flask-Babel caches the locale in the request context (ctx.babel_locale)
+            # We must refresh to clear this cache so the new locale takes effect immediately
+            # This is especially important for tests where multiple requests happen rapidly
+            from flask_babel import refresh
+            refresh()
+        else:
+            logger.error(f"Invalid locale {locale}, available: {language_codes}")
+
+        # Check if there's a redirect parameter to return to the same page
+        redirect_url = request.args.get('redirect')
+
+        # If redirect is provided and safe, use it
+        if redirect_url and is_safe_url(redirect_url):
+            return redirect(redirect_url)
+
+        # Otherwise redirect to watchlist
         return redirect(url_for('watchlist.index'))
 
     # https://github.com/pallets/flask/blob/93dd1709d05a1cf0e886df6223377bdab3b077fb/examples/tutorial/flaskr/__init__.py#L39
     # You can divide up the stuff like this
     @app.route('/login', methods=['GET', 'POST'])
     def login():
+        # Extract and validate the redirect parameter
+        redirect_url = request.args.get('redirect') or request.form.get('redirect')
+
+        # Validate the redirect URL - default to watchlist if invalid
+        if redirect_url and is_safe_url(redirect_url):
+            validated_redirect = redirect_url
+        else:
+            validated_redirect = url_for('watchlist.index')
 
         if request.method == 'GET':
             if flask_login.current_user.is_authenticated:
-                flash("Already logged in")
-                return redirect(url_for("watchlist.index"))
-
-            output = render_template("login.html")
+                # Already logged in - redirect immediately to the target
+                flash(gettext("Already logged in"))
+                return redirect(validated_redirect)
+            flash(gettext("You must be logged in, please log in."), 'error')
+            output = render_template("login.html", redirect_url=validated_redirect)
             return output
 
         user = User()
@@ -373,23 +687,13 @@ def changedetection_app(config=None, datastore_o=None):
 
         if (user.check_password(password)):
             flask_login.login_user(user, remember=True)
-
-            # For now there's nothing else interesting here other than the index/list page
-            # It's more reliable and safe to ignore the 'next' redirect
-            # When we used...
-            # next = request.args.get('next')
-            # return redirect(next or url_for('watchlist.index'))
-            # We would sometimes get login loop errors on sites hosted in sub-paths
-
-            # note for the future:
-            #            if not is_safe_url(next):
-            #                return flask.abort(400)
-            return redirect(url_for('watchlist.index'))
+            # Redirect to the validated URL after successful login
+            return redirect(validated_redirect)
 
         else:
-            flash('Incorrect password', 'error')
+            flash(gettext('Incorrect password'), 'error')
 
-        return redirect(url_for('login'))
+        return redirect(url_for('login', redirect=redirect_url if redirect_url else None))
 
     @app.before_request
     def before_request_handle_cookie_x_settings():
@@ -399,12 +703,52 @@ def changedetection_app(config=None, datastore_o=None):
             app.config['SESSION_COOKIE_PATH'] = request.headers['X-Forwarded-Prefix']
         return None
 
+    @app.route("/static/flags/<path:flag_path>", methods=['GET'])
+    def static_flags(flag_path):
+        """Handle flag icon files with subdirectories"""
+        from flask import make_response
+        import re
+
+        # flag_path comes in as "1x1/de.svg" or "4x3/de.svg"
+        if re.match(r'^(1x1|4x3)/[a-z0-9-]+\.svg$', flag_path.lower()):
+            # Reconstruct the path safely with additional validation
+            parts = flag_path.lower().split('/')
+            if len(parts) != 2:
+                abort(404)
+
+            subdir = parts[0]
+            svg_file = parts[1]
+
+            # Extra validation: ensure subdir is exactly 1x1 or 4x3
+            if subdir not in ['1x1', '4x3']:
+                abort(404)
+
+            # Extra validation: ensure svg_file only contains safe characters
+            if not re.match(r'^[a-z0-9-]+\.svg$', svg_file):
+                abort(404)
+
+            try:
+                response = make_response(send_from_directory(f"static/flags/{subdir}", svg_file))
+                response.headers['Content-type'] = 'image/svg+xml'
+                response.headers['Cache-Control'] = 'max-age=86400, public'  # Cache for 24 hours
+                return response
+            except FileNotFoundError:
+                abort(404)
+        else:
+            abort(404)
+
     @app.route("/static/<string:group>/<string:filename>", methods=['GET'])
     def static_content(group, filename):
         from flask import make_response
         import re
-        group = re.sub(r'[^\w.-]+', '', group.lower())
-        filename = re.sub(r'[^\w.-]+', '', filename.lower())
+
+        # Strict sanitization: only allow a-z, 0-9, and underscore (blocks .. and other traversal)
+        group = re.sub(r'[^a-z0-9_-]+', '', group.lower())
+        filename = filename
+
+        # Additional safety: reject if sanitization resulted in empty strings
+        if not group or not filename:
+            abort(404)
 
         if group == 'screenshot':
             # Could be sensitive, follow password requirements
@@ -438,18 +782,11 @@ def changedetection_app(config=None, datastore_o=None):
 
             favicon_filename = watch.get_favicon_filename()
             if favicon_filename:
-                try:
-                    import magic
-                    mime = magic.from_file(
-                        os.path.join(watch.watch_data_dir, favicon_filename),
-                        mime=True
-                    )
-                except ImportError:
-                    # Fallback, no python-magic
-                    import mimetypes
-                    mime, encoding = mimetypes.guess_type(favicon_filename)
+                # Use cached MIME type detection
+                filepath = os.path.join(watch.data_dir, favicon_filename)
+                mime = get_favicon_mime_type(filepath)
 
-                response = make_response(send_from_directory(watch.watch_data_dir, favicon_filename))
+                response = make_response(send_from_directory(watch.data_dir, favicon_filename))
                 response.headers['Content-type'] = mime
                 response.headers['Cache-Control'] = 'max-age=300, must-revalidate'  # Cache for 5 minutes, then revalidate
                 return response
@@ -482,6 +819,31 @@ def changedetection_app(config=None, datastore_o=None):
 
             except FileNotFoundError:
                 abort(404)
+
+        # Handle plugin group specially
+        if group == 'plugin':
+            # Serve files from plugin static directories
+            from changedetectionio.pluggy_interface import plugin_manager
+            import os as os_check
+
+            for plugin_name, plugin_obj in plugin_manager.list_name_plugin():
+                if hasattr(plugin_obj, 'plugin_static_path'):
+                    try:
+                        static_path = plugin_obj.plugin_static_path()
+                        if static_path and os_check.path.isdir(static_path):
+                            # Check if file exists in plugin's static directory
+                            plugin_file_path = os_check.path.join(static_path, filename)
+                            if os_check.path.isfile(plugin_file_path):
+                                # Found the file in a plugin
+                                response = make_response(send_from_directory(static_path, filename))
+                                response.headers['Cache-Control'] = 'max-age=3600, public'  # Cache for 1 hour
+                                return response
+                    except Exception as e:
+                        logger.debug(f"Error checking plugin {plugin_name} for static file: {e}")
+                        pass
+
+            # File not found in any plugin
+            abort(404)
 
         # These files should be in our subdirectory
         try:
@@ -519,13 +881,15 @@ def changedetection_app(config=None, datastore_o=None):
 
     # watchlist UI buttons etc
     import changedetectionio.blueprint.ui as ui
-    app.register_blueprint(ui.construct_blueprint(datastore, update_q, worker_handler, queuedWatchMetaData, watch_check_update))
+    app.register_blueprint(ui.construct_blueprint(datastore, update_q, worker_pool, queuedWatchMetaData, watch_check_update))
 
     import changedetectionio.blueprint.watchlist as watchlist
     app.register_blueprint(watchlist.construct_blueprint(datastore=datastore, update_q=update_q, queuedWatchMetaData=queuedWatchMetaData), url_prefix='')
 
     # Initialize Socket.IO server conditionally based on settings
-    socket_io_enabled = datastore.data['settings']['application']['ui'].get('socket_io_enabled', True)
+    socket_io_enabled = datastore.data['settings']['application'].get('ui', {}).get('socket_io_enabled', True)
+    if socket_io_enabled and app.config.get('batch_mode'):
+        socket_io_enabled = False
     if socket_io_enabled:
         from changedetectionio.realtime.socket_server import init_socketio
         global socketio_server
@@ -554,10 +918,10 @@ def changedetection_app(config=None, datastore_o=None):
         expected_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
         
         # Get basic status
-        status = worker_handler.get_worker_status()
+        status = worker_pool.get_worker_status()
         
         # Perform health check
-        health_result = worker_handler.check_worker_health(
+        health_result = worker_pool.check_worker_health(
             expected_count=expected_workers,
             update_q=update_q,
             notification_q=notification_q,
@@ -621,16 +985,31 @@ def changedetection_app(config=None, datastore_o=None):
     # Can be overridden by ENV or use the default settings
     n_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
     logger.info(f"Starting {n_workers} workers during app initialization")
-    worker_handler.start_workers(n_workers, update_q, notification_q, app, datastore)
+    worker_pool.start_workers(n_workers, update_q, notification_q, app, datastore)
 
-    # @todo handle ctrl break
-    ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks).start()
-    threading.Thread(target=notification_runner).start()
+    # Skip background threads in batch mode (just process queue and exit)
+    batch_mode = app.config.get('batch_mode', False)
+    if not batch_mode:
+        # @todo handle ctrl break
+        ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks, daemon=True, name="TickerThread-ScheduleChecker").start()
 
-    in_pytest = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
-    # Check for new release version, but not when running in test/build or pytest
-    if not os.getenv("GITHUB_REF", False) and not strtobool(os.getenv('DISABLE_VERSION_CHECK', 'no')) and not in_pytest:
-        threading.Thread(target=check_for_new_version).start()
+        # Start configurable number of notification workers (default 1)
+        notification_workers = int(os.getenv("NOTIFICATION_WORKERS", "1"))
+        for i in range(notification_workers):
+            threading.Thread(
+                target=notification_runner,
+                args=(i,),
+                daemon=True,
+                name=f"NotificationRunner-{i}"
+            ).start()
+        logger.info(f"Started {notification_workers} notification worker(s)")
+
+        in_pytest = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
+        # Check for new release version, but not when running in test/build or pytest
+        if not os.getenv("GITHUB_REF", False) and not strtobool(os.getenv('DISABLE_VERSION_CHECK', 'no')) and not in_pytest:
+            threading.Thread(target=check_for_new_version, daemon=True, name="VersionChecker").start()
+    else:
+        logger.info("Batch mode: Skipping ticker thread, notification runner, and version checker")
 
     # Return the Flask app - the Socket.IO will be attached to it but initialized separately
     # This avoids circular dependencies
@@ -643,15 +1022,16 @@ def check_for_new_version():
     import urllib3
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+    session = requests.Session()
+    session.verify = False
+
     while not app.config.exit.is_set():
         try:
-            r = requests.post("https://changedetection.io/check-ver.php",
+            r = session.post("https://changedetection.io/check-ver.php",
                               data={'version': __version__,
                                     'app_guid': datastore.data['app_guid'],
                                     'watch_count': len(datastore.data['watching'])
-                                    },
-
-                              verify=False)
+                                    })
         except:
             pass
 
@@ -665,17 +1045,17 @@ def check_for_new_version():
         app.config.exit.wait(86400)
 
 
-def notification_runner():
+def notification_runner(worker_id=0):
     global notification_debug_log
     from datetime import datetime
     import json
     with app.app_context():
         while not app.config.exit.is_set():
             try:
-                # At the moment only one thread runs (single runner)
+                # Multiple workers can run concurrently (configurable via NOTIFICATION_WORKERS)
                 n_object = notification_q.get(block=False)
             except queue.Empty:
-                time.sleep(1)
+                app.config.exit.wait(1)
 
             else:
 
@@ -698,7 +1078,7 @@ def notification_runner():
                         sent_obj = process_notification(n_object, datastore)
 
                 except Exception as e:
-                    logger.error(f"Watch URL: {n_object['watch_url']}  Error {str(e)}")
+                    logger.error(f"Notification worker {worker_id} - Watch URL: {n_object['watch_url']}  Error {str(e)}")
 
                     # UUID wont be present when we submit a 'test' from the global settings
                     if 'uuid' in n_object:
@@ -712,7 +1092,7 @@ def notification_runner():
                         app.config['watch_check_update_SIGNAL'].send(app_context=app, watch_uuid=n_object.get('uuid'))
 
                 # Process notifications
-                notification_debug_log+= ["{} - SENDING - {}".format(now.strftime("%Y/%m/%d %H:%M:%S,000"), json.dumps(sent_obj))]
+                notification_debug_log+= ["{} - SENDING - {}".format(now.strftime("%c"), json.dumps(sent_obj))]
                 # Trim the log length
                 notification_debug_log = notification_debug_log[-100:]
 
@@ -728,6 +1108,10 @@ def ticker_thread_check_time_launch_checks():
     logger.debug(f"System env MINIMUM_SECONDS_RECHECK_TIME {recheck_time_minimum_seconds}")
 
     # Workers are now started during app initialization, not here
+    WAIT_TIME_BETWEEN_LOOP = 1.0 if not IN_PYTEST else 0.01
+    if IN_PYTEST:
+        # The time between loops should be less than the first .sleep/wait in def wait_for_all_checks() of tests/util.py
+        logger.warning(f"Looks like we're in PYTEST! Setting time between searching for items to add to the queue to {WAIT_TIME_BETWEEN_LOOP}s")
 
     while not app.config.exit.is_set():
 
@@ -735,7 +1119,7 @@ def ticker_thread_check_time_launch_checks():
         now = time.time()
         if now - last_health_check > 60:
             expected_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
-            health_result = worker_handler.check_worker_health(
+            health_result = worker_pool.check_worker_health(
                 expected_count=expected_workers,
                 update_q=update_q,
                 notification_q=notification_q,
@@ -745,11 +1129,19 @@ def ticker_thread_check_time_launch_checks():
             
             if health_result['status'] != 'healthy':
                 logger.warning(f"Worker health check: {health_result['message']}")
-                
+
             last_health_check = now
 
+        # Check if all checks are paused
+        if datastore.data['settings']['application'].get('all_paused', False):
+            app.config.exit.wait(1)
+            continue
+
         # Get a list of watches by UUID that are currently fetching data
-        running_uuids = worker_handler.get_running_uuids()
+        running_uuids = worker_pool.get_running_uuids()
+
+        # Build set of queued UUIDs once for O(1) lookup instead of O(n) per watch
+        queued_uuids = {q_item.item['uuid'] for q_item in update_q.queue}
 
         # Re #232 - Deepcopy the data incase it changes while we're iterating through it all
         watch_uuid_list = []
@@ -767,16 +1159,17 @@ def ticker_thread_check_time_launch_checks():
             else:
                 break
 
-        # Re #438 - Don't place more watches in the queue to be checked if the queue is already large
-        while update_q.qsize() >= 2000:
-            logger.warning(f"Recheck watches queue size limit reached ({MAX_QUEUE_SIZE}), skipping adding more items")
-            time.sleep(3)
-
-
         recheck_time_system_seconds = int(datastore.threshold_seconds)
 
         # Check for watches outside of the time threshold to put in the thread queue.
-        for uuid in watch_uuid_list:
+        for watch_index, uuid in enumerate(watch_uuid_list):
+            # Re #438 - Check queue size every 100 watches for CPU efficiency (not every watch)
+            if watch_index % 100 == 0:
+                current_queue_size = update_q.qsize()
+                if current_queue_size >= MAX_QUEUE_SIZE:
+                    logger.debug(f"Queue size limit reached ({current_queue_size}/{MAX_QUEUE_SIZE}), stopping scheduler this iteration.")
+                    break
+
             now = time.time()
             watch = datastore.data['watching'].get(uuid)
             if not watch:
@@ -789,15 +1182,19 @@ def ticker_thread_check_time_launch_checks():
 
             # @todo - Maybe make this a hook?
             # Time schedule limit - Decide between watch or global settings
+            scheduler_source = None
             if watch.get('time_between_check_use_default'):
                 time_schedule_limit = datastore.data['settings']['requests'].get('time_schedule_limit', {})
-                logger.trace(f"{uuid} Time scheduler - Using system/global settings")
+                scheduler_source = 'system/global settings'
+
             else:
                 time_schedule_limit = watch.get('time_schedule_limit')
-                logger.trace(f"{uuid} Time scheduler - Using watch settings (not global settings)")
-            tz_name = datastore.data['settings']['application'].get('timezone', 'UTC')
+                scheduler_source = 'watch'
+
+            tz_name = datastore.data['settings']['application'].get('scheduler_timezone_default', os.getenv('TZ', 'UTC').strip())
 
             if time_schedule_limit and time_schedule_limit.get('enabled'):
+                logger.trace(f"{uuid} Time scheduler - Using scheduler settings from {scheduler_source}")
                 try:
                     result = is_within_schedule(time_schedule_limit=time_schedule_limit,
                                                 default_tz=tz_name
@@ -809,6 +1206,7 @@ def ticker_thread_check_time_launch_checks():
                     logger.error(
                         f"{uuid} - Recheck scheduler, error handling timezone, check skipped - TZ name '{tz_name}' - {str(e)}")
                     return False
+
             # If they supplied an individual entry minutes to threshold.
             threshold = recheck_time_system_seconds if watch.get('time_between_check_use_default') else watch.threshold_seconds()
 
@@ -821,7 +1219,7 @@ def ticker_thread_check_time_launch_checks():
             seconds_since_last_recheck = now - watch['last_checked']
 
             if seconds_since_last_recheck >= (threshold + watch.jitter_seconds) and seconds_since_last_recheck >= recheck_time_minimum_seconds:
-                if not uuid in running_uuids and uuid not in [q_uuid.item['uuid'] for q_uuid in update_q.queue]:
+                if not uuid in running_uuids and uuid not in queued_uuids:
 
                     # Proxies can be set to have a limit on seconds between which they can be called
                     watch_proxy = datastore.get_preferred_proxy_for_watch(uuid=uuid)
@@ -846,7 +1244,7 @@ def ticker_thread_check_time_launch_checks():
                     priority = int(time.time())
 
                     # Into the queue with you
-                    queued_successfully = worker_handler.queue_item_async_safe(update_q,
+                    queued_successfully = worker_pool.queue_item_async_safe(update_q,
                                                                                queuedWatchMetaData.PrioritizedItem(priority=priority,
                                                                                                                    item={'uuid': uuid})
                                                                                )
@@ -863,8 +1261,5 @@ def ticker_thread_check_time_launch_checks():
                     # Reset for next time
                     watch.jitter_seconds = 0
 
-        # Wait before checking the list again - saves CPU
-        time.sleep(1)
-
         # Should be low so we can break this out in testing
-        app.config.exit.wait(1)
+        app.config.exit.wait(WAIT_TIME_BETWEEN_LOOP)

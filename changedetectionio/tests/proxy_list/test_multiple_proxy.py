@@ -5,7 +5,7 @@ from flask import url_for
 from ..util import live_server_setup, wait_for_all_checks
 
 
-def test_preferred_proxy(client, live_server, measure_memory_usage):
+def test_preferred_proxy(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
     url = "http://chosen.changedetection.io"
 

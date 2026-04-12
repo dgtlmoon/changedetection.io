@@ -14,7 +14,7 @@ Ideal for monitoring price changes, content edits, conditional changes and more.
 [<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/screenshot.png" style="max-width:100%;" alt="Self-hosted web page change monitoring, list of websites with changes"  title="Self-hosted web page change monitoring, list of websites with changes"  />](https://changedetection.io)
 
 
-[**Don't have time? Try our extremely affordable subscription use our proxies and support!**](https://changedetection.io) 
+[**Don't have time? Try our extremely affordable subscription use our proxies and support!**](https://changedetection.io)
 
 
 
@@ -31,7 +31,7 @@ Available when connected to a <a href="https://github.com/dgtlmoon/changedetecti
 
 ### Perform interactive browser steps
 
-Fill in text boxes, click buttons and more, setup your changedetection scenario. 
+Fill in text boxes, click buttons and more, setup your changedetection scenario.
 
 Using the **Browser Steps** configuration, add basic steps before performing change detection, such as logging into websites, adding a product to a cart, accept cookie logins, entering dates and refining searches.
 
@@ -54,7 +54,7 @@ Requires Playwright to be enabled.
 - Know when your favourite whiskey is on sale, or other special deals are announced before anyone else
 - COVID related news from government websites
 - University/organisation news from their website
-- Detect and monitor changes in JSON API responses 
+- Detect and monitor changes in JSON API responses
 - JSON API monitoring and alerting
 - Changes in legal and other documents
 - Trigger API calls via notifications when text appears on a website
@@ -86,7 +86,7 @@ _Need an actual Chrome runner with Javascript support? We support fetching via W
 
 We [recommend and use Bright Data](https://brightdata.grsm.io/n0r16zf7eivq) global proxy services, Bright Data will match any first deposit up to $100 using our signup link.
 
-[Oxylabs](https://oxylabs.go2cloud.org/SH2d) is also an excellent proxy provider and well worth using, they offer Residental, ISP, Rotating and many other proxy types to suit your project. 
+[Oxylabs](https://oxylabs.go2cloud.org/SH2d) is also an excellent proxy provider and well worth using, they offer Residential, ISP, Rotating and many other proxy types to suit your project.
 
 Please :star: star :star: this project and help it grow! https://github.com/dgtlmoon/changedetection.io/
 
@@ -106,4 +106,3 @@ $ changedetection.io -d /path/to/empty/data/dir -p 5000
 Then visit http://127.0.0.1:5000 , You should now be able to access the UI.
 
 See https://changedetection.io for more information.
-

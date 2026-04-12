@@ -1,4 +1,19 @@
+function checkDiscordHtmlWarning() {
+    var urls = $('textarea.notification-urls').val() || '';
+    var format = $('select.notification-format').val() || '';
+    var isDiscord = /discord:\/\/|https:\/\/discord(?:app)?\.com\/api/i.test(urls);
+    var isHtml = format === 'html' || format === 'htmlcolor';
+    if (isDiscord && isHtml) {
+        $('#discord-html-format-warning').show();
+    } else {
+        $('#discord-html-format-warning').hide();
+    }
+}
+
 $(document).ready(function () {
+
+    $('textarea.notification-urls, select.notification-format').on('change input', checkDiscordHtmlWarning);
+    checkDiscordHtmlWarning();
 
     $('#add-email-helper').click(function (e) {
         e.preventDefault();
@@ -14,10 +29,10 @@ $(document).ready(function () {
         e.preventDefault();
 
         data = {
-            notification_body: $('#notification_body').val(),
-            notification_format: $('#notification_format').val(),
-            notification_title: $('#notification_title').val(),
-            notification_urls: $('.notification-urls').val(),
+            notification_urls: $('textarea.notification-urls').val(),
+            notification_title: $('input.notification-title').val(),
+            notification_body: $('textarea.notification-body').val(),
+            notification_format: $('select.notification-format').val(),
             tags: $('#tags').val(),
             window_url: window.location.href,
         }

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 from flask import url_for
-from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
+from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks, delete_all_watches
 from ..forms import REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT, REQUIRE_ATLEAST_ONE_TIME_PART_MESSAGE_DEFAULT
 
 
-def test_recheck_time_field_validation_global_settings(client, live_server):
+def test_recheck_time_field_validation_global_settings(client, live_server, measure_memory_usage, datastore_path):
     """
     Tests that the global settings time field has atleast one value for week/day/hours/minute/seconds etc entered
     class globalSettingsRequestForm(Form):
@@ -25,9 +25,10 @@ def test_recheck_time_field_validation_global_settings(client, live_server):
 
 
     assert REQUIRE_ATLEAST_ONE_TIME_PART_MESSAGE_DEFAULT.encode('utf-8') in res.data
+    delete_all_watches(client)
 
 
-def test_recheck_time_field_validation_single_watch(client, live_server):
+def test_recheck_time_field_validation_single_watch(client, live_server, measure_memory_usage, datastore_path):
     """
     Tests that the global settings time field has atleast one value for week/day/hours/minute/seconds etc entered
     class globalSettingsRequestForm(Form):
@@ -36,13 +37,8 @@ def test_recheck_time_field_validation_single_watch(client, live_server):
     test_url = url_for('test_endpoint', _external=True)
 
     # Add our URL to the import page
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
@@ -99,10 +95,12 @@ def test_recheck_time_field_validation_single_watch(client, live_server):
 
     assert b"Updated watch." in res.data
     assert REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT.encode('utf-8') not in res.data
+    delete_all_watches(client)
 
-def test_checkbox_open_diff_in_new_tab(client, live_server):
+def test_checkbox_open_diff_in_new_tab(client, live_server, measure_memory_usage, datastore_path):
     
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
+
     # Add our URL to the import page
     res = client.post(
         url_for("imports.import_page"),
@@ -114,7 +112,7 @@ def test_checkbox_open_diff_in_new_tab(client, live_server):
     wait_for_all_checks(client)
 
     # Make a change
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
 
     # Test case 1 - checkbox is enabled in settings
     res = client.post(
@@ -171,12 +169,11 @@ def test_checkbox_open_diff_in_new_tab(client, live_server):
     assert 'target=' not in target_line
 
     # Cleanup everything
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
-def test_page_title_listing_behaviour(client, live_server):
+def test_page_title_listing_behaviour(client, live_server, measure_memory_usage, datastore_path):
 
-    set_original_response(extra_title="custom html")
+    set_original_response(extra_title="custom html", datastore_path=datastore_path)
 
     # either the manually entered title/description or the page link should be visible
     res = client.post(
@@ -247,13 +244,14 @@ def test_page_title_listing_behaviour(client, live_server):
     # No page title description, and 'use_page_title_in_list' is on, it should show the <title>
     res = client.get(url_for("watchlist.index"))
     assert b"head titlecustom html" in res.data
+    delete_all_watches(client)
 
 
-def test_ui_viewed_unread_flag(client, live_server):
+def test_ui_viewed_unread_flag(client, live_server, measure_memory_usage, datastore_path):
 
     import time
 
-    set_original_response(extra_title="custom html")
+    set_original_response(datastore_path=datastore_path, extra_title="custom html")
 
     # Add our URL to the import page
     res = client.post(
@@ -265,7 +263,7 @@ def test_ui_viewed_unread_flag(client, live_server):
     assert b"2 Imported" in res.data
     wait_for_all_checks(client)
 
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
     res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 2 watches for rechecking.' in res.data
     wait_for_all_checks(client)
@@ -274,7 +272,7 @@ def test_ui_viewed_unread_flag(client, live_server):
     assert res.data.count(b'data-watch-uuid') == 2
 
     # one should now be viewed, but two in total still
-    client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
+    client.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
     res = client.get(url_for("watchlist.index"))
     assert b'<span id="unread-tab-counter">1</span>' in res.data
     assert res.data.count(b'data-watch-uuid') == 2
@@ -289,3 +287,4 @@ def test_ui_viewed_unread_flag(client, live_server):
     time.sleep(0.2)
     res = client.get(url_for("watchlist.index"))
     assert b'<span id="unread-tab-counter">0</span>' in res.data
+    delete_all_watches(client)

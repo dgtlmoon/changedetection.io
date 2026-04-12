@@ -57,14 +57,15 @@ class SignalPriorityQueue(queue.PriorityQueue):
     def put(self, item, block=True, timeout=None):
         # Call the parent's put method first
         super().put(item, block, timeout)
-        
+
         # After putting the item in the queue, check if it has a UUID and emit signal
         if hasattr(item, 'item') and isinstance(item.item, dict) and 'uuid' in item.item:
             uuid = item.item['uuid']
             # Get the signal and send it if it exists
             watch_check_update = signal('watch_check_update')
             if watch_check_update:
-                # Send the watch_uuid parameter
+                # NOTE: This would block other workers from .put/.get while this signal sends
+                # Signal handlers may iterate the queue/datastore while holding locks
                 watch_check_update.send(watch_uuid=uuid)
         
         # Send queue_length signal with current queue size
@@ -312,14 +313,15 @@ class AsyncSignalPriorityQueue(asyncio.PriorityQueue):
     async def put(self, item):
         # Call the parent's put method first
         await super().put(item)
-        
+
         # After putting the item in the queue, check if it has a UUID and emit signal
         if hasattr(item, 'item') and isinstance(item.item, dict) and 'uuid' in item.item:
             uuid = item.item['uuid']
             # Get the signal and send it if it exists
             watch_check_update = signal('watch_check_update')
             if watch_check_update:
-                # Send the watch_uuid parameter
+                # NOTE: This would block other workers from .put/.get while this signal sends
+                # Signal handlers may iterate the queue/datastore while holding locks
                 watch_check_update.send(watch_uuid=uuid)
         
         # Send queue_length signal with current queue size

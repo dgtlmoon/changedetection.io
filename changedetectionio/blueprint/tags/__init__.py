@@ -1,5 +1,7 @@
+import threading
 from flask import Blueprint, request, render_template, flash, url_for, redirect
-
+from flask_babel import gettext
+from loguru import logger
 
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.flask_app import login_optionally_required
@@ -20,10 +22,14 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         tag_count = Counter(tag for watch in datastore.data['watching'].values() if watch.get('tags') for tag in watch['tags'])
 
+        from changedetectionio import processors
         output = render_template("groups-overview.html",
+                                 app_rss_token=datastore.data['settings']['application'].get('rss_access_token'),
                                  available_tags=sorted_tags,
                                  form=add_form,
-                                 tag_count=tag_count
+                                 generate_tag_colors=processors.generate_processor_badge_colors,
+                                 tag_count=tag_count,
+                                 wcag_text_color=processors.wcag_text_color,
                                  )
 
         return output
@@ -42,61 +48,103 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         title = request.form.get('name').strip()
 
         if datastore.tag_exists_by_name(title):
-            flash(f'The tag "{title}" already exists', "error")
+            flash(gettext('The tag "{}" already exists').format(title), "error")
             return redirect(url_for('tags.tags_overview_page'))
 
         datastore.add_tag(title)
-        flash("Tag added")
+        flash(gettext("Tag added"))
 
 
         return redirect(url_for('tags.tags_overview_page'))
 
-    @tags_blueprint.route("/mute/<string:uuid>", methods=['GET'])
+    @tags_blueprint.route("/mute/<uuid_str:uuid>", methods=['GET'])
     @login_optionally_required
     def mute(uuid):
-        if datastore.data['settings']['application']['tags'].get(uuid):
-            datastore.data['settings']['application']['tags'][uuid]['notification_muted'] = not datastore.data['settings']['application']['tags'][uuid]['notification_muted']
+        tag = datastore.data['settings']['application']['tags'].get(uuid)
+        if tag:
+            tag['notification_muted'] = not tag['notification_muted']
+            tag.commit()
         return redirect(url_for('tags.tags_overview_page'))
 
-    @tags_blueprint.route("/delete/<string:uuid>", methods=['GET'])
+    @tags_blueprint.route("/delete/<uuid_str:uuid>", methods=['GET'])
     @login_optionally_required
     def delete(uuid):
-        removed = 0
-        # Delete the tag, and any tag reference
+        # Delete the tag from settings immediately
         if datastore.data['settings']['application']['tags'].get(uuid):
             del datastore.data['settings']['application']['tags'][uuid]
 
-        for watch_uuid, watch in datastore.data['watching'].items():
-            if watch.get('tags') and uuid in watch['tags']:
-                removed += 1
-                watch['tags'].remove(uuid)
+        # Remove tag from all watches in background thread to avoid blocking
+        def remove_tag_background(tag_uuid):
+            """Background thread to remove tag from watches - discarded after completion."""
+            removed_count = 0
+            try:
+                for watch_uuid, watch in datastore.data['watching'].items():
+                    if watch.get('tags') and tag_uuid in watch['tags']:
+                        watch['tags'].remove(tag_uuid)
+                        watch.commit()
+                        removed_count += 1
+                logger.info(f"Background: Tag {tag_uuid} removed from {removed_count} watches")
+            except Exception as e:
+                logger.error(f"Error removing tag from watches: {e}")
 
-        flash(f"Tag deleted and removed from {removed} watches")
+        # Start daemon thread
+        threading.Thread(target=remove_tag_background, args=(uuid,), daemon=True).start()
+
+        flash(gettext("Tag deleted, removing from watches in background"))
         return redirect(url_for('tags.tags_overview_page'))
 
-    @tags_blueprint.route("/unlink/<string:uuid>", methods=['GET'])
+    @tags_blueprint.route("/unlink/<uuid_str:uuid>", methods=['GET'])
     @login_optionally_required
     def unlink(uuid):
-        unlinked = 0
-        for watch_uuid, watch in datastore.data['watching'].items():
-            if watch.get('tags') and uuid in watch['tags']:
-                unlinked += 1
-                watch['tags'].remove(uuid)
+        # Unlink tag from all watches in background thread to avoid blocking
+        def unlink_tag_background(tag_uuid):
+            """Background thread to unlink tag from watches - discarded after completion."""
+            unlinked_count = 0
+            try:
+                for watch_uuid, watch in datastore.data['watching'].items():
+                    if watch.get('tags') and tag_uuid in watch['tags']:
+                        watch['tags'].remove(tag_uuid)
+                        watch.commit()
+                        unlinked_count += 1
+                logger.info(f"Background: Tag {tag_uuid} unlinked from {unlinked_count} watches")
+            except Exception as e:
+                logger.error(f"Error unlinking tag from watches: {e}")
 
-        flash(f"Tag unlinked removed from {unlinked} watches")
+        # Start daemon thread
+        threading.Thread(target=unlink_tag_background, args=(uuid,), daemon=True).start()
+
+        flash(gettext("Unlinking tag from watches in background"))
         return redirect(url_for('tags.tags_overview_page'))
 
     @tags_blueprint.route("/delete_all", methods=['GET'])
     @login_optionally_required
     def delete_all():
-        for watch_uuid, watch in datastore.data['watching'].items():
-            watch['tags'] = []
-        datastore.data['settings']['application']['tags'] = {}
 
-        flash(f"All tags deleted")
+        for tag_uuid in list(datastore.data['settings']['application']['tags'].keys()):
+# TagsDict 'del' handler will remove the dir
+            del datastore.data['settings']['application']['tags'][tag_uuid]
+
+
+        # Clear tags from all watches in background thread to avoid blocking
+        def clear_all_tags_background():
+            """Background thread to clear tags from all watches - discarded after completion."""
+            cleared_count = 0
+            try:
+                for watch_uuid, watch in datastore.data['watching'].items():
+                    watch['tags'] = []
+                    watch.commit()
+                    cleared_count += 1
+                logger.info(f"Background: Cleared tags from {cleared_count} watches")
+            except Exception as e:
+                logger.error(f"Error clearing tags from watches: {e}")
+
+        # Start daemon thread
+        threading.Thread(target=clear_all_tags_background, daemon=True).start()
+
+        flash(gettext("All tags deleted, clearing from watches in background"))
         return redirect(url_for('tags.tags_overview_page'))
 
-    @tags_blueprint.route("/edit/<string:uuid>", methods=['GET'])
+    @tags_blueprint.route("/edit/<uuid_str:uuid>", methods=['GET'])
     @login_optionally_required
     def form_tag_edit(uuid):
         from changedetectionio.blueprint.tags.form import group_restock_settings_form
@@ -105,7 +153,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         default = datastore.data['settings']['application']['tags'].get(uuid)
         if not default:
-            flash("Tag not found", "error")
+            flash(gettext("Tag not found"), "error")
             return redirect(url_for('watchlist.index'))
 
         form = group_restock_settings_form(
@@ -114,6 +162,21 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                        extra_notification_tokens=datastore.get_unique_notification_tokens_available(),
                                        default_system_settings = datastore.data['settings'],
                                        )
+
+        # Bridge API-stored processor_config_* values into the form's FormField sub-forms.
+        # The API stores processor_config_restock_diff in the tag dict; find the matching
+        # FormField by checking which one's sub-fields cover the config keys.
+        from wtforms.fields.form import FormField as WTFormField
+        for key, value in default.items():
+            if not key.startswith('processor_config_') or not isinstance(value, dict):
+                continue
+            for form_field in form:
+                if isinstance(form_field, WTFormField) and all(k in form_field.form._fields for k in value):
+                    for sub_key, sub_value in value.items():
+                        sub_field = form_field.form._fields.get(sub_key)
+                        if sub_field is not None:
+                            sub_field.data = sub_value
+                    break
 
         template_args = {
             'data': default,
@@ -148,27 +211,35 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             template = env.from_string(template_str)
             included_content = template.render(**template_args)
 
+        # Watches whose URL currently matches this tag's pattern
+        matching_watches = {
+            w_uuid: watch
+            for w_uuid, watch in datastore.data['watching'].items()
+            if default.matches_url(watch.get('url', ''))
+        }
+
         output = render_template("edit-tag.html",
-                                 settings_application=datastore.data['settings']['application'],
-                                 extra_tab_content=form.extra_tab_content() if form.extra_tab_content() else None,
                                  extra_form_content=included_content,
+                                 extra_tab_content=form.extra_tab_content() if form.extra_tab_content() else None,
+                                 matching_watches=matching_watches,
+                                 settings_application=datastore.data['settings']['application'],
                                  **template_args
                                  )
 
         return output
 
 
-    @tags_blueprint.route("/edit/<string:uuid>", methods=['POST'])
+    @tags_blueprint.route("/edit/<uuid_str:uuid>", methods=['POST'])
     @login_optionally_required
     def form_tag_edit_submit(uuid):
         from changedetectionio.blueprint.tags.form import group_restock_settings_form
         if uuid == 'first':
             uuid = list(datastore.data['settings']['application']['tags'].keys()).pop()
 
-        default = datastore.data['settings']['application']['tags'].get(uuid)
+        tag = datastore.data['settings']['application']['tags'].get(uuid)
 
         form = group_restock_settings_form(formdata=request.form if request.method == 'POST' else None,
-                               data=default,
+                               data=tag,
                                extra_notification_tokens=datastore.get_unique_notification_tokens_available()
                                )
         # @todo subclass form so validation works
@@ -177,15 +248,18 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 #                flash(','.join(l), 'error')
 #           return redirect(url_for('tags.form_tag_edit_submit', uuid=uuid))
 
-        datastore.data['settings']['application']['tags'][uuid].update(form.data)
-        datastore.data['settings']['application']['tags'][uuid]['processor'] = 'restock_diff'
-        datastore.needs_write_urgent = True
-        flash("Updated")
+        tag.update(form.data)
+        tag['processor'] = 'restock_diff'
+        tag.commit()
+
+        # Clear checksums for all watches using this tag to force reprocessing
+        # Tag changes affect inherited configuration
+        cleared_count = datastore.clear_checksums_for_tag(uuid)
+        logger.info(f"Tag {uuid} updated, cleared {cleared_count} watch checksums")
+
+        flash(gettext("Updated"))
 
         return redirect(url_for('tags.tags_overview_page'))
 
 
-    @tags_blueprint.route("/delete/<string:uuid>", methods=['GET'])
-    def form_tag_delete(uuid):
-        return redirect(url_for('tags.tags_overview_page'))
     return tags_blueprint

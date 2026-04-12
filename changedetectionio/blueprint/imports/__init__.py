@@ -1,13 +1,8 @@
 from flask import Blueprint, request, redirect, url_for, flash, render_template
+from loguru import logger
+
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
-from changedetectionio import worker_handler
-from changedetectionio.blueprint.imports.importer import (
-    import_url_list, 
-    import_distill_io_json, 
-    import_xlsx_wachete, 
-    import_xlsx_custom
-)
 
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData):
     import_blueprint = Blueprint('imports', __name__, template_folder="templates")
@@ -17,15 +12,27 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
     def import_page():
         remaining_urls = []
         from changedetectionio import forms
-
+#
         if request.method == 'POST':
+#            from changedetectionio import worker_pool
+
+            from changedetectionio.blueprint.imports.importer import (
+                import_url_list,
+                import_distill_io_json,
+                import_xlsx_wachete,
+                import_xlsx_custom
+            )
+
             # URL List import
             if request.values.get('urls') and len(request.values.get('urls').strip()):
                 # Import and push into the queue for immediate update check
+                from changedetectionio import processors
                 importer_handler = import_url_list()
-                importer_handler.run(data=request.values.get('urls'), flash=flash, datastore=datastore, processor=request.values.get('processor', 'text_json_diff'))
-                for uuid in importer_handler.new_uuids:
-                    worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+                importer_handler.run(data=request.values.get('urls'), flash=flash, datastore=datastore, processor=request.values.get('processor', processors.get_default_processor()))
+                logger.debug(f"Imported {len(importer_handler.new_uuids)} new UUIDs")
+                # Dont' add to queue because scheduler can see that they haven't been checked and will add them to the queue
+#                for uuid in importer_handler.new_uuids:
+#                    worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
 
                 if len(importer_handler.remaining_data) == 0:
                     return redirect(url_for('watchlist.index'))
@@ -37,8 +44,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 # Import and push into the queue for immediate update check
                 d_importer = import_distill_io_json()
                 d_importer.run(data=request.values.get('distill-io'), flash=flash, datastore=datastore)
-                for uuid in d_importer.new_uuids:
-                    worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+                # Dont' add to queue because scheduler can see that they haven't been checked and will add them to the queue
+#                for uuid in importer_handler.new_uuids:
+#                    worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+
 
             # XLSX importer
             if request.files and request.files.get('xlsx_file'):
@@ -60,8 +69,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                     w_importer.import_profile = map
                     w_importer.run(data=file, flash=flash, datastore=datastore)
 
-                for uuid in w_importer.new_uuids:
-                    worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+                # Dont' add to queue because scheduler can see that they haven't been checked and will add them to the queue
+#                for uuid in importer_handler.new_uuids:
+#                    worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+
 
         # Could be some remaining, or we could be on GET
         form = forms.importForm(formdata=request.form if request.method == 'POST' else None)

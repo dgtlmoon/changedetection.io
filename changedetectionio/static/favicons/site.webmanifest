@@ -1,19 +1,25 @@
 {
-    "name": "",
-    "short_name": "",
+    "name": "ChangeDetection.io",
+    "short_name": "ChangeDetect",
+    "description": "Self-hosted website change detection and monitoring",
     "icons": [
         {
             "src": "android-chrome-192x192.png",
             "sizes": "192x192",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any maskable"
         },
         {
             "src": "android-chrome-256x256.png",
             "sizes": "256x256",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any maskable"
         }
     ],
-    "theme_color": "#ffffff",
+    "start_url": "/",
+    "theme_color": "#5bbad5",
     "background_color": "#ffffff",
-    "display": "standalone"
+    "display": "standalone",
+    "categories": ["utilities", "productivity"],
+    "orientation": "any"
 }

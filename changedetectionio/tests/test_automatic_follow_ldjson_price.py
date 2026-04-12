@@ -2,10 +2,11 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup, extract_UUID_from_client, wait_for_all_checks
+from .util import live_server_setup, extract_UUID_from_client, wait_for_all_checks, delete_all_watches
+import os
 
 
-def set_response_with_ldjson():
+def set_response_with_ldjson(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -55,11 +56,11 @@ def set_response_with_ldjson():
      </html>
 """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
     return None
 
-def set_response_without_ldjson():
+def set_response_without_ldjson(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -72,26 +73,22 @@ def set_response_without_ldjson():
      </html>
 """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
     return None
 
-# def test_setup(client, live_server, measure_memory_usage):
+# def test_setup(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
 
 # actually only really used by the distll.io importer, but could be handy too
-def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage):
+def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage, datastore_path):
     
-    set_response_with_ldjson()
+    set_response_with_ldjson(datastore_path=datastore_path)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Should get a notice that it's available
@@ -99,15 +96,13 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
     assert b'ldjson-price-track-offer' in res.data
 
     # Accept it
-    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
-    #time.sleep(1)
     client.get(url_for('price_data_follower.accept', uuid=uuid, follow_redirects=True))
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     # Offer should be gone
     res = client.get(url_for("watchlist.index"))
     assert b'Embedded price data' not in res.data
-    assert b'tracking-ldjson-price-data' in res.data
+    assert b'processor-badge-restock_diff' in res.data
 
     # and last snapshop (via API) should be just the price
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
@@ -121,37 +116,29 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
     # And not this cause its not the ld-json
     assert b"So let's see what happens" not in res.data
 
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
     ##########################################################################################
     # And we shouldnt see the offer
-    set_response_without_ldjson()
+    set_response_without_ldjson(datastore_path=datastore_path)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'ldjson-price-track-offer' not in res.data
     
     ##########################################################################################
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
 
 def _test_runner_check_bad_format_ignored(live_server, client, has_ldjson_price_data):
 
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     for k,v in client.application.config.get('DATASTORE').data['watching'].items():
@@ -160,10 +147,10 @@ def _test_runner_check_bad_format_ignored(live_server, client, has_ldjson_price_
 
 
     ##########################################################################################
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
 
-def test_bad_ldjson_is_correctly_ignored(client, live_server, measure_memory_usage):
+def test_bad_ldjson_is_correctly_ignored(client, live_server, measure_memory_usage, datastore_path):
     
     test_return_data = """
             <html>
@@ -193,7 +180,7 @@ def test_bad_ldjson_is_correctly_ignored(client, live_server, measure_memory_usa
             <div class="yes">Some extra stuff</div>
             </body></html>
      """
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
     _test_runner_check_bad_format_ignored(live_server=live_server, client=client, has_ldjson_price_data=True)
@@ -227,7 +214,7 @@ def test_bad_ldjson_is_correctly_ignored(client, live_server, measure_memory_usa
     #         <div class="yes">Some extra stuff</div>
     #         </body></html>
     #  """
-    # with open("test-datastore/endpoint-content.txt", "w") as f:
+    # with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
     #     f.write(test_return_data)
     #
     # _test_runner_check_bad_format_ignored(live_server=live_server, client=client, has_ldjson_price_data=False)

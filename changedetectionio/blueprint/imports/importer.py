@@ -2,6 +2,7 @@ from abc import abstractmethod
 import time
 from wtforms import ValidationError
 from loguru import logger
+from flask_babel import gettext
 
 from changedetectionio.forms import validate_url
 
@@ -41,7 +42,7 @@ class import_url_list(Importer):
         now = time.time()
 
         if (len(urls) > 5000):
-            flash("Importing 5,000 of the first URLs from your list, the rest can be imported again.")
+            flash(gettext("Importing 5,000 of the first URLs from your list, the rest can be imported again."))
 
         for url in urls:
             url = url.strip()
@@ -61,7 +62,7 @@ class import_url_list(Importer):
                 extras = None
                 if processor:
                     extras = {'processor': processor}
-                new_uuid = datastore.add_watch(url=url.strip(), tag=tags, write_to_disk_now=False, extras=extras)
+                new_uuid = datastore.add_watch(url=url.strip(), tag=tags, save_immediately=False, extras=extras)
 
                 if new_uuid:
                     # Straight into the queue.
@@ -74,7 +75,7 @@ class import_url_list(Importer):
                 self.remaining_data = []
             self.remaining_data.append(url)
 
-        flash("{} Imported from list in {:.2f}s, {} Skipped.".format(good, time.time() - now, len(self.remaining_data)))
+        flash(gettext("{} Imported from list in {:.2f}s, {} Skipped.").format(good, time.time() - now, len(self.remaining_data)))
 
 
 class import_distill_io_json(Importer):
@@ -94,11 +95,11 @@ class import_distill_io_json(Importer):
         try:
             data = json.loads(data.strip())
         except json.decoder.JSONDecodeError:
-            flash("Unable to read JSON file, was it broken?", 'error')
+            flash(gettext("Unable to read JSON file, was it broken?"), 'error')
             return
 
         if not data.get('data'):
-            flash("JSON structure looks invalid, was it broken?", 'error')
+            flash(gettext("JSON structure looks invalid, was it broken?"), 'error')
             return
 
         for d in data.get('data'):
@@ -128,14 +129,14 @@ class import_distill_io_json(Importer):
                 new_uuid = datastore.add_watch(url=d['uri'].strip(),
                                                tag=",".join(d.get('tags', [])),
                                                extras=extras,
-                                               write_to_disk_now=False)
+                                               save_immediately=False)
 
                 if new_uuid:
                     # Straight into the queue.
                     self.new_uuids.append(new_uuid)
                     good += 1
 
-        flash("{} Imported from Distill.io in {:.2f}s, {} Skipped.".format(len(self.new_uuids), time.time() - now, len(self.remaining_data)))
+        flash(gettext("{} Imported from Distill.io in {:.2f}s, {} Skipped.").format(len(self.new_uuids), time.time() - now, len(self.remaining_data)))
 
 
 class import_xlsx_wachete(Importer):
@@ -156,11 +157,10 @@ class import_xlsx_wachete(Importer):
             wb = load_workbook(data)
         except Exception as e:
             # @todo correct except
-            flash("Unable to read export XLSX file, something wrong with the file?", 'error')
+            flash(gettext("Unable to read export XLSX file, something wrong with the file?"), 'error')
             return
 
-        row_id = 2
-        for row in wb.active.iter_rows(min_row=row_id):
+        for row_id, row in enumerate(wb.active.iter_rows(min_row=2), start=2):
             try:
                 extras = {}
                 data = {}
@@ -196,26 +196,23 @@ class import_xlsx_wachete(Importer):
                         validate_url(data.get('url'))
                     except ValidationError as e:
                         logger.error(f">> Import URL error {data.get('url')} {str(e)}")
-                        flash(f"Error processing row number {row_id}, URL value was incorrect, row was skipped.", 'error')
+                        flash(gettext("Error processing row number {}, URL value was incorrect, row was skipped.").format(row_id), 'error')
                         # Don't bother processing anything else on this row
                         continue
 
                     new_uuid = datastore.add_watch(url=data['url'].strip(),
                                                    extras=extras,
                                                    tag=data.get('folder'),
-                                                   write_to_disk_now=False)
+                                                   save_immediately=False)
                     if new_uuid:
                         # Straight into the queue.
                         self.new_uuids.append(new_uuid)
                         good += 1
             except Exception as e:
                 logger.error(e)
-                flash(f"Error processing row number {row_id}, check all cell data types are correct, row was skipped.", 'error')
-            else:
-                row_id += 1
+                flash(gettext("Error processing row number {}, check all cell data types are correct, row was skipped.").format(row_id), 'error')
 
-        flash(
-            "{} imported from Wachete .xlsx in {:.2f}s".format(len(self.new_uuids), time.time() - now))
+        flash(gettext("{} imported from Wachete .xlsx in {:.2f}s").format(len(self.new_uuids), time.time() - now))
 
 
 class import_xlsx_custom(Importer):
@@ -236,15 +233,15 @@ class import_xlsx_custom(Importer):
             wb = load_workbook(data)
         except Exception as e:
             # @todo correct except
-            flash("Unable to read export XLSX file, something wrong with the file?", 'error')
+            flash(gettext("Unable to read export XLSX file, something wrong with the file?"), 'error')
             return
 
         # @todo cehck atleast 2 rows, same in other method
         from changedetectionio.forms import validate_url
-        row_i = 1
+        row_i = 0
 
         try:
-            for row in wb.active.iter_rows():
+            for row_i, row in enumerate(wb.active.iter_rows(), start=1):
                 url = None
                 tags = None
                 extras = {}
@@ -265,7 +262,7 @@ class import_xlsx_custom(Importer):
                             validate_url(url)
                         except ValidationError as e:
                             logger.error(f">> Import URL error {url} {str(e)}")
-                            flash(f"Error processing row number {row_i}, URL value was incorrect, row was skipped.", 'error')
+                            flash(gettext("Error processing row number {}, URL value was incorrect, row was skipped.").format(row_i), 'error')
                             # Don't bother processing anything else on this row
                             url = None
                             break
@@ -287,16 +284,13 @@ class import_xlsx_custom(Importer):
                     new_uuid = datastore.add_watch(url=url,
                                                    extras=extras,
                                                    tag=tags,
-                                                   write_to_disk_now=False)
+                                                   save_immediately=False)
                     if new_uuid:
                         # Straight into the queue.
                         self.new_uuids.append(new_uuid)
                         good += 1
         except Exception as e:
             logger.error(e)
-            flash(f"Error processing row number {row_i}, check all cell data types are correct, row was skipped.", 'error')
-        else:
-            row_i += 1
+            flash(gettext("Error processing row number {}, check all cell data types are correct, row was skipped.").format(row_i), 'error')
 
-        flash(
-            "{} imported from custom .xlsx in {:.2f}s".format(len(self.new_uuids), time.time() - now))
+        flash(gettext("{} imported from custom .xlsx in {:.2f}s").format(len(self.new_uuids), time.time() - now))

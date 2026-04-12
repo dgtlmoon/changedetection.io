@@ -8,16 +8,42 @@ from loguru import logger
 
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, SCREENSHOT_DEFAULT_QUALITY
 
+def stitch_images_worker_raw_bytes(pipe_conn, original_page_height, capture_height):
+    """
+    Stitch image chunks together in a separate process.
 
-def stitch_images_worker(pipe_conn, chunks_bytes, original_page_height, capture_height):
+    Uses spawn multiprocessing to isolate PIL's C-level memory allocation.
+    When the subprocess exits, the OS reclaims ALL memory including C-level allocations
+    that Python's GC cannot release. This prevents the ~50MB per stitch from accumulating
+    in the main process.
+
+    Trade-off: Adds 35MB resource_tracker subprocess, but prevents 500MB+ memory leak
+    in main process (much better at scale: 35GB vs 500GB for 1000 instances).
+
+    Args:
+        pipe_conn: Pipe connection to receive data and send result
+        original_page_height: Original page height in pixels
+        capture_height: Maximum capture height
+    """
     import os
     import io
+    import struct
     from PIL import Image, ImageDraw, ImageFont
 
     try:
+        # Receive chunk count as 4-byte integer (no pickle!)
+        count_bytes = pipe_conn.recv_bytes()
+        chunk_count = struct.unpack('I', count_bytes)[0]
+
+        # Receive each chunk as raw bytes (no pickle!)
+        chunks_bytes = []
+        for _ in range(chunk_count):
+            chunks_bytes.append(pipe_conn.recv_bytes())
 
         # Load images from byte chunks
         images = [Image.open(io.BytesIO(b)) for b in chunks_bytes]
+        del chunks_bytes
+
         total_height = sum(im.height for im in images)
         max_width = max(im.width for im in images)
 
@@ -27,47 +53,46 @@ def stitch_images_worker(pipe_conn, chunks_bytes, original_page_height, capture_
         for im in images:
             stitched.paste(im, (0, y_offset))
             y_offset += im.height
+            im.close()
+        del images
 
-        # Draw caption on top (overlaid, not extending canvas)
-        draw = ImageDraw.Draw(stitched)
+        # Clip stitched image to capture_height (chunks may overshoot by up to step_size-1 px)
+        if total_height > capture_height:
+            stitched = stitched.crop((0, 0, max_width, capture_height))
 
+        # Draw caption only if page was trimmed
         if original_page_height > capture_height:
+            draw = ImageDraw.Draw(stitched)
             caption_text = f"WARNING: Screenshot was {original_page_height}px but trimmed to {capture_height}px because it was too long"
             padding = 10
-            font_size = 35
-            font_color = (255, 0, 0)
-            background_color = (255, 255, 255)
-
-
-            # Try to load a proper font
             try:
-                font = ImageFont.truetype("arial.ttf", font_size)
+                font = ImageFont.truetype("arial.ttf", 35)
             except IOError:
                 font = ImageFont.load_default()
 
             bbox = draw.textbbox((0, 0), caption_text, font=font)
             text_width = bbox[2] - bbox[0]
             text_height = bbox[3] - bbox[1]
-
-            # Draw white rectangle background behind text
-            rect_top = 0
-            rect_bottom = text_height + 2 * padding
-            draw.rectangle([(0, rect_top), (max_width, rect_bottom)], fill=background_color)
-
-            # Draw text centered horizontally, 10px padding from top of the rectangle
+            draw.rectangle([(0, 0), (max_width, text_height + 2 * padding)], fill=(255, 255, 255))
             text_x = (max_width - text_width) // 2
-            text_y = padding
-            draw.text((text_x, text_y), caption_text, font=font, fill=font_color)
+            draw.text((text_x, padding), caption_text, font=font, fill=(255, 0, 0))
 
-        # Encode and send image
+        # Encode and send
         output = io.BytesIO()
-        stitched.save(output, format="JPEG", quality=int(os.getenv("SCREENSHOT_QUALITY", SCREENSHOT_DEFAULT_QUALITY)))
-        pipe_conn.send_bytes(output.getvalue())
+        stitched.save(output, format="JPEG", quality=int(os.getenv("SCREENSHOT_QUALITY", SCREENSHOT_DEFAULT_QUALITY)), optimize=True)
+        result_bytes = output.getvalue()
 
         stitched.close()
+        del stitched
+        output.close()
+        del output
+
+        pipe_conn.send_bytes(result_bytes)
+        del result_bytes
+
     except Exception as e:
-        pipe_conn.send(f"error:{e}")
+        logger.error(f"Error in stitch_images_worker_raw_bytes: {e}")
+        error_msg = f"error:{e}".encode('utf-8')
+        pipe_conn.send_bytes(error_msg)
     finally:
         pipe_conn.close()
-
-

@@ -2,14 +2,16 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, get_UUID_for_tag_name, extract_UUID_from_client
+from .util import live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, get_UUID_for_tag_name, extract_UUID_from_client, delete_all_watches
 import os
 
+from ..store import ChangeDetectionStore
 
-# def test_setup(client, live_server, measure_memory_usage):
+
+# def test_setup(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
 
-def set_original_response():
+def set_original_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -20,11 +22,11 @@ def set_original_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
     return None
 
-def set_modified_response():
+def set_modified_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -35,13 +37,13 @@ def set_modified_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
     return None
 
-def test_setup_group_tag(client, live_server, measure_memory_usage):
+def test_setup_group_tag(client, live_server, measure_memory_usage, datastore_path):
     
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
 
     # Add a tag with some config, import a tag and it should roughly work
     res = client.post(
@@ -94,7 +96,7 @@ def test_setup_group_tag(client, live_server, measure_memory_usage):
     assert b'Warning, no filters were found' not in res.data
 
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
     assert b'Should be only this' in res.data
@@ -116,7 +118,7 @@ def test_setup_group_tag(client, live_server, measure_memory_usage):
     )
     assert b"1 Imported" in res.data
     wait_for_all_checks(client)
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
     res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     rss_token = extract_rss_token_from_UI(client)
@@ -127,10 +129,9 @@ def test_setup_group_tag(client, live_server, measure_memory_usage):
     assert b"should-be-excluded" not in res.data
     assert res.status_code == 200
     assert b"first-imported=1" in res.data
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
-def test_tag_import_singular(client, live_server, measure_memory_usage):
+def test_tag_import_singular(client, live_server, measure_memory_usage, datastore_path):
     
 
     test_url = url_for('test_endpoint', _external=True)
@@ -146,11 +147,11 @@ def test_tag_import_singular(client, live_server, measure_memory_usage):
         follow_redirects=True
     )
     # Should be only 1 tag because they both had the same
-    assert res.data.count(b'test-tag') == 1
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    assert len(live_server.app.config['DATASTORE'].data['settings']['application'].get('tags')) ==1
 
-def test_tag_add_in_ui(client, live_server, measure_memory_usage):
+    delete_all_watches(client)
+
+def test_tag_add_in_ui(client, live_server, measure_memory_usage, datastore_path):
     
 #
     res = client.post(
@@ -164,12 +165,12 @@ def test_tag_add_in_ui(client, live_server, measure_memory_usage):
     res = client.get(url_for("tags.delete_all"), follow_redirects=True)
     assert b'All tags deleted' in res.data
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
-def test_group_tag_notification(client, live_server, measure_memory_usage):
-    
-    set_original_response()
+def test_group_tag_notification(client, live_server, measure_memory_usage, datastore_path):
+    delete_all_watches(client)
+
+    set_original_response(datastore_path=datastore_path)
 
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
@@ -198,7 +199,7 @@ def test_group_tag_notification(client, live_server, measure_memory_usage):
                                                    "Diff as Patch: {{diff_patch}}\n"
                                                    ":-)",
                               "notification_screenshot": True,
-                              "notification_format": "Text",
+                              "notification_format": 'text',
                               "title": "test-tag"}
 
     res = client.post(
@@ -210,16 +211,18 @@ def test_group_tag_notification(client, live_server, measure_memory_usage):
 
     wait_for_all_checks(client)
 
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
     time.sleep(3)
 
-    assert os.path.isfile("test-datastore/notification.txt")
+    assert os.path.isfile(os.path.join(datastore_path, "notification.txt"))
 
     # Verify what was sent as a notification, this file should exist
-    with open("test-datastore/notification.txt", "r") as f:
+    with open(os.path.join(datastore_path, "notification.txt"), "r") as f:
         notification_submission = f.read()
-    os.unlink("test-datastore/notification.txt")
+    os.unlink(os.path.join(datastore_path, "notification.txt"))
 
     # Did we see the URL that had a change, in the notification?
     # Diff was correctly executed
@@ -232,10 +235,9 @@ def test_group_tag_notification(client, live_server, measure_memory_usage):
 
     #@todo Test that multiple notifications fired
     #@todo Test that each of multiple notifications with different settings
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
-def test_limit_tag_ui(client, live_server, measure_memory_usage):
+def test_limit_tag_ui(client, live_server, measure_memory_usage, datastore_path):
 
     test_url = url_for('test_random_content_endpoint', _external=True)
 
@@ -264,19 +266,16 @@ def test_limit_tag_ui(client, live_server, measure_memory_usage):
     client.get(url_for('ui.mark_all_viewed', tag=tag_uuid), follow_redirects=True)
     wait_for_all_checks(client)
 
-    with open('/tmp/fuck.html', 'wb') as f:
-        f.write(res.data)
     # Should be only 1 unviewed
     res = client.get(url_for("watchlist.index"))
     assert res.data.count(b' unviewed ') == 1
 
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
     res = client.get(url_for("tags.delete_all"), follow_redirects=True)
     assert b'All tags deleted' in res.data
 
-def test_clone_tag_on_import(client, live_server, measure_memory_usage):
+def test_clone_tag_on_import(client, live_server, measure_memory_usage, datastore_path):
     
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
@@ -299,10 +298,9 @@ def test_clone_tag_on_import(client, live_server, measure_memory_usage):
     # 2 times plus the top link to tag
     assert res.data.count(b'test-tag') == 3
     assert res.data.count(b'another-tag') == 3
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
-def test_clone_tag_on_quickwatchform_add(client, live_server, measure_memory_usage):
+def test_clone_tag_on_quickwatchform_add(client, live_server, measure_memory_usage, datastore_path):
     
 
     test_url = url_for('test_endpoint', _external=True)
@@ -327,13 +325,12 @@ def test_clone_tag_on_quickwatchform_add(client, live_server, measure_memory_usa
     # 2 times plus the top link to tag
     assert res.data.count(b'test-tag') == 3
     assert res.data.count(b'another-tag') == 3
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
     res = client.get(url_for("tags.delete_all"), follow_redirects=True)
     assert b'All tags deleted' in res.data
 
-def test_order_of_filters_tag_filter_and_watch_filter(client, live_server, measure_memory_usage):
+def test_order_of_filters_tag_filter_and_watch_filter(client, live_server, measure_memory_usage, datastore_path):
 
     # Add a tag with some config, import a tag and it should roughly work
     res = client.post(
@@ -387,16 +384,12 @@ def test_order_of_filters_tag_filter_and_watch_filter(client, live_server, measu
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(d)
 
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     filters = [
@@ -432,7 +425,7 @@ def test_order_of_filters_tag_filter_and_watch_filter(client, live_server, measu
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -482,5 +475,144 @@ the {test} appeared before. {test in res.data[:n]=}
         """
         n += t_index + len(test)
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
+
+
+def test_tag_json_persistence(client, live_server, measure_memory_usage, datastore_path):
+    """
+    Test that tags are saved to individual tag.json files and loaded correctly.
+
+    This test verifies the update_27 tag storage refactoring:
+    - Tags are saved to {uuid}/tag.json files
+    - Tags persist across datastore restarts
+    - Tag edits write to tag.json
+    - Tag deletion removes tag.json file
+    """
+    import json
+
+    datastore = client.application.config.get('DATASTORE')
+
+    # 1. Create a tag
+    res = client.post(
+        url_for("tags.form_tag_add"),
+        data={"name": "persistence-test-tag"},
+        follow_redirects=True
+    )
+    assert b"Tag added" in res.data
+
+    tag_uuid = get_UUID_for_tag_name(client, name="persistence-test-tag")
+    assert tag_uuid, "Tag UUID should exist"
+
+    # 2. Verify tag.json file was created
+    tag_json_path = os.path.join(datastore_path, tag_uuid, "tag.json")
+    assert os.path.exists(tag_json_path), f"tag.json should exist at {tag_json_path}"
+
+    # 3. Verify tag.json contains correct data
+    with open(tag_json_path, 'r') as f:
+        tag_data = json.load(f)
+    assert tag_data['title'] == 'persistence-test-tag'
+    assert tag_data['uuid'] == tag_uuid
+    assert 'date_created' in tag_data
+
+    # 4. Edit the tag
+    res = client.post(
+        url_for("tags.form_tag_edit_submit", uuid=tag_uuid),
+        data={
+            "name": "persistence-test-tag",
+            "notification_muted": True,
+            "include_filters": '#test-filter'
+        },
+        follow_redirects=True
+    )
+    assert b"Updated" in res.data
+
+    # 5. Verify tag.json was updated
+    with open(tag_json_path, 'r') as f:
+        tag_data = json.load(f)
+    assert tag_data['notification_muted'] == True
+    assert '#test-filter' in tag_data.get('include_filters', [])
+
+    # 5a. Verify tag is NOT in changedetection.json (tags should be in tag.json only)
+    changedetection_json_path = os.path.join(datastore_path, "changedetection.json")
+    with open(changedetection_json_path, 'r') as f:
+        settings_data = json.load(f)
+    # Tags dict should be empty in settings (all tags are in individual files)
+    assert settings_data['settings']['application']['tags'] == {}, \
+        "Tags should NOT be saved to changedetection.json (should be empty dict)"
+
+    # 6. Simulate restart - reload datastore
+    datastore2 = ChangeDetectionStore(datastore_path=datastore_path, include_default_watches=False, version_tag='test')
+
+    # 7. Verify tag was loaded from tag.json
+    assert tag_uuid in datastore2.data['settings']['application']['tags']
+    loaded_tag = datastore2.data['settings']['application']['tags'][tag_uuid]
+    assert loaded_tag['title'] == 'persistence-test-tag'
+    assert loaded_tag['notification_muted'] == True
+    assert '#test-filter' in loaded_tag.get('include_filters', [])
+
+    # 8. Delete the tag via API
+    res = client.get(url_for("tags.delete", uuid=tag_uuid), follow_redirects=True)
+    assert b"Tag deleted" in res.data
+
+    # 9. Verify tag.json file was deleted
+    assert not os.path.exists(tag_json_path), f"tag.json should be deleted at {tag_json_path}"
+
+    # 10. Verify tag is removed from settings
+    assert tag_uuid not in datastore.data['settings']['application']['tags']
+
+    delete_all_watches(client)
+
+
+def test_tag_json_migration_update_27(client, live_server, measure_memory_usage, datastore_path):
+    """
+    Test that update_27 migration correctly moves tags to individual files.
+
+    This simulates a pre-update_27 datastore and verifies migration works.
+    """
+    import json
+
+    # 1. Create multiple tags
+    tag_names = ['migration-tag-1', 'migration-tag-2', 'migration-tag-3']
+    tag_uuids = []
+
+    for tag_name in tag_names:
+        res = client.post(
+            url_for("tags.form_tag_add"),
+            data={"name": tag_name},
+            follow_redirects=True
+        )
+        assert b"Tag added" in res.data
+        tag_uuid = get_UUID_for_tag_name(client, name=tag_name)
+        tag_uuids.append(tag_uuid)
+
+    # 2. Verify all tag.json files exist (update_27 already ran during add_tag)
+    for tag_uuid in tag_uuids:
+        tag_json_path = os.path.join(datastore_path, tag_uuid, "tag.json")
+        assert os.path.exists(tag_json_path), f"tag.json should exist for {tag_uuid}"
+
+    # 2a. Verify tags are NOT in changedetection.json
+    changedetection_json_path = os.path.join(datastore_path, "changedetection.json")
+    with open(changedetection_json_path, 'r') as f:
+        settings_data = json.load(f)
+    assert settings_data['settings']['application']['tags'] == {}, \
+        "Tags should NOT be in changedetection.json after migration"
+
+    # 3. Simulate restart
+    datastore2 = ChangeDetectionStore(datastore_path=datastore_path, include_default_watches=False, version_tag='test')
+
+    # 4. Verify all tags loaded from tag.json files
+    for idx, tag_uuid in enumerate(tag_uuids):
+        assert tag_uuid in datastore2.data['settings']['application']['tags']
+        loaded_tag = datastore2.data['settings']['application']['tags'][tag_uuid]
+        assert loaded_tag['title'] == tag_names[idx]
+
+    # Cleanup
+    res = client.get(url_for("tags.delete_all"), follow_redirects=True)
+    assert b'All tags deleted' in res.data
+
+    # Verify all tag.json files were deleted
+    for tag_uuid in tag_uuids:
+        tag_json_path = os.path.join(datastore_path, tag_uuid, "tag.json")
+        assert not os.path.exists(tag_json_path), f"tag.json should be deleted for {tag_uuid}"
+
+    delete_all_watches(client)

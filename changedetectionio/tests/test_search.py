@@ -4,7 +4,7 @@ import time
 
 
 
-def test_basic_search(client, live_server, measure_memory_usage):
+def test_basic_search(client, live_server, measure_memory_usage, datastore_path):
     
 
     urls = ['https://localhost:12300?first-result=1',
@@ -37,7 +37,7 @@ def test_basic_search(client, live_server, measure_memory_usage):
     assert urls[1].encode('utf-8') not in res.data
 
 
-def test_search_in_tag_limit(client, live_server, measure_memory_usage):
+def test_search_in_tag_limit(client, live_server, measure_memory_usage, datastore_path):
     
 
     urls = ['https://localhost:12300?first-result=1 tag-one',

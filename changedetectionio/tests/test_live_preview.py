@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
 from flask import url_for
-from changedetectionio.tests.util import live_server_setup, wait_for_all_checks, extract_UUID_from_client
+from changedetectionio.tests.util import live_server_setup, wait_for_all_checks, extract_UUID_from_client, delete_all_watches
+import os
 
 
-def set_response():
+def set_response(datastore_path):
 
     data = """<html>
        <body>Awesome, you made it<br>
@@ -15,21 +16,21 @@ something to trigger<br>
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(data)
 
-def test_content_filter_live_preview(client, live_server, measure_memory_usage):
+def test_content_filter_live_preview(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
-    set_response()
-
+    set_response(datastore_path=datastore_path)
+    import time
     test_url = url_for('test_endpoint', _external=True)
 
-    res = client.post(
-        url_for("ui.ui_views.form_quick_watch_add"),
-        data={"url": test_url, "tags": ''},
-        follow_redirects=True
-    )
-    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
+
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    time.sleep(0.5)
+    wait_for_all_checks(client)
+
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
@@ -75,5 +76,4 @@ def test_content_filter_live_preview(client, live_server, measure_memory_usage):
     assert reply.get('ignore_line_numbers') == [2]  # Ignored - "socks" on line 2
     assert reply.get('trigger_line_numbers') == [1]  # Triggers "Awesome" in line 1
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)

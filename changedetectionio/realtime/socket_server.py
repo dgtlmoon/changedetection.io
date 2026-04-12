@@ -1,5 +1,6 @@
 import timeago
 from flask_socketio import SocketIO
+from flask_babel import gettext, get_locale
 
 import time
 import os
@@ -7,6 +8,7 @@ from loguru import logger
 from blinker import signal
 
 from changedetectionio import strtobool
+from changedetectionio.languages import get_timeago_locale
 
 
 class SignalHandler:
@@ -32,22 +34,30 @@ class SignalHandler:
         watch_favicon_bumped_signal = signal('watch_favicon_bump')
         watch_favicon_bumped_signal.connect(self.handle_watch_bumped_favicon_signal, weak=False)
 
+        watch_small_status_comment_signal = signal('watch_small_status_comment')
+        watch_small_status_comment_signal.connect(self.handle_watch_small_status_update, weak=False)
+
         # Connect to the notification_event signal
         notification_event_signal = signal('notification_event')
         notification_event_signal.connect(self.handle_notification_event, weak=False)
         logger.info("SignalHandler: Connected to notification_event signal")
 
-        # Create and start the queue update thread using standard threading
-        import threading
-        self.polling_emitter_thread = threading.Thread(
-            target=self.polling_emit_running_or_queued_watches_threaded,
-            daemon=True
-        )
-        self.polling_emitter_thread.start()
-        logger.info("Started polling thread using threading (eventlet-free)")
 
-        # Store the thread reference in socketio for clean shutdown
-        self.socketio_instance.polling_emitter_thread = self.polling_emitter_thread
+    def handle_watch_small_status_update(self, *args, **kwargs):
+        """Small simple status update, for example 'Connecting...'"""
+        watch_uuid = kwargs.get('watch_uuid')
+        status = kwargs.get('status')
+
+        if watch_uuid and status:
+            logger.debug(f"Socket.IO: Received watch small status update '{status}' for UUID {watch_uuid}")
+            # Emit the status update to all connected clients
+            self.socketio_instance.emit("watch_small_status_comment", {
+                "uuid": watch_uuid,
+                "status": status,
+                "event_timestamp": time.time()
+            })
+
+
 
     def handle_signal(self, *args, **kwargs):
         logger.trace(f"SignalHandler: Signal received with {len(args)} args and {len(kwargs)} kwargs")
@@ -124,74 +134,6 @@ class SignalHandler:
         except Exception as e:
             logger.error(f"Socket.IO error in handle_notification_event: {str(e)}")
 
-    def polling_emit_running_or_queued_watches_threaded(self):
-        """Threading version of polling for Windows compatibility"""
-        import time
-        import threading
-        logger.info("Queue update thread started (threading mode)")
-
-        # Import here to avoid circular imports
-        from changedetectionio.flask_app import app
-        from changedetectionio import worker_handler
-        watch_check_update = signal('watch_check_update')
-
-        # Track previous state to avoid unnecessary emissions
-        previous_running_uuids = set()
-
-        # Run until app shutdown - check exit flag more frequently for fast shutdown
-        exit_event = getattr(app.config, 'exit', threading.Event())
-
-        while not exit_event.is_set():
-            try:
-                # Get current running UUIDs from async workers
-                running_uuids = set(worker_handler.get_running_uuids())
-
-                # Only send updates for UUIDs that changed state
-                newly_running = running_uuids - previous_running_uuids
-                no_longer_running = previous_running_uuids - running_uuids
-
-                # Send updates for newly running UUIDs (but exit fast if shutdown requested)
-                for uuid in newly_running:
-                    if exit_event.is_set():
-                        break
-                    logger.trace(f"Threading polling: UUID {uuid} started processing")
-                    with app.app_context():
-                        watch_check_update.send(app_context=app, watch_uuid=uuid)
-                    time.sleep(0.01)  # Small yield
-
-                # Send updates for UUIDs that finished processing (but exit fast if shutdown requested)
-                if not exit_event.is_set():
-                    for uuid in no_longer_running:
-                        if exit_event.is_set():
-                            break
-                        logger.trace(f"Threading polling: UUID {uuid} finished processing")
-                        with app.app_context():
-                            watch_check_update.send(app_context=app, watch_uuid=uuid)
-                        time.sleep(0.01)  # Small yield
-
-                # Update tracking for next iteration
-                previous_running_uuids = running_uuids
-
-                # Sleep between polling cycles, but check exit flag every 0.5 seconds for fast shutdown
-                for _ in range(20):  # 20 * 0.5 = 10 seconds total
-                    if exit_event.is_set():
-                        break
-                    time.sleep(0.5)
-
-            except Exception as e:
-                logger.error(f"Error in threading polling: {str(e)}")
-                # Even during error recovery, check for exit quickly
-                for _ in range(1):  # 1 * 0.5 = 0.5 seconds
-                    if exit_event.is_set():
-                        break
-                    time.sleep(0.5)
-
-        # Check if we're in pytest environment - if so, be more gentle with logging
-        import sys
-        in_pytest = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
-
-        if not in_pytest:
-            logger.info("Queue update thread stopped (threading mode)")
 
 
 def handle_watch_update(socketio, **kwargs):
@@ -203,16 +145,13 @@ def handle_watch_update(socketio, **kwargs):
         # Emit the watch update to all connected clients
         from changedetectionio.flask_app import update_q
         from changedetectionio.flask_app import _jinja2_filter_datetime
-        from changedetectionio import worker_handler
+        from changedetectionio import worker_pool
 
         # Get list of watches that are currently running
-        running_uuids = worker_handler.get_running_uuids()
+        running_uuids = worker_pool.get_running_uuids()
 
-        # Get list of watches in the queue
-        queue_list = []
-        for q_item in update_q.queue:
-            if hasattr(q_item, 'item') and 'uuid' in q_item.item:
-                queue_list.append(q_item.item['uuid'])
+        # Get list of watches in the queue (efficient single-lock method)
+        queue_list = update_q.get_queued_uuids()
 
         # Get the error texts from the watch
         error_texts = watch.compile_error_texts()
@@ -226,7 +165,7 @@ def handle_watch_update(socketio, **kwargs):
             'has_error': True if error_texts else False,
             'has_favicon': True if watch.get_favicon_filename() else False,
             'history_n': watch.history_n,
-            'last_changed_text': timeago.format(int(watch.last_changed), time.time()) if watch.history_n >= 2 and int(watch.last_changed) > 0 else 'Not yet',
+            'last_changed_text': timeago.format(int(watch.last_changed), time.time(), get_timeago_locale(str(get_locale()))) if watch.history_n >= 2 and int(watch.last_changed) > 0 else gettext('Not yet'),
             'last_checked': watch.get('last_checked'),
             'last_checked_text': _jinja2_filter_datetime(watch),
             'notification_muted': True if watch.get('notification_muted') else False,
@@ -260,8 +199,31 @@ def handle_watch_update(socketio, **kwargs):
         logger.error(f"Socket.IO error in handle_watch_update: {str(e)}")
 
 
+def _suppress_werkzeug_ws_abrupt_disconnect_noise():
+    """Patch BaseWSGIServer.log to suppress the AssertionError traceback that fires when
+    a browser closes a WebSocket connection mid-handshake (e.g. closing a tab).
+    The exception is caught inside run_wsgi and routed to self.server.log() — it never
+    propagates out, so wrapping run_wsgi doesn't help. Patching the log method is the
+    only reliable intercept point. The error is cosmetic: Socket.IO already handles the
+    disconnect correctly via its own disconnect handler and timeout logic."""
+    try:
+        from werkzeug.serving import BaseWSGIServer
+        _original_log = BaseWSGIServer.log
+
+        def _filtered_log(self, type, message, *args):
+            if type == 'error' and 'write() before start_response' in message:
+                return
+            _original_log(self, type, message, *args)
+
+        BaseWSGIServer.log = _filtered_log
+    except Exception:
+        pass
+
+
 def init_socketio(app, datastore):
     """Initialize SocketIO with the main Flask app"""
+    _suppress_werkzeug_ws_abrupt_disconnect_noise()
+
     import platform
     import sys
 
@@ -301,7 +263,10 @@ def init_socketio(app, datastore):
                         async_mode=async_mode,
                         cors_allowed_origins=cors_origins,  # None means same-origin only
                         logger=strtobool(os.getenv('SOCKETIO_LOGGING', 'False')),
-                        engineio_logger=strtobool(os.getenv('SOCKETIO_LOGGING', 'False')))
+                        engineio_logger=strtobool(os.getenv('SOCKETIO_LOGGING', 'False')),
+                        # Disable WebSocket compression to prevent memory accumulation
+                        # Flask-Compress already handles HTTP response compression
+                        engineio_options={'http_compression': False, 'compression_threshold': 0})
 
     # Set up event handlers
     logger.info("Socket.IO: Registering connect event handler")
@@ -310,23 +275,34 @@ def init_socketio(app, datastore):
     def event_checkbox_operations(data):
         from changedetectionio.blueprint.ui import _handle_operations
         from changedetectionio import queuedWatchMetaData
-        from changedetectionio import worker_handler
+        from changedetectionio import worker_pool
         from changedetectionio.flask_app import update_q, watch_check_update
+        import threading
+
         logger.trace(f"Got checkbox operations event: {data}")
 
         datastore = socketio.datastore
 
-        _handle_operations(
-            op=data.get('op'),
-            uuids=data.get('uuids'),
-            datastore=datastore,
-            extra_data=data.get('extra_data'),
-            worker_handler=worker_handler,
-            update_q=update_q,
-            queuedWatchMetaData=queuedWatchMetaData,
-            watch_check_update=watch_check_update,
-            emit_flash=False
-        )
+        def run_operation():
+            """Run the operation in a background thread to avoid blocking the socket.io event loop"""
+            try:
+                _handle_operations(
+                    op=data.get('op'),
+                    uuids=data.get('uuids'),
+                    datastore=datastore,
+                    extra_data=data.get('extra_data'),
+                    worker_pool=worker_pool,
+                    update_q=update_q,
+                    queuedWatchMetaData=queuedWatchMetaData,
+                    watch_check_update=watch_check_update,
+                    emit_flash=False
+                )
+            except Exception as e:
+                logger.error(f"Error in checkbox operation thread: {e}")
+
+        # Start operation in a disposable daemon thread
+        thread = threading.Thread(target=run_operation, daemon=True, name=f"checkbox-op-{data.get('op')}")
+        thread.start()
 
     @socketio.on('connect')
     def handle_connect():
@@ -383,19 +359,6 @@ def init_socketio(app, datastore):
         """Shutdown the SocketIO server fast and aggressively"""
         try:
             logger.info("Socket.IO: Fast shutdown initiated...")
-
-            # For threading mode, give the thread a very short time to exit gracefully
-            if hasattr(socketio, 'polling_emitter_thread'):
-                if socketio.polling_emitter_thread.is_alive():
-                    logger.info("Socket.IO: Waiting 1 second for polling thread to stop...")
-                    socketio.polling_emitter_thread.join(timeout=1.0)  # Only 1 second timeout
-                    if socketio.polling_emitter_thread.is_alive():
-                        logger.info("Socket.IO: Polling thread still running after timeout - continuing with shutdown")
-                    else:
-                        logger.info("Socket.IO: Polling thread stopped quickly")
-                else:
-                    logger.info("Socket.IO: Polling thread already stopped")
-
             logger.info("Socket.IO: Fast shutdown complete")
         except Exception as e:
             logger.error(f"Socket.IO error during shutdown: {str(e)}")

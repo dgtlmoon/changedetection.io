@@ -38,7 +38,7 @@ class TestTriggerConditions(unittest.TestCase):
         first_content = "I saw 100 people at a rock show"
         timestamp1 = int(time.time())
         snapshot_id1 = str(uuid.uuid4())
-        watch.save_history_text(contents=first_content,
+        watch.save_history_blob(contents=first_content,
                                 timestamp=timestamp1,
                                 snapshot_id=snapshot_id1)
 
@@ -46,7 +46,7 @@ class TestTriggerConditions(unittest.TestCase):
         second_content = "I saw 200 people at a rock show"
         timestamp2 = int(time.time()) + 60
         snapshot_id2 = str(uuid.uuid4())
-        watch.save_history_text(contents=second_content,
+        watch.save_history_blob(contents=second_content,
                                 timestamp=timestamp2,
                                 snapshot_id=snapshot_id2)
 
@@ -55,8 +55,8 @@ class TestTriggerConditions(unittest.TestCase):
         self.assertEqual(len(history), 2)
 
         # Retrieve and check snapshots
-        #snapshot1 = watch.get_history_snapshot(str(timestamp1))
-        #snapshot2 = watch.get_history_snapshot(str(timestamp2))
+        #snapshot1 = watch.get_history_snapshot(timestamp=str(timestamp1))
+        #snapshot2 = watch.get_history_snapshot(timestamp=str(timestamp2))
 
         self.store.data['watching'][self.watch_uuid].update(
             {
@@ -64,7 +64,7 @@ class TestTriggerConditions(unittest.TestCase):
                 "conditions": [
                     {"operator": ">=", "field": "extracted_number", "value": "10"},
                     {"operator": "<=", "field": "extracted_number", "value": "5000"},
-                    {"operator": "in", "field": "page_text", "value": "rock"},
+                    {"operator": "in", "field": "page_filtered_text", "value": "rock"},
                     #{"operator": "starts_with", "field": "page_text", "value": "I saw"},
                 ]
             }

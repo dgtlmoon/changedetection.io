@@ -11,7 +11,7 @@ from changedetectionio.notification import (
 )
 
 
-def set_original_response():
+def set_original_response(datastore_path):
     test_return_data = """<html>
        <body>
        <section id=header style="padding: 50px; height: 350px">This is the header which should be ignored always - <span>add to cart</span></section>
@@ -26,13 +26,13 @@ def set_original_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
     return None
 
 
 
-def set_back_in_stock_response():
+def set_back_in_stock_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -45,14 +45,14 @@ def set_back_in_stock_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
     return None
 
 # Add a site in paused mode, add an invalid filter, we should still have visual selector data ready
-def test_restock_detection(client, live_server, measure_memory_usage):
+def test_restock_detection(client, live_server, measure_memory_usage, datastore_path):
 
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
     #assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
    #  live_server_setup(live_server) # Setup on conftest per function
     #####################
@@ -88,24 +88,25 @@ def test_restock_detection(client, live_server, measure_memory_usage):
     assert b'not-in-stock' in res.data # should be out of stock
 
     # Is it correctly shown as in stock
-    set_back_in_stock_response()
+    set_back_in_stock_response(datastore_path)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'not-in-stock' not in res.data
 
     # We should have a notification
-    wait_for_notification_endpoint_output()
-    assert os.path.isfile("test-datastore/notification.txt"), "Notification received"
-    os.unlink("test-datastore/notification.txt")
+    notification_file = os.path.join(datastore_path, "notification.txt")
+    wait_for_notification_endpoint_output(datastore_path=datastore_path)
+    assert os.path.isfile(notification_file), "Notification received"
+    os.unlink(notification_file)
 
     # Default behaviour is to only fire notification when it goes OUT OF STOCK -> IN STOCK
     # So here there should be no file, because we go IN STOCK -> OUT OF STOCK
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     time.sleep(5)
-    assert not os.path.isfile("test-datastore/notification.txt"), "No notification should have fired when it went OUT OF STOCK by default"
+    assert not os.path.isfile(notification_file), "No notification should have fired when it went OUT OF STOCK by default"
 
     # BUT we should see that it correctly shows "not in stock"
     res = client.get(url_for("watchlist.index"))

@@ -1,27 +1,25 @@
-# eventlet>=0.38.0  # Removed - replaced with threading mode for better Python 3.12+ compatibility
-feedgen~=0.9
+feedgen~=1.0
+feedparser~=6.0  # For parsing RSS/Atom feeds
 flask-compress
-# 0.6.3 included compatibility fix for werkzeug 3.x (2.x had deprecation of url handlers)
 flask-login>=0.6.3
 flask-paginate
-flask_expects_json~=1.7
-flask_restful
+flask-socketio>=5.6.1,<6 # Re #3910
+flask>=3.1,<4
 flask_cors # For the Chrome extension to operate
-janus # Thread-safe async/sync queue bridge
+flask_restful
 flask_wtf~=1.2
-flask~=2.3
-flask-socketio~=5.5.1
-python-socketio~=5.13.0
-python-engineio~=4.12.0
 inscriptis~=2.2
+python-engineio>=4.9.0,<5
+python-socketio>=5.11.0,<6
 pytz
 timeago~=1.0
-validators~=0.21
+validators~=0.35
+werkzeug==3.1.6
 
 
 # Set these versions together to avoid a RequestsDependencyWarning
 # >= 2.26 also adds Brotli support if brotli is installed
-brotli~=1.0
+brotli~=1.2
 requests[socks]
 requests-file
 
@@ -29,8 +27,11 @@ requests-file
 # If specific version needed for security, use urllib3>=1.26.19,<3.0
 chardet>2.3.0
 
-wtforms~=3.0
-jsonpath-ng~=1.5.3
+wtforms~=3.2
+jsonpath-ng~=1.8.0
+
+# Fast JSON serialization for better performance
+orjson~=3.11
 
 # dnspython - Used by paho-mqtt for MQTT broker resolution  
 # Version pin removed since eventlet (which required the specific 2.6.1 pin) has been eliminated
@@ -39,40 +40,47 @@ jsonpath-ng~=1.5.3
 # jq not available on Windows so must be installed manually
 
 # Notification library
-apprise==1.9.4
+apprise==1.9.8
+
+diff_match_patch
+
+# Lightweight URL linkifier for notifications
+linkify-it-py
 
 # - Needed for apprise/spush, and maybe others? hopefully doesnt trigger a rust compile.
 # - Requires extra wheel for rPi, adds build time for arm/v8 which is not in piwheels
-# Pinned to 43.0.1 for ARM compatibility (45.x may not have pre-built ARM wheels)
+# Pinned to 44.x for ARM compatibility and sslyze compatibility (sslyze requires <45) and (45.x may not have pre-built ARM wheels)
 # Also pinned because dependabot wants specific versions
-cryptography==44.0.1
+cryptography==44.0.0
 
 # apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
 # use any version other than 2.0.x due to https://github.com/eclipse/paho.mqtt.python/issues/814
 paho-mqtt!=2.0.*
 
 # Used for CSS filtering, JSON extraction from HTML
-beautifulsoup4>=4.0.0,<=4.13.5
+beautifulsoup4>=4.0.0,<=4.14.3
 
 # XPath filtering, lxml is required by bs4 anyway, but put it here to be safe.
 # #2328 - 5.2.0 and 5.2.1 had extra CPU flag CFLAGS set which was not compatible on older hardware
 #         It could be advantageous to run its own pypi package here with those performance flags set
 #         https://bugs.launchpad.net/lxml/+bug/2059910/comments/16
-lxml >=4.8.0,<6,!=5.2.0,!=5.2.1
+lxml >=4.8.0,!=5.2.0,!=5.2.1,<7
 
 # XPath 2.0-3.1 support - 4.2.0 had issues, 4.1.5 stable
 # Consider updating to latest stable version periodically
-elementpath==4.1.5
+elementpath==5.1.1
+
+# For fast image comparison in screenshot change detection
+# opencv-python-headless is OPTIONAL (excluded from requirements.txt)
+# - Installed conditionally via Dockerfile (skipped on arm/v7 and arm/v8 due to long build times)
+# - Pixelmatch is used as fallback when OpenCV is unavailable
+# - To install manually: pip install opencv-python-headless>=4.8.0.76
 
 selenium~=4.31.0
 
-# https://github.com/pallets/werkzeug/issues/2985
-# Maybe related to pytest?
-werkzeug==3.0.6
-
 # Templating, so far just in the URLs but in the future can be for the notifications also
 jinja2~=3.1
-jinja2-time
+arrow
 openpyxl
 # https://peps.python.org/pep-0508/#environment-markers
 # https://github.com/dgtlmoon/changedetection.io/pull/1009
@@ -81,20 +89,16 @@ jq~=1.3; python_version >= "3.8" and sys_platform == "linux"
 
 # playwright is installed at Dockerfile build time because it's not available on all platforms
 
-pyppeteer-ng==2.0.0rc10
-
+pyppeteer-ng==2.0.0rc13
 pyppeteerstealth>=0.0.4
 
 # Include pytest, so if theres a support issue we can ask them to run these tests on their setup
-pytest ~=7.2
-pytest-flask ~=1.2
-
-# Anything 4.0 and up but not 5.0
-jsonschema ~= 4.0
+pytest ~=9.0
+pytest-flask ~=1.3
+pytest-mock ~=3.15
 
 # OpenAPI validation support
-openapi-core[flask] >= 0.19.0
-
+openapi-core[flask] ~= 0.23
 
 loguru
 
@@ -103,6 +107,8 @@ extruct
 
 # For cleaning up unknown currency formats
 babel
+# For internationalization (i18n) support
+Flask-Babel>=4.0.0
 
 levenshtein
 
@@ -114,8 +120,7 @@ greenlet >= 3.0.3
 # Default SOCKETIO_MODE=threading is recommended for better compatibility
 gevent
 
-# Pinned or it causes problems with flask_expects_json which seems unmaintained
-referencing==0.35.1
+referencing  # Don't pin — jsonschema-path (required by openapi-core>=0.18) caps referencing<0.37.0, so pinning 0.37.0 forces openapi-core back to 0.17.2. Revisit once jsonschema-path>=0.3.5 relaxes the cap.
 
 # For conditions
 panzi-json-logic
@@ -124,21 +129,25 @@ price-parser
 
 # flask_socket_io - incorrect package name, already have flask-socketio above
 
-# So far for detecting correct favicon type, but for other things in the future
-python-magic
+# Lightweight MIME type detection (saves ~14MB memory vs python-magic/libmagic)
+# Used for detecting correct favicon type and content-type detection
+puremagic
 
 # Scheduler - Windows seemed to miss a lot of default timezone info (even "UTC" !)
 tzdata
 
 #typing_extensions ==4.8.0
 
-pluggy ~= 1.5
+pluggy ~= 1.6
 
 # Needed for testing, cross-platform for process and system monitoring
-psutil==7.0.0
+psutil==7.2.2
 
 ruff >= 0.11.2
 pre_commit >= 4.2.0
 
 # For events between checking and socketio updates
 blinker
+pytest-xdist
+
+

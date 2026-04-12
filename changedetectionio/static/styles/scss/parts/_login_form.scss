@@ -1,0 +1,233 @@
+// Modern Login Form - Friendly and Welcoming Design
+
+.login-form {
+  min-height: 52vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+
+  .inner {
+    background: var(--color-background);
+    border-radius: 16px;
+    box-shadow:
+      0 10px 40px rgba(0, 0, 0, 0.08),
+      0 2px 8px rgba(0, 0, 0, 0.04);
+    padding: 3rem 2.5rem;
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+    &:hover {
+
+      box-shadow:
+        0 15px 50px rgba(0, 0, 0, 0.12),
+        0 5px 15px rgba(0, 0, 0, 0.06);
+    }
+  }
+
+  form {
+    margin: 0;
+  }
+
+  fieldset {
+    border: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .pure-control-group {
+    margin-bottom: 1.75rem;
+
+    &:last-of-type {
+      margin-bottom: 0;
+      margin-top: 2rem;
+    }
+  }
+
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--color-text);
+    letter-spacing: 0.01em;
+  }
+
+  input[type="password"] {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid var(--color-grey-800);
+    border-radius: 8px;
+    font-size: 1rem;
+    background: var(--color-background-input);
+    color: var(--color-text-input);
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-link);
+      box-shadow: 0 0 0 3px rgba(27, 152, 248, 0.1);
+      transform: translateY(-1px);
+    }
+
+    &::placeholder {
+      color: var(--color-text-input-placeholder);
+    }
+  }
+
+  button[type="submit"] {
+    width: 100%;
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    background: var(--color-background-button-primary);
+    color: var(--color-text-button);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(27, 152, 248, 0.2);
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(27, 152, 248, 0.3);
+      background: #0066cc;
+    }
+
+    &:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(27, 152, 248, 0.2);
+    }
+  }
+}
+
+// Messages styling for login page
+.content-main > ul.messages {
+  position: fixed;
+  top: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  z-index: 1000;
+  min-width: 300px;
+  max-width: 500px;
+
+  li {
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: slideDown 0.3s ease-out;
+    border: 2px solid transparent;
+
+    &.error {
+      background: #fee;
+      border: 2px solid #ef4444;
+      color: #991b1b;
+      font-weight: 600;
+    }
+
+    &.success {
+      background: #f0fdf4;
+      border: 2px solid #10b981;
+      color: #166534;
+    }
+
+    &.info,
+    &.message {
+      background: #eff6ff;
+      border: 2px solid #3b82f6;
+      color: #1e40af;
+    }
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Dark mode adjustments
+html[data-darkmode="true"] {
+  .login-form {
+    .inner {
+      box-shadow:
+        0 10px 40px rgba(0, 0, 0, 0.4),
+        0 2px 8px rgba(0, 0, 0, 0.2);
+
+      &:hover {
+        box-shadow:
+          0 15px 50px rgba(0, 0, 0, 0.5),
+          0 5px 15px rgba(0, 0, 0, 0.3);
+      }
+    }
+
+    input[type="password"] {
+      border-color: var(--color-grey-400);
+
+      &:focus {
+        border-color: var(--color-link);
+      }
+    }
+  }
+
+  .content-main > ul.messages {
+    li {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+
+      &.error {
+        background: #4a1d1d;
+        border-color: #ef4444;
+        color: #fca5a5;
+      }
+
+      &.success {
+        background: #1a3a2a;
+        border-color: #10b981;
+        color: #86efac;
+      }
+
+      &.info,
+      &.message {
+        background: #1e3a5f;
+        border-color: #3b82f6;
+        color: #93c5fd;
+      }
+    }
+  }
+}
+
+// Mobile adjustments
+@media only screen and (max-width: 768px) {
+  .login-form {
+    min-height: auto;
+    padding: 1rem 0.5rem;
+    padding-top: 5rem; // Space for error message
+
+    .inner {
+      padding: 2rem 1.5rem;
+      border-radius: 12px;
+    }
+  }
+
+  .content-main > ul.messages {
+    top: 70px; // Higher up on mobile to avoid overlap
+    left: 10px;
+    right: 10px;
+    transform: none;
+    min-width: auto;
+  }
+}

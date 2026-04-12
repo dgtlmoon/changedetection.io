@@ -5,13 +5,13 @@ import time
 
 from flask import url_for
 
-from .util import live_server_setup, wait_for_all_checks
+from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 
 
-# def test_setup(client, live_server, measure_memory_usage):
+# def test_setup(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
 
-def test_import(client, live_server, measure_memory_usage):
+def test_import(client, live_server, measure_memory_usage, datastore_path):
     # Give the endpoint time to spin up
     wait_for_all_checks(client)
 
@@ -28,13 +28,13 @@ https://example.com tag1, other tag"""
     assert b"3 Imported" in res.data
     assert b"tag1" in res.data
     assert b"other tag" in res.data
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
     # Clear flask alerts
     res = client.get( url_for("watchlist.index"))
     res = client.get( url_for("watchlist.index"))
 
-def xtest_import_skip_url(client, live_server, measure_memory_usage):
+def xtest_import_skip_url(client, live_server, measure_memory_usage, datastore_path):
 
 
     # Give the endpoint time to spin up
@@ -53,11 +53,11 @@ def xtest_import_skip_url(client, live_server, measure_memory_usage):
     assert b"1 Imported" in res.data
     assert b"ht000000broken" in res.data
     assert b"1 Skipped" in res.data
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
     # Clear flask alerts
     res = client.get( url_for("watchlist.index"))
 
-def test_import_distillio(client, live_server, measure_memory_usage):
+def test_import_distillio(client, live_server, measure_memory_usage, datastore_path):
 
     distill_data='''
 {
@@ -82,7 +82,7 @@ def test_import_distillio(client, live_server, measure_memory_usage):
 
     # Give the endpoint time to spin up
     time.sleep(1)
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
     res = client.post(
         url_for("imports.import_page"),
         data={
@@ -119,11 +119,11 @@ def test_import_distillio(client, live_server, measure_memory_usage):
     assert b"nice stuff" in res.data
     assert b"nerd-news" in res.data
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
     # Clear flask alerts
     res = client.get(url_for("watchlist.index"))
 
-def test_import_custom_xlsx(client, live_server, measure_memory_usage):
+def test_import_custom_xlsx(client, live_server, measure_memory_usage, datastore_path):
     """Test can upload a excel spreadsheet and the watches are created correctly"""
 
     
@@ -169,10 +169,9 @@ def test_import_custom_xlsx(client, live_server, measure_memory_usage):
             assert filters[0] == '/html[1]/body[1]/div[4]/div[1]/div[1]/div[1]||//*[@id=\'content\']/div[3]/div[1]/div[1]||//*[@id=\'content\']/div[1]'
             assert watch.get('time_between_check') == {'weeks': 0, 'days': 1, 'hours': 6, 'minutes': 24, 'seconds': 0}
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
-def test_import_watchete_xlsx(client, live_server, measure_memory_usage):
+def test_import_watchete_xlsx(client, live_server, measure_memory_usage, datastore_path):
     """Test can upload a excel spreadsheet and the watches are created correctly"""
 
     
@@ -214,5 +213,86 @@ def test_import_watchete_xlsx(client, live_server, measure_memory_usage):
         if watch.get('title') == 'system default website':
             assert watch.get('fetch_backend') == 'system' # uses default if blank
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
+
+
+def test_import_wachete_xlsx_row_counter(client, live_server, measure_memory_usage, datastore_path):
+    """Row counter in Wachete XLSX import must advance even after a failed row.
+
+    Regression: row_id was only incremented in the try/else (on success), so
+    after any failure the counter froze and all subsequent errors cited the
+    stale number.  With the enumerate() fix, row 5 must say "row 5", not "row 3".
+    """
+    import openpyxl
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    # Header row (row 1)
+    ws.append(['Name', 'Id', 'Url', 'Interval (min)', 'XPath', 'Dynamic Wachet', 'Portal Wachet', 'Folder'])
+    # Row 2: valid
+    ws.append(['Site A', '001', 'https://example.com/a', 60, None, None, None, None])
+    # Row 3: bad URL — must report row 3
+    ws.append(['Site B', '002', 'not-a-valid-url', 60, None, None, None, None])
+    # Row 4: valid
+    ws.append(['Site C', '003', 'https://example.com/c', 60, None, None, None, None])
+    # Row 5: bad URL — must report row 5, not "row 3" (the pre-fix stale value)
+    ws.append(['Site D', '004', 'also-not-valid', 60, None, None, None, None])
+
+    xlsx_bytes = io.BytesIO()
+    wb.save(xlsx_bytes)
+    xlsx_bytes.seek(0)
+
+    res = client.post(
+        url_for("imports.import_page"),
+        data={'file_mapping': 'wachete', 'xlsx_file': (xlsx_bytes, 'test.xlsx')},
+        follow_redirects=True,
+    )
+
+    assert b'2 imported from Wachete .xlsx' in res.data
+    assert b'Error processing row number 3' in res.data
+    assert b'Error processing row number 5' in res.data
+
+    delete_all_watches(client)
+
+
+def test_import_custom_xlsx_row_counter(client, live_server, measure_memory_usage, datastore_path):
+    """Row counter in custom XLSX import must reflect the actual row, not always row 1.
+
+    Regression: row_i was incremented in the else clause of the *outer* try/except
+    (which only fired once, after the whole loop), so every URL-validation error
+    inside the loop reported "row 1".  With enumerate() the third row must say
+    "row 3", not "row 1".
+    """
+    import openpyxl
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    # Row 1: bad URL — must report row 1
+    ws.append(['not-valid-url-row1'])
+    # Row 2: valid
+    ws.append(['https://example.com/b'])
+    # Row 3: bad URL — must report row 3, not "row 1" (the pre-fix value)
+    ws.append(['not-valid-url-row3'])
+    # Row 4: valid
+    ws.append(['https://example.com/d'])
+
+    xlsx_bytes = io.BytesIO()
+    wb.save(xlsx_bytes)
+    xlsx_bytes.seek(0)
+
+    res = client.post(
+        url_for("imports.import_page"),
+        data={
+            'file_mapping': 'custom',
+            'custom_xlsx[col_0]': '1',
+            'custom_xlsx[col_type_0]': 'url',
+            'xlsx_file': (xlsx_bytes, 'test.xlsx'),
+        },
+        follow_redirects=True,
+    )
+
+    assert b'2 imported from custom .xlsx' in res.data
+    assert b'Error processing row number 1' in res.data
+    assert b'Error processing row number 3' in res.data
+
+    delete_all_watches(client)

@@ -21,6 +21,7 @@ venv/
 # IDEs
 .idea
 .vscode/settings.json
+*~
 
 # Datastore files
 datastore/
@@ -28,3 +29,4 @@ test-datastore/
 
 # Memory consumption log
 test-memory.log
+tests/logs/

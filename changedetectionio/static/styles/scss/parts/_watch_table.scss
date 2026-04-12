@@ -1,4 +1,32 @@
 /* table related */
+#stats_row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  color: #fff;
+  font-size: 0.85rem;
+  >* {
+    padding-bottom: 0.5rem;
+  }
+  .left {
+    text-align: left;
+  }
+
+  .right {
+    opacity: 0.5;
+    transition: opacity 0.6s ease;
+    margin-left: auto; /* pushes it to the far right */
+    text-align: right;
+  }
+}
+body.has-queue {
+  #stats_row {
+    .right {
+      opacity: 1.0;
+    }
+  }
+}
+
 .watch-table {
   width: 100%;
   font-size: 80%;

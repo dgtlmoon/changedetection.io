@@ -4,18 +4,15 @@ from urllib.request import urlopen
 from . util import set_original_response, set_modified_response, live_server_setup
 
 
-def test_check_watch_field_storage(client, live_server, measure_memory_usage):
-    set_original_response()
+def test_check_watch_field_storage(client, live_server, measure_memory_usage, datastore_path):
+    set_original_response(datastore_path=datastore_path)
+
    #  live_server_setup(live_server) # Setup on conftest per function
 
     test_url = "http://somerandomsitewewatch.com"
 
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
 
     res = client.post(

@@ -15,138 +15,512 @@ on:
         default: false
 
 jobs:
-  test-application:
+  # Build the Docker image once and share it with all test jobs
+  build:
     runs-on: ubuntu-latest
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
-      # Mainly just for link/flake8
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      - name: Cache pip packages
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-py${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-py${{ env.PYTHON_VERSION }}-
+            ${{ runner.os }}-pip-
+
+      - name: Get current date for cache key
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
       - name: Build changedetection.io container for testing under Python ${{ env.PYTHON_VERSION }}
+        uses: docker/build-push-action@v7
+        with:
+          context: ./
+          file: ./Dockerfile
+          build-args: |
+            PYTHON_VERSION=${{ env.PYTHON_VERSION }}
+            LOGGER_LEVEL=TRACE
+          tags: test-changedetectionio
+          load: true
+          cache-from: type=gha,scope=build-${{ github.ref_name }}-py${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt', 'Dockerfile') }}-${{ steps.date.outputs.date }}
+          cache-to: type=gha,mode=max,scope=build-${{ github.ref_name }}-py${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt', 'Dockerfile') }}-${{ steps.date.outputs.date }}
+
+      - name: Verify build
         run: |
-          echo "---- Building for Python ${{ env.PYTHON_VERSION }} -----"
-          # Build a changedetection.io container and start testing inside
-          docker build --build-arg PYTHON_VERSION=${{ env.PYTHON_VERSION }} --build-arg LOGGER_LEVEL=TRACE -t test-changedetectionio .
-          # Debug info
-          docker run test-changedetectionio  bash -c 'pip list'         
+          echo "---- Built for Python ${{ env.PYTHON_VERSION }} -----"
+          docker run test-changedetectionio bash -c 'pip list'
 
       - name: We should be Python ${{ env.PYTHON_VERSION }} ...
-        run: |         
-          docker run test-changedetectionio  bash -c 'python3 --version'
-
-      - name: Spin up ancillary testable services
         run: |
-          
-          docker network create changedet-network
-          
-          # Selenium
-          docker run --network changedet-network -d --hostname selenium  -p 4444:4444 --rm --shm-size="2g"  selenium/standalone-chrome:4
-          
-          # SocketPuppetBrowser + Extra for custom browser test
-          docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --cap-add=SYS_ADMIN --name sockpuppetbrowser --hostname sockpuppetbrowser --rm -p 3000:3000 dgtlmoon/sockpuppetbrowser:latest                    
-          docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --cap-add=SYS_ADMIN --name sockpuppetbrowser-custom-url --hostname sockpuppetbrowser-custom-url  -p 3001:3000 --rm dgtlmoon/sockpuppetbrowser:latest
+          docker run test-changedetectionio bash -c 'python3 --version'
 
-      - name: Spin up ancillary SMTP+Echo message test server
+      - name: Save Docker image
         run: |
-          # Debug SMTP server/echo message back server
-          docker run --network changedet-network -d -p 11025:11025 -p 11080:11080  --hostname mailserver test-changedetectionio  bash -c 'pip3 install aiosmtpd && python changedetectionio/tests/smtp/smtp-test-server.py'
-          docker ps
+          docker save test-changedetectionio -o /tmp/test-changedetectionio.tar
 
-      - name: Show docker container state and other debug info
+      - name: Upload Docker image artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-changedetectionio-${{ env.PYTHON_VERSION }}
+          path: /tmp/test-changedetectionio.tar
+          retention-days: 1
+
+  # Unit tests (lightweight, no ancillary services needed)
+  unit-tests:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 10
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: test-changedetectionio-${{ env.PYTHON_VERSION }}
+          path: /tmp
+
+      - name: Load Docker image
         run: |
-          set -x
-          echo "Running processes in docker..."
-          docker ps
+          docker load -i /tmp/test-changedetectionio.tar
 
       - name: Run Unit Tests
         run: |
-          # Unit tests
-          docker run test-changedetectionio  bash -c 'python3 -m unittest changedetectionio.tests.unit.test_notification_diff'
-          docker run test-changedetectionio  bash -c 'python3 -m unittest changedetectionio.tests.unit.test_watch_model'
-          docker run test-changedetectionio  bash -c 'python3 -m unittest changedetectionio.tests.unit.test_jinja2_security'
-          docker run test-changedetectionio  bash -c 'python3 -m unittest changedetectionio.tests.unit.test_semver'
+          docker run test-changedetectionio bash -c 'cd changedetectionio;pytest tests/unit/'
 
-      - name: Test built container with Pytest (generally as requests/plaintext fetching)
+  # Basic pytest tests with ancillary services
+  basic-tests:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 25
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: test-changedetectionio-${{ env.PYTHON_VERSION }}
+          path: /tmp
+
+      - name: Load Docker image
         run: |
-          # All tests
-          echo "run test with pytest"
-          # The default pytest logger_level is TRACE
-          # To change logger_level for pytest(test/conftest.py),
-          # append the docker option. e.g. '-e LOGGER_LEVEL=DEBUG'
-          docker run --name test-cdio-basic-tests --network changedet-network  test-changedetectionio  bash -c 'cd changedetectionio && ./run_basic_tests.sh'
+          docker load -i /tmp/test-changedetectionio.tar
 
-# PLAYWRIGHT/NODE-> CDP
-      - name: Playwright and SocketPuppetBrowser - Specific tests in built container
+      - name: Test built container with Pytest
         run: |
-          # Playwright via Sockpuppetbrowser fetch
-          # tests/visualselector/test_fetch_data.py will do browser steps  
-          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest  -vv --capture=tee-sys --showlocals --tb=long --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_content.py'
-          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest  -vv --capture=tee-sys --showlocals --tb=long --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_errorhandling.py'
-          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest  -vv --capture=tee-sys --showlocals --tb=long --live-server-host=0.0.0.0 --live-server-port=5004 tests/visualselector/test_fetch_data.py'
-          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest  -vv --capture=tee-sys --showlocals --tb=long --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_custom_js_before_content.py'
+          docker network inspect changedet-network >/dev/null 2>&1 || docker network create changedet-network
+          docker run --name test-cdio-basic-tests --network changedet-network test-changedetectionio bash -c 'cd changedetectionio && ./run_basic_tests.sh'
 
-
-      - name: Playwright and SocketPuppetBrowser - Headers and requests
-        run: |       
-          # Settings headers playwright tests - Call back in from Sockpuppetbrowser, check headers
-          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000?dumpio=true" --network changedet-network test-changedetectionio  bash -c 'find .; cd changedetectionio; pytest --live-server-host=0.0.0.0  --live-server-port=5004 tests/test_request.py; pwd;find .'
-
-      - name: Playwright and SocketPuppetBrowser - Restock detection
-        run: |                            
-          # restock detection via playwright - added name=changedet here so that playwright and sockpuppetbrowser can connect to it
-          docker run --rm --name "changedet" -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-port=5004 --live-server-host=0.0.0.0 tests/restock/test_restock.py'
-
-# STRAIGHT TO CDP
-      - name: Pyppeteer and SocketPuppetBrowser - Specific tests in built container
-        if: ${{ inputs.skip-pypuppeteer == false }}
+      - name: Test CLI options
         run: |
-          # Playwright via Sockpuppetbrowser fetch 
-          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_content.py'
-          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_errorhandling.py'
-          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/visualselector/test_fetch_data.py'
-          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_custom_js_before_content.py'
+          docker network inspect changedet-network >/dev/null 2>&1 || docker network create changedet-network
+          docker run --name test-cdio-cli-opts --network changedet-network test-changedetectionio bash -c 'changedetectionio/test_cli_opts.sh' &> cli-opts-output.txt
+          echo "=== CLI Options Test Output ==="
+          cat cli-opts-output.txt
 
-      - name: Pyppeteer and SocketPuppetBrowser - Headers and requests checks
-        if: ${{ inputs.skip-pypuppeteer == false }}
+      - name: CLI Memory Test
         run: |
-          # Settings headers playwright tests - Call back in from Sockpuppetbrowser, check headers
-          docker run --name "changedet" --hostname changedet --rm  -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000?dumpio=true" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0  --live-server-port=5004 tests/test_request.py'
+          echo "=== Checking CLI batch mode memory usage ==="
+          # Extract RSS memory value from output
+          RSS_MB=$(grep -oP "Memory consumption before worker shutdown: RSS=\K[\d.]+" cli-opts-output.txt | head -1 || echo "0")
+          echo "RSS Memory: ${RSS_MB} MB"
 
-      - name: Pyppeteer and SocketPuppetBrowser - Restock detection
-        if: ${{ inputs.skip-pypuppeteer == false }}
-        run: |                            
-          # restock detection via playwright - added name=changedet here so that playwright and sockpuppetbrowser can connect to it
-          docker run --rm --name "changedet" -e "FLASK_SERVER_NAME=changedet"  -e "FAST_PUPPETEER_CHROME_FETCHER=True"  -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest --live-server-port=5004 --live-server-host=0.0.0.0 tests/restock/test_restock.py'
+          # Check if RSS is less than 100MB
+          if [ -n "$RSS_MB" ]; then
+            if (( $(echo "$RSS_MB < 100" | bc -l) )); then
+              echo "✓ Memory usage is acceptable: ${RSS_MB} MB < 100 MB"
+            else
+              echo "✗ Memory usage too high: ${RSS_MB} MB >= 100 MB"
+              exit 1
+            fi
+          else
+            echo "⚠ Could not extract memory usage, skipping check"
+          fi
 
-# SELENIUM
+      - name: Extract memory report and logs
+        if: always()
+        uses: ./.github/actions/extract-memory-report
+        with:
+          container-name: test-cdio-basic-tests
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Store test artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-cdio-basic-tests-output-py${{ env.PYTHON_VERSION }}
+          path: output-logs
+
+      - name: Store CLI test output
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-cdio-cli-opts-output-py${{ env.PYTHON_VERSION }}
+          path: cli-opts-output.txt
+
+  # Playwright tests
+  playwright-tests:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 10
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: test-changedetectionio-${{ env.PYTHON_VERSION }}
+          path: /tmp
+
+      - name: Load Docker image
+        run: |
+          docker load -i /tmp/test-changedetectionio.tar
+
+      - name: Spin up ancillary services
+        run: |
+          docker network create changedet-network
+          docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --cap-add=SYS_ADMIN --name sockpuppetbrowser --hostname sockpuppetbrowser --rm -p 3000:3000 dgtlmoon/sockpuppetbrowser:latest
+          docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --cap-add=SYS_ADMIN --name sockpuppetbrowser-custom-url --hostname sockpuppetbrowser-custom-url -p 3001:3000 --rm dgtlmoon/sockpuppetbrowser:latest
+
+      - name: Playwright - Specific tests in built container
+        run: |
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio bash -c 'cd changedetectionio;pytest -vv --capture=tee-sys --showlocals --tb=long --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_content.py'
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio bash -c 'cd changedetectionio;pytest -vv --capture=tee-sys --showlocals --tb=long --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_errorhandling.py'
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio bash -c 'cd changedetectionio;pytest -vv --capture=tee-sys --showlocals --tb=long --live-server-host=0.0.0.0 --live-server-port=5004 tests/visualselector/test_fetch_data.py'
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio bash -c 'cd changedetectionio;pytest -vv --capture=tee-sys --showlocals --tb=long --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_custom_js_before_content.py'
+
+      - name: Playwright - Headers and requests
+        run: |
+          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000?dumpio=true" --network changedet-network test-changedetectionio bash -c 'find .; cd changedetectionio; pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_request.py; pwd;find .'
+
+      - name: Playwright - Restock detection
+        run: |
+          docker run --rm --name "changedet" -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest --live-server-port=5004 --live-server-host=0.0.0.0 tests/restock/test_restock.py'
+
+  # Pyppeteer tests
+  pyppeteer-tests:
+    runs-on: ubuntu-latest
+    needs: build
+    if: ${{ inputs.skip-pypuppeteer == false }}
+    timeout-minutes: 10
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: test-changedetectionio-${{ env.PYTHON_VERSION }}
+          path: /tmp
+
+      - name: Load Docker image
+        run: |
+          docker load -i /tmp/test-changedetectionio.tar
+
+      - name: Spin up ancillary services
+        run: |
+          docker network create changedet-network
+          docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --cap-add=SYS_ADMIN --name sockpuppetbrowser --hostname sockpuppetbrowser --rm -p 3000:3000 dgtlmoon/sockpuppetbrowser:latest
+
+      - name: Pyppeteer - Specific tests in built container
+        run: |
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_content.py'
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_errorhandling.py'
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/visualselector/test_fetch_data.py'
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_custom_js_before_content.py'
+
+      - name: Pyppeteer - Headers and requests checks
+        run: |
+          docker run --name "changedet" --hostname changedet --rm -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000?dumpio=true" --network changedet-network test-changedetectionio bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_request.py'
+
+      - name: Pyppeteer - Restock detection
+        run: |
+          docker run --rm --name "changedet" -e "FLASK_SERVER_NAME=changedet" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest --live-server-port=5004 --live-server-host=0.0.0.0 tests/restock/test_restock.py'
+
+  # Selenium tests
+  selenium-tests:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 10
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: test-changedetectionio-${{ env.PYTHON_VERSION }}
+          path: /tmp
+
+      - name: Load Docker image
+        run: |
+          docker load -i /tmp/test-changedetectionio.tar
+
+      - name: Spin up ancillary services
+        run: |
+          docker network create changedet-network
+          docker run --network changedet-network -d --hostname selenium -p 4444:4444 --rm --shm-size="2g" selenium/standalone-chrome:4
+          sleep 3
+
+      - name: Specific tests for headers and requests checks with Selenium
+        run: |
+
+          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "WEBDRIVER_URL=http://selenium:4444/wd/hub" --network changedet-network test-changedetectionio bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_request.py'
+
       - name: Specific tests in built container for Selenium
         run: |
-          # Selenium fetch
-          docker run --rm -e "WEBDRIVER_URL=http://selenium:4444/wd/hub" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py'
+          docker run --rm -e "WEBDRIVER_URL=http://selenium:4444/wd/hub" --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py'
 
-      - name: Specific tests in built container for headers and requests checks with Selenium
+
+  # SMTP tests
+  smtp-tests:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 10
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: test-changedetectionio-${{ env.PYTHON_VERSION }}
+          path: /tmp
+
+      - name: Load Docker image
         run: |
-          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "WEBDRIVER_URL=http://selenium:4444/wd/hub" --network changedet-network test-changedetectionio  bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0  --live-server-port=5004 tests/test_request.py'
+          docker load -i /tmp/test-changedetectionio.tar
 
-# OTHER STUFF
+      - name: Spin up SMTP test server
+        run: |
+          docker network create changedet-network
+          docker run --network changedet-network -d -p 11025:11025 -p 11080:11080 --hostname mailserver test-changedetectionio bash -c 'pip3 install aiosmtpd && python changedetectionio/tests/smtp/smtp-test-server.py'
+
       - name: Test SMTP notification mime types
         run: |
-          # SMTP content types - needs the 'Debug SMTP server/echo message back server' container from above
-          # "mailserver" hostname defined above
           docker run --rm --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest tests/smtp/test_notification_smtp.py'
 
-      # @todo Add a test via playwright/puppeteer
-      # squid with auth is tested in run_proxy_tests.sh -> tests/proxy_list/test_select_custom_proxy.py
-      - name: Test proxy squid style interaction
+  nginx-reverse-proxy:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 10
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: test-changedetectionio-${{ env.PYTHON_VERSION }}
+          path: /tmp
+
+      - name: Load Docker image
+        run: |
+          docker load -i /tmp/test-changedetectionio.tar
+
+      - name: Spin up services
+        run: |
+          docker network create changedet-network
+
+          # Start changedetection.io container with X-Forwarded headers support
+          docker run --name changedet-app --hostname changedet-app --network changedet-network \
+            -e USE_X_SETTINGS=true \
+            -d test-changedetectionio
+          sleep 3
+
+      - name: Start nginx reverse proxy
+        run: |
+          # Start nginx with our test configuration
+          docker run --name nginx-proxy --network changedet-network -d -p 8080:80 --rm \
+            -v ${{ github.workspace }}/.github/nginx-reverse-proxy-test.conf:/etc/nginx/conf.d/default.conf:ro \
+            nginx:alpine
+          sleep 2
+
+      - name: Test reverse proxy - root path
+        run: |
+          echo "=== Testing nginx reverse proxy at root path ==="
+          curl --retry-connrefused --retry 6 -s http://localhost:8080/ > /tmp/nginx-test-root.html
+
+          # Check for changedetection.io UI elements
+          if grep -q "checkbox-uuid" /tmp/nginx-test-root.html; then
+            echo "✓ Found checkbox-uuid in response"
+          else
+            echo "ERROR: checkbox-uuid not found in response"
+            cat /tmp/nginx-test-root.html
+            exit 1
+          fi
+
+          # Check for watchlist content
+          if grep -q -i "watch" /tmp/nginx-test-root.html; then
+            echo "✓ Found watch/watchlist content in response"
+          else
+            echo "ERROR: watchlist content not found"
+            cat /tmp/nginx-test-root.html
+            exit 1
+          fi
+
+          echo "✓ Root path reverse proxy working correctly"
+
+      - name: Test reverse proxy - subpath with X-Forwarded-Prefix
+        run: |
+          echo "=== Testing nginx reverse proxy at subpath /changedet-sub/ ==="
+          curl --retry-connrefused --retry 6 -s http://localhost:8080/changedet-sub/ > /tmp/nginx-test-subpath.html
+
+          # Check for changedetection.io UI elements
+          if grep -q "checkbox-uuid" /tmp/nginx-test-subpath.html; then
+            echo "✓ Found checkbox-uuid in subpath response"
+          else
+            echo "ERROR: checkbox-uuid not found in subpath response"
+            cat /tmp/nginx-test-subpath.html
+            exit 1
+          fi
+
+          echo "✓ Subpath reverse proxy working correctly"
+
+      - name: Test API through reverse proxy subpath
+        run: |
+          echo "=== Testing API endpoints through nginx subpath /changedet-sub/ ==="
+
+          # Extract API key from the changedetection.io datastore
+          API_KEY=$(docker exec changedet-app cat /datastore/changedetection.json | grep -o '"api_access_token": *"[^"]*"' | cut -d'"' -f4)
+
+          if [ -z "$API_KEY" ]; then
+            echo "ERROR: Could not extract API key from datastore"
+            docker exec changedet-app cat /datastore/changedetection.json
+            exit 1
+          fi
+
+          echo "✓ Extracted API key: ${API_KEY:0:8}..."
+
+          # Create a watch via API through nginx proxy subpath
+          echo "Creating watch via POST to /changedet-sub/api/v1/watch"
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "http://localhost:8080/changedet-sub/api/v1/watch" \
+            -H "x-api-key: ${API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "url": "https://example.com/test-nginx-proxy",
+              "tag": "nginx-test"
+            }')
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+
+          if [ "$HTTP_CODE" != "201" ]; then
+            echo "ERROR: Expected HTTP 201, got $HTTP_CODE"
+            echo "Response: $BODY"
+            exit 1
+          fi
+
+          echo "✓ Watch created successfully (HTTP 201)"
+
+          # Extract the watch UUID from response
+          WATCH_UUID=$(echo "$BODY" | grep -o '"uuid": *"[^"]*"' | cut -d'"' -f4)
+          echo "✓ Watch UUID: $WATCH_UUID"
+
+          # Update the watch via PUT through nginx proxy subpath
+          echo "Updating watch via PUT to /changedet-sub/api/v1/watch/${WATCH_UUID}"
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT "http://localhost:8080/changedet-sub/api/v1/watch/${WATCH_UUID}" \
+            -H "x-api-key: ${API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "paused": true
+            }')
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "ERROR: Expected HTTP 200, got $HTTP_CODE"
+            echo "Response: $BODY"
+            exit 1
+          fi
+
+          if echo "$BODY" | grep -q 'OK'; then
+            echo "✓ Watch updated successfully (HTTP 200, response: OK)"
+          else
+            echo "ERROR: Expected response 'OK', got: $BODY"
+            echo "Response: $BODY"
+            exit 1
+          fi
+
+          # Verify the watch is paused via GET
+          echo "Verifying watch is paused via GET"
+          RESPONSE=$(curl -s "http://localhost:8080/changedet-sub/api/v1/watch/${WATCH_UUID}" \
+            -H "x-api-key: ${API_KEY}")
+
+          if echo "$RESPONSE" | grep -q '"paused": *true'; then
+            echo "✓ Watch is paused as expected"
+          else
+            echo "ERROR: Watch paused state not confirmed"
+            echo "Response: $RESPONSE"
+            exit 1
+          fi
+
+          echo "✓ API tests through nginx subpath completed successfully"
+
+      - name: Cleanup nginx test
+        if: always()
+        run: |
+          docker logs nginx-proxy || true
+          docker logs changedet-app || true
+          docker stop nginx-proxy changedet-app || true
+          docker rm nginx-proxy changedet-app || true
+
+
+
+  # Proxy tests
+  proxy-tests:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 10
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: test-changedetectionio-${{ env.PYTHON_VERSION }}
+          path: /tmp
+
+      - name: Load Docker image
+        run: |
+          docker load -i /tmp/test-changedetectionio.tar
+
+      - name: Spin up services
+        run: |
+          docker network create changedet-network
+          docker run --network changedet-network -d --hostname selenium -p 4444:4444 --rm --shm-size="2g" selenium/standalone-chrome:4
+          docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --cap-add=SYS_ADMIN --name sockpuppetbrowser --hostname sockpuppetbrowser --rm -p 3000:3000 dgtlmoon/sockpuppetbrowser:latest
+          docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --cap-add=SYS_ADMIN --name sockpuppetbrowser-custom-url --hostname sockpuppetbrowser-custom-url -p 3001:3000 --rm dgtlmoon/sockpuppetbrowser:latest
+
+      - name: Test proxy Squid style interaction
         run: |
           cd changedetectionio
           ./run_proxy_tests.sh
+          docker ps
           cd ..
 
       - name: Test proxy SOCKS5 style interaction
@@ -155,28 +529,92 @@ jobs:
           ./run_socks_proxy_tests.sh
           cd ..
 
+  # Custom browser URL tests
+  custom-browser-tests:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 10
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: test-changedetectionio-${{ env.PYTHON_VERSION }}
+          path: /tmp
+
+      - name: Load Docker image
+        run: |
+          docker load -i /tmp/test-changedetectionio.tar
+
+      - name: Spin up ancillary services
+        run: |
+          docker network create changedet-network
+          docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --cap-add=SYS_ADMIN --name sockpuppetbrowser --hostname sockpuppetbrowser --rm -p 3000:3000 dgtlmoon/sockpuppetbrowser:latest
+          docker run --network changedet-network -d -e "LOG_LEVEL=TRACE" --cap-add=SYS_ADMIN --name sockpuppetbrowser-custom-url --hostname sockpuppetbrowser-custom-url -p 3001:3000 --rm dgtlmoon/sockpuppetbrowser:latest
+
       - name: Test custom browser URL
         run: |
           cd changedetectionio
           ./run_custom_browser_url_tests.sh
-          cd ..
 
-      - name: Test changedetection.io container starts+runs basically without error
+  processor-plugin-tests:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 20
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: test-changedetectionio-${{ env.PYTHON_VERSION }}
+          path: /tmp
+
+      - name: Load Docker image
         run: |
-          docker run --name test-changedetectionio -p 5556:5000  -d test-changedetectionio
+          docker load -i /tmp/test-changedetectionio.tar
+
+      - name: Basic processor plugin registration and checks
+        run: |
+          docker run  -e EXTRA_PACKAGES=changedetection.io-osint-processor test-changedetectionio bash -c 'cd changedetectionio;pytest -vvv -s  tests/plugins/test_processor.py::test_check_plugin_processor'
+
+      - name: Plugin get_html_head_extras hook injects into base.html
+        run: |
+          docker run test-changedetectionio bash -c 'cd changedetectionio;pytest -vvv -s tests/plugins/test_html_head_extras.py'
+
+  # Container startup tests
+  container-tests:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 10
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: test-changedetectionio-${{ env.PYTHON_VERSION }}
+          path: /tmp
+
+      - name: Load Docker image
+        run: |
+          docker load -i /tmp/test-changedetectionio.tar
+
+      - name: Test container starts+runs basically without error
+        run: |
+          docker run --name test-changedetectionio -p 5556:5000 -d test-changedetectionio
           sleep 3
-          # Should return 0 (no error) when grep finds it
-          curl --retry-connrefused --retry 6  -s http://localhost:5556 |grep -q checkbox-uuid
-          
-          # and IPv6
-          curl --retry-connrefused --retry 6  -s -g -6 "http://[::1]:5556"|grep -q checkbox-uuid
-
-          # Check whether TRACE log is enabled.
-          # Also, check whether TRACE came from STDOUT
+          curl --retry-connrefused --retry 6 -s http://localhost:5556 |grep -q checkbox-uuid
+          curl --retry-connrefused --retry 6 -s -g -6 "http://[::1]:5556"|grep -q checkbox-uuid
           docker logs test-changedetectionio 2>/dev/null | grep 'TRACE log is enabled' || exit 1
-          # Check whether DEBUG is came from STDOUT
           docker logs test-changedetectionio 2>/dev/null | grep 'DEBUG' || exit 1
-
           docker kill test-changedetectionio
 
       - name: Test HTTPS SSL mode
@@ -184,78 +622,217 @@ jobs:
           openssl req -x509 -newkey rsa:4096 -keyout privkey.pem -out cert.pem -days 365 -nodes -subj "/CN=localhost"
           docker run --name test-changedetectionio-ssl --rm -e SSL_CERT_FILE=cert.pem -e SSL_PRIVKEY_FILE=privkey.pem -p 5000:5000 -v ./cert.pem:/app/cert.pem -v ./privkey.pem:/app/privkey.pem -d test-changedetectionio
           sleep 3
-          # Should return 0 (no error) when grep finds it
-          # -k because its self-signed
           curl --retry-connrefused --retry 6 -k https://localhost:5000 -v|grep -q checkbox-uuid
-      
           docker kill test-changedetectionio-ssl
 
       - name: Test IPv6 Mode
         run: |
-          # IPv6 - :: bind to all interfaces inside container (like 0.0.0.0), ::1 would be localhost only
           docker run --name test-changedetectionio-ipv6 --rm -p 5000:5000 -e LISTEN_HOST=:: -d test-changedetectionio
           sleep 3
-          # Should return 0 (no error) when grep finds it on localhost
           curl --retry-connrefused --retry 6 http://[::1]:5000 -v|grep -q checkbox-uuid
           docker kill test-changedetectionio-ipv6
 
-      - name: Test changedetection.io SIGTERM and SIGINT signal shutdown
+  # Signal tests
+  signal-tests:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 10
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: test-changedetectionio-${{ env.PYTHON_VERSION }}
+          path: /tmp
+
+      - name: Load Docker image
         run: |
-          
+          docker load -i /tmp/test-changedetectionio.tar
+
+      - name: Test SIGTERM and SIGINT signal shutdown
+        run: |
           echo SIGINT Shutdown request test
           docker run --name sig-test -d test-changedetectionio
           sleep 3
           echo ">>> Sending SIGINT to sig-test container"
           docker kill --signal=SIGINT sig-test
           sleep 3
-          # invert the check (it should be not 0/not running)
           docker ps
-          # check signal catch(STDERR) log. Because of
-          # changedetectionio/__init__.py: logger.add(sys.stderr, level=logger_level)
           docker logs sig-test 2>&1 | grep 'Shutdown: Got Signal - SIGINT' || exit 1
           test -z "`docker ps|grep sig-test`"
-          if [ $? -ne 0 ]
-          then
+          if [ $? -ne 0 ]; then
             echo "Looks like container was running when it shouldnt be"
             docker ps
             exit 1
           fi
-          
-          # @todo - scan the container log to see the right "graceful shutdown" text exists 
           docker rm sig-test
-          
+
           echo SIGTERM Shutdown request test
           docker run --name sig-test -d test-changedetectionio
           sleep 3
           echo ">>> Sending SIGTERM to sig-test container"
           docker kill --signal=SIGTERM sig-test
           sleep 3
-          # invert the check (it should be not 0/not running)
           docker ps
-          # check signal catch(STDERR) log. Because of
-          # changedetectionio/__init__.py: logger.add(sys.stderr, level=logger_level)
           docker logs sig-test 2>&1 | grep 'Shutdown: Got Signal - SIGTERM' || exit 1
           test -z "`docker ps|grep sig-test`"
-          if [ $? -ne 0 ]
-          then
+          if [ $? -ne 0 ]; then
             echo "Looks like container was running when it shouldnt be"
             docker ps
             exit 1
           fi
-          
-          # @todo - scan the container log to see the right "graceful shutdown" text exists           
           docker rm sig-test
 
-      - name: Dump container log
-        if: always()
-        run: |
-          mkdir output-logs
-          docker logs test-cdio-basic-tests > output-logs/test-cdio-basic-tests-stdout-${{ env.PYTHON_VERSION }}.txt
-          docker logs test-cdio-basic-tests 2> output-logs/test-cdio-basic-tests-stderr-${{ env.PYTHON_VERSION }}.txt
-
-      - name: Store everything including test-datastore
-        if: always()
-        uses: actions/upload-artifact@v4
+  # Upgrade path test
+  upgrade-path-test:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 25
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v6
         with:
-          name: test-cdio-basic-tests-output-py${{ env.PYTHON_VERSION }}
-          path: .
+          fetch-depth: 0  # Fetch all history and tags for upgrade testing
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Check upgrade works without error
+        run: |
+          echo "=== Testing upgrade path from 0.49.1 to ${{ github.ref_name }} (${{ github.sha }}) ==="
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends \
+              g++ \
+              gcc \
+              libc-dev \
+              libffi-dev \
+              libjpeg-dev \
+              libssl-dev \
+              libxslt-dev \
+              make \
+              patch \
+              pkg-config \
+              zlib1g-dev
+          
+          # Checkout old version and create datastore
+          git checkout 0.49.1
+          python3 -m venv .venv
+          source .venv/bin/activate
+          pip install -r requirements.txt
+          pip install 'pyOpenSSL>=23.2.0'
+
+          echo "=== Running version 0.49.1 to create datastore ==="
+          ALLOW_IANA_RESTRICTED_ADDRESSES=true python3 ./changedetection.py -C -d /tmp/data &
+          APP_PID=$!
+
+          # Wait for app to be ready
+          echo "Waiting for 0.49.1 to be ready..."
+          sleep 6
+
+          # Extract API key from datastore (0.49.1 uses url-watches.json)
+          API_KEY=$(jq -r '.settings.application.api_access_token // empty' /tmp/data/url-watches.json)
+          echo "API Key: ${API_KEY:0:8}..."
+
+          # Create a watch with tag "github-group-test" via API
+          echo "Creating test watch with tag via API..."
+          curl -X POST "http://127.0.0.1:5000/api/v1/watch" \
+            -H "x-api-key: ${API_KEY}" \
+            -H "Content-Type: application/json" \
+            --show-error --fail \
+            --retry 6 --retry-delay 1 --retry-connrefused \
+            -d '{
+              "url": "https://example.com/upgrade-test",
+              "tag": "github-group-test"
+            }'
+
+          echo "✓ Created watch with tag 'github-group-test'"
+
+          # Create a specific test URL watch
+          echo "Creating test URL watch via API..."
+          curl -X POST "http://127.0.0.1:5000/api/v1/watch" \
+            -H "x-api-key: ${API_KEY}" \
+            -H "Content-Type: application/json" \
+            --show-error --fail \
+            -d '{
+              "url": "http://localhost/test.txt"
+            }'
+
+          echo "✓ Created watch for 'http://localhost/test.txt' in version 0.49.1"
+
+          # Stop the old version gracefully
+          kill $APP_PID
+          wait $APP_PID || true
+          echo "✓ Version 0.49.1 stopped"
+
+          # Upgrade to current version (use commit SHA since we're in detached HEAD)
+          echo "Upgrading to commit ${{ github.sha }}"
+          git checkout ${{ github.sha }}
+          pip install -r requirements.txt
+
+          echo "=== Running current version (commit ${{ github.sha }}) with old datastore (testing mode) ==="
+          ALLOW_IANA_RESTRICTED_ADDRESSES=true TESTING_SHUTDOWN_AFTER_DATASTORE_LOAD=1 python3 ./changedetection.py -d /tmp/data > /tmp/upgrade-test.log 2>&1
+
+          echo "=== Upgrade test output ==="
+          cat /tmp/upgrade-test.log
+          echo "✓ Datastore upgraded successfully"
+
+          # Now start the current version normally to verify the tag survived
+          echo "=== Starting current version to verify tag exists after upgrade ==="
+          ALLOW_IANA_RESTRICTED_ADDRESSES=true timeout 20 python3 ./changedetection.py -d /tmp/data > /tmp/ui-test.log 2>&1 &
+          APP_PID=$!
+
+          # Wait for app to be ready and fetch UI
+          echo "Waiting for current version to be ready..."
+          sleep 5
+          curl --retry 6 --retry-delay 1 --retry-connrefused --silent http://127.0.0.1:5000 > /tmp/ui-output.html
+
+          # Verify tag exists in UI
+          if grep -q "github-group-test" /tmp/ui-output.html; then
+            echo "✓ Tag 'github-group-test' found in UI after upgrade"
+          else
+            echo "ERROR: Tag 'github-group-test' not found in UI after upgrade"
+            echo "=== UI Output ==="
+            cat /tmp/ui-output.html
+            echo "=== App Log ==="
+            cat /tmp/ui-test.log
+            kill $APP_PID || true
+            exit 1
+          fi
+
+          # Verify test URL exists in UI
+          if grep -q "http://localhost/test.txt" /tmp/ui-output.html; then
+            echo "✓ Watch URL 'http://localhost/test.txt' found in UI after upgrade"
+          else
+            echo "ERROR: Watch URL 'http://localhost/test.txt' not found in UI after upgrade"
+            echo "=== UI Output ==="
+            cat /tmp/ui-output.html
+            echo "=== App Log ==="
+            cat /tmp/ui-test.log
+            kill $APP_PID || true
+            exit 1
+          fi
+
+          # Cleanup
+          kill $APP_PID || true
+          wait $APP_PID || true
+
+          echo ""
+          echo "✓✓✓ Upgrade test passed: 0.49.1 → ${{ github.ref_name }} ✓✓✓"
+          echo "    - Commit: ${{ github.sha }}"
+          echo "    - Datastore migrated successfully"
+          echo "    - Tag 'github-group-test' survived upgrade"
+          echo "    - Watch URL 'http://localhost/test.txt' survived upgrade"
+
+          echo "✓ Upgrade test passed: 0.49.1 → ${{ github.ref_name }}"
+
+      - name: Upload upgrade test logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: upgrade-test-logs-py${{ env.PYTHON_VERSION }}
+          path: /tmp/upgrade-test.log

@@ -2,6 +2,13 @@
   padding: 0.5rem 1em;
   line-height: 1.2rem;
 }
+#menu-mute, #menu-pause {
+  padding-left: 0.3rem;
+  padding-right: 0.3rem;
+  img {
+    height: 1.2rem;
+  }
+}
 
 .pure-menu-item {
   svg {
@@ -21,5 +28,23 @@
     &:hover {
       cursor: pointer;
     }
+  }
+
+  // Active menu item styling
+  &.active {
+    .pure-menu-link {
+      background-color: var(--color-background-menu-link-hover);
+      color: var(--color-text-menu-link-hover);
+    }
+  }
+}
+
+#cdio-logo {
+  padding-left: 0.5em;
+}
+
+#inline-menu-extras-group {
+  >* {
+    display: inline-block;
   }
 }

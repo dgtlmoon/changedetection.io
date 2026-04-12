@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 import json
 import time
+import os
 
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks
+from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 from ..model import CONDITIONS_MATCH_LOGIC_DEFAULT
 
 
-def set_original_response(number="50"):
+def set_original_response(datastore_path, number="50"):
     test_return_data = f"""<html>
        <body>
      <h1>Test Page for Conditions</h1>
@@ -17,10 +18,10 @@ def set_original_response(number="50"):
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
-def set_number_in_range_response(number="75"):
+def set_number_in_range_response(datastore_path, number="75"):
     test_return_data = f"""<html>
        <body>
      <h1>Test Page for Conditions</h1>
@@ -30,10 +31,10 @@ def set_number_in_range_response(number="75"):
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
-def set_number_out_of_range_response(number="150"):
+def set_number_out_of_range_response(datastore_path, number="150"):
     test_return_data = f"""<html>
        <body>
      <h1>Test Page for Conditions</h1>
@@ -43,36 +44,32 @@ def set_number_out_of_range_response(number="150"):
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
-# def test_setup(client, live_server):
+# def test_setup(client, live_server, measure_memory_usage, datastore_path):
     """Test that both text and number conditions work together with AND logic."""
    #  live_server_setup(live_server) # Setup on conftest per function
 
-def test_conditions_with_text_and_number(client, live_server):
+def test_conditions_with_text_and_number(client, live_server, measure_memory_usage, datastore_path):
     """Test that both text and number conditions work together with AND logic."""
     
-    set_original_response("50")
+    set_original_response(datastore_path=datastore_path, number="50")
     
 
     test_url = url_for('test_endpoint', _external=True)
 
     # Add our URL to the import page
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Configure the watch with two conditions connected with AND:
     # 1. The page filtered text must contain "5" (first digit of value)
     # 2. The extracted number should be >= 20 and <= 100
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
             "url": test_url,
             "fetch_backend": "html_requests",
@@ -113,27 +110,22 @@ def test_conditions_with_text_and_number(client, live_server):
 
     wait_for_all_checks(client)
     client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
-    time.sleep(0.2)
-
-    wait_for_all_checks(client)
+    time.sleep(1)
 
     # Case 1
-    set_number_in_range_response("70.5")
+    set_number_in_range_response(datastore_path=datastore_path, number="70.5")
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
-    time.sleep(2)
     # 75 is > 20 and < 100 and contains "5"
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' in res.data
 
-
     # Case 2: Change with one condition violated
     # Number out of range (150) but contains '5'
     client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
-    time.sleep(0.2)
 
-    set_number_out_of_range_response("150.5")
+    set_number_out_of_range_response(datastore_path=datastore_path, number="150.5")
 
 
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -143,26 +135,20 @@ def test_conditions_with_text_and_number(client, live_server):
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' not in res.data
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 # The 'validate' button next to each rule row
-def test_condition_validate_rule_row(client, live_server):
+def test_condition_validate_rule_row(client, live_server, measure_memory_usage, datastore_path):
 
-    set_original_response("50")
+    set_original_response(datastore_path=datastore_path, number="50")
 
     test_url = url_for('test_endpoint', _external=True)
 
     # Add our URL to the import page
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
-    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
 
     # the front end submits the current form state which should override the watch in a temporary copy
     res = client.post(
@@ -203,16 +189,12 @@ def test_condition_validate_rule_row(client, live_server):
     )
     assert res.status_code == 200
     assert b'false' in res.data
-    # cleanup for the next
-    client.get(
-        url_for("ui.form_delete", uuid="all"),
-        follow_redirects=True
-    )
 
+    delete_all_watches(client)
 
 
 # If there was only a change in the whitespacing, then we shouldnt have a change detected
-def test_wordcount_conditions_plugin(client, live_server, measure_memory_usage):
+def test_wordcount_conditions_plugin(client, live_server, measure_memory_usage, datastore_path):
     
 
     test_return_data = """<html>
@@ -225,40 +207,31 @@ def test_wordcount_conditions_plugin(client, live_server, measure_memory_usage):
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
     # Check it saved
     res = client.get(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
     )
 
     # Assert the word count is counted correctly
     assert b'<td>13</td>' in res.data
-
-    # cleanup for the next
-    client.get(
-        url_for("ui.form_delete", uuid="all"),
-        follow_redirects=True
-    )
+    delete_all_watches(client)
 
 # If there was only a change in the whitespacing, then we shouldnt have a change detected
-def test_lev_conditions_plugin(client, live_server, measure_memory_usage):
-    
+def test_lev_conditions_plugin(client, live_server, measure_memory_usage, datastore_path):
+    # This should break..
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("""<html>
        <body>
      Some initial text<br>
@@ -303,14 +276,14 @@ def test_lev_conditions_plugin(client, live_server, measure_memory_usage):
 
     # Check the content saved initially, even tho a condition was set - this is the first snapshot so shouldnt be affected by conditions
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid=uuid),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
     assert b'Which is across multiple lines' in res.data
 
 
     ############### Now change it a LITTLE bit...
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("""<html>
        <body>
      Some initial text<br>
@@ -339,7 +312,7 @@ def test_lev_conditions_plugin(client, live_server, measure_memory_usage):
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
     res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data

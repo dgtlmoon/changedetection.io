@@ -1,15 +1,15 @@
-import time
 from copy import deepcopy
 import os
 import importlib.resources
-from flask import Blueprint, request, redirect, url_for, flash, render_template, make_response, send_from_directory, abort
+from flask import Blueprint, request, redirect, url_for, flash, render_template, abort
+from flask_babel import gettext
 from loguru import logger
 from jinja2 import Environment, FileSystemLoader
 
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
 from changedetectionio.time_handler import is_within_schedule
-from changedetectionio import worker_handler
+from changedetectionio import worker_pool
 
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData):
     edit_blueprint = Blueprint('ui_edit', __name__, template_folder="../ui/templates")
@@ -20,26 +20,25 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             if tag_uuid in watch.get('tags', []) and (tag.get('include_filters') or tag.get('subtractive_selectors')):
                 return True
 
-    @edit_blueprint.route("/edit/<string:uuid>", methods=['GET', 'POST'])
+    @edit_blueprint.route("/edit/<uuid_str:uuid>", methods=['GET', 'POST'])
     @login_optionally_required
     # https://stackoverflow.com/questions/42984453/wtforms-populate-form-with-data-if-data-exists
     # https://wtforms.readthedocs.io/en/3.0.x/forms/#wtforms.form.Form.populate_obj ?
     def edit_page(uuid):
         from changedetectionio import forms
-        from changedetectionio.blueprint.browser_steps.browser_steps import browser_step_ui_config
+        from changedetectionio.browser_steps.browser_steps import browser_step_ui_config
         from changedetectionio import processors
         import importlib
 
-        # More for testing, possible to return the first/only
-        if not datastore.data['watching'].keys():
-            flash("No watches to edit", "error")
-            return redirect(url_for('watchlist.index'))
-
         if uuid == 'first':
             uuid = list(datastore.data['watching'].keys()).pop()
+        # More for testing, possible to return the first/only
+        if not datastore.data['watching'].keys():
+            flash(gettext("No watches to edit"), "error")
+            return redirect(url_for('watchlist.index'))
 
         if not uuid in datastore.data['watching']:
-            flash("No watch with the UUID %s found." % (uuid), "error")
+            flash(gettext("No watch with the UUID {} found.").format(uuid), "error")
             return redirect(url_for('watchlist.index'))
 
         switch_processor = request.args.get('switch_processor')
@@ -47,12 +46,18 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             for p in processors.available_processors():
                 if p[0] == switch_processor:
                     datastore.data['watching'][uuid]['processor'] = switch_processor
-                    flash(f"Switched to mode - {p[1]}.")
+                    flash(gettext("Switched to mode - {}.").format(p[1]))
                     datastore.clear_watch_history(uuid)
                     redirect(url_for('ui_edit.edit_page', uuid=uuid))
 
         # be sure we update with a copy instead of accidently editing the live object by reference
-        default = deepcopy(datastore.data['watching'][uuid])
+        default = None
+        while not default:
+            try:
+                default = deepcopy(datastore.data['watching'][uuid])
+            except RuntimeError as e:
+                # Dictionary changed
+                continue
 
         # Defaults for proxy choice
         if datastore.proxy_list is not None:  # When enabled
@@ -66,8 +71,13 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         processor_name = datastore.data['watching'][uuid].get('processor', '')
         processor_classes = next((tpl for tpl in processors.find_processors() if tpl[1] == processor_name), None)
         if not processor_classes:
-            flash(f"Cannot load the edit form for processor/plugin '{processor_classes[1]}', plugin missing?", 'error')
-            return redirect(url_for('watchlist.index'))
+            flash(gettext("Could not load '{}' processor, processor plugin might be missing. Please select a different processor.").format(processor_name), 'error')
+            # Fall back to default processor so user can still edit and change processor
+            processor_classes = next((tpl for tpl in processors.find_processors() if tpl[1] == 'text_json_diff'), None)
+            if not processor_classes:
+                # If even text_json_diff is missing, something is very wrong
+                flash(gettext("Could not load '{}' processor, processor plugin might be missing.").format(processor_name), 'error')
+                return redirect(url_for('watchlist.index'))
 
         parent_module = processors.get_parent_module(processor_classes[0])
 
@@ -96,6 +106,39 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         form.datastore = datastore
         form.watch = default
 
+        # Load processor-specific config from JSON file for GET requests
+        if request.method == 'GET' and processor_name:
+            try:
+                from changedetectionio.processors.base import difference_detection_processor
+                # Create a processor instance to access config methods
+                processor_instance = difference_detection_processor(datastore, uuid)
+                # Use processor name as filename so each processor keeps its own config
+                config_filename = f'{processor_name}.json'
+                processor_config = processor_instance.get_extra_watch_config(config_filename)
+
+                if processor_config:
+                    from wtforms.fields.form import FormField
+                    # Populate processor-config-* fields from JSON
+                    for config_key, config_value in processor_config.items():
+                        if not isinstance(config_value, dict):
+                            continue
+                        # Try exact API-named field first (e.g., processor_config_restock_diff)
+                        target_field = getattr(form, f'processor_config_{config_key}', None)
+                        # Fallback: find any FormField sub-form whose fields cover config_value keys
+                        if target_field is None:
+                            for form_field in form:
+                                if isinstance(form_field, FormField) and all(k in form_field.form._fields for k in config_value):
+                                    target_field = form_field
+                                    break
+                        if target_field is not None:
+                            for sub_key, sub_value in config_value.items():
+                                sub_field = target_field.form._fields.get(sub_key)
+                                if sub_field is not None:
+                                    sub_field.data = sub_value
+                                    logger.debug(f"Loaded processor config from {config_filename}: {sub_key} = {sub_value}")
+            except Exception as e:
+                logger.warning(f"Failed to load processor config: {e}")
+
         for p in datastore.extra_browsers:
             form.fetch_backend.choices.append(p)
 
@@ -114,11 +157,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         if request.method == 'POST' and form.validate():
 
-            # If they changed processor, it makes sense to reset it.
-            if datastore.data['watching'][uuid].get('processor') != form.data.get('processor'):
-                datastore.data['watching'][uuid].clear_watch()
-                flash("Reset watch history due to change of processor")
-
             extra_update_obj = {
                 'consecutive_filter_failures': 0,
                 'last_error' : False
@@ -129,7 +167,12 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
             extra_update_obj['time_between_check'] = form.time_between_check.data
 
-             # Ignore text
+            # Handle processor-config-* fields separately (save to JSON, not datastore)
+            # IMPORTANT: These must NOT be saved to url-watches.json, only to the processor-specific JSON file
+            processor_config_data = processors.extract_processor_config_from_form_data(form.data)
+            processors.save_processor_config(datastore, uuid, processor_config_data)
+
+            # Ignore text
             form_ignore_text = form.ignore_text.data
             datastore.data['watching'][uuid]['ignore_text'] = form_ignore_text
 
@@ -167,12 +210,19 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
             # Recast it if need be to right data Watch handler
             watch_class = processors.get_custom_watch_obj_for_processor(form.data.get('processor'))
-            datastore.data['watching'][uuid] = watch_class(datastore_path=datastore.datastore_path, default=datastore.data['watching'][uuid])
-            flash("Updated watch - unpaused!" if request.args.get('unpause_on_save') else "Updated watch.")
+            datastore.data['watching'][uuid] = watch_class(datastore_path=datastore.datastore_path, __datastore=datastore.data, default=datastore.data['watching'][uuid])
 
-            # Re #286 - We wait for syncing new data to disk in another thread every 60 seconds
-            # But in the case something is added we should save straight away
-            datastore.needs_write_urgent = True
+            # Save the watch immediately
+            datastore.data['watching'][uuid].commit()
+
+            flash(gettext("Updated watch - unpaused!") if request.args.get('unpause_on_save') else gettext("Updated watch."))
+
+            # Cleanup any browsersteps session for this watch
+            try:
+                from changedetectionio.blueprint.browser_steps import cleanup_session_for_watch
+                cleanup_session_for_watch(uuid)
+            except Exception as e:
+                logger.debug(f"Error cleaning up browsersteps session: {e}")
 
             # Do not queue on edit if its not within the time range
 
@@ -187,7 +237,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
             tz_name = time_schedule_limit.get('timezone')
             if not tz_name:
-                tz_name = datastore.data['settings']['application'].get('timezone', 'UTC')
+                tz_name = datastore.data['settings']['application'].get('scheduler_timezone_default', os.getenv('TZ', 'UTC').strip())
 
             if time_schedule_limit and time_schedule_limit.get('enabled'):
                 try:
@@ -202,17 +252,17 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             #############################
             if not datastore.data['watching'][uuid].get('paused') and is_in_schedule:
                 # Queue the watch for immediate recheck, with a higher priority
-                worker_handler.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+                worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
 
             # Diff page [edit] link should go back to diff page
             if request.args.get("next") and request.args.get("next") == 'diff':
-                return redirect(url_for('ui.ui_views.diff_history_page', uuid=uuid))
+                return redirect(url_for('ui.ui_diff.diff_history_page', uuid=uuid))
 
             return redirect(url_for('watchlist.index', tag=request.args.get("tag",'')))
 
         else:
             if request.method == 'POST' and not form.validate():
-                flash("An error occurred, please see below.", "error")
+                flash(gettext("An error occurred, please see below."), "error")
 
             # JQ is difficult to install on windows and must be manually added (outside requirements.txt)
             jq_support = True
@@ -223,26 +273,32 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
             watch = datastore.data['watching'].get(uuid)
 
-            # if system or watch is configured to need a chrome type browser
-            system_uses_webdriver = datastore.data['settings']['application']['fetch_backend'] == 'html_webdriver'
-            watch_needs_selenium_or_playwright = False
-            if (watch.get('fetch_backend') == 'system' and system_uses_webdriver) or watch.get('fetch_backend') == 'html_webdriver' or watch.get('fetch_backend', '').startswith('extra_browser_'):
-                watch_needs_selenium_or_playwright = True
-
-
             from zoneinfo import available_timezones
 
-            # Only works reliably with Playwright
-
             # Import the global plugin system
-            from changedetectionio.pluggy_interface import collect_ui_edit_stats_extras
-            
+            from changedetectionio.pluggy_interface import collect_ui_edit_stats_extras, get_fetcher_capabilities
+
+            # Get fetcher capabilities instead of hardcoded logic
+            capabilities = get_fetcher_capabilities(watch, datastore)
+
+            # Add processor capabilities from module
+            capabilities['supports_visual_selector'] = getattr(parent_module, 'supports_visual_selector', False)
+            capabilities['supports_text_filters_and_triggers'] = getattr(parent_module, 'supports_text_filters_and_triggers', False)
+            capabilities['supports_text_filters_and_triggers_elements'] = getattr(parent_module, 'supports_text_filters_and_triggers_elements', False)
+            capabilities['supports_request_type'] = getattr(parent_module, 'supports_request_type', False)
+
+            app_rss_token = datastore.data['settings']['application'].get('rss_access_token'),
+
+            c = [f"processor-{watch.get('processor')}"]
+            if worker_pool.is_watch_running(uuid):
+                c.append('checking-now')
+
             template_args = {
                 'available_processors': processors.available_processors(),
                 'available_timezones': sorted(available_timezones()),
                 'browser_steps_config': browser_step_ui_config,
                 'emailprefix': os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
-                'extra_classes': 'checking-now' if worker_handler.is_watch_running(uuid) else '',
+                'extra_classes': ' '.join(c),
                 'extra_notification_token_placeholder_info': datastore.get_unique_notification_token_placeholders_available(),
                 'extra_processor_config': form.extra_tab_content(),
                 'extra_title': f" - Edit - {watch.label}",
@@ -252,16 +308,24 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 'has_special_tag_options': _watch_has_tag_options_set(watch=watch),
                 'jq_support': jq_support,
                 'playwright_enabled': os.getenv('PLAYWRIGHT_DRIVER_URL', False),
+                'app_rss_token': app_rss_token,
+                'rss_uuid_feed' : {
+                    'label': watch.label,
+                    'url': url_for('rss.rss_single_watch', uuid=watch['uuid'], token=app_rss_token)
+                },
                 'settings_application': datastore.data['settings']['application'],
-                'system_has_playwright_configured': os.getenv('PLAYWRIGHT_DRIVER_URL'),
-                'system_has_webdriver_configured': os.getenv('WEBDRIVER_URL'),
                 'ui_edit_stats_extras': collect_ui_edit_stats_extras(watch),
                 'visual_selector_data_ready': datastore.visualselector_data_is_ready(watch_uuid=uuid),
-                'timezone_default_config': datastore.data['settings']['application'].get('timezone'),
+                'timezone_default_config': datastore.data['settings']['application'].get('scheduler_timezone_default'),
                 'using_global_webdriver_wait': not default['webdriver_delay'],
                 'uuid': uuid,
                 'watch': watch,
-                'watch_needs_selenium_or_playwright': watch_needs_selenium_or_playwright,
+                'capabilities': capabilities,
+                'auto_applied_tags': {
+                    tag_uuid: tag
+                    for tag_uuid, tag in datastore.data['settings']['application']['tags'].items()
+                    if tag_uuid not in watch.get('tags', []) and tag.matches_url(watch.get('url', ''))
+                },
             }
 
             included_content = None
@@ -281,17 +345,19 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         return output
 
-    @edit_blueprint.route("/edit/<string:uuid>/get-html", methods=['GET'])
+    @edit_blueprint.route("/edit/<uuid_str:uuid>/get-html", methods=['GET'])
     @login_optionally_required
     def watch_get_latest_html(uuid):
         from io import BytesIO
         from flask import send_file
         import brotli
 
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
         watch = datastore.data['watching'].get(uuid)
-        if watch and watch.history.keys() and os.path.isdir(watch.watch_data_dir):
+        if watch and watch.history.keys() and os.path.isdir(watch.data_dir):
             latest_filename = list(watch.history.keys())[-1]
-            html_fname = os.path.join(watch.watch_data_dir, f"{latest_filename}.html.br")
+            html_fname = os.path.join(watch.data_dir, f"{latest_filename}.html.br")
             with open(html_fname, 'rb') as f:
                 if html_fname.endswith('.br'):
                     # Read and decompress the Brotli file
@@ -306,12 +372,65 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         # Return a 500 error
         abort(500)
 
+    @edit_blueprint.route("/edit/<uuid_str:uuid>/get-data-package", methods=['GET'])
+    @login_optionally_required
+    def watch_get_data_package(uuid):
+        """Download all data for a single watch as a zip file"""
+        from io import BytesIO
+        from flask import send_file
+        import zipfile
+        from pathlib import Path
+        import datetime
+
+        watch = datastore.data['watching'].get(uuid)
+        if not watch:
+            abort(404)
+
+        # Create zip in memory
+        memory_file = BytesIO()
+
+        with zipfile.ZipFile(memory_file, 'w',
+                           compression=zipfile.ZIP_DEFLATED,
+                           compresslevel=8) as zipObj:
+
+            # Add the watch's JSON file if it exists
+            watch_json_path = os.path.join(watch.data_dir, 'watch.json')
+            if os.path.isfile(watch_json_path):
+                zipObj.write(watch_json_path,
+                           arcname=os.path.join(uuid, 'watch.json'),
+                           compress_type=zipfile.ZIP_DEFLATED,
+                           compresslevel=8)
+
+            # Add all files in the watch data directory
+            if os.path.isdir(watch.data_dir):
+                for f in Path(watch.data_dir).glob('*'):
+                    if f.is_file() and f.name != 'watch.json':  # Skip watch.json since we already added it
+                        zipObj.write(f,
+                                   arcname=os.path.join(uuid, f.name),
+                                   compress_type=zipfile.ZIP_DEFLATED,
+                                   compresslevel=8)
+
+        # Seek to beginning of file
+        memory_file.seek(0)
+
+        # Generate filename with timestamp
+        timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        filename = f"watch-data-{uuid[:8]}-{timestamp}.zip"
+
+        return send_file(memory_file,
+                        as_attachment=True,
+                        download_name=filename,
+                        mimetype='application/zip')
+
     # Ajax callback
-    @edit_blueprint.route("/edit/<string:uuid>/preview-rendered", methods=['POST'])
+    @edit_blueprint.route("/edit/<uuid_str:uuid>/preview-rendered", methods=['POST'])
     @login_optionally_required
     def watch_get_preview_rendered(uuid):
         '''For when viewing the "preview" of the rendered text from inside of Edit'''
         from flask import jsonify
+
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
         from changedetectionio.processors.text_json_diff import prepare_filter_prevew
         result = prepare_filter_prevew(watch_uuid=uuid, form_data=request.form, datastore=datastore)
         return jsonify(result)
@@ -335,6 +454,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                     s = re.sub(r'[0-9]+', r'\\d+', s)
                     datastore.data["watching"][uuid]['ignore_text'].append('/' + s + '/')
 
-        return f"<a href={url_for('ui.ui_views.preview_page', uuid=uuid)}>Click to preview</a>"
+            # Save the updated ignore_text
+            datastore.data["watching"][uuid].commit()
+
+        return f"<a href={url_for('ui.ui_preview.preview_page', uuid=uuid)}>Click to preview</a>"
     
     return edit_blueprint

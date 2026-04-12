@@ -3,12 +3,11 @@
 
 import time
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks
+from .util import live_server_setup, wait_for_all_checks, delete_all_watches
+import os
 
 
-
-
-def set_original_ignore_response():
+def set_original_ignore_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -19,13 +18,13 @@ def set_original_ignore_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
-# Should be the same as set_original_ignore_response() but with a different
+# Should be the same as set_original_ignore_response(datastore_path=datastore_path) but with a different
 # link
-def set_modified_ignore_response():
+def set_modified_ignore_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -36,19 +35,18 @@ def set_modified_ignore_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
-def test_render_anchor_tag_content_true(client, live_server, measure_memory_usage):
+def test_render_anchor_tag_content_true(client, live_server, measure_memory_usage, datastore_path):
     """Testing that the link changes are detected when
     render_anchor_tag_content setting is set to true"""
-    sleep_time_for_fetch_thread = 3
 
     # Give the endpoint time to spin up
     time.sleep(1)
 
     # set original html text
-    set_original_ignore_response()
+    set_original_ignore_response(datastore_path=datastore_path)
 
     # Goto the settings page, choose to ignore links (dont select/send "application-render_anchor_tag_content")
     res = client.post(
@@ -74,7 +72,7 @@ def test_render_anchor_tag_content_true(client, live_server, measure_memory_usag
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # set a new html text with a modified link
-    set_modified_ignore_response()
+    set_modified_ignore_response(datastore_path=datastore_path)
     wait_for_all_checks(client)
 
     # Trigger a check
@@ -83,7 +81,7 @@ def test_render_anchor_tag_content_true(client, live_server, measure_memory_usag
     wait_for_all_checks(client)
 
     # We should not see the rendered anchor tag
-    res = client.get(url_for("ui.ui_views.preview_page", uuid="first"))
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid="first"))
     assert '(/modified_link)' not in res.data.decode()
 
     # Goto the settings page, ENABLE render anchor tag
@@ -107,7 +105,7 @@ def test_render_anchor_tag_content_true(client, live_server, measure_memory_usag
 
 
     # check that the anchor tag content is rendered
-    res = client.get(url_for("ui.ui_views.preview_page", uuid="first"))
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid="first"))
     assert '(/modified_link)' in res.data.decode()
 
     # since the link has changed, and we chose to render anchor tag content,
@@ -117,7 +115,5 @@ def test_render_anchor_tag_content_true(client, live_server, measure_memory_usag
     assert b"/test-endpoint" in res.data
 
     # Cleanup everything
-    res = client.get(url_for("ui.form_delete", uuid="all"),
-                     follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 

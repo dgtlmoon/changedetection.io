@@ -1,13 +1,13 @@
 import os
 import time
 from flask import url_for
-from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks
+from .util import set_original_response, set_modified_response, live_server_setup, wait_for_all_checks, delete_all_watches
 import logging
 
-def test_check_notification_error_handling(client, live_server, measure_memory_usage):
+def test_check_notification_error_handling(client, live_server, measure_memory_usage, datastore_path):
 
    #  live_server_setup(live_server) # Setup on conftest per function
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
 
     # Set a URL and fetch it, then set a notification URL which is going to give errors
     test_url = url_for('test_endpoint', _external=True)
@@ -19,7 +19,7 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
     assert b"Watch added" in res.data
 
     wait_for_all_checks(client)
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
 
     working_notification_url = url_for('test_notification_endpoint', _external=True).replace('http', 'json')
     broken_notification_url = "jsons://broken-url-xxxxxxxx123/test"
@@ -30,7 +30,7 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
         data={"notification_urls": f"{broken_notification_url}\r\n{working_notification_url}",
               "notification_title": "xxx",
               "notification_body": "xxxxx",
-              "notification_format": "Text",
+              "notification_format": 'text',
               "url": test_url,
               "tags": "",
               "title": "",
@@ -41,6 +41,9 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
+
+
+    wait_for_all_checks(client)
 
     found=False
     for i in range(1, 10):
@@ -73,9 +76,9 @@ def test_check_notification_error_handling(client, live_server, measure_memory_u
     assert found_name_resolution_error
 
     # And the working one, which is after the 'broken' one should still have fired
-    with open("test-datastore/notification.txt", "r") as f:
+    with open(os.path.join(datastore_path, "notification.txt"), "r") as f:
         notification_submission = f.read()
-    os.unlink("test-datastore/notification.txt")
+    os.unlink(os.path.join(datastore_path, "notification.txt"))
     assert 'xxxxx' in notification_submission
 
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)

@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 
 import time
+import os
 
 from flask import url_for
 
 from ..html_tools import *
-from .util import live_server_setup, wait_for_all_checks
+from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 
 
 
 
-def set_response_with_multiple_index():
+def set_response_with_multiple_index(datastore_path):
     data= """<!DOCTYPE html>
 <html>
 <body>
@@ -36,11 +37,11 @@ def set_response_with_multiple_index():
 </body>
 </html>
 """
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(data)
 
 
-def set_original_response():
+def set_original_response(datastore_path):
     test_return_data = """<html>
     <header>
     <h2>Header</h2>
@@ -65,11 +66,11 @@ def set_original_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
-def set_modified_response():
+def set_modified_response(datastore_path):
     test_return_data = """<html>
     <header>
     <h2>Header changed</h2>
@@ -94,7 +95,7 @@ def set_modified_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
 
@@ -146,10 +147,10 @@ across multiple lines
     )
 
 
-def test_element_removal_full(client, live_server, measure_memory_usage):
+def test_element_removal_full(client, live_server, measure_memory_usage, datastore_path):
     
 
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
 
 
     # Add our URL to the import page
@@ -191,10 +192,10 @@ def test_element_removal_full(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     # so that we set the state to 'has-unread-changes' after all the edits
-    client.get(url_for("ui.ui_views.diff_history_page", uuid="first"))
+    client.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
 
     #  Make a change to header/footer/nav
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
 
     # Trigger a check
     res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -208,56 +209,41 @@ def test_element_removal_full(client, live_server, measure_memory_usage):
     assert b"unviewed" not in res.data
 
 # Re #2752
-def test_element_removal_nth_offset_no_shift(client, live_server, measure_memory_usage):
-    
+def test_element_removal_nth_offset_no_shift(client, live_server, measure_memory_usage, datastore_path):
 
-    set_response_with_multiple_index()
-    subtractive_selectors_data = ["""
-body > table > tr:nth-child(1) > th:nth-child(2)
+    set_response_with_multiple_index(datastore_path=datastore_path)
+    subtractive_selectors_data = [
+### css style ###
+"""body > table > tr:nth-child(1) > th:nth-child(2)
 body > table >  tr:nth-child(2) > td:nth-child(2)
 body > table > tr:nth-child(3) > td:nth-child(2)
 body > table > tr:nth-child(1) > th:nth-child(3)
 body > table >  tr:nth-child(2) > td:nth-child(3)
 body > table > tr:nth-child(3) > td:nth-child(3)""",
+### second type, xpath ###
 """//body/table/tr[1]/th[2]
 //body/table/tr[2]/td[2]
 //body/table/tr[3]/td[2]
 //body/table/tr[1]/th[3]
 //body/table/tr[2]/td[3]
 //body/table/tr[3]/td[3]"""]
+    
+    test_url = url_for("test_endpoint", _external=True)
 
     for selector_list in subtractive_selectors_data:
 
-        res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-        assert b'Deleted' in res.data
+        delete_all_watches(client)
 
-        # Add our URL to the import page
-        test_url = url_for("test_endpoint", _external=True)
-        res = client.post(
-            url_for("imports.import_page"), data={"urls": test_url}, follow_redirects=True
-        )
-        assert b"1 Imported" in res.data
-        wait_for_all_checks(client)
-
-        res = client.post(
-            url_for("ui.ui_edit.edit_page", uuid="first"),
-            data={
-                "subtractive_selectors": selector_list,
-                "url": test_url,
-                "tags": "",
-                "fetch_backend": "html_requests",
-                "time_between_check_use_default": "y",
-            },
-            follow_redirects=True,
-        )
-        assert b"Updated watch." in res.data
+        uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, extras={"subtractive_selectors": selector_list.splitlines()})
+        client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
 
         res = client.get(
-            url_for("ui.ui_views.preview_page", uuid="first"),
+            url_for("ui.ui_preview.preview_page", uuid="first"),
             follow_redirects=True
         )
 
+        # the filters above should have removed this but they never say to remove the "emil" column
         assert b"Tobias" not in res.data
         assert b"Linus" not in res.data
         assert b"Person 2" not in res.data

@@ -5,7 +5,7 @@ from flask import url_for
 from ..util import live_server_setup, wait_for_all_checks, extract_UUID_from_client
 
 # just make a request, we will grep in the docker logs to see it actually got called
-def test_check_basic_change_detection_functionality(client, live_server, measure_memory_usage):
+def test_check_basic_change_detection_functionality(client, live_server, measure_memory_usage, datastore_path):
    #  live_server_setup(live_server) # Setup on conftest per function
     res = client.post(
         url_for("imports.import_page"),

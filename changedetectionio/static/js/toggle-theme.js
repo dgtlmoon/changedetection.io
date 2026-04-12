@@ -3,14 +3,12 @@
  * Toggles theme between light and dark mode.
  */
 $(document).ready(function () {
-    const button = document.getElementById("toggle-light-mode");
 
-    button.onclick = () => {
-        const htmlElement = document.getElementsByTagName("html");
-        const isDarkMode = htmlElement[0].dataset.darkmode === "true";
-        htmlElement[0].dataset.darkmode = !isDarkMode;
-        setCookieValue(!isDarkMode);
-    };
+    $(".toggle-light-mode").on("click", function () {
+        const isDark = $("html").attr("data-darkmode") === "true";
+        $("html").attr("data-darkmode", !isDark);
+        setCookieValue(!isDark);
+    });
 
     const setCookieValue = (value) => {
         document.cookie = `css_dark_mode=${value};max-age=31536000;path=/`

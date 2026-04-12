@@ -1,16 +1,47 @@
 # -*- coding: utf-8 -*-
 
-import time
+
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks
-
-from ..html_tools import *
-
-
+from .util import  wait_for_all_checks, delete_all_watches
+from ..processors.magic import RSS_XML_CONTENT_TYPES
+import os
 
 
+def set_rss_atom_feed_response(datastore_path, header='', ):
+    test_return_data = f"""{header}<!-- Generated on Wed, 08 Oct 2025 08:42:33 -0700, really really honestly  -->
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+<channel>
+    <atom:link href="https://store.waterpowered.com/news/collection//" rel="self" type="application/rss+xml"/>
+    <title>RSS Feed</title>
+    <link>
+        <![CDATA[ https://store.waterpowered.com/news/collection// ]]>
+    </link>
+    <description>
+        <![CDATA[ Events and Announcements for ]]>
+    </description>
+    <language>en-us</language>
+    <generator>water News RSS</generator>
+    <item>
+        <title> 🍁 Lets go discount</title>
+        <description><p class="bb_paragraph">ok heres the description</p></description>
+        <link>
+        <![CDATA[ https://store.waterpowered.com/news/app/1643320/view/511845698831908921 ]]>
+        </link>
+        <pubDate>Wed, 08 Oct 2025 15:28:55 +0000</pubDate>
+        <guid isPermaLink="true">https://store.waterpowered.com/news/app/1643320/view/511845698831908921</guid>
+        <enclosure url="https://clan.fastly.waterstatic.com/images/40721482/42822e5f00b2becf520ace9500981bb56f3a89f2.jpg" length="0" type="image/jpeg"/>
+    </item>
+</channel>
+</rss>"""
 
-def set_original_response():
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
+        f.write(test_return_data)
+
+    return None
+
+
+
+def set_original_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -23,12 +54,12 @@ def set_original_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
     return None
 
 
-def set_modified_response():
+def set_modified_response(datastore_path):
     test_return_data = """<html>
        <body>
      Some initial text<br>
@@ -41,14 +72,14 @@ def set_modified_response():
      </html>
     """
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
 
     return None
 
 
 # Handle utf-8 charset replies https://github.com/dgtlmoon/changedetection.io/pull/613
-def test_check_xpath_filter_utf8(client, live_server, measure_memory_usage):
+def test_check_xpath_filter_utf8(client, live_server, measure_memory_usage, datastore_path):
     filter = '//item/*[self::description]'
 
     d = '''<?xml version="1.0" encoding="UTF-8"?>
@@ -78,17 +109,13 @@ def test_check_xpath_filter_utf8(client, live_server, measure_memory_usage):
 	</channel>
 </rss>'''
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(d)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True, content_type="application/rss+xml;charset=UTF-8")
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
@@ -99,12 +126,11 @@ def test_check_xpath_filter_utf8(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'Unicode strings with encoding declaration are not supported.' not in res.data
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 
 # Handle utf-8 charset replies https://github.com/dgtlmoon/changedetection.io/pull/613
-def test_check_xpath_text_function_utf8(client, live_server, measure_memory_usage):
+def test_check_xpath_text_function_utf8(client, live_server, measure_memory_usage, datastore_path):
     filter = '//item/title/text()'
 
     d = '''<?xml version="1.0" encoding="UTF-8"?>
@@ -132,17 +158,13 @@ def test_check_xpath_text_function_utf8(client, live_server, measure_memory_usag
 	</channel>
 </rss>'''
 
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(d)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True, content_type="application/rss+xml;charset=UTF-8")
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
@@ -156,30 +178,25 @@ def test_check_xpath_text_function_utf8(client, live_server, measure_memory_usag
 
     # The service should echo back the request headers
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 
     assert b'Stock Alert (UK): RPi CM4' in res.data
     assert b'Stock Alert (UK): Big monitor' in res.data
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 
-def test_check_markup_xpath_filter_restriction(client, live_server, measure_memory_usage):
+def test_check_markup_xpath_filter_restriction(client, live_server, measure_memory_usage, datastore_path):
     xpath_filter = "//*[contains(@class, 'sametext')]"
 
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -197,10 +214,10 @@ def test_check_markup_xpath_filter_restriction(client, live_server, measure_memo
     wait_for_all_checks(client)
 
     # view it/reset state back to viewed
-    client.get(url_for("ui.ui_views.diff_history_page", uuid="first"), follow_redirects=True)
+    client.get(url_for("ui.ui_diff.diff_history_page", uuid="first"), follow_redirects=True)
 
     #  Make a change
-    set_modified_response()
+    set_modified_response(datastore_path=datastore_path)
 
     # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -209,19 +226,14 @@ def test_check_markup_xpath_filter_restriction(client, live_server, measure_memo
 
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' not in res.data
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 
-def test_xpath_validation(client, live_server, measure_memory_usage):
+def test_xpath_validation(client, live_server, measure_memory_usage, datastore_path):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.post(
@@ -230,19 +242,14 @@ def test_xpath_validation(client, live_server, measure_memory_usage):
         follow_redirects=True
     )
     assert b"is not a valid XPath expression" in res.data
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 
-def test_xpath23_prefix_validation(client, live_server, measure_memory_usage):
+def test_xpath23_prefix_validation(client, live_server, measure_memory_usage, datastore_path):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.post(
@@ -251,10 +258,9 @@ def test_xpath23_prefix_validation(client, live_server, measure_memory_usage):
         follow_redirects=True
     )
     assert b"is not a valid XPath expression" in res.data
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
-def test_xpath1_lxml(client, live_server, measure_memory_usage):
+def test_xpath1_lxml(client, live_server, measure_memory_usage, datastore_path):
     
 
     d = '''<?xml version="1.0" encoding="UTF-8"?>
@@ -282,17 +288,13 @@ def test_xpath1_lxml(client, live_server, measure_memory_usage):
     	</channel>
     </rss>'''.encode('utf-8')
 
-    with open("test-datastore/endpoint-content.txt", "wb") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "wb") as f:
         f.write(d)
 
 
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.post(
@@ -308,7 +310,7 @@ def test_xpath1_lxml(client, live_server, measure_memory_usage):
     assert b'_ElementStringResult' not in res.data # tested with 5.1.1 when it was removed and 5.1.0
     assert b'Exception' not in res.data
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 
@@ -318,15 +320,11 @@ def test_xpath1_lxml(client, live_server, measure_memory_usage):
     #####
 
 
-def test_xpath1_validation(client, live_server, measure_memory_usage):
+def test_xpath1_validation(client, live_server, measure_memory_usage, datastore_path):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.post(
@@ -335,25 +333,19 @@ def test_xpath1_validation(client, live_server, measure_memory_usage):
         follow_redirects=True
     )
     assert b"is not a valid XPath expression" in res.data
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 
 # actually only really used by the distll.io importer, but could be handy too
-def test_check_with_prefix_include_filters(client, live_server, measure_memory_usage):
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+def test_check_with_prefix_include_filters(client, live_server, measure_memory_usage, datastore_path):
+    delete_all_watches(client)
 
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
     wait_for_all_checks(client)
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.post(
@@ -367,20 +359,20 @@ def test_check_with_prefix_include_filters(client, live_server, measure_memory_u
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 
     assert b"Some text thats the same" in res.data  # in selector
     assert b"Some text that will change" not in res.data  # not in selector
 
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
 
-def test_various_rules(client, live_server, measure_memory_usage):
+def test_various_rules(client, live_server, measure_memory_usage, datastore_path):
     # Just check these don't error
     ##  live_server_setup(live_server) # Setup on conftest per function
-    with open("test-datastore/endpoint-content.txt", "w") as f:
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("""<html>
        <body>
      Some initial text<br>
@@ -398,12 +390,8 @@ def test_various_rules(client, live_server, measure_memory_usage):
     """)
 
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     for r in ['//div', '//a', 'xpath://div', 'xpath://a']:
@@ -422,25 +410,20 @@ def test_various_rules(client, live_server, measure_memory_usage):
         res = client.get(url_for("watchlist.index"))
         assert b'fetch-error' not in res.data, f"Should not see errors after '{r} filter"
 
-    res = client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
-    assert b'Deleted' in res.data
+    delete_all_watches(client)
 
 
-def test_xpath_20(client, live_server, measure_memory_usage):
+def test_xpath_20(client, live_server, measure_memory_usage, datastore_path):
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
-    set_original_response()
+    set_original_response(datastore_path=datastore_path)
 
     test_url = url_for('test_endpoint', _external=True)
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={"include_filters": "//*[contains(@class, 'sametext')]|//*[contains(@class, 'changetext')]",
               "url": test_url,
               "tags": "",
@@ -454,27 +437,23 @@ def test_xpath_20(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
 
     assert b"Some text thats the same" in res.data  # in selector
     assert b"Some text that will change" in res.data  # in selector
 
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
 
-def test_xpath_20_function_count(client, live_server, measure_memory_usage):
-    set_original_response()
+def test_xpath_20_function_count(client, live_server, measure_memory_usage, datastore_path):
+    set_original_response(datastore_path=datastore_path)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.post(
@@ -492,26 +471,22 @@ def test_xpath_20_function_count(client, live_server, measure_memory_usage):
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 
     assert b"246913579975308642" in res.data  # in selector
 
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
 
-def test_xpath_20_function_count2(client, live_server, measure_memory_usage):
-    set_original_response()
+def test_xpath_20_function_count2(client, live_server, measure_memory_usage, datastore_path):
+    set_original_response(datastore_path=datastore_path)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.post(
@@ -526,33 +501,31 @@ def test_xpath_20_function_count2(client, live_server, measure_memory_usage):
     )
 
     assert b"Updated watch." in res.data
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid="first"),
         follow_redirects=True
     )
 
     assert b"246913579975308642" in res.data  # in selector
 
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
 
-def test_xpath_20_function_string_join_matches(client, live_server, measure_memory_usage):
-    set_original_response()
+def test_xpath_20_function_string_join_matches(client, live_server, measure_memory_usage, datastore_path):
+    set_original_response(datastore_path=datastore_path)
 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
-    res = client.post(
-        url_for("imports.import_page"),
-        data={"urls": test_url},
-        follow_redirects=True
-    )
-    assert b"1 Imported" in res.data
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.post(
-        url_for("ui.ui_edit.edit_page", uuid="first"),
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
         data={
             "include_filters": "xpath:string-join(//*[contains(@class, 'sametext')]|//*[matches(@class, 'changetext')], 'specialconjunction')",
             "url": test_url,
@@ -567,11 +540,131 @@ def test_xpath_20_function_string_join_matches(client, live_server, measure_memo
     wait_for_all_checks(client)
 
     res = client.get(
-        url_for("ui.ui_views.preview_page", uuid="first"),
+        url_for("ui.ui_preview.preview_page", uuid=uuid),
         follow_redirects=True
     )
 
     assert b"Some text thats the samespecialconjunctionSome text that will change" in res.data  # in selector
 
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    delete_all_watches(client)
 
+
+def _subtest_xpath_rss(client, datastore_path, content_type='text/html'):
+
+    # Add our URL to the import page
+    test_url = url_for('test_endpoint', content_type=content_type, _external=True)
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
+        follow_redirects=True
+    )
+
+    assert b"Watch added in Paused state, saving will unpause" in res.data
+
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid="first", unpause_on_save=1),
+        data={
+            "url": test_url,
+            "include_filters": "xpath://item",
+            "tags": '',
+            "fetch_backend": "html_requests",
+            "time_between_check_use_default": "y",
+        },
+        follow_redirects=True
+    )
+
+    assert b"unpaused" in res.data
+    wait_for_all_checks(client)
+
+    res = client.get(
+        url_for("ui.ui_preview.preview_page", uuid="first"),
+        follow_redirects=True
+    )
+
+    assert b"Lets go discount" in res.data, f"When testing for Lets go discount called with content type '{content_type}'"
+    assert b"Events and Announcements" not in res.data, f"When testing for Lets go discount called with content type '{content_type}'" # It should not be here because thats not our selector target
+
+    delete_all_watches(client)
+
+# Be sure all-in-the-wild types of RSS feeds work with xpath
+def test_rss_xpath(client, live_server, measure_memory_usage, datastore_path):
+    for feed_header in ['', '<?xml version="1.0" encoding="utf-8"?>']:
+        set_rss_atom_feed_response(header=feed_header, datastore_path=datastore_path)
+        for content_type in RSS_XML_CONTENT_TYPES:
+            _subtest_xpath_rss(client, content_type=content_type, datastore_path=datastore_path)
+
+
+# GHSA-6fmw-82m7-jq6p — XPath arbitrary file read via unparsed-text() and friends
+# Unit-level: verify xpath_filter() and SafeXPath3Parser block all dangerous functions.
+def test_xpath_blocked_functions_unit():
+    """Dangerous XPath 3.0 functions must be rejected at the parser level (no live server needed)."""
+    import elementpath
+    from changedetectionio.html_tools import xpath_filter, SafeXPath3Parser
+    from lxml import html
+
+    html_content = '<html><body><p>safe content</p></body></html>'
+
+    dangerous_expressions = [
+        "unparsed-text('file:///etc/passwd')",
+        "unparsed-text-lines('file:///etc/passwd')",
+        "unparsed-text-available('file:///etc/passwd')",
+        "doc('file:///etc/passwd')",
+        "doc-available('file:///etc/passwd')",
+        "json-doc('file:///datastore/changedetection.json')",
+        "collection('file:///datastore/')",
+        "uri-collection('file:///datastore/')",
+        "transform(map{})",
+        "load-xquery-module('foo')",
+        "environment-variable('PATH')",
+        "available-environment-variables()",
+    ]
+
+    for expr in dangerous_expressions:
+        # xpath_filter() must raise, not silently return file contents
+        try:
+            result = xpath_filter(expr, html_content)
+            assert False, f"xpath_filter should have raised for: {expr!r}, got: {result!r}"
+        except elementpath.ElementPathError:
+            pass  # expected
+
+        # SafeXPath3Parser must reject the expression at parse time
+        tree = html.fromstring(html_content)
+        try:
+            elementpath.select(tree, expr, parser=SafeXPath3Parser)
+            assert False, f"SafeXPath3Parser should have raised for: {expr!r}"
+        except elementpath.ElementPathError:
+            pass  # expected
+
+    # Sanity check: normal XPath still works
+    result = xpath_filter('//p/text()', html_content)
+    assert result == 'safe content'
+
+
+# GHSA-6fmw-82m7-jq6p — form validation must also reject dangerous XPath expressions.
+def test_xpath_blocked_functions_form_validation(client, live_server, measure_memory_usage, datastore_path):
+    """Edit-form validation must reject dangerous XPath 3.0 functions before they are stored."""
+    from flask import url_for
+
+    set_original_response(datastore_path=datastore_path)
+    test_url = url_for('test_endpoint', _external=True)
+    client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    dangerous_expressions = [
+        "xpath:unparsed-text('file:///etc/passwd')",
+        "xpath:environment-variable('PATH')",
+        "xpath:doc('file:///etc/passwd')",
+    ]
+
+    for expr in dangerous_expressions:
+        res = client.post(
+            url_for("ui.ui_edit.edit_page", uuid="first"),
+            data={"include_filters": expr, "url": test_url, "tags": "", "headers": "",
+                  'fetch_backend': "html_requests", "time_between_check_use_default": "y"},
+            follow_redirects=True
+        )
+        assert b"is not a valid XPath expression" in res.data, \
+            f"Form should reject dangerous expression: {expr!r}"
+
+    delete_all_watches(client)

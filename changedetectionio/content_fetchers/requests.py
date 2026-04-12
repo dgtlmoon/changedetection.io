@@ -1,18 +1,22 @@
 from loguru import logger
+from urllib.parse import urljoin, urlparse
 import hashlib
 import os
+import re
 import asyncio
+
 from changedetectionio import strtobool
 from changedetectionio.content_fetchers.exceptions import BrowserStepsInUnsupportedFetcher, EmptyReply, Non200ErrorCodeReceived
 from changedetectionio.content_fetchers.base import Fetcher
+from changedetectionio.validate_url import is_private_hostname
 
 
 # "html_requests" is listed as the default fetcher in store.py!
 class fetcher(Fetcher):
     fetcher_description = "Basic fast Plaintext/HTTP Client"
 
-    def __init__(self, proxy_override=None, custom_browser_connection_url=None):
-        super().__init__()
+    def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
+        super().__init__(**kwargs)
         self.proxy_override = proxy_override
         # browser_connection_url is none because its always 'launched locally'
 
@@ -25,14 +29,16 @@ class fetcher(Fetcher):
             ignore_status_codes=False,
             current_include_filters=None,
             is_binary=False,
-            empty_pages_are_a_change=False):
+            empty_pages_are_a_change=False,
+            watch_uuid=None,
+            ):
         """Synchronous version of run - the original requests implementation"""
 
         import chardet
         import requests
         from requests.exceptions import ProxyError, ConnectionError, RequestException
 
-        if self.browser_steps_get_valid_steps():
+        if self.browser_steps:
             raise BrowserStepsInUnsupportedFetcher(url=url)
 
         proxies = {}
@@ -51,17 +57,72 @@ class fetcher(Fetcher):
 
         session = requests.Session()
 
+        # Configure retry adapter for low-level network errors only
+        # Retries connection timeouts, read timeouts, connection resets - not HTTP status codes
+        # Especially helpful in parallel test execution when servers are slow/overloaded
+        # Configurable via REQUESTS_RETRY_MAX_COUNT (default: 3 attempts)
+        from requests.adapters import HTTPAdapter
+        from urllib3.util.retry import Retry
+
+        max_retries = int(os.getenv("REQUESTS_RETRY_MAX_COUNT", "6"))
+        retry_strategy = Retry(
+            total=max_retries,
+            connect=max_retries,  # Retry connection timeouts
+            read=max_retries,     # Retry read timeouts
+            status=0,             # Don't retry on HTTP status codes
+            backoff_factor=0.5,   # Wait 0.3s, 0.6s, 1.2s between retries
+            allowed_methods=["HEAD", "GET", "OPTIONS", "POST"],
+            raise_on_status=False
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+
         if strtobool(os.getenv('ALLOW_FILE_URI', 'false')) and url.startswith('file://'):
             from requests_file import FileAdapter
             session.mount('file://', FileAdapter())
+
+        allow_iana_restricted = strtobool(os.getenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'false'))
+
         try:
+            # Fresh DNS check at fetch time — catches DNS rebinding regardless of add-time cache.
+            if not allow_iana_restricted:
+                parsed_initial = urlparse(url)
+                if parsed_initial.hostname and is_private_hostname(parsed_initial.hostname):
+                    raise Exception(f"Fetch blocked: '{url}' resolves to a private/reserved IP address. "
+                                    f"Set ALLOW_IANA_RESTRICTED_ADDRESSES=true to allow.")
+
             r = session.request(method=request_method,
                                 data=request_body.encode('utf-8') if type(request_body) is str else request_body,
                                 url=url,
                                 headers=request_headers,
                                 timeout=timeout,
                                 proxies=proxies,
-                                verify=False)
+                                verify=False,
+                                allow_redirects=False)
+
+            # Manually follow redirects so each hop's resolved IP can be validated,
+            # preventing SSRF via an open redirect on a public host.
+            current_url = url
+            for _ in range(10):
+                if not r.is_redirect:
+                    break
+                location = r.headers.get('Location', '')
+                redirect_url = urljoin(current_url, location)
+                if not allow_iana_restricted:
+                    parsed_redirect = urlparse(redirect_url)
+                    if parsed_redirect.hostname and is_private_hostname(parsed_redirect.hostname):
+                        raise Exception(f"Redirect blocked: '{redirect_url}' resolves to a private/reserved IP address.")
+                current_url = redirect_url
+                r = session.request('GET', redirect_url,
+                                    headers=request_headers,
+                                    timeout=timeout,
+                                    proxies=proxies,
+                                    verify=False,
+                                    allow_redirects=False)
+            else:
+                raise Exception("Too many redirects")
+
         except Exception as e:
             msg = str(e)
             if proxies and 'SOCKSHTTPSConnectionPool' in msg:
@@ -75,9 +136,44 @@ class fetcher(Fetcher):
         if not is_binary:
             # Don't run this for PDF (and requests identified as binary) takes a _long_ time
             if not r.headers.get('content-type') or not 'charset=' in r.headers.get('content-type'):
-                encoding = chardet.detect(r.content)['encoding']
-                if encoding:
-                    r.encoding = encoding
+                # For XML/RSS feeds, check the XML declaration for encoding attribute
+                # This is more reliable than chardet which can misdetect UTF-8 as MacRoman
+                content_type = r.headers.get('content-type', '').lower()
+                if 'xml' in content_type or 'rss' in content_type:
+                    # Look for <?xml version="1.0" encoding="UTF-8"?>
+                    xml_encoding_match = re.search(rb'<\?xml[^>]+encoding=["\']([^"\']+)["\']', r.content[:200])
+                    if xml_encoding_match:
+                        r.encoding = xml_encoding_match.group(1).decode('ascii')
+                    else:
+                        # Default to UTF-8 for XML if no encoding found
+                        r.encoding = 'utf-8'
+                else:
+                    # No charset in HTTP header - sniff encoding in priority order matching browsers
+                    # (WHATWG encoding sniffing algorithm):
+                    # 1. BOM - highest confidence, check before anything else
+                    # 2. <meta charset> in first 2kb
+                    # 3. chardet statistical detection - last resort
+                    # See: https://github.com/dgtlmoon/changedetection.io/issues/3952
+                    boms = [
+                        (b'\xef\xbb\xbf', 'utf-8-sig'),
+                        (b'\xff\xfe', 'utf-16-le'),
+                        (b'\xfe\xff', 'utf-16-be'),
+                    ]
+                    bom_encoding = next((enc for bom, enc in boms if r.content.startswith(bom)), None)
+                    if bom_encoding:
+                        logger.info(f"URL: {url} Using encoding '{bom_encoding}' detected from BOM")
+                        r.encoding = bom_encoding
+                    else:
+                        meta_charset_match = re.search(rb'<meta[^>]+charset\s*=\s*["\']?\s*([^"\'\s;>]+)', r.content[:2000], re.IGNORECASE)
+                        if meta_charset_match:
+                            encoding = meta_charset_match.group(1).decode('ascii', errors='ignore')
+                            logger.info(f"URL: {url} No content-type encoding in HTTP headers - Using encoding '{encoding}' from HTML meta charset tag")
+                            r.encoding = encoding
+                        else:
+                            encoding = chardet.detect(r.content)['encoding']
+                            logger.warning(f"URL: {url} No charset in headers or meta tag, guessed encoding as '{encoding}' via chardet")
+                            if encoding:
+                                r.encoding = encoding
 
         self.headers = r.headers
 
@@ -103,6 +199,12 @@ class fetcher(Fetcher):
 
         self.raw_content = r.content
 
+        # If the content is an image, set it as screenshot for SSIM/visual comparison
+        content_type = r.headers.get('content-type', '').lower()
+        if 'image/' in content_type:
+            self.screenshot = r.content
+            logger.debug(f"Image content detected ({content_type}), set as screenshot for comparison")
+
     async def run(self,
                   fetch_favicon=True,
                   current_include_filters=None,
@@ -112,14 +214,17 @@ class fetcher(Fetcher):
                   request_body=None,
                   request_headers=None,
                   request_method=None,
+                  screenshot_format=None,
                   timeout=None,
                   url=None,
+                  watch_uuid=None,
                   ):
         """Async wrapper that runs the synchronous requests code in a thread pool"""
-        
+
         loop = asyncio.get_event_loop()
-        
+
         # Run the synchronous _run_sync in a thread pool to avoid blocking the event loop
+        # Retry logic is handled by requests' HTTPAdapter (see _run_sync for configuration)
         await loop.run_in_executor(
             None,  # Use default ThreadPoolExecutor
             lambda: self._run_sync(
@@ -131,12 +236,12 @@ class fetcher(Fetcher):
                 ignore_status_codes=ignore_status_codes,
                 current_include_filters=current_include_filters,
                 is_binary=is_binary,
-                empty_pages_are_a_change=empty_pages_are_a_change
+                empty_pages_are_a_change=empty_pages_are_a_change,
+                watch_uuid=watch_uuid,
             )
         )
 
-    def quit(self, watch=None):
-
+    async def quit(self, watch=None):
         # In case they switched to `requests` fetcher from something else
         # Then the screenshot could be old, in any case, it's not used here.
         # REMOVE_REQUESTS_OLD_SCREENSHOTS - Mainly used for testing
@@ -148,3 +253,15 @@ class fetcher(Fetcher):
                 except Exception as e:
                     logger.warning(f"Failed to unlink screenshot: {screenshot} - {e}")
 
+
+# Plugin registration for built-in fetcher
+class RequestsFetcherPlugin:
+    """Plugin class that registers the requests fetcher as a built-in plugin."""
+
+    def register_content_fetcher(self):
+        """Register the requests fetcher"""
+        return ('html_requests', fetcher)
+
+
+# Create module-level instance for plugin registration
+requests_plugin = RequestsFetcherPlugin()

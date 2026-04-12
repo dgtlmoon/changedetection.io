@@ -38,26 +38,39 @@
       if (a.size !== b.size) {
         return b.size - a.size;
       }
-      
+
       // Second priority: apple-touch-icon over regular icon
       const isAppleA = /apple-touch-icon/.test(a.rel);
       const isAppleB = /apple-touch-icon/.test(b.rel);
       if (isAppleA && !isAppleB) return -1;
       if (!isAppleA && isAppleB) return 1;
-      
+
       // Third priority: icons with no size attribute (fallback icons) last
       const hasNoSizeA = !a.hasSizes;
       const hasNoSizeB = !b.hasSizes;
       if (hasNoSizeA && !hasNoSizeB) return 1;
       if (!hasNoSizeA && hasNoSizeB) return -1;
-      
+
       return 0;
     });
 
     const timeoutMs = 2000;
+    // 1 MB — matches the server-side limit in bump_favicon()
+    const MAX_BYTES = 1 * 1024 * 1024;
 
     for (const icon of icons) {
       try {
+        // Inline data URI — no network fetch needed, data is already here
+        if (icon.href.startsWith('data:')) {
+          const match = icon.href.match(/^data:([^;]+);base64,([A-Za-z0-9+/=]+)$/);
+          if (!match) continue;
+          const mime_type = match[1];
+          const base64 = match[2];
+          // Rough size check: base64 is ~4/3 the binary size
+          if (base64.length * 0.75 > MAX_BYTES) continue;
+          return { url: icon.href, mime_type, base64 };
+        }
+
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -74,12 +87,15 @@
 
         const blob = await resp.blob();
 
+        if (blob.size > MAX_BYTES) continue;
+
         // Convert blob to base64
         const reader = new FileReader();
         return await new Promise(resolve => {
           reader.onloadend = () => {
             resolve({
               url: icon.href,
+              mime_type: blob.type,
               base64: reader.result.split(",")[1]
             });
           };
@@ -98,4 +114,3 @@
   // Auto-execute and return result for page.evaluate()
   return await window.getFaviconAsBlob();
 })();
-

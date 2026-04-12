@@ -17,8 +17,6 @@ $(document).ready(function () {
         set_scale();
     });
     // Should always be disabled
-    $('#browser_steps-0-operation option[value="Goto site"]').prop("selected", "selected");
-    $('#browser_steps-0-operation').attr('disabled', 'disabled');
 
     $('#browsersteps-click-start').click(function () {
         $("#browsersteps-click-start").fadeOut();
@@ -45,12 +43,6 @@ $(document).ready(function () {
         browsersteps_session_id = false;
         apply_buttons_disabled = false;
         ctx.clearRect(0, 0, c.width, c.height);
-        set_first_gotosite_disabled();
-    }
-
-    function set_first_gotosite_disabled() {
-        $('#browser_steps >li:first-child select').val('Goto site').attr('disabled', 'disabled');
-        $('#browser_steps >li:first-child').css('opacity', '0.5');
     }
 
     // Show seconds remaining until the browser interface needs to restart the session
@@ -243,14 +235,54 @@ $(document).ready(function () {
         ctx.fill();
     }
 
+    // Reusable AJAX function for browser step operations
+    function executeBrowserStep(url, data = {}) {
+        $('#browser-steps-ui .loader .spinner').fadeIn();
+        apply_buttons_disabled = true;
+        $('ul#browser_steps li .control .apply').css('opacity', 0.5);
+        $("#browsersteps-img").css('opacity', 0.65);
+
+        return $.ajax({
+            method: "POST",
+            url: url,
+            data: data,
+            statusCode: {
+                400: function () {
+                    alert("There was a problem processing the request, please reload the page.");
+                    $("#loading-status-text").hide();
+                    $('#browser-steps-ui .loader .spinner').fadeOut();
+                },
+                401: function (data) {
+                    alert(data.responseText);
+                    $("#loading-status-text").hide();
+                    $('#browser-steps-ui .loader .spinner').fadeOut();
+                }
+            }
+        }).done(function (data) {
+            xpath_data = data.xpath_data;
+            $('#browsersteps-img').attr('src', data.screenshot);
+            $('#browser-steps-ui .loader .spinner').fadeOut();
+            apply_buttons_disabled = false;
+            $("#browsersteps-img").css('opacity', 1);
+            $('ul#browser_steps li .control .apply').css('opacity', 1);
+            $("#loading-status-text").hide();
+        }).fail(function (data) {
+            console.log(data);
+            if (data.responseText && data.responseText.includes("Browser session expired")) {
+                disable_browsersteps_ui();
+            }
+            apply_buttons_disabled = false;
+            $("#loading-status-text").hide();
+            $('ul#browser_steps li .control .apply').css('opacity', 1);
+            $("#browsersteps-img").css('opacity', 1);
+        });
+    }
+
     function start() {
         console.log("Starting browser-steps UI");
         browsersteps_session_id = false;
-        // @todo This setting of the first one should be done at the datalayer but wtforms doesnt wanna play nice
-        $('#browser_steps >li:first-child').removeClass('empty');
-        set_first_gotosite_disabled();
         $('#browser-steps-ui .loader .spinner').show();
-        $('.clear,.remove', $('#browser_steps >li:first-child')).hide();
+        // Request a new session
         $.ajax({
             type: "GET",
             url: browser_steps_start_url,
@@ -267,11 +299,12 @@ $(document).ready(function () {
         }).done(function (data) {
             $("#loading-status-text").fadeIn();
             browsersteps_session_id = data.browsersteps_session_id;
-            // This should trigger 'Goto site'
-            console.log("Got startup response, requesting Goto-Site (first) step fake click");
-            $('#browser_steps >li:first-child .apply').click();
             browser_interface_seconds_remaining = 500;
-            set_first_gotosite_disabled();
+            // Request goto_site operation
+            executeBrowserStep(
+                browser_steps_sync_url + "&browsersteps_session_id=" + browsersteps_session_id + "&goto_website_url_first_step=true"
+            );
+
         }).fail(function (data) {
             console.log(data);
             alert('There was an error communicating with the server.');
@@ -280,7 +313,6 @@ $(document).ready(function () {
     }
 
     function disable_browsersteps_ui() {
-        set_first_gotosite_disabled();
         $("#browser-steps-ui").css('opacity', '0.3');
         $('#browsersteps-selector-canvas').off("mousemove mousedown click");
     }
@@ -328,16 +360,13 @@ $(document).ready(function () {
     // Add the extra buttons to the steps
     $('ul#browser_steps li').each(function (i) {
             var s = '<div class="control">' + '<a data-step-index=' + i + ' class="pure-button button-secondary button-green button-xsmall apply" >Apply</a>&nbsp;';
-            if (i > 0) {
-                // The first step never gets these (Goto-site)
-                s += `<a data-step-index="${i}" class="pure-button button-secondary button-xsmall clear" >Clear</a>&nbsp;` +
-                    `<a data-step-index="${i}" class="pure-button button-secondary button-red button-xsmall remove" >Remove</a>`;
+            s += `<a data-step-index="${i}" class="pure-button button-secondary button-xsmall clear" >Clear</a>&nbsp;` +
+                `<a data-step-index="${i}" class="pure-button button-secondary button-red button-xsmall remove" >Remove</a>`;
 
-                // if a screenshot is available
-                if (browser_steps_available_screenshots.includes(i.toString())) {
-                    var d = (browser_steps_last_error_step === i+1) ? 'before' : 'after';
-                    s += `&nbsp;<a data-step-index="${i}" class="pure-button button-secondary button-xsmall show-screenshot" title="Show screenshot from last run" data-type="${d}">Pic</a>&nbsp;`;
-                }
+            // if a screenshot is available
+            if (browser_steps_available_screenshots.includes(i.toString())) {
+                var d = (browser_steps_last_error_step === i+1) ? 'before' : 'after';
+                s += `&nbsp;<a data-step-index="${i}" class="pure-button button-secondary button-xsmall show-screenshot" title="Show screenshot from last run" data-type="${d}">Pic</a>&nbsp;`;
             }
             s += '</div>';
             $(this).append(s)
@@ -376,80 +405,35 @@ $(document).ready(function () {
     });
 
     $('ul#browser_steps li .control .apply').click(function (event) {
-        // sequential requests @todo refactor
         if (apply_buttons_disabled) {
             return;
         }
 
         var current_data = $(event.currentTarget).closest('li');
-        $('#browser-steps-ui .loader .spinner').fadeIn();
-        apply_buttons_disabled = true;
-        $('ul#browser_steps li .control .apply').css('opacity', 0.5);
-        $("#browsersteps-img").css('opacity', 0.65);
-
-        var is_last_step = 0;
         var step_n = $(event.currentTarget).data('step-index');
 
-        // On the last step, we should also be getting data ready for the visual selector
+        // Determine if this is the last configured step
+        var is_last_step = 0;
         $('ul#browser_steps li select').each(function (i) {
             if ($(this).val() !== 'Choose one') {
                 is_last_step += 1;
             }
         });
-
-        if (is_last_step == (step_n + 1)) {
-            is_last_step = true;
-        } else {
-            is_last_step = false;
-        }
+        is_last_step = (is_last_step == (step_n + 1));
 
         console.log("Requesting step via POST " + $("select[id$='operation']", current_data).first().val());
-        // POST the currently clicked step form widget back and await response, redraw
-        $.ajax({
-            method: "POST",
-            url: browser_steps_sync_url + "&browsersteps_session_id=" + browsersteps_session_id,
-            data: {
+
+        // Execute the browser step
+        executeBrowserStep(
+            browser_steps_sync_url + "&browsersteps_session_id=" + browsersteps_session_id,
+            {
                 'operation': $("select[id$='operation']", current_data).first().val(),
                 'selector': $("input[id$='selector']", current_data).first().val(),
                 'optional_value': $("input[id$='optional_value']", current_data).first().val(),
                 'step_n': step_n,
                 'is_last_step': is_last_step
-            },
-            statusCode: {
-                400: function () {
-                    // More than likely the CSRF token was lost when the server restarted
-                    alert("There was a problem processing the request, please reload the page.");
-                    $("#loading-status-text").hide();
-                    $('#browser-steps-ui .loader .spinner').fadeOut();
-                },
-                401: function (data) {
-                    // More than likely the CSRF token was lost when the server restarted
-                    alert(data.responseText);
-                    $("#loading-status-text").hide();
-                    $('#browser-steps-ui .loader .spinner').fadeOut();
-                }
             }
-        }).done(function (data) {
-            // it should return the new state (selectors available and screenshot)
-            xpath_data = data.xpath_data;
-            $('#browsersteps-img').attr('src', data.screenshot);
-            $('#browser-steps-ui .loader .spinner').fadeOut();
-            apply_buttons_disabled = false;
-            $("#browsersteps-img").css('opacity', 1);
-            $('ul#browser_steps li .control .apply').css('opacity', 1);
-            $("#loading-status-text").hide();
-            set_first_gotosite_disabled();
-        }).fail(function (data) {
-            console.log(data);
-            if (data.responseText.includes("Browser session expired")) {
-                disable_browsersteps_ui();
-            }
-            apply_buttons_disabled = false;
-            $("#loading-status-text").hide();
-            $('ul#browser_steps li .control .apply').css('opacity', 1);
-            $("#browsersteps-img").css('opacity', 1);
-        });
-
+        );
     });
 
     $('ul#browser_steps li .control .show-screenshot').click(function (element) {

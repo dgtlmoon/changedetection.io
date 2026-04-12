@@ -9,10 +9,54 @@ by testing various scenarios that should trigger validation errors.
 import time
 import json
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks
+from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 
 
-def test_openapi_validation_invalid_content_type_on_create_watch(client, live_server, measure_memory_usage):
+def test_openapi_merged_spec_contains_restock_fields():
+    """
+    Unit test: verify that build_merged_spec_dict() correctly merges the
+    restock_diff processor api.yaml into the base spec so that
+    WatchBase.properties includes processor_config_restock_diff with all
+    expected sub-fields.  No live server required.
+    """
+    from changedetectionio.api import build_merged_spec_dict
+
+    spec = build_merged_spec_dict()
+    schemas = spec['components']['schemas']
+
+    # The merged schema for processor_config_restock_diff should exist
+    assert 'processor_config_restock_diff' in schemas, \
+        "processor_config_restock_diff schema missing from merged spec"
+
+    restock_schema = schemas['processor_config_restock_diff']
+    props = restock_schema.get('properties', {})
+
+    expected_fields = {
+        'in_stock_processing',
+        'follow_price_changes',
+        'price_change_min',
+        'price_change_max',
+        'price_change_threshold_percent',
+    }
+    missing = expected_fields - set(props.keys())
+    assert not missing, f"Missing fields in processor_config_restock_diff schema: {missing}"
+
+    # in_stock_processing must be an enum with the three valid values
+    enum_values = set(props['in_stock_processing'].get('enum', []))
+    assert enum_values == {'in_stock_only', 'all_changes', 'off'}, \
+        f"Unexpected enum values for in_stock_processing: {enum_values}"
+
+    # WatchBase.properties must carry a $ref to the restock schema so the
+    # validation middleware can enforce it on every POST/PUT to /watch
+    watchbase_props = schemas['WatchBase']['properties']
+    assert 'processor_config_restock_diff' in watchbase_props, \
+        "processor_config_restock_diff not wired into WatchBase.properties"
+    ref = watchbase_props['processor_config_restock_diff'].get('$ref', '')
+    assert 'processor_config_restock_diff' in ref, \
+        f"WatchBase.processor_config_restock_diff should $ref the schema, got: {ref}"
+
+
+def test_openapi_validation_invalid_content_type_on_create_watch(client, live_server, measure_memory_usage, datastore_path):
     """Test that creating a watch with invalid content-type triggers OpenAPI validation error."""
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
 
@@ -26,10 +70,11 @@ def test_openapi_validation_invalid_content_type_on_create_watch(client, live_se
 
     # Should get 400 error due to OpenAPI validation failure
     assert res.status_code == 400, f"Expected 400 but got {res.status_code}"
-    assert b"OpenAPI validation failed" in res.data, "Should contain OpenAPI validation error message"
+    assert b"Validation failed" in res.data, "Should contain validation error message"
+    delete_all_watches(client)
 
 
-def test_openapi_validation_missing_required_field_create_watch(client, live_server, measure_memory_usage):
+def test_openapi_validation_missing_required_field_create_watch(client, live_server, measure_memory_usage, datastore_path):
     """Test that creating a watch without required URL field triggers OpenAPI validation error."""
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
 
@@ -43,10 +88,11 @@ def test_openapi_validation_missing_required_field_create_watch(client, live_ser
 
     # Should get 400 error due to missing required field
     assert res.status_code == 400, f"Expected 400 but got {res.status_code}"
-    assert b"OpenAPI validation failed" in res.data, "Should contain OpenAPI validation error message"
+    assert b"Validation failed" in res.data, "Should contain validation error message"
+    delete_all_watches(client)
 
 
-def test_openapi_validation_invalid_field_in_request_body(client, live_server, measure_memory_usage):
+def test_openapi_validation_invalid_field_in_request_body(client, live_server, measure_memory_usage, datastore_path):
     """Test that including invalid fields triggers OpenAPI validation error."""
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
 
@@ -80,10 +126,13 @@ def test_openapi_validation_invalid_field_in_request_body(client, live_server, m
     # Should get 400 error due to invalid field (this will be caught by internal validation)
     # Note: This tests the flow where OpenAPI validation passes but internal validation catches it
     assert res.status_code == 400, f"Expected 400 but got {res.status_code}"
-    assert b"Additional properties are not allowed" in res.data, "Should contain validation error about additional properties"
+    # Backend validation now returns "Unknown field(s):" message
+    assert b"Unknown field" in res.data, \
+            "Should contain validation error about unknown fields"
+    delete_all_watches(client)
 
 
-def test_openapi_validation_import_wrong_content_type(client, live_server, measure_memory_usage):
+def test_openapi_validation_import_wrong_content_type(client, live_server, measure_memory_usage, datastore_path):
     """Test that import endpoint with wrong content-type triggers OpenAPI validation error."""
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
 
@@ -97,10 +146,11 @@ def test_openapi_validation_import_wrong_content_type(client, live_server, measu
 
     # Should get 400 error due to content-type mismatch
     assert res.status_code == 400, f"Expected 400 but got {res.status_code}"
-    assert b"OpenAPI validation failed" in res.data, "Should contain OpenAPI validation error message"
+    assert b"Validation failed" in res.data, "Should contain validation error message"
+    delete_all_watches(client)
 
 
-def test_openapi_validation_import_correct_content_type_succeeds(client, live_server, measure_memory_usage):
+def test_openapi_validation_import_correct_content_type_succeeds(client, live_server, measure_memory_usage, datastore_path):
     """Test that import endpoint with correct content-type succeeds (positive test)."""
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
 
@@ -115,9 +165,10 @@ def test_openapi_validation_import_correct_content_type_succeeds(client, live_se
     # Should succeed
     assert res.status_code == 200, f"Expected 200 but got {res.status_code}"
     assert len(res.json) == 2, "Should import 2 URLs"
+    delete_all_watches(client)
 
 
-def test_openapi_validation_get_requests_bypass_validation(client, live_server, measure_memory_usage):
+def test_openapi_validation_get_requests_bypass_validation(client, live_server, measure_memory_usage, datastore_path):
     """Test that GET requests bypass OpenAPI validation entirely."""
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
 
@@ -139,9 +190,10 @@ def test_openapi_validation_get_requests_bypass_validation(client, live_server, 
 
     # Should return JSON with watch list (empty in this case)
     assert isinstance(res.json, dict), "Should return JSON dictionary for watch list"
+    delete_all_watches(client)
 
 
-def test_openapi_validation_create_tag_missing_required_title(client, live_server, measure_memory_usage):
+def test_openapi_validation_create_tag_missing_required_title(client, live_server, measure_memory_usage, datastore_path):
     """Test that creating a tag without required title triggers OpenAPI validation error."""
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
 
@@ -155,11 +207,14 @@ def test_openapi_validation_create_tag_missing_required_title(client, live_serve
 
     # Should get 400 error due to missing required field
     assert res.status_code == 400, f"Expected 400 but got {res.status_code}"
-    assert b"OpenAPI validation failed" in res.data, "Should contain OpenAPI validation error message"
+    assert b"Validation failed" in res.data, "Should contain validation error message"
+    delete_all_watches(client)
 
 
-def test_openapi_validation_watch_update_allows_partial_updates(client, live_server, measure_memory_usage):
+def test_openapi_validation_watch_update_allows_partial_updates(client, live_server, measure_memory_usage, datastore_path):
+
     """Test that watch updates allow partial updates without requiring all fields (positive test)."""
+#xxx
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
 
     # First create a valid watch
@@ -197,3 +252,4 @@ def test_openapi_validation_watch_update_allows_partial_updates(client, live_ser
     assert res.status_code == 200
     assert res.json.get('title') == 'Updated Title Only', "Title should be updated"
     assert res.json.get('url') == 'https://example.com', "URL should remain unchanged"
+    delete_all_watches(client)

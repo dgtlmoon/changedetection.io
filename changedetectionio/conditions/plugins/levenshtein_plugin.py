@@ -1,3 +1,7 @@
+"""
+Levenshtein distance and similarity plugin for text change detection.
+Provides metrics for measuring text similarity between snapshots.
+"""
 import pluggy
 from loguru import logger
 
