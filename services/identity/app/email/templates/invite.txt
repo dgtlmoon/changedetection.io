@@ -1,0 +1,16 @@
+You've been invited to {{ org_name }} on onChange by Sairo
+
+Hi,
+
+{{ inviter_name or "A teammate" }} has invited you to join
+{{ org_name }} on onChange by Sairo as a {{ role }}.
+
+Open this link to accept:
+
+    {{ accept_url }}
+
+This invitation expires in 7 days. If you weren't expecting this
+message you can safely ignore it — no account is created until you
+accept.
+
+— onChange by Sairo

@@ -247,12 +247,96 @@ New table `email_verification_tokens` mirroring
 
 ## 2c — Invites
 
-- `POST /v1/orgs/{slug}/invites` — admin/owner can invite by email +
-  role.
-- `GET /v1/orgs/{slug}/invites` — list pending.
-- `DELETE /v1/orgs/{slug}/invites/{id}` — revoke.
-- `POST /v1/auth/invites/accept` — body `{ token }`. Creates user if
-  new, creates membership, marks invite accepted.
+### Endpoints
+
+```
+POST /v1/orgs/{slug}/invites
+    auth: bearer access token AND caller must be owner|admin of {slug}
+    body: { email, role }   // role ∈ { admin, member, viewer }
+    → 201 { id, email, role, expires_at, created_at }
+    Triggers invite email to {email} with a signed acceptance link.
+
+GET /v1/orgs/{slug}/invites
+    auth: owner|admin
+    → 200 { invites: [ { id, email, role, expires_at, created_at, accepted_at? } ] }
+    Lists pending + accepted; consumed invites stay for audit for 30 days.
+
+DELETE /v1/orgs/{slug}/invites/{id}
+    auth: owner|admin
+    → 204
+    Hard-deletes the invite row. Audit-logged.
+
+POST /v1/auth/invites/accept
+    body: { token, password?, display_name? }
+    auth: optional bearer token.
+    → 200 { access_token, refresh_token, access_expires_in, user, org, role }
+    Accepts the invite and returns an active session.
+
+    Three cases handled by one endpoint:
+      a) Caller has a bearer token AND the invite email matches the
+         user → attach membership, mint new session. Ignores password
+         field.
+      b) Caller has no bearer token AND invite email matches an
+         existing user → requires password; authenticates, attaches
+         membership.
+      c) Caller has no bearer token AND no user exists for the email
+         yet → creates the user (password required), attaches
+         membership, mints session.
+
+    Email mismatch between caller and invite returns 403. Expired /
+    already-accepted / unknown token returns 400.
+```
+
+### Authorization — `require_membership(min_role)`
+
+New FastAPI dependency. Resolution:
+
+1. Calls `get_current_user` (bearer token required).
+2. Reads `request.state.org_id` (populated by the tenant resolver from
+   the `/v1/orgs/{slug}/…` path parameter).
+3. Runs a tenant-scoped lookup via `db.with_current_org(org_id)` —
+   RLS restricts visibility to the current org, so the same query
+   serves as both the membership-exists check and the tenant-membership
+   enforcement.
+4. Compares the membership's role to `min_role` using a fixed ordering:
+   `owner > admin > member > viewer`.
+5. Raises `404` (not 403) when the caller has no membership in the
+   org — don't confirm the org's existence to non-members.
+
+### Data model
+
+Phase 1's `invites` table already covers the need. No new migrations in
+2c.
+
+### Email
+
+Reuses the Phase-2b email adapter + Jinja2 renderer. New paired
+template `invite.{txt,html}`. The invite URL points at
+`https://{root_domain}/invites/accept?token={token}`. The Next.js app
+(Phase 5+) renders the UI; until then, the link yields a JSON 400 if
+opened directly — expected, since the page needs to collect the
+acceptance POST body.
+
+### Cross-tenant isolation tests
+
+The first phase that really exercises it. `tests/test_invites_flow.py`
+asserts:
+
+- Admin in org A cannot list invites of org B (`404`).
+- An invite token issued for org A cannot be accepted into org B.
+- An invited user's membership row is only visible inside `/v1/me` of
+  the accepting account and inside the org's invite list — never
+  across orgs.
+
+### Done-when checklist (2c)
+
+- [x] `invites/*` endpoints implemented.
+- [x] `require_membership(min_role)` dep with role-ordering helper.
+- [x] Acceptance endpoint handles all three auth cases.
+- [x] Invite email template + link.
+- [x] Cross-tenant isolation tests pass.
+- [x] Audit log entries for invite.create, invite.revoke,
+  invite.accept.
 
 ## 2d — API keys
 
