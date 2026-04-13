@@ -891,6 +891,20 @@ def changedetection_app(config=None, datastore_o=None):
     import changedetectionio.blueprint.watchlist as watchlist
     app.register_blueprint(watchlist.construct_blueprint(datastore=datastore, update_q=update_q, queuedWatchMetaData=queuedWatchMetaData), url_prefix='')
 
+    # Watch templates — one-click recipes for common monitoring targets.
+    from changedetectionio.blueprint.watch_templates import construct_blueprint as construct_watch_templates_blueprint
+    app.register_blueprint(
+        construct_watch_templates_blueprint(datastore, update_q, queuedWatchMetaData),
+        url_prefix='/templates',
+    )
+
+    # AI-assisted filter builder (natural-language → CSS/XPath suggestion).
+    from changedetectionio.blueprint.ai_filter import construct_blueprint as construct_ai_filter_blueprint
+    app.register_blueprint(
+        construct_ai_filter_blueprint(datastore),
+        url_prefix='/ui/ai-filter',
+    )
+
     # Initialize Socket.IO server conditionally based on settings
     socket_io_enabled = datastore.data['settings']['application'].get('ui', {}).get('socket_io_enabled', True)
     if socket_io_enabled and app.config.get('batch_mode'):
@@ -1008,6 +1022,13 @@ def changedetection_app(config=None, datastore_o=None):
                 name=f"NotificationRunner-{i}"
             ).start()
         logger.info(f"Started {notification_workers} notification worker(s)")
+
+        # Scheduled digest-email daemon (no-op unless digest_enabled is set in settings)
+        try:
+            from changedetectionio.digest import start_digest_thread
+            start_digest_thread(datastore=datastore, notification_q=notification_q, app=app)
+        except Exception as e:
+            logger.warning(f"Could not start digest email scheduler: {e}")
 
         in_pytest = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
         # Check for new release version, but not when running in test/build or pytest

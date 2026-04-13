@@ -1,3 +1,23 @@
+                    {% if settings_application and settings_application.get('ai_filter_enabled') and uuid is defined and uuid and watch is defined %}
+                    <div class="pure-control-group ai-filter-assist" id="ai-filter-assist">
+                        <label for="ai-filter-prompt">
+                            <strong>{{ _('✨ AI Assist') }}</strong>
+                            — {{ _('describe what you want to monitor:') }}
+                        </label>
+                        <input type="text" id="ai-filter-prompt" class="m-d"
+                               placeholder="{{ _('e.g. “alert me when the price drops” or “notify when a new article appears”') }}"
+                               maxlength="500" autocomplete="off">
+                        <button type="button" class="pure-button button-small" id="ai-filter-suggest-btn"
+                                data-uuid="{{ uuid }}">
+                            {{ _('Suggest filter') }}
+                        </button>
+                        <span id="ai-filter-status" class="pure-form-message-inline"
+                              style="margin-left: 0.5em;"></span>
+                        <div id="ai-filter-result" class="pure-form-message-inline"
+                             style="display:none; margin-top: 0.5em; padding: 0.5em; border: 1px dashed var(--color-border-table-cell); border-radius: 4px;"></div>
+                    </div>
+                    <script src="{{ url_for('static_content', group='js', filename='ai-filter.js') }}" defer></script>
+                    {% endif %}
                     <div class="pure-control-group">
                         {% set field = render_field(form.include_filters,
                             rows=5,

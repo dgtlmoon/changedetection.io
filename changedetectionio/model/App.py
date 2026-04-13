@@ -48,6 +48,17 @@ class model(dict):
                     'global_ignore_text': [], # List of text to ignore when calculating the comparison checksum
                     'global_subtractive_selectors': [],
                     'history_snapshot_max_length': None,
+                    # --- Scheduled digest email settings ---
+                    'digest_enabled': False,
+                    'digest_frequency': 'daily',       # 'daily' or 'weekly'
+                    'digest_hour_utc': 8,              # 0..23, UTC
+                    'digest_notification_urls': [],    # Apprise destination list for digests
+                    'digest_include_unchanged': False,
+                    'digest_last_sent_epoch': 0,       # System-managed: last successful send (unix epoch)
+                    # --- AI-assisted filter builder ---
+                    'ai_filter_enabled': False,
+                    'ai_filter_api_key': '',
+                    'ai_filter_model': 'claude-haiku-4-5-20251001',
                     'ignore_whitespace': True,
                     'ignore_status_codes': False, #@todo implement, as ternary.
                     'ssim_threshold': '0.96',  # Default SSIM threshold for screenshot comparison

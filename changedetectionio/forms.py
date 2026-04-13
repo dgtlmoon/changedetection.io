@@ -1036,6 +1036,37 @@ class globalSettingsApplicationForm(commonSettingsForm):
                                                                                                      message=_l("Should contain zero or more attempts"))])
 
     history_snapshot_max_length = IntegerField(_l('Number of history items per watch to keep'), render_kw={"style": "width: 5em;"}, validators=[validators.Optional(), validators.NumberRange(min=2)])
+
+    # --- Scheduled digest email settings ---
+    digest_enabled = BooleanField(_l('Send a periodic digest of all changes'), default=False,
+                                  validators=[validators.Optional()])
+    digest_frequency = SelectField(_l('Digest frequency'),
+                                   choices=[('daily', 'Daily'), ('weekly', 'Weekly')],
+                                   default='daily',
+                                   validators=[validators.Optional()])
+    digest_hour_utc = IntegerField(_l('Send hour (UTC, 0–23)'),
+                                   render_kw={"style": "width: 5em;", "placeholder": "8"},
+                                   default=8,
+                                   validators=[validators.Optional(),
+                                               validators.NumberRange(min=0, max=23,
+                                                                      message=_l("Must be 0–23"))])
+    digest_notification_urls = StringListField(
+        _l('Digest destination(s) — Apprise URL list (e.g. mailtos://… or slack://…)'),
+        [validators.Optional(), ValidateAppRiseServers()])
+    digest_include_unchanged = BooleanField(_l('Include watches that had no changes'), default=False,
+                                            validators=[validators.Optional()])
+
+    # --- AI-assisted filter builder (Claude API) ---
+    ai_filter_enabled = BooleanField(_l('Enable natural-language filter builder'), default=False,
+                                     validators=[validators.Optional()])
+    ai_filter_api_key = StringField(_l('Anthropic API key'),
+                                    render_kw={"autocomplete": "off", "placeholder": "sk-ant-…"},
+                                    validators=[validators.Optional()])
+    ai_filter_model = StringField(_l('Model'),
+                                  default='claude-haiku-4-5-20251001',
+                                  render_kw={"placeholder": "claude-haiku-4-5-20251001"},
+                                  validators=[validators.Optional()])
+
     ui = FormField(globalSettingsApplicationUIForm)
 
 
