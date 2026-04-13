@@ -43,6 +43,9 @@ packages = ["app"]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 addopts = "-ra --strict-markers"
+markers = [
+    "db: integration tests that require a running Postgres with migrations applied",
+]
 
 [tool.ruff]
 line-length = 100

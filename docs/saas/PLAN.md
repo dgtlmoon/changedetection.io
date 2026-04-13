@@ -63,8 +63,8 @@
 
 | # | Phase | Goal | Status |
 |---|---|---|---|
-| 1 | Foundations & tenancy primitives | Orgs/Users/Memberships/Sessions/ApiKeys, tenant middleware, RLS | **in progress** |
-| 2 | Identity & session | Real signup, login, OAuth, invites, transactional email | pending |
+| 1 | Foundations & tenancy primitives | Orgs/Users/Memberships/Sessions/ApiKeys, tenant middleware, RLS | **complete** |
+| 2 | Identity & session | Real signup, login, OAuth, invites, transactional email | **2a in progress** (core auth loop); 2b–2e pending |
 | 3 | New data layer | Replace file datastore with Postgres + S3 behind feature flag | pending |
 | 4 | Distributed workers & queue | Redis-backed queue, horizontal workers, per-org fairness | pending |
 | 5 | Tenant-scoped HTTP + realtime | All routes + Socket.IO rooms tenant-scoped | pending |

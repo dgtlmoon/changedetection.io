@@ -19,7 +19,7 @@ from starlette.responses import JSONResponse
 
 from .config import get_settings
 from .middleware.tenant_resolver import TenantResolverMiddleware
-from .routes import health
+from .routes import auth, health, me
 
 _log = structlog.get_logger()
 
@@ -54,6 +54,8 @@ def create_app() -> FastAPI:
     app.add_middleware(TenantResolverMiddleware, settings=settings)
 
     app.include_router(health.router)
+    app.include_router(auth.router)
+    app.include_router(me.router)
 
     @app.get("/", include_in_schema=False)
     async def root() -> JSONResponse:

@@ -103,3 +103,10 @@ jobs:
 
       - name: Alembic upgrade head (again)
         run: uv run alembic upgrade head
+
+      - name: Pytest (db-integration — Phase 2a auth flows)
+        run: uv run pytest -m db
+        env:
+          IDENTITY_DATABASE_URL: postgresql+asyncpg://onchange:onchange_dev_password@localhost:5432/onchange
+          IDENTITY_DATABASE_ADMIN_URL: postgresql+asyncpg://onchange:onchange_dev_password@localhost:5432/onchange
+          IDENTITY_SECRET_KEY: ci-only-secret-key-not-used-in-production-32-bytes

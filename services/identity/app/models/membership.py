@@ -4,12 +4,16 @@ from __future__ import annotations
 
 import enum
 from datetime import datetime
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import DateTime, Enum, ForeignKey, UniqueConstraint, text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, created_at_column, uuid_pk
+
+if TYPE_CHECKING:
+    from .org import Org
 
 
 class MembershipRole(str, enum.Enum):
@@ -46,3 +50,5 @@ class Membership(Base):
         server_default=text("now()"),
     )
     created_at: Mapped[datetime] = created_at_column()
+
+    org: Mapped["Org"] = relationship(lazy="raise", foreign_keys=[org_id])
