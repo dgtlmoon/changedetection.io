@@ -50,6 +50,12 @@ The short version (full list in [`ATTRIBUTION.md`](ATTRIBUTION.md)):
 5. **Security hardening** — non-root Docker user, scoped CORS, pooled
    HTTP sessions, chardet confidence gate, transient-HTTP retry, a
    client-side modal XSS fix, ARIA/mobile accessibility pass.
+6. **Mobile-first UX** — a fixed bottom navigation bar (Watches / Groups
+   / Search / More) on ≤ 980 px, iOS safe-area-aware hamburger drawer,
+   2-column language picker, horizontally scrolling tab strips with
+   44 px hit targets, and a rebuilt diff page that stacks From/To
+   selectors and gives screenshots the full card width on phones.
+   Details in [`ATTRIBUTION.md`](ATTRIBUTION.md#accessibility--frontend-polish).
 
 ---
 
