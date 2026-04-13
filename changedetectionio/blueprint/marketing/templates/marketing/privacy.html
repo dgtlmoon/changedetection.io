@@ -1,0 +1,52 @@
+{% extends 'marketing/_layout.html' %}
+{% block marketing_content %}
+
+<section class="marketing-hero marketing-hero-narrow">
+  <div class="marketing-hero-inner">
+    <h1 class="marketing-h1">{{ _('Privacy') }}</h1>
+    <p class="marketing-lede">
+      {{ _('onChange by Sairo is a self-hosted application. This page describes the privacy posture of the software itself; the operator of any given deployment is responsible for their own policies.') }}
+    </p>
+  </div>
+</section>
+
+<section class="marketing-section">
+  <div class="marketing-prose">
+    <h2>{{ _('What the software collects') }}</h2>
+    <p>{{ _('Nothing the operator does not configure. No analytics beacons, no telemetry endpoints, no phone-home behaviour ships in the codebase.') }}</p>
+
+    <h2>{{ _('What the software fetches') }}</h2>
+    <p>
+      {{ _('Only the URLs you configure as watches. Fetches use the HTTP client, proxy, and credentials you set. The optional AI-assist feature sends a trimmed HTML snippet to Anthropic; it is off by default and requires an explicit API key.') }}
+    </p>
+
+    <h2>{{ _('What the software stores') }}</h2>
+    <ul>
+      <li>{{ _('Your watch list (URLs, filters, schedules).') }}</li>
+      <li>{{ _('Snapshot history — the content of the pages you monitor, so the diff engine can show before / after.') }}</li>
+      <li>{{ _('Notification destinations (AppRise URLs) and any credentials embedded in them.') }}</li>
+      <li>{{ _('Per-watch configuration (e.g. site-inventory settings, restock thresholds).') }}</li>
+    </ul>
+    <p>{{ _('All of the above lives in the data directory you mount into the container — typically a local volume on your server. It never leaves that directory unless you export it.') }}</p>
+
+    <h2>{{ _('Third-party destinations') }}</h2>
+    <p>{{ _('Notifications go to whichever service(s) you configure — Discord, Slack, SMTP, webhook, etc. Those services have their own privacy terms and log retention. onChange does not proxy or inspect those destinations beyond what AppRise needs to deliver the message.') }}</p>
+
+    <h2>{{ _('Cookies') }}</h2>
+    <p>{{ _('One session cookie for login (when a password is set), and one preference cookie for dark / light mode. No tracking cookies are set.') }}</p>
+
+    <h2>{{ _('robots.txt policy') }}</h2>
+    <p>
+      {{ _('The app surfaces (watchlist, edit, diff, preview, settings, API) are disallowed in') }}
+      <a href="{{ url_for('marketing.robots_txt') }}">robots.txt</a>.
+      {{ _('Only the public marketing pages linked from this site are indexable.') }}
+    </p>
+  </div>
+</section>
+
+<section class="marketing-section marketing-cta-block">
+  <a class="pure-button" href="{{ url_for('marketing.landing') }}">{{ _('Back to landing') }}</a>
+  <a class="pure-button" href="{{ url_for('marketing.features') }}">{{ _('All features') }}</a>
+</section>
+
+{% endblock %}

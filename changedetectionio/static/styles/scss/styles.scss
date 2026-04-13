@@ -36,6 +36,10 @@
 @use "parts/login_form";
 @use "parts/tabs";
 @use "parts/bottom_nav";
+// UI audit improvements — additive; keep last so it can win on specificity.
+@use "parts/ui_audit";
+@use "parts/site_inventory";
+@use "parts/marketing";
 
 // Smooth transitions for theme switching
 body,

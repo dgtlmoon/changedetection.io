@@ -1,0 +1,74 @@
+/**
+ * Styles for the site_inventory_diff dashboard (blueprint/site_inventory).
+ *
+ * Scoped tightly to avoid leaking into the rest of the app. Color tokens
+ * come from _variables.scss so dark mode just works.
+ */
+
+.inventory-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0 1.5rem;
+
+  .inv-card {
+    background: var(--color-background-code);
+    border: 1px solid var(--color-border-input);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+
+    .inv-card-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--color-text);
+      line-height: 1.1;
+    }
+
+    .inv-card-label {
+      margin-top: 0.25rem;
+      font-size: 0.8rem;
+      color: var(--color-text);
+      opacity: 0.75;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    &.inv-card-added .inv-card-value {
+      color: var(--color-background-button-green, #10b981);
+    }
+    &.inv-card-removed .inv-card-value {
+      color: var(--color-background-button-error, #dc2626);
+    }
+  }
+}
+
+.tiny-url {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  word-break: break-all;
+  margin-top: 0.1rem;
+}
+
+.num-added {
+  color: var(--color-background-button-green, #10b981);
+  font-weight: 600;
+}
+
+.num-removed {
+  color: var(--color-background-button-error, #dc2626);
+  font-weight: 600;
+}
+
+.inventory-url-list {
+  max-height: 18rem;
+  overflow: auto;
+  background: var(--color-background-code);
+  border: 1px solid var(--color-border-input);
+  border-radius: 4px;
+  padding: 0.6rem 0.8rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  white-space: pre;
+}
