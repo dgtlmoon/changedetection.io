@@ -35,6 +35,7 @@
 @use "parts/toast";
 @use "parts/login_form";
 @use "parts/tabs";
+@use "parts/bottom_nav";
 // UI audit improvements — additive; keep last so it can win on specificity.
 @use "parts/ui_audit";
 @use "parts/site_inventory";
@@ -208,8 +209,15 @@ body.spinner-active {
 
 
 .tab-pane-inner {
-  // .tab-pane-inner will have the #id that the tab button jumps/anchors to
+  // .tab-pane-inner will have the #id that the tab button jumps/anchors to.
+  // 200px clears the fixed top nav + tab row on desktop.
   scroll-margin-top: 200px;
+  // On mobile the fixed nav is shorter (no nav row, tabs wrap) and 200px
+  // pushes the target past the bottom of the viewport. 90px is enough to
+  // clear the nav + first tab row without losing the scroll anchor.
+  @media only screen and (max-width: 760px) {
+    scroll-margin-top: 90px;
+  }
 }
 
 section.content {

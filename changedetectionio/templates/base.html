@@ -99,7 +99,11 @@
     {%- endif %}
   </head>
 
-  <body class="{{extra_classes}}">
+  {# has-bottom-nav toggles body padding so content clears the fixed mobile nav.
+     Only add it when the bottom nav is actually rendered (authenticated + not
+     viewing a shared-diff URL). See _bottom_nav.scss. #}
+  {% set _show_bottom_nav = (current_user.is_authenticated or not has_password) and not current_diff_url %}
+  <body class="{{extra_classes}}{% if _show_bottom_nav %} has-bottom-nav{% endif %}">
     <a href="#main-content" class="visually-hidden skip-link">{{ _('Skip to main content') }}</a>
     <header class="header" role="banner">
     <div {% if pure_menu_fixed != False %}class="pure-menu-fixed"{% endif %} style="width: 100%;">
@@ -307,6 +311,37 @@
         <div id="bottom-horizontal-offscreen" style="display:none">
             {{ bottom_horizontal_offscreen_contents|safe }}
         </div>
+    {% endif %}
+
+    {# ----------------------------------------------------------------
+       Mobile bottom navigation (<=980px). Hidden on desktop via CSS.
+       "More" triggers the existing hamburger drawer rather than
+       duplicating its menu items. Search triggers the existing modal.
+       ---------------------------------------------------------------- #}
+    {% if _show_bottom_nav %}
+    <nav class="mobile-bottom-nav" aria-label="{{ _('Primary mobile navigation') }}">
+      <a href="{{ url_for('watchlist.index') }}"
+         class="{% if request.endpoint == 'watchlist.index' or request.endpoint.startswith('ui.') %}active{% endif %}"
+         aria-label="{{ _('Watches') }}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        <span class="label">{{ _('Watches') }}</span>
+      </a>
+      <a href="{{ url_for('tags.tags_overview_page') }}"
+         class="{% if request.endpoint.startswith('tags.') %}active{% endif %}"
+         aria-label="{{ _('Groups') }}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/></svg>
+        <span class="label">{{ _('Groups') }}</span>
+      </a>
+      <button type="button" class="bottom-nav-search" aria-label="{{ _('Search') }}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <span class="label">{{ _('Search') }}</span>
+      </button>
+      <button type="button" class="bottom-nav-more" aria-label="{{ _('More menu') }}" aria-controls="mobile-menu-drawer">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        <span class="label">{{ _('More') }}</span>
+      </button>
+    </nav>
+    <script src="{{url_for('static_content', group='js', filename='bottom-nav.js')}}" defer></script>
     {% endif %}
 
     <!-- Language Selection Modal -->

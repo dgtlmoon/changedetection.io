@@ -65,5 +65,27 @@
       overflow: hidden;
     }
   }
+
+  // On narrow screens there are ~12+ languages; a 2-col grid makes the list
+  // scannable without heavy scroll. Each cell is still a 44px+ tap target.
+  @media only screen and (max-width: 600px) {
+    .language-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.35rem;
+    }
+    .language-option {
+      padding: 0.6rem 0.4rem;
+      min-height: 44px;
+      border: 1px solid var(--color-border-table-cell);
+      .language-name {
+        font-size: 0.85rem;
+        // Prevent very long language names from breaking the grid
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+  }
 }
 

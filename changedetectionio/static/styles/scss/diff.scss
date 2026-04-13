@@ -246,3 +246,93 @@ body.difference-page {
     }
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Mobile polish for the diff page. The desktop layout wastes ~40% of horizontal
+ * space on padding and a fixed version-selector row; on phones we reclaim that
+ * for the actual diff content.
+ * ------------------------------------------------------------------------- */
+@media only screen and (max-width: 760px) {
+  #diff-col {
+    // Remove the 40px left-padding that only makes sense next to the
+    // desktop #diff-jump rail (which is hidden on mobile anyway).
+    padding-left: 0;
+  }
+
+  #diff-form {
+    padding: 0.6rem;
+    font-size: 0.85rem;
+    margin-bottom: 0.6em;
+    text-align: left;
+
+    .diff-fieldset {
+      // Stack "From" and "To" vertically so each select gets the full width
+      // instead of being squeezed into 2 columns with tiny hit targets.
+      flex-direction: column;
+      align-items: stretch;
+      gap: 6px;
+      > span {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        white-space: normal !important;
+        select {
+          flex: 1;
+          min-width: 0;
+        }
+      }
+    }
+
+    label.from-to-label {
+      width: auto;
+      min-width: 3rem;
+      padding: 0.35rem 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    #diff-style {
+      display: flex;
+      flex-wrap: wrap;
+      > span {
+        padding: 0.2em 0.4em;
+      }
+    }
+
+    #keyboard-nav {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 0.4rem;
+      .pure-button {
+        flex: 1;
+        min-width: 0;
+      }
+    }
+  }
+
+  #diff-ui {
+    padding: 0.6rem;
+
+    // Screenshot previews should use the full card width on mobile
+    .tab-pane-inner#screenshot img,
+    .tab-pane-inner#error-screenshot img {
+      max-width: 100% !important;
+    }
+
+    // Diff grid visualiser — keep it visible but trimmed
+    #cell-diff-jump-visualiser {
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+    }
+  }
+
+  // The highlight action strip (share / add-to-ignore) wraps to a big pile
+  // on narrow screens; tighten spacing so it fits without heavy scrolling.
+  #diff-ui ul#highlightSnippetActions {
+    gap: 0.5rem;
+    li {
+      padding: 0.25rem;
+      font-size: 0.85rem;
+    }
+  }
+}

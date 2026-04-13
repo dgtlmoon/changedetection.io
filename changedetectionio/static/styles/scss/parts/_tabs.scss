@@ -55,3 +55,33 @@ body.wrapped-tabs {
     }
   }
 }
+
+// Mobile: tabs often wrap into 2-3 rows on small screens. The wrapped-tabs
+// mode already handles that, but tap targets and spacing need tuning.
+@media only screen and (max-width: 760px) {
+  .tabs {
+    ul {
+      // Allow horizontal scroll as a fallback when many tabs are present,
+      // instead of forcing a tall wrapped stack that pushes content down.
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      // Hide scrollbar on iOS but keep it functional
+      scrollbar-width: thin;
+    }
+    li {
+      a {
+        padding: 0.85em 0.9em;
+        font-size: 0.95rem;
+        // Minimum 44px tap target without forcing height on desktop
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+      }
+    }
+  }
+
+  // When tabs wrap to a grid, each cell should still be tappable
+  body.wrapped-tabs .tabs ul {
+    overflow-x: visible;
+  }
+}
