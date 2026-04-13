@@ -340,15 +340,73 @@ asserts:
 
 ## 2d — API keys
 
-- `POST /v1/orgs/{slug}/api-keys` — body `{ name, scopes, expires_at? }`.
-  Returns the plaintext key **once** (`sk_live_…`). We store only the
-  prefix + hash.
-- `GET /v1/orgs/{slug}/api-keys` — list (never returns plaintext).
-- `DELETE /v1/orgs/{slug}/api-keys/{id}` — revoke.
-- Auth middleware: bearer token starting with `sk_live_` is looked up
-  by prefix then verified by constant-time hash compare.
-- Scopes: a minimal alphabet (`watches:read`, `watches:write`,
-  `admin`) at launch; extensible.
+### Endpoints
+
+```
+POST /v1/orgs/{slug}/api-keys       (owner|admin)
+    body: { name, scopes: [scope, ...], expires_at? }
+    → 201 { id, name, key_prefix, scopes, created_at,
+             last_used_at, expires_at, revoked_at,
+             plaintext_key }   ← shown ONCE
+    The plaintext_key field appears only on this response. List /
+    get never returns it.
+
+GET /v1/orgs/{slug}/api-keys        (owner|admin)
+    → 200 { api_keys: [ {id, name, key_prefix, scopes, ...} ] }
+
+DELETE /v1/orgs/{slug}/api-keys/{id}   (owner|admin)
+    → 204
+    Sets revoked_at (soft-delete). Key is immediately unusable for
+    authentication; row stays for audit.
+```
+
+### Key format
+
+```
+sk_live_<28 chars urlsafe base64>      — 36 chars total
+```
+
+- `key_prefix` column stores the first **12** chars (e.g.
+  `sk_live_AbCd`). Indexed for O(1) lookup.
+- `key_hash` column stores the SHA-256 of the full plaintext.
+- Validation path:
+  1. Extract bearer token.
+  2. If it doesn't start with `sk_live_`, treat as JWT (Phase 2a path).
+  3. Else look up by prefix (first 12 chars).
+  4. Compare `sha256(plaintext)` to `key_hash` in **constant time**.
+  5. Reject if `revoked_at` or `expires_at` have passed.
+  6. Update `last_used_at` asynchronously (background task) — we don't
+     block the request path on this write.
+
+### Scopes
+
+Minimal alphabet at launch, extensible:
+
+- `watches:read`
+- `watches:write`
+- `admin` (implies everything)
+
+Stored as a JSONB array. Scope-checking is a small helper function; the
+core API (Phase 3+) will consume it via a dep factory
+`require_scope("watches:write")` analogous to `require_membership`.
+
+### Auth dependencies
+
+- `get_current_api_key` — resolves an `sk_live_*` bearer to
+  `(ApiKey, Org)`. Returns 401 on any failure.
+- `get_current_principal` — **unified** auth that accepts either a JWT
+  (→ User) or an API key (→ ApiKey). Future Phase-3 endpoints use this.
+
+### Tests (`test_api_keys_flow.py` @db)
+
+- Admin creates key, plaintext appears once, list hides it.
+- Listing excludes revoked keys? — actually shows them with
+  `revoked_at` set so admins can audit.
+- Non-admin gets 403 on create.
+- Cross-tenant delete returns 404.
+- Validated: `get_current_api_key` resolves a fresh key; after revoke
+  the same bearer returns 401; after `expires_at` passes, ditto.
+- Tampered key (right prefix, wrong secret) is 401.
 
 ## 2e — OAuth
 

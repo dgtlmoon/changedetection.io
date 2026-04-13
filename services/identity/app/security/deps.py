@@ -126,6 +126,112 @@ def _not_found() -> HTTPException:
     )
 
 
+# ---------------------------------------------------------------------------
+# API-key auth
+# ---------------------------------------------------------------------------
+
+
+@dataclass(slots=True, frozen=True)
+class CurrentApiKey:
+    """Resolved-api-key context handed to route handlers."""
+
+    api_key_id: UUID
+    org_id: UUID
+    scopes: tuple[str, ...]
+
+
+async def get_current_api_key(
+    creds: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> CurrentApiKey:
+    """Resolve an ``sk_live_*`` bearer to a :class:`CurrentApiKey`.
+
+    Use this on endpoints that are machine-only. For endpoints that
+    accept either a JWT or an API key, use :func:`get_current_principal`
+    instead.
+    """
+    from ..db import admin_session
+    from ..services import api_keys as api_keys_svc
+
+    if creds is None or creds.scheme.lower() != "bearer":
+        raise _unauthorized()
+    if not creds.credentials.startswith(api_keys_svc.KEY_BRAND):
+        raise _unauthorized()
+
+    async with admin_session() as db:
+        pair = await api_keys_svc.resolve(db, plaintext=creds.credentials)
+    if pair is None:
+        raise _unauthorized()
+    api_key, _org = pair
+    return CurrentApiKey(
+        api_key_id=api_key.id,
+        org_id=api_key.org_id,
+        scopes=tuple(api_key.scopes or ()),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Unified principal (JWT OR API key) — consumed by future Phase-3 endpoints
+# ---------------------------------------------------------------------------
+
+
+@dataclass(slots=True, frozen=True)
+class Principal:
+    """Discriminated container for either auth type."""
+
+    kind: str  # "user" | "api_key"
+    user: CurrentUser | None
+    api_key: CurrentApiKey | None
+
+    @property
+    def org_id(self) -> UUID | None:
+        if self.api_key is not None:
+            return self.api_key.org_id
+        return None  # JWT tokens don't carry org context
+
+
+async def get_current_principal(
+    request: Request,
+    creds: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> Principal:
+    """Accept both JWT and API-key bearers. 401 if neither resolves."""
+    from ..db import admin_session
+    from ..services import api_keys as api_keys_svc
+
+    if creds is None or creds.scheme.lower() != "bearer":
+        raise _unauthorized()
+
+    token = creds.credentials
+    if token.startswith(api_keys_svc.KEY_BRAND):
+        async with admin_session() as db:
+            pair = await api_keys_svc.resolve(db, plaintext=token)
+        if pair is None:
+            raise _unauthorized()
+        api_key, _org = pair
+        return Principal(
+            kind="api_key",
+            user=None,
+            api_key=CurrentApiKey(
+                api_key_id=api_key.id,
+                org_id=api_key.org_id,
+                scopes=tuple(api_key.scopes or ()),
+            ),
+        )
+
+    try:
+        claims = decode_access_token(token)
+    except TokenError:
+        raise _unauthorized() from None
+    async with admin_session() as db:
+        user = await users_svc.find_by_id(db, claims.user_id)
+    if user is None:
+        raise _unauthorized()
+    return Principal(
+        kind="user",
+        user=CurrentUser(user=user, claims=claims),
+        api_key=None,
+    )
+
+
 def require_membership(minimum: MembershipRole):
     """Return a FastAPI dep enforcing ``caller's role >= minimum`` in the
     org resolved onto the request.

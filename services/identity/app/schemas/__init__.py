@@ -3,6 +3,13 @@
 Split by resource to keep imports tight; re-exported here for convenience.
 """
 
+from .api_keys import (
+    ApiKeyCreate,
+    ApiKeyCreateResponse,
+    ApiKeyListOut,
+    ApiKeyOut,
+    ApiKeyScope,
+)
 from .auth import (
     LoginRequest,
     LogoutResponse,
@@ -23,6 +30,11 @@ from .invites import (
 )
 
 __all__ = [
+    "ApiKeyCreate",
+    "ApiKeyCreateResponse",
+    "ApiKeyListOut",
+    "ApiKeyOut",
+    "ApiKeyScope",
     "InviteAcceptRequest",
     "InviteAcceptResponse",
     "InviteCreate",
