@@ -410,14 +410,76 @@ core API (Phase 3+) will consume it via a dep factory
 
 ## 2e — OAuth
 
-- `GET /v1/auth/oauth/{provider}/start` → redirect with state + nonce
-  in signed cookie.
-- `GET /v1/auth/oauth/{provider}/callback` → validate state, exchange
-  code, look up or create `oauth_accounts` row, look up or create
-  `users` row, create session.
-- Providers at launch: Google, GitHub.
-- `POST /v1/me/oauth/{provider}/unlink` — remove link; refuses if it
-  would lock the user out (no password + no other OAuth).
+### Sub-phase split
+
+- **2e.1** — Sign-in / sign-up via Google + GitHub. *Landing now.*
+- **2e.2** — Link / unlink existing account. *Deferred, own PR.*
+
+### Endpoints (2e.1)
+
+```
+GET /v1/auth/oauth/{provider}/start?redirect_to={url}
+    Generates a signed state (random nonce + timestamp, HMAC-signed
+    with secret_key) in an HttpOnly cookie ``oauth_state``, and
+    307-redirects to the provider's authorize URL.
+
+GET /v1/auth/oauth/{provider}/callback?code=&state=
+    Validates cookie-vs-query state match, exchanges code, fetches
+    profile, then:
+      - ``oauth_accounts(provider, provider_user_id)`` hit → sign in.
+      - Else ``users.email`` match AND provider-verified email →
+        attach new oauth_accounts row (implicit link).
+      - Else → create new SSO-only user + oauth_accounts row.
+    Responds JSON:
+      { access_token, refresh_token, access_expires_in, user, is_new_user }
+    Never embeds tokens in a URL.
+```
+
+### Provider abstraction
+
+`app/oauth/`:
+
+- `provider.py` — `OAuthProvider` Protocol + `OAuthProfile` dataclass
+  (provider, provider_user_id, email, email_verified, display_name,
+  avatar_url) + a process-wide registry.
+- `state.py` — signed-state cookie helpers (10-minute TTL,
+  HttpOnly, SameSite=Lax, Secure in prod).
+- `google.py` — Google OAuth 2.0 via `accounts.google.com`.
+- `github.py` — GitHub via `github.com/login/oauth` + emails API.
+
+Providers register only when their `client_id`+`client_secret` are
+set — `/v1/auth/oauth/bogus/start` → 404.
+
+### Unverified-email takeover guard
+
+Implicit-link step requires the provider to assert `email_verified`.
+Google always does; GitHub's emails endpoint exposes a per-address
+`verified` flag. If the provider email isn't verified and a user row
+already exists, callback returns 409 — stops an attacker who creates
+a GitHub account using a victim's email from hijacking the account.
+
+### Testing
+
+A `FakeProvider` is registered via monkey-patch. It echoes a caller-
+supplied `OAuthProfile` from `exchange_code`, so all branches of the
+sign-in / sign-up / link logic are tested without real Google / GitHub
+HTTP roundtrips.
+
+### Done-when checklist (2e.1)
+
+- [x] Provider abstraction + Google + GitHub implementations.
+- [x] Signed-state cookie with replay protection.
+- [x] Sign-up via provider creates SSO-only user.
+- [x] Sign-in via existing oauth_accounts row.
+- [x] Implicit link when email matches + provider-verified.
+- [x] 409 on unverified-email collision with existing user.
+- [x] FakeProvider test suite covering every branch.
+
+### Out of scope (2e.2)
+
+- `POST /v1/me/oauth/{provider}/start` + callback in link-mode.
+- `POST /v1/me/oauth/{provider}/unlink` — refuses when it would
+  lock the user out (no password AND no other OAuth).
 
 ## Cross-cutting
 

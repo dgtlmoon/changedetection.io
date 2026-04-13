@@ -20,6 +20,7 @@ from starlette.responses import JSONResponse
 from .config import get_settings
 from .middleware.security_headers import SecurityHeadersMiddleware
 from .middleware.tenant_resolver import TenantResolverMiddleware
+from .oauth.bootstrap import register_from_settings as register_oauth_providers
 from .redis_client import close_redis
 from .routes import (
     api_keys,
@@ -28,6 +29,7 @@ from .routes import (
     invite_accept,
     invites,
     me,
+    oauth,
     password_reset,
     verify_email,
 )
@@ -77,6 +79,11 @@ def create_app() -> FastAPI:
     app.include_router(invites.router)
     app.include_router(invite_accept.router)
     app.include_router(api_keys.router)
+    app.include_router(oauth.router)
+
+    # Register OAuth providers from env. Safe to call multiple times
+    # across test fixtures — the registry is idempotent.
+    register_oauth_providers()
 
     @app.get("/", include_in_schema=False)
     async def root() -> JSONResponse:

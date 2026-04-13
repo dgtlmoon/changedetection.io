@@ -61,6 +61,17 @@ class Settings(BaseSettings):
     postmark_server_token: str | None = None
     postmark_message_stream: str = "outbound"
 
+    # --- OAuth ---------------------------------------------------------------
+    # Providers are registered at startup only if both client_id and
+    # client_secret are set. All callback URLs are of the form
+    #   https://api.{root_domain}/v1/auth/oauth/{provider}/callback
+    # — register that URL with each provider's console.
+    oauth_redirect_base_url: str = "https://api.change.sairo.app"
+    oauth_google_client_id: str | None = None
+    oauth_google_client_secret: str | None = None
+    oauth_github_client_id: str | None = None
+    oauth_github_client_secret: str | None = None
+
     # --- Runtime -------------------------------------------------------------
     environment: Literal["development", "staging", "production"] = "development"
     log_level: str = "INFO"
