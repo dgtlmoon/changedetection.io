@@ -69,7 +69,7 @@
         {% else %}
           {% if new_version_available and not(has_password and not current_user.is_authenticated) %}
             <span id="new-version-text" class="pure-menu-heading">
-              <a href="https://changedetection.io">A new version is available</a>
+              <a href="https://changedetection.io">{{ _('A new version is available') }}</a>
             </span>
           {% endif %}
         {% endif %}
