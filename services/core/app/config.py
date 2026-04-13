@@ -35,6 +35,15 @@ class Settings(BaseSettings):
         ),
     )
 
+    # --- Tenancy + auth ------------------------------------------------------
+    # Must match the identity service's IDENTITY_ROOT_DOMAIN. The
+    # tenant resolver peels the first subdomain label off this.
+    root_domain: str = "change.sairo.app"
+    # Must match IDENTITY_SECRET_KEY. We verify JWTs with the same
+    # HS256 key so the two services don't need to talk over HTTP on
+    # the auth hot path.
+    secret_key: str = "dev-only-do-not-use-in-production"
+
     # --- Object storage ------------------------------------------------------
     object_store_backend: Literal["local", "s3"] = "local"
     # LocalObjectStore root. Ignored unless backend=local.

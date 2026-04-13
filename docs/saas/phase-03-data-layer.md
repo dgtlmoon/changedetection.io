@@ -237,6 +237,102 @@ a blob-delete failure leaves a row we can GC rather than the reverse.
 - [ ] *(3.2b)* HTTP routes under `services/core/`.
 - [ ] *(3.2c)* Legacy importer.
 
+### 3.2b — HTTP routes on `services/core/`
+
+> Status: **landing now.**
+
+First HTTP surface for the new tenant-scoped API. Reuses the Phase-2
+auth primitives by decoding JWTs locally against the shared
+`secret_key` — no inter-service HTTP for auth on the hot path.
+
+#### Cross-service reads — policy
+
+Core reads four identity-owned tables: `users`, `memberships`,
+`api_keys`, `orgs`. We do **not** import identity's SQLAlchemy models;
+we use **raw SQL** via `sqlalchemy.text()` at each read site so the
+coupling is visible and ungilded. When a third service needs the same
+tables we'll extract `packages/shared/identity-client/` and replace
+these SQL strings.
+
+Core never writes to identity tables.
+
+#### Endpoints
+
+All routes live under `/v1/orgs/{slug}/...`. The tenant resolver
+populates `request.state.org_id` from the path; `require_membership`
+enforces the caller's role.
+
+**Watches**
+
+```
+GET    /v1/orgs/{slug}/watches              (member) — list, paginated
+POST   /v1/orgs/{slug}/watches              (member) — create
+GET    /v1/orgs/{slug}/watches/{watch_id}   (viewer) — fetch one
+PATCH  /v1/orgs/{slug}/watches/{watch_id}   (member) — partial update
+DELETE /v1/orgs/{slug}/watches/{watch_id}   (admin)  — soft-delete
+```
+
+**Tags**
+
+```
+GET    /v1/orgs/{slug}/tags                 (viewer) — list
+POST   /v1/orgs/{slug}/tags                 (member) — create (409 on duplicate)
+DELETE /v1/orgs/{slug}/tags/{tag_id}        (admin)  — soft-delete + unlink
+```
+
+**Watch ↔ tag assignment**
+
+```
+GET /v1/orgs/{slug}/watches/{watch_id}/tags            (viewer)
+PUT /v1/orgs/{slug}/watches/{watch_id}/tags            (member)
+      body: { tag_ids: [uuid, ...] }
+      — REPLACES the set. Cross-tenant + unknown ids silently dropped.
+```
+
+**Watch history**
+
+```
+GET    /v1/orgs/{slug}/watches/{watch_id}/history          (viewer)
+POST   /v1/orgs/{slug}/watches/{watch_id}/history          (member)
+          multipart: body (file) + kind + content_type
+          — uploads to object storage AND records the index row in one tx.
+GET    /v1/orgs/{slug}/watches/{watch_id}/history/{id}/content   (viewer)
+          — returns the blob. 404 on missing object.
+DELETE /v1/orgs/{slug}/watches/{watch_id}/history/{id}     (admin)
+          — DB-first-then-blob delete.
+```
+
+#### Scopes + roles
+
+API-key callers use the `Principal.kind == "api_key"` branch, which
+carries `scopes` and `org_id`. `require_scope("watches:write")` is
+the API-key counterpart to `require_membership`.
+
+For 3.2b the mapping is hard-coded:
+
+| HTTP verb | Scope required for API-key callers |
+|---|---|
+| GET (any watch/tag/history route) | `watches:read` |
+| POST/PATCH/PUT | `watches:write` |
+| DELETE | `admin` |
+
+Human JWT callers fall through to the `require_membership` ordering
+(owner > admin > member > viewer).
+
+#### Done-when (3.2b)
+
+- [x] FastAPI scaffold with `/healthz`, `/readyz`, OpenAPI at `/docs`.
+- [x] Security headers + tenant-resolver middleware (port of identity's).
+- [x] `get_current_principal` accepts either a JWT or an `sk_live_*` key.
+- [x] `require_membership(role)` + `require_scope(scope)` deps.
+- [x] Full CRUD routes for watches, tags, history.
+- [x] Cross-tenant isolation tests on every endpoint.
+- [x] History POST uploads to the configured object store + writes
+  the index row in a single transaction.
+- [x] History delete removes the DB row first, then the blob; if the
+  blob delete fails we log and return 204 anyway (row is gone).
+- [ ] *(3.2c)* Legacy file-datastore importer.
+
 ---
 
 ## Architectural decisions
