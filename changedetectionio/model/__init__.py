@@ -335,11 +335,28 @@ class watch_base(dict):
         readonly_fields = get_readonly_watch_fields()
 
         # Additional system-managed fields not in OpenAPI spec (yet)
-        # These are set by processors/workers and should not trigger edited flag
+        # These are set by processors/workers and should not trigger edited flag.
+        # Keep this in sync with fields written from run_changedetection() /
+        # worker.py:final_updates so a successful check never re-arms was_edited
+        # (which would defeat the raw-content-checksum early-skip optimisation
+        # AND introduce a race with user edits — see processors/text_json_diff
+        # "consume the was_edited flag atomically" comment).
         additional_system_fields = {
-            'last_check_status',  # Set by processors
-            'restock',  # Set by restock processor
-            'last_viewed',  # Set by mark_all_viewed endpoint
+            'last_check_status',         # Set by processors
+            'restock',                   # Set by restock processor
+            'last_viewed',               # Set by mark_all_viewed endpoint
+            'previous_md5',              # Set by processors after successful compare
+            'content-type',              # Recorded from last HTTP response
+            'has_ldjson_price_data',     # Set by price-detect processor
+            'last_notification_error',   # Set by notification pipeline
+            'last_error',                # Set on fetch/processing failure
+            'fetch_time',                # Duration of last fetch
+            'check_count',               # Monotonic counter of completed checks
+            'remote_server_reply',       # Server header recorded per fetch
+            'consecutive_filter_failures',  # Managed by FilterNotFoundInResponse handler
+            'browser_steps_last_error_step',  # Set by browser-steps processor
+            'last_checked',              # Timestamp of last check attempt
+            'trigger_text_missing_warning',  # Set by text processor when trigger_text is configured but absent
         }
 
         # Only mark as edited if this is a user-writable field

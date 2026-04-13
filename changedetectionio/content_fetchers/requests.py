@@ -29,12 +29,22 @@ def _get_pooled_session():
     from urllib3.util.retry import Retry
 
     max_retries = int(os.getenv("REQUESTS_RETRY_MAX_COUNT", "6"))
+    # Retry transient HTTP statuses at the adapter level so a momentary 429/503 on
+    # a rate-limited upstream doesn't surface as a spurious "Error - 429 received"
+    # on the watch (and, once the site recovers on the next check, potentially
+    # get hashed as "changed content"). Retryable statuses are overridable via
+    # REQUESTS_RETRY_STATUS_FORCELIST (comma-separated).
+    status_forcelist_env = os.getenv("REQUESTS_RETRY_STATUS_FORCELIST", "429,502,503,504")
+    status_forcelist = tuple(int(s) for s in status_forcelist_env.split(",") if s.strip().isdigit())
     retry_strategy = Retry(
         total=max_retries,
         connect=max_retries,
         read=max_retries,
-        status=0,
+        status=max_retries,
+        status_forcelist=status_forcelist,
         backoff_factor=0.5,
+        # `respect_retry_after_header` is on by default in urllib3 — honors the
+        # `Retry-After` header which well-behaved services send with 429/503.
         allowed_methods=["HEAD", "GET", "OPTIONS", "POST"],
         raise_on_status=False,
     )
@@ -192,10 +202,29 @@ class fetcher(Fetcher):
                             logger.info(f"URL: {url} No content-type encoding in HTTP headers - Using encoding '{encoding}' from HTML meta charset tag")
                             r.encoding = encoding
                         else:
-                            encoding = chardet.detect(r.content)['encoding']
-                            logger.warning(f"URL: {url} No charset in headers or meta tag, guessed encoding as '{encoding}' via chardet")
-                            if encoding:
+                            # chardet is a statistical guess — on borderline content
+                            # (e.g. short text with one high-bit byte) it can flip
+                            # between UTF-8 and Windows-1252 between fetches of the
+                            # *same* page, which produces spurious checksum diffs
+                            # and false "change" notifications. Only trust chardet
+                            # when it reports high confidence; otherwise default to
+                            # UTF-8 (the modern web default).
+                            detection = chardet.detect(r.content) or {}
+                            encoding = detection.get('encoding')
+                            confidence = detection.get('confidence') or 0
+                            CHARDET_MIN_CONFIDENCE = float(os.getenv('CHARDET_MIN_CONFIDENCE', '0.9'))
+                            if encoding and confidence >= CHARDET_MIN_CONFIDENCE:
+                                logger.info(
+                                    f"URL: {url} No charset in headers or meta tag, "
+                                    f"using chardet encoding '{encoding}' (confidence {confidence:.2f})"
+                                )
                                 r.encoding = encoding
+                            else:
+                                logger.warning(
+                                    f"URL: {url} chardet uncertain ('{encoding}' @ {confidence:.2f}), "
+                                    f"defaulting to utf-8 to keep checksum stable"
+                                )
+                                r.encoding = 'utf-8'
 
         self.headers = r.headers
 

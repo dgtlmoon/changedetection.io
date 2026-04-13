@@ -397,8 +397,18 @@ class perform_site_check(difference_detection_processor):
         # 2. Watch configuration was not edited (including trigger_text, filters, etc.)
         # The was_edited flag handles all watch configuration changes, so we don't need
         # separate checks for trigger_text or other processing rules.
+        #
+        # CONSUME the was_edited flag atomically: snapshot its value and reset it
+        # right here, BEFORE making the skip decision. If the user saves an edit
+        # AFTER this point, the flag will be set back to True and picked up by
+        # the next check — it won't be silently overwritten by a late reset at
+        # the end of processing (which would race with an in-flight edit).
+        was_edited_snapshot = watch.was_edited
+        if was_edited_snapshot:
+            watch.reset_watch_edited_flag()
+
         if (not force_reprocess and
-            not watch.was_edited and
+            not was_edited_snapshot and
             self.last_raw_content_checksum and
             self.last_raw_content_checksum == current_raw_document_checksum):
             raise checksumFromPreviousCheckWasTheSame()
@@ -555,9 +565,30 @@ class perform_site_check(difference_detection_processor):
         # === BLOCKING RULES EVALUATION ===
         blocked = False
 
-        # Check trigger_text
+        # Check trigger_text.  trigger_text is "required-to-match" semantics:
+        # notifications are suppressed UNLESS the trigger phrase appears in the
+        # content. That means if the page is redesigned and the phrase disappears
+        # entirely, the watch silently goes dark — a false negative the user has
+        # no way to notice. Log a warning the first time this happens after the
+        # phrase was previously matching, and surface it on the watch so the UI
+        # can display it.
         if rule_engine.evaluate_trigger_text(stripped_text, filter_config.trigger_text):
             blocked = True
+            if filter_config.trigger_text:
+                trigger_missing_msg = (
+                    f"Trigger text configured but not found in fetched content — "
+                    f"notifications are suppressed. The page may have been redesigned; "
+                    f"review the trigger text filter."
+                )
+                if not watch.get('trigger_text_missing_warning'):
+                    logger.warning(
+                        f"UUID {watch.get('uuid')} - {trigger_missing_msg}"
+                    )
+                update_obj['trigger_text_missing_warning'] = trigger_missing_msg
+        else:
+            # Trigger was found (or not configured) — clear any previous warning.
+            if watch.get('trigger_text_missing_warning'):
+                update_obj['trigger_text_missing_warning'] = ''
 
         # Check text_should_not_be_present
         if rule_engine.evaluate_text_should_not_be_present(stripped_text, filter_config.text_should_not_be_present):
