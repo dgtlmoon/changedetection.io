@@ -42,25 +42,53 @@ const ModalDialog = {
       dialog.className = 'modal-dialog';
       dialog.setAttribute('aria-labelledby', 'modal-title');
       dialog.setAttribute('aria-describedby', 'modal-body');
+      dialog.setAttribute('aria-modal', 'true');
+      dialog.setAttribute('role', 'alertdialog');
 
-      // Build dialog content
-      dialog.innerHTML = `
-        <div class="modal-header">
-          <span class="modal-icon ${config.type}">${icons[config.type] || icons.info}</span>
-          <h2 class="modal-title" id="modal-title">${config.title}</h2>
-        </div>
-        <div class="modal-body" id="modal-body">
-          ${config.message}
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="modal-btn-cancel pure-button" data-action="cancel">
-            ${config.cancelText}
-          </button>
-          <button type="button" class="modal-btn-${config.type} pure-button" data-action="confirm">
-            ${config.confirmText}
-          </button>
-        </div>
-      `;
+      // Build dialog content with DOM APIs (not innerHTML) so user-supplied
+      // strings in config.title / config.message / button text cannot inject HTML.
+      // Callers that need rich markup in the body must pass `messageHtml` with
+      // trusted, pre-sanitized HTML instead of plain `message`.
+      const header = document.createElement('div');
+      header.className = 'modal-header';
+      const iconEl = document.createElement('span');
+      iconEl.className = 'modal-icon ' + config.type;
+      iconEl.textContent = icons[config.type] || icons.info;
+      const titleEl = document.createElement('h2');
+      titleEl.className = 'modal-title';
+      titleEl.id = 'modal-title';
+      titleEl.textContent = config.title;
+      header.appendChild(iconEl);
+      header.appendChild(titleEl);
+
+      const body = document.createElement('div');
+      body.className = 'modal-body';
+      body.id = 'modal-body';
+      if (typeof config.messageHtml === 'string') {
+        // Trusted HTML path — caller is responsible for sanitization.
+        body.innerHTML = config.messageHtml;
+      } else {
+        body.textContent = config.message;
+      }
+
+      const footer = document.createElement('div');
+      footer.className = 'modal-footer';
+      const cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button';
+      cancelBtn.className = 'modal-btn-cancel pure-button';
+      cancelBtn.dataset.action = 'cancel';
+      cancelBtn.textContent = config.cancelText;
+      const confirmBtn = document.createElement('button');
+      confirmBtn.type = 'button';
+      confirmBtn.className = 'modal-btn-' + config.type + ' pure-button';
+      confirmBtn.dataset.action = 'confirm';
+      confirmBtn.textContent = config.confirmText;
+      footer.appendChild(cancelBtn);
+      footer.appendChild(confirmBtn);
+
+      dialog.appendChild(header);
+      dialog.appendChild(body);
+      dialog.appendChild(footer);
 
       // Append to body
       document.body.appendChild(dialog);
@@ -120,14 +148,25 @@ const ModalDialog = {
   },
 
   /**
+   * Escape a string so it can safely be embedded in HTML.
+   * Used by helper methods that build small HTML snippets around user-supplied names.
+   */
+  _escapeHtml: function(str) {
+    return String(str).replace(/[&<>"']/g, function(c) {
+      return ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[c];
+    });
+  },
+
+  /**
    * Helper method for delete confirmations
    * @param {string} itemName - Name of the item being deleted
    * @param {Function} onConfirm - Callback when confirmed
    */
   confirmDelete: function(itemName, onConfirm) {
+    const safeName = this._escapeHtml(itemName);
     return this.confirm({
       title: 'Delete ' + itemName + '?',
-      message: `<p>Are you sure you want to delete <strong>${itemName}</strong>?</p><p>This action cannot be undone.</p>`,
+      messageHtml: `<p>Are you sure you want to delete <strong>${safeName}</strong>?</p><p>This action cannot be undone.</p>`,
       type: 'danger',
       confirmText: 'Delete',
       cancelText: 'Cancel',
@@ -141,9 +180,10 @@ const ModalDialog = {
    * @param {Function} onConfirm - Callback when confirmed
    */
   confirmUnlink: function(itemName, onConfirm) {
+    const safeName = this._escapeHtml(itemName);
     return this.confirm({
       title: 'Unlink ' + itemName + '?',
-      message: `<p>Are you sure you want to unlink all watches from <strong>${itemName}</strong>?</p><p>The tag will be kept but watches will be removed from it.</p>`,
+      messageHtml: `<p>Are you sure you want to unlink all watches from <strong>${safeName}</strong>?</p><p>The tag will be kept but watches will be removed from it.</p>`,
       type: 'warning',
       confirmText: 'Unlink',
       cancelText: 'Cancel',
@@ -171,10 +211,12 @@ $(document).ready(function() {
     const $element = $(this);
     const url = $element.attr('href');
 
+    // data-confirm-message is rendered as plain text (via textContent) to
+    // prevent HTML injection from server-generated attribute values.
     const config = {
       type: $element.data('confirm-type') || 'danger',
       title: $element.data('confirm-title') || 'Confirm Action',
-      message: $element.data('confirm-message') || '<p>Are you sure you want to proceed?</p>',
+      message: $element.data('confirm-message') || 'Are you sure you want to proceed?',
       confirmText: $element.data('confirm-button') || 'Confirm',
       cancelText: $element.data('cancel-button') || 'Cancel',
       onConfirm: function() {

@@ -282,8 +282,9 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     process_changedetection_results = False
                     changed_detected = False
                     logger.debug(f'[{uuid}] - checksumFromPreviousCheckWasTheSame - Checksum from previous check was the same, nothing todo here.')
-                    # Reset the edited flag since we successfully completed the check
-                    watch.reset_watch_edited_flag()
+                    # NOTE: was_edited flag is now consumed atomically inside the processor
+                    # (before the early-skip decision). Resetting it here would race with
+                    # any edit saved between the processor's check and this point.
                     # Page was fetched successfully - clear any previous error state
                     datastore.update_watch(uuid=uuid, update_obj={'last_error': False})
                     cleanup_error_artifacts(uuid, datastore)
@@ -403,8 +404,9 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                 logger.debug(f"Processing watch UUID: {uuid} - xpath_data length returned {len(update_handler.xpath_data) if update_handler and update_handler.xpath_data else 'empty.'}")
                 if update_handler and process_changedetection_results:
                     try:
-                        # Reset the edited flag BEFORE update_watch (which calls watch.update() and would set it again)
-                        watch.reset_watch_edited_flag()
+                        # was_edited is consumed atomically inside the processor's
+                        # run_changedetection() — do NOT reset it again here or we'd
+                        # race with any edit saved between that consumption and now.
                         datastore.update_watch(uuid=uuid, update_obj=update_obj)
 
                         if changed_detected or not watch.history_n:

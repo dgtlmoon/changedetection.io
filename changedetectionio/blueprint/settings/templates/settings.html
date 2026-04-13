@@ -20,6 +20,8 @@
         <ul>
             <li class="tab" id=""><a href="#general">{{ _('General') }}</a></li>
             <li class="tab"><a href="#notifications">{{ _('Notifications') }}</a></li>
+            <li class="tab"><a href="#digest-emails">{{ _('Digest Emails') }}</a></li>
+            <li class="tab"><a href="#ai-assist">{{ _('AI Assist') }}</a></li>
             <li class="tab"><a href="#fetching">{{ _('Fetching') }}</a></li>
             <li class="tab"><a href="#filters">{{ _('Global Filters') }}</a></li>
             <li class="tab"><a href="#ui-options">{{ _('UI Options') }}</a></li>
@@ -73,7 +75,7 @@
                                 {{ render_button(form.application.form.removepassword_button) }}
                             {% else %}
                             {{ render_field(form.application.form.password) }}
-                            <span class="pure-form-message-inline">{{ _('Password protection for your changedetection.io application.') }}</span>
+                            <span class="pure-form-message-inline">{{ _('Password protection for your onChange by Sairo installation.') }}</span>
                             {% endif %}
                         {% else %}
                             <span class="pure-form-message-inline">{{ _('Password is locked.') }}</span>
@@ -112,6 +114,55 @@
                         {{ _('Default value is the system environment variable') }} '<code>BASE_URL</code>' - <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Configurable-BASE_URL-setting">{{ _('read more here') }}</a>.
                     </span>
                 </div>
+            </div>
+
+            <div class="tab-pane-inner" id="digest-emails">
+                <fieldset class="pure-group">
+                    <legend>{{ _('Scheduled digest emails') }}</legend>
+                    <p class="pure-form-message-inline">
+                        {{ _('Summarise recent changes and send them on a schedule instead of notifying per-change. Works with any Apprise destination (email, Slack, Discord, Telegram, webhook, …).') }}
+                    </p>
+                    <div class="pure-control-group">
+                        {{ render_checkbox_field(form.application.form.digest_enabled) }}
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.application.form.digest_frequency) }}
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.application.form.digest_hour_utc) }}
+                        <span class="pure-form-message-inline">{{ _('Hour of day (UTC) to send the digest.') }}</span>
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.application.form.digest_notification_urls, rows=3, class="m-d") }}
+                        <span class="pure-form-message-inline">
+                            {{ _('One Apprise URL per line. Leave empty to reuse the global notification destinations.') }}
+                        </span>
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_checkbox_field(form.application.form.digest_include_unchanged) }}
+                    </div>
+                </fieldset>
+            </div>
+
+            <div class="tab-pane-inner" id="ai-assist">
+                <fieldset class="pure-group">
+                    <legend>{{ _('AI-assisted filter builder') }}</legend>
+                    <p class="pure-form-message-inline">
+                        {{ _('Let an AI suggest a CSS/XPath filter from a plain-English description — e.g. "notify me when the price drops". Requires an Anthropic API key (or the ANTHROPIC_API_KEY env var). The key is stored on this server; requests send a trimmed snippet of the page HTML to Anthropic.') }}
+                    </p>
+                    <div class="pure-control-group">
+                        {{ render_checkbox_field(form.application.form.ai_filter_enabled) }}
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.application.form.ai_filter_api_key, class="m-d") }}
+                        <span class="pure-form-message-inline">
+                            {{ _('Leave blank to use the ANTHROPIC_API_KEY environment variable.') }}
+                        </span>
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.application.form.ai_filter_model, class="m-d") }}
+                    </div>
+                </fieldset>
             </div>
 
             <div class="tab-pane-inner" id="fetching">

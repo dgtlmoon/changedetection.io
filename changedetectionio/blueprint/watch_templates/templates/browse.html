@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<section class="content">
+  <div class="edit-form">
+    <div class="inner">
+      <h1>{{ _('Watch templates') }}</h1>
+      <p class="pure-form-message-inline">
+        {{ _('Pick a recipe and paste the URL to create a pre-configured watch. You can edit every detail afterwards.') }}
+      </p>
+
+      {% for category, recipes in categories.items() %}
+        <h2 style="text-transform: capitalize; margin-top: 1.5em;">{{ category }}</h2>
+        <div class="recipe-grid">
+          {% for r in recipes %}
+            <form method="POST" action="{{ url_for('watch_templates.apply_recipe') }}"
+                  class="recipe-card pure-form" data-domain-hints="{{ r.domain_hints|join(',') }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="recipe_id" value="{{ r.id }}">
+
+              <h3 class="recipe-title">{{ r.name }}</h3>
+              <p class="recipe-desc">{{ r.description }}</p>
+
+              <label for="url-{{ r.id }}" class="visually-hidden">{{ _('URL to monitor') }}</label>
+              <input id="url-{{ r.id }}" name="url" type="text"
+                     placeholder="{{ r.url_example }}"
+                     value="{{ request.args.get('url', '') if r.domain_hints and (request.args.get('url', '')|lower).find(r.domain_hints[0]) > -1 else '' }}">
+
+              <label for="tags-{{ r.id }}" class="visually-hidden">{{ _('Tags (optional)') }}</label>
+              <input id="tags-{{ r.id }}" name="tags" type="text"
+                     placeholder="{{ _('Tags (optional)') }}">
+
+              <button type="submit" class="pure-button pure-button-primary">
+                {{ _('Use this template') }}
+              </button>
+            </form>
+          {% endfor %}
+        </div>
+      {% endfor %}
+
+      <p style="margin-top: 2em;">
+        <a href="{{ url_for('watchlist.index') }}" class="pure-button">{{ _('Back to watches') }}</a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+.recipe-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin: 0.5rem 0 1.5rem 0;
+}
+.recipe-card {
+  background: var(--color-background);
+  border: 1px solid var(--color-border-table-cell);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.recipe-card .recipe-title { margin: 0; font-size: 1.05rem; }
+.recipe-card .recipe-desc  { margin: 0; font-size: 0.9rem; opacity: 0.8; }
+.recipe-card input[type="text"] { width: 100%; }
+.recipe-card button { align-self: flex-start; }
+@media (max-width: 600px) {
+  .recipe-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+{% endblock %}

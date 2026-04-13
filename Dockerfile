@@ -105,7 +105,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # https://stackoverflow.com/questions/58701233/docker-logs-erroneously-appears-empty-until-container-stops
 ENV PYTHONUNBUFFERED=1
 
-RUN [ ! -d "/datastore" ] && mkdir /datastore
+# Create a non-root user/group to run the application (principle of least privilege).
+# Fixed UID/GID keeps bind-mounted /datastore predictable across hosts.
+RUN groupadd -r -g 1000 changedetection \
+    && useradd -r -u 1000 -g changedetection -d /app -s /sbin/nologin changedetection
+
+RUN [ ! -d "/datastore" ] && mkdir /datastore \
+    && chown -R changedetection:changedetection /datastore
 
 # Re #80, sets SECLEVEL=1 in openssl.conf to allow monitoring sites with weak/old cipher suites
 RUN sed -i 's/^CipherString = .*/CipherString = DEFAULT@SECLEVEL=1/' /etc/ssl/openssl.cnf
@@ -142,6 +148,12 @@ WORKDIR /app
 # Copy and set up entrypoint script for installing extra packages
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
+
+# Ensure the app directory is owned by the non-root user
+RUN chown -R changedetection:changedetection /app
+
+# Drop privileges — the app and entrypoint both run as the unprivileged user
+USER changedetection:changedetection
 
 # Set entrypoint to handle EXTRA_PACKAGES env var
 ENTRYPOINT ["/docker-entrypoint.sh"]

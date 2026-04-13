@@ -1,185 +1,237 @@
 /**
- * CSS custom properties (aka variables).
+ * onChange by Sairo — Semantic CSS custom properties.
+ *
+ * The hex values live in _brand.scss; this file maps them onto the
+ * role-based names used throughout the rest of the app (so existing
+ * selectors like `background: var(--color-background-button-primary)`
+ * continue to work after the re-brand).
+ *
+ * If you need a new role, add it here — never a raw hex.
+ * See DESIGN.md for colour-pair contrast guarantees.
  */
 
 :root {
-  --color-white: #fff;
-  --color-grey-50: #111;
-  --color-grey-100: #262626;
-  --color-grey-200: #333;
-  --color-grey-300: #444;
-  --color-grey-325: #555;
-  --color-grey-350: #565d64;
-  --color-grey-400: #666;
-  --color-grey-500: #777;
-  --color-grey-600: #999;
-  --color-grey-700: #cbcbcb;
-  --color-grey-750: #ddd;
-  --color-grey-800: #e0e0e0;
-  --color-grey-850: #eee;
-  --color-grey-900: #f2f2f2;
-  --color-black: #000;
-  --color-dark-red: #a00;
-  --color-light-red: #dd0000;
+  /* ---- Legacy greyscale kept for backwards compatibility (maps to slate) ---- */
+  --color-white:     #fff;
+  --color-black:     #000;
+  --color-grey-50:   var(--slate-900);
+  --color-grey-100:  var(--slate-800);
+  --color-grey-200:  var(--slate-700);
+  --color-grey-300:  var(--slate-600);
+  --color-grey-325:  #475467;
+  --color-grey-350:  var(--slate-500);
+  --color-grey-400:  #64748B;
+  --color-grey-500:  var(--slate-400);
+  --color-grey-600:  #A0AAB8;
+  --color-grey-700:  var(--slate-300);
+  --color-grey-750:  #DDE3EA;
+  --color-grey-800:  var(--slate-200);
+  --color-grey-850:  #E8EEF5;
+  --color-grey-900:  var(--slate-100);
 
-  --color-background-page: var(--color-grey-100);
-  --color-background-gradient-first: #5ad8f7;
-  --color-background-gradient-second: #2f50af;
-  --color-background-gradient-third: #9150bf;
+  --color-dark-red:  var(--status-danger-fg);
+  --color-light-red: #DC2626;
+
+  /* ---- Core layout ---- */
+  --color-background-page: var(--slate-50);
   --color-background: var(--color-white);
-  --color-text: var(--color-grey-200);
-  --color-link: #1b98f8;
-  --color-menu-accent: #ed5900;
-  --color-background-code: var(--color-grey-850);
-  --color-error: var(--color-dark-red);
-  --color-error-input: #ffebeb;
-  --color-error-list: var(--color-light-red);
+  --color-text: var(--slate-700);
+  --color-link: var(--brand-indigo-700);
+
+  /* Ambient hero gradient — use brand tones that stay within AAA on the
+     content card that sits above it. */
+  --color-background-gradient-first:  var(--brand-indigo-500);
+  --color-background-gradient-second: var(--brand-indigo-700);
+  --color-background-gradient-third:  var(--brand-indigo-900);
+
+  --color-menu-accent: var(--brand-indigo-600);
+  --color-background-code: var(--slate-100);
+  --color-error: var(--status-danger-fg);
+  --color-error-input: var(--status-danger-bg);
+  --color-error-list: var(--status-danger-fg);
   --color-table-background: var(--color-background);
-  --color-table-stripe: var(--color-grey-900);
+  --color-table-stripe: var(--slate-100);
+
+  /* ---- Tabs ---- */
   --color-text-tab: var(--color-white);
-  --color-background-tab: rgba(255, 255, 255, 0.2);
-  --color-background-tab-hover: rgba(255, 255, 255, 0.5);
-  --color-text-tab-active: #222;
-  --color-api-key: #0078e7;
+  --color-background-tab: rgba(255, 255, 255, 0.18);
+  --color-background-tab-hover: rgba(255, 255, 255, 0.36);
+  --color-text-tab-active: var(--slate-800);
 
-  --color-background-button-primary: #0078e7;
-  --color-background-button-green: #42dd53;
-  --color-background-button-red: #dd4242;
-  --color-background-button-success: rgb(28, 184, 65);
-  --color-background-button-error: rgb(202, 60, 60);
-  --color-text-button-error: var(--color-white);
-  --color-background-button-warning: rgb(202, 60, 60);
-  --color-text-button-warning: var(--color-white);
-  --color-background-button-secondary: rgb(66, 184, 221);
-  --color-background-button-cancel: rgb(200, 200, 200);
-  --color-text-button: var(--color-white);
-  --color-background-button-tag: rgb(99, 99, 99);
-  --color-background-snapshot-age: #dfdfdf;
+  --color-api-key: var(--brand-indigo-700);
+
+  /* ---- Buttons ---- */
+  --color-background-button-primary:   var(--brand-indigo-700);
+  --color-background-button-primary-hover: var(--brand-indigo-800);
+  --color-background-button-green:     #10B981;       /* emerald-500 */
+  --color-background-button-red:       #E11D48;       /* rose-600 */
+  --color-background-button-success:   #059669;       /* emerald-600 */
+  --color-background-button-error:     #DC2626;
+  --color-text-button-error:           var(--color-white);
+  --color-background-button-warning:   #D97706;       /* amber-600 */
+  --color-text-button-warning:         var(--color-white);
+  --color-background-button-secondary: var(--slate-200);
+  --color-background-button-cancel:    var(--slate-200);
+  --color-text-button:                 var(--color-white);
+  --color-background-button-tag:       var(--brand-indigo-100);
+  --color-background-button-tag-active: var(--brand-indigo-300);
+
+  --color-background-snapshot-age: var(--slate-200);
   --color-error-text-snapshot-age: var(--color-white);
-  --color-error-background-snapshot-age: #ff0000;
-  --color-background-button-tag-active: #9c9c9c;
+  --color-error-background-snapshot-age: var(--status-danger-fg);
 
+  /* ---- Messages ---- */
   --color-text-messages: var(--color-white);
-  --color-background-messages-message: rgba(255, 255, 255, .2);
-  --color-background-messages-error: rgba(255, 1, 1, .5);
-  --color-background-messages-notice: rgba(255, 255, 255, .5);
-  --color-border-notification: #ccc;
+  --color-background-messages-message: var(--brand-indigo-700);
+  --color-background-messages-error:   var(--status-danger-fg);
+  --color-background-messages-notice:  var(--brand-indigo-600);
+  --color-border-notification: var(--slate-300);
 
-  --color-background-checkbox-operations: rgba(0, 0, 0, 0.05);
-  --color-warning: #ff3300;
-  --color-border-warning: var(--color-warning);
+  --color-background-checkbox-operations: var(--slate-100);
+
+  /* ---- Warnings / errors ---- */
+  --color-warning: var(--status-warning-fg);
+  --color-border-warning: var(--status-warning-fg);
   --color-text-legend: var(--color-white);
 
-  --color-link-new-version: #e07171;
-  --color-last-checked: #bbb;
-  --color-text-footer: #444;
-  --color-border-watch-table-cell: #eee;
+  --color-link-new-version: var(--status-change-fg);
+  --color-last-checked: var(--slate-500);
+  --color-text-footer: var(--slate-500);
+  --color-border-watch-table-cell: var(--slate-200);
 
-  --color-text-watch-tag-list: rgba(231, 0, 105, 0.4);
-  --color-background-new-watch-form: rgba(0, 0, 0, 0.05);
+  --color-text-watch-tag-list: var(--brand-indigo-700);
+  --color-background-new-watch-form: rgba(255, 255, 255, 0.85);
   --color-background-new-watch-input: var(--color-white);
-  --color-background-new-watch-input-transparent: rgba(255, 255, 255, 0.1);
+  --color-background-new-watch-input-transparent: rgba(255, 255, 255, 0.12);
   --color-text-new-watch-input: var(--color-text);
 
-  --color-border-input: var(--color-grey-500);
-  --color-shadow-input: var(--color-grey-400);
+  /* ---- Inputs ---- */
+  --color-border-input: var(--slate-300);
+  --color-shadow-input: rgba(15, 23, 42, 0.05);
   --color-background-input: var(--color-white);
   --color-text-input: var(--color-text);
-  --color-text-input-description: var(--color-grey-500);
-  --color-text-input-placeholder: var(--color-grey-600);
+  --color-text-input-description: var(--slate-500);
+  --color-text-input-placeholder: var(--slate-400);
 
-  --color-background-table-thead: var(--color-grey-800);
-  --color-border-table-cell: var(--color-grey-700);
+  /* ---- Tables ---- */
+  --color-background-table-thead: var(--slate-100);
+  --color-border-table-cell: var(--slate-200);
 
-  --color-text-menu-heading: var(--color-grey-350);
-  --color-text-menu-link: var(--color-grey-500);
-  --color-background-menu-link-hover: var(--color-grey-850);
-  --color-text-menu-link-hover: var(--color-grey-300);
+  /* ---- Menu ---- */
+  --color-text-menu-heading: var(--slate-700);
+  --color-text-menu-link: var(--slate-600);
+  --color-background-menu-link-hover: var(--brand-indigo-50);
+  --color-text-menu-link-hover: var(--brand-indigo-700);
 
-  --color-shadow-jump: var(--color-grey-500);
-  --color-icon-github: var(--color-black);
-  --color-icon-github-hover: var(--color-grey-300);
+  --color-shadow-jump: rgba(15, 23, 42, 0.15);
+  --color-icon-github: var(--slate-700);
+  --color-icon-github-hover: var(--brand-indigo-700);
 
-  --color-watch-table-error: var(--color-dark-red);
-  --color-watch-table-row-text: var(--color-grey-100);
+  --color-watch-table-error: var(--status-danger-fg);
+  --color-watch-table-row-text: var(--slate-700);
 
-  --highlight-trigger-text-bg-color: #1b98f8;
-  --highlight-ignored-text-bg-color: var(--color-grey-700);
-  --highlight-blocked-text-bg-color: rgb(202, 60, 60);
+  --highlight-trigger-text-bg-color: var(--status-change-bg);
+  --highlight-ignored-text-bg-color: var(--slate-200);
+  --highlight-blocked-text-bg-color: var(--status-danger-bg);
 }
 
+/* =================================================================
+   DARK MODE — semantic overrides only. The brand palette itself does
+   not change; we re-map the role-based variables to darker surfaces.
+   ================================================================= */
 html[data-darkmode="true"] {
-  --color-link: #59bdfb;
-  --color-text: var(--color-white);
+  --color-link: var(--brand-indigo-300);
+  --color-text: #E2E8F0;
 
-  --color-background-gradient-first: #3f90a5;
-  --color-background-gradient-second: #1e316c;
-  --color-background-gradient-third: #4d2c64;
+  --color-background-page: var(--slate-900);
+  --color-background: var(--slate-800);
 
-  --color-background-new-watch-input: var(--color-grey-100);
-  --color-background-new-watch-input-transparent: var(--color-grey-100);
+  --color-background-gradient-first:  var(--brand-indigo-700);
+  --color-background-gradient-second: var(--brand-indigo-800);
+  --color-background-gradient-third:  var(--slate-900);
+
+  --color-background-new-watch-input: var(--slate-800);
+  --color-background-new-watch-input-transparent: rgba(15, 23, 42, 0.4);
   --color-text-new-watch-input: var(--color-text);
-  --color-background-table-thead: var(--color-grey-200);
-  --color-table-background: var(--color-grey-300);
-  --color-table-stripe: var(--color-grey-325);
-  --color-background: var(--color-grey-300);
-  --color-text-menu-heading: var(--color-grey-850);
-  --color-text-menu-link: var(--color-grey-800);
-  --color-border-table-cell: var(--color-grey-400);
+  --color-background-table-thead: var(--slate-700);
+  --color-table-background: var(--slate-800);
+  --color-table-stripe: #1B2434;
+  --color-text-menu-heading: #F1F5F9;
+  --color-text-menu-link: #E2E8F0;
+  --color-border-table-cell: #334155;
   --color-text-tab-active: var(--color-text);
 
-  --color-border-input: var(--color-grey-400);
-  --color-shadow-input: var(--color-grey-50);
-  --color-background-input: var(--color-grey-350);
-  --color-text-input-description: var(--color-grey-600);
-  --color-text-input-placeholder: var(--color-grey-600);
-  --color-text-watch-tag-list: rgba(250, 62, 146, 0.4);
-  --color-background-code: var(--color-grey-200);
+  --color-border-input: #475569;
+  --color-shadow-input: rgba(0, 0, 0, 0.35);
+  --color-background-input: var(--slate-700);
+  --color-text-input-description: var(--slate-400);
+  --color-text-input-placeholder: var(--slate-500);
+  --color-text-watch-tag-list: var(--brand-indigo-300);
+  --color-background-code: var(--slate-900);
 
-  --color-background-tab: rgba(0, 0, 0, 0.2);
-  --color-background-tab-hover: rgba(0, 0, 0, 0.5);
+  --color-background-tab: rgba(255, 255, 255, 0.10);
+  --color-background-tab-hover: rgba(255, 255, 255, 0.22);
 
-  --color-background-snapshot-age: var(--color-grey-200);
-  --color-shadow-jump: var(--color-grey-200);
+  --color-background-snapshot-age: var(--slate-700);
+  --color-shadow-jump: rgba(0, 0, 0, 0.5);
   --color-icon-github: var(--color-white);
-  --color-icon-github-hover: var(--color-grey-700);
-  --color-watch-table-error: var(--color-light-red);
-  --color-watch-table-row-text: var(--color-grey-800);
+  --color-icon-github-hover: var(--brand-indigo-300);
+  --color-watch-table-error: #F87171;
+  --color-watch-table-row-text: #CBD5E1;
 
+  --color-text-footer: var(--slate-400);
+  --color-background-button-tag: rgba(99, 102, 241, 0.22);
+  --color-background-button-tag-active: rgba(99, 102, 241, 0.42);
 
-  .icon-spread {
-    filter: hue-rotate(-10deg) brightness(1.5);
-  }
+  --color-background-menu-link-hover: rgba(99, 102, 241, 0.15);
+  --color-text-menu-link-hover: var(--brand-indigo-300);
+
+  /* Keep existing dark-mode visual tweaks that upstream added ---- */
+  .icon-spread { filter: hue-rotate(-10deg) brightness(1.5); }
 
   .watch-table {
-
     .title-col a[target="_blank"]::after,
-    .current-diff-url::after {
-      filter: invert(.5) hue-rotate(10deg) brightness(2);
-    }
-
-    .status-browsersteps {
-      filter: invert(.5) hue-rotate(10deg) brightness(1.5);
-    }
-
+    .current-diff-url::after { filter: invert(.5) hue-rotate(10deg) brightness(2); }
+    .status-browsersteps { filter: invert(.5) hue-rotate(10deg) brightness(1.5); }
     .watch-controls {
-      .state-off {
-        img {
-          opacity: 0.3;
-        }
-      }
-      .state-on {
-        img {
-          opacity: 1.0;
-        }
-      }
+      .state-off img { opacity: 0.3; }
+      .state-on  img { opacity: 1.0; }
     }
-
     .unviewed {
       color: #fff;
-      &.error {
-        color: var(--color-watch-table-error);
-      }
+      &.error { color: var(--color-watch-table-error); }
     }
   }
+}
+
+/* =================================================================
+   Global niceties: reflect the brand design system.
+   ================================================================= */
+html { font-family: var(--font-sans); }
+code, pre, .monospaced-textarea textarea { font-family: var(--font-mono); }
+
+/* Respect reduced motion (DESIGN.md §6.4) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Prefers-color-scheme: auto-enable dark mode if the user never toggled. */
+@media (prefers-color-scheme: dark) {
+  html:not([data-darkmode="true"]):not([data-darkmode="false"]) {
+    color-scheme: dark;
+  }
+}
+
+/* Focus ring — never remove. Applies to every keyboard-focused element
+   that opts into :focus-visible. */
+:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
 }

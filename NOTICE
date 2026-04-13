@@ -1,0 +1,44 @@
+onChange by Sairo
+Copyright 2024-2025 Sairo (change.sairo.app)
+
+This product includes software originally developed as part of the
+changedetection.io project:
+
+    changedetection.io
+    Copyright 2020-2025 Leigh Morresi ("dgtlmoon") and contributors
+    https://github.com/dgtlmoon/changedetection.io
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may
+not use this file except in compliance with the License. You may obtain
+a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+-------------------------------------------------------------------------
+Summary of significant modifications made by the "onChange by Sairo"
+fork (see ATTRIBUTION.md for the full changelog and commit history):
+
+  * Rebranded the user interface to "onChange by Sairo"; the upstream
+    name and logos are used only for attribution.
+  * Introduced a new brand design system (see DESIGN.md) and replaced
+    the colour palette, typography, and layout tokens.
+  * Added: Watch Templates library, Scheduled Digest emails, AI-assisted
+    Filter Builder (natural-language → CSS/XPath suggestion).
+  * Security hardening: non-root Docker user, scoped CORS, pooled HTTP
+    sessions, chardet confidence gate, transient-HTTP retry, was_edited
+    consumption fix, XSS fix in client-side modal dialog, ARIA/mobile
+    accessibility pass.
+  * Frontend: deferred script loading, console-log gating,
+    mobile tap-target breakpoint.
+
+"Sairo" and the "onChange by Sairo" logo are the property of Sairo.
+The "changedetection.io" name and logo remain trademarks of their
+respective owners and are used here only as required for attribution
+under the Apache License. Use of the upstream name/logo does not imply
+endorsement of this fork by the upstream project.

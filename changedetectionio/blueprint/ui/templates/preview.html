@@ -11,7 +11,7 @@
         {% endif %}
         const highlight_submit_ignore_url = "{{url_for('ui.ui_edit.highlight_submit_ignore_url', uuid=uuid)}}";
     </script>
-    <script src="{{url_for('static_content', group='js', filename='plugins.js')}}"></script>
+    <script src="{{url_for('static_content', group='js', filename='plugins.js')}}" defer></script>
     <script src="{{ url_for('static_content', group='js', filename='diff-overview.js') }}" defer></script>
     <script src="{{ url_for('static_content', group='js', filename='preview.js') }}" defer></script>
     <script src="{{ url_for('static_content', group='js', filename='tabs.js') }}" defer></script>

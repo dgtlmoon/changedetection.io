@@ -1,3 +1,28 @@
+> ### ⚠️ Notice from the onChange by Sairo fork
+>
+> This document is inherited, **unmodified**, from the upstream
+> [`changedetection.io`](https://github.com/dgtlmoon/changedetection.io)
+> project. It describes a **commercial licence offered by the upstream
+> project's owners (Web Technologies s.r.o.)**, and it is reproduced here
+> only because it accompanied the upstream source tree we forked from.
+>
+> **It does NOT originate from, and is NOT granted or enforceable by,
+> the onChange by Sairo fork.**
+>
+> - The source code of this fork is distributed under the
+>   [Apache License 2.0](LICENSE). That licence is *all* you need to use,
+>   modify, or redistribute **onChange by Sairo**.
+> - If you wish to license the **upstream** `changedetection.io` software
+>   for commercial hosting/resale under the terms described below, you
+>   must contact the **upstream project directly** — not Sairo.
+> - We keep this file in the repository for transparency and to honour
+>   Apache 2.0 § 4(a)–(d) (preserving notices from the original work).
+>
+> See [`NOTICE`](NOTICE) and [`ATTRIBUTION.md`](ATTRIBUTION.md) for the
+> full provenance and legal framing of this fork.
+
+---
+
 # Generally
 
 In any commercial activity involving 'Hosting' (as defined herein), whether in part or in full, this license must be executed and adhered to.

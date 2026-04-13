@@ -1,0 +1,129 @@
+/**
+ * onChange by Sairo — brand components (wordmark + footer).
+ *
+ * Keep these rules thin; anything more than layout/typography belongs
+ * in a feature-specific partial.
+ */
+
+/* =================================================================
+   Wordmark in the top navigation
+   ================================================================= */
+.brand-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  text-decoration: none;
+  font-family: var(--font-sans);
+  letter-spacing: -0.01em;
+
+  .brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--radius-md);
+    background: var(--brand-indigo-700);
+    color: var(--color-white);
+    font-weight: 700;
+    font-size: 0.9rem;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    flex: 0 0 auto;
+  }
+
+  .brand-name {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.35em;
+    color: var(--color-text-menu-heading);
+    font-size: 1rem;
+
+    strong {
+      font-weight: 600;
+      color: var(--brand-indigo-700);
+    }
+
+    .brand-by {
+      font-weight: 400;
+      color: var(--slate-500);
+      font-size: 0.875rem;
+    }
+  }
+
+  &:hover .brand-mark {
+    background: var(--brand-indigo-800);
+  }
+}
+
+html[data-darkmode="true"] .brand-wordmark {
+  .brand-name strong {
+    color: var(--brand-indigo-300);
+  }
+  .brand-name .brand-by {
+    color: var(--slate-400);
+  }
+}
+
+/* Mobile: drop the "by Sairo" lockup, keep the mark + bold name. */
+@media only screen and (max-width: 600px) {
+  .brand-wordmark .brand-name .brand-by { display: none; }
+}
+
+/* =================================================================
+   Site footer — provides the required fork attribution on every page.
+   ================================================================= */
+.site-footer {
+  margin-top: var(--space-7);
+  padding: var(--space-5) var(--space-6);
+  background: var(--color-background);
+  color: var(--color-text-footer);
+  border-top: 1px solid var(--color-border-table-cell);
+  font-size: 0.8125rem; /* 13 px — "caption" in DESIGN.md */
+  line-height: 1.5;
+
+  .footer-inner {
+    max-width: 1120px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+  }
+
+  .footer-brand {
+    color: var(--brand-indigo-700);
+    font-weight: 500;
+  }
+
+  .footer-attribution {
+    color: var(--color-text-footer);
+
+    a {
+      color: var(--color-link);
+      text-decoration: underline;
+      text-decoration-color: rgba(67, 56, 202, 0.35);
+      text-underline-offset: 0.2em;
+    }
+    a:hover {
+      text-decoration-color: currentColor;
+    }
+  }
+}
+
+html[data-darkmode="true"] .site-footer .footer-brand {
+  color: var(--brand-indigo-300);
+}
+
+@media only screen and (max-width: 600px) {
+  .site-footer {
+    padding: var(--space-4) var(--space-4);
+    text-align: center;
+
+    .footer-inner {
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+  }
+}

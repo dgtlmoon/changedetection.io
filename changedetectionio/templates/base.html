@@ -4,11 +4,12 @@
   <head>
     <meta charset="utf-8" >
     <meta name="viewport" content="width=device-width, initial-scale=1.0" >
-    <meta name="description" content="Self hosted website change detection." >
+    <meta name="description" content="onChange by Sairo — self-hosted web-page change monitoring. A friendly fork of changedetection.io.">
     <meta name="robots" content="noindex">
-    <title>Change Detection{{extra_title}}</title>
+    <meta name="application-name" content="onChange by Sairo">
+    <title>onChange by Sairo{{extra_title}}</title>
     {% if app_rss_token %}
-        <link rel="alternate" type="application/rss+xml" title="Changedetection.io » Feed{% if active_tag_uuid %}- {{active_tag.title}}{% endif %}" href="{{ url_for('rss.feed', tag=active_tag_uuid, token=app_rss_token, _external=True )}}" >
+        <link rel="alternate" type="application/rss+xml" title="onChange by Sairo » Feed{% if active_tag_uuid %} — {{active_tag.title}}{% endif %}" href="{{ url_for('rss.feed', tag=active_tag_uuid, token=app_rss_token, _external=True )}}" >
 
         {% if rss_uuid_feed %}
         <link rel="alternate" type="application/rss+xml" title="Feed » {{ rss_uuid_feed['label'] }}" href="{{ rss_uuid_feed['url'] }}" >
@@ -37,12 +38,21 @@
         const csrftoken="{{ csrf_token() }}";
         const socketio_url="{{ get_socketio_path() }}/socket.io";
         const is_authenticated = {% if current_user.is_authenticated or not has_password %}true{% else %}false{% endif %};
+
+        // Silence developer-style console.log noise in production.
+        // Enable with ?debug=1 in the URL or localStorage.setItem('cdio_debug','1').
+        // console.info / warn / error remain untouched so real problems still surface.
+        try {
+            var _cdioDebugOn = (new URLSearchParams(window.location.search)).has('debug')
+                || (window.localStorage && window.localStorage.getItem('cdio_debug'));
+            if (!_cdioDebugOn) { console.log = function () {}; }
+        } catch (e) { /* no-op: never let this break the page */ }
     </script>
-    <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
+    <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}" defer></script>
     <script src="{{url_for('static_content', group='js', filename='csrf.js')}}" defer></script>
     <script src="{{url_for('static_content', group='js', filename='feather-icons.min.js')}}" defer></script>
     {% if socket_io_enabled %}
-    <script src="{{url_for('static_content', group='js', filename='socket.io.min.js')}}"></script>
+    <script src="{{url_for('static_content', group='js', filename='socket.io.min.js')}}" defer></script>
     <script src="{{url_for('static_content', group='js', filename='realtime.js')}}" defer></script>
     {% endif %}
     {%- set _html_head_extras = get_html_head_extras() -%}
@@ -52,16 +62,23 @@
   </head>
 
   <body class="{{extra_classes}}">
-    <div class="header">
+    <a href="#main-content" class="visually-hidden skip-link">{{ _('Skip to main content') }}</a>
+    <header class="header" role="banner">
     <div {% if pure_menu_fixed != False %}class="pure-menu-fixed"{% endif %} style="width: 100%;">
-      <div class="home-menu pure-menu pure-menu-horizontal" id="nav-menu">
+      <nav class="home-menu pure-menu pure-menu-horizontal" id="nav-menu" aria-label="{{ _('Primary') }}">
 
         {% if has_password and not current_user.is_authenticated %}
-          <a id="cdio-logo" class="pure-menu-heading" href="https://changedetection.io" rel="noopener">
-            <strong>Change</strong>Detection.io</a>
+          <a id="brand-logo" class="pure-menu-heading brand-wordmark" href="https://change.sairo.app" rel="noopener"
+             aria-label="{{ _('onChange by Sairo — home') }}">
+            <span class="brand-mark" aria-hidden="true">oC</span>
+            <span class="brand-name"><strong>onChange</strong><span class="brand-by"> by Sairo</span></span>
+          </a>
         {% else %}
-          <a  id="cdio-logo" class="pure-menu-heading" href="{{url_for('watchlist.index')}}">
-            <strong>Change</strong>Detection.io</a>
+          <a id="brand-logo" class="pure-menu-heading brand-wordmark" href="{{url_for('watchlist.index')}}"
+             aria-label="{{ _('onChange by Sairo — home') }}">
+            <span class="brand-mark" aria-hidden="true">oC</span>
+            <span class="brand-name"><strong>onChange</strong><span class="brand-by"> by Sairo</span></span>
+          </a>
         {% endif %}
         {% if current_diff_url and is_safe_valid_url(current_diff_url) %}
           <a class="current-diff-url" href="{{ current_diff_url }}">
@@ -69,7 +86,7 @@
         {% else %}
           {% if new_version_available and not(has_password and not current_user.is_authenticated) %}
             <span id="new-version-text" class="pure-menu-heading">
-              <a href="https://changedetection.io">A new version is available</a>
+              <a href="https://github.com/wolfieeee/change.sairo.app/releases" rel="noopener">{{ _('A new version is available') }}</a>
             </span>
           {% endif %}
         {% endif %}
@@ -97,7 +114,8 @@
                    viewBox="0 0 16.9 16.1"
                    id="svg-heart"
                    xmlns="http://www.w3.org/2000/svg"
-                   >
+                   role="img"
+                   aria-label="{{ _('Support us') }}">
                   <path id="heartpath" d="M 5.338316,0.50302766 C 0.71136983,0.50647126 -3.9576371,7.2707777 8.5004254,15.503028 23.833425,5.3700277 13.220206,-2.5384409 8.6762066,1.6475589 c -0.060791,0.054322 -0.11943,0.1110064 -0.1757812,0.1699219 -0.057,-0.059 -0.1157813,-0.116875 -0.1757812,-0.171875 C 7.4724566,0.86129334 6.4060729,0.50223298 5.338316,0.50302766 Z" style="fill:var(--color-background);fill-opacity:1;stroke:#ff0000;stroke-opacity:1" />
                 </svg>
           </li>
@@ -112,7 +130,7 @@
             </button>
           </li>
         </ul>
-      </div>
+      </nav>
 
       <!-- Mobile menu drawer -->
       <div class="mobile-menu-overlay" id="mobile-menu-overlay"></div>
@@ -121,19 +139,15 @@
           {% include "menu.html" %}
             <li class="pure-menu-item menu-collapsible">
                 {%- if right_sticky -%}<div>{{ right_sticky }}</div>{%- endif -%}
-                <a href="https://changedetection.io/?ref={{ guid }}">Let us host your instance!</a><br>
             </li>
         </ul>
       </div>
       <div id="pure-menu-horizontal-spinner"></div>
       </div>
 
-    </div>
-    {% if hosted_sticky %}
-      <div class="sticky-tab" id="hosted-sticky">
-        <a href="https://changedetection.io/?ref={{guid}}">Let us host your instance!</a>
-      </div>
-    {% endif %}
+    </header>
+    {# Upstream had a "hosted_sticky" promo here. Removed in this fork to avoid
+       implying an affiliation with the upstream commercial SaaS. #}
     {% if left_sticky %}
       <div class="sticky-tab" id="left-sticky">
       </div>
@@ -141,53 +155,23 @@
     {% if right_sticky %}
       <div class="sticky-tab" id="right-sticky">{{ right_sticky }}</div>
     {% endif %}
-    <section class="content">
+    <main id="main-content" class="content" role="main" tabindex="-1">
         <div id="overlay">
             <div class="content">
-                <h4>Try our Chrome extension</h4>
+                <h4>{{ _('About onChange by Sairo') }}</h4>
                 <p>
-                    <a id="chrome-extension-link"
-                       title="Chrome Extension - Web Page Change Detection with changedetection.io!"
-                       href="https://chromewebstore.google.com/detail/changedetectionio-website/kefcfmgmlhmankjmnbijimhofdjekbop">
-                        <img alt="Chrome store icon" src="{{url_for('static_content', group='images', filename='google-chrome-icon.png')}}">
-                        Chrome Webstore
-                    </a>
-                </p>
-                Easily add the current web-page from your browser directly into your changedetection.io tool, more great features coming soon!
-                <h4>Changedetection.io needs your support!</h4>
-                <p>
-                    You can help us by supporting changedetection.io on these platforms;
+                    {{ _('onChange by Sairo is a self-hosted web-page change monitor. Paste any URL; we tell you when anything meaningful changes.') }}
                 </p>
                 <p>
-                <ul>
-                    <li>
-                        <a href="https://alternativeto.net/software/changedetection-io/about/" title="Web page change detection at alternativeto.net">Rate us at
-                        AlternativeTo.net</a>
-                    </li>
-                <li>
-                    <a href="https://github.com/dgtlmoon/changedetection.io" title="Web page change detection on GitHub">Star us on GitHub</a>
-                </li>
-                <li>
-                    <a rel="nofollow" href="https://twitter.com/change_det_io" title="Web page change detection on Twitter">Follow us at Twitter/X</a>
-                </li>
-                <li>
-                    <a rel="nofollow" href="https://www.g2.com/products/changedetection-io/reviews" title="Web page change detection reviews at G2">G2 Software reviews</a>
-                </li>
-                <li>
-                    <a rel="nofollow" href="https://www.linkedin.com/company/changedetection-io" title="Visit web page change detection at LinkedIn">Check us out on LinkedIn</a>
-                </li>
-                <li>
-                    And tell your friends and colleagues :)
-                </li>
-                </ul>
-                <p>
-                    The more popular changedetection.io is, the more time we can dedicate to adding amazing features!
+                    {{ _('It is a friendly fork of the open-source project') }}
+                    <a rel="noopener" href="https://github.com/dgtlmoon/changedetection.io">changedetection.io</a>
+                    {{ _('by Leigh Morresi and contributors, distributed under the Apache 2.0 licence.') }}
                 </p>
                 <p>
-                    Many thanks :)<br>
-                </p>
-                <p>
-                    <i>changedetection.io team</i>
+                    {{ _('Full attribution, provenance, and the list of changes we have made are documented in') }}
+                    <a rel="noopener" href="https://github.com/wolfieeee/change.sairo.app/blob/main/ATTRIBUTION.md">ATTRIBUTION.md</a>,
+                    <a rel="noopener" href="https://github.com/wolfieeee/change.sairo.app/blob/main/NOTICE">NOTICE</a>, {{ _('and') }}
+                    <a rel="noopener" href="https://github.com/wolfieeee/change.sairo.app/blob/main/DESIGN.md">DESIGN.md</a>.
                 </p>
             </div>
         </div>
@@ -225,9 +209,9 @@
 
             {% with messages = get_flashed_messages(with_categories = true) %}
             {% if messages %}
-              <ul class="messages">
+              <ul class="messages" role="status" aria-live="polite">
                 {% for category, message in messages %}
-                  <li class="{{ category }}">{{ message }}</li>
+                  <li class="{{ category }}"{% if category == 'error' %} role="alert"{% endif %}>{{ message }}</li>
                 {% endfor %}
               </ul>
             {% endif %}
@@ -244,12 +228,29 @@
             {% block content %}{% endblock %}
           </div>
         </div>
-    </section>
+    </main>
+    <footer class="site-footer" role="contentinfo">
+      <div class="footer-inner">
+        <span class="footer-brand">
+          <strong>onChange</strong> <span aria-hidden="true">·</span> by Sairo
+        </span>
+        <span class="footer-attribution">
+          {{ _('A friendly fork of') }}
+          <a href="https://github.com/dgtlmoon/changedetection.io" rel="noopener">changedetection.io</a>.
+          {{ _('Apache 2.0 licensed.') }}
+          <a href="https://github.com/wolfieeee/change.sairo.app/blob/main/ATTRIBUTION.md" rel="noopener">{{ _('Attribution') }}</a>
+          <span aria-hidden="true">·</span>
+          <a href="https://github.com/wolfieeee/change.sairo.app/blob/main/NOTICE" rel="noopener">NOTICE</a>
+          <span aria-hidden="true">·</span>
+          <a href="https://github.com/wolfieeee/change.sairo.app/blob/main/DESIGN.md" rel="noopener">{{ _('Design system') }}</a>
+        </span>
+      </div>
+    </footer>
     <script src="{{url_for('static_content', group='js', filename='toggle-theme.js')}}" defer></script>
     <script src="{{url_for('static_content', group='js', filename='hamburger-menu.js')}}" defer></script>
 
-    <div id="checking-now-fixed-tab" style="display: none;"><span class="spinner"></span><span class="status-text">&nbsp;{{ _('Checking now') }}</span></div>
-    <div id="realtime-conn-error" style="display:none">{{ _('Real-time updates offline') }}</div>
+    <div id="checking-now-fixed-tab" style="display: none;" role="status" aria-live="polite"><span class="spinner"></span><span class="status-text">&nbsp;{{ _('Checking now') }}</span></div>
+    <div id="realtime-conn-error" style="display:none" role="alert" aria-live="assertive">{{ _('Real-time updates offline') }}</div>
     {% if bottom_horizontal_offscreen_contents %}
         <div id="bottom-horizontal-offscreen" style="display:none">
             {{ bottom_horizontal_offscreen_contents|safe }}
@@ -257,7 +258,7 @@
     {% endif %}
 
     <!-- Language Selection Modal -->
-    <dialog id="language-modal" class="modal-dialog" aria-labelledby="language-modal-title">
+    <dialog id="language-modal" class="modal-dialog" aria-labelledby="language-modal-title" aria-modal="true">
       <div class="modal-header">
         <h2 class="modal-title" id="language-modal-title">{{ _('Select Language') }}</h2>
       </div>
@@ -283,7 +284,7 @@
 
     <!-- Search Modal -->
     {% if current_user.is_authenticated or not has_password %}
-    <dialog id="search-modal" class="modal-dialog" aria-labelledby="search-modal-title">
+    <dialog id="search-modal" class="modal-dialog" aria-labelledby="search-modal-title" aria-modal="true">
       <div class="modal-header">
         <h2 class="modal-title" id="search-modal-title">{{ _('Search') }}</h2>
       </div>
@@ -376,7 +377,7 @@
 
     <script src="{{url_for('static_content', group='js', filename='language-selector.js')}}" defer></script>
     <script src="{{url_for('static_content', group='js', filename='search-modal.js')}}" defer></script>
-    <script src="{{url_for('static_content', group='js', filename='toast.js')}}"></script>
+    <script src="{{url_for('static_content', group='js', filename='toast.js')}}" defer></script>
     <script src="{{url_for('static_content', group='js', filename='flask-toast-bridge.js')}}" defer></script>
   </body>
 
