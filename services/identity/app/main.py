@@ -18,8 +18,10 @@ from fastapi import FastAPI
 from starlette.responses import JSONResponse
 
 from .config import get_settings
+from .middleware.security_headers import SecurityHeadersMiddleware
 from .middleware.tenant_resolver import TenantResolverMiddleware
-from .routes import auth, health, me
+from .redis_client import close_redis
+from .routes import auth, health, me, password_reset, verify_email
 
 _log = structlog.get_logger()
 
@@ -31,8 +33,10 @@ async def _lifespan(_app: FastAPI) -> AsyncIterator[None]:
         "identity.startup",
         environment=settings.environment,
         root_domain=settings.root_domain,
+        email_backend=settings.email_backend,
     )
     yield
+    await close_redis()
     _log.info("identity.shutdown")
 
 
@@ -51,11 +55,16 @@ def create_app() -> FastAPI:
         redoc_url=None,
     )
 
+    # Order matters: outermost first. Security headers wrap everything;
+    # the tenant resolver is the next layer in.
+    app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(TenantResolverMiddleware, settings=settings)
 
     app.include_router(health.router)
     app.include_router(auth.router)
     app.include_router(me.router)
+    app.include_router(verify_email.router)
+    app.include_router(password_reset.router)
 
     @app.get("/", include_in_schema=False)
     async def root() -> JSONResponse:

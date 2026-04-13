@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <body style="font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: #0f172a; max-width: 560px; margin: 0 auto; padding: 24px;">
+    <h1 style="font-size: 20px; margin: 0 0 16px;">Verify your email</h1>
+    <p>Hi{% if display_name %} {{ display_name }}{% endif %},</p>
+    <p>Confirm your email address by clicking the button below:</p>
+    <p style="margin: 24px 0;">
+      <a href="{{ verify_url }}"
+         style="display: inline-block; padding: 12px 20px; background: #4f46e5; color: #fff; text-decoration: none; border-radius: 6px;">
+        Verify email
+      </a>
+    </p>
+    <p style="color: #475569; font-size: 14px;">
+      Or paste this link into your browser:<br />
+      <code style="word-break: break-all;">{{ verify_url }}</code>
+    </p>
+    <p style="color: #475569; font-size: 14px;">
+      This link expires in 24 hours. If you didn't create this account
+      you can safely ignore this message.
+    </p>
+    <p style="color: #94a3b8; font-size: 12px; margin-top: 32px;">
+      — onChange by Sairo
+    </p>
+  </body>
+</html>

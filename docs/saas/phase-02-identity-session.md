@@ -151,16 +151,99 @@ Partial failure means nothing persists — the caller can retry safely.
 
 ## 2b — Email verification, password reset, transactional email
 
-- `POST /v1/auth/verify-email/request` → sends email with a signed
-  token.
-- `POST /v1/auth/verify-email/confirm` → consumes token, sets
-  `users.email_verified_at`.
-- `POST /v1/auth/password-reset/request` → rate-limited; idempotent
-  response (no enumeration).
-- `POST /v1/auth/password-reset/confirm` → consumes token, updates
-  `users.password_hash`, revokes all sessions for that user.
-- Email adapter: `EmailSender` interface; `PostmarkSender` implementation.
-- Rate limits via Redis bucket keyed on `(email, ip)`.
+### Endpoints
+
+```
+POST /v1/auth/verify-email/request
+    body: { }  (authenticated; uses current user's email)
+    → 204 No Content
+    Idempotent; safe to call repeatedly. Rate-limited per user to 5/hour.
+
+POST /v1/auth/verify-email/confirm
+    body: { token }
+    → 200 { verified_at }
+    On success: sets users.email_verified_at, writes audit log.
+
+POST /v1/auth/password-reset/request
+    body: { email }
+    → 204 No Content   (ALWAYS 204 — never reveal whether email exists)
+    Rate-limited per (ip, email) to 3/hour.
+
+POST /v1/auth/password-reset/confirm
+    body: { token, new_password }
+    → 204
+    On success: updates password_hash, revokes every session for the
+    user, writes audit log. Caller must log in again.
+```
+
+### Token model (both flows)
+
+- 32 random bytes, urlsafe-base64.
+- Only sha256(token) is persisted, matching the refresh-token pattern.
+- Stored in dedicated tables (`email_verification_tokens`,
+  `password_reset_tokens`) so we can revoke / audit independently.
+- TTL: email verification 24 h, password reset 1 h.
+- Single-use: `consumed_at` gate.
+
+### Email delivery
+
+- `EmailSender` protocol with `send_transactional(template, to, vars)`.
+- Two implementations:
+  - `ConsoleSender` — prints message to stdout; dev default; used in CI.
+  - `PostmarkSender` — real Postmark API over HTTPS; prod default.
+- Templates live under `app/email/templates/` as paired `{name}.txt`
+  (required) + `{name}.html` (optional). Rendered via Jinja2 with
+  variable safety.
+- Sends are fired from a FastAPI `BackgroundTask` so the request path
+  isn't blocked on SMTP.
+
+### Rate limiting
+
+- Redis-backed sliding-window limiter. Bucket key layout:
+  `rl:{action}:{identifier}` — e.g. `rl:login:1.2.3.4:ada@example.com`.
+- Applied on: `/v1/auth/login`, `/v1/auth/signup`,
+  `/v1/auth/verify-email/request`, `/v1/auth/password-reset/request`.
+- Default windows (overridable via env):
+  - `signup`: 5 per IP per hour.
+  - `login`: 10 per (IP, email) per hour.
+  - `verify-email/request`: 5 per user per hour.
+  - `password-reset/request`: 3 per (IP, email) per hour.
+- Exceeded: `429 Too Many Requests` with `Retry-After` header.
+
+### Security headers
+
+Enforced by `SecurityHeadersMiddleware`:
+
+- `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`
+- `X-Content-Type-Options: nosniff`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Permissions-Policy: geolocation=(), microphone=(), camera=()`
+- `Cross-Origin-Opener-Policy: same-origin`
+- `X-Frame-Options: DENY` (the API is never iframed)
+
+### Data model additions
+
+New table `email_verification_tokens` mirroring
+`password_reset_tokens`:
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | `uuid` PK | |
+| `user_id` | `uuid` FK | |
+| `token_hash` | `bytea` unique | sha256 |
+| `expires_at` | `timestamptz` | 24h |
+| `consumed_at` | `timestamptz` nullable | single-use |
+| `created_at` | `timestamptz` | |
+
+### Done-when checklist (2b)
+
+- [x] Redis connection + sliding-window limiter with a fake-clock unit test.
+- [x] `EmailSender` protocol, `ConsoleSender`, `PostmarkSender`.
+- [x] Verification request + confirm routes, fully tested.
+- [x] Password-reset request + confirm routes, fully tested.
+- [x] Revoke-all-sessions on password-reset confirm.
+- [x] Security-headers middleware.
+- [x] Rate limit applied to login/signup in addition to the new routes.
 
 ## 2c — Invites
 

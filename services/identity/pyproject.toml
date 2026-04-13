@@ -13,23 +13,26 @@ dependencies = [
     "sqlalchemy[asyncio]>=2.0.35",
     "asyncpg>=0.30",
     "alembic>=1.14",
-    "pydantic>=2.9",
+    "pydantic[email]>=2.9",
     "pydantic-settings>=2.6",
     "argon2-cffi>=23.1",
     "python-jose[cryptography]>=3.3",
     "uuid6>=2024.7.10",
     "structlog>=24.4",
     "orjson>=3.10",
+    "redis>=5.2",
+    "httpx>=0.27",
+    "jinja2>=3.1",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.3",
     "pytest-asyncio>=0.24",
-    "httpx>=0.27",
     "ruff>=0.7",
     "mypy>=1.13",
     "types-python-jose",
+    "fakeredis>=2.26",
 ]
 
 [build-system]

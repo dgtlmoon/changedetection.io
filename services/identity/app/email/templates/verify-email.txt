@@ -1,0 +1,12 @@
+Verify your email for onChange by Sairo
+
+Hi{% if display_name %} {{ display_name }}{% endif %},
+
+Confirm your email address by opening the link below:
+
+    {{ verify_url }}
+
+This link expires in 24 hours. If you didn't create this account you
+can safely ignore this message.
+
+— onChange by Sairo

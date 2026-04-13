@@ -55,6 +55,12 @@ class Settings(BaseSettings):
         description="Used to sign access JWTs from Phase 2 onwards.",
     )
 
+    # --- Email ---------------------------------------------------------------
+    email_backend: Literal["console", "postmark"] = "console"
+    email_from: str = "onChange by Sairo <noreply@change.sairo.app>"
+    postmark_server_token: str | None = None
+    postmark_message_stream: str = "outbound"
+
     # --- Runtime -------------------------------------------------------------
     environment: Literal["development", "staging", "production"] = "development"
     log_level: str = "INFO"

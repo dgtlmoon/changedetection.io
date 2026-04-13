@@ -16,9 +16,26 @@ suites; developers can skip the db suite locally by passing
 from __future__ import annotations
 
 import pytest
+import fakeredis.aioredis
 from httpx import ASGITransport, AsyncClient
 
+from app import redis_client as redis_module
 from app.main import create_app
+
+
+@pytest.fixture(autouse=True)
+def fake_redis(monkeypatch):
+    """Swap the module-level Redis client for an in-memory fake.
+
+    Rate limiters and anything else that calls ``get_redis()`` during
+    the test hits this fake instead of a real server. Cleared between
+    tests so state doesn't leak.
+    """
+    fake = fakeredis.aioredis.FakeRedis(decode_responses=True)
+    monkeypatch.setattr(redis_module, "_client", fake)
+    yield fake
+    # best-effort cleanup: wipe keys
+    # ``flushdb`` is safe on the fake.
 
 
 @pytest.fixture

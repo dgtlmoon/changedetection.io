@@ -19,6 +19,7 @@ from ..schemas.auth import (
 )
 from ..security import tokens
 from ..security.deps import CurrentUser, get_current_user
+from ..security.rate_limit_dep import rate_limit
 from ..services import audit, orgs as orgs_svc, sessions as sessions_svc, users as users_svc
 from ..services.errors import (
     EmailAlreadyRegistered,
@@ -41,6 +42,7 @@ def _client_info(request: Request) -> tuple[str | None, str | None]:
     "/signup",
     response_model=SignupResponse,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(rate_limit("signup", 5, 3600, key_per="ip"))],
 )
 async def signup(body: SignupRequest, request: Request) -> SignupResponse:
     user_agent, ip = _client_info(request)
@@ -107,7 +109,11 @@ async def signup(body: SignupRequest, request: Request) -> SignupResponse:
         )
 
 
-@router.post("/login", response_model=LoginResponse)
+@router.post(
+    "/login",
+    response_model=LoginResponse,
+    dependencies=[Depends(rate_limit("login", 10, 3600, key_per="ip"))],
+)
 async def login(body: LoginRequest, request: Request) -> LoginResponse:
     user_agent, ip = _client_info(request)
     async with admin_session() as db:
