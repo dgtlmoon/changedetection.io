@@ -4,12 +4,14 @@ Public marketing pages for the onChange by Sairo deployment at change.sairo.app.
 This blueprint provides the *only* pages on the site that are intended to be
 crawled and indexed:
 
-* ``/welcome``      — landing page with hero, feature grid, CTA
-* ``/features``     — detailed feature breakdown (including site inventory)
-* ``/about``        — project story + attribution to changedetection.io
-* ``/privacy``      — brief privacy posture for a self-hosted tool
-* ``/robots.txt``   — dynamic; allow marketing paths, disallow app paths
-* ``/sitemap.xml``  — dynamic; lists the public marketing URLs
+* ``/welcome``              — landing page with hero, feature grid, CTA
+* ``/features``             — detailed feature breakdown (including site inventory)
+* ``/about``                — project story + attribution to changedetection.io
+* ``/privacy``              — brief privacy posture for a self-hosted tool
+* ``/accessibility``        — WCAG 2.2 AA accessibility statement
+* ``/accessibility/vpat``   — VPAT 2.5Rev WCAG 2.2 conformance report
+* ``/robots.txt``           — dynamic; allow marketing paths, disallow app paths
+* ``/sitemap.xml``          — dynamic; lists the public marketing URLs
 
 Every response sets ``page_public=True`` so ``base.html`` emits
 ``robots: index,follow`` — every OTHER page on the site inherits the default
@@ -62,6 +64,8 @@ _SITEMAP_ENDPOINTS: tuple[str, ...] = (
     "marketing.features",
     "marketing.about",
     "marketing.privacy",
+    "marketing.accessibility",
+    "marketing.vpat",
 )
 
 
@@ -138,6 +142,45 @@ def construct_blueprint() -> Blueprint:
             seo_canonical=url_for("marketing.privacy", _external=True),
         )
 
+    @bp.route("/accessibility", methods=["GET"], endpoint="accessibility")
+    def accessibility():
+        return _render_public(
+            "marketing/accessibility.html",
+            seo_title="Accessibility statement — onChange by Sairo",
+            seo_description=(
+                "Accessibility statement for onChange by Sairo. We target "
+                "WCAG 2.2 Level AA and publish a per-criterion VPAT 2.5Rev "
+                "conformance report covering the full Level A and AA set."
+            ),
+            seo_keywords=(
+                "accessibility, WCAG 2.2, WCAG 2.2 AA, VPAT, Section 508, "
+                "EN 301 549, screen reader, keyboard navigation, "
+                "onChange, Sairo"
+            ),
+            seo_canonical=url_for("marketing.accessibility", _external=True),
+        )
+
+    @bp.route(
+        "/accessibility/vpat", methods=["GET"], endpoint="vpat"
+    )
+    def vpat():
+        return _render_public(
+            "marketing/vpat.html",
+            seo_title=(
+                "VPAT 2.5Rev — WCAG 2.2 conformance — onChange by Sairo"
+            ),
+            seo_description=(
+                "Voluntary Product Accessibility Template (VPAT 2.5Rev) "
+                "for onChange by Sairo, reporting per-criterion conformance "
+                "with WCAG 2.2 Levels A and AA."
+            ),
+            seo_keywords=(
+                "VPAT, VPAT 2.5, VPAT 2.5Rev, WCAG 2.2, WCAG 2.2 AA, "
+                "Section 508, EN 301 549, accessibility conformance"
+            ),
+            seo_canonical=url_for("marketing.vpat", _external=True),
+        )
+
     # -----------------------------------------------------------------
     # robots.txt — dynamic so we can reflect the current host and
     # sitemap URL without hard-coding.
@@ -170,6 +213,8 @@ def construct_blueprint() -> Blueprint:
             "marketing.features": ("0.9", "monthly"),
             "marketing.about": ("0.6", "monthly"),
             "marketing.privacy": ("0.3", "yearly"),
+            "marketing.accessibility": ("0.5", "yearly"),
+            "marketing.vpat": ("0.4", "yearly"),
         }
         for ep in _SITEMAP_ENDPOINTS:
             prio, freq = priorities.get(ep, ("0.5", "monthly"))

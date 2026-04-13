@@ -1,0 +1,130 @@
+{% extends 'marketing/_layout.html' %}
+{% block marketing_content %}
+
+<section class="marketing-hero marketing-hero-narrow">
+  <div class="marketing-hero-inner">
+    <h1 class="marketing-h1">{{ _('Accessibility statement') }}</h1>
+    <p class="marketing-lede">
+      {{ _('onChange by Sairo is committed to digital accessibility. We target conformance with the Web Content Accessibility Guidelines (WCAG) 2.2 Level AA across both the public marketing pages and the application itself.') }}
+    </p>
+  </div>
+</section>
+
+<section class="marketing-section">
+  <div class="marketing-prose">
+    <h2>{{ _('Conformance status') }}</h2>
+    <p>
+      {{ _('This product is') }}
+      <strong>{{ _('substantially conformant') }}</strong>
+      {{ _('with WCAG 2.2 Level AA. "Substantially conformant" means the application meets the WCAG 2.2 Level AA success criteria with the limited, scoped exceptions documented in the VPAT and below.') }}
+    </p>
+    <p>
+      {{ _('A detailed, per-criterion conformance report is published as our') }}
+      <a href="{{ url_for('marketing.vpat') }}">{{ _('Voluntary Product Accessibility Template (VPAT 2.5Rev — WCAG 2.2)') }}</a>.
+    </p>
+
+    <h2>{{ _('Standards we measure against') }}</h2>
+    <ul>
+      <li>{{ _('WCAG 2.2 Level A and AA — primary target.') }}</li>
+      <li>{{ _('WAI-ARIA 1.2 Authoring Practices for custom widgets (dialogs, tabs, accordions, menus).') }}</li>
+      <li>{{ _('Revised Section 508 of the U.S. Rehabilitation Act (which incorporates WCAG 2.0 AA by reference; we exceed this baseline).') }}</li>
+      <li>{{ _('EN 301 549 v3.2.1 (the European harmonised accessibility standard for ICT, which references WCAG 2.1 AA; we exceed this baseline).') }}</li>
+    </ul>
+
+    <h2>{{ _('Compatibility') }}</h2>
+    <p>{{ _('We test against the following user-agent and assistive-technology pairings before releasing accessibility-impacting changes:') }}</p>
+    <ul>
+      <li>{{ _('macOS Safari + VoiceOver (latest stable)') }}</li>
+      <li>{{ _('iOS Safari + VoiceOver (latest stable)') }}</li>
+      <li>{{ _('Windows Firefox + NVDA (latest stable)') }}</li>
+      <li>{{ _('Windows Chrome + JAWS (latest two major versions)') }}</li>
+      <li>{{ _('Android Chrome + TalkBack (latest stable)') }}</li>
+      <li>{{ _('Linux Firefox + Orca (best-effort)') }}</li>
+    </ul>
+    <p>{{ _('JavaScript is required for some interactive features (live diff preview, AI-assisted filter builder, real-time watch status). Static views — landing, features, about, privacy, login, watchlist — are usable without JavaScript.') }}</p>
+
+    <h2>{{ _('How we get here') }}</h2>
+    <ul>
+      <li>{{ _('Every interactive control is reachable, visible, and operable via keyboard alone.') }}</li>
+      <li>{{ _('Focus indicators are a 2 px indigo ring with 2 px offset; they are never removed.') }}</li>
+      <li>{{ _('Sticky chrome (header, mobile bottom nav) is sized so the focused element is never fully obscured (WCAG 2.2 SC 2.4.11).') }}</li>
+      <li>{{ _('Touch targets are at minimum 24 × 24 CSS px globally and 44 × 44 CSS px on touch viewports (WCAG 2.2 SC 2.5.8 / 2.5.5).') }}</li>
+      <li>{{ _('Drag-and-drop interactions (re-ordering watches, resizing) all expose a keyboard or click-based equivalent (WCAG 2.2 SC 2.5.7).') }}</li>
+      <li>{{ _('Login uses a standard email + password flow with paste enabled and password-manager autofill supported; no cognitive-function tests are required (WCAG 2.2 SC 3.3.8).') }}</li>
+      <li>{{ _('The Help / Docs link appears in the same relative position on every page (WCAG 2.2 SC 3.2.6).') }}</li>
+      <li>{{ _('Multi-step flows pre-fill any value the user has already entered earlier in the same flow (WCAG 2.2 SC 3.3.7).') }}</li>
+      <li>{{ _('All text and meaningful UI components meet WCAG 2.2 contrast minima (4.5 : 1 normal text, 3 : 1 large text and non-text components). Each pair is logged in DESIGN.md § 2.4.') }}</li>
+      <li>{{ _('Animation respects prefers-reduced-motion. No content flashes more than three times per second.') }}</li>
+    </ul>
+
+    <h2>{{ _('Known limitations') }}</h2>
+    <p>{{ _('We disclose the items below transparently. Each is tracked in our public issue tracker and we welcome additional reports.') }}</p>
+    <ul>
+      <li>
+        <strong>{{ _('Visual selector (browser-steps capture)') }}</strong> —
+        {{ _('the in-browser CSS / XPath picker relies on pointer interaction with a rendered page screenshot. Direct keyboard equivalents are limited; users who cannot use a pointing device can paste a CSS selector or XPath into the same form field as a workaround. Improving this is on the roadmap.') }}
+      </li>
+      <li>
+        <strong>{{ _('Embedded third-party content') }}</strong> —
+        {{ _('the page snapshots the application captures from sites you monitor are user-supplied content; their accessibility is outside our control. The diff viewer surrounding them is fully accessible.') }}
+      </li>
+      <li>
+        <strong>{{ _('Animated GIFs in documentation') }}</strong> —
+        {{ _('a small number of demonstrational GIFs in the docs/ folder do not have synchronised captions; they always sit beside an equivalent textual description.') }}
+      </li>
+    </ul>
+
+    <h2>{{ _('Assessment approach') }}</h2>
+    <p>{{ _('Our conformance claim is supported by a combination of:') }}</p>
+    <ul>
+      <li>{{ _('Automated testing with axe-core and Lighthouse in development.') }}</li>
+      <li>{{ _('Manual keyboard-only walkthroughs of every changed flow.') }}</li>
+      <li>{{ _('Manual screen-reader smoke-tests against at least one of VoiceOver / NVDA / Orca per accessibility-impacting change.') }}</li>
+      <li>{{ _('Reflow checks at 320 CSS px and 400% zoom.') }}</li>
+      <li>{{ _('Colour-blind simulation (protanopia, deuteranopia, tritanopia) for all status colours.') }}</li>
+    </ul>
+    <p>{{ _('We have not yet engaged a third-party auditor; the assessment is a self-evaluation against the WCAG 2.2 Level AA success criteria.') }}</p>
+
+    <h2>{{ _('Self-hosted considerations') }}</h2>
+    <p>{{ _('onChange by Sairo is a self-hosted application. Operators can change the deployment in ways that affect accessibility — for example, by injecting custom CSS, embedding the app inside an inaccessible host page, or running an outdated build. The conformance claim above describes the upstream codebase as published. Operators are responsible for the accessibility of their own deployments, and we recommend re-testing after any local customisation.') }}</p>
+
+    <h2>{{ _('Feedback') }}</h2>
+    <p>{{ _('We welcome accessibility feedback. If you encounter a barrier, please contact us so we can fix it:') }}</p>
+    <ul>
+      <li>{{ _('GitHub issues:') }} <a href="https://github.com/wolfieeee/change.sairo.app/issues" rel="noopener">github.com/wolfieeee/change.sairo.app/issues</a> — {{ _('please prefix the title with "[a11y]" so we can triage quickly.') }}</li>
+      <li>{{ _('Email:') }} <a href="mailto:accessibility@sairo.app">accessibility@sairo.app</a></li>
+    </ul>
+    <p>{{ _('We aim to acknowledge accessibility reports within 5 business days and to provide a remediation timeline within 15 business days. Accessibility regressions are treated as blockers, not enhancements.') }}</p>
+
+    <h2>{{ _('Formal complaints') }}</h2>
+    <p>{{ _('If you are not satisfied with our response, you may escalate to:') }}</p>
+    <ul>
+      <li><strong>{{ _('European Union users:') }}</strong> {{ _('your national enforcement body under the EU Web Accessibility Directive 2016/2102.') }}</li>
+      <li><strong>{{ _('United Kingdom users:') }}</strong> {{ _('the Equality and Human Rights Commission (EHRC) via the Equality Advisory and Support Service.') }}</li>
+      <li><strong>{{ _('United States users:') }}</strong> {{ _('the U.S. Access Board or the Department of Justice ADA enforcement line.') }}</li>
+    </ul>
+
+    <h2>{{ _('Statement metadata') }}</h2>
+    <dl class="marketing-dl">
+      <dt>{{ _('Statement applies to') }}</dt>
+      <dd>{{ _('The onChange by Sairo web application and the public marketing pages at change.sairo.app.') }}</dd>
+      <dt>{{ _('Statement prepared on') }}</dt>
+      <dd><time datetime="2026-04-13">2026-04-13</time></dd>
+      <dt>{{ _('Statement last reviewed on') }}</dt>
+      <dd><time datetime="2026-04-13">2026-04-13</time></dd>
+      <dt>{{ _('Method used to prepare the statement') }}</dt>
+      <dd>{{ _('Self-evaluation against WCAG 2.2 Level AA, using the methodology described above.') }}</dd>
+    </dl>
+  </div>
+</section>
+
+<section class="marketing-section marketing-cta-block">
+  <h2 class="marketing-h2">{{ _('Related documents') }}</h2>
+  <div class="marketing-cta-row">
+    <a class="pure-button pure-button-primary" href="{{ url_for('marketing.vpat') }}">{{ _('Read the VPAT (WCAG 2.2)') }}</a>
+    <a class="pure-button" href="https://github.com/wolfieeee/change.sairo.app/blob/main/DESIGN.md#6-accessibility-wcag-22-aa" rel="noopener">{{ _('Design system § 6') }}</a>
+    <a class="pure-button" href="{{ url_for('marketing.privacy') }}">{{ _('Privacy') }}</a>
+  </div>
+</section>
+
+{% endblock %}

@@ -106,7 +106,7 @@
 
       >* {
         display: block;
-        // WCAG: min 44px tap height. 1rem top+bottom + ~1.2rem line = ~54px ✓
+        // WCAG 2.2 SC 2.5.5/2.5.8: min 44px tap height. 1rem top+bottom + ~1.2rem line = ~54px ✓
         padding: 0.9rem 1.25rem;
         color: var(--color-text);
         text-decoration: none;

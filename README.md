@@ -109,10 +109,65 @@ AI filter builder) is documented in the in-app **Settings** panel.
 
 ## Accessibility
 
-We target **WCAG 2.1 Level AA**. Every visual decision, colour
-contrast pair, focus behaviour, and keyboard journey is specified in
-[`DESIGN.md`](DESIGN.md). If you find an accessibility regression,
-please open an issue — we treat those as blockers, not bugs.
+We target **WCAG 2.2 Level AA** (which subsumes 2.1 AA and 2.0 AA).
+Every visual decision, colour contrast pair, focus behaviour, and
+keyboard journey is specified in [`DESIGN.md`](DESIGN.md). If you find
+an accessibility regression, please open an issue — we treat those as
+blockers, not bugs.
+
+The full WCAG 2.2 AA conformance checklist — including the six new 2.2
+success criteria (2.4.11 Focus Not Obscured, 2.5.7 Dragging Movements,
+2.5.8 Target Size Minimum, 3.2.6 Consistent Help, 3.3.7 Redundant Entry,
+3.3.8 Accessible Authentication) — is documented in
+[`DESIGN.md` § 6](DESIGN.md#6-accessibility-wcag-22-aa).
+
+Highlights of how we conform:
+
+- **1.4.3 / 1.4.11 Contrast** — every text/background pair is logged in
+  `DESIGN.md` § 2.4 and exceeds 4.5 : 1 for normal text, 3 : 1 for
+  large text and non-text UI.
+- **1.4.10 Reflow** — layouts reflow at 320 CSS px without horizontal
+  scrolling; mobile bottom-nav and stacked diff page enforce this.
+- **1.4.12 Text Spacing** — body text uses `rem` units and respects
+  user-set spacing overrides.
+- **2.1.1 / 2.1.2 Keyboard** — every interactive control is reachable
+  and operable via keyboard with no traps.
+- **2.4.7 Focus Visible** — 2 px indigo focus ring with 2 px offset on
+  every focusable element; never removed.
+- **2.4.11 Focus Not Obscured (new in 2.2)** — sticky headers, the
+  mobile bottom-nav, and toast region are sized so the focused element
+  is never fully hidden; `scroll-margin` is applied to anchored targets.
+- **2.5.5 / 2.5.8 Target Size** — 44 × 44 CSS px on touch viewports
+  (≤ 760 px) and ≥ 24 × 24 CSS px everywhere else, with adequate
+  spacing between adjacent targets.
+- **2.5.7 Dragging Movements (new in 2.2)** — every drag-only
+  interaction (re-ordering watches, resizing panes) has a keyboard or
+  click-based alternative.
+- **3.2.6 Consistent Help (new in 2.2)** — the support / docs link
+  appears in the same position on every page (header on desktop,
+  "More" tab on mobile).
+- **3.3.7 Redundant Entry (new in 2.2)** — multi-step flows
+  (watch creation, restore, import) pre-fill or auto-populate any
+  value the user has already entered.
+- **3.3.8 Accessible Authentication (new in 2.2)** — login does not
+  require a cognitive-function test; password managers and browser
+  autofill are not blocked, and the password field allows paste.
+- **4.1.2 / 4.1.3 Name, Role, Value & Status Messages** — custom
+  widgets follow the WAI-ARIA Authoring Practices; toasts use
+  `role="status"` (neutral) or `role="alert"` (errors).
+
+We test pages against axe-core / Lighthouse and screen readers (VoiceOver
+on macOS/iOS, NVDA on Windows) before shipping accessibility-impacting
+changes.
+
+The deployed app surfaces two public, indexable accessibility documents
+(linked from the footer of every page):
+
+- **`/accessibility`** — the public accessibility statement (conformance
+  status, compatibility matrix, known limitations, feedback channels).
+- **`/accessibility/vpat`** — the **VPAT 2.5Rev — WCAG 2.2** conformance
+  report with per-criterion Supports / Partially Supports / Not
+  Applicable findings for every Level A and Level AA success criterion.
 
 ---
 
