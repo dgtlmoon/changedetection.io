@@ -1,0 +1,107 @@
+{% extends 'marketing/_layout.html' %}
+{% block marketing_content %}
+
+<section class="marketing-hero">
+  <div class="marketing-hero-inner">
+    <p class="marketing-eyebrow">{{ _('Self-hosted &middot; Open source &middot; Apache 2.0') }}</p>
+    <h1 class="marketing-h1">{{ _('Know when the web changes.') }}</h1>
+    <p class="marketing-lede">
+      {{ _('onChange by Sairo watches any web page, sitemap, or whole site and tells you the moment anything meaningful moves — prices, restocks, new posts, new pages, new PDFs. You host it, you own your data.') }}
+    </p>
+
+    <div class="marketing-cta-row">
+      {% if current_user.is_authenticated or not has_password %}
+        <a class="pure-button pure-button-primary marketing-cta-primary" href="{{ url_for('watchlist.index') }}">
+          {{ _('Open the app') }} &rarr;
+        </a>
+      {% else %}
+        <a class="pure-button pure-button-primary marketing-cta-primary" href="{{ url_for('login') }}">
+          {{ _('Sign in') }} &rarr;
+        </a>
+      {% endif %}
+      <a class="pure-button marketing-cta-secondary" href="{{ url_for('marketing.features') }}">
+        {{ _('See all features') }}
+      </a>
+      <a class="pure-button marketing-cta-ghost" href="https://github.com/wolfieeee/change.sairo.app" rel="noopener">
+        {{ _('View source on GitHub') }}
+      </a>
+    </div>
+
+    <p class="marketing-hero-meta">
+      {{ _('A friendly fork of') }}
+      <a href="https://github.com/dgtlmoon/changedetection.io" rel="noopener">changedetection.io</a>
+      {{ _('by Leigh Morresi &amp; contributors.') }}
+    </p>
+  </div>
+</section>
+
+<section class="marketing-section" id="what-you-can-track">
+  <h2 class="marketing-h2">{{ _('What you can track') }}</h2>
+  <div class="marketing-feature-grid">
+    <article class="marketing-feature-card">
+      <h3>{{ _('Text &amp; HTML changes') }}</h3>
+      <p>{{ _('The classic mode — diff any page and get a clean before/after. Works for docs, changelogs, release notes, policy updates.') }}</p>
+    </article>
+    <article class="marketing-feature-card">
+      <h3>{{ _('Restock &amp; price') }}</h3>
+      <p>{{ _('Automatic stock and price detection on product pages, with per-watch thresholds so you only get pinged on meaningful moves.') }}</p>
+    </article>
+    <article class="marketing-feature-card marketing-feature-card-new">
+      <span class="marketing-new-badge">{{ _('New') }}</span>
+      <h3>{{ _('Whole-site URL inventory') }}</h3>
+      <p>{{ _('Point at a sitemap, a listing page, or let the bounded crawler walk the site — learn when pages are added or removed. Great for SEO and competitor monitoring.') }}</p>
+      <p class="marketing-feature-meta">
+        <a href="{{ url_for('marketing.features') }}#site-inventory">{{ _('How it works') }} &rarr;</a>
+      </p>
+    </article>
+    <article class="marketing-feature-card">
+      <h3>{{ _('Visual &amp; CSS selectors') }}</h3>
+      <p>{{ _('Click the part of the page you care about, or paste a CSS/XPath/JSONPath filter. Ignore headers, ads, and stock tickers with one line of config.') }}</p>
+    </article>
+    <article class="marketing-feature-card">
+      <h3>{{ _('Browser steps') }}</h3>
+      <p>{{ _('Log in, click buttons, fill forms before the snapshot — powered by Playwright or a WebDriver backend of your choice.') }}</p>
+    </article>
+    <article class="marketing-feature-card">
+      <h3>{{ _('AppRise notifications') }}</h3>
+      <p>{{ _('Send change alerts to almost any service — Discord, Slack, Telegram, SMTP, webhook, you name it. Plus a scheduled digest-email mode.') }}</p>
+    </article>
+  </div>
+</section>
+
+<section class="marketing-section marketing-section-muted" id="why">
+  <h2 class="marketing-h2">{{ _('Why onChange by Sairo') }}</h2>
+  <div class="marketing-two-col">
+    <div>
+      <h3>{{ _('Your data, your server') }}</h3>
+      <p>{{ _('Runs in Docker or any Python 3 host. No telemetry, no call-home, no account signup. The snapshot history lives on your disk.') }}</p>
+    </div>
+    <div>
+      <h3>{{ _('Designed for the long haul') }}</h3>
+      <p>{{ _('Per-watch schedules, time-of-day windows, jitter to avoid thundering herds, proxies, robots.txt-aware crawling. Built to be a background citizen of your infrastructure.') }}</p>
+    </div>
+    <div>
+      <h3>{{ _('Accessible by default') }}</h3>
+      <p>{{ _('Keyboard navigation, ARIA labels, dark mode, 44px touch targets — the UI audit that informed this fork is tracked in-repo so you can see what was changed and why.') }}</p>
+    </div>
+    <div>
+      <h3>{{ _('Upstream-friendly fork') }}</h3>
+      <p>{{ _('Full attribution to the original authors; changes documented in ATTRIBUTION.md, NOTICE, DESIGN.md. Apache 2.0, forever.') }}</p>
+    </div>
+  </div>
+</section>
+
+<section class="marketing-section marketing-cta-block">
+  <h2 class="marketing-h2">{{ _('Ready to watch something?') }}</h2>
+  <p>{{ _('Self-host in a single Docker command, or try it against your own site right now.') }}</p>
+  <div class="marketing-cta-row">
+    {% if current_user.is_authenticated or not has_password %}
+      <a class="pure-button pure-button-primary marketing-cta-primary" href="{{ url_for('watchlist.index') }}">{{ _('Open the app') }} &rarr;</a>
+    {% else %}
+      <a class="pure-button pure-button-primary marketing-cta-primary" href="{{ url_for('login') }}">{{ _('Sign in') }} &rarr;</a>
+    {% endif %}
+    <a class="pure-button marketing-cta-ghost" href="https://github.com/wolfieeee/change.sairo.app#install" rel="noopener">{{ _('Docker install') }}</a>
+  </div>
+</section>
+
+{% endblock %}

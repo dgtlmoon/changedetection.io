@@ -912,6 +912,12 @@ def changedetection_app(config=None, datastore_o=None):
         url_prefix='/site-inventory',
     )
 
+    # Public marketing pages (landing, features, about, privacy) +
+    # robots.txt and sitemap.xml. This is the ONLY indexable surface
+    # of the app; every other route is noindex via base.html.
+    from changedetectionio.blueprint.marketing import construct_blueprint as construct_marketing_blueprint
+    app.register_blueprint(construct_marketing_blueprint(), url_prefix='')
+
     # Initialize Socket.IO server conditionally based on settings
     socket_io_enabled = datastore.data['settings']['application'].get('ui', {}).get('socket_io_enabled', True)
     if socket_io_enabled and app.config.get('batch_mode'):

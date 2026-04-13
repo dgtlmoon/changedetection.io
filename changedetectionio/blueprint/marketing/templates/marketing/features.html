@@ -1,0 +1,137 @@
+{% extends 'marketing/_layout.html' %}
+{% block marketing_content %}
+
+<section class="marketing-hero marketing-hero-narrow">
+  <div class="marketing-hero-inner">
+    <h1 class="marketing-h1">{{ _('Features') }}</h1>
+    <p class="marketing-lede">
+      {{ _('Every monitoring mode in onChange by Sairo, with pointers to the docs and the code. Built on the solid foundation of changedetection.io, extended with a site-inventory processor and a polished UI audit.') }}
+    </p>
+  </div>
+</section>
+
+<section class="marketing-section">
+  <h2 class="marketing-h2" id="detection-modes">{{ _('Detection modes') }}</h2>
+
+  <article class="marketing-feature-row">
+    <h3>{{ _('Text / HTML / JSON / PDF') }}</h3>
+    <p>
+      {{ _('The default processor. Fetches a page, applies your CSS/XPath/JSONPath filters, normalises whitespace, strips the ignore-text lines, and produces a unified diff on every change. Works against static HTML, SPAs (via Playwright or WebDriver), JSON APIs, and PDFs (converted to text before diffing).') }}
+    </p>
+  </article>
+
+  <article class="marketing-feature-row">
+    <h3>{{ _('Restock &amp; price detection') }}</h3>
+    <p>
+      {{ _('Parses embedded product metadata (JSON-LD, microdata, OpenGraph) to detect stock status and price across most e-commerce platforms. Configurable "only notify on in-stock" mode, minimum/maximum price thresholds, and percentage-change triggers.') }}
+    </p>
+  </article>
+
+  <article class="marketing-feature-row marketing-feature-row-highlight" id="site-inventory">
+    <span class="marketing-new-badge">{{ _('New in this fork') }}</span>
+    <h3>{{ _('Site URL inventory') }}</h3>
+    <p>
+      {{ _('The newest processor in the fork. Emits a sorted, canonicalised list of URLs as the snapshot, so the existing diff engine produces added/removed alerts for free.') }}
+    </p>
+    <ul>
+      <li><strong>{{ _('Auto mode') }}</strong> — {{ _('sniffs your source URL and picks sitemap, sitemap index, or HTML listing automatically.') }}</li>
+      <li><strong>{{ _('Sitemap mode') }}</strong> — {{ _('parses sitemap.xml and recurses into sitemap indexes (capped at 50 children with a visible warning).') }}</li>
+      <li><strong>{{ _('HTML mode') }}</strong> — {{ _('extracts anchors from any listing page, optionally scoped to a CSS selector like') }} <code>.post-list</code>.</li>
+      <li><strong>{{ _('Bounded crawl mode') }}</strong> — {{ _('same-origin BFS with max pages, max depth, a hard time budget, robots.txt + Crawl-delay honour, 1-hour robots cache, and an SSRF guard that rejects private / reserved IP ranges.') }}</li>
+    </ul>
+    <p>
+      {{ _('Plus: strip-tracking-params (utm_*, gclid, fbclid, ref), same-origin filter with www-fold, include/exclude regex, per-watch CSV export, and a dashboard that rolls up added / removed pages across a tag.') }}
+    </p>
+    <p>
+      {{ _('Notification tokens:') }}
+      <code>{{ '{{new_urls}}' }}</code>,
+      <code>{{ '{{removed_urls}}' }}</code>,
+      <code>{{ '{{url_count}}' }}</code>,
+      <code>{{ '{{inventory_mode}}' }}</code>,
+      <code>{{ '{{inventory_warnings}}' }}</code>.
+    </p>
+  </article>
+
+  <article class="marketing-feature-row">
+    <h3>{{ _('Visual element selection') }}</h3>
+    <p>
+      {{ _('Screenshot-driven selector UI: click the element you care about and the CSS/XPath is auto-filled into your filter. Works on rendered pages, behind JS, behind browser steps.') }}
+    </p>
+  </article>
+
+  <article class="marketing-feature-row">
+    <h3>{{ _('Browser steps') }}</h3>
+    <p>
+      {{ _('Record a sequence of clicks, form fills, and waits before the snapshot is taken. Useful for watching pages behind logins, cookie walls, or multi-click drill-downs.') }}
+    </p>
+  </article>
+</section>
+
+<section class="marketing-section marketing-section-muted">
+  <h2 class="marketing-h2" id="delivery">{{ _('Delivery &amp; notifications') }}</h2>
+  <div class="marketing-feature-grid">
+    <article class="marketing-feature-card">
+      <h3>{{ _('AppRise URLs') }}</h3>
+      <p>{{ _('One URL per destination. Slack, Discord, Telegram, Matrix, Gotify, Pushover, SMTP, webhooks, SMS providers, 80+ more.') }}</p>
+    </article>
+    <article class="marketing-feature-card">
+      <h3>{{ _('Digest emails') }}</h3>
+      <p>{{ _('Roll up recent changes into a scheduled digest — daily or weekly — so you can batch consumption.') }}</p>
+    </article>
+    <article class="marketing-feature-card">
+      <h3>{{ _('RSS / Atom feed') }}</h3>
+      <p>{{ _('Per-tag and per-watch feeds with reader-friendly HTML or plain text bodies. Good for pipeline integrations.') }}</p>
+    </article>
+    <article class="marketing-feature-card">
+      <h3>{{ _('Jinja token templates') }}</h3>
+      <p>{{ _('Any notification body can template values from the watch — diffs, prices, URLs — using standard Jinja2 filters (tojson, urlencode, regex_replace).') }}</p>
+    </article>
+  </div>
+</section>
+
+<section class="marketing-section">
+  <h2 class="marketing-h2" id="infra">{{ _('Fetching &amp; infrastructure') }}</h2>
+  <div class="marketing-feature-grid">
+    <article class="marketing-feature-card">
+      <h3>{{ _('Three fetch backends') }}</h3>
+      <p>{{ _('Plain requests for static HTML, Playwright for JS-rendered SPAs, Selenium / WebDriver for edge cases. Pick per-watch or set a global default.') }}</p>
+    </article>
+    <article class="marketing-feature-card">
+      <h3>{{ _('Proxies built in') }}</h3>
+      <p>{{ _('Bright Data / Oxylabs first-class support, or bring your own HTTP/SOCKS proxy. Per-watch proxy override; crawl mode honours the same proxy.') }}</p>
+    </article>
+    <article class="marketing-feature-card">
+      <h3>{{ _('Schedules that scale') }}</h3>
+      <p>{{ _('Per-watch interval, time-of-day window, day-of-week mask, jitter. Configurable worker pool for parallelism.') }}</p>
+    </article>
+    <article class="marketing-feature-card">
+      <h3>{{ _('Docker-first') }}</h3>
+      <p>{{ _('One-command deployment. Persistent volume for snapshots. Healthchecks, clean shutdown, no mystery state.') }}</p>
+    </article>
+  </div>
+</section>
+
+<section class="marketing-section marketing-section-muted">
+  <h2 class="marketing-h2" id="ux">{{ _('UX &amp; accessibility') }}</h2>
+  <ul class="marketing-bullet-list">
+    <li>{{ _('Keyboard-navigable everywhere. Focus rings on every interactive control. Skip-to-main-content link.') }}</li>
+    <li>{{ _('ARIA labels on all icon-only buttons; table headers with scope; mobile drawer with focus trap.') }}</li>
+    <li>{{ _('Dark mode with proper contrast tokens — no hard-coded colors sneaking through.') }}</li>
+    <li>{{ _('44px minimum touch targets on mobile; no 16px inputs to trigger iOS zoom.') }}</li>
+    <li>{{ _('Danger-zone separation for destructive actions; required-field indicators; visible form errors.') }}</li>
+  </ul>
+</section>
+
+<section class="marketing-section marketing-cta-block">
+  <h2 class="marketing-h2">{{ _('Try it on your own site') }}</h2>
+  <div class="marketing-cta-row">
+    {% if current_user.is_authenticated or not has_password %}
+      <a class="pure-button pure-button-primary marketing-cta-primary" href="{{ url_for('watchlist.index') }}">{{ _('Open the app') }} &rarr;</a>
+    {% else %}
+      <a class="pure-button pure-button-primary marketing-cta-primary" href="{{ url_for('login') }}">{{ _('Sign in') }} &rarr;</a>
+    {% endif %}
+    <a class="pure-button marketing-cta-ghost" href="{{ url_for('marketing.about') }}">{{ _('Project history') }}</a>
+  </div>
+</section>
+
+{% endblock %}

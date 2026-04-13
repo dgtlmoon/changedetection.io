@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Social share image for onChange by Sairo.
+  1200x630 at the recommended Open Graph aspect ratio.
+  Uses the DESIGN.md brand palette (indigo 500/700/900 + slate 50/900).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="og-title og-subtitle">
+  <title id="og-title">onChange by Sairo — self-hosted web-page change monitoring</title>
+  <desc id="og-subtitle">Detect text, price, restock, sitemap, and whole-site URL changes. Open source. Apache 2.0.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"  stop-color="#0F172A"/>
+      <stop offset="55%" stop-color="#3730A3"/>
+      <stop offset="100%" stop-color="#1E1B4B"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="30%" cy="25%" r="55%">
+      <stop offset="0%"  stop-color="#6366F1" stop-opacity="0.55"/>
+      <stop offset="60%" stop-color="#6366F1" stop-opacity="0.0"/>
+    </radialGradient>
+    <linearGradient id="wordmarkFill" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"  stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#E0E7FF"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+
+  <!-- Decorative "change pulse" line chart -->
+  <g stroke="#A5B4FC" stroke-opacity="0.35" stroke-width="2" fill="none">
+    <polyline points="60,500 160,490 260,460 360,470 460,440 560,450 660,420 760,430 860,380 960,410 1060,340 1140,370"/>
+    <circle cx="860" cy="380" r="6" fill="#A5B4FC" fill-opacity="0.65"/>
+    <circle cx="1060" cy="340" r="8" fill="#C7D2FE" fill-opacity="0.9"/>
+  </g>
+
+  <!-- Brand mark: oC monogram -->
+  <g transform="translate(80,110)">
+    <rect x="0" y="0" width="104" height="104" rx="22" fill="#6366F1" fill-opacity="0.18" stroke="#A5B4FC" stroke-opacity="0.45" stroke-width="2"/>
+    <text x="52" y="68" text-anchor="middle" font-family="Helvetica Neue, Arial, sans-serif" font-weight="800" font-size="46" fill="#E0E7FF">oC</text>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="220" y="170" font-family="Helvetica Neue, Arial, sans-serif" font-weight="800" font-size="62" fill="url(#wordmarkFill)">onChange</text>
+  <text x="220" y="210" font-family="Helvetica Neue, Arial, sans-serif" font-weight="500" font-size="26" fill="#C7D2FE" fill-opacity="0.9">by Sairo</text>
+
+  <!-- Main headline -->
+  <text x="80" y="330" font-family="Helvetica Neue, Arial, sans-serif" font-weight="800" font-size="72" fill="#F8FAFC">Know when the web changes.</text>
+  <text x="80" y="395" font-family="Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="30" fill="#C7D2FE">Text &bull; Prices &bull; Restocks &bull; Sitemaps &bull; Whole-site inventory</text>
+
+  <!-- Bottom meta strip -->
+  <g transform="translate(80, 540)">
+    <rect x="0" y="0" width="260" height="48" rx="24" fill="#FFFFFF" fill-opacity="0.10" stroke="#A5B4FC" stroke-opacity="0.35" stroke-width="1.5"/>
+    <text x="130" y="30" text-anchor="middle" font-family="Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="18" fill="#E0E7FF">Self-hosted</text>
+
+    <rect x="280" y="0" width="260" height="48" rx="24" fill="#FFFFFF" fill-opacity="0.10" stroke="#A5B4FC" stroke-opacity="0.35" stroke-width="1.5"/>
+    <text x="410" y="30" text-anchor="middle" font-family="Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="18" fill="#E0E7FF">Open source &bull; Apache 2.0</text>
+
+    <rect x="560" y="0" width="320" height="48" rx="24" fill="#FFFFFF" fill-opacity="0.10" stroke="#A5B4FC" stroke-opacity="0.35" stroke-width="1.5"/>
+    <text x="720" y="30" text-anchor="middle" font-family="Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="18" fill="#E0E7FF">Fork of changedetection.io</text>
+  </g>
+
+  <!-- Domain tag, bottom right -->
+  <text x="1120" y="585" text-anchor="end" font-family="Helvetica Neue, Arial, sans-serif" font-weight="600" font-size="20" fill="#A5B4FC">change.sairo.app</text>
+</svg>

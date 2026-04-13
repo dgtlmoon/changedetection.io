@@ -1,0 +1,42 @@
+{# Marketing layout: sits on top of base.html, unifies hero/meta for
+   landing/features/about/privacy. Keeps the app chrome (header, footer)
+   so branding is consistent, but adds a marketing-specific container. #}
+{% extends 'base.html' %}
+
+{% block seo_structured_data %}
+{# Default JSON-LD: SoftwareApplication schema. Individual pages may
+   extend/override this block. Kept lean — Google reads the "price:0"
+   note to categorise us as free/self-hosted correctly. #}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "onChange by Sairo",
+  "alternateName": "onChange",
+  "description": "{{ _seo_description|e }}",
+  "applicationCategory": "WebApplication",
+  "operatingSystem": "Linux, macOS, Windows, Docker",
+  "url": "{{ url_for('marketing.landing', _external=True) }}",
+  "image": "{{ _seo_og_image }}",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "license": "https://www.apache.org/licenses/LICENSE-2.0",
+  "isBasedOn": {
+    "@type": "SoftwareApplication",
+    "name": "changedetection.io",
+    "url": "https://github.com/dgtlmoon/changedetection.io"
+  }{% if seo_schema_extra is defined %},
+  {{ seo_schema_extra|safe }}
+{% endif %}
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<main class="marketing-page" role="main">
+  {% block marketing_content %}{% endblock %}
+</main>
+{% endblock %}

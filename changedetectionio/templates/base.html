@@ -4,10 +4,48 @@
   <head>
     <meta charset="utf-8" >
     <meta name="viewport" content="width=device-width, initial-scale=1.0" >
-    <meta name="description" content="onChange by Sairo — self-hosted web-page change monitoring. A friendly fork of changedetection.io.">
-    <meta name="robots" content="noindex">
+
+    {# --- SEO + social meta stack -----------------------------------------
+      Pages inherit the sensible defaults below. Overrides per page by
+      setting the variables `seo_title`, `seo_description`, `seo_canonical`,
+      `seo_og_image`, `seo_keywords`, `seo_robots`, or by filling the
+      `seo_structured_data` block with a JSON-LD <script> block.
+    ------------------------------------------------------------------- #}
+    {%- set _default_title = "onChange by Sairo — self-hosted web-page change monitoring" -%}
+    {%- set _default_description = "Detect when any web page changes — text, prices, restocks, sitemaps, whole-site URL inventories. Self-hosted, open source, Apache 2.0." -%}
+    {%- set _seo_title = seo_title if seo_title is defined and seo_title else _default_title -%}
+    {%- set _seo_description = seo_description if seo_description is defined and seo_description else _default_description -%}
+    {%- set _seo_keywords = seo_keywords if seo_keywords is defined and seo_keywords else "change detection, web page monitoring, sitemap monitoring, self-hosted, open source, onChange, Sairo" -%}
+    {%- set _seo_canonical = seo_canonical if seo_canonical is defined and seo_canonical else request.url -%}
+    {%- set _seo_og_image = seo_og_image if seo_og_image is defined and seo_og_image else url_for('static_content', group='images', filename='og-image.svg', _external=True) -%}
+    {%- set _seo_is_public = page_public if page_public is defined else false -%}
+    {%- set _seo_robots = seo_robots if seo_robots is defined and seo_robots else ('index,follow' if _seo_is_public else 'noindex,nofollow') -%}
+
+    <title>{{ _seo_title }}</title>
+    <meta name="description" content="{{ _seo_description }}">
+    <meta name="keywords" content="{{ _seo_keywords }}">
+    <meta name="robots" content="{{ _seo_robots }}">
+    <meta name="author" content="onChange by Sairo">
     <meta name="application-name" content="onChange by Sairo">
-    <title>onChange by Sairo{{extra_title}}</title>
+    <link rel="canonical" href="{{ _seo_canonical }}">
+
+    {# Open Graph #}
+    <meta property="og:site_name" content="onChange by Sairo">
+    <meta property="og:type" content="{{ seo_og_type if seo_og_type is defined and seo_og_type else 'website' }}">
+    <meta property="og:title" content="{{ _seo_title }}">
+    <meta property="og:description" content="{{ _seo_description }}">
+    <meta property="og:url" content="{{ _seo_canonical }}">
+    <meta property="og:image" content="{{ _seo_og_image }}">
+    <meta property="og:image:alt" content="onChange by Sairo logo">
+    <meta property="og:locale" content="{{ get_locale()|replace('_', '-') }}">
+
+    {# Twitter #}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ _seo_title }}">
+    <meta name="twitter:description" content="{{ _seo_description }}">
+    <meta name="twitter:image" content="{{ _seo_og_image }}">
+
+    {% block seo_structured_data %}{% endblock %}
     {% if app_rss_token %}
         <link rel="alternate" type="application/rss+xml" title="onChange by Sairo » Feed{% if active_tag_uuid %} — {{active_tag.title}}{% endif %}" href="{{ url_for('rss.feed', tag=active_tag_uuid, token=app_rss_token, _external=True )}}" >
 
@@ -238,6 +276,15 @@
       <div class="footer-inner">
         <span class="footer-brand">
           <strong>onChange</strong> <span aria-hidden="true">·</span> by Sairo
+        </span>
+        <span class="footer-links">
+          <a href="{{ url_for('marketing.landing') }}">{{ _('Home') }}</a>
+          <span aria-hidden="true">·</span>
+          <a href="{{ url_for('marketing.features') }}">{{ _('Features') }}</a>
+          <span aria-hidden="true">·</span>
+          <a href="{{ url_for('marketing.about') }}">{{ _('About') }}</a>
+          <span aria-hidden="true">·</span>
+          <a href="{{ url_for('marketing.privacy') }}">{{ _('Privacy') }}</a>
         </span>
         <span class="footer-attribution">
           {{ _('A friendly fork of') }}
