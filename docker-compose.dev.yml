@@ -1,0 +1,75 @@
+# ============================================================================
+# Local development stack for the SaaS rewrite
+# ----------------------------------------------------------------------------
+# Starts just the infrastructure that the new services (services/identity,
+# services/core, services/worker) expect. You run the services themselves on
+# the host via `uv run uvicorn ...` so reload and debugger work.
+#
+#   docker compose -f docker-compose.dev.yml up -d
+#   docker compose -f docker-compose.dev.yml down     # preserves volumes
+#   docker compose -f docker-compose.dev.yml down -v  # nukes data
+#
+# This file is INTENTIONALLY separate from:
+#   - docker-compose.yml           (legacy single-tenant self-hosted)
+#   - docker-compose.coolify.yml   (production Coolify deploy)
+# ============================================================================
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: onchange-dev-postgres
+    environment:
+      POSTGRES_USER: onchange
+      POSTGRES_PASSWORD: onchange_dev_password
+      POSTGRES_DB: onchange
+      # Enable extensions that Alembic migrations will CREATE EXTENSION for.
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./services/identity/migrations/sql/dev-init.sql:/docker-entrypoint-initdb.d/00-dev-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U onchange -d onchange"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: onchange-dev-redis
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Optional: MinIO for object-storage development. Phase 3+ uses this.
+  # Uncomment to enable; adds ~100 MB RAM.
+  # minio:
+  #   image: minio/minio:latest
+  #   container_name: onchange-dev-minio
+  #   command: server /data --console-address ":9001"
+  #   environment:
+  #     MINIO_ROOT_USER: onchange
+  #     MINIO_ROOT_PASSWORD: onchange_dev_password
+  #   ports:
+  #     - "127.0.0.1:9000:9000"  # S3 API
+  #     - "127.0.0.1:9001:9001"  # Web console
+  #   volumes:
+  #     - minio-data:/data
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+volumes:
+  postgres-data:
+  redis-data:
+  # minio-data:

@@ -129,6 +129,29 @@ Every environment variable the app reads is documented in
 lists, browser fetchers, digest emails, AI filter builder) are also
 configurable from the in-app **Settings** panel.
 
+### SaaS rewrite (in progress)
+
+A multi-tenant SaaS rewrite is underway as a strangler-fig refactor —
+the existing Flask app keeps shipping unchanged while the new services
+land alongside. Design docs and phase specs live under
+[`docs/saas/`](docs/saas):
+
+- [`docs/saas/PLAN.md`](docs/saas/PLAN.md) — phased roadmap.
+- [`docs/saas/decisions.md`](docs/saas/decisions.md) — foundational
+  decisions (tenancy model, URL scheme, framework, billing, region).
+- [`docs/saas/phase-01-foundations.md`](docs/saas/phase-01-foundations.md)
+  — Phase 1 (tenancy primitives, landing now).
+- [`docs/saas/adr/`](docs/saas/adr) — architecture decision records.
+
+The new services live under [`services/`](services):
+
+- [`services/identity/`](services/identity) — orgs, users, memberships,
+  sessions, API keys. *Phase 1 scaffold.*
+
+Local-dev infrastructure (Postgres 16 + Redis 7) is in
+[`docker-compose.dev.yml`](docker-compose.dev.yml) — separate from the
+production [`docker-compose.coolify.yml`](docker-compose.coolify.yml).
+
 ---
 
 ## Accessibility

@@ -30,3 +30,11 @@ test-datastore/
 # Memory consumption log
 test-memory.log
 tests/logs/
+
+# New services (SaaS rewrite) — uv.lock IS committed for reproducibility
+services/*/.env
+services/*/.venv/
+services/*/**/__pycache__/
+services/*/**/.pytest_cache/
+services/*/**/.mypy_cache/
+services/*/**/.ruff_cache/
