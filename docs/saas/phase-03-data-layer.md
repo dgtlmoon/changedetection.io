@@ -153,7 +153,91 @@ filters on it in the ORM query AND runs under
 
 ---
 
-## 3.2 — Object storage, history index, legacy importer (later PR)
+## 3.2 — Object storage, history index, HTTP routes, legacy importer
+
+> Status: **3.2a landing now** (history index + object storage).
+> 3.2b (HTTP routes) and 3.2c (legacy importer) are separate PRs.
+
+### 3.2a — History index + object storage
+
+New table `watch_history_index`, one row per persisted artefact
+(snapshot text, screenshot, PDF, browser-step image). The row points
+at a key in object storage; the blob itself never touches Postgres.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | `uuid` PK | |
+| `watch_id` | `uuid` not null FK → `watches.id` ON DELETE CASCADE | tenant boundary via the FK chain |
+| `taken_at` | `timestamptz` not null | logical capture time |
+| `kind` | `text` not null | `snapshot` / `screenshot` / `pdf` / `browser_step` |
+| `content_type` | `text` not null | MIME |
+| `object_key` | `text` not null unique | `org_id/watches/watch_id/…` |
+| `size_bytes` | `bigint` not null | quotas + UI |
+| `hash_md5` | `text` not null | checksum; importer uses it for idempotency |
+| `created_at` | `timestamptz` | |
+
+Indexes:
+- `(watch_id, taken_at DESC)` — the main paginate-history query.
+- `(watch_id, kind, taken_at DESC)` — filter by artefact type.
+- unique `(object_key)` — prevents collisions from concurrent imports.
+
+RLS: `EXISTS`-join to `watches` (same pattern as `watch_tag_links`).
+
+### Object storage
+
+```
+services/core/app/object_store/
+├── protocol.py   # ObjectStore Protocol
+├── local.py      # LocalObjectStore — filesystem, dev + tests
+└── s3.py         # S3ObjectStore — aioboto3, prod
+```
+
+Key scheme (enforced by callers, not the protocol):
+
+```
+{org_id}/watches/{watch_id}/snapshots/{iso8601}.brotli
+{org_id}/watches/{watch_id}/screenshots/{iso8601}.jpg
+{org_id}/watches/{watch_id}/pdfs/{iso8601}.pdf
+{org_id}/watches/{watch_id}/favicon.{ext}
+{org_id}/watches/{watch_id}/browser_steps/{step_id}_{iso8601}.jpg
+```
+
+`LocalObjectStore` refuses keys containing `..` or leading `/` so a
+malicious watch URL can't traverse outside its sandbox.
+
+`S3ObjectStore` uses the standard AWS SDK env vars (or an explicit
+credentials pair). In production the IAM policy on that credential
+restricts the bucket to a given prefix, so even a code bug cannot
+reach another tenant's blobs.
+
+### `PgHistoryStore`
+
+```python
+class HistoryStore(Protocol):
+    async def record(self, db, *, watch_id, taken_at, kind,
+                     content_type, object_key, size_bytes,
+                     hash_md5) -> WatchHistoryEntry: ...
+    async def list(self, db, *, watch_id, limit=50, offset=0,
+                   kind=None) -> list[WatchHistoryEntry]: ...
+    async def get(self, db, *, watch_id, entry_id) -> WatchHistoryEntry | None: ...
+    async def delete(self, db, *, watch_id, entry_id) -> tuple[bool, str | None]: ...
+```
+
+`delete` returns `(deleted, object_key)` so the caller can remove the
+blob from object storage in a second step — DB first, blob second, so
+a blob-delete failure leaves a row we can GC rather than the reverse.
+
+### Done-when (3.2a)
+
+- [x] `watch_history_index` table + RLS + reversibility CI.
+- [x] `LocalObjectStore` works against a tmp directory; path-traversal
+  guard has a test.
+- [x] `S3ObjectStore` compiles and has a unit-level interface test.
+- [x] `PgHistoryStore` CRUD + cross-tenant isolation tests.
+- [ ] *(3.2b)* HTTP routes under `services/core/`.
+- [ ] *(3.2c)* Legacy importer.
+
+---
 
 ## Architectural decisions
 

@@ -35,6 +35,17 @@ class Settings(BaseSettings):
         ),
     )
 
+    # --- Object storage ------------------------------------------------------
+    object_store_backend: Literal["local", "s3"] = "local"
+    # LocalObjectStore root. Ignored unless backend=local.
+    object_store_local_root: str = "./var/object-store"
+    # S3 (or compatible: R2, MinIO). Ignored unless backend=s3.
+    object_store_s3_bucket: str | None = None
+    object_store_s3_region: str | None = None
+    object_store_s3_endpoint_url: str | None = None
+    object_store_s3_access_key_id: str | None = None
+    object_store_s3_secret_access_key: str | None = None
+
     environment: Literal["development", "staging", "production"] = "development"
     log_level: str = "INFO"
 

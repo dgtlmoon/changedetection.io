@@ -23,7 +23,9 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models import Watch, WatchTag
+from datetime import datetime
+
+from ..models import Watch, WatchHistoryEntry, WatchTag
 
 
 class WatchPatch(TypedDict, total=False):
@@ -125,3 +127,56 @@ class TagStore(Protocol):
         watch_id: UUID,
         tag_ids: list[UUID],
     ) -> list[WatchTag]: ...
+
+
+class HistoryStore(Protocol):
+    """Index of persisted artefacts. Tenant boundary via ``watch_id``.
+
+    Every method also takes ``org_id`` so queries can filter explicitly
+    via a join on ``watches`` (primary control); RLS is the safety net
+    (suspenders). Callers are expected to run under
+    ``db.with_current_org(org_id)``.
+    """
+
+    async def record(
+        self,
+        db: AsyncSession,
+        *,
+        org_id: UUID,
+        watch_id: UUID,
+        taken_at: datetime,
+        kind: str,
+        content_type: str,
+        object_key: str,
+        size_bytes: int,
+        hash_md5: str,
+    ) -> WatchHistoryEntry: ...
+
+    async def list(
+        self,
+        db: AsyncSession,
+        *,
+        org_id: UUID,
+        watch_id: UUID,
+        limit: int = 50,
+        offset: int = 0,
+        kind: str | None = None,
+    ) -> list[WatchHistoryEntry]: ...
+
+    async def get(
+        self,
+        db: AsyncSession,
+        *,
+        org_id: UUID,
+        watch_id: UUID,
+        entry_id: UUID,
+    ) -> WatchHistoryEntry | None: ...
+
+    async def delete(
+        self,
+        db: AsyncSession,
+        *,
+        org_id: UUID,
+        watch_id: UUID,
+        entry_id: UUID,
+    ) -> tuple[bool, str | None]: ...

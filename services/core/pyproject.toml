@@ -25,6 +25,12 @@ dev = [
     "ruff>=0.7",
     "mypy>=1.13",
 ]
+# Pulled in only when settings.object_store_backend=s3. Keeping it
+# optional trims ~40 MB off dev-only installs where LocalObjectStore
+# is the default.
+s3 = [
+    "aioboto3>=13.0",
+]
 
 [build-system]
 requires = ["hatchling"]

@@ -7,7 +7,7 @@ just takes the session.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone  # noqa: F401 — datetime used in annotations
 from typing import Any
 from uuid import UUID
 
@@ -15,7 +15,7 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models import Watch, WatchTag, WatchTagLink
+from ..models import Watch, WatchHistoryEntry, WatchTag, WatchTagLink
 from .protocol import WatchPatch
 
 
@@ -326,3 +326,141 @@ class PgTagStore:
             .order_by(WatchTag.name)
         )
         return list(result.scalars().all())
+
+
+class PgHistoryStore:
+    """Index of persisted artefacts. Tenant boundary via the watch FK.
+
+    Every query filters ``WatchHistoryEntry.watch_id`` against a
+    tenant-scoped ``watches`` subquery — the watch lookup implicitly
+    enforces org ownership. RLS is the safety net in production.
+    """
+
+    # Accepted values. Strings rather than an enum column to keep
+    # future extension cheap (new processors can emit new artefact
+    # kinds without a migration).
+    ALLOWED_KINDS = frozenset({"snapshot", "screenshot", "pdf", "browser_step"})
+
+    def _watch_in_org(self, org_id: UUID, watch_id: UUID):
+        """Build a correlated subquery the row checks must pass.
+
+        Using a subquery keeps the filter uniform across ``list`` /
+        ``get`` / ``delete``.
+        """
+        return (
+            select(Watch.id)
+            .where(
+                Watch.id == watch_id,
+                Watch.org_id == org_id,
+                Watch.deleted_at.is_(None),
+            )
+            .scalar_subquery()
+        )
+
+    async def record(
+        self,
+        db: AsyncSession,
+        *,
+        org_id: UUID,
+        watch_id: UUID,
+        taken_at: datetime,
+        kind: str,
+        content_type: str,
+        object_key: str,
+        size_bytes: int,
+        hash_md5: str,
+    ) -> WatchHistoryEntry:
+        if kind not in self.ALLOWED_KINDS:
+            raise ValueError(f"unknown history kind: {kind!r}")
+
+        # Assert the watch belongs to the org before inserting.
+        watch_hit = await db.execute(
+            select(Watch.id).where(
+                Watch.id == watch_id,
+                Watch.org_id == org_id,
+                Watch.deleted_at.is_(None),
+            )
+        )
+        if watch_hit.scalar_one_or_none() is None:
+            raise ValueError("watch not found in org")
+
+        row = WatchHistoryEntry(
+            watch_id=watch_id,
+            taken_at=taken_at,
+            kind=kind,
+            content_type=content_type,
+            object_key=object_key,
+            size_bytes=size_bytes,
+            hash_md5=hash_md5,
+        )
+        db.add(row)
+        await db.flush()
+        return row
+
+    async def list(
+        self,
+        db: AsyncSession,
+        *,
+        org_id: UUID,
+        watch_id: UUID,
+        limit: int = 50,
+        offset: int = 0,
+        kind: str | None = None,
+    ) -> list[WatchHistoryEntry]:
+        stmt = (
+            select(WatchHistoryEntry)
+            .where(
+                WatchHistoryEntry.watch_id == watch_id,
+                WatchHistoryEntry.watch_id.in_(self._watch_in_org(org_id, watch_id)),
+            )
+            .order_by(WatchHistoryEntry.taken_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        if kind is not None:
+            stmt = stmt.where(WatchHistoryEntry.kind == kind)
+        result = await db.execute(stmt)
+        return list(result.scalars().all())
+
+    async def get(
+        self,
+        db: AsyncSession,
+        *,
+        org_id: UUID,
+        watch_id: UUID,
+        entry_id: UUID,
+    ) -> WatchHistoryEntry | None:
+        result = await db.execute(
+            select(WatchHistoryEntry).where(
+                WatchHistoryEntry.id == entry_id,
+                WatchHistoryEntry.watch_id == watch_id,
+                WatchHistoryEntry.watch_id.in_(
+                    self._watch_in_org(org_id, watch_id)
+                ),
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def delete(
+        self,
+        db: AsyncSession,
+        *,
+        org_id: UUID,
+        watch_id: UUID,
+        entry_id: UUID,
+    ) -> tuple[bool, str | None]:
+        """Hard-delete the history row. Returns ``(deleted, object_key)``.
+
+        Caller is responsible for removing the blob from object
+        storage in a second step. DB first, blob second, so a failed
+        blob delete leaves a GC-able row rather than a phantom key.
+        """
+        row = await self.get(
+            db, org_id=org_id, watch_id=watch_id, entry_id=entry_id
+        )
+        if row is None:
+            return False, None
+        key = row.object_key
+        await db.delete(row)
+        await db.flush()
+        return True, key
