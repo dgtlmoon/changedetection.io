@@ -34,8 +34,10 @@
                 </fieldset>
             </form>
                 <br>
-                <strong>{{ _('Keyboard:') }} </strong><a href="" class="pure-button pure-button-primary" id="btn-previous">
-                &larr; {{ _('Previous') }}</a> &nbsp; <a class="pure-button pure-button-primary" id="btn-next" href="">
+                <strong>{{ _('Keyboard:') }} </strong><a href="" class="pure-button pure-button-primary" id="btn-previous"
+                    aria-label="{{ _('Previous version (left arrow key)') }}" title="{{ _('Previous version (left arrow key)') }}">
+                &larr; {{ _('Previous') }}</a> &nbsp; <a class="pure-button pure-button-primary" id="btn-next" href=""
+                    aria-label="{{ _('Next version (right arrow key)') }}" title="{{ _('Next version (right arrow key)') }}">
                 &rarr; {{ _('Next') }}</a>
         </div>
     {% endif %}

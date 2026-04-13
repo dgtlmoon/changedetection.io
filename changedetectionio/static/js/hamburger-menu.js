@@ -11,18 +11,33 @@
       return;
     }
 
+    const mainContent = document.getElementById('main-content');
+
     function openMenu() {
       hamburgerToggle.classList.add('active');
       mobileMenuDrawer.classList.add('active');
       mobileMenuOverlay.classList.add('active');
+      hamburgerToggle.setAttribute('aria-expanded', 'true');
+      mobileMenuDrawer.setAttribute('aria-hidden', 'false');
+      mobileMenuOverlay.setAttribute('aria-hidden', 'false');
+      if (mainContent) { mainContent.setAttribute('aria-hidden', 'true'); }
       document.body.style.overflow = 'hidden';
+      // Move focus into the drawer for keyboard users
+      const firstFocusable = mobileMenuDrawer.querySelector('a, button, [tabindex]:not([tabindex="-1"])');
+      if (firstFocusable) { firstFocusable.focus(); }
     }
 
     function closeMenu() {
       hamburgerToggle.classList.remove('active');
       mobileMenuDrawer.classList.remove('active');
       mobileMenuOverlay.classList.remove('active');
+      hamburgerToggle.setAttribute('aria-expanded', 'false');
+      mobileMenuDrawer.setAttribute('aria-hidden', 'true');
+      mobileMenuOverlay.setAttribute('aria-hidden', 'true');
+      if (mainContent) { mainContent.removeAttribute('aria-hidden'); }
       document.body.style.overflow = '';
+      // Return focus to the toggle
+      hamburgerToggle.focus();
     }
 
     function toggleMenu() {
@@ -48,10 +63,29 @@
       item.addEventListener('click', closeMenu);
     });
 
-    // Close menu on escape key
+    // Close menu on escape key + trap Tab focus inside the drawer while open
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape' && mobileMenuDrawer.classList.contains('active')) {
+      if (!mobileMenuDrawer.classList.contains('active')) return;
+
+      if (e.key === 'Escape') {
         closeMenu();
+        return;
+      }
+
+      if (e.key === 'Tab') {
+        const focusables = mobileMenuDrawer.querySelectorAll(
+          'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (!focusables.length) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     });
 

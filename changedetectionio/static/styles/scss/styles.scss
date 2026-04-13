@@ -35,6 +35,8 @@
 @use "parts/toast";
 @use "parts/login_form";
 @use "parts/tabs";
+// UI audit improvements — additive; keep last so it can win on specificity.
+@use "parts/ui_audit";
 
 // Smooth transitions for theme switching
 body,

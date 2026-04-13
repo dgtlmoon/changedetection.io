@@ -80,16 +80,19 @@
         {%- if versions|length >= 2 -%}
             <div id="keyboard-nav">
                 <strong>{{ _('Keyboard:') }} </strong>
-                <a href="" class="pure-button pure-button-primary" id="btn-previous"> &larr; {{ _('Previous') }}</a>
-                &nbsp; <a class="pure-button pure-button-primary" id="btn-next" href=""> &rarr; {{ _('Next') }}</a>
+                <a href="" class="pure-button pure-button-primary" id="btn-previous"
+                   aria-label="{{ _('Previous version (left arrow key)') }}"
+                   title="{{ _('Previous version (left arrow key)') }}"> &larr; {{ _('Previous') }}</a>
+                &nbsp; <a class="pure-button pure-button-primary" id="btn-next" href=""
+                   aria-label="{{ _('Next version (right arrow key)') }}"
+                   title="{{ _('Next version (right arrow key)') }}"> &rarr; {{ _('Next') }}</a>
             </div>
         {%- endif -%}
     </form>
 </div>
 
-<div id="diff-jump" style="display:none;"><!-- disabled for now -->
-    <a id="jump-next-diff" title="{{ _('Jump to next difference') }}">{{ _('Jump') }}</a>
-</div>
+{# "#diff-jump" / "Jump to next difference" feature was previously stubbed here with
+   display:none. Removed to reduce clutter — reinstate if the feature ships. #}
 
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <div class="tabs">

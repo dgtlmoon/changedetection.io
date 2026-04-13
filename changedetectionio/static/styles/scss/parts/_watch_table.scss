@@ -87,7 +87,7 @@ body.has-queue {
       bottom: 0;
       left: 0;
       width: 3px;
-      background-color: #293eff;
+      background-color: var(--color-link);
     }
 
     td.last-checked {

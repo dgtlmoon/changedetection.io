@@ -180,8 +180,8 @@ html[data-darkmode="true"] {
   --color-watch-table-row-text: #CBD5E1;
 
   --color-text-footer: var(--slate-400);
-  --color-background-button-tag: rgba(99, 102, 241, 0.22);
-  --color-background-button-tag-active: rgba(99, 102, 241, 0.42);
+  --color-background-button-tag: rgba(99, 102, 241, 0.40);
+  --color-background-button-tag-active: rgba(99, 102, 241, 0.60);
 
   --color-background-menu-link-hover: rgba(99, 102, 241, 0.15);
   --color-text-menu-link-hover: var(--brand-indigo-300);
@@ -198,7 +198,7 @@ html[data-darkmode="true"] {
       .state-on  img { opacity: 1.0; }
     }
     .unviewed {
-      color: #fff;
+      color: var(--color-text);
       &.error { color: var(--color-watch-table-error); }
     }
   }

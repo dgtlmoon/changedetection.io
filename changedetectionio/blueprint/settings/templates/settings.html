@@ -269,8 +269,13 @@ nav
                 <div class="pure-control-group">
                     {{ render_checkbox_field(form.application.form.api_access_token_enabled) }}
                     <div class="pure-form-message-inline">{{ _('Restrict API access limit by using') }} <code>x-api-key</code> {{ _('header - required for the Chrome Extension to work') }}</div><br>
-                    <div class="pure-form-message-inline"><br>{{ _('API Key') }} <span id="api-key">{{api_key}}</span>
-                        <span style="display:none;" id="api-key-copy" >{{ _('copy') }}</span>
+                    <div class="pure-form-message-inline api-key-row"><br>
+                        <label for="api-key">{{ _('API Key') }}</label>
+                        <input type="text" id="api-key" value="{{api_key}}" readonly
+                               aria-label="{{ _('API Key') }}"
+                               onclick="this.select();"
+                               style="max-width: 28rem; width: 100%; font-family: var(--font-mono, monospace); cursor: pointer;">
+                        <span style="display:none;" id="api-key-copy" role="button" tabindex="0" aria-label="{{ _('Copy API key') }}">{{ _('copy') }}</span>
                     </div>
                 </div>
                 <div class="pure-control-group">

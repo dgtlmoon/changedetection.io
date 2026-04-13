@@ -98,7 +98,9 @@
           {% if current_user.is_authenticated or not has_password %}
             {% if not current_diff_url %}
               <li class="pure-menu-item  menu-collapsible">
-                <button class="toggle-button" id="open-search-modal" type="button" title="{{ _('Search, or Use Alt+S Key') }}">
+                <button class="toggle-button" id="open-search-modal" type="button"
+                        title="{{ _('Search, or Use Alt+S Key') }}"
+                        aria-label="{{ _('Open search (Alt+S)') }}">
                   {% include "svgs/search-icon.svg" %}
                 </button>
               </li>
@@ -121,8 +123,11 @@
           </li>
           <!-- Hamburger menu button (mobile only) -->
           <li class="pure-menu-item">
-            <button class="hamburger-menu" id="hamburger-toggle" aria-label="Toggle menu">
-              <div class="hamburger-icon">
+            <button class="hamburger-menu" id="hamburger-toggle" type="button"
+                    aria-label="{{ _('Toggle navigation menu') }}"
+                    aria-expanded="false"
+                    aria-controls="mobile-menu-drawer">
+              <div class="hamburger-icon" aria-hidden="true">
                 <span></span>
                 <span></span>
                 <span></span>
@@ -133,8 +138,8 @@
       </nav>
 
       <!-- Mobile menu drawer -->
-      <div class="mobile-menu-overlay" id="mobile-menu-overlay"></div>
-      <div class="mobile-menu-drawer" id="mobile-menu-drawer">
+      <div class="mobile-menu-overlay" id="mobile-menu-overlay" aria-hidden="true"></div>
+      <div class="mobile-menu-drawer" id="mobile-menu-drawer" role="dialog" aria-modal="true" aria-label="{{ _('Navigation menu') }}" aria-hidden="true">
         <ul class="mobile-menu-items">
           {% include "menu.html" %}
             <li class="pure-menu-item menu-collapsible">
