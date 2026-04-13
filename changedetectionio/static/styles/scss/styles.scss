@@ -3,7 +3,10 @@
  */
 
 @use "settings" as *;
+// Brand tokens MUST load first — _variables.scss consumes them.
+@use "parts/brand";
 @use "parts/variables";
+@use "parts/brand_components";
 @use "parts/arrows";
 @use "parts/browser-steps";
 @use "parts/extra_proxies";

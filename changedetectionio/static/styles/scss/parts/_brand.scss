@@ -1,0 +1,74 @@
+/**
+ * onChange by Sairo — Brand tokens.
+ *
+ * ⚠️  This partial is the ONLY place in the SCSS tree where hex values
+ *     live. Every other partial consumes the semantic tokens defined
+ *     here (or in _variables.scss which maps them to role-based names).
+ *
+ * See DESIGN.md (repo root) for the authoritative description of the
+ * palette, type scale, spacing rhythm, and accessibility rules.
+ */
+
+:root {
+  /* ---------------- Brand palette (indigo) ---------------- */
+  --brand-indigo-50:  #EEF2FF;
+  --brand-indigo-100: #E0E7FF;
+  --brand-indigo-300: #A5B4FC;
+  --brand-indigo-500: #6366F1;
+  --brand-indigo-600: #4F46E5;
+  --brand-indigo-700: #4338CA; /* primary brand colour */
+  --brand-indigo-800: #3730A3;
+  --brand-indigo-900: #312E81;
+
+  /* ---------------- Neutral scale (slate) ---------------- */
+  --slate-50:  #F8FAFC;
+  --slate-100: #F1F5F9;
+  --slate-200: #E2E8F0;
+  --slate-300: #CBD5E1;
+  --slate-400: #94A3B8;
+  --slate-500: #64748B;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1E293B;
+  --slate-900: #0F172A;
+
+  /* ---------------- Status / semantic colours ---------------- */
+  --status-success-bg: #D1FAE5;
+  --status-success-fg: #065F46;
+  --status-warning-bg: #FEF3C7;
+  --status-warning-fg: #92400E;
+  --status-danger-bg:  #FEE2E2;
+  --status-danger-fg:  #991B1B;
+  --status-info-bg:    #DBEAFE;
+  --status-info-fg:    #1E40AF;
+  --status-change-bg:  #FEF3C7; /* "something changed" highlight */
+  --status-change-fg:  #B45309;
+
+  /* ---------------- Spacing rhythm (4 px) ---------------- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  /* ---------------- Radius ---------------- */
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-full: 9999px;
+
+  /* ---------------- Elevation (intentionally only two levels) ---------------- */
+  --shadow-1: 0 1px 2px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-2: 0 10px 25px rgba(15, 23, 42, 0.12), 0 4px 10px rgba(15, 23, 42, 0.08);
+
+  /* ---------------- Font stacks ---------------- */
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* ---------------- Focus ring (never remove) ---------------- */
+  --focus-ring-color: var(--brand-indigo-600);
+  --focus-ring-offset: 2px;
+  --focus-ring-width: 2px;
+}
