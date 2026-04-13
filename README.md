@@ -160,6 +160,15 @@ We test pages against axe-core / Lighthouse and screen readers (VoiceOver
 on macOS/iOS, NVDA on Windows) before shipping accessibility-impacting
 changes.
 
+The deployed app surfaces two public, indexable accessibility documents
+(linked from the footer of every page):
+
+- **`/accessibility`** — the public accessibility statement (conformance
+  status, compatibility matrix, known limitations, feedback channels).
+- **`/accessibility/vpat`** — the **VPAT 2.5Rev — WCAG 2.2** conformance
+  report with per-criterion Supports / Partially Supports / Not
+  Applicable findings for every Level A and Level AA success criterion.
+
 ---
 
 ## Licences

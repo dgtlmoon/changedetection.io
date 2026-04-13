@@ -56,6 +56,50 @@ def test_about_and_privacy_render(client, live_server, measure_memory_usage, dat
     assert "/robots.txt" in privacy
 
 
+def test_accessibility_statement_renders(client, live_server, measure_memory_usage, datastore_path):
+    body = _get_ok(client, "marketing.accessibility")
+    # Statement must name the standard explicitly.
+    assert "WCAG 2.2" in body
+    assert "Level AA" in body
+    # Required elements of a public a11y statement.
+    assert "Conformance status" in body
+    assert "Known limitations" in body
+    assert "Feedback" in body
+    assert "accessibility@sairo.app" in body
+    # Must link to the VPAT.
+    assert url_for("marketing.vpat") in body
+    # Public page → indexable.
+    assert 'content="noindex,nofollow"' not in body
+    assert 'content="index,follow"' in body
+
+
+def test_vpat_renders_full_wcag_22_table(client, live_server, measure_memory_usage, datastore_path):
+    body = _get_ok(client, "marketing.vpat")
+    # Document type and standard.
+    assert "Voluntary Product Accessibility Template" in body
+    assert "WCAG 2.2" in body
+    # All six new 2.2 success criteria must be enumerated by SC number.
+    for sc in ("2.4.11", "2.5.7", "2.5.8", "3.2.6", "3.3.7", "3.3.8"):
+        assert sc in body, f"VPAT missing WCAG 2.2 new SC {sc}"
+    # A representative pre-2.2 criterion (Level A and Level AA) is present.
+    assert "1.1.1" in body
+    assert "1.4.3" in body
+    # Standard VPAT terms must be defined.
+    for term in ("Supports", "Partially Supports", "Does Not Support", "Not Applicable"):
+        assert term in body
+    # Public page → indexable.
+    assert 'content="noindex,nofollow"' not in body
+    assert 'content="index,follow"' in body
+
+
+def test_footer_links_to_accessibility_and_vpat(client, live_server, measure_memory_usage, datastore_path):
+    # The footer is rendered on every page via base.html. Pick the landing
+    # page (always public) and verify both links are present.
+    body = _get_ok(client, "marketing.landing")
+    assert url_for("marketing.accessibility") in body
+    assert url_for("marketing.vpat") in body
+
+
 def test_robots_txt_disallows_app_surfaces(client, live_server, measure_memory_usage, datastore_path):
     res = client.get(url_for("marketing.robots_txt"))
     assert res.status_code == 200
@@ -82,8 +126,15 @@ def test_sitemap_xml_is_valid_and_lists_public_routes(client, live_server, measu
     assert root.tag == f"{ns}urlset"
 
     locs = [el.text for el in root.iter(f"{ns}loc")]
-    # All four public pages must be listed.
-    for endpoint in ("marketing.landing", "marketing.features", "marketing.about", "marketing.privacy"):
+    # All public pages must be listed.
+    for endpoint in (
+        "marketing.landing",
+        "marketing.features",
+        "marketing.about",
+        "marketing.privacy",
+        "marketing.accessibility",
+        "marketing.vpat",
+    ):
         expected = url_for(endpoint, _external=True)
         assert expected in locs, f"sitemap missing {endpoint} -> {expected}"
 

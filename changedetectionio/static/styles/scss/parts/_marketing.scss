@@ -310,6 +310,72 @@
 }
 
 /* ---------------------------------------------------------------------
+ * Definition list used on accessibility statement / VPAT metadata
+ * ------------------------------------------------------------------- */
+.marketing-dl {
+  display: grid;
+  grid-template-columns: minmax(180px, max-content) 1fr;
+  gap: 0.5rem 1.25rem;
+  margin: 0.5rem 0 1.5rem;
+
+  dt {
+    font-weight: 600;
+    color: var(--color-text);
+  }
+  dd {
+    margin: 0;
+    line-height: 1.55;
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * Tables on marketing pages (VPAT, conformance, terms)
+ * ------------------------------------------------------------------- */
+.marketing-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0 1.5rem;
+  font-size: 0.95rem;
+
+  caption {
+    text-align: left;
+    font-weight: 600;
+    padding: 0.5rem 0;
+  }
+
+  th, td {
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--color-border-input);
+    text-align: left;
+    vertical-align: top;
+    line-height: 1.5;
+  }
+
+  thead th {
+    background: var(--color-background-code);
+    font-weight: 700;
+  }
+
+  tbody tr:nth-child(even) {
+    background: var(--color-background-code);
+  }
+}
+
+/* The VPAT table is content-dense and benefits from wider prose. */
+.vpat-table {
+  font-size: 0.9rem;
+
+  th[scope="row"] { width: 32%; font-weight: 600; }
+  td:nth-child(2) { width: 14%; white-space: nowrap; }
+}
+
+/* Allow VPAT tables to break out of the 720px prose column on wider
+ * viewports — a 3-column conformance grid needs the room. */
+.marketing-prose:has(.vpat-table) {
+  max-width: 1080px;
+}
+
+/* ---------------------------------------------------------------------
  * Mobile tweaks
  * ------------------------------------------------------------------- */
 @media (max-width: 760px) {
@@ -317,4 +383,20 @@
   .marketing-section { padding: 2rem 1rem; }
   .marketing-cta-row { gap: 0.5rem; }
   .marketing-feature-row-highlight { padding: 1rem; }
+
+  .marketing-dl {
+    grid-template-columns: 1fr;
+    gap: 0.25rem 0;
+    dt { margin-top: 0.75rem; }
+  }
+
+  /* Tables: keep them readable on narrow screens by allowing
+     horizontal scroll on the table itself rather than overflowing
+     the page (preserves WCAG 2.2 SC 1.4.10 reflow at 320 px). */
+  .marketing-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    font-size: 0.85rem;
+  }
 }

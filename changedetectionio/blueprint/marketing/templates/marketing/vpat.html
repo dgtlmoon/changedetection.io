@@ -1,0 +1,162 @@
+{% extends 'marketing/_layout.html' %}
+{% block marketing_content %}
+
+<section class="marketing-hero marketing-hero-narrow">
+  <div class="marketing-hero-inner">
+    <h1 class="marketing-h1">{{ _('Voluntary Product Accessibility Template (VPAT&reg; 2.5Rev)') }}</h1>
+    <p class="marketing-lede">
+      {{ _('Conformance report for') }}
+      <strong>onChange by Sairo</strong>
+      {{ _('against WCAG 2.2 Level A and Level AA. This document follows the structure of the ITI VPAT 2.5Rev — WCAG edition.') }}
+    </p>
+  </div>
+</section>
+
+<section class="marketing-section">
+  <div class="marketing-prose">
+
+    <h2>{{ _('Document information') }}</h2>
+    <dl class="marketing-dl">
+      <dt>{{ _('Name of product / version') }}</dt>
+      <dd>onChange by Sairo — {{ _('rolling release on') }} <code>main</code></dd>
+      <dt>{{ _('Product description') }}</dt>
+      <dd>{{ _('Self-hosted web application for monitoring web pages, sitemaps, restock state, prices, and full-site URL inventories. Notifications via Apprise.') }}</dd>
+      <dt>{{ _('Date') }}</dt>
+      <dd><time datetime="2026-04-13">2026-04-13</time></dd>
+      <dt>{{ _('Contact information') }}</dt>
+      <dd><a href="mailto:accessibility@sairo.app">accessibility@sairo.app</a></dd>
+      <dt>{{ _('Notes') }}</dt>
+      <dd>{{ _('This VPAT covers the upstream codebase as published. It does not bind any third-party operator who modifies their own deployment.') }}</dd>
+      <dt>{{ _('Evaluation methods used') }}</dt>
+      <dd>{{ _('Self-evaluation combining axe-core automated checks, manual keyboard walkthroughs, screen-reader smoke-tests (VoiceOver, NVDA), 320 px reflow checks, and colour-blind simulation.') }}</dd>
+    </dl>
+
+    <h2>{{ _('Applicable standards / guidelines') }}</h2>
+    <table class="marketing-table">
+      <caption class="visually-hidden">{{ _('Standards covered by this VPAT') }}</caption>
+      <thead>
+        <tr><th scope="col">{{ _('Standard / guideline') }}</th><th scope="col">{{ _('Included in report') }}</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><a href="https://www.w3.org/TR/WCAG22/" rel="noopener">{{ _('Web Content Accessibility Guidelines 2.2') }}</a></td><td>{{ _('Level A (yes), Level AA (yes), Level AAA (no)') }}</td></tr>
+        <tr><td><a href="https://www.access-board.gov/ict/" rel="noopener">{{ _('Revised Section 508') }}</a></td><td>{{ _('Inherits WCAG 2.0 AA — exceeded') }}</td></tr>
+        <tr><td><a href="https://www.etsi.org/deliver/etsi_en/301500_301599/301549/" rel="noopener">EN 301 549 v3.2.1</a></td><td>{{ _('Inherits WCAG 2.1 AA — exceeded') }}</td></tr>
+      </tbody>
+    </table>
+
+    <h2>{{ _('Terms') }}</h2>
+    <dl class="marketing-dl">
+      <dt>{{ _('Supports') }}</dt>
+      <dd>{{ _('The functionality of the product has at least one method that meets the criterion without known defects or meets with equivalent facilitation.') }}</dd>
+      <dt>{{ _('Partially Supports') }}</dt>
+      <dd>{{ _('Some functionality of the product does not meet the criterion.') }}</dd>
+      <dt>{{ _('Does Not Support') }}</dt>
+      <dd>{{ _('The majority of product functionality does not meet the criterion.') }}</dd>
+      <dt>{{ _('Not Applicable') }}</dt>
+      <dd>{{ _('The criterion is not relevant to the product.') }}</dd>
+      <dt>{{ _('Not Evaluated') }}</dt>
+      <dd>{{ _('The product has not been evaluated against the criterion. May be used only for Level AAA in WCAG 2.x evaluations.') }}</dd>
+    </dl>
+
+    <!-- ============================================================ -->
+    <h2>{{ _('WCAG 2.2 Report') }}</h2>
+
+    <h3>{{ _('Table 1: Success Criteria, Level A') }}</h3>
+    <table class="marketing-table vpat-table">
+      <caption class="visually-hidden">{{ _('WCAG 2.2 Level A success criteria conformance table') }}</caption>
+      <thead>
+        <tr>
+          <th scope="col">{{ _('Criteria') }}</th>
+          <th scope="col">{{ _('Conformance level') }}</th>
+          <th scope="col">{{ _('Remarks and explanations') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><th scope="row">1.1.1 {{ _('Non-text Content (Level A)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Decorative icons use aria-hidden="true". Meaningful icons have aria-label or paired text. Snapshot screenshots have descriptive alt text or adjacent textual context.') }}</td></tr>
+        <tr><th scope="row">1.2.1 {{ _('Audio-only and Video-only (Prerecorded) (Level A)') }}</th><td>{{ _('Not Applicable') }}</td><td>{{ _('No audio-only or video-only content in the product.') }}</td></tr>
+        <tr><th scope="row">1.2.2 {{ _('Captions (Prerecorded) (Level A)') }}</th><td>{{ _('Not Applicable') }}</td><td>{{ _('No prerecorded video content in the product.') }}</td></tr>
+        <tr><th scope="row">1.2.3 {{ _('Audio Description or Media Alternative (Prerecorded) (Level A)') }}</th><td>{{ _('Not Applicable') }}</td><td>{{ _('No prerecorded video content in the product.') }}</td></tr>
+        <tr><th scope="row">1.3.1 {{ _('Info and Relationships (Level A)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Semantic HTML5 throughout. Tables use scope. Forms use label[for]. Landmarks (main, nav, header, footer, contentinfo) are present.') }}</td></tr>
+        <tr><th scope="row">1.3.2 {{ _('Meaningful Sequence (Level A)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('DOM order matches visual order; CSS positioning never reorders content meaningfully.') }}</td></tr>
+        <tr><th scope="row">1.3.3 {{ _('Sensory Characteristics (Level A)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Instructions never rely on shape, location, or sound alone.') }}</td></tr>
+        <tr><th scope="row">1.4.1 {{ _('Use of Color (Level A)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Status badges always pair colour with an icon and text label.') }}</td></tr>
+        <tr><th scope="row">1.4.2 {{ _('Audio Control (Level A)') }}</th><td>{{ _('Not Applicable') }}</td><td>{{ _('No auto-playing audio.') }}</td></tr>
+        <tr><th scope="row">2.1.1 {{ _('Keyboard (Level A)') }}</th><td>{{ _('Partially Supports') }}</td><td>{{ _('All standard interactions are keyboard-operable. The visual selector for browser-step capture relies on pointer interaction with a screenshot; users can paste a CSS selector or XPath into the same field as the equivalent keyboard path.') }}</td></tr>
+        <tr><th scope="row">2.1.2 {{ _('No Keyboard Trap (Level A)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Modals trap focus intentionally and release on ESC. No unintended traps exist.') }}</td></tr>
+        <tr><th scope="row">2.1.4 {{ _('Character Key Shortcuts (Level A)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Single-character shortcuts (e.g. "/" for search) are scoped to non-input contexts and can be disabled per session.') }}</td></tr>
+        <tr><th scope="row">2.2.1 {{ _('Timing Adjustable (Level A)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Sessions do not time out automatically. Toast messages are dismissable and do not auto-disappear faster than 6 seconds.') }}</td></tr>
+        <tr><th scope="row">2.2.2 {{ _('Pause, Stop, Hide (Level A)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('No auto-updating content longer than 5 seconds is presented without a pause control. Real-time watch updates are user-initiated.') }}</td></tr>
+        <tr><th scope="row">2.3.1 {{ _('Three Flashes or Below Threshold (Level A)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('No content flashes at any rate.') }}</td></tr>
+        <tr><th scope="row">2.4.1 {{ _('Bypass Blocks (Level A)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('A skip-to-main-content link is the first interactive element on every page.') }}</td></tr>
+        <tr><th scope="row">2.4.2 {{ _('Page Titled (Level A)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Every page has a unique, descriptive <title>.') }}</td></tr>
+        <tr><th scope="row">2.4.3 {{ _('Focus Order (Level A)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Tab order follows the visible reading order on every page.') }}</td></tr>
+        <tr><th scope="row">2.4.4 {{ _('Link Purpose (In Context) (Level A)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Link text describes its destination; ambiguous "click here" patterns are not used.') }}</td></tr>
+        <tr><th scope="row">2.5.1 {{ _('Pointer Gestures (Level A)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('No multi-point or path-based gestures are required for any operation.') }}</td></tr>
+        <tr><th scope="row">2.5.2 {{ _('Pointer Cancellation (Level A)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('All controls activate on pointer-up; users may abort by moving the pointer off the target before release.') }}</td></tr>
+        <tr><th scope="row">2.5.3 {{ _('Label in Name (Level A)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Accessible names contain the visible label string.') }}</td></tr>
+        <tr><th scope="row">2.5.4 {{ _('Motion Actuation (Level A)') }}</th><td>{{ _('Not Applicable') }}</td><td>{{ _('No motion-activated functionality.') }}</td></tr>
+        <tr><th scope="row">3.1.1 {{ _('Language of Page (Level A)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Every page declares lang on the html element; the value reflects the active translation.') }}</td></tr>
+        <tr><th scope="row">3.2.1 {{ _('On Focus (Level A)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Focus does not trigger context changes anywhere in the product.') }}</td></tr>
+        <tr><th scope="row">3.2.2 {{ _('On Input (Level A)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Input never triggers an unexpected context change; form submission is always explicit.') }}</td></tr>
+        <tr><th scope="row">3.2.6 {{ _('Consistent Help (Level A — new in 2.2)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Help / Docs links appear in the same relative position on every page (header on desktop, "More" tab on mobile).') }}</td></tr>
+        <tr><th scope="row">3.3.1 {{ _('Error Identification (Level A)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Validation errors render adjacent to their input with role="alert".') }}</td></tr>
+        <tr><th scope="row">3.3.2 {{ _('Labels or Instructions (Level A)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Every input has a visible label and, where useful, a help-text description via aria-describedby.') }}</td></tr>
+        <tr><th scope="row">3.3.7 {{ _('Redundant Entry (Level A — new in 2.2)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Multi-step flows pre-fill values from earlier steps. The "duplicate watch" action copies all fields.') }}</td></tr>
+        <tr><th scope="row">4.1.1 {{ _('Parsing (Level A) — obsolete in WCAG 2.2') }}</th><td>{{ _('Not Applicable') }}</td><td>{{ _('Removed from WCAG 2.2; HTML5 validity is enforced regardless.') }}</td></tr>
+        <tr><th scope="row">4.1.2 {{ _('Name, Role, Value (Level A)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Custom widgets follow the WAI-ARIA Authoring Practices.') }}</td></tr>
+      </tbody>
+    </table>
+
+    <h3>{{ _('Table 2: Success Criteria, Level AA') }}</h3>
+    <table class="marketing-table vpat-table">
+      <caption class="visually-hidden">{{ _('WCAG 2.2 Level AA success criteria conformance table') }}</caption>
+      <thead>
+        <tr>
+          <th scope="col">{{ _('Criteria') }}</th>
+          <th scope="col">{{ _('Conformance level') }}</th>
+          <th scope="col">{{ _('Remarks and explanations') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><th scope="row">1.2.4 {{ _('Captions (Live) (Level AA)') }}</th><td>{{ _('Not Applicable') }}</td><td>{{ _('No live audio.') }}</td></tr>
+        <tr><th scope="row">1.2.5 {{ _('Audio Description (Prerecorded) (Level AA)') }}</th><td>{{ _('Not Applicable') }}</td><td>{{ _('No prerecorded video.') }}</td></tr>
+        <tr><th scope="row">1.3.4 {{ _('Orientation (Level AA)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('No content is restricted to a single display orientation.') }}</td></tr>
+        <tr><th scope="row">1.3.5 {{ _('Identify Input Purpose (Level AA)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Login fields use autocomplete="email" / "current-password". Other personal-data fields use the appropriate autocomplete tokens.') }}</td></tr>
+        <tr><th scope="row">1.4.3 {{ _('Contrast (Minimum) (Level AA)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('All text/background pairs ≥ 4.5 : 1 (normal) or 3 : 1 (large), audited in DESIGN.md § 2.4.') }}</td></tr>
+        <tr><th scope="row">1.4.4 {{ _('Resize Text (Level AA)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Body text uses rem; layout remains usable at 200% zoom.') }}</td></tr>
+        <tr><th scope="row">1.4.5 {{ _('Images of Text (Level AA)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('No images of text are used in product chrome; logos are excepted.') }}</td></tr>
+        <tr><th scope="row">1.4.10 {{ _('Reflow (Level AA)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('No horizontal scrolling at 320 CSS px on portrait or 256 CSS px on landscape; mobile-first SCSS enforces this.') }}</td></tr>
+        <tr><th scope="row">1.4.11 {{ _('Non-text Contrast (Level AA)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('UI components (borders, focus rings, status icons) all meet 3 : 1.') }}</td></tr>
+        <tr><th scope="row">1.4.12 {{ _('Text Spacing (Level AA)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Content adapts when users override line-height, paragraph spacing, letter-spacing, and word-spacing.') }}</td></tr>
+        <tr><th scope="row">1.4.13 {{ _('Content on Hover or Focus (Level AA)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Tooltips are dismissable with ESC, persist while hovered, and never overlap the focus target.') }}</td></tr>
+        <tr><th scope="row">2.4.5 {{ _('Multiple Ways (Level AA)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Watches can be reached via list view, tag filter, search, and direct URL.') }}</td></tr>
+        <tr><th scope="row">2.4.6 {{ _('Headings and Labels (Level AA)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Headings describe the section topic; labels describe the input purpose.') }}</td></tr>
+        <tr><th scope="row">2.4.7 {{ _('Focus Visible (Level AA)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('2 px indigo focus ring with 2 px offset on every focusable element. Never removed.') }}</td></tr>
+        <tr><th scope="row">2.4.11 {{ _('Focus Not Obscured (Minimum) (Level AA — new in 2.2)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Sticky header and mobile bottom-nav are sized so the focused element is never fully obscured. scroll-padding-top and scroll-padding-bottom are set on the html element.') }}</td></tr>
+        <tr><th scope="row">2.5.7 {{ _('Dragging Movements (Level AA — new in 2.2)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Sortable lists expose ↑/↓ keyboard reorder. Resize handles offer click-to-cycle preset widths.') }}</td></tr>
+        <tr><th scope="row">2.5.8 {{ _('Target Size (Minimum) (Level AA — new in 2.2)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Global floor of 24 × 24 CSS px with ≥ 4 px spacing; touch viewports raise to 44 × 44.') }}</td></tr>
+        <tr><th scope="row">3.1.2 {{ _('Language of Parts (Level AA)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Inline language switches use the lang attribute.') }}</td></tr>
+        <tr><th scope="row">3.2.3 {{ _('Consistent Navigation (Level AA)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('The primary navigation has identical order and content on every page.') }}</td></tr>
+        <tr><th scope="row">3.2.4 {{ _('Consistent Identification (Level AA)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Components with the same function (Save, Cancel, Delete) use the same labels and icons throughout.') }}</td></tr>
+        <tr><th scope="row">3.3.3 {{ _('Error Suggestion (Level AA)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Validation messages name the expected format and offer a corrected example where possible.') }}</td></tr>
+        <tr><th scope="row">3.3.4 {{ _('Error Prevention (Legal, Financial, Data) (Level AA)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Destructive actions (delete watch, restore backup) require explicit confirmation in a "danger zone" panel and are reversible from a backup snapshot.') }}</td></tr>
+        <tr><th scope="row">3.3.8 {{ _('Accessible Authentication (Minimum) (Level AA — new in 2.2)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Login uses email + password. Paste is enabled. Password managers and browser autofill are not blocked. No cognitive-function tests are required.') }}</td></tr>
+        <tr><th scope="row">4.1.3 {{ _('Status Messages (Level AA)') }}</th><td>{{ _('Supports') }}</td><td>{{ _('Toasts use role="status" (informational) and role="alert" (errors). Live regions are scoped and not abused for chrome.') }}</td></tr>
+      </tbody>
+    </table>
+
+    <h3>{{ _('Table 3: Success Criteria, Level AAA') }}</h3>
+    <p>{{ _('Level AAA conformance is not claimed. Some Level AAA criteria are met as a side-effect (notably 2.5.5 Target Size on touch viewports and several enhanced contrast pairs), but the product is not evaluated against the full Level AAA set.') }}</p>
+
+    <h2>{{ _('Legal disclaimer') }}</h2>
+    <p>{{ _('VPAT&reg; is a registered trademark of the Information Technology Industry Council (ITI). This document follows the structure of the VPAT 2.5Rev template but is published independently. The information provided here is offered in good faith based on self-evaluation; it does not constitute a warranty or contractual commitment. Operators of self-hosted deployments are responsible for the accessibility of their own deployments.') }}</p>
+
+  </div>
+</section>
+
+<section class="marketing-section marketing-cta-block">
+  <a class="pure-button pure-button-primary" href="{{ url_for('marketing.accessibility') }}">{{ _('Back to accessibility statement') }}</a>
+  <a class="pure-button" href="https://github.com/wolfieeee/change.sairo.app/blob/main/DESIGN.md#6-accessibility-wcag-22-aa" rel="noopener">{{ _('Design system § 6') }}</a>
+</section>
+
+{% endblock %}
