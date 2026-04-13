@@ -1,0 +1,122 @@
+# CI for services/core/ — Phase 3.1 of the SaaS rewrite.
+# Depends on the identity service's migrations being applied first,
+# since core's watches/tags tables FK into orgs(id).
+name: core-service
+
+on:
+  push:
+    paths:
+      - "services/core/**"
+      - "services/identity/migrations/**"
+      - ".github/workflows/core-service.yml"
+  pull_request:
+    paths:
+      - "services/core/**"
+      - "services/identity/migrations/**"
+      - ".github/workflows/core-service.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: core-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-unit:
+    name: Lint + unit tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/core
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.5.x"
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Ruff (lint)
+        run: uv run ruff check app tests
+
+      - name: Ruff (format check)
+        run: uv run ruff format --check app tests
+
+      - name: Pytest (unit only — no DB)
+        run: uv run pytest -m "not db"
+
+  integration:
+    name: Integration — identity migrations → core migrations → tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: onchange
+          POSTGRES_PASSWORD: onchange_dev_password
+          POSTGRES_DB: onchange
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U onchange"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      IDENTITY_DATABASE_ADMIN_URL: postgresql+asyncpg://onchange:onchange_dev_password@localhost:5432/onchange
+      IDENTITY_DATABASE_URL: postgresql+asyncpg://onchange:onchange_dev_password@localhost:5432/onchange
+      CORE_DATABASE_ADMIN_URL: postgresql+asyncpg://onchange:onchange_dev_password@localhost:5432/onchange
+      CORE_DATABASE_URL: postgresql+asyncpg://onchange:onchange_dev_password@localhost:5432/onchange
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.5.x"
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Bootstrap dev Postgres roles
+        run: |
+          PGPASSWORD=onchange_dev_password psql \
+            -h localhost -U onchange -d onchange \
+            -f services/identity/migrations/sql/dev-init.sql
+
+      # -------------- identity first --------------
+      - name: identity — install
+        working-directory: services/identity
+        run: uv sync --all-extras
+
+      - name: identity — alembic upgrade head
+        working-directory: services/identity
+        run: uv run alembic upgrade head
+
+      # -------------- then core --------------
+      - name: core — install
+        working-directory: services/core
+        run: uv sync --all-extras
+
+      - name: core — alembic upgrade head
+        working-directory: services/core
+        run: uv run alembic upgrade head
+
+      - name: core — alembic downgrade base (reversibility)
+        working-directory: services/core
+        run: uv run alembic downgrade base
+
+      - name: core — alembic upgrade head (again)
+        working-directory: services/core
+        run: uv run alembic upgrade head
+
+      - name: core — pytest @db
+        working-directory: services/core
+        run: uv run pytest -m db

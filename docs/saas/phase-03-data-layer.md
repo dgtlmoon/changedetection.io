@@ -1,8 +1,7 @@
 # Phase 3 — New data layer
 
-> Status: **draft.** This is the ceiling-setter: the shapes chosen here
-> determine what every subsequent phase can do. Nothing here is built
-> yet.
+> Status: **3.1 landing now.** 3.2 + 3.3 planned, built after 3.1
+> is merged.
 
 ## Goal
 
@@ -11,6 +10,150 @@ with a Postgres-backed, tenant-scoped store and move binary artefacts
 (snapshots, screenshots, PDFs, favicons) to S3-compatible object
 storage. Do it behind a `NEW_STORE=true` feature flag so the existing
 single-tenant store keeps working until the switch.
+
+## Sub-phase split
+
+| # | Scope | Status |
+|---|---|---|
+| **3.1** | `services/core/` scaffold; `WatchStore` + `TagStore` protocols; Postgres-backed implementation; watches + watch_tags + watch_tag_links tables; RLS; CRUD + cross-tenant tests. **No HTTP routes.** | **landing now** |
+| 3.2 | Object-storage adapter (S3-compatible), `watch_history_index` table, snapshots + screenshots + favicon persistence, importer from the legacy file datastore. | pending |
+| 3.3 | Processor rewiring: remove singleton `datastore` imports, processors return updates instead of mutating, side-by-side tests under both stores, `NEW_STORE` feature flag cutover. | pending |
+
+The 3.1 / 3.2 / 3.3 order is enforced — 3.2 needs 3.1's tables to
+index history into, and 3.3 needs both stores before it can compare
+behaviour.
+
+---
+
+## 3.1 — Core store + schema (this commit)
+
+### New service: `services/core/`
+
+Owns the tenant-scoped watch API that will eventually replace the
+Flask blueprints in `changedetectionio/blueprint/`. For 3.1 we only
+need the package and its DB layer — HTTP routes come in a later PR.
+
+```
+services/core/
+├── pyproject.toml
+├── alembic.ini           # version_table = alembic_version_core
+├── README.md
+├── migrations/
+│   └── versions/
+│       └── 20260413_0001_watches_tags.py
+├── app/
+│   ├── config.py
+│   ├── db.py             # its own engine + with_current_org()
+│   ├── models/           # watch, watch_tag, watch_tag_link
+│   └── store/
+│       ├── protocol.py   # WatchStore, TagStore
+│       └── pg.py         # PgWatchStore, PgTagStore
+└── tests/
+    ├── conftest.py
+    ├── test_watches_crud.py
+    └── test_tags_crud.py
+```
+
+### Migration ordering
+
+Core depends on identity's `orgs` table (`watches.org_id` references
+`orgs.id`). The two services each manage their own migration tree
+with a distinct `version_table`:
+
+- identity uses the default `alembic_version`.
+- core uses `alembic_version_core`.
+
+Both connect to the same database. Deploy order:
+`alembic upgrade head` in **identity first**, then in core. CI
+enforces this.
+
+### Table: `watches`
+
+High-value fields get real columns; the long tail stays in `settings`
+jsonb so the 120+ legacy `Watch.model` fields don't multiply the
+migration burden.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | `uuid` PK | `uuid7()` |
+| `org_id` | `uuid` not null FK → `orgs.id` | RLS key |
+| `url` | `text` not null | |
+| `title` | `text` nullable | |
+| `processor` | `text` not null default `'text_json_diff'` | |
+| `fetch_backend` | `text` not null default `'system'` | |
+| `paused` | `bool` not null default false | |
+| `notification_muted` | `bool` not null default false | |
+| `time_between_check_seconds` | `int` nullable | null = use org default |
+| `last_checked` | `timestamptz` nullable | |
+| `last_changed` | `timestamptz` nullable | |
+| `last_error` | `text` nullable | |
+| `check_count` | `bigint` not null default 0 | |
+| `previous_md5` | `text` nullable | |
+| `settings` | `jsonb` not null default `'{}'` | everything else |
+| `created_at`, `updated_at`, `deleted_at` | `timestamptz` | |
+
+Indexes:
+- `(org_id, deleted_at)` partial — fast org list
+- `(org_id, paused)` — scheduler queries unpaused watches
+- `(org_id, last_checked ASC NULLS FIRST)` — scheduler ordering
+
+### Table: `watch_tags`
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | `uuid` PK | |
+| `org_id` | `uuid` not null FK | |
+| `name` | `citext` not null | |
+| `color` | `text` nullable | |
+| `settings` | `jsonb` not null default `'{}'` | tag overrides |
+| `created_at`, `updated_at`, `deleted_at` | `timestamptz` | |
+
+Unique `(org_id, name)` partial index `WHERE deleted_at IS NULL`.
+
+### Table: `watch_tag_links`
+
+Simple m2m. Composite PK `(watch_id, tag_id)`. Both FKs
+`ON DELETE CASCADE`.
+
+### RLS
+
+Enabled on all three tables. `watch_tag_links` has no direct
+`org_id`; its policy joins to `watches`:
+
+```sql
+CREATE POLICY p_watch_tag_links_org_isolation ON watch_tag_links
+    USING (EXISTS (
+        SELECT 1 FROM watches w
+        WHERE w.id = watch_tag_links.watch_id
+          AND w.org_id = NULLIF(current_setting('app.current_org', true), '')::uuid
+    ));
+```
+
+### `WatchStore` / `TagStore` protocols
+
+`typing.Protocol` — no full ABC needed. Concrete implementations take
+`AsyncSession` as first argument (same pattern identity uses) so
+tests can inject freely. Every method takes `org_id` explicitly and
+filters on it in the ORM query AND runs under
+`with_current_org(org_id)` — belt + suspenders.
+
+### Done-when checklist (3.1)
+
+- [x] `services/core/` scaffold compiles; `uv run pytest` passes.
+- [x] Alembic migration forward + `downgrade base` reversible.
+- [x] `PgWatchStore` + `PgTagStore` full CRUD tests @db.
+- [x] Cross-tenant isolation: org A cannot read / update / delete
+  org B's watches or tags via the store.
+- [x] `assign_to_watch` m2m tests (add, remove, cross-tenant tag
+  ignored).
+- [x] CI job for core service runs after identity migrations.
+- [ ] *(3.2)* HTTP routes.
+- [ ] *(3.2)* Object storage + history index + importer.
+- [ ] *(3.3)* Legacy processor rewiring + cutover flag.
+
+---
+
+## 3.2 — Object storage, history index, legacy importer (later PR)
 
 ## Architectural decisions
 
