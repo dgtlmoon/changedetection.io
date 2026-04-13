@@ -1173,9 +1173,11 @@ ul#highlightSnippetActions {
 
 
 /* ---------------------------------------------------------------------------
- * Mobile polish: enforce WCAG 2.1 minimum touch target sizes and a few
+ * Mobile polish: enforce WCAG 2.2 minimum touch target sizes and a few
  * small-screen ergonomics fixes for <=760px viewports. Additive only — does
- * not change desktop styling.
+ * not change desktop styling. Note that WCAG 2.2 SC 2.5.8 (Target Size,
+ * Minimum) is satisfied globally at 24x24 CSS px; here we go further and meet
+ * the AAA-level 44x44 from SC 2.5.5 on touch viewports.
  * ------------------------------------------------------------------------- */
 @media only screen and (max-width: 760px) {
   /* WCAG 2.5.5 Level AAA: 44x44px minimum target size for interactive controls */

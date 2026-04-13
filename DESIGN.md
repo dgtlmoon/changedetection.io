@@ -6,7 +6,7 @@ should be traceable to a token, rule, or pattern defined here. If you
 need to deviate, update this file in the same commit and explain why.
 
 > **TL;DR** — Use the semantic CSS variables (never raw hex), hit WCAG
-> 2.1 AA contrast, prefer `rem`/`em` over pixel sizes, and keep the
+> 2.2 AA contrast, prefer `rem`/`em` over pixel sizes, and keep the
 > keyboard journey intact. Everything else follows.
 
 ---
@@ -86,7 +86,7 @@ it pairs well with indigo and stays warm enough in dark mode.
 | Info     | `--status-info-bg`     | `--status-info-fg`     | `#DBEAFE` / `#1E40AF` |
 | Change   | `--status-change-bg`   | `--status-change-fg`   | `#FEF3C7` / `#B45309` (amber — product-specific "something changed" highlight) |
 
-### 2.4 Contrast guarantees (WCAG 2.1 AA)
+### 2.4 Contrast guarantees (WCAG 2.2 AA — SC 1.4.3 / 1.4.11)
 
 Every combination listed below has been checked and exceeds **4.5 : 1**
 for normal text or **3 : 1** for large (≥ 18 pt / 14 pt bold) text.
@@ -177,8 +177,10 @@ modals / popovers.
 | Danger       | `--status-danger-bg`     | `--status-danger-fg`| `1px solid currentColor` |
 | Ghost        | transparent              | `--brand-indigo-700`| none   |
 
-**Touch target:** minimum 44 × 44 px (WCAG 2.5.5, already enforced in
-`styles.scss` for `<=760px` viewports).
+**Touch target:** minimum 44 × 44 px on touch viewports (WCAG 2.5.5,
+already enforced in `styles.scss` for `<=760px`). On all viewports a
+hard floor of 24 × 24 CSS px applies (WCAG 2.2 SC 2.5.8 — Target Size
+Minimum), with at least 4 px of clear spacing between adjacent targets.
 
 **Focus:** 2 px solid `--brand-indigo-600` outline with `offset: 2px`.
 Never remove focus rings.
@@ -212,22 +214,37 @@ Sticky headers, zebra striping via `--slate-100`, row hover via
 
 ---
 
-## 6. Accessibility (WCAG 2.1 AA)
+## 6. Accessibility (WCAG 2.2 AA)
 
-Our target is **WCAG 2.1 Level AA**, measured against the [ACT rules](https://www.w3.org/WAI/standards-guidelines/act/).
+Our target is **WCAG 2.2 Level AA**, measured against the
+[ACT rules](https://www.w3.org/WAI/standards-guidelines/act/). 2.2 AA
+is a strict superset of 2.1 AA and 2.0 AA — every criterion from those
+earlier versions still applies.
 
 ### 6.1 Non-negotiables
 
 1. Every page has a single `<h1>`, one `<main>`, one `<nav>`.
 2. Every form control has a label (`<label for>` or `aria-label`). No
    placeholder-only labels.
-3. Focus is visible on every interactive element.
+3. Focus is visible on every interactive element (SC 2.4.7) and never
+   fully obscured by sticky chrome (SC 2.4.11 — new in 2.2).
 4. Skip-link `.skip-link` is the first interactive element in `<body>`.
 5. Colour is never the sole carrier of meaning (use icons + text).
 6. All icons that carry meaning have an `aria-label` or paired text;
    decorative icons carry `aria-hidden="true"`.
 7. Motion is discretionary — respect `prefers-reduced-motion`.
 8. No fixed pixel font-sizes for body copy.
+9. Every drag interaction has a non-drag alternative (SC 2.5.7 — new
+   in 2.2).
+10. Targets are ≥ 24 × 24 CSS px with ≥ 4 px spacing, or 44 × 44 on
+    touch viewports (SC 2.5.8 — new in 2.2).
+11. Authentication never relies on a cognitive-function test, allows
+    paste into password fields, and does not block password managers
+    (SC 3.3.8 — new in 2.2).
+12. Multi-step flows pre-fill any value the user has already supplied
+    in the same session (SC 3.3.7 — new in 2.2).
+13. Help controls (Docs, Support, Contact) are in the same relative
+    location on every page (SC 3.2.6 — new in 2.2).
 
 ### 6.2 Keyboard journey
 
@@ -259,6 +276,48 @@ Test every new status-colour pair against the three common CVD
 simulations (protanopia, deuteranopia, tritanopia). Status must still be
 distinguishable from *shape and text*, not from hue alone.
 
+### 6.6 WCAG 2.2 AA conformance map
+
+| SC       | Title                              | How we conform |
+|----------|------------------------------------|----------------|
+| 1.3.1    | Info and Relationships             | Semantic HTML5; tables use `<th scope>`; landmarks (`<main>`, `<nav>`, `<header>`, `<footer>`). |
+| 1.4.3    | Contrast (Minimum)                 | All pairs in § 2.4 — every pair ≥ 4.5 : 1 (normal) / 3 : 1 (large). |
+| 1.4.10   | Reflow                             | No horizontal scrolling at 320 CSS px; mobile-first SCSS. |
+| 1.4.11   | Non-text Contrast                  | Borders, focus rings, status icons all ≥ 3 : 1 against adjacent surfaces. |
+| 1.4.12   | Text Spacing                       | All copy uses `rem`; no `!important` on `line-height`/`letter-spacing`. |
+| 1.4.13   | Content on Hover or Focus          | Tooltips dismissable with ESC, persist while hovered, never overlap focus target. |
+| 2.1.1    | Keyboard                           | Every interaction reachable via keyboard. |
+| 2.1.2    | No Keyboard Trap                   | Modals trap *intentionally* and release on ESC. |
+| 2.4.3    | Focus Order                        | DOM order matches visual order. |
+| 2.4.7    | Focus Visible                      | 2 px indigo ring, never removed. |
+| 2.4.11   | Focus Not Obscured (Min) **(2.2)** | `scroll-padding-top` on `html` accounts for sticky header; bottom-nav has `scroll-padding-bottom`. |
+| 2.5.5    | Target Size (Enhanced, AAA)        | Best-effort 44 × 44 on touch viewports. |
+| 2.5.7    | Dragging Movements **(2.2)**       | Sortable lists expose ↑/↓ keyboard reorder; resize handles offer click-to-cycle. |
+| 2.5.8    | Target Size (Min) **(2.2)**        | ≥ 24 × 24 CSS px global floor; spacing ≥ 4 px. |
+| 3.2.3    | Consistent Navigation              | Primary nav is identical on every page. |
+| 3.2.6    | Consistent Help **(2.2)**          | Help / Docs link is in the header on desktop and in the "More" tab on mobile, in the same position on every page. |
+| 3.3.1    | Error Identification               | Inline `role="alert"` with descriptive text. |
+| 3.3.3    | Error Suggestion                   | Validation messages name the expected format. |
+| 3.3.7    | Redundant Entry **(2.2)**          | Multi-step wizards pre-fill prior values; "duplicate watch" copies all fields. |
+| 3.3.8    | Accessible Authentication **(2.2)**| Login uses email + password; paste enabled; password managers supported; no puzzles or memorisation tests. |
+| 4.1.2    | Name, Role, Value                  | Custom widgets follow WAI-ARIA APG patterns. |
+| 4.1.3    | Status Messages                    | Toasts use `role="status"` (info) and `role="alert"` (errors). |
+
+Items marked **(2.2)** are new success criteria added in WCAG 2.2.
+
+### 6.7 Testing matrix
+
+Before any accessibility-impacting PR is merged:
+
+1. **axe-core** (browser extension or `@axe-core/cli`) on every changed
+   template — zero new violations.
+2. **Lighthouse** Accessibility score ≥ 95 on the changed page.
+3. **Keyboard-only** walk-through of the changed flow (no mouse).
+4. **Screen reader** smoke-test on at least one of: VoiceOver (macOS or
+   iOS), NVDA (Windows), Orca (Linux).
+5. **320 px reflow** check in dev tools.
+6. **Reduced-motion** check (`prefers-reduced-motion: reduce`).
+
 ---
 
 ## 7. Implementation rules
@@ -281,3 +340,4 @@ distinguishable from *shape and text*, not from hue alone.
 | Date       | Version | Author | Summary                         |
 |------------|---------|--------|---------------------------------|
 | 2026-04-13 | 1.0     | Sairo  | Initial version covering brand, palette, typography, spacing, components, accessibility, and implementation rules. |
+| 2026-04-13 | 1.1     | Sairo  | Re-targeted accessibility commitment from WCAG 2.1 AA to WCAG 2.2 AA. Added § 6.6 SC-by-SC conformance map (incl. new 2.2 criteria 2.4.11, 2.5.7, 2.5.8, 3.2.6, 3.3.7, 3.3.8) and § 6.7 testing matrix. Tightened target-size rules to a 24 × 24 CSS px global floor. |
