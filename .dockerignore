@@ -50,6 +50,9 @@ works-data/
 Dockerfile*
 docker-compose*.yml
 .dockerignore
+.env
+.env.*
+COOLIFY.md
 
 # Development certificates and keys
 *.pem

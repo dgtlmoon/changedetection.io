@@ -1,0 +1,120 @@
+# ============================================================================
+# onChange by Sairo — Coolify deployment compose
+# ----------------------------------------------------------------------------
+# This file targets the Coolify "Docker Compose" build pack (v4.x, 2025/2026).
+# Point Coolify at this file via:
+#   Build -> Docker Compose Location: docker-compose.coolify.yml
+#
+# Local / non-Coolify users: keep using ./docker-compose.yml instead.
+#
+# Coolify magic variables used below:
+#   SERVICE_FQDN_CHANGEDETECTION_5000   -> auto-generated public hostname
+#   SERVICE_URL_CHANGEDETECTION_5000    -> full https://... URL
+#   SERVICE_PASSWORD_64_CHANGEDETECTION -> random 64-char secret (admin pass)
+# Docs: https://coolify.io/docs/knowledge-base/docker/compose
+# ============================================================================
+
+services:
+  changedetection:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # NOTE: do not set `ports:` in Coolify compose — Coolify binds the domain
+    # through its Traefik proxy based on `expose:` + SERVICE_FQDN_*_<PORT>.
+    expose:
+      - "5000"
+    environment:
+      # --- Coolify-managed public URL ------------------------------------------
+      # Declaring SERVICE_FQDN_<NAME>_<PORT> here tells Coolify to generate a
+      # hostname and route :5000 to it. BASE_URL is what changedetection.io uses
+      # inside notifications / RSS / API links.
+      - SERVICE_FQDN_CHANGEDETECTION_5000
+      - BASE_URL=${SERVICE_URL_CHANGEDETECTION_5000}
+
+      # --- Networking / reverse-proxy awareness --------------------------------
+      - LISTEN_HOST=0.0.0.0
+      - PORT=5000
+      # Respect X-Forwarded-* headers from the Coolify Traefik proxy.
+      - USE_X_SETTINGS=1
+
+      # --- Security / privacy ---------------------------------------------------
+      # Hide the Referer header so monitored sites can't see your Coolify host.
+      - HIDE_REFERER=true
+      # For complete privacy, disable the upstream version-check ping.
+      - DISABLE_VERSION_CHECK=true
+      # Optional salted-password protection for the admin UI. Coolify will
+      # generate and store this the first time the resource is deployed.
+      # Leave commented out on first boot if you want to set a password from
+      # the in-app Settings page instead.
+      # - SALTED_PASS=${SERVICE_PASSWORD_64_CHANGEDETECTION}
+
+      # --- Runtime behaviour (safe defaults; override in the Coolify UI) -------
+      - LOGGER_LEVEL=${LOGGER_LEVEL:-INFO}
+      - TZ=${TZ:-UTC}
+      - LC_ALL=${LC_ALL:-en_US.UTF-8}
+      - FETCH_WORKERS=${FETCH_WORKERS:-10}
+      - NOTIFICATION_WORKERS=${NOTIFICATION_WORKERS:-1}
+      - MINIMUM_SECONDS_RECHECK_TIME=${MINIMUM_SECONDS_RECHECK_TIME:-3}
+      - ALLOW_FILE_URI=${ALLOW_FILE_URI:-false}
+
+      # --- AI-assisted filter builder (optional) -------------------------------
+      # Get a key at https://console.anthropic.com/settings/keys
+      # Leave blank to disable the AI filter feature.
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - AI_FILTER_MAX_HTML_CHARS=${AI_FILTER_MAX_HTML_CHARS:-20000}
+
+      # --- Playwright browser sidecar (uncomment `playwright-chrome` below to
+      #     enable JavaScript-rendered page fetching) ---------------------------
+      # - PLAYWRIGHT_DRIVER_URL=ws://playwright-chrome:3000/?stealth=1&--disable-web-security=true
+
+      # --- Outbound proxy (optional) -------------------------------------------
+      # - HTTP_PROXY=
+      # - HTTPS_PROXY=
+      # - NO_PROXY=
+
+      # --- Plugin installation at runtime (optional) ---------------------------
+      # Space-separated list of pip packages installed on container start.
+      # See https://changedetection.io/plugins
+      # - EXTRA_PACKAGES=
+
+    volumes:
+      # Named volume avoids the file-bind-mount bug tracked in
+      # coollabsio/coolify#8107. Coolify will show this on the Storage tab.
+      - changedetection-data:/datastore
+
+    healthcheck:
+      # Coolify hides the UI healthcheck panel for compose deployments
+      # (coollabsio/coolify#6463), so we define it inline.
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:5000/', timeout=5).status==200 else 1)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+    restart: unless-stopped
+
+    # Uncomment if you enable the playwright-chrome service below.
+    # depends_on:
+    #   playwright-chrome:
+    #     condition: service_started
+
+  # ---------------------------------------------------------------------------
+  # OPTIONAL: Playwright/Chrome sidecar for JavaScript-rendered page fetching.
+  # Enable by uncommenting this block AND the PLAYWRIGHT_DRIVER_URL above AND
+  # the depends_on block.
+  # ---------------------------------------------------------------------------
+  # playwright-chrome:
+  #   image: dgtlmoon/sockpuppetbrowser:latest
+  #   hostname: playwright-chrome
+  #   cap_add:
+  #     - SYS_ADMIN
+  #   environment:
+  #     - SCREEN_WIDTH=1920
+  #     - SCREEN_HEIGHT=1024
+  #     - SCREEN_DEPTH=16
+  #     - MAX_CONCURRENT_CHROME_PROCESSES=10
+  #   restart: unless-stopped
+
+volumes:
+  changedetection-data:
+    driver: local

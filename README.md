@@ -102,8 +102,32 @@ python changedetection.py -d /tmp/onchange-data
 # Visit http://localhost:5000
 ```
 
-Full configuration (env vars, proxies, browser fetchers, digest emails,
-AI filter builder) is documented in the in-app **Settings** panel.
+### Deploying on Coolify
+
+`onChange by Sairo` ships first-class support for
+[Coolify](https://coolify.io) (v4.x, 2025/2026). Everything you need is
+already in the repo:
+
+- [`docker-compose.coolify.yml`](docker-compose.coolify.yml) — Coolify-tuned
+  compose using `SERVICE_FQDN_*` magic variables, named volumes, and an
+  inline healthcheck.
+- [`COOLIFY.md`](COOLIFY.md) — step-by-step deployment guide (domains, TLS,
+  persistent storage, auto-deploy, the Playwright sidecar, troubleshooting).
+- [`.env.example`](.env.example) — **every** environment variable the app
+  reads, with defaults, notes, and where to get secrets like
+  `ANTHROPIC_API_KEY`.
+
+Point Coolify at `docker-compose.coolify.yml` on the *Docker Compose* build
+pack, copy the values you need from `.env.example` into the
+*Environment Variables* tab, and deploy. Full walkthrough in
+[`COOLIFY.md`](COOLIFY.md).
+
+### Configuration
+
+Every environment variable the app reads is documented in
+[`.env.example`](.env.example). Runtime settings (notifications, proxy
+lists, browser fetchers, digest emails, AI filter builder) are also
+configurable from the in-app **Settings** panel.
 
 ---
 

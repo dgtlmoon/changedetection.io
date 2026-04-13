@@ -122,6 +122,11 @@ ENV PYTHONPATH=/usr/local
 
 EXPOSE 5000
 
+# Healthcheck — used by Docker, Coolify, and most orchestrators.
+# Uses Python's stdlib so we don't need to install curl/wget in the final image.
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
+    CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:5000/', timeout=5).status==200 else 1)" || exit 1
+
 # The actual flask app module
 COPY changedetectionio /app/changedetectionio
 
