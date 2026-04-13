@@ -1,0 +1,103 @@
+components:
+  schemas:
+    processor_config_site_inventory_diff:
+      type: object
+      description: Configuration for the site_inventory_diff processor (track new / removed pages across a site)
+      properties:
+        source_type:
+          type: string
+          enum: [auto, sitemap, html, crawl]
+          default: auto
+          description: |
+            How to interpret the watched URL:
+            - `auto`: sniff by content-type / URL suffix (recommended)
+            - `sitemap`: parse as sitemap XML (including sitemap indexes)
+            - `html`: parse as an HTML listing page, extract `<a href>` links
+            - `crawl`: bounded same-origin BFS crawl from the URL
+        css_scope:
+          type: string
+          description: CSS selector used only in `html` mode to scope anchor extraction (e.g. `.post-list`).
+        same_origin_only:
+          type: boolean
+          default: true
+          description: Drop links that point off-site.
+        strip_query_strings:
+          type: boolean
+          default: true
+          description: Treat `?a=1` / `?b=2` as the same page. Off for query-driven sites.
+        strip_tracking_params_always:
+          type: boolean
+          default: true
+          description: Even when query strings are kept, strip tracking params (utm_*, gclid, fbclid, ref, …).
+        follow_sitemap_index:
+          type: boolean
+          default: true
+          description: Recurse into child sitemaps when the source is a sitemap index.
+        include_regex:
+          type: string
+          description: Only keep URLs matching this regular expression.
+        exclude_regex:
+          type: string
+          description: Drop URLs matching this regular expression.
+        crawl_max_pages:
+          type: integer
+          minimum: 1
+          maximum: 10000
+          default: 100
+          description: Max pages fetched per run in `crawl` mode.
+        crawl_max_depth:
+          type: integer
+          minimum: 0
+          maximum: 10
+          default: 2
+          description: Max BFS depth in `crawl` mode.
+        crawl_delay_seconds:
+          type: number
+          minimum: 0
+          maximum: 60
+          default: 1.0
+          description: Delay between HTTP requests in `crawl` mode.
+        crawl_time_budget_seconds:
+          type: number
+          minimum: 1
+          maximum: 1800
+          default: 60.0
+          description: Hard cap on total crawl duration.
+        crawl_respect_robots_txt:
+          type: boolean
+          default: true
+          description: Honor robots.txt for the seed host. Strongly recommended.
+
+paths:
+  /watch:
+    post:
+      x-code-samples:
+        - lang: 'curl'
+          label: 'Site URL inventory (sitemap)'
+          source: |
+            curl -X POST "http://localhost:5000/api/v1/watch" \
+              -H "x-api-key: YOUR_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "url": "https://example.com/sitemap.xml",
+                "processor": "site_inventory_diff",
+                "processor_config_site_inventory_diff": {
+                  "source_type": "sitemap",
+                  "follow_sitemap_index": true
+                }
+              }'
+        - lang: 'curl'
+          label: 'Site URL inventory (HTML listing)'
+          source: |
+            curl -X POST "http://localhost:5000/api/v1/watch" \
+              -H "x-api-key: YOUR_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "url": "https://example.com/blog/",
+                "processor": "site_inventory_diff",
+                "processor_config_site_inventory_diff": {
+                  "source_type": "html",
+                  "css_scope": ".post-list",
+                  "include_regex": "^https?://example\\.com/blog/"
+                }
+              }'

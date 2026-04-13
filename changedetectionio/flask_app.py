@@ -905,6 +905,13 @@ def changedetection_app(config=None, datastore_o=None):
         url_prefix='/ui/ai-filter',
     )
 
+    # Site URL inventory dashboard (new/removed pages rollup, CSV export).
+    from changedetectionio.blueprint.site_inventory import construct_blueprint as construct_site_inventory_blueprint
+    app.register_blueprint(
+        construct_site_inventory_blueprint(datastore),
+        url_prefix='/site-inventory',
+    )
+
     # Initialize Socket.IO server conditionally based on settings
     socket_io_enabled = datastore.data['settings']['application'].get('ui', {}).get('socket_io_enabled', True)
     if socket_io_enabled and app.config.get('batch_mode'):

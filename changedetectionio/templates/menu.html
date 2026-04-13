@@ -16,6 +16,9 @@
     <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('watch_templates.') %}active{% endif %}">
         <a href="{{ url_for('watch_templates.browse') }}" class="pure-menu-link">{{ _('TEMPLATES') }}</a>
     </li>
+    <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('site_inventory.') %}active{% endif %}">
+        <a href="{{ url_for('site_inventory.dashboard') }}" class="pure-menu-link" title="{{ _('Site URL inventory: new/removed pages rollup') }}">{{ _('INVENTORY') }}</a>
+    </li>
     <li class="pure-menu-item" id="menu-pause">
         <a href="{{ url_for('settings.toggle_all_paused') }}"
            aria-label="{% if all_paused %}{{ _('Scheduling is paused - click to resume') }}{% else %}{{ _('Pause auto-queue scheduling of watches') }}{% endif %}"

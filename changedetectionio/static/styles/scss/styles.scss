@@ -37,6 +37,7 @@
 @use "parts/tabs";
 // UI audit improvements — additive; keep last so it can win on specificity.
 @use "parts/ui_audit";
+@use "parts/site_inventory";
 
 // Smooth transitions for theme switching
 body,
