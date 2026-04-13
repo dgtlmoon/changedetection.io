@@ -14,9 +14,9 @@
     const initialScrollToLineNumber = {{ initial_scroll_line_number|default('null') }};
 </script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="{{url_for('static_content', group='js', filename='plugins.js')}}"></script>
-<script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.min.js"></script>
-<script src="{{url_for('static_content', group='js', filename='snippet-to-image.js')}}"></script>
+<script src="{{url_for('static_content', group='js', filename='plugins.js')}}" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.min.js" defer></script>
+<script src="{{url_for('static_content', group='js', filename='snippet-to-image.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='diff-overview.js')}}" defer></script>
 
 
@@ -160,7 +160,7 @@
 <script>
     const newest_version_timestamp = {{newest_version_timestamp}};
 </script>
-<script src="{{url_for('static_content', group='js', filename='diff-render.js')}}"></script>
+<script src="{{url_for('static_content', group='js', filename='diff-render.js')}}" defer></script>
 
 
 {% endblock %}

@@ -75,6 +75,27 @@ body {
   width: 1px;
 }
 
+/* Skip link: hidden until keyboard-focused, then jumps into view */
+.skip-link {
+  &:focus {
+    clip: auto;
+    clip-path: none;
+    height: auto;
+    width: auto;
+    overflow: visible;
+    white-space: normal;
+    top: 0;
+    left: 0;
+    z-index: 10000;
+    background: var(--color-background);
+    color: var(--color-text);
+    padding: 0.5rem 1rem;
+    border: 2px solid var(--color-link);
+    border-radius: 0 0 4px 0;
+    text-decoration: underline;
+  }
+}
+
 // Row icons like chrome, pdf, share, etc
 .status-icon {
   display: inline-block;
@@ -1135,4 +1156,59 @@ ul#highlightSnippetActions {
   }
 }
 
+
+/* ---------------------------------------------------------------------------
+ * Mobile polish: enforce WCAG 2.1 minimum touch target sizes and a few
+ * small-screen ergonomics fixes for <=760px viewports. Additive only — does
+ * not change desktop styling.
+ * ------------------------------------------------------------------------- */
+@media only screen and (max-width: 760px) {
+  /* WCAG 2.5.5 Level AAA: 44x44px minimum target size for interactive controls */
+  .pure-button,
+  button,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  .pure-menu-link,
+  .toggle-button,
+  .hamburger-menu {
+    min-height: 44px;
+    /* Don't force min-width on menu links — would break tight nav rows */
+  }
+
+  /* Checkboxes/radios are notoriously small; give the label a comfortable hit area */
+  .pure-form label.checkbox,
+  .pure-form .checkbox > label {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* Prevent iOS auto-zoom on focused text inputs (triggers when font-size < 16px) */
+  .pure-form input[type="text"],
+  .pure-form input[type="email"],
+  .pure-form input[type="password"],
+  .pure-form input[type="search"],
+  .pure-form input[type="url"],
+  .pure-form input[type="tel"],
+  .pure-form input[type="number"],
+  .pure-form textarea,
+  .pure-form select {
+    font-size: 16px;
+  }
+
+  /* Keep the realtime-offline badge readable and out of the way on small screens */
+  #realtime-conn-error {
+    font-size: 0.75rem;
+    padding: 6px 10px;
+    max-width: 90vw;
+  }
+
+  /* Modal dialogs should use most of the screen on phones */
+  .modal-dialog {
+    width: 94vw;
+    max-width: 94vw;
+    padding: 1rem;
+  }
+}
 

@@ -5,9 +5,9 @@
     _("You can also add 'shared' watches.") ~ ' <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Sharing-a-Watch">' ~ _('More info') ~ '</a>'
 ] -%}
 {%- from '_helpers.html' import render_simple_field, render_field, render_nolabel_field, sort_by_title -%}
-<script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
+<script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
-<script src="{{url_for('static_content', group='js', filename='modal.js')}}"></script>
+<script src="{{url_for('static_content', group='js', filename='modal.js')}}" defer></script>
 <script>let nowtimeserver={{ now_time_server }};</script>
 <script>let favicon_baseURL="{{ url_for('static_content', group='favicon', filename="PLACEHOLDER")}}";</script>
 <script>
