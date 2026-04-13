@@ -82,6 +82,32 @@ project.
 - Deferred loading of jQuery and its dependents.
 - Production-gated `console.log` (enable with `?debug=1`).
 
+#### Mobile UX
+
+- **Fixed bottom navigation bar** (≤ 980 px, authenticated sessions
+  only): Watches / Groups / Search / More. `Search` delegates to the
+  existing modal, `More` triggers the hamburger drawer — no duplicate
+  modal or drawer logic. `body.has-bottom-nav` lifts the realtime-offline
+  badge and `#bottom-horizontal-offscreen` so they don't stack on top
+  of the bar. `env(safe-area-inset-bottom)` honored for notched devices.
+- **Watch list** — URL/title columns wrap instead of overflowing,
+  pause/mute each get their own 44×44 px tap target, stats row and
+  bulk-ops toolbar wrap gracefully on narrow screens.
+- **Hamburger drawer** — width clamped to `min(85vw, 320px)`,
+  `safe-area-inset-top/bottom` applied, ease-out animation replaces the
+  previous overshoot bezier, `overscroll-behavior: contain` so drawer
+  scrolling doesn't chain to the page.
+- **Tabs** (edit / diff / settings) — become a horizontal scroll strip
+  below 760 px with 44 px hit targets; `scroll-margin-top` reduced from
+  200 px to 90 px on mobile so tab anchors don't scroll past the
+  viewport.
+- **Diff page** — From/To version selectors stack full-width, checkboxes
+  wrap in a compact flex row, Prev/Next share the row equally,
+  screenshots use the full card width, and the desktop-only 40 px
+  `#diff-col` left-padding is dropped.
+- **Language modal** — 2-column grid on ≤ 600 px with ellipsis guards
+  for long language names.
+
 ---
 
 ## Third-party components
