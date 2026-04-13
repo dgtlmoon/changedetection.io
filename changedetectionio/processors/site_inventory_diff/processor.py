@@ -57,12 +57,16 @@ processor_weight = 2
 list_badge_text = "Inventory"
 
 # Processor capabilities — crawl mode does its own fetching so we don't
-# advertise browser_steps / visual_selector. The text diff engine still runs
-# the snapshot through the existing filter/trigger pipeline which is useful
-# (e.g. ignore_text).
+# advertise browser_steps / visual_selector. For inventory watches the
+# existing Filters & Triggers pipeline doesn't meaningfully apply either:
+# the snapshot is a sorted list of URLs, not page text, so ignore_text /
+# trigger_text would silently do nothing. The processor exposes its own
+# include_regex / exclude_regex / css_scope knobs for URL-level filtering
+# (see forms.py), and setting supports_text_filters_and_triggers=False
+# keeps the misleading tab hidden.
 supports_visual_selector = False
 supports_browser_steps = False
-supports_text_filters_and_triggers = True
+supports_text_filters_and_triggers = False
 supports_text_filters_and_triggers_elements = False
 supports_request_type = True
 
@@ -141,6 +145,86 @@ class perform_site_check(difference_detection_processor):
             {"site_inventory_diff_last": meta},
             merge=True,
         )
+
+    def _resolve_watch_http_context(
+        self,
+    ) -> tuple[Optional[str], dict, Optional[str]]:
+        """Extract proxy URL + merged request headers + User-Agent for the
+        current watch, using the same precedence rules as
+        :meth:`~difference_detection_processor.call_browser` so crawl-mode
+        fetches look like the watch's configured fetcher to the remote site.
+
+        Returns ``(proxy_url, headers, user_agent)`` where any element may be
+        ``None`` / empty when the watch has no override.
+        """
+        from changedetectionio.jinja2_custom import render as jinja_render
+
+        # --- Proxy -----------------------------------------------------
+        proxy_url: Optional[str] = None
+        try:
+            preferred_proxy_id = self.datastore.get_preferred_proxy_for_watch(
+                uuid=self.watch.get("uuid")
+            )
+            if preferred_proxy_id:
+                proxy_entry = self.datastore.proxy_list.get(preferred_proxy_id) or {}
+                proxy_url = proxy_entry.get("url") or None
+        except Exception as exc:
+            logger.debug(
+                f"site_inventory_diff: proxy resolution failed: {exc!r}"
+            )
+
+        # --- Headers ---------------------------------------------------
+        # Resolve what fetch_backend the watch would have used so the default
+        # User-Agent matches the main fetcher's UA.
+        fetch_backend = self.watch.get("fetch_backend", "system")
+        if not fetch_backend or fetch_backend == "system":
+            fetch_backend = self.datastore.data["settings"]["application"].get(
+                "fetch_backend"
+            )
+
+        user_agent: Optional[str] = None
+        ua_map = self.datastore.data["settings"]["requests"].get("default_ua") or {}
+        if isinstance(ua_map, dict) and ua_map.get(fetch_backend):
+            user_agent = ua_map.get(fetch_backend)
+
+        merged: dict[str, str] = {}
+        try:
+            merged.update(self.datastore.get_all_base_headers() or {})
+            merged.update(
+                self.datastore.get_all_headers_in_textfile_for_watch(
+                    uuid=self.watch.get("uuid")
+                )
+                or {}
+            )
+        except Exception as exc:
+            logger.debug(
+                f"site_inventory_diff: base/textfile header merge failed: {exc!r}"
+            )
+        merged.update(self.watch.get("headers", {}) or {})
+
+        # Don't ask for brotli — our minimal `requests`-based client
+        # doesn't decode it. Parity with base.py::call_browser.
+        if "Accept-Encoding" in merged and "br" in merged["Accept-Encoding"]:
+            merged["Accept-Encoding"] = merged["Accept-Encoding"].replace(", br", "")
+
+        # Jinja-render header values exactly like the main fetcher does.
+        for k in list(merged.keys()):
+            try:
+                merged[k] = jinja_render(template_str=merged[k])
+            except Exception as exc:
+                logger.debug(
+                    f"site_inventory_diff: header jinja render failed for {k!r}: {exc!r}"
+                )
+
+        # If the caller wants a specific UA, hoist it out of the dict so the
+        # crawler can apply it to both robots.txt matching and the HTTP
+        # Authorization header construction.
+        if "User-Agent" in merged and not user_agent:
+            user_agent = merged.pop("User-Agent")
+        else:
+            merged.pop("User-Agent", None)
+
+        return proxy_url, merged, user_agent
 
     def _fetch_child_sitemap(
         self, child_url: str, timeout: float = 30.0
@@ -297,11 +381,29 @@ class perform_site_check(difference_detection_processor):
                     css_scope=cfg["css_scope"] or None,
                 )
             elif source_type == "crawl":
-                # v2 — the fetcher already retrieved the seed; we ignore it and
-                # run the bounded crawler directly. This keeps crawl UX simple
-                # (only requires source URL) while still honoring the watch's
-                # schedule / notification plumbing.
+                # Crawl mode runs its own HTTP client because robots.txt, per-
+                # request delay, and SSRF per-URL checks don't fit the main
+                # fetcher's one-shot contract. To preserve the user's intent
+                # we still propagate their configured proxy, custom request
+                # headers, timeout, and UA into the crawler — and we seed it
+                # with the body the worker already fetched so we don't make a
+                # redundant HTTP call for the seed URL itself.
                 from . import crawler
+
+                proxy_url, request_headers, user_agent_str = (
+                    self._resolve_watch_http_context()
+                )
+                timeout = (
+                    float(
+                        self.datastore.data["settings"]["requests"].get(
+                            "timeout"
+                        )
+                        or 10.0
+                    )
+                )
+                seed_body_for_crawler: Optional[str] = None
+                if self.fetcher.content and isinstance(self.fetcher.content, str):
+                    seed_body_for_crawler = self.fetcher.content
 
                 cr = crawler.crawl(
                     seed_url=source_url,
@@ -312,9 +414,15 @@ class perform_site_check(difference_detection_processor):
                         cfg["crawl_time_budget_seconds"] or 60
                     ),
                     respect_robots_txt=bool(cfg["crawl_respect_robots_txt"]),
+                    user_agent=user_agent_str or crawler.DEFAULT_USER_AGENT,
+                    request_timeout=timeout,
                     include_regex=cfg["include_regex"] or None,
                     exclude_regex=cfg["exclude_regex"] or None,
                     normalize_opts=normalize_opts,
+                    proxy_url=proxy_url,
+                    extra_headers=request_headers,
+                    seed_body=seed_body_for_crawler,
+                    seed_content_type=update_obj["content-type"] or "text/html",
                 )
                 raw_urls = list(cr.urls)
                 warnings.extend(cr.warnings)

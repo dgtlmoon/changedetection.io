@@ -29,10 +29,14 @@ from changedetectionio.pluggy_interface import hookimpl, plugin_manager
 
 # Processor capabilities — checked at form-render time by edit.html to decide
 # which tabs to show. Mirror the flags in processor.py so the edit UI doesn't
-# expose options that won't apply (e.g. visual selector).
+# expose options that won't apply (e.g. visual selector). The text filters &
+# triggers tab is intentionally hidden: the snapshot for this processor is a
+# sorted URL list, not page text, so trigger_text / ignore_text would silently
+# do nothing. URL-level filtering is exposed via the processor's own
+# include_regex / exclude_regex / css_scope fields.
 supports_visual_selector = False
 supports_browser_steps = False
-supports_text_filters_and_triggers = True
+supports_text_filters_and_triggers = False
 supports_text_filters_and_triggers_elements = False
 supports_request_type = True
 
