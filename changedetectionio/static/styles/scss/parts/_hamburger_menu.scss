@@ -75,16 +75,22 @@
 .mobile-menu-drawer {
   position: fixed;
   top: 0;
-  right: -280px;
-  width: 280px;
+  right: -320px;
+  width: min(85vw, 320px);
   height: 100%;
+  // Respect iOS safe areas so the drawer doesn't hide under the home indicator
+  padding-top: max(60px, env(safe-area-inset-top));
+  padding-bottom: env(safe-area-inset-bottom);
   background: var(--color-background);
   opacity: 1;
-  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+  box-shadow: -2px 0 12px rgba(0, 0, 0, 0.18);
   z-index: 10000;
-  transition: right 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  // Calmer easing — the previous overshoot bezier made the drawer feel bouncy
+  // on touch devices where the user is already scrolling.
+  transition: right 0.25s ease-out;
   overflow-y: auto;
-  padding-top: 60px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 
   &.active {
     right: 0;
@@ -100,12 +106,16 @@
 
       >* {
         display: block;
-        padding: 1rem 1.5rem;
+        // WCAG: min 44px tap height. 1rem top+bottom + ~1.2rem line = ~54px ✓
+        padding: 0.9rem 1.25rem;
         color: var(--color-text);
         text-decoration: none;
         font-weight: 500;
         transition: background 0.2s ease;
-
+        // Active-state feedback — subtle but visible on tap-and-hold
+        &:active {
+          background: var(--color-background-menu-link-hover);
+        }
         &:hover {
           background: var(--color-background-menu-link-hover);
         }
