@@ -98,6 +98,15 @@ def _default_config() -> dict:
         "crawl_delay_seconds": 1.0,
         "crawl_time_budget_seconds": 60.0,
         "crawl_respect_robots_txt": True,
+        # Skip-if-seed-unchanged heuristic for crawl mode. On every scheduled
+        # run we hash the seed HTML and, if it hasn't changed since the last
+        # FULL crawl AND the watch wasn't edited AND we're inside the
+        # safety-valve window below, we short-circuit with
+        # checksumFromPreviousCheckWasTheSame(). This avoids hammering a
+        # site whose homepage is truly static while still guaranteeing a
+        # periodic full recrawl to catch silent deep-page changes.
+        "crawl_skip_if_seed_unchanged": True,
+        "crawl_full_crawl_every_hours": 24,
     }
 
 
@@ -353,6 +362,7 @@ class perform_site_check(difference_detection_processor):
 
         raw_urls: list[str] = []
         actual_mode = source_type
+        _crawl_bookkeeping: Optional[dict] = None
 
         try:
             if source_type == "sitemap":
@@ -405,6 +415,67 @@ class perform_site_check(difference_detection_processor):
                 if self.fetcher.content and isinstance(self.fetcher.content, str):
                     seed_body_for_crawler = self.fetcher.content
 
+                # Skip-if-seed-unchanged (#8). Cheap heuristic: if the seed
+                # HTML is byte-identical to what it was at the last full
+                # crawl, AND the watch wasn't edited, AND we're still inside
+                # the "max skip age" window, don't re-walk the site. The
+                # window makes sure silent deep-page changes still get
+                # caught periodically.
+                seed_md5 = hashlib.md5(
+                    (seed_body_for_crawler or "").encode("utf-8")
+                ).hexdigest()
+                last_meta = self.get_extra_watch_config(CONFIG_FILENAME).get(
+                    "site_inventory_diff_last", {}
+                ) or {}
+                last_seed_md5 = last_meta.get("seed_md5")
+                last_full_crawl_at = int(last_meta.get("last_full_crawl_unix", 0) or 0)
+                max_skip_age_s = int(
+                    (cfg.get("crawl_full_crawl_every_hours") or 24) * 3600
+                )
+                seed_unchanged = (
+                    seed_body_for_crawler
+                    and last_seed_md5
+                    and last_seed_md5 == seed_md5
+                )
+                inside_skip_window = (
+                    last_full_crawl_at > 0
+                    and (int(time.time()) - last_full_crawl_at) < max_skip_age_s
+                )
+                if (
+                    cfg.get("crawl_skip_if_seed_unchanged")
+                    and not force_reprocess
+                    and not watch.was_edited
+                    and seed_unchanged
+                    and inside_skip_window
+                ):
+                    logger.debug(
+                        f"site_inventory_diff: skip crawl (seed md5 unchanged, "
+                        f"last full crawl {int(time.time()) - last_full_crawl_at}s ago)"
+                    )
+                    raise checksumFromPreviousCheckWasTheSame()
+
+                # Progress callback for #9 — write a small crawl_progress
+                # subtree into the meta file every few successful fetches.
+                # The Stats-tab widget reads this to show live progress.
+                def _on_progress(cr_live):
+                    try:
+                        self.update_extra_watch_config(
+                            CONFIG_FILENAME,
+                            {
+                                "site_inventory_diff_progress": {
+                                    "pages_fetched": cr_live.pages_fetched,
+                                    "pages_failed": cr_live.pages_failed,
+                                    "pages_skipped_robots": cr_live.pages_skipped_robots,
+                                    "pages_skipped_ssrf": cr_live.pages_skipped_ssrf,
+                                    "updated_at_unix": int(time.time()),
+                                    "max_pages": int(cfg["crawl_max_pages"] or 100),
+                                }
+                            },
+                            merge=True,
+                        )
+                    except Exception as exc:
+                        logger.debug(f"progress persist failed: {exc!r}")
+
                 cr = crawler.crawl(
                     seed_url=source_url,
                     max_pages=int(cfg["crawl_max_pages"] or 100),
@@ -423,6 +494,7 @@ class perform_site_check(difference_detection_processor):
                     extra_headers=request_headers,
                     seed_body=seed_body_for_crawler,
                     seed_content_type=update_obj["content-type"] or "text/html",
+                    on_progress=_on_progress,
                 )
                 raw_urls = list(cr.urls)
                 warnings.extend(cr.warnings)
@@ -438,6 +510,15 @@ class perform_site_check(difference_detection_processor):
                     warnings.append(
                         f"{cr.pages_skipped_robots} URL(s) skipped by robots.txt"
                     )
+
+                # Record the seed MD5 and full-crawl timestamp so the next
+                # scheduled check can consider skipping. We persist these
+                # alongside the main meta below, not here.
+                actual_mode = "crawl"
+                _crawl_bookkeeping = {
+                    "seed_md5": seed_md5,
+                    "last_full_crawl_unix": int(time.time()),
+                }
             else:
                 raise ProcessorException(
                     message=f"Unknown source_type {source_type!r}",
@@ -486,7 +567,19 @@ class perform_site_check(difference_detection_processor):
             mode=actual_mode,
             warnings=warnings,
         )
+        if _crawl_bookkeeping:
+            meta.update(_crawl_bookkeeping)
         self._save_inventory_meta(meta)
+        # Clear any transient crawl-progress record — the run is complete,
+        # so a partial progress ping would just confuse the Stats widget.
+        try:
+            self.update_extra_watch_config(
+                CONFIG_FILENAME,
+                {"site_inventory_diff_progress": None},
+                merge=True,
+            )
+        except Exception:
+            pass
 
         # Change detection via MD5 of the *body* (not the header) — so the
         # timestamp line doesn't cause spurious changes on every check.

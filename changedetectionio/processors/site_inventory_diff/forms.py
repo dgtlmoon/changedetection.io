@@ -121,6 +121,18 @@ class InventorySettingsForm(Form):
         default=True,
     )
 
+    crawl_skip_if_seed_unchanged = BooleanField(
+        _l("Crawl: skip full walk when the seed page is unchanged"),
+        default=True,
+    )
+
+    crawl_full_crawl_every_hours = IntegerField(
+        _l("Crawl: force a full walk at least every N hours"),
+        [validators.Optional(), validators.NumberRange(min=1, max=720)],
+        default=24,
+        render_kw={"placeholder": "24"},
+    )
+
 
 class processor_settings_form(processor_text_json_diff_form):
     processor_config_site_inventory_diff = FormField(InventorySettingsForm)
@@ -143,6 +155,15 @@ class processor_settings_form(processor_text_json_diff_form):
               <span class="pure-form-message-inline">
                 {{ _('"Auto" sniffs the response as sitemap or HTML. Pick "Bounded crawl" only when the site has no sitemap and no good listing page.') }}
               </span>
+              <div class="pure-form-message-inline" style="margin-top: 0.4rem; padding: 0.5rem 0.6rem; border-left: 3px solid var(--color-link, #6366f1); background: var(--color-background-code, #f1f5f9);">
+                <strong>{{ _('What each mode uses:') }}</strong>
+                <ul style="margin: 0.25rem 0 0 1rem; padding: 0;">
+                  <li><strong>{{ _('Sitemap / HTML:') }}</strong>
+                    {{ _('uses the Request tab (fetch backend, proxy, headers, timeout).') }}</li>
+                  <li><strong>{{ _('Bounded crawl:') }}</strong>
+                    {{ _('uses its own HTTP client. Fetch backend is ignored; proxy, custom request headers, and timeout are still honoured. robots.txt is consulted and cached for one hour.') }}</li>
+                </ul>
+              </div>
             </fieldset>
 
             <fieldset class="pure-group">
@@ -198,6 +219,18 @@ class processor_settings_form(processor_text_json_diff_form):
                   {{ render_checkbox_field(form.processor_config_site_inventory_diff.crawl_respect_robots_txt) }}
                   <span class="pure-form-message-inline">
                     {{ _('Strongly recommended. Disable only on sites you own or have explicit permission to crawl.') }}
+                  </span>
+                </fieldset>
+                <fieldset class="pure-group">
+                  {{ render_checkbox_field(form.processor_config_site_inventory_diff.crawl_skip_if_seed_unchanged) }}
+                  <span class="pure-form-message-inline">
+                    {{ _('Save bandwidth: if the seed page is byte-identical to the previous successful crawl, skip the full walk. A periodic full walk still runs (see below) so silent deep-page changes are caught.') }}
+                  </span>
+                </fieldset>
+                <fieldset class="pure-group">
+                  {{ render_field(form.processor_config_site_inventory_diff.crawl_full_crawl_every_hours) }}
+                  <span class="pure-form-message-inline">
+                    {{ _('Safety valve for the skip above. Every N hours, force a fresh full walk even if the seed page looks unchanged.') }}
                   </span>
                 </fieldset>
               </div>

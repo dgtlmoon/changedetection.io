@@ -261,6 +261,12 @@ def crawl(
     extra_headers: Optional[Mapping[str, str]] = None,
     seed_body: Optional[str] = None,
     seed_content_type: str = "text/html",
+    # Progress reporting. Called every ``progress_every`` page fetches with
+    # the current :class:`CrawlResult` (mutable, still-in-progress). The
+    # processor uses this to persist crawl progress so the Stats-tab widget
+    # can show a live-ish spinner during long crawls.
+    on_progress: Optional[callable] = None,
+    progress_every: int = 5,
     # Test hooks:
     _now: Optional[callable] = None,
     _sleep: Optional[callable] = None,
@@ -429,6 +435,17 @@ def crawl(
 
         result.pages_fetched += 1
         result.urls.add(url)
+
+        # Emit a progress ping every `progress_every` successful fetches.
+        # We deliberately call this only on success so the callback sees
+        # monotonically increasing work done — if we called it on failure
+        # too, a domain with lots of 404s would spam progress updates
+        # without making real headway.
+        if on_progress and progress_every > 0 and (result.pages_fetched % progress_every) == 0:
+            try:
+                on_progress(result)
+            except Exception as exc:  # pragma: no cover — never let progress kill the crawl
+                logger.debug(f"on_progress callback failed: {exc!r}")
 
         if depth >= max_depth:
             result.hit_max_depth = True

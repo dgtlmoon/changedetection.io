@@ -73,11 +73,12 @@ class Watch(BaseWatch):
 
     # --- Processor-specific helpers used by the dashboard blueprint -----
 
-    def get_site_inventory_meta(self) -> dict:
-        """Return the processor's persisted meta (mode, url_count, warnings).
+    def _read_site_inventory_file(self) -> dict:
+        """Read and return the raw site_inventory_diff.json contents.
 
-        Returns an empty dict on first-run / missing-config — callers should
-        handle that.
+        Returns ``{}`` on missing / unreadable files. All higher-level
+        accessors (meta, progress, config) go through this so we only touch
+        the disk once per template render.
         """
         data_dir = self.data_dir
         if not data_dir:
@@ -87,11 +88,28 @@ class Watch(BaseWatch):
             return {}
         try:
             with open(path, "r", encoding="utf-8") as f:
-                data = json.load(f)
+                return json.load(f) or {}
         except (json.JSONDecodeError, IOError) as exc:
             logger.debug(f"site_inventory_diff: meta read failed {path!r}: {exc!r}")
             return {}
-        return data.get("site_inventory_diff_last") or {}
+
+    def get_site_inventory_meta(self) -> dict:
+        """Return the processor's persisted meta (mode, url_count, warnings).
+
+        Returns an empty dict on first-run / missing-config — callers should
+        handle that.
+        """
+        return self._read_site_inventory_file().get("site_inventory_diff_last") or {}
+
+    def get_site_inventory_progress(self) -> dict:
+        """Return the transient in-progress crawl record, or ``{}`` when no
+        crawl is mid-flight. Cleared by the processor at end-of-run.
+        """
+        raw = self._read_site_inventory_file()
+        progress = raw.get("site_inventory_diff_progress")
+        if not progress or not isinstance(progress, dict):
+            return {}
+        return progress
 
     def compute_url_delta(
         self, newer_timestamp: Optional[str], older_timestamp: Optional[str]
@@ -184,6 +202,11 @@ def _render_stats_widget(watch: "Watch") -> str:
     responsible for deciding whether to render it at all.
     """
     meta = watch.get_site_inventory_meta()
+    progress = (
+        watch.get_site_inventory_progress()
+        if hasattr(watch, "get_site_inventory_progress")
+        else {}
+    )
     newest, previous = watch.get_latest_two_history_keys()
     added, removed = watch.compute_url_delta(newest, previous)
 
@@ -233,9 +256,37 @@ def _render_stats_widget(watch: "Watch") -> str:
     csv_href = f"/site-inventory/watch/{uuid}.csv"
     dashboard_href = "/site-inventory/"
 
+    # Live-crawl progress banner. We treat a progress entry as "recent" if
+    # its updated_at is within the last 10 minutes; older records are
+    # considered stale (the worker probably crashed or the crawl finished
+    # without clearing — either way the banner would confuse the user).
+    progress_html = ""
+    if progress:
+        updated_at = int(progress.get("updated_at_unix", 0) or 0)
+        if updated_at and (int(time.time()) - updated_at) < 600:
+            fetched = int(progress.get("pages_fetched", 0))
+            max_pages = int(progress.get("max_pages", 0) or 0)
+            failed = int(progress.get("pages_failed", 0))
+            skipped_robots = int(progress.get("pages_skipped_robots", 0))
+            skipped_ssrf = int(progress.get("pages_skipped_ssrf", 0))
+            pct = (fetched / max_pages * 100) if max_pages else 0
+            progress_html = f"""
+  <div class="site-inventory-progress" style="margin: 0.5rem 0; padding: 0.6rem 0.75rem; border-left: 3px solid var(--color-link, #6366f1); background: var(--color-background-code, #f1f5f9);">
+    <strong>Crawl in progress</strong>
+    &mdash; {fetched}{"/" + str(max_pages) if max_pages else ""} pages fetched
+    ({pct:.0f}%)
+    {f' &middot; {failed} failed' if failed else ''}
+    {f' &middot; {skipped_robots} skipped (robots.txt)' if skipped_robots else ''}
+    {f' &middot; {skipped_ssrf} skipped (SSRF)' if skipped_ssrf else ''}
+    <br>
+    <small>Last update {_fmt_unix(updated_at)}. This page auto-updates on refresh.</small>
+  </div>
+"""
+
     return f"""
 <div class="site-inventory-stats" style="margin-top: 1rem;">
   <h4 style="margin: 0 0 0.5rem;">Site URL inventory</h4>
+  {progress_html}
   <table class="pure-table" style="width: 100%;">
     <tbody>
       <tr><td>Source</td><td><code>{source_url}</code></td></tr>
