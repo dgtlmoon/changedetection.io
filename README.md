@@ -42,15 +42,39 @@ The short version (full list in [`ATTRIBUTION.md`](ATTRIBUTION.md)):
    [`DESIGN.md`](DESIGN.md).
 2. **Watch Templates** — 15 one-click recipes (Amazon, GitHub releases,
    CVEs, Wikipedia, arXiv, …).
-3. **Scheduled digest emails** — summary notifications on a daily /
+3. **Site URL inventory & crawler** — new `site_inventory_diff`
+   processor that tracks when *pages* are added to or removed from a
+   site, not just text changes on one URL. Four sources you can point
+   it at:
+   - `auto` — sniff a URL's response and pick the right mode.
+   - `sitemap` — read `sitemap.xml` or a sitemap index (follows child
+     sitemaps up to 50 deep).
+   - `html` — parse `<a href>` links from a listing page, with CSS
+     scoping and include/exclude regex.
+   - `crawl` *(beta)* — bounded same-origin BFS crawl with
+     robots.txt-respect (default on), per-request delay, max pages /
+     depth / time-budget caps, SSRF filtering, skip-if-seed-unchanged,
+     and a periodic full-walk so silent deep-page changes still surface.
+
+   The snapshot is just a sorted URL list per line, so it plugs into
+   **every existing feature for free** — the diff viewer renders
+   added/removed URLs, history navigation works, RSS feeds carry the
+   delta, and the existing fetcher stack (Playwright/Selenium) is used
+   for the non-crawl modes. New notification tokens `{{new_urls}}`,
+   `{{removed_urls}}`, `{{new_urls_count}}`, `{{removed_urls_count}}`,
+   `{{url_count}}`, `{{inventory_mode}}`, and `{{inventory_warnings}}`
+   work in any Apprise channel. Per-watch CSV export, a tag-level
+   rollup dashboard at `/site-inventory/`, and a live crawl-progress
+   widget on the Stats tab round it out.
+4. **Scheduled digest emails** — summary notifications on a daily /
    weekly cadence via any Apprise destination.
-4. **AI-assisted filter builder** — describe what you want to monitor in
+5. **AI-assisted filter builder** — describe what you want to monitor in
    plain English; an Anthropic Claude call returns a CSS/XPath
    suggestion you review before saving.
-5. **Security hardening** — non-root Docker user, scoped CORS, pooled
+6. **Security hardening** — non-root Docker user, scoped CORS, pooled
    HTTP sessions, chardet confidence gate, transient-HTTP retry, a
    client-side modal XSS fix, ARIA/mobile accessibility pass.
-6. **Mobile-first UX** — a fixed bottom navigation bar (Watches / Groups
+7. **Mobile-first UX** — a fixed bottom navigation bar (Watches / Groups
    / Search / More) on ≤ 980 px, iOS safe-area-aware hamburger drawer,
    2-column language picker, horizontally scrolling tab strips with
    44 px hit targets, and a rebuilt diff page that stacks From/To

@@ -56,6 +56,29 @@ project.
 - **Watch Templates** — one-click recipes for common monitoring targets
   (Amazon, GitHub releases, CVE feeds, Wikipedia, etc.).
   `changedetectionio/blueprint/watch_templates/`
+- **Site URL inventory** — new `site_inventory_diff` processor that
+  detects when pages are added to or removed from a site.
+  `changedetectionio/processors/site_inventory_diff/` + blueprint at
+  `changedetectionio/blueprint/site_inventory/`.
+  - Four detection modes: `auto`, `sitemap` (with sitemap-index
+    recursion up to 50 children), `html` (CSS-scoped `<a href>`
+    extraction with include/exclude regex), and a bounded same-origin
+    BFS `crawl` (beta).
+  - Crawler safety: robots.txt-respect (default on), per-request
+    delay, `max_pages` / `max_depth` / time-budget caps, SSRF filter
+    on resolved IPs, skip-if-seed-unchanged with periodic full-walk so
+    deep-page changes still surface.
+  - Integration: snapshot is one URL per line (sorted), so the
+    existing text-diff / history / RSS / preview pipelines produce
+    added/removed lists for free; non-crawl modes honor the configured
+    fetcher (Playwright / Selenium / requests).
+  - Notification tokens: `{{new_urls}}`, `{{removed_urls}}`,
+    `{{new_urls_count}}`, `{{removed_urls_count}}`, `{{url_count}}`,
+    `{{inventory_mode}}`, `{{inventory_warnings}}`.
+  - UX: Stats-tab widget (via the `ui_edit_stats_extras` pluggy
+    hookimpl) with live crawl-progress banner; tag-level rollup
+    dashboard at `/site-inventory/`; per-watch CSV export at
+    `/site-inventory/watch/<uuid>.csv`.
 - **Scheduled Digest emails** — periodic summary notifications via the
   existing Apprise pipeline. `changedetectionio/digest.py`
 - **AI-assisted Filter Builder** — natural-language → CSS/XPath
