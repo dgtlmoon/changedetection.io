@@ -3,6 +3,7 @@ import re
 import pluggy
 from price_parser import Price
 from loguru import logger
+from flask_babel import lazy_gettext as _l
 
 hookimpl = pluggy.HookimplMarker("changedetectionio_conditions")
 
@@ -47,22 +48,22 @@ def register_operators():
 @hookimpl
 def register_operator_choices():
     return [
-        ("!in", "Does NOT Contain"),
-        ("starts_with", "Text Starts With"),
-        ("ends_with", "Text Ends With"),
-        ("length_min", "Length minimum"),
-        ("length_max", "Length maximum"),
-        ("contains_regex", "Text Matches Regex"),
-        ("!contains_regex", "Text Does NOT Match Regex"),
+        ("!in", _l("Does NOT Contain")),
+        ("starts_with", _l("Text Starts With")),
+        ("ends_with", _l("Text Ends With")),
+        ("length_min", _l("Length minimum")),
+        ("length_max", _l("Length maximum")),
+        ("contains_regex", _l("Text Matches Regex")),
+        ("!contains_regex", _l("Text Does NOT Match Regex")),
     ]
 
 @hookimpl
 def register_field_choices():
     return [
-        ("extracted_number", "Extracted number after 'Filters & Triggers'"),
+        ("extracted_number", _l("Extracted number after 'Filters & Triggers'")),
 #        ("meta_description", "Meta Description"),
 #        ("meta_keywords", "Meta Keywords"),
-        ("page_filtered_text", "Page text after 'Filters & Triggers'"),
+        ("page_filtered_text", _l("Page text after 'Filters & Triggers'")),
         #("page_title", "Page <title>"), # actual page title <title>
     ]
 
