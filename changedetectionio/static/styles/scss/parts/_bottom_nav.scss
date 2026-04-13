@@ -1,0 +1,125 @@
+/**
+ * Mobile bottom navigation bar.
+ *
+ * Shown only on touch-sized viewports (<= $desktop-wide-breakpoint) as a
+ * fixed-position action strip with 4 primary destinations. Hidden on
+ * desktop; the existing top menu covers those widths.
+ *
+ * The markup is inert on desktop, so adding padding-bottom to <body> /
+ * offsets to other bottom-fixed widgets only happens inside the mobile
+ * media query.
+ */
+@use "../settings" as *;
+
+.mobile-bottom-nav {
+  // Default: off. Turned on by the mobile media query below so it never
+  // leaks into the desktop layout even if the element is present.
+  display: none;
+}
+
+@media only screen and (max-width: $desktop-wide-breakpoint) {
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9998; // below the hamburger drawer (10000) and overlay (9999)
+
+    background: var(--color-background);
+    border-top: 1px solid var(--color-border-table-cell);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+
+    // Respect iOS home indicator
+    padding-bottom: env(safe-area-inset-bottom);
+
+    // Evenly distribute items
+    justify-content: space-around;
+    align-items: stretch;
+
+    // Items
+    > a,
+    > button {
+      appearance: none;
+      background: transparent;
+      border: 0;
+      cursor: pointer;
+
+      flex: 1 1 0;
+      min-width: 0;
+      min-height: 56px;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      padding: 6px 4px;
+
+      color: var(--color-text-menu-link);
+      text-decoration: none;
+      font-size: 0.72rem;
+      font-weight: 500;
+      line-height: 1;
+
+      transition: color 0.15s ease, background 0.15s ease;
+
+      svg {
+        width: 22px;
+        height: 22px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        pointer-events: none;
+      }
+
+      .label {
+        // Long translations shouldn't break the row
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      &:active {
+        background: var(--color-background-menu-link-hover);
+      }
+
+      &.active {
+        color: var(--color-text-menu-link-hover);
+      }
+    }
+  }
+
+  // Push page content above the bar so the footer doesn't hide underneath
+  body.has-bottom-nav {
+    padding-bottom: calc(56px + env(safe-area-inset-bottom));
+  }
+
+  // Lift existing bottom-fixed widgets so they don't overlap the bar
+  body.has-bottom-nav {
+    #realtime-conn-error {
+      bottom: calc(56px + env(safe-area-inset-bottom));
+    }
+    #bottom-horizontal-offscreen {
+      bottom: calc(56px + env(safe-area-inset-bottom));
+    }
+  }
+}
+
+// Extra-small phones — tighten padding further so labels still show
+@media only screen and (max-width: 360px) {
+  .mobile-bottom-nav > a,
+  .mobile-bottom-nav > button {
+    font-size: 0.68rem;
+    padding: 4px 2px;
+    svg { width: 20px; height: 20px; }
+  }
+}
+
+// Dark mode: slightly heavier border on top
+html[data-darkmode="true"] .mobile-bottom-nav {
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.4);
+}
