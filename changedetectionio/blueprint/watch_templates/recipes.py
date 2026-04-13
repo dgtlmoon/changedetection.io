@@ -210,6 +210,42 @@ RECIPES = [
             "use_page_title_in_list": True,
         },
     },
+    {
+        "id": "site-inventory-sitemap",
+        "name": "New pages on a site (sitemap)",
+        "description": "Alert when a site adds or removes pages, using its sitemap.xml.",
+        "category": "dev",
+        "domain_hints": [],
+        "url_example": "https://example.com/sitemap.xml",
+        "extras": {
+            "processor": "site_inventory_diff",
+            "use_page_title_in_list": True,
+        },
+    },
+    {
+        "id": "site-inventory-listing",
+        "name": "New posts on a listing page",
+        "description": "Track when new links appear on a blog index or article list page.",
+        "category": "news",
+        "domain_hints": [],
+        "url_example": "https://example.com/blog/",
+        "extras": {
+            "processor": "site_inventory_diff",
+            "use_page_title_in_list": True,
+        },
+    },
+    {
+        "id": "site-inventory-crawl",
+        "name": "Full-site URL inventory (bounded crawl)",
+        "description": "Walk a site same-origin from a seed URL and track the page inventory over time. Respects robots.txt.",
+        "category": "dev",
+        "domain_hints": [],
+        "url_example": "https://example.com/",
+        "extras": {
+            "processor": "site_inventory_diff",
+            "use_page_title_in_list": True,
+        },
+    },
 ]
 
 

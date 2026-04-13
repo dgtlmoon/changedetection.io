@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="edit-form">
+  <div class="box-wrap inner">
+    <h2 style="margin-top: 0;">{{ _('Site URL inventory') }}</h2>
+    <p class="pure-form-message-inline">
+      {{ _('Activity across your inventory watches over the last %(n)d day(s).', n=window_days) }}
+    </p>
+
+    <div class="inventory-summary-cards">
+      <div class="inv-card">
+        <div class="inv-card-value">{{ watch_count }}</div>
+        <div class="inv-card-label">{{ _('Inventory watches') }}</div>
+      </div>
+      <div class="inv-card">
+        <div class="inv-card-value">{{ total_urls }}</div>
+        <div class="inv-card-label">{{ _('Total URLs tracked') }}</div>
+      </div>
+      <div class="inv-card inv-card-added">
+        <div class="inv-card-value">+{{ total_added }}</div>
+        <div class="inv-card-label">{{ _('URLs added (recent)') }}</div>
+      </div>
+      <div class="inv-card inv-card-removed">
+        <div class="inv-card-value">-{{ total_removed }}</div>
+        <div class="inv-card-label">{{ _('URLs removed (recent)') }}</div>
+      </div>
+    </div>
+
+    {% if not rows %}
+      <div class="tip">
+        {{ _('No inventory watches yet. Create a watch and set its processor to "Site URL inventory" \u2014 point it at a sitemap, a listing page, or enable bounded crawl.') }}
+      </div>
+    {% else %}
+      <table class="pure-table pure-table-striped" style="width:100%; margin-top: 1rem;">
+        <thead>
+          <tr>
+            <th scope="col">{{ _('Watch') }}</th>
+            <th scope="col">{{ _('Mode') }}</th>
+            <th scope="col">{{ _('URLs') }}</th>
+            <th scope="col">{{ _('Added') }}</th>
+            <th scope="col">{{ _('Removed') }}</th>
+            <th scope="col">{{ _('Warnings') }}</th>
+            <th scope="col"><span class="visually-hidden">{{ _('Actions') }}</span></th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for row in rows %}
+          <tr>
+            <td>
+              <a href="{{ url_for('ui.ui_edit.edit_page', uuid=row.uuid) }}">{{ row.label }}</a>
+              <div class="tiny-url">{{ row.url }}</div>
+              {% if row.tags %}
+                {% for tag_uuid, tag in row.tags %}
+                  <a href="{{ url_for('site_inventory.tag_report', tag_uuid=tag_uuid) }}" class="watch-tag-list tag-{{ tag.title|sanitize_tag_class }}">{{ tag.title }}</a>
+                {% endfor %}
+              {% endif %}
+            </td>
+            <td>{{ row.mode or '\u2014' }}</td>
+            <td>{{ row.url_count }}</td>
+            <td class="num-added">{% if row.added_recent %}+{{ row.added_recent }}{% else %}0{% endif %}</td>
+            <td class="num-removed">{% if row.removed_recent %}-{{ row.removed_recent }}{% else %}0{% endif %}</td>
+            <td>
+              {% if row.warnings %}
+                <details>
+                  <summary>{{ row.warnings|length }}</summary>
+                  <ul style="margin: 0.25rem 0; padding-left: 1rem;">
+                    {% for w in row.warnings %}<li>{{ w }}</li>{% endfor %}
+                  </ul>
+                </details>
+              {% else %}\u2014{% endif %}
+            </td>
+            <td>
+              <a class="pure-button button-xsmall" href="{{ url_for('ui.ui_diff.diff_history_page', uuid=row.uuid) }}">{{ _('Diff') }}</a>
+              <a class="pure-button button-xsmall" href="{{ url_for('site_inventory.csv_export', uuid=row.uuid) }}">{{ _('CSV') }}</a>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

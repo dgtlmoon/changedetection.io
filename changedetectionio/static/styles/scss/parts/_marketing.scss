@@ -1,0 +1,320 @@
+/**
+ * Styles for the public marketing pages (blueprint/marketing).
+ *
+ * Loaded last in styles.scss so it can win specificity without !important.
+ * Scoped to ``.marketing-page`` so none of it leaks into the app chrome.
+ * Uses the existing design tokens (--color-*, --brand-*) so dark mode is
+ * automatic.
+ */
+
+.marketing-page {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  color: var(--color-text);
+
+  a {
+    color: var(--color-link);
+    text-decoration: underline;
+    text-decoration-thickness: from-font;
+    text-underline-offset: 3px;
+
+    &:hover {
+      opacity: 0.85;
+    }
+  }
+
+  code {
+    background: rgba(255, 255, 255, 0.12);
+    color: inherit;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 0.92em;
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * Hero
+ * ------------------------------------------------------------------- */
+.marketing-hero {
+  padding: 3rem 1.5rem 2rem;
+  text-align: center;
+
+  .marketing-hero-inner {
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  &.marketing-hero-narrow .marketing-hero-inner {
+    max-width: 720px;
+  }
+}
+
+.marketing-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem;
+  color: var(--color-text);
+  opacity: 0.75;
+}
+
+.marketing-h1 {
+  font-size: clamp(2rem, 5.5vw, 3.75rem);
+  line-height: 1.1;
+  font-weight: 800;
+  margin: 0 0 1rem;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+}
+
+.marketing-h2 {
+  font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+  font-weight: 700;
+  margin: 0 0 1.5rem;
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+}
+
+.marketing-lede {
+  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+  line-height: 1.55;
+  opacity: 0.9;
+  margin: 0 auto 1.5rem;
+  max-width: 640px;
+}
+
+.marketing-hero-meta {
+  font-size: 0.9rem;
+  opacity: 0.7;
+  margin: 1.5rem auto 0;
+}
+
+/* ---------------------------------------------------------------------
+ * CTA row
+ * ------------------------------------------------------------------- */
+.marketing-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  align-items: center;
+  margin: 1.5rem 0 0;
+}
+
+.marketing-cta-primary.pure-button {
+  background: var(--color-background-button-primary);
+  color: var(--color-text-button);
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
+}
+
+.marketing-cta-secondary.pure-button {
+  background: transparent;
+  border: 2px solid var(--color-link);
+  color: var(--color-link);
+  font-weight: 600;
+  padding: calc(0.75rem - 2px) calc(1.5rem - 2px);
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.marketing-cta-ghost.pure-button {
+  background: transparent;
+  color: var(--color-text);
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  text-decoration: none;
+  opacity: 0.85;
+
+  &:hover { opacity: 1; }
+}
+
+/* ---------------------------------------------------------------------
+ * Sections
+ * ------------------------------------------------------------------- */
+.marketing-section {
+  padding: 3rem 1.5rem;
+  max-width: 1080px;
+  width: 100%;
+  margin: 0 auto;
+
+  &.marketing-section-muted {
+    max-width: none;
+    background: var(--color-background-code);
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+
+    > * {
+      max-width: 1080px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+
+  &.marketing-cta-block {
+    text-align: center;
+    padding-top: 2rem;
+    padding-bottom: 4rem;
+  }
+}
+
+.marketing-prose {
+  max-width: 720px;
+  margin: 0 auto;
+  line-height: 1.65;
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 2rem 0 0.75rem;
+    letter-spacing: -0.01em;
+  }
+
+  p { margin: 0.5rem 0 1rem; }
+  ul { padding-left: 1.2rem; }
+  li { margin-bottom: 0.4rem; }
+}
+
+/* ---------------------------------------------------------------------
+ * Feature grid (landing + features pages)
+ * ------------------------------------------------------------------- */
+.marketing-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.marketing-feature-card {
+  position: relative;
+  background: var(--color-background);
+  border: 1px solid var(--color-border-input);
+  border-radius: 12px;
+  padding: 1.25rem 1.25rem 1.5rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+
+  h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0.25rem 0 0.75rem;
+    line-height: 1.5;
+    opacity: 0.9;
+    font-size: 0.95rem;
+  }
+
+  .marketing-feature-meta {
+    font-size: 0.88rem;
+    a { font-weight: 600; text-decoration: none; }
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    border-color: var(--color-link);
+  }
+}
+
+.marketing-feature-card-new {
+  border-color: var(--color-link);
+  box-shadow: 0 4px 18px rgba(99, 102, 241, 0.12);
+}
+
+.marketing-new-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--color-link);
+  color: var(--color-white, #fff);
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-bottom: 0.5rem;
+}
+
+/* ---------------------------------------------------------------------
+ * Feature rows (long-form on /features)
+ * ------------------------------------------------------------------- */
+.marketing-feature-row {
+  padding: 1.5rem 0;
+  border-bottom: 1px solid var(--color-border-input);
+
+  &:last-of-type { border-bottom: none; }
+
+  h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+  p { line-height: 1.6; }
+  ul { padding-left: 1.25rem; margin: 0.5rem 0; }
+  li { margin-bottom: 0.35rem; line-height: 1.5; }
+}
+
+.marketing-feature-row-highlight {
+  background: var(--color-background-code);
+  border: 1px solid var(--color-link);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+/* ---------------------------------------------------------------------
+ * Two-col "why" layout
+ * ------------------------------------------------------------------- */
+.marketing-two-col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem 2rem;
+
+  h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+  p { margin: 0; line-height: 1.55; opacity: 0.9; }
+}
+
+/* ---------------------------------------------------------------------
+ * Bullet list
+ * ------------------------------------------------------------------- */
+.marketing-bullet-list {
+  max-width: 720px;
+  margin: 0 auto;
+  line-height: 1.65;
+  padding-left: 1.2rem;
+
+  li { margin-bottom: 0.5rem; }
+}
+
+/* ---------------------------------------------------------------------
+ * Footer link block (extends existing .footer-inner layout)
+ * ------------------------------------------------------------------- */
+.footer-links {
+  display: inline-flex;
+  gap: 0.25rem 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+
+  a { color: var(--color-text-footer); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+}
+
+/* ---------------------------------------------------------------------
+ * Mobile tweaks
+ * ------------------------------------------------------------------- */
+@media (max-width: 760px) {
+  .marketing-hero { padding: 2rem 1rem 1.5rem; }
+  .marketing-section { padding: 2rem 1rem; }
+  .marketing-cta-row { gap: 0.5rem; }
+  .marketing-feature-row-highlight { padding: 1rem; }
+}

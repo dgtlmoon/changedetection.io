@@ -1,0 +1,57 @@
+{% extends 'marketing/_layout.html' %}
+{% block marketing_content %}
+
+<section class="marketing-hero marketing-hero-narrow">
+  <div class="marketing-hero-inner">
+    <h1 class="marketing-h1">{{ _('About onChange by Sairo') }}</h1>
+    <p class="marketing-lede">
+      {{ _('A friendly fork of the excellent open-source project') }}
+      <a href="https://github.com/dgtlmoon/changedetection.io" rel="noopener">changedetection.io</a>
+      {{ _('by Leigh Morresi and contributors, with an updated brand, a new site-inventory processor, and a focused UI audit.') }}
+    </p>
+  </div>
+</section>
+
+<section class="marketing-section">
+  <div class="marketing-prose">
+    <h2>{{ _('What this fork changed') }}</h2>
+    <ul>
+      <li><strong>{{ _('New site-inventory processor') }}</strong> — {{ _('detect new or removed pages across a whole site, via sitemap, listing page, or bounded crawler with robots.txt support.') }}</li>
+      <li><strong>{{ _('Dedicated dashboard') }}</strong> — {{ _('aggregate new / removed pages across tags, per-watch CSV export, and a Stats-tab widget that shows live crawl progress.') }}</li>
+      <li><strong>{{ _('Accessibility and UI polish') }}</strong> — {{ _('ARIA labels on every icon, table scope headers, focus-trapping mobile drawer, 44px touch targets, dark-mode token audit, danger-zone for destructive actions.') }}</li>
+      <li><strong>{{ _('Brand refresh') }}</strong> — {{ _('"onChange by Sairo" with a new colour system documented in DESIGN.md. Upstream app behavior is preserved.') }}</li>
+    </ul>
+
+    <h2>{{ _('Provenance &amp; attribution') }}</h2>
+    <p>
+      {{ _('Every material change this fork introduces is documented in') }}
+      <a href="https://github.com/wolfieeee/change.sairo.app/blob/main/ATTRIBUTION.md" rel="noopener">ATTRIBUTION.md</a>,
+      <a href="https://github.com/wolfieeee/change.sairo.app/blob/main/NOTICE" rel="noopener">NOTICE</a>, {{ _('and') }}
+      <a href="https://github.com/wolfieeee/change.sairo.app/blob/main/DESIGN.md" rel="noopener">DESIGN.md</a>.
+      {{ _('We kept the project Apache 2.0 so the upstream community can freely pick up any improvements that help them.') }}
+    </p>
+
+    <h2>{{ _('Why a fork') }}</h2>
+    <p>
+      {{ _("The upstream project is excellent and actively maintained. This fork exists to experiment with a focused set of additions (principally the site-inventory processor and the accessibility pass) under a dedicated brand, without pressuring upstream maintainers to adopt changes outside their roadmap. Any improvement that proves useful here is welcome to flow upstream.") }}
+    </p>
+
+    <h2>{{ _('License') }}</h2>
+    <p>
+      {{ _('Apache License 2.0 — see') }}
+      <a href="https://github.com/wolfieeee/change.sairo.app/blob/main/LICENSE" rel="noopener">LICENSE</a>
+      {{ _('for the full text. Commercial use permitted under the terms of that license.') }}
+    </p>
+  </div>
+</section>
+
+<section class="marketing-section marketing-cta-block">
+  <h2 class="marketing-h2">{{ _('Explore') }}</h2>
+  <div class="marketing-cta-row">
+    <a class="pure-button" href="{{ url_for('marketing.features') }}">{{ _('All features') }}</a>
+    <a class="pure-button" href="{{ url_for('marketing.privacy') }}">{{ _('Privacy') }}</a>
+    <a class="pure-button" href="https://github.com/wolfieeee/change.sairo.app" rel="noopener">{{ _('Source on GitHub') }}</a>
+  </div>
+</section>
+
+{% endblock %}

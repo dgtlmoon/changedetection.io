@@ -6,16 +6,25 @@ $(document).ready(function () {
         function () {
             $("#api-key-copy").hide();
         }
-    ).click(function (e) {
-        $("#api-key-copy").html('copied');
-        var range = document.createRange();
-        var n = $("#api-key")[0];
-        range.selectNode(n);
-        window.getSelection().removeAllRanges();
-        window.getSelection().addRange(range);
-        document.execCommand("copy");
-        window.getSelection().removeAllRanges();
-
+    ).on('click focus', function (e) {
+        var el = $("#api-key")[0];
+        if (!el) return;
+        // Prefer modern clipboard API; fall back to legacy selection + execCommand.
+        var text = (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') ? el.value : $(el).text();
+        var setCopied = function () { $("#api-key-copy").html('copied').fadeIn(); };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(setCopied, function () {});
+        }
+        // Also highlight so keyboard users can copy with Ctrl/Cmd+C.
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+            el.select();
+        } else {
+            var range = document.createRange();
+            range.selectNode(el);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            try { document.execCommand("copy"); setCopied(); } catch (err) {}
+        }
     });
 
     $(".toggle-show").click(function (e) {

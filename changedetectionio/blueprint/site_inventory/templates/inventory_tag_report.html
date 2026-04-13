@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="edit-form">
+  <div class="box-wrap inner">
+    <h2 style="margin-top: 0;">
+      {{ _('Inventory rollup:') }}
+      <span class="watch-tag-list tag-{{ tag.title|sanitize_tag_class }}">{{ tag.title }}</span>
+    </h2>
+    <p class="pure-form-message-inline">
+      {{ _('Recent activity across every inventory watch tagged %(name)s (last %(n)d day(s)).', name=tag.title, n=window_days) }}
+      <a href="{{ url_for('site_inventory.dashboard') }}">{{ _('Back to dashboard') }}</a>
+    </p>
+
+    <h3>{{ _('Union added') }} ({{ union_added|length }})</h3>
+    {% if union_added %}
+      <pre class="inventory-url-list">{% for u in union_added %}{{ u }}
+{% endfor %}</pre>
+    {% else %}
+      <p class="pure-form-message-inline">{{ _('No URLs added in the window.') }}</p>
+    {% endif %}
+
+    <h3>{{ _('Union removed') }} ({{ union_removed|length }})</h3>
+    {% if union_removed %}
+      <pre class="inventory-url-list">{% for u in union_removed %}{{ u }}
+{% endfor %}</pre>
+    {% else %}
+      <p class="pure-form-message-inline">{{ _('No URLs removed in the window.') }}</p>
+    {% endif %}
+
+    <h3>{{ _('Per-watch breakdown') }}</h3>
+    {% if not rows %}
+      <p class="pure-form-message-inline">{{ _('No inventory watches in this tag yet.') }}</p>
+    {% else %}
+      <table class="pure-table pure-table-striped" style="width:100%;">
+        <thead>
+          <tr>
+            <th scope="col">{{ _('Watch') }}</th>
+            <th scope="col">{{ _('Added') }}</th>
+            <th scope="col">{{ _('Removed') }}</th>
+            <th scope="col"><span class="visually-hidden">{{ _('Actions') }}</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td>
+              <a href="{{ url_for('ui.ui_edit.edit_page', uuid=row.uuid) }}">{{ row.label }}</a>
+              <div class="tiny-url">{{ row.url }}</div>
+            </td>
+            <td class="num-added">{% if row.added_recent %}+{{ row.added_recent|length }}{% else %}0{% endif %}</td>
+            <td class="num-removed">{% if row.removed_recent %}-{{ row.removed_recent|length }}{% else %}0{% endif %}</td>
+            <td>
+              <a class="pure-button button-xsmall" href="{{ url_for('site_inventory.csv_export', uuid=row.uuid) }}">{{ _('CSV') }}</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

@@ -10,8 +10,13 @@
             <div class="pure-control-group">
                 <label for="password">{{ _('Password') }}</label>
                 <input type="password" id="password" required="" name="password" value=""
-                       size="15" autofocus />
+                       size="15" autofocus autocomplete="current-password"
+                       aria-describedby="login-help" />
+                {# Single-user install: username is hardcoded, not shown to the user. #}
                 <input type="hidden" id="email" name="email" value="defaultuser@changedetection.io" >
+                <div id="login-help" class="pure-form-message" style="margin-top: 0.5rem; font-size: 0.85rem; opacity: 0.8;">
+                    {{ _('Enter the system password set during installation.') }}
+                </div>
             </div>
             <div class="pure-control-group">
                 <button type="submit" class="pure-button pure-button-primary">{{ _('Login') }}</button>
