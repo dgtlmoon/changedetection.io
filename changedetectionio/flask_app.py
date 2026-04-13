@@ -67,8 +67,13 @@ app = Flask(__name__,
 # Will be initialized in changedetection_app
 socketio_server = None
 
-# Enable CORS, especially useful for the Chrome extension to operate from anywhere
-CORS(app)
+# Enable CORS only on /api/* endpoints (where the Chrome extension needs it).
+# API routes use header-based auth (x-api-key) so cross-origin reads are safe.
+# UI/session routes are intentionally NOT exposed cross-origin to reduce attack surface.
+# CORS_ALLOWED_ORIGINS can restrict further (comma-separated list of origins, or "*").
+_cors_origins_env = os.getenv("CORS_ALLOWED_ORIGINS", "*").strip()
+_cors_origins = [o.strip() for o in _cors_origins_env.split(",")] if _cors_origins_env != "*" else "*"
+CORS(app, resources={r"/api/*": {"origins": _cors_origins}}, supports_credentials=False)
 from werkzeug.routing import BaseConverter, ValidationError
 from uuid import UUID
 

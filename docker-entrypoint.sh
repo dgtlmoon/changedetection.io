@@ -10,7 +10,9 @@ if [ -n "$EXTRA_PACKAGES" ]; then
     # Check if we need to install/update packages
     if [ ! -f "$INSTALLED_MARKER" ] || [ "$(cat $INSTALLED_MARKER 2>/dev/null)" != "$CURRENT_PACKAGES" ]; then
         echo "Installing extra packages: $EXTRA_PACKAGES"
-        pip3 install --no-cache-dir $EXTRA_PACKAGES
+        # Use --user so pip works for the unprivileged runtime user.
+        # User site-packages are picked up automatically by Python's site module.
+        pip3 install --user --no-cache-dir $EXTRA_PACKAGES
 
         if [ $? -eq 0 ]; then
             echo "$CURRENT_PACKAGES" > "$INSTALLED_MARKER"

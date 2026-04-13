@@ -4,11 +4,55 @@ import hashlib
 import os
 import re
 import asyncio
+import threading
 
 from changedetectionio import strtobool
 from changedetectionio.content_fetchers.exceptions import BrowserStepsInUnsupportedFetcher, EmptyReply, Non200ErrorCodeReceived
 from changedetectionio.content_fetchers.base import Fetcher
 from changedetectionio.validate_url import is_private_hostname
+
+
+# Thread-local pool of requests.Session objects so TCP/TLS connections are reused
+# across fetches on the same worker thread. Creating a new Session per request
+# discards the connection pool and forces a fresh SSL handshake every time.
+_session_local = threading.local()
+
+
+def _get_pooled_session():
+    """Return a per-thread requests.Session with retry adapters mounted once."""
+    session = getattr(_session_local, "session", None)
+    if session is not None:
+        return session
+
+    import requests
+    from requests.adapters import HTTPAdapter
+    from urllib3.util.retry import Retry
+
+    max_retries = int(os.getenv("REQUESTS_RETRY_MAX_COUNT", "6"))
+    retry_strategy = Retry(
+        total=max_retries,
+        connect=max_retries,
+        read=max_retries,
+        status=0,
+        backoff_factor=0.5,
+        allowed_methods=["HEAD", "GET", "OPTIONS", "POST"],
+        raise_on_status=False,
+    )
+    adapter = HTTPAdapter(
+        max_retries=retry_strategy,
+        pool_connections=20,
+        pool_maxsize=50,
+    )
+    session = requests.Session()
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+
+    if strtobool(os.getenv('ALLOW_FILE_URI', 'false')):
+        from requests_file import FileAdapter
+        session.mount('file://', FileAdapter())
+
+    _session_local.session = session
+    return session
 
 
 # "html_requests" is listed as the default fetcher in store.py!
@@ -55,32 +99,10 @@ class fetcher(Fetcher):
             if self.system_https_proxy:
                 proxies['https'] = self.system_https_proxy
 
-        session = requests.Session()
-
-        # Configure retry adapter for low-level network errors only
-        # Retries connection timeouts, read timeouts, connection resets - not HTTP status codes
-        # Especially helpful in parallel test execution when servers are slow/overloaded
-        # Configurable via REQUESTS_RETRY_MAX_COUNT (default: 3 attempts)
-        from requests.adapters import HTTPAdapter
-        from urllib3.util.retry import Retry
-
-        max_retries = int(os.getenv("REQUESTS_RETRY_MAX_COUNT", "6"))
-        retry_strategy = Retry(
-            total=max_retries,
-            connect=max_retries,  # Retry connection timeouts
-            read=max_retries,     # Retry read timeouts
-            status=0,             # Don't retry on HTTP status codes
-            backoff_factor=0.5,   # Wait 0.3s, 0.6s, 1.2s between retries
-            allowed_methods=["HEAD", "GET", "OPTIONS", "POST"],
-            raise_on_status=False
-        )
-        adapter = HTTPAdapter(max_retries=retry_strategy)
-        session.mount("http://", adapter)
-        session.mount("https://", adapter)
-
-        if strtobool(os.getenv('ALLOW_FILE_URI', 'false')) and url.startswith('file://'):
-            from requests_file import FileAdapter
-            session.mount('file://', FileAdapter())
+        # Reuse a thread-local pooled Session so TCP/TLS connections stay warm
+        # across fetches. Retry adapter + file:// handler are configured once
+        # inside _get_pooled_session().
+        session = _get_pooled_session()
 
         allow_iana_restricted = strtobool(os.getenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'false'))
 
