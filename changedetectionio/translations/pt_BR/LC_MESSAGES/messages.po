@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.54.8\n"
 "Report-Msgid-Bugs-To: mstrey@gmail.com\n"
-"POT-Creation-Date: 2026-04-15 01:56+0900\n"
+"POT-Creation-Date: 2026-04-15 03:04+0900\n"
 "PO-Revision-Date: 2026-04-07 22:00-0300\n"
 "Last-Translator: Gemini AI\n"
 "Language: pt_BR\n"
@@ -969,6 +969,10 @@ msgstr "Nome da Tag / Rótulo"
 msgid "No website organisational tags/groups configured"
 msgstr "Nenhum grupo ou tag organizacional configurado"
 
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/templates/menu.html
+msgid "Mute notifications"
+msgstr "Silenciar notificações"
+
 #: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Edit"
@@ -1925,6 +1929,26 @@ msgstr "Nenhum monitoramento configurado, adicione uma URL na caixa acima ou"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "import a list"
 msgstr "importe uma lista"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Pause checks"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "UnPause checks"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Mute notification"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "UnMute notification"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Create a link to share watch config with others"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Detecting restock and price"
@@ -3553,10 +3577,6 @@ msgstr "O agendamento está pausado - clique para retomar"
 #: changedetectionio/templates/menu.html
 msgid "Unmute notifications"
 msgstr "Reativar notificações"
-
-#: changedetectionio/templates/menu.html
-msgid "Mute notifications"
-msgstr "Silenciar notificações"
 
 #: changedetectionio/templates/menu.html
 msgid "Notifications are muted - click to unmute"

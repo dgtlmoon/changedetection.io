@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-15 01:56+0900\n"
+"POT-Creation-Date: 2026-04-15 03:04+0900\n"
 "PO-Revision-Date: 2026-03-20 18:13+0100\n"
 "Last-Translator: Adrian Gonzalez <adrian@example.com>\n"
 "Language: es\n"
@@ -982,6 +982,10 @@ msgstr "Nombre de etiqueta/etiqueta"
 msgid "No website organisational tags/groups configured"
 msgstr "No hay etiquetas/grupos organizativos del sitio web configurados"
 
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/templates/menu.html
+msgid "Mute notifications"
+msgstr "Silenciar notificaciones"
+
 #: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Edit"
@@ -1950,6 +1954,26 @@ msgstr "No hay monitores de detección de cambios de página web configuradas; a
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "import a list"
 msgstr "importar una lista"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Pause checks"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "UnPause checks"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Mute notification"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "UnMute notification"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Create a link to share watch config with others"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Detecting restock and price"
@@ -3585,10 +3609,6 @@ msgstr "La programación está en pausa: haga clic para reanudar"
 #: changedetectionio/templates/menu.html
 msgid "Unmute notifications"
 msgstr "Dejar de silenciar notificaciones"
-
-#: changedetectionio/templates/menu.html
-msgid "Mute notifications"
-msgstr "Silenciar notificaciones"
 
 #: changedetectionio/templates/menu.html
 msgid "Notifications are muted - click to unmute"

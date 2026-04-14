@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-15 01:56+0900\n"
+"POT-Creation-Date: 2026-04-15 03:04+0900\n"
 "PO-Revision-Date: 2026-04-10 20:38+0300\n"
 "Last-Translator: \n"
 "Language: tr\n"
@@ -975,6 +975,10 @@ msgstr "Etiket / İsim adı"
 msgid "No website organisational tags/groups configured"
 msgstr "Yapılandırılmış web sitesi organizasyonel etiketi/grubu yok"
 
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/templates/menu.html
+msgid "Mute notifications"
+msgstr "Bildirimleri sessize al"
+
 #: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Edit"
@@ -1935,6 +1939,26 @@ msgstr "Yapılandırılmış web sayfası değişiklik tespiti izleyicisi yok, l
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "import a list"
 msgstr "bir listeyi içe aktarın"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Pause checks"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "UnPause checks"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Mute notification"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "UnMute notification"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Create a link to share watch config with others"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Detecting restock and price"
@@ -3565,10 +3589,6 @@ msgstr "Zamanlama duraklatıldı - devam etmek için tıklayın"
 #: changedetectionio/templates/menu.html
 msgid "Unmute notifications"
 msgstr "Bildirimlerin sesini aç"
-
-#: changedetectionio/templates/menu.html
-msgid "Mute notifications"
-msgstr "Bildirimleri sessize al"
 
 #: changedetectionio/templates/menu.html
 msgid "Notifications are muted - click to unmute"
