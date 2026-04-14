@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-15 01:03+0900\n"
+"POT-Creation-Date: 2026-04-15 01:56+0900\n"
 "PO-Revision-Date: 2026-04-10 20:38+0300\n"
 "Last-Translator: \n"
 "Language: tr\n"
@@ -975,7 +975,7 @@ msgstr "Etiket / İsim adı"
 msgid "No website organisational tags/groups configured"
 msgstr "Yapılandırılmış web sitesi organizasyonel etiketi/grubu yok"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Edit"
 msgstr "Düzenle"
@@ -1181,6 +1181,14 @@ msgid "Could not load '{}' processor, processor plugin might be missing."
 msgstr "'{}' işlemcisi yüklenemedi, işlemci eklentisi eksik olabilir."
 
 #: changedetectionio/blueprint/ui/edit.py
+msgid "System settings default"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/edit.py
+msgid "Default"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/edit.py
 msgid "Updated watch - unpaused!"
 msgstr "İzleyici güncellendi - duraklatma iptal edildi!"
 
@@ -1191,6 +1199,10 @@ msgstr "İzleyici güncellendi."
 #: changedetectionio/blueprint/ui/preview.py
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
 msgstr "Önizleme kullanılamıyor - Getirme/kontrol tamamlanmadı veya tetikleyicilere ulaşılamadı"
+
+#: changedetectionio/blueprint/ui/preview.py
+msgid "Diff"
+msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "This will remove version history (snapshots) for ALL watches, but keep your list of URLs!"
@@ -1319,7 +1331,8 @@ msgstr "Metin"
 msgid "Current screenshot"
 msgstr "Mevcut ekran görüntüsü"
 
-#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/templates/extract.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/extract.py
+#: changedetectionio/processors/templates/extract.html
 msgid "Extract Data"
 msgstr "Veriyi Çıkar"
 
@@ -1952,6 +1965,7 @@ msgid "Queued"
 msgstr "Sırada"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/text_json_diff/difference.py
 msgid "History"
 msgstr "Geçmiş"
 
@@ -2141,6 +2155,10 @@ msgstr ""
 
 #: changedetectionio/conditions/plugins/wordcount_plugin.py
 msgid "Word count is a simple measure of content length, calculated by splitting text on whitespace."
+msgstr ""
+
+#: changedetectionio/content_fetchers/requests.py
+msgid "Basic fast Plaintext/HTTP Client"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/flask_app.py
