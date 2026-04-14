@@ -216,6 +216,7 @@ class watch_base(dict):
             'notification_urls': [],  # List of URLs to add to the notification Queue (Usually AppRise)
             'page_title': None, # <title> from the page
             'paused': False,
+            'last_filter_config_hash': False,
             'previous_md5': False,
             'processor': 'text_json_diff',  # could be restock_diff or others from .processors
             'price_change_threshold_percent': None,

@@ -74,9 +74,7 @@ def test_trigger_functionality(client, live_server, measure_memory_usage, datast
     # And set the trigger text as 'ignore text', it should then not trigger
     live_server.app.config['DATASTORE'].data['settings']['application']['global_ignore_text'] = [trigger_text]
 
-
-
-# Trigger a check
+    # Trigger a check
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Goto the edit page, add our ignore text
