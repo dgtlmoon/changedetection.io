@@ -105,6 +105,30 @@ class FilterConfig:
     def text_should_not_be_present(self):
         return self._get_merged_rules('text_should_not_be_present')
 
+    def get_filter_config_hash(self):
+        """
+        Stable hash of the effective filter configuration.
+
+        Used by the skip-logic in run_changedetection() so that any change to
+        global settings, tag overrides, or watch filters automatically invalidates
+        the raw-content-unchanged shortcut — without needing scattered
+        clear_all_last_checksums() calls at every settings mutation site.
+        """
+        app = self.datastore.data['settings']['application']
+        config = {
+            'extract_lines_containing': sorted(self.extract_lines_containing),
+            'extract_text':             sorted(self.extract_text),
+            'ignore_text':              sorted(self.ignore_text),
+            'include_filters':          sorted(self.include_filters),
+            'subtractive_selectors':    sorted(self.subtractive_selectors),
+            'text_should_not_be_present': sorted(self.text_should_not_be_present),
+            'trigger_text':             sorted(self.trigger_text),
+            # Global processing flags not captured by the filter lists above
+            'ignore_whitespace':        app.get('ignore_whitespace', False),
+            'strip_ignored_lines':      app.get('strip_ignored_lines', False),
+        }
+        return hashlib.md5(json.dumps(config, sort_keys=True).encode()).hexdigest()
+
     @property
     def has_include_filters(self):
         return bool(self.include_filters) and bool(self.include_filters[0].strip())
@@ -392,19 +416,26 @@ class perform_site_check(difference_detection_processor):
             raise Exception("Watch no longer exists.")
 
         current_raw_document_checksum = self.get_raw_document_checksum()
-        # Skip processing only if BOTH conditions are true:
-        # 1. HTML content unchanged (checksum matches last saved checksum)
-        # 2. Watch configuration was not edited (including trigger_text, filters, etc.)
-        # The was_edited flag handles all watch configuration changes, so we don't need
-        # separate checks for trigger_text or other processing rules.
+
+        # Build filter config up front so we can hash it for the skip check.
+        filter_config = FilterConfig(watch, self.datastore)
+        current_filter_config_hash = filter_config.get_filter_config_hash()
+
+        # Skip only when ALL of these hold:
+        #   1. raw HTML is unchanged
+        #   2. watch config was not edited (was_edited covers per-watch field changes)
+        #   3. effective filter config is unchanged (covers global/tag setting changes that
+        #      bypass was_edited — e.g. global_ignore_text, global_subtractive_selectors)
+        # last_filter_config_hash being False means first run or upgrade: don't skip.
         if (not force_reprocess and
             not watch.was_edited and
             self.last_raw_content_checksum and
-            self.last_raw_content_checksum == current_raw_document_checksum):
+            self.last_raw_content_checksum == current_raw_document_checksum and
+            watch.get('last_filter_config_hash') and
+            watch.get('last_filter_config_hash') == current_filter_config_hash):
             raise checksumFromPreviousCheckWasTheSame()
 
-        # Initialize components
-        filter_config = FilterConfig(watch, self.datastore)
+        # Initialize remaining components
         content_processor = ContentProcessor(self.fetcher, watch, filter_config, self.datastore)
         transformer = ContentTransformer()
         rule_engine = RuleEngine()
@@ -425,6 +456,7 @@ class perform_site_check(difference_detection_processor):
 
         # Save the raw content checksum to file (processor implementation detail, not watch config)
         self.update_last_raw_content_checksum(current_raw_document_checksum)
+        update_obj['last_filter_config_hash'] = current_filter_config_hash
 
         # === CONTENT PREPROCESSING ===
         # Avoid creating unnecessary intermediate string copies by reassigning only when needed
@@ -555,8 +587,8 @@ class perform_site_check(difference_detection_processor):
         # === BLOCKING RULES EVALUATION ===
         blocked = False
 
-        # Check trigger_text
-        if rule_engine.evaluate_trigger_text(stripped_text, filter_config.trigger_text):
+        # Check trigger_text - use text_for_checksuming so ignore_text can suppress trigger_text
+        if rule_engine.evaluate_trigger_text(text_for_checksuming, filter_config.trigger_text):
             blocked = True
 
         # Check text_should_not_be_present

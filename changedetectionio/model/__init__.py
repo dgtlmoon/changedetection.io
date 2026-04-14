@@ -338,6 +338,7 @@ class watch_base(dict):
         # These are set by processors/workers and should not trigger edited flag
         additional_system_fields = {
             'last_check_status',  # Set by processors
+            'last_filter_config_hash',  # Set by text_json_diff processor, internal skip-cache
             'restock',  # Set by restock processor
             'last_viewed',  # Set by mark_all_viewed endpoint
         }
