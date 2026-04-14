@@ -61,7 +61,7 @@ def render_form(watch, datastore, request, url_for, render_template, flash, redi
         screenshot=screenshot_url,
         is_html_webdriver=is_html_webdriver,
         password_enabled_and_share_is_off=password_enabled_and_share_is_off,
-        extra_title=f" - {watch.label} - Extract Data",
+        extra_title=f" - {watch.label} - {gettext('Extract Data')}",
         extra_stylesheets=[url_for('static_content', group='styles', filename='diff.css')],
         pure_menu_fixed=False
     )

@@ -301,7 +301,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 'extra_classes': ' '.join(c),
                 'extra_notification_token_placeholder_info': datastore.get_unique_notification_token_placeholders_available(),
                 'extra_processor_config': form.extra_tab_content(),
-                'extra_title': f" - Edit - {watch.label}",
+                'extra_title': f" - {gettext('Edit')} - {watch.label}",
                 'form': form,
                 'has_default_notification_urls': True if len(datastore.data['settings']['application']['notification_urls']) else False,
                 'has_extra_headers_file': len(datastore.get_all_headers_in_textfile_for_watch(uuid=uuid)) > 0,
