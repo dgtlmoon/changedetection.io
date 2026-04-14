@@ -337,7 +337,6 @@ class model(EntityPersistenceMixin, watch_base):
             'has_ldjson_price_data': None,
             'last_checked': 0,
             'last_error': False,
-            'last_filter_config_hash': False,
             'last_notification_error': False,
             'last_viewed': 0,
             'previous_md5': False,
