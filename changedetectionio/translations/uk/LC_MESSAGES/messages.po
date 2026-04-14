@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  changedetection.io\n"
 "Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io\n"
-"POT-Creation-Date: 2026-04-14 20:24+0900\n"
+"POT-Creation-Date: 2026-04-15 01:03+0900\n"
 "PO-Revision-Date: 2026-02-19 12:30+0100\n"
 "Last-Translator: \n"
 "Language: uk\n"
@@ -3337,6 +3337,10 @@ msgstr ""
 #: changedetectionio/templates/base.html
 msgid "Search, or Use Alt+S Key"
 msgstr "Пошук, або використовуйте Alt+S"
+
+#: changedetectionio/templates/base.html
+msgid "Share this link:"
+msgstr ""
 
 #: changedetectionio/templates/base.html
 msgid "Real-time updates offline"

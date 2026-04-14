@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-14 20:24+0900\n"
+"POT-Creation-Date: 2026-04-15 01:03+0900\n"
 "PO-Revision-Date: 2026-03-31 23:52+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -3375,6 +3375,10 @@ msgstr "新しいバージョンが利用可能です"
 #: changedetectionio/templates/base.html
 msgid "Search, or Use Alt+S Key"
 msgstr "検索、またはAlt+Sキーを使用"
+
+#: changedetectionio/templates/base.html
+msgid "Share this link:"
+msgstr "このリンクを共有:"
 
 #: changedetectionio/templates/base.html
 msgid "Real-time updates offline"

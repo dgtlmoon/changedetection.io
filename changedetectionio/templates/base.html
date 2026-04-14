@@ -235,7 +235,7 @@
             {% if session['share-link'] %}
               <ul class="messages with-share-link">
                 <li class="message">
-                  Share this link:
+                  {{ _('Share this link:') }}
                   <span id="share-link">{{ session['share-link'] }}</span>
                   <img style="height: 1em; display: inline-block" src="{{url_for('static_content', group='images', filename='copy.svg')}}" >
                 </li>
