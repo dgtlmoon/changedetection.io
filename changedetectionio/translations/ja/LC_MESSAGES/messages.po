@@ -841,15 +841,15 @@ msgstr "更新しました"
 
 #: changedetectionio/blueprint/tags/form.py
 msgid "Activate for individual watches in this tag/group?"
-msgstr ""
+msgstr "このタグ/グループ内の個別ウォッチに対して有効にしますか？"
 
 #: changedetectionio/blueprint/tags/form.py
 msgid "Auto-apply to watches with URLs matching"
-msgstr ""
+msgstr "URLが一致するウォッチに自動適用"
 
 #: changedetectionio/blueprint/tags/form.py
 msgid "e.g. *://example.com/* or github.com/myorg"
-msgstr ""
+msgstr "例: *://example.com/* や github.com/myorg"
 
 #: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "Tag colour"
@@ -857,7 +857,7 @@ msgstr "タグの色"
 
 #: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
-msgstr ""
+msgstr "タグ名"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Filters & Triggers"
@@ -1973,161 +1973,161 @@ msgstr "'%(title)s' 内"
 
 #: changedetectionio/conditions/__init__.py
 msgid "Choose one - Operator"
-msgstr ""
+msgstr "選択してください - 演算子"
 
 #: changedetectionio/conditions/__init__.py
 msgid "Greater Than"
-msgstr ""
+msgstr "より大きい"
 
 #: changedetectionio/conditions/__init__.py
 msgid "Less Than"
-msgstr ""
+msgstr "より小さい"
 
 #: changedetectionio/conditions/__init__.py
 msgid "Greater Than or Equal To"
-msgstr ""
+msgstr "以上"
 
 #: changedetectionio/conditions/__init__.py
 msgid "Less Than or Equal To"
-msgstr ""
+msgstr "以下"
 
 #: changedetectionio/conditions/__init__.py
 msgid "Equals"
-msgstr ""
+msgstr "等しい"
 
 #: changedetectionio/conditions/__init__.py
 msgid "Not Equals"
-msgstr ""
+msgstr "等しくない"
 
 #: changedetectionio/conditions/__init__.py
 msgid "Contains"
-msgstr ""
+msgstr "含む"
 
 #: changedetectionio/conditions/__init__.py
 msgid "Choose one - Field"
-msgstr ""
+msgstr "選択してください - フィールド"
 
 #: changedetectionio/conditions/default_plugin.py
 msgid "Does NOT Contain"
-msgstr ""
+msgstr "含まない"
 
 #: changedetectionio/conditions/default_plugin.py
 msgid "Text Starts With"
-msgstr ""
+msgstr "テキストが次で始まる"
 
 #: changedetectionio/conditions/default_plugin.py
 msgid "Text Ends With"
-msgstr ""
+msgstr "テキストが次で終わる"
 
 #: changedetectionio/conditions/default_plugin.py
 msgid "Length minimum"
-msgstr ""
+msgstr "文字数の最小値"
 
 #: changedetectionio/conditions/default_plugin.py
 msgid "Length maximum"
-msgstr ""
+msgstr "文字数の最大値"
 
 #: changedetectionio/conditions/default_plugin.py
 msgid "Text Matches Regex"
-msgstr ""
+msgstr "テキストが正規表現にマッチ"
 
 #: changedetectionio/conditions/default_plugin.py
 msgid "Text Does NOT Match Regex"
-msgstr ""
+msgstr "テキストが正規表現にマッチしない"
 
 #: changedetectionio/conditions/default_plugin.py
 msgid "Extracted number after 'Filters & Triggers'"
-msgstr ""
+msgstr "'フィルタとトリガー' 後に抽出された数値"
 
 #: changedetectionio/conditions/default_plugin.py
 msgid "Page text after 'Filters & Triggers'"
-msgstr ""
+msgstr "'フィルタとトリガー' 後のページテキスト"
 
 #: changedetectionio/conditions/form.py
 msgid "Field"
-msgstr ""
+msgstr "フィールド"
 
 #: changedetectionio/conditions/form.py
 msgid "Operator"
-msgstr ""
+msgstr "演算子"
 
 #: changedetectionio/conditions/form.py
 msgid "A value"
-msgstr ""
+msgstr "値"
 
 #: changedetectionio/conditions/form.py
 msgid "Operator is required."
-msgstr ""
+msgstr "演算子は必須です。"
 
 #: changedetectionio/conditions/form.py
 msgid "Field is required."
-msgstr ""
+msgstr "フィールドは必須です。"
 
 #: changedetectionio/conditions/form.py
 msgid "Value is required."
-msgstr ""
+msgstr "値は必須です。"
 
 #: changedetectionio/conditions/plugins/levenshtein_plugin.py
 msgid "Levenshtein - Text similarity ratio"
-msgstr ""
+msgstr "レーベンシュタイン - テキスト類似度"
 
 #: changedetectionio/conditions/plugins/levenshtein_plugin.py
 msgid "Levenshtein - Text change distance"
-msgstr ""
+msgstr "レーベンシュタイン - テキスト変化距離"
 
 #: changedetectionio/conditions/plugins/levenshtein_plugin.py
 msgid "Not enough history to calculate Levenshtein metrics"
-msgstr ""
+msgstr "レーベンシュタイン指標を計算するのに十分な履歴がありません"
 
 #: changedetectionio/conditions/plugins/levenshtein_plugin.py
 msgid "Snapshot too large for edit statistics, skipping."
-msgstr ""
+msgstr "スナップショットが大きすぎるため、編集統計をスキップします。"
 
 #: changedetectionio/conditions/plugins/levenshtein_plugin.py
 msgid "Unable to calculate Levenshtein metrics"
-msgstr ""
+msgstr "レーベンシュタイン指標を計算できません"
 
 #: changedetectionio/conditions/plugins/levenshtein_plugin.py
 msgid "Levenshtein Text Similarity Details"
-msgstr ""
+msgstr "レーベンシュタイン テキスト類似度の詳細"
 
 #: changedetectionio/conditions/plugins/levenshtein_plugin.py
 msgid "Raw distance (edits needed)"
-msgstr ""
+msgstr "編集距離（必要な編集回数）"
 
 #: changedetectionio/conditions/plugins/levenshtein_plugin.py
 msgid "Similarity ratio"
-msgstr ""
+msgstr "類似度"
 
 #: changedetectionio/conditions/plugins/levenshtein_plugin.py
 msgid "Percent similar"
-msgstr ""
+msgstr "類似度（%）"
 
 #: changedetectionio/conditions/plugins/levenshtein_plugin.py
 msgid ""
 "Levenshtein metrics compare the last two snapshots, measuring how many character edits are needed to transform one "
 "into the other."
-msgstr ""
+msgstr "レーベンシュタイン指標は直近2つのスナップショットを比較し、一方を他方に変換するために必要な文字編集回数を測定します。"
 
 #: changedetectionio/conditions/plugins/levenshtein_plugin.py
 msgid "Error calculating Levenshtein metrics"
-msgstr ""
+msgstr "レーベンシュタイン指標の計算中にエラーが発生しました"
 
 #: changedetectionio/conditions/plugins/wordcount_plugin.py
 msgid "Word count of content"
-msgstr ""
+msgstr "コンテンツの単語数"
 
 #: changedetectionio/conditions/plugins/wordcount_plugin.py
 msgid "Content Analysis"
-msgstr ""
+msgstr "コンテンツ分析"
 
 #: changedetectionio/conditions/plugins/wordcount_plugin.py
 msgid "Word count (latest snapshot)"
-msgstr ""
+msgstr "単語数（最新のスナップショット）"
 
 #: changedetectionio/conditions/plugins/wordcount_plugin.py
 msgid "Word count is a simple measure of content length, calculated by splitting text on whitespace."
-msgstr ""
+msgstr "単語数はコンテンツの長さを示す簡易指標で、テキストを空白で分割して計算されます。"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/flask_app.py
 #: changedetectionio/realtime/socket_server.py
@@ -2413,7 +2413,7 @@ msgstr "セレクター"
 
 #: changedetectionio/forms.py
 msgid "CSS or xPath selector"
-msgstr ""
+msgstr "CSS または xPath セレクター"
 
 #: changedetectionio/forms.py
 msgid "value"
@@ -2421,15 +2421,15 @@ msgstr "値"
 
 #: changedetectionio/conditions/form.py changedetectionio/forms.py
 msgid "Value"
-msgstr ""
+msgstr "値"
 
 #: changedetectionio/forms.py
 msgid "Web Page URL"
-msgstr ""
+msgstr "ウェブページ URL"
 
 #: changedetectionio/forms.py
 msgid "Group Tag"
-msgstr ""
+msgstr "グループタグ"
 
 #: changedetectionio/forms.py
 msgid "Time Between Check"
@@ -2686,7 +2686,7 @@ msgstr "空白を無視"
 
 #: changedetectionio/forms.py
 msgid "Screenshot: Minimum Change Percentage"
-msgstr ""
+msgstr "スクリーンショット: 最小変化率"
 
 #: changedetectionio/forms.py changedetectionio/processors/image_ssim_diff/forms.py
 msgid "Must be between 0 and 100"
@@ -2889,39 +2889,39 @@ msgstr "製品が在庫ありに戻ったかどうかを検知します"
 
 #: changedetectionio/processors/templates/extract.html
 msgid "Screenshot"
-msgstr ""
+msgstr "スクリーンショット"
 
 #: changedetectionio/processors/templates/extract.html
 msgid "This tool will extract text data from all of the watch history."
-msgstr ""
+msgstr "このツールはすべてのウォッチ履歴からテキストデータを抽出します。"
 
 #: changedetectionio/processors/templates/extract.html
 msgid "A <strong>RegEx</strong> is a pattern that identifies exactly which part inside of the text that you want to extract."
-msgstr ""
+msgstr "<strong>正規表現</strong> は、抽出したいテキスト内の部分を正確に特定するためのパターンです。"
 
 #: changedetectionio/processors/templates/extract.html
 msgid "For example, to extract only the numbers from text"
-msgstr ""
+msgstr "例えば、テキストから数値のみを抽出するには"
 
 #: changedetectionio/processors/templates/extract.html
 msgid "Raw text"
-msgstr ""
+msgstr "元のテキスト"
 
 #: changedetectionio/processors/templates/extract.html
 msgid "RegEx to extract:"
-msgstr ""
+msgstr "抽出用の正規表現："
 
 #: changedetectionio/processors/templates/extract.html
 msgid "Be sure to test your RegEx here."
-msgstr ""
+msgstr "ここで正規表現をテストしてください。"
 
 #: changedetectionio/processors/templates/extract.html
 msgid "Each RegEx group bracket"
-msgstr ""
+msgstr "正規表現の各グループ括弧"
 
 #: changedetectionio/processors/templates/extract.html
 msgid "will be in its own column, the first column value is always the date."
-msgstr ""
+msgstr "は独立したカラムとなり、最初のカラムの値は常に日付です。"
 
 #: changedetectionio/processors/text_json_diff/processor.py
 msgid "Webpage Text/HTML, JSON and PDF changes"
@@ -3227,23 +3227,27 @@ msgstr "すべての通知のフォーマット"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Note"
-msgstr ""
+msgstr "注意"
 
+# 訳注: "Discord does not render HTML — switch to <Plain Text> format to avoid <&nbsp;> and other HTML entities appearing
+# literally in your notifications."
+# → 「Discord は HTML をレンダリングしません。プレーンテキスト形式に切り替えて、通知で &nbsp; などの HTML エンティティがそのまま表示されるのを回避してください。」
+# 3分割された文をプレースホルダー位置に合わせて再配分
 #: changedetectionio/templates/_common_fields.html
 msgid "Discord does not render HTML — switch to"
-msgstr ""
+msgstr "Discord は HTML をレンダリングしません。"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Plain Text"
-msgstr ""
+msgstr "プレーンテキスト"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "format to avoid"
-msgstr ""
+msgstr " 形式に切り替えて、通知で "
 
 #: changedetectionio/templates/_common_fields.html
 msgid "and other HTML entities appearing literally in your notifications."
-msgstr ""
+msgstr " などの HTML エンティティがそのまま表示されるのを回避してください。"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Entry"
@@ -3366,7 +3370,7 @@ msgstr "ブロックされたテキスト"
 
 #: changedetectionio/templates/base.html
 msgid "A new version is available"
-msgstr ""
+msgstr "新しいバージョンが利用可能です"
 
 #: changedetectionio/templates/base.html
 msgid "Search, or Use Alt+S Key"
