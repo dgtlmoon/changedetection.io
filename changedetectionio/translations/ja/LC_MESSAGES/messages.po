@@ -917,7 +917,7 @@ msgid "Lookout!"
 msgstr "注意！"
 
 # 訳注: "There are" + <a>"system-wide notification URLs enabled"</a> + ", " + ...
-# → 「 件のシステム全体の通知URLが有効化されています、...」
+# → 「システム全体の通知URLが有効化されています、...」
 # 前半は日本語では不要なため、空白1文字で非表示にする（空文字は英語にフォールバックするため）
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "There are"
@@ -925,7 +925,7 @@ msgstr " "
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "system-wide notification URLs enabled"
-msgstr "件のシステム全体の通知URLが有効化されています"
+msgstr "システム全体の通知URLが有効化されています"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "this form will override notification settings for this watch only"
