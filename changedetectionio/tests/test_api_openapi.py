@@ -177,7 +177,6 @@ def test_openapi_validation_get_requests_bypass_validation(client, live_server, 
         url_for("settings.settings_page"),
         data={
             "requests-time_between_check-minutes": 180,
-            "application-fetch_backend": "html_requests",
             "application-api_access_token_enabled": ""
         },
         follow_redirects=True

@@ -295,14 +295,23 @@ def register_builtin_fetchers():
     This is called from content_fetchers/__init__.py after all fetchers are imported
     to avoid circular import issues.
     """
-    from changedetectionio.content_fetchers import requests, playwright, puppeteer, webdriver_selenium
+    from changedetectionio.content_fetchers import requests, puppeteer, webdriver_selenium
+    from changedetectionio.content_fetchers.playwright import CDP, chrome, firefox, webkit
 
-    # Register each built-in fetcher plugin
     if hasattr(requests, 'requests_plugin'):
         plugin_manager.register(requests.requests_plugin, 'builtin_requests')
 
-    if hasattr(playwright, 'playwright_plugin'):
-        plugin_manager.register(playwright.playwright_plugin, 'builtin_playwright')
+    if hasattr(CDP, 'cdp_plugin'):
+        plugin_manager.register(CDP.cdp_plugin, 'builtin_playwright_cdp')
+
+    if hasattr(chrome, 'chrome_plugin'):
+        plugin_manager.register(chrome.chrome_plugin, 'builtin_playwright_chrome')
+
+    if hasattr(firefox, 'firefox_plugin'):
+        plugin_manager.register(firefox.firefox_plugin, 'builtin_playwright_firefox')
+
+    if hasattr(webkit, 'webkit_plugin'):
+        plugin_manager.register(webkit.webkit_plugin, 'builtin_playwright_webkit')
 
     if hasattr(puppeteer, 'puppeteer_plugin'):
         plugin_manager.register(puppeteer.puppeteer_plugin, 'builtin_puppeteer')
@@ -418,57 +427,28 @@ def get_active_plugins():
 
 
 def get_fetcher_capabilities(watch, datastore):
-    """Get capability flags for a watch's fetcher.
+    """Get capability flags for a watch's resolved fetcher.
 
-    Args:
-        watch: The watch object/dict
-        datastore: The datastore to resolve 'system' fetcher
+    Uses the BrowserProfile resolution chain (watch → tag → global → built-in)
+    to determine the actual fetcher class, then reads its capability flags.
 
     Returns:
-        dict: Dictionary with capability flags:
-            {
-                'supports_browser_steps': bool,
-                'supports_screenshots': bool,
-                'supports_xpath_element_data': bool
-            }
+        dict: {'supports_browser_steps': bool, 'supports_screenshots': bool,
+               'supports_xpath_element_data': bool}
     """
-    # Get the fetcher name from watch
-    fetcher_name = watch.get('fetch_backend', 'system')
-
-    # Resolve 'system' to actual fetcher
-    if fetcher_name == 'system':
-        fetcher_name = datastore.data['settings']['application'].get('fetch_backend', 'html_requests')
-
-    # Get the fetcher class
+    from changedetectionio.model.browser_profile import resolve_browser_profile
     from changedetectionio import content_fetchers
 
-    # Try to get from built-in fetchers first
-    if hasattr(content_fetchers, fetcher_name):
-        fetcher_class = getattr(content_fetchers, fetcher_name)
-        return {
-            'supports_browser_steps': getattr(fetcher_class, 'supports_browser_steps', False),
-            'supports_screenshots': getattr(fetcher_class, 'supports_screenshots', False),
-            'supports_xpath_element_data': getattr(fetcher_class, 'supports_xpath_element_data', False)
-        }
+    profile = resolve_browser_profile(watch, datastore)
+    fetcher_class = content_fetchers.get_fetcher(profile.fetch_backend)
 
-    # Try to get from plugin-provided fetchers
-    # Query all plugins for registered fetchers
-    plugin_fetchers = plugin_manager.hook.register_content_fetcher()
-    for fetcher_registration in plugin_fetchers:
-        if fetcher_registration:
-            name, fetcher_class = fetcher_registration
-            if name == fetcher_name:
-                return {
-                    'supports_browser_steps': getattr(fetcher_class, 'supports_browser_steps', False),
-                    'supports_screenshots': getattr(fetcher_class, 'supports_screenshots', False),
-                    'supports_xpath_element_data': getattr(fetcher_class, 'supports_xpath_element_data', False)
-                }
+    if fetcher_class is None:
+        return {'supports_browser_steps': False, 'supports_screenshots': False, 'supports_xpath_element_data': False}
 
-    # Default: no capabilities
     return {
-        'supports_browser_steps': False,
-        'supports_screenshots': False,
-        'supports_xpath_element_data': False
+        'supports_browser_steps': getattr(fetcher_class, 'supports_browser_steps', False),
+        'supports_screenshots': getattr(fetcher_class, 'supports_screenshots', False),
+        'supports_xpath_element_data': getattr(fetcher_class, 'supports_xpath_element_data', False),
     }
 
 

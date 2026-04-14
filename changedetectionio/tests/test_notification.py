@@ -41,8 +41,7 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
               "application-notification_title": "fallback-title "+default_notification_title,
               "application-notification_body": "fallback-body "+default_notification_body,
               "application-notification_format": default_notification_format,
-              "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+              "requests-time_between_check-minutes": 180},
         follow_redirects=True
     )
 
@@ -122,7 +121,7 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
         "tags": "my tag, my second tag",
         "title": "my title",
         "headers": "",
-        "fetch_backend": "html_requests",
+        "browser_profile": "direct_http_requests",
         "time_between_check_use_default": "y"})
 
     res = client.post(
@@ -251,7 +250,7 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
         "notification_title": '',
         "notification_body": '',
         "notification_format": default_notification_format,
-        "fetch_backend": "html_requests",
+        "browser_profile": "direct_http_requests",
         "time_between_check_use_default": "y"},
         follow_redirects=True
     )
@@ -282,7 +281,6 @@ def test_notification_urls_jinja2_apprise_integration(client, live_server, measu
     res = client.post(
         url_for("settings.settings_page"),
         data={
-              "application-fetch_backend": "html_requests",
               "application-minutes_between_check": 180,
               "application-notification_body": '{ "url" : "{{ watch_url }}", "secret": 444, "somebug": "网站监测 内容更新了", "another": "{{diff|truncate(1500)}}" }',
               "application-notification_format": default_notification_format,
@@ -314,7 +312,6 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
     res = client.post(
         url_for("settings.settings_page"),
         data={
-              "application-fetch_backend": "html_requests",
               "application-minutes_between_check": 180,
               "application-notification_body": '{ "url" : "{{ watch_url }}", "secret": 444, "somebug": "网站监测 内容更新了" }',
               "application-notification_format": default_notification_format,
@@ -399,7 +396,6 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
     res = client.post(
         url_for("settings.settings_page"),
         data={
-            "application-fetch_backend": "html_requests",
             "application-minutes_between_check": 180,
             "application-notification_body": test_body,
             "application-notification_format": default_notification_format,
@@ -478,7 +474,8 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
         b"nodename nor servname provided" in res.data or
         b"Temporary failure in name resolution" in res.data or
         b"Failed to establish a new connection" in res.data or
-        b"Connection error occurred" in res.data
+        b"Connection error occurred" in res.data or
+        b"net::ERR_NAME_NOT_RESOLVED" in res.data
     )
     
     client.get(
@@ -556,7 +553,6 @@ def _test_color_notifications(client, notification_body_token, datastore_path):
     res = client.post(
         url_for("settings.settings_page"),
         data={
-            "application-fetch_backend": "html_requests",
             "application-minutes_between_check": 180,
             "application-notification_body": notification_body_token,
             "application-notification_format": "htmlcolor",

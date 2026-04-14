@@ -174,9 +174,9 @@ class import_xlsx_wachete(Importer):
                 dynamic_wachet = str(data.get('dynamic wachet', '')).strip().lower()  # Convert bool to str to cover all cases
                 # libreoffice and others can have it as =FALSE() =TRUE(), or bool(true)
                 if 'true' in dynamic_wachet or dynamic_wachet == '1':
-                    extras['fetch_backend'] = 'html_webdriver'
+                    extras['browser_profile'] = 'browser_chromeplaywright'
                 elif 'false' in dynamic_wachet or dynamic_wachet == '0':
-                    extras['fetch_backend'] = 'html_requests'
+                    extras['browser_profile'] = 'direct_http_requests'
 
                 if data.get('xpath'):
                     # @todo split by || ?

@@ -89,7 +89,7 @@ def test_unique_lines_functionality(client, live_server, measure_memory_usage, d
         url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"check_unique_lines": "y",
               "url": test_url,
-              "fetch_backend": "html_requests",
+              "browser_profile": "direct_http_requests",
               "time_between_check_use_default": "y"},
         follow_redirects=True
     )
@@ -133,7 +133,7 @@ def test_sort_lines_functionality(client, live_server, measure_memory_usage, dat
         url_for("ui.ui_edit.edit_page", uuid="first"),
         data={"sort_text_alphabetically": "n",
               "url": test_url,
-              "fetch_backend": "html_requests",
+              "browser_profile": "direct_http_requests",
               "time_between_check_use_default": "y"},
         follow_redirects=True
     )
@@ -181,7 +181,7 @@ def test_extra_filters(client, live_server, measure_memory_usage, datastore_path
               "trim_text_whitespace": "y",
               "sort_text_alphabetically": "",  # leave this OFF for testing
               "url": test_url,
-              "fetch_backend": "html_requests",
+              "browser_profile": "direct_http_requests",
               "time_between_check_use_default": "y"},
         follow_redirects=True
     )

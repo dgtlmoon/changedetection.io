@@ -25,7 +25,6 @@ def test_execute_custom_js(client, live_server, measure_memory_usage, datastore_
         data={
             "url": test_url,
             "tags": "",
-            'fetch_backend': "html_webdriver",
             'webdriver_js_execute_code': 'document.querySelector("button[name=test-button]").click();',
             'headers': "testheader: yes\buser-agent: MyCustomAgent",
             "time_between_check_use_default": "y",

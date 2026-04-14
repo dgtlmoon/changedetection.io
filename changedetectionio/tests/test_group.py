@@ -417,7 +417,7 @@ def test_order_of_filters_tag_filter_and_watch_filter(client, live_server, measu
             "url": test_url,
             "tags": "test-tag-keep-order",
             "headers": "",
-            'fetch_backend': "html_requests",
+            'browser_profile': "direct_http_requests",
             "time_between_check_use_default": "y"},
         follow_redirects=True
     )

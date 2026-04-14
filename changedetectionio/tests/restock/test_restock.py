@@ -60,15 +60,14 @@ def test_restock_detection(client, live_server, measure_memory_usage, datastore_
 
 
     #####################
-    # Set this up for when we remove the notification from the watch, it should fallback with these details
+    # preconfigure_browser_profiles_based_on_env() already set the correct system default
     res = client.post(
         url_for("settings.settings_page"),
         data={"application-notification_urls": notification_url,
               "application-notification_title": "fallback-title "+default_notification_title,
               "application-notification_body": "fallback-body "+default_notification_body,
               "application-notification_format": default_notification_format,
-              "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_webdriver"},
+              "requests-time_between_check-minutes": 180},
         follow_redirects=True
     )
     # Add our URL to the import page, because the docker container (playwright/selenium) wont be able to connect to our usual test url

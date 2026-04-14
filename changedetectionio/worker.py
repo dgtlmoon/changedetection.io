@@ -214,6 +214,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     process_changedetection_results = False
 
                 except content_fetchers_exceptions.Non200ErrorCodeReceived as e:
+                    logger.info(f"Watch UUID {uuid} Non200ErrorCodeReceived")
                     if e.status_code == 403:
                         err_text = "Error - 403 (Access denied) received"
                     elif e.status_code == 404:
@@ -377,6 +378,11 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text})
                     process_changedetection_results = False
                     logger.error(f"Exception (BrowserStepsInUnsupportedFetcher) reached processing watch UUID: {uuid}")
+
+                except KeyError as e:
+                    # Watch was deleted between being queued and processed — skip
+                    logger.warning(f"Worker {worker_id} skipping UUID {uuid}: {e}")
+                    process_changedetection_results = False
 
                 except Exception as e:
                     import traceback

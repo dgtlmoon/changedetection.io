@@ -106,7 +106,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             search_q=request.args.get('q', '').strip(),
             sort_attribute=request.args.get('sort') if request.args.get('sort') else request.cookies.get('sort'),
             sort_order=request.args.get('order') if request.args.get('order') else request.cookies.get('order'),
-            system_default_fetcher=datastore.data['settings']['application'].get('fetch_backend'),
+            system_default_fetcher=datastore.data['settings']['application'].get('browser_profile'),
             tags=sorted_tags,
             unread_changes_count=datastore.unread_changes_count,
             watches=sorted_watches
