@@ -606,7 +606,7 @@ msgstr "テキスト変換前に CSS および XPath セレクターで HTML 要
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Don't paste HTML here, use only CSS and XPath selectors"
-msgstr "ここにHTMLを貼り付けないでください。CSSとXPathセレクターのみを使用してください"
+msgstr "ここにHTMLを貼り付けないでください。CSSとXPathセレクターのみを使用してください。"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Add multiple elements, CSS or XPath selectors per line to ignore multiple parts of the HTML."
