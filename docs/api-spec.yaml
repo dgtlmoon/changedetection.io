@@ -458,6 +458,13 @@ components:
             maxLength: 5000
           maxItems: 100
           description: Text that should NOT be present (triggers alert if found)
+        extract_lines_containing:
+          type: array
+          items:
+            type: string
+            maxLength: 5000
+          maxItems: 100
+          description: Keep only lines containing these substrings (plain text, case-insensitive) — simpler alternative to regex
         extract_text:
           type: array
           items:

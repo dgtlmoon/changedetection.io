@@ -51,6 +51,21 @@ Unavailable") }}
                 </fieldset>
                 <fieldset>
                     <div class="pure-control-group">
+                        {{ render_field(form.extract_lines_containing, rows=5, placeholder="celsius
+temperature
+price") }}
+                        <span class="pure-form-message-inline">
+                            <ul>
+                                <li>{{ _('Keep only lines that contain any of these words or phrases (plain text, case-insensitive)') }}</li>
+                                <li>{{ _('One entry per line — any line in the page text that contains a match is kept') }}</li>
+                                <li>{{ _('Simpler alternative to regex — use this when you just want lines about a specific topic') }}</li>
+                                <li>{{ _('Example: enter') }} <code>celsius</code> {{ _('to keep only lines mentioning temperature readings') }}</li>
+                            </ul>
+                        </span>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <div class="pure-control-group">
                         {{ render_field(form.extract_text, rows=5, placeholder="/.+?\d+ comments.+?/
  or
 keyword") }}

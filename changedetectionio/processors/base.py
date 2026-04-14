@@ -100,7 +100,6 @@ class difference_detection_processor():
             logger.warning(f"Failed to read checksum file for {self.watch_uuid}: {e}")
             self.last_raw_content_checksum = None
 
-
     async def validate_iana_url(self):
         """Pre-flight SSRF check — runs DNS lookup in executor to avoid blocking the event loop.
         Covers all fetchers (requests, playwright, puppeteer, plugins) since every fetch goes

@@ -186,6 +186,7 @@ class watch_base(dict):
             'consecutive_filter_failures': 0,  # Every time the CSS/xPath filter cannot be located, reset when all is fine.
             'content-type': None,
             'date_created': None,
+            'extract_lines_containing': [],  # Keep only lines containing these substrings (plain text, case-insensitive)
             'extract_text': [],  # Extract text by regex after filters
             'browser_profile': 'system',  # machine-name key of a BrowserProfile; 'system' → resolve via chain
             'fetch_backend': 'system',  # plaintext, playwright etc
@@ -338,6 +339,7 @@ class watch_base(dict):
         # These are set by processors/workers and should not trigger edited flag
         additional_system_fields = {
             'last_check_status',  # Set by processors
+            'last_filter_config_hash',  # Set by text_json_diff processor, internal skip-cache
             'restock',  # Set by restock processor
             'last_viewed',  # Set by mark_all_viewed endpoint
         }

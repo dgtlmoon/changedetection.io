@@ -50,6 +50,85 @@ def test_favicon(client, live_server, measure_memory_usage, datastore_path):
     res = client.get(url_for('static_content', group='js', filename='../styles/styles.css'))
     assert res.status_code != 200
 
+def test_favicon_inline_data_uri(client, live_server, measure_memory_usage, datastore_path):
+    """
+    bump_favicon() must handle a data URI as the url parameter.
+    Previously this logged "Cant work out file extension from 'data:image/png;base64,...'" and bailed.
+    The mime_type from the data URI should be used to pick the correct extension.
+    """
+    import base64
+    import os
+
+    # 1x1 transparent PNG (minimal valid PNG bytes)
+    PNG_BYTES = (
+        b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01'
+        b'\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01'
+        b'\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82'
+    )
+    png_b64 = base64.b64encode(PNG_BYTES).decode()
+    data_uri = f"data:image/png;base64,{png_b64}"
+
+    uuid = client.application.config.get('DATASTORE').add_watch(url='https://localhost')
+    watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
+
+    # Should NOT raise / bail — must save as favicon.png
+    watch.bump_favicon(url=data_uri, favicon_base_64=png_b64, mime_type='image/png')
+
+    favicon_fname = watch.get_favicon_filename()
+    assert favicon_fname is not None, "Favicon should have been saved"
+    assert favicon_fname.endswith('.png'), f"Expected .png extension, got: {favicon_fname}"
+
+    full_path = os.path.join(watch.data_dir, favicon_fname)
+    assert os.path.getsize(full_path) == len(PNG_BYTES)
+
+    # Also verify it's served correctly via the static route
+    res = client.get(url_for('static_content', group='favicon', filename=uuid))
+    assert res.status_code == 200
+    assert res.data == PNG_BYTES
+
+
+def test_favicon_mime_type_overrides_url_extension(client, live_server, measure_memory_usage, datastore_path):
+    """
+    mime_type parameter takes precedence over the URL path extension.
+    A URL ending in .ico but with mime_type='image/png' should save as .png.
+    """
+    import base64
+    import os
+
+    PNG_BYTES = (
+        b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01'
+        b'\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01'
+        b'\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82'
+    )
+    png_b64 = base64.b64encode(PNG_BYTES).decode()
+
+    uuid = client.application.config.get('DATASTORE').add_watch(url='https://localhost')
+    watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
+
+    watch.bump_favicon(url='https://example.com/favicon.ico', favicon_base_64=png_b64, mime_type='image/png')
+
+    favicon_fname = watch.get_favicon_filename()
+    assert favicon_fname is not None
+    assert favicon_fname.endswith('.png'), f"mime_type should override URL extension, got: {favicon_fname}"
+
+
+def test_favicon_oversized_rejected(client, live_server, measure_memory_usage, datastore_path):
+    """Favicons larger than 1 MB must be silently dropped."""
+    import base64
+    import os
+
+    oversized = b'\x00' * (1 * 1024 * 1024 + 1)
+    oversized_b64 = base64.b64encode(oversized).decode()
+
+    uuid = client.application.config.get('DATASTORE').add_watch(url='https://localhost')
+    watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
+
+    result = watch.bump_favicon(url='https://example.com/big.png', favicon_base_64=oversized_b64, mime_type='image/png')
+
+    assert result is None, "bump_favicon should return None for oversized favicon"
+    assert watch.get_favicon_filename() is None, "No favicon file should have been written"
+
+
 def test_bad_access(client, live_server, measure_memory_usage, datastore_path):
 
     res = client.post(

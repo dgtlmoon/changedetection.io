@@ -195,6 +195,10 @@
                             <div class="">
                                 {{ render_field(form.notification_format , class="notification-format") }}
                                 <span class="pure-form-message-inline">{{ _('Format for all notifications') }}</span>
+                                <div id="discord-html-format-warning" class="inline-warning" style="display: none; margin-top: 6px;">
+                                    <img class="inline-warning-icon" src="{{url_for('static_content', group='images', filename='notice.svg')}}" alt="{{ _('Note') }}" title="{{ _('Note') }}">
+                                    {{ _('Discord does not render HTML — switch to') }} <strong>{{ _('Plain Text') }}</strong> {{ _('format to avoid') }} <code>&amp;nbsp;</code> {{ _('and other HTML entities appearing literally in your notifications.') }}
+                                </div>
                             </div>
                         </div>
 {% endmacro %}

@@ -259,9 +259,12 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
     elif (url.startswith('discord://') or url.startswith('https://discordapp.com/api/webhooks')
           or url.startswith('https://discord.com/api'))\
             and 'html' in requested_output_format:
-        # Discord doesn't support HTML, replace <br> with newlines
+        # Discord doesn't render HTML — convert markup to plain text equivalents.
+        # &nbsp; is injected upstream to preserve double-spaces for HTML email clients;
+        # Discord displays it as the literal string "&nbsp;" so strip it here.
         n_body = n_body.strip().replace('<br>', '\n')
         n_body = n_body.replace('</br>', '\n')
+        n_body = n_body.replace('&nbsp;', ' ')
         n_body = newline_re.sub('\n', n_body)
 
         # Don't replace placeholders or truncate here - let the custom Discord plugin handle it

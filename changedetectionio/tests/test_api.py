@@ -374,6 +374,9 @@ def test_roundtrip_API(client, live_server, measure_memory_usage, datastore_path
     watch['last_changed'] = 454444444444
     watch['date_created'] = 454444444444
 
+    # Exercise the new extract_lines_containing field
+    watch['extract_lines_containing'] = ['celsius', 'temperature']
+
     # HTTP PUT ( UPDATE an existing watch )
     res = client.put(
         url_for("watch", uuid=uuid),
@@ -396,6 +399,9 @@ def test_roundtrip_API(client, live_server, measure_memory_usage, datastore_path
     date_created = res.json.get('date_created')
     assert date_created != 454444444444
     assert date_created != "454444444444"
+
+    assert res.json.get('extract_lines_containing') == ['celsius', 'temperature'], \
+        "extract_lines_containing should be persisted and returned via API"
 
 
 def test_access_denied(client, live_server, measure_memory_usage, datastore_path):

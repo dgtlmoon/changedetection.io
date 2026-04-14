@@ -779,24 +779,50 @@ class model(EntityPersistenceMixin, watch_base):
         # Also in the case that the file didnt exist
         return True
 
-    def bump_favicon(self, url, favicon_base_64: str) -> None:
+    def bump_favicon(self, url, favicon_base_64: str, mime_type: str = None) -> None:
         from urllib.parse import urlparse
         import base64
         import binascii
-        decoded = None
+        import re
 
-        if url:
+        MAX_FAVICON_BYTES = 1 * 1024 * 1024  # 1 MB
+
+        MIME_TO_EXT = {
+            'image/png': 'png',
+            'image/x-icon': 'ico',
+            'image/vnd.microsoft.icon': 'ico',
+            'image/jpeg': 'jpg',
+            'image/gif': 'gif',
+            'image/svg+xml': 'svg',
+            'image/webp': 'webp',
+            'image/bmp': 'bmp',
+        }
+
+        extension = None
+
+        # If the caller already resolved the MIME type (e.g. from blob.type or a data URI),
+        # use that directly — it's more reliable than guessing from a URL path.
+        if mime_type:
+            extension = MIME_TO_EXT.get(mime_type.lower().split(';')[0].strip(), None)
+
+        # Fall back to extracting extension from URL path, unless it's a data URI.
+        if not extension and url and not url.startswith('data:'):
             try:
                 parsed = urlparse(url)
                 filename = os.path.basename(parsed.path)
-                (base, extension) = filename.lower().strip().rsplit('.', 1)
+                (_base, ext) = filename.lower().strip().rsplit('.', 1)
+                extension = ext
             except ValueError:
-                logger.error(f"UUID: {self.get('uuid')} Cant work out file extension from '{url}'")
-                return None
-        else:
-            # Assume favicon.ico
-            base = "favicon"
-            extension = "ico"
+                logger.warning(f"UUID: {self.get('uuid')} Cant work out file extension from '{url}', defaulting to ico")
+
+        # Handle data URIs: extract MIME type from the URI itself when not already known
+        if not extension and url and url.startswith('data:'):
+            m = re.match(r'^data:([^;]+);base64,', url)
+            if m:
+                extension = MIME_TO_EXT.get(m.group(1).lower(), None)
+
+        if not extension:
+            extension = 'ico'
 
         fname = os.path.join(self.data_dir, f"favicon.{extension}")
 
@@ -805,22 +831,27 @@ class model(EntityPersistenceMixin, watch_base):
             decoded = base64.b64decode(favicon_base_64, validate=True)
         except (binascii.Error, ValueError) as e:
             logger.warning(f"UUID: {self.get('uuid')} FavIcon save data (Base64) corrupt? {str(e)}")
-        else:
-            if decoded:
-                try:
-                    with open(fname, 'wb') as f:
-                        f.write(decoded)
+            return None
 
-                    # Invalidate module-level favicon filename cache for this watch
-                    _FAVICON_FILENAME_CACHE.pop(self.data_dir, None)
+        if len(decoded) > MAX_FAVICON_BYTES:
+            logger.warning(f"UUID: {self.get('uuid')} Favicon too large ({len(decoded)} bytes), skipping")
+            return None
 
-                    # A signal that could trigger the socket server to update the browser also
-                    watch_check_update = signal('watch_favicon_bump')
-                    if watch_check_update:
-                        watch_check_update.send(watch_uuid=self.get('uuid'))
+        try:
+            with open(fname, 'wb') as f:
+                f.write(decoded)
 
-                except Exception as e:
-                    logger.warning(f"UUID: {self.get('uuid')} error saving FavIcon to {fname} - {str(e)}")
+            # Invalidate module-level favicon filename cache for this watch
+            _FAVICON_FILENAME_CACHE.pop(self.data_dir, None)
+
+            # A signal that could trigger the socket server to update the browser also
+            watch_check_update = signal('watch_favicon_bump')
+            if watch_check_update:
+                watch_check_update.send(watch_uuid=self.get('uuid'))
+
+        except Exception as e:
+            logger.warning(f"UUID: {self.get('uuid')} error saving FavIcon to {fname} - {str(e)}")
+            return None
 
         # @todo - Store some checksum and only write when its different
         logger.debug(f"UUID: {self.get('uuid')} updated favicon to at {fname}")
