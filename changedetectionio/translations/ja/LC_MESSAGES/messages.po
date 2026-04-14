@@ -847,9 +847,7 @@ msgstr "フィルタとトリガー"
 msgid ""
 "Automatically applies this tag to any watch whose URL matches. Supports wildcards: <code>*example.com*</code> or "
 "plain substring: <code>github.com/myorg</code>"
-msgstr ""
-"URLが一致するウォッチにこのタグを自動適用します。ワイルドカード: <code>*example.com*</code> または"
-"部分文字列: <code>github.com/myorg</code> に対応"
+msgstr "URLが一致するウォッチにこのタグを自動適用します。ワイルドカード: <code>*example.com*</code> または部分文字列: <code>github.com/myorg</code> に対応"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "Currently matching watches"
@@ -2821,17 +2819,13 @@ msgstr "差分出力 - 統一フォーマットのパッチ"
 msgid ""
 "Only the changed words/values from the previous version — e.g. the old price. Best when a single value changes per "
 "line; multiple changed fragments are joined by newline."
-msgstr ""
-"前バージョンから変更された単語/値のみ — 例: 旧価格。1行あたり1つの値が変わる場合に最適。"
-"複数の変更箇所は改行で結合されます。"
+msgstr "前バージョンから変更された単語/値のみ — 例: 旧価格。1行あたり1つの値が変わる場合に最適。複数の変更箇所は改行で結合されます。"
 
 #: changedetectionio/templates/_common_fields.html
 msgid ""
 "Only the changed words/values from the new version — e.g. the new price. Best when a single value changes per line; "
 "multiple changed fragments are joined by newline."
-msgstr ""
-"新バージョンの変更された単語/値のみ — 例: 新価格。1行あたり1つの値が変わる場合に最適。"
-"複数の変更箇所は改行で結合されます。"
+msgstr "新バージョンの変更された単語/値のみ — 例: 新価格。1行あたり1つの値が変わる場合に最適。複数の変更箇所は改行で結合されます。"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "The current snapshot text contents value, useful when combined with JSON or CSS filters"
@@ -2876,13 +2870,13 @@ msgstr "ほぼすべてのサービスへの通知に対応！"
 msgid "Please read the notification services wiki here for important configuration notes"
 msgstr "重要な設定に関するメモについては、通知サービスのWikiをこちらでお読みください"
 
-#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/text-options.html
 # 訳注: 2箇所で使用される共通フラグメント
 # (1) _common_fields.html: "Use" + <a>AppRise Notification URLs</a> + "for notification to just about any service!"
-#   → 「 AppRise 通知URL ほぼすべてのサービスへの通知に対応！」
+# → 「 AppRise 通知URL ほぼすべてのサービスへの通知に対応！」
 # (2) text-options.html: "Use" + <code>//(?aiLmsux))</code> + "type flags (more" + <a>information here</a> + ")"
-#   → 「 //(?aiLmsux)) タイプフラグを使用できます（詳細 はこちら）」
+# → 「 //(?aiLmsux)) タイプフラグを使用できます（詳細 はこちら）」
 # 前半は日本語では不要なため、空白1文字で非表示にする（空文字は英語にフォールバックするため）
+#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/text-options.html
 msgid "Use"
 msgstr " "
 
