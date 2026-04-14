@@ -661,6 +661,10 @@ components:
               type: [string, boolean]
               description: MD5 hash of previous content (false if not set)
               readOnly: true
+            last_filter_config_hash:
+              type: [string, boolean]
+              description: Hash of effective filter configuration at last check (false if not set)
+              readOnly: true
             previous_md5_before_filters:
               type: [string, boolean]
               description: MD5 hash before filters applied (false if not set)
