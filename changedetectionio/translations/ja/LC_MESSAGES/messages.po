@@ -1654,15 +1654,18 @@ msgstr "ビジュアルセレクターツールを使用すると、変更検知
 msgid "text"
 msgstr "テキスト"
 
+# 訳注: "elements that will be used for the change detection. It automatically fills-in the filters in the \"CSS/JSONPath/JQ/XPath Filters\" box of the [Filters & Triggers] tab. Use [Shift+Click] to select multiple items."
+# → 「要素を選択できます。フィルタが自動的に入力される「CSS/JSONPath/JQ/XPath フィルタ」ボックスは [フィルタとトリガー] タブにあります。複数の項目を選択するには [Shift+クリック] を使用します。」
+# "tab. Use" 以降の述語部分と副詞を入れ替えた
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid ""
 "elements that will be used for the change detection. It automatically fills-in the filters in the "
 "\"CSS/JSONPath/JQ/XPath Filters\" box of the"
-msgstr "要素を選択できます。「CSS/JSONPath/JQ/XPath フィルタ」ボックスのフィルタを自動的に入力します（タブ："
+msgstr "要素を選択できます。フィルタが自動的に入力される「CSS/JSONPath/JQ/XPath フィルタ」ボックスは"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "tab. Use"
-msgstr "タブを使用する。使用："
+msgstr "タブにあります。複数の項目を選択するには"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Shift+Click"
@@ -1670,7 +1673,7 @@ msgstr "Shift+クリック"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "to select multiple items."
-msgstr "複数の項目を選択するには。"
+msgstr "を使用します。"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Selection Mode:"
