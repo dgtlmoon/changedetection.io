@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-15 03:04+0900\n"
+"POT-Creation-Date: 2026-04-15 10:58+0900\n"
 "PO-Revision-Date: 2026-03-20 18:13+0100\n"
 "Last-Translator: Adrian Gonzalez <adrian@example.com>\n"
 "Language: es\n"
@@ -2746,6 +2746,10 @@ msgid "Notification base URL override"
 msgstr "Anulación de URL de base de notificaciones"
 
 #: changedetectionio/forms.py
+msgid "Not set"
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "Treat empty pages as a change?"
 msgstr "¿Tratar las páginas vacías como un cambio?"
 
@@ -3462,6 +3466,44 @@ msgstr "en"
 #: changedetectionio/templates/base.html
 msgid "Enter search term..."
 msgstr "Introduzca el término de búsqueda..."
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "Note!: //text() function does not work where the <element> contains <![CDATA[]]>"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "One CSS, xPath 1 & 2, JSON Path/JQ selector per line, <i>any</i> rules that matches will be used."
+msgstr ""
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "Limit text to this CSS rule, only text matching this CSS rule is included."
+msgstr ""
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "jq support not installed"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid ""
+"Limit text to this XPath rule, simply start with a forward-slash. To specify XPath to be used explicitly or the XPath"
+" rule starts with an XPath function: Prefix with <code>xpath:</code>"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "Example"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "test your XPath here"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "Get all titles from an RSS feed <code>//title/text()</code>"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "To use XPath1.0: Prefix with <code>xpath1:</code>"
+msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
 msgid "Text to wait for before triggering a change/notification, all text and regex are tested case-insensitive."

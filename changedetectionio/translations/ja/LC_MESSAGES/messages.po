@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-15 03:04+0900\n"
+"POT-Creation-Date: 2026-04-15 10:58+0900\n"
 "PO-Revision-Date: 2026-03-31 23:52+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -1654,7 +1654,8 @@ msgstr "ビジュアルセレクターツールを使用すると、変更検知
 msgid "text"
 msgstr "テキスト"
 
-# 訳注: "elements that will be used for the change detection. It automatically fills-in the filters in the \"CSS/JSONPath/JQ/XPath Filters\" box of the [Filters & Triggers] tab. Use [Shift+Click] to select multiple items."
+# 訳注: "elements that will be used for the change detection. It automatically fills-in the filters in the
+# \"CSS/JSONPath/JQ/XPath Filters\" box of the [Filters & Triggers] tab. Use [Shift+Click] to select multiple items."
 # → 「要素を選択できます。フィルタが自動的に入力される「CSS/JSONPath/JQ/XPath フィルタ」ボックスは [フィルタとトリガー] タブにあります。複数の項目を選択するには [Shift+クリック] を使用します。」
 # "tab. Use" 以降の述語部分と副詞を入れ替えた
 #: changedetectionio/blueprint/ui/templates/edit.html
@@ -2718,6 +2719,10 @@ msgid "Notification base URL override"
 msgstr "通知ベースURLの上書き"
 
 #: changedetectionio/forms.py
+msgid "Not set"
+msgstr "未設定"
+
+#: changedetectionio/forms.py
 msgid "Treat empty pages as a change?"
 msgstr "空のページを変更としてみなしますか？"
 
@@ -3458,6 +3463,46 @@ msgstr "-"
 #: changedetectionio/templates/base.html
 msgid "Enter search term..."
 msgstr "検索語を入力..."
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "Note!: //text() function does not work where the <element> contains <![CDATA[]]>"
+msgstr "注意: <element> が <![CDATA[]]> を含む場合、//text() 関数は動作しません"
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "One CSS, xPath 1 & 2, JSON Path/JQ selector per line, <i>any</i> rules that matches will be used."
+msgstr "1行につき1つのCSS、xPath 1 & 2、JSON Path/JQセレクタを指定してください。一致した<i>すべての</i>ルールが使用されます。"
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "Limit text to this CSS rule, only text matching this CSS rule is included."
+msgstr "このCSSルールにマッチするテキストのみを対象にします。"
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "jq support not installed"
+msgstr "jqサポートはインストールされていません"
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid ""
+"Limit text to this XPath rule, simply start with a forward-slash. To specify XPath to be used explicitly or the XPath"
+" rule starts with an XPath function: Prefix with <code>xpath:</code>"
+msgstr ""
+"このXPathルールにマッチするテキストのみを対象にします。スラッシュ (/) で始めるだけです。"
+"XPathを明示的に指定する場合や、XPath関数で始まるルールの場合は、先頭に <code>xpath:</code> を付けてください"
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "Example"
+msgstr "例"
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "test your XPath here"
+msgstr "XPathをここでテスト"
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "Get all titles from an RSS feed <code>//title/text()</code>"
+msgstr "RSSフィードからすべてのタイトルを取得 <code>//title/text()</code>"
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "To use XPath1.0: Prefix with <code>xpath1:</code>"
+msgstr "XPath 1.0を使用するには、先頭に <code>xpath1:</code> を付けてください"
 
 #: changedetectionio/templates/edit/text-options.html
 msgid "Text to wait for before triggering a change/notification, all text and regex are tested case-insensitive."
