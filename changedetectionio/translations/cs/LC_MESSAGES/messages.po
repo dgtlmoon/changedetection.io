@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-15 15:58+0900\n"
+"POT-Creation-Date: 2026-04-15 20:27+0900\n"
 "PO-Revision-Date: 2026-01-02 11:40+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: cs\n"
@@ -479,29 +479,15 @@ msgstr ""
 msgid "read more here"
 msgstr "přečtěte si více zde"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "method (default) where your watched sites don't need Javascript to render."
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "Use the"
-msgstr "Použít"
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "Basic"
-msgstr "Základní"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var"
+msgid ""
+"The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set"
+" by the ENV var 'WEBDRIVER_URL'."
 msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "The"
-msgstr "The"
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "Chrome/Javascript"
-msgstr "Chrome/Javascript"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid ""
@@ -1399,14 +1385,6 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Set to empty to use system settings default"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "method (default) where your watched site doesn't need Javascript to render."
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
@@ -3756,6 +3734,30 @@ msgstr "Hlavní nastavení"
 
 #~ msgid "for example."
 #~ msgstr "například."
+
+#~ msgid "method (default) where your watched sites don't need Javascript to render."
+#~ msgstr ""
+
+#~ msgid "Use the"
+#~ msgstr "Použít"
+
+#~ msgid "Basic"
+#~ msgstr "Základní"
+
+#~ msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var"
+#~ msgstr ""
+
+#~ msgid "The"
+#~ msgstr "The"
+
+#~ msgid "Chrome/Javascript"
+#~ msgstr "Chrome/Javascript"
+
+#~ msgid "method (default) where your watched site doesn't need Javascript to render."
+#~ msgstr ""
+
+#~ msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'."
+#~ msgstr ""
 
 #~ msgid "From"
 #~ msgstr "Z"

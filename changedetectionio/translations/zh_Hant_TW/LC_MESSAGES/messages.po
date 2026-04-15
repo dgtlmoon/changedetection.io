@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-15 15:58+0900\n"
+"POT-Creation-Date: 2026-04-15 20:27+0900\n"
 "PO-Revision-Date: 2026-01-15 12:00+0800\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh_Hant_TW\n"
@@ -479,29 +479,15 @@ msgstr ""
 msgid "read more here"
 msgstr "在此閱讀更多內容"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "method (default) where your watched sites don't need Javascript to render."
-msgstr "方法（預設），適用於您監測的網站不需要 Javascript 渲染的情況。"
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render."
+msgstr "使用 <strong>基本</strong> 方法（預設），適用於您監測的網站不需要 Javascript 渲染的情況。"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "Use the"
-msgstr "使用"
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "Basic"
-msgstr "基本"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var"
-msgstr "方法需要連線到執行中的 WebDriver + Chrome 伺服器，由環境變數 'WEBDRIVER_URL' 設定。"
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "The"
-msgstr "這個"
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "Chrome/Javascript"
-msgstr "Chrome / Javascript"
+msgid ""
+"The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set"
+" by the ENV var 'WEBDRIVER_URL'."
+msgstr "<strong>Chrome / Javascript</strong> 方法需要連線到執行中的 WebDriver + Chrome 伺服器，其位址由環境變數 'WEBDRIVER_URL' 設定。"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid ""
@@ -1400,14 +1386,6 @@ msgstr "當頁面上找不到過濾器時發送通知，這有助於了解頁面
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Set to empty to use system settings default"
 msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "method (default) where your watched site doesn't need Javascript to render."
-msgstr "方法（預設），適用於您監測的網站不需要 Javascript 渲染的情況。"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'."
-msgstr "方法需要連線到執行中的 WebDriver + Chrome 伺服器，由環境變數 'WEBDRIVER_URL' 設定。"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Connect using Bright Data and Oxylabs Proxies, find out more here."
@@ -3817,6 +3795,30 @@ msgstr "主設定"
 
 #~ msgid "for example."
 #~ msgstr "例如。"
+
+#~ msgid "method (default) where your watched sites don't need Javascript to render."
+#~ msgstr "方法（預設），適用於您監測的網站不需要 Javascript 渲染的情況。"
+
+#~ msgid "Use the"
+#~ msgstr "使用"
+
+#~ msgid "Basic"
+#~ msgstr "基本"
+
+#~ msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var"
+#~ msgstr "方法需要連線到執行中的 WebDriver + Chrome 伺服器，由環境變數 'WEBDRIVER_URL' 設定。"
+
+#~ msgid "The"
+#~ msgstr "這個"
+
+#~ msgid "Chrome/Javascript"
+#~ msgstr "Chrome / Javascript"
+
+#~ msgid "method (default) where your watched site doesn't need Javascript to render."
+#~ msgstr "方法（預設），適用於您監測的網站不需要 Javascript 渲染的情況。"
+
+#~ msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'."
+#~ msgstr "方法需要連線到執行中的 WebDriver + Chrome 伺服器，由環境變數 'WEBDRIVER_URL' 設定。"
 
 #~ msgid "From"
 #~ msgstr "從"

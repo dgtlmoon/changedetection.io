@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-15 15:58+0900\n"
+"POT-Creation-Date: 2026-04-15 20:27+0900\n"
 "PO-Revision-Date: 2026-03-20 18:13+0100\n"
 "Last-Translator: Adrian Gonzalez <adrian@example.com>\n"
 "Language: es\n"
@@ -485,31 +485,19 @@ msgstr "El valor predeterminado es la variable de entorno del sistema"
 msgid "read more here"
 msgstr "leer más aquí"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "method (default) where your watched sites don't need Javascript to render."
-msgstr "método (predeterminado) donde los sitios observados no necesitan Javascript para renderizarse."
-
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "Use the"
-msgstr "Utilice el"
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "Basic"
-msgstr "Básico"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var"
+msgid "Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render."
 msgstr ""
-"este método requiere una conexión de red a un servidor WebDriver+Chrome en ejecución, configurado mediante la "
-"variable de entorno ENV"
+"Utilice el método <strong>Básico</strong> (predeterminado) cuando los sitios observados no necesiten Javascript para "
+"renderizarse."
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "The"
-msgstr "El"
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "Chrome/Javascript"
-msgstr "Cromo/Javascript"
+msgid ""
+"The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set"
+" by the ENV var 'WEBDRIVER_URL'."
+msgstr ""
+"El método <strong>Chrome/Javascript</strong> requiere una conexión de red a un servidor WebDriver+Chrome en "
+"ejecución, establecido por la variable ENV 'WEBDRIVER_URL'."
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid ""
@@ -1444,16 +1432,6 @@ msgstr ""
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Set to empty to use system settings default"
 msgstr "Establecer en vacío para usar la configuración predeterminada del sistema"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "method (default) where your watched site doesn't need Javascript to render."
-msgstr "método (predeterminado) donde su sitio observado no necesita Javascript para renderizarse."
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'."
-msgstr ""
-"el método requiere una conexión de red a un servidor WebDriver+Chrome en ejecución, establecido por la variable ENV "
-"'WEBDRIVER_URL'."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Connect using Bright Data and Oxylabs Proxies, find out more here."
@@ -3756,6 +3734,36 @@ msgstr "Configuraciones principales"
 
 #~ msgid "for example."
 #~ msgstr "por ejemplo."
+
+#~ msgid "method (default) where your watched sites don't need Javascript to render."
+#~ msgstr "método (predeterminado) donde los sitios observados no necesitan Javascript para renderizarse."
+
+#~ msgid "Use the"
+#~ msgstr "Utilice el"
+
+#~ msgid "Basic"
+#~ msgstr "Básico"
+
+#~ msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var"
+#~ msgstr ""
+#~ "este método requiere una conexión de red a un servidor "
+#~ "WebDriver+Chrome en ejecución, configurado mediante la variable de "
+#~ "entorno ENV"
+
+#~ msgid "The"
+#~ msgstr "El"
+
+#~ msgid "Chrome/Javascript"
+#~ msgstr "Cromo/Javascript"
+
+#~ msgid "method (default) where your watched site doesn't need Javascript to render."
+#~ msgstr "método (predeterminado) donde su sitio observado no necesita Javascript para renderizarse."
+
+#~ msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'."
+#~ msgstr ""
+#~ "el método requiere una conexión de red a un servidor "
+#~ "WebDriver+Chrome en ejecución, establecido por la variable ENV "
+#~ "'WEBDRIVER_URL'."
 
 #~ msgid "From"
 #~ msgstr "De"
