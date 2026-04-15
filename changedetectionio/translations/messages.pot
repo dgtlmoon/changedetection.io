@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.54.10\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-21 13:27+0900\n"
+"POT-Creation-Date: 2026-04-15 15:58+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -431,11 +431,7 @@ msgid "After this many consecutive times that the CSS/xPath filter is missing, s
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Set to"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "to disable"
+msgid "Set to <strong>0</strong> to disable"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
@@ -513,11 +509,7 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "This will wait"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "seconds before extracting the text."
+msgid "This will wait <i>n</i> seconds before extracting the text."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -871,15 +863,7 @@ msgid "Leave unchecked to use the auto-generated colour based on the tag name."
 msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
-msgid "These settings are"
-msgstr ""
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-msgid "added"
-msgstr ""
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-msgid "to any existing watch configurations."
+msgid "These settings are <strong><i>added</i></strong> to any existing watch configurations."
 msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
@@ -1327,15 +1311,7 @@ msgid "Current error-ing screenshot from most recent request"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/diff.html
-msgid "Pro-tip: You can enable"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/diff.html
-msgid "\"share access when password is enabled\""
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/diff.html
-msgid "from settings."
+msgid "Pro-tip: You can enable <strong>\"share access when password is enabled\"</strong> from settings."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/diff.html
@@ -1555,23 +1531,9 @@ msgid "Limit trigger/ignore/block/extract to;"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Note: Depending on the length and similarity of the text on each line, the algorithm may consider an"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "instead of"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "replacement"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "for example."
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "addition"
+msgid ""
+"Note: Depending on the length and similarity of the text on each line, the algorithm may consider an "
+"<strong>addition</strong> instead of <strong>replacement</strong> for example."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
@@ -1584,6 +1546,10 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "When content is merely moved in a list, it will also trigger an"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "addition"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html

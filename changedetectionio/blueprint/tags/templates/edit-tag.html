@@ -89,7 +89,7 @@
             </div>
 
             <div class="tab-pane-inner" id="filters-and-triggers">
-                <p>{{ _('These settings are') }} <strong><i>{{ _('added') }}</i></strong> {{ _('to any existing watch configurations.') }}</p>
+                <p>{{ _('These settings are <strong><i>added</i></strong> to any existing watch configurations.')|safe }}</p>
                 {% include "edit/include_subtract.html" %}
                 <div class="text-filtering border-fieldset">
                     <h3>{{ _('Text filtering') }}</h3>

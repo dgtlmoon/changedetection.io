@@ -163,7 +163,7 @@
                         <div class="pure-form-message-inline">
                             <strong>{{ _('If you\'re having trouble waiting for the page to be fully rendered (text missing etc), try increasing the \'wait\' time here.') }}</strong>
                             <br>
-                            {{ _('This will wait') }} <i>n</i> {{ _('seconds before extracting the text.') }}
+                            {{ _('This will wait <i>n</i> seconds before extracting the text.')|safe }}
                             {% if using_global_webdriver_wait %}
                             <br><strong>{{ _('Using the current global default settings') }}</strong>
                             {% endif %}
@@ -346,7 +346,7 @@ Math: {{ 1 + 1 }}") }}
                         {{ render_checkbox_field(form.filter_text_added) }}
                         {{ render_checkbox_field(form.filter_text_replaced) }}
                         {{ render_checkbox_field(form.filter_text_removed) }}
-                    <span class="pure-form-message-inline">{{ _('Note: Depending on the length and similarity of the text on each line, the algorithm may consider an') }} <strong>{{ _('addition') }}</strong> {{ _('instead of') }} <strong>{{ _('replacement') }}</strong> {{ _('for example.') }}</span><br>
+                    <span class="pure-form-message-inline">{{ _('Note: Depending on the length and similarity of the text on each line, the algorithm may consider an <strong>addition</strong> instead of <strong>replacement</strong> for example.')|safe }}</span><br>
                     <span class="pure-form-message-inline">&nbsp;{{ _('So it\'s always better to select') }} <strong>{{ _('Added') }}</strong>+<strong>{{ _('Replaced') }}</strong> {{ _('when you\'re interested in new content.') }}</span><br>
                     <span class="pure-form-message-inline">&nbsp;{{ _('When content is merely moved in a list, it will also trigger an') }} <strong>{{ _('addition') }}</strong>, {{ _('consider enabling') }} <code><strong>{{ _('Only trigger when unique lines appear') }}</strong></code></span>
                 </fieldset>

@@ -56,7 +56,7 @@
                         {{ render_field(form.application.form.filter_failure_notification_threshold_attempts, class="filter_failure_notification_threshold_attempts") }}
                         <span class="pure-form-message-inline">{{ _('After this many consecutive times that the CSS/xPath filter is missing, send a notification') }}
                             <br>
-                        {{ _('Set to') }} <strong>0</strong> {{ _('to disable') }}
+                        {{ _('Set to <strong>0</strong> to disable')|safe }}
                         </span>
                     </div>
                     <div class="pure-control-group">
@@ -126,7 +126,7 @@
                     <div class="pure-form-message-inline">
                         <strong>{{ _('If you\'re having trouble waiting for the page to be fully rendered (text missing etc), try increasing the \'wait\' time here.') }}</strong>
                         <br>
-                        {{ _('This will wait') }} <i>n</i> {{ _('seconds before extracting the text.') }}
+                        {{ _('This will wait <i>n</i> seconds before extracting the text.')|safe }}
                     </div>
                     <div class="pure-control-group">
                         {{ render_field(form.application.form.webdriver_delay) }}

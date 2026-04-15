@@ -126,7 +126,7 @@
         </div>
     {%- endif -%}
         {%- if password_enabled_and_share_is_off -%}
-            <div class="tip">{{ _('Pro-tip: You can enable') }} <strong>{{ _('"share access when password is enabled"') }}</strong> {{ _('from settings.') }}
+            <div class="tip">{{ _('Pro-tip: You can enable <strong>"share access when password is enabled"</strong> from settings.')|safe }}
             </div>
         {%- endif -%}
         <div id="text-diff-heading-area"  style="user-select: none;">
