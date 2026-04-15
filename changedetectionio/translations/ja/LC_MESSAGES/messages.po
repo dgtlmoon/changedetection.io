@@ -494,11 +494,16 @@ msgstr "詳しくはこちら"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "method (default) where your watched sites don't need Javascript to render."
-msgstr "メソッド（デフォルト）：監視しているサイトがJavascriptなしでレンダリングできる場合。"
+msgstr "方式（デフォルト）は、監視しているサイトがJavascriptなしでレンダリングできる場合に使用します。"
 
+# 訳注: "Use the" + <Basic> + "method (default) where your watched sites don't need Javascript to render."
+# → 「 」+「基本」+「方式（デフォルト）は、監視しているサイトがJavascriptなしでレンダリングできる場合に使用します。」
+# 述語の訳を後半にまとめた
+# 前半は日本語では不要なため、空白1文字で非表示にする（空文字は英語にフォールバックするため）
+# リスク: 将来、別テンプレートで再利用されると、本来の英語の意味とは異なる訳が流用されて壊れる可能性あり。新規追加時は見直すこと。
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use the"
-msgstr "使用："
+msgstr " "
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Basic"
@@ -506,7 +511,7 @@ msgstr "基本"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var"
-msgstr "メソッドは ENV 変数で設定された、実行中の WebDriver+Chrome サーバーへのネットワーク接続が必要です"
+msgstr "方式は ENV 変数で設定された、実行中の WebDriver+Chrome サーバーへのネットワーク接続が必要です"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "The"
@@ -1453,13 +1458,14 @@ msgstr "フィルタがページで見つからなくなったときに通知を
 msgid "Set to empty to use system settings default"
 msgstr "空欄にするとシステム設定のデフォルトを使用します"
 
+# 訳注: msgid "Use the" (別箇所) と共に再配分された訳。msgid "Use the" の訳注を参照のこと。
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "method (default) where your watched site doesn't need Javascript to render."
-msgstr "メソッド（デフォルト）：監視しているサイトがJavascriptなしでレンダリングできる場合。"
+msgstr "方式（デフォルト）は、監視しているサイトがJavascriptなしでレンダリングできる場合に使用します。"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'."
-msgstr "メソッドは ENV 変数「WEBDRIVER_URL」で設定された実行中の WebDriver+Chrome サーバーへのネットワーク接続が必要です。"
+msgstr "方式は ENV 変数「WEBDRIVER_URL」で設定された実行中の WebDriver+Chrome サーバーへのネットワーク接続が必要です。"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Connect using Bright Data and Oxylabs Proxies, find out more here."
@@ -1553,7 +1559,7 @@ msgstr "次の操作が必要です："
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Set the fetch method"
-msgstr "取得メソッドを設定する"
+msgstr "取得方式を設定する"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use the verify (✓) button to test if a condition passes against the current snapshot."
@@ -2193,7 +2199,7 @@ msgstr "単語数はコンテンツの長さを示す簡易指標で、テキス
 
 #: changedetectionio/content_fetchers/requests.py
 msgid "Basic fast Plaintext/HTTP Client"
-msgstr "シンプルで高速なプレーンテキスト/HTTPクライアント"
+msgstr "基本 (高速なプレーンテキスト/HTTPクライアント)"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/flask_app.py
 #: changedetectionio/realtime/socket_server.py
@@ -2419,7 +2425,7 @@ msgstr "編集 > ウォッチ"
 
 #: changedetectionio/forms.py
 msgid "Fetch Method"
-msgstr "取得メソッド"
+msgstr "取得方式"
 
 #: changedetectionio/forms.py
 msgid "Notification Body"
