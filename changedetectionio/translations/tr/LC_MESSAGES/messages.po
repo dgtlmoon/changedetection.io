@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-21 13:27+0900\n"
+"POT-Creation-Date: 2026-04-15 15:58+0900\n"
 "PO-Revision-Date: 2026-04-10 20:38+0300\n"
 "Last-Translator: \n"
 "Language: tr\n"
@@ -439,12 +439,8 @@ msgid "After this many consecutive times that the CSS/xPath filter is missing, s
 msgstr "CSS/xPath filtresi arka arkaya bu kadar çok kez eksik olduğunda bir bildirim gönder"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Set to"
-msgstr "Şuna ayarla"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "to disable"
-msgstr "devre dışı bırakmak için"
+msgid "Set to <strong>0</strong> to disable"
+msgstr "Devre dışı bırakmak için <strong>0</strong>'a ayarlayın"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Limit collection of history snapshots for each watch to this number of history items."
@@ -525,12 +521,8 @@ msgstr ""
 "artırmayı deneyin."
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "This will wait"
-msgstr "Bu şu kadar bekleyecek"
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "seconds before extracting the text."
-msgstr "metni çıkarmadan önce saniye."
+msgid "This will wait <i>n</i> seconds before extracting the text."
+msgstr "Metni çıkarmadan önce <i>n</i> saniye bekleyecek."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Number of concurrent workers to process watches. More workers = faster processing but higher memory usage."
@@ -899,16 +891,8 @@ msgid "Leave unchecked to use the auto-generated colour based on the tag name."
 msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
-msgid "These settings are"
-msgstr "Bu ayarlar, "
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-msgid "added"
-msgstr "eklenerek"
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-msgid "to any existing watch configurations."
-msgstr "mevcut izleyici yapılandırmalarına uygulanır."
+msgid "These settings are <strong><i>added</i></strong> to any existing watch configurations."
+msgstr "Bu ayarlar, mevcut izleyici yapılandırmalarına <strong><i>eklenerek</i></strong> uygulanır."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Text filtering"
@@ -1357,16 +1341,8 @@ msgid "Current error-ing screenshot from most recent request"
 msgstr "En son istekten kaynaklanan mevcut hatalı ekran görüntüsü"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
-msgid "Pro-tip: You can enable"
-msgstr "Uzman ipucu: Şunu etkinleştirebilirsiniz"
-
-#: changedetectionio/blueprint/ui/templates/diff.html
-msgid "\"share access when password is enabled\""
-msgstr "\"parola etkinken erişimi paylaş\""
-
-#: changedetectionio/blueprint/ui/templates/diff.html
-msgid "from settings."
-msgstr "ayarlardan."
+msgid "Pro-tip: You can enable <strong>\"share access when password is enabled\"</strong> from settings."
+msgstr "Uzman ipucu: Ayarlardan <strong>\"parola etkinken erişimi paylaş\"</strong> seçeneğini etkinleştirebilirsiniz."
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Goto single snapshot"
@@ -1591,24 +1567,12 @@ msgid "Limit trigger/ignore/block/extract to;"
 msgstr "Tetiklemeyi/yoksaymayı/engellemeyi/çıkarmayı şununla sınırla;"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Note: Depending on the length and similarity of the text on each line, the algorithm may consider an"
-msgstr "Not: Her satırdaki metnin uzunluğuna ve benzerliğine bağlı olarak, algoritma şunları dikkate alabilir"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "instead of"
-msgstr "yerine"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "replacement"
-msgstr "değiştirme"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "for example."
-msgstr "örneğin."
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "addition"
-msgstr "ekleme"
+msgid ""
+"Note: Depending on the length and similarity of the text on each line, the algorithm may consider an "
+"<strong>addition</strong> instead of <strong>replacement</strong> for example."
+msgstr ""
+"Not: Her satırdaki metnin uzunluğuna ve benzerliğine bağlı olarak, algoritma örneğin bir <strong>değiştirme</strong> "
+"yerine bir <strong>ekleme</strong> dikkate alabilir."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "So it's always better to select"
@@ -1621,6 +1585,10 @@ msgstr "yeni içerikle ilgilendiğinizde."
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "When content is merely moved in a list, it will also trigger an"
 msgstr "İçerik yalnızca bir listede taşındığında, ayrıca şunu tetikleyecektir"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "addition"
+msgstr "ekleme"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "consider enabling"
@@ -3721,6 +3689,48 @@ msgstr "Ana ayarlar"
 
 #~ msgid "\"Residential\" and \"Mobile\" proxy type can be more successfull than \"Data Center\" for blocked websites."
 #~ msgstr "Engellenen web siteleri için \"Yerleşim Yeri\" ve \"Mobil\" proxy türü \"Veri Merkezi\"nden daha başarılı olabilir."
+
+#~ msgid "Set to"
+#~ msgstr "Şuna ayarla"
+
+#~ msgid "to disable"
+#~ msgstr "devre dışı bırakmak için"
+
+#~ msgid "This will wait"
+#~ msgstr "Bu şu kadar bekleyecek"
+
+#~ msgid "seconds before extracting the text."
+#~ msgstr "metni çıkarmadan önce saniye."
+
+#~ msgid "These settings are"
+#~ msgstr "Bu ayarlar, "
+
+#~ msgid "added"
+#~ msgstr "eklenerek"
+
+#~ msgid "to any existing watch configurations."
+#~ msgstr "mevcut izleyici yapılandırmalarına uygulanır."
+
+#~ msgid "Pro-tip: You can enable"
+#~ msgstr "Uzman ipucu: Şunu etkinleştirebilirsiniz"
+
+#~ msgid "\"share access when password is enabled\""
+#~ msgstr "\"parola etkinken erişimi paylaş\""
+
+#~ msgid "from settings."
+#~ msgstr "ayarlardan."
+
+#~ msgid "Note: Depending on the length and similarity of the text on each line, the algorithm may consider an"
+#~ msgstr "Not: Her satırdaki metnin uzunluğuna ve benzerliğine bağlı olarak, algoritma şunları dikkate alabilir"
+
+#~ msgid "instead of"
+#~ msgstr "yerine"
+
+#~ msgid "replacement"
+#~ msgstr "değiştirme"
+
+#~ msgid "for example."
+#~ msgstr "örneğin."
 
 #~ msgid "From"
 #~ msgstr "Kimden"

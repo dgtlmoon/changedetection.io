@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-21 13:27+0900\n"
+"POT-Creation-Date: 2026-04-15 15:58+0900\n"
 "PO-Revision-Date: 2026-03-31 23:52+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -432,18 +432,9 @@ msgstr "詳細はこちら"
 msgid "After this many consecutive times that the CSS/xPath filter is missing, send a notification"
 msgstr "CSS/XPath フィルタがこの回数連続して見つからない場合、通知を送信"
 
-# 訳注: "Set to [N] to disable" → 「[N]に設定すると無効になります」
-# 述語の訳を後半にまとめた
-# 前半は日本語では不要なため、空白1文字で非表示にする（空文字は英語にフォールバックするため）
-# リスク: 将来、別テンプレートで再利用されると、本来の英語の意味とは異なる訳が流用されて壊れる可能性あり。新規追加時は見直すこと。
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Set to"
-msgstr " "
-
-# リスク: 将来、別テンプレートで再利用されると、本来の英語の意味とは異なる訳が流用されて壊れる可能性あり。新規追加時は見直すこと。
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "to disable"
-msgstr "に設定すると無効になります"
+msgid "Set to <strong>0</strong> to disable"
+msgstr "<strong>0</strong> に設定すると無効になります"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Limit collection of history snapshots for each watch to this number of history items."
@@ -527,17 +518,9 @@ msgid ""
 " here."
 msgstr "ページが完全にレンダリングされるのを待つのに問題がある場合（テキストが欠けているなど）、ここで「待機」時間を増やしてみてください。"
 
-# 訳注: "This will wait [n] seconds before extracting the text."
-# → 「テキスト抽出前に [n] 秒間待機します。」
-# 時間条件と述語の訳を入れ替えた
-# リスク: 将来、別テンプレートで再利用されると、本来の英語の意味とは異なる訳が流用されて壊れる可能性あり。新規追加時は見直すこと。
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "This will wait"
-msgstr "テキスト抽出前に"
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "seconds before extracting the text."
-msgstr "秒間待機します。"
+msgid "This will wait <i>n</i> seconds before extracting the text."
+msgstr "テキスト抽出前に <i>n</i> 秒間待機します。"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Number of concurrent workers to process watches. More workers = faster processing but higher memory usage."
@@ -890,20 +873,8 @@ msgid "Leave unchecked to use the auto-generated colour based on the tag name."
 msgstr "タグ名に基づく自動生成色を使用する場合はチェックを外してください。"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
-msgid "These settings are"
-msgstr "これらの設定は"
-
-# 訳注: "These settings are [added] to any existing watch configurations."
-# → 「これらの設定は既存のすべてのウォッチ設定に[追加]されます。」
-# 目的語と述語の訳を入れ替えた
-# リスク: 将来、別テンプレートで再利用されると、本来の英語の意味とは異なる訳が流用されて壊れる可能性あり。新規追加時は見直すこと。
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-msgid "added"
-msgstr "既存のすべてのウォッチ設定に"
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-msgid "to any existing watch configurations."
-msgstr "追加されます。"
+msgid "These settings are <strong><i>added</i></strong> to any existing watch configurations."
+msgstr "これらの設定は既存のすべてのウォッチ設定に<strong><i>追加</i></strong>されます。"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Text filtering"
@@ -1356,21 +1327,9 @@ msgstr "秒前"
 msgid "Current error-ing screenshot from most recent request"
 msgstr "最新のリクエストからの現在のエラースクリーンショット"
 
-# 訳注: "Pro-tip: You can enable [option] from settings."
-# → 「プロのヒント：設定から [option] を有効にできます。」
-# 修飾語と述語の訳を入れ替えた
 #: changedetectionio/blueprint/ui/templates/diff.html
-msgid "Pro-tip: You can enable"
-msgstr "プロのヒント：設定から"
-
-#: changedetectionio/blueprint/ui/templates/diff.html
-msgid "\"share access when password is enabled\""
-msgstr "「パスワードが有効な場合でも共有アクセスを許可」"
-
-# リスク: 将来、別テンプレートで再利用されると、本来の英語の意味とは異なる訳が流用されて壊れる可能性あり。新規追加時は見直すこと。
-#: changedetectionio/blueprint/ui/templates/diff.html
-msgid "from settings."
-msgstr "を有効にできます。"
+msgid "Pro-tip: You can enable <strong>\"share access when password is enabled\"</strong> from settings."
+msgstr "プロのヒント：設定から<strong>「パスワードが有効な場合でも共有アクセスを許可」</strong>を有効にできます。"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Goto single snapshot"
@@ -1589,31 +1548,11 @@ msgstr "プレビューページを使用して、フィルタとトリガーの
 msgid "Limit trigger/ignore/block/extract to;"
 msgstr "トリガー/無視/ブロック/抽出を次に制限："
 
-# 訳注: "...the algorithm may consider an [addition] instead of [replacement], for example."
-# → 「...アルゴリズムが「追加」ではなく「置換」と判断することがあります。」
-# 日本語では「AではなくB」の語順になるため断片の訳を組み替えた。
-# 「 の開き括弧は前半の msgstr 末尾に、閉じ括弧は "instead of" と "for example." の msgstr に入れた
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Note: Depending on the length and similarity of the text on each line, the algorithm may consider an"
-msgstr "注意：各行のテキストの長さと類似度によっては、アルゴリズムが「"
-
-# リスク: 将来、別テンプレートで再利用されると、本来の英語の意味とは異なる訳が流用されて壊れる可能性あり。新規追加時は見直すこと。
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "instead of"
-msgstr "」ではなく「"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "replacement"
-msgstr "置換"
-
-# リスク: 将来、別テンプレートで再利用されると、本来の英語の意味とは異なる訳が流用されて壊れる可能性あり。新規追加時は見直すこと。
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "for example."
-msgstr "」と判断することがあります。"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "addition"
-msgstr "追加"
+msgid ""
+"Note: Depending on the length and similarity of the text on each line, the algorithm may consider an "
+"<strong>addition</strong> instead of <strong>replacement</strong> for example."
+msgstr "注意：各行のテキストの長さと類似度によっては、アルゴリズムが「<strong>置換</strong>」ではなく「<strong>追加</strong>」と判断することがあります。"
 
 # 訳注: "So it's always better to select [X] when you're interested in new content."
 # → 「そのため、新しいコンテンツに興味がある場合は [X] を選択することをおすすめします。」
@@ -1629,6 +1568,10 @@ msgstr "を選択することをおすすめします。"
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "When content is merely moved in a list, it will also trigger an"
 msgstr "リスト内でコンテンツが移動しただけでも"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "addition"
+msgstr "追加"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "consider enabling"

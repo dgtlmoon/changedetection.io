@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-21 13:27+0900\n"
+"POT-Creation-Date: 2026-04-15 15:58+0900\n"
 "PO-Revision-Date: 2026-01-18 21:31+0800\n"
 "Last-Translator: 吾爱分享 <admin@wuaishare.cn>\n"
 "Language: zh\n"
@@ -432,12 +432,8 @@ msgid "After this many consecutive times that the CSS/xPath filter is missing, s
 msgstr "CSS/xPath 过滤器连续缺失此次数后发送通知"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Set to"
-msgstr "设置为"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "to disable"
-msgstr "以禁用"
+msgid "Set to <strong>0</strong> to disable"
+msgstr "设置为 <strong>0</strong> 以禁用"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Limit collection of history snapshots for each watch to this number of history items."
@@ -514,12 +510,8 @@ msgid ""
 msgstr "如果页面渲染未完成（缺文本等），可尝试增加这里的等待时间。"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "This will wait"
-msgstr "这将等待"
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "seconds before extracting the text."
-msgstr "秒后再提取文本。"
+msgid "This will wait <i>n</i> seconds before extracting the text."
+msgstr "这将等待 <i>n</i> 秒后再提取文本。"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Number of concurrent workers to process watches. More workers = faster processing but higher memory usage."
@@ -872,16 +864,8 @@ msgid "Leave unchecked to use the auto-generated colour based on the tag name."
 msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
-msgid "These settings are"
-msgstr "这些设置会"
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-msgid "added"
-msgstr "应用"
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-msgid "to any existing watch configurations."
-msgstr "到现有的所有监控项配置中。"
+msgid "These settings are <strong><i>added</i></strong> to any existing watch configurations."
+msgstr "这些设置会<strong><i>应用</i></strong>到现有的所有监控项配置中。"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Text filtering"
@@ -1328,16 +1312,8 @@ msgid "Current error-ing screenshot from most recent request"
 msgstr "最近请求的错误截图"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
-msgid "Pro-tip: You can enable"
-msgstr "提示：你可以启用"
-
-#: changedetectionio/blueprint/ui/templates/diff.html
-msgid "\"share access when password is enabled\""
-msgstr "“启用密码时允许共享访问”"
-
-#: changedetectionio/blueprint/ui/templates/diff.html
-msgid "from settings."
-msgstr "（设置中）"
+msgid "Pro-tip: You can enable <strong>\"share access when password is enabled\"</strong> from settings."
+msgstr "提示：你可以在设置中启用 <strong>“启用密码时允许共享访问”</strong>。"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Goto single snapshot"
@@ -1556,24 +1532,10 @@ msgid "Limit trigger/ignore/block/extract to;"
 msgstr "将触发/忽略/阻止/提取限定为;"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Note: Depending on the length and similarity of the text on each line, the algorithm may consider an"
-msgstr "注意：根据每行文本长度与相似度，算法可能把"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "instead of"
-msgstr "视为"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "replacement"
-msgstr "替换"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "for example."
-msgstr "例如。"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "addition"
-msgstr "新增"
+msgid ""
+"Note: Depending on the length and similarity of the text on each line, the algorithm may consider an "
+"<strong>addition</strong> instead of <strong>replacement</strong> for example."
+msgstr "注意：根据每行文本长度与相似度，算法可能把 <strong>替换</strong> 视为 <strong>新增</strong>，例如。"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "So it's always better to select"
@@ -1586,6 +1548,10 @@ msgstr "。"
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "When content is merely moved in a list, it will also trigger an"
 msgstr "当内容仅在列表中移动时，也会触发"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "addition"
+msgstr "新增"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "consider enabling"
@@ -3680,6 +3646,48 @@ msgstr "主设置"
 
 #~ msgid "\"Residential\" and \"Mobile\" proxy type can be more successfull than \"Data Center\" for blocked websites."
 #~ msgstr "对于被封锁的网站，“住宅”和“移动”代理类型可能比“数据中心”更有效。"
+
+#~ msgid "Set to"
+#~ msgstr "设置为"
+
+#~ msgid "to disable"
+#~ msgstr "以禁用"
+
+#~ msgid "This will wait"
+#~ msgstr "这将等待"
+
+#~ msgid "seconds before extracting the text."
+#~ msgstr "秒后再提取文本。"
+
+#~ msgid "These settings are"
+#~ msgstr "这些设置会"
+
+#~ msgid "added"
+#~ msgstr "应用"
+
+#~ msgid "to any existing watch configurations."
+#~ msgstr "到现有的所有监控项配置中。"
+
+#~ msgid "Pro-tip: You can enable"
+#~ msgstr "提示：你可以启用"
+
+#~ msgid "\"share access when password is enabled\""
+#~ msgstr "“启用密码时允许共享访问”"
+
+#~ msgid "from settings."
+#~ msgstr "（设置中）"
+
+#~ msgid "Note: Depending on the length and similarity of the text on each line, the algorithm may consider an"
+#~ msgstr "注意：根据每行文本长度与相似度，算法可能把"
+
+#~ msgid "instead of"
+#~ msgstr "视为"
+
+#~ msgid "replacement"
+#~ msgstr "替换"
+
+#~ msgid "for example."
+#~ msgstr "例如。"
 
 #~ msgid "From"
 #~ msgstr "从"

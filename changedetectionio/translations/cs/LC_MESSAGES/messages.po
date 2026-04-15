@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-21 13:27+0900\n"
+"POT-Creation-Date: 2026-04-15 15:58+0900\n"
 "PO-Revision-Date: 2026-01-02 11:40+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: cs\n"
@@ -432,12 +432,8 @@ msgid "After this many consecutive times that the CSS/xPath filter is missing, s
 msgstr "Po tolika po sobě jdoucích případech, kdy CSS/xPath filtr chybí, odeslat oznámení"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Set to"
-msgstr "Nastavit na"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "to disable"
-msgstr "vypnuto"
+msgid "Set to <strong>0</strong> to disable"
+msgstr "Nastavte na <strong>0</strong> pro vypnutí"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Limit collection of history snapshots for each watch to this number of history items."
@@ -514,12 +510,8 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "This will wait"
-msgstr "Toto počká"
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "seconds before extracting the text."
-msgstr "sekund před extrahováním textu."
+msgid "This will wait <i>n</i> seconds before extracting the text."
+msgstr "Toto počká <i>n</i> sekund před extrahováním textu."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Number of concurrent workers to process watches. More workers = faster processing but higher memory usage."
@@ -872,16 +864,8 @@ msgid "Leave unchecked to use the auto-generated colour based on the tag name."
 msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
-msgid "These settings are"
-msgstr "NASTAVENÍ"
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-msgid "added"
-msgstr "přidáno"
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
-msgid "to any existing watch configurations."
-msgstr "do všech existujících konfigurací monitorů."
+msgid "These settings are <strong><i>added</i></strong> to any existing watch configurations."
+msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Text filtering"
@@ -1328,16 +1312,8 @@ msgid "Current error-ing screenshot from most recent request"
 msgstr "Aktuální snímek obrazovky s chybou z posledního požadavku"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
-msgid "Pro-tip: You can enable"
-msgstr "Pro-tip: Můžete povolit"
-
-#: changedetectionio/blueprint/ui/templates/diff.html
-msgid "\"share access when password is enabled\""
+msgid "Pro-tip: You can enable <strong>\"share access when password is enabled\"</strong> from settings."
 msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/diff.html
-msgid "from settings."
-msgstr "NASTAVENÍ"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Goto single snapshot"
@@ -1556,24 +1532,10 @@ msgid "Limit trigger/ignore/block/extract to;"
 msgstr "Omezit spouštění/ignorovat/blokovat/extrahovat na;"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Note: Depending on the length and similarity of the text on each line, the algorithm may consider an"
+msgid ""
+"Note: Depending on the length and similarity of the text on each line, the algorithm may consider an "
+"<strong>addition</strong> instead of <strong>replacement</strong> for example."
 msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "instead of"
-msgstr "místo"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "replacement"
-msgstr "nahrazení"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "for example."
-msgstr "například."
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "addition"
-msgstr "přidání"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "So it's always better to select"
@@ -1586,6 +1548,10 @@ msgstr "když vás zajímá nový obsah."
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "When content is merely moved in a list, it will also trigger an"
 msgstr "Když se obsah pouze přesune v seznamu, spustí se také"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "addition"
+msgstr "přidání"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "consider enabling"
@@ -3748,6 +3714,48 @@ msgstr "Hlavní nastavení"
 
 #~ msgid "\"Residential\" and \"Mobile\" proxy type can be more successfull than \"Data Center\" for blocked websites."
 #~ msgstr ""
+
+#~ msgid "Set to"
+#~ msgstr "Nastavit na"
+
+#~ msgid "to disable"
+#~ msgstr "vypnuto"
+
+#~ msgid "This will wait"
+#~ msgstr "Toto počká"
+
+#~ msgid "seconds before extracting the text."
+#~ msgstr "sekund před extrahováním textu."
+
+#~ msgid "These settings are"
+#~ msgstr "NASTAVENÍ"
+
+#~ msgid "added"
+#~ msgstr "přidáno"
+
+#~ msgid "to any existing watch configurations."
+#~ msgstr "do všech existujících konfigurací monitorů."
+
+#~ msgid "Pro-tip: You can enable"
+#~ msgstr "Pro-tip: Můžete povolit"
+
+#~ msgid "\"share access when password is enabled\""
+#~ msgstr ""
+
+#~ msgid "from settings."
+#~ msgstr "NASTAVENÍ"
+
+#~ msgid "Note: Depending on the length and similarity of the text on each line, the algorithm may consider an"
+#~ msgstr ""
+
+#~ msgid "instead of"
+#~ msgstr "místo"
+
+#~ msgid "replacement"
+#~ msgstr "nahrazení"
+
+#~ msgid "for example."
+#~ msgstr "například."
 
 #~ msgid "From"
 #~ msgstr "Z"
