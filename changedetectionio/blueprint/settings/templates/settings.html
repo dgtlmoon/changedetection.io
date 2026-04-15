@@ -118,8 +118,8 @@
                 <div class="pure-control-group inline-radio">
                     {{ render_field(form.application.form.fetch_backend, class="fetch-backend") }}
                     <span class="pure-form-message-inline">
-                        <p>{{ _('Use the') }} <strong>{{ _('Basic') }}</strong> {{ _('method (default) where your watched sites don\'t need Javascript to render.') }}</p>
-                        <p>{{ _('The') }} <strong>{{ _('Chrome/Javascript') }}</strong> {{ _('method requires a network connection to a running WebDriver+Chrome server, set by the ENV var') }} 'WEBDRIVER_URL'. </p>
+                        <p>{{ _('Use the <strong>Basic</strong> method (default) where your watched sites don\'t need Javascript to render.')|safe }}</p>
+                        <p>{{ _('The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set by the ENV var \'WEBDRIVER_URL\'.')|safe }}</p>
                     </span>
                 </div>
                 <fieldset class="pure-group" id="webdriver-override-options" data-visible-for="application-fetch_backend=html_webdriver">

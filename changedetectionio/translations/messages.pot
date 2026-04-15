@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.54.10\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-15 15:58+0900\n"
+"POT-Creation-Date: 2026-04-15 20:27+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -478,28 +478,14 @@ msgstr ""
 msgid "read more here"
 msgstr ""
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "method (default) where your watched sites don't need Javascript to render."
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "Use the"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "Basic"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "The"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "Chrome/Javascript"
+msgid ""
+"The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set"
+" by the ENV var 'WEBDRIVER_URL'."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
@@ -1398,14 +1384,6 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Set to empty to use system settings default"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "method (default) where your watched site doesn't need Javascript to render."
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
