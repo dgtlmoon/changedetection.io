@@ -321,6 +321,11 @@ Math: {{ 1 + 1 }}") }}
                 </div>
             </div>
             <div class="tab-pane-inner" id="filters-and-triggers">
+
+                {# ── AI Intent ─────────────────────────────────────────── #}
+                {% include "edit/include_llm_intent.html" %}
+                {# ── end AI Intent ──────────────────────────────────────── #}
+
                 <span id="activate-text-preview" class="pure-button pure-button-primary button-xsmall">{{ _('Activate preview') }}</span>
               <div>
               <div id="edit-text-filter">

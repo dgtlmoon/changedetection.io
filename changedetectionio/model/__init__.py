@@ -188,6 +188,10 @@ class watch_base(dict):
             'date_created': None,
             'extract_lines_containing': [],  # Keep only lines containing these substrings (plain text, case-insensitive)
             'extract_text': [],  # Extract text by regex after filters
+            # LLM intent-based evaluation
+            'llm_intent': '',                # Plain-English description of what the user cares about
+            'llm_prefilter': None,           # CSS selector derived at setup time (semantic only, e.g. "footer")
+            'llm_evaluation_cache': {},      # {sha256(intent+diff): {important, summary}} - evaluated once, cached
             'fetch_backend': 'system',  # plaintext, playwright etc
             'fetch_time': 0.0,
             'filter_failure_notification_send': strtobool(os.getenv('FILTER_FAILURE_NOTIFICATION_SEND_DEFAULT', 'True')),

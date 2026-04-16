@@ -794,6 +794,9 @@ class processor_text_json_diff_form(commonSettingsForm):
 
     time_between_check_use_default = BooleanField(_l('Use global settings for time between check and scheduler.'), default=False)
 
+    llm_intent = TextAreaField(_l('AI Intent'), validators=[validators.Optional(), validators.Length(max=2000)],
+                               render_kw={"rows": "3", "placeholder": "e.g. Alert me when the price drops below $300"})
+
     include_filters = StringListField(_l('CSS/JSONPath/JQ/XPath Filters'), [ValidateCSSJSONXPATHInput()], default='')
 
     subtractive_selectors = StringListField(_l('Remove elements'), [ValidateCSSJSONXPATHInput(allow_json=False)])
@@ -1039,6 +1042,61 @@ class globalSettingsApplicationForm(commonSettingsForm):
     ui = FormField(globalSettingsApplicationUIForm)
 
 
+class globalSettingsLLMForm(Form):
+    """
+    LLM / AI provider settings — stored under datastore['settings']['application']['llm'].
+
+    Uses litellm under the hood, so the model string encodes both the provider and model.
+    No separate provider dropdown needed — litellm routes automatically:
+      gpt-4o-mini                           → OpenAI
+      claude-3-5-haiku-20251001             → Anthropic
+      ollama/llama3.2                       → Ollama (local)
+      openrouter/google/gemma-3-12b-it:free → OpenRouter (free tier)
+      gemini/gemini-2.0-flash               → Google Gemini
+      azure/gpt-4o                          → Azure OpenAI
+    """
+    llm_model = StringField(
+        _l('Model'),
+        validators=[validators.Optional()],
+        render_kw={"placeholder": "gpt-4o-mini", "style": "width: 24em;"},
+    )
+    llm_api_key = StringField(
+        _l('API Key'),
+        validators=[validators.Optional()],
+        render_kw={
+            "placeholder": _l('Leave blank to use LITELLM_API_KEY env var'),
+            "autocomplete": "off",
+            "style": "width: 24em;",
+        },
+    )
+    llm_api_base = StringField(
+        _l('API Base URL'),
+        validators=[validators.Optional()],
+        render_kw={
+            "placeholder": "http://localhost:11434  (Ollama / custom endpoints only)",
+            "style": "width: 24em;",
+        },
+    )
+    llm_max_tokens_per_check = IntegerField(
+        _l('Max tokens per check'),
+        validators=[validators.Optional(), validators.NumberRange(min=0)],
+        default=0,
+        render_kw={
+            "placeholder": "0 = unlimited",
+            "style": "width: 8em;",
+        },
+    )
+    llm_max_tokens_cumulative = IntegerField(
+        _l('Max cumulative tokens (per watch)'),
+        validators=[validators.Optional(), validators.NumberRange(min=0)],
+        default=0,
+        render_kw={
+            "placeholder": "0 = unlimited",
+            "style": "width: 8em;",
+        },
+    )
+
+
 class globalSettingsForm(Form):
     # Define these as FormFields/"sub forms", this way it matches the JSON storage
     # datastore.data['settings']['application']..
@@ -1051,6 +1109,7 @@ class globalSettingsForm(Form):
 
     requests = FormField(globalSettingsRequestForm)
     application = FormField(globalSettingsApplicationForm)
+    llm = FormField(globalSettingsLLMForm)
     save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
 
 

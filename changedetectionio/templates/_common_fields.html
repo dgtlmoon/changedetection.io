@@ -114,7 +114,17 @@
             <tr>
                 <td><code>{{ '{{triggered_text}}' }}</code></td>
                 <td>{{ _('Text that tripped the trigger from filters') }}</td>
-
+            </tr>
+            {% if settings_application.get('llm', {}).get('model') %}
+            <tr>
+                <td><code>{{ '{{llm_summary}}' }}</code></td>
+                <td>{{ _('AI-generated plain-English summary of the relevant change (requires AI Intent to be configured on the watch or its group)') }}</td>
+            </tr>
+            <tr>
+                <td><code>{{ '{{llm_intent}}' }}</code></td>
+                <td>{{ _('The AI intent that was evaluated — the plain-English description of what to look for') }}</td>
+            </tr>
+            {% endif %}
                 {% if extra_notification_token_placeholder_info %}
                     {% for token in extra_notification_token_placeholder_info %}
                         <tr>

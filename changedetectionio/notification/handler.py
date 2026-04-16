@@ -364,6 +364,13 @@ def process_notification(n_object: NotificationContextData, datastore):
         )
     )
 
+    # Lazily populate llm_summary / llm_intent if used in notification template
+    scan_text = n_object.get('notification_body', '') + n_object.get('notification_title', '')
+    if 'llm_summary' in scan_text or 'llm_intent' in scan_text:
+        llm_result = n_object.get('_llm_result') or {}
+        n_object['llm_summary'] = llm_result.get('summary', '')
+        n_object['llm_intent'] = n_object.get('_llm_intent', '')
+
     with (apprise.LogCapture(level=apprise.logging.DEBUG) as logs):
         for url in n_object['notification_urls']:
 

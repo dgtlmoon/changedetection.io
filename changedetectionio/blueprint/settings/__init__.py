@@ -76,6 +76,19 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
                 datastore.data['settings']['application'].update(app_update)
 
+                # Save LLM config separately under settings.application.llm
+                llm_data = form.data.get('llm', {})
+                llm_config = {
+                    'model': llm_data.get('llm_model', '').strip(),
+                    'api_key': llm_data.get('llm_api_key', '').strip(),
+                    'api_base': llm_data.get('llm_api_base', '').strip(),
+                }
+                # Only store if a model is set
+                if llm_config['model']:
+                    datastore.data['settings']['application']['llm'] = llm_config
+                else:
+                    datastore.data['settings']['application'].pop('llm', None)
+
                 # Handle dynamic worker count adjustment
                 old_worker_count = datastore.data['settings']['requests'].get('workers', 1)
                 new_worker_count = form.data['requests'].get('workers', 1)
@@ -164,9 +177,15 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             # Instantiate the form with existing settings
             plugin_forms[plugin_id] = form_class(data=settings)
 
+        from changedetectionio.llm.evaluator import get_llm_config as _get_llm_cfg, llm_configured_via_env
+        llm_config = _get_llm_cfg(datastore) or {}
+        llm_env_configured = llm_configured_via_env()
+
         output = render_template("settings.html",
                                 active_plugins=active_plugins,
                                 api_key=datastore.data['settings']['application'].get('api_access_token'),
+                                llm_config=llm_config,
+                                llm_env_configured=llm_env_configured,
                                 python_version=python_version,
                                 uptime_seconds=uptime_seconds,
                                 available_timezones=sorted(available_timezones()),

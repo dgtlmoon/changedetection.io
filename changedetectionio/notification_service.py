@@ -194,6 +194,8 @@ class NotificationContextData(dict):
             'timestamp_from': None,
             'timestamp_to': None,
             'triggered_text': None,
+            'llm_summary': None,     # AI plain-English summary of what changed (requires AI intent to be configured)
+            'llm_intent': None,      # The intent that was evaluated (watch-level or inherited from tag)
             'uuid': 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX',  # Converted to 'watch_uuid' in create_notification_parameters
             'watch_mime_type': None,
             'watch_tag': None,
@@ -409,6 +411,10 @@ class NotificationService:
         n_object['notification_title'] = _check_cascading_vars(self.datastore,'notification_title', watch)
         n_object['notification_body'] = _check_cascading_vars(self.datastore,'notification_body', watch)
         n_object['notification_format'] = _check_cascading_vars(self.datastore,'notification_format', watch)
+
+        # Attach LLM evaluation result so {{ llm_summary }} / {{ llm_intent }} tokens render correctly
+        n_object['_llm_result'] = watch.get('_llm_result')
+        n_object['_llm_intent'] = watch.get('_llm_intent', '')
 
         # (Individual watch) Only prepare to notify if the rules above matched
         queued = False

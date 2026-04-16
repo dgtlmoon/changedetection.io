@@ -1,0 +1,89 @@
+{#
+  AI Intent section — shared include for watch edit and tag/group edit.
+
+  Required template context:
+    llm_configured  — bool: LLM provider is configured in settings
+    form            — the WTForms form (must have .llm_intent field)
+
+  Optional (watch edit only):
+    watch               — the Watch object (for processor check and prefilter display)
+    llm_intent_source   — str: 'watch', tag title, or '' (for inherited-from-tag hint)
+
+  Usage in watch edit (edit.html):
+    {% include "edit/include_llm_intent.html" %}
+
+  Usage in tag edit (edit-tag.html):
+    {% include "edit/include_llm_intent.html" %}
+    (watch is not set → tag mode: no processor check, no examples, different description)
+#}
+
+{# Watch edit: only show for text_json_diff processor #}
+{% if watch is defined and watch %}
+    {% set is_text_json_diff = not watch.get('processor') or watch.get('processor') == 'text_json_diff' %}
+{% else %}
+    {% set is_text_json_diff = true %}
+{% endif %}
+
+{% if is_text_json_diff %}
+
+{# ── Configured: show the intent textarea ────────────────────────── #}
+{% if llm_configured %}
+<div class="border-fieldset" id="llm-intent-section">
+    <h3>&#x2728; {{ _('AI Intent') }}</h3>
+    <p class="pure-form-message-inline">
+        {% if watch is defined and watch %}
+            {{ _('Describe in plain English what you care about. The AI evaluates every detected change against this intent and only notifies you when it matches.') }}
+            {% if llm_intent_source is defined and llm_intent_source and llm_intent_source != 'watch' %}
+            <br><em>{{ _('Inherited from tag:') }} <strong>{{ llm_intent_source }}</strong> — {{ _('type here to override for this watch only') }}</em>
+            {% endif %}
+        {% else %}
+            {{ _('Set an intent for all watches in this tag/group. Each watch can override this with its own intent.') }}
+        {% endif %}
+    </p>
+    <div class="pure-control-group">
+        <textarea name="llm_intent"
+                  id="llm_intent"
+                  rows="3"
+                  class="pure-input-1"
+                  {% if watch is defined and watch %}
+                  placeholder="{{ _('e.g. Alert me when the price drops below $300, or a new product is launched. Ignore footer and navigation changes.') }}"
+                  {% else %}
+                  placeholder="{{ _('e.g. Flag price changes or new product launches across all watches in this group') }}"
+                  {% endif %}
+        >{{ form.llm_intent.data or '' }}</textarea>
+    </div>
+    {% if watch is defined and watch %}
+    <div class="pure-form-message-inline">
+        <strong>{{ _('Examples:') }}</strong>
+        <ul style="margin: 0.3em 0 0 1.2em; padding: 0;">
+            <li><em>{{ _('Flag any price change, including discount percentages and bundle pricing') }}</em></li>
+            <li><em>{{ _('Alert when new senior engineering or product roles are posted. Ignore edits to existing listings.') }}</em></li>
+            <li><em>{{ _('Notify when indemnification clauses or liability caps are added or modified') }}</em></li>
+            <li><em>{{ _('Important only if a new enforcement action is posted or a compliance deadline changes') }}</em></li>
+        </ul>
+    </div>
+    {% if watch.get('llm_prefilter') %}
+    <div class="pure-form-message-inline" style="margin-top: 0.5em;">
+        <small>{{ _('AI pre-filter active:') }} <code>{{ watch.get('llm_prefilter') }}</code>
+        — {{ _('narrows content scope before evaluation') }}</small>
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+
+{# ── Not configured: greyed-out prompt to configure ──────────────── #}
+{% else %}
+<div class="border-fieldset" id="llm-intent-section-disabled" style="opacity: 0.5;">
+    <h3>&#x2728; {{ _('AI Intent') }}</h3>
+    <p>{{ _('Configure an AI/LLM provider in') }}
+       <a href="{{ url_for('settings.settings_page') }}#ai">{{ _('Settings → AI/LLM') }}</a>
+       {% if watch is defined and watch %}
+           {{ _('to enable intent-based change filtering.') }}
+       {% else %}
+           {{ _('to enable intent-based change filtering for this group.') }}
+       {% endif %}
+    </p>
+</div>
+{% endif %}
+
+{% endif %}{# is_text_json_diff #}

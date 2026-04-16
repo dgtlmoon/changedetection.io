@@ -99,7 +99,7 @@ jobs:
 
       - name: Run Unit Tests
         run: |
-          docker run test-changedetectionio bash -c 'cd changedetectionio;pytest tests/unit/'
+          docker run test-changedetectionio bash -c 'cd changedetectionio;pytest tests/unit/ tests/llm/'
 
   # Basic pytest tests with ancillary services
   basic-tests:

@@ -10,10 +10,24 @@ from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
 from changedetectionio.time_handler import is_within_schedule
 from changedetectionio import worker_pool
+from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config
 
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData):
     edit_blueprint = Blueprint('ui_edit', __name__, template_folder="../ui/templates")
-    
+
+    def _resolve_llm_intent_source(watch, datastore) -> str:
+        """
+        Return the source of the effective LLM intent: 'watch', tag title, or ''.
+        Used in the edit form to show an "inherited from tag: X" hint.
+        """
+        if (watch.get('llm_intent') or '').strip():
+            return 'watch'
+        for tag_uuid in watch.get('tags', []):
+            tag = datastore.data['settings']['application'].get('tags', {}).get(tag_uuid)
+            if tag and (tag.get('llm_intent') or '').strip():
+                return tag.get('title', 'tag')
+        return ''
+
     def _watch_has_tag_options_set(watch):
         """This should be fixed better so that Tag is some proper Model, a tag is just a Watch also"""
         for tag_uuid, tag in datastore.data['settings']['application'].get('tags', {}).items():
@@ -326,6 +340,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                     for tag_uuid, tag in datastore.data['settings']['application']['tags'].items()
                     if tag_uuid not in watch.get('tags', []) and tag.matches_url(watch.get('url', ''))
                 },
+                # LLM intent context
+                'llm_configured': bool(_get_llm_config(datastore)),
+                'llm_intent_source': _resolve_llm_intent_source(watch, datastore),
             }
 
             included_content = None
