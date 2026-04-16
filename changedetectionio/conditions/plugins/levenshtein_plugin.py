@@ -4,6 +4,7 @@ Provides metrics for measuring text similarity between snapshots.
 """
 import pluggy
 from loguru import logger
+from flask_babel import gettext as _, lazy_gettext as _l
 
 LEVENSHTEIN_MAX_LEN_FOR_EDIT_STATS=100000
 
@@ -53,8 +54,8 @@ def register_operator_choices():
 @conditions_hookimpl
 def register_field_choices():
     return [
-        ("levenshtein_ratio", "Levenshtein - Text similarity ratio"),
-        ("levenshtein_distance", "Levenshtein - Text change distance"),
+        ("levenshtein_ratio", _l("Levenshtein - Text similarity ratio")),
+        ("levenshtein_distance", _l("Levenshtein - Text change distance")),
     ]
 
 @conditions_hookimpl
@@ -77,7 +78,7 @@ def ui_edit_stats_extras(watch):
     """Add Levenshtein stats to the UI using the global plugin system"""
     """Generate the HTML for Levenshtein stats - shared by both plugin systems"""
     if len(watch.history.keys()) < 2:
-        return "<p>Not enough history to calculate Levenshtein metrics</p>"
+        return f"<p>{_('Not enough history to calculate Levenshtein metrics')}</p>"
 
 
     # Protection against the algorithm getting stuck on huge documents
@@ -87,37 +88,37 @@ def ui_edit_stats_extras(watch):
             for idx in (-1, -2)
             if len(k) >= abs(idx)
     ):
-        return "<p>Snapshot too large for edit statistics, skipping.</p>"
+        return f"<p>{_('Snapshot too large for edit statistics, skipping.')}</p>"
 
     try:
         lev_data = levenshtein_ratio_recent_history(watch)
         if not lev_data or not isinstance(lev_data, dict):
-            return "<p>Unable to calculate Levenshtein metrics</p>"
-            
+            return f"<p>{_('Unable to calculate Levenshtein metrics')}</p>"
+
         html = f"""
         <div class="levenshtein-stats">
-            <h4>Levenshtein Text Similarity Details</h4>
+            <h4>{_('Levenshtein Text Similarity Details')}</h4>
             <table class="pure-table">
                 <tbody>
                     <tr>
-                        <td>Raw distance (edits needed)</td>
+                        <td>{_('Raw distance (edits needed)')}</td>
                         <td>{lev_data['distance']}</td>
                     </tr>
                     <tr>
-                        <td>Similarity ratio</td>
+                        <td>{_('Similarity ratio')}</td>
                         <td>{lev_data['ratio']:.4f}</td>
                     </tr>
                     <tr>
-                        <td>Percent similar</td>
+                        <td>{_('Percent similar')}</td>
                         <td>{lev_data['percent_similar']}%</td>
                     </tr>
                 </tbody>
             </table>
-            <p style="font-size: 80%;">Levenshtein metrics compare the last two snapshots, measuring how many character edits are needed to transform one into the other.</p>
+            <p style="font-size: 80%;">{_('Levenshtein metrics compare the last two snapshots, measuring how many character edits are needed to transform one into the other.')}</p>
         </div>
         """
         return html
     except Exception as e:
         logger.error(f"Error generating Levenshtein UI extras: {str(e)}")
-        return "<p>Error calculating Levenshtein metrics</p>"
+        return f"<p>{_('Error calculating Levenshtein metrics')}</p>"
         

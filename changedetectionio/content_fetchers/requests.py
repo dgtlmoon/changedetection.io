@@ -1,3 +1,4 @@
+from flask_babel import lazy_gettext as _l
 from loguru import logger
 from urllib.parse import urljoin, urlparse
 import hashlib
@@ -13,7 +14,7 @@ from changedetectionio.validate_url import is_private_hostname
 
 # "html_requests" is listed as the default fetcher in store.py!
 class fetcher(Fetcher):
-    fetcher_description = "Basic fast Plaintext/HTTP Client"
+    fetcher_description = _l("Basic fast Plaintext/HTTP Client")
 
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
         super().__init__(**kwargs)

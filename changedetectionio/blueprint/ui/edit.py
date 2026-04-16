@@ -142,7 +142,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         for p in datastore.extra_browsers:
             form.fetch_backend.choices.append(p)
 
-        form.fetch_backend.choices.append(("system", 'System settings default'))
+        form.fetch_backend.choices.append(("system", gettext('System settings default')))
 
         # form.browser_steps[0] can be assumed that we 'goto url' first
 
@@ -150,7 +150,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             # @todo - Couldn't get setattr() etc dynamic addition working, so remove it instead
             del form.proxy
         else:
-            form.proxy.choices = [('', 'Default')]
+            form.proxy.choices = [('', gettext('Default'))]
             for p in datastore.proxy_list:
                 form.proxy.choices.append(tuple((p, datastore.proxy_list[p]['label'])))
 
@@ -301,7 +301,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 'extra_classes': ' '.join(c),
                 'extra_notification_token_placeholder_info': datastore.get_unique_notification_token_placeholders_available(),
                 'extra_processor_config': form.extra_tab_content(),
-                'extra_title': f" - Edit - {watch.label}",
+                'extra_title': f" - {gettext('Edit')} - {watch.label}",
                 'form': form,
                 'has_default_notification_urls': True if len(datastore.data['settings']['application']['notification_urls']) else False,
                 'has_extra_headers_file': len(datastore.get_all_headers_in_textfile_for_watch(uuid=uuid)) > 0,

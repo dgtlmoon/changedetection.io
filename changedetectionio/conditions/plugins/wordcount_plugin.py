@@ -4,6 +4,7 @@ Provides word count metrics for snapshot content.
 """
 import pluggy
 from loguru import logger
+from flask_babel import gettext as _, lazy_gettext as _l
 
 # Support both plugin systems
 conditions_hookimpl = pluggy.HookimplMarker("changedetectionio_conditions")
@@ -40,7 +41,7 @@ def register_operator_choices():
 def register_field_choices():
     # Add a field that will be available in conditions
     return [
-        ("word_count", "Word count of content"),
+        ("word_count", _l("Word count of content")),
     ]
 
 @conditions_hookimpl
@@ -61,16 +62,16 @@ def _generate_stats_html(watch):
     
     html = f"""
     <div class="word-count-stats">
-        <h4>Content Analysis</h4>
+        <h4>{_('Content Analysis')}</h4>
         <table class="pure-table">
             <tbody>
                 <tr>
-                    <td>Word count (latest snapshot)</td>
+                    <td>{_('Word count (latest snapshot)')}</td>
                     <td>{word_count}</td>
                 </tr>
             </tbody>
         </table>
-        <p style="font-size: 80%;">Word count is a simple measure of content length, calculated by splitting text on whitespace.</p>
+        <p style="font-size: 80%;">{_('Word count is a simple measure of content length, calculated by splitting text on whitespace.')}</p>
     </div>
     """
     return html
