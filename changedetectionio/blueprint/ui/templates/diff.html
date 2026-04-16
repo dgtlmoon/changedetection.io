@@ -127,6 +127,16 @@
             <div class="tip">{{ _('Pro-tip: You can enable') }} <strong>{{ _('"share access when password is enabled"') }}</strong> {{ _('from settings.') }}
             </div>
         {%- endif -%}
+        {%- if llm_configured -%}
+        <div id="llm-diff-summary-area"{% if not llm_diff_summary %} data-pending="1"{% endif %}>
+            <span class="llm-diff-summary-label">&#x2728; {{ _('AI Change Summary') }}</span>
+            {%- if llm_diff_summary -%}
+            <p class="llm-diff-summary-text">{{ llm_diff_summary }}</p>
+            {%- else -%}
+            <p class="llm-diff-summary-text llm-diff-summary-loading">{{ _('Generating summary…') }}</p>
+            {%- endif -%}
+        </div>
+        {%- endif -%}
         <div id="text-diff-heading-area"  style="user-select: none;">
             <div class="snapshot-age"><span>{{ from_version|format_timestamp_timeago }}</span>
                 {%- if note -%}<span class="note"><strong>{{ note }}</strong></span>{%- endif -%}
@@ -162,5 +172,32 @@
 </script>
 <script src="{{url_for('static_content', group='js', filename='diff-render.js')}}"></script>
 
+{% if llm_configured %}
+<script>
+$(function () {
+    var $area = $('#llm-diff-summary-area');
+    if (!$area.length || !$area.data('pending')) return;
+
+    var fromVersion = $('#diff-from-version').val();
+    var toVersion   = $('#diff-to-version').val();
+    var summaryUrl  = "{{ url_for('ui.ui_diff.diff_llm_summary', uuid=uuid) }}";
+
+    $.getJSON(summaryUrl, { from_version: fromVersion, to_version: toVersion })
+        .done(function (data) {
+            if (data.summary) {
+                $area.find('.llm-diff-summary-text')
+                     .removeClass('llm-diff-summary-loading')
+                     .text(data.summary);
+                $area.removeAttr('data-pending');
+            } else {
+                $area.remove();
+            }
+        })
+        .fail(function () {
+            $area.remove();
+        });
+});
+</script>
+{% endif %}
 
 {% endblock %}

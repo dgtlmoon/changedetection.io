@@ -43,6 +43,22 @@ def parse_eval_response(raw: str) -> dict:
         return {'important': False, 'summary': ''}
 
 
+def parse_preview_response(raw: str) -> dict:
+    """
+    Parse a live-preview extraction response.
+    Returns {'found': bool, 'answer': str}.
+    Falls back to found=False on any parse error.
+    """
+    try:
+        data = json.loads(_extract_json(raw))
+        return {
+            'found': bool(data.get('found', False)),
+            'answer': str(data.get('answer', '')).strip(),
+        }
+    except (json.JSONDecodeError, AttributeError):
+        return {'found': False, 'answer': ''}
+
+
 def parse_setup_response(raw: str) -> dict:
     """
     Parse a setup/pre-filter decision response.

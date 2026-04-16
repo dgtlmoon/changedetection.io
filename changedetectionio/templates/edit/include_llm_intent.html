@@ -1,9 +1,9 @@
 {#
-  AI Intent section — shared include for watch edit and tag/group edit.
+  AI Intent + AI Change Summary section — shared include for watch edit and tag/group edit.
 
   Required template context:
     llm_configured  — bool: LLM provider is configured in settings
-    form            — the WTForms form (must have .llm_intent field)
+    form            — the WTForms form (must have .llm_intent and .llm_change_summary fields)
 
   Optional (watch edit only):
     watch               — the Watch object (for processor check and prefilter display)
@@ -26,18 +26,21 @@
 
 {% if is_text_json_diff %}
 
-{# ── Configured: show the intent textarea ────────────────────────── #}
+{# ── Configured: show the intent + summary textareas ─────────────── #}
 {% if llm_configured %}
 <div class="border-fieldset" id="llm-intent-section">
-    <h3>&#x2728; {{ _('AI Intent') }}</h3>
-    <p class="pure-form-message-inline">
+    <h3>&#x2728; {{ _('AI') }}</h3>
+
+    {# — AI Change Intent — #}
+    <h4 style="margin: 0 0 0.3em 0;">{{ _('AI Change Intent') }}</h4>
+    <p class="pure-form-message-inline" style="margin-top:0">
         {% if watch is defined and watch %}
-            {{ _('Describe in plain English what you care about. The AI evaluates every detected change against this intent and only notifies you when it matches.') }}
+            {{ _('Describe what you care about. The AI evaluates every detected change against this and only notifies you when it matches.') }}
             {% if llm_intent_source is defined and llm_intent_source and llm_intent_source != 'watch' %}
             <br><em>{{ _('Inherited from tag:') }} <strong>{{ llm_intent_source }}</strong> — {{ _('type here to override for this watch only') }}</em>
             {% endif %}
         {% else %}
-            {{ _('Set an intent for all watches in this tag/group. Each watch can override this with its own intent.') }}
+            {{ _('Set a change intent for all watches in this tag/group. Each watch can override with its own.') }}
         {% endif %}
     </p>
     <div class="pure-control-group">
@@ -69,18 +72,52 @@
     </div>
     {% endif %}
     {% endif %}
+
+    <hr style="margin: 1.2em 0; border: none; border-top: 1px solid var(--color-border, #ddd);">
+
+    {# — AI Change Summary — #}
+    <h4 style="margin: 0 0 0.3em 0;">{{ _('AI Change Summary') }}</h4>
+    <p class="pure-form-message-inline" style="margin-top:0">
+        {% if watch is defined and watch %}
+            {{ _('When a change is detected, the AI describes it according to your instructions and replaces') }} <code>{{ '{{diff}}' }}</code> {{ _('in your notification. Use') }} <code>{{ '{{raw_diff}}' }}</code> {{ _('if you still want the original diff.') }}
+        {% else %}
+            {{ _('Describe how changes should be summarised in notifications for all watches in this group.') }}
+        {% endif %}
+    </p>
+    <div class="pure-control-group">
+        <textarea name="llm_change_summary"
+                  id="llm_change_summary"
+                  rows="3"
+                  class="pure-input-1"
+                  {% if watch is defined and watch %}
+                  placeholder="{{ _('e.g. List what was added or removed as bullet points. Translate to English.') }}"
+                  {% else %}
+                  placeholder="{{ _('e.g. Summarise new items added. Translate to English if needed.') }}"
+                  {% endif %}
+        >{{ form.llm_change_summary.data or '' }}</textarea>
+    </div>
+    {% if watch is defined and watch %}
+    <div class="pure-form-message-inline">
+        <strong>{{ _('Examples:') }}</strong>
+        <ul style="margin: 0.3em 0 0 1.2em; padding: 0;">
+            <li><em>{{ _('List each new item added with its name and price. Translate to English.') }}</em></li>
+            <li><em>{{ _('Summarise what events were added or cancelled. Two sentences maximum.') }}</em></li>
+            <li><em>{{ _('Describe the price change: old price, new price, percentage difference.') }}</em></li>
+        </ul>
+    </div>
+    {% endif %}
 </div>
 
 {# ── Not configured: greyed-out prompt to configure ──────────────── #}
 {% else %}
 <div class="border-fieldset" id="llm-intent-section-disabled" style="opacity: 0.5;">
-    <h3>&#x2728; {{ _('AI Intent') }}</h3>
+    <h3>&#x2728; {{ _('AI') }}</h3>
     <p>{{ _('Configure an AI/LLM provider in') }}
        <a href="{{ url_for('settings.settings_page') }}#ai">{{ _('Settings → AI/LLM') }}</a>
        {% if watch is defined and watch %}
-           {{ _('to enable intent-based change filtering.') }}
+           {{ _('to enable AI Change Intent and AI Change Summary.') }}
        {% else %}
-           {{ _('to enable intent-based change filtering for this group.') }}
+           {{ _('to enable AI features for this group.') }}
        {% endif %}
     </p>
 </div>

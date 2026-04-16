@@ -1001,6 +1001,38 @@ class model(EntityPersistenceMixin, watch_base):
         return False
 
 
+    def get_last_llm_diff_summary(self, cache_key: str = None) -> str:
+        """Return the cached AI Change Summary, or '' if absent or stale.
+
+        If *cache_key* is provided the stored key is compared first;
+        a mismatch (different diff or prompt) returns '' so the caller
+        knows it must regenerate rather than serving a stale summary.
+        """
+        fname = os.path.join(self.data_dir, 'last-llm-diff-summary.txt')
+        if not os.path.isfile(fname):
+            return ''
+        if cache_key is not None:
+            key_fname = os.path.join(self.data_dir, 'last-llm-diff-summary.key')
+            stored_key = ''
+            if os.path.isfile(key_fname):
+                with open(key_fname, 'r', encoding='utf-8') as f:
+                    stored_key = f.read().strip()
+            if stored_key != cache_key:
+                return ''
+        with open(fname, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+
+    def save_llm_diff_summary(self, summary: str, cache_key: str = None):
+        """Persist the AI Change Summary and its cache key so stale entries are detectable."""
+        self.ensure_data_dir_exists()
+        fname = os.path.join(self.data_dir, 'last-llm-diff-summary.txt')
+        with open(fname, 'w', encoding='utf-8') as f:
+            f.write(summary)
+        if cache_key is not None:
+            key_fname = os.path.join(self.data_dir, 'last-llm-diff-summary.key')
+            with open(key_fname, 'w', encoding='utf-8') as f:
+                f.write(cache_key)
+
     def pause(self):
         self['paused'] = True
 

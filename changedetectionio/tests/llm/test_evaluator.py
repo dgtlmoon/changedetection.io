@@ -22,9 +22,10 @@ def _make_datastore(llm_cfg=None, tags=None):
     return ds
 
 
-def _make_watch(llm_intent='', tags=None, uuid='test-uuid-1234'):
+def _make_watch(llm_intent='', llm_change_summary='', tags=None, uuid='test-uuid-1234'):
     w = {}
     w['llm_intent'] = llm_intent
+    w['llm_change_summary'] = llm_change_summary
     w['tags'] = tags or []
     w['uuid'] = uuid
     w['url'] = 'https://example.com'
@@ -389,3 +390,171 @@ class TestTokenBudget:
         # (budget warning is logged but evaluation result is still used)
         assert result is not None
         assert 'important' in result
+
+
+# ---------------------------------------------------------------------------
+# resolve_llm_field (generic cascade)
+# ---------------------------------------------------------------------------
+
+class TestResolveLlmField:
+    def test_watch_value_takes_priority(self):
+        from changedetectionio.llm.evaluator import resolve_llm_field
+        tag = {'title': 'mygroup', 'llm_change_summary': 'tag summary prompt'}
+        ds = _make_datastore(tags={'tag-1': tag})
+        watch = _make_watch(llm_change_summary='watch summary prompt', tags=['tag-1'])
+        value, source = resolve_llm_field(watch, ds, 'llm_change_summary')
+        assert value == 'watch summary prompt'
+        assert source == 'watch'
+
+    def test_tag_value_used_when_watch_empty(self):
+        from changedetectionio.llm.evaluator import resolve_llm_field
+        tag = {'title': 'events-group', 'llm_change_summary': 'list new events'}
+        ds = _make_datastore(tags={'tag-1': tag})
+        watch = _make_watch(llm_change_summary='', tags=['tag-1'])
+        value, source = resolve_llm_field(watch, ds, 'llm_change_summary')
+        assert value == 'list new events'
+        assert source == 'events-group'
+
+    def test_returns_empty_when_not_set_anywhere(self):
+        from changedetectionio.llm.evaluator import resolve_llm_field
+        ds = _make_datastore()
+        watch = _make_watch()
+        value, source = resolve_llm_field(watch, ds, 'llm_change_summary')
+        assert value == ''
+        assert source == ''
+
+    def test_works_for_llm_intent_field_too(self):
+        """resolve_llm_field is generic — works for llm_intent same as llm_change_summary."""
+        from changedetectionio.llm.evaluator import resolve_llm_field
+        tag = {'title': 'grp', 'llm_intent': 'flag price drops'}
+        ds = _make_datastore(tags={'t1': tag})
+        watch = _make_watch(llm_intent='', tags=['t1'])
+        value, source = resolve_llm_field(watch, ds, 'llm_intent')
+        assert value == 'flag price drops'
+
+
+# ---------------------------------------------------------------------------
+# summarise_change
+# ---------------------------------------------------------------------------
+
+class TestSummariseChange:
+    def test_returns_empty_when_llm_not_configured(self):
+        from changedetectionio.llm.evaluator import summarise_change
+        ds = _make_datastore(llm_cfg={})
+        watch = _make_watch(llm_change_summary='List what changed')
+        result = summarise_change(watch, ds, diff='- old\n+ new')
+        assert result == ''
+
+    def test_uses_default_prompt_when_no_summary_prompt(self):
+        """When llm_change_summary is empty, falls back to DEFAULT_CHANGE_SUMMARY_PROMPT."""
+        from changedetectionio.llm.evaluator import summarise_change, DEFAULT_CHANGE_SUMMARY_PROMPT
+        ds = _make_datastore(llm_cfg={'model': 'gpt-4o-mini', 'api_key': 'sk-test'})
+        watch = _make_watch(llm_change_summary='')
+        with patch('changedetectionio.llm.client.completion',
+                   return_value=('A new item was added.', 40)) as mock_llm:
+            result = summarise_change(watch, ds, diff='- old\n+ new')
+        mock_llm.assert_called_once()
+        # Default prompt must appear in the user message
+        call_messages = mock_llm.call_args.kwargs['messages']
+        user_msg = next(m['content'] for m in call_messages if m['role'] == 'user')
+        assert DEFAULT_CHANGE_SUMMARY_PROMPT in user_msg
+        assert result == 'A new item was added.'
+
+    def test_returns_empty_when_diff_empty(self):
+        from changedetectionio.llm.evaluator import summarise_change
+        ds = _make_datastore(llm_cfg={'model': 'gpt-4o-mini'})
+        watch = _make_watch(llm_change_summary='List what changed')
+        with patch('changedetectionio.llm.client.completion') as mock_llm:
+            result = summarise_change(watch, ds, diff='')
+            mock_llm.assert_not_called()
+        assert result == ''
+
+    def test_calls_llm_and_returns_plain_text(self):
+        from changedetectionio.llm.evaluator import summarise_change
+        ds = _make_datastore(llm_cfg={'model': 'gpt-4o-mini', 'api_key': 'sk-test'})
+        watch = _make_watch(llm_change_summary='List new events in English')
+        with patch('changedetectionio.llm.client.completion',
+                   return_value=('3 new events added: Jazz Night, Art Show, Comedy Gig', 80)):
+            result = summarise_change(watch, ds, diff='+ Jazz Night\n+ Art Show\n+ Comedy Gig')
+        assert 'Jazz Night' in result
+        assert 'Art Show' in result
+
+    def test_cascades_from_tag(self):
+        """llm_change_summary on a tag propagates to watches in that tag."""
+        from changedetectionio.llm.evaluator import summarise_change
+        tag = {'title': 'events', 'llm_change_summary': 'Translate events to English'}
+        ds = _make_datastore(llm_cfg={'model': 'gpt-4o-mini'}, tags={'tag-1': tag})
+        watch = _make_watch(llm_change_summary='', tags=['tag-1'])
+        with patch('changedetectionio.llm.client.completion',
+                   return_value=('New concert added on Friday', 60)):
+            result = summarise_change(watch, ds, diff='+ Konzert am Freitag')
+        assert result == 'New concert added on Friday'
+
+    def test_llm_failure_returns_empty_string(self):
+        """On LLM error, returns '' — the caller falls back to raw diff."""
+        from changedetectionio.llm.evaluator import summarise_change
+        ds = _make_datastore(llm_cfg={'model': 'gpt-4o-mini'})
+        watch = _make_watch(llm_change_summary='Describe the change')
+        with patch('changedetectionio.llm.client.completion', side_effect=Exception('timeout')):
+            result = summarise_change(watch, ds, diff='- old\n+ new')
+        assert result == ''
+
+    def test_uses_higher_token_limit_than_eval(self):
+        """summarise_change passes max_tokens=500 to client, not the default 200."""
+        from changedetectionio.llm.evaluator import summarise_change, _MAX_SUMMARY_TOKENS
+        ds = _make_datastore(llm_cfg={'model': 'gpt-4o-mini'})
+        watch = _make_watch(llm_change_summary='Describe changes')
+        with patch('changedetectionio.llm.client.completion',
+                   return_value=('Some summary', 100)) as mock_llm:
+            summarise_change(watch, ds, diff='- old\n+ new')
+        call_kwargs = mock_llm.call_args
+        assert call_kwargs.kwargs.get('max_tokens') == _MAX_SUMMARY_TOKENS
+
+
+# ---------------------------------------------------------------------------
+# compute_summary_cache_key / get_effective_summary_prompt
+# ---------------------------------------------------------------------------
+
+class TestSummaryCacheKey:
+    def test_same_inputs_produce_same_key(self):
+        from changedetectionio.llm.evaluator import compute_summary_cache_key
+        key1 = compute_summary_cache_key('+ new line', 'describe changes')
+        key2 = compute_summary_cache_key('+ new line', 'describe changes')
+        assert key1 == key2
+
+    def test_different_diff_produces_different_key(self):
+        from changedetectionio.llm.evaluator import compute_summary_cache_key
+        key1 = compute_summary_cache_key('+ line A', 'prompt')
+        key2 = compute_summary_cache_key('+ line B', 'prompt')
+        assert key1 != key2
+
+    def test_different_prompt_produces_different_key(self):
+        from changedetectionio.llm.evaluator import compute_summary_cache_key
+        key1 = compute_summary_cache_key('diff', 'list changes')
+        key2 = compute_summary_cache_key('diff', 'translate to English')
+        assert key1 != key2
+
+    def test_key_is_16_hex_chars(self):
+        from changedetectionio.llm.evaluator import compute_summary_cache_key
+        key = compute_summary_cache_key('diff', 'prompt')
+        assert len(key) == 16
+        assert all(c in '0123456789abcdef' for c in key)
+
+    def test_get_effective_prompt_returns_custom_when_set(self):
+        from changedetectionio.llm.evaluator import get_effective_summary_prompt
+        ds = _make_datastore()
+        watch = _make_watch(llm_change_summary='My custom prompt')
+        assert get_effective_summary_prompt(watch, ds) == 'My custom prompt'
+
+    def test_get_effective_prompt_returns_default_when_empty(self):
+        from changedetectionio.llm.evaluator import get_effective_summary_prompt, DEFAULT_CHANGE_SUMMARY_PROMPT
+        ds = _make_datastore()
+        watch = _make_watch(llm_change_summary='')
+        assert get_effective_summary_prompt(watch, ds) == DEFAULT_CHANGE_SUMMARY_PROMPT
+
+    def test_get_effective_prompt_cascades_from_tag(self):
+        from changedetectionio.llm.evaluator import get_effective_summary_prompt
+        tag = {'title': 'grp', 'llm_change_summary': 'tag-level prompt'}
+        ds = _make_datastore(tags={'t1': tag})
+        watch = _make_watch(llm_change_summary='', tags=['t1'])
+        assert get_effective_summary_prompt(watch, ds) == 'tag-level prompt'

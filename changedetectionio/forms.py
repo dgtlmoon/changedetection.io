@@ -794,8 +794,12 @@ class processor_text_json_diff_form(commonSettingsForm):
 
     time_between_check_use_default = BooleanField(_l('Use global settings for time between check and scheduler.'), default=False)
 
-    llm_intent = TextAreaField(_l('AI Intent'), validators=[validators.Optional(), validators.Length(max=2000)],
+    llm_intent = TextAreaField(_l('AI Change Intent'), validators=[validators.Optional(), validators.Length(max=2000)],
                                render_kw={"rows": "3", "placeholder": "e.g. Alert me when the price drops below $300"})
+
+    llm_change_summary = TextAreaField(_l('AI Change Summary'), validators=[validators.Optional(), validators.Length(max=2000)],
+                               render_kw={"rows": "3", "placeholder": "e.g. List what was added or removed. Translate to English."},
+                               default='')
 
     include_filters = StringListField(_l('CSS/JSONPath/JQ/XPath Filters'), [ValidateCSSJSONXPATHInput()], default='')
 

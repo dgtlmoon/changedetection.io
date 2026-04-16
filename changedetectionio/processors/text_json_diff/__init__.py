@@ -65,6 +65,12 @@ def prepare_filter_prevew(datastore, watch_uuid, form_data):
         # Only update vars that came in via the AJAX post
         p = {k: v for k, v in form.data.items() if k in form_data.keys()}
         tmp_watch.update(p)
+
+        # Apply llm_intent from form directly — it's not part of processor_text_json_diff_form
+        # but the AJAX sends all visible inputs, so it arrives in form_data
+        if hasattr(form_data, 'get') and 'llm_intent' in form_data:
+            tmp_watch['llm_intent'] = (form_data.get('llm_intent') or '').strip()
+
         blank_watch_no_filters = watch_model(datastore_path=datastore.datastore_path, __datastore=datastore.data)
         blank_watch_no_filters['url'] = tmp_watch.get('url')
 
@@ -120,6 +126,18 @@ def prepare_filter_prevew(datastore, watch_uuid, form_data):
     except Exception as e:
         text_before_filter = f"Error: {str(e)}"
 
+    # LLM preview extraction — asks the LLM to directly answer the intent
+    # against the current filtered content (no diff comparison).
+    # e.g. intent "how many articles?" → answer "30 articles listed"
+    # Results are NOT cached back to the real watch.
+    llm_evaluation = None
+    try:
+        from changedetectionio.llm.evaluator import preview_extract
+        if text_after_filter and text_after_filter.strip() not in ('', 'Empty content'):
+            llm_evaluation = preview_extract(tmp_watch, datastore, content=text_after_filter)
+    except Exception as e:
+        logger.warning(f"LLM preview evaluation failed for {watch_uuid}: {e}")
+
     logger.trace(f"Parsed in {time.time() - now:.3f}s")
 
     return ({
@@ -128,6 +146,7 @@ def prepare_filter_prevew(datastore, watch_uuid, form_data):
         'blocked_line_numbers': blocked_line_numbers,
         'duration': time.time() - now,
         'ignore_line_numbers': ignore_line_numbers,
+        'llm_evaluation': llm_evaluation,
         'trigger_line_numbers': trigger_line_numbers,
         })
 

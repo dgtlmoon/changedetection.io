@@ -128,6 +128,80 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             redirect=redirect
         )
 
+    @diff_blueprint.route("/diff/<uuid_str:uuid>/llm-summary", methods=['GET'])
+    @login_optionally_required
+    def diff_llm_summary(uuid):
+        """
+        Generate (or return cached) an AI summary of the diff between two snapshots.
+        Called via AJAX from the diff page when no cached summary exists.
+        Returns JSON: {"summary": "...", "error": null} or {"summary": null, "error": "..."}
+        """
+        import difflib
+        from flask import jsonify
+
+        try:
+            watch = datastore.data['watching'][uuid]
+        except KeyError:
+            return jsonify({'summary': None, 'error': 'Watch not found'}), 404
+
+        llm_cfg = datastore.data.get('settings', {}).get('application', {}).get('llm', {})
+        if not llm_cfg.get('model'):
+            return jsonify({'summary': None, 'error': 'LLM not configured'}), 400
+
+        dates = list(watch.history.keys())
+        if len(dates) < 2:
+            return jsonify({'summary': None, 'error': 'Not enough history'}), 400
+
+        from_version = request.args.get('from_version', dates[-2])
+        to_version = request.args.get('to_version', dates[-1])
+
+        try:
+            from_text = watch.get_history_snapshot(timestamp=from_version)
+            to_text = watch.get_history_snapshot(timestamp=to_version)
+        except Exception as e:
+            return jsonify({'summary': None, 'error': f'Could not read snapshots: {e}'}), 500
+
+        # Plain-text unified diff for LLM consumption
+        diff_lines = list(difflib.unified_diff(
+            from_text.splitlines(),
+            to_text.splitlines(),
+            lineterm='',
+            n=3,
+        ))
+        # Skip the +++/--- header lines
+        diff_text = '\n'.join(diff_lines[2:]) if len(diff_lines) > 2 else '\n'.join(diff_lines)
+
+        if not diff_text.strip():
+            return jsonify({'summary': None, 'error': 'No differences found'})
+
+        from changedetectionio.llm.evaluator import (
+            summarise_change, get_effective_summary_prompt, compute_summary_cache_key,
+        )
+
+        # Check cache — skip LLM if this exact (diff, prompt) pair was already summarised
+        effective_prompt = get_effective_summary_prompt(watch, datastore)
+        cache_key = compute_summary_cache_key(diff_text, effective_prompt)
+        cached = watch.get_last_llm_diff_summary(cache_key=cache_key)
+        if cached:
+            return jsonify({'summary': cached, 'error': None, 'cached': True})
+
+        try:
+            summary = summarise_change(watch, datastore, diff=diff_text, current_snapshot=to_text)
+        except Exception as e:
+            logger.error(f"LLM summary generation failed for {uuid}: {e}")
+            return jsonify({'summary': None, 'error': str(e)}), 500
+
+        if not summary:
+            return jsonify({'summary': None, 'error': 'LLM returned empty summary'})
+
+        # Persist with cache key so subsequent requests (and next page load) are instant
+        try:
+            watch.save_llm_diff_summary(summary, cache_key=cache_key)
+        except Exception as e:
+            logger.warning(f"Could not cache llm summary for {uuid}: {e}")
+
+        return jsonify({'summary': summary, 'error': None, 'cached': False})
+
     @diff_blueprint.route("/diff/<uuid_str:uuid>/extract", methods=['GET'])
     @login_optionally_required
     def diff_history_page_extract_GET(uuid):

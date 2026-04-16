@@ -412,9 +412,10 @@ class NotificationService:
         n_object['notification_body'] = _check_cascading_vars(self.datastore,'notification_body', watch)
         n_object['notification_format'] = _check_cascading_vars(self.datastore,'notification_format', watch)
 
-        # Attach LLM evaluation result so {{ llm_summary }} / {{ llm_intent }} tokens render correctly
+        # Attach LLM results so notification tokens render correctly
         n_object['_llm_result'] = watch.get('_llm_result')
         n_object['_llm_intent'] = watch.get('_llm_intent', '')
+        n_object['_llm_change_summary'] = watch.get('_llm_change_summary', '')
 
         # (Individual watch) Only prepare to notify if the rules above matched
         queued = False

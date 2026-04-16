@@ -20,15 +20,43 @@ from loguru import logger
 
 from . import client as llm_client
 from .prompt_builder import (
+    build_change_summary_prompt, build_change_summary_system_prompt,
     build_eval_prompt, build_eval_system_prompt,
+    build_preview_prompt, build_preview_system_prompt,
     build_setup_prompt, build_setup_system_prompt,
 )
-from .response_parser import parse_eval_response, parse_setup_response
+from .response_parser import parse_eval_response, parse_preview_response, parse_setup_response
+
+# AI Change Summary can produce longer output than eval responses
+_MAX_SUMMARY_TOKENS = 500
+
+# Default prompt used when the user hasn't configured llm_change_summary
+DEFAULT_CHANGE_SUMMARY_PROMPT = "Briefly describe in plain English what changed — what was added, removed, or modified."
 
 
 # ---------------------------------------------------------------------------
 # Intent resolution
 # ---------------------------------------------------------------------------
+
+def resolve_llm_field(watch, datastore, field: str) -> tuple[str, str]:
+    """
+    Generic cascade resolver for any LLM per-watch field.
+    Returns (value, source) where source is 'watch' or tag title.
+    Returns ('', '') if not set anywhere.
+    """
+    value = (watch.get(field) or '').strip()
+    if value:
+        return value, 'watch'
+
+    for tag_uuid in watch.get('tags', []):
+        tag = datastore.data['settings']['application'].get('tags', {}).get(tag_uuid)
+        if tag:
+            tag_value = (tag.get(field) or '').strip()
+            if tag_value:
+                return tag_value, tag.get('title', 'tag')
+
+    return '', ''
+
 
 def resolve_intent(watch, datastore) -> tuple[str, str]:
     """
@@ -152,6 +180,128 @@ def run_setup(watch, datastore, snapshot_text: str) -> None:
     except Exception as e:
         logger.warning(f"LLM setup call failed for {watch.get('uuid')}: {e}")
         watch['llm_prefilter'] = None
+
+
+# ---------------------------------------------------------------------------
+# AI Change Summary — human-readable description of what changed
+# ---------------------------------------------------------------------------
+
+def get_effective_summary_prompt(watch, datastore) -> str:
+    """Return the prompt that summarise_change will use — custom or the default fallback."""
+    prompt, _ = resolve_llm_field(watch, datastore, 'llm_change_summary')
+    return prompt or DEFAULT_CHANGE_SUMMARY_PROMPT
+
+
+def compute_summary_cache_key(diff_text: str, prompt: str) -> str:
+    """Stable 16-char hex key for a (diff, prompt) pair.  Stored alongside the summary file."""
+    h = hashlib.md5()
+    h.update(diff_text.encode('utf-8', errors='replace'))
+    h.update(b'\x00')
+    h.update(prompt.encode('utf-8', errors='replace'))
+    return h.hexdigest()[:16]
+
+
+def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') -> str:
+    """
+    Generate a plain-language summary of the change using the watch's
+    llm_change_summary prompt (cascades from tag if not set on watch).
+
+    Returns the summary string, or '' on failure.
+    The result replaces {{ diff }} in notifications so the user gets a
+    readable description instead of raw +/- diff lines.
+    """
+    cfg = get_llm_config(datastore)
+    if not cfg:
+        return ''
+
+    custom_prompt, _ = resolve_llm_field(watch, datastore, 'llm_change_summary')
+    if not custom_prompt:
+        custom_prompt = DEFAULT_CHANGE_SUMMARY_PROMPT
+    if not diff.strip():
+        return ''
+
+    url = watch.get('url', '')
+    title = watch.get('page_title') or watch.get('title') or ''
+
+    system_prompt = build_change_summary_system_prompt()
+    user_prompt = build_change_summary_prompt(
+        diff=diff,
+        custom_prompt=custom_prompt,
+        current_snapshot=current_snapshot,
+        url=url,
+        title=title,
+    )
+
+    try:
+        raw, tokens = llm_client.completion(
+            model=cfg['model'],
+            messages=[
+                {'role': 'system', 'content': system_prompt},
+                {'role': 'user', 'content': user_prompt},
+            ],
+            api_key=cfg.get('api_key'),
+            api_base=cfg.get('api_base'),
+            max_tokens=_MAX_SUMMARY_TOKENS,
+        )
+        summary = raw.strip()
+        logger.debug(
+            f"LLM change summary {watch.get('uuid')}: tokens={tokens} "
+            f"summary={summary[:80]}"
+        )
+        return summary
+    except Exception as e:
+        logger.warning(f"LLM change summary failed for {watch.get('uuid')}: {e}")
+        return ''
+
+
+# ---------------------------------------------------------------------------
+# Live-preview extraction (current content, no diff)
+# ---------------------------------------------------------------------------
+
+def preview_extract(watch, datastore, content: str) -> dict | None:
+    """
+    For the live-preview endpoint: extract relevant information from the
+    *current* page content according to the watch's intent.
+
+    Unlike evaluate_change (which compares a diff), this asks the LLM to
+    directly answer the intent against the current snapshot — giving the user
+    immediate feedback like "30 articles listed" or "Price: $149, 25% off".
+
+    Returns {'found': bool, 'answer': str} or None if LLM not configured / no intent.
+    """
+    cfg = get_llm_config(datastore)
+    if not cfg:
+        return None
+
+    intent, _ = resolve_intent(watch, datastore)
+    if not intent or not content.strip():
+        return None
+
+    url = watch.get('url', '')
+    title = watch.get('page_title') or watch.get('title') or ''
+
+    system_prompt = build_preview_system_prompt()
+    user_prompt = build_preview_prompt(intent, content, url=url, title=title)
+
+    try:
+        raw, tokens = llm_client.completion(
+            model=cfg['model'],
+            messages=[
+                {'role': 'system', 'content': system_prompt},
+                {'role': 'user', 'content': user_prompt},
+            ],
+            api_key=cfg.get('api_key'),
+            api_base=cfg.get('api_base'),
+        )
+        result = parse_preview_response(raw)
+        logger.debug(
+            f"LLM preview {watch.get('uuid')}: found={result['found']} "
+            f"tokens={tokens} answer={result['answer'][:80]}"
+        )
+        return result
+    except Exception as e:
+        logger.warning(f"LLM preview extraction failed for {watch.get('uuid')}: {e}")
+        return None
 
 
 # ---------------------------------------------------------------------------

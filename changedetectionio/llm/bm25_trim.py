@@ -38,16 +38,15 @@ def trim_to_relevant(text: str, query: str, max_chars: int = MAX_CONTEXT_CHARS) 
     bm25 = BM25Okapi(tokenized)
     scores = bm25.get_scores(query.lower().split())
 
-    ranked = sorted(zip(scores, lines), reverse=True)
+    ranked = sorted(enumerate(zip(scores, lines)), key=lambda x: x[1][0], reverse=True)
 
-    result, total = [], 0
-    for _score, line in ranked:
+    selected_indices, total = [], 0
+    for idx, (_score, line) in ranked:
         if total + len(line) + 1 > max_chars:
             break
-        result.append(line)
+        selected_indices.append(idx)
         total += len(line) + 1
 
     # Re-order selected lines to preserve original document order
-    selected = set(result)
-    ordered = [l for l in lines if l in selected]
+    ordered = [lines[i] for i in sorted(selected_indices)]
     return '\n'.join(ordered)

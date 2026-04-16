@@ -48,6 +48,71 @@ def build_eval_system_prompt() -> str:
     )
 
 
+def build_preview_prompt(intent: str, content: str, url: str = '', title: str = '') -> str:
+    """
+    Build the user message for a live-preview extraction call.
+    Unlike build_eval_prompt (which analyses a diff), this asks the LLM to
+    extract relevant information from the *current* page content — giving the
+    user a direct answer to their intent so they can verify it makes sense
+    before saving.
+    """
+    parts = []
+    if url:
+        parts.append(f"URL: {url}")
+    if title:
+        parts.append(f"Page title: {title}")
+    parts.append(f"Intent / question: {intent}")
+    parts.append(f"\nPage content:\n{content[:6_000]}")
+    return '\n'.join(parts)
+
+
+def build_preview_system_prompt() -> str:
+    return (
+        "You are a web page content analyzer for a website monitoring tool.\n"
+        "Given the user's intent or question and the current page content, "
+        "extract and directly answer what the intent is looking for.\n\n"
+        "Respond with ONLY a JSON object — no markdown, no explanation outside it:\n"
+        '{"found": true/false, "answer": "concise direct answer or extraction"}\n\n'
+        "Rules:\n"
+        "- found=true when the page contains something relevant to the intent\n"
+        "- answer must directly address the intent (e.g. for 'how many articles?' → '30 articles listed')\n"
+        "- answer must be in the same language as the intent\n"
+        "- Keep answer brief — one sentence maximum"
+    )
+
+
+def build_change_summary_prompt(diff: str, custom_prompt: str,
+                                current_snapshot: str = '', url: str = '', title: str = '') -> str:
+    """
+    Build the user message for an AI Change Summary call.
+    The user supplies their own instructions (custom_prompt); this wraps them
+    with the diff and optional page context.
+    """
+    parts = []
+    if url:
+        parts.append(f"URL: {url}")
+    if title:
+        parts.append(f"Page title: {title}")
+    parts.append(f"Instructions: {custom_prompt}")
+    if current_snapshot:
+        excerpt = trim_to_relevant(current_snapshot, custom_prompt, max_chars=2_000)
+        if excerpt:
+            parts.append(f"\nCurrent page (excerpt):\n{excerpt}")
+    parts.append(f"\nWhat changed (diff):\n{diff}")
+    return '\n'.join(parts)
+
+
+def build_change_summary_system_prompt() -> str:
+    return (
+        "You summarise website changes for a monitoring notification.\n"
+        "Given a diff of what changed and the user's formatting instructions, "
+        "produce a concise plain-language description of the change.\n"
+        "Follow the user's instructions exactly for format, language, and length.\n"
+        "Respond with ONLY the summary text — no JSON, no markdown code fences, "
+        "no preamble. Just the description."
+    )
+
+
 def build_setup_prompt(intent: str, snapshot_text: str, url: str = '') -> str:
     """
     Build the prompt for the one-time setup call that decides whether

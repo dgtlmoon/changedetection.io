@@ -12,7 +12,8 @@ _MAX_COMPLETION_TOKENS = 200
 
 
 def completion(model: str, messages: list, api_key: str = None,
-               api_base: str = None, timeout: int = 30) -> tuple[str, int]:
+               api_base: str = None, timeout: int = 30,
+               max_tokens: int = None) -> tuple[str, int]:
     """
     Call the LLM and return (response_text, total_tokens_used).
     total_tokens_used is 0 if the provider doesn't return usage data.
@@ -28,7 +29,7 @@ def completion(model: str, messages: list, api_key: str = None,
         'messages': messages,
         'timeout': timeout,
         'temperature': 0,
-        'max_tokens': _MAX_COMPLETION_TOKENS,
+        'max_tokens': max_tokens if max_tokens is not None else _MAX_COMPLETION_TOKENS,
     }
     if api_key:
         kwargs['api_key'] = api_key

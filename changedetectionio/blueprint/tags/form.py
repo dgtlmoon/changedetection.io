@@ -14,10 +14,16 @@ class group_restock_settings_form(restock_settings_form):
     url_match_pattern = StringField('Auto-apply to watches with URLs matching',
                                     render_kw={"placeholder": "e.g. *://example.com/* or github.com/myorg"})
     tag_colour = StringField('Tag colour', default='')
-    llm_intent = TextAreaField('AI Intent',
+    llm_intent = TextAreaField('AI Change Intent',
                                validators=[validators.Optional(), validators.Length(max=2000)],
                                render_kw={"rows": "3",
                                           "placeholder": "e.g. Flag price changes or new product launches across all watches in this group"})
+
+    llm_change_summary = TextAreaField('AI Change Summary',
+                               validators=[validators.Optional(), validators.Length(max=2000)],
+                               render_kw={"rows": "3",
+                                          "placeholder": "e.g. List what was added or removed. Translate to English."},
+                               default='')
 
 class SingleTag(Form):
 
