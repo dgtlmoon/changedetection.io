@@ -59,10 +59,10 @@
     <div class="pure-form-message-inline">
         <strong>{{ _('Examples:') }}</strong>
         <ul style="margin: 0.3em 0 0 1.2em; padding: 0;">
-            <li><em>{{ _('Flag any price change, including discount percentages and bundle pricing') }}</em></li>
-            <li><em>{{ _('Alert when new senior engineering or product roles are posted. Ignore edits to existing listings.') }}</em></li>
-            <li><em>{{ _('Notify when indemnification clauses or liability caps are added or modified') }}</em></li>
-            <li><em>{{ _('Important only if a new enforcement action is posted or a compliance deadline changes') }}</em></li>
+            <li><em>{{ _('Only notify if the price drops below $200, or a limited-time deal is added') }}</em></li>
+            <li><em>{{ _('Alert when a new recall, safety notice, or product withdrawal is published') }}</em></li>
+            <li><em>{{ _('Notify when a new grant round opens or an application deadline is announced') }}</em></li>
+            <li><em>{{ _('Only important if package versions change or a CVE is mentioned') }}</em></li>
         </ul>
     </div>
     {% if watch.get('llm_prefilter') %}
