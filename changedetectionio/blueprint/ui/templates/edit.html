@@ -502,6 +502,16 @@ Math: {{ 1 + 1 }}") }}
                             <td>{{ _('Server type reply') }}</td>
                             <td>{{ watch.get('remote_server_reply') }}</td>
                         </tr>
+                        {% if settings_application.get('llm', {}).get('model') %}
+                        <tr>
+                            <td>{{ _('AI tokens (last check)') }}</td>
+                            <td>{{ "{:,}".format(watch.get('llm_last_tokens_used') or 0) }}</td>
+                        </tr>
+                        <tr>
+                            <td>{{ _('AI tokens (total)') }}</td>
+                            <td>{{ "{:,}".format(watch.get('llm_tokens_used_cumulative') or 0) }}</td>
+                        </tr>
+                        {% endif %}
                         </tbody>
                     </table>
 

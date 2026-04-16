@@ -244,6 +244,8 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
             max_tokens=_MAX_SUMMARY_TOKENS,
         )
         summary = raw.strip()
+        _check_token_budget(watch, cfg, tokens)
+        watch['llm_last_tokens_used'] = (watch.get('llm_last_tokens_used') or 0) + tokens
         logger.debug(
             f"LLM change summary {watch.get('uuid')}: tokens={tokens} "
             f"summary={summary[:80]}"
