@@ -77,11 +77,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 datastore.data['settings']['application'].update(app_update)
 
                 # Save LLM config separately under settings.application.llm
-                llm_data = form.data.get('llm', {})
+                llm_data = form.data.get('llm') or {}
                 llm_config = {
-                    'model': llm_data.get('llm_model', '').strip(),
-                    'api_key': llm_data.get('llm_api_key', '').strip(),
-                    'api_base': llm_data.get('llm_api_base', '').strip(),
+                    'model': (llm_data.get('llm_model') or '').strip(),
+                    'api_key': (llm_data.get('llm_api_key') or '').strip(),
+                    'api_base': (llm_data.get('llm_api_base') or '').strip(),
                 }
                 # Only store if a model is set
                 if llm_config['model']:
