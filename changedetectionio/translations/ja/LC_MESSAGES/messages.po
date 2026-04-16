@@ -853,9 +853,10 @@ msgstr "カスタム色"
 msgid "Leave unchecked to use the auto-generated colour based on the tag name."
 msgstr "タグ名に基づく自動生成色を使用する場合はチェックを外してください。"
 
+# 訳注: 日本語を斜体にすると字形が崩れるため、<strong> のみで強調し <i> は外す
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "These settings are <strong><i>added</i></strong> to any existing watch configurations."
-msgstr "これらの設定は既存のすべてのウォッチ設定に<strong><i>追加</i></strong>されます。"
+msgstr "これらの設定は既存のすべてのウォッチ設定に<strong>追加</strong>されます。"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Text filtering"
@@ -2994,11 +2995,11 @@ msgid "The diff output - only changes, additions, and removals"
 msgstr "差分出力 - 変更、追加、削除のみ"
 
 # 訳注: "All diff variants accept [codes] args, e.g. [examples]"
-# → 「すべての差分バリアントは [codes] 引数を受け付けます。例: [examples]」
+# → 「各種差分出力は [codes] 引数を受け付けます。例: [examples]」
 # 述語の訳を後半にまとめた
 #: changedetectionio/templates/_common_fields.html
 msgid "All diff variants accept"
-msgstr "すべての差分バリアントは"
+msgstr "各種差分出力は"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "args, e.g."
@@ -3416,9 +3417,10 @@ msgstr "検索語を入力..."
 msgid "Note!: //text() function does not work where the <element> contains <![CDATA[]]>"
 msgstr "注意: <element> が <![CDATA[]]> を含む場合、//text() 関数は動作しません"
 
+# 訳注: 日本語を斜体にすると字形が崩れるため、強調表示は<strong>に置き換える。
 #: changedetectionio/templates/edit/include_subtract.html
 msgid "One CSS, xPath 1 & 2, JSON Path/JQ selector per line, <i>any</i> rules that matches will be used."
-msgstr "1行につき1つのCSS、xPath 1 & 2、JSON Path/JQセレクタを指定してください。一致した<i>すべての</i>ルールが使用されます。"
+msgstr "1行につき1つのCSS、xPath 1 & 2、JSON Path/JQセレクタを指定してください。一致した<strong>すべての</strong>ルールが使用されます。"
 
 #: changedetectionio/templates/edit/include_subtract.html
 msgid "Limit text to this CSS rule, only text matching this CSS rule is included."
