@@ -15,18 +15,26 @@ from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData):
     edit_blueprint = Blueprint('ui_edit', __name__, template_folder="../ui/templates")
 
-    def _resolve_llm_intent_source(watch, datastore) -> str:
+    def _resolve_llm_group_overrides(watch, datastore) -> dict:
         """
-        Return the source of the effective LLM intent: 'watch', tag title, or ''.
-        Used in the edit form to show an "inherited from tag: X" hint.
+        For each LLM field (llm_intent, llm_change_summary): if the watch has no own
+        value but a linked tag does, return {'value': ..., 'group_name': ...} so the
+        edit template can render the textarea as readonly with a group-sourced placeholder.
+        Returns None for each field when the watch has its own value (editable).
         """
-        if (watch.get('llm_intent') or '').strip():
-            return 'watch'
-        for tag_uuid in watch.get('tags', []):
-            tag = datastore.data['settings']['application'].get('tags', {}).get(tag_uuid)
-            if tag and (tag.get('llm_intent') or '').strip():
-                return tag.get('title', 'tag')
-        return ''
+        result = {'llm_intent': None, 'llm_change_summary': None}
+        for field in ('llm_intent', 'llm_change_summary'):
+            if (watch.get(field) or '').strip():
+                continue  # watch has its own value — editable, no group override
+            for tag_uuid in watch.get('tags', []):
+                tag = datastore.data['settings']['application'].get('tags', {}).get(tag_uuid)
+                if tag and (tag.get(field) or '').strip():
+                    result[field] = {
+                        'value': tag.get(field).strip(),
+                        'group_name': tag.get('title', 'tag'),
+                    }
+                    break
+        return result
 
     def _watch_has_tag_options_set(watch):
         """This should be fixed better so that Tag is some proper Model, a tag is just a Watch also"""
@@ -342,7 +350,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 },
                 # LLM intent context
                 'llm_configured': bool(_get_llm_config(datastore)),
-                'llm_intent_source': _resolve_llm_intent_source(watch, datastore),
+                'llm_group_overrides': _resolve_llm_group_overrides(watch, datastore),
             }
 
             included_content = None

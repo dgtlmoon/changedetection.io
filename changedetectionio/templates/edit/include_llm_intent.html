@@ -7,7 +7,10 @@
 
   Optional (watch edit only):
     watch               — the Watch object (for processor check and prefilter display)
-    llm_intent_source   — str: 'watch', tag title, or '' (for inherited-from-tag hint)
+    llm_group_overrides — dict returned by _resolve_llm_group_overrides():
+                          {'llm_intent': {'value': str, 'group_name': str} | None,
+                           'llm_change_summary': {'value': str, 'group_name': str} | None}
+                          Present only in watch edit context; absent in tag edit context.
 
   Usage in watch edit (edit.html):
     {% include "edit/include_llm_intent.html" %}
@@ -17,8 +20,9 @@
     (watch is not set → tag mode: no processor check, no examples, different description)
 #}
 
-{# Watch edit: only show for text_json_diff processor #}
-{% if watch is defined and watch %}
+{# Processor check only applies in watch-edit context (llm_group_overrides present). #}
+{# In tag/group edit context the AI section is always visible.                        #}
+{% if llm_group_overrides is defined %}
     {% set is_text_json_diff = not watch.get('processor') or watch.get('processor') == 'text_json_diff' %}
 {% else %}
     {% set is_text_json_diff = true %}
@@ -36,9 +40,6 @@
     <p class="pure-form-message-inline" style="margin-top:0">
         {% if watch is defined and watch %}
             {{ _('Describe what you care about. The AI evaluates every detected change against this and only notifies you when it matches.') }}
-            {% if llm_intent_source is defined and llm_intent_source and llm_intent_source != 'watch' %}
-            <br><em>{{ _('Inherited from tag:') }} <strong>{{ llm_intent_source }}</strong> — {{ _('type here to override for this watch only') }}</em>
-            {% endif %}
         {% else %}
             {{ _('Set a change intent for all watches in this tag/group. Each watch can override with its own.') }}
         {% endif %}
@@ -48,7 +49,9 @@
                   id="llm_intent"
                   rows="3"
                   class="pure-input-1"
-                  {% if watch is defined and watch %}
+                  {% if watch is defined and watch and llm_group_overrides is defined and llm_group_overrides.llm_intent %}
+                  placeholder="{{ _('From group') }} &apos;{{ llm_group_overrides.llm_intent.group_name }}&apos;: {{ llm_group_overrides.llm_intent.value }}"
+                  {% elif watch is defined and watch %}
                   placeholder="{{ _('e.g. Alert me when the price drops below $300, or a new product is launched. Ignore footer and navigation changes.') }}"
                   {% else %}
                   placeholder="{{ _('e.g. Flag price changes or new product launches across all watches in this group') }}"
@@ -89,7 +92,9 @@
                   id="llm_change_summary"
                   rows="3"
                   class="pure-input-1"
-                  {% if watch is defined and watch %}
+                  {% if watch is defined and watch and llm_group_overrides is defined and llm_group_overrides.llm_change_summary %}
+                  placeholder="{{ _('From group') }} &apos;{{ llm_group_overrides.llm_change_summary.group_name }}&apos;: {{ llm_group_overrides.llm_change_summary.value }}"
+                  {% elif watch is defined and watch %}
                   placeholder="{{ _('e.g. List what was added or removed as bullet points. Translate to English.') }}"
                   {% else %}
                   placeholder="{{ _('e.g. Summarise new items added. Translate to English if needed.') }}"

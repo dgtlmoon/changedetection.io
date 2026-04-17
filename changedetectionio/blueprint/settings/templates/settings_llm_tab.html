@@ -99,6 +99,16 @@
                     <td>{{ _('All-time total') }}</td>
                     <td style="text-align: right; padding-left: 2em;"><strong>{{ '{:,}'.format(llm_stored.get('tokens_total_cumulative', 0)) }}</strong></td>
                 </tr>
+                <tr>
+                    <td>{{ _('Token budget this period') }}</td>
+                    <td style="text-align: right; padding-left: 2em;">
+                        {% if llm_token_budget_month %}
+                            <strong>{{ '{:,}'.format(llm_token_budget_month) }}</strong>
+                        {% else %}
+                            {{ _('Unlimited') }}
+                        {% endif %}
+                    </td>
+                </tr>
                 {% if llm_stored.get('tokens_month_key') %}
                 <tr>
                     <td>{{ _('Current billing period') }}</td>
