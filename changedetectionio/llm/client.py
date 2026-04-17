@@ -13,10 +13,10 @@ _MAX_COMPLETION_TOKENS = 200
 
 def completion(model: str, messages: list, api_key: str = None,
                api_base: str = None, timeout: int = 30,
-               max_tokens: int = None) -> tuple[str, int]:
+               max_tokens: int = None) -> tuple[str, int, int, int]:
     """
-    Call the LLM and return (response_text, total_tokens_used).
-    total_tokens_used is 0 if the provider doesn't return usage data.
+    Call the LLM and return (response_text, total_tokens, input_tokens, output_tokens).
+    Token counts are 0 if the provider doesn't return usage data.
     Raises on network/auth errors — callers handle gracefully.
     """
     try:
@@ -40,8 +40,10 @@ def completion(model: str, messages: list, api_key: str = None,
         response = litellm.completion(**kwargs)
         text = response.choices[0].message.content
         usage = getattr(response, 'usage', None)
-        total_tokens = int(getattr(usage, 'total_tokens', 0) or 0) if usage else 0
-        return text, total_tokens
+        input_tokens  = int(getattr(usage, 'prompt_tokens',     0) or 0) if usage else 0
+        output_tokens = int(getattr(usage, 'completion_tokens', 0) or 0) if usage else 0
+        total_tokens  = int(getattr(usage, 'total_tokens',      0) or 0) if usage else (input_tokens + output_tokens)
+        return text, total_tokens, input_tokens, output_tokens
     except Exception as e:
         logger.warning(f"LLM call failed: {e}")
         raise

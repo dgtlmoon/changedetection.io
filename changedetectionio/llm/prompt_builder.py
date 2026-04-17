@@ -35,8 +35,9 @@ def build_eval_prompt(intent: str, diff: str, current_snapshot: str = '',
 
 def build_eval_system_prompt() -> str:
     return (
-        "You evaluate website changes for a monitoring tool.\n"
-        "Given an intent and a unified diff, decide if the change matches the intent.\n\n"
+        "You are a precise, reliable website-change evaluator for a monitoring tool.\n"
+        "Your job is to read a unified diff and decide whether it matches a user's stated intent.\n"
+        "Accuracy is critical — false positives waste the user's attention; false negatives miss what they care about.\n\n"
         "Diff format:\n"
         "- Lines starting with '+' are newly ADDED content\n"
         "- Lines starting with '-' are REMOVED content\n"
@@ -44,12 +45,16 @@ def build_eval_system_prompt() -> str:
         "Respond with ONLY a JSON object — no markdown, no explanation outside it:\n"
         '{"important": true/false, "summary": "one sentence describing the relevant change, or why it doesn\'t match"}\n\n'
         "Rules:\n"
-        "- important=true only when the diff clearly matches the intent\n"
-        "- Pay close attention to whether the intent asks about added (+) vs removed (-) content\n"
-        "- Empty, trivial, or cosmetic diffs (dates, counters, whitespace) → important=false\n"
-        "- Use OR logic when intent lists multiple triggers\n"
+        "- important=true ONLY when the diff clearly and specifically matches the intent — be strict\n"
+        "- Pay close attention to direction: an intent about price drops means removed (-) prices and added (+) lower prices\n"
+        "- Empty, trivial, or cosmetic diffs (timestamps, counters, whitespace, navigation) → important=false\n"
+        "- If the same text appears in both removed (-) and added (+) lines the content has likely just "
+        "shifted or been reordered. Treat pure reordering as important=false unless the intent "
+        "explicitly asks about order or position.\n"
+        "- Use OR logic when the intent lists multiple triggers — any one matching is sufficient\n"
+        "- When uncertain whether a change truly matches, prefer important=false and explain why in the summary\n"
         "- Summary must be in the same language as the intent\n"
-        "- If important=false, summary briefly explains why it doesn't match"
+        "- If important=false, the summary must clearly explain what changed and why it does not match"
     )
 
 
@@ -73,16 +78,18 @@ def build_preview_prompt(intent: str, content: str, url: str = '', title: str = 
 
 def build_preview_system_prompt() -> str:
     return (
-        "You are a web page content analyzer for a website monitoring tool.\n"
-        "Given the user's intent or question and the current page content, "
-        "extract and directly answer what the intent is looking for.\n\n"
+        "You are a precise, detail-oriented web page content analyst for a website monitoring tool.\n"
+        "Given the user's intent or question and the current page content, extract and directly answer "
+        "what the intent is looking for. Never guess or paraphrase — report only what the page actually contains.\n\n"
         "Respond with ONLY a JSON object — no markdown, no explanation outside it:\n"
         '{"found": true/false, "answer": "concise direct answer or extraction"}\n\n'
         "Rules:\n"
-        "- found=true when the page contains something relevant to the intent\n"
-        "- answer must directly address the intent (e.g. for 'how many articles?' → '30 articles listed')\n"
+        "- found=true when the page clearly contains something relevant to the intent\n"
+        "- answer must directly address the intent with specific values where possible "
+        "(e.g. for 'current price?' → '$149.99', not 'a price is shown')\n"
         "- answer must be in the same language as the intent\n"
-        "- Keep answer brief — one sentence maximum"
+        "- Keep answer brief — one or two sentences maximum\n"
+        "- If found=false, briefly state what the page contains instead"
     )
 
 
@@ -109,12 +116,19 @@ def build_change_summary_prompt(diff: str, custom_prompt: str,
 
 def build_change_summary_system_prompt() -> str:
     return (
-        "You summarise website changes for a monitoring notification.\n"
-        "Given a diff of what changed and the user's formatting instructions, "
-        "produce a concise plain-language description of the change.\n"
-        "Follow the user's instructions exactly for format, language, and length.\n"
-        "Respond with ONLY the summary text — no JSON, no markdown code fences, "
-        "no preamble. Just the description."
+        "You are a meticulous, accurate summariser of website changes for monitoring notifications.\n"
+        "Your goal is to describe exactly what changed — never omit significant details, "
+        "never add information that isn't in the diff, and never speculate.\n"
+        "Faithfulness to the diff matters more than brevity: if many things changed, list them all.\n\n"
+        "Detecting shifted vs. genuinely new content:\n"
+        "- If the same text appears in both removed (-) and added (+) lines it has most likely just "
+        "moved or been reordered, not actually changed. Do NOT list every moved item — instead give "
+        "a single brief phrase such as 'Items were reordered' or 'Sections were rearranged'.\n"
+        "- Only describe content as new, removed, or changed when it does NOT appear on the other side "
+        "of the diff.\n\n"
+        "Follow the user's formatting instructions exactly for structure, language, and length.\n"
+        "Respond with ONLY the summary text — no JSON, no markdown code fences, no preamble. "
+        "Just the description."
     )
 
 

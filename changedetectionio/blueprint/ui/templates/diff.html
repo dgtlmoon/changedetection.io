@@ -146,6 +146,7 @@
         <pre id="difference" style="border-left: 2px solid #ddd;">{{ content| diff_unescape_difference_spans }}</pre>
     <div id="diff-visualiser-area-after" style="user-select: none;">
         <strong>{{ _('Tip:') }}</strong> {{ _('Highlight text to share or add to ignore lists.') }}
+        &nbsp;&mdash;&nbsp;<a href="{{ url_for('ui.ui_diff.download_patch', uuid=uuid, from_version=from_version, to_version=to_version) }}" target="_blank" rel="noopener" style="font-size:0.85em;">{{ _('Download difference patch') }}</a>
     </div>
     </div>
 

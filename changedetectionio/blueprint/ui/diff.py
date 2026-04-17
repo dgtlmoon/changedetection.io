@@ -327,6 +327,47 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             redirect=redirect
         )
 
+    @diff_blueprint.route("/diff/<uuid_str:uuid>/download-patch", methods=['GET'])
+    @login_optionally_required
+    def download_patch(uuid):
+        """
+        Generate and return a unified diff patch file between two snapshots.
+        Query params: from_version, to_version (timestamp strings from watch history).
+        Returns the patch as a downloadable .patch file — the same content fed to the LLM.
+        """
+        import difflib
+
+        try:
+            watch = datastore.data['watching'][uuid]
+        except KeyError:
+            return make_response('Watch not found', 404)
+
+        dates = list(watch.history.keys())
+        if len(dates) < 2:
+            return make_response('Not enough history', 400)
+
+        from_version = request.args.get('from_version', dates[-2])
+        to_version   = request.args.get('to_version',   dates[-1])
+
+        try:
+            from_text = watch.get_history_snapshot(timestamp=from_version)
+            to_text   = watch.get_history_snapshot(timestamp=to_version)
+        except Exception as e:
+            return make_response(f'Could not read snapshots: {e}', 500)
+
+        diff_lines = list(difflib.unified_diff(
+            from_text.splitlines(keepends=True),
+            to_text.splitlines(keepends=True),
+            fromfile=f'snapshot-{from_version}',
+            tofile=f'snapshot-{to_version}',
+            lineterm='',
+        ))
+        patch_text = ''.join(diff_lines) if diff_lines else '(no differences)\n'
+
+        response = make_response(patch_text)
+        response.headers['Content-Type'] = 'text/plain; charset=utf-8'
+        return response
+
     @diff_blueprint.route("/diff/<uuid_str:uuid>/processor-asset/<string:asset_name>", methods=['GET'])
     @login_optionally_required
     def processor_asset(uuid, asset_name):

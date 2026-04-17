@@ -93,11 +93,19 @@
                             ({{ pct }}%)
                         </span>
                         {% endif %}
+                        {% if llm_show_costs and llm_stored.get('cost_usd_this_month') %}
+                        <span style="color: #666; margin-left: 0.8em; font-size: 0.9em;">≈&nbsp;${{ '%.4f'|format(llm_stored.get('cost_usd_this_month', 0)) }}</span>
+                        {% endif %}
                     </td>
                 </tr>
                 <tr>
                     <td>{{ _('All-time total') }}</td>
-                    <td style="text-align: right; padding-left: 2em;"><strong>{{ '{:,}'.format(llm_stored.get('tokens_total_cumulative', 0)) }}</strong></td>
+                    <td style="text-align: right; padding-left: 2em;">
+                        <strong>{{ '{:,}'.format(llm_stored.get('tokens_total_cumulative', 0)) }}</strong>
+                        {% if llm_show_costs and llm_stored.get('cost_usd_total_cumulative') %}
+                        <span style="color: #666; margin-left: 0.8em; font-size: 0.9em;">≈&nbsp;${{ '%.4f'|format(llm_stored.get('cost_usd_total_cumulative', 0)) }}</span>
+                        {% endif %}
+                    </td>
                 </tr>
                 <tr>
                     <td>{{ _('Token budget this period') }}</td>

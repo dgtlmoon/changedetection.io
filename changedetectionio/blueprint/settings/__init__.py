@@ -79,7 +79,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 # Save LLM config separately under settings.application.llm.
                 # Token counters (tokens_total_cumulative, tokens_this_month, tokens_month_key)
                 # are system-managed and must never be overwritten by form submissions.
-                _LLM_PROTECTED_FIELDS = {'tokens_total_cumulative', 'tokens_this_month', 'tokens_month_key'}
+                _LLM_PROTECTED_FIELDS = {
+                    'tokens_total_cumulative', 'tokens_this_month', 'tokens_month_key',
+                    'cost_usd_total_cumulative', 'cost_usd_this_month',
+                }
                 existing_llm = datastore.data['settings']['application'].get('llm') or {}
                 preserved_counters = {k: v for k, v in existing_llm.items() if k in _LLM_PROTECTED_FIELDS}
 
@@ -204,6 +207,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         llm_env_configured = llm_configured_via_env()
         llm_stored = datastore.data['settings']['application'].get('llm') or {}
         llm_token_budget_month = get_global_token_budget_month()
+        # Cost display: only when user configured their own key (not hosted/operator-managed)
+        llm_show_costs = not llm_env_configured
 
         output = render_template("settings.html",
                                 active_plugins=active_plugins,
@@ -212,6 +217,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                 llm_env_configured=llm_env_configured,
                                 llm_stored=llm_stored,
                                 llm_token_budget_month=llm_token_budget_month,
+                                llm_show_costs=llm_show_costs,
                                 python_version=python_version,
                                 uptime_seconds=uptime_seconds,
                                 available_timezones=sorted(available_timezones()),

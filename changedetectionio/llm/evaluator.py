@@ -132,10 +132,34 @@ def get_global_token_budget_month() -> int:
         return 0
 
 
-def accumulate_global_tokens(datastore, tokens: int) -> None:
+def _estimate_cost_usd(model: str, input_tokens: int, output_tokens: int) -> float:
+    """
+    Return estimated cost in USD using litellm's pricing database.
+    Returns 0.0 for unknown models (local/Ollama/custom endpoints).
+    Never raises — cost estimation is best-effort.
+    """
+    if not model or (not input_tokens and not output_tokens):
+        return 0.0
+    try:
+        from litellm.cost_calculator import cost_per_token
+        prompt_cost, completion_cost = cost_per_token(
+            model=model,
+            prompt_tokens=input_tokens,
+            completion_tokens=output_tokens,
+        )
+        return float(prompt_cost + completion_cost)
+    except Exception:
+        return 0.0
+
+
+def accumulate_global_tokens(datastore, tokens: int,
+                              input_tokens: int = 0, output_tokens: int = 0,
+                              model: str = '') -> None:
     """
     Add *tokens* to both the all-time and this-month global counters.
-    Resets the monthly counter automatically on month rollover.
+    When input_tokens / output_tokens / model are supplied the estimated
+    USD cost is accumulated alongside the token counts.
+    Resets monthly counters automatically on month rollover.
 
     These counters live at datastore.data['settings']['application']['llm']
     and are intentionally read-only from the API/form side — they are only
@@ -145,6 +169,7 @@ def accumulate_global_tokens(datastore, tokens: int) -> None:
         return
 
     current_month = _get_month_key()
+    cost = _estimate_cost_usd(model, input_tokens, output_tokens)
 
     # Work on the live dict in-place (or create a stub if llm key is absent)
     app_settings = datastore.data['settings']['application']
@@ -152,13 +177,16 @@ def accumulate_global_tokens(datastore, tokens: int) -> None:
         app_settings['llm'] = {}
     llm_cfg = app_settings['llm']
 
-    # Month rollover: reset monthly counter
+    # Month rollover: reset monthly counters
     if llm_cfg.get('tokens_month_key') != current_month:
         llm_cfg['tokens_this_month'] = 0
+        llm_cfg['cost_usd_this_month'] = 0.0
         llm_cfg['tokens_month_key'] = current_month
 
     llm_cfg['tokens_total_cumulative'] = (llm_cfg.get('tokens_total_cumulative') or 0) + tokens
-    llm_cfg['tokens_this_month'] = (llm_cfg.get('tokens_this_month') or 0) + tokens
+    llm_cfg['tokens_this_month']       = (llm_cfg.get('tokens_this_month') or 0) + tokens
+    llm_cfg['cost_usd_total_cumulative'] = (llm_cfg.get('cost_usd_total_cumulative') or 0.0) + cost
+    llm_cfg['cost_usd_this_month']       = (llm_cfg.get('cost_usd_this_month') or 0.0) + cost
 
     # Persist immediately — token accounting must survive restarts
     datastore.commit()
@@ -236,7 +264,7 @@ def run_setup(watch, datastore, snapshot_text: str) -> None:
     user_prompt = build_setup_prompt(intent, snapshot_text, url=url)
 
     try:
-        raw, tokens = llm_client.completion(
+        raw, tokens, *_ = llm_client.completion(
             model=cfg['model'],
             messages=[
                 {'role': 'system', 'content': system_prompt},
@@ -315,7 +343,7 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
     )
 
     try:
-        raw, tokens = llm_client.completion(
+        _resp = llm_client.completion(
             model=cfg['model'],
             messages=[
                 {'role': 'system', 'content': system_prompt},
@@ -325,10 +353,16 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
             api_base=cfg.get('api_base'),
             max_tokens=_MAX_SUMMARY_TOKENS,
         )
+        raw, tokens = _resp[0], _resp[1]
+        input_tokens  = _resp[2] if len(_resp) > 2 else 0
+        output_tokens = _resp[3] if len(_resp) > 3 else 0
         summary = raw.strip()
         _check_token_budget(watch, cfg, tokens)
         watch['llm_last_tokens_used'] = (watch.get('llm_last_tokens_used') or 0) + tokens
-        accumulate_global_tokens(datastore, tokens)
+        accumulate_global_tokens(datastore, tokens,
+                                 input_tokens=input_tokens,
+                                 output_tokens=output_tokens,
+                                 model=cfg['model'])
         logger.debug(
             f"LLM change summary {watch.get('uuid')}: tokens={tokens} "
             f"summary={summary[:80]}"
@@ -369,7 +403,7 @@ def preview_extract(watch, datastore, content: str) -> dict | None:
     user_prompt = build_preview_prompt(intent, content, url=url, title=title)
 
     try:
-        raw, tokens = llm_client.completion(
+        raw, tokens, *_ = llm_client.completion(
             model=cfg['model'],
             messages=[
                 {'role': 'system', 'content': system_prompt},
@@ -448,7 +482,7 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
     )
 
     try:
-        raw, tokens = llm_client.completion(
+        _resp = llm_client.completion(
             model=cfg['model'],
             messages=[
                 {'role': 'system', 'content': system_prompt},
@@ -457,6 +491,9 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
             api_key=cfg.get('api_key'),
             api_base=cfg.get('api_base'),
         )
+        raw, tokens = _resp[0], _resp[1]
+        input_tokens  = _resp[2] if len(_resp) > 2 else 0
+        output_tokens = _resp[3] if len(_resp) > 3 else 0
         result = parse_eval_response(raw)
     except Exception as e:
         logger.warning(f"LLM evaluation failed for {watch.get('uuid')}: {e}")
@@ -467,7 +504,10 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
     # Accumulate token usage: per-watch limit and global monthly budget
     _check_token_budget(watch, cfg, tokens)
     watch['llm_last_tokens_used'] = tokens
-    accumulate_global_tokens(datastore, tokens)
+    accumulate_global_tokens(datastore, tokens,
+                             input_tokens=input_tokens,
+                             output_tokens=output_tokens,
+                             model=cfg['model'])
 
     # Store in cache
     if 'llm_evaluation_cache' not in watch or watch['llm_evaluation_cache'] is None:

@@ -351,3 +351,148 @@ def test_is_global_token_budget_exceeded(
         assert not is_global_token_budget_exceeded(ds)
 
     delete_all_watches(client)
+
+
+# ---------------------------------------------------------------------------
+# Cost accumulation tests
+# ---------------------------------------------------------------------------
+
+def test_accumulate_global_tokens_tracks_cost_for_known_model(
+        client, live_server, measure_memory_usage, datastore_path):
+    """
+    When input/output tokens and a known model are supplied, cost_usd_this_month
+    and cost_usd_total_cumulative must be accumulated as positive floats.
+    Uses litellm's real pricing db — exact value may change but must be > 0
+    for a model that has known pricing (gpt-4o-mini).
+    """
+    from changedetectionio.llm.evaluator import accumulate_global_tokens, _get_month_key
+
+    ds = client.application.config.get('DATASTORE')
+    ds.data['settings']['application']['llm'] = {
+        'model': 'gpt-4o-mini',
+        'tokens_this_month': 0,
+        'tokens_total_cumulative': 0,
+        'tokens_month_key': _get_month_key(),
+        'cost_usd_this_month': 0.0,
+        'cost_usd_total_cumulative': 0.0,
+    }
+
+    accumulate_global_tokens(ds, tokens=1000, input_tokens=800, output_tokens=200, model='gpt-4o-mini')
+
+    llm_cfg = ds.data['settings']['application']['llm']
+    assert llm_cfg['tokens_this_month'] == 1000
+    assert llm_cfg['tokens_total_cumulative'] == 1000
+    # gpt-4o-mini has known pricing in litellm — cost must be > 0
+    assert llm_cfg.get('cost_usd_this_month', 0) > 0, \
+        "cost_usd_this_month must be positive for a model with known pricing"
+    assert llm_cfg.get('cost_usd_total_cumulative', 0) > 0
+
+    delete_all_watches(client)
+
+
+def test_accumulate_global_tokens_cost_rollover(
+        client, live_server, measure_memory_usage, datastore_path):
+    """
+    On month rollover, cost_usd_this_month must reset to zero (fresh month),
+    while cost_usd_total_cumulative keeps growing.
+    """
+    from changedetectionio.llm.evaluator import accumulate_global_tokens, _get_month_key
+
+    ds = client.application.config.get('DATASTORE')
+    ds.data['settings']['application']['llm'] = {
+        'model': 'gpt-4o-mini',
+        'tokens_this_month': 500,
+        'tokens_total_cumulative': 1000,
+        'tokens_month_key': '2024-01',  # stale month
+        'cost_usd_this_month': 0.05,
+        'cost_usd_total_cumulative': 0.20,
+    }
+
+    accumulate_global_tokens(ds, tokens=50, input_tokens=40, output_tokens=10, model='gpt-4o-mini')
+
+    llm_cfg = ds.data['settings']['application']['llm']
+    assert llm_cfg['tokens_month_key'] == _get_month_key(), "Month key must update"
+    assert llm_cfg['tokens_this_month'] == 50, "Monthly token counter must reset then add"
+    assert llm_cfg['tokens_total_cumulative'] == 1050, "All-time counter must not reset"
+    # Monthly cost must reset (old 0.05 discarded) then add new cost
+    assert llm_cfg['cost_usd_this_month'] >= 0.0
+    assert llm_cfg['cost_usd_this_month'] < 0.05, \
+        "Monthly cost must have reset (new cost for 50 tokens is less than old 0.05)"
+    # All-time cost must keep growing from 0.20
+    assert llm_cfg['cost_usd_total_cumulative'] >= 0.20
+
+    delete_all_watches(client)
+
+
+def test_accumulate_global_tokens_no_cost_for_unknown_model(
+        client, live_server, measure_memory_usage, datastore_path):
+    """
+    When model is unknown (e.g. custom endpoint) or no input/output split
+    is provided, cost stays at 0.0 — no error raised.
+    """
+    from changedetectionio.llm.evaluator import accumulate_global_tokens, _get_month_key
+
+    ds = client.application.config.get('DATASTORE')
+    ds.data['settings']['application']['llm'] = {
+        'tokens_this_month': 0,
+        'tokens_total_cumulative': 0,
+        'tokens_month_key': _get_month_key(),
+        'cost_usd_this_month': 0.0,
+        'cost_usd_total_cumulative': 0.0,
+    }
+
+    # No model, no input/output split → no cost
+    accumulate_global_tokens(ds, tokens=200)
+
+    llm_cfg = ds.data['settings']['application']['llm']
+    assert llm_cfg['tokens_this_month'] == 200
+    assert llm_cfg['cost_usd_this_month'] == 0.0
+    assert llm_cfg['cost_usd_total_cumulative'] == 0.0
+
+    delete_all_watches(client)
+
+
+def test_cost_fields_are_tamper_proof_via_settings_form(
+        client, live_server, measure_memory_usage, datastore_path):
+    """
+    Submitting the settings form must not be able to set cost_usd_this_month
+    or cost_usd_total_cumulative — those are operator-controlled counters.
+    """
+    from flask import url_for
+
+    ds = client.application.config.get('DATASTORE')
+    ds.data['settings']['application']['llm'] = {
+        'model': 'gpt-4o-mini',
+        'api_key': 'sk-test',
+        'cost_usd_this_month': 1.23,
+        'cost_usd_total_cumulative': 9.99,
+    }
+
+    client.post(
+        url_for('settings.settings_page'),
+        data={
+            'llm-llm_model': 'gpt-4o',
+            'llm-llm_api_key': 'sk-test',
+            'llm-llm_api_base': '',
+            'llm-cost_usd_this_month': '0',       # injection attempt
+            'llm-cost_usd_total_cumulative': '0',  # injection attempt
+            'application-pager_size': '50',
+            'application-notification_format': 'System default',
+            'requests-time_between_check-days': '0',
+            'requests-time_between_check-hours': '0',
+            'requests-time_between_check-minutes': '5',
+            'requests-time_between_check-seconds': '0',
+            'requests-time_between_check-weeks': '0',
+            'requests-workers': '10',
+            'requests-timeout': '60',
+        },
+        follow_redirects=True,
+    )
+
+    llm_cfg = ds.data['settings']['application'].get('llm', {})
+    assert llm_cfg.get('cost_usd_this_month') == 1.23, \
+        "cost_usd_this_month must be tamper-proof"
+    assert llm_cfg.get('cost_usd_total_cumulative') == 9.99, \
+        "cost_usd_total_cumulative must be tamper-proof"
+
+    delete_all_watches(client)
