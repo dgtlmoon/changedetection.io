@@ -84,6 +84,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         proxy_list = datastore.proxy_list
 
         from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config
+        from changedetectionio.llm.ui_strings import LLM_INTENT_WATCH_PLACEHOLDER
         llm_configured = bool(_get_llm_config(datastore))
 
         output = render_template(
@@ -115,6 +116,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             unread_changes_count=datastore.unread_changes_count,
             watches=sorted_watches,
             llm_configured=llm_configured,
+            llm_intent_watch_placeholder=LLM_INTENT_WATCH_PLACEHOLDER,
         )
 
         # Return freed template-building memory to the OS immediately.

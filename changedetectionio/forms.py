@@ -5,6 +5,7 @@ from wtforms.widgets.core import TimeInput
 from flask_babel import lazy_gettext as _l, gettext
 
 from changedetectionio.blueprint.rss import RSS_FORMAT_TYPES, RSS_TEMPLATE_TYPE_OPTIONS, RSS_TEMPLATE_HTML_DEFAULT
+from changedetectionio.llm.ui_strings import LLM_INTENT_WATCH_PLACEHOLDER, LLM_CHANGE_SUMMARY_PLACEHOLDER
 from changedetectionio.conditions.form import ConditionFormRow
 from changedetectionio.notification_service import NotificationContextData
 from changedetectionio.strtobool import strtobool
@@ -795,10 +796,10 @@ class processor_text_json_diff_form(commonSettingsForm):
     time_between_check_use_default = BooleanField(_l('Use global settings for time between check and scheduler.'), default=False)
 
     llm_intent = TextAreaField(_l('AI Change Intent'), validators=[validators.Optional(), validators.Length(max=2000)],
-                               render_kw={"rows": "3", "placeholder": "e.g. Alert me when the price drops below $300"})
+                               render_kw={"rows": "3", "placeholder": LLM_INTENT_WATCH_PLACEHOLDER})
 
     llm_change_summary = TextAreaField(_l('AI Change Summary'), validators=[validators.Optional(), validators.Length(max=2000)],
-                               render_kw={"rows": "3", "placeholder": "e.g. List what was added or removed. Translate to English."},
+                               render_kw={"rows": "3", "placeholder": LLM_CHANGE_SUMMARY_PLACEHOLDER},
                                default='')
 
     include_filters = StringListField(_l('CSS/JSONPath/JQ/XPath Filters'), [ValidateCSSJSONXPATHInput()], default='')

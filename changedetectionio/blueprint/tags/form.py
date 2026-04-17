@@ -8,6 +8,7 @@ from wtforms import (
 from wtforms.fields.simple import BooleanField
 
 from changedetectionio.processors.restock_diff.forms import processor_settings_form as restock_settings_form
+from changedetectionio.llm.ui_strings import LLM_INTENT_TAG_PLACEHOLDER, LLM_CHANGE_SUMMARY_PLACEHOLDER
 
 class group_restock_settings_form(restock_settings_form):
     overrides_watch = BooleanField('Activate for individual watches in this tag/group?', default=False)
@@ -16,13 +17,11 @@ class group_restock_settings_form(restock_settings_form):
     tag_colour = StringField('Tag colour', default='')
     llm_intent = TextAreaField('AI Change Intent',
                                validators=[validators.Optional(), validators.Length(max=2000)],
-                               render_kw={"rows": "3",
-                                          "placeholder": "e.g. Flag price changes or new product launches across all watches in this group"})
+                               render_kw={"rows": "3", "placeholder": LLM_INTENT_TAG_PLACEHOLDER})
 
     llm_change_summary = TextAreaField('AI Change Summary',
                                validators=[validators.Optional(), validators.Length(max=2000)],
-                               render_kw={"rows": "3",
-                                          "placeholder": "e.g. List what was added or removed. Translate to English."},
+                               render_kw={"rows": "3", "placeholder": LLM_CHANGE_SUMMARY_PLACEHOLDER},
                                default='')
 
 class SingleTag(Form):

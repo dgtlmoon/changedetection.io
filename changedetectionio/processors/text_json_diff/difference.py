@@ -202,22 +202,16 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
         datastore.data.get('settings', {}).get('application', {}).get('llm', {}).get('model')
     )
 
-    # Load cached AI diff summary (only shown when viewing the latest snapshot)
-    llm_diff_summary = ''
+    # Load cached AI diff summary for this exact from→to + prompt combination
     viewing_latest = str(to_version) == str(dates[-1])
-    if viewing_latest and llm_configured:
+    llm_diff_summary = ''
+    if llm_configured:
         try:
-            import difflib as _difflib
-            from changedetectionio.llm.evaluator import get_effective_summary_prompt, compute_summary_cache_key
-            _plain_diff = '\n'.join(list(_difflib.unified_diff(
-                from_version_file_contents.splitlines(),
-                to_version_file_contents.splitlines(),
-                lineterm='', n=3,
-            ))[2:])
-            _cache_key = compute_summary_cache_key(_plain_diff, get_effective_summary_prompt(watch, datastore))
-            llm_diff_summary = watch.get_last_llm_diff_summary(cache_key=_cache_key)
+            from changedetectionio.llm.evaluator import get_effective_summary_prompt
+            _prompt = get_effective_summary_prompt(watch, datastore)
+            llm_diff_summary = watch.get_llm_diff_summary(from_version, to_version, prompt=_prompt)
         except Exception as e:
-            logger.warning(f"Could not validate llm-diff-summary cache for {uuid}: {e}")
+            logger.warning(f"Could not load llm-diff-summary for {uuid}: {e}")
 
     output = render_template("diff.html",
                              #initial_scroll_line_number=100,

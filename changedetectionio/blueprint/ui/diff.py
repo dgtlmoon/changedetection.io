@@ -174,14 +174,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         if not diff_text.strip():
             return jsonify({'summary': None, 'error': 'No differences found'})
 
-        from changedetectionio.llm.evaluator import (
-            summarise_change, get_effective_summary_prompt, compute_summary_cache_key,
-        )
+        from changedetectionio.llm.evaluator import summarise_change, get_effective_summary_prompt
 
-        # Check cache — skip LLM if this exact (diff, prompt) pair was already summarised
         effective_prompt = get_effective_summary_prompt(watch, datastore)
-        cache_key = compute_summary_cache_key(diff_text, effective_prompt)
-        cached = watch.get_last_llm_diff_summary(cache_key=cache_key)
+
+        # Check cache — keyed by version pair + prompt hash (invalidates if prompt changes)
+        cached = watch.get_llm_diff_summary(from_version, to_version, prompt=effective_prompt)
         if cached:
             return jsonify({'summary': cached, 'error': None, 'cached': True})
 
@@ -194,9 +192,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         if not summary:
             return jsonify({'summary': None, 'error': 'LLM returned empty summary'})
 
-        # Persist with cache key so subsequent requests (and next page load) are instant
         try:
-            watch.save_llm_diff_summary(summary, cache_key=cache_key)
+            watch.save_llm_diff_summary(summary, from_version, to_version, prompt=effective_prompt)
         except Exception as e:
             logger.warning(f"Could not cache llm summary for {uuid}: {e}")
 

@@ -1001,37 +1001,32 @@ class model(EntityPersistenceMixin, watch_base):
         return False
 
 
-    def get_last_llm_diff_summary(self, cache_key: str = None) -> str:
-        """Return the cached AI Change Summary, or '' if absent or stale.
+    @staticmethod
+    def _llm_summary_prompt_hash(prompt: str) -> str:
+        """8-char hex hash of the prompt — used to detect when the prompt changes."""
+        import hashlib
+        return hashlib.md5(prompt.encode('utf-8', errors='replace')).hexdigest()[:8]
 
-        If *cache_key* is provided the stored key is compared first;
-        a mismatch (different diff or prompt) returns '' so the caller
-        knows it must regenerate rather than serving a stale summary.
+    def get_llm_diff_summary(self, from_version, to_version, prompt: str = '') -> str:
+        """Return the cached AI Change Summary for this from→to + prompt combination, or ''.
+
+        The prompt hash is embedded in the filename so that a changed prompt
+        automatically produces a cache miss and triggers regeneration.
         """
-        fname = os.path.join(self.data_dir, 'last-llm-diff-summary.txt')
+        prompt_hash = self._llm_summary_prompt_hash(prompt)
+        fname = os.path.join(self.data_dir, f'change-summary-{from_version}-to-{to_version}-{prompt_hash}.txt')
         if not os.path.isfile(fname):
             return ''
-        if cache_key is not None:
-            key_fname = os.path.join(self.data_dir, 'last-llm-diff-summary.key')
-            stored_key = ''
-            if os.path.isfile(key_fname):
-                with open(key_fname, 'r', encoding='utf-8') as f:
-                    stored_key = f.read().strip()
-            if stored_key != cache_key:
-                return ''
         with open(fname, 'r', encoding='utf-8') as f:
             return f.read().strip()
 
-    def save_llm_diff_summary(self, summary: str, cache_key: str = None):
-        """Persist the AI Change Summary and its cache key so stale entries are detectable."""
+    def save_llm_diff_summary(self, summary: str, from_version, to_version, prompt: str = ''):
+        """Persist the AI Change Summary keyed by version pair + prompt hash."""
         self.ensure_data_dir_exists()
-        fname = os.path.join(self.data_dir, 'last-llm-diff-summary.txt')
+        prompt_hash = self._llm_summary_prompt_hash(prompt)
+        fname = os.path.join(self.data_dir, f'change-summary-{from_version}-to-{to_version}-{prompt_hash}.txt')
         with open(fname, 'w', encoding='utf-8') as f:
             f.write(summary)
-        if cache_key is not None:
-            key_fname = os.path.join(self.data_dir, 'last-llm-diff-summary.key')
-            with open(key_fname, 'w', encoding='utf-8') as f:
-                f.write(cache_key)
 
     def pause(self):
         self['paused'] = True
