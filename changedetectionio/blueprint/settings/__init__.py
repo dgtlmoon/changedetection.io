@@ -76,18 +76,36 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
                 datastore.data['settings']['application'].update(app_update)
 
-                # Save LLM config separately under settings.application.llm
+                # Save LLM config separately under settings.application.llm.
+                # Token counters (tokens_total_cumulative, tokens_this_month, tokens_month_key)
+                # are system-managed and must never be overwritten by form submissions.
+                _LLM_PROTECTED_FIELDS = {'tokens_total_cumulative', 'tokens_this_month', 'tokens_month_key'}
+                existing_llm = datastore.data['settings']['application'].get('llm') or {}
+                preserved_counters = {k: v for k, v in existing_llm.items() if k in _LLM_PROTECTED_FIELDS}
+
                 llm_data = form.data.get('llm') or {}
+
+                # PasswordField never re-populates its value on GET, so the submitted value
+                # is only non-empty when the user explicitly typed a new key.
+                # If blank, preserve the existing key so a settings save doesn't accidentally clear it.
+                submitted_api_key = (llm_data.get('llm_api_key') or '').strip()
+                effective_api_key = submitted_api_key if submitted_api_key else existing_llm.get('api_key', '')
+
                 llm_config = {
                     'model': (llm_data.get('llm_model') or '').strip(),
-                    'api_key': (llm_data.get('llm_api_key') or '').strip(),
+                    'api_key': effective_api_key,
                     'api_base': (llm_data.get('llm_api_base') or '').strip(),
+                    **preserved_counters,
                 }
                 # Only store if a model is set
                 if llm_config['model']:
                     datastore.data['settings']['application']['llm'] = llm_config
                 else:
-                    datastore.data['settings']['application'].pop('llm', None)
+                    # Remove model config but retain counters for historical record
+                    if preserved_counters:
+                        datastore.data['settings']['application']['llm'] = preserved_counters
+                    else:
+                        datastore.data['settings']['application'].pop('llm', None)
 
                 # Handle dynamic worker count adjustment
                 old_worker_count = datastore.data['settings']['requests'].get('workers', 1)
@@ -177,15 +195,23 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             # Instantiate the form with existing settings
             plugin_forms[plugin_id] = form_class(data=settings)
 
-        from changedetectionio.llm.evaluator import get_llm_config as _get_llm_cfg, llm_configured_via_env
+        from changedetectionio.llm.evaluator import (
+            get_llm_config as _get_llm_cfg,
+            llm_configured_via_env,
+            get_global_token_budget_month,
+        )
         llm_config = _get_llm_cfg(datastore) or {}
         llm_env_configured = llm_configured_via_env()
+        llm_stored = datastore.data['settings']['application'].get('llm') or {}
+        llm_token_budget_month = get_global_token_budget_month()
 
         output = render_template("settings.html",
                                 active_plugins=active_plugins,
                                 api_key=datastore.data['settings']['application'].get('api_access_token'),
                                 llm_config=llm_config,
                                 llm_env_configured=llm_env_configured,
+                                llm_stored=llm_stored,
+                                llm_token_budget_month=llm_token_budget_month,
                                 python_version=python_version,
                                 uptime_seconds=uptime_seconds,
                                 available_timezones=sorted(available_timezones()),

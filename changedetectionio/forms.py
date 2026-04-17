@@ -17,6 +17,7 @@ from wtforms import (
     Field,
     FloatField,
     IntegerField,
+    PasswordField,
     RadioField,
     SelectField,
     StringField,
@@ -1065,7 +1066,7 @@ class globalSettingsLLMForm(Form):
         validators=[validators.Optional()],
         render_kw={"placeholder": "gpt-4o-mini", "style": "width: 24em;"},
     )
-    llm_api_key = StringField(
+    llm_api_key = PasswordField(
         _l('API Key'),
         validators=[validators.Optional()],
         render_kw={

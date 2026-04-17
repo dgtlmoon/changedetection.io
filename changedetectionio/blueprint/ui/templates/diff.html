@@ -189,12 +189,27 @@ $(function () {
                      .removeClass('llm-diff-summary-loading')
                      .text(data.summary);
                 $area.removeAttr('data-pending');
+            } else if (data.budget_exceeded) {
+                $area.find('.llm-diff-summary-text')
+                     .removeClass('llm-diff-summary-loading')
+                     .addClass('llm-budget-exceeded')
+                     .text(data.error);
+                $area.removeAttr('data-pending');
             } else {
                 $area.remove();
             }
         })
-        .fail(function () {
-            $area.remove();
+        .fail(function (xhr) {
+            var resp = xhr.responseJSON;
+            if (resp && resp.budget_exceeded) {
+                $area.find('.llm-diff-summary-text')
+                     .removeClass('llm-diff-summary-loading')
+                     .addClass('llm-budget-exceeded')
+                     .text(resp.error);
+                $area.removeAttr('data-pending');
+            } else {
+                $area.remove();
+            }
         });
 });
 </script>

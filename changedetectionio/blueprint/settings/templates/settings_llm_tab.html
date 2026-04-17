@@ -76,6 +76,44 @@
             {{ _("Your API key is stored locally and sent only to your chosen provider. On each detected change, the watch's diff and extracted text are sent to the LLM — no full page HTML.") }}
         </p>
         {% endif %}{# llm_env_configured #}
+
+        {% if llm_stored.get('tokens_total_cumulative') or llm_stored.get('tokens_this_month') %}
+        <hr style="margin: 1em 0; border: none; border-top: 1px solid #ddd;">
+        <h4 style="margin: 0.5em 0 0.3em;">{{ _('AI Token Usage') }}</h4>
+        <table class="pure-table pure-table-horizontal" style="width: auto; font-size: 0.9em;">
+            <tbody>
+                <tr>
+                    <td>{{ _('This month') }}</td>
+                    <td style="text-align: right; padding-left: 2em;">
+                        <strong>{{ '{:,}'.format(llm_stored.get('tokens_this_month', 0)) }}</strong>
+                        {% if llm_token_budget_month %}
+                        &nbsp;/&nbsp;{{ '{:,}'.format(llm_token_budget_month) }}
+                        {% set pct = (llm_stored.get('tokens_this_month', 0) / llm_token_budget_month * 100)|int %}
+                        <span style="color: {% if pct >= 100 %}#c0392b{% elif pct >= 80 %}#e67e22{% else %}#27ae60{% endif %}; margin-left: 0.4em;">
+                            ({{ pct }}%)
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td>{{ _('All-time total') }}</td>
+                    <td style="text-align: right; padding-left: 2em;"><strong>{{ '{:,}'.format(llm_stored.get('tokens_total_cumulative', 0)) }}</strong></td>
+                </tr>
+                {% if llm_stored.get('tokens_month_key') %}
+                <tr>
+                    <td>{{ _('Current billing period') }}</td>
+                    <td style="text-align: right; padding-left: 2em;">{{ llm_stored.get('tokens_month_key') }}</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+        {% if llm_token_budget_month and llm_stored.get('tokens_this_month', 0) >= llm_token_budget_month %}
+        <p style="color: #c0392b; font-weight: bold; margin-top: 0.5em;">
+            &#9888; {{ _('Monthly token budget reached. AI summarisation is paused until next month.') }}
+        </p>
+        {% endif %}
+        {% endif %}
+
     </fieldset>
 </div>
 <script>

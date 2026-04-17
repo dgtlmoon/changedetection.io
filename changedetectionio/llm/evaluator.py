@@ -16,6 +16,7 @@ Environment variable overrides (take priority over datastore settings):
 
 import hashlib
 import os
+from datetime import datetime, timezone
 from loguru import logger
 
 from . import client as llm_client
@@ -108,6 +109,77 @@ def get_llm_config(datastore) -> dict | None:
 def llm_configured_via_env() -> bool:
     """True when LLM config comes from environment variables, not the UI."""
     return bool(os.getenv('LLM_MODEL', '').strip())
+
+
+# ---------------------------------------------------------------------------
+# Global monthly token budget
+# ---------------------------------------------------------------------------
+
+def _get_month_key() -> str:
+    """Returns 'YYYY-MM' for the current UTC month."""
+    return datetime.now(timezone.utc).strftime("%Y-%m")
+
+
+def get_global_token_budget_month() -> int:
+    """
+    Monthly token budget ceiling from LLM_TOKEN_BUDGET_MONTH env var.
+    Returns 0 (no limit) if not set or not a valid positive integer.
+    """
+    try:
+        val = int(os.getenv('LLM_TOKEN_BUDGET_MONTH', '0'))
+        return max(0, val)
+    except (ValueError, TypeError):
+        return 0
+
+
+def accumulate_global_tokens(datastore, tokens: int) -> None:
+    """
+    Add *tokens* to both the all-time and this-month global counters.
+    Resets the monthly counter automatically on month rollover.
+
+    These counters live at datastore.data['settings']['application']['llm']
+    and are intentionally read-only from the API/form side — they are only
+    ever written here, in a controlled way.
+    """
+    if tokens <= 0:
+        return
+
+    current_month = _get_month_key()
+
+    # Work on the live dict in-place (or create a stub if llm key is absent)
+    app_settings = datastore.data['settings']['application']
+    if 'llm' not in app_settings:
+        app_settings['llm'] = {}
+    llm_cfg = app_settings['llm']
+
+    # Month rollover: reset monthly counter
+    if llm_cfg.get('tokens_month_key') != current_month:
+        llm_cfg['tokens_this_month'] = 0
+        llm_cfg['tokens_month_key'] = current_month
+
+    llm_cfg['tokens_total_cumulative'] = (llm_cfg.get('tokens_total_cumulative') or 0) + tokens
+    llm_cfg['tokens_this_month'] = (llm_cfg.get('tokens_this_month') or 0) + tokens
+
+    # Persist immediately — token accounting must survive restarts
+    datastore.commit()
+
+
+def is_global_token_budget_exceeded(datastore) -> bool:
+    """
+    Returns True when a monthly token budget is configured (via
+    LLM_TOKEN_BUDGET_MONTH) and the current month's usage has reached
+    or exceeded that budget.
+    """
+    budget = get_global_token_budget_month()
+    if not budget:
+        return False
+
+    llm_cfg = datastore.data['settings']['application'].get('llm') or {}
+    if llm_cfg.get('tokens_month_key') != _get_month_key():
+        # Counter hasn't been updated yet this month → zero usage
+        return False
+
+    return (llm_cfg.get('tokens_this_month') or 0) >= budget
 
 
 # ---------------------------------------------------------------------------
@@ -214,6 +286,16 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
     if not cfg:
         return ''
 
+    if is_global_token_budget_exceeded(datastore):
+        budget = get_global_token_budget_month()
+        llm_cfg = datastore.data['settings']['application'].get('llm') or {}
+        used = llm_cfg.get('tokens_this_month', 0)
+        logger.warning(
+            f"LLM summarise_change skipped: monthly budget {budget:,} reached "
+            f"({used:,} used this month)"
+        )
+        return ''
+
     custom_prompt, _ = resolve_llm_field(watch, datastore, 'llm_change_summary')
     if not custom_prompt:
         custom_prompt = DEFAULT_CHANGE_SUMMARY_PROMPT
@@ -246,6 +328,7 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
         summary = raw.strip()
         _check_token_budget(watch, cfg, tokens)
         watch['llm_last_tokens_used'] = (watch.get('llm_last_tokens_used') or 0) + tokens
+        accumulate_global_tokens(datastore, tokens)
         logger.debug(
             f"LLM change summary {watch.get('uuid')}: tokens={tokens} "
             f"summary={summary[:80]}"
@@ -335,7 +418,19 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
         logger.debug(f"LLM cache hit for {watch.get('uuid')} key={cache_key[:8]}")
         return cache[cache_key]
 
-    # Check cumulative budget before making the call
+    # Check global monthly budget before making the call
+    if is_global_token_budget_exceeded(datastore):
+        budget = get_global_token_budget_month()
+        llm_cfg = datastore.data['settings']['application'].get('llm') or {}
+        used = llm_cfg.get('tokens_this_month', 0)
+        logger.warning(
+            f"LLM evaluate_change skipped for {watch.get('uuid')}: monthly budget {budget:,} reached "
+            f"({used:,} used this month) — passing change through as important"
+        )
+        # Fail open: don't suppress notifications when budget is exhausted
+        return {'important': True, 'summary': ''}
+
+    # Check per-watch cumulative budget before making the call
     if not _check_token_budget(watch, cfg):
         # Already over budget — fail open (don't suppress notification)
         return {'important': True, 'summary': ''}
@@ -369,9 +464,10 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
         watch['llm_last_tokens_used'] = 0
         return {'important': True, 'summary': ''}
 
-    # Accumulate token usage and enforce per-check limit
+    # Accumulate token usage: per-watch limit and global monthly budget
     _check_token_budget(watch, cfg, tokens)
     watch['llm_last_tokens_used'] = tokens
+    accumulate_global_tokens(datastore, tokens)
 
     # Store in cache
     if 'llm_evaluation_cache' not in watch or watch['llm_evaluation_cache'] is None:

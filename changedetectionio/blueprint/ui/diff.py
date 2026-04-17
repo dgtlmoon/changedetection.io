@@ -174,7 +174,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         if not diff_text.strip():
             return jsonify({'summary': None, 'error': 'No differences found'})
 
-        from changedetectionio.llm.evaluator import summarise_change, get_effective_summary_prompt
+        from changedetectionio.llm.evaluator import (
+            summarise_change, get_effective_summary_prompt,
+            is_global_token_budget_exceeded, get_global_token_budget_month,
+        )
 
         effective_prompt = get_effective_summary_prompt(watch, datastore)
 
@@ -182,6 +185,21 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         cached = watch.get_llm_diff_summary(from_version, to_version, prompt=effective_prompt)
         if cached:
             return jsonify({'summary': cached, 'error': None, 'cached': True})
+
+        # Check global monthly token budget before making an LLM call
+        if is_global_token_budget_exceeded(datastore):
+            budget = get_global_token_budget_month()
+            llm_cfg = datastore.data.get('settings', {}).get('application', {}).get('llm', {})
+            used = llm_cfg.get('tokens_this_month', 0)
+            return jsonify({
+                'summary': None,
+                'error': gettext(
+                    'Monthly AI token budget of %(budget)s tokens reached (%(used)s used). Resets next month.',
+                    budget=f'{budget:,}',
+                    used=f'{used:,}',
+                ),
+                'budget_exceeded': True,
+            }), 429
 
         try:
             summary = summarise_change(watch, datastore, diff=diff_text, current_snapshot=to_text)
