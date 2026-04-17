@@ -289,7 +289,8 @@ body.difference-page {
   50%       { opacity: 0.2; }
 }
 
-.llm-budget-exceeded {
+.llm-budget-exceeded,
+.llm-error {
   color: #c0392b;
   font-weight: 600;
   font-style: normal;

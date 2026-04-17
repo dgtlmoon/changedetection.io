@@ -13,7 +13,6 @@
         </p>
 
         {% if llm_env_configured %}
-        {# Config is coming from environment variables — hide the form #}
         <div class="inline-warning" style="margin-bottom: 1em;">
             <img class="inline-warning-icon" src="{{url_for('static_content', group='images', filename='notice.svg')}}" alt="{{ _('Note') }}">
             {{ _('AI/LLM is configured via environment variables') }}
@@ -21,54 +20,78 @@
             {{ _('Remove the') }} <code>LLM_MODEL</code> {{ _('environment variable to configure via this form instead.') }}
         </div>
         {% else %}
+
+        {# ── Step 1: provider picker ───────────────────────────────────────── #}
         <div class="pure-control-group">
-            <label>{{ _('Quick preset') }}</label>
-            <select id="llm-preset" onchange="applyLLMPreset(this.value)" class="pure-input-1-3">
-                <option value="">— {{ _('choose a preset or type your own below') }} —</option>
+            <label for="llm-provider">{{ _('Provider') }}</label>
+            <select id="llm-provider" class="pure-input-1-3" onchange="llmOnProviderChange(this.value)">
+                <option value="">— {{ _('select a provider') }} —</option>
                 <optgroup label="OpenAI">
-                    <option value="gpt-4o-mini|">gpt-4o-mini (fast, affordable)</option>
-                    <option value="gpt-4o|">gpt-4o (most capable)</option>
+                    <option value="openai">OpenAI</option>
                 </optgroup>
                 <optgroup label="Anthropic">
-                    <option value="claude-3-5-haiku-20251001|">claude-3-5-haiku (fast)</option>
-                    <option value="claude-sonnet-4-5|">claude-sonnet-4-5 (balanced)</option>
+                    <option value="anthropic">Anthropic</option>
                 </optgroup>
                 <optgroup label="Google">
-                    <option value="gemini/gemini-2.0-flash|">gemini-2.0-flash</option>
-                    <option value="gemini/gemini-2.0-flash-lite|">gemini-2.0-flash-lite (free tier)</option>
-                </optgroup>
-                <optgroup label="OpenRouter (access 200+ models)">
-                    <option value="openrouter/google/gemma-3-12b-it:free|">gemma-3-12b (free)</option>
-                    <option value="openrouter/meta-llama/llama-4-scout:free|">llama-4-scout (free)</option>
-                    <option value="openrouter/mistralai/mistral-small-3.1-24b-instruct:free|">mistral-small (free)</option>
+                    <option value="gemini">Google (Gemini)</option>
                 </optgroup>
                 <optgroup label="{{ _('Local / Self-hosted') }}">
-                    <option value="ollama/llama3.2|http://localhost:11434">ollama/llama3.2 (local)</option>
-                    <option value="ollama/mistral|http://localhost:11434">ollama/mistral (local)</option>
+                    <option value="ollama">Ollama (local)</option>
+                </optgroup>
+                <optgroup label="OpenRouter">
+                    <option value="openrouter">OpenRouter (200+ models)</option>
                 </optgroup>
             </select>
         </div>
 
-        <div class="pure-control-group">
-            {{ render_field(form.llm.form.llm_model) }}
-            <span class="pure-form-message-inline">
-                {{ _('The model string encodes both provider and model — litellm routes automatically. Any') }}
-                <a href="https://docs.litellm.ai/docs/providers" target="_blank">{{ _('litellm-supported model') }}</a> {{ _('works here.') }}
-            </span>
-        </div>
+        {# ── Step 2: credentials ───────────────────────────────────────────── #}
         <div class="pure-control-group">
             {{ render_field(form.llm.form.llm_api_key) }}
+            <span class="pure-form-message-inline" id="llm-key-hint"></span>
         </div>
-        <div class="pure-control-group">
+        <div class="pure-control-group" id="llm-base-group">
             {{ render_field(form.llm.form.llm_api_base) }}
             <span class="pure-form-message-inline">{{ _('Only needed for Ollama or custom/self-hosted endpoints. Leave blank for cloud providers.') }}</span>
         </div>
 
+        {# ── Step 3: fetch + pick model ────────────────────────────────────── #}
+        <div class="pure-control-group" id="llm-fetch-group" style="display:none">
+            <label></label>
+            <button type="button" id="llm-fetch-btn" class="pure-button button-xsmall" onclick="llmFetchModels()"
+                    style="background:#27ae60;color:#fff;border:none;">
+                &#8635; {{ _('Load available models') }}
+            </button>
+            <span id="llm-fetch-status" style="margin-left:.6em;font-size:.85em;color:#888;"></span>
+        </div>
+
+        <div class="pure-control-group" id="llm-model-select-group" style="display:none">
+            <label for="llm-model-select">{{ _('Available models') }}</label>
+            <select id="llm-model-select" class="pure-input-1-2" onchange="llmOnModelPick(this.value)">
+                <option value="">— {{ _('choose a model') }} —</option>
+            </select>
+        </div>
+
+        <div class="pure-control-group">
+            {{ render_field(form.llm.form.llm_model,
+                            readonly=True,
+                            placeholder=_("Enter API key and click 'Load available models'")) }}
+        </div>
+
+        {# ── Status + remove button ────────────────────────────────────────── #}
         {% if llm_config and llm_config.get('model') %}
         <div class="pure-control-group">
-            <span style="color: #4a7c59; font-weight: bold;">
+            <label></label>
+            <span style="color:#4a7c59;font-weight:bold;">
                 &#10003; {{ _('AI configured:') }} {{ llm_config.get('model') }}
             </span>
+            &nbsp;
+            <form method="POST" action="{{ url_for('settings.llm_clear') }}" style="display:inline">
+                <button type="submit" class="pure-button button-xsmall"
+                        style="background:#c0392b;color:#fff;border:none;"
+                        onclick="return confirm('{{ _('Remove AI/LLM configuration?') }}')">
+                    &#10005; {{ _('Remove') }}
+                </button>
+            </form>
         </div>
         {% endif %}
 
@@ -77,6 +100,7 @@
         </p>
         {% endif %}{# llm_env_configured #}
 
+        {# ── Token / cost stats ────────────────────────────────────────────── #}
         {% if llm_stored.get('tokens_total_cumulative') or llm_stored.get('tokens_this_month') %}
         <hr style="margin: 1em 0; border: none; border-top: 1px solid #ddd;">
         <h4 style="margin: 0.5em 0 0.3em;">{{ _('AI Token Usage') }}</h4>
@@ -134,13 +158,133 @@
 
     </fieldset>
 </div>
+
 <script>
-function applyLLMPreset(value) {
-    if (!value) return;
-    var parts = value.split('|');
-    var modelField = document.querySelector('[name="llm-llm_model"]');
-    var baseField  = document.querySelector('[name="llm-llm_api_base"]');
-    if (modelField) modelField.value = parts[0] || '';
-    if (baseField)  baseField.value  = parts[1] || '';
-}
+(function () {
+    // Providers that support live model listing via the backend AJAX route
+    const LIVE_PROVIDERS = ['openai', 'anthropic', 'gemini', 'ollama'];
+    // Providers whose base URL should be pre-filled
+    const BASE_DEFAULTS = { ollama: 'http://localhost:11434' };
+    // Hint text shown next to the API key field
+    const KEY_HINTS = {
+        openai:      'platform.openai.com → API keys',
+        anthropic:   'console.anthropic.com → API keys',
+        gemini:      'aistudio.google.com → Get API key',
+        ollama:      'No API key needed for local Ollama',
+        openrouter:  'openrouter.ai → Keys',
+    };
+
+    window.llmOnProviderChange = function (provider) {
+        const fetchGroup  = document.getElementById('llm-fetch-group');
+        const baseGroup   = document.getElementById('llm-base-group');
+        const modelSelGrp = document.getElementById('llm-model-select-group');
+        const baseField   = document.querySelector('[name="llm-llm_api_base"]');
+        const hint        = document.getElementById('llm-key-hint');
+
+        // Show/hide "Load models" button
+        fetchGroup.style.display = (LIVE_PROVIDERS.includes(provider)) ? '' : 'none';
+
+        // Pre-fill api_base for Ollama, clear for cloud
+        if (BASE_DEFAULTS[provider] !== undefined) {
+            if (!baseField.value) baseField.value = BASE_DEFAULTS[provider];
+        }
+
+        // Key hint
+        hint.textContent = KEY_HINTS[provider] || '';
+
+        // Hide stale model list when provider changes
+        modelSelGrp.style.display = 'none';
+
+        // Reset fetch status
+        document.getElementById('llm-fetch-status').textContent = '';
+    };
+
+    window.llmFetchModels = async function () {
+        const provider   = document.getElementById('llm-provider').value;
+        const apiKey     = document.querySelector('[name="llm-llm_api_key"]').value.trim();
+        const apiBase    = document.querySelector('[name="llm-llm_api_base"]').value.trim();
+        const btn        = document.getElementById('llm-fetch-btn');
+        const statusEl   = document.getElementById('llm-fetch-status');
+        const selGroup   = document.getElementById('llm-model-select-group');
+        const modelSel   = document.getElementById('llm-model-select');
+
+        if (!provider) { statusEl.textContent = 'Select a provider first.'; return; }
+
+        btn.disabled = true;
+        btn.textContent = '⏳ Loading…';
+        statusEl.textContent = '';
+
+        const params = new URLSearchParams({ provider });
+        if (apiKey)  params.set('api_key',  apiKey);
+        if (apiBase) params.set('api_base', apiBase);
+
+        try {
+            const resp = await fetch('{{ url_for("settings.llm_get_models") }}?' + params);
+            const data = await resp.json();
+
+            if (data.error) {
+                statusEl.style.color = '#c0392b';
+                statusEl.textContent = '✗ ' + data.error;
+                selGroup.style.display = 'none';
+                return;
+            }
+
+            if (!data.models || data.models.length === 0) {
+                statusEl.style.color = '#e67e22';
+                statusEl.textContent = 'No models returned — check your API key.';
+                selGroup.style.display = 'none';
+                return;
+            }
+
+            // Populate model <select>
+            modelSel.innerHTML = '<option value="">— choose a model —</option>';
+            // Pre-select current model if it's in the list
+            const currentModel = document.querySelector('[name="llm-llm_model"]').value.trim();
+            for (const m of data.models) {
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.textContent = m;
+                if (m === currentModel) opt.selected = true;
+                modelSel.appendChild(opt);
+            }
+
+            selGroup.style.display = '';
+            statusEl.style.color = '#27ae60';
+            statusEl.textContent = '✓ ' + data.models.length + ' models available with your key';
+        } catch (e) {
+            statusEl.style.color = '#c0392b';
+            statusEl.textContent = '✗ Request failed: ' + e.message;
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '↻ Load available models';
+        }
+    };
+
+    window.llmOnModelPick = function (value) {
+        if (value) document.querySelector('[name="llm-llm_model"]').value = value;
+    };
+
+    // On page load: if a model is already configured, detect the provider and show the fetch button
+    (function detectCurrentProvider() {
+        const modelField = document.querySelector('[name="llm-llm_model"]');
+        if (!modelField) return;
+        const m = modelField.value.trim();
+        if (!m) return;
+
+        let guessed = '';
+        if (m.startsWith('gemini/'))      guessed = 'gemini';
+        else if (m.startsWith('ollama/')) guessed = 'ollama';
+        else if (m.startsWith('openrouter/')) guessed = 'openrouter';
+        else if (m.startsWith('claude'))  guessed = 'anthropic';
+        else if (m.startsWith('gpt') || m.startsWith('o1') || m.startsWith('o3')) guessed = 'openai';
+
+        if (guessed) {
+            const sel = document.getElementById('llm-provider');
+            if (sel) {
+                sel.value = guessed;
+                llmOnProviderChange(guessed);
+            }
+        }
+    })();
+}());
 </script>

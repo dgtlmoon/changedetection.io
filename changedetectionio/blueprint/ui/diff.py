@@ -17,6 +17,34 @@ from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
 
 
+def _clean_litellm_error(exc) -> str:
+    """Return a short, human-readable error string from a litellm exception.
+
+    litellm embeds the raw provider JSON in str(exc), which can be hundreds of
+    characters of verbose quota detail.  We try to pull just the provider's
+    'message' field; failing that we return the first non-empty line with the
+    'litellm.XxxError:' class prefix stripped.
+    """
+    import json, re
+    raw = str(exc)
+    # Try to parse the embedded JSON block (starts at first '{')
+    brace = raw.find('{')
+    if brace >= 0:
+        try:
+            payload = json.loads(raw[brace:])
+            msg = (payload.get('error') or {}).get('message') or ''
+            if msg:
+                # Take only the first sentence / line — provider messages can be long
+                return msg.split('\n')[0].split('. ')[0].strip() + '.'
+        except Exception:
+            pass
+    # Fallback: strip the "litellm.XxxError: litellm.XxxError: providerException - " prefix
+    first_line = raw.split('\n')[0]
+    first_line = re.sub(r'^(litellm\.\w+:\s*)+', '', first_line)
+    first_line = re.sub(r'\w+Exception\s*-\s*', '', first_line).strip()
+    return first_line or raw.split('\n')[0]
+
+
 def construct_blueprint(datastore: ChangeDetectionStore):
     diff_blueprint = Blueprint('ui_diff', __name__, template_folder="../ui/templates")
 
@@ -205,7 +233,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             summary = summarise_change(watch, datastore, diff=diff_text, current_snapshot=to_text)
         except Exception as e:
             logger.error(f"LLM summary generation failed for {uuid}: {e}")
-            return jsonify({'summary': None, 'error': str(e)}), 500
+            return jsonify({'summary': None, 'error': _clean_litellm_error(e)}), 500
 
         if not summary:
             return jsonify({'summary': None, 'error': 'LLM returned empty summary'})

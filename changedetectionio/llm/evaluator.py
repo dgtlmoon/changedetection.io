@@ -370,7 +370,7 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
         return summary
     except Exception as e:
         logger.warning(f"LLM change summary failed for {watch.get('uuid')}: {e}")
-        return ''
+        raise
 
 
 # ---------------------------------------------------------------------------
