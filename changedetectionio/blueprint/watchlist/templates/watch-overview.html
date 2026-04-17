@@ -113,6 +113,16 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
                     {{ render_nolabel_field(form.watch_submit_button, title=_("Watch this URL!") ) }}
                     {{ render_nolabel_field(form.edit_and_watch_submit_button, title=_("Edit first then Watch") ) }}
             </div>
+            {% if llm_configured %}
+            <div id="quick-watch-llm-intent" style="display:none; margin-top: 0.5em;">
+                <textarea name="llm_intent"
+                          id="quick_watch_llm_intent"
+                          rows="2"
+                          class="pure-input-1"
+                          placeholder="{{ _('AI — Notify when… (e.g. Alert me when the price drops below $300, or a new product is launched)') }}"
+                ></textarea>
+            </div>
+            {% endif %}
             <div id="watch-group-tag">
                {{ render_field(form.tags, value=active_tag.title if active_tag_uuid else '', placeholder=_("Watch group / tag"), class="transparent-field") }}
             </div>
@@ -126,6 +136,16 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
         </span>
     </form>
 </div>
+{% if llm_configured %}
+<script>
+$(function () {
+    var $intentWrap = $('#quick-watch-llm-intent');
+    $('#new-watch-form input[name="url"]').one('keydown', function () {
+        $intentWrap.slideDown(200);
+    });
+});
+</script>
+{% endif %}
 <div class="box">
     <form class="pure-form" action="{{ url_for('ui.form_watch_list_checkbox_operations') }}" method="POST" id="watch-list-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >

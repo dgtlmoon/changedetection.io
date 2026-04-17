@@ -346,6 +346,14 @@ class watch_base(dict):
             'last_filter_config_hash',  # Set by text_json_diff processor, internal skip-cache
             'restock',  # Set by restock processor
             'last_viewed',  # Set by mark_all_viewed endpoint
+            # LLM runtime fields written back by worker/evaluator
+            '_llm_result',
+            '_llm_intent',
+            '_llm_change_summary',
+            'llm_prefilter',
+            'llm_evaluation_cache',
+            'llm_last_tokens_used',
+            'llm_tokens_used_cumulative',
         }
 
         # Only mark as edited if this is a user-writable field

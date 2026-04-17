@@ -6,6 +6,11 @@
 <div class="tab-pane-inner" id="ai">
     <fieldset>
         <p>{{ _('Configure an AI/LLM provider to enable intent-based change filtering. Each watch or tag can have a plain-English intent — the AI evaluates every detected change against it and only notifies you when it matches.') }}</p>
+        <p class="pure-form-message-inline">
+            {{ _('The AI receives a') }} <strong>{{ _('unified diff') }}</strong> {{ _('of what changed — lines starting with') }} <code>+</code> {{ _('are newly added content, lines starting with') }} <code>-</code> {{ _('are removed content. This means your intent can target specific directions of change, for example:') }}
+            <em>{{ _('"notify me only when a price drops"') }}</em> {{ _('or') }} <em>{{ _('"alert when a product is removed from the listing"') }}</em>.
+            {{ _('For best results with complex or removal-focused intents, use a GPT-4-class model (GPT-4o, Claude Sonnet, Gemini 2.0 Flash or better) — smaller models may miss the significance of') }} <code>-</code> {{ _('lines.') }}
+        </p>
 
         {% if llm_env_configured %}
         {# Config is coming from environment variables — hide the form #}

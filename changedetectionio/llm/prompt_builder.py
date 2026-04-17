@@ -36,11 +36,16 @@ def build_eval_prompt(intent: str, diff: str, current_snapshot: str = '',
 def build_eval_system_prompt() -> str:
     return (
         "You evaluate website changes for a monitoring tool.\n"
-        "Given an intent and a diff (added/removed lines), decide if the change matches the intent.\n\n"
+        "Given an intent and a unified diff, decide if the change matches the intent.\n\n"
+        "Diff format:\n"
+        "- Lines starting with '+' are newly ADDED content\n"
+        "- Lines starting with '-' are REMOVED content\n"
+        "- Lines starting with ' ' (space) are unchanged context\n\n"
         "Respond with ONLY a JSON object — no markdown, no explanation outside it:\n"
         '{"important": true/false, "summary": "one sentence describing the relevant change, or why it doesn\'t match"}\n\n'
         "Rules:\n"
         "- important=true only when the diff clearly matches the intent\n"
+        "- Pay close attention to whether the intent asks about added (+) vs removed (-) content\n"
         "- Empty, trivial, or cosmetic diffs (dates, counters, whitespace) → important=false\n"
         "- Use OR logic when intent lists multiple triggers\n"
         "- Summary must be in the same language as the intent\n"

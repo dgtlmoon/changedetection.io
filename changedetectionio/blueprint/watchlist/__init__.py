@@ -82,6 +82,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         sorted_tags = sorted(datastore.data['settings']['application'].get('tags').items(), key=lambda x: x[1]['title'])
 
         proxy_list = datastore.proxy_list
+
+        from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config
+        llm_configured = bool(_get_llm_config(datastore))
+
         output = render_template(
             "watch-overview.html",
             active_tag=active_tag,
@@ -109,7 +113,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             system_default_fetcher=datastore.data['settings']['application'].get('fetch_backend'),
             tags=sorted_tags,
             unread_changes_count=datastore.unread_changes_count,
-            watches=sorted_watches
+            watches=sorted_watches,
+            llm_configured=llm_configured,
         )
 
         # Return freed template-building memory to the OS immediately.
