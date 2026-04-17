@@ -5,11 +5,11 @@
 #}
 <div class="tab-pane-inner" id="ai">
     <fieldset>
-        <p>{{ _('Configure an AI/LLM provider to enable intent-based change filtering. Each watch or tag can have a plain-English intent — the AI evaluates every detected change against it and only notifies you when it matches.') }}</p>
+        <p>{{ _('Configure an AI/LLM provider to enable intent-based change filtering. Each watch or tag can have a plain-text intent — the AI evaluates every detected change against it and only notifies you when it matches.') }}</p>
         <p class="pure-form-message-inline">
             {{ _('The AI receives a') }} <strong>{{ _('unified diff') }}</strong> {{ _('of what changed — lines starting with') }} <code>+</code> {{ _('are newly added content, lines starting with') }} <code>-</code> {{ _('are removed content. This means your intent can target specific directions of change, for example:') }}
             <em>{{ _('"notify me only when a price drops"') }}</em> {{ _('or') }} <em>{{ _('"alert when a product is removed from the listing"') }}</em>.
-            {{ _('For best results with complex or removal-focused intents, use a GPT-4-class model (GPT-4o, Claude Sonnet, Gemini 2.0 Flash or better) — smaller models may miss the significance of') }} <code>-</code> {{ _('lines.') }}
+            {{ _('gpt-4o-mini, Gemini Flash, and other low-cost models are perfectly suitable for summarisation and intent filtering.') }}
         </p>
 
         {% if llm_env_configured %}
@@ -20,6 +20,15 @@
             {{ _('Remove the') }} <code>LLM_MODEL</code> {{ _('environment variable to configure via this form instead.') }}
         </div>
         {% else %}
+
+        {# ── Global default AI Change Summary prompt ───────────────────────── #}
+        <div class="pure-control-group">
+            {{ render_field(form.llm.form.llm_change_summary_default) }}
+            <span class="pure-form-message-inline">
+                {{ _('Used for all watches unless overridden by the watch or its tag/group.') }}
+            </span>
+        </div>
+        <hr style="margin: 1em 0; border: none; border-top: 1px solid #ddd;">
 
         {# ── Step 1: provider picker ───────────────────────────────────────── #}
         <div class="pure-control-group">

@@ -27,6 +27,16 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
 
         default = deepcopy(datastore.data['settings'])
+
+        # Pre-populate LLM sub-form fields from stored config (text fields only —
+        # PasswordField for api_key is intentionally left blank on GET).
+        _stored_llm = datastore.data['settings']['application'].get('llm') or {}
+        default['llm'] = {
+            'llm_model':                   _stored_llm.get('model', ''),
+            'llm_api_base':                _stored_llm.get('api_base', ''),
+            'llm_change_summary_default':  datastore.data['settings']['application'].get('llm_change_summary_default', ''),
+        }
+
         if datastore.proxy_list is not None:
             available_proxies = list(datastore.proxy_list.keys())
             # When enabled
@@ -93,6 +103,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 # If blank, preserve the existing key so a settings save doesn't accidentally clear it.
                 submitted_api_key = (llm_data.get('llm_api_key') or '').strip()
                 effective_api_key = submitted_api_key if submitted_api_key else existing_llm.get('api_key', '')
+
+                # Default summary prompt lives at application level — survives provider changes
+                datastore.data['settings']['application']['llm_change_summary_default'] = (
+                    llm_data.get('llm_change_summary_default') or ''
+                ).strip()
 
                 llm_config = {
                     'model': (llm_data.get('llm_model') or '').strip(),

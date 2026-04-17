@@ -287,9 +287,19 @@ def run_setup(watch, datastore, snapshot_text: str) -> None:
 # ---------------------------------------------------------------------------
 
 def get_effective_summary_prompt(watch, datastore) -> str:
-    """Return the prompt that summarise_change will use — custom or the default fallback."""
+    """Return the prompt that summarise_change will use.
+
+    Cascade: watch → tag → global settings default → hardcoded fallback.
+    """
     prompt, _ = resolve_llm_field(watch, datastore, 'llm_change_summary')
-    return prompt or DEFAULT_CHANGE_SUMMARY_PROMPT
+    if prompt:
+        return prompt
+    global_default = (
+        datastore.data.get('settings', {})
+        .get('application', {})
+        .get('llm_change_summary_default', '') or ''
+    ).strip()
+    return global_default or DEFAULT_CHANGE_SUMMARY_PROMPT
 
 
 def compute_summary_cache_key(diff_text: str, prompt: str) -> str:
@@ -324,9 +334,7 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
         )
         return ''
 
-    custom_prompt, _ = resolve_llm_field(watch, datastore, 'llm_change_summary')
-    if not custom_prompt:
-        custom_prompt = DEFAULT_CHANGE_SUMMARY_PROMPT
+    custom_prompt = get_effective_summary_prompt(watch, datastore)
     if not diff.strip():
         return ''
 

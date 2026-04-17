@@ -1083,6 +1083,16 @@ class globalSettingsLLMForm(Form):
             "style": "width: 24em;",
         },
     )
+    llm_change_summary_default = TextAreaField(
+        _l('Default AI Change Summary prompt'),
+        validators=[validators.Optional(), validators.Length(max=2000)],
+        render_kw={
+            "rows": "3",
+            "placeholder": LLM_CHANGE_SUMMARY_PLACEHOLDER,
+            "style": "width: 100%; max-width: 36em;",
+        },
+        default='',
+    )
     llm_max_tokens_per_check = IntegerField(
         _l('Max tokens per check'),
         validators=[validators.Optional(), validators.NumberRange(min=0)],

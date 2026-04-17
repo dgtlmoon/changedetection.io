@@ -233,6 +233,166 @@ def test_llm_summary_ajax_error_displayed_not_silenced(
     delete_all_watches(client)
 
 
+# ---------------------------------------------------------------------------
+# Global default prompt cascade
+# ---------------------------------------------------------------------------
+
+def _set_global_default(ds, prompt):
+    ds.data['settings']['application']['llm_change_summary_default'] = prompt
+
+
+def test_global_default_used_when_watch_and_tag_have_none(
+        client, live_server, measure_memory_usage, datastore_path):
+    """
+    get_effective_summary_prompt returns the global default when neither the
+    watch nor any of its tags have llm_change_summary set.
+    """
+    from changedetectionio.llm.evaluator import get_effective_summary_prompt
+
+    ds = client.application.config.get('DATASTORE')
+    _configure_llm(client)
+
+    uuid = ds.add_watch(url='https://example.com')
+    watch = ds.data['watching'][uuid]
+    watch['llm_change_summary'] = ''
+
+    _set_global_default(ds, 'Global: summarise as one sentence.')
+
+    assert get_effective_summary_prompt(watch, ds) == 'Global: summarise as one sentence.'
+
+    delete_all_watches(client)
+
+
+def test_tag_prompt_overrides_global_default(
+        client, live_server, measure_memory_usage, datastore_path):
+    """
+    A tag-level llm_change_summary takes precedence over the global default.
+    """
+    from changedetectionio.llm.evaluator import get_effective_summary_prompt
+
+    ds = client.application.config.get('DATASTORE')
+    _configure_llm(client)
+
+    tag_uuid = ds.add_tag('my-group')
+    ds.data['settings']['application']['tags'][tag_uuid]['llm_change_summary'] = 'Tag: bullet points.'
+
+    uuid = ds.add_watch(url='https://example.com')
+    watch = ds.data['watching'][uuid]
+    watch['llm_change_summary'] = ''
+    watch['tags'] = [tag_uuid]
+
+    _set_global_default(ds, 'Global: one sentence.')
+
+    assert get_effective_summary_prompt(watch, ds) == 'Tag: bullet points.'
+
+    delete_all_watches(client)
+
+
+def test_watch_prompt_overrides_tag_and_global(
+        client, live_server, measure_memory_usage, datastore_path):
+    """
+    A watch-level llm_change_summary wins over both tag and global default.
+    """
+    from changedetectionio.llm.evaluator import get_effective_summary_prompt
+
+    ds = client.application.config.get('DATASTORE')
+    _configure_llm(client)
+
+    tag_uuid = ds.add_tag('my-group')
+    ds.data['settings']['application']['tags'][tag_uuid]['llm_change_summary'] = 'Tag prompt.'
+
+    uuid = ds.add_watch(url='https://example.com')
+    watch = ds.data['watching'][uuid]
+    watch['llm_change_summary'] = 'Watch: my own prompt.'
+    watch['tags'] = [tag_uuid]
+
+    _set_global_default(ds, 'Global prompt.')
+
+    assert get_effective_summary_prompt(watch, ds) == 'Watch: my own prompt.'
+
+    delete_all_watches(client)
+
+
+def test_hardcoded_fallback_when_nothing_set(
+        client, live_server, measure_memory_usage, datastore_path):
+    """
+    Falls back to DEFAULT_CHANGE_SUMMARY_PROMPT when watch, tag, and global
+    default are all empty.
+    """
+    from changedetectionio.llm.evaluator import get_effective_summary_prompt, DEFAULT_CHANGE_SUMMARY_PROMPT
+
+    ds = client.application.config.get('DATASTORE')
+    _configure_llm(client)
+
+    uuid = ds.add_watch(url='https://example.com')
+    watch = ds.data['watching'][uuid]
+    watch['llm_change_summary'] = ''
+
+    # Ensure global default is also empty
+    ds.data['settings']['application']['llm_change_summary_default'] = ''
+
+    assert get_effective_summary_prompt(watch, ds) == DEFAULT_CHANGE_SUMMARY_PROMPT
+
+    delete_all_watches(client)
+
+
+def test_global_default_saved_and_loaded_via_settings_form(
+        client, live_server, measure_memory_usage, datastore_path):
+    """
+    Submitting the settings form persists llm_change_summary_default at
+    settings.application level (not inside the llm credentials dict).
+    """
+    from changedetectionio.tests.util import live_server_setup
+    live_server_setup(live_server)
+
+    _configure_llm(client)
+
+    res = client.post(
+        url_for('settings.settings_page'),
+        data={
+            'application-empty_pages_are_a_change': '',
+            'requests-time_between_check-minutes': 180,
+            'application-fetch_backend': 'html_requests',
+            'llm-llm_change_summary_default': 'Saved global prompt.',
+            # Keep existing model so llm block is retained
+            'llm-llm_model': 'gpt-4o-mini',
+        },
+        follow_redirects=True,
+    )
+    assert b'Settings updated.' in res.data
+
+    ds = client.application.config.get('DATASTORE')
+    stored = ds.data['settings']['application'].get('llm_change_summary_default', '')
+    assert stored == 'Saved global prompt.', f"Got: {stored!r}"
+
+    # Must NOT be buried inside the llm credentials dict
+    llm_dict = ds.data['settings']['application'].get('llm', {})
+    assert 'change_summary_default' not in llm_dict
+
+    delete_all_watches(client)
+
+
+def test_global_default_survives_llm_clear(
+        client, live_server, measure_memory_usage, datastore_path):
+    """
+    Clearing LLM credentials via /settings/llm-clear must not wipe
+    the global summary default.
+    """
+    from changedetectionio.tests.util import live_server_setup
+    live_server_setup(live_server)
+
+    _configure_llm(client)
+    ds = client.application.config.get('DATASTORE')
+    _set_global_default(ds, 'Surviving prompt.')
+
+    res = client.post(url_for('settings.llm_clear'), follow_redirects=True)
+    assert res.status_code == 200
+
+    assert ds.data['settings']['application'].get('llm_change_summary_default') == 'Surviving prompt.'
+
+    delete_all_watches(client)
+
+
 def test_diff_token_unchanged_when_no_ai_summary(
         client, live_server, measure_memory_usage, datastore_path):
     """When no AI Change Summary is configured, {{ diff }} renders the raw diff as normal."""
