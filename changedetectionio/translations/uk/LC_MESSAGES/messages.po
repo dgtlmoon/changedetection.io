@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  changedetection.io\n"
 "Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io\n"
-"POT-Creation-Date: 2026-04-15 10:58+0900\n"
+"POT-Creation-Date: 2026-04-18 15:53+0900\n"
 "PO-Revision-Date: 2026-02-19 12:30+0100\n"
 "Last-Translator: \n"
 "Language: uk\n"
@@ -3433,6 +3433,18 @@ msgid "Limit text to this CSS rule, only text matching this CSS rule is included
 msgstr ""
 
 #: changedetectionio/templates/edit/include_subtract.html
+msgid "Prefix with <code>json:</code>, use <code>json:$</code> to force re-formatting if required,"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "test your JSONPath here"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "Prefix <code>jqraw:</code> outputs the results as text instead of a JSON list."
+msgstr ""
+
+#: changedetectionio/templates/edit/include_subtract.html
 msgid "jq support not installed"
 msgstr ""
 
@@ -3456,6 +3468,10 @@ msgstr ""
 
 #: changedetectionio/templates/edit/include_subtract.html
 msgid "To use XPath1.0: Prefix with <code>xpath1:</code>"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "here for more CSS selector help"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html

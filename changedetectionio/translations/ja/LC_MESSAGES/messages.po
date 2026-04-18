@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-15 10:58+0900\n"
+"POT-Creation-Date: 2026-04-18 15:53+0900\n"
 "PO-Revision-Date: 2026-03-31 23:52+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -3477,6 +3477,18 @@ msgid "Limit text to this CSS rule, only text matching this CSS rule is included
 msgstr "このCSSルールにマッチするテキストのみを対象にします。"
 
 #: changedetectionio/templates/edit/include_subtract.html
+msgid "Prefix with <code>json:</code>, use <code>json:$</code> to force re-formatting if required,"
+msgstr "先頭に <code>json:</code> を付けてください。必要に応じて <code>json:$</code> で再フォーマットを強制できます。"
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "test your JSONPath here"
+msgstr "JSONPathをここでテスト"
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "Prefix <code>jqraw:</code> outputs the results as text instead of a JSON list."
+msgstr "先頭に <code>jqraw:</code> を付けると、結果をJSONリストではなくテキストとして出力します。"
+
+#: changedetectionio/templates/edit/include_subtract.html
 msgid "jq support not installed"
 msgstr "jqサポートはインストールされていません"
 
@@ -3484,9 +3496,7 @@ msgstr "jqサポートはインストールされていません"
 msgid ""
 "Limit text to this XPath rule, simply start with a forward-slash. To specify XPath to be used explicitly or the XPath"
 " rule starts with an XPath function: Prefix with <code>xpath:</code>"
-msgstr ""
-"このXPathルールにマッチするテキストのみを対象にします。スラッシュ (/) で始めるだけです。"
-"XPathを明示的に指定する場合や、XPath関数で始まるルールの場合は、先頭に <code>xpath:</code> を付けてください"
+msgstr "このXPathルールにマッチするテキストのみを対象にします。スラッシュ (/) で始めるだけです。XPathを明示的に指定する場合や、XPath関数で始まるルールの場合は、先頭に <code>xpath:</code> を付けてください"
 
 #: changedetectionio/templates/edit/include_subtract.html
 msgid "Example"
@@ -3503,6 +3513,10 @@ msgstr "RSSフィードからすべてのタイトルを取得 <code>//title/tex
 #: changedetectionio/templates/edit/include_subtract.html
 msgid "To use XPath1.0: Prefix with <code>xpath1:</code>"
 msgstr "XPath 1.0を使用するには、先頭に <code>xpath1:</code> を付けてください"
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "here for more CSS selector help"
+msgstr "CSSセレクタの詳細なヘルプはこちら"
 
 #: changedetectionio/templates/edit/text-options.html
 msgid "Text to wait for before triggering a change/notification, all text and regex are tested case-insensitive."
