@@ -1088,9 +1088,9 @@ class globalSettingsLLMForm(Form):
         _l('Default AI Change Summary prompt'),
         validators=[validators.Optional(), validators.Length(max=2000)],
         render_kw={
-            "rows": "3",
+            "rows": "5",
             "placeholder": DEFAULT_CHANGE_SUMMARY_PROMPT,
-            "style": "width: 100%; max-width: 36em;",
+            "style": "width: 100%; ",
         },
         default='',
     )
@@ -1111,6 +1111,24 @@ class globalSettingsLLMForm(Form):
             "placeholder": "0 = unlimited",
             "style": "width: 8em;",
         },
+    )
+    llm_token_budget_month = IntegerField(
+        _l('Monthly token budget'),
+        validators=[validators.Optional(), validators.NumberRange(min=0)],
+        default=0,
+        render_kw={"style": "width: 10em;"},
+    )
+    llm_override_diff_with_summary = BooleanField(
+        _l('Replace {{diff}} notification token with AI summary'),
+        default=True,
+    )
+    llm_budget_action = RadioField(
+        _l('When monthly token budget is reached'),
+        choices=[
+            ('skip_llm',   _l('Skip AI summarisation only (watch still checks)')),
+            ('skip_check', _l('Skip the watch check entirely')),
+        ],
+        default='skip_llm',
     )
 
 

@@ -142,10 +142,16 @@
                 <tr>
                     <td>{{ _('Token budget this period') }}</td>
                     <td style="text-align: right; padding-left: 2em;">
-                        {% if llm_token_budget_month %}
-                            <strong>{{ '{:,}'.format(llm_token_budget_month) }}</strong>
+                        {% if llm_token_budget_month_env %}
+                            <strong>{{ '{:,}'.format(llm_token_budget_month_env) }}</strong>
+                            <span style="font-size:0.8em; color:#888; margin-left:0.4em;">({{ _('set via') }} <code>LLM_TOKEN_BUDGET_MONTH</code>)</span>
+                            <input type="hidden" name="llm-llm_token_budget_month" value="{{ llm_token_budget_month_env }}">
                         {% else %}
-                            {{ _('Unlimited') }}
+                            {{ form.llm.form.llm_token_budget_month(
+                                placeholder=_('0 = unlimited'),
+                                value=llm_stored.get('token_budget_month', 0) or ''
+                            ) }}
+                            <span style="font-size:0.8em; color:#888; margin-left:0.4em;">{{ _('tokens (0 = unlimited)') }}</span>
                         {% endif %}
                     </td>
                 </tr>
@@ -162,6 +168,33 @@
             &#9888; {{ _('Monthly token budget reached. AI summarisation is paused until next month.') }}
         </p>
         {% endif %}
+        {% endif %}
+
+        {# ── Behaviour settings ────────────────────────────────────────────── #}
+        {% if llm_config and llm_config.get('model') %}
+        <hr style="margin: 1em 0; border: none; border-top: 1px solid #ddd;">
+
+        <div class="pure-control-group">
+            <label></label>
+            {{ form.llm.form.llm_override_diff_with_summary() }}
+            <label for="{{ form.llm.form.llm_override_diff_with_summary.id }}" style="display:inline; font-weight:normal;">
+                {{ form.llm.form.llm_override_diff_with_summary.label.text }}
+            </label>
+            <span class="pure-form-message-inline">
+                {{ _('When enabled, the') }} <code>{{ '{{diff}}' }}</code> {{ _('notification token shows the AI summary instead of the raw diff. Use') }} <code>{{ '{{raw_diff}}' }}</code> {{ _('to always get the original.') }}
+            </span>
+        </div>
+
+        <div class="pure-control-group">
+            <label>{{ form.llm.form.llm_budget_action.label.text }}</label>
+            <div>
+                {% for subfield in form.llm.form.llm_budget_action %}
+                <label class="pure-radio" style="display:block; font-weight:normal; margin-bottom:0.3em;">
+                    {{ subfield() }} {{ subfield.label.text }}
+                </label>
+                {% endfor %}
+            </div>
+        </div>
         {% endif %}
 
     </fieldset>

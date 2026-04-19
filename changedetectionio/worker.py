@@ -410,6 +410,14 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                         update_obj['_llm_result'] = None
                         update_obj['_llm_intent'] = ''
                         update_obj['_llm_change_summary'] = ''
+                        # skip_check: when budget exceeded, don't run LLM or the check
+                        _llm_budget_action = datastore.data['settings']['application'].get('llm_budget_action', 'skip_llm')
+                        if _llm_budget_action == 'skip_check':
+                            from changedetectionio.llm.evaluator import is_global_token_budget_exceeded
+                            if is_global_token_budget_exceeded(datastore):
+                                logger.info(f"LLM monthly budget exceeded — skipping check for {uuid} (budget_action=skip_check)")
+                                changed_detected = False
+
                         if changed_detected:
                             try:
                                 from changedetectionio.llm.evaluator import (

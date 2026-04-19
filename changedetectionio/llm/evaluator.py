@@ -120,16 +120,27 @@ def _get_month_key() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m")
 
 
-def get_global_token_budget_month() -> int:
+def get_global_token_budget_month(datastore=None) -> int:
     """
-    Monthly token budget ceiling from LLM_TOKEN_BUDGET_MONTH env var.
-    Returns 0 (no limit) if not set or not a valid positive integer.
+    Monthly token budget ceiling. Resolution order:
+      1. LLM_TOKEN_BUDGET_MONTH env var (takes priority, makes field read-only in UI)
+      2. datastore settings (set via UI)
+    Returns 0 (no limit) if not set anywhere.
     """
     try:
-        val = int(os.getenv('LLM_TOKEN_BUDGET_MONTH', '0'))
-        return max(0, val)
+        env_val = int(os.getenv('LLM_TOKEN_BUDGET_MONTH', '0'))
+        if env_val > 0:
+            return env_val
     except (ValueError, TypeError):
-        return 0
+        pass
+    if datastore is not None:
+        try:
+            stored = datastore.data['settings']['application'].get('llm') or {}
+            val = int(stored.get('token_budget_month') or 0)
+            return max(0, val)
+        except (ValueError, TypeError):
+            pass
+    return 0
 
 
 def _estimate_cost_usd(model: str, input_tokens: int, output_tokens: int) -> float:
@@ -198,7 +209,7 @@ def is_global_token_budget_exceeded(datastore) -> bool:
     LLM_TOKEN_BUDGET_MONTH) and the current month's usage has reached
     or exceeded that budget.
     """
-    budget = get_global_token_budget_month()
+    budget = get_global_token_budget_month(datastore)
     if not budget:
         return False
 
@@ -325,7 +336,7 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
         return ''
 
     if is_global_token_budget_exceeded(datastore):
-        budget = get_global_token_budget_month()
+        budget = get_global_token_budget_month(datastore)
         llm_cfg = datastore.data['settings']['application'].get('llm') or {}
         used = llm_cfg.get('tokens_this_month', 0)
         logger.warning(
@@ -462,7 +473,7 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
 
     # Check global monthly budget before making the call
     if is_global_token_budget_exceeded(datastore):
-        budget = get_global_token_budget_month()
+        budget = get_global_token_budget_month(datastore)
         llm_cfg = datastore.data['settings']['application'].get('llm') or {}
         used = llm_cfg.get('tokens_this_month', 0)
         logger.warning(

@@ -32,9 +32,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # PasswordField for api_key is intentionally left blank on GET).
         _stored_llm = datastore.data['settings']['application'].get('llm') or {}
         default['llm'] = {
-            'llm_model':                   _stored_llm.get('model', ''),
-            'llm_api_base':                _stored_llm.get('api_base', ''),
-            'llm_change_summary_default':  datastore.data['settings']['application'].get('llm_change_summary_default', ''),
+            'llm_model':                      _stored_llm.get('model', ''),
+            'llm_api_base':                   _stored_llm.get('api_base', ''),
+            'llm_change_summary_default':     datastore.data['settings']['application'].get('llm_change_summary_default', ''),
+            'llm_override_diff_with_summary': datastore.data['settings']['application'].get('llm_override_diff_with_summary', True),
+            'llm_budget_action':              datastore.data['settings']['application'].get('llm_budget_action', 'skip_llm'),
+            'llm_token_budget_month':         _stored_llm.get('token_budget_month', 0),
         }
 
         if datastore.proxy_list is not None:
@@ -104,15 +107,28 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 submitted_api_key = (llm_data.get('llm_api_key') or '').strip()
                 effective_api_key = submitted_api_key if submitted_api_key else existing_llm.get('api_key', '')
 
-                # Default summary prompt lives at application level — survives provider changes
+                # Application-level LLM settings (survive provider changes)
                 datastore.data['settings']['application']['llm_change_summary_default'] = (
                     llm_data.get('llm_change_summary_default') or ''
                 ).strip()
+                datastore.data['settings']['application']['llm_override_diff_with_summary'] = (
+                    bool(llm_data.get('llm_override_diff_with_summary', True))
+                )
+                datastore.data['settings']['application']['llm_budget_action'] = (
+                    llm_data.get('llm_budget_action') or 'skip_llm'
+                )
+
+                # Monthly token budget — only save if env var is not set
+                import os as _os
+                if not _os.getenv('LLM_TOKEN_BUDGET_MONTH', '').strip():
+                    _budget = llm_data.get('llm_token_budget_month') or 0
+                    existing_llm['token_budget_month'] = int(_budget) if _budget else 0
 
                 llm_config = {
                     'model': (llm_data.get('llm_model') or '').strip(),
                     'api_key': effective_api_key,
                     'api_base': (llm_data.get('llm_api_base') or '').strip(),
+                    'token_budget_month': existing_llm.get('token_budget_month', 0),
                     **preserved_counters,
                 }
                 # Only store if a model is set
@@ -221,7 +237,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         llm_config = _get_llm_cfg(datastore) or {}
         llm_env_configured = llm_configured_via_env()
         llm_stored = datastore.data['settings']['application'].get('llm') or {}
-        llm_token_budget_month = get_global_token_budget_month()
+        llm_token_budget_month = get_global_token_budget_month(datastore)
+        llm_token_budget_month_env = get_global_token_budget_month()  # env var only, for readonly logic
         # Cost display: only when user configured their own key (not hosted/operator-managed)
         llm_show_costs = not llm_env_configured
 
@@ -232,6 +249,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                 llm_env_configured=llm_env_configured,
                                 llm_stored=llm_stored,
                                 llm_token_budget_month=llm_token_budget_month,
+                                llm_token_budget_month_env=llm_token_budget_month_env,
                                 llm_show_costs=llm_show_costs,
                                 python_version=python_version,
                                 uptime_seconds=uptime_seconds,
