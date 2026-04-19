@@ -98,6 +98,7 @@ DIFF_PREFERENCES_CONFIG = {
     'added': {'default': True, 'type': 'bool'},
     'replaced': {'default': True, 'type': 'bool'},
     'type': {'default': 'diffLines', 'type': 'value'},
+    'llm_all_changes': {'default': False, 'type': 'bool'},
 }
 
 def render(watch, datastore, request, url_for, render_template, flash, redirect, extract_form=None):

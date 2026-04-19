@@ -182,6 +182,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         from_version = request.args.get('from_version', dates[-2])
         to_version = request.args.get('to_version', dates[-1])
+        all_changes = request.args.get('all_changes', '0') == '1'
 
         try:
             from_text = watch.get_history_snapshot(timestamp=from_version)
@@ -189,15 +190,41 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         except Exception as e:
             return jsonify({'summary': None, 'error': f'Could not read snapshots: {e}'}), 500
 
-        # Plain-text unified diff for LLM consumption
-        diff_lines = list(difflib.unified_diff(
-            from_text.splitlines(),
-            to_text.splitlines(),
-            lineterm='',
-            n=3,
-        ))
-        # Skip the +++/--- header lines
-        diff_text = '\n'.join(diff_lines[2:]) if len(diff_lines) > 2 else '\n'.join(diff_lines)
+        if all_changes:
+            # Build sequential diffs for every intermediate snapshot between from and to
+            # so the LLM sees the full timeline of changes, not just start→end
+            sorted_dates = sorted(dates)
+            try:
+                start_idx = sorted_dates.index(from_version)
+                end_idx   = sorted_dates.index(to_version)
+            except ValueError:
+                start_idx, end_idx = 0, len(sorted_dates) - 1
+
+            steps = sorted_dates[start_idx:end_idx + 1]
+            segments = []
+            for i in range(len(steps) - 1):
+                a_ts, b_ts = steps[i], steps[i + 1]
+                try:
+                    a_text = watch.get_history_snapshot(timestamp=a_ts) or ''
+                    b_text = watch.get_history_snapshot(timestamp=b_ts) or ''
+                except Exception:
+                    continue
+                seg_lines = list(difflib.unified_diff(
+                    a_text.splitlines(), b_text.splitlines(), lineterm='', n=3,
+                ))
+                seg = '\n'.join(seg_lines[2:]) if len(seg_lines) > 2 else '\n'.join(seg_lines)
+                if seg.strip():
+                    segments.append(f'=== {a_ts} → {b_ts} ===\n{seg}')
+
+            diff_text = '\n\n'.join(segments) if segments else ''
+        else:
+            diff_lines = list(difflib.unified_diff(
+                from_text.splitlines(),
+                to_text.splitlines(),
+                lineterm='',
+                n=3,
+            ))
+            diff_text = '\n'.join(diff_lines[2:]) if len(diff_lines) > 2 else '\n'.join(diff_lines)
 
         if not diff_text.strip():
             return jsonify({'summary': None, 'error': 'No differences found'})
@@ -208,9 +235,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         )
 
         effective_prompt = get_effective_summary_prompt(watch, datastore)
+        # Append mode flag to prompt cache key so sequential and direct summaries are cached separately
+        cache_prompt = effective_prompt + ('\x00all_changes' if all_changes else '')
 
         # Check cache — keyed by version pair + prompt hash (invalidates if prompt changes)
-        cached = watch.get_llm_diff_summary(from_version, to_version, prompt=effective_prompt)
+        cached = watch.get_llm_diff_summary(from_version, to_version, prompt=cache_prompt)
         if cached:
             return jsonify({'summary': cached, 'error': None, 'cached': True})
 
@@ -239,7 +268,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             return jsonify({'summary': None, 'error': 'LLM returned empty summary'})
 
         try:
-            watch.save_llm_diff_summary(summary, from_version, to_version, prompt=effective_prompt)
+            watch.save_llm_diff_summary(summary, from_version, to_version, prompt=cache_prompt)
         except Exception as e:
             logger.warning(f"Could not cache llm summary for {uuid}: {e}")
 
