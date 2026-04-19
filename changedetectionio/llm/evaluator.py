@@ -29,10 +29,10 @@ from .prompt_builder import (
 from .response_parser import parse_eval_response, parse_preview_response, parse_setup_response
 
 # AI Change Summary can produce longer output than eval responses
-_MAX_SUMMARY_TOKENS = 500
+_MAX_SUMMARY_TOKENS = 2000
 
 # Default prompt used when the user hasn't configured llm_change_summary
-DEFAULT_CHANGE_SUMMARY_PROMPT = "Briefly describe in plain English what changed — what was added, removed, or modified."
+DEFAULT_CHANGE_SUMMARY_PROMPT = "Describe in plain English what changed — list what was added or removed as bullet points, including key details for each item. Do not quote non-English text verbatim; translate and summarise all content into English. Your entire response must be in English."
 
 
 # ---------------------------------------------------------------------------

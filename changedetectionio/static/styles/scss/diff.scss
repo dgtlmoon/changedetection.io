@@ -278,6 +278,15 @@ body.difference-page {
   }
 }
 
+.llm-diff-summary-prompt {
+  margin: 0.3em 0 0;
+  font-size: 0.75rem;
+  opacity: 0.45;
+  font-style: italic;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
 .llm-diff-summary-loading {
   opacity: 0.5;
   font-style: italic;

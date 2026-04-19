@@ -283,7 +283,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         except Exception as e:
             return jsonify({'models': [], 'error': str(e)}), 400
 
-    @settings_blueprint.route("/llm-clear", methods=['POST'])
+    @settings_blueprint.route("/llm-clear", methods=['GET'])
     @login_optionally_required
     def llm_clear():
         _LLM_PROTECTED_FIELDS = {

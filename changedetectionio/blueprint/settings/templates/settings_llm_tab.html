@@ -94,13 +94,12 @@
                 &#10003; {{ _('AI configured:') }} {{ llm_config.get('model') }}
             </span>
             &nbsp;
-            <form method="POST" action="{{ url_for('settings.llm_clear') }}" style="display:inline">
-                <button type="submit" class="pure-button button-xsmall"
-                        style="background:#c0392b;color:#fff;border:none;"
-                        onclick="return confirm('{{ _('Remove AI/LLM configuration?') }}')">
-                    &#10005; {{ _('Remove') }}
-                </button>
-            </form>
+            <a href="{{ url_for('settings.llm_clear') }}"
+               class="pure-button button-xsmall"
+               style="background:#c0392b;color:#fff;"
+               onclick="return confirm('{{ _('Remove AI/LLM configuration?') }}')">
+                &#10005; {{ _('Remove') }}
+            </a>
         </div>
         {% endif %}
 
@@ -272,6 +271,7 @@
     window.llmOnModelPick = function (value) {
         if (value) document.querySelector('[name="llm-llm_model"]').value = value;
     };
+
 
     // On page load: if a model is already configured, detect the provider and show the fetch button
     (function detectCurrentProvider() {

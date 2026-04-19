@@ -94,10 +94,8 @@
                   class="pure-input-1"
                   {% if watch is defined and watch and llm_group_overrides is defined and llm_group_overrides.llm_change_summary %}
                   placeholder="{{ _('From group') }} &apos;{{ llm_group_overrides.llm_change_summary.group_name }}&apos;: {{ llm_group_overrides.llm_change_summary.value }}"
-                  {% elif watch is defined and watch %}
-                  placeholder="{{ _('e.g. List what was added or removed as bullet points. Translate to English.') }}"
                   {% else %}
-                  placeholder="{{ _('e.g. Summarise new items added. Translate to English if needed.') }}"
+                  placeholder="{{ form.llm_change_summary.render_kw['placeholder'] }}"
                   {% endif %}
         >{{ form.llm_change_summary.data or '' }}</textarea>
     </div>

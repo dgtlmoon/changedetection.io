@@ -5,7 +5,8 @@ from wtforms.widgets.core import TimeInput
 from flask_babel import lazy_gettext as _l, gettext
 
 from changedetectionio.blueprint.rss import RSS_FORMAT_TYPES, RSS_TEMPLATE_TYPE_OPTIONS, RSS_TEMPLATE_HTML_DEFAULT
-from changedetectionio.llm.ui_strings import LLM_INTENT_WATCH_PLACEHOLDER, LLM_CHANGE_SUMMARY_PLACEHOLDER
+from changedetectionio.llm.ui_strings import LLM_INTENT_WATCH_PLACEHOLDER
+from changedetectionio.llm.evaluator import DEFAULT_CHANGE_SUMMARY_PROMPT
 from changedetectionio.conditions.form import ConditionFormRow
 from changedetectionio.notification_service import NotificationContextData
 from changedetectionio.strtobool import strtobool
@@ -800,7 +801,7 @@ class processor_text_json_diff_form(commonSettingsForm):
                                render_kw={"rows": "3", "placeholder": LLM_INTENT_WATCH_PLACEHOLDER})
 
     llm_change_summary = TextAreaField(_l('AI Change Summary'), validators=[validators.Optional(), validators.Length(max=2000)],
-                               render_kw={"rows": "3", "placeholder": LLM_CHANGE_SUMMARY_PLACEHOLDER},
+                               render_kw={"rows": "3", "placeholder": DEFAULT_CHANGE_SUMMARY_PROMPT},
                                default='')
 
     include_filters = StringListField(_l('CSS/JSONPath/JQ/XPath Filters'), [ValidateCSSJSONXPATHInput()], default='')
@@ -1088,7 +1089,7 @@ class globalSettingsLLMForm(Form):
         validators=[validators.Optional(), validators.Length(max=2000)],
         render_kw={
             "rows": "3",
-            "placeholder": LLM_CHANGE_SUMMARY_PLACEHOLDER,
+            "placeholder": DEFAULT_CHANGE_SUMMARY_PROMPT,
             "style": "width: 100%; max-width: 36em;",
         },
         default='',

@@ -205,10 +205,12 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
     # Load cached AI diff summary for this exact from→to + prompt combination
     viewing_latest = str(to_version) == str(dates[-1])
     llm_diff_summary = ''
+    llm_summary_prompt = ''
     if llm_configured:
         try:
             from changedetectionio.llm.evaluator import get_effective_summary_prompt
             _prompt = get_effective_summary_prompt(watch, datastore)
+            llm_summary_prompt = _prompt
             llm_diff_summary = watch.get_llm_diff_summary(from_version, to_version, prompt=_prompt)
         except Exception as e:
             logger.warning(f"Could not load llm-diff-summary for {uuid}: {e}")
@@ -241,6 +243,7 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
                              watch_a=watch,
                              llm_configured=llm_configured,
                              llm_diff_summary=llm_diff_summary,
+                             llm_summary_prompt=llm_summary_prompt,
                              viewing_latest=viewing_latest,
                              )
     return output

@@ -16,7 +16,3 @@ LLM_INTENT_TAG_PLACEHOLDER = (
     "e.g. Flag price changes or new product launches across all watches in this group"
 )
 
-# llm_change_summary field — shared between watch and tag forms
-LLM_CHANGE_SUMMARY_PLACEHOLDER = (
-    "e.g. List what was added or removed as bullet points. Translate to English."
-)
