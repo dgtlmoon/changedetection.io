@@ -32,7 +32,7 @@ from .response_parser import parse_eval_response, parse_preview_response, parse_
 _MAX_SUMMARY_TOKENS = 2000
 
 # Default prompt used when the user hasn't configured llm_change_summary
-DEFAULT_CHANGE_SUMMARY_PROMPT = "Describe in plain English what changed — list what was added or removed as bullet points, including key details for each item. Do not quote non-English text verbatim; translate and summarise all content into English. Your entire response must be in English."
+DEFAULT_CHANGE_SUMMARY_PROMPT = "Describe in plain English what changed — list what was added or removed as bullet points, including key details for each item. Be careful of content that merely just moved around, you should mention that it moved but dont report that it was added/removed etc. Be considerate of the style content you are summarising the change of, adjust your report accordingly. Do not quote non-English text verbatim; translate and summarise all content into English. Your entire response must be in English."
 
 
 # ---------------------------------------------------------------------------
