@@ -64,7 +64,7 @@ def extract_changed_from(raw_diff: str) -> str:
     Useful for {{diff_changed_from}} — gives just the old value (e.g. old price),
     not the full surrounding line. Multiple fragments joined with newlines.
     """
-    return '\n'.join(m.group(1) or m.group(2) for m in _EXTRACT_REMOVED_RE.finditer(raw_diff))
+    return '\n'.join(next((g for g in m.groups() if g is not None), '') for m in _EXTRACT_REMOVED_RE.finditer(raw_diff))
 
 
 def extract_changed_to(raw_diff: str) -> str:
@@ -73,7 +73,7 @@ def extract_changed_to(raw_diff: str) -> str:
     Useful for {{diff_changed_to}} — gives just the new value (e.g. new price),
     not the full surrounding line. Multiple fragments joined with newlines.
     """
-    return '\n'.join(m.group(1) or m.group(2) for m in _EXTRACT_ADDED_RE.finditer(raw_diff))
+    return '\n'.join(next((g for g in m.groups() if g is not None), '') for m in _EXTRACT_ADDED_RE.finditer(raw_diff))
 
 
 def render_inline_word_diff(before_line: str, after_line: str, ignore_junk: bool = False, markdown_style: str = None, tokenizer: str = 'words_and_html', include_change_type_prefix: bool = True) -> tuple[str, bool]:
@@ -457,8 +457,8 @@ def render_diff(
     Returns:
         str: Rendered difference
     """
-    newest_lines = [line.rstrip() for line in newest_version_file_contents.splitlines()]
-    previous_lines = [line.rstrip() for line in previous_version_file_contents.splitlines()] if previous_version_file_contents else []
+    newest_lines = [line.rstrip() for line in (newest_version_file_contents or '').splitlines()]
+    previous_lines = [line.rstrip() for line in (previous_version_file_contents or '').splitlines()]
     now = time.time()
     logger.debug(
         f"diff options: "
