@@ -7,6 +7,7 @@ a side-by-side or unified diff view with syntax highlighting and change markers.
 
 import os
 import time
+from flask_babel import gettext
 from loguru import logger
 
 from changedetectionio import diff, strtobool
@@ -224,7 +225,7 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
                              diff_prefs=diff_prefs,
                              extra_classes='difference-page',
                              extra_stylesheets=extra_stylesheets,
-                             extra_title=f" - {watch.label} - History",
+                             extra_title=f" - {watch.label} - {gettext('History')}",
                              extract_form=extract_form,
                              from_version=str(from_version),
                              is_html_webdriver=is_html_webdriver,

@@ -3,11 +3,11 @@
 {% block content %}
     <div class="tabs">
     <ul>
-        {% if last_error_text %}<li class="tab" id="error-text-tab"><a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=uuid)}}#error-text">Error Text</a></li> {% endif %}
-        {% if last_error_screenshot %}<li class="tab" id="error-screenshot-tab"><a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=uuid)}}#error-screenshot">Error Screenshot</a></li> {% endif %}
-        <li class="tab" id=""><a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=uuid)}}#text">Text</a></li>
-        <li class="tab" id="screenshot-tab"><a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=uuid)}}#screenshot">Screenshot</a></li>
-        <li class="tab active" id="extract-tab"><a href="{{ url_for('ui.ui_diff.diff_history_page_extract_GET', uuid=uuid)}}">Extract Data</a></li>
+        {% if last_error_text %}<li class="tab" id="error-text-tab"><a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=uuid)}}#error-text">{{ _('Error Text') }}</a></li> {% endif %}
+        {% if last_error_screenshot %}<li class="tab" id="error-screenshot-tab"><a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=uuid)}}#error-screenshot">{{ _('Error Screenshot') }}</a></li> {% endif %}
+        <li class="tab" id=""><a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=uuid)}}#text">{{ _('Text') }}</a></li>
+        <li class="tab" id="screenshot-tab"><a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=uuid)}}#screenshot">{{ _('Screenshot') }}</a></li>
+        <li class="tab active" id="extract-tab"><a href="{{ url_for('ui.ui_diff.diff_history_page_extract_GET', uuid=uuid)}}">{{ _('Extract Data') }}</a></li>
     </ul>
 </div>
 
@@ -17,23 +17,23 @@
         <form id="extract-data-form" class="pure-form pure-form-stacked edit-form"  action="{{ url_for('ui.ui_diff.diff_history_page_extract_POST', uuid=uuid) }}"  method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-            <p>This tool will extract text data from all of the watch history.</p>
+            <p>{{ _('This tool will extract text data from all of the watch history.') }}</p>
 
             <div class="pure-control-group">
                 {{ render_field(extract_form.extract_regex) }}
                 <span class="pure-form-message-inline">
-                    A <strong>RegEx</strong> is a pattern that identifies exactly which part inside of the text that you want to extract.<br>
+                    {{ _('A <strong>RegEx</strong> is a pattern that identifies exactly which part inside of the text that you want to extract.')|safe }}<br>
 
                     <p>
-                        For example, to extract only the numbers from text &dash;<br>
-                        <strong>Raw text</strong>: <code>Temperature <span style="color: red">5.5</span>°C in Sydney</code><br>
-                        <strong>RegEx to extract:</strong> <code>Temperature <span style="color: red">([0-9\.]+)</span></code><br>
+                        {{ _('For example, to extract only the numbers from text') }} &dash;<br>
+                        <strong>{{ _('Raw text') }}</strong>: <code>Temperature <span style="color: red">5.5</span>°C in Sydney</code><br>
+                        <strong>{{ _('RegEx to extract:') }}</strong> <code>Temperature <span style="color: red">([0-9\.]+)</span></code><br>
                     </p>
                     <p>
-                        <a href="https://RegExr.com/">Be sure to test your RegEx here.</a>
+                        <a href="https://RegExr.com/">{{ _('Be sure to test your RegEx here.') }}</a>
                     </p>
                     <p>
-                        Each RegEx group bracket <code>()</code> will be in its own column, the first column value is always the date.
+                        {{ _('Each RegEx group bracket') }} <code>()</code> {{ _('will be in its own column, the first column value is always the date.') }}
                     </p>
                 </span>
             </div>

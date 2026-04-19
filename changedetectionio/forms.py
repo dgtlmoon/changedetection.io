@@ -774,16 +774,16 @@ class SingleBrowserStep(Form):
     operation = SelectField(_l('Operation'), [validators.Optional()], choices=browser_step_ui_config.keys())
 
     # maybe better to set some <script>var..
-    selector = StringField(_l('Selector'), [validators.Optional()], render_kw={"placeholder": "CSS or xPath selector"})
-    optional_value = StringField(_l('value'), [validators.Optional()], render_kw={"placeholder": "Value"})
+    selector = StringField(_l('Selector'), [validators.Optional()], render_kw={"placeholder": _l("CSS or xPath selector")})
+    optional_value = StringField(_l('value'), [validators.Optional()], render_kw={"placeholder": _l("Value")})
 #   @todo move to JS? ajax fetch new field?
 #    remove_button = SubmitField(_l('-'), render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Remove'})
 #    add_button = SubmitField(_l('+'), render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Add new step after'})
 
 class processor_text_json_diff_form(commonSettingsForm):
 
-    url = StringField('Web Page URL', validators=[validateURL()])
-    tags = StringTagUUID('Group Tag', [validators.Optional()], default='')
+    url = StringField(_l('Web Page URL'), validators=[validateURL()])
+    tags = StringTagUUID(_l('Group Tag'), [validators.Optional()], default='')
 
     time_between_check = EnhancedFormField(
         TimeBetweenCheckForm,
@@ -928,7 +928,7 @@ class processor_text_json_diff_form(commonSettingsForm):
 
 class SingleExtraProxy(Form):
     # maybe better to set some <script>var..
-    proxy_name = StringField(_l('Name'), [validators.Optional()], render_kw={"placeholder": "Name"})
+    proxy_name = StringField(_l('Name'), [validators.Optional()], render_kw={"placeholder": _l("Name")})
     proxy_url = StringField(_l('Proxy URL'), [
         validators.Optional(),
         ValidateStartsWithRegex(
@@ -940,7 +940,7 @@ class SingleExtraProxy(Form):
     ], render_kw={"placeholder": "socks5:// or regular proxy http://user:pass@...:3128", "size":50})
 
 class SingleExtraBrowser(Form):
-    browser_name = StringField(_l('Name'), [validators.Optional()], render_kw={"placeholder": "Name"})
+    browser_name = StringField(_l('Name'), [validators.Optional()], render_kw={"placeholder": _l("Name")})
     browser_connection_url = StringField(_l('Browser connection URL'), [
         validators.Optional(),
         ValidateStartsWithRegex(
@@ -1009,7 +1009,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
 
     # Screenshot comparison settings
     min_change_percentage = FloatField(
-        'Screenshot: Minimum Change Percentage',
+        _l('Screenshot: Minimum Change Percentage'),
         validators=[
             validators.Optional(),
             validators.NumberRange(min=0.0, max=100.0, message=_l('Must be between 0 and 100'))
