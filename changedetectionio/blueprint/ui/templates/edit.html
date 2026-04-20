@@ -360,7 +360,7 @@ Math: {{ 1 + 1 }}") }}
                 </fieldset>
                 <fieldset class="pure-control-group">
                     {{ render_checkbox_field(form.sort_text_alphabetically) }}
-                    <span class="pure-form-message-inline">{{ _('Helps reduce changes detected caused by sites shuffling lines around, combine with') }} <i>{{ _('check unique lines') }}</i> {{ _('below.') }}</span>
+                    <span class="pure-form-message-inline">{{ _('Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below.')|safe }}</span>
                 </fieldset>
                 <fieldset class="pure-control-group">
                     {{ render_checkbox_field(form.trim_text_whitespace) }}
