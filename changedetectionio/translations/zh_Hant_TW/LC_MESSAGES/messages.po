@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-15 20:27+0900\n"
+"POT-Creation-Date: 2026-04-20 15:58+0900\n"
 "PO-Revision-Date: 2026-01-15 12:00+0800\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh_Hant_TW\n"
@@ -228,9 +228,10 @@ msgstr ""
 msgid "Enter one URL per line, and optionally add tags for each URL after a space, delineated by comma (,):"
 msgstr "每行輸入一個 URL，可選用空格分隔後為每個 URL 新增標籤，標籤間用逗號 (,) 分隔："
 
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "Example:"
-msgstr "範例："
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/edit/include_subtract.html
+#: changedetectionio/templates/edit/text-options.html
+msgid "Example"
+msgstr "範例"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "URLs which do not pass validation will stay in the textarea."
@@ -240,25 +241,14 @@ msgstr "未通過驗證的 URL 將保留在文字區塊中。"
 msgid "Copy and Paste your Distill.io watch 'export' file, this should be a JSON file."
 msgstr "複製並貼上您的 Distill.io 監測任務「匯出」檔案，這應該是一個 JSON 檔案。"
 
+# TN: CJK scripts degrade when italicized; emphasis is rendered with <strong> instead.
 #: changedetectionio/blueprint/imports/templates/import.html
-msgid "This is"
-msgstr "這是"
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "experimental"
-msgstr "實驗性功能"
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "supported fields are"
-msgstr "支援的欄位有"
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "the rest (including"
-msgstr "其餘（包括"
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "are ignored."
-msgstr "將被忽略。"
+msgid ""
+"This is <i>experimental</i>, supported fields are <code>name</code>, <code>uri</code>, <code>tags</code>, "
+"<code>config:selections</code>, the rest (including <code>schedule</code>) are ignored."
+msgstr ""
+"這是<strong>實驗性功能</strong>，支援的欄位有 "
+"<code>name</code>、<code>uri</code>、<code>tags</code>、<code>config:selections</code>，其餘（包括 <code>schedule</code>）將被忽略。"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "How to export?"
@@ -584,16 +574,8 @@ msgstr ""
 msgid "Note: This is applied globally in addition to the per-watch rules."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Matching text will be"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "ignored"
-msgstr "已忽略"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "in the text snapshot (you can still see it but it wont trigger a change)"
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
+msgid "Matching text will be ignored in the text snapshot (you can still see it but it wont trigger a change)"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
@@ -1545,17 +1527,10 @@ msgid ""
 "lines against all history for this watch."
 msgstr "適用於內容僅會移動的網站，且您想知道何時新增了「新」內容，此功能會將新行與此監測任務的所有歷史記錄進行比較。"
 
+# TN: CJK scripts degrade when italicized; UI label reference is wrapped in 「」 instead.
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with"
-msgstr "有助於減少因網站重新排列行而檢測到的變更，結合"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "check unique lines"
-msgstr "檢查獨特行"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "below."
-msgstr "於下方。"
+msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below."
+msgstr "有助於減少因網站重新排列行而檢測到的變更，結合下方的「檢查獨特行」一起使用。"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Remove any whitespace before and after each line of text"
@@ -3394,10 +3369,6 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/templates/edit/include_subtract.html
-msgid "Example"
-msgstr ""
-
-#: changedetectionio/templates/edit/include_subtract.html
 msgid "test your XPath here"
 msgstr ""
 
@@ -3442,10 +3413,6 @@ msgid "\"Page text\" - with Contains, Starts With, Not Contains and many more"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
-msgid "Matching text will be ignored in the text snapshot (you can still see it but it wont trigger a change)"
-msgstr ""
-
-#: changedetectionio/templates/edit/text-options.html
 msgid ""
 "For example: Out of stock\n"
 "Sold out\n"
@@ -3487,11 +3454,7 @@ msgid "Simpler alternative to regex — use this when you just want lines about 
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
-msgid "Example: enter"
-msgstr ""
-
-#: changedetectionio/templates/edit/text-options.html
-msgid "to keep only lines mentioning temperature readings"
+msgid "enter <code>celsius</code> to keep only lines mentioning temperature readings"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
@@ -3819,6 +3782,48 @@ msgstr "主設定"
 
 #~ msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'."
 #~ msgstr "方法需要連線到執行中的 WebDriver + Chrome 伺服器，由環境變數 'WEBDRIVER_URL' 設定。"
+
+#~ msgid "Example:"
+#~ msgstr "範例："
+
+#~ msgid "This is"
+#~ msgstr "這是"
+
+#~ msgid "experimental"
+#~ msgstr "實驗性功能"
+
+#~ msgid "supported fields are"
+#~ msgstr "支援的欄位有"
+
+#~ msgid "the rest (including"
+#~ msgstr "其餘（包括"
+
+#~ msgid "are ignored."
+#~ msgstr "將被忽略。"
+
+#~ msgid "Matching text will be"
+#~ msgstr ""
+
+#~ msgid "ignored"
+#~ msgstr "已忽略"
+
+#~ msgid "in the text snapshot (you can still see it but it wont trigger a change)"
+#~ msgstr ""
+
+#~ msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with"
+#~ msgstr "有助於減少因網站重新排列行而檢測到的變更，結合"
+
+#~ msgid "check unique lines"
+#~ msgstr "檢查獨特行"
+
+#~ msgid "below."
+#~ msgstr "於下方。"
+
+#~ msgid "Example: enter"
+#~ msgstr ""
+
+#~ msgid "to keep only lines mentioning temperature readings"
+#~ msgstr ""
 
 #~ msgid "From"
 #~ msgstr "從"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-15 20:27+0900\n"
+"POT-Creation-Date: 2026-04-20 15:58+0900\n"
 "PO-Revision-Date: 2026-01-14 03:57+0100\n"
 "Last-Translator: \n"
 "Language: de\n"
@@ -232,9 +232,10 @@ msgstr ""
 "Geben Sie eine URL pro Zeile ein und fügen Sie optional Tags für jede URL nach einem Leerzeichen hinzu, getrennt "
 "durch Kommas (,):"
 
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "Example:"
-msgstr "Beispiel:"
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/edit/include_subtract.html
+#: changedetectionio/templates/edit/text-options.html
+msgid "Example"
+msgstr "Beispiel"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "URLs which do not pass validation will stay in the textarea."
@@ -247,24 +248,12 @@ msgstr ""
 "handeln."
 
 #: changedetectionio/blueprint/imports/templates/import.html
-msgid "This is"
-msgstr "Das ist"
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "experimental"
-msgstr "Experimental-"
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "supported fields are"
-msgstr "Unterstützte Felder sind"
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "the rest (including"
-msgstr "der Rest (inkl"
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "are ignored."
-msgstr "werden ignoriert."
+msgid ""
+"This is <i>experimental</i>, supported fields are <code>name</code>, <code>uri</code>, <code>tags</code>, "
+"<code>config:selections</code>, the rest (including <code>schedule</code>) are ignored."
+msgstr ""
+"Das ist <i>experimentell</i>, unterstützte Felder sind <code>name</code>, <code>uri</code>, <code>tags</code>, "
+"<code>config:selections</code>, der Rest (inkl. <code>schedule</code>) wird ignoriert."
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "How to export?"
@@ -600,16 +589,8 @@ msgstr ""
 msgid "Note: This is applied globally in addition to the per-watch rules."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Matching text will be"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "ignored"
-msgstr "ignoriert"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "in the text snapshot (you can still see it but it wont trigger a change)"
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
+msgid "Matching text will be ignored in the text snapshot (you can still see it but it wont trigger a change)"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
@@ -1586,18 +1567,10 @@ msgstr ""
 "hinzugefügt werden. Vergleicht neue Zeilen mit dem gesamten Verlauf dieser Überwachung."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with"
+msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below."
 msgstr ""
 "Hilft dabei, erkannte Änderungen zu reduzieren, die durch das Umstellen von Zeilen auf Websites verursacht werden, "
-"kombiniert mit"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "check unique lines"
-msgstr "Überprüfen Sie eindeutige Zeilen"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "below."
-msgstr "unten."
+"kombiniert mit <i>Überprüfen Sie eindeutige Zeilen</i> unten."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Remove any whitespace before and after each line of text"
@@ -3451,10 +3424,6 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/templates/edit/include_subtract.html
-msgid "Example"
-msgstr ""
-
-#: changedetectionio/templates/edit/include_subtract.html
 msgid "test your XPath here"
 msgstr ""
 
@@ -3499,10 +3468,6 @@ msgid "\"Page text\" - with Contains, Starts With, Not Contains and many more"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
-msgid "Matching text will be ignored in the text snapshot (you can still see it but it wont trigger a change)"
-msgstr ""
-
-#: changedetectionio/templates/edit/text-options.html
 msgid ""
 "For example: Out of stock\n"
 "Sold out\n"
@@ -3544,11 +3509,7 @@ msgid "Simpler alternative to regex — use this when you just want lines about 
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
-msgid "Example: enter"
-msgstr ""
-
-#: changedetectionio/templates/edit/text-options.html
-msgid "to keep only lines mentioning temperature readings"
+msgid "enter <code>celsius</code> to keep only lines mentioning temperature readings"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
@@ -3884,6 +3845,51 @@ msgstr "Haupteinstellungen"
 #~ "Die Methode erfordert eine Netzwerkverbindung zu einem laufenden "
 #~ "WebDriver+Chrome-Server, der durch die Umgebungsvariable „WEBDRIVER_URL“ "
 #~ "festgelegt wird."
+
+#~ msgid "Example:"
+#~ msgstr "Beispiel:"
+
+#~ msgid "This is"
+#~ msgstr "Das ist"
+
+#~ msgid "experimental"
+#~ msgstr "Experimental-"
+
+#~ msgid "supported fields are"
+#~ msgstr "Unterstützte Felder sind"
+
+#~ msgid "the rest (including"
+#~ msgstr "der Rest (inkl"
+
+#~ msgid "are ignored."
+#~ msgstr "werden ignoriert."
+
+#~ msgid "Matching text will be"
+#~ msgstr ""
+
+#~ msgid "ignored"
+#~ msgstr "ignoriert"
+
+#~ msgid "in the text snapshot (you can still see it but it wont trigger a change)"
+#~ msgstr ""
+
+#~ msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with"
+#~ msgstr ""
+#~ "Hilft dabei, erkannte Änderungen zu reduzieren, die durch das "
+#~ "Umstellen von Zeilen auf Websites verursacht werden, kombiniert "
+#~ "mit"
+
+#~ msgid "check unique lines"
+#~ msgstr "Überprüfen Sie eindeutige Zeilen"
+
+#~ msgid "below."
+#~ msgstr "unten."
+
+#~ msgid "Example: enter"
+#~ msgstr ""
+
+#~ msgid "to keep only lines mentioning temperature readings"
+#~ msgstr ""
 
 #~ msgid "From"
 #~ msgstr "Von"

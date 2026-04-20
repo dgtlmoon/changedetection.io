@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-15 20:27+0900\n"
+"POT-Creation-Date: 2026-04-20 15:58+0900\n"
 "PO-Revision-Date: 2026-01-02 11:40+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: cs\n"
@@ -228,9 +228,10 @@ msgstr "sekci záloh"
 msgid "Enter one URL per line, and optionally add tags for each URL after a space, delineated by comma (,):"
 msgstr "Vložte jednu URL na řádek a případně přidejte tagy pro každou URL odsazené mezerníkem, oddělené čárkou (,):"
 
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "Example:"
-msgstr "Příklad:"
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/edit/include_subtract.html
+#: changedetectionio/templates/edit/text-options.html
+msgid "Example"
+msgstr "Příklad"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "URLs which do not pass validation will stay in the textarea."
@@ -241,24 +242,12 @@ msgid "Copy and Paste your Distill.io watch 'export' file, this should be a JSON
 msgstr "Nakopírujte a vložte exportovaný Distill.io soubor, měl by být ve formátu JSON."
 
 #: changedetectionio/blueprint/imports/templates/import.html
-msgid "This is"
-msgstr "Tohle je"
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "experimental"
-msgstr "experimentální"
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "supported fields are"
-msgstr "podporovaná pole jsou"
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "the rest (including"
-msgstr "zbytek (včetně"
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "are ignored."
-msgstr "jsou ignorovány."
+msgid ""
+"This is <i>experimental</i>, supported fields are <code>name</code>, <code>uri</code>, <code>tags</code>, "
+"<code>config:selections</code>, the rest (including <code>schedule</code>) are ignored."
+msgstr ""
+"Tohle je <i>experimentální</i>, podporovaná pole jsou <code>name</code>, <code>uri</code>, <code>tags</code>, "
+"<code>config:selections</code>, zbytek (včetně <code>schedule</code>) je ignorován."
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "How to export?"
@@ -584,16 +573,8 @@ msgstr ""
 msgid "Note: This is applied globally in addition to the per-watch rules."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Matching text will be"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "ignored"
-msgstr "ignorováno"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "in the text snapshot (you can still see it but it wont trigger a change)"
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
+msgid "Matching text will be ignored in the text snapshot (you can still see it but it wont trigger a change)"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
@@ -1546,16 +1527,8 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with"
+msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below."
 msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "check unique lines"
-msgstr "zkontrolujte jedinečné řádky"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "below."
-msgstr "níže."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Remove any whitespace before and after each line of text"
@@ -3396,10 +3369,6 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/templates/edit/include_subtract.html
-msgid "Example"
-msgstr ""
-
-#: changedetectionio/templates/edit/include_subtract.html
 msgid "test your XPath here"
 msgstr ""
 
@@ -3444,10 +3413,6 @@ msgid "\"Page text\" - with Contains, Starts With, Not Contains and many more"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
-msgid "Matching text will be ignored in the text snapshot (you can still see it but it wont trigger a change)"
-msgstr ""
-
-#: changedetectionio/templates/edit/text-options.html
 msgid ""
 "For example: Out of stock\n"
 "Sold out\n"
@@ -3489,11 +3454,7 @@ msgid "Simpler alternative to regex — use this when you just want lines about 
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
-msgid "Example: enter"
-msgstr ""
-
-#: changedetectionio/templates/edit/text-options.html
-msgid "to keep only lines mentioning temperature readings"
+msgid "enter <code>celsius</code> to keep only lines mentioning temperature readings"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
@@ -3757,6 +3718,48 @@ msgstr "Hlavní nastavení"
 #~ msgstr ""
 
 #~ msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'."
+#~ msgstr ""
+
+#~ msgid "Example:"
+#~ msgstr "Příklad:"
+
+#~ msgid "This is"
+#~ msgstr "Tohle je"
+
+#~ msgid "experimental"
+#~ msgstr "experimentální"
+
+#~ msgid "supported fields are"
+#~ msgstr "podporovaná pole jsou"
+
+#~ msgid "the rest (including"
+#~ msgstr "zbytek (včetně"
+
+#~ msgid "are ignored."
+#~ msgstr "jsou ignorovány."
+
+#~ msgid "Matching text will be"
+#~ msgstr ""
+
+#~ msgid "ignored"
+#~ msgstr "ignorováno"
+
+#~ msgid "in the text snapshot (you can still see it but it wont trigger a change)"
+#~ msgstr ""
+
+#~ msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with"
+#~ msgstr ""
+
+#~ msgid "check unique lines"
+#~ msgstr "zkontrolujte jedinečné řádky"
+
+#~ msgid "below."
+#~ msgstr "níže."
+
+#~ msgid "Example: enter"
+#~ msgstr ""
+
+#~ msgid "to keep only lines mentioning temperature readings"
 #~ msgstr ""
 
 #~ msgid "From"

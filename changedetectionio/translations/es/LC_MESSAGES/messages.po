@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-15 20:27+0900\n"
+"POT-Creation-Date: 2026-04-20 15:58+0900\n"
 "PO-Revision-Date: 2026-03-20 18:13+0100\n"
 "Last-Translator: Adrian Gonzalez <adrian@example.com>\n"
 "Language: es\n"
@@ -232,9 +232,10 @@ msgstr ""
 "Ingrese una URL por línea y, opcionalmente, agregue etiquetas para cada URL después de un espacio, delimitado por una"
 " coma (,):"
 
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "Example:"
-msgstr "Ejemplo:"
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/edit/include_subtract.html
+#: changedetectionio/templates/edit/text-options.html
+msgid "Example"
+msgstr "Ejemplo"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "URLs which do not pass validation will stay in the textarea."
@@ -245,24 +246,12 @@ msgid "Copy and Paste your Distill.io watch 'export' file, this should be a JSON
 msgstr "Copie y pegue el archivo de 'exportación' del monitor Distill.io, este debería ser un archivo JSON."
 
 #: changedetectionio/blueprint/imports/templates/import.html
-msgid "This is"
-msgstr "Esto es"
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "experimental"
-msgstr "experimental"
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "supported fields are"
-msgstr "los campos admitidos son"
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "the rest (including"
-msgstr "el resto (incluyendo"
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "are ignored."
-msgstr "son ignorados."
+msgid ""
+"This is <i>experimental</i>, supported fields are <code>name</code>, <code>uri</code>, <code>tags</code>, "
+"<code>config:selections</code>, the rest (including <code>schedule</code>) are ignored."
+msgstr ""
+"Esto es <i>experimental</i>, los campos admitidos son <code>name</code>, <code>uri</code>, <code>tags</code>, "
+"<code>config:selections</code>, el resto (incluyendo <code>schedule</code>) es ignorado."
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "How to export?"
@@ -604,17 +593,9 @@ msgstr "Agregue múltiples elementos, selectores CSS o XPath por línea para ign
 msgid "Note: This is applied globally in addition to the per-watch rules."
 msgstr "Nota: Esto se aplica globalmente además de las reglas por visualización."
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Matching text will be"
-msgstr "El texto coincidente será"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "ignored"
-msgstr "ignorado"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "in the text snapshot (you can still see it but it wont trigger a change)"
-msgstr "en la instantánea de texto (aún puedes verla pero no activará un cambio)"
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
+msgid "Matching text will be ignored in the text snapshot (you can still see it but it wont trigger a change)"
+msgstr "El texto coincidente se ignorará en la instantánea del texto (aún podrás verlo pero no activará un cambio)"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
 msgid "Each line processed separately, any line matching will be ignored (removed before creating the checksum)"
@@ -1598,16 +1579,10 @@ msgstr ""
 "nuevas líneas con todo el historial de este monitor."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with"
-msgstr "Ayuda a reducir los cambios detectados causados ​​por sitios que cambian las líneas, combinar con"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "check unique lines"
-msgstr "comprobar líneas únicas"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "below."
-msgstr "abajo."
+msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below."
+msgstr ""
+"Ayuda a reducir los cambios detectados causados por sitios que cambian las líneas, combine con <i>comprobar líneas "
+"únicas</i> abajo."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Remove any whitespace before and after each line of text"
@@ -3462,10 +3437,6 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/templates/edit/include_subtract.html
-msgid "Example"
-msgstr ""
-
-#: changedetectionio/templates/edit/include_subtract.html
 msgid "test your XPath here"
 msgstr ""
 
@@ -3514,10 +3485,6 @@ msgid "\"Page text\" - with Contains, Starts With, Not Contains and many more"
 msgstr "\"Texto de página\": contiene, comienza con, no contiene y muchos más"
 
 #: changedetectionio/templates/edit/text-options.html
-msgid "Matching text will be ignored in the text snapshot (you can still see it but it wont trigger a change)"
-msgstr "El texto coincidente se ignorará en la instantánea del texto (aún podrás verlo pero no activará un cambio)"
-
-#: changedetectionio/templates/edit/text-options.html
 msgid ""
 "For example: Out of stock\n"
 "Sold out\n"
@@ -3562,11 +3529,7 @@ msgid "Simpler alternative to regex — use this when you just want lines about 
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
-msgid "Example: enter"
-msgstr ""
-
-#: changedetectionio/templates/edit/text-options.html
-msgid "to keep only lines mentioning temperature readings"
+msgid "enter <code>celsius</code> to keep only lines mentioning temperature readings"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
@@ -3764,6 +3727,48 @@ msgstr "Configuraciones principales"
 #~ "el método requiere una conexión de red a un servidor "
 #~ "WebDriver+Chrome en ejecución, establecido por la variable ENV "
 #~ "'WEBDRIVER_URL'."
+
+#~ msgid "Example:"
+#~ msgstr "Ejemplo:"
+
+#~ msgid "This is"
+#~ msgstr "Esto es"
+
+#~ msgid "experimental"
+#~ msgstr "experimental"
+
+#~ msgid "supported fields are"
+#~ msgstr "los campos admitidos son"
+
+#~ msgid "the rest (including"
+#~ msgstr "el resto (incluyendo"
+
+#~ msgid "are ignored."
+#~ msgstr "son ignorados."
+
+#~ msgid "Matching text will be"
+#~ msgstr "El texto coincidente será"
+
+#~ msgid "ignored"
+#~ msgstr "ignorado"
+
+#~ msgid "in the text snapshot (you can still see it but it wont trigger a change)"
+#~ msgstr "en la instantánea de texto (aún puedes verla pero no activará un cambio)"
+
+#~ msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with"
+#~ msgstr "Ayuda a reducir los cambios detectados causados ​​por sitios que cambian las líneas, combinar con"
+
+#~ msgid "check unique lines"
+#~ msgstr "comprobar líneas únicas"
+
+#~ msgid "below."
+#~ msgstr "abajo."
+
+#~ msgid "Example: enter"
+#~ msgstr ""
+
+#~ msgid "to keep only lines mentioning temperature readings"
+#~ msgstr ""
 
 #~ msgid "From"
 #~ msgstr "De"

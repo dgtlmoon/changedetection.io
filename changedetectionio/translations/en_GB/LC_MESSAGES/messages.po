@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  changedetection.io\n"
 "Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io\n"
-"POT-Creation-Date: 2026-04-15 20:27+0900\n"
+"POT-Creation-Date: 2026-04-20 15:58+0900\n"
 "PO-Revision-Date: 2026-01-12 16:33+0100\n"
 "Last-Translator: British English Translation Team\n"
 "Language: en_GB\n"
@@ -228,8 +228,9 @@ msgstr ""
 msgid "Enter one URL per line, and optionally add tags for each URL after a space, delineated by comma (,):"
 msgstr ""
 
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "Example:"
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/edit/include_subtract.html
+#: changedetectionio/templates/edit/text-options.html
+msgid "Example"
 msgstr ""
 
 #: changedetectionio/blueprint/imports/templates/import.html
@@ -241,23 +242,9 @@ msgid "Copy and Paste your Distill.io watch 'export' file, this should be a JSON
 msgstr ""
 
 #: changedetectionio/blueprint/imports/templates/import.html
-msgid "This is"
-msgstr ""
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "experimental"
-msgstr ""
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "supported fields are"
-msgstr ""
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "the rest (including"
-msgstr ""
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "are ignored."
+msgid ""
+"This is <i>experimental</i>, supported fields are <code>name</code>, <code>uri</code>, <code>tags</code>, "
+"<code>config:selections</code>, the rest (including <code>schedule</code>) are ignored."
 msgstr ""
 
 #: changedetectionio/blueprint/imports/templates/import.html
@@ -584,16 +571,8 @@ msgstr ""
 msgid "Note: This is applied globally in addition to the per-watch rules."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Matching text will be"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "ignored"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "in the text snapshot (you can still see it but it wont trigger a change)"
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
+msgid "Matching text will be ignored in the text snapshot (you can still see it but it wont trigger a change)"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
@@ -1546,15 +1525,7 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "check unique lines"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "below."
+msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
@@ -3394,10 +3365,6 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/templates/edit/include_subtract.html
-msgid "Example"
-msgstr ""
-
-#: changedetectionio/templates/edit/include_subtract.html
 msgid "test your XPath here"
 msgstr ""
 
@@ -3442,10 +3409,6 @@ msgid "\"Page text\" - with Contains, Starts With, Not Contains and many more"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
-msgid "Matching text will be ignored in the text snapshot (you can still see it but it wont trigger a change)"
-msgstr ""
-
-#: changedetectionio/templates/edit/text-options.html
 msgid ""
 "For example: Out of stock\n"
 "Sold out\n"
@@ -3487,11 +3450,7 @@ msgid "Simpler alternative to regex — use this when you just want lines about 
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
-msgid "Example: enter"
-msgstr ""
-
-#: changedetectionio/templates/edit/text-options.html
-msgid "to keep only lines mentioning temperature readings"
+msgid "enter <code>celsius</code> to keep only lines mentioning temperature readings"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
@@ -3638,6 +3597,48 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "\"Residential\" and \"Mobile\" proxy type can be more successfull than \"Data Center\" for blocked websites."
+#~ msgstr ""
+
+#~ msgid "Example:"
+#~ msgstr ""
+
+#~ msgid "This is"
+#~ msgstr ""
+
+#~ msgid "experimental"
+#~ msgstr ""
+
+#~ msgid "supported fields are"
+#~ msgstr ""
+
+#~ msgid "the rest (including"
+#~ msgstr ""
+
+#~ msgid "are ignored."
+#~ msgstr ""
+
+#~ msgid "Matching text will be"
+#~ msgstr ""
+
+#~ msgid "ignored"
+#~ msgstr ""
+
+#~ msgid "in the text snapshot (you can still see it but it wont trigger a change)"
+#~ msgstr ""
+
+#~ msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with"
+#~ msgstr ""
+
+#~ msgid "check unique lines"
+#~ msgstr ""
+
+#~ msgid "below."
+#~ msgstr ""
+
+#~ msgid "Example: enter"
+#~ msgstr ""
+
+#~ msgid "to keep only lines mentioning temperature readings"
 #~ msgstr ""
 
 #~ msgid "From"

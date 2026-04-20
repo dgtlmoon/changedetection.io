@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-15 20:27+0900\n"
+"POT-Creation-Date: 2026-04-20 15:58+0900\n"
 "PO-Revision-Date: 2026-04-10 20:38+0300\n"
 "Last-Translator: \n"
 "Language: tr\n"
@@ -235,9 +235,10 @@ msgstr ""
 "Her satıra bir URL girin ve isteğe bağlı olarak her URL için bir boşluk bıraktıktan sonra virgülle (,) ayrılmış "
 "etiketler ekleyin:"
 
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "Example:"
-msgstr "Örnek:"
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/edit/include_subtract.html
+#: changedetectionio/templates/edit/text-options.html
+msgid "Example"
+msgstr "Örnek"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "URLs which do not pass validation will stay in the textarea."
@@ -248,24 +249,12 @@ msgid "Copy and Paste your Distill.io watch 'export' file, this should be a JSON
 msgstr "Distill.io izleyici 'dışa aktarım' dosyanızı kopyalayıp yapıştırın, bu bir JSON dosyası olmalıdır."
 
 #: changedetectionio/blueprint/imports/templates/import.html
-msgid "This is"
-msgstr "Bu"
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "experimental"
-msgstr "deneyseldir"
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "supported fields are"
-msgstr "desteklenen alanlar şunlardır"
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "the rest (including"
-msgstr "geri kalanı (şunlar dahil"
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "are ignored."
-msgstr "yoksayılır."
+msgid ""
+"This is <i>experimental</i>, supported fields are <code>name</code>, <code>uri</code>, <code>tags</code>, "
+"<code>config:selections</code>, the rest (including <code>schedule</code>) are ignored."
+msgstr ""
+"Bu <i>deneyseldir</i>, desteklenen alanlar şunlardır: <code>name</code>, <code>uri</code>, <code>tags</code>, "
+"<code>config:selections</code>. Geri kalanı (<code>schedule</code> dahil) yoksayılır."
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "How to export?"
@@ -605,17 +594,11 @@ msgstr "HTML'nin birden çok bölümünü yoksaymak için satır başına birden
 msgid "Note: This is applied globally in addition to the per-watch rules."
 msgstr "Not: Bu, izleyici başına kurallara ek olarak genel olarak uygulanır."
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Matching text will be"
-msgstr "Eşleşen metin"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "ignored"
-msgstr "yoksayılacak"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "in the text snapshot (you can still see it but it wont trigger a change)"
-msgstr "metin anlık görüntüsünde (hala görebilirsiniz ancak bir değişikliği tetiklemez)"
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
+msgid "Matching text will be ignored in the text snapshot (you can still see it but it wont trigger a change)"
+msgstr ""
+"Eşleşen metin metin anlık görüntüsünde yoksayılacaktır (yine de görebilirsiniz ancak bir değişikliği "
+"tetiklemeyecektir)"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
 msgid "Each line processed separately, any line matching will be ignored (removed before creating the checksum)"
@@ -1587,18 +1570,10 @@ msgstr ""
 "satırları bu izleyicinin tüm geçmişiyle karşılaştırır."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with"
+msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below."
 msgstr ""
-"Sitelerin satırları karıştırmasından kaynaklanan tespit edilen değişiklikleri azaltmaya yardımcı olur, şununla "
-"birleştirin"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "check unique lines"
-msgstr "benzersiz satırları kontrol et"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "below."
-msgstr "aşağıda."
+"Sitelerin satırları karıştırmasından kaynaklanan tespit edilen değişiklikleri azaltmaya yardımcı olur, aşağıdaki "
+"<i>benzersiz satırları kontrol et</i> ile birleştirin."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Remove any whitespace before and after each line of text"
@@ -3445,10 +3420,6 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/templates/edit/include_subtract.html
-msgid "Example"
-msgstr ""
-
-#: changedetectionio/templates/edit/include_subtract.html
 msgid "test your XPath here"
 msgstr ""
 
@@ -3495,12 +3466,6 @@ msgid "\"Page text\" - with Contains, Starts With, Not Contains and many more"
 msgstr "da kullanabilirsiniz: \\\"Sayfa metni\\\" - İçerir, Şununla Başlar, İçermez ve daha fazlası"
 
 #: changedetectionio/templates/edit/text-options.html
-msgid "Matching text will be ignored in the text snapshot (you can still see it but it wont trigger a change)"
-msgstr ""
-"Eşleşen metin metin anlık görüntüsünde yoksayılacaktır (yine de görebilirsiniz ancak bir değişikliği "
-"tetiklemeyecektir)"
-
-#: changedetectionio/templates/edit/text-options.html
 msgid ""
 "For example: Out of stock\n"
 "Sold out\n"
@@ -3544,11 +3509,7 @@ msgid "Simpler alternative to regex — use this when you just want lines about 
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
-msgid "Example: enter"
-msgstr ""
-
-#: changedetectionio/templates/edit/text-options.html
-msgid "to keep only lines mentioning temperature readings"
+msgid "enter <code>celsius</code> to keep only lines mentioning temperature readings"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
@@ -3737,6 +3698,50 @@ msgstr "Ana ayarlar"
 #~ msgstr ""
 #~ "yöntemi, 'WEBDRIVER_URL' ENV değişkeni tarafından ayarlanan, çalışan bir"
 #~ " WebDriver+Chrome sunucusuna ağ bağlantısı gerektirir."
+
+#~ msgid "Example:"
+#~ msgstr "Örnek:"
+
+#~ msgid "This is"
+#~ msgstr "Bu"
+
+#~ msgid "experimental"
+#~ msgstr "deneyseldir"
+
+#~ msgid "supported fields are"
+#~ msgstr "desteklenen alanlar şunlardır"
+
+#~ msgid "the rest (including"
+#~ msgstr "geri kalanı (şunlar dahil"
+
+#~ msgid "are ignored."
+#~ msgstr "yoksayılır."
+
+#~ msgid "Matching text will be"
+#~ msgstr "Eşleşen metin"
+
+#~ msgid "ignored"
+#~ msgstr "yoksayılacak"
+
+#~ msgid "in the text snapshot (you can still see it but it wont trigger a change)"
+#~ msgstr "metin anlık görüntüsünde (hala görebilirsiniz ancak bir değişikliği tetiklemez)"
+
+#~ msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with"
+#~ msgstr ""
+#~ "Sitelerin satırları karıştırmasından kaynaklanan tespit edilen değişiklikleri"
+#~ " azaltmaya yardımcı olur, şununla birleştirin"
+
+#~ msgid "check unique lines"
+#~ msgstr "benzersiz satırları kontrol et"
+
+#~ msgid "below."
+#~ msgstr "aşağıda."
+
+#~ msgid "Example: enter"
+#~ msgstr ""
+
+#~ msgid "to keep only lines mentioning temperature readings"
+#~ msgstr ""
 
 #~ msgid "From"
 #~ msgstr "Kimden"
