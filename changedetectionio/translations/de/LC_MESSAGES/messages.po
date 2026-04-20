@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-18 16:38+0900\n"
+"POT-Creation-Date: 2026-04-19 00:17+0900\n"
 "PO-Revision-Date: 2026-01-14 03:57+0100\n"
 "Last-Translator: \n"
 "Language: de\n"
@@ -1983,9 +1983,17 @@ msgstr "Preis"
 msgid "No information"
 msgstr "Keine Informationen"
 
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Last Checked"
+msgstr ""
+
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
 msgid "Checking now"
 msgstr "Jetzt prüfen"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Last Changed"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Queued"
