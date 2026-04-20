@@ -200,8 +200,18 @@ $(function () {
         $area.removeAttr('data-pending');
     }
 
-    var llmAllChanges = $('#llm_all_changes').is(':checked') ? 1 : 0;
-    $.getJSON(summaryUrl, { from_version: fromVersion, to_version: toVersion, all_changes: llmAllChanges })
+    var llmAllChanges      = $('#llm_all_changes').is(':checked')    ? 1 : 0;
+    var ignoreWhitespace   = $('#ignoreWhitespace').is(':checked')   ? 1 : 0;
+    var showRemoved        = $('#removed').is(':checked')            ? 1 : 0;
+    var showAdded          = $('#added').is(':checked')              ? 1 : 0;
+    $.getJSON(summaryUrl, {
+        from_version:      fromVersion,
+        to_version:        toVersion,
+        all_changes:       llmAllChanges,
+        ignore_whitespace: ignoreWhitespace,
+        removed:           showRemoved,
+        added:             showAdded,
+    })
         .done(function (data) {
             if (data.summary) {
                 $area.find('.llm-diff-summary-text')

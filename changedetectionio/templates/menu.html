@@ -37,6 +37,12 @@
     </li>
 {% endif %}
     <li class="pure-menu-item menu-collapsible" id="inline-menu-extras-group">
+        {% if llm_configured %}
+        <button class="toggle-button toggle-ai-mode" type="button" title="{{ _('Toggle AI Mode') }}">
+            <span class="visually-hidden">{{ _('Toggle AI mode') }}</span>
+            {% include "svgs/ai-mode-icon.svg" %}
+        </button>
+        {% endif %}
         <button class="toggle-button toggle-light-mode " type="button" title="{{ _('Toggle Light/Dark Mode') }}">
             <span class="visually-hidden">{{ _('Toggle light/dark mode') }}</span>
             <span class="icon-light">

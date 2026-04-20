@@ -1025,8 +1025,13 @@ class model(EntityPersistenceMixin, watch_base):
         self.ensure_data_dir_exists()
         prompt_hash = self._llm_summary_prompt_hash(prompt)
         fname = os.path.join(self.data_dir, f'change-summary-{from_version}-to-{to_version}-{prompt_hash}.txt')
-        with open(fname, 'w', encoding='utf-8') as f:
-            f.write(summary)
+        tmp = fname + '.tmp'
+        try:
+            with open(tmp, 'w', encoding='utf-8') as f:
+                f.write(summary)
+            os.replace(tmp, fname)
+        except OSError as e:
+            logger.warning(f"Could not write LLM summary cache {fname}: {e}")
 
     def pause(self):
         self['paused'] = True

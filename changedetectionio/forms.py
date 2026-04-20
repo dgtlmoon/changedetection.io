@@ -1118,8 +1118,21 @@ class globalSettingsLLMForm(Form):
         default=0,
         render_kw={"style": "width: 10em;"},
     )
+    llm_max_input_chars = IntegerField(
+        _l('Max input characters'),
+        validators=[validators.Optional(), validators.NumberRange(min=1)],
+        default=100000,
+        render_kw={
+            "placeholder": "100000",
+            "style": "width: 10em;",
+        },
+    )
     llm_override_diff_with_summary = BooleanField(
         _l('Replace {{diff}} notification token with AI summary'),
+        default=True,
+    )
+    llm_restock_use_fallback_extract = BooleanField(
+        _l('Use LLM as a fallback for extracting price and restock info'),
         default=True,
     )
     llm_budget_action = RadioField(

@@ -161,6 +161,25 @@
                     <td style="text-align: right; padding-left: 2em;">{{ llm_stored.get('tokens_month_key') }}</td>
                 </tr>
                 {% endif %}
+                <tr>
+                    <td>{{ _('Max input characters') }}</td>
+                    <td style="text-align: right; padding-left: 2em;">
+                        {% if llm_max_input_chars_env %}
+                            {{ form.llm.form.llm_max_input_chars(
+                                value=llm_max_input_chars_env,
+                                readonly=True,
+                                style="width: 10em; opacity: 0.6; cursor: not-allowed;"
+                            ) }}
+                            <span style="font-size:0.8em; color:#888; margin-left:0.4em;">({{ _('set via') }} <code>LLM_MAX_INPUT_CHARS</code>)</span>
+                        {% else %}
+                            {{ form.llm.form.llm_max_input_chars(
+                                placeholder='100000',
+                                value=llm_stored.get('max_input_chars', 100000) or ''
+                            ) }}
+                            <span style="font-size:0.8em; color:#888; margin-left:0.4em;">{{ _('characters — currently enforcing: %(n)s', n='{:,}'.format(llm_effective_max_input_chars)) }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
             </tbody>
         </table>
         {% if llm_token_budget_month and llm_stored.get('tokens_this_month', 0) >= llm_token_budget_month %}
@@ -182,6 +201,17 @@
             </label>
             <span class="pure-form-message-inline">
                 {{ _('When enabled, the') }} <code>{{ '{{diff}}' }}</code> {{ _('notification token shows the AI summary instead of the raw diff. Use') }} <code>{{ '{{raw_diff}}' }}</code> {{ _('to always get the original.') }}
+            </span>
+        </div>
+
+        <div class="pure-control-group">
+            <label></label>
+            {{ form.llm.form.llm_restock_use_fallback_extract() }}
+            <label for="{{ form.llm.form.llm_restock_use_fallback_extract.id }}" style="display:inline; font-weight:normal;">
+                {{ form.llm.form.llm_restock_use_fallback_extract.label.text }}
+            </label>
+            <span class="pure-form-message-inline">
+                {{ _('When enabled, the AI will be used as a last resort to extract price and stock status from product pages where no structured metadata (JSON-LD, microdata, OpenGraph) is found.') }}
             </span>
         </div>
 

@@ -500,15 +500,26 @@ class TestSummariseChange:
                 summarise_change(watch, ds, diff='- old\n+ new')
 
     def test_uses_higher_token_limit_than_eval(self):
-        """summarise_change passes max_tokens=500 to client, not the default 200."""
-        from changedetectionio.llm.evaluator import summarise_change, _MAX_SUMMARY_TOKENS
+        """summarise_change passes a dynamic max_tokens larger than the eval default (200)."""
+        from changedetectionio.llm.evaluator import summarise_change, _summary_max_tokens
         ds = _make_datastore(llm_cfg={'model': 'gpt-4o-mini'})
         watch = _make_watch(llm_change_summary='Describe changes')
+        diff = '- old\n+ new'
         with patch('changedetectionio.llm.client.completion',
                    return_value=('Some summary', 100)) as mock_llm:
-            summarise_change(watch, ds, diff='- old\n+ new')
+            summarise_change(watch, ds, diff=diff)
         call_kwargs = mock_llm.call_args
-        assert call_kwargs.kwargs.get('max_tokens') == _MAX_SUMMARY_TOKENS
+        passed_max_tokens = call_kwargs.kwargs.get('max_tokens')
+        assert passed_max_tokens == _summary_max_tokens(diff)
+        assert passed_max_tokens >= 400  # always more generous than eval cap of 200
+
+    def test_dynamic_token_cap_scales_with_diff_size(self):
+        """Larger diffs produce a higher max_tokens cap, bounded at 3000."""
+        from changedetectionio.llm.evaluator import _summary_max_tokens
+        assert _summary_max_tokens('x' * 100)   == 400   # floor
+        assert _summary_max_tokens('x' * 4000)  == 1000
+        assert _summary_max_tokens('x' * 12000) == 3000  # ceiling
+        assert _summary_max_tokens('x' * 99999) == 3000  # never exceeds ceiling
 
 
 # ---------------------------------------------------------------------------

@@ -143,6 +143,73 @@ $(function () {
     $('#new-watch-form input[name="url"]').one('keydown', function () {
         $intentWrap.slideDown(200);
     });
+
+    // AI mode inline summary — clicking Summary button injects a row below with AJAX summary
+    $(document).on('click', '.ai-history-btn', function (e) {
+        if ($('html').attr('data-ai-mode') !== 'true') return; // normal navigation in non-AI mode
+
+        e.preventDefault();
+
+        var $btn    = $(this);
+        var uuid    = $btn.data('uuid');
+        var url     = $btn.data('summary-url');
+        var $row    = $btn.closest('tr');
+        var rowId   = 'ai-summary-row-' + uuid;
+        var cols    = $row.find('td').length;
+
+        var $tbody = $row.closest('tbody');
+
+        // Toggle: remove existing row if already open
+        if ($('#' + rowId).length) {
+            $('#' + rowId).remove();
+            $tbody.find('tr:not(.ai-inline-summary-row) td').css('background-color', '');
+            return;
+        }
+
+        // Snapshot backgrounds BEFORE DOM mutation — inserting a tr shifts nth-child parity
+        var $dataRows = $tbody.find('tr:not(.ai-inline-summary-row)');
+        var bgMap = [];
+        $dataRows.each(function () {
+            bgMap.push($(this).find('td:first').css('background-color'));
+        });
+
+        var $summaryRow = $(
+            '<tr class="ai-inline-summary-row" id="' + rowId + '">' +
+            '<td colspan="' + cols + '">' +
+            '<div class="ai-inline-summary-content">' +
+            '<span class="ai-inline-spinner">&#x2728;</span>' +
+            '<div class="ai-inline-body">' +
+            '<span class="ai-inline-text">{{ _('Generating summary…') }}</span>' +
+            '</div>' +
+            '</div>' +
+            '</td></tr>'
+        );
+        $row.after($summaryRow);
+
+        // Re-apply frozen backgrounds so nth-child shift is invisible
+        $dataRows.each(function (i) {
+            $(this).find('td').css('background-color', bgMap[i]);
+        });
+
+        $.getJSON(url)
+            .done(function (data) {
+                var $content = $summaryRow.find('.ai-inline-summary-content');
+                var historyUrl = $btn.attr('href');
+                if (data.summary) {
+                    $content.addClass('loaded');
+                    $content.find('.ai-inline-text').text(data.summary);
+                    $content.find('.ai-inline-body').append('<a href="' + historyUrl + '" class="ai-inline-history-link">{{ _('Goto full history') }}</a>');
+                } else if (data.error) {
+                    $summaryRow.find('td').html('<span class="ai-inline-error">' + $('<span>').text(data.error).html() + '</span>');
+                } else {
+                    $summaryRow.remove();
+                }
+            })
+            .fail(function (xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.error) ? xhr.responseJSON.error : 'AI summary request failed (HTTP ' + xhr.status + ').';
+                $summaryRow.find('td').html('<span class="ai-inline-error">' + $('<span>').text(msg).html() + '</span>');
+            });
+    });
 });
 </script>
 {% endif %}
@@ -373,7 +440,7 @@ $(function () {
                     <a href="" class="already-in-queue-button recheck pure-button pure-button-primary" style="display: none;" disabled="disabled">{{ _('Queued') }}</a>
                     <a href="{{ url_for('ui.form_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}" data-op='recheck' class="ajax-op recheck pure-button pure-button-primary">{{ _('Recheck') }}</a>
                     <a href="{{ url_for('ui.ui_edit.edit_page', uuid=watch.uuid, tag=active_tag_uuid)}}#general" class="pure-button pure-button-primary">{{ _('Edit') }}</a>
-                    <a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=watch.uuid)}}" {{target_attr}} class="pure-button pure-button-primary history-link" style="display: none;">{{ _('History') }}</a>
+                    <a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=watch.uuid)}}" {{target_attr}} class="pure-button pure-button-primary history-link ai-history-btn" style="display: none;" data-uuid="{{ watch.uuid }}" data-summary-url="{{ url_for('ui.ui_diff.diff_llm_summary', uuid=watch.uuid) }}"><span class="btn-label-history">{{ _('History') }}</span><span class="btn-label-summary">&#x2728; {{ _('Summary') }}</span></a>
                     <a href="{{ url_for('ui.ui_preview.preview_page', uuid=watch.uuid)}}" {{target_attr}} class="pure-button pure-button-primary preview-link" style="display: none;">{{ _('Preview') }}</a>
                     </div>
                 </td>

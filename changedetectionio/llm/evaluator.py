@@ -28,8 +28,49 @@ from .prompt_builder import (
 )
 from .response_parser import parse_eval_response, parse_preview_response, parse_setup_response
 
-# AI Change Summary can produce longer output than eval responses
-_MAX_SUMMARY_TOKENS = 2000
+_DEFAULT_MAX_INPUT_CHARS = 100_000
+
+def _get_max_input_chars(datastore) -> int:
+    """Max input characters to send to the LLM. Resolution: env var → datastore → 100,000.
+    Always returns at least 1 — unlimited is not permitted.
+    """
+    env_val = os.getenv('LLM_MAX_INPUT_CHARS', '').strip()
+    if env_val.isdigit() and int(env_val) > 0:
+        return int(env_val)
+    cfg = datastore.data.get('settings', {}).get('application', {}).get('llm') or {}
+    stored = cfg.get('max_input_chars')
+    if stored and int(stored) > 0:
+        return int(stored)
+    return _DEFAULT_MAX_INPUT_CHARS
+
+
+class LLMInputTooLargeError(Exception):
+    pass
+
+
+def _check_input_size(text: str, max_chars: int) -> None:
+    """Raise LLMInputTooLargeError if text exceeds max_chars."""
+    if len(text) > max_chars:
+        raise LLMInputTooLargeError(
+            f"Change too large for AI summary ({len(text):,} chars, limit {max_chars:,})"
+        )
+
+
+def _cached_system(text: str) -> dict:
+    """Wrap a system prompt for Anthropic prompt caching.
+    LiteLLM passes cache_control through to Anthropic and safely strips it for other providers.
+    """
+    return {'role': 'system', 'content': [{'type': 'text', 'text': text, 'cache_control': {'type': 'ephemeral'}}]}
+
+
+def _summary_max_tokens(diff: str) -> int:
+    """Scale completion tokens to diff size so short diffs aren't over-allocated
+    and long diffs (or all_changes multi-snapshot) aren't truncated mid-sentence.
+
+    ~1 LLM token ≈ 4 chars of English text; output is roughly proportional to input.
+    Bounds: 400 (minimum for any meaningful summary) … 3 000 (cost sanity ceiling).
+    """
+    return min(max(400, len(diff) // 4), 3000)
 
 # Default prompt used when the user hasn't configured llm_change_summary
 DEFAULT_CHANGE_SUMMARY_PROMPT = "Describe in plain English what changed — list what was added or removed as bullet points, including key details for each item. Be careful of content that merely just moved around, you should mention that it moved but dont report that it was added/removed etc. Be considerate of the style content you are summarising the change of, adjust your report accordingly. Do not quote non-English text verbatim; translate and summarise all content into English. Your entire response must be in English."
@@ -278,7 +319,7 @@ def run_setup(watch, datastore, snapshot_text: str) -> None:
         raw, tokens, *_ = llm_client.completion(
             model=cfg['model'],
             messages=[
-                {'role': 'system', 'content': system_prompt},
+                _cached_system(system_prompt),
                 {'role': 'user', 'content': user_prompt},
             ],
             api_key=cfg.get('api_key'),
@@ -349,6 +390,7 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
     if not diff.strip():
         return ''
 
+    _check_input_size(diff, _get_max_input_chars(datastore))
     url = watch.get('url', '')
     title = watch.get('page_title') or watch.get('title') or ''
 
@@ -365,12 +407,12 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
         _resp = llm_client.completion(
             model=cfg['model'],
             messages=[
-                {'role': 'system', 'content': system_prompt},
+                _cached_system(system_prompt),
                 {'role': 'user', 'content': user_prompt},
             ],
             api_key=cfg.get('api_key'),
             api_base=cfg.get('api_base'),
-            max_tokens=_MAX_SUMMARY_TOKENS,
+            max_tokens=_summary_max_tokens(diff),
         )
         raw, tokens = _resp[0], _resp[1]
         input_tokens  = _resp[2] if len(_resp) > 2 else 0
@@ -388,7 +430,6 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
         )
         return summary
     except Exception as e:
-        logger.warning(f"LLM change summary failed for {watch.get('uuid')}: {e}")
         raise
 
 
@@ -415,6 +456,7 @@ def preview_extract(watch, datastore, content: str) -> dict | None:
     if not intent or not content.strip():
         return None
 
+    _check_input_size(content, _get_max_input_chars(datastore))
     url = watch.get('url', '')
     title = watch.get('page_title') or watch.get('title') or ''
 
@@ -425,7 +467,7 @@ def preview_extract(watch, datastore, content: str) -> dict | None:
         raw, tokens, *_ = llm_client.completion(
             model=cfg['model'],
             messages=[
-                {'role': 'system', 'content': system_prompt},
+                _cached_system(system_prompt),
                 {'role': 'user', 'content': user_prompt},
             ],
             api_key=cfg.get('api_key'),
@@ -463,6 +505,8 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
 
     if not diff or not diff.strip():
         return {'important': False, 'summary': ''}
+
+    _check_input_size(diff, _get_max_input_chars(datastore))
 
     # Cache lookup — evaluations are deterministic once cached
     cache_key = hashlib.sha256(f"{intent}||{diff}".encode()).hexdigest()
@@ -504,7 +548,7 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
         _resp = llm_client.completion(
             model=cfg['model'],
             messages=[
-                {'role': 'system', 'content': system_prompt},
+                _cached_system(system_prompt),
                 {'role': 'user', 'content': user_prompt},
             ],
             api_key=cfg.get('api_key'),

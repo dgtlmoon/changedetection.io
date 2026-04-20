@@ -61,7 +61,7 @@ class ChangeDetectionSpec:
         pass
 
     @hookspec
-    def get_itemprop_availability_override(self, content, fetcher_name, fetcher_instance, url):
+    def get_itemprop_availability_override(self, content, fetcher_name, fetcher_instance, url, llm_intent=None):
         """Provide custom implementation of get_itemprop_availability for a specific fetcher.
 
         This hook allows plugins to provide their own product availability detection
@@ -73,6 +73,7 @@ class ChangeDetectionSpec:
             fetcher_name: The name of the fetcher being used (e.g., 'html_js_zyte')
             fetcher_instance: The fetcher instance that generated the content
             url: The URL being watched/checked
+            llm_intent: Optional user-supplied intent string (e.g. "alert when price drops below $300")
 
         Returns:
             dict or None: Dictionary with availability data:
@@ -241,24 +242,27 @@ plugin_manager.add_hookspecs(ChangeDetectionSpec)
 
 # Load plugins from subdirectories
 def load_plugins_from_directories():
-    # Dictionary of directories to scan for plugins
-    plugin_dirs = {
-        'conditions': os.path.join(os.path.dirname(__file__), 'conditions', 'plugins'),
-        # Add more plugin directories here as needed
-    }
-    
-    # Note: Removed the direct import of example_word_count_plugin as it's now in the conditions/plugins directory
-    
-    for dir_name, dir_path in plugin_dirs.items():
+    # List of (python_package_prefix, filesystem_path) pairs to scan for plugins.
+    # NOTE: processors/restock_diff/plugins is intentionally excluded here — those
+    # plugins are registered via register_builtin_restock_plugins() to avoid the
+    # circular import: restock_diff/__init__.py → model.Watch → content_fetchers → pluggy_interface.
+    plugin_dirs = [
+        (
+            'changedetectionio.conditions.plugins',
+            os.path.join(os.path.dirname(__file__), 'conditions', 'plugins'),
+        ),
+    ]
+
+    for module_prefix, dir_path in plugin_dirs:
         if not os.path.exists(dir_path):
             continue
-            
+
         # Get all Python files (excluding __init__.py)
         for filename in os.listdir(dir_path):
             if filename.endswith(".py") and filename != "__init__.py":
                 module_name = filename[:-3]  # Remove .py extension
-                module_path = f"changedetectionio.{dir_name}.plugins.{module_name}"
-                
+                module_path = f"{module_prefix}.{module_name}"
+
                 try:
                     module = importlib.import_module(module_path)
                     # Register the plugin with pluggy
@@ -310,6 +314,24 @@ def register_builtin_fetchers():
     if hasattr(webdriver_selenium, 'webdriver_selenium_plugin'):
         plugin_manager.register(webdriver_selenium.webdriver_selenium_plugin, 'builtin_webdriver_selenium')
 
+
+def register_builtin_restock_plugins():
+    """Register built-in restock processor plugins after all imports are complete.
+
+    Called from content_fetchers/__init__.py alongside register_builtin_fetchers()
+    to avoid the circular import that occurs when loading via load_plugins_from_directories()
+    (restock_diff/__init__.py → model.Watch → content_fetchers → pluggy_interface).
+    """
+    import importlib
+    module_path = 'changedetectionio.processors.restock_diff.plugins.llm_restock'
+    try:
+        module = importlib.import_module(module_path)
+        if not plugin_manager.is_registered(module):
+            plugin_manager.register(module, 'llm_restock')
+            logger.debug("Registered built-in restock plugin: llm_restock")
+    except Exception as e:
+        logger.error(f"Failed to register llm_restock plugin: {e}")
+
 # Helper function to collect UI stats extras from all plugins
 def collect_ui_edit_stats_extras(watch):
     """Collect and combine HTML content from all plugins that implement ui_edit_stats_extras"""
@@ -346,7 +368,7 @@ def collect_fetcher_status_icons(fetcher_name):
 
     return None
 
-def get_itemprop_availability_from_plugin(content, fetcher_name, fetcher_instance, url):
+def get_itemprop_availability_from_plugin(content, fetcher_name, fetcher_instance, url, llm_intent=None):
     """Get itemprop availability data from plugins as a fallback.
 
     This is called when the built-in get_itemprop_availability doesn't find good data.
@@ -356,6 +378,7 @@ def get_itemprop_availability_from_plugin(content, fetcher_name, fetcher_instanc
         fetcher_name: The name of the fetcher being used (e.g., 'html_js_zyte')
         fetcher_instance: The fetcher instance that generated the content
         url: The URL being watched (watch.link - includes Jinja2 evaluation)
+        llm_intent: Optional user-supplied intent string passed through to plugins
 
     Returns:
         dict or None: Availability data dictionary from first matching plugin, or None
@@ -365,7 +388,8 @@ def get_itemprop_availability_from_plugin(content, fetcher_name, fetcher_instanc
         content=content,
         fetcher_name=fetcher_name,
         fetcher_instance=fetcher_instance,
-        url=url
+        url=url,
+        llm_intent=llm_intent,
     )
 
     # Return first non-None result with actual data

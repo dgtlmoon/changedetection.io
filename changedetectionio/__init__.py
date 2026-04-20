@@ -400,8 +400,11 @@ def main():
         datastore.data['settings']['application']['all_paused'] = all_paused
         logger.info(f"Setting all watches paused: {all_paused}")
 
+    # Register built-in restock plugins (deferred here to avoid circular imports at module load time)
+    from changedetectionio.pluggy_interface import inject_datastore_into_plugins, register_builtin_restock_plugins
+    register_builtin_restock_plugins()
+
     # Inject datastore into plugins that need access to settings
-    from changedetectionio.pluggy_interface import inject_datastore_into_plugins
     inject_datastore_into_plugins(datastore)
 
     # Step 1: Add URLs with their options (if provided via -u flags)
@@ -624,12 +627,14 @@ def main():
 
     @app.context_processor
     def inject_template_globals():
+        from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config
         return dict(right_sticky="v"+__version__,
                     new_version_available=app.config['NEW_VERSION_AVAILABLE'],
                     has_password=datastore.data['settings']['application']['password'] != False,
                     socket_io_enabled=datastore.data['settings']['application'].get('ui', {}).get('socket_io_enabled', True),
                     all_paused=datastore.data['settings']['application'].get('all_paused', False),
-                    all_muted=datastore.data['settings']['application'].get('all_muted', False)
+                    all_muted=datastore.data['settings']['application'].get('all_muted', False),
+                    llm_configured=bool(_get_llm_config(datastore)),
                     )
 
     # Monitored websites will not receive a Referer header when a user clicks on an outgoing link.

@@ -32,12 +32,14 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # PasswordField for api_key is intentionally left blank on GET).
         _stored_llm = datastore.data['settings']['application'].get('llm') or {}
         default['llm'] = {
-            'llm_model':                      _stored_llm.get('model', ''),
-            'llm_api_base':                   _stored_llm.get('api_base', ''),
-            'llm_change_summary_default':     datastore.data['settings']['application'].get('llm_change_summary_default', ''),
-            'llm_override_diff_with_summary': datastore.data['settings']['application'].get('llm_override_diff_with_summary', True),
-            'llm_budget_action':              datastore.data['settings']['application'].get('llm_budget_action', 'skip_llm'),
-            'llm_token_budget_month':         _stored_llm.get('token_budget_month', 0),
+            'llm_model':                         _stored_llm.get('model', ''),
+            'llm_api_base':                      _stored_llm.get('api_base', ''),
+            'llm_change_summary_default':        datastore.data['settings']['application'].get('llm_change_summary_default', ''),
+            'llm_override_diff_with_summary':    datastore.data['settings']['application'].get('llm_override_diff_with_summary', True),
+            'llm_restock_use_fallback_extract':  datastore.data['settings']['application'].get('llm_restock_use_fallback_extract', True),
+            'llm_budget_action':                 datastore.data['settings']['application'].get('llm_budget_action', 'skip_llm'),
+            'llm_token_budget_month':            _stored_llm.get('token_budget_month', 0),
+            'llm_max_input_chars':               _stored_llm.get('max_input_chars', 0),
         }
 
         if datastore.proxy_list is not None:
@@ -114,6 +116,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 datastore.data['settings']['application']['llm_override_diff_with_summary'] = (
                     bool(llm_data.get('llm_override_diff_with_summary', True))
                 )
+                datastore.data['settings']['application']['llm_restock_use_fallback_extract'] = (
+                    bool(llm_data.get('llm_restock_use_fallback_extract', True))
+                )
                 datastore.data['settings']['application']['llm_budget_action'] = (
                     llm_data.get('llm_budget_action') or 'skip_llm'
                 )
@@ -124,11 +129,17 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     _budget = llm_data.get('llm_token_budget_month') or 0
                     existing_llm['token_budget_month'] = int(_budget) if _budget else 0
 
+                # Max input chars — only save if env var is not set
+                if not _os.getenv('LLM_MAX_INPUT_CHARS', '').strip():
+                    _max_chars = llm_data.get('llm_max_input_chars') or 0
+                    existing_llm['max_input_chars'] = int(_max_chars) if _max_chars else 0
+
                 llm_config = {
                     'model': (llm_data.get('llm_model') or '').strip(),
                     'api_key': effective_api_key,
                     'api_base': (llm_data.get('llm_api_base') or '').strip(),
                     'token_budget_month': existing_llm.get('token_budget_month', 0),
+                    'max_input_chars': existing_llm.get('max_input_chars', 0),
                     **preserved_counters,
                 }
                 # Only store if a model is set
@@ -239,6 +250,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         llm_stored = datastore.data['settings']['application'].get('llm') or {}
         llm_token_budget_month = get_global_token_budget_month(datastore)
         llm_token_budget_month_env = get_global_token_budget_month()  # env var only, for readonly logic
+        _max_input_chars_env_str = os.getenv('LLM_MAX_INPUT_CHARS', '').strip()
+        llm_max_input_chars_env = int(_max_input_chars_env_str) if _max_input_chars_env_str.isdigit() else 0
+        from changedetectionio.llm.evaluator import _get_max_input_chars, _DEFAULT_MAX_INPUT_CHARS
+        llm_effective_max_input_chars = _get_max_input_chars(datastore)
         # Cost display: only when user configured their own key (not hosted/operator-managed)
         llm_show_costs = not llm_env_configured
 
@@ -250,6 +265,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                 llm_stored=llm_stored,
                                 llm_token_budget_month=llm_token_budget_month,
                                 llm_token_budget_month_env=llm_token_budget_month_env,
+                                llm_max_input_chars_env=llm_max_input_chars_env,
+                                llm_effective_max_input_chars=llm_effective_max_input_chars,
                                 llm_show_costs=llm_show_costs,
                                 python_version=python_version,
                                 uptime_seconds=uptime_seconds,

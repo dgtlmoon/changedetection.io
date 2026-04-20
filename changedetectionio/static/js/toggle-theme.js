@@ -10,6 +10,19 @@ $(document).ready(function () {
         setCookieValue(!isDark);
     });
 
+    // AI mode toggle — persisted in localStorage
+    (function initAiMode() {
+        const enabled = localStorage.getItem('ai-mode') === 'true';
+        $("html").attr("data-ai-mode", enabled ? "true" : "false");
+    })();
+
+    $(".toggle-ai-mode").on("click", function () {
+        const current = $("html").attr("data-ai-mode") === "true";
+        const next = !current;
+        $("html").attr("data-ai-mode", next ? "true" : "false");
+        localStorage.setItem('ai-mode', next ? 'true' : 'false');
+    });
+
     const setCookieValue = (value) => {
         document.cookie = `css_dark_mode=${value};max-age=31536000;path=/`
     }
