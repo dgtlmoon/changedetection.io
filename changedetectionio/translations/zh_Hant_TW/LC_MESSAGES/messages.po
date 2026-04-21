@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-22 01:44+0900\n"
+"POT-Creation-Date: 2026-04-22 02:48+0900\n"
 "PO-Revision-Date: 2026-01-15 12:00+0800\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh_Hant_TW\n"
@@ -3444,7 +3444,7 @@ msgid "Use <code>//(?aiLmsux))</code> type flags (more <a href=\"%(url)s\">infor
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
-msgid "Keyword example - example"
+msgid "Keyword example - example: <code>Out of stock</code>"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
@@ -3825,6 +3825,9 @@ msgstr "主設定"
 #~ msgstr ""
 
 #~ msgid "Please read the notification services wiki here for important configuration notes"
+#~ msgstr ""
+
+#~ msgid "Keyword example - example"
 #~ msgstr ""
 
 #~ msgid "From"

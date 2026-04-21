@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  changedetection.io\n"
 "Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io\n"
-"POT-Creation-Date: 2026-04-22 01:44+0900\n"
+"POT-Creation-Date: 2026-04-22 02:48+0900\n"
 "PO-Revision-Date: 2026-02-19 12:30+0100\n"
 "Last-Translator: \n"
 "Language: uk\n"
@@ -3478,8 +3478,8 @@ msgid "Use <code>//(?aiLmsux))</code> type flags (more <a href=\"%(url)s\">infor
 msgstr "Використовуйте прапори типу <code>//(?aiLmsux))</code> (більше <a href=\"%(url)s\">інформації тут</a>)"
 
 #: changedetectionio/templates/edit/text-options.html
-msgid "Keyword example - example"
-msgstr "Ключове слово - приклад"
+msgid "Keyword example - example: <code>Out of stock</code>"
+msgstr "Ключове слово - приклад: <code>Немає в наявності</code>"
 
 #: changedetectionio/templates/edit/text-options.html
 msgid "Use groups to extract just that text - example"
@@ -3740,6 +3740,9 @@ msgstr "Головні налаштування"
 
 #~ msgid "in"
 #~ msgstr "у"
+
+#~ msgid "Keyword example - example"
+#~ msgstr "Ключове слово - приклад"
 
 #~ msgid "From"
 #~ msgstr "Від"

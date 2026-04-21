@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  changedetection.io\n"
 "Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io\n"
-"POT-Creation-Date: 2026-04-22 01:44+0900\n"
+"POT-Creation-Date: 2026-04-22 02:48+0900\n"
 "PO-Revision-Date: 2026-01-12 16:33+0100\n"
 "Last-Translator: British English Translation Team\n"
 "Language: en_GB\n"
@@ -3440,7 +3440,7 @@ msgid "Use <code>//(?aiLmsux))</code> type flags (more <a href=\"%(url)s\">infor
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
-msgid "Keyword example - example"
+msgid "Keyword example - example: <code>Out of stock</code>"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
@@ -3659,6 +3659,9 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "in"
+#~ msgstr ""
+
+#~ msgid "Keyword example - example"
 #~ msgstr ""
 
 #~ msgid "From"

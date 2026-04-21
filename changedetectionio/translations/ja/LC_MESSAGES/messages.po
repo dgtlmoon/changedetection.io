@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-22 01:44+0900\n"
+"POT-Creation-Date: 2026-04-22 02:48+0900\n"
 "PO-Revision-Date: 2026-03-31 23:52+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -3485,8 +3485,8 @@ msgid "Use <code>//(?aiLmsux))</code> type flags (more <a href=\"%(url)s\">infor
 msgstr "<code>//(?aiLmsux))</code> タイプフラグを使用できます（詳細は <a href=\"%(url)s\">こちら</a>）"
 
 #: changedetectionio/templates/edit/text-options.html
-msgid "Keyword example - example"
-msgstr "キーワード例 - 例"
+msgid "Keyword example - example: <code>Out of stock</code>"
+msgstr "キーワード例 - 例: <code>在庫切れ</code>"
 
 #: changedetectionio/templates/edit/text-options.html
 msgid "Use groups to extract just that text - example"
@@ -3594,4 +3594,7 @@ msgstr "メイン設定"
 
 #~ msgid "Please read the notification services wiki here for important configuration notes"
 #~ msgstr "重要な設定に関するメモについては、通知サービスのWikiをこちらでお読みください"
+
+#~ msgid "Keyword example - example"
+#~ msgstr "キーワード例 - 例"
 
