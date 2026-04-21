@@ -3,7 +3,11 @@ Prompt construction for LLM evaluation calls.
 Pure functions — no side effects, fully testable.
 """
 
+import re
+
 from .bm25_trim import trim_to_relevant
+
+_AGO_RE = re.compile(r'^\d+\s+\w+\s+ago$', re.IGNORECASE)
 
 SNAPSHOT_CONTEXT_CHARS = 3_000   # current page state excerpt sent alongside the diff
 
@@ -29,7 +33,7 @@ def _annotate_moved_lines(diff_text: str) -> str:
     for line in lines:
         if line.startswith(('+', '-')):
             bare = line[1:].strip().lower()
-            if bare in moved_texts:
+            if bare in moved_texts or _AGO_RE.match(line[1:].strip()):
                 result.append(f'~{line[1:]}')  # ~ prefix = moved/reordered/trivial, skip
                 continue
         result.append(line)
@@ -150,13 +154,12 @@ def build_change_summary_system_prompt() -> str:
         "Rules for reading the diff:\n"
         "- Lines starting with + are genuinely new content. List them specifically.\n"
         "- Lines starting with - are genuinely removed content. List them specifically.\n"
-        "- Lines starting with ~ have been PRE-IDENTIFIED as moved/reordered — "
-        "the same text exists on both sides of the diff. Do NOT report ~ lines as added or removed. "
+        "- Lines starting with ~ have been PRE-IDENTIFIED as moved/reordered or trivial — "
+        "the same text exists on both sides of the diff, or the line is a standalone timestamp. "
+        "Do NOT report ~ lines as added or removed. "
         "If many ~ lines exist, note briefly that some content was reordered.\n"
-        "- NEVER mention standalone timestamps (e.g. '3 hours ago', '17 hours ago', 'Yesterday', "
-        "'Today', '2 minutes ago', '1 hour ago') as added or removed items. They are not content. "
-        "Completely discard any + or - line whose entire content is a timestamp like these. "
-        "Do not list them. Do not count them. Pretend they do not exist in the diff.\n\n"
+        "- Never list standalone timestamps like '3 hours ago', 'Yesterday', '2 minutes ago' "
+        "as added or removed items — they are not meaningful content changes.\n"
         "For content-heavy pages (news, listings, feeds): quote or paraphrase the specific new "
         "headlines, items, or entries that were added — do not collapse them into vague phrases "
         "like 'new articles were added' or 'section was expanded'.\n"
