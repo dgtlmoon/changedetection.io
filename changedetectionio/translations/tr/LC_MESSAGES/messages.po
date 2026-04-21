@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-19 00:17+0900\n"
+"POT-Creation-Date: 2026-04-21 13:27+0900\n"
 "PO-Revision-Date: 2026-04-10 20:38+0300\n"
 "Last-Translator: \n"
 "Language: tr\n"
@@ -1260,11 +1260,15 @@ msgstr "Eşleşen satırları yoksay"
 msgid "Ignore any lines matching excluding digits"
 msgstr "Rakamlar hariç eşleşen satırları yoksay"
 
+#. 'From' labels the older snapshot version selector on the diff page
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgctxt "diff version"
 msgid "From"
 msgstr "Kimden"
 
+#. 'To' labels the newer snapshot version selector on the diff page
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgctxt "diff version"
 msgid "To"
 msgstr "Kime"
 
@@ -3644,4 +3648,10 @@ msgstr "Ana ayarlar"
 
 #~ msgid "\"Residential\" and \"Mobile\" proxy type can be more successfull than \"Data Center\" for blocked websites."
 #~ msgstr "Engellenen web siteleri için \"Yerleşim Yeri\" ve \"Mobil\" proxy türü \"Veri Merkezi\"nden daha başarılı olabilir."
+
+#~ msgid "From"
+#~ msgstr "Kimden"
+
+#~ msgid "To"
+#~ msgstr "Kime"
 
