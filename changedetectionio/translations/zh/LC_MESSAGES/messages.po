@@ -2698,6 +2698,10 @@ msgid "Notification base URL override"
 msgstr "通知基础 URL 覆盖"
 
 #: changedetectionio/forms.py
+msgid "Not set"
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "Treat empty pages as a change?"
 msgstr "将空页面视为变更？"
 
@@ -3411,6 +3415,60 @@ msgstr "在"
 msgid "Enter search term..."
 msgstr "输入搜索关键词..."
 
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "Note!: //text() function does not work where the <element> contains <![CDATA[]]>"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "One CSS, xPath 1 & 2, JSON Path/JQ selector per line, <i>any</i> rules that matches will be used."
+msgstr ""
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "Limit text to this CSS rule, only text matching this CSS rule is included."
+msgstr ""
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "Prefix with <code>json:</code>, use <code>json:$</code> to force re-formatting if required,"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "test your JSONPath here"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "Prefix <code>jqraw:</code> outputs the results as text instead of a JSON list."
+msgstr ""
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "jq support not installed"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid ""
+"Limit text to this XPath rule, simply start with a forward-slash. To specify XPath to be used explicitly or the XPath"
+" rule starts with an XPath function: Prefix with <code>xpath:</code>"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "Example"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "test your XPath here"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "Get all titles from an RSS feed <code>//title/text()</code>"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "To use XPath1.0: Prefix with <code>xpath1:</code>"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "here for more CSS selector help"
+msgstr ""
+
 #: changedetectionio/templates/edit/text-options.html
 msgid "Text to wait for before triggering a change/notification, all text and regex are tested case-insensitive."
 msgstr "触发变更/通知前等待的文本，所有文本和正则均不区分大小写。"
@@ -3445,6 +3503,14 @@ msgstr "匹配的文本会在文本快照中被忽略（仍可见但不会触发
 
 #: changedetectionio/templates/edit/text-options.html
 msgid ""
+"For example: Out of stock\n"
+"Sold out\n"
+"Not in stock\n"
+"Unavailable"
+msgstr ""
+
+#: changedetectionio/templates/edit/text-options.html
+msgid ""
 "Block change-detection while this text is on the page, all text and regex are tested case-insensitive, good for "
 "waiting for when a product is available again"
 msgstr "当页面出现这些文本时阻止变更检测，所有文本和正则均不区分大小写，适合等待商品重新上架"
@@ -3456,6 +3522,13 @@ msgstr "阻止文本来自该监控项的 CSS/JSON 过滤结果"
 #: changedetectionio/templates/edit/text-options.html
 msgid "All lines here must not exist (think of each line as \"OR\")"
 msgstr "此处所有行必须不存在（每行视为“或”）"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid ""
+"celsius\n"
+"temperature\n"
+"price"
+msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
 msgid "Keep only lines that contain any of these words or phrases (plain text, case-insensitive)"
