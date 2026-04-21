@@ -144,7 +144,8 @@
                             }}
                             <div class="pure-form-message-inline">
                                 <p>
-                                <strong>{{ _('Tip:') }}</strong> {{ _('Use') }} <a target="newwindow" href="https://github.com/caronc/apprise">{{ _('AppRise Notification URLs') }}</a> {{ _('for notification to just about any service!') }} <i><a target="newwindow" href="https://github.com/dgtlmoon/changedetection.io/wiki/Notification-configuration-notes">{{ _('Please read the notification services wiki here for important configuration notes') }}</a></i>.<br>
+                                <strong>{{ _('Tip:') }}</strong> {{ _('Use <a target="newwindow" href="%(url)s">AppRise Notification URLs</a> for notification to just about any service!',
+                                    url='https://github.com/caronc/apprise')|safe }} <a target="newwindow" href="https://github.com/dgtlmoon/changedetection.io/wiki/Notification-configuration-notes">{{ _('<i>Please read the notification services wiki here for important configuration notes</i>')|safe }}</a>.<br>
 </p>
                                 <div data-target="#advanced-help-notifications" class="toggle-show pure-button button-tag button-xsmall">{{ _('Show advanced help and tips') }}</div>
                                 <ul style="display: none" id="advanced-help-notifications">
