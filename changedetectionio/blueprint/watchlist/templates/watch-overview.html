@@ -146,7 +146,7 @@ $(function () {
 
     // AI mode inline summary — clicking Summary button injects a row below with AJAX summary
     $(document).on('click', '.ai-history-btn', function (e) {
-        if ($('html').attr('data-ai-mode') !== 'true') return; // normal navigation in non-AI mode
+        if ($('html').attr('data-ai-mode') !== 'true' || !$('body').hasClass('llm-configured')) return; // normal navigation when AI mode off or LLM not configured
 
         e.preventDefault();
 

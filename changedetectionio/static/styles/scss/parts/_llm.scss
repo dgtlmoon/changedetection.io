@@ -66,10 +66,21 @@
 .toggle-ai-mode {
   opacity: 0.4;
   transition: opacity 0.2s ease, filter 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--color-text-menu-link);
 
   svg {
     height: 1.2rem;
     width: 1.2rem;
+  }
+
+  .ai-mode-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    line-height: 1;
   }
 }
 
@@ -83,7 +94,7 @@ html[data-ai-mode="true"] .toggle-ai-mode {
   display: none;
 }
 
-html[data-ai-mode="true"] {
+html[data-ai-mode="true"] body.llm-configured {
   .btn-label-history { display: none; }
   .btn-label-summary { display: inline; }
 }

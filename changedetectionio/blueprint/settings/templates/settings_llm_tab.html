@@ -9,7 +9,7 @@
         <p class="pure-form-message-inline">
             {{ _('The AI receives a') }} <strong>{{ _('unified diff') }}</strong> {{ _('of what changed — lines starting with') }} <code>+</code> {{ _('are newly added content, lines starting with') }} <code>-</code> {{ _('are removed content. This means your intent can target specific directions of change, for example:') }}
             <em>{{ _('"notify me only when a price drops"') }}</em> {{ _('or') }} <em>{{ _('"alert when a product is removed from the listing"') }}</em>.
-            {{ _('gpt-4o-mini, Gemini Flash, and other low-cost models are perfectly suitable for summarisation and intent filtering.') }}
+            {{ _('%(gpt_link)s, %(gemini_link)s, and other low-cost models are perfectly suitable for summarisation and intent filtering.', gpt_link='<a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">gpt-4o-mini</a>', gemini_link='<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Gemini Flash</a>') | safe }}
         </p>
 
         {% if llm_env_configured %}

@@ -94,7 +94,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             app_rss_token=datastore.data['settings']['application'].get('rss_access_token'),
             datastore=datastore,
             errored_count=errored_count,
-            extra_classes='has-queue' if not update_q.empty() else '',
+            extra_classes=' '.join(filter(None, ['has-queue' if not update_q.empty() else '', 'llm-configured' if llm_configured else ''])),
             form=form,
             generate_tag_colors=processors.generate_processor_badge_colors,
             wcag_text_color=processors.wcag_text_color,
