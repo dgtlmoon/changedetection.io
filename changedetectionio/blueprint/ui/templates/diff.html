@@ -25,7 +25,8 @@
         <fieldset class="diff-fieldset">
             {% if versions|length >= 1 %}
                 <span style="white-space: nowrap;">
-                <label id="change-from" for="diff-from-version" class="from-to-label">{{ _('From') }}</label>
+                {# TRANSLATORS: 'From' labels the older snapshot version selector on the diff page #}
+                <label id="change-from" for="diff-from-version" class="from-to-label">{{ pgettext('diff version', 'From') }}</label>
                 <select id="diff-from-version" name="from_version" class="needs-localtime">
                     {%- for version in versions|reverse -%}
                         <option value="{{ version }}" {% if version== from_version %} selected="" {% endif %}>
@@ -35,7 +36,8 @@
                 </select>
                 </span>
                 <span style="white-space: nowrap;">
-                <label id="change-to" for="diff-to-version" class="from-to-label">{{ _('To') }}</label>
+                {# TRANSLATORS: 'To' labels the newer snapshot version selector on the diff page #}
+                <label id="change-to" for="diff-to-version" class="from-to-label">{{ pgettext('diff version', 'To') }}</label>
                 <select id="diff-to-version" name="to_version" class="needs-localtime">
                     {%- for version in versions|reverse -%}
                         <option value="{{ version }}" {% if version== to_version %} selected="" {% endif %}>
