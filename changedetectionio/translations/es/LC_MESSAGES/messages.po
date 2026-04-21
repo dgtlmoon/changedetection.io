@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-19 00:17+0900\n"
+"POT-Creation-Date: 2026-04-21 13:27+0900\n"
 "PO-Revision-Date: 2026-03-20 18:13+0100\n"
 "Last-Translator: Adrian Gonzalez <adrian@example.com>\n"
 "Language: es\n"
@@ -1271,11 +1271,15 @@ msgstr "Ignora cualquier línea que coincida"
 msgid "Ignore any lines matching excluding digits"
 msgstr "Ignore cualquier línea que coincida excluyendo dígitos"
 
+#. 'From' labels the older snapshot version selector on the diff page
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgctxt "diff version"
 msgid "From"
 msgstr "De"
 
+#. 'To' labels the newer snapshot version selector on the diff page
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgctxt "diff version"
 msgid "To"
 msgstr "A"
 
@@ -3740,4 +3744,10 @@ msgstr "Configuraciones principales"
 #~ "El tipo de proxy \"residencial\" y \"móvil\" puede tener más"
 #~ " éxito que el \"centro de datos\" para sitios web "
 #~ "bloqueados."
+
+#~ msgid "From"
+#~ msgstr "De"
+
+#~ msgid "To"
+#~ msgstr "A"
 

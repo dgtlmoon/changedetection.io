@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: changedetection.io 0.54.9\n"
+"Project-Id-Version: changedetection.io 0.54.10\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-19 00:17+0900\n"
+"POT-Creation-Date: 2026-04-21 13:27+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1230,11 +1230,15 @@ msgstr ""
 msgid "Ignore any lines matching excluding digits"
 msgstr ""
 
+#. 'From' labels the older snapshot version selector on the diff page
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgctxt "diff version"
 msgid "From"
 msgstr ""
 
+#. 'To' labels the newer snapshot version selector on the diff page
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgctxt "diff version"
 msgid "To"
 msgstr ""
 

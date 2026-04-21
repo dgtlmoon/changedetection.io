@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  changedetection.io\n"
 "Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io\n"
-"POT-Creation-Date: 2026-04-19 00:17+0900\n"
+"POT-Creation-Date: 2026-04-21 13:27+0900\n"
 "PO-Revision-Date: 2026-02-19 12:30+0100\n"
 "Last-Translator: \n"
 "Language: uk\n"
@@ -1240,11 +1240,15 @@ msgstr "Ігнорувати рядки, що збігаються з"
 msgid "Ignore any lines matching excluding digits"
 msgstr "Ігнорувати рядки, що збігаються з (виключаючи цифри)"
 
+#. 'From' labels the older snapshot version selector on the diff page
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgctxt "diff version"
 msgid "From"
 msgstr "Від"
 
+#. 'To' labels the newer snapshot version selector on the diff page
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgctxt "diff version"
 msgid "To"
 msgstr "До"
 
@@ -3688,4 +3692,10 @@ msgstr "Головні налаштування"
 
 #~ msgid "\"Residential\" and \"Mobile\" proxy type can be more successfull than \"Data Center\" for blocked websites."
 #~ msgstr "Проксі типу «Резидентні» та «Мобільні» можуть бути ефективнішими, ніж «Дата-центр», для заблокованих сайтів."
+
+#~ msgid "From"
+#~ msgstr "Від"
+
+#~ msgid "To"
+#~ msgstr "До"
 
