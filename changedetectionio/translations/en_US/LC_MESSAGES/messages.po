@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io\n"
-"POT-Creation-Date: 2026-04-21 18:11+0900\n"
+"POT-Creation-Date: 2026-04-22 01:44+0900\n"
 "PO-Revision-Date: 2026-01-12 16:37+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en_US\n"
@@ -3022,19 +3022,12 @@ msgid "More Here"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Use"
+#, python-format
+msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
-msgid "AppRise Notification URLs"
-msgstr ""
-
-#: changedetectionio/templates/_common_fields.html
-msgid "for notification to just about any service!"
-msgstr ""
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Please read the notification services wiki here for important configuration notes"
+msgid "<i>Please read the notification services wiki here for important configuration notes</i>"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
@@ -3294,11 +3287,12 @@ msgid "Search"
 msgstr ""
 
 #: changedetectionio/templates/base.html
-msgid "URL or Title"
+#, python-format
+msgid "URL or Title in '%(title)s'"
 msgstr ""
 
 #: changedetectionio/templates/base.html
-msgid "in"
+msgid "URL or Title"
 msgstr ""
 
 #: changedetectionio/templates/base.html
@@ -3650,6 +3644,21 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "information here"
+#~ msgstr ""
+
+#~ msgid "Use"
+#~ msgstr ""
+
+#~ msgid "AppRise Notification URLs"
+#~ msgstr ""
+
+#~ msgid "for notification to just about any service!"
+#~ msgstr ""
+
+#~ msgid "Please read the notification services wiki here for important configuration notes"
+#~ msgstr ""
+
+#~ msgid "in"
 #~ msgstr ""
 
 #~ msgid "From"

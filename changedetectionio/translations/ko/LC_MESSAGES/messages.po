@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-21 18:11+0900\n"
+"POT-Creation-Date: 2026-04-22 01:44+0900\n"
 "PO-Revision-Date: 2026-01-02 11:40+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ko\n"
@@ -3025,19 +3025,12 @@ msgid "More Here"
 msgstr "더보기"
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Use"
-msgstr "사용"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "AppRise Notification URLs"
-msgstr "AppRise 알림 URL"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "for notification to just about any service!"
+#, python-format
+msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Please read the notification services wiki here for important configuration notes"
+msgid "<i>Please read the notification services wiki here for important configuration notes</i>"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
@@ -3297,12 +3290,13 @@ msgid "Search"
 msgstr "검색"
 
 #: changedetectionio/templates/base.html
-msgid "URL or Title"
+#, python-format
+msgid "URL or Title in '%(title)s'"
 msgstr ""
 
 #: changedetectionio/templates/base.html
-msgid "in"
-msgstr "내"
+msgid "URL or Title"
+msgstr ""
 
 #: changedetectionio/templates/base.html
 msgid "Enter search term..."
@@ -3695,7 +3689,7 @@ msgstr "기본 설정"
 #~ msgstr "수색"
 
 #~ msgid "in"
-#~ msgstr "추가 정보"
+#~ msgstr "내"
 
 #~ msgid "Visual"
 #~ msgstr "시각적"
@@ -3867,6 +3861,18 @@ msgstr "기본 설정"
 
 #~ msgid "information here"
 #~ msgstr "여기 정보"
+
+#~ msgid "Use"
+#~ msgstr "사용"
+
+#~ msgid "AppRise Notification URLs"
+#~ msgstr "AppRise 알림 URL"
+
+#~ msgid "for notification to just about any service!"
+#~ msgstr ""
+
+#~ msgid "Please read the notification services wiki here for important configuration notes"
+#~ msgstr ""
 
 #~ msgid "From"
 #~ msgstr "에서"

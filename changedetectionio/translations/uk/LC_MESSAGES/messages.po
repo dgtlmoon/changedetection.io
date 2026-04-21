@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  changedetection.io\n"
 "Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io\n"
-"POT-Creation-Date: 2026-04-21 18:11+0900\n"
+"POT-Creation-Date: 2026-04-22 01:44+0900\n"
 "PO-Revision-Date: 2026-02-19 12:30+0100\n"
 "Last-Translator: \n"
 "Language: uk\n"
@@ -3052,20 +3052,15 @@ msgid "More Here"
 msgstr "Детальніше тут"
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Use"
-msgstr "Використовуйте"
+#, python-format
+msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
+msgstr ""
+"Використовуйте <a target=\"newwindow\" href=\"%(url)s\">URL сповіщень AppRise</a> для сповіщень практично в будь-який"
+" сервіс!"
 
 #: changedetectionio/templates/_common_fields.html
-msgid "AppRise Notification URLs"
-msgstr "URL сповіщень AppRise"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "for notification to just about any service!"
-msgstr "для сповіщень практично в будь-який сервіс!"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Please read the notification services wiki here for important configuration notes"
-msgstr "Будь ласка, прочитайте вікі по сервісах сповіщень тут для важливих нотаток щодо конфігурації"
+msgid "<i>Please read the notification services wiki here for important configuration notes</i>"
+msgstr "<i>Будь ласка, прочитайте вікі по сервісах сповіщень тут для важливих нотаток щодо конфігурації</i>"
 
 #: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
 msgid "Show advanced help and tips"
@@ -3326,12 +3321,13 @@ msgid "Search"
 msgstr "Пошук"
 
 #: changedetectionio/templates/base.html
-msgid "URL or Title"
-msgstr "URL або Назва"
+#, python-format
+msgid "URL or Title in '%(title)s'"
+msgstr "URL або Назва у '%(title)s'"
 
 #: changedetectionio/templates/base.html
-msgid "in"
-msgstr "у"
+msgid "URL or Title"
+msgstr "URL або Назва"
 
 #: changedetectionio/templates/base.html
 msgid "Enter search term..."
@@ -3729,6 +3725,21 @@ msgstr "Головні налаштування"
 
 #~ msgid "information here"
 #~ msgstr "інформації тут"
+
+#~ msgid "Use"
+#~ msgstr "Використовуйте"
+
+#~ msgid "AppRise Notification URLs"
+#~ msgstr "URL сповіщень AppRise"
+
+#~ msgid "for notification to just about any service!"
+#~ msgstr "для сповіщень практично в будь-який сервіс!"
+
+#~ msgid "Please read the notification services wiki here for important configuration notes"
+#~ msgstr "Будь ласка, прочитайте вікі по сервісах сповіщень тут для важливих нотаток щодо конфігурації"
+
+#~ msgid "in"
+#~ msgstr "у"
 
 #~ msgid "From"
 #~ msgstr "Від"

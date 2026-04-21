@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-21 18:11+0900\n"
+"POT-Creation-Date: 2026-04-22 01:44+0900\n"
 "PO-Revision-Date: 2026-03-31 23:52+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -3046,26 +3046,15 @@ msgstr "例えば、追加や削除が場合によっては変更として認識
 msgid "More Here"
 msgstr "詳細はこちら"
 
-# 訳注: "Use" + <a>AppRise Notification URLs</a> + "for notification to just about any service!"
-# → 「 AppRise 通知URL ほぼすべてのサービスへの通知に対応！」
-# 述語の訳を後続フラグメントにまとめた
-# 前半は日本語では不要なため、空白1文字で非表示にする（空文字は英語にフォールバックするため）
-# リスク: 将来、別テンプレートで再利用されると、本来の英語の意味とは異なる訳が流用されて壊れる可能性あり。新規追加時は見直すこと。
 #: changedetectionio/templates/_common_fields.html
-msgid "Use"
-msgstr " "
+#, python-format
+msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
+msgstr "<a target=\"newwindow\" href=\"%(url)s\">AppRise 通知URL</a> を使えば、ほぼすべてのサービスへの通知に対応できます！"
 
+# 訳注: 日本語を斜体にすると字形が崩れるため、強調表示は<strong>に置き換える。
 #: changedetectionio/templates/_common_fields.html
-msgid "AppRise Notification URLs"
-msgstr "AppRise 通知URL"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "for notification to just about any service!"
-msgstr "ほぼすべてのサービスへの通知に対応！"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Please read the notification services wiki here for important configuration notes"
-msgstr "重要な設定に関するメモについては、通知サービスのWikiをこちらでお読みください"
+msgid "<i>Please read the notification services wiki here for important configuration notes</i>"
+msgstr "<strong>重要な設定に関するメモについては、通知サービスのWikiをこちらでお読みください</strong>"
 
 #: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
 msgid "Show advanced help and tips"
@@ -3333,15 +3322,13 @@ msgid "Search"
 msgstr "検索"
 
 #: changedetectionio/templates/base.html
+#, python-format
+msgid "URL or Title in '%(title)s'"
+msgstr "'%(title)s' 内のURLまたはタイトル"
+
+#: changedetectionio/templates/base.html
 msgid "URL or Title"
 msgstr "URLまたはタイトル"
-
-# 訳注: "URL or Title in 'タグ名'" → 「URLまたはタイトル - 'タグ名'」
-# 前置詞 "in" を区切り文字に置き換えた
-# リスク: 将来、別テンプレートで再利用されると、本来の英語の意味とは異なる訳が流用されて壊れる可能性あり。新規追加時は見直すこと。
-#: changedetectionio/templates/base.html
-msgid "in"
-msgstr "-"
 
 #: changedetectionio/templates/base.html
 msgid "Enter search term..."
@@ -3604,4 +3591,7 @@ msgstr "メイン設定"
 
 #~ msgid "information here"
 #~ msgstr "情報はこちら"
+
+#~ msgid "Please read the notification services wiki here for important configuration notes"
+#~ msgstr "重要な設定に関するメモについては、通知サービスのWikiをこちらでお読みください"
 

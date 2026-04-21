@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-21 18:11+0900\n"
+"POT-Creation-Date: 2026-04-22 01:44+0900\n"
 "PO-Revision-Date: 2026-01-02 11:40+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: cs\n"
@@ -3028,19 +3028,12 @@ msgid "More Here"
 msgstr "Více zde"
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Use"
-msgstr "Použít"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "AppRise Notification URLs"
-msgstr "URL pro AppRise oznámení"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "for notification to just about any service!"
+#, python-format
+msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Please read the notification services wiki here for important configuration notes"
+msgid "<i>Please read the notification services wiki here for important configuration notes</i>"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
@@ -3300,12 +3293,13 @@ msgid "Search"
 msgstr "Hledat"
 
 #: changedetectionio/templates/base.html
-msgid "URL or Title"
+#, python-format
+msgid "URL or Title in '%(title)s'"
 msgstr ""
 
 #: changedetectionio/templates/base.html
-msgid "in"
-msgstr "v"
+msgid "URL or Title"
+msgstr ""
 
 #: changedetectionio/templates/base.html
 msgid "Enter search term..."
@@ -3593,7 +3587,7 @@ msgstr "Hlavní nastavení"
 #~ msgstr "Hledání"
 
 #~ msgid "in"
-#~ msgstr "Více informací"
+#~ msgstr "v"
 
 #~ msgid "Visual"
 #~ msgstr "Vizuální"
@@ -3765,6 +3759,18 @@ msgstr "Hlavní nastavení"
 
 #~ msgid "information here"
 #~ msgstr "informace zde"
+
+#~ msgid "Use"
+#~ msgstr "Použít"
+
+#~ msgid "AppRise Notification URLs"
+#~ msgstr "URL pro AppRise oznámení"
+
+#~ msgid "for notification to just about any service!"
+#~ msgstr ""
+
+#~ msgid "Please read the notification services wiki here for important configuration notes"
+#~ msgstr ""
 
 #~ msgid "From"
 #~ msgstr "Z"

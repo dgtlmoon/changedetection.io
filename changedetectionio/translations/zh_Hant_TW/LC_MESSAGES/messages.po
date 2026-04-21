@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-21 18:11+0900\n"
+"POT-Creation-Date: 2026-04-22 01:44+0900\n"
 "PO-Revision-Date: 2026-01-15 12:00+0800\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh_Hant_TW\n"
@@ -3026,19 +3026,12 @@ msgid "More Here"
 msgstr "更多資訊"
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Use"
-msgstr "使用"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "AppRise Notification URLs"
-msgstr "AppRise 通知 URL"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "for notification to just about any service!"
+#, python-format
+msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Please read the notification services wiki here for important configuration notes"
+msgid "<i>Please read the notification services wiki here for important configuration notes</i>"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
@@ -3298,12 +3291,13 @@ msgid "Search"
 msgstr "搜尋"
 
 #: changedetectionio/templates/base.html
-msgid "URL or Title"
+#, python-format
+msgid "URL or Title in '%(title)s'"
 msgstr ""
 
 #: changedetectionio/templates/base.html
-msgid "in"
-msgstr "在"
+msgid "URL or Title"
+msgstr ""
 
 #: changedetectionio/templates/base.html
 msgid "Enter search term..."
@@ -3639,7 +3633,7 @@ msgstr "主設定"
 #~ msgstr "URL 或標題"
 
 #~ msgid "in"
-#~ msgstr "於"
+#~ msgstr "在"
 
 #~ msgid "Enter search term..."
 #~ msgstr "輸入搜尋關鍵字 ..."
@@ -3820,6 +3814,18 @@ msgstr "主設定"
 
 #~ msgid "information here"
 #~ msgstr "此處資訊"
+
+#~ msgid "Use"
+#~ msgstr "使用"
+
+#~ msgid "AppRise Notification URLs"
+#~ msgstr "AppRise 通知 URL"
+
+#~ msgid "for notification to just about any service!"
+#~ msgstr ""
+
+#~ msgid "Please read the notification services wiki here for important configuration notes"
+#~ msgstr ""
 
 #~ msgid "From"
 #~ msgstr "從"

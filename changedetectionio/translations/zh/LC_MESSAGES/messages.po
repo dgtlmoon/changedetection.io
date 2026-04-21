@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-21 18:11+0900\n"
+"POT-Creation-Date: 2026-04-22 01:44+0900\n"
 "PO-Revision-Date: 2026-01-18 21:31+0800\n"
 "Last-Translator: 吾爱分享 <admin@wuaishare.cn>\n"
 "Language: zh\n"
@@ -3027,20 +3027,14 @@ msgid "More Here"
 msgstr "更多信息"
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Use"
-msgstr "使用"
+#, python-format
+msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
+msgstr "使用 <a target=\"newwindow\" href=\"%(url)s\">AppRise通知URL</a>，向几乎任何服务发送通知！"
 
+# TN: CJK scripts degrade when italicized; emphasis is rendered with <strong> instead.
 #: changedetectionio/templates/_common_fields.html
-msgid "AppRise Notification URLs"
-msgstr "AppRise通知URL"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "for notification to just about any service!"
-msgstr "用于向几乎任何服务发送通知！"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Please read the notification services wiki here for important configuration notes"
-msgstr "请阅读通知服务 Wiki 以了解重要配置说明"
+msgid "<i>Please read the notification services wiki here for important configuration notes</i>"
+msgstr "<strong>请阅读通知服务 Wiki 以了解重要配置说明</strong>"
 
 #: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
 msgid "Show advanced help and tips"
@@ -3301,12 +3295,13 @@ msgid "Search"
 msgstr "搜索"
 
 #: changedetectionio/templates/base.html
-msgid "URL or Title"
-msgstr "URL 或标题"
+#, python-format
+msgid "URL or Title in '%(title)s'"
+msgstr "'%(title)s' 中的 URL 或标题"
 
 #: changedetectionio/templates/base.html
-msgid "in"
-msgstr "在"
+msgid "URL or Title"
+msgstr "URL 或标题"
 
 #: changedetectionio/templates/base.html
 msgid "Enter search term..."
@@ -3709,6 +3704,21 @@ msgstr "主设置"
 
 #~ msgid "information here"
 #~ msgstr "此处信息"
+
+#~ msgid "Use"
+#~ msgstr "使用"
+
+#~ msgid "AppRise Notification URLs"
+#~ msgstr "AppRise通知URL"
+
+#~ msgid "for notification to just about any service!"
+#~ msgstr "用于向几乎任何服务发送通知！"
+
+#~ msgid "Please read the notification services wiki here for important configuration notes"
+#~ msgstr "请阅读通知服务 Wiki 以了解重要配置说明"
+
+#~ msgid "in"
+#~ msgstr "在"
 
 #~ msgid "From"
 #~ msgstr "从"
