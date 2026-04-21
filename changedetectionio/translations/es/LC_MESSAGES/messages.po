@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-20 15:58+0900\n"
+"POT-Creation-Date: 2026-04-21 18:11+0900\n"
 "PO-Revision-Date: 2026-03-20 18:13+0100\n"
 "Last-Translator: Adrian Gonzalez <adrian@example.com>\n"
 "Language: es\n"
@@ -889,20 +889,14 @@ msgid "Lookout!"
 msgstr "¡Estar atento!"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "There are"
-msgstr "Hay"
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "system-wide notification URLs enabled"
-msgstr "URLs de notificación en todo el sistema habilitadas"
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "this form will override notification settings for this watch only"
-msgstr "este formulario anulará la configuración de notificaciones solo para este monitor"
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "an empty Notification URL list here will still send notifications."
-msgstr "una lista de URL de notificación vacía aquí seguirá enviando notificaciones."
+#, python-format
+msgid ""
+"There are <a href=\"%(url)s\">system-wide notification URLs enabled</a>, this form will override notification "
+"settings for this watch only &dash; an empty Notification URL list here will still send notifications."
+msgstr ""
+"Hay <a href=\"%(url)s\">URLs de notificación en todo el sistema habilitadas</a>; este formulario anulará la "
+"configuración de notificaciones solo para este monitor &dash; una lista de URL de notificación vacía aquí seguirá "
+"enviando notificaciones."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use system defaults"
@@ -3099,6 +3093,10 @@ msgid "More Here"
 msgstr "Más aquí"
 
 #: changedetectionio/templates/_common_fields.html
+msgid "Use"
+msgstr "Usar"
+
+#: changedetectionio/templates/_common_fields.html
 msgid "AppRise Notification URLs"
 msgstr "URL de notificación de AppRise"
 
@@ -3109,10 +3107,6 @@ msgstr "para notificar a casi cualquier servicio!"
 #: changedetectionio/templates/_common_fields.html
 msgid "Please read the notification services wiki here for important configuration notes"
 msgstr "Lea la wiki de servicios de notificación aquí para obtener notas de configuración importantes"
-
-#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/text-options.html
-msgid "Use"
-msgstr "Usar"
 
 #: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
 msgid "Show advanced help and tips"
@@ -3161,12 +3155,9 @@ msgid "more help here"
 msgstr "más ayuda aquí"
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Accepts the"
-msgstr "Acepta el"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "placeholders listed below"
-msgstr "marcadores de posición enumerados a continuación"
+#, python-format
+msgid "Accepts the <code>%(token)s</code> placeholders listed below"
+msgstr "Acepta los marcadores de posición <code>%(token)s</code> enumerados a continuación"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Send test notification"
@@ -3275,24 +3266,13 @@ msgid "very affordable subscription based service which has all this setup for y
 msgstr "servicio basado en suscripción muy asequible que tiene toda esta configuración para usted."
 
 #: changedetectionio/templates/_helpers.html
-msgid "You may need to"
-msgstr "Es posible que necesites"
-
-#: changedetectionio/templates/_helpers.html
-msgid "Enable playwright environment variable"
-msgstr "Habilitar la variable de entorno de playwright"
-
-#: changedetectionio/templates/_helpers.html
-msgid "and uncomment the"
-msgstr "y descomentar el"
-
-#: changedetectionio/templates/_helpers.html
-msgid "in the"
-msgstr "en el"
-
-#: changedetectionio/templates/_helpers.html
-msgid "file"
-msgstr "fichero"
+#, python-format
+msgid ""
+"You may need to <a href=\"%(url_pinned)s\">Enable playwright environment variable</a> and uncomment the "
+"<strong>sockpuppetbrowser</strong> in the <a href=\"%(url_master)s\">docker-compose.yml</a> file."
+msgstr ""
+"Es posible que necesites <a href=\"%(url_pinned)s\">Habilitar la variable de entorno de playwright</a> y descomentar "
+"el <strong>sockpuppetbrowser</strong> en el fichero <a href=\"%(url_master)s\">docker-compose.yml</a>."
 
 #: changedetectionio/templates/_helpers.html
 msgid "Set a hourly/week day schedule"
@@ -3547,12 +3527,9 @@ msgid "Don't forget to consider the white-space at the start of a line"
 msgstr "No olvides considerar el espacio en blanco al comienzo de una línea"
 
 #: changedetectionio/templates/edit/text-options.html
-msgid "type flags (more"
-msgstr "tipo banderas (más"
-
-#: changedetectionio/templates/edit/text-options.html
-msgid "information here"
-msgstr "información aquí"
+#, python-format
+msgid "Use <code>//(?aiLmsux))</code> type flags (more <a href=\"%(url)s\">information here</a>)"
+msgstr "Usar banderas de tipo <code>//(?aiLmsux))</code> (más <a href=\"%(url)s\">información aquí</a>)"
 
 #: changedetectionio/templates/edit/text-options.html
 msgid "Keyword example - example"
@@ -3769,6 +3746,45 @@ msgstr "Configuraciones principales"
 
 #~ msgid "to keep only lines mentioning temperature readings"
 #~ msgstr ""
+
+#~ msgid "There are"
+#~ msgstr "Hay"
+
+#~ msgid "system-wide notification URLs enabled"
+#~ msgstr "URLs de notificación en todo el sistema habilitadas"
+
+#~ msgid "this form will override notification settings for this watch only"
+#~ msgstr "este formulario anulará la configuración de notificaciones solo para este monitor"
+
+#~ msgid "an empty Notification URL list here will still send notifications."
+#~ msgstr "una lista de URL de notificación vacía aquí seguirá enviando notificaciones."
+
+#~ msgid "Accepts the"
+#~ msgstr "Acepta el"
+
+#~ msgid "placeholders listed below"
+#~ msgstr "marcadores de posición enumerados a continuación"
+
+#~ msgid "You may need to"
+#~ msgstr "Es posible que necesites"
+
+#~ msgid "Enable playwright environment variable"
+#~ msgstr "Habilitar la variable de entorno de playwright"
+
+#~ msgid "and uncomment the"
+#~ msgstr "y descomentar el"
+
+#~ msgid "in the"
+#~ msgstr "en el"
+
+#~ msgid "file"
+#~ msgstr "fichero"
+
+#~ msgid "type flags (more"
+#~ msgstr "tipo banderas (más"
+
+#~ msgid "information here"
+#~ msgstr "información aquí"
 
 #~ msgid "From"
 #~ msgstr "De"

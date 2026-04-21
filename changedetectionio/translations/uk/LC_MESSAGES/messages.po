@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  changedetection.io\n"
 "Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io\n"
-"POT-Creation-Date: 2026-04-20 15:58+0900\n"
+"POT-Creation-Date: 2026-04-21 18:11+0900\n"
 "PO-Revision-Date: 2026-02-19 12:30+0100\n"
 "Last-Translator: \n"
 "Language: uk\n"
@@ -866,20 +866,14 @@ msgid "Lookout!"
 msgstr "Обережно!"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "There are"
-msgstr "Є"
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "system-wide notification URLs enabled"
-msgstr "увімкнених системних URL сповіщень"
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "this form will override notification settings for this watch only"
-msgstr "ця форма перевизначить налаштування сповіщень лише для цього завдання"
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "an empty Notification URL list here will still send notifications."
-msgstr "порожній список URL сповіщень тут не вимкне надсилання сповіщень (використовуватимуться системні)."
+#, python-format
+msgid ""
+"There are <a href=\"%(url)s\">system-wide notification URLs enabled</a>, this form will override notification "
+"settings for this watch only &dash; an empty Notification URL list here will still send notifications."
+msgstr ""
+"Є <a href=\"%(url)s\">увімкнені системні URL сповіщень</a>; ця форма перевизначить налаштування сповіщень лише для "
+"цього завдання &dash; порожній список URL сповіщень тут не вимкне надсилання сповіщень (використовуватимуться "
+"системні)."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use system defaults"
@@ -3058,6 +3052,10 @@ msgid "More Here"
 msgstr "Детальніше тут"
 
 #: changedetectionio/templates/_common_fields.html
+msgid "Use"
+msgstr "Використовуйте"
+
+#: changedetectionio/templates/_common_fields.html
 msgid "AppRise Notification URLs"
 msgstr "URL сповіщень AppRise"
 
@@ -3068,10 +3066,6 @@ msgstr "для сповіщень практично в будь-який сер
 #: changedetectionio/templates/_common_fields.html
 msgid "Please read the notification services wiki here for important configuration notes"
 msgstr "Будь ласка, прочитайте вікі по сервісах сповіщень тут для важливих нотаток щодо конфігурації"
-
-#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/text-options.html
-msgid "Use"
-msgstr "Використовуйте"
 
 #: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
 msgid "Show advanced help and tips"
@@ -3118,12 +3112,9 @@ msgid "more help here"
 msgstr "більше довідки тут"
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Accepts the"
-msgstr "Приймає"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "placeholders listed below"
-msgstr "заповнювачі, перелічені нижче"
+#, python-format
+msgid "Accepts the <code>%(token)s</code> placeholders listed below"
+msgstr "Приймає заповнювачі <code>%(token)s</code>, перелічені нижче"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Send test notification"
@@ -3230,24 +3221,13 @@ msgid "very affordable subscription based service which has all this setup for y
 msgstr "дуже доступний сервіс за передплатою, де все це вже налаштовано для вас"
 
 #: changedetectionio/templates/_helpers.html
-msgid "You may need to"
-msgstr "Вам може знадобитися"
-
-#: changedetectionio/templates/_helpers.html
-msgid "Enable playwright environment variable"
-msgstr "Увімкнути змінну оточення playwright"
-
-#: changedetectionio/templates/_helpers.html
-msgid "and uncomment the"
-msgstr "та розкоментувати"
-
-#: changedetectionio/templates/_helpers.html
-msgid "in the"
-msgstr "у"
-
-#: changedetectionio/templates/_helpers.html
-msgid "file"
-msgstr "файлі"
+#, python-format
+msgid ""
+"You may need to <a href=\"%(url_pinned)s\">Enable playwright environment variable</a> and uncomment the "
+"<strong>sockpuppetbrowser</strong> in the <a href=\"%(url_master)s\">docker-compose.yml</a> file."
+msgstr ""
+"Вам може знадобитися <a href=\"%(url_pinned)s\">Увімкнути змінну оточення playwright</a> та розкоментувати "
+"<strong>sockpuppetbrowser</strong> у файлі <a href=\"%(url_master)s\">docker-compose.yml</a>."
 
 #: changedetectionio/templates/_helpers.html
 msgid "Set a hourly/week day schedule"
@@ -3497,12 +3477,9 @@ msgid "Don't forget to consider the white-space at the start of a line"
 msgstr "Не забудьте врахувати пробіли на початку рядка"
 
 #: changedetectionio/templates/edit/text-options.html
-msgid "type flags (more"
-msgstr "прапори типу (більше"
-
-#: changedetectionio/templates/edit/text-options.html
-msgid "information here"
-msgstr "інформації тут"
+#, python-format
+msgid "Use <code>//(?aiLmsux))</code> type flags (more <a href=\"%(url)s\">information here</a>)"
+msgstr "Використовуйте прапори типу <code>//(?aiLmsux))</code> (більше <a href=\"%(url)s\">інформації тут</a>)"
 
 #: changedetectionio/templates/edit/text-options.html
 msgid "Keyword example - example"
@@ -3713,6 +3690,45 @@ msgstr "Головні налаштування"
 
 #~ msgid "to keep only lines mentioning temperature readings"
 #~ msgstr ""
+
+#~ msgid "There are"
+#~ msgstr "Є"
+
+#~ msgid "system-wide notification URLs enabled"
+#~ msgstr "увімкнених системних URL сповіщень"
+
+#~ msgid "this form will override notification settings for this watch only"
+#~ msgstr "ця форма перевизначить налаштування сповіщень лише для цього завдання"
+
+#~ msgid "an empty Notification URL list here will still send notifications."
+#~ msgstr "порожній список URL сповіщень тут не вимкне надсилання сповіщень (використовуватимуться системні)."
+
+#~ msgid "Accepts the"
+#~ msgstr "Приймає"
+
+#~ msgid "placeholders listed below"
+#~ msgstr "заповнювачі, перелічені нижче"
+
+#~ msgid "You may need to"
+#~ msgstr "Вам може знадобитися"
+
+#~ msgid "Enable playwright environment variable"
+#~ msgstr "Увімкнути змінну оточення playwright"
+
+#~ msgid "and uncomment the"
+#~ msgstr "та розкоментувати"
+
+#~ msgid "in the"
+#~ msgstr "у"
+
+#~ msgid "file"
+#~ msgstr "файлі"
+
+#~ msgid "type flags (more"
+#~ msgstr "прапори типу (більше"
+
+#~ msgid "information here"
+#~ msgstr "інформації тут"
 
 #~ msgid "From"
 #~ msgstr "Від"

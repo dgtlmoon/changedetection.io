@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-20 15:58+0900\n"
+"POT-Creation-Date: 2026-04-21 18:11+0900\n"
 "PO-Revision-Date: 2026-01-02 11:40+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: cs\n"
@@ -855,20 +855,13 @@ msgid "Lookout!"
 msgstr "ODHLÁSIT SE"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "There are"
-msgstr "Existují"
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "system-wide notification URLs enabled"
-msgstr "povoleny adresy URL pro upozornění v celém systému"
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "this form will override notification settings for this watch only"
-msgstr "tento formulář přepíše nastavení oznámení pouze pro tato sledování"
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "an empty Notification URL list here will still send notifications."
-msgstr "prázdný seznam adres URL upozornění zde bude stále odesílat upozornění."
+#, python-format
+msgid ""
+"There are <a href=\"%(url)s\">system-wide notification URLs enabled</a>, this form will override notification "
+"settings for this watch only &dash; an empty Notification URL list here will still send notifications."
+msgstr ""
+"<a href=\"%(url)s\">Jsou povoleny adresy URL pro upozornění v celém systému</a>. Tento formulář přepíše nastavení "
+"oznámení pouze pro tato sledování &dash; prázdný seznam adres URL upozornění zde bude stále odesílat upozornění."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use system defaults"
@@ -3035,6 +3028,10 @@ msgid "More Here"
 msgstr "Více zde"
 
 #: changedetectionio/templates/_common_fields.html
+msgid "Use"
+msgstr "Použít"
+
+#: changedetectionio/templates/_common_fields.html
 msgid "AppRise Notification URLs"
 msgstr "URL pro AppRise oznámení"
 
@@ -3045,10 +3042,6 @@ msgstr ""
 #: changedetectionio/templates/_common_fields.html
 msgid "Please read the notification services wiki here for important configuration notes"
 msgstr ""
-
-#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/text-options.html
-msgid "Use"
-msgstr "Použít"
 
 #: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
 msgid "Show advanced help and tips"
@@ -3095,11 +3088,8 @@ msgid "more help here"
 msgstr "další nápověda zde"
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Accepts the"
-msgstr ""
-
-#: changedetectionio/templates/_common_fields.html
-msgid "placeholders listed below"
+#, python-format
+msgid "Accepts the <code>%(token)s</code> placeholders listed below"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
@@ -3207,24 +3197,11 @@ msgid "very affordable subscription based service which has all this setup for y
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html
-msgid "You may need to"
-msgstr "Možná budete muset"
-
-#: changedetectionio/templates/_helpers.html
-msgid "Enable playwright environment variable"
+#, python-format
+msgid ""
+"You may need to <a href=\"%(url_pinned)s\">Enable playwright environment variable</a> and uncomment the "
+"<strong>sockpuppetbrowser</strong> in the <a href=\"%(url_master)s\">docker-compose.yml</a> file."
 msgstr ""
-
-#: changedetectionio/templates/_helpers.html
-msgid "and uncomment the"
-msgstr ""
-
-#: changedetectionio/templates/_helpers.html
-msgid "in the"
-msgstr "v"
-
-#: changedetectionio/templates/_helpers.html
-msgid "file"
-msgstr "soubor"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Set a hourly/week day schedule"
@@ -3470,12 +3447,9 @@ msgid "Don't forget to consider the white-space at the start of a line"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
-msgid "type flags (more"
+#, python-format
+msgid "Use <code>//(?aiLmsux))</code> type flags (more <a href=\"%(url)s\">information here</a>)"
 msgstr ""
-
-#: changedetectionio/templates/edit/text-options.html
-msgid "information here"
-msgstr "informace zde"
 
 #: changedetectionio/templates/edit/text-options.html
 msgid "Keyword example - example"
@@ -3580,13 +3554,13 @@ msgstr "Hlavní nastavení"
 #~ msgstr "Podmínky"
 
 #~ msgid "You may need to"
-#~ msgstr "musíte"
+#~ msgstr "Možná budete muset"
 
 #~ msgid "in the"
-#~ msgstr "The"
+#~ msgstr "v"
 
 #~ msgid "file"
-#~ msgstr "Titul"
+#~ msgstr "soubor"
 
 #~ msgid "Schedule time limits"
 #~ msgstr "Znovu zkontrolovat čas (minuty)"
@@ -3761,6 +3735,36 @@ msgstr "Hlavní nastavení"
 
 #~ msgid "to keep only lines mentioning temperature readings"
 #~ msgstr ""
+
+#~ msgid "There are"
+#~ msgstr "Existují"
+
+#~ msgid "system-wide notification URLs enabled"
+#~ msgstr "povoleny adresy URL pro upozornění v celém systému"
+
+#~ msgid "this form will override notification settings for this watch only"
+#~ msgstr "tento formulář přepíše nastavení oznámení pouze pro tato sledování"
+
+#~ msgid "an empty Notification URL list here will still send notifications."
+#~ msgstr "prázdný seznam adres URL upozornění zde bude stále odesílat upozornění."
+
+#~ msgid "Accepts the"
+#~ msgstr ""
+
+#~ msgid "placeholders listed below"
+#~ msgstr ""
+
+#~ msgid "Enable playwright environment variable"
+#~ msgstr ""
+
+#~ msgid "and uncomment the"
+#~ msgstr ""
+
+#~ msgid "type flags (more"
+#~ msgstr ""
+
+#~ msgid "information here"
+#~ msgstr "informace zde"
 
 #~ msgid "From"
 #~ msgstr "Z"

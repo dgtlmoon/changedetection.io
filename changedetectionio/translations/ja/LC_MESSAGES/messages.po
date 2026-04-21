@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-20 15:58+0900\n"
+"POT-Creation-Date: 2026-04-21 18:11+0900\n"
 "PO-Revision-Date: 2026-03-31 23:52+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -860,25 +860,12 @@ msgstr "注意！"
 msgid "Lookout!"
 msgstr "注意！"
 
-# 訳注: "There are" + <a>"system-wide notification URLs enabled"</a> + ", " + ...
-# → 「システム全体の通知URLが有効化されています、...」
-# 前半は日本語では不要なため、空白1文字で非表示にする（空文字は英語にフォールバックするため）
-# リスク: 将来、別テンプレートで再利用されると、本来の英語の意味とは異なる訳が流用されて壊れる可能性あり。新規追加時は見直すこと。
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "There are"
-msgstr " "
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "system-wide notification URLs enabled"
-msgstr "システム全体の通知URLが有効化されています"
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "this form will override notification settings for this watch only"
-msgstr "このフォームはこのウォッチのみの通知設定を上書きします"
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "an empty Notification URL list here will still send notifications."
-msgstr "ここの通知URLリストが空の場合でも通知は送信されます。"
+#, python-format
+msgid ""
+"There are <a href=\"%(url)s\">system-wide notification URLs enabled</a>, this form will override notification "
+"settings for this watch only &dash; an empty Notification URL list here will still send notifications."
+msgstr "<a href=\"%(url)s\">システム全体の通知URLが有効化されています</a>。このフォームではこのウォッチの通知設定のみを上書きします &dash; ここで通知URLリストを空にしても通知は送信されます。"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use system defaults"
@@ -3059,12 +3046,19 @@ msgstr "例えば、追加や削除が場合によっては変更として認識
 msgid "More Here"
 msgstr "詳細はこちら"
 
-# 訳注: msgid "Use" (別箇所) と共に再配分された訳。msgid "Use" の訳注を参照のこと。
+# 訳注: "Use" + <a>AppRise Notification URLs</a> + "for notification to just about any service!"
+# → 「 AppRise 通知URL ほぼすべてのサービスへの通知に対応！」
+# 述語の訳を後続フラグメントにまとめた
+# 前半は日本語では不要なため、空白1文字で非表示にする（空文字は英語にフォールバックするため）
+# リスク: 将来、別テンプレートで再利用されると、本来の英語の意味とは異なる訳が流用されて壊れる可能性あり。新規追加時は見直すこと。
+#: changedetectionio/templates/_common_fields.html
+msgid "Use"
+msgstr " "
+
 #: changedetectionio/templates/_common_fields.html
 msgid "AppRise Notification URLs"
 msgstr "AppRise 通知URL"
 
-# 訳注: msgid "Use" (別箇所) と共に再配分された訳。msgid "Use" の訳注を参照のこと。
 #: changedetectionio/templates/_common_fields.html
 msgid "for notification to just about any service!"
 msgstr "ほぼすべてのサービスへの通知に対応！"
@@ -3072,17 +3066,6 @@ msgstr "ほぼすべてのサービスへの通知に対応！"
 #: changedetectionio/templates/_common_fields.html
 msgid "Please read the notification services wiki here for important configuration notes"
 msgstr "重要な設定に関するメモについては、通知サービスのWikiをこちらでお読みください"
-
-# 訳注: 2箇所で使用される共通フラグメント
-# (1) _common_fields.html: "Use" + <a>AppRise Notification URLs</a> + "for notification to just about any service!"
-# → 「 AppRise 通知URL ほぼすべてのサービスへの通知に対応！」
-# (2) text-options.html: "Use" + <code>//(?aiLmsux))</code> + "type flags (more" + <a>information here</a> + ")"
-# → 「 //(?aiLmsux)) タイプフラグを使用できます（詳細 はこちら）」
-# 前半は日本語では不要なため、空白1文字で非表示にする（空文字は英語にフォールバックするため）
-# リスク: 将来、別テンプレートで再利用されると、本来の英語の意味とは異なる訳が流用されて壊れる可能性あり。新規追加時は見直すこと。
-#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/text-options.html
-msgid "Use"
-msgstr " "
 
 #: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
 msgid "Show advanced help and tips"
@@ -3131,18 +3114,10 @@ msgstr "非SSLの場合、例："
 msgid "more help here"
 msgstr "詳細なヘルプはこちら"
 
-# 訳注: "Accepts the {{token}} placeholders listed below"
-# → 「{{token}} 以下のプレースホルダーを受け付けます」
-# 述語の訳を後半にまとめた
-# 前半は日本語では不要なため、空白1文字で非表示にする（空文字は英語にフォールバックするため）
-# リスク: 将来、別テンプレートで再利用されると、本来の英語の意味とは異なる訳が流用されて壊れる可能性あり。新規追加時は見直すこと。
 #: changedetectionio/templates/_common_fields.html
-msgid "Accepts the"
-msgstr " "
-
-#: changedetectionio/templates/_common_fields.html
-msgid "placeholders listed below"
-msgstr "以下のプレースホルダーを受け付けます"
+#, python-format
+msgid "Accepts the <code>%(token)s</code> placeholders listed below"
+msgstr "下記の <code>%(token)s</code> プレースホルダーを受け付けます"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Send test notification"
@@ -3253,29 +3228,13 @@ msgid "very affordable subscription based service which has all this setup for y
 msgstr "すべての設定が完了した手頃な価格のサブスクリプションサービス"
 
 #: changedetectionio/templates/_helpers.html
-msgid "You may need to"
-msgstr "次の操作が必要かもしれません："
-
-#: changedetectionio/templates/_helpers.html
-msgid "Enable playwright environment variable"
-msgstr "playwright 環境変数を有効にする"
-
-# 訳注: "and uncomment the [code] in the [filename] file"
-# → 「そして [code] のコメントを [filename] ファイル内で解除してください」
-# 目的語と述語の訳を入れ替えた
-#: changedetectionio/templates/_helpers.html
-msgid "and uncomment the"
-msgstr "そして"
-
-# リスク: 将来、別テンプレートで再利用されると、本来の英語の意味とは異なる訳が流用されて壊れる可能性あり。新規追加時は見直すこと。
-#: changedetectionio/templates/_helpers.html
-msgid "in the"
-msgstr "のコメントを"
-
-# リスク: 将来、別テンプレートで再利用されると、本来の英語の意味とは異なる訳が流用されて壊れる可能性あり。新規追加時は見直すこと。
-#: changedetectionio/templates/_helpers.html
-msgid "file"
-msgstr "ファイル内で解除してください"
+#, python-format
+msgid ""
+"You may need to <a href=\"%(url_pinned)s\">Enable playwright environment variable</a> and uncomment the "
+"<strong>sockpuppetbrowser</strong> in the <a href=\"%(url_master)s\">docker-compose.yml</a> file."
+msgstr ""
+"<a href=\"%(url_pinned)s\">playwright 環境変数の有効化</a>と <a href=\"%(url_master)s\">docker-compose.yml</a> ファイル内の "
+"<strong>sockpuppetbrowser</strong> のコメント解除が必要な場合があります。"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Set a hourly/week day schedule"
@@ -3533,15 +3492,10 @@ msgstr "正規表現 - 例"
 msgid "Don't forget to consider the white-space at the start of a line"
 msgstr "行頭の空白を考慮することを忘れないでください"
 
-# 訳注: msgid "Use" (別箇所) と共に再配分された訳。msgid "Use" の訳注を参照のこと。
 #: changedetectionio/templates/edit/text-options.html
-msgid "type flags (more"
-msgstr "タイプフラグを使用できます（詳細"
-
-# 訳注: msgid "Use" (別箇所) と共に再配分された訳。msgid "Use" の訳注を参照のこと。
-#: changedetectionio/templates/edit/text-options.html
-msgid "information here"
-msgstr "情報はこちら"
+#, python-format
+msgid "Use <code>//(?aiLmsux))</code> type flags (more <a href=\"%(url)s\">information here</a>)"
+msgstr "<code>//(?aiLmsux))</code> タイプフラグを使用できます（詳細は <a href=\"%(url)s\">こちら</a>）"
 
 #: changedetectionio/templates/edit/text-options.html
 msgid "Keyword example - example"
@@ -3647,4 +3601,7 @@ msgstr "メイン設定"
 
 #~ msgid "Example:"
 #~ msgstr "例："
+
+#~ msgid "information here"
+#~ msgstr "情報はこちら"
 

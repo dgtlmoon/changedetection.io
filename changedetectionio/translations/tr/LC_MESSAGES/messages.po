@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-20 15:58+0900\n"
+"POT-Creation-Date: 2026-04-21 18:11+0900\n"
 "PO-Revision-Date: 2026-04-10 20:38+0300\n"
 "Last-Translator: \n"
 "Language: tr\n"
@@ -888,20 +888,13 @@ msgid "Lookout!"
 msgstr "Dikkat!"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "There are"
-msgstr "Şunlar var"
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "system-wide notification URLs enabled"
-msgstr "sistem geneli bildirim URL'leri etkinleştirildi"
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "this form will override notification settings for this watch only"
-msgstr "bu form bildirim ayarlarını yalnızca bu izleyici için geçersiz kılar"
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "an empty Notification URL list here will still send notifications."
-msgstr "buradaki boş bir Bildirim URL listesi yine de bildirim gönderir."
+#, python-format
+msgid ""
+"There are <a href=\"%(url)s\">system-wide notification URLs enabled</a>, this form will override notification "
+"settings for this watch only &dash; an empty Notification URL list here will still send notifications."
+msgstr ""
+"<a href=\"%(url)s\">Sistem geneli bildirim URL'leri etkinleştirilmiş</a>; bu form bildirim ayarlarını yalnızca bu "
+"izleyici için geçersiz kılar &dash; buradaki boş bir Bildirim URL listesi yine de bildirim gönderir."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use system defaults"
@@ -3082,6 +3075,10 @@ msgid "More Here"
 msgstr "Daha Fazlası Burada"
 
 #: changedetectionio/templates/_common_fields.html
+msgid "Use"
+msgstr "Şu"
+
+#: changedetectionio/templates/_common_fields.html
 msgid "AppRise Notification URLs"
 msgstr "AppRise Bildirim URL'leri"
 
@@ -3092,10 +3089,6 @@ msgstr "ile hemen hemen her hizmete bildirim gönderebilirsiniz!"
 #: changedetectionio/templates/_common_fields.html
 msgid "Please read the notification services wiki here for important configuration notes"
 msgstr "Önemli yapılandırma notları için lütfen buradaki bildirim hizmetleri wiki'sini okuyun"
-
-#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/text-options.html
-msgid "Use"
-msgstr "Şu"
 
 #: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
 msgid "Show advanced help and tips"
@@ -3142,12 +3135,9 @@ msgid "more help here"
 msgstr "daha fazla yardım burada"
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Accepts the"
-msgstr "Şunu kabul eder"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "placeholders listed below"
-msgstr "aşağıda listelenen yer tutucular"
+#, python-format
+msgid "Accepts the <code>%(token)s</code> placeholders listed below"
+msgstr "Aşağıda listelenen <code>%(token)s</code> yer tutucularını kabul eder"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Send test notification"
@@ -3256,24 +3246,13 @@ msgid "very affordable subscription based service which has all this setup for y
 msgstr "sizin için tüm bu kuruluma sahip çok uygun fiyatlı abonelik tabanlı hizmetimiz"
 
 #: changedetectionio/templates/_helpers.html
-msgid "You may need to"
-msgstr "Şunu yapmanız gerekebilir"
-
-#: changedetectionio/templates/_helpers.html
-msgid "Enable playwright environment variable"
-msgstr "Playwright ortam değişkenini etkinleştir"
-
-#: changedetectionio/templates/_helpers.html
-msgid "and uncomment the"
-msgstr "ve şunun yorumunu kaldırın"
-
-#: changedetectionio/templates/_helpers.html
-msgid "in the"
-msgstr "içindeki"
-
-#: changedetectionio/templates/_helpers.html
-msgid "file"
-msgstr "dosya"
+#, python-format
+msgid ""
+"You may need to <a href=\"%(url_pinned)s\">Enable playwright environment variable</a> and uncomment the "
+"<strong>sockpuppetbrowser</strong> in the <a href=\"%(url_master)s\">docker-compose.yml</a> file."
+msgstr ""
+"<a href=\"%(url_pinned)s\">Playwright ortam değişkenini etkinleştirmeniz</a> ve <a href=\"%(url_master)s\">docker-"
+"compose.yml</a> dosyası içindeki <strong>sockpuppetbrowser</strong> satırının yorumunu kaldırmanız gerekebilir."
 
 #: changedetectionio/templates/_helpers.html
 msgid "Set a hourly/week day schedule"
@@ -3525,12 +3504,9 @@ msgid "Don't forget to consider the white-space at the start of a line"
 msgstr "Bir satırın başındaki boşluğu dikkate almayı unutmayın"
 
 #: changedetectionio/templates/edit/text-options.html
-msgid "type flags (more"
-msgstr "tür bayraklarını kullanabilirsiniz (daha fazla"
-
-#: changedetectionio/templates/edit/text-options.html
-msgid "information here"
-msgstr "bilgi burada"
+#, python-format
+msgid "Use <code>//(?aiLmsux))</code> type flags (more <a href=\"%(url)s\">information here</a>)"
+msgstr "<code>//(?aiLmsux))</code> tür bayraklarını kullanın (daha fazla <a href=\"%(url)s\">bilgi burada</a>)"
 
 #: changedetectionio/templates/edit/text-options.html
 msgid "Keyword example - example"
@@ -3742,6 +3718,45 @@ msgstr "Ana ayarlar"
 
 #~ msgid "to keep only lines mentioning temperature readings"
 #~ msgstr ""
+
+#~ msgid "There are"
+#~ msgstr "Şunlar var"
+
+#~ msgid "system-wide notification URLs enabled"
+#~ msgstr "sistem geneli bildirim URL'leri etkinleştirildi"
+
+#~ msgid "this form will override notification settings for this watch only"
+#~ msgstr "bu form bildirim ayarlarını yalnızca bu izleyici için geçersiz kılar"
+
+#~ msgid "an empty Notification URL list here will still send notifications."
+#~ msgstr "buradaki boş bir Bildirim URL listesi yine de bildirim gönderir."
+
+#~ msgid "Accepts the"
+#~ msgstr "Şunu kabul eder"
+
+#~ msgid "placeholders listed below"
+#~ msgstr "aşağıda listelenen yer tutucular"
+
+#~ msgid "You may need to"
+#~ msgstr "Şunu yapmanız gerekebilir"
+
+#~ msgid "Enable playwright environment variable"
+#~ msgstr "Playwright ortam değişkenini etkinleştir"
+
+#~ msgid "and uncomment the"
+#~ msgstr "ve şunun yorumunu kaldırın"
+
+#~ msgid "in the"
+#~ msgstr "içindeki"
+
+#~ msgid "file"
+#~ msgstr "dosya"
+
+#~ msgid "type flags (more"
+#~ msgstr "tür bayraklarını kullanabilirsiniz (daha fazla"
+
+#~ msgid "information here"
+#~ msgstr "bilgi burada"
 
 #~ msgid "From"
 #~ msgstr "Kimden"
