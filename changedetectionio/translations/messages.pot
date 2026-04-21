@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.54.10\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-20 15:58+0900\n"
+"POT-Creation-Date: 2026-04-21 18:11+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -852,19 +852,10 @@ msgid "Lookout!"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "There are"
-msgstr ""
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "system-wide notification URLs enabled"
-msgstr ""
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "this form will override notification settings for this watch only"
-msgstr ""
-
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "an empty Notification URL list here will still send notifications."
+#, python-format
+msgid ""
+"There are <a href=\"%(url)s\">system-wide notification URLs enabled</a>, this form will override notification "
+"settings for this watch only &dash; an empty Notification URL list here will still send notifications."
 msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
@@ -3030,6 +3021,10 @@ msgid "More Here"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
+msgid "Use"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
 msgid "AppRise Notification URLs"
 msgstr ""
 
@@ -3039,10 +3034,6 @@ msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Please read the notification services wiki here for important configuration notes"
-msgstr ""
-
-#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/text-options.html
-msgid "Use"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
@@ -3090,11 +3081,8 @@ msgid "more help here"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Accepts the"
-msgstr ""
-
-#: changedetectionio/templates/_common_fields.html
-msgid "placeholders listed below"
+#, python-format
+msgid "Accepts the <code>%(token)s</code> placeholders listed below"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
@@ -3202,23 +3190,10 @@ msgid "very affordable subscription based service which has all this setup for y
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html
-msgid "You may need to"
-msgstr ""
-
-#: changedetectionio/templates/_helpers.html
-msgid "Enable playwright environment variable"
-msgstr ""
-
-#: changedetectionio/templates/_helpers.html
-msgid "and uncomment the"
-msgstr ""
-
-#: changedetectionio/templates/_helpers.html
-msgid "in the"
-msgstr ""
-
-#: changedetectionio/templates/_helpers.html
-msgid "file"
+#, python-format
+msgid ""
+"You may need to <a href=\"%(url_pinned)s\">Enable playwright environment variable</a> and uncomment the "
+"<strong>sockpuppetbrowser</strong> in the <a href=\"%(url_master)s\">docker-compose.yml</a> file."
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html
@@ -3465,11 +3440,8 @@ msgid "Don't forget to consider the white-space at the start of a line"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
-msgid "type flags (more"
-msgstr ""
-
-#: changedetectionio/templates/edit/text-options.html
-msgid "information here"
+#, python-format
+msgid "Use <code>//(?aiLmsux))</code> type flags (more <a href=\"%(url)s\">information here</a>)"
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html

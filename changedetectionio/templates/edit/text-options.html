@@ -75,7 +75,7 @@ keyword") }}
                             <ul>
                                 <li>{{ _('Regular expression - example') }} <code>/reports.+?2022/i</code></li>
                                 <li>{{ _('Don\'t forget to consider the white-space at the start of a line') }} <code>/.+?reports.+?2022/i</code></li>
-                                <li>{{ _('Use') }} <code>//(?aiLmsux))</code> {{ _('type flags (more') }} <a href="https://docs.python.org/3/library/re.html#index-15">{{ _('information here') }}</a>)<br></li>
+                                <li>{{ _('Use <code>//(?aiLmsux))</code> type flags (more <a href="%(url)s">information here</a>)', url='https://docs.python.org/3/library/re.html#index-15')|safe }}<br></li>
                                 <li>{{ _('Keyword example - example') }} <code>Out of stock</code></li>
                                 <li>{{ _('Use groups to extract just that text - example') }} <code>/reports.+?(\d+)/i</code> {{ _('returns a list of years only') }}</li>
                                 <li>{{ _('Example - match lines containing a keyword') }} <code>/.*icecream.*/</code></li>
