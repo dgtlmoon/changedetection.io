@@ -102,7 +102,8 @@ class FormattableExtract(str):
     def __new__(cls, prev_snapshot, current_snapshot, extract_fn):
         if prev_snapshot or current_snapshot:
             from changedetectionio import diff as diff_module
-            raw = diff_module.render_diff(prev_snapshot, current_snapshot, word_diff=True)
+            # word_diff=True is required — placemarker extraction regexes only exist in word-diff output
+            raw = diff_module.render_diff(prev_snapshot or '', current_snapshot or '', word_diff=True)
             extracted = extract_fn(raw)
         else:
             extracted = ''
