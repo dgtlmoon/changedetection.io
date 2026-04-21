@@ -8,6 +8,34 @@ from .bm25_trim import trim_to_relevant
 SNAPSHOT_CONTEXT_CHARS = 3_000   # current page state excerpt sent alongside the diff
 
 
+def _annotate_moved_lines(diff_text: str) -> str:
+    """
+    Pre-process a unified diff to mark lines that appear on both the + and - sides
+    as [MOVED] rather than genuinely added/removed. This prevents the LLM from
+    incorrectly classifying repositioned content as new or deleted.
+
+    Lines are compared after stripping leading +/- and whitespace so that
+    indentation changes don't prevent matching.
+    """
+    lines = diff_text.splitlines()
+    added_texts   = {l[1:].strip().lower() for l in lines if l.startswith('+') and l[1:].strip()}
+    removed_texts = {l[1:].strip().lower() for l in lines if l.startswith('-') and l[1:].strip()}
+    moved_texts   = added_texts & removed_texts
+
+    if not moved_texts:
+        return diff_text
+
+    result = []
+    for line in lines:
+        if line.startswith(('+', '-')):
+            bare = line[1:].strip().lower()
+            if bare in moved_texts:
+                result.append(f'~{line[1:]}')  # ~ prefix = moved/reordered/trivial, skip
+                continue
+        result.append(line)
+    return '\n'.join(result)
+
+
 def build_eval_prompt(intent: str, diff: str, current_snapshot: str = '',
                       url: str = '', title: str = '') -> str:
     """
@@ -110,7 +138,7 @@ def build_change_summary_prompt(diff: str, custom_prompt: str,
         excerpt = trim_to_relevant(current_snapshot, custom_prompt, max_chars=2_000)
         if excerpt:
             parts.append(f"\nCurrent page (excerpt):\n{excerpt}")
-    parts.append(f"\nWhat changed (diff):\n{diff}")
+    parts.append(f"\nWhat changed (diff):\n{_annotate_moved_lines(diff)}")
     return '\n'.join(parts)
 
 
@@ -118,14 +146,28 @@ def build_change_summary_system_prompt() -> str:
     return (
         "You are a meticulous, accurate summariser of website changes for monitoring notifications.\n"
         "Your goal is to describe exactly what changed — never omit significant details, "
-        "never add information that isn't in the diff, and never speculate.\n"
-        "Faithfulness to the diff matters more than brevity: if many things changed, list them all.\n\n"
-        "Detecting shifted vs. genuinely new content:\n"
-        "- If the same text appears in both removed (-) and added (+) lines it has most likely just "
-        "moved or been reordered, not actually changed. Do NOT list every moved item — instead give "
-        "a single brief phrase such as 'Items were reordered' or 'Sections were rearranged'.\n"
-        "- Only describe content as new, removed, or changed when it does NOT appear on the other side "
-        "of the diff.\n\n"
+        "never add information that isn't in the diff, and never speculate.\n\n"
+        "Rules for reading the diff:\n"
+        "- Lines starting with + are genuinely new content. List them specifically.\n"
+        "- Lines starting with - are genuinely removed content. List them specifically.\n"
+        "- Lines starting with ~ have been PRE-IDENTIFIED as moved/reordered — "
+        "the same text exists on both sides of the diff. Do NOT report ~ lines as added or removed. "
+        "If many ~ lines exist, note briefly that some content was reordered.\n"
+        "- NEVER mention standalone timestamps (e.g. '3 hours ago', '17 hours ago', 'Yesterday', "
+        "'Today', '2 minutes ago', '1 hour ago') as added or removed items. They are not content. "
+        "Completely discard any + or - line whose entire content is a timestamp like these. "
+        "Do not list them. Do not count them. Pretend they do not exist in the diff.\n\n"
+        "For content-heavy pages (news, listings, feeds): quote or paraphrase the specific new "
+        "headlines, items, or entries that were added — do not collapse them into vague phrases "
+        "like 'new articles were added' or 'section was expanded'.\n"
+        "For large blocks of new text (full articles, documents, long paragraphs): briefly summarise "
+        "the substance in 1-2 sentences capturing the key point — do not just repeat the title.\n\n"
+        "Structure your response using these sections, in this fixed order — "
+        "omit a section entirely if there is nothing to report for it:\n"
+        "  Added: ...\n"
+        "  Changed: ...\n"
+        "  Removed: ...\n"
+        "The Removed section MUST always be last. Never place removals before additions or changes.\n\n"
         "Follow the user's formatting instructions exactly for structure, language, and length.\n"
         "Respond with ONLY the summary text — no JSON, no markdown code fences, no preamble. "
         "Just the description."

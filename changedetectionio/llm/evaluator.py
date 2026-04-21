@@ -56,11 +56,15 @@ def _check_input_size(text: str, max_chars: int) -> None:
         )
 
 
-def _cached_system(text: str) -> dict:
-    """Wrap a system prompt for Anthropic prompt caching.
-    LiteLLM passes cache_control through to Anthropic and safely strips it for other providers.
+def _cached_system(text: str, model: str = '') -> dict:
+    """Wrap a system prompt, adding Anthropic prompt-caching headers only for Anthropic models.
+    Gemini and other providers have their own caching APIs that break when they receive
+    cache_control, so we only apply it where it's supported.
     """
-    return {'role': 'system', 'content': [{'type': 'text', 'text': text, 'cache_control': {'type': 'ephemeral'}}]}
+    is_anthropic = model.startswith('claude') or model.startswith('anthropic/')
+    if is_anthropic:
+        return {'role': 'system', 'content': [{'type': 'text', 'text': text, 'cache_control': {'type': 'ephemeral'}}]}
+    return {'role': 'system', 'content': text}
 
 
 def _summary_max_tokens(diff: str) -> int:
@@ -319,7 +323,7 @@ def run_setup(watch, datastore, snapshot_text: str) -> None:
         raw, tokens, *_ = llm_client.completion(
             model=cfg['model'],
             messages=[
-                _cached_system(system_prompt),
+                _cached_system(system_prompt, model=cfg['model']),
                 {'role': 'user', 'content': user_prompt},
             ],
             api_key=cfg.get('api_key'),
@@ -407,7 +411,7 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
         _resp = llm_client.completion(
             model=cfg['model'],
             messages=[
-                _cached_system(system_prompt),
+                _cached_system(system_prompt, model=cfg['model']),
                 {'role': 'user', 'content': user_prompt},
             ],
             api_key=cfg.get('api_key'),
@@ -467,7 +471,7 @@ def preview_extract(watch, datastore, content: str) -> dict | None:
         raw, tokens, *_ = llm_client.completion(
             model=cfg['model'],
             messages=[
-                _cached_system(system_prompt),
+                _cached_system(system_prompt, model=cfg['model']),
                 {'role': 'user', 'content': user_prompt},
             ],
             api_key=cfg.get('api_key'),
@@ -548,7 +552,7 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
         _resp = llm_client.completion(
             model=cfg['model'],
             messages=[
-                _cached_system(system_prompt),
+                _cached_system(system_prompt, model=cfg['model']),
                 {'role': 'user', 'content': user_prompt},
             ],
             api_key=cfg.get('api_key'),

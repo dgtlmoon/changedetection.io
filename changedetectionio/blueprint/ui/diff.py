@@ -253,11 +253,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         )
 
         effective_prompt = get_effective_summary_prompt(watch, datastore)
-        # Diff-pref flags are part of the cache key: changing them triggers a fresh LLM call
+        from changedetectionio.llm.prompt_builder import build_change_summary_system_prompt
+        # Diff-pref flags + system prompt are part of the cache key so prompt changes bust the cache
         cache_prompt = (
             effective_prompt
             + f'\x00prefs:all={int(all_changes)},ws={int(ignore_whitespace)}'
               f',rm={int(show_removed)},add={int(show_added)}'
+            + f'\x00sys:{build_change_summary_system_prompt()}'
         )
 
         # Check cache — keyed by version pair + prompt hash (invalidates if prompt changes)
