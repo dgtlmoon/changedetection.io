@@ -180,7 +180,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         if len(dates) < 2:
             return jsonify({'summary': None, 'error': 'Not enough history'}), 400
 
-        from_version      = request.args.get('from_version', dates[-2])
+        best_from = watch.get_from_version_based_on_last_viewed
+        from_version      = request.args.get('from_version', best_from if best_from else dates[-2])
         to_version        = request.args.get('to_version', dates[-1])
         all_changes       = request.args.get('all_changes', '0') == '1'
         ignore_whitespace = request.args.get('ignore_whitespace', '0') == '1'
