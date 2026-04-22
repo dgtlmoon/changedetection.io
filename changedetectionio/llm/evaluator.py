@@ -330,6 +330,7 @@ def run_setup(watch, datastore, snapshot_text: str) -> None:
             api_base=cfg.get('api_base'),
         )
         _check_token_budget(watch, cfg, tokens)
+        accumulate_global_tokens(datastore, tokens, model=cfg['model'])
         result = parse_setup_response(raw)
         watch['llm_prefilter'] = result['selector']
         logger.debug(f"LLM setup for {watch.get('uuid')}: prefilter={result['selector']} reason={result['reason']}")
@@ -478,6 +479,7 @@ def preview_extract(watch, datastore, content: str) -> dict | None:
             api_key=cfg.get('api_key'),
             api_base=cfg.get('api_base'),
         )
+        accumulate_global_tokens(datastore, tokens, model=cfg['model'])
         result = parse_preview_response(raw)
         logger.debug(
             f"LLM preview {watch.get('uuid')}: found={result['found']} "
