@@ -423,7 +423,8 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
         output_tokens = _resp[3] if len(_resp) > 3 else 0
         summary = raw.strip()
         _check_token_budget(watch, cfg, tokens)
-        watch['llm_last_tokens_used'] = (watch.get('llm_last_tokens_used') or 0) + tokens
+        watch['llm_last_tokens_used'] = tokens
+        watch['llm_tokens_used_cumulative'] = (watch.get('llm_tokens_used_cumulative') or 0) + tokens
         accumulate_global_tokens(datastore, tokens,
                                  input_tokens=input_tokens,
                                  output_tokens=output_tokens,
