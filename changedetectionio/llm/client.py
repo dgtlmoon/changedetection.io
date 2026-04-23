@@ -6,9 +6,11 @@ and makes the call easy to mock in tests.
 
 from loguru import logger
 
-# Output token cap for all LLM calls — our JSON response is always <50 tokens,
-# so 200 is a generous hard cap that prevents runaway per-call cost.
-_MAX_COMPLETION_TOKENS = 200
+# Default output token cap for JSON-returning calls (intent eval, preview, setup).
+# These return small JSON objects — 400 is enough for a verbose explanation while
+# still preventing runaway cost. Change summaries pass their own max_tokens via
+# _summary_max_tokens() and are NOT subject to this cap.
+_MAX_COMPLETION_TOKENS = 400
 
 
 def completion(model: str, messages: list, api_key: str = None,
@@ -50,6 +52,12 @@ def completion(model: str, messages: list, api_key: str = None,
             if parts:
                 text = ''.join(getattr(p, 'text', '') or '' for p in parts).strip()
                 logger.debug(f"LLM client: extracted text from message.parts ({len(parts)} parts) model={model!r}")
+
+        if finish == 'length':
+            logger.warning(
+                f"LLM client: response truncated (finish_reason='length') model={model!r} "
+                f"— increase max_tokens; got {len(text)} chars so far"
+            )
 
         if not text:
             logger.warning(
