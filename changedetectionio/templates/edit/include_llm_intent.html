@@ -115,8 +115,8 @@
 {% else %}
 <div class="border-fieldset" id="llm-intent-section-disabled" style="opacity: 0.5;">
     <h3>&#x2728; {{ _('AI') }}</h3>
-    <p>{{ _('Configure an AI/LLM provider in') }}
-       <a href="{{ url_for('settings.settings_page') }}#ai">{{ _('Settings → AI/LLM') }}</a>
+    <p>{{ _('Configure an AI / LLM provider in') }}
+       <a href="{{ url_for('settings.settings_page') }}#ai">{{ _('Settings → AI / LLM') }}</a>
        {% if watch is defined and watch %}
            {{ _('to enable AI Change Intent and AI Change Summary.') }}
        {% else %}

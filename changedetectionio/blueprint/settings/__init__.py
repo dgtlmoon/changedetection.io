@@ -13,7 +13,9 @@ from changedetectionio.auth_decorator import login_optionally_required
 
 
 def construct_blueprint(datastore: ChangeDetectionStore):
+    from changedetectionio.blueprint.settings.llm import construct_llm_blueprint
     settings_blueprint = Blueprint('settings', __name__, template_folder="templates")
+    settings_blueprint.register_blueprint(construct_llm_blueprint(datastore), url_prefix='/llm')
 
     @settings_blueprint.route("", methods=['GET', "POST"])
     @login_optionally_required
@@ -284,56 +286,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                 )
 
         return output
-
-    @settings_blueprint.route("/llm-models", methods=['GET'])
-    @login_optionally_required
-    def llm_get_models():
-        from flask import jsonify
-        provider = request.args.get('provider', '').strip()
-        api_key  = request.args.get('api_key',  '').strip()
-        api_base = request.args.get('api_base', '').strip()
-
-        if not provider:
-            return jsonify({'models': [], 'error': 'No provider specified'}), 400
-
-        # If the user didn't type a key in the form yet, fall back to the stored one
-        if not api_key:
-            api_key = (datastore.data['settings']['application'].get('llm') or {}).get('api_key', '')
-
-        # Providers whose model strings need a prefix for litellm routing
-        _PREFIXES = {'gemini': 'gemini/', 'ollama': 'ollama/', 'openrouter': 'openrouter/'}
-        prefix = _PREFIXES.get(provider, '')
-
-        try:
-            import litellm
-            raw = litellm.get_valid_models(
-                check_provider_endpoint=True,
-                custom_llm_provider=provider,
-                api_key=api_key or None,
-                api_base=api_base or None,
-            ) or []
-            # Ensure every model string has the correct litellm provider prefix
-            models = sorted({(m if m.startswith(prefix) else prefix + m) for m in raw})
-            return jsonify({'models': models, 'error': None})
-        except Exception as e:
-            return jsonify({'models': [], 'error': str(e)}), 400
-
-    @settings_blueprint.route("/llm-clear", methods=['GET'])
-    @login_optionally_required
-    def llm_clear():
-        _LLM_PROTECTED_FIELDS = {
-            'tokens_total_cumulative', 'tokens_this_month', 'tokens_month_key',
-            'cost_usd_total_cumulative', 'cost_usd_this_month',
-        }
-        existing = datastore.data['settings']['application'].get('llm') or {}
-        preserved = {k: v for k, v in existing.items() if k in _LLM_PROTECTED_FIELDS}
-        if preserved:
-            datastore.data['settings']['application']['llm'] = preserved
-        else:
-            datastore.data['settings']['application'].pop('llm', None)
-        datastore.commit()
-        flash(gettext("AI/LLM configuration removed."), 'notice')
-        return redirect(url_for('settings.settings_page') + '#ai')
 
     @settings_blueprint.route("/reset-api-key", methods=['GET'])
     @login_optionally_required

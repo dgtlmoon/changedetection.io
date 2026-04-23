@@ -375,7 +375,7 @@ def test_global_default_saved_and_loaded_via_settings_form(
 def test_global_default_survives_llm_clear(
         client, live_server, measure_memory_usage, datastore_path):
     """
-    Clearing LLM credentials via /settings/llm-clear must not wipe
+    Clearing LLM credentials via /settings/llm/clear must not wipe
     the global summary default.
     """
     from changedetectionio.tests.util import live_server_setup
@@ -385,7 +385,7 @@ def test_global_default_survives_llm_clear(
     ds = client.application.config.get('DATASTORE')
     _set_global_default(ds, 'Surviving prompt.')
 
-    res = client.get(url_for('settings.llm_clear'), follow_redirects=True)
+    res = client.get(url_for('settings.llm.llm_clear'), follow_redirects=True)
     assert res.status_code == 200
 
     assert ds.data['settings']['application'].get('llm_change_summary_default') == 'Surviving prompt.'
