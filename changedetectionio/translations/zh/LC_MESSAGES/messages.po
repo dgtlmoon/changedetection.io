@@ -472,13 +472,13 @@ msgstr "在此阅读更多"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render."
-msgstr "使用 <strong>基础</strong> 方法（默认），适用于无需 JavaScript 渲染的监视网站。"
+msgstr "使用 <strong>基础</strong> 方式（默认），适用于您要监控的无需 JavaScript 渲染的网站。"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid ""
 "The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set"
 " by the ENV var 'WEBDRIVER_URL'."
-msgstr "<strong>Chrome/JavaScript</strong> 方法需要连接到运行中的 WebDriver+Chrome 服务器，其地址通过环境变量 'WEBDRIVER_URL' 设置。"
+msgstr "<strong>Chrome/JavaScript</strong> 方式需要连接到运行中的 WebDriver+Chrome 服务器，其地址通过环境变量 'WEBDRIVER_URL' 设置。"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid ""

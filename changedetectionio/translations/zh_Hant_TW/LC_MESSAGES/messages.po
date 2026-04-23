@@ -1521,7 +1521,7 @@ msgstr "適用於內容僅會移動的網站，且您想知道何時新增了「
 # TN: CJK scripts degrade when italicized; UI label reference is wrapped in 「」 instead.
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below."
-msgstr "有助於減少因網站重新排列行而檢測到的變更，結合下方的「檢查獨特行」一起使用。"
+msgstr "有助於減少因網站重新排列行而檢測到的變更，結合下方的「檢查獨特行」使用。"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Remove any whitespace before and after each line of text"
