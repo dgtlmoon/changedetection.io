@@ -19,6 +19,7 @@
     {% include "edit/include_llm_intent.html" %}
     (watch is not set → tag mode: no processor check, no examples, different description)
 #}
+{% from '_helpers.html' import render_field %}
 
 {# Processor check only applies in watch-edit context (llm_group_overrides present). #}
 {# In tag/group edit context the AI section is always visible.                        #}
@@ -30,7 +31,7 @@
 
 {% if is_text_json_diff %}
 
-{# ── Configured: show the intent + summary textareas ─────────────── #}
+{# ── Configured: show the intent + summary fields ────────────────── #}
 {% if llm_configured %}
 <div class="border-fieldset" id="llm-intent-section">
     <h3>&#x2728; {{ _('AI') }}</h3>
@@ -45,18 +46,14 @@
         {% endif %}
     </p>
     <div class="pure-control-group">
-        <textarea name="llm_intent"
-                  id="llm_intent"
-                  rows="3"
-                  class="pure-input-1"
-                  {% if watch is defined and watch and llm_group_overrides is defined and llm_group_overrides.llm_intent %}
-                  placeholder="{{ _('From group') }} &apos;{{ llm_group_overrides.llm_intent.group_name }}&apos;: {{ llm_group_overrides.llm_intent.value }}"
-                  {% elif watch is defined and watch %}
-                  placeholder="{{ _('e.g. Alert me when the price drops below $300, or a new product is launched. Ignore footer and navigation changes.') }}"
-                  {% else %}
-                  placeholder="{{ _('e.g. Flag price changes or new product launches across all watches in this group') }}"
-                  {% endif %}
-        >{{ form.llm_intent.data or '' }}</textarea>
+        {% if watch is defined and watch and llm_group_overrides is defined and llm_group_overrides.llm_intent %}
+            {% set intent_placeholder = _('From group') ~ " '" ~ llm_group_overrides.llm_intent.group_name ~ "': " ~ llm_group_overrides.llm_intent.value %}
+        {% elif watch is defined and watch %}
+            {% set intent_placeholder = _('e.g. Alert me when the price drops below $300, or a new product is launched. Ignore footer and navigation changes.') %}
+        {% else %}
+            {% set intent_placeholder = _('e.g. Flag price changes or new product launches across all watches in this group') %}
+        {% endif %}
+        {{ render_field(form.llm_intent, placeholder=intent_placeholder, rows=5, class="pure-input-1") }}
     </div>
     {% if watch is defined and watch %}
     <div class="pure-form-message-inline">
@@ -88,16 +85,15 @@
         {% endif %}
     </p>
     <div class="pure-control-group">
-        <textarea name="llm_change_summary"
-                  id="llm_change_summary"
-                  rows="3"
-                  class="pure-input-1"
-                  {% if watch is defined and watch and llm_group_overrides is defined and llm_group_overrides.llm_change_summary %}
-                  placeholder="{{ _('From group') }} &apos;{{ llm_group_overrides.llm_change_summary.group_name }}&apos;: {{ llm_group_overrides.llm_change_summary.value }}"
-                  {% else %}
-                  placeholder="{{ form.llm_change_summary.render_kw['placeholder'] }}"
-                  {% endif %}
-        >{{ form.llm_change_summary.data or '' }}</textarea>
+        {% if watch is defined and watch and llm_group_overrides is defined and llm_group_overrides.llm_change_summary %}
+            {% set summary_placeholder = _('From group') ~ " '" ~ llm_group_overrides.llm_change_summary.group_name ~ "': " ~ llm_group_overrides.llm_change_summary.value %}
+        {% else %}
+            {% set summary_placeholder = form.llm_change_summary.render_kw['placeholder'] %}
+        {% endif %}
+        {{ render_field(form.llm_change_summary, placeholder=summary_placeholder, rows=5, class="pure-input-1") }}
+    </div>
+    <div style="margin-top: 0.3em;">
+        <a href="#" class="pure-button button-xsmall" onclick="var t=document.getElementById('llm_change_summary'); if(!t.value&amp;&amp;t.placeholder) t.value=t.placeholder; return false;">{{ _('Modify default prompt') }}</a>
     </div>
     {% if watch is defined and watch %}
     <div class="pure-form-message-inline">

@@ -19,11 +19,11 @@ class group_restock_settings_form(restock_settings_form):
     tag_colour = StringField(_l('Tag colour'), default='')
     llm_intent = TextAreaField('AI Change Intent',
                                validators=[validators.Optional(), validators.Length(max=2000)],
-                               render_kw={"rows": "3", "placeholder": LLM_INTENT_TAG_PLACEHOLDER})
+                               render_kw={"rows": "5", "placeholder": LLM_INTENT_TAG_PLACEHOLDER})
 
     llm_change_summary = TextAreaField('AI Change Summary',
                                validators=[validators.Optional(), validators.Length(max=2000)],
-                               render_kw={"rows": "3", "placeholder": DEFAULT_CHANGE_SUMMARY_PROMPT},
+                               render_kw={"rows": "5", "placeholder": DEFAULT_CHANGE_SUMMARY_PROMPT},
                                default='')
 
 class SingleTag(Form):
