@@ -68,15 +68,8 @@ def _cached_system(text: str, model: str = '') -> dict:
 
 
 def _summary_max_tokens(diff: str) -> int:
-    """Scale completion tokens to diff size.
-
-    Short diffs (<3 000 chars) get the full 3 000-token ceiling — they're cheap
-    and we never want truncation on small changes.
-    Longer diffs scale at ~1 output token per 2 input chars, capped at 3 000.
-    """
-    if len(diff) < 3000:
-        return 3000
-    return min(len(diff) // 2, 3000)
+    """Scale completion tokens to diff size: floor 400, ~1 token per 4 chars, ceiling 3000."""
+    return max(400, min(len(diff) // 4, 3000))
 
 # Default prompt used when the user hasn't configured llm_change_summary
 DEFAULT_CHANGE_SUMMARY_PROMPT = "Describe in plain English what changed — list what was added or removed as bullet points, including key details for each item. Be careful of content that merely just moved around, you should mention that it moved but dont report that it was added/removed etc. Be considerate of the style content you are summarising the change of, adjust your report accordingly. Do not quote non-English text verbatim; translate and summarise all content into English. Your entire response must be in English."
