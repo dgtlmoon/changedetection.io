@@ -33,7 +33,7 @@ jobs:
           done
       - name: Check translation catalog is up-to-date
         run: |
-          pip install --upgrade babel
+          pip install "$(grep -E '^babel==' requirements.txt)"
           python setup.py extract_messages
           python setup.py update_catalog
           python setup.py compile_catalog
