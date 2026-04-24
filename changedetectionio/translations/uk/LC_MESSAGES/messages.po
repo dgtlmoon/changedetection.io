@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  changedetection.io\n"
 "Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io\n"
-"POT-Creation-Date: 2026-04-24 19:56+1000\n"
+"POT-Creation-Date: 2026-04-24 22:30+1000\n"
 "PO-Revision-Date: 2026-02-19 12:30+0100\n"
 "Last-Translator: \n"
 "Language: uk\n"
@@ -1701,10 +1701,6 @@ msgstr "у налаштуваннях."
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Generating summary…"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/diff.html
-msgid "Prompt:"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/diff.html
@@ -4295,58 +4291,4 @@ msgstr "Ні"
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"
 msgstr "Головні налаштування"
-
-#~ msgid "Marking watches as viewed in background..."
-#~ msgstr "Позначення завдань як переглянутих у фоновому режимі..."
-
-#~ msgid "\"Residential\" and \"Mobile\" proxy type can be more successfull than \"Data Center\" for blocked websites."
-#~ msgstr "Проксі типу «Резидентні» та «Мобільні» можуть бути ефективнішими, ніж «Дата-центр», для заблокованих сайтів."
-
-#~ msgid "From"
-#~ msgstr "Від"
-
-#~ msgid "To"
-#~ msgstr "До"
-
-#~ msgid "%(link)s, Gemini Flash, and other low-cost models are perfectly suitable for summarisation and intent filtering."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Configure an AI / LLM provider to enable intent-based "
-#~ "change filtering. Each watch or tag can have a plain-"
-#~ "text intent — the AI evaluates every detected change against"
-#~ " it and only notifies you when it matches."
-#~ msgstr ""
-
-#~ msgid "The AI receives a"
-#~ msgstr ""
-
-#~ msgid "unified diff"
-#~ msgstr ""
-
-#~ msgid "of what changed — lines starting with"
-#~ msgstr ""
-
-#~ msgid "are newly added content, lines starting with"
-#~ msgstr ""
-
-#~ msgid "are removed content. This means your intent can target specific directions of change, for example:"
-#~ msgstr ""
-
-#~ msgid "\"notify me only when a price drops\""
-#~ msgstr ""
-
-#~ msgid "or"
-#~ msgstr ""
-
-#~ msgid "\"alert when a product is removed from the listing\""
-#~ msgstr ""
-
-#~ msgid ""
-#~ "%(gpt_link)s, %(gemini_link)s, and other low-cost models are "
-#~ "perfectly suitable for summarisation and intent filtering."
-#~ msgstr ""
-
-#~ msgid "AI Token Usage"
-#~ msgstr ""
 

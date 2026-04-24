@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-24 19:56+1000\n"
+"POT-Creation-Date: 2026-04-24 22:30+1000\n"
 "PO-Revision-Date: 2026-01-02 11:40+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -1696,10 +1696,6 @@ msgstr "PARAMÈTRES"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Generating summary…"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/diff.html
-msgid "Prompt:"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/diff.html
@@ -4284,85 +4280,4 @@ msgstr "Non"
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"
 msgstr "Paramètres principaux"
-
-#~ msgid "Visual"
-#~ msgstr "Visuel"
-
-#~ msgid "Restock"
-#~ msgstr "Réapprovisionner"
-
-#~ msgid "Watch List"
-#~ msgstr "Moniteurs"
-
-#~ msgid "Watches"
-#~ msgstr "Moniteurs"
-
-#~ msgid "Queue"
-#~ msgstr "En file d'attente"
-
-#~ msgid "Cleared snapshot history for all watches"
-#~ msgstr "Effacer/réinitialiser l'historique"
-
-#~ msgid "Cannot load the edit form for processor/plugin '{}', plugin missing?"
-#~ msgstr ""
-
-#~ msgid "Create a shareable link"
-#~ msgstr "Créer un lien partageable"
-
-#~ msgid "Tip: You can also add 'shared' watches."
-#~ msgstr "Astuce : Vous pouvez également ajouter des montres « partagées »."
-
-#~ msgid "Marking watches as viewed in background..."
-#~ msgstr ""
-
-#~ msgid "\"Residential\" and \"Mobile\" proxy type can be more successfull than \"Data Center\" for blocked websites."
-#~ msgstr ""
-
-#~ msgid "From"
-#~ msgstr "Depuis"
-
-#~ msgid "To"
-#~ msgstr "À"
-
-#~ msgid "%(link)s, Gemini Flash, and other low-cost models are perfectly suitable for summarisation and intent filtering."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Configure an AI / LLM provider to enable intent-based "
-#~ "change filtering. Each watch or tag can have a plain-"
-#~ "text intent — the AI evaluates every detected change against"
-#~ " it and only notifies you when it matches."
-#~ msgstr ""
-
-#~ msgid "The AI receives a"
-#~ msgstr ""
-
-#~ msgid "unified diff"
-#~ msgstr ""
-
-#~ msgid "of what changed — lines starting with"
-#~ msgstr ""
-
-#~ msgid "are newly added content, lines starting with"
-#~ msgstr ""
-
-#~ msgid "are removed content. This means your intent can target specific directions of change, for example:"
-#~ msgstr ""
-
-#~ msgid "\"notify me only when a price drops\""
-#~ msgstr ""
-
-#~ msgid "or"
-#~ msgstr ""
-
-#~ msgid "\"alert when a product is removed from the listing\""
-#~ msgstr ""
-
-#~ msgid ""
-#~ "%(gpt_link)s, %(gemini_link)s, and other low-cost models are "
-#~ "perfectly suitable for summarisation and intent filtering."
-#~ msgstr ""
-
-#~ msgid "AI Token Usage"
-#~ msgstr ""
 

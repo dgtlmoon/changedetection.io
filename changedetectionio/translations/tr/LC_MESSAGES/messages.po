@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-24 19:56+1000\n"
+"POT-Creation-Date: 2026-04-24 22:30+1000\n"
 "PO-Revision-Date: 2026-04-10 20:38+0300\n"
 "Last-Translator: \n"
 "Language: tr\n"
@@ -1721,10 +1721,6 @@ msgstr "ayarlardan."
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Generating summary…"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/diff.html
-msgid "Prompt:"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/diff.html
@@ -4327,55 +4323,4 @@ msgstr "Hayır"
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"
 msgstr "Ana ayarlar"
-
-#~ msgid "\"Residential\" and \"Mobile\" proxy type can be more successfull than \"Data Center\" for blocked websites."
-#~ msgstr "Engellenen web siteleri için \"Yerleşim Yeri\" ve \"Mobil\" proxy türü \"Veri Merkezi\"nden daha başarılı olabilir."
-
-#~ msgid "From"
-#~ msgstr "Kimden"
-
-#~ msgid "To"
-#~ msgstr "Kime"
-
-#~ msgid "%(link)s, Gemini Flash, and other low-cost models are perfectly suitable for summarisation and intent filtering."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Configure an AI / LLM provider to enable intent-based "
-#~ "change filtering. Each watch or tag can have a plain-"
-#~ "text intent — the AI evaluates every detected change against"
-#~ " it and only notifies you when it matches."
-#~ msgstr ""
-
-#~ msgid "The AI receives a"
-#~ msgstr ""
-
-#~ msgid "unified diff"
-#~ msgstr ""
-
-#~ msgid "of what changed — lines starting with"
-#~ msgstr ""
-
-#~ msgid "are newly added content, lines starting with"
-#~ msgstr ""
-
-#~ msgid "are removed content. This means your intent can target specific directions of change, for example:"
-#~ msgstr ""
-
-#~ msgid "\"notify me only when a price drops\""
-#~ msgstr ""
-
-#~ msgid "or"
-#~ msgstr ""
-
-#~ msgid "\"alert when a product is removed from the listing\""
-#~ msgstr ""
-
-#~ msgid ""
-#~ "%(gpt_link)s, %(gemini_link)s, and other low-cost models are "
-#~ "perfectly suitable for summarisation and intent filtering."
-#~ msgstr ""
-
-#~ msgid "AI Token Usage"
-#~ msgstr ""
 

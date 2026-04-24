@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.54.8\n"
 "Report-Msgid-Bugs-To: mstrey@gmail.com\n"
-"POT-Creation-Date: 2026-04-24 19:56+1000\n"
+"POT-Creation-Date: 2026-04-24 22:30+1000\n"
 "PO-Revision-Date: 2026-04-07 22:00-0300\n"
 "Last-Translator: Gemini AI\n"
 "Language: pt_BR\n"
@@ -1717,10 +1717,6 @@ msgstr "nas configurações."
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Generating summary…"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/diff.html
-msgid "Prompt:"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/diff.html
@@ -4315,58 +4311,4 @@ msgstr "Não"
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"
 msgstr "Configurações principais"
-
-#~ msgid "Max upload size: %(upload)s MB &nbsp;·&nbsp; Max decompressed size: %(decomp)s MB"
-#~ msgstr "Tamanho máx. de envio: %(upload)s MB &nbsp;·&nbsp; Tamanho máx. descompactado: %(decomp)s MB"
-
-#~ msgid "\"Residential\" and \"Mobile\" proxy type can be more successfull than \"Data Center\" for blocked websites."
-#~ msgstr ""
-
-#~ msgid "From"
-#~ msgstr "De"
-
-#~ msgid "To"
-#~ msgstr "Para"
-
-#~ msgid "%(link)s, Gemini Flash, and other low-cost models are perfectly suitable for summarisation and intent filtering."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Configure an AI / LLM provider to enable intent-based "
-#~ "change filtering. Each watch or tag can have a plain-"
-#~ "text intent — the AI evaluates every detected change against"
-#~ " it and only notifies you when it matches."
-#~ msgstr ""
-
-#~ msgid "The AI receives a"
-#~ msgstr ""
-
-#~ msgid "unified diff"
-#~ msgstr ""
-
-#~ msgid "of what changed — lines starting with"
-#~ msgstr ""
-
-#~ msgid "are newly added content, lines starting with"
-#~ msgstr ""
-
-#~ msgid "are removed content. This means your intent can target specific directions of change, for example:"
-#~ msgstr ""
-
-#~ msgid "\"notify me only when a price drops\""
-#~ msgstr ""
-
-#~ msgid "or"
-#~ msgstr ""
-
-#~ msgid "\"alert when a product is removed from the listing\""
-#~ msgstr ""
-
-#~ msgid ""
-#~ "%(gpt_link)s, %(gemini_link)s, and other low-cost models are "
-#~ "perfectly suitable for summarisation and intent filtering."
-#~ msgstr ""
-
-#~ msgid "AI Token Usage"
-#~ msgstr ""
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-24 19:56+1000\n"
+"POT-Creation-Date: 2026-04-24 22:30+1000\n"
 "PO-Revision-Date: 2026-01-14 03:57+0100\n"
 "Last-Translator: \n"
 "Language: de\n"
@@ -1714,10 +1714,6 @@ msgstr "aus den Einstellungen."
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Generating summary…"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/diff.html
-msgid "Prompt:"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/diff.html
@@ -4329,97 +4325,4 @@ msgstr "Nein"
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"
 msgstr "Haupteinstellungen"
-
-#~ msgid "Watch List"
-#~ msgstr "Überwachungsliste"
-
-#~ msgid "Watches"
-#~ msgstr "Überwachungen"
-
-#~ msgid "Queue Status"
-#~ msgstr "Warteschlangenstatus"
-
-#~ msgid "Queue"
-#~ msgstr "Wartend"
-
-#~ msgid "Sitemap Crawler"
-#~ msgstr "Sitemap Crawler"
-
-#~ msgid "Sitemap"
-#~ msgstr "Sitemap"
-
-#~ msgid "Tag unlinked removed from {} watches"
-#~ msgstr "Tag nicht verknüpft aus {} \"Watches\" entfernt"
-
-#~ msgid "All tags deleted"
-#~ msgstr "Alle Tags gelöscht"
-
-#~ msgid "Cleared snapshot history for all watches"
-#~ msgstr "Snapshot-Verlauf für alle Beobachtungen gelöscht"
-
-#~ msgid "No watches available to recheck."
-#~ msgstr "Keine Überwachungen verfügbar, um erneut zu überprüfen."
-
-#~ msgid "Cannot load the edit form for processor/plugin '{}', plugin missing?"
-#~ msgstr "Das Bearbeitungsformular für den Prozessor/das Plugin „{}“ kann nicht geladen werden. Fehlt das Plugin?"
-
-#~ msgid "Create a shareable link"
-#~ msgstr "Erstellen Sie einen Link zum Teilen"
-
-#~ msgid "Tip: You can also add 'shared' watches."
-#~ msgstr "Tipp: Sie können auch „gemeinsame“ Überwachungen hinzufügen."
-
-#~ msgid "Marking watches as viewed in background..."
-#~ msgstr ""
-
-#~ msgid "\"Residential\" and \"Mobile\" proxy type can be more successfull than \"Data Center\" for blocked websites."
-#~ msgstr ""
-
-#~ msgid "From"
-#~ msgstr "Von"
-
-#~ msgid "To"
-#~ msgstr "Zu"
-
-#~ msgid "%(link)s, Gemini Flash, and other low-cost models are perfectly suitable for summarisation and intent filtering."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Configure an AI / LLM provider to enable intent-based "
-#~ "change filtering. Each watch or tag can have a plain-"
-#~ "text intent — the AI evaluates every detected change against"
-#~ " it and only notifies you when it matches."
-#~ msgstr ""
-
-#~ msgid "The AI receives a"
-#~ msgstr ""
-
-#~ msgid "unified diff"
-#~ msgstr ""
-
-#~ msgid "of what changed — lines starting with"
-#~ msgstr ""
-
-#~ msgid "are newly added content, lines starting with"
-#~ msgstr ""
-
-#~ msgid "are removed content. This means your intent can target specific directions of change, for example:"
-#~ msgstr ""
-
-#~ msgid "\"notify me only when a price drops\""
-#~ msgstr ""
-
-#~ msgid "or"
-#~ msgstr ""
-
-#~ msgid "\"alert when a product is removed from the listing\""
-#~ msgstr ""
-
-#~ msgid ""
-#~ "%(gpt_link)s, %(gemini_link)s, and other low-cost models are "
-#~ "perfectly suitable for summarisation and intent filtering."
-#~ msgstr ""
-
-#~ msgid "AI Token Usage"
-#~ msgstr ""
 
