@@ -22,6 +22,19 @@ Ideal for monitoring price changes, content edits, conditional changes and more.
 - Get started watching and receiving website change notifications straight away.
 - See our [tutorials and how-to page for more inspiration](https://changedetection.io/tutorials) 
 
+## AI-powered website change detection — smart alerts and plain-language summaries
+
+Stop drowning in noise. Connect any LLM (OpenAI, Gemini, Anthropic, Ollama and more) and go from _"something changed"_ to _"only the thing you care about changed"_.
+
+**AI change detection rules** — write a plain-English intent once: _"notify me only when the price drops below $50"_, _"alert me when the item comes back in stock"_, _"ignore navigation and footer changes"_. The AI evaluates every detected diff against your intent and silently suppresses everything irrelevant. Fewer false positives, zero noise.
+
+**AI change summaries** — instead of staring at a raw diff, your notification reads _"Price dropped from $89.99 to $67.00"_ or _"3 new products added to the listing"_. Works globally or per-watch, with full control over the prompt.
+
+Works with any model you already pay for — GPT-4o-mini and Gemini Flash handle this well at fractions of a cent per check. Or run it entirely locally with Ollama. Powered by [LiteLLM](https://github.com/BerriAI/litellm), giving you seamless access to [100+ supported providers and models](https://docs.litellm.ai/docs/providers).
+
+[<img src="./docs/LLM-change-summary.jpeg" style="max-width:100%;" alt="AI-powered website change detection — plain language change summaries and smart alert rules"  title="AI website change detection with LLM change summaries and intelligent alert filtering" />](https://changedetection.io?src=github)
+
+
 ### Target specific parts of the webpage using the Visual Selector tool.
 
 Available when connected to a <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Playwright-content-fetcher">playwright content fetcher</a> (included as part of our subscription service)
