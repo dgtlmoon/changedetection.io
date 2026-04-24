@@ -26,6 +26,7 @@ jobs:
       - uses: actions/checkout@v6
       - name: Check .po files with msgfmt
         run: |
+          sudo apt-get install -y gettext
           find changedetectionio/translations -name "*.po" | while read f; do
             echo "Checking $f"
             msgfmt --check-format -o /dev/null "$f"
