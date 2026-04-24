@@ -34,6 +34,7 @@ Works with any model you already pay for — GPT-4o-mini and Gemini Flash handle
 
 [<img src="./docs/LLM-change-summary.jpeg" style="max-width:100%;" alt="AI-powered website change detection — plain language change summaries and smart alert rules"  title="AI website change detection with LLM change summaries and intelligent alert filtering" />](https://changedetection.io?src=github)
 
+_Note: Available in our subscription/hosted service from June 2026_
 
 ### Target specific parts of the webpage using the Visual Selector tool.
 
