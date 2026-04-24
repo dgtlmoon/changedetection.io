@@ -1001,6 +1001,38 @@ class model(EntityPersistenceMixin, watch_base):
         return False
 
 
+    @staticmethod
+    def _llm_summary_prompt_hash(prompt: str) -> str:
+        """8-char hex hash of the prompt — used to detect when the prompt changes."""
+        import hashlib
+        return hashlib.md5(prompt.encode('utf-8', errors='replace')).hexdigest()[:8]
+
+    def get_llm_diff_summary(self, from_version, to_version, prompt: str = '') -> str:
+        """Return the cached AI Change Summary for this from→to + prompt combination, or ''.
+
+        The prompt hash is embedded in the filename so that a changed prompt
+        automatically produces a cache miss and triggers regeneration.
+        """
+        prompt_hash = self._llm_summary_prompt_hash(prompt)
+        fname = os.path.join(self.data_dir, f'change-summary-{from_version}-to-{to_version}-{prompt_hash}.txt')
+        if not os.path.isfile(fname):
+            return ''
+        with open(fname, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+
+    def save_llm_diff_summary(self, summary: str, from_version, to_version, prompt: str = ''):
+        """Persist the AI Change Summary keyed by version pair + prompt hash."""
+        self.ensure_data_dir_exists()
+        prompt_hash = self._llm_summary_prompt_hash(prompt)
+        fname = os.path.join(self.data_dir, f'change-summary-{from_version}-to-{to_version}-{prompt_hash}.txt')
+        tmp = fname + '.tmp'
+        try:
+            with open(tmp, 'w', encoding='utf-8') as f:
+                f.write(summary)
+            os.replace(tmp, fname)
+        except OSError as e:
+            logger.warning(f"Could not write LLM summary cache {fname}: {e}")
+
     def pause(self):
         self['paused'] = True
 

@@ -1,0 +1,525 @@
+{% from '_helpers.html' import render_field %}
+{% from '_stab.html' import stab_shell, stab_pane %}
+{#
+  AI / LLM settings tab content — included from settings.html.
+  Requires template context: form, llm_config, llm_env_configured
+#}
+<div class="tab-pane-inner" id="ai">
+<script src="{{ url_for('static_content', group='js', filename='sub-tabs.js') }}"></script>
+
+{% call stab_shell('ai-settings', [
+    {'id': 'overview',  'label': _('Overview'),  'icon': '✦'},
+    {'id': 'provider',  'label': _('Provider'),  'icon': '⚙'},
+    {'id': 'prompts',   'label': _('Prompts'),   'icon': '≡'},
+    {'id': 'behaviour', 'label': _('Behaviour'), 'icon': '⚑'},
+    {'id': 'usage',     'label': _('Usage'),     'icon': '$'},
+]) %}
+
+  {# ── Overview ──────────────────────────────────────────────────────────── #}
+  {% call stab_pane('overview') %}
+  <div class="stab-overview-hero">
+    <h3><span class="stab-overview-glyph">✦</span> {{ _('AI-powered change monitoring') }}</h3>
+    <p>{{ _('Connect an LLM to move from "something changed" to "only the thing you care about changed".') }}</p>
+  </div>
+
+  <div class="stab-overview-features">
+    <div class="stab-overview-feature">
+      <div class="stab-overview-icon">⊞</div>
+      <div class="stab-overview-text">
+        <strong>{{ _('Intent filtering') }}</strong>
+        <p>{{ _('Each watch or tag can carry a plain-text intent — %(ex1)s or %(ex2)s. On every detected change the AI evaluates the diff against it and suppresses irrelevant noise.', ex1='<strong>"notify me only when the price drops"</strong>', ex2='<strong>"alert when the item goes out of stock"</strong>') | safe }}</p>
+      </div>
+    </div>
+    <div class="stab-overview-feature">
+      <div class="stab-overview-icon">≡</div>
+      <div class="stab-overview-text">
+        <strong>{{ _('AI Change Summary') }}</strong>
+        <p>{{ _('Instead of raw diffs, receive plain-language summaries in notifications — %(ex1)s or %(ex2)s. Set a global default prompt here, or override per watch or tag.', ex1='<strong>"Price dropped from $89 to $67"</strong>', ex2='<strong>"3 new items added to the listing"</strong>') | safe }}</p>
+      </div>
+    </div>
+    <div class="stab-overview-feature">
+      <div class="stab-overview-icon">≈</div>
+      <div class="stab-overview-text">
+        <strong>{{ _('Minimal cost') }}</strong>
+        <p>{{ _('The AI sees only a unified diff of what changed — never full page HTML. Low-cost models like %(gpt)s or %(gemini)s handle this well, typically fractions of a cent per check.',
+              gpt='<a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">gpt-4o-mini</a>',
+              gemini='<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Gemini Flash</a>') | safe }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="stab-overview-cta">
+    {% if llm_config and llm_config.get('model') %}
+    <span class="stab-configured-badge">&#10003; {{ _('AI / LLM configured:') }} {{ llm_config.get('model') }}</span>
+    {% else %}
+    <button type="button" class="pure-button pure-button-primary" data-stab-goto="provider">
+      ⚙ {{ _('Configure AI Provider') }} &rarr;
+    </button>
+    {% endif %}
+  </div>
+  {% endcall %}
+
+  {# ── Provider ──────────────────────────────────────────────────────────── #}
+  {% call stab_pane('provider') %}
+  <p class="stab-section-title">{{ _('AI Provider') }}</p>
+
+  {% if not llm_env_configured and not (llm_config and llm_config.get('model')) %}
+  <div class="stab-overview-disclaimer">
+    <div class="stab-disclaimer-icon">⚠</div>
+    <div class="stab-disclaimer-body">
+      <strong>{{ _('Third-party data transfer — please read') }}</strong>
+      <p>{{ _('When AI features are active, change data from the websites you monitor — including page diffs and extracted text — is sent to an external AI provider of your choice.') }}</p>
+      <ul>
+        <li>{{ _('You are solely responsible for ensuring this complies with the terms of service of each website you monitor.') }}</li>
+        <li>{{ _("You are solely responsible for compliance with applicable data-protection laws (e.g. GDPR) regarding any personal data that may appear in monitored content.") }}</li>
+        <li>{{ _('API costs charged by your chosen provider are your own responsibility; this software has no visibility into or control over those charges.') }}</li>
+        <li>{{ _('AI / LLM models are known to hallucinate — producing plausible-sounding but factually incorrect or entirely fabricated output with apparent confidence — and by design may omit or truncate relevant data during summarisation. AI output must never be relied upon as complete or accurate. This software is provided as-is with no warranty of any kind.') }}</li>
+        <li>{{ _('By enabling AI features you personally indemnify and hold harmless the creator(s) and contributor(s) of this software from any claims, damages, or liability arising from this data transfer or your use of AI features.') }}</li>
+      </ul>
+      <label class="stab-disclaimer-check">
+        <input type="checkbox" id="llm-disclaimer-accept" onchange="llmDisclaimerToggle(this)">
+        <span>{{ _('I have read and understood the above. I accept full responsibility and indemnify the creator(s) of this software.') }}</span>
+      </label>
+    </div>
+  </div>
+  <div id="llm-provider-fields" style="display:none">
+  {% endif %}
+
+  {% if llm_env_configured %}
+  <div class="inline-warning" style="margin-bottom: 1em;">
+    <img class="inline-warning-icon" src="{{ url_for('static_content', group='images', filename='notice.svg') }}" alt="{{ _('Note') }}">
+    {{ _('AI / LLM is configured via environment variables') }}
+    (<code>LLM_MODEL={{ llm_config.get('model', '') }}</code>{% if llm_config.get('api_base') %}, <code>LLM_API_BASE={{ llm_config.get('api_base') }}</code>{% endif %}).
+    {{ _('Remove the') }} <code>LLM_MODEL</code> {{ _('environment variable to configure via this form instead.') }}
+  </div>
+  {% else %}
+
+  <div class="pure-control-group">
+    <label for="llm-provider">{{ _('Provider') }}</label>
+    <select id="llm-provider" onchange="llmOnProviderChange(this.value)">
+      <option value="">— {{ _('select a provider') }} —</option>
+      <optgroup label="OpenAI">
+        <option value="openai">OpenAI</option>
+      </optgroup>
+      <optgroup label="Anthropic">
+        <option value="anthropic">Anthropic</option>
+      </optgroup>
+      <optgroup label="Google">
+        <option value="gemini">Google (Gemini)</option>
+      </optgroup>
+      <optgroup label="{{ _('Local / Self-hosted') }}">
+        <option value="ollama">Ollama (local)</option>
+      </optgroup>
+      <optgroup label="OpenRouter">
+        <option value="openrouter">OpenRouter (200+ models)</option>
+      </optgroup>
+    </select>
+  </div>
+
+  <div class="pure-control-group">
+    {{ render_field(form.llm.form.llm_api_key) }}
+    <span class="pure-form-message-inline" id="llm-key-hint"></span>
+  </div>
+  <div class="pure-control-group" id="llm-base-group" style="display:none">
+    {{ render_field(form.llm.form.llm_api_base) }}
+    <span class="pure-form-message-inline">{{ _('Only needed for Ollama or custom/self-hosted endpoints. Leave blank for cloud providers.') }}</span>
+  </div>
+
+  <div class="pure-control-group" id="llm-fetch-group" style="display:none">
+    <label></label>
+    <button type="button" id="llm-fetch-btn" class="pure-button button-xsmall" onclick="llmFetchModels()"
+            style="background:#27ae60;color:#fff;border:none;">
+      &#8635; {{ _('Load available models') }}
+    </button>
+    <span id="llm-fetch-status" style="margin-left:.6em;font-size:.85em;color:#888;"></span>
+  </div>
+
+  <div class="pure-control-group" id="llm-model-select-group" style="display:none">
+    <label for="llm-model-select">{{ _('Available models') }}</label>
+    <select id="llm-model-select" class="pure-input-1-2" onchange="llmOnModelPick(this.value)">
+      <option value="">— {{ _('choose a model') }} —</option>
+    </select>
+  </div>
+
+  <div class="pure-control-group">
+    {{ render_field(form.llm.form.llm_model,
+                    readonly=True,
+                    placeholder=_("Enter API key and click 'Load available models'")) }}
+  </div>
+
+  {% if llm_config and llm_config.get('model') %}
+  <div class="pure-control-group">
+    <label></label>
+    <span style="color:#4a7c59;font-weight:bold;">
+      &#10003; {{ _('AI / LLM configured:') }} {{ llm_config.get('model') }}
+    </span>
+    &nbsp;
+    <a href="{{ url_for('settings.llm.llm_clear') }}"
+       class="pure-button button-xsmall"
+       style="background:#c0392b;color:#fff;"
+       data-requires-confirm
+       data-confirm-type="danger"
+       data-confirm-title="{{ _('Remove AI / LLM configuration?') }}"
+       data-confirm-message="<p>{{ _('This will remove your saved AI provider, model, and API key.') }}</p>"
+       data-confirm-button="{{ _('Remove') }}"
+       data-cancel-button="{{ _('Cancel') }}">
+      &#10005; {{ _('Remove') }}
+    </a>
+    &nbsp;
+    <button type="button" id="llm-test-btn" class="pure-button button-xsmall" onclick="llmRunTest()"
+            style="background:#2980b9;color:#fff;border:none;">
+      &#9654; {{ _('Test connection') }}
+    </button>
+  </div>
+  <div id="llm-test-result" style="display:none; margin-top:0.6em; padding:0.6em 0.85em; border-radius:5px; font-size:0.88em; line-height:1.45;"></div>
+  {% endif %}
+
+  <p class="pure-form-message-inline" style="margin-top:0.5em;">
+    {{ _("Your API key is stored locally and sent only to your chosen provider. On each detected change, the watch's diff and extracted text are sent to the LLM — no full page HTML.") }}
+  </p>
+
+  <div class="pure-control-group" style="margin-top:1.2em; padding-top:1em; border-top:1px solid rgba(128,128,128,0.15);">
+    <label style="color:#888; font-size:0.85em;">{{ _('Cache') }}</label>
+    <a href="{{ url_for('settings.llm.llm_clear_summary_cache') }}"
+       class="pure-button button-xsmall"
+       style="background:#7f8c8d;color:#fff;"
+       data-requires-confirm
+       data-confirm-type="warning"
+       data-confirm-title="{{ _('Clear all summary cache?') }}"
+       data-confirm-message="<p>{{ _('This will remove all cached AI change summaries across all watches.') }}</p><p>{{ _('They will be regenerated on the next check.') }}</p>"
+       data-confirm-button="{{ _('Clear cache') }}"
+       data-cancel-button="{{ _('Cancel') }}">
+      &#10005; {{ _('Clear all summary cache') }}
+    </a>
+    <span class="pure-form-message-inline">{{ _('Removes all cached AI change summaries across all watches. They will be regenerated on the next check.') }}</span>
+  </div>
+  {% endif %}{# llm_env_configured #}
+
+  {% if not llm_env_configured and not (llm_config and llm_config.get('model')) %}
+  </div>{# llm-provider-fields #}
+  {% endif %}
+  {% endcall %}
+
+  {# ── Prompts ───────────────────────────────────────────────────────────── #}
+  {% call stab_pane('prompts') %}
+  <p class="stab-section-title">{{ _('Default AI Change Summary') }}</p>
+
+  <div class="pure-control-group">
+    {{ render_field(form.llm.form.llm_change_summary_default) }}
+    <span class="pure-form-message-inline">
+      {{ _('Used for all watches unless overridden by the watch or its tag/group.') }}
+      &nbsp;<a href="#" class="pure-button button-small" onclick="var t=document.getElementById('llm-llm_change_summary_default'); if(!t.value && t.placeholder) t.value=t.placeholder; return false;">{{ _('Modify default prompt') }}</a>
+    </span>
+  </div>
+
+  {% endcall %}
+
+  {# ── Behaviour ─────────────────────────────────────────────────────────── #}
+  {% call stab_pane('behaviour') %}
+  <p class="stab-section-title">{{ _('Behaviour') }}</p>
+
+  {% if llm_config and llm_config.get('model') %}
+  <div class="pure-control-group">
+    <label></label>
+    {{ form.llm.form.llm_override_diff_with_summary() }}
+    <label for="{{ form.llm.form.llm_override_diff_with_summary.id }}" style="display:inline; font-weight:normal;">
+      {{ form.llm.form.llm_override_diff_with_summary.label.text }}
+    </label>
+    <span class="pure-form-message-inline">
+      {{ _('When enabled, the') }} <code>{{ '{{diff}}' }}</code> {{ _('notification token shows the AI summary instead of the raw diff. Use') }} <code>{{ '{{raw_diff}}' }}</code> {{ _('to always get the original.') }}
+    </span>
+  </div>
+
+  <div class="pure-control-group">
+    <label></label>
+    {{ form.llm.form.llm_restock_use_fallback_extract() }}
+    <label for="{{ form.llm.form.llm_restock_use_fallback_extract.id }}" style="display:inline; font-weight:normal;">
+      {{ form.llm.form.llm_restock_use_fallback_extract.label.text }}
+    </label>
+    <span class="pure-form-message-inline">
+      {{ _('When enabled, the AI will be used as a last resort to extract price and stock status from product pages where no structured metadata (JSON-LD, microdata, OpenGraph) is found.') }}
+    </span>
+  </div>
+
+  <div class="pure-control-group">
+    <label for="{{ form.llm.form.llm_thinking_budget.id }}">{{ form.llm.form.llm_thinking_budget.label.text }}</label>
+    {{ form.llm.form.llm_thinking_budget() }}
+    <span class="pure-form-message-inline">{{ _('For Gemini 2.5+ models only. Thinking tokens improve reasoning quality but count against the output budget. Set to Off if summaries are being cut short.') }}</span>
+  </div>
+
+  <div class="pure-control-group">
+    <label for="{{ form.llm.form.llm_max_summary_tokens.id }}">{{ form.llm.form.llm_max_summary_tokens.label.text }}</label>
+    {{ form.llm.form.llm_max_summary_tokens() }}
+    <span class="pure-form-message-inline">{{ _('Upper limit on tokens the AI may use when writing a change summary. Higher values allow longer summaries but cost more.') }}</span>
+  </div>
+
+  <div class="pure-control-group">
+    <label>{{ form.llm.form.llm_budget_action.label.text }}</label>
+    <div>
+      {% for subfield in form.llm.form.llm_budget_action %}
+      <label class="pure-radio" style="display:block; font-weight:normal; margin-bottom:0.3em;">
+        {{ subfield() }} {{ subfield.label.text }}
+      </label>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <p class="pure-form-message-inline" style="margin-top:0.5em;">
+    {{ _('Configure a provider first to unlock behaviour settings.') }}
+  </p>
+  {% endif %}
+  {% endcall %}
+
+  {# ── Usage ─────────────────────────────────────────────────────────────── #}
+  {% call stab_pane('usage') %}
+  <p class="stab-section-title">{{ _('Token & Cost Tracking') }}</p>
+
+  {% if llm_stored.get('tokens_total_cumulative') or llm_stored.get('tokens_this_month') %}
+
+  <div class="llm-usage-grid">
+    <div class="llm-stat-card">
+      <div class="llm-stat-label">{{ _('This month') }}</div>
+      <div class="llm-stat-value">{{ '{:,}'.format(llm_stored.get('tokens_this_month', 0)) }}</div>
+      <div class="llm-stat-sub">{{ _('tokens') }}{% if llm_show_costs and llm_stored.get('cost_usd_this_month') %} &nbsp;·&nbsp; ≈&thinsp;${{ '%.4f'|format(llm_stored.get('cost_usd_this_month', 0)) }}{% endif %}</div>
+      {% if llm_token_budget_month %}
+      {% set pct = (llm_stored.get('tokens_this_month', 0) / llm_token_budget_month * 100)|int %}
+      <div class="llm-stat-bar-wrap">
+        <div class="llm-stat-bar-fill {% if pct >= 100 %}bar-over{% elif pct >= 80 %}bar-warn{% else %}bar-ok{% endif %}"
+             style="width:{{ [pct, 100]|min }}%"></div>
+      </div>
+      <div class="llm-stat-budget-text">{{ pct }}% {{ _('of') }} {{ '{:,}'.format(llm_token_budget_month) }}</div>
+      {% endif %}
+    </div>
+
+    <div class="llm-stat-card">
+      <div class="llm-stat-label">{{ _('All-time total') }}</div>
+      <div class="llm-stat-value">{{ '{:,}'.format(llm_stored.get('tokens_total_cumulative', 0)) }}</div>
+      <div class="llm-stat-sub">{{ _('tokens') }}{% if llm_show_costs and llm_stored.get('cost_usd_total_cumulative') %} &nbsp;·&nbsp; ≈&thinsp;${{ '%.4f'|format(llm_stored.get('cost_usd_total_cumulative', 0)) }}{% endif %}</div>
+    </div>
+  </div>
+
+  {% if llm_token_budget_month and llm_stored.get('tokens_this_month', 0) >= llm_token_budget_month %}
+  <p class="llm-budget-alert">&#9888; {{ _('Monthly token budget reached. AI summarisation is paused until next month.') }}</p>
+  {% endif %}
+
+  <div class="llm-usage-settings">
+    <div class="llm-usage-row">
+      <span class="llm-usage-row-label">{{ _('Token budget this period') }}</span>
+      <span class="llm-usage-row-value">
+        {% if llm_token_budget_month_env %}
+          <strong>{{ '{:,}'.format(llm_token_budget_month_env) }}</strong>
+          <span class="llm-env-badge">({{ _('set via') }} <code>LLM_TOKEN_BUDGET_MONTH</code>)</span>
+          <input type="hidden" name="llm-llm_token_budget_month" value="{{ llm_token_budget_month_env }}">
+        {% else %}
+          {{ form.llm.form.llm_token_budget_month(placeholder=_('0 = unlimited'), value=llm_stored.get('token_budget_month', 0) or '') }}
+          <span class="llm-field-hint">{{ _('tokens (0 = unlimited)') }}</span>
+        {% endif %}
+      </span>
+    </div>
+    {% if llm_stored.get('tokens_month_key') %}
+    <div class="llm-usage-row">
+      <span class="llm-usage-row-label">{{ _('Current billing period') }}</span>
+      <span class="llm-usage-row-value">{{ llm_stored.get('tokens_month_key') }}</span>
+    </div>
+    {% endif %}
+    <div class="llm-usage-row">
+      <span class="llm-usage-row-label">{{ _('Max input characters') }}</span>
+      <span class="llm-usage-row-value">
+        {% if llm_max_input_chars_env %}
+          {{ form.llm.form.llm_max_input_chars(value=llm_max_input_chars_env, readonly=True, style="width:10em;opacity:0.6;cursor:not-allowed;") }}
+          <span class="llm-env-badge">({{ _('set via') }} <code>LLM_MAX_INPUT_CHARS</code>)</span>
+        {% else %}
+          {{ form.llm.form.llm_max_input_chars(placeholder='100000', value=llm_stored.get('max_input_chars', 100000) or '') }}
+          <span class="llm-field-hint">{{ _('characters — currently enforcing: %(n)s', n='{:,}'.format(llm_effective_max_input_chars)) }}</span>
+        {% endif %}
+      </span>
+    </div>
+  </div>
+
+  {% else %}
+  <p class="llm-no-usage">{{ _('No AI usage recorded yet.') }}</p>
+
+  <div class="llm-usage-settings">
+    <div class="llm-usage-row">
+      <span class="llm-usage-row-label">{{ _('Token budget') }}</span>
+      <span class="llm-usage-row-value">
+        {% if llm_token_budget_month_env %}
+          <strong>{{ '{:,}'.format(llm_token_budget_month_env) }}</strong>
+          <span class="llm-env-badge">({{ _('set via') }} <code>LLM_TOKEN_BUDGET_MONTH</code>)</span>
+          <input type="hidden" name="llm-llm_token_budget_month" value="{{ llm_token_budget_month_env }}">
+        {% else %}
+          {{ form.llm.form.llm_token_budget_month(placeholder=_('0 = unlimited'), value=llm_stored.get('token_budget_month', 0) or '') }}
+          <span class="llm-field-hint">{{ _('tokens per month (0 = unlimited)') }}</span>
+        {% endif %}
+      </span>
+    </div>
+    <div class="llm-usage-row">
+      <span class="llm-usage-row-label">{{ _('Max input characters') }}</span>
+      <span class="llm-usage-row-value">
+        {% if llm_max_input_chars_env %}
+          {{ form.llm.form.llm_max_input_chars(value=llm_max_input_chars_env, readonly=True, style="width:10em;opacity:0.6;cursor:not-allowed;") }}
+          <span class="llm-env-badge">({{ _('set via') }} <code>LLM_MAX_INPUT_CHARS</code>)</span>
+        {% else %}
+          {{ form.llm.form.llm_max_input_chars(placeholder='100000', value=llm_stored.get('max_input_chars', 100000) or '') }}
+          <span class="llm-field-hint">{{ _('characters — currently enforcing: %(n)s', n='{:,}'.format(llm_effective_max_input_chars)) }}</span>
+        {% endif %}
+      </span>
+    </div>
+  </div>
+  {% endif %}
+  {% endcall %}
+
+{% endcall %}{# stab_shell #}
+</div>
+
+<script>
+(function () {
+  const LIVE_PROVIDERS = ['openai', 'anthropic', 'gemini', 'ollama'];
+  const BASE_DEFAULTS  = { ollama: 'http://localhost:11434' };
+  const KEY_HINTS = {
+    openai:     '{{ _("platform.openai.com → API keys") }}',
+    anthropic:  '{{ _("console.anthropic.com → API keys") }}',
+    gemini:     '{{ _("aistudio.google.com → Get API key") }}',
+    ollama:     '{{ _("No API key needed for local Ollama") }}',
+    openrouter: '{{ _("openrouter.ai → Keys") }}',
+  };
+
+  window.llmDisclaimerToggle = function (cb) {
+    const fields = document.getElementById('llm-provider-fields');
+    if (fields) fields.style.display = cb.checked ? '' : 'none';
+  };
+
+  window.llmOnProviderChange = function (provider) {
+    const fetchGroup  = document.getElementById('llm-fetch-group');
+    const baseGroup   = document.getElementById('llm-base-group');
+    const modelSelGrp = document.getElementById('llm-model-select-group');
+    const baseField   = document.querySelector('[name="llm-llm_api_base"]');
+    const hint        = document.getElementById('llm-key-hint');
+
+    fetchGroup.style.display = LIVE_PROVIDERS.includes(provider) ? '' : 'none';
+
+    const needsBase = provider === 'ollama' || provider === 'openrouter';
+    baseGroup.style.display = needsBase ? '' : 'none';
+    if (BASE_DEFAULTS[provider] !== undefined) {
+      if (!baseField.value) baseField.value = BASE_DEFAULTS[provider];
+    }
+
+    hint.textContent = KEY_HINTS[provider] || '';
+    modelSelGrp.style.display = 'none';
+    document.getElementById('llm-fetch-status').textContent = '';
+  };
+
+  window.llmFetchModels = async function () {
+    const provider  = document.getElementById('llm-provider').value;
+    const apiKey    = document.querySelector('[name="llm-llm_api_key"]').value.trim();
+    const apiBase   = document.querySelector('[name="llm-llm_api_base"]').value.trim();
+    const btn       = document.getElementById('llm-fetch-btn');
+    const statusEl  = document.getElementById('llm-fetch-status');
+    const selGroup  = document.getElementById('llm-model-select-group');
+    const modelSel  = document.getElementById('llm-model-select');
+
+    if (!provider) { statusEl.textContent = '{{ _("Select a provider first.") }}'; return; }
+
+    btn.disabled = true;
+    btn.textContent = '⏳ {{ _("Loading…") }}';
+    statusEl.textContent = '';
+
+    const params = new URLSearchParams({ provider });
+    if (apiKey)  params.set('api_key',  apiKey);
+    if (apiBase) params.set('api_base', apiBase);
+
+    try {
+      const resp = await fetch('{{ url_for("settings.llm.llm_get_models") }}?' + params);
+      const data = await resp.json();
+
+      if (data.error) {
+        statusEl.style.color = '#c0392b';
+        statusEl.textContent = '✗ ' + data.error;
+        selGroup.style.display = 'none';
+        return;
+      }
+
+      if (!data.models || data.models.length === 0) {
+        statusEl.style.color = '#e67e22';
+        statusEl.textContent = '{{ _("No models returned — check your API key.") }}';
+        selGroup.style.display = 'none';
+        return;
+      }
+
+      modelSel.innerHTML = '<option value="">{{ _("— choose a model —") }}</option>';
+      const currentModel = document.querySelector('[name="llm-llm_model"]').value.trim();
+      for (const m of data.models) {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = m;
+        if (m === currentModel) opt.selected = true;
+        modelSel.appendChild(opt);
+      }
+
+      selGroup.style.display = '';
+      statusEl.style.color = '#27ae60';
+      statusEl.textContent = '✓ ' + data.models.length + ' {{ _("models available with your key") }}';
+    } catch (e) {
+      statusEl.style.color = '#c0392b';
+      statusEl.textContent = '✗ {{ _("Request failed") }}: ' + e.message;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '↻ {{ _("Load available models") }}';
+    }
+  };
+
+  window.llmOnModelPick = function (value) {
+    if (value) document.querySelector('[name="llm-llm_model"]').value = value;
+  };
+
+  window.llmRunTest = async function () {
+    const btn    = document.getElementById('llm-test-btn');
+    const result = document.getElementById('llm-test-result');
+    if (!btn || !result) return;
+
+    btn.disabled = true;
+    btn.textContent = '⏳ {{ _("Testing…") }}';
+    result.style.display = 'none';
+
+    try {
+      const resp = await fetch('{{ url_for("settings.llm.llm_test") }}');
+      const data = await resp.json();
+      if (data.ok) {
+        result.style.cssText = 'display:block; background:rgba(39,174,96,0.08); border:1px solid rgba(39,174,96,0.3); border-radius:5px; padding:0.6em 0.85em; font-size:0.88em; line-height:1.45;';
+        result.innerHTML = '<span style="color:#27ae60; font-weight:600;">&#10003; {{ _("Connected") }}</span>'
+          + (data.tokens ? ' <span style="opacity:0.55; font-size:0.9em;">(' + data.tokens + ' {{ _("tokens") }})</span>' : '')
+          + '<br><em style="opacity:0.75;">' + data.text.replace(/</g,'&lt;') + '</em>';
+      } else {
+        result.style.cssText = 'display:block; background:rgba(192,57,43,0.07); border:1px solid rgba(192,57,43,0.25); border-radius:5px; padding:0.6em 0.85em; font-size:0.88em; line-height:1.45;';
+        result.innerHTML = '<span style="color:#c0392b; font-weight:600;">&#10007; {{ _("Failed") }}</span><br><code style="font-size:0.92em; word-break:break-all;">' + (data.error || '').replace(/</g,'&lt;') + '</code>';
+      }
+    } catch (e) {
+      result.style.cssText = 'display:block; background:rgba(192,57,43,0.07); border:1px solid rgba(192,57,43,0.25); border-radius:5px; padding:0.6em 0.85em; font-size:0.88em;';
+      result.innerHTML = '<span style="color:#c0392b; font-weight:600;">&#10007; {{ _("Request failed") }}</span>: ' + e.message.replace(/</g,'&lt;');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '&#9654; {{ _("Test connection") }}';
+    }
+  };
+
+  // On page load: detect and pre-select provider from current model
+  (function detectCurrentProvider() {
+    const modelField = document.querySelector('[name="llm-llm_model"]');
+    if (!modelField) return;
+    const m = modelField.value.trim();
+    if (!m) return;
+
+    let guessed = '';
+    if (m.startsWith('gemini/'))       guessed = 'gemini';
+    else if (m.startsWith('ollama/'))  guessed = 'ollama';
+    else if (m.startsWith('openrouter/')) guessed = 'openrouter';
+    else if (m.startsWith('claude'))   guessed = 'anthropic';
+    else if (m.startsWith('gpt') || m.startsWith('o1') || m.startsWith('o3')) guessed = 'openai';
+
+    if (guessed) {
+      const sel = document.getElementById('llm-provider');
+      if (sel) { sel.value = guessed; llmOnProviderChange(guessed); }
+    }
+  })();
+}());
+</script>

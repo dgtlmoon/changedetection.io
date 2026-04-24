@@ -57,6 +57,7 @@
             {% if capabilities.supports_visual_selector %}
             <li class="tab"><a id="visualselector-tab" href="#visualselector">{{ _('Visual Filter Selector') }}</a></li>
             {% endif %}
+            <li class="tab"><a href="#ai-llm">{{ _('AI / LLM') }}</a></li>
             {% if capabilities.supports_text_filters_and_triggers %}
             <li class="tab" id="filters-and-triggers-tab"><a href="#filters-and-triggers">{{ _('Filters & Triggers') }}</a></li>
             <li class="tab" id="conditions-tab"><a href="#conditions">{{ _('Conditions') }}</a></li>
@@ -320,7 +321,11 @@ Math: {{ 1 + 1 }}") }}
                     </div>
                 </div>
             </div>
+            <div class="tab-pane-inner" id="ai-llm">
+                {% include "edit/include_llm_intent.html" %}
+            </div>
             <div class="tab-pane-inner" id="filters-and-triggers">
+
                 <span id="activate-text-preview" class="pure-button pure-button-primary button-xsmall">{{ _('Activate preview') }}</span>
               <div>
               <div id="edit-text-filter">
@@ -374,7 +379,20 @@ Math: {{ 1 + 1 }}") }}
                     const preview_text_edit_filters_url="{{url_for('ui.ui_edit.watch_get_preview_rendered', uuid=uuid)}}";
                 </script>
                 <br>
-                {#<div id="text-preview-controls"><span id="text-preview-refresh" class="pure-button button-xsmall">Refresh</span></div>#}
+                {% if llm_configured %}
+                <div id="llm-preview-result" style="display:none; margin-bottom: 0.8em; padding: 0.8em 1.1em; border-radius: 4px; border-left: 4px solid #ccc; font-size: 0.9em;">
+                    <div style="font-size:0.75em; text-transform:uppercase; letter-spacing:0.06em; opacity:0.55; margin-bottom:0.35em;">{{ _('AI Intent preview') }}</div>
+                    <span class="llm-preview-verdict" style="font-weight: bold;"></span>
+                    <div class="llm-preview-answer" style="margin-top: 0.5em; white-space: pre-wrap; line-height: 1.5; font-style: italic;"></div>
+                </div>
+                <style>
+                    #llm-preview-result { transition: border-color 0.2s, background 0.2s; }
+                    #llm-preview-result[data-found="1"] { border-color: #2ecc71; background: rgba(46,204,113,0.07); }
+                    #llm-preview-result[data-found="1"] .llm-preview-verdict { color: #27ae60; }
+                    #llm-preview-result[data-found="0"] { border-color: #aaa; background: rgba(0,0,0,0.03); }
+                    #llm-preview-result[data-found="0"] .llm-preview-verdict { color: #888; }
+                </style>
+                {% endif %}
                 <div class="minitabs-wrapper">
                   <div class="minitabs-content">
                       <div id="text-preview-inner" class="monospace-preview">
@@ -484,6 +502,16 @@ Math: {{ 1 + 1 }}") }}
                             <td>{{ _('Server type reply') }}</td>
                             <td>{{ watch.get('remote_server_reply') }}</td>
                         </tr>
+                        {% if settings_application.get('llm', {}).get('model') %}
+                        <tr>
+                            <td>{{ _('AI tokens (last check)') }}</td>
+                            <td>{{ "{:,}".format(watch.get('llm_last_tokens_used') or 0) }}</td>
+                        </tr>
+                        <tr>
+                            <td>{{ _('AI tokens (total)') }}</td>
+                            <td>{{ "{:,}".format(watch.get('llm_tokens_used_cumulative') or 0) }}</td>
+                        </tr>
+                        {% endif %}
                         </tbody>
                     </table>
 

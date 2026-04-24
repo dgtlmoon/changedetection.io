@@ -28,10 +28,12 @@
 @use "parts/action_sidebar";
 @use "parts/hamburger_menu";
 @use "parts/search_modal";
+@use "parts/llm";
 @use "parts/notification_bubble";
 @use "parts/toast";
 @use "parts/login_form";
 @use "parts/tabs";
+@use "parts/sub_tabs";
 
 // Smooth transitions for theme switching
 body,

@@ -78,6 +78,12 @@
                 <label for="replaced" class="pure-checkbox" id="label-diff-replaced">
                 <input type="checkbox" id="replaced"  name="replaced" {% if diff_prefs.replaced %}checked=""{% endif %}> {{ _('Replaced') }}</label>
             </span>
+            {%- if llm_configured -%}
+            <span>
+                <label for="llm_all_changes" class="pure-checkbox" id="label-diff-llm-all-changes" title="{{ _('Include all intermediate snapshots between the selected versions in the AI summary') }}">
+                <input type="checkbox" id="llm_all_changes" name="llm_all_changes" {% if diff_prefs.llm_all_changes %}checked=""{% endif %}> &#x2728; {{ _('AI: every change between versions') }}</label>
+            </span>
+            {%- endif -%}
         </fieldset>
         {%- if versions|length >= 2 -%}
             <div id="keyboard-nav">
@@ -129,6 +135,19 @@
             <div class="tip">{{ _('Pro-tip: You can enable') }} <strong>{{ _('"share access when password is enabled"') }}</strong> {{ _('from settings.') }}
             </div>
         {%- endif -%}
+        {%- if llm_configured -%}
+        <div id="llm-diff-summary-area"{% if not llm_diff_summary %} data-pending="1"{% endif %}>
+            <span class="llm-diff-summary-label">&#x2728; {{ _('AI Change Summary') }}</span>
+            {%- if llm_diff_summary -%}
+            <p class="llm-diff-summary-text">{{ llm_diff_summary }}</p>
+            {%- else -%}
+            <p class="llm-diff-summary-text llm-diff-summary-loading">{{ _('Generating summary…') }}</p>
+            {%- if llm_summary_prompt -%}
+            <p class="llm-diff-summary-prompt"><span class="llm-diff-summary-prompt-text">{{ llm_summary_prompt }}</span></p>
+            {%- endif -%}
+            {%- endif -%}
+        </div>
+        {%- endif -%}
         <div id="text-diff-heading-area"  style="user-select: none;">
             <div class="snapshot-age"><span>{{ from_version|format_timestamp_timeago }}</span>
                 {%- if note -%}<span class="note"><strong>{{ note }}</strong></span>{%- endif -%}
@@ -138,6 +157,7 @@
         <pre id="difference" style="border-left: 2px solid #ddd;">{{ content| diff_unescape_difference_spans }}</pre>
     <div id="diff-visualiser-area-after" style="user-select: none;">
         <strong>{{ _('Tip:') }}</strong> {{ _('Highlight text to share or add to ignore lists.') }}
+        &nbsp;&mdash;&nbsp;<a href="{{ url_for('ui.ui_diff.download_patch', uuid=uuid, from_version=from_version, to_version=to_version) }}" target="_blank" rel="noopener" style="font-size:0.85em;">{{ _('Download difference patch') }}</a>
     </div>
     </div>
 
@@ -164,5 +184,58 @@
 </script>
 <script src="{{url_for('static_content', group='js', filename='diff-render.js')}}"></script>
 
+{% if llm_configured %}
+<script>
+$(function () {
+    var $area = $('#llm-diff-summary-area');
+    if (!$area.length || !$area.data('pending')) return;
+
+    var fromVersion = $('#diff-from-version').val();
+    var toVersion   = $('#diff-to-version').val();
+    var summaryUrl  = "{{ url_for('ui.ui_diff.diff_llm_summary', uuid=uuid) }}";
+
+    function showLlmError(msg) {
+        $area.find('.llm-diff-summary-text')
+             .removeClass('llm-diff-summary-loading')
+             .addClass('llm-error')
+             .text(msg);
+        $area.removeAttr('data-pending');
+    }
+
+    var llmAllChanges      = $('#llm_all_changes').is(':checked')    ? 1 : 0;
+    var ignoreWhitespace   = $('#ignoreWhitespace').is(':checked')   ? 1 : 0;
+    var showRemoved        = $('#removed').is(':checked')            ? 1 : 0;
+    var showAdded          = $('#added').is(':checked')              ? 1 : 0;
+    $.getJSON(summaryUrl, {
+        from_version:      fromVersion,
+        to_version:        toVersion,
+        all_changes:       llmAllChanges,
+        ignore_whitespace: ignoreWhitespace,
+        removed:           showRemoved,
+        added:             showAdded,
+    })
+        .done(function (data) {
+            if (data.summary) {
+                $area.find('.llm-diff-summary-text')
+                     .removeClass('llm-diff-summary-loading')
+                     .text(data.summary);
+                $area.removeAttr('data-pending');
+            } else if (data.error) {
+                showLlmError(data.error);
+            } else {
+                $area.remove();
+            }
+        })
+        .fail(function (xhr) {
+            var resp = xhr.responseJSON;
+            if (resp && resp.error) {
+                showLlmError(resp.error);
+            } else {
+                showLlmError('AI summary request failed (HTTP ' + xhr.status + ').');
+            }
+        });
+});
+</script>
+{% endif %}
 
 {% endblock %}

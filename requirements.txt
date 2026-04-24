@@ -140,6 +140,11 @@ tzdata
 
 pluggy ~= 1.6
 
+# LLM intent-based change evaluation (multi-provider via litellm)
+litellm>=1.40.0
+# BM25 relevance trimming for large snapshots (pure Python, no ML)
+rank-bm25>=0.2.2
+
 # Needed for testing, cross-platform for process and system monitoring
 psutil==7.2.2
 

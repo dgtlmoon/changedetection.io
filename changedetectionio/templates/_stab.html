@@ -1,0 +1,47 @@
+{#
+  Vertical sub-tab macros — reusable across any settings pane.
+
+  Usage:
+    {% from '_stab.html' import stab_shell, stab_pane %}
+
+    {% call stab_shell('my-shell-id', [
+        {'id': 'overview', 'label': _('Overview'), 'icon': '✦'},
+        {'id': 'settings', 'label': _('Settings'), 'icon': '⚙'},
+    ]) %}
+      {% call stab_pane('overview') %}
+        <p>Overview content…</p>
+      {% endcall %}
+      {% call stab_pane('settings') %}
+        <p>Settings content…</p>
+      {% endcall %}
+    {% endcall %}
+
+  Tabs are switched by sub-tabs.js (looks for .stab-shell elements).
+  Hidden panes use visibility:hidden so form fields inside still submit.
+  Active tab is persisted in localStorage keyed by shell id.
+
+  data-stab-goto="tab-id" on any element inside the shell navigates to that tab.
+#}
+
+{% macro stab_shell(shell_id, tabs) %}
+<div class="stab-shell" id="{{ shell_id }}">
+  <nav class="stab-nav" aria-label="{{ _('Settings sections') }}">
+    {%- for tab in tabs %}
+    <button class="stab-btn" type="button" data-stab="{{ tab.id }}" aria-controls="stab-pane-{{ tab.id }}">
+      {%- if tab.get('icon') %}<span class="stab-icon" aria-hidden="true">{{ tab.icon }}</span>{% endif -%}
+      {{ tab.label }}
+    </button>
+    {%- endfor %}
+  </nav>
+  <div class="stab-body">
+    {{ caller() }}
+  </div>
+</div>
+{% endmacro %}
+
+
+{% macro stab_pane(tab_id) %}
+<div class="stab-pane" data-stab="{{ tab_id }}" id="stab-pane-{{ tab_id }}" role="tabpanel">
+  {{ caller() }}
+</div>
+{% endmacro %}

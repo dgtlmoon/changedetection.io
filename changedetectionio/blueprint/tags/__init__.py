@@ -5,6 +5,7 @@ from loguru import logger
 
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.flask_app import login_optionally_required
+from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config
 
 
 def construct_blueprint(datastore: ChangeDetectionStore):
@@ -183,6 +184,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             'form': form,
             'watch': default,
             'extra_notification_token_placeholder_info': datastore.get_unique_notification_token_placeholders_available(),
+            'llm_configured': bool(_get_llm_config(datastore)),
         }
 
         included_content = {}

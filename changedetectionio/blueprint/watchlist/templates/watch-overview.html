@@ -113,6 +113,16 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
                     {{ render_nolabel_field(form.watch_submit_button, title=_("Watch this URL!") ) }}
                     {{ render_nolabel_field(form.edit_and_watch_submit_button, title=_("Edit first then Watch") ) }}
             </div>
+            {% if llm_configured %}
+            <div id="quick-watch-llm-intent" style="display:none; margin-top: 0.5em;">
+                <textarea name="llm_intent"
+                          id="quick_watch_llm_intent"
+                          rows="2"
+                          class="pure-input-1"
+                          placeholder="{{ _('AI — Notify when…') }} {{ llm_intent_watch_placeholder }}"
+                ></textarea>
+            </div>
+            {% endif %}
             <div id="watch-group-tag">
                {{ render_field(form.tags, value=active_tag.title if active_tag_uuid else '', placeholder=_("Watch group / tag"), class="transparent-field") }}
             </div>
@@ -126,6 +136,14 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
         </span>
     </form>
 </div>
+{% if llm_configured %}
+<script>
+window.watchOverviewI18n = {
+    generatingSummary: {{ _('Generating summary…')|tojson }},
+    gotoHistory:       {{ _('Goto full history')|tojson }}
+};
+</script>
+{% endif %}
 <div class="box">
     <form class="pure-form" action="{{ url_for('ui.form_watch_list_checkbox_operations') }}" method="POST" id="watch-list-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
@@ -353,7 +371,7 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
                     <a href="" class="already-in-queue-button recheck pure-button pure-button-primary" style="display: none;" disabled="disabled">{{ _('Queued') }}</a>
                     <a href="{{ url_for('ui.form_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}" data-op='recheck' class="ajax-op recheck pure-button pure-button-primary">{{ _('Recheck') }}</a>
                     <a href="{{ url_for('ui.ui_edit.edit_page', uuid=watch.uuid, tag=active_tag_uuid)}}#general" class="pure-button pure-button-primary">{{ _('Edit') }}</a>
-                    <a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=watch.uuid)}}" {{target_attr}} class="pure-button pure-button-primary history-link" style="display: none;">{{ _('History') }}</a>
+                    <a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=watch.uuid)}}" {{target_attr}} class="pure-button pure-button-primary history-link ai-history-btn" style="display: none;" data-uuid="{{ watch.uuid }}" data-summary-url="{{ url_for('ui.ui_diff.diff_llm_summary', uuid=watch.uuid) }}"><span class="btn-label-history">{{ _('History') }}</span><span class="btn-label-summary">&#x2728; {{ _('Summary') }}</span></a>
                     <a href="{{ url_for('ui.ui_preview.preview_page', uuid=watch.uuid)}}" {{target_attr}} class="pure-button pure-button-primary preview-link" style="display: none;">{{ _('Preview') }}</a>
                     </div>
                 </td>

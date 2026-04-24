@@ -1,0 +1,476 @@
+// ── Vertical sub-tab layout ───────────────────────────────────────────────────
+// Reusable panel: left nav rail + right content area.
+// HTML structure:
+//   <div class="stab-shell" id="some-id">
+//     <nav class="stab-nav">
+//       <button class="stab-btn" data-stab="foo"><span class="stab-icon">⊞</span> Foo</button>
+//     </nav>
+//     <div class="stab-body">
+//       <div class="stab-pane" data-stab="foo">…content…</div>
+//     </div>
+//   </div>
+// JS: sub-tabs.js initialises all .stab-shell elements, toggles .active.
+// Form fields in hidden panes still submit (visibility:hidden, not display:none).
+
+.stab-shell {
+  display: flex;
+  align-items: stretch;
+  background: var(--color-background);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1.5rem;
+}
+
+// ── Left nav rail ─────────────────────────────────────────────────────────────
+.stab-nav {
+  display: flex;
+  flex-direction: column;
+  width: 11rem;
+  flex-shrink: 0;
+  padding: 0.75rem 0;
+  gap: 1px;
+  background: linear-gradient(180deg,
+    rgba(0, 0, 0, 0.03) 0%,
+    rgba(0, 0, 0, 0.05) 100%
+  );
+  border-right: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+.stab-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.9rem 0.65rem 1rem;
+  width: 100%;
+  background: none;
+  border: none;
+  border-left: 3px solid transparent;
+  border-radius: 0;
+  cursor: pointer;
+  font: inherit;
+  color: var(--color-text);
+  text-align: left;
+  opacity: 0.65;
+  transition: background 0.12s ease, opacity 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.04);
+    opacity: 0.85;
+  }
+
+  &.active {
+    border-left-color: var(--color-menu-accent);
+    background: rgba(237, 89, 0, 0.07);
+    color: var(--color-menu-accent);
+    font-weight: 700;
+    opacity: 1;
+  }
+
+  .stab-icon {
+    font-size: 0.95rem;
+    width: 1.1rem;
+    text-align: center;
+    flex-shrink: 0;
+    opacity: 0.8;
+  }
+}
+
+// ── Right content area ────────────────────────────────────────────────────────
+.stab-body {
+  flex: 1;
+  min-width: 0;
+  padding: 1.4rem 1.6rem;
+  overflow-x: hidden;
+}
+
+// ── Individual pane — hidden but field values still submitted ─────────────────
+.stab-pane {
+  visibility: hidden;
+  height: 0;
+  overflow: hidden;
+
+  &.active {
+    visibility: visible;
+    height: auto;
+    overflow: visible;
+    animation: stab-enter 0.16s ease both;
+  }
+}
+
+@keyframes stab-enter {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ── Generic overview pane layout (hero + feature cards + CTA) ─────────────────
+.stab-overview-hero {
+  margin-bottom: 1.5rem;
+
+  h3 {
+    margin: 0 0 0.3rem;
+    font-size: 1.05rem;
+  }
+
+  .stab-overview-glyph {
+    color: var(--color-menu-accent);
+    margin-right: 0.2rem;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--color-text-input-description);
+    max-width: 44rem;
+    line-height: 1.55;
+  }
+}
+
+.stab-overview-features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-bottom: 1.6rem;
+}
+
+.stab-overview-feature {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.022);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: background 0.12s ease;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.035);
+  }
+
+  .stab-overview-icon {
+    font-size: 1.1rem;
+    width: 1.6rem;
+    flex-shrink: 0;
+    text-align: center;
+    padding-top: 0.05rem;
+    opacity: 0.7;
+  }
+
+  .stab-overview-text {
+    > strong {
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+
+    p {
+      color: var(--color-text-input-description);
+    }
+  }
+}
+
+.stab-overview-disclaimer {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  margin: 0 0 1.1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 6px;
+  border: 1px solid rgba(211, 136, 0, 0.35);
+  background: rgba(255, 180, 0, 0.07);
+
+  .stab-disclaimer-icon {
+    font-size: 1.15rem;
+    flex-shrink: 0;
+    padding-top: 0.05rem;
+    color: #c07800;
+  }
+
+  .stab-disclaimer-body {
+    font-size: 0.85rem;
+    line-height: 1.55;
+
+    > strong {
+      display: block;
+      margin-bottom: 0.35rem;
+      color: #8a5500;
+      font-size: 0.87rem;
+    }
+
+    p {
+      margin: 0 0 0.45rem;
+      color: var(--color-text-input-description);
+    }
+
+    ul {
+      margin: 0 0 0.6rem;
+      padding-left: 1.25rem;
+      color: var(--color-text-input-description);
+
+      li {
+        margin-bottom: 0.2rem;
+      }
+    }
+  }
+
+  .stab-disclaimer-check {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: var(--color-text-input-description);
+    font-weight: 600;
+
+    input[type="checkbox"] {
+      flex-shrink: 0;
+      margin-top: 0.18rem;
+      cursor: pointer;
+    }
+  }
+}
+
+.stab-overview-cta {
+  margin-top: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.stab-configured-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  background: rgba(39, 174, 96, 0.09);
+  border: 1px solid rgba(39, 174, 96, 0.28);
+  border-radius: 4px;
+  color: #2a7a4e;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+// ── Section header inside a pane ──────────────────────────────────────────────
+.stab-section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  opacity: 0.45;
+  margin: 1.4rem 0 0.6rem;
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
+// ── Mobile: stack nav above content, buttons stay vertical ───────────────────
+@media (max-width: 600px) {
+  .stab-shell {
+    flex-direction: column;
+    min-height: unset;
+  }
+
+  .stab-nav {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+    padding: 0.4rem 0;
+  }
+
+  .stab-body {
+    padding-left: 1rem;
+  }
+}
+
+// ── LLM Usage pane — stat cards ───────────────────────────────────────────────
+.llm-usage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.9rem;
+  margin-bottom: 1.4rem;
+}
+
+.llm-stat-card {
+  padding: 1rem 1.1rem 0.85rem;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.025);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+
+  .llm-stat-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    opacity: 0.4;
+    margin-bottom: 0.4rem;
+  }
+
+  .llm-stat-value {
+    font-size: 1.65rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+
+  .llm-stat-sub {
+    font-size: 0.79rem;
+    opacity: 0.5;
+  }
+
+  .llm-stat-budget-text {
+    font-size: 0.77rem;
+    opacity: 0.55;
+    margin-top: 0.3rem;
+  }
+}
+
+.llm-stat-bar-wrap {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin-top: 0.65rem;
+}
+
+.llm-stat-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+
+  &.bar-ok   { background: #27ae60; }
+  &.bar-warn { background: #e67e22; }
+  &.bar-over { background: #c0392b; }
+}
+
+// ── Usage settings rows ────────────────────────────────────────────────────────
+.llm-usage-settings {
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
+  padding-top: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.llm-usage-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+
+  .llm-usage-row-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    opacity: 0.6;
+    min-width: 12rem;
+    flex-shrink: 0;
+  }
+
+  .llm-usage-row-value {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    font-size: 0.88rem;
+  }
+}
+
+.llm-field-hint {
+  font-size: 0.8rem;
+  opacity: 0.55;
+}
+
+.llm-env-badge {
+  font-size: 0.79rem;
+  opacity: 0.6;
+}
+
+.llm-budget-alert {
+  color: #c0392b;
+  font-weight: 600;
+  font-size: 0.88rem;
+  margin: 0 0 1rem;
+}
+
+.llm-no-usage {
+  opacity: 0.5;
+  font-style: italic;
+  font-size: 0.88rem;
+  margin-bottom: 1rem;
+}
+
+// ── Dark mode ─────────────────────────────────────────────────────────────────
+html[data-darkmode="true"] {
+  .stab-shell {
+    border-color: rgba(255, 255, 255, 0.07);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  }
+
+  .stab-nav {
+    background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.025) 0%,
+      rgba(255, 255, 255, 0.04) 100%
+    );
+    border-right-color: rgba(255, 255, 255, 0.07);
+  }
+
+  .stab-btn {
+    &:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    &.active {
+      background: rgba(237, 89, 0, 0.12);
+    }
+  }
+
+  .stab-overview-feature {
+    background: rgba(255, 255, 255, 0.025);
+    border-color: rgba(255, 255, 255, 0.05);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+  }
+
+  .stab-configured-badge {
+    background: rgba(39, 174, 96, 0.1);
+    border-color: rgba(39, 174, 96, 0.22);
+    color: #5db880;
+  }
+
+  .stab-overview-disclaimer {
+    border-color: rgba(255, 190, 50, 0.22);
+    background: rgba(255, 180, 0, 0.05);
+
+    .stab-disclaimer-icon {
+      color: #c9963a;
+    }
+
+    .stab-disclaimer-body > strong {
+      color: #c9a050;
+    }
+  }
+
+  .llm-stat-card {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.07);
+  }
+
+  .llm-stat-bar-wrap {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .llm-usage-settings {
+    border-top-color: rgba(255, 255, 255, 0.07);
+  }
+}

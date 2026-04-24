@@ -26,7 +26,11 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         add_paused = request.form.get('edit_and_watch_submit_button') != None
         from changedetectionio import processors
         processor = request.form.get('processor', processors.get_default_processor())
-        new_uuid = datastore.add_watch(url=url, tag=request.form.get('tags','').strip(), extras={'paused': add_paused, 'processor': processor})
+        llm_intent = request.form.get('llm_intent', '').strip()
+        extras = {'paused': add_paused, 'processor': processor}
+        if llm_intent:
+            extras['llm_intent'] = llm_intent
+        new_uuid = datastore.add_watch(url=url, tag=request.form.get('tags','').strip(), extras=extras)
 
         if new_uuid:
             if add_paused:

@@ -2,6 +2,7 @@ from os import getenv
 from copy import deepcopy
 
 from changedetectionio.blueprint.rss import RSS_FORMAT_TYPES, RSS_CONTENT_FORMAT_DEFAULT
+from changedetectionio.llm.evaluator import LLM_DEFAULT_MAX_SUMMARY_TOKENS, LLM_DEFAULT_THINKING_BUDGET
 from changedetectionio.model.Tags import TagsDict
 
 from changedetectionio.notification import (
@@ -70,6 +71,8 @@ class model(dict):
                     'shared_diff_access': False,
                     'strip_ignored_lines': False,
                     'tags': None,  # Initialized in __init__ with real datastore_path
+                    'llm_thinking_budget': LLM_DEFAULT_THINKING_BUDGET,
+                    'llm_max_summary_tokens': LLM_DEFAULT_MAX_SUMMARY_TOKENS,
                     'webdriver_delay': None , # Extra delay in seconds before extracting text
                     'ui': {
                         'use_page_title_in_list': True,

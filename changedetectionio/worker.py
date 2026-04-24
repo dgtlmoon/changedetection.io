@@ -405,7 +405,94 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     try:
                         # Reset the edited flag BEFORE update_watch (which calls watch.update() and would set it again)
                         watch.reset_watch_edited_flag()
+
+                        # LLM evaluation — intent filtering + change summary
+                        update_obj['_llm_result'] = None
+                        update_obj['_llm_intent'] = ''
+                        update_obj['_llm_change_summary'] = ''
+                        # skip_check: when budget exceeded, don't run LLM or the check
+                        _llm_budget_action = datastore.data['settings']['application'].get('llm_budget_action', 'skip_llm')
+                        if _llm_budget_action == 'skip_check':
+                            from changedetectionio.llm.evaluator import is_global_token_budget_exceeded
+                            if is_global_token_budget_exceeded(datastore):
+                                logger.info(f"LLM monthly budget exceeded — skipping check for {uuid} (budget_action=skip_check)")
+                                changed_detected = False
+
+                        if changed_detected:
+                            try:
+                                from changedetectionio.llm.evaluator import (
+                                    evaluate_change, resolve_intent, resolve_llm_field,
+                                    summarise_change, get_llm_config,
+                                )
+                                _llm_cfg = get_llm_config(datastore)
+                                if _llm_cfg:
+                                    # Compute unified diff once — used by both intent and summary
+                                    _watch_dates = list(watch.history.keys())
+                                    # Capture from_version before new snapshot is added
+                                    _llm_from_version = _watch_dates[-1] if _watch_dates else None
+                                    if _watch_dates:
+                                        _prev_text = watch.get_history_snapshot(timestamp=_watch_dates[-1]) or ''
+                                        from difflib import unified_diff as _unified_diff
+                                        _diff_lines = list(_unified_diff(
+                                            _prev_text.splitlines(keepends=True),
+                                            contents.splitlines(keepends=True),
+                                            lineterm='',
+                                            n=3
+                                        ))
+                                        _diff_text = ''.join(_diff_lines) if _diff_lines else contents
+                                    else:
+                                        _diff_text = contents
+
+                                    # Step 1: AI Change Intent — may suppress notification
+                                    _llm_intent, _llm_intent_source = resolve_intent(watch, datastore)
+                                    if _llm_intent:
+                                        _llm_result = await loop.run_in_executor(
+                                            executor,
+                                            lambda diff=_diff_text, snap=contents: evaluate_change(
+                                                watch, datastore, diff=diff, current_snapshot=snap
+                                            )
+                                        )
+                                        update_obj['_llm_result'] = _llm_result
+                                        update_obj['_llm_intent'] = _llm_intent
+
+                                        if _llm_result and not _llm_result.get('important', True):
+                                            changed_detected = False
+                                            logger.info(
+                                                f"LLM filtered out change for {uuid} "
+                                                f"(intent from {_llm_intent_source}): "
+                                                f"{_llm_result.get('summary', '')[:80]}"
+                                            )
+
+                                    # Step 2: AI Change Summary — runs for any LLM-configured watch with a change
+                                    if changed_detected:
+                                        _change_summary = await loop.run_in_executor(
+                                            executor,
+                                            lambda diff=_diff_text, snap=contents: summarise_change(
+                                                watch, datastore, diff=diff, current_snapshot=snap
+                                            )
+                                        )
+                                        if _change_summary:
+                                            update_obj['_llm_change_summary'] = _change_summary
+                            except Exception as e:
+                                logger.warning(f"LLM evaluation error for {uuid}: {e}")
+
                         datastore.update_watch(uuid=uuid, update_obj=update_obj)
+
+                        # Save AI summary file now that the new snapshot has been committed
+                        # and its version timestamp is the last key in history
+                        if update_obj.get('_llm_change_summary') and _llm_from_version:
+                            try:
+                                from changedetectionio.llm.evaluator import get_effective_summary_prompt
+                                _llm_to_version = list(watch.history.keys())[-1]
+                                _llm_prompt = get_effective_summary_prompt(watch, datastore)
+                                watch.save_llm_diff_summary(
+                                    update_obj['_llm_change_summary'],
+                                    _llm_from_version,
+                                    _llm_to_version,
+                                    prompt=_llm_prompt,
+                                )
+                            except Exception as _fe:
+                                logger.warning(f"Could not write change-summary file for {uuid}: {_fe}")
 
                         if changed_detected or not watch.history_n:
                             if update_handler.screenshot:
