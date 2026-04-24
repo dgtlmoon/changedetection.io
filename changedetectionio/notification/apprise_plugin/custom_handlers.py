@@ -48,8 +48,9 @@ To verify this works:
 """
 
 import json
+import os
 import re
-from urllib.parse import unquote_plus
+from urllib.parse import unquote_plus, urlparse
 
 import requests
 from apprise import plugins
@@ -58,6 +59,8 @@ from apprise.utils.parse import parse_url as apprise_parse_url, url_assembly
 from apprise.utils.logic import dict_full_update
 from loguru import logger
 from requests.structures import CaseInsensitiveDict
+
+from changedetectionio.validate_url import is_private_hostname
 
 SUPPORTED_HTTP_METHODS = {"get", "post", "put", "delete", "patch", "head"}
 
@@ -194,6 +197,15 @@ def apprise_http_custom_handler(
     params = _get_params(parsed_url=parsed_url)
 
     url = re.sub(rf"^{schema}", "https" if schema.endswith("s") else "http", parsed_url.get("url"))
+
+    # SSRF protection — block private/loopback addresses unless explicitly allowed
+    if not os.getenv('ALLOW_IANA_RESTRICTED_ADDRESSES', '').lower() in ('true', '1', 'yes'):
+        hostname = urlparse(url).hostname or ''
+        if hostname and is_private_hostname(hostname):
+            raise ValueError(
+                f"Notification target '{hostname}' is a private/reserved address. "
+                f"Set ALLOW_IANA_RESTRICTED_ADDRESSES=true to allow."
+            )
 
     response = requests.request(
         method=method,

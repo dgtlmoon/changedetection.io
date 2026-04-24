@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-24 19:50+1000\n"
+"POT-Creation-Date: 2026-04-24 23:02+1000\n"
 "PO-Revision-Date: 2026-01-18 21:31+0800\n"
 "Last-Translator: 吾爱分享 <admin@wuaishare.cn>\n"
 "Language: zh\n"
@@ -365,6 +365,15 @@ msgstr "所有通知已静音。"
 msgid "All notifications unmuted."
 msgstr "所有通知已取消静音。"
 
+#: changedetectionio/blueprint/settings/llm.py
+msgid "AI / LLM configuration removed."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm.py
+#, python-format
+msgid "AI summary cache cleared (%(n)s file(s) removed)."
+msgstr ""
+
 #: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "Notification debug log"
 msgstr "通知调试日志"
@@ -405,6 +414,11 @@ msgstr "时间与日期"
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "CAPTCHA & Proxies"
 msgstr "验证码与代理"
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "AI / LLM"
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Info"
@@ -616,10 +630,6 @@ msgid "header - required for the Chrome Extension to work"
 msgstr "请求头 - Chrome 扩展正常工作所需"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "API Key"
-msgstr "API密钥"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "copy"
 msgstr "复制"
 
@@ -760,6 +770,382 @@ msgstr "返回"
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Clear Snapshot History"
 msgstr "清除快照历史"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Overview"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Provider"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Prompts"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Behaviour"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Usage"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "AI-powered change monitoring"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Connect an LLM to move from \"something changed\" to \"only the thing you care about changed\"."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Intent filtering"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#, python-format
+msgid ""
+"Each watch or tag can carry a plain-text intent — %(ex1)s or %(ex2)s. On every detected change the AI evaluates the "
+"diff against it and suppresses irrelevant noise."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#, python-format
+msgid ""
+"Instead of raw diffs, receive plain-language summaries in notifications — %(ex1)s or %(ex2)s. Set a global default "
+"prompt here, or override per watch or tag."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Minimal cost"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#, python-format
+msgid ""
+"The AI sees only a unified diff of what changed — never full page HTML. Low-cost models like %(gpt)s or %(gemini)s "
+"handle this well, typically fractions of a cent per check."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "AI / LLM configured:"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Configure AI Provider"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "AI Provider"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Third-party data transfer — please read"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"When AI features are active, change data from the websites you monitor — including page diffs and extracted text — is"
+" sent to an external AI provider of your choice."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "You are solely responsible for ensuring this complies with the terms of service of each website you monitor."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"You are solely responsible for compliance with applicable data-protection laws (e.g. GDPR) regarding any personal "
+"data that may appear in monitored content."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"API costs charged by your chosen provider are your own responsibility; this software has no visibility into or "
+"control over those charges."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"AI / LLM models are known to hallucinate — producing plausible-sounding but factually incorrect or entirely "
+"fabricated output with apparent confidence — and by design may omit or truncate relevant data during summarisation. "
+"AI output must never be relied upon as complete or accurate. This software is provided as-is with no warranty of any "
+"kind."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"By enabling AI features you personally indemnify and hold harmless the creator(s) and contributor(s) of this software"
+" from any claims, damages, or liability arising from this data transfer or your use of AI features."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "I have read and understood the above. I accept full responsibility and indemnify the creator(s) of this software."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/templates/_common_fields.html
+msgid "Note"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "AI / LLM is configured via environment variables"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Remove the"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "environment variable to configure via this form instead."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "select a provider"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Local / Self-hosted"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Only needed for Ollama or custom/self-hosted endpoints. Leave blank for cloud providers."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Load available models"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Available models"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "choose a model"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Enter API key and click 'Load available models'"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Remove AI / LLM configuration?"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "This will remove your saved AI provider, model, and API key."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Remove"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
+msgid "Cancel"
+msgstr "取消"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Test connection"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"Your API key is stored locally and sent only to your chosen provider. On each detected change, the watch's diff and "
+"extracted text are sent to the LLM — no full page HTML."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Cache"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Clear all summary cache?"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "This will remove all cached AI change summaries across all watches."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "They will be regenerated on the next check."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Clear cache"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Clear all summary cache"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Removes all cached AI change summaries across all watches. They will be regenerated on the next check."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Default AI Change Summary"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Used for all watches unless overridden by the watch or its tag/group."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Modify default prompt"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "When enabled, the"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "notification token shows the AI summary instead of the raw diff. Use"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "to always get the original."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"When enabled, the AI will be used as a last resort to extract price and stock status from product pages where no "
+"structured metadata (JSON-LD, microdata, OpenGraph) is found."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"For Gemini 2.5+ models only. Thinking tokens improve reasoning quality but count against the output budget. Set to "
+"Off if summaries are being cut short."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"Upper limit on tokens the AI may use when writing a change summary. Higher values allow longer summaries but cost "
+"more."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Configure a provider first to unlock behaviour settings."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Token & Cost Tracking"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "This month"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "tokens"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "of"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "All-time total"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Monthly token budget reached. AI summarisation is paused until next month."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Token budget this period"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "set via"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "0 = unlimited"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "tokens (0 = unlimited)"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Current billing period"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#, python-format
+msgid "characters — currently enforcing: %(n)s"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "No AI usage recorded yet."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Token budget"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "tokens per month (0 = unlimited)"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "platform.openai.com → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.anthropic.com → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "aistudio.google.com → Get API key"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "No API key needed for local Ollama"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "openrouter.ai → Keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Select a provider first."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Loading…"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "No models returned — check your API key."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "— choose a model —"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "models available with your key"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Request failed"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Testing…"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Connected"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Failed"
+msgstr ""
 
 #: changedetectionio/blueprint/tags/__init__.py
 #, python-brace-format
@@ -1075,6 +1461,11 @@ msgstr "未找到该链接的历史记录，链接是否有误？"
 msgid "Not enough history (2 snapshots required) to show difference page for this watch."
 msgstr "历史记录不足（需要 2 个快照），无法显示该监控项的差异页。"
 
+#: changedetectionio/blueprint/ui/diff.py
+#, python-format
+msgid "Monthly AI token budget of %(budget)s tokens reached (%(used)s used). Resets next month."
+msgstr ""
+
 #: changedetectionio/blueprint/ui/edit.py
 msgid "No watches to edit"
 msgstr "没有可编辑的监控项"
@@ -1155,10 +1546,6 @@ msgstr "以确认你已理解。"
 msgid "Clear History!"
 msgstr "清除历史记录！"
 
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
-msgid "Cancel"
-msgstr "取消"
-
 #: changedetectionio/blueprint/ui/templates/diff-offscreen-options.html
 msgid "Share diff as image"
 msgstr "将差异分享为图片"
@@ -1214,6 +1601,14 @@ msgstr "新增"
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Replaced"
 msgstr "替换"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Include all intermediate snapshots between the selected versions in the AI summary"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "AI: every change between versions"
+msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Keyboard:"
@@ -1275,6 +1670,10 @@ msgstr "最近请求的错误截图"
 msgid "Pro-tip: You can enable <strong>\"share access when password is enabled\"</strong> from settings."
 msgstr "提示：你可以在设置中启用 <strong>“启用密码时允许共享访问”</strong>。"
 
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Generating summary…"
+msgstr ""
+
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Goto single snapshot"
 msgstr "查看单个快照"
@@ -1282,6 +1681,10 @@ msgstr "查看单个快照"
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Highlight text to share or add to ignore lists."
 msgstr "选中文本以分享或加入忽略列表。"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Download difference patch"
+msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "For now, Differences are performed on text, not graphically, only the latest screenshot is available."
@@ -1529,6 +1932,10 @@ msgid "Remove any whitespace before and after each line of text"
 msgstr "移除每行文本前后的空白"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
+msgid "AI Intent preview"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Loading..."
 msgstr "加载中..."
 
@@ -1613,6 +2020,14 @@ msgstr "通知告警次数"
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Server type reply"
 msgstr "服务器类型响应"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "AI tokens (last check)"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "AI tokens (total)"
+msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Download latest HTML snapshot"
@@ -1715,6 +2130,15 @@ msgstr "监控此 URL！"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Edit first then Watch"
 msgstr "先编辑，再监控"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "AI — Notify when…"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Goto full history"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Pause"
@@ -1867,6 +2291,10 @@ msgstr ""
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Queued"
 msgstr "队列中"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Summary"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/text_json_diff/difference.py
@@ -2376,6 +2804,15 @@ msgid "Use global settings for time between check and scheduler."
 msgstr "检查间隔与调度时间使用全局设置。"
 
 #: changedetectionio/forms.py
+msgid "AI Change Intent"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/blueprint/ui/templates/diff.html
+#: changedetectionio/forms.py changedetectionio/templates/edit/include_llm_intent.html
+msgid "AI Change Summary"
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "CSS/JSONPath/JQ/XPath Filters"
 msgstr "CSS/JSONPath/JQ/XPath 过滤器"
 
@@ -2687,6 +3124,74 @@ msgstr "应为 0 或更多次"
 #: changedetectionio/forms.py
 msgid "Number of times the filter can be missing before sending a notification"
 msgstr "过滤器缺失达到多少次后发送通知"
+
+#: changedetectionio/forms.py
+msgid "Model"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/forms.py
+msgid "API Key"
+msgstr "API密钥"
+
+#: changedetectionio/forms.py
+msgid "Leave blank to use LITELLM_API_KEY env var"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "API Base URL"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Default AI Change Summary prompt"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Max tokens per check"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Max cumulative tokens (per watch)"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Monthly token budget"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/forms.py
+msgid "Max input characters"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Replace {{diff}} notification token with AI summary"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Use LLM as a fallback for extracting price and restock info"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "AI thinking budget (tokens)"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Off (no thinking)"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Max AI summary length (tokens)"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "When monthly token budget is reached"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Skip AI summarisation only (watch still checks)"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Skip the watch check entirely"
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "RegEx to extract"
@@ -3007,6 +3512,28 @@ msgid "Text that tripped the trigger from filters"
 msgstr "由过滤器触发的文本"
 
 #: changedetectionio/templates/_common_fields.html
+msgid "(upgraded)"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
+msgid ""
+"When AI Change Summary is configured, contains the AI-generated description instead of the raw diff. Falls back to "
+"raw diff when not configured."
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Always the raw +/- diff, regardless of AI Change Summary setting."
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The AI Change Summary text (same as the upgraded {{diff}} — explicit reference)."
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The AI Change Intent that was evaluated."
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
 msgid "Warning: Contents of"
 msgstr "警告：以下内容"
 
@@ -3138,10 +3665,6 @@ msgid "Format for all notifications"
 msgstr "所有通知的格式"
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Note"
-msgstr ""
-
-#: changedetectionio/templates/_common_fields.html
 msgid "Discord does not render HTML — switch to"
 msgstr ""
 
@@ -3262,6 +3785,10 @@ msgstr "此文本存在时将不会进行变更检测。"
 msgid "Blocked text"
 msgstr "阻止文本"
 
+#: changedetectionio/templates/_stab.html
+msgid "Settings sections"
+msgstr ""
+
 #: changedetectionio/templates/base.html
 msgid "A new version is available"
 msgstr ""
@@ -3291,6 +3818,22 @@ msgid "Language support is in beta, please help us improve by opening a PR on Gi
 msgstr "语言支持仍在测试阶段，欢迎在 GitHub 提交 PR 帮助改进。"
 
 #: changedetectionio/templates/base.html
+msgid "AI / LLM not configured"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "LLM-powered summaries are not yet enabled. Configure an AI provider in Settings to get started."
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Go to AI / LLM Settings"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Close"
+msgstr ""
+
+#: changedetectionio/templates/base.html
 msgid "Search"
 msgstr "搜索"
 
@@ -3306,6 +3849,104 @@ msgstr "URL 或标题"
 #: changedetectionio/templates/base.html
 msgid "Enter search term..."
 msgstr "输入搜索关键词..."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "AI"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid ""
+"Describe what you care about. The AI evaluates every detected change against this and only notifies you when it "
+"matches."
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Set a change intent for all watches in this tag/group. Each watch can override with its own."
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "From group"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "e.g. Alert me when the price drops below $300, or a new product is launched. Ignore footer and navigation changes."
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "e.g. Flag price changes or new product launches across all watches in this group"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Examples:"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Only notify if the price drops below $200, or a limited-time deal is added"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Alert when a new recall, safety notice, or product withdrawal is published"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Notify when a new grant round opens or an application deadline is announced"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Only important if package versions change or a CVE is mentioned"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "AI pre-filter active:"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "narrows content scope before evaluation"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "When a change is detected, the AI describes it according to your instructions and replaces"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "in your notification. Use"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "if you still want the original diff."
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Describe how changes should be summarised in notifications for all watches in this group."
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "List each new item added with its name and price. Translate to English."
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Summarise what events were added or cancelled. Two sentences maximum."
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Describe the price change: old price, new price, percentage difference."
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Configure an AI / LLM provider in"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Settings → AI / LLM"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "to enable AI Change Intent and AI Change Summary."
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "to enable AI features for this group."
+msgstr ""
 
 #: changedetectionio/templates/edit/include_subtract.html
 msgid "Note!: //text() function does not work where the <element> contains <![CDATA[]]>"
@@ -3516,6 +4157,14 @@ msgid "Website Change Detection and Notification."
 msgstr "网站变更检测与通知。"
 
 #: changedetectionio/templates/menu.html
+msgid "Toggle AI Mode"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
+msgid "Toggle AI mode"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
 msgid "Toggle Light/Dark Mode"
 msgstr "切换亮/暗模式"
 
@@ -3542,190 +4191,4 @@ msgstr "否"
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"
 msgstr "主设置"
-
-#~ msgid "Cannot load the edit form for processor/plugin '{}', plugin missing?"
-#~ msgstr "无法加载处理器/插件 '{}' 的编辑表单，插件是否缺失？"
-
-#~ msgid "Create a shareable link"
-#~ msgstr "创建可分享链接"
-
-#~ msgid "Tip: You can also add 'shared' watches."
-#~ msgstr "提示：你也可以添加“共享”的监控项。"
-
-#~ msgid "Marking watches as viewed in background..."
-#~ msgstr "正在后台将监控项标记为已读..."
-
-#~ msgid "\"Residential\" and \"Mobile\" proxy type can be more successfull than \"Data Center\" for blocked websites."
-#~ msgstr "对于被封锁的网站，“住宅”和“移动”代理类型可能比“数据中心”更有效。"
-
-#~ msgid "Set to"
-#~ msgstr "设置为"
-
-#~ msgid "to disable"
-#~ msgstr "以禁用"
-
-#~ msgid "This will wait"
-#~ msgstr "这将等待"
-
-#~ msgid "seconds before extracting the text."
-#~ msgstr "秒后再提取文本。"
-
-#~ msgid "These settings are"
-#~ msgstr "这些设置会"
-
-#~ msgid "added"
-#~ msgstr "应用"
-
-#~ msgid "to any existing watch configurations."
-#~ msgstr "到现有的所有监控项配置中。"
-
-#~ msgid "Pro-tip: You can enable"
-#~ msgstr "提示：你可以启用"
-
-#~ msgid "\"share access when password is enabled\""
-#~ msgstr "“启用密码时允许共享访问”"
-
-#~ msgid "from settings."
-#~ msgstr "（设置中）"
-
-#~ msgid "Note: Depending on the length and similarity of the text on each line, the algorithm may consider an"
-#~ msgstr "注意：根据每行文本长度与相似度，算法可能把"
-
-#~ msgid "instead of"
-#~ msgstr "视为"
-
-#~ msgid "replacement"
-#~ msgstr "替换"
-
-#~ msgid "for example."
-#~ msgstr "例如。"
-
-#~ msgid "method (default) where your watched sites don't need Javascript to render."
-#~ msgstr "方法(默认)，适用于无需 JavaScript 渲染的监视网站。"
-
-#~ msgid "Use the"
-#~ msgstr "使用"
-
-#~ msgid "Basic"
-#~ msgstr "基础"
-
-#~ msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var"
-#~ msgstr "方法需要连接到运行中的 WebDriver+Chrome 服务器，通过环境变量设置"
-
-#~ msgid "The"
-#~ msgstr "该"
-
-#~ msgid "Chrome/Javascript"
-#~ msgstr "Chrome/JavaScript"
-
-#~ msgid "method (default) where your watched site doesn't need Javascript to render."
-#~ msgstr "方式（默认），适用于无需 JavaScript 渲染的网站。"
-
-#~ msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'."
-#~ msgstr "方式需要连接正在运行的 WebDriver+Chrome 服务器，通过环境变量 'WEBDRIVER_URL' 设置。"
-
-#~ msgid "Example:"
-#~ msgstr "示例："
-
-#~ msgid "This is"
-#~ msgstr "这项功能为"
-
-#~ msgid "experimental"
-#~ msgstr "实验性"
-
-#~ msgid "supported fields are"
-#~ msgstr "，支持的字段有"
-
-#~ msgid "the rest (including"
-#~ msgstr "其余字段（包括"
-
-#~ msgid "are ignored."
-#~ msgstr "）将被忽略。"
-
-#~ msgid "Matching text will be"
-#~ msgstr "匹配的文本将会"
-
-#~ msgid "ignored"
-#~ msgstr "已忽略"
-
-#~ msgid "in the text snapshot (you can still see it but it wont trigger a change)"
-#~ msgstr "在文本快照中（仍可见但不会触发变更）"
-
-#~ msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with"
-#~ msgstr "有助于减少因行顺序变化导致的变更，可结合"
-
-#~ msgid "check unique lines"
-#~ msgstr "检查唯一行"
-
-#~ msgid "below."
-#~ msgstr "一起使用。"
-
-#~ msgid "Example: enter"
-#~ msgstr ""
-
-#~ msgid "to keep only lines mentioning temperature readings"
-#~ msgstr ""
-
-#~ msgid "There are"
-#~ msgstr "当前有"
-
-#~ msgid "system-wide notification URLs enabled"
-#~ msgstr "系统级通知 URL 已启用"
-
-#~ msgid "this form will override notification settings for this watch only"
-#~ msgstr "此表单将仅覆盖该监控项的通知设置"
-
-#~ msgid "an empty Notification URL list here will still send notifications."
-#~ msgstr "即使此处通知 URL 列表为空，仍会发送通知。"
-
-#~ msgid "Accepts the"
-#~ msgstr "接受以下"
-
-#~ msgid "placeholders listed below"
-#~ msgstr "下方列出的占位符"
-
-#~ msgid "You may need to"
-#~ msgstr "您可能需要"
-
-#~ msgid "Enable playwright environment variable"
-#~ msgstr "启用 Playwright 环境变量"
-
-#~ msgid "and uncomment the"
-#~ msgstr "并取消注释"
-
-#~ msgid "in the"
-#~ msgstr "在"
-
-#~ msgid "file"
-#~ msgstr "文件"
-
-#~ msgid "type flags (more"
-#~ msgstr "类型标志（更多"
-
-#~ msgid "information here"
-#~ msgstr "此处信息"
-
-#~ msgid "Use"
-#~ msgstr "使用"
-
-#~ msgid "AppRise Notification URLs"
-#~ msgstr "AppRise通知URL"
-
-#~ msgid "for notification to just about any service!"
-#~ msgstr "用于向几乎任何服务发送通知！"
-
-#~ msgid "Please read the notification services wiki here for important configuration notes"
-#~ msgstr "请阅读通知服务 Wiki 以了解重要配置说明"
-
-#~ msgid "in"
-#~ msgstr "在"
-
-#~ msgid "Keyword example - example"
-#~ msgstr "关键字示例 - 示例"
-
-#~ msgid "From"
-#~ msgstr "从"
-
-#~ msgid "To"
-#~ msgstr "到"
 

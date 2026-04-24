@@ -281,6 +281,20 @@
       </div>
     </dialog>
 
+    <!-- LLM Not Configured Modal -->
+    <dialog id="llm-not-configured-modal" class="modal-dialog" aria-labelledby="llm-not-configured-modal-title">
+      <div class="modal-header">
+        <h2 class="modal-title" id="llm-not-configured-modal-title">{{ _('AI / LLM not configured') }}</h2>
+      </div>
+      <div class="modal-body">
+        <p>{{ _('LLM-powered summaries are not yet enabled. Configure an AI provider in Settings to get started.') }}</p>
+        <p><a href="{{ url_for('settings.settings_page') }}#ai" class="pure-button pure-button-primary">{{ _('Go to AI / LLM Settings') }}</a></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="pure-button" id="close-llm-not-configured-modal">{{ _('Close') }}</button>
+      </div>
+    </dialog>
+
     <!-- Search Modal -->
     {% if current_user.is_authenticated or not has_password %}
     <dialog id="search-modal" class="modal-dialog" aria-labelledby="search-modal-title">

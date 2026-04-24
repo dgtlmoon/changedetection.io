@@ -1,0 +1,125 @@
+{#
+  AI Intent + AI Change Summary section — shared include for watch edit and tag/group edit.
+
+  Required template context:
+    llm_configured  — bool: LLM provider is configured in settings
+    form            — the WTForms form (must have .llm_intent and .llm_change_summary fields)
+
+  Optional (watch edit only):
+    watch               — the Watch object (for processor check and prefilter display)
+    llm_group_overrides — dict returned by _resolve_llm_group_overrides():
+                          {'llm_intent': {'value': str, 'group_name': str} | None,
+                           'llm_change_summary': {'value': str, 'group_name': str} | None}
+                          Present only in watch edit context; absent in tag edit context.
+
+  Usage in watch edit (edit.html):
+    {% include "edit/include_llm_intent.html" %}
+
+  Usage in tag edit (edit-tag.html):
+    {% include "edit/include_llm_intent.html" %}
+    (watch is not set → tag mode: no processor check, no examples, different description)
+#}
+{% from '_helpers.html' import render_field %}
+
+{# Processor check only applies in watch-edit context (llm_group_overrides present). #}
+{# In tag/group edit context the AI section is always visible.                        #}
+{% if llm_group_overrides is defined %}
+    {% set is_text_json_diff = not watch.get('processor') or watch.get('processor') == 'text_json_diff' %}
+{% else %}
+    {% set is_text_json_diff = true %}
+{% endif %}
+
+{% if is_text_json_diff %}
+
+{# ── Configured: show the intent + summary fields ────────────────── #}
+{% if llm_configured %}
+<div class="border-fieldset" id="llm-intent-section">
+    <h3>&#x2728; {{ _('AI') }}</h3>
+
+    {# — AI Change Intent — #}
+    <h4 style="margin: 0 0 0.3em 0;">{{ _('AI — Notify when…') }}</h4>
+    <p class="pure-form-message-inline" style="margin-top:0">
+        {% if watch is defined and watch %}
+            {{ _('Describe what you care about. The AI evaluates every detected change against this and only notifies you when it matches.') }}
+        {% else %}
+            {{ _('Set a change intent for all watches in this tag/group. Each watch can override with its own.') }}
+        {% endif %}
+    </p>
+    <div class="pure-control-group">
+        {% if watch is defined and watch and llm_group_overrides is defined and llm_group_overrides.llm_intent %}
+            {% set intent_placeholder = _('From group') ~ " '" ~ llm_group_overrides.llm_intent.group_name ~ "': " ~ llm_group_overrides.llm_intent.value %}
+        {% elif watch is defined and watch %}
+            {% set intent_placeholder = _('e.g. Alert me when the price drops below $300, or a new product is launched. Ignore footer and navigation changes.') %}
+        {% else %}
+            {% set intent_placeholder = _('e.g. Flag price changes or new product launches across all watches in this group') %}
+        {% endif %}
+        {{ render_field(form.llm_intent, placeholder=intent_placeholder, rows=5, class="pure-input-1") }}
+    </div>
+    {% if watch is defined and watch %}
+    <div class="pure-form-message-inline">
+        <strong>{{ _('Examples:') }}</strong>
+        <ul style="margin: 0.3em 0 0 1.2em; padding: 0;">
+            <li><em>{{ _('Only notify if the price drops below $200, or a limited-time deal is added') }}</em></li>
+            <li><em>{{ _('Alert when a new recall, safety notice, or product withdrawal is published') }}</em></li>
+            <li><em>{{ _('Notify when a new grant round opens or an application deadline is announced') }}</em></li>
+            <li><em>{{ _('Only important if package versions change or a CVE is mentioned') }}</em></li>
+        </ul>
+    </div>
+    {% if watch.get('llm_prefilter') %}
+    <div class="pure-form-message-inline" style="margin-top: 0.5em;">
+        <small>{{ _('AI pre-filter active:') }} <code>{{ watch.get('llm_prefilter') }}</code>
+        — {{ _('narrows content scope before evaluation') }}</small>
+    </div>
+    {% endif %}
+    {% endif %}
+
+    <hr style="margin: 1.2em 0; border: none; border-top: 1px solid var(--color-border, #ddd);">
+
+    {# — AI Change Summary — #}
+    <h4 style="margin: 0 0 0.3em 0;">{{ _('AI Change Summary') }}</h4>
+    <p class="pure-form-message-inline" style="margin-top:0">
+        {% if watch is defined and watch %}
+            {{ _('When a change is detected, the AI describes it according to your instructions and replaces') }} <code>{{ '{{diff}}' }}</code> {{ _('in your notification. Use') }} <code>{{ '{{raw_diff}}' }}</code> {{ _('if you still want the original diff.') }}
+        {% else %}
+            {{ _('Describe how changes should be summarised in notifications for all watches in this group.') }}
+        {% endif %}
+    </p>
+    <div class="pure-control-group">
+        {% if watch is defined and watch and llm_group_overrides is defined and llm_group_overrides.llm_change_summary %}
+            {% set summary_placeholder = _('From group') ~ " '" ~ llm_group_overrides.llm_change_summary.group_name ~ "': " ~ llm_group_overrides.llm_change_summary.value %}
+        {% else %}
+            {% set summary_placeholder = form.llm_change_summary.render_kw['placeholder'] %}
+        {% endif %}
+        {{ render_field(form.llm_change_summary, placeholder=summary_placeholder, rows=5, class="pure-input-1") }}
+    </div>
+    <div style="margin-top: 0.3em;">
+        <a href="#" class="pure-button button-xsmall" onclick="var t=document.getElementById('llm_change_summary'); if(!t.value&amp;&amp;t.placeholder) t.value=t.placeholder; return false;">{{ _('Modify default prompt') }}</a>
+    </div>
+    {% if watch is defined and watch %}
+    <div class="pure-form-message-inline">
+        <strong>{{ _('Examples:') }}</strong>
+        <ul style="margin: 0.3em 0 0 1.2em; padding: 0;">
+            <li><em>{{ _('List each new item added with its name and price. Translate to English.') }}</em></li>
+            <li><em>{{ _('Summarise what events were added or cancelled. Two sentences maximum.') }}</em></li>
+            <li><em>{{ _('Describe the price change: old price, new price, percentage difference.') }}</em></li>
+        </ul>
+    </div>
+    {% endif %}
+</div>
+
+{# ── Not configured: greyed-out prompt to configure ──────────────── #}
+{% else %}
+<div class="border-fieldset" id="llm-intent-section-disabled" style="opacity: 0.5;">
+    <h3>&#x2728; {{ _('AI') }}</h3>
+    <p>{{ _('Configure an AI / LLM provider in') }}
+       <a href="{{ url_for('settings.settings_page') }}#ai">{{ _('Settings → AI / LLM') }}</a>
+       {% if watch is defined and watch %}
+           {{ _('to enable AI Change Intent and AI Change Summary.') }}
+       {% else %}
+           {{ _('to enable AI features for this group.') }}
+       {% endif %}
+    </p>
+</div>
+{% endif %}
+
+{% endif %}{# is_text_json_diff #}

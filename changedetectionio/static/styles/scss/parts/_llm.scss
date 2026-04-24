@@ -1,0 +1,200 @@
+// ── AI / LLM shared styles ────────────────────────────────────────────────────
+// Used by both the diff page (#llm-diff-summary-area) and the watchlist
+// inline summary row (.ai-inline-summary-row).
+
+// ── Diff page: summary block ──────────────────────────────────────────────────
+#llm-diff-summary-area {
+  margin: 0.6rem 0 0.4rem;
+  padding: 0.65rem 0.9rem;
+  background: linear-gradient(135deg, rgba(120, 80, 200, 0.18), rgba(80, 160, 220, 0.14));
+  border-left: 3px solid rgba(140, 90, 220, 0.8);
+  border-radius: 0 4px 4px 0;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+
+  .llm-diff-summary-label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.55;
+    margin-bottom: 0.25rem;
+  }
+
+  .llm-diff-summary-text {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+}
+
+.llm-diff-summary-prompt {
+  margin: 0.4em 0 0;
+  font-size: 0.78rem;
+  font-style: italic;
+  overflow: hidden;
+  max-height: 3.8em;
+  animation: llm-prompt-reveal 0.7s ease-out both;
+
+  .llm-diff-summary-prompt-text {
+    display: block;
+    opacity: 0.55;
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,0.85) 30%, rgba(0,0,0,0) 100%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.85) 30%, rgba(0,0,0,0) 100%);
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    line-height: 1.45;
+  }
+}
+
+@keyframes llm-prompt-reveal {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.llm-diff-summary-loading {
+  opacity: 0.5;
+  font-style: italic;
+  animation: llm-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes llm-pulse {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 0.2; }
+}
+
+.llm-budget-exceeded,
+.llm-error {
+  color: #c0392b;
+  font-weight: 600;
+  font-style: normal;
+  opacity: 1;
+}
+
+// ── Menu: AI mode toggle button ───────────────────────────────────────────────
+.toggle-ai-mode {
+  opacity: 0.4;
+  transition: opacity 0.2s ease, filter 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--color-text-menu-link);
+
+  svg {
+    height: 1.2rem;
+    width: 1.2rem;
+  }
+
+  .ai-mode-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    line-height: 1;
+  }
+}
+
+html[data-ai-mode="true"] .toggle-ai-mode {
+  opacity: 1;
+  filter: drop-shadow(0 0 4px rgba(160, 100, 255, 0.7));
+}
+
+// ── Watchlist: History/Summary dual-label button ──────────────────────────────
+.btn-label-summary {
+  display: none;
+}
+
+html[data-ai-mode="true"] body.llm-configured {
+  .btn-label-history { display: none; }
+  .btn-label-summary { display: inline; }
+}
+
+// ── Watchlist: inline AI summary row ─────────────────────────────────────────
+.ai-inline-summary-row {
+  td {
+    white-space: normal !important;
+    word-break: break-word;
+    padding: 0.5rem 1rem 0.6rem 1.4rem !important;
+    background: linear-gradient(135deg, #f0ebff, #eaf0ff) !important;
+    border-top: 1px solid #c4b5fd !important;
+    border-left: 3px solid #8b5cf6 !important;
+    color: #1a0640 !important;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  html[data-darkmode="true"] & td {
+    background: linear-gradient(135deg, #1c0d35, #0d1535) !important;
+    border-top: 1px solid #3b1f6e !important;
+    border-left-color: #8b5cf6 !important;
+    color: #e9d5ff !important;
+  }
+
+  .ai-inline-summary-content {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+
+    .ai-inline-spinner {
+      flex-shrink: 0;
+      animation: llm-pulse 1.4s ease-in-out infinite;
+    }
+
+    .ai-inline-body {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .ai-inline-text {
+      font-style: italic;
+      opacity: 0.75;
+      white-space: pre-wrap;
+    }
+
+    &.loaded .ai-inline-spinner {
+      animation: none;
+    }
+
+    &.loaded .ai-inline-text {
+      font-style: normal;
+      opacity: 1;
+    }
+  }
+
+  .ai-inline-history-link {
+    display: inline-block;
+    margin-top: 0.4rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    opacity: 0.7;
+    white-space: nowrap;
+
+    &:hover { opacity: 1; }
+  }
+
+  .ai-inline-error {
+    color: #c0392b;
+  }
+
+  .ai-inline-prompt {
+    display: block;
+    margin-top: 0.3em;
+    font-size: 0.75rem;
+    font-style: italic;
+    overflow: hidden;
+    max-height: 3.6em;
+    animation: llm-prompt-reveal 0.6s ease-out both;
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,0.7) 30%, rgba(0,0,0,0) 100%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.7) 30%, rgba(0,0,0,0) 100%);
+    opacity: 0.55;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+  }
+}

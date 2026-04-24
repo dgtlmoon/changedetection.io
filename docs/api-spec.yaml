@@ -594,6 +594,34 @@ components:
           default: 'ALL'
           description: Logic operator - ALL (match all conditions) or ANY (match any condition)
 
+        # AI / LLM
+        llm_intent:
+          type: string
+          maxLength: 2000
+          default: ''
+          description: Plain-English intent for AI-based change filtering. The AI evaluates every detected change against this and only notifies when it matches.
+        llm_change_summary:
+          type: string
+          maxLength: 2000
+          default: ''
+          description: Instructions for the AI to summarise changes in notifications. When set, replaces {{diff}} with a human-readable description.
+        llm_prefilter:
+          type: [string, 'null']
+          readOnly: true
+          description: CSS selector derived by the AI to narrow content scope before evaluation (auto-managed, do not set manually).
+        llm_evaluation_cache:
+          type: object
+          readOnly: true
+          description: Internal cache of AI evaluation results keyed by (intent, diff) hash (auto-managed).
+        llm_last_tokens_used:
+          type: [integer, 'null']
+          readOnly: true
+          description: Number of tokens consumed by the AI on the most recent check.
+        llm_tokens_used_cumulative:
+          type: [integer, 'null']
+          readOnly: true
+          description: Total tokens consumed by the AI across all checks for this watch.
+
     DaySchedule:
       type: object
       properties:

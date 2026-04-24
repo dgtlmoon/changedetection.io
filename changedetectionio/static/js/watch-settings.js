@@ -12,7 +12,14 @@ function request_textpreview_update() {
         data[name] = $element.is(':checkbox') ? ($element.is(':checked') ? $element.val() : false) : $element.val();
     });
 
+    // llm_intent lives in a separate (potentially hidden) tab — include it explicitly
+    const $llmIntent = $('textarea[name="llm_intent"]');
+    if ($llmIntent.length) {
+        data['llm_intent'] = $llmIntent.val();
+    }
+
     $('body').toggleClass('spinner-active', 1);
+    $('#llm-preview-result').hide();
 
     $.abortiveSingularAjax({
         type: "POST",
@@ -41,6 +48,21 @@ function request_textpreview_update() {
                     'title': "No change-detection will occur because this text exists."
                 }
             ])
+
+        // LLM preview extraction result
+        const $llmResult = $('#llm-preview-result');
+        if ($llmResult.length && data['llm_evaluation']) {
+            const ev = data['llm_evaluation'];
+            const found = ev['found'];
+            $llmResult.attr('data-found', found ? '1' : '0');
+            $llmResult.find('.llm-preview-verdict').text(
+                found ? '✓ Would trigger a change' : '✗ Would not trigger a change'
+            );
+            $llmResult.find('.llm-preview-answer').text(ev['answer'] || '');
+            $llmResult.show();
+        } else if ($llmResult.length) {
+            $llmResult.hide();
+        }
     }).fail(function (error) {
         if (error.statusText === 'abort') {
             console.log('Request was aborted due to a new request being fired.');

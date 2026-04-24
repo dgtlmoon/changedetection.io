@@ -17,6 +17,34 @@ from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
 
 
+def _clean_litellm_error(exc) -> str:
+    """Return a short, human-readable error string from a litellm exception.
+
+    litellm embeds the raw provider JSON in str(exc), which can be hundreds of
+    characters of verbose quota detail.  We try to pull just the provider's
+    'message' field; failing that we return the first non-empty line with the
+    'litellm.XxxError:' class prefix stripped.
+    """
+    import json, re
+    raw = str(exc)
+    # Try to parse the embedded JSON block (starts at first '{')
+    brace = raw.find('{')
+    if brace >= 0:
+        try:
+            payload = json.loads(raw[brace:])
+            msg = (payload.get('error') or {}).get('message') or ''
+            if msg:
+                # Take only the first sentence / line — provider messages can be long
+                return msg.split('\n')[0].split('. ')[0].strip() + '.'
+        except Exception:
+            pass
+    # Fallback: strip the "litellm.XxxError: litellm.XxxError: providerException - " prefix
+    first_line = raw.split('\n')[0]
+    first_line = re.sub(r'^(litellm\.\w+:\s*)+', '', first_line)
+    first_line = re.sub(r'\w+Exception\s*-\s*', '', first_line).strip()
+    return first_line or raw.split('\n')[0]
+
+
 def construct_blueprint(datastore: ChangeDetectionStore):
     diff_blueprint = Blueprint('ui_diff', __name__, template_folder="../ui/templates")
 
@@ -128,6 +156,168 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             redirect=redirect
         )
 
+    @diff_blueprint.route("/diff/<uuid_str:uuid>/llm-summary/prompt", methods=['GET'])
+    @login_optionally_required
+    def diff_llm_summary_prompt(uuid):
+        """Return the effective LLM summary prompt for a watch immediately (no LLM call)."""
+        from flask import jsonify
+        watch = datastore.data['watching'].get(uuid)
+        if not watch:
+            return jsonify({'prompt': ''}), 404
+        try:
+            from changedetectionio.llm.evaluator import get_effective_summary_prompt
+            prompt = get_effective_summary_prompt(watch, datastore)
+        except Exception:
+            prompt = ''
+        return jsonify({'prompt': prompt})
+
+    @diff_blueprint.route("/diff/<uuid_str:uuid>/llm-summary", methods=['GET'])
+    @login_optionally_required
+    def diff_llm_summary(uuid):
+        """
+        Generate (or return cached) an AI summary of the diff between two snapshots.
+        Called via AJAX from the diff page when no cached summary exists.
+        Returns JSON: {"summary": "...", "error": null} or {"summary": null, "error": "..."}
+        """
+        import difflib
+        from flask import jsonify
+
+        try:
+            watch = datastore.data['watching'][uuid]
+        except KeyError:
+            return jsonify({'summary': None, 'error': 'Watch not found'}), 404
+
+        llm_cfg = datastore.data.get('settings', {}).get('application', {}).get('llm', {})
+        if not llm_cfg.get('model'):
+            return jsonify({'summary': None, 'error': 'LLM not configured'}), 400
+
+        dates = list(watch.history.keys())
+        if len(dates) < 2:
+            return jsonify({'summary': None, 'error': 'Not enough history'}), 400
+
+        best_from = watch.get_from_version_based_on_last_viewed
+        from_version      = request.args.get('from_version', best_from if best_from else dates[-2])
+        to_version        = request.args.get('to_version', dates[-1])
+        all_changes       = request.args.get('all_changes', '0') == '1'
+        ignore_whitespace = request.args.get('ignore_whitespace', '0') == '1'
+        show_removed      = request.args.get('removed', '1') == '1'
+        show_added        = request.args.get('added', '1') == '1'
+
+        def _prep(text):
+            """Optionally normalise whitespace on each line before diffing."""
+            if not ignore_whitespace:
+                return text.splitlines()
+            return [' '.join(line.split()) for line in text.splitlines()]
+
+        def _make_unified_diff(a_text, b_text):
+            lines = list(difflib.unified_diff(_prep(a_text), _prep(b_text), lineterm='', n=3))
+            return '\n'.join(lines[2:]) if len(lines) > 2 else '\n'.join(lines)
+
+        def _apply_filters(diff_text):
+            """Strip +/- lines the user has hidden in the UI so the LLM matches what they see."""
+            if show_removed and show_added:
+                return diff_text
+            out = []
+            for line in diff_text.splitlines():
+                if line.startswith('-') and not show_removed:
+                    continue
+                if line.startswith('+') and not show_added:
+                    continue
+                out.append(line)
+            return '\n'.join(out)
+
+        try:
+            from_text = watch.get_history_snapshot(timestamp=from_version)
+            to_text = watch.get_history_snapshot(timestamp=to_version)
+        except Exception as e:
+            return jsonify({'summary': None, 'error': f'Could not read snapshots: {e}'}), 500
+
+        if all_changes:
+            # Build sequential diffs for every intermediate snapshot between from and to
+            # so the LLM sees the full timeline of changes, not just start→end
+            sorted_dates = sorted(dates)
+            try:
+                start_idx = sorted_dates.index(from_version)
+                end_idx   = sorted_dates.index(to_version)
+            except ValueError:
+                start_idx, end_idx = 0, len(sorted_dates) - 1
+
+            steps = sorted_dates[start_idx:end_idx + 1]
+            segments = []
+            for i in range(len(steps) - 1):
+                a_ts, b_ts = steps[i], steps[i + 1]
+                try:
+                    a_text = watch.get_history_snapshot(timestamp=a_ts) or ''
+                    b_text = watch.get_history_snapshot(timestamp=b_ts) or ''
+                except Exception:
+                    continue
+                seg = _apply_filters(_make_unified_diff(a_text, b_text))
+                if seg.strip():
+                    segments.append(f'=== {a_ts} → {b_ts} ===\n{seg}')
+
+            diff_text = '\n\n'.join(segments) if segments else ''
+        else:
+            diff_text = _apply_filters(_make_unified_diff(from_text, to_text))
+
+        if not diff_text.strip():
+            return jsonify({'summary': None, 'error': 'No differences found'})
+
+        from changedetectionio.llm.evaluator import (
+            summarise_change, get_effective_summary_prompt,
+            is_global_token_budget_exceeded, get_global_token_budget_month,
+            LLMInputTooLargeError,
+        )
+
+        effective_prompt = get_effective_summary_prompt(watch, datastore)
+        from changedetectionio.llm.prompt_builder import build_change_summary_system_prompt
+        # Diff-pref flags + system prompt are part of the cache key so prompt changes bust the cache
+        _max_summary_tokens = datastore.data['settings']['application'].get('llm_max_summary_tokens', 3000)
+        cache_prompt = (
+            effective_prompt
+            + f'\x00prefs:all={int(all_changes)},ws={int(ignore_whitespace)}'
+              f',rm={int(show_removed)},add={int(show_added)}'
+            + f'\x00sys:{build_change_summary_system_prompt()}'
+            + f'\x00max_tokens:{_max_summary_tokens}'
+        )
+
+        # Check cache — keyed by version pair + prompt hash (invalidates if prompt changes)
+        cached = watch.get_llm_diff_summary(from_version, to_version, prompt=cache_prompt)
+        if cached:
+            return jsonify({'summary': cached, 'error': None, 'cached': True})
+
+        # Check global monthly token budget before making an LLM call
+        if is_global_token_budget_exceeded(datastore):
+            budget = get_global_token_budget_month(datastore)
+            llm_cfg = datastore.data.get('settings', {}).get('application', {}).get('llm', {})
+            used = llm_cfg.get('tokens_this_month', 0)
+            return jsonify({
+                'summary': None,
+                'error': gettext(
+                    'Monthly AI token budget of %(budget)s tokens reached (%(used)s used). Resets next month.',
+                    budget=f'{budget:,}',
+                    used=f'{used:,}',
+                ),
+                'budget_exceeded': True,
+            }), 429
+
+        try:
+            summary = summarise_change(watch, datastore, diff=diff_text, current_snapshot=to_text)
+        except LLMInputTooLargeError as e:
+            return jsonify({'summary': None, 'error': str(e)}), 400
+        except Exception as e:
+            logger.error(f"LLM summary generation failed for {uuid}: {e}")
+            return jsonify({'summary': None, 'error': _clean_litellm_error(e)}), 500
+
+        if not summary:
+            return jsonify({'summary': None, 'error': 'LLM returned empty summary'})
+
+        try:
+            watch.save_llm_diff_summary(summary, from_version, to_version, prompt=cache_prompt)
+        except Exception as e:
+            logger.warning(f"Could not cache llm summary for {uuid}: {e}")
+
+        return jsonify({'summary': summary, 'error': None, 'cached': False})
+
     @diff_blueprint.route("/diff/<uuid_str:uuid>/extract", methods=['GET'])
     @login_optionally_required
     def diff_history_page_extract_GET(uuid):
@@ -237,6 +427,47 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             flash=flash,
             redirect=redirect
         )
+
+    @diff_blueprint.route("/diff/<uuid_str:uuid>/download-patch", methods=['GET'])
+    @login_optionally_required
+    def download_patch(uuid):
+        """
+        Generate and return a unified diff patch file between two snapshots.
+        Query params: from_version, to_version (timestamp strings from watch history).
+        Returns the patch as a downloadable .patch file — the same content fed to the LLM.
+        """
+        import difflib
+
+        try:
+            watch = datastore.data['watching'][uuid]
+        except KeyError:
+            return make_response('Watch not found', 404)
+
+        dates = list(watch.history.keys())
+        if len(dates) < 2:
+            return make_response('Not enough history', 400)
+
+        from_version = request.args.get('from_version', dates[-2])
+        to_version   = request.args.get('to_version',   dates[-1])
+
+        try:
+            from_text = watch.get_history_snapshot(timestamp=from_version)
+            to_text   = watch.get_history_snapshot(timestamp=to_version)
+        except Exception as e:
+            return make_response(f'Could not read snapshots: {e}', 500)
+
+        diff_lines = list(difflib.unified_diff(
+            from_text.splitlines(keepends=True),
+            to_text.splitlines(keepends=True),
+            fromfile=f'snapshot-{from_version}',
+            tofile=f'snapshot-{to_version}',
+            lineterm='',
+        ))
+        patch_text = ''.join(diff_lines) if diff_lines else '(no differences)\n'
+
+        response = make_response(patch_text)
+        response.headers['Content-Type'] = 'text/plain; charset=utf-8'
+        return response
 
     @diff_blueprint.route("/diff/<uuid_str:uuid>/processor-asset/<string:asset_name>", methods=['GET'])
     @login_optionally_required

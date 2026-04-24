@@ -13,7 +13,9 @@ from changedetectionio.auth_decorator import login_optionally_required
 
 
 def construct_blueprint(datastore: ChangeDetectionStore):
+    from changedetectionio.blueprint.settings.llm import construct_llm_blueprint
     settings_blueprint = Blueprint('settings', __name__, template_folder="templates")
+    settings_blueprint.register_blueprint(construct_llm_blueprint(datastore), url_prefix='/llm')
 
     @settings_blueprint.route("", methods=['GET', "POST"])
     @login_optionally_required
@@ -27,6 +29,23 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
 
         default = deepcopy(datastore.data['settings'])
+
+        # Pre-populate LLM sub-form fields from stored config (text fields only —
+        # PasswordField for api_key is intentionally left blank on GET).
+        _stored_llm = datastore.data['settings']['application'].get('llm') or {}
+        default['llm'] = {
+            'llm_model':                         _stored_llm.get('model', ''),
+            'llm_api_base':                      _stored_llm.get('api_base', ''),
+            'llm_change_summary_default':        datastore.data['settings']['application'].get('llm_change_summary_default', ''),
+            'llm_override_diff_with_summary':    datastore.data['settings']['application'].get('llm_override_diff_with_summary', True),
+            'llm_restock_use_fallback_extract':  datastore.data['settings']['application'].get('llm_restock_use_fallback_extract', True),
+            'llm_budget_action':                 datastore.data['settings']['application'].get('llm_budget_action', 'skip_llm'),
+            'llm_thinking_budget':               str(datastore.data['settings']['application'].get('llm_thinking_budget', 0)),
+            'llm_max_summary_tokens':            str(datastore.data['settings']['application'].get('llm_max_summary_tokens', 3000)),
+            'llm_token_budget_month':            _stored_llm.get('token_budget_month', 0),
+            'llm_max_input_chars':               _stored_llm.get('max_input_chars', 0),
+        }
+
         if datastore.proxy_list is not None:
             available_proxies = list(datastore.proxy_list.keys())
             # When enabled
@@ -75,6 +94,73 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     del (app_update['password'])
 
                 datastore.data['settings']['application'].update(app_update)
+
+                # Save LLM config separately under settings.application.llm.
+                # Token counters (tokens_total_cumulative, tokens_this_month, tokens_month_key)
+                # are system-managed and must never be overwritten by form submissions.
+                _LLM_PROTECTED_FIELDS = {
+                    'tokens_total_cumulative', 'tokens_this_month', 'tokens_month_key',
+                    'cost_usd_total_cumulative', 'cost_usd_this_month',
+                }
+                existing_llm = datastore.data['settings']['application'].get('llm') or {}
+                preserved_counters = {k: v for k, v in existing_llm.items() if k in _LLM_PROTECTED_FIELDS}
+
+                llm_data = form.data.get('llm') or {}
+
+                # PasswordField never re-populates its value on GET, so the submitted value
+                # is only non-empty when the user explicitly typed a new key.
+                # If blank, preserve the existing key so a settings save doesn't accidentally clear it.
+                submitted_api_key = (llm_data.get('llm_api_key') or '').strip()
+                effective_api_key = submitted_api_key if submitted_api_key else existing_llm.get('api_key', '')
+
+                # Application-level LLM settings (survive provider changes)
+                datastore.data['settings']['application']['llm_change_summary_default'] = (
+                    llm_data.get('llm_change_summary_default') or ''
+                ).strip()
+                datastore.data['settings']['application']['llm_override_diff_with_summary'] = (
+                    bool(llm_data.get('llm_override_diff_with_summary', True))
+                )
+                datastore.data['settings']['application']['llm_restock_use_fallback_extract'] = (
+                    bool(llm_data.get('llm_restock_use_fallback_extract', True))
+                )
+                datastore.data['settings']['application']['llm_budget_action'] = (
+                    llm_data.get('llm_budget_action') or 'skip_llm'
+                )
+                datastore.data['settings']['application']['llm_thinking_budget'] = (
+                    int(llm_data.get('llm_thinking_budget') or 0)
+                )
+                datastore.data['settings']['application']['llm_max_summary_tokens'] = (
+                    int(llm_data.get('llm_max_summary_tokens') or 3000)
+                )
+
+                # Monthly token budget — only save if env var is not set
+                import os as _os
+                if not _os.getenv('LLM_TOKEN_BUDGET_MONTH', '').strip():
+                    _budget = llm_data.get('llm_token_budget_month') or 0
+                    existing_llm['token_budget_month'] = int(_budget) if _budget else 0
+
+                # Max input chars — only save if env var is not set
+                if not _os.getenv('LLM_MAX_INPUT_CHARS', '').strip():
+                    _max_chars = llm_data.get('llm_max_input_chars') or 0
+                    existing_llm['max_input_chars'] = int(_max_chars) if _max_chars else 0
+
+                llm_config = {
+                    'model': (llm_data.get('llm_model') or '').strip(),
+                    'api_key': effective_api_key,
+                    'api_base': (llm_data.get('llm_api_base') or '').strip(),
+                    'token_budget_month': existing_llm.get('token_budget_month', 0),
+                    'max_input_chars': existing_llm.get('max_input_chars', 0),
+                    **preserved_counters,
+                }
+                # Only store if a model is set
+                if llm_config['model']:
+                    datastore.data['settings']['application']['llm'] = llm_config
+                else:
+                    # Remove model config but retain counters for historical record
+                    if preserved_counters:
+                        datastore.data['settings']['application']['llm'] = preserved_counters
+                    else:
+                        datastore.data['settings']['application'].pop('llm', None)
 
                 # Handle dynamic worker count adjustment
                 old_worker_count = datastore.data['settings']['requests'].get('workers', 1)
@@ -164,9 +250,34 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             # Instantiate the form with existing settings
             plugin_forms[plugin_id] = form_class(data=settings)
 
+        from changedetectionio.llm.evaluator import (
+            get_llm_config as _get_llm_cfg,
+            llm_configured_via_env,
+            get_global_token_budget_month,
+        )
+        llm_config = _get_llm_cfg(datastore) or {}
+        llm_env_configured = llm_configured_via_env()
+        llm_stored = datastore.data['settings']['application'].get('llm') or {}
+        llm_token_budget_month = get_global_token_budget_month(datastore)
+        llm_token_budget_month_env = get_global_token_budget_month()  # env var only, for readonly logic
+        _max_input_chars_env_str = os.getenv('LLM_MAX_INPUT_CHARS', '').strip()
+        llm_max_input_chars_env = int(_max_input_chars_env_str) if _max_input_chars_env_str.isdigit() else 0
+        from changedetectionio.llm.evaluator import _get_max_input_chars, _DEFAULT_MAX_INPUT_CHARS
+        llm_effective_max_input_chars = _get_max_input_chars(datastore)
+        # Cost display: only when user configured their own key (not hosted/operator-managed)
+        llm_show_costs = not llm_env_configured
+
         output = render_template("settings.html",
                                 active_plugins=active_plugins,
                                 api_key=datastore.data['settings']['application'].get('api_access_token'),
+                                llm_config=llm_config,
+                                llm_env_configured=llm_env_configured,
+                                llm_stored=llm_stored,
+                                llm_token_budget_month=llm_token_budget_month,
+                                llm_token_budget_month_env=llm_token_budget_month_env,
+                                llm_max_input_chars_env=llm_max_input_chars_env,
+                                llm_effective_max_input_chars=llm_effective_max_input_chars,
+                                llm_show_costs=llm_show_costs,
                                 python_version=python_version,
                                 uptime_seconds=uptime_seconds,
                                 available_timezones=sorted(available_timezones()),

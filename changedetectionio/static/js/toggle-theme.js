@@ -10,6 +10,27 @@ $(document).ready(function () {
         setCookieValue(!isDark);
     });
 
+    // AI mode toggle — persisted in localStorage
+    (function initAiMode() {
+        const enabled = localStorage.getItem('ai-mode') === 'true';
+        $("html").attr("data-ai-mode", enabled ? "true" : "false");
+    })();
+
+    $(".toggle-ai-mode").on("click", function () {
+        if ($(this).data("llm-configured") !== true && $(this).data("llm-configured") !== "true") {
+            document.getElementById("llm-not-configured-modal").showModal();
+            return;
+        }
+        const current = $("html").attr("data-ai-mode") === "true";
+        const next = !current;
+        $("html").attr("data-ai-mode", next ? "true" : "false");
+        localStorage.setItem('ai-mode', next ? 'true' : 'false');
+    });
+
+    $("#close-llm-not-configured-modal").on("click", function () {
+        document.getElementById("llm-not-configured-modal").close();
+    });
+
     const setCookieValue = (value) => {
         document.cookie = `css_dark_mode=${value};max-age=31536000;path=/`
     }

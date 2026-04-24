@@ -9,6 +9,7 @@
     const email_notification_prefix=JSON.parse('{{emailprefix|tojson}}');
 {% endif %}
 </script>
+<script src="{{url_for('static_content', group='js', filename='modal.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='plugins.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
@@ -33,6 +34,7 @@
             <li class="tab"><a href="#plugin-{{ tab.plugin_id }}">{{ tab.tab_label }}</a></li>
                 {% endfor %}
             {% endif %}
+            <li class="tab"><a href="#ai">{{ _('AI / LLM') }}</a></li>
             <li class="tab"><a href="#info">{{ _('Info') }}</a></li>
         </ul>
     </div>
@@ -263,7 +265,7 @@ nav
                     </div>
                     <div>
                        {{ render_field(form.application.form.rss_template_override) }}
-                        {{ show_token_placeholders(extra_notification_token_placeholder_info=extra_notification_token_placeholder_info, suffix="-rss") }}
+                        {{ show_token_placeholders(extra_notification_token_placeholder_info=extra_notification_token_placeholder_info, suffix="-rss", settings_application=settings_application) }}
                     </div>
                 </div>
                 <br>
@@ -392,6 +394,7 @@ nav
             </div>
                 {% endfor %}
             {% endif %}
+            {% include 'settings_llm_tab.html' %}
             <div class="tab-pane-inner" id="info">
                 <p><strong>{{ _('Uptime:') }}</strong> {{ uptime_seconds|format_duration }}</p>
                 <p><strong>{{ _('Python version:') }}</strong> {{ python_version }}</p>

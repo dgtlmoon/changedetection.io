@@ -1,8 +1,6 @@
 #!/usr/bin/env python
-import codecs
 import os.path
 import re
-import sys
 
 from setuptools import setup, find_packages
 from setuptools.command.build_py import build_py
@@ -12,7 +10,8 @@ here = os.path.abspath(os.path.dirname(__file__))
 
 
 def read(*parts):
-    return codecs.open(os.path.join(here, *parts), 'r').read()
+    with open(os.path.join(here, *parts), 'r', encoding='utf-8') as f:
+        return f.read()
 
 
 def find_version(*file_paths):

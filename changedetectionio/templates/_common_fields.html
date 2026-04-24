@@ -1,7 +1,7 @@
 
 {% from '_helpers.html' import render_field %}
 
-{% macro show_token_placeholders(extra_notification_token_placeholder_info, suffix="") %}
+{% macro show_token_placeholders(extra_notification_token_placeholder_info, suffix="", settings_application=None) %}
 
 
     <div class="pure-controls">
@@ -114,7 +114,25 @@
             <tr>
                 <td><code>{{ '{{triggered_text}}' }}</code></td>
                 <td>{{ _('Text that tripped the trigger from filters') }}</td>
-
+            </tr>
+            {% if settings_application and settings_application.get('llm', {}).get('model') %}
+            <tr>
+                <td><code>{{ '{{diff}}' }}</code> <small style="opacity:0.6">{{ _('(upgraded)') }}</small></td>
+                <td>{{ _('When AI Change Summary is configured, contains the AI-generated description instead of the raw diff. Falls back to raw diff when not configured.') }}</td>
+            </tr>
+            <tr>
+                <td><code>{{ '{{raw_diff}}' }}</code></td>
+                <td>{{ _('Always the raw +/- diff, regardless of AI Change Summary setting.') }}</td>
+            </tr>
+            <tr>
+                <td><code>{{ '{{llm_summary}}' }}</code></td>
+                <td>{{ _('The AI Change Summary text (same as the upgraded {{diff}} — explicit reference).') }}</td>
+            </tr>
+            <tr>
+                <td><code>{{ '{{llm_intent}}' }}</code></td>
+                <td>{{ _('The AI Change Intent that was evaluated.') }}</td>
+            </tr>
+            {% endif %}
                 {% if extra_notification_token_placeholder_info %}
                     {% for token in extra_notification_token_placeholder_info %}
                         <tr>
@@ -174,7 +192,7 @@
                             </div>
                             <div class="pure-control-group">
                                 {{ render_field(form.notification_body , rows=5, class="notification-body", placeholder=settings_application['notification_body']) }}
-                                {{ show_token_placeholders(extra_notification_token_placeholder_info=extra_notification_token_placeholder_info) }}
+                                {{ show_token_placeholders(extra_notification_token_placeholder_info=extra_notification_token_placeholder_info, settings_application=settings_application) }}
                                 <div class="pure-form-message-inline">
                                     <ul>
                                     <li><span class="pure-form-message-inline">

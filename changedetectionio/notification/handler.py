@@ -364,6 +364,21 @@ def process_notification(n_object: NotificationContextData, datastore):
         )
     )
 
+    # {{ raw_diff }} always holds the actual diff regardless of AI Change Summary
+    n_object['raw_diff'] = n_object.get('diff', '')
+
+    # AI Change Summary: optionally replace {{ diff }} with the AI summary
+    _llm_change_summary = (n_object.get('_llm_change_summary') or '').strip()
+    _override_diff = datastore.data['settings']['application'].get('llm_override_diff_with_summary', True)
+    if _llm_change_summary and _override_diff:
+        n_object['diff'] = _llm_change_summary
+
+    # Lazily populate llm_summary / llm_intent if used in notification template
+    scan_text = n_object.get('notification_body', '') + n_object.get('notification_title', '')
+    if 'llm_summary' in scan_text or 'llm_intent' in scan_text or 'raw_diff' in scan_text:
+        n_object['llm_summary'] = _llm_change_summary or (n_object.get('_llm_result') or {}).get('summary', '')
+        n_object['llm_intent'] = n_object.get('_llm_intent', '')
+
     with (apprise.LogCapture(level=apprise.logging.DEBUG) as logs):
         for url in n_object['notification_urls']:
 

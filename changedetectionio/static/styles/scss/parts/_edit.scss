@@ -1,3 +1,14 @@
+// LLM intent/summary textareas are prose, not code — override the
+// .monospaced-textarea rules so they wrap vertically, not scroll horizontally.
+#llm-intent-section textarea {
+  white-space: normal;
+  overflow-wrap: break-word;
+  overflow-x: hidden;
+  overflow-y: auto;
+  resize: vertical;
+  font-family: inherit;
+}
+
 ul#conditions_match_logic {
     list-style: none;
   input, label, li {
