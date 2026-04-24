@@ -343,8 +343,11 @@ def new_live_server_setup(live_server):
     @live_server.app.route('/test_notification_endpoint', methods=['POST', 'GET'])
     def test_notification_endpoint():
         datastore_path = current_app.config.get('TEST_DATASTORE_PATH', 'test-datastore')
-
-        with open(os.path.join(datastore_path, "notification.txt"), "wb") as f:
+        from loguru import logger
+        # @todo make safe
+        fname = request.args.get('outputfilename', "notification.txt")
+        logger.debug(f"Writing test notification endpoint data to '{fname}' - {request.args}")
+        with open(os.path.join(datastore_path, fname), "wb") as f:
             # Debug method, dump all POST to file also, used to prove #65
             data = request.stream.read()
             if data != None:
