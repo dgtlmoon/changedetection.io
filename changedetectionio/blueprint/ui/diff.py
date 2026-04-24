@@ -156,6 +156,21 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             redirect=redirect
         )
 
+    @diff_blueprint.route("/diff/<uuid_str:uuid>/llm-summary/prompt", methods=['GET'])
+    @login_optionally_required
+    def diff_llm_summary_prompt(uuid):
+        """Return the effective LLM summary prompt for a watch immediately (no LLM call)."""
+        from flask import jsonify
+        watch = datastore.data['watching'].get(uuid)
+        if not watch:
+            return jsonify({'prompt': ''}), 404
+        try:
+            from changedetectionio.llm.evaluator import get_effective_summary_prompt
+            prompt = get_effective_summary_prompt(watch, datastore)
+        except Exception:
+            prompt = ''
+        return jsonify({'prompt': prompt})
+
     @diff_blueprint.route("/diff/<uuid_str:uuid>/llm-summary", methods=['GET'])
     @login_optionally_required
     def diff_llm_summary(uuid):

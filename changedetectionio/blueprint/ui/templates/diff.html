@@ -143,7 +143,7 @@
             {%- else -%}
             <p class="llm-diff-summary-text llm-diff-summary-loading">{{ _('Generating summary…') }}</p>
             {%- if llm_summary_prompt -%}
-            <p class="llm-diff-summary-prompt">{{ _('Prompt:') }} {{ llm_summary_prompt }}</p>
+            <p class="llm-diff-summary-prompt"><span class="llm-diff-summary-prompt-text">{{ llm_summary_prompt }}</span></p>
             {%- endif -%}
             {%- endif -%}
         </div>

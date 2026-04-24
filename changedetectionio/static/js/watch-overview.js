@@ -178,6 +178,18 @@ $(function () {
                 }).join('<br>');
             }
 
+            var promptUrl = url + '/prompt';
+
+            // Fire both requests simultaneously — prompt returns immediately, summary after LLM
+            $.getJSON(promptUrl)
+                .done(function (data) {
+                    if (data.prompt && $summaryRow.find('.ai-inline-summary-content:not(.loaded)').length) {
+                        $summaryRow.find('.ai-inline-body').append(
+                            '<span class="ai-inline-prompt">' + $('<span>').text(data.prompt).html() + '</span>'
+                        );
+                    }
+                });
+
             $.getJSON(url)
                 .done(function (data) {
                     var $content = $summaryRow.find('.ai-inline-summary-content');
@@ -185,6 +197,7 @@ $(function () {
                     if (data.summary) {
                         $content.addClass('loaded');
                         $content.find('.ai-inline-text').html(formatSummary(data.summary));
+                        $content.find('.ai-inline-prompt').remove();
                         $content.find('.ai-inline-body').append(
                             '<a href="' + historyUrl + '" class="ai-inline-history-link">' +
                             $('<span>').text(msgHistory).html() + '</a>'
