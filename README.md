@@ -322,6 +322,7 @@ I offer commercial support, this software is depended on by network security, ae
 [release-link]: https://github.com/dgtlmoon/changedetection.io/releases
 [docker-link]: https://hub.docker.com/r/dgtlmoon/changedetection.io
 
+
 ## Disclaimer
 
 **This software is provided "as-is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and non-infringement. In no event shall the authors or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.**
@@ -342,10 +343,6 @@ If you choose to enable AI / LLM features, content detected on monitored website
 **AI and LLM models are known to hallucinate** — producing plausible-sounding but factually incorrect, incomplete, or entirely fabricated output with apparent confidence. By design, LLMs may also omit or silently truncate relevant information during summarisation. **AI output must never be relied upon as complete or accurate.**
 
 By using this software, and in particular any AI / LLM features, you personally indemnify and hold harmless the author(s), contributor(s), and any associated parties from and against any and all claims, damages, losses, costs, and expenses (including reasonable legal fees) arising out of or in connection with your use of this software.
-
-## Commercial Licencing
-
-If you are reselling this software either in part or full as part of any commercial arrangement, you must abide by our COMMERCIAL_LICENCE.md found in our code repository, please contact dgtlmoon@gmail.com and contact@changedetection.io .
 
 ## Third-party licenses
 
