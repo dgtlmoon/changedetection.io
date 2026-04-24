@@ -135,7 +135,12 @@
     <a href="{{ url_for('settings.llm.llm_clear') }}"
        class="pure-button button-xsmall"
        style="background:#c0392b;color:#fff;"
-       onclick="return confirm('{{ _('Remove AI / LLM configuration?') }}')">
+       data-requires-confirm
+       data-confirm-type="danger"
+       data-confirm-title="{{ _('Remove AI / LLM configuration?') }}"
+       data-confirm-message="<p>{{ _('This will remove your saved AI provider, model, and API key.') }}</p>"
+       data-confirm-button="{{ _('Remove') }}"
+       data-cancel-button="{{ _('Cancel') }}">
       &#10005; {{ _('Remove') }}
     </a>
     &nbsp;
@@ -150,6 +155,22 @@
   <p class="pure-form-message-inline" style="margin-top:0.5em;">
     {{ _("Your API key is stored locally and sent only to your chosen provider. On each detected change, the watch's diff and extracted text are sent to the LLM — no full page HTML.") }}
   </p>
+
+  <div class="pure-control-group" style="margin-top:1.2em; padding-top:1em; border-top:1px solid rgba(128,128,128,0.15);">
+    <label style="color:#888; font-size:0.85em;">{{ _('Cache') }}</label>
+    <a href="{{ url_for('settings.llm.llm_clear_summary_cache') }}"
+       class="pure-button button-xsmall"
+       style="background:#7f8c8d;color:#fff;"
+       data-requires-confirm
+       data-confirm-type="warning"
+       data-confirm-title="{{ _('Clear all summary cache?') }}"
+       data-confirm-message="<p>{{ _('This will remove all cached AI change summaries across all watches.') }}</p><p>{{ _('They will be regenerated on the next check.') }}</p>"
+       data-confirm-button="{{ _('Clear cache') }}"
+       data-cancel-button="{{ _('Cancel') }}">
+      &#10005; {{ _('Clear all summary cache') }}
+    </a>
+    <span class="pure-form-message-inline">{{ _('Removes all cached AI change summaries across all watches. They will be regenerated on the next check.') }}</span>
+  </div>
   {% endif %}{# llm_env_configured #}
   {% endcall %}
 

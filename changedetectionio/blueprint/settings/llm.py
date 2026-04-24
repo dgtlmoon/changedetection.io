@@ -1,3 +1,5 @@
+import os
+
 from flask import Blueprint, jsonify, redirect, url_for, flash
 from flask_babel import gettext
 from loguru import logger
@@ -102,6 +104,25 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
         datastore.data['settings']['application'].pop('llm', None)
         datastore.commit()
         flash(gettext("AI / LLM configuration removed."), 'notice')
+        return redirect(url_for('settings.settings_page') + '#ai')
+
+    @llm_blueprint.route("/clear-summary-cache", methods=['GET'])
+    @login_optionally_required
+    def llm_clear_summary_cache():
+        import glob
+        count = 0
+        for watch in datastore.data['watching'].values():
+            if not watch.data_dir:
+                continue
+            for f in glob.glob(os.path.join(watch.data_dir, 'change-summary-*.txt')):
+                try:
+                    os.remove(f)
+                    logger.info(f"LLM summary cache removed: {f}")
+                    count += 1
+                except OSError as e:
+                    logger.warning(f"Could not remove LLM summary cache file {f}: {e}")
+        logger.info(f"LLM summary cache cleared: {count} file(s) removed")
+        flash(gettext("AI summary cache cleared (%(n)s file(s) removed).", n=count), 'notice')
         return redirect(url_for('settings.settings_page') + '#ai')
 
     return llm_blueprint
