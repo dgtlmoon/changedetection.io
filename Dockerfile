@@ -86,6 +86,7 @@ LABEL org.opencontainers.image.licenses="Apache-2.0"
 LABEL org.opencontainers.image.vendor="changedetection.io"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    gosu \
     libxslt1.1 \
     # For presenting price amounts correctly in the restock/price detection overview
     locales \
@@ -101,18 +102,29 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxrender-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Create unprivileged user and required directories
+RUN groupadd -g 911 changedetection && \
+    useradd -u 911 -g 911 -M -s /bin/false changedetection && \
+    mkdir -p /datastore /extra_packages && \
+    chown changedetection:changedetection /extra_packages
 
 # https://stackoverflow.com/questions/58701233/docker-logs-erroneously-appears-empty-until-container-stops
 ENV PYTHONUNBUFFERED=1
-
-RUN [ ! -d "/datastore" ] && mkdir /datastore
+# Redirect .pyc cache to a writable location since /app is root-owned.
+# To disable bytecode caching entirely, set PYTHONDONTWRITEBYTECODE=1 at runtime.
+ENV PYTHONPYCACHEPREFIX=/tmp/pycache
+# Disable pytest's .pytest_cache directory (also writes to /app, which is root-owned).
+# Only has an effect when running tests inside the container.
+ENV PYTEST_ADDOPTS="-p no:cacheprovider"
+# Redirect test logs to the datastore (writable) instead of /app/tests/logs (read-only in container).
+ENV TEST_LOG_DIR=/datastore/test_logs
 
 # Re #80, sets SECLEVEL=1 in openssl.conf to allow monitoring sites with weak/old cipher suites
 RUN sed -i 's/^CipherString = .*/CipherString = DEFAULT@SECLEVEL=1/' /etc/ssl/openssl.cnf
 
 # Copy modules over to the final image and add their dir to PYTHONPATH
 COPY --from=builder /dependencies /usr/local
-ENV PYTHONPATH=/usr/local
+ENV PYTHONPATH=/usr/local:/extra_packages
 
 EXPOSE 5000
 
