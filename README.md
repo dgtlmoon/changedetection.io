@@ -308,6 +308,27 @@ I offer commercial support, this software is depended on by network security, ae
 [release-link]: https://github.com/dgtlmoon/changedetection.io/releases
 [docker-link]: https://hub.docker.com/r/dgtlmoon/changedetection.io
 
+## Disclaimer
+
+**This software is provided "as-is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and non-infringement. In no event shall the authors or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.**
+
+### Website content monitoring
+
+You are solely responsible for ensuring that your use of this software complies with the terms of service, `robots.txt` directives, access policies, and all applicable laws of any website or service you choose to monitor. The authors and contributors of this software accept no liability whatsoever for how you choose to use it or for any consequences arising from that use.
+
+### AI / LLM features
+
+If you choose to enable AI / LLM features, content detected on monitored websites — including page diffs and extracted text — will be transmitted to a third-party AI provider of your choosing, outside of this installation. You are solely responsible for:
+
+- Ensuring such transmission is permitted by the terms of service of every website you monitor.
+- Compliance with all applicable data-protection and privacy laws (including but not limited to GDPR) with respect to any personal data that may appear in monitored content.
+- All API costs and charges levied by your chosen AI provider. This software has no visibility into or control over those charges.
+- Any consequences arising from acting on AI-generated output.
+
+**AI and LLM models are known to hallucinate** — producing plausible-sounding but factually incorrect, incomplete, or entirely fabricated output with apparent confidence. By design, LLMs may also omit or silently truncate relevant information during summarisation. **AI output must never be relied upon as complete or accurate.**
+
+By using this software, and in particular any AI / LLM features, you personally indemnify and hold harmless the author(s), contributor(s), and any associated parties from and against any and all claims, damages, losses, costs, and expenses (including reasonable legal fees) arising out of or in connection with your use of this software.
+
 ## Commercial Licencing
 
 If you are reselling this software either in part or full as part of any commercial arrangement, you must abide by our COMMERCIAL_LICENCE.md found in our code repository, please contact dgtlmoon@gmail.com and contact@changedetection.io .
