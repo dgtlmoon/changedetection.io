@@ -106,7 +106,7 @@ loguru
 extruct
 
 # For cleaning up unknown currency formats
-babel
+babel==2.18.0
 # For internationalization (i18n) support
 Flask-Babel>=4.0.0
 
