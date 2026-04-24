@@ -999,7 +999,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
     api_access_token_enabled = BooleanField(_l('API access token security check enabled'), default=True, validators=[validators.Optional()])
     base_url = StringField(_l('Notification base URL override'),
                            validators=[validators.Optional()],
-                           render_kw={"placeholder": os.getenv('BASE_URL', 'Not set')}
+                           render_kw={"placeholder": os.getenv('BASE_URL', _l('Not set'))}
                            )
     empty_pages_are_a_change =  BooleanField(_l('Treat empty pages as a change?'), default=False)
     fetch_backend = RadioField(_l('Fetch Method'), default="html_requests", choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])

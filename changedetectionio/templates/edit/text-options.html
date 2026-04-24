@@ -35,10 +35,10 @@
 
                 <fieldset>
                     <div class="pure-control-group">
-                        {{ render_field(form.text_should_not_be_present, rows=5, placeholder="For example: Out of stock
+                        {{ render_field(form.text_should_not_be_present, rows=5, placeholder=_("For example: Out of stock
 Sold out
 Not in stock
-Unavailable") }}
+Unavailable")) }}
                         <span class="pure-form-message-inline">
                             <ul>
                                 <li>{{ _('Block change-detection while this text is on the page, all text and regex are tested case-insensitive, good for waiting for when a product is available again') }}</li>
@@ -51,9 +51,9 @@ Unavailable") }}
                 </fieldset>
                 <fieldset>
                     <div class="pure-control-group">
-                        {{ render_field(form.extract_lines_containing, rows=5, placeholder="celsius
+                        {{ render_field(form.extract_lines_containing, rows=5, placeholder=_("celsius
 temperature
-price") }}
+price")) }}
                         <span class="pure-form-message-inline">
                             <ul>
                                 <li>{{ _('Keep only lines that contain any of these words or phrases (plain text, case-insensitive)') }}</li>
