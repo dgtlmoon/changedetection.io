@@ -63,6 +63,28 @@
   {% call stab_pane('provider') %}
   <p class="stab-section-title">{{ _('AI Provider') }}</p>
 
+  {% if not llm_env_configured and not (llm_config and llm_config.get('model')) %}
+  <div class="stab-overview-disclaimer">
+    <div class="stab-disclaimer-icon">⚠</div>
+    <div class="stab-disclaimer-body">
+      <strong>{{ _('Third-party data transfer — please read') }}</strong>
+      <p>{{ _('When AI features are active, change data from the websites you monitor — including page diffs and extracted text — is sent to an external AI provider of your choice.') }}</p>
+      <ul>
+        <li>{{ _('You are solely responsible for ensuring this complies with the terms of service of each website you monitor.') }}</li>
+        <li>{{ _("You are solely responsible for compliance with applicable data-protection laws (e.g. GDPR) regarding any personal data that may appear in monitored content.") }}</li>
+        <li>{{ _('API costs charged by your chosen provider are your own responsibility; this software has no visibility into or control over those charges.') }}</li>
+        <li>{{ _('The AI output may be inaccurate. This software is provided as-is with no warranty of any kind.') }}</li>
+        <li>{{ _('By enabling AI features you personally indemnify and hold harmless the creator(s) and contributor(s) of this software from any claims, damages, or liability arising from this data transfer or your use of AI features.') }}</li>
+      </ul>
+      <label class="stab-disclaimer-check">
+        <input type="checkbox" id="llm-disclaimer-accept" onchange="llmDisclaimerToggle(this)">
+        <span>{{ _('I have read and understood the above. I accept full responsibility and indemnify the creator(s) of this software.') }}</span>
+      </label>
+    </div>
+  </div>
+  <div id="llm-provider-fields" style="display:none">
+  {% endif %}
+
   {% if llm_env_configured %}
   <div class="inline-warning" style="margin-bottom: 1em;">
     <img class="inline-warning-icon" src="{{ url_for('static_content', group='images', filename='notice.svg') }}" alt="{{ _('Note') }}">
@@ -172,6 +194,10 @@
     <span class="pure-form-message-inline">{{ _('Removes all cached AI change summaries across all watches. They will be regenerated on the next check.') }}</span>
   </div>
   {% endif %}{# llm_env_configured #}
+
+  {% if not llm_env_configured and not (llm_config and llm_config.get('model')) %}
+  </div>{# llm-provider-fields #}
+  {% endif %}
   {% endcall %}
 
   {# ── Prompts ───────────────────────────────────────────────────────────── #}
@@ -356,6 +382,11 @@
     gemini:     '{{ _("aistudio.google.com → Get API key") }}',
     ollama:     '{{ _("No API key needed for local Ollama") }}',
     openrouter: '{{ _("openrouter.ai → Keys") }}',
+  };
+
+  window.llmDisclaimerToggle = function (cb) {
+    const fields = document.getElementById('llm-provider-fields');
+    if (fields) fields.style.display = cb.checked ? '' : 'none';
   };
 
   window.llmOnProviderChange = function (provider) {
