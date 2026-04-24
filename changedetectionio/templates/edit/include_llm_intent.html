@@ -47,7 +47,7 @@
     </p>
     <div class="pure-control-group">
         {% if watch is defined and watch and llm_group_overrides is defined and llm_group_overrides.llm_intent %}
-            {% set intent_placeholder = _('From group') ~ " '" ~ llm_group_overrides.llm_intent.group_name ~ "': " ~ llm_group_overrides.llm_intent.value %}
+            {% set intent_placeholder = _("From group '%(name)s': %(value)s", name=llm_group_overrides.llm_intent.group_name, value=llm_group_overrides.llm_intent.value) %}
         {% elif watch is defined and watch %}
             {% set intent_placeholder = _('e.g. Alert me when the price drops below $300, or a new product is launched. Ignore footer and navigation changes.') %}
         {% else %}
@@ -67,8 +67,7 @@
     </div>
     {% if watch.get('llm_prefilter') %}
     <div class="pure-form-message-inline" style="margin-top: 0.5em;">
-        <small>{{ _('AI pre-filter active:') }} <code>{{ watch.get('llm_prefilter') }}</code>
-        — {{ _('narrows content scope before evaluation') }}</small>
+        <small>{{ _('AI pre-filter active: <code>%(filter)s</code> — narrows content scope before evaluation', filter=watch.get('llm_prefilter')|e) | safe }}</small>
     </div>
     {% endif %}
     {% endif %}
@@ -79,14 +78,15 @@
     <h4 style="margin: 0 0 0.3em 0;">{{ _('AI Change Summary') }}</h4>
     <p class="pure-form-message-inline" style="margin-top:0">
         {% if watch is defined and watch %}
-            {{ _('When a change is detected, the AI describes it according to your instructions and replaces') }} <code>{{ '{{diff}}' }}</code> {{ _('in your notification. Use') }} <code>{{ '{{raw_diff}}' }}</code> {{ _('if you still want the original diff.') }}
+            {{ _('When a change is detected, the AI describes it according to your instructions and replaces <code>%(diff)s</code> in your notification. Use <code>%(raw_diff)s</code> if you still want the original diff.',
+                 diff='{{diff}}', raw_diff='{{raw_diff}}') | safe }}
         {% else %}
             {{ _('Describe how changes should be summarised in notifications for all watches in this group.') }}
         {% endif %}
     </p>
     <div class="pure-control-group">
         {% if watch is defined and watch and llm_group_overrides is defined and llm_group_overrides.llm_change_summary %}
-            {% set summary_placeholder = _('From group') ~ " '" ~ llm_group_overrides.llm_change_summary.group_name ~ "': " ~ llm_group_overrides.llm_change_summary.value %}
+            {% set summary_placeholder = _("From group '%(name)s': %(value)s", name=llm_group_overrides.llm_change_summary.group_name, value=llm_group_overrides.llm_change_summary.value) %}
         {% else %}
             {% set summary_placeholder = form.llm_change_summary.render_kw['placeholder'] %}
         {% endif %}
@@ -111,12 +111,13 @@
 {% else %}
 <div class="border-fieldset" id="llm-intent-section-disabled" style="opacity: 0.5;">
     <h3>&#x2728; {{ _('AI') }}</h3>
-    <p>{{ _('Configure an AI / LLM provider in') }}
-       <a href="{{ url_for('settings.settings_page') }}#ai">{{ _('Settings → AI / LLM') }}</a>
+    <p>
        {% if watch is defined and watch %}
-           {{ _('to enable AI Change Intent and AI Change Summary.') }}
+           {{ _('Configure an AI / LLM provider in <a href="%(url)s">Settings → AI / LLM</a> to enable AI Change Intent and AI Change Summary.',
+                url=url_for('settings.settings_page') + '#ai') | safe }}
        {% else %}
-           {{ _('to enable AI features for this group.') }}
+           {{ _('Configure an AI / LLM provider in <a href="%(url)s">Settings → AI / LLM</a> to enable AI features for this group.',
+                url=url_for('settings.settings_page') + '#ai') | safe }}
        {% endif %}
     </p>
 </div>
