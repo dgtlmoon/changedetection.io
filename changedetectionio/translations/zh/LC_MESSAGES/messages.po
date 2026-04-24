@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-23 02:58+0200\n"
+"POT-Creation-Date: 2026-04-24 19:38+1000\n"
 "PO-Revision-Date: 2026-01-18 21:31+0800\n"
 "Last-Translator: 吾爱分享 <admin@wuaishare.cn>\n"
 "Language: zh\n"
@@ -355,10 +355,6 @@ msgid "An error occurred, please see below."
 msgstr "发生错误，请查看下方详情。"
 
 #: changedetectionio/blueprint/settings/__init__.py
-msgid "AI / LLM configuration removed."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/__init__.py
 msgid "API Key was regenerated."
 msgstr "API Key 已重新生成。"
 
@@ -377,6 +373,15 @@ msgstr "所有通知已静音。"
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "All notifications unmuted."
 msgstr "所有通知已取消静音。"
+
+#: changedetectionio/blueprint/settings/llm.py
+msgid "AI / LLM configuration removed."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm.py
+#, python-format
+msgid "AI summary cache cleared (%(n)s file(s) removed)."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "Notification debug log"
@@ -419,7 +424,8 @@ msgstr "时间与日期"
 msgid "CAPTCHA & Proxies"
 msgstr "验证码与代理"
 
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "AI / LLM"
 msgstr ""
 
@@ -922,8 +928,17 @@ msgid "Remove AI / LLM configuration?"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "This will remove your saved AI provider, model, and API key."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Remove"
 msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
+msgid "Cancel"
+msgstr "取消"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Test connection"
@@ -936,6 +951,34 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Cache"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Clear all summary cache?"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "This will remove all cached AI change summaries across all watches."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "They will be regenerated on the next check."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Clear cache"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Clear all summary cache"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Removes all cached AI change summaries across all watches. They will be regenerated on the next check."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Default AI Change Summary"
 msgstr ""
 
@@ -944,6 +987,7 @@ msgid "Used for all watches unless overridden by the watch or its tag/group."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#: changedetectionio/templates/edit/include_llm_intent.html
 msgid "Modify default prompt"
 msgstr ""
 
@@ -963,6 +1007,18 @@ msgstr ""
 msgid ""
 "When enabled, the AI will be used as a last resort to extract price and stock status from product pages where no "
 "structured metadata (JSON-LD, microdata, OpenGraph) is found."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"For Gemini 2.5+ models only. Thinking tokens improve reasoning quality but count against the output budget. Set to "
+"Off if summaries are being cut short."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"Upper limit on tokens the AI may use when writing a change summary. Higher values allow longer summaries but cost "
+"more."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
@@ -1501,10 +1557,6 @@ msgstr "以确认你已理解。"
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "Clear History!"
 msgstr "清除历史记录！"
-
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
-msgid "Cancel"
-msgstr "取消"
 
 #: changedetectionio/blueprint/ui/templates/diff-offscreen-options.html
 msgid "Share diff as image"
@@ -3167,6 +3219,18 @@ msgid "Use LLM as a fallback for extracting price and restock info"
 msgstr ""
 
 #: changedetectionio/forms.py
+msgid "AI thinking budget (tokens)"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Off (no thinking)"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Max AI summary length (tokens)"
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "When monthly token budget is reached"
 msgstr ""
 
@@ -3950,6 +4014,8 @@ msgstr ""
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "to enable AI features for this group."
+msgstr ""
+
 #: changedetectionio/templates/edit/include_subtract.html
 msgid "Note!: //text() function does not work where the <element> contains <![CDATA[]]>"
 msgstr ""
