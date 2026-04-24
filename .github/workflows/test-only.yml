@@ -37,7 +37,12 @@ jobs:
           python setup.py extract_messages
           python setup.py update_catalog
           python setup.py compile_catalog
-          git diff --quiet changedetectionio/translations || (echo "ERROR: Translation catalog is out of sync. Run: python setup.py extract_messages && python setup.py update_catalog && python setup.py compile_catalog" && git diff --stat changedetectionio/translations && exit 1)
+          # Ignore POT-Creation-Date timestamp lines — they change on every extract_messages run
+          if git diff changedetectionio/translations | grep -v 'POT-Creation-Date' | grep -qE '^[+-][^+-]'; then
+            echo "ERROR: Translation catalog is out of sync. Run: python setup.py extract_messages && python setup.py update_catalog && python setup.py compile_catalog"
+            git diff --stat changedetectionio/translations
+            exit 1
+          fi
 
   test-application-3-10:
     # Only run on push to master (including PR merges)
