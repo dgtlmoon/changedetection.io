@@ -31,6 +31,13 @@ jobs:
             echo "Checking $f"
             msgfmt --check-format -o /dev/null "$f"
           done
+      - name: Check translation catalog is up-to-date
+        run: |
+          pip install babel
+          python setup.py extract_messages
+          python setup.py update_catalog
+          python setup.py compile_catalog
+          git diff --quiet changedetectionio/translations || (echo "ERROR: Translation catalog is out of sync. Run: python setup.py extract_messages && python setup.py update_catalog && python setup.py compile_catalog" && git diff --stat changedetectionio/translations && exit 1)
 
   test-application-3-10:
     # Only run on push to master (including PR merges)
